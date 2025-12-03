@@ -19,7 +19,9 @@ import (
 
 	"github.com/krisarmstrong/netscope/internal/auth"
 	"github.com/krisarmstrong/netscope/internal/config"
+	"github.com/krisarmstrong/netscope/internal/dhcp"
 	"github.com/krisarmstrong/netscope/internal/discovery"
+	"github.com/krisarmstrong/netscope/internal/dns"
 	"github.com/krisarmstrong/netscope/internal/network"
 )
 
@@ -32,6 +34,8 @@ type Server struct {
 	mux              *http.ServeMux
 	netManager       *network.Manager
 	discoveryManager *discovery.Manager
+	dnsTester        *dns.Tester
+	dhcpMonitor      *dhcp.Monitor
 }
 
 // NewServer creates a new server instance.
@@ -47,6 +51,8 @@ func NewServer(cfg *config.Config, netMgr *network.Manager) *Server {
 			cfg.Auth.DefaultPasswordHash,
 		),
 		discoveryManager: discovery.NewManager(cfg.Interface.Default),
+		dnsTester:        dns.NewTester("", "google.com", dns.DefaultThresholds()),
+		dhcpMonitor:      dhcp.NewMonitor(cfg.Interface.Default),
 	}
 
 	s.wsHub = NewHub()
@@ -68,6 +74,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/link", s.handleLink)
 	s.mux.HandleFunc("/api/ipconfig", s.handleIPConfig)
 	s.mux.HandleFunc("/api/discovery", s.handleDiscovery)
+	s.mux.HandleFunc("/api/dns", s.handleDNS)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)

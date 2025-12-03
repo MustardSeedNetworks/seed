@@ -262,14 +262,24 @@ type IPv6Info struct {
 	Source  string `json:"source"` // slaac, dhcpv6, static, temporary
 }
 
+// DHCPTimingInfo represents DHCP transaction timing.
+type DHCPTimingInfo struct {
+	Discover int64 `json:"discover"` // ms
+	Offer    int64 `json:"offer"`
+	Request  int64 `json:"request"`
+	Ack      int64 `json:"ack"`
+	Total    int64 `json:"total"`
+}
+
 // IPConfigResponse represents the full IP configuration.
 type IPConfigResponse struct {
-	Interface string     `json:"interface"`
-	MAC       string     `json:"mac"`
-	Mode      string     `json:"mode"` // dhcp, static, auto
-	IPv4      *IPv4Info  `json:"ipv4,omitempty"`
-	IPv6      []IPv6Info `json:"ipv6"`
-	DNS       []string   `json:"dns"`
+	Interface string          `json:"interface"`
+	MAC       string          `json:"mac"`
+	Mode      string          `json:"mode"` // dhcp, static, auto
+	IPv4      *IPv4Info       `json:"ipv4,omitempty"`
+	IPv6      []IPv6Info      `json:"ipv6"`
+	DNS       []string        `json:"dns"`
+	Timing    *DHCPTimingInfo `json:"timing,omitempty"`
 }
 
 // handleIPConfig returns IP configuration for the current interface.
@@ -321,6 +331,19 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 
 	// Try to get DNS servers from system
 	resp.DNS = getSystemDNS()
+
+	// Add DHCP timing if available
+	if s.dhcpMonitor != nil {
+		if timing := s.dhcpMonitor.GetLastTiming(); timing != nil {
+			ms := timing.ToMs()
+			resp.Timing = &DHCPTimingInfo{
+				Discover: ms.Discover,
+				Offer:    ms.Offer,
+				Request:  ms.Request,
+				Total:    ms.Total,
+			}
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
@@ -495,6 +518,64 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 			LastSeen:          n.LastSeen.Format("2006-01-02T15:04:05Z07:00"),
 			SourceMAC:         n.SourceMAC,
 		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// DNSLookupResult represents a DNS lookup result for the API.
+type DNSLookupResult struct {
+	Result string `json:"result"`
+	Time   int64  `json:"time"` // ms
+	Status string `json:"status"`
+	Error  string `json:"error,omitempty"`
+}
+
+// DNSResponse represents the DNS test results for the API.
+type DNSResponse struct {
+	Server       string           `json:"server"`
+	TestHostname string           `json:"testHostname"`
+	Forward      *DNSLookupResult `json:"forward,omitempty"`
+	Reverse      *DNSLookupResult `json:"reverse,omitempty"`
+}
+
+// handleDNS performs DNS testing and returns results.
+func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.dnsTester == nil {
+		http.Error(w, "DNS tester not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Perform DNS test
+	result := s.dnsTester.Test(r.Context())
+
+	resp := DNSResponse{
+		Server:       result.Server,
+		TestHostname: result.TestHostname,
+	}
+
+	if result.Forward != nil {
+		resp.Forward = &DNSLookupResult{
+			Result: result.Forward.Result,
+			Time:   result.Forward.TimeMs,
+			Status: string(result.Forward.Status),
+			Error:  result.Forward.Error,
+		}
+	}
+
+	if result.Reverse != nil {
+		resp.Reverse = &DNSLookupResult{
+			Result: result.Reverse.Result,
+			Time:   result.Reverse.TimeMs,
+			Status: string(result.Reverse.Status),
+			Error:  result.Reverse.Error,
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
