@@ -23,6 +23,7 @@ interface UseAuthReturn {
 
 const TOKEN_KEY = 'netscope_token';
 const USERNAME_KEY = 'netscope_username';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 export function useAuth(): UseAuthReturn {
   const [state, setState] = useState<AuthState>({
@@ -52,7 +53,7 @@ export function useAuth(): UseAuthReturn {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +96,7 @@ export function useAuth(): UseAuthReturn {
     });
 
     // Call logout endpoint (fire and forget)
-    fetch('/api/auth/logout', {
+    fetch(`${API_BASE}/api/auth/logout`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${state.token}`,

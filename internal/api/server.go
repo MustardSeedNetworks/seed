@@ -66,12 +66,28 @@ func (s *Server) setupRoutes() {
 	s.mux.Handle("/", http.FileServer(http.Dir("web/dist")))
 }
 
+// corsMiddleware adds CORS headers for development.
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 // Start starts the HTTP/HTTPS server.
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
-	// Apply auth middleware
-	handler := s.authManager.Middleware(s.mux)
+	// Apply CORS middleware then auth middleware
+	handler := corsMiddleware(s.authManager.Middleware(s.mux))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
