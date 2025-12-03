@@ -11,7 +11,7 @@ import {
   DHCPCard,
   DHCPData,
   DNSCard,
-  DNSData,
+  type DNSData,
   GatewayCard,
   GatewayData,
   VLANCard,
@@ -169,6 +169,37 @@ function App() {
     }
   }, []);
 
+  // Fetch DNS test data
+  const fetchDNSData = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/dns`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCards((prev) => ({
+          ...prev,
+          dns: {
+            server: data.server || 'Unknown',
+            testHostname: data.testHostname || 'google.com',
+            forward: data.forward ? {
+              result: data.forward.result,
+              time: data.forward.time,
+              status: data.forward.status,
+            } : null,
+            reverse: data.reverse ? {
+              result: data.reverse.result,
+              time: data.reverse.time,
+              status: data.reverse.status,
+            } : null,
+          },
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch DNS data:', err);
+    }
+  }, []);
+
   // Change interface on backend
   const changeInterface = useCallback(async (interfaceName: string) => {
     try {
@@ -187,11 +218,12 @@ function App() {
         fetchLinkData();
         fetchIPConfig();
         fetchDiscoveryData();
+        fetchDNSData();
       }
     } catch (err) {
       console.error('Failed to change interface:', err);
     }
-  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData]);
+  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData]);
 
   // Fetch data on mount and periodically
   useEffect(() => {
@@ -201,16 +233,18 @@ function App() {
     fetchIPConfig();
     fetchInterfaces();
     fetchDiscoveryData();
+    fetchDNSData();
     setLoading(false);
 
     const interval = setInterval(() => {
       fetchLinkData();
       fetchIPConfig();
       fetchDiscoveryData();
+      fetchDNSData();
     }, 5000); // Refresh every 5 seconds
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData]);
+  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData]);
 
   const { status, reconnect } = useWebSocket({
     url: '/ws',
