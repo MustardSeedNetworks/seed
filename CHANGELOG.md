@@ -7,18 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2025-12-03
+
 ### Added
-- Initial project structure
-- Project plan and architecture documentation
+
+**Backend (Go)**
+- HTTP/HTTPS server with auto-generated self-signed TLS certificates
+- WebSocket server for real-time card updates with heartbeat/ping-pong
+- JWT authentication with bcrypt password hashing
+- Network interface detection and management
+- Configuration loading from YAML with sensible defaults
+- Graceful shutdown handling
+
+**Frontend (React + TypeScript)**
+- WebSocket hook with auto-reconnect and connection status
+- Authentication hook with login/logout flow
+- Card component system with status indicators (green/yellow/red)
+- 8 diagnostic cards: Link, Cable, VLAN, Switch, Wi-Fi, DHCP, DNS, Gateway
+- Login form with default credentials hint
+- Connection status indicator in header
+- Responsive grid layout (mobile-friendly)
+- WiFi Vigilante color scheme (dark mode default)
+
+**Infrastructure**
 - CI/CD pipeline with GitHub Actions
-- Conventional commit enforcement
 - Security scanning with CodeQL
+- Dependabot for automated dependency updates
+- Conventional commits enforcement
+- BSL 1.1 license (converts to Apache 2.0 on 2029-12-01)
 
 ---
 
-## Release History
+## [0.0.0] - 2025-12-02
 
-*No releases yet*
+### Added
+- Initial project structure
+- Project plan and architecture documentation
 
 ---
 
