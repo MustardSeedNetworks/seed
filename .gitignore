@@ -1,0 +1,74 @@
+# Binaries
+/netscope
+/netscope-*
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/dist/
+/bin/
+
+# Test binary
+*.test
+
+# Output of go coverage
+*.out
+coverage.html
+coverage.txt
+
+# Go workspace
+go.work
+go.work.sum
+
+# Dependency directories
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+
+# Frontend
+web/node_modules/
+web/dist/
+web/.vite/
+web/coverage/
+*.log
+npm-debug.log*
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Config overrides (keep defaults)
+configs/*.local.yaml
+configs/*.local.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Certificates (generated)
+certs/
+!certs/.gitkeep

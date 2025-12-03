@@ -1,0 +1,66 @@
+# NetScope Configuration
+# Copy to netscope.local.yaml for local overrides
+
+server:
+  port: 8443
+  https: true
+  # cert_file: /path/to/cert.pem
+  # key_file: /path/to/key.pem
+
+interface:
+  default: eth0
+  # Fallback interfaces to try if default not found
+  fallbacks:
+    - enp0s3
+    - wlan0
+
+vlan:
+  enabled: false
+  id: 0
+
+ip:
+  mode: dhcp  # dhcp or static
+  # Static IP configuration (used when mode: static)
+  # static:
+  #   address: 192.168.1.100
+  #   netmask: 255.255.255.0
+  #   gateway: 192.168.1.1
+  #   dns:
+  #     - 8.8.8.8
+  #     - 8.8.4.4
+
+discovery:
+  # Protocol preference: auto, lldp, cdp, edp, fdp
+  protocol: auto
+  timeout: 30s
+
+dns:
+  test_hostname: google.com
+  timeout: 5s
+
+thresholds:
+  dhcp:
+    total:
+      warning: 500ms
+      critical: 2s
+    per_phase:
+      warning: 200ms
+      critical: 1s
+  dns:
+    warning: 100ms
+    critical: 500ms
+  ping:
+    warning: 50ms
+    critical: 200ms
+  wifi:
+    signal:
+      warning: -70  # dBm
+      critical: -80
+
+auth:
+  # Default credentials - CHANGE ON FIRST LOGIN
+  default_username: admin
+  # Password hash (bcrypt) - default: "netscope"
+  # Generate new hash: htpasswd -nbBC 10 "" "newpassword" | tr -d ':\n' | sed 's/$2y/$2a/'
+  default_password_hash: "$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqPqMqYjP8tTO.C5p3QBrC4qZlFIG"
+  session_timeout: 24h

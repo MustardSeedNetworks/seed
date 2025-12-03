@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* NetScope Theme - WiFi Vigilante Color Scheme */
+
+:root {
+  /* Light Mode */
+  --color-brand-primary: #2563eb;
+  --color-brand-accent: #3b82f6;
+
+  --color-surface-base: #ffffff;
+  --color-surface-raised: #f8fafc;
+  --color-surface-border: #e2e8f0;
+  --color-surface-hover: #eff6ff;
+
+  --color-text-primary: #0f172a;
+  --color-text-muted: #64748b;
+  --color-text-accent: #2563eb;
+  --color-text-inverse: #ffffff;
+
+  --color-status-success: #10b981;
+  --color-status-warning: #f59e0b;
+  --color-status-error: #ef4444;
+  --color-status-info: #2563eb;
+}
+
+.dark {
+  /* Dark Mode */
+  --color-brand-primary: #60a5fa;
+  --color-brand-accent: #3b82f6;
+
+  --color-surface-base: #0f172a;
+  --color-surface-raised: #1e293b;
+  --color-surface-border: #334155;
+  --color-surface-hover: #1e3a5f;
+
+  --color-text-primary: #f1f5f9;
+  --color-text-muted: #a1b4c9;
+  --color-text-accent: #60a5fa;
+  --color-text-inverse: #0f172a;
+
+  --color-status-success: #34d399;
+  --color-status-warning: #fbbf24;
+  --color-status-error: #f87171;
+  --color-status-info: #60a5fa;
+}
+
+/* Apply dark mode by default */
+html {
+  @apply dark;
+}
+
+body {
+  @apply bg-surface-base text-text-primary antialiased;
+}

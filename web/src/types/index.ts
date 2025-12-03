@@ -1,0 +1,140 @@
+/**
+ * NetScope Type Definitions
+ */
+
+export type Status = 'success' | 'warning' | 'error' | 'unknown';
+
+export interface CardData {
+  id: string;
+  title: string;
+  status: Status;
+  lastUpdated: string;
+}
+
+export interface LinkCard extends CardData {
+  type: 'link';
+  speed: string;
+  duplex: 'full' | 'half';
+  advertisedSpeeds: string[];
+  linkUp: boolean;
+}
+
+export interface CableCard extends CardData {
+  type: 'cable';
+  supported: boolean;
+  length?: number;
+  status: Status;
+  faults?: string[];
+}
+
+export interface VlanCard extends CardData {
+  type: 'vlan';
+  nativeVlan?: number;
+  taggedVlans: number[];
+  voiceVlan?: number;
+}
+
+export interface SwitchCard extends CardData {
+  type: 'switch';
+  protocol: 'lldp' | 'cdp' | 'edp' | 'fdp' | 'unknown';
+  switchName?: string;
+  portId?: string;
+  portDescription?: string;
+  managementIp?: string;
+  systemDescription?: string;
+}
+
+export interface WifiCard extends CardData {
+  type: 'wifi';
+  ssid?: string;
+  bssid?: string;
+  signal: number; // dBm
+  channel: number;
+  frequency: number; // MHz
+  security: string;
+}
+
+export interface DhcpCard extends CardData {
+  type: 'dhcp';
+  mode: 'dhcp' | 'static';
+  ip?: string;
+  subnet?: string;
+  gateway?: string;
+  dns: string[];
+  server?: string;
+  leaseTime?: number;
+  timing?: {
+    discover: number;
+    offer: number;
+    request: number;
+    ack: number;
+    total: number;
+  };
+}
+
+export interface DnsCard extends CardData {
+  type: 'dns';
+  server: string;
+  testHostname: string;
+  forward?: {
+    result: string;
+    time: number;
+    status: Status;
+  };
+  reverse?: {
+    result: string;
+    time: number;
+    status: Status;
+  };
+}
+
+export interface GatewayCard extends CardData {
+  type: 'gateway';
+  ip: string;
+  pings: {
+    time: number;
+    success: boolean;
+  }[];
+  averageLatency: number;
+  packetLoss: number;
+}
+
+export type DiagnosticCard =
+  | LinkCard
+  | CableCard
+  | VlanCard
+  | SwitchCard
+  | WifiCard
+  | DhcpCard
+  | DnsCard
+  | GatewayCard;
+
+export interface Thresholds {
+  dhcp: {
+    total: { warning: number; critical: number };
+    perPhase: { warning: number; critical: number };
+  };
+  dns: { warning: number; critical: number };
+  ping: { warning: number; critical: number };
+  wifi: { warning: number; critical: number };
+}
+
+export interface Settings {
+  interface: string;
+  availableInterfaces: string[];
+  vlan: {
+    enabled: boolean;
+    id: number;
+  };
+  ip: {
+    mode: 'dhcp' | 'static';
+    static?: {
+      address: string;
+      netmask: string;
+      gateway: string;
+      dns: string[];
+    };
+  };
+  thresholds: Thresholds;
+  darkMode: boolean;
+}

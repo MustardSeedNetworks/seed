@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install libpcap
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpcap-dev gcc-aarch64-linux-gnu
+
+      - name: Build frontend
+        run: |
+          cd web
+          npm ci
+          npm run build
+
+      - name: Build binaries
+        run: |
+          # Linux AMD64
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=1 \
+            go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
+            -o dist/netscope-linux-amd64 ./cmd/netscope
+
+          # Linux ARM64 (Raspberry Pi)
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc \
+            go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
+            -o dist/netscope-linux-arm64 ./cmd/netscope
+
+      - name: Create archives
+        run: |
+          cd dist
+          tar -czvf netscope-${{ github.ref_name }}-linux-amd64.tar.gz netscope-linux-amd64
+          tar -czvf netscope-${{ github.ref_name }}-linux-arm64.tar.gz netscope-linux-arm64
+          sha256sum *.tar.gz > checksums.txt
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)")
+          fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: |
+            ## Changes
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Checksums
+
+            ```
+            $(cat dist/checksums.txt)
+            ```
+
+            ## Installation
+
+            ### Linux (AMD64)
+            ```bash
+            curl -LO https://github.com/krisarmstrong/netscope/releases/download/${{ github.ref_name }}/netscope-${{ github.ref_name }}-linux-amd64.tar.gz
+            tar -xzf netscope-${{ github.ref_name }}-linux-amd64.tar.gz
+            sudo mv netscope-linux-amd64 /usr/local/bin/netscope
+            ```
+
+            ### Raspberry Pi (ARM64)
+            ```bash
+            curl -LO https://github.com/krisarmstrong/netscope/releases/download/${{ github.ref_name }}/netscope-${{ github.ref_name }}-linux-arm64.tar.gz
+            tar -xzf netscope-${{ github.ref_name }}-linux-arm64.tar.gz
+            sudo mv netscope-linux-arm64 /usr/local/bin/netscope
+            ```
+          files: |
+            dist/*.tar.gz
+            dist/checksums.txt
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}

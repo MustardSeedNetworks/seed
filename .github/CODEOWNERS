@@ -1,0 +1,14 @@
+# Default owner for everything
+* @krisarmstrong
+
+# Backend
+/cmd/ @krisarmstrong
+/internal/ @krisarmstrong
+*.go @krisarmstrong
+
+# Frontend
+/web/ @krisarmstrong
+
+# Infrastructure
+/.github/ @krisarmstrong
+/configs/ @krisarmstrong
