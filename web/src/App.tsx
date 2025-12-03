@@ -111,20 +111,56 @@ function App() {
     }
   }, []);
 
+  // Fetch discovery data (LLDP/CDP/EDP neighbors)
+  const fetchDiscoveryData = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/discovery`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Use the first neighbor as the "nearest switch"
+        if (data.neighbors && data.neighbors.length > 0) {
+          const neighbor = data.neighbors[0];
+          setCards((prev) => ({
+            ...prev,
+            switch: {
+              protocol: neighbor.protocol as SwitchData['protocol'],
+              switchName: neighbor.systemName || neighbor.chassisId || null,
+              portId: neighbor.portId || null,
+              portDescription: neighbor.portDescription || null,
+              managementIp: neighbor.managementAddress || null,
+              systemDescription: neighbor.systemDescription || null,
+            },
+          }));
+        } else {
+          setCards((prev) => ({
+            ...prev,
+            switch: null,
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch discovery data:', err);
+    }
+  }, []);
+
   // Fetch data on mount and periodically
   useEffect(() => {
     if (!isAuthenticated) return;
 
     fetchLinkData();
     fetchInterfaces();
+    fetchDiscoveryData();
     setLoading(false);
 
     const interval = setInterval(() => {
       fetchLinkData();
+      fetchDiscoveryData();
     }, 5000); // Refresh every 5 seconds
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchLinkData, fetchInterfaces]);
+  }, [isAuthenticated, fetchLinkData, fetchInterfaces, fetchDiscoveryData]);
 
   const { status, reconnect } = useWebSocket({
     url: '/ws',
@@ -204,12 +240,12 @@ function App() {
         {/* Development notice */}
         <div className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-6 text-center">
           <h2 className="text-lg font-semibold text-text-muted">
-            NetScope v0.1.0 - Core Infrastructure Complete
+            NetScope v0.3.0 - Link & Switch Cards
           </h2>
           <p className="mt-2 text-sm text-text-muted">
-            Backend server, WebSocket, and authentication are ready.
+            Link status and discovery protocols (LLDP/CDP/EDP) active.
             <br />
-            Card data collection coming in next milestone.
+            Run as root for packet capture capabilities.
           </p>
         </div>
       </main>
