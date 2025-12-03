@@ -1,0 +1,264 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '../../hooks/useTheme';
+import { getAuthHeaders } from '../../hooks/useAuth';
+
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
+interface Thresholds {
+  dns: {
+    good: number;
+    warning: number;
+  };
+  gateway: {
+    good: number;
+    warning: number;
+  };
+  wifi: {
+    good: number;
+    warning: number;
+  };
+}
+
+interface SettingsDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
+  const { theme, setTheme, isDark } = useTheme();
+  const [thresholds, setThresholds] = useState<Thresholds>({
+    dns: { good: 50, warning: 100 },
+    gateway: { good: 20, warning: 50 },
+    wifi: { good: -50, warning: -70 },
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // Fetch current thresholds
+  const fetchThresholds = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/settings`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.thresholds) {
+          setThresholds((prev) => ({
+            ...prev,
+            ...data.thresholds,
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch thresholds:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchThresholds();
+    }
+  }, [isOpen, fetchThresholds]);
+
+  const saveThresholds = async () => {
+    setSaving(true);
+    setSaveMessage(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/settings`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ thresholds }),
+      });
+      if (response.ok) {
+        setSaveMessage('Settings saved');
+        setTimeout(() => setSaveMessage(null), 2000);
+      } else {
+        setSaveMessage('Failed to save');
+      }
+    } catch (err) {
+      setSaveMessage('Error saving settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateThreshold = (
+    category: keyof Thresholds,
+    level: 'good' | 'warning',
+    value: number
+  ) => {
+    setThresholds((prev) => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [level]: value,
+      },
+    }));
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/50 z-40"
+        onClick={onClose}
+      />
+
+      {/* Drawer */}
+      <div className="fixed right-0 top-0 h-full w-80 bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-surface-border">
+          <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-surface-hover text-text-muted"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-4 space-y-6">
+          {/* Theme Section */}
+          <section>
+            <h3 className="text-sm font-medium text-text-muted mb-3">Appearance</h3>
+            <div className="space-y-2">
+              <label className="flex items-center justify-between p-3 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Theme</span>
+                <select
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
+                  className="bg-surface-raised border border-surface-border rounded px-2 py-1 text-sm text-text-primary"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="system">System</option>
+                </select>
+              </label>
+
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="w-full flex items-center justify-between p-3 bg-surface-base rounded border border-surface-border hover:bg-surface-hover transition-colors"
+              >
+                <span className="text-sm text-text-primary">Quick Toggle</span>
+                <span className="text-xl">{isDark ? '🌙' : '☀️'}</span>
+              </button>
+            </div>
+          </section>
+
+          {/* Thresholds Section */}
+          <section>
+            <h3 className="text-sm font-medium text-text-muted mb-3">Response Thresholds (ms)</h3>
+            <div className="space-y-4">
+              {/* DNS Thresholds */}
+              <div className="p-3 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm font-medium text-text-primary block mb-2">DNS Lookup</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-text-muted">Good (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.dns.good}
+                      onChange={(e) => updateThreshold('dns', 'good', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">Warning (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.dns.warning}
+                      onChange={(e) => updateThreshold('dns', 'warning', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Gateway Thresholds */}
+              <div className="p-3 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm font-medium text-text-primary block mb-2">Gateway Ping</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-text-muted">Good (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.gateway.good}
+                      onChange={(e) => updateThreshold('gateway', 'good', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">Warning (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.gateway.warning}
+                      onChange={(e) => updateThreshold('gateway', 'warning', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Wi-Fi Signal Thresholds */}
+              <div className="p-3 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm font-medium text-text-primary block mb-2">Wi-Fi Signal (dBm)</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-text-muted">Good (&gt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.wifi.good}
+                      onChange={(e) => updateThreshold('wifi', 'good', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">Warning (&gt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.wifi.warning}
+                      onChange={(e) => updateThreshold('wifi', 'warning', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Save Button */}
+          <button
+            onClick={saveThresholds}
+            disabled={saving}
+            className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+          >
+            {saving ? 'Saving...' : 'Save Thresholds'}
+          </button>
+
+          {saveMessage && (
+            <p className={`text-sm text-center ${saveMessage.includes('Error') || saveMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'}`}>
+              {saveMessage}
+            </p>
+          )}
+
+          {/* About Section */}
+          <section className="pt-4 border-t border-surface-border">
+            <h3 className="text-sm font-medium text-text-muted mb-2">About</h3>
+            <p className="text-xs text-text-muted">
+              NetScope v0.7.0
+              <br />
+              Network Diagnostic Tool
+            </p>
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}

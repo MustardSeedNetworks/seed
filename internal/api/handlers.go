@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 // LoginRequest represents a login request.
@@ -108,7 +109,20 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 		"ip": map[string]interface{}{
 			"mode": s.config.IP.Mode,
 		},
-		"thresholds": s.config.Thresholds,
+		"thresholds": map[string]interface{}{
+			"dns": map[string]int64{
+				"good":    s.config.Thresholds.DNS.Warning.Milliseconds(),
+				"warning": s.config.Thresholds.DNS.Critical.Milliseconds(),
+			},
+			"gateway": map[string]int64{
+				"good":    s.config.Thresholds.Ping.Warning.Milliseconds(),
+				"warning": s.config.Thresholds.Ping.Critical.Milliseconds(),
+			},
+			"wifi": map[string]int{
+				"good":    s.config.Thresholds.WiFi.Signal.Warning,
+				"warning": s.config.Thresholds.WiFi.Signal.Critical,
+			},
+		},
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -122,8 +136,33 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Apply settings updates
-	// This will be implemented when we add the settings management
+	// Apply threshold updates
+	if thresholds, ok := updates["thresholds"].(map[string]interface{}); ok {
+		if dns, ok := thresholds["dns"].(map[string]interface{}); ok {
+			if good, ok := dns["good"].(float64); ok {
+				s.config.Thresholds.DNS.Warning = time.Duration(good) * time.Millisecond
+			}
+			if warning, ok := dns["warning"].(float64); ok {
+				s.config.Thresholds.DNS.Critical = time.Duration(warning) * time.Millisecond
+			}
+		}
+		if gateway, ok := thresholds["gateway"].(map[string]interface{}); ok {
+			if good, ok := gateway["good"].(float64); ok {
+				s.config.Thresholds.Ping.Warning = time.Duration(good) * time.Millisecond
+			}
+			if warning, ok := gateway["warning"].(float64); ok {
+				s.config.Thresholds.Ping.Critical = time.Duration(warning) * time.Millisecond
+			}
+		}
+		if wifi, ok := thresholds["wifi"].(map[string]interface{}); ok {
+			if good, ok := wifi["good"].(float64); ok {
+				s.config.Thresholds.WiFi.Signal.Warning = int(good)
+			}
+			if warning, ok := wifi["warning"].(float64); ok {
+				s.config.Thresholds.WiFi.Signal.Critical = int(warning)
+			}
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useWebSocket, Message, CardUpdate } from './hooks/useWebSocket';
 import { useAuth, getAuthHeaders } from './hooks/useAuth';
+import { useTheme } from './hooks/useTheme';
+import { SettingsDrawer } from './components/settings/SettingsDrawer';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 import {
@@ -35,6 +37,8 @@ interface CardState {
 
 function App() {
   const { isAuthenticated, login, logout, isLoading, error } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [cards, setCards] = useState<CardState>({
     link: null,
     cable: null,
@@ -407,12 +411,14 @@ function App() {
             <button
               className="rounded p-2 hover:bg-surface-hover"
               title="Toggle theme"
+              onClick={toggleTheme}
             >
-              🌙
+              {isDark ? '🌙' : '☀️'}
             </button>
             <button
               className="rounded p-2 hover:bg-surface-hover"
               title="Settings"
+              onClick={() => setSettingsOpen(true)}
             >
               ⚙️
             </button>
@@ -443,15 +449,18 @@ function App() {
         {/* Development notice */}
         <div className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-6 text-center">
           <h2 className="text-lg font-semibold text-text-muted">
-            NetScope v0.6.0 - Wi-Fi & Cable Testing
+            NetScope v0.7.0 - Settings & Polish
           </h2>
           <p className="mt-2 text-sm text-text-muted">
-            Link, DHCP, DNS, Gateway, VLAN, Wi-Fi info, and Cable testing active.
+            All diagnostic cards active with configurable thresholds.
             <br />
             Run as root for packet capture and TDR cable testing capabilities.
           </p>
         </div>
       </main>
+
+      {/* Settings Drawer */}
+      <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }
