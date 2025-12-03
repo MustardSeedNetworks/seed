@@ -25,6 +25,8 @@ import (
 	"github.com/krisarmstrong/netscope/internal/gateway"
 	"github.com/krisarmstrong/netscope/internal/network"
 	"github.com/krisarmstrong/netscope/internal/vlan"
+	"github.com/krisarmstrong/netscope/internal/wifi"
+	"github.com/krisarmstrong/netscope/internal/cable"
 )
 
 // Server represents the HTTP/HTTPS server.
@@ -40,6 +42,8 @@ type Server struct {
 	dhcpMonitor      *dhcp.Monitor
 	gatewayTester    *gateway.Tester
 	vlanManager      *vlan.Manager
+	wifiManager      *wifi.Manager
+	cableTester      *cable.Tester
 }
 
 // NewServer creates a new server instance.
@@ -59,6 +63,8 @@ func NewServer(cfg *config.Config, netMgr *network.Manager) *Server {
 		dhcpMonitor:      dhcp.NewMonitor(cfg.Interface.Default),
 		gatewayTester:    gateway.NewTester(gateway.DefaultThresholds()),
 		vlanManager:      vlan.NewManager(cfg.Interface.Default),
+		wifiManager:      wifi.NewManager(cfg.Interface.Default),
+		cableTester:      cable.NewTester(cfg.Interface.Default),
 	}
 
 	s.wsHub = NewHub()
@@ -83,6 +89,8 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/dns", s.handleDNS)
 	s.mux.HandleFunc("/api/gateway", s.handleGateway)
 	s.mux.HandleFunc("/api/vlan", s.handleVLAN)
+	s.mux.HandleFunc("/api/wifi", s.handleWiFi)
+	s.mux.HandleFunc("/api/cable", s.handleCable)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)

@@ -252,6 +252,61 @@ function App() {
     }
   }, []);
 
+  // Fetch Wi-Fi data
+  const fetchWiFiData = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/wifi`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Check if this is a wireless interface with data
+        if (data.ssid) {
+          setCards((prev) => ({
+            ...prev,
+            wifi: {
+              ssid: data.ssid || '',
+              bssid: data.bssid || '',
+              signal: data.signal || 0,
+              channel: data.channel || 0,
+              frequency: data.frequency || 0,
+              security: data.security || 'Unknown',
+            },
+          }));
+          setIsWifi(true);
+        } else {
+          setCards((prev) => ({ ...prev, wifi: null }));
+          setIsWifi(data.wireless === true);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch Wi-Fi data:', err);
+    }
+  }, []);
+
+  // Fetch Cable test data
+  const fetchCableData = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/cable`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCards((prev) => ({
+          ...prev,
+          cable: {
+            supported: data.supported || false,
+            length: data.length || null,
+            status: data.status || 'unknown',
+            faults: data.faults || [],
+          },
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch Cable data:', err);
+    }
+  }, []);
+
   // Change interface on backend
   const changeInterface = useCallback(async (interfaceName: string) => {
     try {
@@ -273,11 +328,13 @@ function App() {
         fetchDNSData();
         fetchGatewayData();
         fetchVLANData();
+        fetchWiFiData();
+        fetchCableData();
       }
     } catch (err) {
       console.error('Failed to change interface:', err);
     }
-  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData]);
+  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
 
   // Fetch data on mount and periodically
   useEffect(() => {
@@ -290,6 +347,8 @@ function App() {
     fetchDNSData();
     fetchGatewayData();
     fetchVLANData();
+    fetchWiFiData();
+    fetchCableData();
     setLoading(false);
 
     const interval = setInterval(() => {
@@ -299,10 +358,12 @@ function App() {
       fetchDNSData();
       fetchGatewayData();
       fetchVLANData();
+      fetchWiFiData();
+      // Cable test not refreshed periodically (can take time)
     }, 10000); // Refresh every 10 seconds (gateway ping takes time)
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData]);
+  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
 
   const { status, reconnect } = useWebSocket({
     url: '/ws',
@@ -382,12 +443,12 @@ function App() {
         {/* Development notice */}
         <div className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-6 text-center">
           <h2 className="text-lg font-semibold text-text-muted">
-            NetScope v0.5.1 - VLAN Detection
+            NetScope v0.6.0 - Wi-Fi & Cable Testing
           </h2>
           <p className="mt-2 text-sm text-text-muted">
-            Link, DHCP, DNS, Gateway ping, and VLAN detection active.
+            Link, DHCP, DNS, Gateway, VLAN, Wi-Fi info, and Cable testing active.
             <br />
-            Run as root for packet capture capabilities.
+            Run as root for packet capture and TDR cable testing capabilities.
           </p>
         </div>
       </main>

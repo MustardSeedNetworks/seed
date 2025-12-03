@@ -683,3 +683,92 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
+
+// WiFiResponse represents the Wi-Fi information for the API.
+type WiFiResponse struct {
+	SSID      string `json:"ssid"`
+	BSSID     string `json:"bssid"`
+	Signal    int    `json:"signal"`    // dBm
+	Channel   int    `json:"channel"`
+	Frequency int    `json:"frequency"` // MHz
+	Security  string `json:"security"`
+}
+
+// handleWiFi returns Wi-Fi information for the current interface.
+func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.wifiManager == nil {
+		http.Error(w, "Wi-Fi manager not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Check if interface is wireless
+	if !s.wifiManager.IsWireless() {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"wireless": false,
+			"message":  "Current interface is not a wireless adapter",
+		})
+		return
+	}
+
+	info := s.wifiManager.GetInfo()
+	if info == nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"wireless":  true,
+			"connected": false,
+			"message":   "Not connected to a wireless network",
+		})
+		return
+	}
+
+	resp := WiFiResponse{
+		SSID:      info.SSID,
+		BSSID:     info.BSSID,
+		Signal:    info.Signal,
+		Channel:   info.Channel,
+		Frequency: info.Frequency,
+		Security:  info.Security,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// CableResponse represents the cable test results for the API.
+type CableResponse struct {
+	Supported bool     `json:"supported"`
+	Length    *float64 `json:"length,omitempty"` // meters
+	Status    string   `json:"status"`
+	Faults    []string `json:"faults"`
+}
+
+// handleCable performs a cable test and returns results.
+func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.cableTester == nil {
+		http.Error(w, "Cable tester not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	result := s.cableTester.Test()
+
+	resp := CableResponse{
+		Supported: result.Supported,
+		Length:    result.Length,
+		Status:    string(result.Status),
+		Faults:    result.Faults,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
