@@ -199,22 +199,22 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         onClick={onClose}
       />
 
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-80 bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl">
+      {/* Drawer - full width on mobile, 320px on larger screens */}
+      <div className="fixed right-0 top-0 h-full w-full sm:w-80 bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-surface-border">
+        <div className="flex items-center justify-between p-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
           <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-surface-hover text-text-muted"
+            className="p-2.5 rounded hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="p-4 space-y-6">
+        <div className="p-4 pb-8 space-y-6">
           {/* IP Configuration Section */}
           <section>
             <h3 className="text-sm font-medium text-text-muted mb-3">IP Configuration</h3>

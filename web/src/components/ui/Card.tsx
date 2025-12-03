@@ -43,16 +43,16 @@ export function Card({ title, status, children, className = '', onClick }: CardP
 
   return (
     <div
-      className={`rounded-lg border border-surface-border bg-surface-raised p-4 transition-all hover:border-brand-primary/50 ${
-        onClick ? 'cursor-pointer' : ''
+      className={`rounded-lg border border-surface-border bg-surface-raised p-3 sm:p-4 transition-all hover:border-brand-primary/50 touch-manipulation ${
+        onClick ? 'cursor-pointer active:scale-[0.98]' : ''
       } ${className}`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-text-primary">{title}</h3>
+        <h3 className="font-medium text-text-primary text-sm sm:text-base">{title}</h3>
         <span className={`text-lg ${config.color}`}>{config.icon}</span>
       </div>
-      <div className="mt-3">{children}</div>
+      <div className="mt-2 sm:mt-3">{children}</div>
     </div>
   );
 }

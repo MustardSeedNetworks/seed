@@ -383,16 +383,22 @@ function App() {
   return (
     <div className="min-h-screen bg-surface-base text-text-primary">
       {/* Header */}
-      <header className="border-b border-surface-border bg-surface-raised px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-brand-primary">◉</span>
-            <h1 className="text-lg font-semibold">NetScope</h1>
-            <ConnectionStatus status={status} onReconnect={reconnect} />
+      <header className="border-b border-surface-border bg-surface-raised px-3 py-2 sm:px-4 sm:py-3">
+        <div className="flex items-center justify-between gap-2">
+          {/* Logo and title - hide title on very small screens */}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xl font-bold text-brand-primary flex-shrink-0">◉</span>
+            <h1 className="text-lg font-semibold hidden xs:block sm:block">NetScope</h1>
+            <div className="hidden sm:block">
+              <ConnectionStatus status={status} onReconnect={reconnect} />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Controls */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Interface selector */}
             <select
-              className="rounded border border-surface-border bg-surface-base px-2 py-1 text-sm"
+              className="rounded border border-surface-border bg-surface-base px-2 py-1.5 text-sm min-w-0 max-w-[100px] sm:max-w-none"
               value={currentInterface}
               onChange={(e) => changeInterface(e.target.value)}
             >
@@ -408,34 +414,49 @@ function App() {
                 <option value={currentInterface}>{currentInterface}</option>
               )}
             </select>
+
+            {/* Touch-friendly buttons with larger tap targets */}
             <button
-              className="rounded p-2 hover:bg-surface-hover"
+              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover touch-manipulation"
               title="Toggle theme"
               onClick={toggleTheme}
             >
               {isDark ? '🌙' : '☀️'}
             </button>
             <button
-              className="rounded p-2 hover:bg-surface-hover"
+              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover touch-manipulation"
               title="Settings"
               onClick={() => setSettingsOpen(true)}
             >
               ⚙️
             </button>
             <button
-              className="rounded p-2 hover:bg-surface-hover text-sm"
+              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover text-sm hidden sm:block touch-manipulation"
               onClick={logout}
               title="Logout"
             >
               Logout
             </button>
+            {/* Mobile logout icon */}
+            <button
+              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover sm:hidden touch-manipulation"
+              onClick={logout}
+              title="Logout"
+            >
+              🚪
+            </button>
           </div>
+        </div>
+
+        {/* Mobile connection status - show below header on small screens */}
+        <div className="sm:hidden mt-2 flex items-center justify-center">
+          <ConnectionStatus status={status} onReconnect={reconnect} />
         </div>
       </header>
 
       {/* Main content */}
-      <main className="p-4">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <main className="p-3 sm:p-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <LinkCard data={cards.link} loading={loading} />
           <CableCard data={cards.cable} loading={loading} />
           <VLANCard data={cards.vlan} loading={loading} />
@@ -447,14 +468,15 @@ function App() {
         </div>
 
         {/* Development notice */}
-        <div className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-6 text-center">
-          <h2 className="text-lg font-semibold text-text-muted">
+        <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
+          <h2 className="text-base sm:text-lg font-semibold text-text-muted">
             NetScope v0.7.0 - Settings & Polish
           </h2>
-          <p className="mt-2 text-sm text-text-muted">
+          <p className="mt-2 text-xs sm:text-sm text-text-muted">
             All diagnostic cards active with configurable thresholds.
-            <br />
-            Run as root for packet capture and TDR cable testing capabilities.
+            <span className="hidden sm:inline"><br /></span>
+            <span className="sm:hidden"> </span>
+            Run as root for packet capture and TDR cable testing.
           </p>
         </div>
       </main>
