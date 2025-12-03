@@ -1,6 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useWebSocket, Message, CardUpdate } from './hooks/useWebSocket';
-import { useAuth } from './hooks/useAuth';
+import { useAuth, getAuthHeaders } from './hooks/useAuth';
+
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 import {
   LinkCard,
   LinkData,
@@ -46,6 +48,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [currentInterface, setCurrentInterface] = useState('eth0');
   const [isWifi, setIsWifi] = useState(false);
+  const [interfaces, setInterfaces] = useState<Array<{ name: string; type: string; up: boolean }>>([]);
 
   const handleMessage = useCallback((message: Message) => {
     if (message.type === 'initial_state') {
@@ -64,6 +67,64 @@ function App() {
       [update.cardId]: update.data,
     }));
   }, []);
+
+  // Fetch link data
+  const fetchLinkData = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/link`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCards((prev) => ({
+          ...prev,
+          link: {
+            linkUp: data.linkUp,
+            speed: data.speed || '',
+            duplex: data.duplex || '',
+            advertisedSpeeds: data.advertisedSpeeds || [],
+            mac: data.mac || '',
+            mtu: data.mtu || 0,
+            addresses: data.addresses || [],
+          },
+        }));
+        setCurrentInterface(data.interface || 'unknown');
+        setIsWifi(data.interface?.startsWith('wl') || false);
+      }
+    } catch (err) {
+      console.error('Failed to fetch link data:', err);
+    }
+  }, []);
+
+  // Fetch interfaces
+  const fetchInterfaces = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/interfaces`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setInterfaces(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch interfaces:', err);
+    }
+  }, []);
+
+  // Fetch data on mount and periodically
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    fetchLinkData();
+    fetchInterfaces();
+    setLoading(false);
+
+    const interval = setInterval(() => {
+      fetchLinkData();
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, fetchLinkData, fetchInterfaces]);
 
   const { status, reconnect } = useWebSocket({
     url: '/ws',
@@ -92,8 +153,17 @@ function App() {
               value={currentInterface}
               onChange={(e) => setCurrentInterface(e.target.value)}
             >
-              <option value="eth0">eth0</option>
-              <option value="wlan0">wlan0</option>
+              {interfaces.length > 0 ? (
+                interfaces
+                  .filter((iface) => iface.type === 'ethernet' || iface.type === 'wifi')
+                  .map((iface) => (
+                    <option key={iface.name} value={iface.name}>
+                      {iface.name} {!iface.up && '(down)'}
+                    </option>
+                  ))
+              ) : (
+                <option value={currentInterface}>{currentInterface}</option>
+              )}
             </select>
             <button
               className="rounded p-2 hover:bg-surface-hover"

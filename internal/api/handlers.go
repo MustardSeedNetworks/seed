@@ -136,14 +136,69 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Get real interfaces from network module
-	interfaces := []map[string]interface{}{
-		{"name": "eth0", "type": "ethernet", "up": true},
-		{"name": "wlan0", "type": "wifi", "up": false},
+	if s.netManager == nil {
+		http.Error(w, "Network manager not available", http.StatusServiceUnavailable)
+		return
 	}
+
+	s.netManager.RefreshInterfaces()
+	interfaces := s.netManager.GetInterfaces()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(interfaces)
+}
+
+// LinkResponse represents the link status for an interface.
+type LinkResponse struct {
+	Interface   string   `json:"interface"`
+	LinkUp      bool     `json:"linkUp"`
+	Speed       string   `json:"speed"`
+	Duplex      string   `json:"duplex"`
+	Advertised  []string `json:"advertisedSpeeds"`
+	MAC         string   `json:"mac"`
+	MTU         int      `json:"mtu"`
+	Addresses   []string `json:"addresses"`
+}
+
+// handleLink returns link status for the current interface.
+func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.netManager == nil {
+		http.Error(w, "Network manager not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	s.netManager.RefreshInterfaces()
+	currentIface := s.netManager.GetCurrentInterface()
+
+	ifaceInfo, err := s.netManager.GetInterface(currentIface)
+	if err != nil {
+		http.Error(w, "Interface not found", http.StatusNotFound)
+		return
+	}
+
+	linkStatus, _ := s.netManager.GetLinkStatus(currentIface)
+
+	resp := LinkResponse{
+		Interface: currentIface,
+		LinkUp:    ifaceInfo.Running,
+		MAC:       ifaceInfo.HardwareAddr,
+		MTU:       ifaceInfo.MTU,
+		Addresses: ifaceInfo.Addresses,
+	}
+
+	if linkStatus != nil {
+		resp.Speed = linkStatus.Speed
+		resp.Duplex = linkStatus.Duplex
+		resp.Advertised = linkStatus.Advertised
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
 // handleExport exports current diagnostic data as JSON.

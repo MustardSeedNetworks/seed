@@ -19,6 +19,7 @@ import (
 
 	"github.com/krisarmstrong/netscope/internal/auth"
 	"github.com/krisarmstrong/netscope/internal/config"
+	"github.com/krisarmstrong/netscope/internal/network"
 )
 
 // Server represents the HTTP/HTTPS server.
@@ -28,13 +29,15 @@ type Server struct {
 	authManager *auth.Manager
 	wsHub       *Hub
 	mux         *http.ServeMux
+	netManager  *network.Manager
 }
 
 // NewServer creates a new server instance.
-func NewServer(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config, netMgr *network.Manager) *Server {
 	s := &Server{
-		config: cfg,
-		mux:    http.NewServeMux(),
+		config:     cfg,
+		mux:        http.NewServeMux(),
+		netManager: netMgr,
 		authManager: auth.NewManager(
 			cfg.Auth.JWTSecret,
 			cfg.Auth.SessionTimeout,
@@ -58,6 +61,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/settings", s.handleSettings)
 	s.mux.HandleFunc("/api/interfaces", s.handleInterfaces)
 	s.mux.HandleFunc("/api/export", s.handleExport)
+	s.mux.HandleFunc("/api/link", s.handleLink)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
