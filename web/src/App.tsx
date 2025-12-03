@@ -200,6 +200,35 @@ function App() {
     }
   }, []);
 
+  // Fetch Gateway ping data
+  const fetchGatewayData = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/gateway`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCards((prev) => ({
+          ...prev,
+          gateway: {
+            gateway: data.gateway || '',
+            reachable: data.reachable || false,
+            sent: data.sent || 0,
+            received: data.received || 0,
+            lossPercent: data.lossPercent || 0,
+            minTime: data.minTime || 0,
+            maxTime: data.maxTime || 0,
+            avgTime: data.avgTime || 0,
+            lastTime: data.lastTime || 0,
+            status: data.status || 'unknown',
+          },
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch Gateway data:', err);
+    }
+  }, []);
+
   // Change interface on backend
   const changeInterface = useCallback(async (interfaceName: string) => {
     try {
@@ -219,11 +248,12 @@ function App() {
         fetchIPConfig();
         fetchDiscoveryData();
         fetchDNSData();
+        fetchGatewayData();
       }
     } catch (err) {
       console.error('Failed to change interface:', err);
     }
-  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData]);
+  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData, fetchGatewayData]);
 
   // Fetch data on mount and periodically
   useEffect(() => {
@@ -234,6 +264,7 @@ function App() {
     fetchInterfaces();
     fetchDiscoveryData();
     fetchDNSData();
+    fetchGatewayData();
     setLoading(false);
 
     const interval = setInterval(() => {
@@ -241,10 +272,11 @@ function App() {
       fetchIPConfig();
       fetchDiscoveryData();
       fetchDNSData();
-    }, 5000); // Refresh every 5 seconds
+      fetchGatewayData();
+    }, 10000); // Refresh every 10 seconds (gateway ping takes time)
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData]);
+  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData]);
 
   const { status, reconnect } = useWebSocket({
     url: '/ws',
@@ -324,10 +356,10 @@ function App() {
         {/* Development notice */}
         <div className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-6 text-center">
           <h2 className="text-lg font-semibold text-text-muted">
-            NetScope v0.3.0 - Link & Switch Cards
+            NetScope v0.5.0 - Gateway Ping Testing
           </h2>
           <p className="mt-2 text-sm text-text-muted">
-            Link status and discovery protocols (LLDP/CDP/EDP) active.
+            Link, DHCP, DNS, and Gateway ping testing active.
             <br />
             Run as root for packet capture capabilities.
           </p>
