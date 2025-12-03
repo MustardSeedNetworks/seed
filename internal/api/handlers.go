@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/krisarmstrong/netscope/internal/dhcp"
 )
 
 // LoginRequest represents a login request.
@@ -368,8 +370,30 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Try to get DNS servers from system
-	resp.DNS = getSystemDNS()
+	// Get DHCP lease info (server, gateway, lease time)
+	if leaseInfo, err := dhcp.GetLeaseInfo(currentIface); err == nil && leaseInfo != nil {
+		if resp.IPv4 != nil {
+			if leaseInfo.Gateway != "" {
+				resp.IPv4.Gateway = leaseInfo.Gateway
+			}
+			if leaseInfo.DHCPServer != "" {
+				resp.IPv4.DHCPServer = leaseInfo.DHCPServer
+				resp.Mode = "dhcp"
+			}
+			if leaseInfo.LeaseTime > 0 {
+				resp.IPv4.LeaseTime = leaseInfo.LeaseTime
+			}
+		}
+		// Use DNS from lease if available
+		if len(leaseInfo.DNS) > 0 {
+			resp.DNS = leaseInfo.DNS
+		}
+	}
+
+	// Fallback: Try to get DNS servers from system if not from lease
+	if len(resp.DNS) == 0 {
+		resp.DNS = getSystemDNS()
+	}
 
 	// Add DHCP timing if available
 	if s.dhcpMonitor != nil {
