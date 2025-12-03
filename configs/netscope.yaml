@@ -62,5 +62,5 @@ auth:
   default_username: admin
   # Password hash (bcrypt) - default: "netscope"
   # Generate new hash: htpasswd -nbBC 10 "" "newpassword" | tr -d ':\n' | sed 's/$2y/$2a/'
-  default_password_hash: "$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqPqMqYjP8tTO.C5p3QBrC4qZlFIG"
+  default_password_hash: "$2a$10$Dmw4tbpvJ3hoxg4ln8fl6uUCnhUIeXBm7Xy6txdvgwNAjhtYgzmsi"
   session_timeout: 24h

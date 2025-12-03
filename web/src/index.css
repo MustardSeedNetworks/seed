@@ -46,11 +46,9 @@
   --color-status-info: #60a5fa;
 }
 
-/* Apply dark mode by default */
-html {
-  @apply dark;
-}
-
 body {
-  @apply bg-surface-base text-text-primary antialiased;
+  background-color: var(--color-surface-base);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
