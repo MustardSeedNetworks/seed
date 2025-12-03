@@ -19,6 +19,14 @@ interface Thresholds {
   };
 }
 
+interface IPSettings {
+  mode: 'dhcp' | 'static';
+  address: string;
+  netmask: string;
+  gateway: string;
+  dns: string[];
+}
+
 interface SettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,8 +39,18 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     gateway: { good: 20, warning: 50 },
     wifi: { good: -50, warning: -70 },
   });
+  const [ipSettings, setIPSettings] = useState<IPSettings>({
+    mode: 'dhcp',
+    address: '',
+    netmask: '24',
+    gateway: '',
+    dns: [],
+  });
+  const [dnsInput, setDnsInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [savingIP, setSavingIP] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [ipMessage, setIPMessage] = useState<string | null>(null);
 
   // Fetch current thresholds
   const fetchThresholds = useCallback(async () => {
@@ -54,11 +72,34 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   }, []);
 
+  // Fetch current IP settings
+  const fetchIPSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/ipconfig/settings`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setIPSettings({
+          mode: data.mode || 'dhcp',
+          address: data.address || '',
+          netmask: data.netmask || '24',
+          gateway: data.gateway || '',
+          dns: data.dns || [],
+        });
+        setDnsInput((data.dns || []).join(', '));
+      }
+    } catch (err) {
+      console.error('Failed to fetch IP settings:', err);
+    }
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       fetchThresholds();
+      fetchIPSettings();
     }
-  }, [isOpen, fetchThresholds]);
+  }, [isOpen, fetchThresholds, fetchIPSettings]);
 
   const saveThresholds = async () => {
     setSaving(true);
@@ -99,6 +140,55 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }));
   };
 
+  const saveIPSettings = async () => {
+    setSavingIP(true);
+    setIPMessage(null);
+    try {
+      // Parse DNS from input
+      const dns = dnsInput
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+      const response = await fetch(`${API_BASE}/api/ipconfig/settings`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mode: ipSettings.mode,
+          address: ipSettings.address,
+          netmask: ipSettings.netmask,
+          gateway: ipSettings.gateway,
+          dns,
+        }),
+      });
+      if (response.ok) {
+        setIPMessage('IP settings applied');
+        setTimeout(() => setIPMessage(null), 3000);
+      } else {
+        const error = await response.text();
+        setIPMessage(`Failed: ${error}`);
+      }
+    } catch (err) {
+      setIPMessage('Error applying IP settings');
+    } finally {
+      setSavingIP(false);
+    }
+  };
+
+  // Validate IP address format
+  const isValidIP = (ip: string): boolean => {
+    if (!ip) return true; // Empty is OK for optional fields
+    const parts = ip.split('.');
+    if (parts.length !== 4) return false;
+    return parts.every((p) => {
+      const n = parseInt(p, 10);
+      return !isNaN(n) && n >= 0 && n <= 255 && p === String(n);
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -125,6 +215,121 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         </div>
 
         <div className="p-4 space-y-6">
+          {/* IP Configuration Section */}
+          <section>
+            <h3 className="text-sm font-medium text-text-muted mb-3">IP Configuration</h3>
+            <div className="p-3 bg-surface-base rounded border border-surface-border space-y-3">
+              {/* Mode Toggle */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIPSettings((prev) => ({ ...prev, mode: 'dhcp' }))}
+                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                    ipSettings.mode === 'dhcp'
+                      ? 'bg-brand-primary text-text-inverse'
+                      : 'bg-surface-raised border border-surface-border text-text-primary hover:bg-surface-hover'
+                  }`}
+                >
+                  DHCP
+                </button>
+                <button
+                  onClick={() => setIPSettings((prev) => ({ ...prev, mode: 'static' }))}
+                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                    ipSettings.mode === 'static'
+                      ? 'bg-brand-primary text-text-inverse'
+                      : 'bg-surface-raised border border-surface-border text-text-primary hover:bg-surface-hover'
+                  }`}
+                >
+                  Static
+                </button>
+              </div>
+
+              {/* Static IP Fields */}
+              {ipSettings.mode === 'static' && (
+                <div className="space-y-2 pt-2 border-t border-surface-border">
+                  <div>
+                    <label className="text-xs text-text-muted">IP Address *</label>
+                    <input
+                      type="text"
+                      value={ipSettings.address}
+                      onChange={(e) =>
+                        setIPSettings((prev) => ({ ...prev, address: e.target.value }))
+                      }
+                      placeholder="192.168.1.100"
+                      className={`w-full mt-1 px-2 py-1 bg-surface-raised border rounded text-sm text-text-primary ${
+                        ipSettings.address && !isValidIP(ipSettings.address)
+                          ? 'border-status-error'
+                          : 'border-surface-border'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">Subnet Mask *</label>
+                    <input
+                      type="text"
+                      value={ipSettings.netmask}
+                      onChange={(e) =>
+                        setIPSettings((prev) => ({ ...prev, netmask: e.target.value }))
+                      }
+                      placeholder="24 or 255.255.255.0"
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">Gateway</label>
+                    <input
+                      type="text"
+                      value={ipSettings.gateway}
+                      onChange={(e) =>
+                        setIPSettings((prev) => ({ ...prev, gateway: e.target.value }))
+                      }
+                      placeholder="192.168.1.1"
+                      className={`w-full mt-1 px-2 py-1 bg-surface-raised border rounded text-sm text-text-primary ${
+                        ipSettings.gateway && !isValidIP(ipSettings.gateway)
+                          ? 'border-status-error'
+                          : 'border-surface-border'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">DNS Servers (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={dnsInput}
+                      onChange={(e) => setDnsInput(e.target.value)}
+                      placeholder="8.8.8.8, 8.8.4.4"
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Apply Button */}
+              <button
+                onClick={saveIPSettings}
+                disabled={savingIP || (ipSettings.mode === 'static' && !ipSettings.address)}
+                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+              >
+                {savingIP ? 'Applying...' : 'Apply IP Settings'}
+              </button>
+
+              {ipMessage && (
+                <p
+                  className={`text-xs text-center ${
+                    ipMessage.includes('Failed') || ipMessage.includes('Error')
+                      ? 'text-status-error'
+                      : 'text-status-success'
+                  }`}
+                >
+                  {ipMessage}
+                </p>
+              )}
+
+              <p className="text-xs text-text-muted">
+                Note: Requires root/admin privileges to apply
+              </p>
+            </div>
+          </section>
+
           {/* Theme Section */}
           <section>
             <h3 className="text-sm font-medium text-text-muted mb-3">Appearance</h3>

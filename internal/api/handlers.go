@@ -2,10 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
+	"github.com/krisarmstrong/netscope/internal/config"
 	"github.com/krisarmstrong/netscope/internal/dhcp"
+	"github.com/krisarmstrong/netscope/internal/network"
 )
 
 // LoginRequest represents a login request.
@@ -809,6 +813,119 @@ type CableResponse struct {
 	Length    *float64 `json:"length,omitempty"` // meters
 	Status    string   `json:"status"`
 	Faults    []string `json:"faults"`
+}
+
+// IPSettingsRequest represents a request to change IP configuration.
+type IPSettingsRequest struct {
+	Mode    string   `json:"mode"`    // "dhcp" or "static"
+	Address string   `json:"address"` // IP address (static mode)
+	Netmask string   `json:"netmask"` // Subnet mask (static mode)
+	Gateway string   `json:"gateway"` // Gateway (static mode, optional)
+	DNS     []string `json:"dns"`     // DNS servers (static mode, optional)
+}
+
+// IPSettingsResponse represents the current IP configuration settings.
+type IPSettingsResponse struct {
+	Mode    string   `json:"mode"`
+	Address string   `json:"address,omitempty"`
+	Netmask string   `json:"netmask,omitempty"`
+	Gateway string   `json:"gateway,omitempty"`
+	DNS     []string `json:"dns,omitempty"`
+}
+
+// handleIPSettings handles GET/PUT for IP configuration settings.
+func (s *Server) handleIPSettings(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.handleIPSettingsGet(w, r)
+	case http.MethodPut:
+		s.handleIPSettingsPut(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleIPSettingsGet returns the current IP configuration settings.
+func (s *Server) handleIPSettingsGet(w http.ResponseWriter, r *http.Request) {
+	resp := IPSettingsResponse{
+		Mode: s.config.IP.Mode,
+	}
+
+	if s.config.IP.Static != nil {
+		resp.Address = s.config.IP.Static.Address
+		resp.Netmask = s.config.IP.Static.Netmask
+		resp.Gateway = s.config.IP.Static.Gateway
+		resp.DNS = s.config.IP.Static.DNS
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// handleIPSettingsPut updates the IP configuration settings.
+func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
+	var req IPSettingsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate mode
+	if req.Mode != "dhcp" && req.Mode != "static" {
+		http.Error(w, "Mode must be 'dhcp' or 'static'", http.StatusBadRequest)
+		return
+	}
+
+	currentIface := s.netManager.GetCurrentInterface()
+
+	if req.Mode == "static" {
+		// Apply static IP configuration
+		cfg := &network.StaticIPConfig{
+			Address: req.Address,
+			Netmask: req.Netmask,
+			Gateway: req.Gateway,
+			DNS:     req.DNS,
+		}
+
+		if err := s.netManager.ConfigureStaticIP(currentIface, cfg); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to configure static IP: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Update config
+		s.config.IP.Mode = "static"
+		s.config.IP.Static = &config.StaticIP{
+			Address: req.Address,
+			Netmask: req.Netmask,
+			Gateway: req.Gateway,
+			DNS:     req.DNS,
+		}
+	} else {
+		// Switch to DHCP
+		if err := s.netManager.ConfigureDHCP(currentIface); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to configure DHCP: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Update config
+		s.config.IP.Mode = "dhcp"
+		s.config.IP.Static = nil
+	}
+
+	// Save config to file
+	if err := s.config.Save("config.yaml"); err != nil {
+		// Log but don't fail - the config was applied
+		log.Printf("Warning: Failed to save config: %v", err)
+	}
+
+	// Refresh interface data
+	s.netManager.RefreshInterfaces()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "IP configuration updated",
+	})
 }
 
 // handleCable performs a cable test and returns results.
