@@ -581,3 +581,49 @@ func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
+
+// GatewayResponse represents the gateway ping test results for the API.
+type GatewayResponse struct {
+	Gateway     string  `json:"gateway"`
+	Reachable   bool    `json:"reachable"`
+	Sent        int     `json:"sent"`
+	Received    int     `json:"received"`
+	LossPercent float64 `json:"lossPercent"`
+	MinTime     float64 `json:"minTime"`
+	MaxTime     float64 `json:"maxTime"`
+	AvgTime     float64 `json:"avgTime"`
+	LastTime    float64 `json:"lastTime"`
+	Status      string  `json:"status"`
+}
+
+// handleGateway performs gateway ping testing and returns results.
+func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.gatewayTester == nil {
+		http.Error(w, "Gateway tester not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Perform gateway ping test
+	stats := s.gatewayTester.Test()
+
+	resp := GatewayResponse{
+		Gateway:     stats.Gateway,
+		Reachable:   stats.Reachable,
+		Sent:        stats.Sent,
+		Received:    stats.Received,
+		LossPercent: stats.LossPercent,
+		MinTime:     stats.MinTime,
+		MaxTime:     stats.MaxTime,
+		AvgTime:     stats.AvgTime,
+		LastTime:    stats.LastTime,
+		Status:      string(stats.Status),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
