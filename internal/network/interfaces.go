@@ -146,11 +146,16 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 		return nil, fmt.Errorf("interface %s not found", name)
 	}
 
+	// Determine if link is actually up:
+	// - Interface must have Running flag
+	// - For ethernet, also check if we have a routable IP (not just link-local)
+	linkUp := info.Running && hasRoutableAddress(info.Addresses)
+
 	status := &LinkStatus{
-		LinkUp: info.Running,
+		LinkUp: linkUp,
 	}
 
-	// Try to read speed from sysfs (Linux)
+	// Try to read speed from sysfs (Linux only)
 	speedPath := filepath.Join("/sys/class/net", name, "speed")
 	if data, err := os.ReadFile(speedPath); err == nil {
 		speed := strings.TrimSpace(string(data))
@@ -159,13 +164,57 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 		}
 	}
 
-	// Try to read duplex from sysfs (Linux)
+	// Try to read duplex from sysfs (Linux only)
 	duplexPath := filepath.Join("/sys/class/net", name, "duplex")
 	if data, err := os.ReadFile(duplexPath); err == nil {
 		status.Duplex = strings.TrimSpace(string(data))
 	}
 
+	// macOS: try to get link info from ifconfig
+	if status.Speed == "" {
+		speed, duplex := getLinkInfoFromIfconfig(name)
+		if speed != "" {
+			status.Speed = speed
+		}
+		if duplex != "" {
+			status.Duplex = duplex
+		}
+	}
+
 	return status, nil
+}
+
+// hasRoutableAddress checks if any address is routable (not link-local).
+func hasRoutableAddress(addresses []string) bool {
+	for _, addr := range addresses {
+		// Parse the address (remove CIDR suffix if present)
+		ipStr := addr
+		if idx := strings.Index(addr, "/"); idx != -1 {
+			ipStr = addr[:idx]
+		}
+		ip := net.ParseIP(ipStr)
+		if ip == nil {
+			continue
+		}
+		// Skip loopback
+		if ip.IsLoopback() {
+			continue
+		}
+		// Skip link-local (169.254.x.x for IPv4, fe80:: for IPv6)
+		if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			continue
+		}
+		// Found a routable address
+		return true
+	}
+	return false
+}
+
+// getLinkInfoFromIfconfig parses ifconfig output on macOS.
+func getLinkInfoFromIfconfig(name string) (speed, duplex string) {
+	// This is a placeholder - actual implementation would exec ifconfig
+	// and parse "media: autoselect (1000baseT <full-duplex>)"
+	return "", ""
 }
 
 // detectInterfaceType determines the type of interface from its name.

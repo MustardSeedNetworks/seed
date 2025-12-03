@@ -148,6 +148,51 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(interfaces)
 }
 
+// SetInterfaceRequest represents a request to change the current interface.
+type SetInterfaceRequest struct {
+	Interface string `json:"interface"`
+}
+
+// handleInterface handles GET/PUT for current interface.
+func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
+	if s.netManager == nil {
+		http.Error(w, "Network manager not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"interface": s.netManager.GetCurrentInterface(),
+		})
+	case http.MethodPut:
+		var req SetInterfaceRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if err := s.netManager.SetCurrentInterface(req.Interface); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Also update discovery manager to use new interface
+		if err := s.discoveryManager.SetInterface(req.Interface); err != nil {
+			// Log but don't fail - discovery may not work without root
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":    "ok",
+			"interface": req.Interface,
+		})
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 // LinkResponse represents the link status for an interface.
 type LinkResponse struct {
 	Interface   string   `json:"interface"`
@@ -185,13 +230,14 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 
 	resp := LinkResponse{
 		Interface: currentIface,
-		LinkUp:    ifaceInfo.Running,
+		LinkUp:    false, // Default to false
 		MAC:       ifaceInfo.HardwareAddr,
 		MTU:       ifaceInfo.MTU,
 		Addresses: ifaceInfo.Addresses,
 	}
 
 	if linkStatus != nil {
+		resp.LinkUp = linkStatus.LinkUp // Use the improved detection
 		resp.Speed = linkStatus.Speed
 		resp.Duplex = linkStatus.Duplex
 		resp.Advertised = linkStatus.Advertised

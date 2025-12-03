@@ -145,6 +145,29 @@ function App() {
     }
   }, []);
 
+  // Change interface on backend
+  const changeInterface = useCallback(async (interfaceName: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/interface`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ interface: interfaceName }),
+      });
+      if (response.ok) {
+        setCurrentInterface(interfaceName);
+        setIsWifi(interfaceName.startsWith('wl'));
+        // Refresh data for new interface
+        fetchLinkData();
+        fetchDiscoveryData();
+      }
+    } catch (err) {
+      console.error('Failed to change interface:', err);
+    }
+  }, [fetchLinkData, fetchDiscoveryData]);
+
   // Fetch data on mount and periodically
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -187,7 +210,7 @@ function App() {
             <select
               className="rounded border border-surface-border bg-surface-base px-2 py-1 text-sm"
               value={currentInterface}
-              onChange={(e) => setCurrentInterface(e.target.value)}
+              onChange={(e) => changeInterface(e.target.value)}
             >
               {interfaces.length > 0 ? (
                 interfaces
