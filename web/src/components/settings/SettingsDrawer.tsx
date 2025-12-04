@@ -320,6 +320,8 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       if (response.ok) {
         setTestsMessage('Tests settings saved');
         setTimeout(() => setTestsMessage(null), 2000);
+        // Dispatch event to notify Health Checks card to refresh
+        window.dispatchEvent(new CustomEvent('healthChecksUpdated'));
       } else {
         const error = await response.text();
         setTestsMessage(`Failed: ${error}`);

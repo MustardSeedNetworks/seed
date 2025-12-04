@@ -66,6 +66,17 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
     fetchTests();
   }, [fetchTests]);
 
+  // Listen for settings changes to auto-refresh
+  useEffect(() => {
+    const handleHealthChecksUpdated = () => {
+      fetchTests();
+    };
+    window.addEventListener('healthChecksUpdated', handleHealthChecksUpdated);
+    return () => {
+      window.removeEventListener('healthChecksUpdated', handleHealthChecksUpdated);
+    };
+  }, [fetchTests]);
+
   // Don't render card if no tests are configured
   if (!data?.hasTests && !loading && !isRunning) {
     return null;
@@ -116,10 +127,11 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
       }
     }
 
+    // Display name - backend already formats as host:port when name is empty
+    // Only add HTTP status code, not ports (already in name)
+    let displayName = result.name;
     let details = '';
-    if ((type === 'tcp' || type === 'udp') && result.port) {
-      details = `:${result.port}`;
-    } else if (type === 'http' && result.status) {
+    if (type === 'http' && result.status) {
       details = ` (${result.status})`;
     }
 
@@ -132,8 +144,8 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
     return (
       <div key={`${type}-${result.name}`} className="py-1">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-text-muted truncate flex-1" title={result.name}>
-            {result.name}{details}
+          <span className="text-sm text-text-muted truncate flex-1" title={displayName}>
+            {displayName}{details}
           </span>
           <span className={`text-sm font-medium ${statusColor}`}>
             {result.success ? formatLatency(result.latency) : 'fail'}
