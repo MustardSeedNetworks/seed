@@ -26,10 +26,11 @@ type LoginResponse struct {
 
 // StatusResponse represents the system status.
 type StatusResponse struct {
-	Status    string `json:"status"`
-	Version   string `json:"version"`
-	Uptime    int64  `json:"uptime"`
-	Interface string `json:"interface"`
+	Status     string `json:"status"`
+	Version    string `json:"version"`
+	Uptime     int64  `json:"uptime"`
+	Interface  string `json:"interface"`
+	IsWireless bool   `json:"isWireless"`
 }
 
 // handleLogin handles user authentication.
@@ -80,10 +81,17 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if current interface is wireless
+	isWireless := false
+	if s.wifiManager != nil {
+		isWireless = s.wifiManager.IsWireless()
+	}
+
 	resp := StatusResponse{
-		Status:    "ok",
-		Version:   "0.1.0",
-		Interface: s.config.Interface.Default,
+		Status:     "ok",
+		Version:    "0.7.0",
+		Interface:  s.config.Interface.Default,
+		IsWireless: isWireless,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -228,10 +236,27 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			// Log but don't fail - discovery may not work without root
 		}
 
+		// Update WiFi manager interface and check if wireless
+		if s.wifiManager != nil {
+			s.wifiManager.SetInterface(req.Interface)
+		}
+
+		// Update link monitor interface
+		if s.linkMonitor != nil {
+			s.linkMonitor.SetInterface(req.Interface)
+		}
+
+		// Check if new interface is wireless
+		isWireless := false
+		if s.wifiManager != nil {
+			isWireless = s.wifiManager.IsWireless()
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":    "ok",
-			"interface": req.Interface,
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":     "ok",
+			"interface":  req.Interface,
+			"isWireless": isWireless,
 		})
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -744,18 +769,23 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 
 // DNSLookupResult represents a DNS lookup result for the API.
 type DNSLookupResult struct {
-	Result string `json:"result"`
-	Time   int64  `json:"time"` // ms
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
+	Result   string   `json:"result"`
+	Time     int64    `json:"time"` // ms (deprecated, use timeMs)
+	TimeMs   int64    `json:"timeMs"`
+	Status   string   `json:"status"`
+	Error    string   `json:"error,omitempty"`
+	Resolved []string `json:"resolved,omitempty"`
 }
 
 // DNSResponse represents the DNS test results for the API.
 type DNSResponse struct {
 	Server       string           `json:"server"`
+	Servers      []string         `json:"servers"` // All configured DNS servers
 	TestHostname string           `json:"testHostname"`
 	Forward      *DNSLookupResult `json:"forward,omitempty"`
+	ForwardIpv6  *DNSLookupResult `json:"forwardIpv6,omitempty"`
 	Reverse      *DNSLookupResult `json:"reverse,omitempty"`
+	ReverseIpv6  *DNSLookupResult `json:"reverseIpv6,omitempty"`
 }
 
 // handleDNS performs DNS testing and returns results.
@@ -775,24 +805,51 @@ func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 
 	resp := DNSResponse{
 		Server:       result.Server,
+		Servers:      result.Servers,
 		TestHostname: result.TestHostname,
 	}
 
 	if result.Forward != nil {
 		resp.Forward = &DNSLookupResult{
-			Result: result.Forward.Result,
-			Time:   result.Forward.TimeMs,
-			Status: string(result.Forward.Status),
-			Error:  result.Forward.Error,
+			Result:   result.Forward.Result,
+			Time:     result.Forward.TimeMs,
+			TimeMs:   result.Forward.TimeMs,
+			Status:   string(result.Forward.Status),
+			Error:    result.Forward.Error,
+			Resolved: result.Forward.Resolved,
+		}
+	}
+
+	if result.ForwardIPv6 != nil {
+		resp.ForwardIpv6 = &DNSLookupResult{
+			Result:   result.ForwardIPv6.Result,
+			Time:     result.ForwardIPv6.TimeMs,
+			TimeMs:   result.ForwardIPv6.TimeMs,
+			Status:   string(result.ForwardIPv6.Status),
+			Error:    result.ForwardIPv6.Error,
+			Resolved: result.ForwardIPv6.Resolved,
 		}
 	}
 
 	if result.Reverse != nil {
 		resp.Reverse = &DNSLookupResult{
-			Result: result.Reverse.Result,
-			Time:   result.Reverse.TimeMs,
-			Status: string(result.Reverse.Status),
-			Error:  result.Reverse.Error,
+			Result:   result.Reverse.Result,
+			Time:     result.Reverse.TimeMs,
+			TimeMs:   result.Reverse.TimeMs,
+			Status:   string(result.Reverse.Status),
+			Error:    result.Reverse.Error,
+			Resolved: result.Reverse.Resolved,
+		}
+	}
+
+	if result.ReverseIPv6 != nil {
+		resp.ReverseIpv6 = &DNSLookupResult{
+			Result:   result.ReverseIPv6.Result,
+			Time:     result.ReverseIPv6.TimeMs,
+			TimeMs:   result.ReverseIPv6.TimeMs,
+			Status:   string(result.ReverseIPv6.Status),
+			Error:    result.ReverseIPv6.Error,
+			Resolved: result.ReverseIPv6.Resolved,
 		}
 	}
 

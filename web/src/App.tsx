@@ -57,10 +57,13 @@ function App() {
   const handleMessage = useCallback((message: Message) => {
     if (message.type === 'initial_state') {
       setLoading(false);
-      const payload = message.payload as { interface?: string; cards?: CardState };
+      const payload = message.payload as { interface?: string; isWireless?: boolean; cards?: CardState };
       if (payload.interface) {
         setCurrentInterface(payload.interface);
-        setIsWifi(payload.interface.startsWith('wl'));
+      }
+      // Use isWireless from payload if available (works for macOS and Linux)
+      if (payload.isWireless !== undefined) {
+        setIsWifi(payload.isWireless);
       }
     }
   }, []);
@@ -92,7 +95,7 @@ function App() {
           },
         }));
         setCurrentInterface(data.interface || 'unknown');
-        setIsWifi(data.interface?.startsWith('wl') || false);
+        // isWifi is now set by fetchWiFiData which properly detects wireless interfaces
       }
     } catch (err) {
       console.error('Failed to fetch link data:', err);
@@ -185,16 +188,39 @@ function App() {
           ...prev,
           dns: {
             server: data.server || 'Unknown',
+            servers: data.servers || [],
             testHostname: data.testHostname || 'google.com',
             forward: data.forward ? {
               result: data.forward.result,
-              time: data.forward.time,
+              time: data.forward.time || data.forward.timeMs || 0,
+              timeMs: data.forward.timeMs || data.forward.time || 0,
               status: data.forward.status,
+              error: data.forward.error,
+              resolved: data.forward.resolved,
+            } : null,
+            forwardIpv6: data.forwardIpv6 ? {
+              result: data.forwardIpv6.result,
+              time: data.forwardIpv6.time || data.forwardIpv6.timeMs || 0,
+              timeMs: data.forwardIpv6.timeMs || data.forwardIpv6.time || 0,
+              status: data.forwardIpv6.status,
+              error: data.forwardIpv6.error,
+              resolved: data.forwardIpv6.resolved,
             } : null,
             reverse: data.reverse ? {
               result: data.reverse.result,
-              time: data.reverse.time,
+              time: data.reverse.time || data.reverse.timeMs || 0,
+              timeMs: data.reverse.timeMs || data.reverse.time || 0,
               status: data.reverse.status,
+              error: data.reverse.error,
+              resolved: data.reverse.resolved,
+            } : null,
+            reverseIpv6: data.reverseIpv6 ? {
+              result: data.reverseIpv6.result,
+              time: data.reverseIpv6.time || data.reverseIpv6.timeMs || 0,
+              timeMs: data.reverseIpv6.timeMs || data.reverseIpv6.time || 0,
+              status: data.reverseIpv6.status,
+              error: data.reverseIpv6.error,
+              resolved: data.reverseIpv6.resolved,
             } : null,
           },
         }));
@@ -323,8 +349,10 @@ function App() {
         body: JSON.stringify({ interface: interfaceName }),
       });
       if (response.ok) {
+        const data = await response.json();
         setCurrentInterface(interfaceName);
-        setIsWifi(interfaceName.startsWith('wl'));
+        // Use isWireless from API response (works for macOS and Linux)
+        setIsWifi(data.isWireless === true);
         // Refresh data for new interface
         fetchLinkData();
         fetchIPConfig();
