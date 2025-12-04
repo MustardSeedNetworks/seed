@@ -414,6 +414,18 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
         <p className="text-sm text-status-error mb-2">{speedtestError}</p>
       )}
 
+      <button
+        onClick={runSpeedtest}
+        disabled={speedtestRunning}
+        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors mb-3 ${
+          speedtestRunning
+            ? 'bg-surface-hover text-text-muted cursor-not-allowed'
+            : 'bg-brand-primary text-text-inverse hover:bg-brand-accent'
+        }`}
+      >
+        {speedtestRunning ? 'Running...' : 'Run Speedtest'}
+      </button>
+
       <CardDivider />
 
       {/* LAN Speed (iperf3) Section */}
@@ -486,6 +498,20 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
 
           {iperfError && (
             <p className="text-sm text-status-error mb-3">{iperfError}</p>
+          )}
+
+          {iperfSettings.server && (
+            <button
+              onClick={runIperfClient}
+              disabled={iperfClientRunning}
+              className={`w-full py-2 px-4 rounded-lg font-medium transition-colors mb-3 ${
+                iperfClientRunning
+                  ? 'bg-surface-hover text-text-muted cursor-not-allowed'
+                  : 'bg-brand-primary text-text-inverse hover:bg-brand-accent'
+              }`}
+            >
+              {iperfClientRunning ? 'Running...' : 'Run iperf3 Test'}
+            </button>
           )}
 
           {/* Server status indicator (if enabled) */}

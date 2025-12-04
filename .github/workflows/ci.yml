@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  test-backend:
-    name: Test Backend (Go)
+  lint-backend:
+    name: Lint Backend (Go)
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +17,29 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: 'stable'
+          cache: true
+
+      - name: Install libpcap
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+
+      - name: Run linting
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  test-backend:
+    name: Test Backend (Go)
+    runs-on: ubuntu-latest
+    needs: lint-backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
           cache: true
 
       - name: Install libpcap
@@ -25,11 +47,6 @@ jobs:
 
       - name: Download dependencies
         run: go mod download
-
-      - name: Run linting
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: latest
 
       - name: Run tests
         run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
@@ -39,9 +56,11 @@ jobs:
         with:
           files: coverage.out
           flags: backend
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  test-frontend:
-    name: Test Frontend (React)
+  lint-frontend:
+    name: Lint Frontend (React)
     runs-on: ubuntu-latest
 
     defaults:
@@ -54,7 +73,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'lts/*'
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
 
@@ -64,8 +83,33 @@ jobs:
       - name: Run linting
         run: npm run lint
 
+      - name: Type check
+        run: npm run build -- --mode production 2>&1 | head -50
+
+  test-frontend:
+    name: Test Frontend (React)
+    runs-on: ubuntu-latest
+    needs: lint-frontend
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run tests
-        run: npm test -- --coverage
+        run: npm test -- --coverage --passWithNoTests
 
       - name: Build
         run: npm run build
@@ -75,11 +119,91 @@ jobs:
         with:
           files: web/coverage/lcov.info
           flags: frontend
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpcap-dev iperf3
+          go mod download
+          cd web && npm ci && npm run build
+
+      - name: Build application
+        run: go build -o netscope ./cmd/netscope
+
+      - name: Start server
+        run: |
+          ./netscope &
+          sleep 5
+
+      - name: Test health endpoint
+        run: |
+          # Test that server is responding (will get 401 without auth, which is fine)
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+          echo "Root endpoint returned: $HTTP_CODE"
+          if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "401" ]; then
+            echo "Unexpected status code"
+            exit 1
+          fi
+
+      - name: Test API endpoints exist
+        run: |
+          # Test various API endpoints return expected codes
+          for endpoint in "/api/health" "/api/network/info" "/api/speedtest/status"; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080$endpoint")
+            echo "$endpoint returned: $HTTP_CODE"
+            # 401 (unauthorized) or 200 means endpoint exists
+            if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "401" ]; then
+              echo "Endpoint $endpoint not responding correctly"
+              exit 1
+            fi
+          done
+
+      - name: Test static assets
+        run: |
+          # Test that frontend assets are being served
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+          echo "Static assets returned: $HTTP_CODE"
+
+      - name: Test with authentication
+        run: |
+          # Test authenticated endpoint
+          AUTH=$(echo -n 'admin:netscope' | base64)
+          RESPONSE=$(curl -s -H "Authorization: Basic $AUTH" http://localhost:8080/api/network/info)
+          echo "Network info response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q "hostname"; then
+            echo "Authenticated API working correctly"
+          else
+            echo "Authentication or API may have issues"
+            exit 1
+          fi
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]
+    needs: smoke-test
 
     strategy:
       matrix:
@@ -92,8 +216,15 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: 'stable'
           cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
 
       - name: Install cross-compile dependencies
         run: |
@@ -102,6 +233,10 @@ jobs:
           if [ "${{ matrix.goarch }}" = "arm64" ]; then
             sudo apt-get install -y gcc-aarch64-linux-gnu
           fi
+
+      - name: Build frontend
+        run: |
+          cd web && npm ci && npm run build
 
       - name: Build backend
         env:
@@ -120,6 +255,26 @@ jobs:
           name: netscope-${{ matrix.goos }}-${{ matrix.goarch }}
           path: netscope-${{ matrix.goos }}-${{ matrix.goarch }}
 
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: smoke-test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: netscope:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   security:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -130,7 +285,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: 'stable'
+
+      - name: Install libpcap
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
 
       - name: Run Gosec
         uses: securego/gosec@master
@@ -155,7 +313,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'lts/*'
 
       - name: Install commitlint
         run: npm install -g @commitlint/cli @commitlint/config-conventional

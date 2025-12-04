@@ -265,7 +265,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       // Dispatch event to notify PerformanceCard
       window.dispatchEvent(new CustomEvent('iperfSettingsUpdated', { detail: iperfSettings }));
       setTimeout(() => setIperfMessage(null), 2000);
-    } catch (err) {
+    } catch {
       setIperfMessage('Failed to save settings');
     } finally {
       setSavingIperf(false);
@@ -300,7 +300,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       } else {
         setSaveMessage('Failed to save');
       }
-    } catch (err) {
+    } catch {
       setSaveMessage('Error saving settings');
     } finally {
       setSaving(false);
@@ -352,7 +352,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         const error = await response.text();
         setIPMessage(`Failed: ${error}`);
       }
-    } catch (err) {
+    } catch {
       setIPMessage('Error applying IP settings');
     } finally {
       setSavingIP(false);
@@ -380,7 +380,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         const error = await response.text();
         setTestsMessage(`Failed: ${error}`);
       }
-    } catch (err) {
+    } catch {
       setTestsMessage('Error saving tests settings');
     } finally {
       setSavingTests(false);
@@ -406,7 +406,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         const error = await response.text();
         setWifiMessage(`Failed: ${error}`);
       }
-    } catch (err) {
+    } catch {
       setWifiMessage('Error saving WiFi settings');
     } finally {
       setSavingWifi(false);

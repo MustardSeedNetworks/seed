@@ -147,7 +147,7 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
 
     // Display name - backend already formats as host:port when name is empty
     // Only add HTTP status code, not ports (already in name)
-    let displayName = result.name;
+    const displayName = result.name;
     let details = '';
     if (type === 'http' && result.status) {
       details = ` (${result.status})`;
@@ -304,8 +304,20 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
       )}
 
       {error && (
-        <p className="text-sm text-status-error">{error}</p>
+        <p className="text-sm text-status-error mb-3">{error}</p>
       )}
+
+      <button
+        onClick={fetchTests}
+        disabled={isRunning}
+        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+          isRunning
+            ? 'bg-surface-hover text-text-muted cursor-not-allowed'
+            : 'bg-brand-primary text-text-inverse hover:bg-brand-accent'
+        }`}
+      >
+        {isRunning ? 'Running...' : 'Run Tests'}
+      </button>
     </Card>
   );
 }

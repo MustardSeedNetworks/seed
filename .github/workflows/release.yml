@@ -9,9 +9,87 @@ permissions:
   contents: write
 
 jobs:
+  build-iperf3:
+    name: Build iperf3
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            cc: gcc
+          - arch: arm64
+            cc: aarch64-linux-gnu-gcc
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu
+          fi
+
+      - name: Get latest iperf3 version
+        id: iperf3_version
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/esnet/iperf/releases/latest | jq -r '.tag_name')
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest iperf3 version: $LATEST"
+
+      - name: Download and build iperf3
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          VERSION="${{ steps.iperf3_version.outputs.version }}"
+          curl -L -o iperf3.tar.gz "https://github.com/esnet/iperf/archive/refs/tags/${VERSION}.tar.gz"
+          tar -xzf iperf3.tar.gz
+          cd iperf-*
+
+          # Bootstrap if needed
+          if [ ! -f configure ]; then
+            ./bootstrap.sh || autoreconf -i
+          fi
+
+          # Configure for cross-compilation if arm64
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            ./configure --host=aarch64-linux-gnu --prefix=/tmp/iperf3-install --disable-shared --enable-static-bin
+          else
+            ./configure --prefix=/tmp/iperf3-install --disable-shared --enable-static-bin
+          fi
+
+          make -j$(nproc)
+          make install
+
+          # Copy binary
+          mkdir -p ../dist
+          cp /tmp/iperf3-install/bin/iperf3 ../dist/iperf3-linux-${{ matrix.arch }}
+          chmod +x ../dist/iperf3-linux-${{ matrix.arch }}
+
+      - name: Verify iperf3 binary
+        run: |
+          file dist/iperf3-linux-${{ matrix.arch }}
+
+      - name: Upload iperf3 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iperf3-linux-${{ matrix.arch }}
+          path: dist/iperf3-linux-${{ matrix.arch }}
+
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    needs: build-iperf3
+
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            cc: gcc
+          - arch: arm64
+            cc: aarch64-linux-gnu-gcc
 
     steps:
       - uses: actions/checkout@v4
@@ -21,20 +99,29 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: 'stable'
           cache: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'lts/*'
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
 
-      - name: Install libpcap
+      - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpcap-dev gcc-aarch64-linux-gnu
+          sudo apt-get install -y libpcap-dev
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu
+          fi
+
+      - name: Download iperf3 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: iperf3-linux-${{ matrix.arch }}
+          path: bin/
 
       - name: Build frontend
         run: |
@@ -42,46 +129,104 @@ jobs:
           npm ci
           npm run build
 
-      - name: Build binaries
+      - name: Build NetScope
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 1
+          CC: ${{ matrix.cc }}
         run: |
-          # Linux AMD64
-          GOOS=linux GOARCH=amd64 CGO_ENABLED=1 \
-            go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
-            -o dist/netscope-linux-amd64 ./cmd/netscope
+          go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
+            -o dist/netscope-linux-${{ matrix.arch }} ./cmd/netscope
 
-          # Linux ARM64 (Raspberry Pi)
-          GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc \
-            go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
-            -o dist/netscope-linux-arm64 ./cmd/netscope
-
-      - name: Create archives
+      - name: Create release package
         run: |
+          mkdir -p release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}
+
+          # Copy NetScope binary
+          cp dist/netscope-linux-${{ matrix.arch }} release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/netscope
+
+          # Copy iperf3 binary
+          cp bin/iperf3-linux-${{ matrix.arch }} release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/iperf3
+          chmod +x release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/*
+
+          # Copy config
+          cp -r configs release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/
+
+          # Copy web assets
+          cp -r web/dist release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/web/
+
+          # Create archive
+          cd release
+          tar -czvf netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}.tar.gz netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-${{ matrix.arch }}
+          path: release/*.tar.gz
+
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Prepare release files
+        run: |
+          mkdir -p dist
+          find artifacts -name "*.tar.gz" -exec cp {} dist/ \;
           cd dist
-          tar -czvf netscope-${{ github.ref_name }}-linux-amd64.tar.gz netscope-linux-amd64
-          tar -czvf netscope-${{ github.ref_name }}-linux-arm64.tar.gz netscope-linux-arm64
           sha256sum *.tar.gz > checksums.txt
+          cat checksums.txt
 
       - name: Generate changelog
         id: changelog
         run: |
-          # Get commits since last tag
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$PREV_TAG" ]; then
             CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD)
           else
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)")
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" -20)
           fi
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Get versions
+        id: versions
+        run: |
+          GO_VERSION=$(curl -s 'https://go.dev/VERSION?m=text' | head -1)
+          NODE_VERSION=$(curl -s https://nodejs.org/dist/index.json | jq -r '[.[] | select(.lts != false)][0].version')
+          IPERF_VERSION=$(curl -s https://api.github.com/repos/esnet/iperf/releases/latest | jq -r '.tag_name')
+          echo "go=$GO_VERSION" >> $GITHUB_OUTPUT
+          echo "node=$NODE_VERSION" >> $GITHUB_OUTPUT
+          echo "iperf3=$IPERF_VERSION" >> $GITHUB_OUTPUT
+
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           body: |
             ## Changes
 
             ${{ steps.changelog.outputs.changelog }}
+
+            ## Build Information
+
+            | Component | Version |
+            |-----------|---------|
+            | Go | ${{ steps.versions.outputs.go }} |
+            | Node.js | ${{ steps.versions.outputs.node }} |
+            | iperf3 | ${{ steps.versions.outputs.iperf3 }} |
 
             ## Checksums
 
@@ -91,19 +236,29 @@ jobs:
 
             ## Installation
 
-            ### Linux (AMD64)
+            ### Linux AMD64
             ```bash
             curl -LO https://github.com/krisarmstrong/netscope/releases/download/${{ github.ref_name }}/netscope-${{ github.ref_name }}-linux-amd64.tar.gz
             tar -xzf netscope-${{ github.ref_name }}-linux-amd64.tar.gz
-            sudo mv netscope-linux-amd64 /usr/local/bin/netscope
+            cd netscope-${{ github.ref_name }}-linux-amd64
+            sudo mv netscope iperf3 /usr/local/bin/
             ```
 
-            ### Raspberry Pi (ARM64)
+            ### Linux ARM64 (Raspberry Pi, ARM servers)
             ```bash
             curl -LO https://github.com/krisarmstrong/netscope/releases/download/${{ github.ref_name }}/netscope-${{ github.ref_name }}-linux-arm64.tar.gz
             tar -xzf netscope-${{ github.ref_name }}-linux-arm64.tar.gz
-            sudo mv netscope-linux-arm64 /usr/local/bin/netscope
+            cd netscope-${{ github.ref_name }}-linux-arm64
+            sudo mv netscope iperf3 /usr/local/bin/
             ```
+
+            ## Package Contents
+
+            Each release archive contains:
+            - `netscope` - Main application binary
+            - `iperf3` - Bundled iperf3 binary (latest version)
+            - `configs/` - Default configuration files
+            - `web/` - Frontend assets
           files: |
             dist/*.tar.gz
             dist/checksums.txt
