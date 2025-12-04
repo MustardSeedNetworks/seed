@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { getAuthHeaders } from '../../hooks/useAuth';
 
 interface SpeedtestData {
   download: number;
@@ -43,7 +44,9 @@ export function SpeedtestCard({ loading }: SpeedtestCardProps) {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch('/api/speedtest/status');
+        const res = await fetch('/api/speedtest/status', {
+          headers: getAuthHeaders(),
+        });
         if (res.ok) {
           const data = await res.json();
           setStatus(data);
@@ -65,7 +68,9 @@ export function SpeedtestCard({ loading }: SpeedtestCardProps) {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('/api/speedtest/status');
+        const res = await fetch('/api/speedtest/status', {
+          headers: getAuthHeaders(),
+        });
         if (res.ok) {
           const data = await res.json();
           setStatus(data);
@@ -90,7 +95,10 @@ export function SpeedtestCard({ loading }: SpeedtestCardProps) {
     setStatus({ running: true, phase: 'finding_server', progress: 0 });
 
     try {
-      const res = await fetch('/api/speedtest', { method: 'POST' });
+      const res = await fetch('/api/speedtest', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || 'Speedtest failed');
