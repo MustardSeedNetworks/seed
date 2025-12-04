@@ -474,8 +474,8 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         onClick={onClose}
       />
 
-      {/* Drawer - full width on mobile, 320px on larger screens */}
-      <div className="fixed right-0 top-0 h-full w-full sm:w-80 bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl">
+      {/* Drawer - full width on mobile, 384px on larger screens */}
+      <div className="fixed right-0 top-0 h-full w-full sm:w-96 bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
           <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
