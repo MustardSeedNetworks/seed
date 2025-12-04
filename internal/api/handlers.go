@@ -1487,6 +1487,8 @@ type CustomTestResult struct {
 	CertStatus     string `json:"certStatus,omitempty"`     // success, warning, error
 	CertExpiry     string `json:"certExpiry,omitempty"`     // Expiry date string
 	CertCommonName string `json:"certCommonName,omitempty"` // Certificate CN
+	TLSVersion     string `json:"tlsVersion,omitempty"`     // TLS 1.2, TLS 1.3, etc.
+	CertIssuer     string `json:"certIssuer,omitempty"`     // Certificate issuer
 }
 
 // CustomTestsResult represents results from all custom tests.
@@ -1685,6 +1687,8 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			testResult.CertStatus = certInfo.Status
 			testResult.CertExpiry = certInfo.ExpiryDate
 			testResult.CertCommonName = certInfo.CommonName
+			testResult.TLSVersion = certInfo.TLSVersion
+			testResult.CertIssuer = certInfo.Issuer
 
 			// Upgrade test status if cert is in bad shape
 			if certInfo.Status == "error" && testResult.TestStatus != "error" {
@@ -1937,6 +1941,8 @@ type CertInfo struct {
 	Status     string // success, warning, error
 	ExpiryDate string
 	CommonName string
+	TLSVersion string // TLS 1.0, TLS 1.1, TLS 1.2, TLS 1.3
+	Issuer     string // Certificate issuer (for context)
 }
 
 // checkCertExpiry checks the TLS certificate expiry for a URL.
@@ -1966,8 +1972,14 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 	}
 	defer conn.Close()
 
+	// Get connection state for TLS info
+	connState := conn.ConnectionState()
+
+	// Get TLS version
+	info.TLSVersion = getTLSVersionString(connState.Version)
+
 	// Get certificate chain
-	certs := conn.ConnectionState().PeerCertificates
+	certs := connState.PeerCertificates
 	if len(certs) == 0 {
 		info.Status = "error"
 		return info
@@ -1977,6 +1989,13 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 	cert := certs[0]
 	info.CommonName = cert.Subject.CommonName
 	info.ExpiryDate = cert.NotAfter.Format("2006-01-02")
+
+	// Get issuer (org or CN)
+	if len(cert.Issuer.Organization) > 0 {
+		info.Issuer = cert.Issuer.Organization[0]
+	} else if cert.Issuer.CommonName != "" {
+		info.Issuer = cert.Issuer.CommonName
+	}
 
 	// Calculate days until expiry
 	daysLeft := int(time.Until(cert.NotAfter).Hours() / 24)
@@ -1994,6 +2013,22 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 	}
 
 	return info
+}
+
+// getTLSVersionString converts TLS version to human-readable string.
+func getTLSVersionString(version uint16) string {
+	switch version {
+	case tls.VersionTLS10:
+		return "TLS 1.0"
+	case tls.VersionTLS11:
+		return "TLS 1.1"
+	case tls.VersionTLS12:
+		return "TLS 1.2"
+	case tls.VersionTLS13:
+		return "TLS 1.3"
+	default:
+		return "Unknown"
+	}
 }
 
 // SpeedtestResponse represents the speedtest results for the API.

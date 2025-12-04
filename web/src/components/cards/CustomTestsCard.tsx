@@ -22,6 +22,8 @@ interface TestResult {
   certStatus?: 'success' | 'warning' | 'error';
   certExpiry?: string;
   certCommonName?: string;
+  tlsVersion?: string;
+  certIssuer?: string;
 }
 
 interface CustomTestsData {
@@ -187,6 +189,18 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
     }
 
     const hasCertInfo = result.certDaysLeft !== undefined && result.certDaysLeft >= 0;
+    const hasTLS = result.tlsVersion && result.tlsVersion !== 'Unknown';
+
+    // Format cert expiry nicely
+    const formatCertExpiry = () => {
+      if (!hasCertInfo) return '';
+      const days = result.certDaysLeft!;
+      if (days <= 0) return 'EXPIRED';
+      if (days === 1) return '1 day';
+      if (days < 30) return `${days} days`;
+      if (days < 365) return `${Math.floor(days / 30)}mo`;
+      return `${Math.floor(days / 365)}y`;
+    };
 
     return (
       <div key={`http-${result.name}`} className="py-1">
@@ -198,9 +212,25 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
             {result.success ? formatLatency(result.latency) : 'fail'}
           </span>
         </div>
-        {hasCertInfo && (
-          <div className={`text-xs mt-0.5 ${certColor}`}>
-            Cert: {result.certDaysLeft}d left
+        {(hasTLS || hasCertInfo) && (
+          <div className="text-xs mt-0.5 flex items-center gap-2">
+            {hasTLS && (
+              <span className="text-text-muted">{result.tlsVersion}</span>
+            )}
+            {hasTLS && hasCertInfo && <span className="text-text-muted">·</span>}
+            {hasCertInfo && (
+              <span className={certColor} title={`Expires: ${result.certExpiry}`}>
+                {formatCertExpiry()}
+              </span>
+            )}
+            {result.certIssuer && (
+              <>
+                <span className="text-text-muted">·</span>
+                <span className="text-text-muted truncate" title={result.certIssuer}>
+                  {result.certIssuer}
+                </span>
+              </>
+            )}
           </div>
         )}
       </div>
