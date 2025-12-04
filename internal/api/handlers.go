@@ -1074,7 +1074,7 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save config
-	if err := s.config.Save("config.yaml"); err != nil {
+	if err := s.config.Save(s.configPath); err != nil {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
 
@@ -1237,7 +1237,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save config to file
-	if err := s.config.Save("config.yaml"); err != nil {
+	if err := s.config.Save(s.configPath); err != nil {
 		// Log but don't fail - the config was applied
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
@@ -1450,7 +1450,7 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save config to file
-	if err := s.config.Save("config.yaml"); err != nil {
+	if err := s.config.Save(s.configPath); err != nil {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
 

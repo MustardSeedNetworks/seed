@@ -33,6 +33,7 @@ import (
 // Server represents the HTTP/HTTPS server.
 type Server struct {
 	config           *config.Config
+	configPath       string
 	httpServer       *http.Server
 	authManager      *auth.Manager
 	wsHub            *Hub
@@ -50,9 +51,10 @@ type Server struct {
 }
 
 // NewServer creates a new server instance.
-func NewServer(cfg *config.Config, netMgr *network.Manager) *Server {
+func NewServer(cfg *config.Config, configPath string, netMgr *network.Manager) *Server {
 	s := &Server{
 		config:     cfg,
+		configPath: configPath,
 		mux:        http.NewServeMux(),
 		netManager: netMgr,
 		authManager: auth.NewManager(

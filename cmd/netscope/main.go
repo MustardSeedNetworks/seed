@@ -68,7 +68,7 @@ func main() {
 	}
 
 	// Create and start the server
-	server := api.NewServer(cfg, netMgr)
+	server := api.NewServer(cfg, *configPath, netMgr)
 
 	// Handle shutdown gracefully
 	done := make(chan struct{})

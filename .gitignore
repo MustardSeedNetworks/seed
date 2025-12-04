@@ -72,3 +72,7 @@ temp/
 # Certificates (generated)
 certs/
 !certs/.gitkeep
+
+# Local files
+*.png
+config.yaml
