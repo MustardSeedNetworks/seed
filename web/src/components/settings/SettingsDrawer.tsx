@@ -85,6 +85,15 @@ interface TestsSettings {
   };
 }
 
+interface IperfSettings {
+  server: string;
+  port: number;
+  protocol: 'tcp' | 'udp';
+  direction: 'upload' | 'download';
+  duration: number;
+  serverPort: number;
+}
+
 interface SettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -132,6 +141,18 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const [ipMessage, setIPMessage] = useState<string | null>(null);
   const [testsMessage, setTestsMessage] = useState<string | null>(null);
   const [wifiMessage, setWifiMessage] = useState<string | null>(null);
+
+  // iperf3/LAN Speed settings
+  const [iperfSettings, setIperfSettings] = useState<IperfSettings>({
+    server: '',
+    port: 5201,
+    protocol: 'tcp',
+    direction: 'download',
+    duration: 10,
+    serverPort: 5201,
+  });
+  const [savingIperf, setSavingIperf] = useState(false);
+  const [iperfMessage, setIperfMessage] = useState<string | null>(null);
 
   // Fetch current thresholds
   const fetchThresholds = useCallback(async () => {
@@ -219,14 +240,45 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   }, []);
 
+  // Load iperf settings from localStorage
+  const loadIperfSettings = useCallback(() => {
+    try {
+      const saved = localStorage.getItem('netscope-iperf-settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setIperfSettings((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch (err) {
+      console.error('Failed to load iperf settings:', err);
+    }
+  }, []);
+
+  // Save iperf settings to localStorage
+  const saveIperfSettings = () => {
+    setSavingIperf(true);
+    setIperfMessage(null);
+    try {
+      localStorage.setItem('netscope-iperf-settings', JSON.stringify(iperfSettings));
+      setIperfMessage('Settings saved');
+      // Dispatch event to notify PerformanceCard
+      window.dispatchEvent(new CustomEvent('iperfSettingsUpdated', { detail: iperfSettings }));
+      setTimeout(() => setIperfMessage(null), 2000);
+    } catch (err) {
+      setIperfMessage('Failed to save settings');
+    } finally {
+      setSavingIperf(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchThresholds();
       fetchIPSettings();
       fetchTestsSettings();
       fetchWifiSettings();
+      loadIperfSettings();
     }
-  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings]);
+  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings]);
 
   const saveThresholds = async () => {
     setSaving(true);
@@ -931,6 +983,146 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             </div>
           </CollapsibleSection>
 
+          {/* LAN Speed (iperf3) Section */}
+          <CollapsibleSection title="LAN Speed (iperf3)">
+            <div className="space-y-3">
+              <p className="text-xs text-text-muted">
+                Configure iperf3 client settings for LAN speed tests.
+              </p>
+
+              {/* Server Address */}
+              <div>
+                <label className="text-xs text-text-muted">Server Address</label>
+                <input
+                  type="text"
+                  value={iperfSettings.server}
+                  onChange={(e) =>
+                    setIperfSettings((prev) => ({ ...prev, server: e.target.value }))
+                  }
+                  placeholder="192.168.1.100 or hostname"
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+              </div>
+
+              {/* Port */}
+              <div>
+                <label className="text-xs text-text-muted">Port</label>
+                <input
+                  type="number"
+                  value={iperfSettings.port}
+                  onChange={(e) =>
+                    setIperfSettings((prev) => ({ ...prev, port: parseInt(e.target.value) || 5201 }))
+                  }
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+              </div>
+
+              {/* Protocol Toggle */}
+              <div>
+                <label className="text-xs text-text-muted block mb-1">Protocol</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIperfSettings((prev) => ({ ...prev, protocol: 'tcp' }))}
+                    className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                      iperfSettings.protocol === 'tcp'
+                        ? 'bg-brand-primary text-text-inverse'
+                        : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover'
+                    }`}
+                  >
+                    TCP
+                  </button>
+                  <button
+                    onClick={() => setIperfSettings((prev) => ({ ...prev, protocol: 'udp' }))}
+                    className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                      iperfSettings.protocol === 'udp'
+                        ? 'bg-brand-primary text-text-inverse'
+                        : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover'
+                    }`}
+                  >
+                    UDP
+                  </button>
+                </div>
+              </div>
+
+              {/* Direction Toggle */}
+              <div>
+                <label className="text-xs text-text-muted block mb-1">Direction</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIperfSettings((prev) => ({ ...prev, direction: 'download' }))}
+                    className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                      iperfSettings.direction === 'download'
+                        ? 'bg-brand-primary text-text-inverse'
+                        : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover'
+                    }`}
+                  >
+                    Download
+                  </button>
+                  <button
+                    onClick={() => setIperfSettings((prev) => ({ ...prev, direction: 'upload' }))}
+                    className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                      iperfSettings.direction === 'upload'
+                        ? 'bg-brand-primary text-text-inverse'
+                        : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover'
+                    }`}
+                  >
+                    Upload
+                  </button>
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="text-xs text-text-muted">Duration (seconds)</label>
+                <input
+                  type="number"
+                  value={iperfSettings.duration}
+                  onChange={(e) =>
+                    setIperfSettings((prev) => ({ ...prev, duration: parseInt(e.target.value) || 10 }))
+                  }
+                  min={1}
+                  max={60}
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+              </div>
+
+              {/* Server Port (for server mode) */}
+              <div className="border-t border-surface-border pt-3">
+                <label className="text-xs text-text-muted">Server Mode Port</label>
+                <input
+                  type="number"
+                  value={iperfSettings.serverPort}
+                  onChange={(e) =>
+                    setIperfSettings((prev) => ({ ...prev, serverPort: parseInt(e.target.value) || 5201 }))
+                  }
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  Port to use when running in server mode
+                </p>
+              </div>
+
+              {/* Save Button */}
+              <button
+                onClick={saveIperfSettings}
+                disabled={savingIperf}
+                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+              >
+                {savingIperf ? 'Saving...' : 'Save LAN Speed Settings'}
+              </button>
+
+              {iperfMessage && (
+                <p
+                  className={`text-xs text-center ${
+                    iperfMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'
+                  }`}
+                >
+                  {iperfMessage}
+                </p>
+              )}
+            </div>
+          </CollapsibleSection>
+
           {/* Thresholds Section */}
           <CollapsibleSection title="Thresholds">
             <div className="space-y-3">
@@ -1149,7 +1341,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           <section className="pt-4 border-t border-surface-border">
             <h3 className="text-sm font-medium text-text-muted mb-2">About</h3>
             <p className="text-xs text-text-muted">
-              NetScope v0.7.3
+              NetScope v0.8.2
               <br />
               Network Diagnostic Tool
             </p>

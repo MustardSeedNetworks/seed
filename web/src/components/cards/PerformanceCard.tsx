@@ -62,6 +62,15 @@ interface PerformanceCardProps {
   loading?: boolean;
 }
 
+interface IperfSettings {
+  server: string;
+  port: number;
+  protocol: 'tcp' | 'udp';
+  direction: 'upload' | 'download';
+  duration: number;
+  serverPort: number;
+}
+
 const speedtestPhaseLabels: Record<string, string> = {
   idle: 'Ready',
   finding_server: 'Finding server...',
@@ -93,12 +102,16 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   const [iperfError, setIperfError] = useState<string | null>(null);
   const [iperfClientRunning, setIperfClientRunning] = useState(false);
 
-  // iperf3 client config
+  // iperf3 settings (loaded from localStorage/Settings)
   const [iperfMode, setIperfMode] = useState<'client' | 'server'>('client');
-  const [iperfServer, setIperfServer] = useState('');
-  const [iperfPort, setIperfPort] = useState(5201);
-  const [iperfProtocol, setIperfProtocol] = useState<'tcp' | 'udp'>('tcp');
-  const [iperfDirection, setIperfDirection] = useState<'upload' | 'download'>('download');
+  const [iperfSettings, setIperfSettings] = useState<IperfSettings>({
+    server: '',
+    port: 5201,
+    protocol: 'tcp',
+    direction: 'download',
+    duration: 10,
+    serverPort: 5201,
+  });
 
   // Fetch initial status
   useEffect(() => {
@@ -150,6 +163,33 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       }
     };
     fetchStatus();
+  }, []);
+
+  // Load iperf settings from localStorage and listen for updates
+  useEffect(() => {
+    const loadSettings = () => {
+      try {
+        const saved = localStorage.getItem('netscope-iperf-settings');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setIperfSettings((prev) => ({ ...prev, ...parsed }));
+        }
+      } catch (err) {
+        console.error('Failed to load iperf settings:', err);
+      }
+    };
+
+    loadSettings();
+
+    // Listen for settings updates from SettingsDrawer
+    const handleSettingsUpdate = (e: CustomEvent<IperfSettings>) => {
+      setIperfSettings((prev) => ({ ...prev, ...e.detail }));
+    };
+
+    window.addEventListener('iperfSettingsUpdated', handleSettingsUpdate as EventListener);
+    return () => {
+      window.removeEventListener('iperfSettingsUpdated', handleSettingsUpdate as EventListener);
+    };
   }, []);
 
   // Poll speedtest status while running
@@ -228,8 +268,8 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   }, []);
 
   const runIperfClient = useCallback(async () => {
-    if (!iperfServer) {
-      setIperfError('Server address required');
+    if (!iperfSettings.server) {
+      setIperfError('Server address required - configure in Settings');
       return;
     }
 
@@ -245,11 +285,11 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          server: iperfServer,
-          port: iperfPort,
-          protocol: iperfProtocol,
-          reverse: iperfDirection === 'download',
-          duration: 10,
+          server: iperfSettings.server,
+          port: iperfSettings.port,
+          protocol: iperfSettings.protocol,
+          reverse: iperfSettings.direction === 'download',
+          duration: iperfSettings.duration,
           parallel: 1,
         }),
       });
@@ -262,7 +302,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       setIperfClientStatus({ running: false, phase: 'idle', progress: 0 });
       setIperfClientRunning(false);
     }
-  }, [iperfServer, iperfPort, iperfProtocol, iperfDirection]);
+  }, [iperfSettings]);
 
   const toggleIperfServer = useCallback(async () => {
     try {
@@ -275,7 +315,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
         },
         body: JSON.stringify({
           action,
-          port: iperfPort,
+          port: iperfSettings.serverPort,
         }),
       });
       if (!res.ok) {
@@ -292,7 +332,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
     } catch (err) {
       setIperfError(err instanceof Error ? err.message : 'Server toggle failed');
     }
-  }, [iperfServerStatus, iperfPort]);
+  }, [iperfServerStatus, iperfSettings.serverPort]);
 
   const formatSpeed = (mbps: number): string => {
     if (mbps >= 1000) {
@@ -402,71 +442,23 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
 
           {iperfMode === 'client' && (
             <>
-              {/* Client Config */}
-              <div className="space-y-2 mb-3">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Server address"
-                    value={iperfServer}
-                    onChange={(e) => setIperfServer(e.target.value)}
-                    className="flex-1 px-3 py-1.5 rounded bg-surface-hover border border-surface-border text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-primary"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Port"
-                    value={iperfPort}
-                    onChange={(e) => setIperfPort(parseInt(e.target.value) || 5201)}
-                    className="w-20 px-3 py-1.5 rounded bg-surface-hover border border-surface-border text-sm text-text-primary focus:outline-none focus:border-brand-primary"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <div className="flex-1 flex gap-1">
-                    <button
-                      onClick={() => setIperfProtocol('tcp')}
-                      className={`flex-1 py-1 px-2 rounded text-xs font-medium ${
-                        iperfProtocol === 'tcp'
-                          ? 'bg-brand-primary text-text-inverse'
-                          : 'bg-surface-hover text-text-muted'
-                      }`}
-                    >
-                      TCP
-                    </button>
-                    <button
-                      onClick={() => setIperfProtocol('udp')}
-                      className={`flex-1 py-1 px-2 rounded text-xs font-medium ${
-                        iperfProtocol === 'udp'
-                          ? 'bg-brand-primary text-text-inverse'
-                          : 'bg-surface-hover text-text-muted'
-                      }`}
-                    >
-                      UDP
-                    </button>
+              {/* Client Config Summary */}
+              {iperfSettings.server ? (
+                <div className="text-xs text-text-muted mb-3 p-2 bg-surface-hover rounded">
+                  <div className="flex justify-between">
+                    <span>Server:</span>
+                    <span className="text-text-primary">{iperfSettings.server}:{iperfSettings.port}</span>
                   </div>
-                  <div className="flex-1 flex gap-1">
-                    <button
-                      onClick={() => setIperfDirection('download')}
-                      className={`flex-1 py-1 px-2 rounded text-xs font-medium ${
-                        iperfDirection === 'download'
-                          ? 'bg-brand-primary text-text-inverse'
-                          : 'bg-surface-hover text-text-muted'
-                      }`}
-                    >
-                      Download
-                    </button>
-                    <button
-                      onClick={() => setIperfDirection('upload')}
-                      className={`flex-1 py-1 px-2 rounded text-xs font-medium ${
-                        iperfDirection === 'upload'
-                          ? 'bg-brand-primary text-text-inverse'
-                          : 'bg-surface-hover text-text-muted'
-                      }`}
-                    >
-                      Upload
-                    </button>
+                  <div className="flex justify-between">
+                    <span>Test:</span>
+                    <span className="text-text-primary">{iperfSettings.protocol.toUpperCase()} {iperfSettings.direction}</span>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <p className="text-xs text-text-muted mb-3">
+                  Configure server address in Settings
+                </p>
+              )}
 
               {/* Client Status/Results */}
               {iperfClientRunning && iperfClientStatus && (
@@ -524,16 +516,8 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
             <>
               {/* Server Config */}
               <div className="space-y-2 mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-text-muted">Port:</span>
-                  <input
-                    type="number"
-                    value={iperfPort}
-                    onChange={(e) => setIperfPort(parseInt(e.target.value) || 5201)}
-                    disabled={iperfServerStatus?.running}
-                    className="w-24 px-3 py-1.5 rounded bg-surface-hover border border-surface-border text-sm text-text-primary focus:outline-none focus:border-brand-primary disabled:opacity-50"
-                  />
-                  <div className="flex-1" />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-muted">Port: {iperfSettings.serverPort}</span>
                   <span className={`text-sm font-medium ${iperfServerStatus?.running ? 'text-status-success' : 'text-text-muted'}`}>
                     {iperfServerStatus?.running ? 'Running' : 'Stopped'}
                   </span>
