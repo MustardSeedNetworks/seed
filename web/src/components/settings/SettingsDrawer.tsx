@@ -92,6 +92,7 @@ interface IperfSettings {
   direction: 'upload' | 'download';
   duration: number;
   serverPort: number;
+  enableServer: boolean;
 }
 
 interface SettingsDrawerProps {
@@ -150,6 +151,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     direction: 'download',
     duration: 10,
     serverPort: 5201,
+    enableServer: false,
   });
   const [savingIperf, setSavingIperf] = useState(false);
   const [iperfMessage, setIperfMessage] = useState<string | null>(null);
@@ -1086,19 +1088,32 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </div>
 
-              {/* Server Port (for server mode) */}
+              {/* Server Mode */}
               <div className="border-t border-surface-border pt-3">
-                <label className="text-xs text-text-muted">Server Mode Port</label>
-                <input
-                  type="number"
-                  value={iperfSettings.serverPort}
-                  onChange={(e) =>
-                    setIperfSettings((prev) => ({ ...prev, serverPort: parseInt(e.target.value) || 5201 }))
-                  }
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
-                />
+                <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border mb-2">
+                  <span className="text-sm text-text-primary">Enable iperf3 Server</span>
+                  <input
+                    type="checkbox"
+                    checked={iperfSettings.enableServer}
+                    onChange={(e) =>
+                      setIperfSettings((prev) => ({ ...prev, enableServer: e.target.checked }))
+                    }
+                    className="w-4 h-4"
+                  />
+                </label>
+                <div>
+                  <label className="text-xs text-text-muted">Server Port</label>
+                  <input
+                    type="number"
+                    value={iperfSettings.serverPort}
+                    onChange={(e) =>
+                      setIperfSettings((prev) => ({ ...prev, serverPort: parseInt(e.target.value) || 5201 }))
+                    }
+                    className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  />
+                </div>
                 <p className="text-xs text-text-muted mt-1">
-                  Port to use when running in server mode
+                  When enabled, starts iperf3 server automatically
                 </p>
               </div>
 

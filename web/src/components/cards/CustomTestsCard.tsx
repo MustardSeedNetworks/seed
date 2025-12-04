@@ -79,6 +79,19 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
     };
   }, [fetchTests]);
 
+  // Listen for FAB "run all tests" event
+  useEffect(() => {
+    const handleRunAllTests = () => {
+      if (!isRunning) {
+        fetchTests();
+      }
+    };
+    window.addEventListener('runAllTests', handleRunAllTests);
+    return () => {
+      window.removeEventListener('runAllTests', handleRunAllTests);
+    };
+  }, [fetchTests, isRunning]);
+
   // Don't render card if no tests are configured
   if (!data?.hasTests && !loading && !isRunning) {
     return null;
@@ -291,20 +304,8 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
       )}
 
       {error && (
-        <p className="text-sm text-status-error mb-3">{error}</p>
+        <p className="text-sm text-status-error">{error}</p>
       )}
-
-      <button
-        onClick={fetchTests}
-        disabled={isRunning}
-        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-          isRunning
-            ? 'bg-surface-hover text-text-muted cursor-not-allowed'
-            : 'bg-brand-primary text-text-inverse hover:bg-brand-accent'
-        }`}
-      >
-        {isRunning ? 'Running...' : 'Run Tests'}
-      </button>
     </Card>
   );
 }

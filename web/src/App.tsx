@@ -25,6 +25,7 @@ import {
 } from './components/cards';
 import { PerformanceCard } from './components/cards/PerformanceCard';
 import { CustomTestsCard } from './components/cards/CustomTestsCard';
+import { FAB } from './components/ui/FAB';
 
 interface CardState {
   link: LinkData | null;
@@ -513,19 +514,22 @@ function App() {
         {/* Development notice */}
         <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-            NetScope v0.8.0 - Performance
+            NetScope v0.8.3 - Simplified UI
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-text-muted">
-            All diagnostic cards active with iperf3 LAN speed testing.
+            Tap the play button to run all tests.
             <span className="hidden sm:inline"><br /></span>
             <span className="sm:hidden"> </span>
-            Run as root for packet capture and TDR cable testing.
+            Configure iperf3 and health checks in Settings.
           </p>
         </div>
       </main>
 
       {/* Settings Drawer */}
       <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      {/* FAB - Run All Tests */}
+      <FAB />
     </div>
   );
 }
