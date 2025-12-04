@@ -4,11 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 )
+
+// iperfBinaryPath caches the resolved iperf3 binary path
+var iperfBinaryPath string
 
 // ClientConfig holds iperf3 client test configuration
 type ClientConfig struct {
@@ -111,21 +116,72 @@ func NewManager() *Manager {
 	}
 }
 
+// findIperf3Binary locates the iperf3 binary, checking bundled paths first
+func findIperf3Binary() (string, error) {
+	// Return cached path if already found
+	if iperfBinaryPath != "" {
+		return iperfBinaryPath, nil
+	}
+
+	// Get executable path to find bundled binary
+	execPath, err := os.Executable()
+	if err == nil {
+		execDir := filepath.Dir(execPath)
+
+		// Check bundled locations relative to executable
+		bundledPaths := []string{
+			filepath.Join(execDir, "bin", "iperf3"),
+			filepath.Join(execDir, "iperf3"),
+			filepath.Join(execDir, "..", "bin", "iperf3"),
+		}
+
+		for _, path := range bundledPaths {
+			if _, err := os.Stat(path); err == nil {
+				iperfBinaryPath = path
+				return path, nil
+			}
+		}
+	}
+
+	// Check relative to working directory (for development)
+	cwd, err := os.Getwd()
+	if err == nil {
+		devPaths := []string{
+			filepath.Join(cwd, "bin", "iperf3"),
+			filepath.Join(cwd, "iperf3"),
+		}
+
+		for _, path := range devPaths {
+			if _, err := os.Stat(path); err == nil {
+				iperfBinaryPath = path
+				return path, nil
+			}
+		}
+	}
+
+	// Fall back to system PATH
+	path, err := exec.LookPath("iperf3")
+	if err != nil {
+		return "", fmt.Errorf("iperf3 not found: not bundled and not in system PATH")
+	}
+
+	iperfBinaryPath = path
+	return path, nil
+}
+
 // CheckInstalled checks if iperf3 is available
 func CheckInstalled() error {
-	_, err := exec.LookPath("iperf3")
-	if err != nil {
-		return fmt.Errorf("iperf3 not found: %w", err)
-	}
-	return nil
+	_, err := findIperf3Binary()
+	return err
 }
 
 // GetVersion returns the installed iperf3 version
 func GetVersion() (string, error) {
-	if err := CheckInstalled(); err != nil {
+	binaryPath, err := findIperf3Binary()
+	if err != nil {
 		return "", err
 	}
-	out, err := exec.Command("iperf3", "--version").Output()
+	out, err := exec.Command(binaryPath, "--version").Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to get iperf3 version: %w", err)
 	}
@@ -167,7 +223,8 @@ func (m *Manager) StartServer(port int) error {
 		return fmt.Errorf("server already running on port %d", m.serverStatus.Port)
 	}
 
-	if err := CheckInstalled(); err != nil {
+	binaryPath, err := findIperf3Binary()
+	if err != nil {
 		return err
 	}
 
@@ -175,7 +232,7 @@ func (m *Manager) StartServer(port int) error {
 	m.serverCancel = cancel
 
 	// Start iperf3 server: iperf3 -s -p <port> -D (daemon mode doesn't work well, use background)
-	cmd := exec.CommandContext(ctx, "iperf3", "-s", "-p", fmt.Sprintf("%d", port))
+	cmd := exec.CommandContext(ctx, binaryPath, "-s", "-p", fmt.Sprintf("%d", port))
 	if err := cmd.Start(); err != nil {
 		cancel()
 		return fmt.Errorf("failed to start iperf3 server: %w", err)
@@ -242,7 +299,8 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 		m.mu.Unlock()
 	}()
 
-	if err := CheckInstalled(); err != nil {
+	binaryPath, err := findIperf3Binary()
+	if err != nil {
 		return nil, err
 	}
 
@@ -284,7 +342,7 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 	m.mu.Unlock()
 
 	// Run iperf3
-	cmd := exec.CommandContext(ctx, "iperf3", args...)
+	cmd := exec.CommandContext(ctx, binaryPath, args...)
 	output, err := cmd.Output()
 	if err != nil {
 		// Try to parse error from output

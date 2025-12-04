@@ -54,6 +54,7 @@ npm-debug.log*
 # Build artifacts
 *.tar.gz
 *.zip
+/build/
 
 # Database
 *.db

@@ -1,4 +1,4 @@
-.PHONY: all build build-frontend build-backend clean test lint run dev help
+.PHONY: all build build-frontend build-backend build-iperf3 clean test lint run dev help
 
 # Variables
 BINARY_NAME=netscope
@@ -10,7 +10,11 @@ all: build
 
 ## Build
 
-build: build-frontend build-backend ## Build everything
+build: build-iperf3 build-frontend build-backend ## Build everything
+
+build-iperf3: ## Build iperf3 from source
+	@echo "Building iperf3..."
+	@./scripts/build-iperf3.sh
 
 build-backend: ## Build Go backend
 	CGO_ENABLED=1 go build $(LDFLAGS) -o $(BINARY_NAME) ./cmd/netscope
@@ -66,6 +70,7 @@ clean: ## Clean build artifacts
 	rm -f $(BINARY_NAME) $(BINARY_NAME)-*
 	rm -f coverage.out coverage.html
 	rm -rf web/dist web/node_modules
+	rm -rf build/iperf3 bin/iperf3*
 
 ## Dependencies
 
