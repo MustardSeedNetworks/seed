@@ -95,15 +95,18 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
     ];
     if (allResults.length === 0) return 'unknown';
 
-    // Check for any failures first
-    if (allResults.some((r) => !r.success)) {
-      if (allResults.every((r) => !r.success)) return 'error';
+    // Priority: error > warning > success
+    // Any failure (!success) or error status = card is error
+    if (allResults.some((r) => !r.success || r.testStatus === 'error' || r.certStatus === 'error')) {
+      return 'error';
+    }
+
+    // Any warning status = card is warning
+    if (allResults.some((r) => r.testStatus === 'warning' || r.certStatus === 'warning')) {
       return 'warning';
     }
 
-    // All succeeded - check for threshold warnings (including cert expiry)
-    if (allResults.some((r) => r.testStatus === 'error' || r.certStatus === 'error')) return 'error';
-    if (allResults.some((r) => r.testStatus === 'warning' || r.certStatus === 'warning')) return 'warning';
+    // All tests passed with no warnings
     return 'success';
   };
 
