@@ -95,6 +95,7 @@ export function SpeedtestCard({ loading }: SpeedtestCardProps) {
     setStatus({ running: true, phase: 'finding_server', progress: 0 });
 
     try {
+      // Start the speedtest (returns immediately, runs in background)
       const res = await fetch('/api/speedtest', {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -103,13 +104,10 @@ export function SpeedtestCard({ loading }: SpeedtestCardProps) {
         const text = await res.text();
         throw new Error(text || 'Speedtest failed');
       }
-      const data = await res.json();
-      setResult(data);
-      setStatus({ running: false, phase: 'complete', progress: 100, last: data });
+      // The test is now running in background - polling will pick up results
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Speedtest failed');
       setStatus({ running: false, phase: 'idle', progress: 0 });
-    } finally {
       setIsRunning(false);
     }
   }, []);

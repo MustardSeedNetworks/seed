@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -1182,7 +1183,8 @@ type SpeedtestStatusResponse struct {
 	Last     *SpeedtestResponse     `json:"last,omitempty"`
 }
 
-// handleSpeedtest starts a speedtest and returns results.
+// handleSpeedtest starts a speedtest in the background and returns immediately.
+// Use /api/speedtest/status to poll for results.
 func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed - use POST to start a speedtest", http.StatusMethodNotAllowed)
@@ -1201,27 +1203,21 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Run the test (this can take 30-60 seconds)
-	result, err := s.speedtestTester.RunTest(r.Context())
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Speedtest failed: %v", err), http.StatusInternalServerError)
-		return
-	}
+	// Run the test in the background (takes 30-60 seconds)
+	go func() {
+		ctx := context.Background()
+		_, err := s.speedtestTester.RunTest(ctx)
+		if err != nil {
+			log.Printf("Speedtest failed: %v", err)
+		}
+	}()
 
-	resp := SpeedtestResponse{
-		Download:     result.Download,
-		Upload:       result.Upload,
-		Latency:      result.Latency,
-		Server:       result.Server,
-		Location:     result.Location,
-		Host:         result.Host,
-		Distance:     result.Distance,
-		Timestamp:    result.Timestamp.Format(time.RFC3339),
-		TestDuration: result.TestDuration,
-	}
-
+	// Return immediately with "started" status
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "started",
+		"message": "Speedtest started. Poll /api/speedtest/status for results.",
+	})
 }
 
 // handleSpeedtestStatus returns the current speedtest status.
