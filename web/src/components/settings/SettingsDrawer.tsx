@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { getAuthHeaders } from '../../hooks/useAuth';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
@@ -17,6 +18,24 @@ interface Thresholds {
     good: number;
     warning: number;
   };
+  customPing: {
+    good: number;
+    warning: number;
+  };
+  customTcp: {
+    good: number;
+    warning: number;
+  };
+  customHttp: {
+    good: number;
+    warning: number;
+  };
+}
+
+interface WiFiSettings {
+  interface: string;
+  availableWifi: string[];
+  isWireless: boolean;
 }
 
 interface IPSettings {
@@ -25,6 +44,45 @@ interface IPSettings {
   netmask: string;
   gateway: string;
   dns: string[];
+}
+
+interface PingTarget {
+  name: string;
+  host: string;
+  enabled: boolean;
+}
+
+interface TCPPort {
+  name: string;
+  host: string;
+  port: number;
+  enabled: boolean;
+}
+
+interface UDPPort {
+  name: string;
+  host: string;
+  port: number;
+  enabled: boolean;
+}
+
+interface HTTPEndpoint {
+  name: string;
+  url: string;
+  expectedStatus: number;
+  enabled: boolean;
+}
+
+interface TestsSettings {
+  dnsHostname: string;
+  pingTargets: PingTarget[];
+  tcpPorts: TCPPort[];
+  udpPorts: UDPPort[];
+  httpEndpoints: HTTPEndpoint[];
+  speedtest: {
+    serverId: string;
+    autoRunOnLink: boolean;
+  };
 }
 
 interface SettingsDrawerProps {
@@ -38,6 +96,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     dns: { good: 50, warning: 100 },
     gateway: { good: 20, warning: 50 },
     wifi: { good: -50, warning: -70 },
+    customPing: { good: 50, warning: 100 },
+    customTcp: { good: 100, warning: 500 },
+    customHttp: { good: 500, warning: 2000 },
   });
   const [ipSettings, setIPSettings] = useState<IPSettings>({
     mode: 'dhcp',
@@ -46,11 +107,31 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     gateway: '',
     dns: [],
   });
+  const [testsSettings, setTestsSettings] = useState<TestsSettings>({
+    dnsHostname: 'google.com',
+    pingTargets: [],
+    tcpPorts: [],
+    udpPorts: [],
+    httpEndpoints: [],
+    speedtest: {
+      serverId: '',
+      autoRunOnLink: false,
+    },
+  });
+  const [wifiSettings, setWifiSettings] = useState<WiFiSettings>({
+    interface: '',
+    availableWifi: [],
+    isWireless: false,
+  });
   const [dnsInput, setDnsInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [savingIP, setSavingIP] = useState(false);
+  const [savingTests, setSavingTests] = useState(false);
+  const [savingWifi, setSavingWifi] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [ipMessage, setIPMessage] = useState<string | null>(null);
+  const [testsMessage, setTestsMessage] = useState<string | null>(null);
+  const [wifiMessage, setWifiMessage] = useState<string | null>(null);
 
   // Fetch current thresholds
   const fetchThresholds = useCallback(async () => {
@@ -94,12 +175,58 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   }, []);
 
+  // Fetch current tests settings
+  const fetchTestsSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/tests/settings`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTestsSettings({
+          dnsHostname: data.dnsHostname || 'google.com',
+          pingTargets: data.pingTargets || [],
+          tcpPorts: data.tcpPorts || [],
+          udpPorts: data.udpPorts || [],
+          httpEndpoints: data.httpEndpoints || [],
+          speedtest: {
+            serverId: data.speedtest?.serverId || '',
+            autoRunOnLink: data.speedtest?.autoRunOnLink || false,
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch tests settings:', err);
+    }
+  }, []);
+
+  // Fetch WiFi settings
+  const fetchWifiSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/wifi/settings`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setWifiSettings({
+          interface: data.interface || '',
+          availableWifi: data.availableWifi || [],
+          isWireless: data.isWireless || false,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch WiFi settings:', err);
+    }
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       fetchThresholds();
       fetchIPSettings();
+      fetchTestsSettings();
+      fetchWifiSettings();
     }
-  }, [isOpen, fetchThresholds, fetchIPSettings]);
+  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings]);
 
   const saveThresholds = async () => {
     setSaving(true);
@@ -114,7 +241,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         body: JSON.stringify({ thresholds }),
       });
       if (response.ok) {
-        setSaveMessage('Settings saved');
+        setSaveMessage('Thresholds saved');
         setTimeout(() => setSaveMessage(null), 2000);
       } else {
         setSaveMessage('Failed to save');
@@ -178,6 +305,58 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   };
 
+  const saveTestsSettings = async () => {
+    setSavingTests(true);
+    setTestsMessage(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/tests/settings`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testsSettings),
+      });
+      if (response.ok) {
+        setTestsMessage('Tests settings saved');
+        setTimeout(() => setTestsMessage(null), 2000);
+      } else {
+        const error = await response.text();
+        setTestsMessage(`Failed: ${error}`);
+      }
+    } catch (err) {
+      setTestsMessage('Error saving tests settings');
+    } finally {
+      setSavingTests(false);
+    }
+  };
+
+  const saveWifiSettings = async () => {
+    setSavingWifi(true);
+    setWifiMessage(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/wifi/settings`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ interface: wifiSettings.interface }),
+      });
+      if (response.ok) {
+        setWifiMessage('WiFi settings saved');
+        setTimeout(() => setWifiMessage(null), 2000);
+      } else {
+        const error = await response.text();
+        setWifiMessage(`Failed: ${error}`);
+      }
+    } catch (err) {
+      setWifiMessage('Error saving WiFi settings');
+    } finally {
+      setSavingWifi(false);
+    }
+  };
+
   // Validate IP address format
   const isValidIP = (ip: string): boolean => {
     if (!ip) return true; // Empty is OK for optional fields
@@ -187,6 +366,102 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       const n = parseInt(p, 10);
       return !isNaN(n) && n >= 0 && n <= 255 && p === String(n);
     });
+  };
+
+  // Add/remove ping target
+  const addPingTarget = () => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      pingTargets: [...prev.pingTargets, { name: '', host: '', enabled: true }],
+    }));
+  };
+
+  const removePingTarget = (index: number) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      pingTargets: prev.pingTargets.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updatePingTarget = (index: number, field: keyof PingTarget, value: string | boolean) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      pingTargets: prev.pingTargets.map((t, i) =>
+        i === index ? { ...t, [field]: value } : t
+      ),
+    }));
+  };
+
+  // Add/remove TCP port
+  const addTCPPort = () => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      tcpPorts: [...prev.tcpPorts, { name: '', host: '', port: 80, enabled: true }],
+    }));
+  };
+
+  const removeTCPPort = (index: number) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      tcpPorts: prev.tcpPorts.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateTCPPort = (index: number, field: keyof TCPPort, value: string | number | boolean) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      tcpPorts: prev.tcpPorts.map((t, i) =>
+        i === index ? { ...t, [field]: value } : t
+      ),
+    }));
+  };
+
+  // Add/remove UDP port
+  const addUDPPort = () => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      udpPorts: [...prev.udpPorts, { name: '', host: '', port: 53, enabled: true }],
+    }));
+  };
+
+  const removeUDPPort = (index: number) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      udpPorts: prev.udpPorts.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateUDPPort = (index: number, field: keyof UDPPort, value: string | number | boolean) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      udpPorts: prev.udpPorts.map((u, i) =>
+        i === index ? { ...u, [field]: value } : u
+      ),
+    }));
+  };
+
+  // Add/remove HTTP endpoint
+  const addHTTPEndpoint = () => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      httpEndpoints: [...prev.httpEndpoints, { name: '', url: '', expectedStatus: 200, enabled: true }],
+    }));
+  };
+
+  const removeHTTPEndpoint = (index: number) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      httpEndpoints: prev.httpEndpoints.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateHTTPEndpoint = (index: number, field: keyof HTTPEndpoint, value: string | number | boolean) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      httpEndpoints: prev.httpEndpoints.map((t, i) =>
+        i === index ? { ...t, [field]: value } : t
+      ),
+    }));
   };
 
   if (!isOpen) return null;
@@ -214,11 +489,12 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           </button>
         </div>
 
-        <div className="p-4 pb-8 space-y-6">
-          {/* IP Configuration Section */}
-          <section>
-            <h3 className="text-sm font-medium text-text-muted mb-3">IP Configuration</h3>
-            <div className="p-3 bg-surface-base rounded border border-surface-border space-y-3">
+        <div className="p-4 pb-8 space-y-4">
+          {/* Network Section */}
+          <CollapsibleSection title="Network" defaultOpen>
+            {/* IP Configuration */}
+            <div className="space-y-3">
+              <p className="text-xs text-text-muted font-medium">IP Configuration</p>
               {/* Mode Toggle */}
               <div className="flex gap-2">
                 <button
@@ -226,7 +502,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
                     ipSettings.mode === 'dhcp'
                       ? 'bg-brand-primary text-text-inverse'
-                      : 'bg-surface-raised border border-surface-border text-text-primary hover:bg-surface-hover'
+                      : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover'
                   }`}
                 >
                   DHCP
@@ -236,7 +512,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
                     ipSettings.mode === 'static'
                       ? 'bg-brand-primary text-text-inverse'
-                      : 'bg-surface-raised border border-surface-border text-text-primary hover:bg-surface-hover'
+                      : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover'
                   }`}
                 >
                   Static
@@ -255,7 +531,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         setIPSettings((prev) => ({ ...prev, address: e.target.value }))
                       }
                       placeholder="192.168.1.100"
-                      className={`w-full mt-1 px-2 py-1 bg-surface-raised border rounded text-sm text-text-primary ${
+                      className={`w-full mt-1 px-2 py-1 bg-surface-base border rounded text-sm text-text-primary ${
                         ipSettings.address && !isValidIP(ipSettings.address)
                           ? 'border-status-error'
                           : 'border-surface-border'
@@ -271,7 +547,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         setIPSettings((prev) => ({ ...prev, netmask: e.target.value }))
                       }
                       placeholder="24 or 255.255.255.0"
-                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                     />
                   </div>
                   <div>
@@ -283,7 +559,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         setIPSettings((prev) => ({ ...prev, gateway: e.target.value }))
                       }
                       placeholder="192.168.1.1"
-                      className={`w-full mt-1 px-2 py-1 bg-surface-raised border rounded text-sm text-text-primary ${
+                      className={`w-full mt-1 px-2 py-1 bg-surface-base border rounded text-sm text-text-primary ${
                         ipSettings.gateway && !isValidIP(ipSettings.gateway)
                           ? 'border-status-error'
                           : 'border-surface-border'
@@ -297,7 +573,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       value={dnsInput}
                       onChange={(e) => setDnsInput(e.target.value)}
                       placeholder="8.8.8.8, 8.8.4.4"
-                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                     />
                   </div>
                 </div>
@@ -328,42 +604,337 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 Note: Requires root/admin privileges to apply
               </p>
             </div>
-          </section>
+          </CollapsibleSection>
 
-          {/* Theme Section */}
-          <section>
-            <h3 className="text-sm font-medium text-text-muted mb-3">Appearance</h3>
-            <div className="space-y-2">
-              <label className="flex items-center justify-between p-3 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm text-text-primary">Theme</span>
-                <select
-                  value={theme}
-                  onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
-                  className="bg-surface-raised border border-surface-border rounded px-2 py-1 text-sm text-text-primary"
+          {/* WiFi Section */}
+          <CollapsibleSection title="WiFi">
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-text-muted">WiFi Interface</label>
+                {wifiSettings.availableWifi.length > 0 ? (
+                  <select
+                    value={wifiSettings.interface}
+                    onChange={(e) =>
+                      setWifiSettings((prev) => ({ ...prev, interface: e.target.value }))
+                    }
+                    className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  >
+                    {wifiSettings.availableWifi.map((iface) => (
+                      <option key={iface} value={iface}>
+                        {iface}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={wifiSettings.interface}
+                    onChange={(e) =>
+                      setWifiSettings((prev) => ({ ...prev, interface: e.target.value }))
+                    }
+                    placeholder="wlan0 or en0"
+                    className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  />
+                )}
+                <p className="text-xs text-text-muted mt-1">
+                  {wifiSettings.isWireless
+                    ? 'Currently monitoring a wireless interface'
+                    : 'No wireless interface detected'}
+                </p>
+              </div>
+
+              <button
+                onClick={saveWifiSettings}
+                disabled={savingWifi}
+                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+              >
+                {savingWifi ? 'Saving...' : 'Save WiFi Settings'}
+              </button>
+
+              {wifiMessage && (
+                <p
+                  className={`text-xs text-center ${
+                    wifiMessage.includes('Failed') || wifiMessage.includes('Error')
+                      ? 'text-status-error'
+                      : 'text-status-success'
+                  }`}
                 >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="system">System</option>
-                </select>
+                  {wifiMessage}
+                </p>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* Health Checks Section */}
+          <CollapsibleSection title="Health Checks">
+            <div className="space-y-4">
+              {/* DNS Hostname */}
+              <div>
+                <label className="text-xs text-text-muted">DNS Test Hostname</label>
+                <input
+                  type="text"
+                  value={testsSettings.dnsHostname}
+                  onChange={(e) =>
+                    setTestsSettings((prev) => ({ ...prev, dnsHostname: e.target.value }))
+                  }
+                  placeholder="google.com"
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  Hostname used for DNS forward/reverse lookups
+                </p>
+              </div>
+
+              {/* Ping Targets */}
+              <div className="border-t border-surface-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-text-muted font-medium">Ping Targets</span>
+                  <button
+                    onClick={addPingTarget}
+                    className="text-xs text-brand-primary hover:text-brand-accent"
+                  >
+                    + Add
+                  </button>
+                </div>
+                {testsSettings.pingTargets.map((target, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={target.name}
+                      onChange={(e) => updatePingTarget(idx, 'name', e.target.value)}
+                      placeholder="Name"
+                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <input
+                      type="text"
+                      value={target.host}
+                      onChange={(e) => updatePingTarget(idx, 'host', e.target.value)}
+                      placeholder="Host/IP"
+                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <button
+                      onClick={() => removePingTarget(idx)}
+                      className="text-status-error hover:text-status-error/80 px-1"
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* TCP Ports */}
+              <div className="border-t border-surface-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-text-muted font-medium">TCP Port Tests</span>
+                  <button
+                    onClick={addTCPPort}
+                    className="text-xs text-brand-primary hover:text-brand-accent"
+                  >
+                    + Add
+                  </button>
+                </div>
+                {testsSettings.tcpPorts.map((port, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={port.name}
+                      onChange={(e) => updateTCPPort(idx, 'name', e.target.value)}
+                      placeholder="Name"
+                      className="w-20 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <input
+                      type="text"
+                      value={port.host}
+                      onChange={(e) => updateTCPPort(idx, 'host', e.target.value)}
+                      placeholder="Host"
+                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <input
+                      type="number"
+                      value={port.port}
+                      onChange={(e) => updateTCPPort(idx, 'port', parseInt(e.target.value) || 80)}
+                      placeholder="Port"
+                      className="w-16 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <button
+                      onClick={() => removeTCPPort(idx)}
+                      className="text-status-error hover:text-status-error/80 px-1"
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* UDP Ports */}
+              <div className="border-t border-surface-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-text-muted font-medium">UDP Port Tests</span>
+                  <button
+                    onClick={addUDPPort}
+                    className="text-xs text-brand-primary hover:text-brand-accent"
+                  >
+                    + Add
+                  </button>
+                </div>
+                <p className="text-xs text-text-muted mb-2">
+                  Test UDP services (DNS:53, NTP:123, etc.)
+                </p>
+                {testsSettings.udpPorts.map((port, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={port.name}
+                      onChange={(e) => updateUDPPort(idx, 'name', e.target.value)}
+                      placeholder="Name"
+                      className="w-20 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <input
+                      type="text"
+                      value={port.host}
+                      onChange={(e) => updateUDPPort(idx, 'host', e.target.value)}
+                      placeholder="Host"
+                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <input
+                      type="number"
+                      value={port.port}
+                      onChange={(e) => updateUDPPort(idx, 'port', parseInt(e.target.value) || 53)}
+                      placeholder="Port"
+                      className="w-16 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <button
+                      onClick={() => removeUDPPort(idx)}
+                      className="text-status-error hover:text-status-error/80 px-1"
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* HTTP Endpoints */}
+              <div className="border-t border-surface-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-text-muted font-medium">HTTP Endpoints</span>
+                  <button
+                    onClick={addHTTPEndpoint}
+                    className="text-xs text-brand-primary hover:text-brand-accent"
+                  >
+                    + Add
+                  </button>
+                </div>
+                {testsSettings.httpEndpoints.map((endpoint, idx) => (
+                  <div key={idx} className="space-y-1 mb-3 p-2 bg-surface-base rounded border border-surface-border">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={endpoint.name}
+                        onChange={(e) => updateHTTPEndpoint(idx, 'name', e.target.value)}
+                        placeholder="Name"
+                        className="flex-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                      />
+                      <input
+                        type="number"
+                        value={endpoint.expectedStatus}
+                        onChange={(e) => updateHTTPEndpoint(idx, 'expectedStatus', parseInt(e.target.value) || 200)}
+                        placeholder="Status"
+                        className="w-16 px-2 py-1 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                      />
+                      <button
+                        onClick={() => removeHTTPEndpoint(idx)}
+                        className="text-status-error hover:text-status-error/80 px-1"
+                      >
+                        x
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={endpoint.url}
+                      onChange={(e) => updateHTTPEndpoint(idx, 'url', e.target.value)}
+                      placeholder="https://example.com/health"
+                      className="w-full px-2 py-1 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Save Health Checks Button */}
+              <button
+                onClick={saveTestsSettings}
+                disabled={savingTests}
+                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+              >
+                {savingTests ? 'Saving...' : 'Save Health Checks'}
+              </button>
+
+              {testsMessage && (
+                <p
+                  className={`text-xs text-center ${
+                    testsMessage.includes('Failed') || testsMessage.includes('Error')
+                      ? 'text-status-error'
+                      : 'text-status-success'
+                  }`}
+                >
+                  {testsMessage}
+                </p>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* Speedtest Section */}
+          <CollapsibleSection title="Speedtest">
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-text-muted">Server ID (optional)</label>
+                <input
+                  type="text"
+                  value={testsSettings.speedtest.serverId}
+                  onChange={(e) =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      speedtest: { ...prev.speedtest, serverId: e.target.value },
+                    }))
+                  }
+                  placeholder="Auto (closest server)"
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  Leave empty for auto-selection
+                </p>
+              </div>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Auto-run on link up</span>
+                <input
+                  type="checkbox"
+                  checked={testsSettings.speedtest.autoRunOnLink}
+                  onChange={(e) =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      speedtest: { ...prev.speedtest, autoRunOnLink: e.target.checked },
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
               </label>
 
               <button
-                onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="w-full flex items-center justify-between p-3 bg-surface-base rounded border border-surface-border hover:bg-surface-hover transition-colors"
+                onClick={saveTestsSettings}
+                disabled={savingTests}
+                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
               >
-                <span className="text-sm text-text-primary">Quick Toggle</span>
-                <span className="text-xl">{isDark ? '🌙' : '☀️'}</span>
+                {savingTests ? 'Saving...' : 'Save Speedtest Settings'}
               </button>
             </div>
-          </section>
+          </CollapsibleSection>
 
           {/* Thresholds Section */}
-          <section>
-            <h3 className="text-sm font-medium text-text-muted mb-3">Response Thresholds (ms)</h3>
-            <div className="space-y-4">
+          <CollapsibleSection title="Thresholds">
+            <div className="space-y-3">
               {/* DNS Thresholds */}
               <div className="p-3 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm font-medium text-text-primary block mb-2">DNS Lookup</span>
+                <span className="text-sm font-medium text-text-primary block mb-2">DNS Lookup (ms)</span>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs text-text-muted">Good (&lt;)</label>
@@ -388,7 +959,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* Gateway Thresholds */}
               <div className="p-3 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm font-medium text-text-primary block mb-2">Gateway Ping</span>
+                <span className="text-sm font-medium text-text-primary block mb-2">Gateway Ping (ms)</span>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs text-text-muted">Good (&lt;)</label>
@@ -435,23 +1006,124 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Health Check Ping Thresholds */}
+              <div className="p-3 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm font-medium text-text-primary block mb-2">Health Check: Ping (ms)</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-text-muted">Good (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.customPing.good}
+                      onChange={(e) => updateThreshold('customPing', 'good', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">Warning (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.customPing.warning}
+                      onChange={(e) => updateThreshold('customPing', 'warning', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Health Check TCP Thresholds */}
+              <div className="p-3 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm font-medium text-text-primary block mb-2">Health Check: TCP (ms)</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-text-muted">Good (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.customTcp.good}
+                      onChange={(e) => updateThreshold('customTcp', 'good', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">Warning (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.customTcp.warning}
+                      onChange={(e) => updateThreshold('customTcp', 'warning', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Health Check HTTP Thresholds */}
+              <div className="p-3 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm font-medium text-text-primary block mb-2">Health Check: HTTP (ms)</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-text-muted">Good (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.customHttp.good}
+                      onChange={(e) => updateThreshold('customHttp', 'good', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted">Warning (&lt;)</label>
+                    <input
+                      type="number"
+                      value={thresholds.customHttp.warning}
+                      onChange={(e) => updateThreshold('customHttp', 'warning', Number(e.target.value))}
+                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <button
+                onClick={saveThresholds}
+                disabled={saving}
+                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+              >
+                {saving ? 'Saving...' : 'Save Thresholds'}
+              </button>
+
+              {saveMessage && (
+                <p className={`text-sm text-center ${saveMessage.includes('Error') || saveMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'}`}>
+                  {saveMessage}
+                </p>
+              )}
             </div>
-          </section>
+          </CollapsibleSection>
 
-          {/* Save Button */}
-          <button
-            onClick={saveThresholds}
-            disabled={saving}
-            className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
-          >
-            {saving ? 'Saving...' : 'Save Thresholds'}
-          </button>
+          {/* Appearance Section */}
+          <CollapsibleSection title="Appearance">
+            <div className="space-y-2">
+              <label className="flex items-center justify-between p-3 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Theme</span>
+                <select
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
+                  className="bg-surface-raised border border-surface-border rounded px-2 py-1 text-sm text-text-primary"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="system">System</option>
+                </select>
+              </label>
 
-          {saveMessage && (
-            <p className={`text-sm text-center ${saveMessage.includes('Error') || saveMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'}`}>
-              {saveMessage}
-            </p>
-          )}
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="w-full flex items-center justify-between p-3 bg-surface-base rounded border border-surface-border hover:bg-surface-hover transition-colors"
+              >
+                <span className="text-sm text-text-primary">Quick Toggle</span>
+                <span className="text-xl">{isDark ? '🌙' : '☀️'}</span>
+              </button>
+            </div>
+          </CollapsibleSection>
 
           {/* Export Section */}
           <section className="pt-4 border-t border-surface-border">
@@ -475,7 +1147,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           <section className="pt-4 border-t border-surface-border">
             <h3 className="text-sm font-medium text-text-muted mb-2">About</h3>
             <p className="text-xs text-text-muted">
-              NetScope v0.7.0
+              NetScope v0.7.3
               <br />
               Network Diagnostic Tool
             </p>

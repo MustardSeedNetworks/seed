@@ -16,6 +16,8 @@ type Config struct {
 	IP         IPConfig         `yaml:"ip"`
 	Discovery  DiscoveryConfig  `yaml:"discovery"`
 	DNS        DNSConfig        `yaml:"dns"`
+	Tests      TestsConfig      `yaml:"tests"`
+	Speedtest  SpeedtestConfig  `yaml:"speedtest"`
 	Thresholds ThresholdsConfig `yaml:"thresholds"`
 	Auth       AuthConfig       `yaml:"auth"`
 }
@@ -32,6 +34,7 @@ type ServerConfig struct {
 type InterfaceConfig struct {
 	Default   string   `yaml:"default"`
 	Fallbacks []string `yaml:"fallbacks"`
+	WiFi      string   `yaml:"wifi,omitempty"` // Separate WiFi interface (optional)
 }
 
 // VLANConfig contains VLAN settings.
@@ -66,12 +69,73 @@ type DNSConfig struct {
 	Timeout      time.Duration `yaml:"timeout"`
 }
 
+// TestsConfig contains custom test configurations.
+type TestsConfig struct {
+	PingTargets   []PingTarget   `yaml:"ping_targets"`
+	TCPPorts      []TCPPortTest  `yaml:"tcp_ports"`
+	UDPPorts      []UDPPortTest  `yaml:"udp_ports"`
+	HTTPEndpoints []HTTPEndpoint `yaml:"http_endpoints"`
+}
+
+// PingTarget represents a custom ping target.
+type PingTarget struct {
+	Name    string `yaml:"name"`
+	Host    string `yaml:"host"`
+	Enabled bool   `yaml:"enabled"`
+}
+
+// TCPPortTest represents a custom TCP port test.
+type TCPPortTest struct {
+	Name    string `yaml:"name"`
+	Host    string `yaml:"host"`
+	Port    int    `yaml:"port"`
+	Enabled bool   `yaml:"enabled"`
+}
+
+// UDPPortTest represents a custom UDP port test.
+type UDPPortTest struct {
+	Name    string `yaml:"name"`
+	Host    string `yaml:"host"`
+	Port    int    `yaml:"port"`
+	Enabled bool   `yaml:"enabled"`
+}
+
+// HTTPEndpoint represents a custom HTTP endpoint test.
+type HTTPEndpoint struct {
+	Name           string `yaml:"name"`
+	URL            string `yaml:"url"`
+	ExpectedStatus int    `yaml:"expected_status"`
+	Enabled        bool   `yaml:"enabled"`
+}
+
+// SpeedtestConfig contains speedtest settings.
+type SpeedtestConfig struct {
+	ServerID      string `yaml:"server_id"`       // Specific server ID (empty = auto)
+	AutoRunOnLink bool   `yaml:"auto_run_on_link"` // Run automatically when link comes up
+}
+
 // ThresholdsConfig contains all threshold settings.
 type ThresholdsConfig struct {
-	DHCP DHCPThresholds `yaml:"dhcp"`
-	DNS  Threshold      `yaml:"dns"`
-	Ping Threshold      `yaml:"ping"`
-	WiFi WiFiThresholds `yaml:"wifi"`
+	DHCP        DHCPThresholds    `yaml:"dhcp"`
+	DNS         Threshold         `yaml:"dns"`
+	Ping        Threshold         `yaml:"ping"`
+	WiFi        WiFiThresholds    `yaml:"wifi"`
+	CustomTests CustomThresholds  `yaml:"custom_tests"`
+}
+
+// CustomThresholds contains thresholds for custom tests.
+type CustomThresholds struct {
+	Ping       Threshold        `yaml:"ping"`        // Custom ping targets
+	TCP        Threshold        `yaml:"tcp"`         // TCP port tests
+	UDP        Threshold        `yaml:"udp"`         // UDP port tests
+	HTTP       Threshold        `yaml:"http"`        // HTTP endpoint tests
+	CertExpiry CertExpiryThreshold `yaml:"cert_expiry"` // Certificate expiry (days)
+}
+
+// CertExpiryThreshold contains certificate expiry thresholds in days.
+type CertExpiryThreshold struct {
+	Warning  int `yaml:"warning"`  // Days until warning (e.g., 30)
+	Critical int `yaml:"critical"` // Days until critical (e.g., 7)
 }
 
 // DHCPThresholds contains DHCP-specific thresholds.
@@ -131,6 +195,16 @@ func DefaultConfig() *Config {
 			TestHostname: "google.com",
 			Timeout:      5 * time.Second,
 		},
+		Tests: TestsConfig{
+			PingTargets:   []PingTarget{},
+			TCPPorts:      []TCPPortTest{},
+			UDPPorts:      []UDPPortTest{},
+			HTTPEndpoints: []HTTPEndpoint{},
+		},
+		Speedtest: SpeedtestConfig{
+			ServerID:      "",    // Auto-select closest
+			AutoRunOnLink: false, // Disabled by default
+		},
 		Thresholds: ThresholdsConfig{
 			DHCP: DHCPThresholds{
 				Total:    Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
@@ -140,6 +214,13 @@ func DefaultConfig() *Config {
 			Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 200 * time.Millisecond},
 			WiFi: WiFiThresholds{
 				Signal: SignalThreshold{Warning: -70, Critical: -80},
+			},
+			CustomTests: CustomThresholds{
+				Ping:       Threshold{Warning: 50 * time.Millisecond, Critical: 100 * time.Millisecond},
+				TCP:        Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+				UDP:        Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+				HTTP:       Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
+				CertExpiry: CertExpiryThreshold{Warning: 30, Critical: 7}, // Days
 			},
 		},
 		Auth: AuthConfig{

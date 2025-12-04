@@ -2,10 +2,14 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/krisarmstrong/netscope/internal/config"
@@ -90,7 +94,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 	resp := StatusResponse{
 		Status:     "ok",
-		Version:    "0.7.0",
+		Version:    "0.7.3",
 		Interface:  s.config.Interface.Default,
 		IsWireless: isWireless,
 	}
@@ -137,6 +141,18 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 				"good":    s.config.Thresholds.WiFi.Signal.Warning,
 				"warning": s.config.Thresholds.WiFi.Signal.Critical,
 			},
+			"customPing": map[string]int64{
+				"good":    s.config.Thresholds.CustomTests.Ping.Warning.Milliseconds(),
+				"warning": s.config.Thresholds.CustomTests.Ping.Critical.Milliseconds(),
+			},
+			"customTcp": map[string]int64{
+				"good":    s.config.Thresholds.CustomTests.TCP.Warning.Milliseconds(),
+				"warning": s.config.Thresholds.CustomTests.TCP.Critical.Milliseconds(),
+			},
+			"customHttp": map[string]int64{
+				"good":    s.config.Thresholds.CustomTests.HTTP.Warning.Milliseconds(),
+				"warning": s.config.Thresholds.CustomTests.HTTP.Critical.Milliseconds(),
+			},
 		},
 	}
 
@@ -175,6 +191,30 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			}
 			if warning, ok := wifi["warning"].(float64); ok {
 				s.config.Thresholds.WiFi.Signal.Critical = int(warning)
+			}
+		}
+		if customPing, ok := thresholds["customPing"].(map[string]interface{}); ok {
+			if good, ok := customPing["good"].(float64); ok {
+				s.config.Thresholds.CustomTests.Ping.Warning = time.Duration(good) * time.Millisecond
+			}
+			if warning, ok := customPing["warning"].(float64); ok {
+				s.config.Thresholds.CustomTests.Ping.Critical = time.Duration(warning) * time.Millisecond
+			}
+		}
+		if customTcp, ok := thresholds["customTcp"].(map[string]interface{}); ok {
+			if good, ok := customTcp["good"].(float64); ok {
+				s.config.Thresholds.CustomTests.TCP.Warning = time.Duration(good) * time.Millisecond
+			}
+			if warning, ok := customTcp["warning"].(float64); ok {
+				s.config.Thresholds.CustomTests.TCP.Critical = time.Duration(warning) * time.Millisecond
+			}
+		}
+		if customHttp, ok := thresholds["customHttp"].(map[string]interface{}); ok {
+			if good, ok := customHttp["good"].(float64); ok {
+				s.config.Thresholds.CustomTests.HTTP.Warning = time.Duration(good) * time.Millisecond
+			}
+			if warning, ok := customHttp["warning"].(float64); ok {
+				s.config.Thresholds.CustomTests.HTTP.Critical = time.Duration(warning) * time.Millisecond
 			}
 		}
 	}
@@ -570,7 +610,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	export := ExportData{
-		Version:   "0.7.0",
+		Version:   "0.7.3",
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Device: ExportDeviceInfo{
 			Interface: currentIface,
@@ -970,6 +1010,81 @@ type WiFiResponse struct {
 	Security  string `json:"security"`
 }
 
+// WiFiSettingsResponse represents the WiFi configuration settings.
+type WiFiSettingsResponse struct {
+	Interface       string   `json:"interface"`
+	AvailableWiFi   []string `json:"availableWifi"`
+	IsWireless      bool     `json:"isWireless"`
+}
+
+// handleWiFiSettings handles GET/PUT for WiFi settings.
+func (s *Server) handleWiFiSettings(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.getWiFiSettings(w, r)
+	case http.MethodPut:
+		s.updateWiFiSettings(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) getWiFiSettings(w http.ResponseWriter, r *http.Request) {
+	// Get configured WiFi interface (or fall back to current)
+	wifiIface := s.config.Interface.WiFi
+	if wifiIface == "" {
+		wifiIface = s.config.Interface.Default
+	}
+
+	// Get list of available wireless interfaces
+	availableWiFi := []string{}
+	if s.netManager != nil {
+		for _, iface := range s.netManager.GetInterfaces() {
+			if s.netManager.IsWireless(iface.Name) {
+				availableWiFi = append(availableWiFi, iface.Name)
+			}
+		}
+	}
+
+	resp := WiFiSettingsResponse{
+		Interface:     wifiIface,
+		AvailableWiFi: availableWiFi,
+		IsWireless:    s.wifiManager != nil && s.wifiManager.IsWireless(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Interface string `json:"interface"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update WiFi interface in config
+	s.config.Interface.WiFi = req.Interface
+
+	// Update WiFi manager to use new interface
+	if s.wifiManager != nil && req.Interface != "" {
+		s.wifiManager.SetInterface(req.Interface)
+	}
+
+	// Save config
+	if err := s.config.Save("config.yaml"); err != nil {
+		log.Printf("Warning: Failed to save config: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "WiFi settings updated",
+	})
+}
+
 // handleWiFi returns Wi-Fi information for the current interface.
 func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -1160,6 +1275,694 @@ func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+// TestsSettingsResponse represents the custom tests configuration.
+type TestsSettingsResponse struct {
+	DNSHostname   string                    `json:"dnsHostname"`
+	PingTargets   []PingTargetResponse      `json:"pingTargets"`
+	TCPPorts      []TCPPortResponse         `json:"tcpPorts"`
+	UDPPorts      []UDPPortResponse         `json:"udpPorts"`
+	HTTPEndpoints []HTTPEndpointResponse    `json:"httpEndpoints"`
+	Speedtest     SpeedtestSettingsResponse `json:"speedtest"`
+}
+
+type PingTargetResponse struct {
+	Name    string `json:"name"`
+	Host    string `json:"host"`
+	Enabled bool   `json:"enabled"`
+}
+
+type TCPPortResponse struct {
+	Name    string `json:"name"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	Enabled bool   `json:"enabled"`
+}
+
+type UDPPortResponse struct {
+	Name    string `json:"name"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	Enabled bool   `json:"enabled"`
+}
+
+type HTTPEndpointResponse struct {
+	Name           string `json:"name"`
+	URL            string `json:"url"`
+	ExpectedStatus int    `json:"expectedStatus"`
+	Enabled        bool   `json:"enabled"`
+}
+
+type SpeedtestSettingsResponse struct {
+	ServerID      string `json:"serverId"`
+	AutoRunOnLink bool   `json:"autoRunOnLink"`
+}
+
+// handleTestsSettings handles GET/PUT for custom tests settings.
+func (s *Server) handleTestsSettings(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.getTestsSettings(w, r)
+	case http.MethodPut:
+		s.updateTestsSettings(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
+	resp := TestsSettingsResponse{
+		DNSHostname:   s.config.DNS.TestHostname,
+		PingTargets:   make([]PingTargetResponse, 0, len(s.config.Tests.PingTargets)),
+		TCPPorts:      make([]TCPPortResponse, 0, len(s.config.Tests.TCPPorts)),
+		UDPPorts:      make([]UDPPortResponse, 0, len(s.config.Tests.UDPPorts)),
+		HTTPEndpoints: make([]HTTPEndpointResponse, 0, len(s.config.Tests.HTTPEndpoints)),
+		Speedtest: SpeedtestSettingsResponse{
+			ServerID:      s.config.Speedtest.ServerID,
+			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
+		},
+	}
+
+	for _, p := range s.config.Tests.PingTargets {
+		resp.PingTargets = append(resp.PingTargets, PingTargetResponse{
+			Name:    p.Name,
+			Host:    p.Host,
+			Enabled: p.Enabled,
+		})
+	}
+
+	for _, t := range s.config.Tests.TCPPorts {
+		resp.TCPPorts = append(resp.TCPPorts, TCPPortResponse{
+			Name:    t.Name,
+			Host:    t.Host,
+			Port:    t.Port,
+			Enabled: t.Enabled,
+		})
+	}
+
+	for _, u := range s.config.Tests.UDPPorts {
+		resp.UDPPorts = append(resp.UDPPorts, UDPPortResponse{
+			Name:    u.Name,
+			Host:    u.Host,
+			Port:    u.Port,
+			Enabled: u.Enabled,
+		})
+	}
+
+	for _, h := range s.config.Tests.HTTPEndpoints {
+		resp.HTTPEndpoints = append(resp.HTTPEndpoints, HTTPEndpointResponse{
+			Name:           h.Name,
+			URL:            h.URL,
+			ExpectedStatus: h.ExpectedStatus,
+			Enabled:        h.Enabled,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
+	var req TestsSettingsResponse
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update DNS hostname
+	if req.DNSHostname != "" {
+		s.config.DNS.TestHostname = req.DNSHostname
+		// Update the DNS tester with the new hostname
+		if s.dnsTester != nil {
+			s.dnsTester.SetTestHostname(req.DNSHostname)
+		}
+	}
+
+	// Update ping targets
+	s.config.Tests.PingTargets = make([]config.PingTarget, 0, len(req.PingTargets))
+	for _, p := range req.PingTargets {
+		s.config.Tests.PingTargets = append(s.config.Tests.PingTargets, config.PingTarget{
+			Name:    p.Name,
+			Host:    p.Host,
+			Enabled: p.Enabled,
+		})
+	}
+
+	// Update TCP ports
+	s.config.Tests.TCPPorts = make([]config.TCPPortTest, 0, len(req.TCPPorts))
+	for _, t := range req.TCPPorts {
+		s.config.Tests.TCPPorts = append(s.config.Tests.TCPPorts, config.TCPPortTest{
+			Name:    t.Name,
+			Host:    t.Host,
+			Port:    t.Port,
+			Enabled: t.Enabled,
+		})
+	}
+
+	// Update UDP ports
+	s.config.Tests.UDPPorts = make([]config.UDPPortTest, 0, len(req.UDPPorts))
+	for _, u := range req.UDPPorts {
+		s.config.Tests.UDPPorts = append(s.config.Tests.UDPPorts, config.UDPPortTest{
+			Name:    u.Name,
+			Host:    u.Host,
+			Port:    u.Port,
+			Enabled: u.Enabled,
+		})
+	}
+
+	// Update HTTP endpoints
+	s.config.Tests.HTTPEndpoints = make([]config.HTTPEndpoint, 0, len(req.HTTPEndpoints))
+	for _, h := range req.HTTPEndpoints {
+		s.config.Tests.HTTPEndpoints = append(s.config.Tests.HTTPEndpoints, config.HTTPEndpoint{
+			Name:           h.Name,
+			URL:            h.URL,
+			ExpectedStatus: h.ExpectedStatus,
+			Enabled:        h.Enabled,
+		})
+	}
+
+	// Update speedtest settings
+	s.config.Speedtest.ServerID = req.Speedtest.ServerID
+	s.config.Speedtest.AutoRunOnLink = req.Speedtest.AutoRunOnLink
+	if s.speedtestTester != nil {
+		s.speedtestTester.SetServerID(req.Speedtest.ServerID)
+	}
+
+	// Save config to file
+	if err := s.config.Save("config.yaml"); err != nil {
+		log.Printf("Warning: Failed to save config: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Tests settings updated",
+	})
+}
+
+// CustomTestResult represents the result of a single custom test.
+type CustomTestResult struct {
+	Name        string  `json:"name"`
+	Host        string  `json:"host"`
+	Port        int     `json:"port,omitempty"`
+	URL         string  `json:"url,omitempty"`
+	Success     bool    `json:"success"`
+	Latency     float64 `json:"latency"` // ms
+	Error       string  `json:"error,omitempty"`
+	Status      int     `json:"status,omitempty"`     // HTTP status code
+	TestStatus  string  `json:"testStatus,omitempty"` // success, warning, error
+	// Extended ping fields
+	PacketLoss  float64 `json:"packetLoss,omitempty"`  // Percentage
+	Jitter      float64 `json:"jitter,omitempty"`      // ms
+	MinLatency  float64 `json:"minLatency,omitempty"`  // ms
+	MaxLatency  float64 `json:"maxLatency,omitempty"`  // ms
+	// Certificate fields
+	CertDaysLeft   int    `json:"certDaysLeft,omitempty"`   // Days until cert expires
+	CertStatus     string `json:"certStatus,omitempty"`     // success, warning, error
+	CertExpiry     string `json:"certExpiry,omitempty"`     // Expiry date string
+	CertCommonName string `json:"certCommonName,omitempty"` // Certificate CN
+}
+
+// CustomTestsResult represents results from all custom tests.
+type CustomTestsResult struct {
+	PingResults []CustomTestResult `json:"pingResults"`
+	TCPResults  []CustomTestResult `json:"tcpResults"`
+	UDPResults  []CustomTestResult `json:"udpResults"`
+	HTTPResults []CustomTestResult `json:"httpResults"`
+	HasTests    bool               `json:"hasTests"`
+}
+
+// handleCustomTests runs all configured custom tests and returns results.
+func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	result := CustomTestsResult{
+		PingResults: make([]CustomTestResult, 0),
+		TCPResults:  make([]CustomTestResult, 0),
+		UDPResults:  make([]CustomTestResult, 0),
+		HTTPResults: make([]CustomTestResult, 0),
+		HasTests:    false,
+	}
+
+	// Check if there are any tests configured
+	if len(s.config.Tests.PingTargets) > 0 || len(s.config.Tests.TCPPorts) > 0 ||
+		len(s.config.Tests.UDPPorts) > 0 || len(s.config.Tests.HTTPEndpoints) > 0 {
+		result.HasTests = true
+	}
+
+	// Get thresholds
+	pingThreshold := s.config.Thresholds.CustomTests.Ping
+	tcpThreshold := s.config.Thresholds.CustomTests.TCP
+	udpThreshold := s.config.Thresholds.CustomTests.UDP
+	httpThreshold := s.config.Thresholds.CustomTests.HTTP
+	certThreshold := s.config.Thresholds.CustomTests.CertExpiry
+
+	// Run extended ping tests (with packet loss and jitter)
+	for _, target := range s.config.Tests.PingTargets {
+		if !target.Enabled {
+			continue
+		}
+		name := target.Name
+		if name == "" {
+			name = target.Host
+		}
+
+		testResult := CustomTestResult{
+			Name: name,
+			Host: target.Host,
+		}
+
+		// Run extended ping (5 pings for stats)
+		pingStats, err := runExtendedPing(target.Host, 5)
+		if err != nil {
+			testResult.Success = false
+			testResult.Error = err.Error()
+			testResult.TestStatus = "error"
+		} else {
+			testResult.Success = pingStats.PacketLoss < 100
+			testResult.Latency = pingStats.AvgLatency
+			testResult.MinLatency = pingStats.MinLatency
+			testResult.MaxLatency = pingStats.MaxLatency
+			testResult.PacketLoss = pingStats.PacketLoss
+			testResult.Jitter = pingStats.Jitter
+
+			// Determine status based on latency or packet loss
+			if pingStats.PacketLoss > 50 {
+				testResult.TestStatus = "error"
+			} else if pingStats.PacketLoss > 10 {
+				testResult.TestStatus = "warning"
+			} else {
+				testResult.TestStatus = getTestStatus(pingStats.AvgLatency, pingThreshold.Warning.Milliseconds(), pingThreshold.Critical.Milliseconds())
+			}
+		}
+		result.PingResults = append(result.PingResults, testResult)
+	}
+
+	// Run TCP port tests
+	for _, target := range s.config.Tests.TCPPorts {
+		if !target.Enabled {
+			continue
+		}
+		name := target.Name
+		if name == "" {
+			name = fmt.Sprintf("%s:%d", target.Host, target.Port)
+		}
+
+		testResult := CustomTestResult{
+			Name: name,
+			Host: target.Host,
+			Port: target.Port,
+		}
+
+		latency, err := runTCPTest(target.Host, target.Port)
+		if err != nil {
+			testResult.Success = false
+			testResult.Error = err.Error()
+			testResult.TestStatus = "error"
+		} else {
+			testResult.Success = true
+			testResult.Latency = latency
+			testResult.TestStatus = getTestStatus(latency, tcpThreshold.Warning.Milliseconds(), tcpThreshold.Critical.Milliseconds())
+		}
+		result.TCPResults = append(result.TCPResults, testResult)
+	}
+
+	// Run UDP port tests
+	for _, target := range s.config.Tests.UDPPorts {
+		if !target.Enabled {
+			continue
+		}
+		name := target.Name
+		if name == "" {
+			name = fmt.Sprintf("%s:%d", target.Host, target.Port)
+		}
+
+		testResult := CustomTestResult{
+			Name: name,
+			Host: target.Host,
+			Port: target.Port,
+		}
+
+		latency, err := runUDPTest(target.Host, target.Port)
+		if err != nil {
+			testResult.Success = false
+			testResult.Error = err.Error()
+			testResult.TestStatus = "error"
+		} else {
+			testResult.Success = true
+			testResult.Latency = latency
+			testResult.TestStatus = getTestStatus(latency, udpThreshold.Warning.Milliseconds(), udpThreshold.Critical.Milliseconds())
+		}
+		result.UDPResults = append(result.UDPResults, testResult)
+	}
+
+	// Run HTTP endpoint tests with certificate expiry checking
+	for _, endpoint := range s.config.Tests.HTTPEndpoints {
+		if !endpoint.Enabled {
+			continue
+		}
+		name := endpoint.Name
+		if name == "" {
+			name = endpoint.URL
+		}
+
+		testResult := CustomTestResult{
+			Name: name,
+			URL:  endpoint.URL,
+		}
+
+		statusCode, latency, err := runHTTPTest(endpoint.URL, endpoint.ExpectedStatus)
+		testResult.Status = statusCode
+		testResult.Latency = latency
+		if err != nil {
+			testResult.Success = false
+			testResult.Error = err.Error()
+			testResult.TestStatus = "error"
+		} else {
+			testResult.Success = true
+			testResult.TestStatus = getTestStatus(latency, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
+		}
+
+		// Check certificate expiry for HTTPS URLs
+		if strings.HasPrefix(endpoint.URL, "https://") {
+			certInfo := checkCertExpiry(endpoint.URL, certThreshold.Warning, certThreshold.Critical)
+			testResult.CertDaysLeft = certInfo.DaysLeft
+			testResult.CertStatus = certInfo.Status
+			testResult.CertExpiry = certInfo.ExpiryDate
+			testResult.CertCommonName = certInfo.CommonName
+
+			// Upgrade test status if cert is in bad shape
+			if certInfo.Status == "error" && testResult.TestStatus != "error" {
+				testResult.TestStatus = "error"
+			} else if certInfo.Status == "warning" && testResult.TestStatus == "success" {
+				testResult.TestStatus = "warning"
+			}
+		}
+
+		result.HTTPResults = append(result.HTTPResults, testResult)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// runPingTest runs a ping test and returns latency in ms.
+func runPingTest(host string) (float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Use Go's net.Dial to test ICMP-like connectivity
+	// For actual ICMP ping, we'd need raw sockets (root)
+	// Using TCP dial to a common port as fallback indicator
+	start := time.Now()
+	conn, err := (&net.Dialer{}).DialContext(ctx, "ip:icmp", host)
+	if err != nil {
+		// Try TCP 80 as fallback (won't work for all hosts but gives connectivity indication)
+		conn, err = (&net.Dialer{}).DialContext(ctx, "tcp", host+":80")
+		if err != nil {
+			// Try TCP 443
+			conn, err = (&net.Dialer{}).DialContext(ctx, "tcp", host+":443")
+			if err != nil {
+				return 0, fmt.Errorf("host unreachable")
+			}
+		}
+	}
+	latency := time.Since(start).Seconds() * 1000
+	conn.Close()
+	return latency, nil
+}
+
+// runTCPTest runs a TCP port test and returns latency in ms.
+func runTCPTest(host string, port int) (float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	addr := fmt.Sprintf("%s:%d", host, port)
+	start := time.Now()
+	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", addr)
+	if err != nil {
+		return 0, err
+	}
+	latency := time.Since(start).Seconds() * 1000
+	conn.Close()
+	return latency, nil
+}
+
+// runHTTPTest runs an HTTP test and returns status code, latency in ms.
+func runHTTPTest(url string, expectedStatus int) (int, float64, error) {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse // Don't follow redirects
+		},
+	}
+
+	start := time.Now()
+	resp, err := client.Get(url)
+	latency := time.Since(start).Seconds() * 1000
+
+	if err != nil {
+		return 0, latency, err
+	}
+	defer resp.Body.Close()
+
+	if expectedStatus > 0 && resp.StatusCode != expectedStatus {
+		return resp.StatusCode, latency, fmt.Errorf("expected %d, got %d", expectedStatus, resp.StatusCode)
+	}
+
+	return resp.StatusCode, latency, nil
+}
+
+// getTestStatus returns status based on latency and thresholds.
+func getTestStatus(latencyMs float64, warningMs, criticalMs int64) string {
+	if latencyMs < float64(warningMs) {
+		return "success"
+	}
+	if latencyMs < float64(criticalMs) {
+		return "warning"
+	}
+	return "error"
+}
+
+// PingStats holds extended ping statistics.
+type PingStats struct {
+	AvgLatency float64 // ms
+	MinLatency float64 // ms
+	MaxLatency float64 // ms
+	PacketLoss float64 // percentage
+	Jitter     float64 // ms (standard deviation)
+}
+
+// runExtendedPing runs multiple pings and returns statistics.
+func runExtendedPing(host string, count int) (*PingStats, error) {
+	var latencies []float64
+	sent := 0
+	received := 0
+
+	for i := 0; i < count; i++ {
+		sent++
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+
+		start := time.Now()
+		// Try TCP 80/443 as ping alternative (actual ICMP requires root)
+		conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", host+":80")
+		if err != nil {
+			conn, err = (&net.Dialer{}).DialContext(ctx, "tcp", host+":443")
+		}
+		cancel()
+
+		if err == nil {
+			latency := time.Since(start).Seconds() * 1000
+			latencies = append(latencies, latency)
+			received++
+			conn.Close()
+		}
+
+		// Small delay between pings
+		if i < count-1 {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	if len(latencies) == 0 {
+		return &PingStats{PacketLoss: 100}, fmt.Errorf("host unreachable")
+	}
+
+	// Calculate statistics
+	stats := &PingStats{
+		PacketLoss: float64(sent-received) / float64(sent) * 100,
+	}
+
+	// Min, max, avg
+	stats.MinLatency = latencies[0]
+	stats.MaxLatency = latencies[0]
+	var sum float64
+	for _, lat := range latencies {
+		sum += lat
+		if lat < stats.MinLatency {
+			stats.MinLatency = lat
+		}
+		if lat > stats.MaxLatency {
+			stats.MaxLatency = lat
+		}
+	}
+	stats.AvgLatency = sum / float64(len(latencies))
+
+	// Jitter (standard deviation)
+	if len(latencies) > 1 {
+		var variance float64
+		for _, lat := range latencies {
+			diff := lat - stats.AvgLatency
+			variance += diff * diff
+		}
+		stats.Jitter = math.Sqrt(variance / float64(len(latencies)))
+	}
+
+	return stats, nil
+}
+
+// runUDPTest runs a UDP port test and returns latency in ms.
+// Note: UDP is connectionless, so we send a packet and wait for ICMP unreachable
+// or application response. For DNS (53), NTP (123), etc. we can get actual responses.
+func runUDPTest(host string, port int) (float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	addr := fmt.Sprintf("%s:%d", host, port)
+
+	// For DNS port, try a simple DNS query
+	if port == 53 {
+		return testDNSPort(ctx, host)
+	}
+
+	// For other UDP ports, we try to connect (which on UDP just sets up local state)
+	// and send a small probe packet
+	start := time.Now()
+
+	conn, err := net.DialTimeout("udp", addr, 5*time.Second)
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Close()
+
+	// Set deadline for response
+	conn.SetDeadline(time.Now().Add(3 * time.Second))
+
+	// Send a small probe packet
+	_, err = conn.Write([]byte{0x00})
+	if err != nil {
+		return 0, err
+	}
+
+	// Try to read response (may timeout for non-responding services)
+	buf := make([]byte, 1024)
+	_, err = conn.Read(buf)
+
+	latency := time.Since(start).Seconds() * 1000
+
+	// For UDP, no error on Write means the port is likely open
+	// (no ICMP unreachable received)
+	if err != nil {
+		// Check if it's a timeout (which for UDP often means the port is open but not responding)
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			// Port is likely open but service didn't respond - still count as success
+			return latency, nil
+		}
+		// Connection refused or other error means port is closed
+		return 0, fmt.Errorf("port closed or filtered")
+	}
+
+	return latency, nil
+}
+
+// testDNSPort tests DNS port by sending a simple query.
+func testDNSPort(ctx context.Context, host string) (float64, error) {
+	// Use Go's resolver to test DNS
+	resolver := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{Timeout: 5 * time.Second}
+			return d.DialContext(ctx, "udp", host+":53")
+		},
+	}
+
+	start := time.Now()
+	_, err := resolver.LookupHost(ctx, "google.com")
+	latency := time.Since(start).Seconds() * 1000
+
+	if err != nil {
+		return 0, err
+	}
+	return latency, nil
+}
+
+// CertInfo holds certificate expiry information.
+type CertInfo struct {
+	DaysLeft   int
+	Status     string // success, warning, error
+	ExpiryDate string
+	CommonName string
+}
+
+// checkCertExpiry checks the TLS certificate expiry for a URL.
+func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
+	info := CertInfo{Status: "success"}
+
+	// Extract host from URL
+	host := strings.TrimPrefix(url, "https://")
+	host = strings.TrimPrefix(host, "http://")
+	if idx := strings.Index(host, "/"); idx != -1 {
+		host = host[:idx]
+	}
+	if idx := strings.Index(host, ":"); idx == -1 {
+		host = host + ":443"
+	}
+
+	// Connect with TLS
+	conn, err := tls.DialWithDialer(
+		&net.Dialer{Timeout: 5 * time.Second},
+		"tcp",
+		host,
+		&tls.Config{InsecureSkipVerify: true}, // We want to check expiry even for self-signed
+	)
+	if err != nil {
+		info.Status = "error"
+		return info
+	}
+	defer conn.Close()
+
+	// Get certificate chain
+	certs := conn.ConnectionState().PeerCertificates
+	if len(certs) == 0 {
+		info.Status = "error"
+		return info
+	}
+
+	// Check the leaf certificate
+	cert := certs[0]
+	info.CommonName = cert.Subject.CommonName
+	info.ExpiryDate = cert.NotAfter.Format("2006-01-02")
+
+	// Calculate days until expiry
+	daysLeft := int(time.Until(cert.NotAfter).Hours() / 24)
+	info.DaysLeft = daysLeft
+
+	// Determine status
+	if daysLeft <= 0 {
+		info.Status = "error" // Expired
+	} else if daysLeft <= criticalDays {
+		info.Status = "error" // Critical
+	} else if daysLeft <= warningDays {
+		info.Status = "warning" // Warning
+	} else {
+		info.Status = "success" // OK
+	}
+
+	return info
 }
 
 // SpeedtestResponse represents the speedtest results for the API.

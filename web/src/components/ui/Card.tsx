@@ -91,9 +91,12 @@ interface CardRowProps {
 
 export function CardRow({ label, value, status }: CardRowProps) {
   return (
-    <div className="flex items-center justify-between py-1">
-      <span className="text-sm text-text-muted">{label}</span>
-      <span className={`text-sm font-medium ${status ? statusConfig[status].color : 'text-text-primary'}`}>
+    <div className="flex items-center justify-between gap-2 py-1">
+      <span className="text-sm text-text-muted shrink-0">{label}</span>
+      <span
+        className={`text-sm font-medium text-right truncate ${status ? statusConfig[status].color : 'text-text-primary'}`}
+        title={String(value)}
+      >
         {value}
       </span>
     </div>

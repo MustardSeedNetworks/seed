@@ -44,6 +44,14 @@ func NewTester() *Tester {
 	}
 }
 
+// NewTesterWithConfig creates a new speedtest tester with a specific server ID
+func NewTesterWithConfig(serverID string) *Tester {
+	return &Tester{
+		status:   Status{Phase: "idle"},
+		serverID: serverID,
+	}
+}
+
 // GetStatus returns the current test status
 func (t *Tester) GetStatus() Status {
 	t.mu.RLock()

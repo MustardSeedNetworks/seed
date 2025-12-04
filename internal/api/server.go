@@ -63,13 +63,13 @@ func NewServer(cfg *config.Config, netMgr *network.Manager) *Server {
 		),
 		linkMonitor:      network.NewLinkMonitor(cfg.Interface.Default),
 		discoveryManager: discovery.NewManager(cfg.Interface.Default),
-		dnsTester:        dns.NewTester("", "google.com", dns.DefaultThresholds()),
+		dnsTester:        dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dhcpMonitor:      dhcp.NewMonitor(cfg.Interface.Default),
 		gatewayTester:    gateway.NewTester(gateway.DefaultThresholds()),
 		vlanManager:      vlan.NewManager(cfg.Interface.Default),
 		wifiManager:      wifi.NewManager(cfg.Interface.Default),
 		cableTester:      cable.NewTester(cfg.Interface.Default),
-		speedtestTester:  speedtest.NewTester(),
+		speedtestTester:  speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 	}
 
 	// Set up link state change callback
@@ -134,9 +134,12 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/gateway", s.handleGateway)
 	s.mux.HandleFunc("/api/vlan", s.handleVLAN)
 	s.mux.HandleFunc("/api/wifi", s.handleWiFi)
+	s.mux.HandleFunc("/api/wifi/settings", s.handleWiFiSettings)
 	s.mux.HandleFunc("/api/cable", s.handleCable)
 	s.mux.HandleFunc("/api/speedtest", s.handleSpeedtest)
 	s.mux.HandleFunc("/api/speedtest/status", s.handleSpeedtestStatus)
+	s.mux.HandleFunc("/api/tests/settings", s.handleTestsSettings)
+	s.mux.HandleFunc("/api/tests/run", s.handleCustomTests)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)

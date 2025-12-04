@@ -24,6 +24,7 @@ import {
   CableData,
 } from './components/cards';
 import { SpeedtestCard } from './components/cards/SpeedtestCard';
+import { CustomTestsCard } from './components/cards/CustomTestsCard';
 
 interface CardState {
   link: LinkData | null;
@@ -504,6 +505,9 @@ function App() {
 
           {/* Performance Testing */}
           <SpeedtestCard loading={loading} />
+
+          {/* Custom Tests - only shows when tests are configured */}
+          <CustomTestsCard loading={loading} />
         </div>
 
         {/* Development notice */}
