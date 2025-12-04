@@ -1630,17 +1630,24 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		if !endpoint.Enabled {
 			continue
 		}
+
+		// Auto-prefix URL with https:// if missing scheme
+		url := endpoint.URL
+		if url != "" && !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			url = "https://" + url
+		}
+
 		name := endpoint.Name
 		if name == "" {
-			name = endpoint.URL
+			name = endpoint.URL // Show original URL in name
 		}
 
 		testResult := CustomTestResult{
 			Name: name,
-			URL:  endpoint.URL,
+			URL:  url,
 		}
 
-		statusCode, latency, err := runHTTPTest(endpoint.URL, endpoint.ExpectedStatus)
+		statusCode, latency, err := runHTTPTest(url, endpoint.ExpectedStatus)
 		testResult.Status = statusCode
 		testResult.Latency = latency
 		if err != nil {
@@ -1653,8 +1660,8 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Check certificate expiry for HTTPS URLs
-		if strings.HasPrefix(endpoint.URL, "https://") {
-			certInfo := checkCertExpiry(endpoint.URL, certThreshold.Warning, certThreshold.Critical)
+		if strings.HasPrefix(url, "https://") {
+			certInfo := checkCertExpiry(url, certThreshold.Warning, certThreshold.Critical)
 			testResult.CertDaysLeft = certInfo.DaysLeft
 			testResult.CertStatus = certInfo.Status
 			testResult.CertExpiry = certInfo.ExpiryDate
