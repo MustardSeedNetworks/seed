@@ -453,6 +453,24 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             </p>
           )}
 
+          {/* Export Section */}
+          <section className="pt-4 border-t border-surface-border">
+            <h3 className="text-sm font-medium text-text-muted mb-3">Export</h3>
+            <a
+              href={`${API_BASE}/api/export`}
+              download="netscope-export.json"
+              className="w-full py-2 px-4 bg-surface-base border border-surface-border text-text-primary rounded font-medium hover:bg-surface-hover transition-colors flex items-center justify-center gap-2 touch-manipulation"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download JSON Export
+            </a>
+            <p className="text-xs text-text-muted mt-2">
+              Export all diagnostic data as JSON for documentation or analysis.
+            </p>
+          </section>
+
           {/* About Section */}
           <section className="pt-4 border-t border-surface-border">
             <h3 className="text-sm font-medium text-text-muted mb-2">About</h3>
