@@ -114,9 +114,9 @@ export function SpeedtestCard({ loading }: SpeedtestCardProps) {
 
   const formatSpeed = (mbps: number): string => {
     if (mbps >= 1000) {
-      return `${(mbps / 1000).toFixed(2)} Gbps`;
+      return `${(mbps / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Gbps`;
     }
-    return `${mbps.toFixed(2)} Mbps`;
+    return `${mbps.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
   };
 
   const getStatus = (): Status => {

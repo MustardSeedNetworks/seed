@@ -145,8 +145,8 @@ func (t *Tester) RunTest(ctx context.Context) (*Result, error) {
 	t.setStatus("complete", 100)
 
 	result := &Result{
-		Download:     float64(server.DLSpeed),
-		Upload:       float64(server.ULSpeed),
+		Download:     server.DLSpeed.Mbps(),
+		Upload:       server.ULSpeed.Mbps(),
 		Latency:      float64(server.Latency.Milliseconds()),
 		Server:       server.Name,
 		Location:     fmt.Sprintf("%s, %s", server.Sponsor, server.Country),
