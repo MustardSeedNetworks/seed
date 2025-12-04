@@ -1631,10 +1631,14 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Auto-prefix URL with https:// if missing scheme
+		// Determine URL and whether to try fallback
 		url := endpoint.URL
+		tryHTTPFallback := false
+
 		if url != "" && !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			// No scheme provided - try HTTPS first, can fallback to HTTP
 			url = "https://" + url
+			tryHTTPFallback = true
 		}
 
 		name := endpoint.Name
@@ -1648,6 +1652,21 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		}
 
 		statusCode, latency, err := runHTTPTest(url, endpoint.ExpectedStatus)
+
+		// If HTTPS failed and we can try HTTP fallback
+		if err != nil && tryHTTPFallback {
+			httpURL := "http://" + endpoint.URL
+			httpStatus, httpLatency, httpErr := runHTTPTest(httpURL, endpoint.ExpectedStatus)
+			if httpErr == nil || httpStatus > 0 {
+				// HTTP worked (or at least connected) - use those results
+				url = httpURL
+				testResult.URL = httpURL
+				statusCode = httpStatus
+				latency = httpLatency
+				err = httpErr
+			}
+		}
+
 		testResult.Status = statusCode
 		testResult.Latency = latency
 		if err != nil {
@@ -1659,8 +1678,8 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			testResult.TestStatus = getTestStatus(latency, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
 		}
 
-		// Check certificate expiry for HTTPS URLs
-		if strings.HasPrefix(url, "https://") {
+		// Check certificate expiry for HTTPS URLs only
+		if strings.HasPrefix(url, "https://") && testResult.Success {
 			certInfo := checkCertExpiry(url, certThreshold.Warning, certThreshold.Critical)
 			testResult.CertDaysLeft = certInfo.DaysLeft
 			testResult.CertStatus = certInfo.Status
