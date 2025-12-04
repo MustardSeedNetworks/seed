@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 )
 
 // InterfaceType represents the type of network interface.
@@ -43,6 +44,7 @@ type LinkStatus struct {
 
 // Manager handles network interface operations.
 type Manager struct {
+	mu               sync.RWMutex
 	currentInterface string
 	interfaces       map[string]*InterfaceInfo
 }
@@ -64,7 +66,8 @@ func (m *Manager) RefreshInterfaces() error {
 		return fmt.Errorf("failed to get interfaces: %w", err)
 	}
 
-	m.interfaces = make(map[string]*InterfaceInfo)
+	// Build new map first, then swap under lock
+	newInterfaces := make(map[string]*InterfaceInfo)
 
 	for _, iface := range ifaces {
 		info := &InterfaceInfo{
@@ -85,14 +88,22 @@ func (m *Manager) RefreshInterfaces() error {
 			}
 		}
 
-		m.interfaces[iface.Name] = info
+		newInterfaces[iface.Name] = info
 	}
+
+	// Swap under lock
+	m.mu.Lock()
+	m.interfaces = newInterfaces
+	m.mu.Unlock()
 
 	return nil
 }
 
 // GetInterfaces returns all available interfaces.
 func (m *Manager) GetInterfaces() []*InterfaceInfo {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	result := make([]*InterfaceInfo, 0, len(m.interfaces))
 	for _, info := range m.interfaces {
 		result = append(result, info)
@@ -102,6 +113,9 @@ func (m *Manager) GetInterfaces() []*InterfaceInfo {
 
 // GetInterface returns information about a specific interface.
 func (m *Manager) GetInterface(name string) (*InterfaceInfo, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	info, ok := m.interfaces[name]
 	if !ok {
 		return nil, fmt.Errorf("interface %s not found", name)
@@ -111,11 +125,16 @@ func (m *Manager) GetInterface(name string) (*InterfaceInfo, error) {
 
 // GetCurrentInterface returns the currently selected interface.
 func (m *Manager) GetCurrentInterface() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.currentInterface
 }
 
 // SetCurrentInterface sets the active interface.
 func (m *Manager) SetCurrentInterface(name string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if _, ok := m.interfaces[name]; !ok {
 		return fmt.Errorf("interface %s not found", name)
 	}
@@ -125,6 +144,9 @@ func (m *Manager) SetCurrentInterface(name string) error {
 
 // FindFirstAvailable finds the first available interface from a list.
 func (m *Manager) FindFirstAvailable(preferred []string) string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	for _, name := range preferred {
 		if info, ok := m.interfaces[name]; ok && info.Up {
 			return name
@@ -143,7 +165,10 @@ func (m *Manager) FindFirstAvailable(preferred []string) string {
 
 // GetLinkStatus returns the link status for an interface.
 func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
+	m.mu.RLock()
 	info, ok := m.interfaces[name]
+	m.mu.RUnlock()
+
 	if !ok {
 		return nil, fmt.Errorf("interface %s not found", name)
 	}
@@ -247,6 +272,9 @@ func detectInterfaceType(name string) InterfaceType {
 
 // IsWireless returns true if the interface is a wireless interface.
 func (m *Manager) IsWireless(name string) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	info, ok := m.interfaces[name]
 	if !ok {
 		return false

@@ -485,14 +485,21 @@ function App() {
       {/* Main content */}
       <main className="p-3 sm:p-4">
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {/* Layer 1-2: Physical */}
           <LinkCard data={cards.link} loading={loading} />
-          <CableCard data={cards.cable} loading={loading} />
-          <VLANCard data={cards.vlan} loading={loading} />
+          {cards.cable?.supported && <CableCard data={cards.cable} loading={loading} />}
+          {isWifi && cards.wifi?.ssid && <WiFiCard data={cards.wifi} loading={loading} visible={true} />}
+
+          {/* Layer 2: Discovery */}
           <SwitchCard data={cards.switch} loading={loading} />
-          <WiFiCard data={cards.wifi} loading={loading} visible={isWifi} />
+          <VLANCard data={cards.vlan} loading={loading} />
+
+          {/* Layer 3: Network */}
           <DHCPCard data={cards.dhcp} loading={loading} />
-          <DNSCard data={cards.dns} loading={loading} />
           <GatewayCard data={cards.gateway} loading={loading} />
+
+          {/* Layer 7: Application */}
+          <DNSCard data={cards.dns} loading={loading} />
         </div>
 
         {/* Development notice */}

@@ -49,7 +49,7 @@ export function Card({ title, status, children, className = '', onClick }: CardP
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-text-primary text-sm sm:text-base">{title}</h3>
+        <h3 className="font-semibold text-text-primary text-base sm:text-lg">{title}</h3>
         <span className={`text-lg ${config.color}`}>{config.icon}</span>
       </div>
       <div className="mt-2 sm:mt-3">{children}</div>
@@ -68,8 +68,8 @@ interface CardValueProps {
 export function CardValue({ label, value, unit, size = 'md', status }: CardValueProps) {
   const sizeClasses = {
     sm: 'text-sm',
-    md: 'text-xl font-semibold',
-    lg: 'text-2xl font-bold',
+    md: 'text-base font-medium',
+    lg: 'text-lg font-semibold',
   };
 
   return (
