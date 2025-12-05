@@ -42,6 +42,7 @@ type Server struct {
 	netManager       *network.Manager
 	linkMonitor      *network.LinkMonitor
 	discoveryManager *discovery.Manager
+	deviceDiscovery  *discovery.DeviceDiscovery
 	dnsTester        *dns.Tester
 	dhcpMonitor      *dhcp.Monitor
 	gatewayTester    *gateway.Tester
@@ -67,6 +68,7 @@ func NewServer(cfg *config.Config, configPath string, netMgr *network.Manager) *
 		),
 		linkMonitor:      network.NewLinkMonitor(cfg.Interface.Default),
 		discoveryManager: discovery.NewManager(cfg.Interface.Default),
+		deviceDiscovery:  discovery.NewDeviceDiscovery(cfg.Interface.Default),
 		dnsTester:        dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dhcpMonitor:      dhcp.NewMonitor(cfg.Interface.Default),
 		gatewayTester:    gateway.NewTester(gateway.DefaultThresholds()),
@@ -162,6 +164,9 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/iperf/client/status", s.handleIperfClientStatus)
 	s.mux.HandleFunc("/api/iperf/server", s.handleIperfServer)
 	s.mux.HandleFunc("/api/iperf/server/status", s.handleIperfServerStatus)
+	s.mux.HandleFunc("/api/devices", s.handleDevices)
+	s.mux.HandleFunc("/api/devices/scan", s.handleDevicesScan)
+	s.mux.HandleFunc("/api/devices/status", s.handleDevicesStatus)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)

@@ -2432,3 +2432,92 @@ func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(status)
 }
+
+// handleDevices returns all discovered network devices.
+func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.deviceDiscovery == nil {
+		http.Error(w, "Device discovery not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	devices := s.deviceDiscovery.GetDevices()
+	status := s.deviceDiscovery.GetStatus()
+
+	resp := map[string]interface{}{
+		"devices": devices,
+		"status":  status,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// handleDevicesScan triggers a network device scan.
+func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.deviceDiscovery == nil {
+		http.Error(w, "Device discovery not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Check if scan is already in progress
+	if s.deviceDiscovery.IsScanning() {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message":  "Scan already in progress",
+			"scanning": true,
+		})
+		return
+	}
+
+	// Start scan in background
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		if err := s.deviceDiscovery.Scan(ctx); err != nil {
+			log.Printf("Device scan error: %v", err)
+		}
+
+		// Notify WebSocket clients when scan completes
+		s.wsHub.Broadcast(Message{
+			Type: "deviceScanComplete",
+			Payload: map[string]interface{}{
+				"deviceCount": s.deviceDiscovery.Count(),
+				"timestamp":   time.Now().Format(time.RFC3339),
+			},
+		})
+	}()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":  "Scan started",
+		"scanning": true,
+	})
+}
+
+// handleDevicesStatus returns the current device discovery status.
+func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.deviceDiscovery == nil {
+		http.Error(w, "Device discovery not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	status := s.deviceDiscovery.GetStatus()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(status)
+}

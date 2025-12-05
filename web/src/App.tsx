@@ -22,6 +22,8 @@ import {
   WiFiData,
   CableCard,
   CableData,
+  NetworkDiscoveryCard,
+  NetworkDiscoveryData,
 } from './components/cards';
 import { PerformanceCard } from './components/cards/PerformanceCard';
 import { HealthCheckCard } from './components/cards/HealthCheckCard';
@@ -56,6 +58,7 @@ function App() {
   const [currentInterface, setCurrentInterface] = useState('eth0');
   const [isWifi, setIsWifi] = useState(false);
   const [interfaces, setInterfaces] = useState<Array<{ name: string; type: string; up: boolean }>>([]);
+  const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
 
   const handleMessage = useCallback((message: Message) => {
     if (message.type === 'initial_state') {
@@ -352,6 +355,75 @@ function App() {
     }
   }, []);
 
+  // Fetch Network Discovery data (devices and status)
+  const fetchNetworkDiscovery = useCallback(async () => {
+    try {
+      const [devicesRes, statusRes] = await Promise.all([
+        fetch(`${API_BASE}/api/devices`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE}/api/devices/status`, { headers: getAuthHeaders() }),
+      ]);
+
+      if (devicesRes.ok && statusRes.ok) {
+        const devices = await devicesRes.json();
+        const status = await statusRes.json();
+        setNetworkDiscovery({
+          devices: devices || [],
+          status: status || {
+            scanning: false,
+            deviceCount: 0,
+            lastScan: '',
+            subnet: '',
+            localIP: '',
+            interface: currentInterface,
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch network discovery data:', err);
+    }
+  }, [currentInterface]);
+
+  // Trigger network device scan
+  const triggerDeviceScan = useCallback(async () => {
+    try {
+      // Update status to show scanning
+      setNetworkDiscovery((prev) => prev ? {
+        ...prev,
+        status: { ...prev.status, scanning: true },
+      } : null);
+
+      const response = await fetch(`${API_BASE}/api/devices/scan`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        // Poll for completion
+        const pollInterval = setInterval(async () => {
+          const statusRes = await fetch(`${API_BASE}/api/devices/status`, {
+            headers: getAuthHeaders(),
+          });
+          if (statusRes.ok) {
+            const status = await statusRes.json();
+            if (!status.scanning) {
+              clearInterval(pollInterval);
+              fetchNetworkDiscovery();
+            }
+          }
+        }, 1000);
+
+        // Safety timeout - stop polling after 60 seconds
+        setTimeout(() => clearInterval(pollInterval), 60000);
+      }
+    } catch (err) {
+      console.error('Failed to trigger device scan:', err);
+      setNetworkDiscovery((prev) => prev ? {
+        ...prev,
+        status: { ...prev.status, scanning: false },
+      } : null);
+    }
+  }, [fetchNetworkDiscovery]);
+
   // Change interface on backend
   const changeInterface = useCallback(async (interfaceName: string) => {
     try {
@@ -465,6 +537,7 @@ function App() {
     fetchVLANData();
     fetchWiFiData();
     fetchCableData();
+    fetchNetworkDiscovery();
     setLoading(false);
 
     const interval = setInterval(() => {
@@ -475,11 +548,11 @@ function App() {
       fetchGatewayData();
       fetchVLANData();
       fetchWiFiData();
-      // Cable test not refreshed periodically (can take time)
+      // Cable test and network discovery not refreshed periodically (can take time)
     }, 10000); // Refresh every 10 seconds (gateway ping takes time)
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
+  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData, fetchNetworkDiscovery]);
 
   const { status, reconnect } = useWebSocket({
     url: '/ws',
@@ -594,6 +667,7 @@ function App() {
           {/* Layer 2: Discovery */}
           <SwitchCard data={cards.switch} loading={loading} />
           <VLANCard data={cards.vlan} loading={loading} />
+          <NetworkDiscoveryCard data={networkDiscovery} loading={loading} onScan={triggerDeviceScan} />
 
           {/* Layer 3: Network */}
           <DHCPCard data={cards.dhcp} loading={loading} />
@@ -612,13 +686,13 @@ function App() {
         {/* Development notice */}
         <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-            NetScope v0.8.8 - FAB Completion Fix
+            NetScope v0.9.2 - Network Discovery
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-text-muted">
             Tap the play button to run all tests.
             <span className="hidden sm:inline"><br /></span>
             <span className="sm:hidden"> </span>
-            Configure iperf3 and health checks in Settings.
+            Use the Network Discovery card to scan for devices on your network.
           </p>
         </div>
       </main>

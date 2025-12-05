@@ -6,3 +6,4 @@ export { GatewayCard, type GatewayData } from './GatewayCard';
 export { VLANCard, type VLANData } from './VLANCard';
 export { WiFiCard, type WiFiData } from './WiFiCard';
 export { CableCard, type CableData } from './CableCard';
+export { NetworkDiscoveryCard, type NetworkDiscoveryData, type DiscoveredDevice, type DiscoveryStatus } from './NetworkDiscoveryCard';
