@@ -113,11 +113,18 @@ func testLinux(iface string) *TestResult {
 	cmd := exec.Command("ethtool", "--cable-test", iface)
 	output, err := cmd.CombinedOutput()
 
-	// Check if command is supported
+	// Check if command is supported or permitted
 	outStr := string(output)
 	if strings.Contains(outStr, "not supported") ||
 		strings.Contains(outStr, "Operation not supported") ||
+		strings.Contains(outStr, "not permitted") ||
+		strings.Contains(outStr, "Operation not permitted") ||
 		strings.Contains(outStr, "unknown command") {
+		return result
+	}
+
+	// If the command failed with an error and we don't have valid output, assume not supported
+	if err != nil && !strings.Contains(outStr, "Cable test") && !strings.Contains(outStr, "pair") {
 		return result
 	}
 

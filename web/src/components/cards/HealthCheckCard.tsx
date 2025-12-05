@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardDivider, Status } from '../ui/Card';
+import { Card, Status } from '../ui/Card';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { getAuthHeaders } from '../../hooks/useAuth';
 
 interface TestResult {
@@ -26,7 +27,7 @@ interface TestResult {
   certIssuer?: string;
 }
 
-interface CustomTestsData {
+interface HealthCheckData {
   pingResults: TestResult[];
   tcpResults: TestResult[];
   udpResults: TestResult[];
@@ -34,12 +35,12 @@ interface CustomTestsData {
   hasTests: boolean;
 }
 
-interface CustomTestsCardProps {
+interface HealthCheckCardProps {
   loading?: boolean;
 }
 
-export function CustomTestsCard({ loading }: CustomTestsCardProps) {
-  const [data, setData] = useState<CustomTestsData | null>(null);
+export function HealthCheckCard({ loading }: HealthCheckCardProps) {
+  const [data, setData] = useState<HealthCheckData | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +83,19 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
   // Listen for FAB "run all tests" event
   useEffect(() => {
     const handleRunAllTests = () => {
+      // Check FAB options from localStorage
+      try {
+        const saved = localStorage.getItem('netscope-fab-options');
+        if (saved) {
+          const fabOptions = JSON.parse(saved);
+          if (fabOptions.runHealthChecks === false) {
+            return; // Skip health checks if disabled
+          }
+        }
+      } catch (err) {
+        console.error('Failed to read FAB options:', err);
+      }
+
       if (!isRunning) {
         fetchTests();
       }
@@ -260,64 +274,86 @@ export function CustomTestsCard({ loading }: CustomTestsCardProps) {
         <>
           {/* Ping Results */}
           {data.pingResults.length > 0 && (
-            <div className="mb-2">
-              <p className="text-xs font-medium text-text-secondary mb-1">Ping</p>
+            <CollapsibleSection
+              title="Ping"
+              count={data.pingResults.length}
+              variant="compact"
+              defaultOpen={true}
+              status={
+                data.pingResults.some((r) => !r.success || r.testStatus === 'error')
+                  ? 'error'
+                  : data.pingResults.some((r) => r.testStatus === 'warning')
+                  ? 'warning'
+                  : 'success'
+              }
+            >
               {data.pingResults.map((r) => renderTestResult(r, 'ping'))}
-            </div>
+            </CollapsibleSection>
           )}
 
           {/* TCP Results */}
           {data.tcpResults.length > 0 && (
-            <>
-              {data.pingResults.length > 0 && <CardDivider />}
-              <div className="mb-2">
-                <p className="text-xs font-medium text-text-secondary mb-1">TCP Ports</p>
-                {data.tcpResults.map((r) => renderTestResult(r, 'tcp'))}
-              </div>
-            </>
+            <CollapsibleSection
+              title="TCP Ports"
+              count={data.tcpResults.length}
+              variant="compact"
+              defaultOpen={true}
+              status={
+                data.tcpResults.some((r) => !r.success || r.testStatus === 'error')
+                  ? 'error'
+                  : data.tcpResults.some((r) => r.testStatus === 'warning')
+                  ? 'warning'
+                  : 'success'
+              }
+            >
+              {data.tcpResults.map((r) => renderTestResult(r, 'tcp'))}
+            </CollapsibleSection>
           )}
 
           {/* UDP Results */}
           {data.udpResults && data.udpResults.length > 0 && (
-            <>
-              {(data.pingResults.length > 0 || data.tcpResults.length > 0) && <CardDivider />}
-              <div className="mb-2">
-                <p className="text-xs font-medium text-text-secondary mb-1">UDP Ports</p>
-                {data.udpResults.map((r) => renderTestResult(r, 'udp'))}
-              </div>
-            </>
+            <CollapsibleSection
+              title="UDP Ports"
+              count={data.udpResults.length}
+              variant="compact"
+              defaultOpen={true}
+              status={
+                data.udpResults.some((r) => !r.success || r.testStatus === 'error')
+                  ? 'error'
+                  : data.udpResults.some((r) => r.testStatus === 'warning')
+                  ? 'warning'
+                  : 'success'
+              }
+            >
+              {data.udpResults.map((r) => renderTestResult(r, 'udp'))}
+            </CollapsibleSection>
           )}
 
           {/* HTTP Results */}
           {data.httpResults.length > 0 && (
-            <>
-              {(data.pingResults.length > 0 || data.tcpResults.length > 0 || (data.udpResults && data.udpResults.length > 0)) && <CardDivider />}
-              <div className="mb-2">
-                <p className="text-xs font-medium text-text-secondary mb-1">HTTP</p>
-                {data.httpResults.map((r) => renderHTTPResult(r))}
-              </div>
-            </>
+            <CollapsibleSection
+              title="HTTP"
+              count={data.httpResults.length}
+              variant="compact"
+              defaultOpen={true}
+              status={
+                data.httpResults.some((r) => !r.success || r.testStatus === 'error' || r.certStatus === 'error')
+                  ? 'error'
+                  : data.httpResults.some((r) => r.testStatus === 'warning' || r.certStatus === 'warning')
+                  ? 'warning'
+                  : 'success'
+              }
+            >
+              {data.httpResults.map((r) => renderHTTPResult(r))}
+            </CollapsibleSection>
           )}
 
-          <CardDivider />
         </>
       )}
 
       {error && (
-        <p className="text-sm text-status-error mb-3">{error}</p>
+        <p className="text-sm text-status-error">{error}</p>
       )}
-
-      <button
-        onClick={fetchTests}
-        disabled={isRunning}
-        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-          isRunning
-            ? 'bg-surface-hover text-text-muted cursor-not-allowed'
-            : 'bg-brand-primary text-text-inverse hover:bg-brand-accent'
-        }`}
-      >
-        {isRunning ? 'Running...' : 'Run Tests'}
-      </button>
     </Card>
   );
 }

@@ -82,14 +82,63 @@ function getScopeLabel(scope: IPv6Info['scope']): string {
   }
 }
 
-function getSourceLabel(source: IPv6Info['source']): string {
-  switch (source) {
-    case 'slaac': return 'SLAAC';
-    case 'dhcpv6': return 'DHCPv6';
-    case 'static': return 'Static';
-    case 'temporary': return 'Temporary';
-    default: return source;
+// getSourceLabel for future use when displaying IPv6 source type
+// function getSourceLabel(source: IPv6Info['source']): string {
+//   switch (source) {
+//     case 'slaac': return 'SLAAC';
+//     case 'dhcpv6': return 'DHCPv6';
+//     case 'static': return 'Static';
+//     case 'temporary': return 'Temporary';
+//     default: return source;
+//   }
+// }
+
+// Compress IPv6 address by replacing longest run of zeros with ::
+function compressIPv6(address: string): string {
+  // Already compressed or not a valid IPv6
+  if (address.includes('::') || !address.includes(':')) {
+    return address;
   }
+
+  // Split into groups and find longest run of zeros
+  const groups = address.split(':');
+  let longestStart = -1;
+  let longestLength = 0;
+  let currentStart = -1;
+  let currentLength = 0;
+
+  for (let i = 0; i < groups.length; i++) {
+    if (groups[i] === '0' || groups[i] === '0000') {
+      if (currentStart === -1) currentStart = i;
+      currentLength++;
+    } else {
+      if (currentLength > longestLength) {
+        longestStart = currentStart;
+        longestLength = currentLength;
+      }
+      currentStart = -1;
+      currentLength = 0;
+    }
+  }
+  if (currentLength > longestLength) {
+    longestStart = currentStart;
+    longestLength = currentLength;
+  }
+
+  // Only compress if we have at least 2 consecutive zero groups
+  if (longestLength < 2) {
+    // Just remove leading zeros from each group
+    return groups.map(g => g.replace(/^0+/, '') || '0').join(':');
+  }
+
+  // Build compressed address
+  const before = groups.slice(0, longestStart).map(g => g.replace(/^0+/, '') || '0');
+  const after = groups.slice(longestStart + longestLength).map(g => g.replace(/^0+/, '') || '0');
+
+  if (before.length === 0 && after.length === 0) return '::';
+  if (before.length === 0) return '::' + after.join(':');
+  if (after.length === 0) return before.join(':') + '::';
+  return before.join(':') + '::' + after.join(':');
 }
 
 export function DHCPCard({ data, loading, thresholds }: DHCPCardProps) {
@@ -185,35 +234,19 @@ export function DHCPCard({ data, loading, thresholds }: DHCPCardProps) {
         <>
           <CardDivider />
           <p className="text-xs text-text-muted mb-1 font-medium">IPv6</p>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {data.ipv6.map((ip, idx) => (
-              <div key={idx} className="text-xs">
-                <div className="font-mono text-text-primary break-all">
-                  {ip.address}/{ip.prefix}
-                </div>
-                <div className="flex gap-2 mt-0.5 text-text-muted">
-                  <span className={ip.scope === 'global' ? 'text-status-success' : ''}>
-                    {getScopeLabel(ip.scope)}
-                  </span>
-                  <span>•</span>
-                  <span>{getSourceLabel(ip.source)}</span>
-                </div>
+              <div key={idx} className="flex items-center justify-between text-xs gap-2">
+                <span
+                  className="font-mono text-text-primary truncate flex-1 min-w-0"
+                  title={`${ip.address}/${ip.prefix}`}
+                >
+                  {compressIPv6(ip.address)}/{ip.prefix}
+                </span>
+                <span className={`flex-shrink-0 ${ip.scope === 'global' ? 'text-status-success' : 'text-text-muted'}`}>
+                  {getScopeLabel(ip.scope)}
+                </span>
               </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* DNS Section */}
-      {data.dns.length > 0 && (
-        <>
-          <CardDivider />
-          <p className="text-xs text-text-muted mb-1 font-medium">DNS Servers</p>
-          <div className="flex flex-col gap-0.5">
-            {data.dns.map((server, idx) => (
-              <span key={idx} className="text-xs font-mono text-text-secondary">
-                {server}
-              </span>
             ))}
           </div>
         </>

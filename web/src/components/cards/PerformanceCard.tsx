@@ -347,12 +347,27 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   // Listen for FAB "run all tests" event
   useEffect(() => {
     const handleRunAllTests = () => {
-      // Run speedtest
-      if (!speedtestRunning) {
+      // Check FAB options from localStorage
+      let fabOptions = {
+        runSpeedtest: false,  // Default OFF (bandwidth-intensive)
+        runIperf: false,      // Default OFF (bandwidth-intensive)
+      };
+      try {
+        const saved = localStorage.getItem('netscope-fab-options');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          fabOptions = { ...fabOptions, ...parsed };
+        }
+      } catch (err) {
+        console.error('Failed to read FAB options:', err);
+      }
+
+      // Run speedtest if enabled
+      if (fabOptions.runSpeedtest && !speedtestRunning) {
         runSpeedtest();
       }
-      // Run iperf client test (if configured)
-      if (!iperfClientRunning && iperfSettings.server && iperfInfo?.installed) {
+      // Run iperf client test if enabled and configured
+      if (fabOptions.runIperf && !iperfClientRunning && iperfSettings.server && iperfInfo?.installed) {
         // Delay slightly so tests don't all hammer at once
         setTimeout(() => runIperfClient(), 500);
       }
@@ -411,20 +426,8 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       )}
 
       {speedtestError && (
-        <p className="text-sm text-status-error mb-2">{speedtestError}</p>
+        <p className="text-sm text-status-error">{speedtestError}</p>
       )}
-
-      <button
-        onClick={runSpeedtest}
-        disabled={speedtestRunning}
-        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors mb-3 ${
-          speedtestRunning
-            ? 'bg-surface-hover text-text-muted cursor-not-allowed'
-            : 'bg-brand-primary text-text-inverse hover:bg-brand-accent'
-        }`}
-      >
-        {speedtestRunning ? 'Running...' : 'Run Speedtest'}
-      </button>
 
       <CardDivider />
 
@@ -497,21 +500,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
           )}
 
           {iperfError && (
-            <p className="text-sm text-status-error mb-3">{iperfError}</p>
-          )}
-
-          {iperfSettings.server && (
-            <button
-              onClick={runIperfClient}
-              disabled={iperfClientRunning}
-              className={`w-full py-2 px-4 rounded-lg font-medium transition-colors mb-3 ${
-                iperfClientRunning
-                  ? 'bg-surface-hover text-text-muted cursor-not-allowed'
-                  : 'bg-brand-primary text-text-inverse hover:bg-brand-accent'
-              }`}
-            >
-              {iperfClientRunning ? 'Running...' : 'Run iperf3 Test'}
-            </button>
+            <p className="text-sm text-status-error">{iperfError}</p>
           )}
 
           {/* Server status indicator (if enabled) */}

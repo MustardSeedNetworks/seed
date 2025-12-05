@@ -135,21 +135,31 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Get token from Authorization header
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
+		var tokenString string
+
+		// For WebSocket connections, check query parameter first (browsers can't send headers)
+		if strings.HasPrefix(r.URL.Path, "/ws") {
+			tokenString = r.URL.Query().Get("token")
 		}
 
-		// Parse Bearer token
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
-			return
+		// If no query token, check Authorization header
+		if tokenString == "" {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// Parse Bearer token
+			parts := strings.Split(authHeader, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
+				return
+			}
+			tokenString = parts[1]
 		}
 
-		claims, err := m.ValidateToken(parts[1])
+		claims, err := m.ValidateToken(tokenString)
 		if err != nil {
 			if errors.Is(err, ErrTokenExpired) {
 				http.Error(w, "Token expired", http.StatusUnauthorized)

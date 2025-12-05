@@ -24,7 +24,7 @@ import {
   CableData,
 } from './components/cards';
 import { PerformanceCard } from './components/cards/PerformanceCard';
-import { CustomTestsCard } from './components/cards/CustomTestsCard';
+import { HealthCheckCard } from './components/cards/HealthCheckCard';
 import { FAB } from './components/ui/FAB';
 
 interface CardState {
@@ -39,7 +39,7 @@ interface CardState {
 }
 
 function App() {
-  const { isAuthenticated, login, logout, isLoading, error } = useAuth();
+  const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cards, setCards] = useState<CardState>({
@@ -371,6 +371,61 @@ function App() {
     }
   }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
 
+  // Listen for FAB "run all tests" event with options
+  useEffect(() => {
+    const handleRunAllTests = () => {
+      // Read FAB options from localStorage (matches SettingsDrawer FABOptions interface)
+      let fabOptions = {
+        // Order matches card display order
+        runLink: true,          // Link card
+        runSwitch: true,        // Nearest Switch card
+        runVLAN: true,          // VLAN card
+        runIPConfig: true,      // IP Config (DHCP) card
+        runGateway: true,       // Gateway card
+        runDNS: true,           // DNS card
+        runSpeedtest: false,    // Performance: Internet Speed (default OFF)
+        runIperf: false,        // Performance: LAN Speed (default OFF)
+        runHealthChecks: true,  // Health Checks card
+      };
+      try {
+        const saved = localStorage.getItem('netscope-fab-options');
+        if (saved) {
+          fabOptions = { ...fabOptions, ...JSON.parse(saved) };
+        }
+      } catch (err) {
+        console.error('Failed to load FAB options:', err);
+      }
+
+      // Conditionally refresh each card based on FAB options
+      if (fabOptions.runLink) {
+        fetchLinkData();
+        fetchWiFiData();  // WiFi is part of Link layer
+        fetchCableData(); // Cable is part of Link layer
+      }
+      if (fabOptions.runSwitch) {
+        fetchDiscoveryData();
+      }
+      if (fabOptions.runVLAN) {
+        fetchVLANData();
+      }
+      if (fabOptions.runIPConfig) {
+        fetchIPConfig();
+      }
+      if (fabOptions.runGateway) {
+        fetchGatewayData();
+      }
+      if (fabOptions.runDNS) {
+        fetchDNSData();
+      }
+      // Note: runSpeedtest, runIperf, and runHealthChecks are handled by
+      // their respective card components listening for the 'runAllTests' event
+    };
+    window.addEventListener('runAllTests', handleRunAllTests);
+    return () => {
+      window.removeEventListener('runAllTests', handleRunAllTests);
+    };
+  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
+
   // Fetch data on mount and periodically
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -402,6 +457,7 @@ function App() {
 
   const { status, reconnect } = useWebSocket({
     url: '/ws',
+    token,
     onMessage: handleMessage,
     onCardUpdate: handleCardUpdate,
   });
@@ -507,14 +563,14 @@ function App() {
           {/* Performance Testing */}
           <PerformanceCard loading={loading} />
 
-          {/* Custom Tests - only shows when tests are configured */}
-          <CustomTestsCard loading={loading} />
+          {/* Health Checks - only shows when tests are configured */}
+          <HealthCheckCard loading={loading} />
         </div>
 
         {/* Development notice */}
         <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-            NetScope v0.8.3 - Simplified UI
+            NetScope v0.8.5 - Enhanced FAB Options
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-text-muted">
             Tap the play button to run all tests.

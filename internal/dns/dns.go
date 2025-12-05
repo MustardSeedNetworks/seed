@@ -31,15 +31,25 @@ type LookupResult struct {
 	Resolved []string      `json:"resolved,omitempty"`
 }
 
+// ServerTestResult contains test results for a specific DNS server.
+type ServerTestResult struct {
+	Server      string        `json:"server"`
+	Forward     *LookupResult `json:"forward"`     // IPv4 forward lookup (A record)
+	ForwardIPv6 *LookupResult `json:"forwardIpv6"` // IPv6 forward lookup (AAAA record)
+	Status      Status        `json:"status"`      // Overall status for this server
+	AvgTimeMs   int64         `json:"avgTimeMs"`   // Average response time
+}
+
 // TestResult contains the complete DNS test results.
 type TestResult struct {
-	Server       string        `json:"server"`
-	Servers      []string      `json:"servers"`      // All configured DNS servers
-	TestHostname string        `json:"testHostname"`
-	Forward      *LookupResult `json:"forward"`      // IPv4 forward lookup (A record)
-	ForwardIPv6  *LookupResult `json:"forwardIpv6"`  // IPv6 forward lookup (AAAA record)
-	Reverse      *LookupResult `json:"reverse"`      // Reverse lookup (PTR record)
-	ReverseIPv6  *LookupResult `json:"reverseIpv6"`  // IPv6 reverse lookup
+	Server           string              `json:"server"`
+	Servers          []string            `json:"servers"`          // All configured DNS servers
+	TestHostname     string              `json:"testHostname"`
+	Forward          *LookupResult       `json:"forward"`          // IPv4 forward lookup (A record)
+	ForwardIPv6      *LookupResult       `json:"forwardIpv6"`      // IPv6 forward lookup (AAAA record)
+	Reverse          *LookupResult       `json:"reverse"`          // Reverse lookup (PTR record)
+	ReverseIPv6      *LookupResult       `json:"reverseIpv6"`      // IPv6 reverse lookup
+	PerServerResults []*ServerTestResult `json:"perServerResults"` // Results for each DNS server
 }
 
 // Thresholds defines timing thresholds for DNS lookups.
@@ -272,12 +282,68 @@ func (t *Tester) ReverseLookup(ctx context.Context, ip string) *LookupResult {
 	return result
 }
 
+// TestServer performs a DNS test against a specific server.
+func (t *Tester) TestServer(ctx context.Context, server string) *ServerTestResult {
+	// Create a temporary tester for this specific server
+	tempTester := NewTester(server, t.testHostname, t.thresholds)
+
+	result := &ServerTestResult{
+		Server: server,
+	}
+
+	// IPv4 forward lookup (A record)
+	result.Forward = tempTester.ForwardLookupIPv4(ctx, t.testHostname)
+
+	// IPv6 forward lookup (AAAA record)
+	result.ForwardIPv6 = tempTester.ForwardLookupIPv6(ctx, t.testHostname)
+
+	// Calculate overall status and average time
+	var totalTime int64
+	var count int64
+	hasError := false
+	hasWarning := false
+
+	if result.Forward != nil {
+		totalTime += result.Forward.TimeMs
+		count++
+		if result.Forward.Status == StatusError {
+			hasError = true
+		} else if result.Forward.Status == StatusWarning {
+			hasWarning = true
+		}
+	}
+	if result.ForwardIPv6 != nil {
+		totalTime += result.ForwardIPv6.TimeMs
+		count++
+		if result.ForwardIPv6.Status == StatusError {
+			hasError = true
+		} else if result.ForwardIPv6.Status == StatusWarning {
+			hasWarning = true
+		}
+	}
+
+	if count > 0 {
+		result.AvgTimeMs = totalTime / count
+	}
+
+	if hasError {
+		result.Status = StatusError
+	} else if hasWarning {
+		result.Status = StatusWarning
+	} else {
+		result.Status = StatusSuccess
+	}
+
+	return result
+}
+
 // Test performs a complete DNS test (forward and reverse) for both IPv4 and IPv6.
 func (t *Tester) Test(ctx context.Context) *TestResult {
+	servers := GetSystemDNS()
 	result := &TestResult{
 		Server:       t.server,
 		TestHostname: t.testHostname,
-		Servers:      GetSystemDNS(),
+		Servers:      servers,
 	}
 
 	if t.server == "" {
@@ -298,6 +364,16 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	// Reverse lookup on the first IPv6 result
 	if result.ForwardIPv6.Status != StatusError && len(result.ForwardIPv6.Resolved) > 0 {
 		result.ReverseIPv6 = t.ReverseLookup(ctx, result.ForwardIPv6.Resolved[0])
+	}
+
+	// Per-server testing (only for IPv4 servers to avoid duplicate long tests)
+	for _, server := range servers {
+		// Skip IPv6 servers for per-server testing if they'd be duplicates
+		if strings.Contains(server, ":") {
+			continue // Skip IPv6 for now, test only IPv4 DNS servers individually
+		}
+		serverResult := t.TestServer(ctx, server)
+		result.PerServerResults = append(result.PerServerResults, serverResult)
 	}
 
 	return result
@@ -347,7 +423,7 @@ func getSystemDNSDarwin() []string {
 	return servers
 }
 
-// getSystemDNSLinux reads DNS servers from /etc/resolv.conf.
+// getSystemDNSLinux reads DNS servers from /etc/resolv.conf or resolvectl.
 func getSystemDNSLinux() []string {
 	servers := []string{}
 
@@ -369,6 +445,49 @@ func getSystemDNSLinux() []string {
 			parts := strings.Fields(line)
 			if len(parts) >= 2 {
 				servers = append(servers, parts[1])
+			}
+		}
+	}
+
+	// If only systemd-resolved stub is found, try to get real servers
+	if len(servers) == 1 && servers[0] == "127.0.0.53" {
+		if realServers := getSystemDNSResolvectl(); len(realServers) > 0 {
+			return realServers
+		}
+	}
+
+	return servers
+}
+
+// getSystemDNSResolvectl gets DNS servers from systemd-resolved via resolvectl.
+func getSystemDNSResolvectl() []string {
+	servers := []string{}
+	seen := make(map[string]bool)
+
+	// Try resolvectl first, then fall back to systemd-resolve
+	cmd := exec.Command("resolvectl", "status")
+	output, err := cmd.Output()
+	if err != nil {
+		cmd = exec.Command("systemd-resolve", "--status")
+		output, err = cmd.Output()
+		if err != nil {
+			return servers
+		}
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		// Look for "DNS Servers:" lines
+		if strings.HasPrefix(line, "DNS Servers:") {
+			// Format: "DNS Servers: 192.168.64.1 fe80::1c57:dcff:fea5:2564"
+			parts := strings.TrimPrefix(line, "DNS Servers:")
+			for _, server := range strings.Fields(parts) {
+				server = strings.TrimSpace(server)
+				if server != "" && !seen[server] {
+					seen[server] = true
+					servers = append(servers, server)
+				}
 			}
 		}
 	}

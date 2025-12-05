@@ -14,6 +14,7 @@ export interface CardUpdate {
 
 interface UseWebSocketOptions {
   url: string;
+  token?: string | null;
   onMessage?: (message: Message) => void;
   onCardUpdate?: (update: CardUpdate) => void;
   reconnectInterval?: number;
@@ -28,6 +29,7 @@ interface UseWebSocketReturn {
 
 export function useWebSocket({
   url,
+  token,
   onMessage,
   onCardUpdate,
   reconnectInterval = 3000,
@@ -43,11 +45,19 @@ export function useWebSocket({
       return;
     }
 
+    // Don't connect if no token (user not logged in)
+    if (!token) {
+      setStatus('disconnected');
+      return;
+    }
+
     setStatus('connecting');
 
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = url.startsWith('ws') ? url : `${protocol}//${window.location.host}${url}`;
+      const baseUrl = url.startsWith('ws') ? url : `${protocol}//${window.location.host}${url}`;
+      // Add token as query parameter (browsers can't send custom headers with WebSocket)
+      const wsUrl = `${baseUrl}?token=${encodeURIComponent(token)}`;
 
       wsRef.current = new WebSocket(wsUrl);
 
@@ -97,7 +107,7 @@ export function useWebSocket({
       setStatus('error');
       console.error('Failed to create WebSocket:', error);
     }
-  }, [url, onMessage, onCardUpdate, reconnectInterval, maxReconnectAttempts]);
+  }, [url, token, onMessage, onCardUpdate, reconnectInterval, maxReconnectAttempts]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

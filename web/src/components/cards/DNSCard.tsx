@@ -1,4 +1,5 @@
 import { Card, CardValue, CardDivider, Status } from '../ui/Card';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
 
 interface LookupResult {
   result: string;
@@ -9,6 +10,14 @@ interface LookupResult {
   resolved?: string[];
 }
 
+interface ServerTestResult {
+  server: string;
+  forward: LookupResult | null;
+  forwardIpv6: LookupResult | null;
+  status: Status;
+  avgTimeMs: number;
+}
+
 export interface DNSData {
   server: string;
   servers?: string[]; // All configured DNS servers
@@ -17,6 +26,7 @@ export interface DNSData {
   forwardIpv6?: LookupResult | null;
   reverse: LookupResult | null;
   reverseIpv6?: LookupResult | null;
+  perServerResults?: ServerTestResult[];
 }
 
 interface DNSCardProps {
@@ -127,6 +137,76 @@ export function DNSCard({ data, loading }: DNSCardProps) {
             <LookupRow label="Forward (AAAA)" lookup={data.forwardIpv6} />
             <LookupRow label="Reverse (PTR)" lookup={data.reverseIpv6} />
           </div>
+        </>
+      )}
+
+      {/* Per-Server Results (collapsible) */}
+      {data.perServerResults && data.perServerResults.length > 0 && (
+        <>
+          <CardDivider />
+          <CollapsibleSection
+            title="Server Tests"
+            count={data.perServerResults.length}
+            variant="compact"
+            status={
+              data.perServerResults.some((s) => s.status === 'error')
+                ? 'error'
+                : data.perServerResults.some((s) => s.status === 'warning')
+                ? 'warning'
+                : 'success'
+            }
+          >
+            {data.perServerResults.map((server) => (
+              <div key={server.server} className="py-1">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-mono text-text-primary">{server.server}</span>
+                  <span
+                    className={`text-xs font-medium ${
+                      server.status === 'success'
+                        ? 'text-status-success'
+                        : server.status === 'warning'
+                        ? 'text-status-warning'
+                        : 'text-status-error'
+                    }`}
+                  >
+                    {formatTime(server.avgTimeMs)}
+                  </span>
+                </div>
+                {server.forward && (
+                  <div className="flex justify-between text-xs text-text-muted">
+                    <span>A</span>
+                    <span
+                      className={
+                        server.forward.status === 'success'
+                          ? 'text-status-success'
+                          : server.forward.status === 'warning'
+                          ? 'text-status-warning'
+                          : 'text-status-error'
+                      }
+                    >
+                      {server.forward.result === 'No A record' ? 'N/A' : formatTime(server.forward.timeMs)}
+                    </span>
+                  </div>
+                )}
+                {server.forwardIpv6 && (
+                  <div className="flex justify-between text-xs text-text-muted">
+                    <span>AAAA</span>
+                    <span
+                      className={
+                        server.forwardIpv6.status === 'success'
+                          ? 'text-status-success'
+                          : server.forwardIpv6.status === 'warning'
+                          ? 'text-status-warning'
+                          : 'text-status-error'
+                      }
+                    >
+                      {server.forwardIpv6.result === 'No AAAA record' ? 'N/A' : formatTime(server.forwardIpv6.timeMs)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </CollapsibleSection>
         </>
       )}
     </Card>

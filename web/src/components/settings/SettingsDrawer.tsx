@@ -50,6 +50,25 @@ interface PingTarget {
   name: string;
   host: string;
   enabled: boolean;
+  count?: number; // Number of pings (default 3)
+}
+
+interface DNSServer {
+  address: string;
+  enabled: boolean;
+}
+
+interface FABOptions {
+  // Order matches card display order
+  runLink: boolean;         // Link card
+  runSwitch: boolean;       // Nearest Switch card
+  runVLAN: boolean;         // VLAN card
+  runIPConfig: boolean;     // IP Config (DHCP) card
+  runGateway: boolean;      // Gateway card
+  runDNS: boolean;          // DNS card
+  runSpeedtest: boolean;    // Performance: Internet Speed (default OFF)
+  runIperf: boolean;        // Performance: LAN Speed (default OFF)
+  runHealthChecks: boolean; // Health Checks card
 }
 
 interface TCPPort {
@@ -75,6 +94,7 @@ interface HTTPEndpoint {
 
 interface TestsSettings {
   dnsHostname: string;
+  dnsServers: DNSServer[];
   pingTargets: PingTarget[];
   tcpPorts: TCPPort[];
   udpPorts: UDPPort[];
@@ -119,6 +139,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   });
   const [testsSettings, setTestsSettings] = useState<TestsSettings>({
     dnsHostname: 'google.com',
+    dnsServers: [],
     pingTargets: [],
     tcpPorts: [],
     udpPorts: [],
@@ -128,6 +149,22 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       autoRunOnLink: false,
     },
   });
+
+  // FAB Options (stored in localStorage)
+  const [fabOptions, setFabOptions] = useState<FABOptions>({
+    // Order matches card display order
+    runLink: true,          // Link card
+    runSwitch: true,        // Nearest Switch card
+    runVLAN: true,          // VLAN card
+    runIPConfig: true,      // IP Config (DHCP) card
+    runGateway: true,       // Gateway card
+    runDNS: true,           // DNS card
+    runSpeedtest: false,    // Performance: Internet Speed (default OFF)
+    runIperf: false,        // Performance: LAN Speed (default OFF)
+    runHealthChecks: true,  // Health Checks card
+  });
+  const [savingFab, setSavingFab] = useState(false);
+  const [fabMessage, setFabMessage] = useState<string | null>(null);
   const [wifiSettings, setWifiSettings] = useState<WiFiSettings>({
     interface: '',
     availableWifi: [],
@@ -208,6 +245,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         const data = await response.json();
         setTestsSettings({
           dnsHostname: data.dnsHostname || 'google.com',
+          dnsServers: data.dnsServers || [],
           pingTargets: data.pingTargets || [],
           tcpPorts: data.tcpPorts || [],
           udpPorts: data.udpPorts || [],
@@ -272,6 +310,36 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   };
 
+  // Load FAB options from localStorage
+  const loadFabOptions = useCallback(() => {
+    try {
+      const saved = localStorage.getItem('netscope-fab-options');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setFabOptions((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch (err) {
+      console.error('Failed to load FAB options:', err);
+    }
+  }, []);
+
+  // Save FAB options to localStorage
+  const saveFabOptions = () => {
+    setSavingFab(true);
+    setFabMessage(null);
+    try {
+      localStorage.setItem('netscope-fab-options', JSON.stringify(fabOptions));
+      setFabMessage('Settings saved');
+      // Dispatch event to notify FAB about options changes
+      window.dispatchEvent(new CustomEvent('fabOptionsUpdated', { detail: fabOptions }));
+      setTimeout(() => setFabMessage(null), 2000);
+    } catch {
+      setFabMessage('Failed to save settings');
+    } finally {
+      setSavingFab(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchThresholds();
@@ -279,8 +347,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       fetchTestsSettings();
       fetchWifiSettings();
       loadIperfSettings();
+      loadFabOptions();
     }
-  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings]);
+  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings, loadFabOptions]);
 
   const saveThresholds = async () => {
     setSaving(true);
@@ -439,7 +508,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }));
   };
 
-  const updatePingTarget = (index: number, field: keyof PingTarget, value: string | boolean) => {
+  const updatePingTarget = (index: number, field: keyof PingTarget, value: string | boolean | number) => {
     setTestsSettings((prev) => ({
       ...prev,
       pingTargets: prev.pingTargets.map((t, i) =>
@@ -516,6 +585,30 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       ...prev,
       httpEndpoints: prev.httpEndpoints.map((t, i) =>
         i === index ? { ...t, [field]: value } : t
+      ),
+    }));
+  };
+
+  // Add/remove DNS server
+  const addDNSServer = () => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      dnsServers: [...prev.dnsServers, { address: '', enabled: true }],
+    }));
+  };
+
+  const removeDNSServer = (index: number) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      dnsServers: prev.dnsServers.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateDNSServer = (index: number, field: keyof DNSServer, value: string | boolean) => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      dnsServers: prev.dnsServers.map((s, i) =>
+        i === index ? { ...s, [field]: value } : s
       ),
     }));
   };
@@ -721,12 +814,12 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             </div>
           </CollapsibleSection>
 
-          {/* Health Checks Section */}
-          <CollapsibleSection title="Health Checks">
+          {/* DNS Section */}
+          <CollapsibleSection title="DNS">
             <div className="space-y-4">
               {/* DNS Hostname */}
               <div>
-                <label className="text-xs text-text-muted">DNS Test Hostname</label>
+                <label className="text-xs text-text-muted">Test Hostname</label>
                 <input
                   type="text"
                   value={testsSettings.dnsHostname}
@@ -741,8 +834,55 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 </p>
               </div>
 
-              {/* Ping Targets */}
+              {/* DNS Servers for per-server testing */}
               <div className="border-t border-surface-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-text-muted font-medium">Additional DNS Servers</span>
+                  <button
+                    onClick={addDNSServer}
+                    className="text-xs text-brand-primary hover:text-brand-accent"
+                  >
+                    + Add
+                  </button>
+                </div>
+                <p className="text-xs text-text-muted mb-2">
+                  Add servers to compare DNS response times (e.g., 8.8.8.8, 1.1.1.1)
+                </p>
+                {testsSettings.dnsServers.map((server, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={server.address}
+                      onChange={(e) => updateDNSServer(idx, 'address', e.target.value)}
+                      placeholder="DNS Server IP"
+                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <button
+                      onClick={() => removeDNSServer(idx)}
+                      className="text-status-error hover:text-status-error/80 px-1"
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Save DNS Settings Button */}
+              <button
+                onClick={saveTestsSettings}
+                disabled={savingTests}
+                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+              >
+                {savingTests ? 'Saving...' : 'Save DNS Settings'}
+              </button>
+            </div>
+          </CollapsibleSection>
+
+          {/* Health Checks Section */}
+          <CollapsibleSection title="Health Checks">
+            <div className="space-y-4">
+              {/* Ping Targets */}
+              <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-text-muted font-medium">Ping Targets</span>
                   <button
@@ -752,6 +892,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     + Add
                   </button>
                 </div>
+                <p className="text-xs text-text-muted mb-2">
+                  Default: 3 pings per target
+                </p>
                 {testsSettings.pingTargets.map((target, idx) => (
                   <div key={idx} className="flex gap-2 mb-2">
                     <input
@@ -759,7 +902,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       value={target.name}
                       onChange={(e) => updatePingTarget(idx, 'name', e.target.value)}
                       placeholder="Name"
-                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="w-20 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <input
                       type="text"
@@ -767,6 +910,15 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       onChange={(e) => updatePingTarget(idx, 'host', e.target.value)}
                       placeholder="Host/IP"
                       className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                    />
+                    <input
+                      type="number"
+                      value={target.count || 3}
+                      onChange={(e) => updatePingTarget(idx, 'count', parseInt(e.target.value) || 3)}
+                      min={1}
+                      max={10}
+                      title="Number of pings"
+                      className="w-12 px-1 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary text-center"
                     />
                     <button
                       onClick={() => removePingTarget(idx)}
@@ -1303,6 +1455,149 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               {saveMessage && (
                 <p className={`text-sm text-center ${saveMessage.includes('Error') || saveMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'}`}>
                   {saveMessage}
+                </p>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* FAB Options Section */}
+          <CollapsibleSection title="Run All Tests (FAB)">
+            <div className="space-y-3">
+              <p className="text-xs text-text-muted">
+                Configure which tests run when the FAB button is pressed. Order matches card display.
+              </p>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Link</span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runLink}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runLink: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Nearest Switch</span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runSwitch}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runSwitch: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">VLAN</span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runVLAN}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runVLAN: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">IP Config</span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runIPConfig}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runIPConfig: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Gateway</span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runGateway}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runGateway: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">DNS</span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runDNS}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runDNS: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <p className="text-xs text-text-muted font-medium pt-2">Performance Tests</p>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border ml-3">
+                <div>
+                  <span className="text-sm text-text-primary">Internet Speed</span>
+                  <p className="text-xs text-text-muted">Uses bandwidth</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runSpeedtest}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runSpeedtest: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border ml-3">
+                <div>
+                  <span className="text-sm text-text-primary">LAN Speed (iperf3)</span>
+                  <p className="text-xs text-text-muted">Requires server</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runIperf}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runIperf: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Health Checks</span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runHealthChecks}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runHealthChecks: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              <button
+                onClick={saveFabOptions}
+                disabled={savingFab}
+                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+              >
+                {savingFab ? 'Saving...' : 'Save FAB Options'}
+              </button>
+
+              {fabMessage && (
+                <p
+                  className={`text-xs text-center ${
+                    fabMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'
+                  }`}
+                >
+                  {fabMessage}
                 </p>
               )}
             </div>
