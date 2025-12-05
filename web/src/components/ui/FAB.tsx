@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 interface FABProps {
   className?: string;
@@ -6,6 +6,26 @@ interface FABProps {
 
 export function FAB({ className = '' }: FABProps) {
   const [isRunning, setIsRunning] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Listen for testsComplete event to stop spinning
+  useEffect(() => {
+    const handleTestsComplete = () => {
+      setIsRunning(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+
+    window.addEventListener('testsComplete', handleTestsComplete);
+    return () => {
+      window.removeEventListener('testsComplete', handleTestsComplete);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleClick = useCallback(() => {
     if (isRunning) return;
@@ -15,10 +35,10 @@ export function FAB({ className = '' }: FABProps) {
     // Dispatch event to trigger all tests
     window.dispatchEvent(new CustomEvent('runAllTests'));
 
-    // Reset after a reasonable time for tests to complete
-    setTimeout(() => {
+    // Fallback timeout in case testsComplete event doesn't fire
+    timeoutRef.current = setTimeout(() => {
       setIsRunning(false);
-    }, 30000);
+    }, 60000); // 60s fallback for long-running tests like speedtest
   }, [isRunning]);
 
   return (

@@ -385,7 +385,7 @@ function App() {
 
   // Listen for FAB "run all tests" event with options
   useEffect(() => {
-    const handleRunAllTests = () => {
+    const handleRunAllTests = async () => {
       // Read FAB options from localStorage (matches SettingsDrawer FABOptions interface)
       let fabOptions = {
         // Order matches card display order
@@ -408,29 +408,43 @@ function App() {
         console.error('Failed to load FAB options:', err);
       }
 
-      // Conditionally refresh each card based on FAB options
+      // Build array of fetch promises based on FAB options
+      const fetchPromises: Promise<void>[] = [];
+
       if (fabOptions.runLink) {
-        fetchLinkData();
-        fetchWiFiData();  // WiFi is part of Link layer
-        fetchCableData(); // Cable is part of Link layer
+        fetchPromises.push(fetchLinkData());
+        fetchPromises.push(fetchWiFiData());  // WiFi is part of Link layer
+        fetchPromises.push(fetchCableData()); // Cable is part of Link layer
       }
       if (fabOptions.runSwitch) {
-        fetchDiscoveryData();
+        fetchPromises.push(fetchDiscoveryData());
       }
       if (fabOptions.runVLAN) {
-        fetchVLANData();
+        fetchPromises.push(fetchVLANData());
       }
       if (fabOptions.runIPConfig) {
-        fetchIPConfig();
+        fetchPromises.push(fetchIPConfig());
       }
       if (fabOptions.runGateway) {
-        fetchGatewayData();
+        fetchPromises.push(fetchGatewayData());
       }
       if (fabOptions.runDNS) {
-        fetchDNSData();
+        fetchPromises.push(fetchDNSData());
       }
+
+      // Wait for all fetches to complete, then notify FAB
       // Note: runSpeedtest, runIperf, and runHealthChecks are handled by
       // their respective card components listening for the 'runAllTests' event
+      // and they dispatch their own 'testComplete' events
+      try {
+        await Promise.all(fetchPromises);
+      } finally {
+        // Dispatch event to signal basic tests are complete
+        // Add small delay to let card-managed tests (speedtest, iperf, health) start
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('testsComplete'));
+        }, 500);
+      }
     };
     window.addEventListener('runAllTests', handleRunAllTests);
     return () => {
@@ -582,7 +596,7 @@ function App() {
         {/* Development notice */}
         <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-            NetScope v0.8.6 - IPv6 Gateway Support
+            NetScope v0.8.8 - FAB Completion Fix
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-text-muted">
             Tap the play button to run all tests.
