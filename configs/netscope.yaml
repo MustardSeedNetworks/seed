@@ -78,5 +78,5 @@ thresholds:
             critical: 7
 auth:
     default_username: admin
-    default_password_hash: $2a$10$Dmw4tbpvJ3hoxg4ln8fl6uUCnhUIeXBm7Xy6txdvgwNAjhtYgzmsi
+    default_password_hash: $2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52
     session_timeout: 24h0m0s
