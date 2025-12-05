@@ -5,25 +5,25 @@
 /* NetScope Theme - WiFi Vigilante Color Scheme */
 
 :root {
-  /* Light Mode - soft off-white, not pure white */
-  --color-brand-primary: #2563eb;
-  --color-brand-accent: #3b82f6;
+  /* Light Mode - improved contrast, WCAG AA compliant */
+  --color-brand-primary: #1d4ed8;
+  --color-brand-accent: #2563eb;
 
-  --color-surface-base: #f1f5f9;
-  --color-surface-raised: #ffffff;
-  --color-surface-border: #cbd5e1;
-  --color-surface-hover: #e2e8f0;
+  --color-surface-base: #e2e8f0;
+  --color-surface-raised: #f8fafc;
+  --color-surface-border: #94a3b8;
+  --color-surface-hover: #cbd5e1;
 
-  --color-text-primary: #1e293b;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748b;
-  --color-text-accent: #2563eb;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #1e293b;
+  --color-text-muted: #475569;
+  --color-text-accent: #1d4ed8;
+  --color-text-inverse: #f8fafc;
 
-  --color-status-success: #059669;
-  --color-status-warning: #d97706;
-  --color-status-error: #dc2626;
-  --color-status-info: #2563eb;
+  --color-status-success: #047857;
+  --color-status-warning: #b45309;
+  --color-status-error: #b91c1c;
+  --color-status-info: #1d4ed8;
 }
 
 .dark {
