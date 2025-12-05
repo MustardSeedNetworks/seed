@@ -202,7 +202,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 // isAllowedOrigin checks if the origin is in the allowed list.
-// Allows localhost variants for development and same-host requests.
+// Allows localhost variants and private network IPs (RFC 1918) for local network use.
 func isAllowedOrigin(origin string) bool {
 	allowedPatterns := []string{
 		"http://localhost",
@@ -211,13 +211,50 @@ func isAllowedOrigin(origin string) bool {
 		"https://127.0.0.1",
 		"http://[::1]",
 		"https://[::1]",
+		// Private network ranges (RFC 1918)
+		"http://192.168.",
+		"https://192.168.",
+		"http://10.",
+		"https://10.",
+		"http://172.16.",
+		"https://172.16.",
+		"http://172.17.",
+		"https://172.17.",
+		"http://172.18.",
+		"https://172.18.",
+		"http://172.19.",
+		"https://172.19.",
+		"http://172.20.",
+		"https://172.20.",
+		"http://172.21.",
+		"https://172.21.",
+		"http://172.22.",
+		"https://172.22.",
+		"http://172.23.",
+		"https://172.23.",
+		"http://172.24.",
+		"https://172.24.",
+		"http://172.25.",
+		"https://172.25.",
+		"http://172.26.",
+		"https://172.26.",
+		"http://172.27.",
+		"https://172.27.",
+		"http://172.28.",
+		"https://172.28.",
+		"http://172.29.",
+		"https://172.29.",
+		"http://172.30.",
+		"https://172.30.",
+		"http://172.31.",
+		"https://172.31.",
 	}
 
 	for _, pattern := range allowedPatterns {
 		if len(origin) >= len(pattern) && origin[:len(pattern)] == pattern {
-			// Allow localhost with any port
+			// Allow localhost with any port, and private IPs
 			remainder := origin[len(pattern):]
-			if remainder == "" || (len(remainder) > 0 && remainder[0] == ':') {
+			if remainder == "" || (len(remainder) > 0 && (remainder[0] == ':' || (remainder[0] >= '0' && remainder[0] <= '9'))) {
 				return true
 			}
 		}
