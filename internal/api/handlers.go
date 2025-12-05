@@ -2521,3 +2521,77 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(status)
 }
+
+// NetworkDiscoverySettingsResponse represents network discovery settings.
+type NetworkDiscoverySettingsResponse struct {
+	Enabled        bool   `json:"enabled"`
+	ARPScanWorkers int    `json:"arpScanWorkers"`
+	PingTimeoutMs  int64  `json:"pingTimeoutMs"`
+	ScanTimeoutMs  int64  `json:"scanTimeoutMs"`
+	AutoScan       bool   `json:"autoScan"`
+	ScanIntervalMs int64  `json:"scanIntervalMs"`
+	OUIFilePath    string `json:"ouiFilePath"`
+}
+
+// handleDevicesSettings handles GET/PUT for network discovery settings.
+func (s *Server) handleDevicesSettings(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.getDevicesSettings(w, r)
+	case http.MethodPut:
+		s.updateDevicesSettings(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
+	resp := NetworkDiscoverySettingsResponse{
+		Enabled:        s.config.NetworkDiscovery.Enabled,
+		ARPScanWorkers: s.config.NetworkDiscovery.ARPScanWorkers,
+		PingTimeoutMs:  s.config.NetworkDiscovery.PingTimeout.Milliseconds(),
+		ScanTimeoutMs:  s.config.NetworkDiscovery.ScanTimeout.Milliseconds(),
+		AutoScan:       s.config.NetworkDiscovery.AutoScan,
+		ScanIntervalMs: s.config.NetworkDiscovery.ScanInterval.Milliseconds(),
+		OUIFilePath:    s.config.NetworkDiscovery.OUIFilePath,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
+	var req NetworkDiscoverySettingsResponse
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update config
+	s.config.NetworkDiscovery.Enabled = req.Enabled
+	if req.ARPScanWorkers > 0 {
+		s.config.NetworkDiscovery.ARPScanWorkers = req.ARPScanWorkers
+	}
+	if req.PingTimeoutMs > 0 {
+		s.config.NetworkDiscovery.PingTimeout = time.Duration(req.PingTimeoutMs) * time.Millisecond
+	}
+	if req.ScanTimeoutMs > 0 {
+		s.config.NetworkDiscovery.ScanTimeout = time.Duration(req.ScanTimeoutMs) * time.Millisecond
+	}
+	s.config.NetworkDiscovery.AutoScan = req.AutoScan
+	s.config.NetworkDiscovery.ScanInterval = time.Duration(req.ScanIntervalMs) * time.Millisecond
+	if req.OUIFilePath != "" {
+		s.config.NetworkDiscovery.OUIFilePath = req.OUIFilePath
+	}
+
+	// Save config to file
+	if err := s.config.Save(s.configPath); err != nil {
+		log.Printf("Warning: Failed to save config: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Network discovery settings updated",
+	})
+}

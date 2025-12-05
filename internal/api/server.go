@@ -167,6 +167,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/devices", s.handleDevices)
 	s.mux.HandleFunc("/api/devices/scan", s.handleDevicesScan)
 	s.mux.HandleFunc("/api/devices/status", s.handleDevicesStatus)
+	s.mux.HandleFunc("/api/devices/settings", s.handleDevicesSettings)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)

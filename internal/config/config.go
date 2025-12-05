@@ -10,16 +10,17 @@ import (
 
 // Config represents the application configuration.
 type Config struct {
-	Server     ServerConfig     `yaml:"server"`
-	Interface  InterfaceConfig  `yaml:"interface"`
-	VLAN       VLANConfig       `yaml:"vlan"`
-	IP         IPConfig         `yaml:"ip"`
-	Discovery  DiscoveryConfig  `yaml:"discovery"`
-	DNS        DNSConfig        `yaml:"dns"`
-	Tests      TestsConfig      `yaml:"tests"`
-	Speedtest  SpeedtestConfig  `yaml:"speedtest"`
-	Thresholds ThresholdsConfig `yaml:"thresholds"`
-	Auth       AuthConfig       `yaml:"auth"`
+	Server           ServerConfig           `yaml:"server"`
+	Interface        InterfaceConfig        `yaml:"interface"`
+	VLAN             VLANConfig             `yaml:"vlan"`
+	IP               IPConfig               `yaml:"ip"`
+	Discovery        DiscoveryConfig        `yaml:"discovery"`
+	NetworkDiscovery NetworkDiscoveryConfig `yaml:"network_discovery"`
+	DNS              DNSConfig              `yaml:"dns"`
+	Tests            TestsConfig            `yaml:"tests"`
+	Speedtest        SpeedtestConfig        `yaml:"speedtest"`
+	Thresholds       ThresholdsConfig       `yaml:"thresholds"`
+	Auth             AuthConfig             `yaml:"auth"`
 }
 
 // ServerConfig contains HTTP server settings.
@@ -61,6 +62,17 @@ type StaticIP struct {
 type DiscoveryConfig struct {
 	Protocol string        `yaml:"protocol"` // "auto", "lldp", "cdp", "edp", "fdp"
 	Timeout  time.Duration `yaml:"timeout"`
+}
+
+// NetworkDiscoveryConfig contains network device discovery settings.
+type NetworkDiscoveryConfig struct {
+	Enabled        bool          `yaml:"enabled"`          // Enable network discovery
+	ARPScanWorkers int           `yaml:"arp_scan_workers"` // Number of concurrent ping workers (default 50)
+	PingTimeout    time.Duration `yaml:"ping_timeout"`     // Timeout for each ping (default 500ms)
+	ScanTimeout    time.Duration `yaml:"scan_timeout"`     // Total scan timeout (default 30s)
+	AutoScan       bool          `yaml:"auto_scan"`        // Auto-scan on startup/interface change
+	ScanInterval   time.Duration `yaml:"scan_interval"`    // Interval for auto-scan (0 = disabled)
+	OUIFilePath    string        `yaml:"oui_file_path"`    // Path to IEEE OUI file (oui.txt)
 }
 
 // DNSConfig contains DNS testing settings.
@@ -197,6 +209,15 @@ func DefaultConfig() *Config {
 		Discovery: DiscoveryConfig{
 			Protocol: "auto",
 			Timeout:  30 * time.Second,
+		},
+		NetworkDiscovery: NetworkDiscoveryConfig{
+			Enabled:        true,
+			ARPScanWorkers: 50,
+			PingTimeout:    500 * time.Millisecond,
+			ScanTimeout:    30 * time.Second,
+			AutoScan:       false,
+			ScanInterval:   0,          // Disabled by default
+			OUIFilePath:    "oui.txt",  // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
 		},
 		DNS: DNSConfig{
 			TestHostname: "google.com",
