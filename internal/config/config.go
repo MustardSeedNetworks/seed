@@ -66,13 +66,21 @@ type DiscoveryConfig struct {
 
 // NetworkDiscoveryConfig contains network device discovery settings.
 type NetworkDiscoveryConfig struct {
-	Enabled        bool          `yaml:"enabled"`          // Enable network discovery
-	ARPScanWorkers int           `yaml:"arp_scan_workers"` // Number of concurrent ping workers (default 50)
-	PingTimeout    time.Duration `yaml:"ping_timeout"`     // Timeout for each ping (default 500ms)
-	ScanTimeout    time.Duration `yaml:"scan_timeout"`     // Total scan timeout (default 30s)
-	AutoScan       bool          `yaml:"auto_scan"`        // Auto-scan on startup/interface change
-	ScanInterval   time.Duration `yaml:"scan_interval"`    // Interval for auto-scan (0 = disabled)
-	OUIFilePath    string        `yaml:"oui_file_path"`    // Path to IEEE OUI file (oui.txt)
+	Enabled           bool            `yaml:"enabled"`            // Enable network discovery
+	ARPScanWorkers    int             `yaml:"arp_scan_workers"`   // Number of concurrent ping workers (default 50)
+	PingTimeout       time.Duration   `yaml:"ping_timeout"`       // Timeout for each ping (default 500ms)
+	ScanTimeout       time.Duration   `yaml:"scan_timeout"`       // Total scan timeout (default 30s)
+	AutoScan          bool            `yaml:"auto_scan"`          // Auto-scan on startup/interface change
+	ScanInterval      time.Duration   `yaml:"scan_interval"`      // Interval for auto-scan (0 = disabled)
+	OUIFilePath       string          `yaml:"oui_file_path"`      // Path to IEEE OUI file (oui.txt)
+	AdditionalSubnets []SubnetConfig  `yaml:"additional_subnets"` // Additional subnets to scan
+}
+
+// SubnetConfig represents a configured subnet for network discovery.
+type SubnetConfig struct {
+	CIDR    string `yaml:"cidr"`    // CIDR notation (e.g., "10.0.0.0/24")
+	Name    string `yaml:"name"`    // Friendly name (e.g., "Server VLAN")
+	Enabled bool   `yaml:"enabled"` // Whether to scan this subnet
 }
 
 // DNSConfig contains DNS testing settings.
@@ -211,13 +219,14 @@ func DefaultConfig() *Config {
 			Timeout:  30 * time.Second,
 		},
 		NetworkDiscovery: NetworkDiscoveryConfig{
-			Enabled:        true,
-			ARPScanWorkers: 50,
-			PingTimeout:    500 * time.Millisecond,
-			ScanTimeout:    30 * time.Second,
-			AutoScan:       false,
-			ScanInterval:   0,          // Disabled by default
-			OUIFilePath:    "oui.txt",  // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
+			Enabled:           true,
+			ARPScanWorkers:    50,
+			PingTimeout:       500 * time.Millisecond,
+			ScanTimeout:       30 * time.Second,
+			AutoScan:          true,            // Auto-scan on startup by default
+			ScanInterval:      0,               // Disabled by default
+			OUIFilePath:       "oui.txt",       // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
+			AdditionalSubnets: []SubnetConfig{}, // No additional subnets by default
 		},
 		DNS: DNSConfig{
 			TestHostname: "google.com",

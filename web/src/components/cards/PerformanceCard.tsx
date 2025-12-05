@@ -249,6 +249,8 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
             if (data.last) {
               setSpeedtestResult(data.last);
             }
+            // Signal FAB that speedtest is complete
+            window.dispatchEvent(new CustomEvent('cardTestComplete', { detail: { test: 'speedtest' } }));
           }
         }
       } catch (err) {
@@ -276,6 +278,8 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
             if (data.last) {
               setIperfResult(data.last);
             }
+            // Signal FAB that iperf is complete
+            window.dispatchEvent(new CustomEvent('cardTestComplete', { detail: { test: 'iperf' } }));
           }
         }
       } catch (err) {

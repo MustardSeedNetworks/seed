@@ -74,15 +74,16 @@ interface DNSServer {
 
 interface FABOptions {
   // Order matches card display order
-  runLink: boolean;         // Link card
-  runSwitch: boolean;       // Nearest Switch card
-  runVLAN: boolean;         // VLAN card
-  runIPConfig: boolean;     // IP Config (DHCP) card
-  runGateway: boolean;      // Gateway card
-  runDNS: boolean;          // DNS card
-  runSpeedtest: boolean;    // Performance: Internet Speed (default OFF)
-  runIperf: boolean;        // Performance: LAN Speed (default OFF)
-  runHealthChecks: boolean; // Health Checks card
+  runLink: boolean;              // Link card
+  runSwitch: boolean;            // Nearest Switch card
+  runVLAN: boolean;              // VLAN card
+  runIPConfig: boolean;          // IP Config (DHCP) card
+  runGateway: boolean;           // Gateway card
+  runDNS: boolean;               // DNS card
+  runHealthChecks: boolean;      // Health Checks card
+  runSpeedtest: boolean;         // Performance: Internet Speed (default OFF)
+  runIperf: boolean;             // Performance: LAN Speed (default OFF)
+  runNetworkDiscovery: boolean;  // Network Discovery card (default ON)
 }
 
 interface TCPPort {
@@ -139,6 +140,12 @@ interface NetworkDiscoverySettings {
   ouiFilePath: string;
 }
 
+interface SubnetConfig {
+  cidr: string;
+  name: string;
+  enabled: boolean;
+}
+
 interface SettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -177,15 +184,16 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   // FAB Options (stored in localStorage)
   const [fabOptions, setFabOptions] = useState<FABOptions>({
     // Order matches card display order
-    runLink: true,          // Link card
-    runSwitch: true,        // Nearest Switch card
-    runVLAN: true,          // VLAN card
-    runIPConfig: true,      // IP Config (DHCP) card
-    runGateway: true,       // Gateway card
-    runDNS: true,           // DNS card
-    runSpeedtest: false,    // Performance: Internet Speed (default OFF)
-    runIperf: false,        // Performance: LAN Speed (default OFF)
-    runHealthChecks: true,  // Health Checks card
+    runLink: true,              // Link card
+    runSwitch: true,            // Nearest Switch card
+    runVLAN: true,              // VLAN card
+    runIPConfig: true,          // IP Config (DHCP) card
+    runGateway: true,           // Gateway card
+    runDNS: true,               // DNS card
+    runHealthChecks: true,      // Health Checks card
+    runSpeedtest: false,        // Performance: Internet Speed (default OFF)
+    runIperf: false,            // Performance: LAN Speed (default OFF)
+    runNetworkDiscovery: true,  // Network Discovery card (default ON)
   });
   const [wifiSettings, setWifiSettings] = useState<WiFiSettings>({
     interface: '',
@@ -214,6 +222,12 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     scanIntervalMs: 0,
     ouiFilePath: 'oui.txt',
   });
+  // Additional subnets for scanning
+  const [subnets, setSubnets] = useState<SubnetConfig[]>([]);
+  const [newSubnetCidr, setNewSubnetCidr] = useState('');
+  const [newSubnetName, setNewSubnetName] = useState('');
+  const [subnetError, setSubnetError] = useState<string | null>(null);
+  const [subnetsStatus, setSubnetsStatus] = useState<SaveStatus>('idle');
   // Auto-save status for each section
   type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
   const [thresholdsStatus, setThresholdsStatus] = useState<SaveStatus>('idle');
@@ -380,6 +394,112 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   }, []);
 
+  // Fetch configured subnets from API
+  const fetchSubnets = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/devices/subnets`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSubnets(data.subnets || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch subnets:', err);
+    }
+  }, []);
+
+  // Add a new subnet
+  const addSubnet = async () => {
+    if (!newSubnetCidr.trim()) {
+      setSubnetError('CIDR is required');
+      return;
+    }
+
+    setSubnetError(null);
+    setSubnetsStatus('saving');
+
+    try {
+      const response = await fetch(`${API_BASE}/api/devices/subnets`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cidr: newSubnetCidr.trim(),
+          name: newSubnetName.trim() || newSubnetCidr.trim(),
+          enabled: true,
+        }),
+      });
+
+      if (response.ok) {
+        setNewSubnetCidr('');
+        setNewSubnetName('');
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
+        fetchSubnets();
+      } else {
+        const errorData = await response.json();
+        setSubnetError(errorData.error || 'Failed to add subnet');
+        setSubnetsStatus('error');
+      }
+    } catch {
+      setSubnetError('Network error adding subnet');
+      setSubnetsStatus('error');
+    }
+  };
+
+  // Toggle subnet enabled state
+  const toggleSubnet = async (cidr: string, enabled: boolean) => {
+    setSubnetsStatus('saving');
+    try {
+      const response = await fetch(`${API_BASE}/api/devices/subnets`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cidr, enabled }),
+      });
+
+      if (response.ok) {
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
+        fetchSubnets();
+      } else {
+        setSubnetsStatus('error');
+      }
+    } catch {
+      setSubnetsStatus('error');
+    }
+  };
+
+  // Delete a subnet
+  const deleteSubnet = async (cidr: string) => {
+    setSubnetsStatus('saving');
+    try {
+      const response = await fetch(`${API_BASE}/api/devices/subnets`, {
+        method: 'DELETE',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cidr }),
+      });
+
+      if (response.ok) {
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
+        fetchSubnets();
+      } else {
+        setSubnetsStatus('error');
+      }
+    } catch {
+      setSubnetsStatus('error');
+    }
+  };
+
   // Save Network Discovery settings to API
   const saveNetworkDiscoverySettings = useCallback(async () => {
     setNetworkDiscoveryStatus('saving');
@@ -421,6 +541,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       loadIperfSettings();
       loadFabOptions();
       fetchNetworkDiscoverySettings();
+      fetchSubnets();
 
       // Mark initial load as done after a short delay
       setTimeout(() => {
@@ -433,7 +554,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         networkDiscoveryInitRef.current = false;
       }, 500);
     }
-  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings, loadFabOptions, fetchNetworkDiscoverySettings]);
+  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings, loadFabOptions, fetchNetworkDiscoverySettings, fetchSubnets]);
 
   const saveThresholds = useCallback(async () => {
     setThresholdsStatus('saving');
@@ -1125,6 +1246,81 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 </p>
               </div>
 
+              {/* Additional Subnets */}
+              <div className="border-t border-surface-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-text-muted font-medium">
+                    Additional Subnets <AutoSaveIndicator status={subnetsStatus} />
+                  </span>
+                </div>
+                <p className="text-xs text-text-muted mb-2">
+                  Add subnets beyond the local interface to scan for devices (e.g., server VLANs, remote networks).
+                </p>
+
+                {/* List of configured subnets */}
+                {subnets.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {subnets.map((subnet) => (
+                      <div
+                        key={subnet.cidr}
+                        className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-text-primary truncate">{subnet.name || subnet.cidr}</div>
+                          <div className="text-xs text-text-muted">{subnet.cidr}</div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-2">
+                          <input
+                            type="checkbox"
+                            checked={subnet.enabled}
+                            onChange={(e) => toggleSubnet(subnet.cidr, e.target.checked)}
+                            className="w-4 h-4"
+                            title={subnet.enabled ? 'Disable subnet' : 'Enable subnet'}
+                          />
+                          <button
+                            onClick={() => deleteSubnet(subnet.cidr)}
+                            className="text-status-error hover:text-red-400 text-sm"
+                            title="Remove subnet"
+                          >
+                            X
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new subnet form */}
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={newSubnetCidr}
+                    onChange={(e) => {
+                      setNewSubnetCidr(e.target.value);
+                      setSubnetError(null);
+                    }}
+                    placeholder="CIDR (e.g., 10.0.0.0/24)"
+                    className="w-full px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  />
+                  <input
+                    type="text"
+                    value={newSubnetName}
+                    onChange={(e) => setNewSubnetName(e.target.value)}
+                    placeholder="Name (optional, e.g., Server VLAN)"
+                    className="w-full px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  />
+                  {subnetError && (
+                    <p className="text-xs text-status-error">{subnetError}</p>
+                  )}
+                  <button
+                    onClick={addSubnet}
+                    className="w-full px-2 py-1 bg-brand-primary hover:bg-brand-accent text-white rounded text-sm"
+                  >
+                    + Add Subnet
+                  </button>
+                </div>
+              </div>
+
             </div>
           </CollapsibleSection>
 
@@ -1793,6 +1989,18 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Health Checks</span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runHealthChecks}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({ ...prev, runHealthChecks: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
               <p className="text-xs text-text-muted font-medium pt-2">Performance Tests</p>
 
               <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border ml-3">
@@ -1826,12 +2034,15 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               </label>
 
               <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm text-text-primary">Health Checks</span>
+                <div>
+                  <span className="text-sm text-text-primary">Network Discovery</span>
+                  <p className="text-xs text-text-muted">Scan for devices</p>
+                </div>
                 <input
                   type="checkbox"
-                  checked={fabOptions.runHealthChecks}
+                  checked={fabOptions.runNetworkDiscovery}
                   onChange={(e) =>
-                    setFabOptions((prev) => ({ ...prev, runHealthChecks: e.target.checked }))
+                    setFabOptions((prev) => ({ ...prev, runNetworkDiscovery: e.target.checked }))
                   }
                   className="w-4 h-4"
                 />

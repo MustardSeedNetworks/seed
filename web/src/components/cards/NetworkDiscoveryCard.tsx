@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
 
 export interface LLDPInfo {
   chassisId: string;
@@ -325,19 +326,24 @@ export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscovery
 
       <CardDivider />
 
-      {/* Network Info */}
-      <div className="space-y-1 text-xs mb-3">
-        {status.subnet && <CardRow label="Subnet" value={status.subnet} />}
-        {status.localIP && <CardRow label="Local IP" value={status.localIP} />}
-        {status.interface && <CardRow label="Interface" value={status.interface} />}
-        <CardRow label="Last Scan" value={formatLastSeen(status.lastScan)} />
-      </div>
+      {/* Network Info - Collapsible */}
+      <CollapsibleSection title="Network Info" variant="compact" defaultOpen={false}>
+        <div className="space-y-1 text-xs">
+          {status.subnet && <CardRow label="Subnet" value={status.subnet} />}
+          {status.localIP && <CardRow label="Local IP" value={status.localIP} />}
+          {status.interface && <CardRow label="Interface" value={status.interface} />}
+          <CardRow label="Last Scan" value={formatLastSeen(status.lastScan)} />
+        </div>
+      </CollapsibleSection>
 
-      {/* Device List */}
+      {/* Device List - Collapsible */}
       {deviceCount > 0 && (
-        <>
-          <CardDivider />
-          <p className="text-xs text-text-muted mb-2 font-medium">Discovered Devices</p>
+        <CollapsibleSection
+          title="Discovered Devices"
+          variant="compact"
+          defaultOpen={false}
+          count={deviceCount}
+        >
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {sortedDevices.map((device) => (
               <DeviceRow
@@ -348,7 +354,7 @@ export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscovery
               />
             ))}
           </div>
-        </>
+        </CollapsibleSection>
       )}
 
       {deviceCount === 0 && !status.scanning && (

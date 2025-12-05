@@ -463,15 +463,16 @@ function App() {
       // Read FAB options from localStorage (matches SettingsDrawer FABOptions interface)
       let fabOptions = {
         // Order matches card display order
-        runLink: true,          // Link card
-        runSwitch: true,        // Nearest Switch card
-        runVLAN: true,          // VLAN card
-        runIPConfig: true,      // IP Config (DHCP) card
-        runGateway: true,       // Gateway card
-        runDNS: true,           // DNS card
-        runSpeedtest: false,    // Performance: Internet Speed (default OFF)
-        runIperf: false,        // Performance: LAN Speed (default OFF)
-        runHealthChecks: true,  // Health Checks card
+        runLink: true,              // Link card
+        runSwitch: true,            // Nearest Switch card
+        runVLAN: true,              // VLAN card
+        runIPConfig: true,          // IP Config (DHCP) card
+        runGateway: true,           // Gateway card
+        runDNS: true,               // DNS card
+        runHealthChecks: true,      // Health Checks card
+        runSpeedtest: false,        // Performance: Internet Speed (default OFF)
+        runIperf: false,            // Performance: LAN Speed (default OFF)
+        runNetworkDiscovery: true,  // Network Discovery card (default ON)
       };
       try {
         const saved = localStorage.getItem('netscope-fab-options');
@@ -506,19 +507,53 @@ function App() {
         fetchPromises.push(fetchDNSData());
       }
 
-      // Wait for all fetches to complete, then notify FAB
+      // Trigger network discovery if enabled
+      if (fabOptions.runNetworkDiscovery) {
+        triggerDeviceScan();
+      }
+
+      // Wait for all fetches to complete
       // Note: runSpeedtest, runIperf, and runHealthChecks are handled by
       // their respective card components listening for the 'runAllTests' event
-      // and they dispatch their own 'testComplete' events
-      try {
-        await Promise.all(fetchPromises);
-      } finally {
-        // Dispatch event to signal basic tests are complete
-        // Add small delay to let card-managed tests (speedtest, iperf, health) start
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('testsComplete'));
-        }, 500);
+      await Promise.all(fetchPromises);
+
+      // Determine how many card-managed tests we need to wait for
+      const cardTestsToWait: string[] = [];
+      if (fabOptions.runSpeedtest) cardTestsToWait.push('speedtest');
+      if (fabOptions.runIperf) cardTestsToWait.push('iperf');
+      if (fabOptions.runHealthChecks) cardTestsToWait.push('healthchecks');
+
+      // If no card-managed tests, signal completion immediately
+      if (cardTestsToWait.length === 0) {
+        window.dispatchEvent(new CustomEvent('testsComplete'));
+        return;
       }
+
+      // Wait for all card-managed tests to complete
+      const completed = new Set<string>();
+      const handleCardComplete = (event: CustomEvent) => {
+        const testName = event.detail?.test;
+        if (testName && cardTestsToWait.includes(testName)) {
+          completed.add(testName);
+          // Check if all expected tests are done
+          if (completed.size === cardTestsToWait.length) {
+            window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
+            window.dispatchEvent(new CustomEvent('testsComplete'));
+          }
+        }
+      };
+
+      // Listen for card test completions
+      window.addEventListener('cardTestComplete', handleCardComplete as EventListener);
+
+      // Failsafe timeout (90s) in case a card doesn't report completion
+      setTimeout(() => {
+        window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
+        if (completed.size < cardTestsToWait.length) {
+          console.warn('FAB timeout: Not all card tests completed, signaling done anyway');
+          window.dispatchEvent(new CustomEvent('testsComplete'));
+        }
+      }, 90000);
     };
     window.addEventListener('runAllTests', handleRunAllTests);
     return () => {
@@ -555,6 +590,33 @@ function App() {
 
     return () => clearInterval(interval);
   }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData, fetchNetworkDiscovery]);
+
+  // Auto-scan network devices on mount (respects FAB option)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Check if network discovery auto-scan is enabled in FAB options
+    let shouldAutoScan = true; // Default to true
+    try {
+      const saved = localStorage.getItem('netscope-fab-options');
+      if (saved) {
+        const fabOptions = JSON.parse(saved);
+        if (fabOptions.runNetworkDiscovery === false) {
+          shouldAutoScan = false;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load FAB options for auto-scan:', err);
+    }
+
+    if (shouldAutoScan) {
+      // Small delay to let other data load first
+      const timer = setTimeout(() => {
+        triggerDeviceScan();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, triggerDeviceScan]);
 
   const { status, reconnect } = useWebSocket({
     url: '/ws',
@@ -669,7 +731,6 @@ function App() {
           {/* Layer 2: Discovery */}
           <SwitchCard data={cards.switch} loading={loading} />
           <VLANCard data={cards.vlan} loading={loading} />
-          <NetworkDiscoveryCard data={networkDiscovery} loading={loading} onScan={triggerDeviceScan} />
 
           {/* Layer 3: Network */}
           <DHCPCard data={cards.dhcp} loading={loading} />
@@ -678,11 +739,14 @@ function App() {
           {/* Layer 7: Application */}
           <DNSCard data={cards.dns} loading={loading} />
 
+          {/* Health Checks - tests configured endpoints */}
+          <HealthCheckCard loading={loading} />
+
           {/* Performance Testing */}
           <PerformanceCard loading={loading} />
 
-          {/* Health Checks - only shows when tests are configured */}
-          <HealthCheckCard loading={loading} />
+          {/* Network Discovery - device scanning (last) */}
+          <NetworkDiscoveryCard data={networkDiscovery} loading={loading} onScan={triggerDeviceScan} />
         </div>
 
         {/* Development notice */}

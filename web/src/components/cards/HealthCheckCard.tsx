@@ -82,7 +82,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
 
   // Listen for FAB "run all tests" event
   useEffect(() => {
-    const handleRunAllTests = () => {
+    const handleRunAllTests = async () => {
       // Check FAB options from localStorage
       try {
         const saved = localStorage.getItem('netscope-fab-options');
@@ -97,7 +97,9 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
       }
 
       if (!isRunning) {
-        fetchTests();
+        await fetchTests();
+        // Signal FAB that healthchecks are complete
+        window.dispatchEvent(new CustomEvent('cardTestComplete', { detail: { test: 'healthchecks' } }));
       }
     };
     window.addEventListener('runAllTests', handleRunAllTests);
