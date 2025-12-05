@@ -28,14 +28,15 @@ type ARPEntry struct {
 
 // ARPScanner performs active network discovery via ARP.
 type ARPScanner struct {
-	interfaceName string
-	oui           *OUIDatabase
-	mu            sync.RWMutex
-	entries       map[string]*ARPEntry // Key by IP
-	subnet        *net.IPNet
-	localIP       net.IP
-	scanning      bool
-	lastScan      time.Time
+	interfaceName     string
+	oui               *OUIDatabase
+	mu                sync.RWMutex
+	entries           map[string]*ARPEntry // Key by IP
+	subnet            *net.IPNet
+	localIP           net.IP
+	additionalSubnets []*net.IPNet // Additional subnets to scan
+	scanning          bool
+	lastScan          time.Time
 }
 
 // NewARPScanner creates a new ARP scanner for the given interface.
@@ -54,6 +55,34 @@ func (s *ARPScanner) SetInterface(name string) {
 	s.interfaceName = name
 	s.subnet = nil
 	s.localIP = nil
+}
+
+// SetAdditionalSubnets configures extra subnets to scan.
+func (s *ARPScanner) SetAdditionalSubnets(cidrs []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.additionalSubnets = nil
+	for _, cidr := range cidrs {
+		_, subnet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return fmt.Errorf("invalid CIDR %s: %w", cidr, err)
+		}
+		s.additionalSubnets = append(s.additionalSubnets, subnet)
+	}
+	return nil
+}
+
+// GetAdditionalSubnets returns the configured additional subnets.
+func (s *ARPScanner) GetAdditionalSubnets() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result := make([]string, len(s.additionalSubnets))
+	for i, subnet := range s.additionalSubnets {
+		result[i] = subnet.String()
+	}
+	return result
 }
 
 // getSubnet determines the subnet for the interface.
@@ -142,6 +171,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		return fmt.Errorf("scan already in progress")
 	}
 	s.scanning = true
+	additionalSubnets := s.additionalSubnets // Copy while holding lock
 	s.mu.Unlock()
 
 	defer func() {
@@ -162,12 +192,23 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	s.localIP = localIP
 	s.mu.Unlock()
 
-	// Perform ping sweep
+	// Perform ping sweep on primary subnet
 	if err := s.pingSweep(ctx, subnet); err != nil {
 		return fmt.Errorf("ping sweep failed: %w", err)
 	}
 
-	// Read ARP table
+	// Perform ping sweep on additional subnets
+	for _, additionalSubnet := range additionalSubnets {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			// Continue scanning additional subnets even if some fail
+			_ = s.pingSweep(ctx, additionalSubnet)
+		}
+	}
+
+	// Read ARP table (will include entries from all scanned subnets)
 	entries, err := s.readARPTable()
 	if err != nil {
 		return fmt.Errorf("failed to read ARP table: %w", err)
@@ -434,16 +475,27 @@ func (s *ARPScanner) readARPTableLinuxFallback() ([]*ARPEntry, error) {
 	return entries, scanner.Err()
 }
 
-// isInSubnet checks if an IP is in the current subnet.
+// isInSubnet checks if an IP is in the current subnet or any additional subnets.
 func (s *ARPScanner) isInSubnet(ipStr string) bool {
-	if s.subnet == nil {
-		return true // No filter if subnet unknown
-	}
 	ip := net.ParseIP(ipStr)
 	if ip == nil {
 		return false
 	}
-	return s.subnet.Contains(ip)
+
+	// Check primary subnet
+	if s.subnet != nil && s.subnet.Contains(ip) {
+		return true
+	}
+
+	// Check additional subnets
+	for _, subnet := range s.additionalSubnets {
+		if subnet.Contains(ip) {
+			return true
+		}
+	}
+
+	// If no subnets configured, accept all (fallback)
+	return s.subnet == nil && len(s.additionalSubnets) == 0
 }
 
 // enrichEntries adds OUI lookups, hostname resolution, and TTL-based OS guessing.

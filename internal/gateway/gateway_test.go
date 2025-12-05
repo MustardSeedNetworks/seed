@@ -29,8 +29,8 @@ func TestNewTester(t *testing.T) {
 	if tester == nil {
 		t.Fatal("expected non-nil tester")
 	}
-	if tester.pingCount != 5 {
-		t.Errorf("expected pingCount 5, got %d", tester.pingCount)
+	if tester.pingCount != 3 {
+		t.Errorf("expected pingCount 3, got %d", tester.pingCount)
 	}
 	if tester.pingTimeout != 2*time.Second {
 		t.Errorf("expected pingTimeout 2s, got %v", tester.pingTimeout)
@@ -914,7 +914,7 @@ func TestTesterPingCount(t *testing.T) {
 	count := tester.pingCount
 	tester.mu.RUnlock()
 
-	if count != 5 {
-		t.Errorf("expected default pingCount 5, got %d", count)
+	if count != 3 {
+		t.Errorf("expected default pingCount 3, got %d", count)
 	}
 }

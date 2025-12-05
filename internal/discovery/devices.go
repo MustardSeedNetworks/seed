@@ -114,6 +114,16 @@ func (d *DeviceDiscovery) SetInterface(name string) error {
 	return d.protoManager.SetInterface(name)
 }
 
+// SetAdditionalSubnets configures extra subnets to scan.
+func (d *DeviceDiscovery) SetAdditionalSubnets(cidrs []string) error {
+	return d.arpScanner.SetAdditionalSubnets(cidrs)
+}
+
+// GetAdditionalSubnets returns the configured additional subnets.
+func (d *DeviceDiscovery) GetAdditionalSubnets() []string {
+	return d.arpScanner.GetAdditionalSubnets()
+}
+
 // Scan performs an active network scan and aggregates results.
 func (d *DeviceDiscovery) Scan(ctx context.Context) error {
 	d.mu.Lock()

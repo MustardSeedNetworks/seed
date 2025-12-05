@@ -2595,3 +2595,203 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		"message": "Network discovery settings updated",
 	})
 }
+
+// SubnetRequest represents a subnet configuration request.
+type SubnetRequest struct {
+	CIDR    string `json:"cidr"`
+	Name    string `json:"name"`
+	Enabled bool   `json:"enabled"`
+}
+
+// SubnetResponse represents a subnet in API responses.
+type SubnetResponse struct {
+	CIDR    string `json:"cidr"`
+	Name    string `json:"name"`
+	Enabled bool   `json:"enabled"`
+}
+
+// handleDevicesSubnets handles GET/POST/DELETE for additional subnets.
+func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.getDevicesSubnets(w, r)
+	case http.MethodPost:
+		s.addDevicesSubnet(w, r)
+	case http.MethodPut:
+		s.updateDevicesSubnet(w, r)
+	case http.MethodDelete:
+		s.deleteDevicesSubnet(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) getDevicesSubnets(w http.ResponseWriter, r *http.Request) {
+	subnets := make([]SubnetResponse, 0, len(s.config.NetworkDiscovery.AdditionalSubnets))
+	for _, subnet := range s.config.NetworkDiscovery.AdditionalSubnets {
+		subnets = append(subnets, SubnetResponse{
+			CIDR:    subnet.CIDR,
+			Name:    subnet.Name,
+			Enabled: subnet.Enabled,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(subnets)
+}
+
+func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
+	var req SubnetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate CIDR format
+	_, _, err := net.ParseCIDR(req.CIDR)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid CIDR format: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Check for duplicates
+	for _, existing := range s.config.NetworkDiscovery.AdditionalSubnets {
+		if existing.CIDR == req.CIDR {
+			http.Error(w, "Subnet already exists", http.StatusConflict)
+			return
+		}
+	}
+
+	// Add the new subnet
+	newSubnet := config.SubnetConfig{
+		CIDR:    req.CIDR,
+		Name:    req.Name,
+		Enabled: req.Enabled,
+	}
+	s.config.NetworkDiscovery.AdditionalSubnets = append(
+		s.config.NetworkDiscovery.AdditionalSubnets,
+		newSubnet,
+	)
+
+	// Update the device discovery scanner
+	if s.deviceDiscovery != nil {
+		enabledCIDRs := make([]string, 0)
+		for _, subnet := range s.config.NetworkDiscovery.AdditionalSubnets {
+			if subnet.Enabled {
+				enabledCIDRs = append(enabledCIDRs, subnet.CIDR)
+			}
+		}
+		if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
+			log.Printf("Warning: Failed to update scanner subnets: %v", err)
+		}
+	}
+
+	// Save config to file
+	if err := s.config.Save(s.configPath); err != nil {
+		log.Printf("Warning: Failed to save config: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Subnet added",
+	})
+}
+
+func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
+	var req SubnetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Find and update the subnet
+	found := false
+	for i, existing := range s.config.NetworkDiscovery.AdditionalSubnets {
+		if existing.CIDR == req.CIDR {
+			s.config.NetworkDiscovery.AdditionalSubnets[i].Name = req.Name
+			s.config.NetworkDiscovery.AdditionalSubnets[i].Enabled = req.Enabled
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		http.Error(w, "Subnet not found", http.StatusNotFound)
+		return
+	}
+
+	// Update the device discovery scanner
+	if s.deviceDiscovery != nil {
+		enabledCIDRs := make([]string, 0)
+		for _, subnet := range s.config.NetworkDiscovery.AdditionalSubnets {
+			if subnet.Enabled {
+				enabledCIDRs = append(enabledCIDRs, subnet.CIDR)
+			}
+		}
+		if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
+			log.Printf("Warning: Failed to update scanner subnets: %v", err)
+		}
+	}
+
+	// Save config to file
+	if err := s.config.Save(s.configPath); err != nil {
+		log.Printf("Warning: Failed to save config: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Subnet updated",
+	})
+}
+
+func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
+	cidr := r.URL.Query().Get("cidr")
+	if cidr == "" {
+		http.Error(w, "CIDR parameter required", http.StatusBadRequest)
+		return
+	}
+
+	// Find and remove the subnet
+	found := false
+	newSubnets := make([]config.SubnetConfig, 0, len(s.config.NetworkDiscovery.AdditionalSubnets))
+	for _, existing := range s.config.NetworkDiscovery.AdditionalSubnets {
+		if existing.CIDR == cidr {
+			found = true
+			continue
+		}
+		newSubnets = append(newSubnets, existing)
+	}
+
+	if !found {
+		http.Error(w, "Subnet not found", http.StatusNotFound)
+		return
+	}
+
+	s.config.NetworkDiscovery.AdditionalSubnets = newSubnets
+
+	// Update the device discovery scanner
+	if s.deviceDiscovery != nil {
+		enabledCIDRs := make([]string, 0)
+		for _, subnet := range s.config.NetworkDiscovery.AdditionalSubnets {
+			if subnet.Enabled {
+				enabledCIDRs = append(enabledCIDRs, subnet.CIDR)
+			}
+		}
+		if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
+			log.Printf("Warning: Failed to update scanner subnets: %v", err)
+		}
+	}
+
+	// Save config to file
+	if err := s.config.Save(s.configPath); err != nil {
+		log.Printf("Warning: Failed to save config: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Subnet deleted",
+	})
+}
