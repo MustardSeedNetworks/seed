@@ -4,13 +4,41 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 )
+
+// validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens)
+var validHostnameRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
+
+// validateServer validates the server address to prevent command injection.
+func validateServer(server string) error {
+	if server == "" {
+		return fmt.Errorf("server address is required")
+	}
+
+	// Check if it's a valid IP address
+	if ip := net.ParseIP(server); ip != nil {
+		return nil
+	}
+
+	// Check if it's a valid hostname
+	if len(server) > 253 {
+		return fmt.Errorf("server hostname too long")
+	}
+
+	if !validHostnameRegex.MatchString(server) {
+		return fmt.Errorf("invalid server address: must be a valid IP or hostname")
+	}
+
+	return nil
+}
 
 // iperfBinaryPath caches the resolved iperf3 binary path
 var iperfBinaryPath string
@@ -292,6 +320,11 @@ func (m *Manager) StopServer() error {
 
 // RunClient runs an iperf3 client test
 func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, error) {
+	// Validate server address to prevent command injection
+	if err := validateServer(config.Server); err != nil {
+		return nil, err
+	}
+
 	m.mu.Lock()
 	if m.clientStatus.Running {
 		m.mu.Unlock()

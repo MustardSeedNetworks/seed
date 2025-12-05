@@ -28,7 +28,28 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins in development
+		origin := r.Header.Get("Origin")
+		// Allow requests with no origin (same-origin) or localhost variants
+		if origin == "" {
+			return true
+		}
+		allowedPatterns := []string{
+			"http://localhost",
+			"https://localhost",
+			"http://127.0.0.1",
+			"https://127.0.0.1",
+			"http://[::1]",
+			"https://[::1]",
+		}
+		for _, pattern := range allowedPatterns {
+			if len(origin) >= len(pattern) && origin[:len(pattern)] == pattern {
+				remainder := origin[len(pattern):]
+				if remainder == "" || (len(remainder) > 0 && remainder[0] == ':') {
+					return true
+				}
+			}
+		}
+		return false
 	},
 }
 
@@ -92,16 +113,30 @@ func (h *Hub) Run() {
 			log.Printf("WebSocket client disconnected. Total clients: %d", len(h.clients))
 
 		case message := <-h.broadcast:
+			// Collect slow clients under read lock, then remove them under write lock
+			var slowClients []*Client
 			h.mu.RLock()
 			for client := range h.clients {
 				select {
 				case client.send <- message:
 				default:
-					close(client.send)
-					delete(h.clients, client)
+					// Client is slow - collect for removal
+					slowClients = append(slowClients, client)
 				}
 			}
 			h.mu.RUnlock()
+
+			// Remove slow clients under write lock
+			if len(slowClients) > 0 {
+				h.mu.Lock()
+				for _, client := range slowClients {
+					if _, ok := h.clients[client]; ok {
+						delete(h.clients, client)
+						close(client.send)
+					}
+				}
+				h.mu.Unlock()
+			}
 
 		case <-h.shutdown:
 			h.mu.Lock()

@@ -170,12 +170,21 @@ func (s *Server) setupRoutes() {
 	s.mux.Handle("/", http.FileServer(http.Dir("web/dist")))
 }
 
-// corsMiddleware adds CORS headers for development.
+// corsMiddleware adds CORS headers with origin validation.
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		origin := r.Header.Get("Origin")
+
+		// Allow requests from same origin (no Origin header) or localhost for development
+		if origin == "" || isAllowedOrigin(origin) {
+			if origin != "" {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Vary", "Origin")
+			}
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
@@ -184,6 +193,30 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// isAllowedOrigin checks if the origin is in the allowed list.
+// Allows localhost variants for development and same-host requests.
+func isAllowedOrigin(origin string) bool {
+	allowedPatterns := []string{
+		"http://localhost",
+		"https://localhost",
+		"http://127.0.0.1",
+		"https://127.0.0.1",
+		"http://[::1]",
+		"https://[::1]",
+	}
+
+	for _, pattern := range allowedPatterns {
+		if len(origin) >= len(pattern) && origin[:len(pattern)] == pattern {
+			// Allow localhost with any port
+			remainder := origin[len(pattern):]
+			if remainder == "" || (len(remainder) > 0 && remainder[0] == ':') {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // Start starts the HTTP/HTTPS server.

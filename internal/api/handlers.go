@@ -18,6 +18,7 @@ import (
 	"github.com/krisarmstrong/netscope/internal/gateway"
 	"github.com/krisarmstrong/netscope/internal/iperf"
 	"github.com/krisarmstrong/netscope/internal/network"
+	"github.com/krisarmstrong/netscope/internal/version"
 )
 
 // LoginRequest represents a login request.
@@ -97,7 +98,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 	resp := StatusResponse{
 		Status:     "ok",
-		Version:    "0.7.3",
+		Version:    version.Version,
 		Interface:  s.config.Interface.Default,
 		IsWireless: isWireless,
 	}
@@ -613,7 +614,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	export := ExportData{
-		Version:   "0.8.7",
+		Version:   version.Version,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Device: ExportDeviceInfo{
 			Interface: currentIface,

@@ -2,6 +2,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"net/http"
 	"strings"
@@ -50,10 +52,17 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 	}
 }
 
-// generateRandomSecret creates a random JWT secret.
+// generateRandomSecret creates a cryptographically secure random JWT secret.
+// Note: This generates a new secret on each server restart, which will invalidate
+// existing tokens. For persistent sessions across restarts, configure jwt_secret in the config file.
 func generateRandomSecret() string {
-	// In production, this should be persisted
-	return "netscope-jwt-secret-change-me-in-production"
+	bytes := make([]byte, 32) // 256-bit key
+	if _, err := rand.Read(bytes); err != nil {
+		// Fallback to a deterministic but unique-per-run secret if crypto/rand fails
+		// This should never happen on modern systems
+		return "netscope-fallback-" + time.Now().Format(time.RFC3339Nano)
+	}
+	return base64.URLEncoding.EncodeToString(bytes)
 }
 
 // Authenticate validates credentials and returns a JWT token.
