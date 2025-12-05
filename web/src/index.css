@@ -27,25 +27,25 @@
 }
 
 .dark {
-  /* Dark Mode - lighter, more readable */
-  --color-brand-primary: #60a5fa;
-  --color-brand-accent: #3b82f6;
+  /* Dark Mode - WCAG AA compliant contrast ratios */
+  --color-brand-primary: #93c5fd;
+  --color-brand-accent: #60a5fa;
 
-  --color-surface-base: #1e293b;
-  --color-surface-raised: #334155;
+  --color-surface-base: #0f172a;
+  --color-surface-raised: #1e293b;
   --color-surface-border: #475569;
-  --color-surface-hover: #3b4f6b;
+  --color-surface-hover: #334155;
 
-  --color-text-primary: #f1f5f9;
+  --color-text-primary: #f8fafc;
   --color-text-secondary: #e2e8f0;
-  --color-text-muted: #94a3b8;
-  --color-text-accent: #60a5fa;
-  --color-text-inverse: #1e293b;
+  --color-text-muted: #cbd5e1;
+  --color-text-accent: #93c5fd;
+  --color-text-inverse: #0f172a;
 
-  --color-status-success: #34d399;
+  --color-status-success: #4ade80;
   --color-status-warning: #fbbf24;
-  --color-status-error: #f87171;
-  --color-status-info: #60a5fa;
+  --color-status-error: #fb7185;
+  --color-status-info: #93c5fd;
 }
 
 body {
@@ -53,4 +53,26 @@ body {
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Toast animation */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* Focus visible utility */
+.focus-visible-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-brand-primary);
 }

@@ -681,6 +681,27 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }));
   };
 
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Handle ESC key to close drawer
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Focus the close button when drawer opens
+    setTimeout(() => closeButtonRef.current?.focus(), 100);
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -689,24 +710,33 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       <div
         className="fixed inset-0 bg-black/50 z-40"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Drawer - full width on mobile, 384px on larger screens */}
-      <div className="fixed right-0 top-0 h-full w-full sm:w-96 bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl">
+      <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-drawer-title"
+        className="fixed right-0 top-0 h-full w-full sm:w-96 bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
-          <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
+          <h2 id="settings-drawer-title" className="text-lg font-semibold text-text-primary">Settings</h2>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
-            className="p-2.5 rounded hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation"
+            className="p-2.5 rounded hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            aria-label="Close settings"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="p-4 pb-8 space-y-4">
+        <div className="p-4 pb-8 space-y-4 text-base sm:text-sm">
           {/* Network Section */}
           <CollapsibleSection title="Network">
             {/* IP Configuration */}

@@ -45,7 +45,7 @@ export function FAB({ className = '' }: FABProps) {
     <button
       onClick={handleClick}
       disabled={isRunning}
-      className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all flex items-center justify-center touch-manipulation z-50 ${
+      className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all flex items-center justify-center touch-manipulation z-50 focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base ${
         isRunning ? 'opacity-75 cursor-not-allowed' : ''
       } ${className}`}
       title="Run All Tests"

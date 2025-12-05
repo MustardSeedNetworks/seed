@@ -400,8 +400,15 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
 
       {speedtestRunning && speedtestStatus && (
         <div className="space-y-2 mb-3">
-          <p className="text-sm text-text-muted">{speedtestPhaseLabels[speedtestStatus.phase] || speedtestStatus.phase}</p>
-          <div className="w-full bg-surface-hover rounded-full h-2">
+          <p className="text-sm text-text-muted" id="speedtest-progress-label">{speedtestPhaseLabels[speedtestStatus.phase] || speedtestStatus.phase}</p>
+          <div
+            role="progressbar"
+            aria-valuenow={speedtestStatus.progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-labelledby="speedtest-progress-label"
+            className="w-full bg-surface-hover rounded-full h-2"
+          >
             <div
               className="bg-brand-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${speedtestStatus.progress}%` }}
@@ -468,8 +475,15 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
           {/* Client Status/Results */}
           {iperfClientRunning && iperfClientStatus && (
             <div className="space-y-2 mb-3">
-              <p className="text-sm text-text-muted">{iperfPhaseLabels[iperfClientStatus.phase] || iperfClientStatus.phase}</p>
-              <div className="w-full bg-surface-hover rounded-full h-2">
+              <p className="text-sm text-text-muted" id="iperf-progress-label">{iperfPhaseLabels[iperfClientStatus.phase] || iperfClientStatus.phase}</p>
+              <div
+                role="progressbar"
+                aria-valuenow={iperfClientStatus.progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-labelledby="iperf-progress-label"
+                className="w-full bg-surface-hover rounded-full h-2"
+              >
                 <div
                   className="bg-brand-primary h-2 rounded-full transition-all duration-300"
                   style={{ width: `${iperfClientStatus.progress}%` }}

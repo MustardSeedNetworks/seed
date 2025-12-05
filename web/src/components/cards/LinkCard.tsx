@@ -1,4 +1,5 @@
 import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
 
 export interface LinkData {
   linkUp: boolean;
@@ -18,7 +19,17 @@ export function LinkCard({ data, loading }: LinkCardProps) {
   if (loading || !data) {
     return (
       <Card title="Link" status="loading">
-        <CardValue value="..." size="lg" />
+        <Skeleton className="h-8 w-32 mb-3" />
+        <div className="space-y-2 mt-4">
+          <div className="flex justify-between">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+          <div className="flex justify-between">
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-3 w-8" />
+          </div>
+        </div>
       </Card>
     );
   }
