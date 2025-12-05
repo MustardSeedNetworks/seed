@@ -1,7 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { getAuthHeaders } from '../../hooks/useAuth';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
+
+// Auto-save status indicator component
+function AutoSaveIndicator({ status }: { status: 'idle' | 'saving' | 'saved' | 'error' }) {
+  if (status === 'idle') return null;
+  return (
+    <span className={`text-xs ml-2 ${
+      status === 'saving' ? 'text-text-muted' :
+      status === 'saved' ? 'text-status-success' :
+      'text-status-error'
+    }`}>
+      {status === 'saving' ? 'Saving...' : status === 'saved' ? 'Saved' : 'Error'}
+    </span>
+  );
+}
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
@@ -163,22 +177,12 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     runIperf: false,        // Performance: LAN Speed (default OFF)
     runHealthChecks: true,  // Health Checks card
   });
-  const [savingFab, setSavingFab] = useState(false);
-  const [fabMessage, setFabMessage] = useState<string | null>(null);
   const [wifiSettings, setWifiSettings] = useState<WiFiSettings>({
     interface: '',
     availableWifi: [],
     isWireless: false,
   });
   const [dnsInput, setDnsInput] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [savingIP, setSavingIP] = useState(false);
-  const [savingTests, setSavingTests] = useState(false);
-  const [savingWifi, setSavingWifi] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [ipMessage, setIPMessage] = useState<string | null>(null);
-  const [testsMessage, setTestsMessage] = useState<string | null>(null);
-  const [wifiMessage, setWifiMessage] = useState<string | null>(null);
 
   // iperf3/LAN Speed settings
   const [iperfSettings, setIperfSettings] = useState<IperfSettings>({
@@ -190,8 +194,32 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     serverPort: 5201,
     enableServer: false,
   });
-  const [savingIperf, setSavingIperf] = useState(false);
-  const [iperfMessage, setIperfMessage] = useState<string | null>(null);
+  // Auto-save status for each section
+  type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+  const [thresholdsStatus, setThresholdsStatus] = useState<SaveStatus>('idle');
+  const [testsStatus, setTestsStatus] = useState<SaveStatus>('idle');
+  const [wifiStatus, setWifiStatus] = useState<SaveStatus>('idle');
+  const [iperfStatus, setIperfStatus] = useState<SaveStatus>('idle');
+  const [fabStatus, setFabStatus] = useState<SaveStatus>('idle');
+
+  // Refs to track initial load (skip auto-save on first load)
+  const initialLoadRef = useRef(true);
+  const thresholdsInitRef = useRef(true);
+  const testsInitRef = useRef(true);
+  const wifiInitRef = useRef(true);
+  const iperfInitRef = useRef(true);
+  const fabInitRef = useRef(true);
+
+  // Debounce timers
+  const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const testsTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const wifiTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const iperfTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const fabTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Legacy state (keep for IP settings which still needs manual apply)
+  const [savingIP, setSavingIP] = useState(false);
+  const [ipMessage, setIPMessage] = useState<string | null>(null);
 
   // Fetch current thresholds
   const fetchThresholds = useCallback(async () => {
@@ -293,23 +321,6 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   }, []);
 
-  // Save iperf settings to localStorage
-  const saveIperfSettings = () => {
-    setSavingIperf(true);
-    setIperfMessage(null);
-    try {
-      localStorage.setItem('netscope-iperf-settings', JSON.stringify(iperfSettings));
-      setIperfMessage('Settings saved');
-      // Dispatch event to notify PerformanceCard
-      window.dispatchEvent(new CustomEvent('iperfSettingsUpdated', { detail: iperfSettings }));
-      setTimeout(() => setIperfMessage(null), 2000);
-    } catch {
-      setIperfMessage('Failed to save settings');
-    } finally {
-      setSavingIperf(false);
-    }
-  };
-
   // Load FAB options from localStorage
   const loadFabOptions = useCallback(() => {
     try {
@@ -323,37 +334,37 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   }, []);
 
-  // Save FAB options to localStorage
-  const saveFabOptions = () => {
-    setSavingFab(true);
-    setFabMessage(null);
-    try {
-      localStorage.setItem('netscope-fab-options', JSON.stringify(fabOptions));
-      setFabMessage('Settings saved');
-      // Dispatch event to notify FAB about options changes
-      window.dispatchEvent(new CustomEvent('fabOptionsUpdated', { detail: fabOptions }));
-      setTimeout(() => setFabMessage(null), 2000);
-    } catch {
-      setFabMessage('Failed to save settings');
-    } finally {
-      setSavingFab(false);
-    }
-  };
-
   useEffect(() => {
     if (isOpen) {
+      // Reset init refs on open
+      initialLoadRef.current = true;
+      thresholdsInitRef.current = true;
+      testsInitRef.current = true;
+      wifiInitRef.current = true;
+      iperfInitRef.current = true;
+      fabInitRef.current = true;
+
       fetchThresholds();
       fetchIPSettings();
       fetchTestsSettings();
       fetchWifiSettings();
       loadIperfSettings();
       loadFabOptions();
+
+      // Mark initial load as done after a short delay
+      setTimeout(() => {
+        initialLoadRef.current = false;
+        thresholdsInitRef.current = false;
+        testsInitRef.current = false;
+        wifiInitRef.current = false;
+        iperfInitRef.current = false;
+        fabInitRef.current = false;
+      }, 500);
     }
   }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings, loadFabOptions]);
 
-  const saveThresholds = async () => {
-    setSaving(true);
-    setSaveMessage(null);
+  const saveThresholds = useCallback(async () => {
+    setThresholdsStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/settings`, {
         method: 'PUT',
@@ -364,17 +375,15 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         body: JSON.stringify({ thresholds }),
       });
       if (response.ok) {
-        setSaveMessage('Thresholds saved');
-        setTimeout(() => setSaveMessage(null), 2000);
+        setThresholdsStatus('saved');
+        setTimeout(() => setThresholdsStatus('idle'), 2000);
       } else {
-        setSaveMessage('Failed to save');
+        setThresholdsStatus('error');
       }
     } catch {
-      setSaveMessage('Error saving settings');
-    } finally {
-      setSaving(false);
+      setThresholdsStatus('error');
     }
-  };
+  }, [thresholds]);
 
   const updateThreshold = (
     category: keyof Thresholds,
@@ -428,9 +437,8 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   };
 
-  const saveTestsSettings = async () => {
-    setSavingTests(true);
-    setTestsMessage(null);
+  const saveTestsSettings = useCallback(async () => {
+    setTestsStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/tests/settings`, {
         method: 'PUT',
@@ -441,24 +449,19 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         body: JSON.stringify(testsSettings),
       });
       if (response.ok) {
-        setTestsMessage('Tests settings saved');
-        setTimeout(() => setTestsMessage(null), 2000);
-        // Dispatch event to notify Health Checks card to refresh
+        setTestsStatus('saved');
+        setTimeout(() => setTestsStatus('idle'), 2000);
         window.dispatchEvent(new CustomEvent('healthChecksUpdated'));
       } else {
-        const error = await response.text();
-        setTestsMessage(`Failed: ${error}`);
+        setTestsStatus('error');
       }
     } catch {
-      setTestsMessage('Error saving tests settings');
-    } finally {
-      setSavingTests(false);
+      setTestsStatus('error');
     }
-  };
+  }, [testsSettings]);
 
-  const saveWifiSettings = async () => {
-    setSavingWifi(true);
-    setWifiMessage(null);
+  const saveWifiSettings = useCallback(async () => {
+    setWifiStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/wifi/settings`, {
         method: 'PUT',
@@ -469,18 +472,83 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         body: JSON.stringify({ interface: wifiSettings.interface }),
       });
       if (response.ok) {
-        setWifiMessage('WiFi settings saved');
-        setTimeout(() => setWifiMessage(null), 2000);
+        setWifiStatus('saved');
+        setTimeout(() => setWifiStatus('idle'), 2000);
       } else {
-        const error = await response.text();
-        setWifiMessage(`Failed: ${error}`);
+        setWifiStatus('error');
       }
     } catch {
-      setWifiMessage('Error saving WiFi settings');
-    } finally {
-      setSavingWifi(false);
+      setWifiStatus('error');
     }
-  };
+  }, [wifiSettings.interface]);
+
+  // Auto-save thresholds with debounce
+  useEffect(() => {
+    if (thresholdsInitRef.current) return;
+    if (thresholdsTimerRef.current) clearTimeout(thresholdsTimerRef.current);
+    thresholdsTimerRef.current = setTimeout(() => {
+      saveThresholds();
+    }, 800);
+    return () => {
+      if (thresholdsTimerRef.current) clearTimeout(thresholdsTimerRef.current);
+    };
+  }, [thresholds, saveThresholds]);
+
+  // Auto-save tests settings with debounce
+  useEffect(() => {
+    if (testsInitRef.current) return;
+    if (testsTimerRef.current) clearTimeout(testsTimerRef.current);
+    testsTimerRef.current = setTimeout(() => {
+      saveTestsSettings();
+    }, 800);
+    return () => {
+      if (testsTimerRef.current) clearTimeout(testsTimerRef.current);
+    };
+  }, [testsSettings, saveTestsSettings]);
+
+  // Auto-save wifi settings with debounce
+  useEffect(() => {
+    if (wifiInitRef.current) return;
+    if (wifiTimerRef.current) clearTimeout(wifiTimerRef.current);
+    wifiTimerRef.current = setTimeout(() => {
+      saveWifiSettings();
+    }, 800);
+    return () => {
+      if (wifiTimerRef.current) clearTimeout(wifiTimerRef.current);
+    };
+  }, [wifiSettings.interface, saveWifiSettings]);
+
+  // Auto-save iperf settings with debounce
+  useEffect(() => {
+    if (iperfInitRef.current) return;
+    if (iperfTimerRef.current) clearTimeout(iperfTimerRef.current);
+    iperfTimerRef.current = setTimeout(() => {
+      setIperfStatus('saving');
+      localStorage.setItem('netscope-iperf-settings', JSON.stringify(iperfSettings));
+      window.dispatchEvent(new CustomEvent('iperfSettingsUpdated', { detail: iperfSettings }));
+      setIperfStatus('saved');
+      setTimeout(() => setIperfStatus('idle'), 2000);
+    }, 800);
+    return () => {
+      if (iperfTimerRef.current) clearTimeout(iperfTimerRef.current);
+    };
+  }, [iperfSettings]);
+
+  // Auto-save FAB options with debounce
+  useEffect(() => {
+    if (fabInitRef.current) return;
+    if (fabTimerRef.current) clearTimeout(fabTimerRef.current);
+    fabTimerRef.current = setTimeout(() => {
+      setFabStatus('saving');
+      localStorage.setItem('netscope-fab-options', JSON.stringify(fabOptions));
+      window.dispatchEvent(new CustomEvent('fabOptionsUpdated', { detail: fabOptions }));
+      setFabStatus('saved');
+      setTimeout(() => setFabStatus('idle'), 2000);
+    }, 800);
+    return () => {
+      if (fabTimerRef.current) clearTimeout(fabTimerRef.current);
+    };
+  }, [fabOptions]);
 
   // Validate IP address format
   const isValidIP = (ip: string): boolean => {
@@ -640,7 +708,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
         <div className="p-4 pb-8 space-y-4">
           {/* Network Section */}
-          <CollapsibleSection title="Network" defaultOpen>
+          <CollapsibleSection title="Network">
             {/* IP Configuration */}
             <div className="space-y-3">
               <p className="text-xs text-text-muted font-medium">IP Configuration</p>
@@ -756,7 +824,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           </CollapsibleSection>
 
           {/* WiFi Section */}
-          <CollapsibleSection title="WiFi">
+          <CollapsibleSection title={<>WiFi<AutoSaveIndicator status={wifiStatus} /></>}>
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-text-muted">WiFi Interface</label>
@@ -792,30 +860,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 </p>
               </div>
 
-              <button
-                onClick={saveWifiSettings}
-                disabled={savingWifi}
-                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
-              >
-                {savingWifi ? 'Saving...' : 'Save WiFi Settings'}
-              </button>
-
-              {wifiMessage && (
-                <p
-                  className={`text-xs text-center ${
-                    wifiMessage.includes('Failed') || wifiMessage.includes('Error')
-                      ? 'text-status-error'
-                      : 'text-status-success'
-                  }`}
-                >
-                  {wifiMessage}
-                </p>
-              )}
             </div>
           </CollapsibleSection>
 
           {/* DNS Section */}
-          <CollapsibleSection title="DNS">
+          <CollapsibleSection title={<>DNS<AutoSaveIndicator status={testsStatus} /></>}>
             <div className="space-y-4">
               {/* DNS Hostname */}
               <div>
@@ -867,19 +916,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 ))}
               </div>
 
-              {/* Save DNS Settings Button */}
-              <button
-                onClick={saveTestsSettings}
-                disabled={savingTests}
-                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
-              >
-                {savingTests ? 'Saving...' : 'Save DNS Settings'}
-              </button>
             </div>
           </CollapsibleSection>
 
           {/* Health Checks Section */}
-          <CollapsibleSection title="Health Checks">
+          <CollapsibleSection title={<>Health Checks<AutoSaveIndicator status={testsStatus} /></>}>
             <div className="space-y-4">
               {/* Ping Targets */}
               <div>
@@ -1067,31 +1108,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 ))}
               </div>
 
-              {/* Save Health Checks Button */}
-              <button
-                onClick={saveTestsSettings}
-                disabled={savingTests}
-                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
-              >
-                {savingTests ? 'Saving...' : 'Save Health Checks'}
-              </button>
-
-              {testsMessage && (
-                <p
-                  className={`text-xs text-center ${
-                    testsMessage.includes('Failed') || testsMessage.includes('Error')
-                      ? 'text-status-error'
-                      : 'text-status-success'
-                  }`}
-                >
-                  {testsMessage}
-                </p>
-              )}
             </div>
           </CollapsibleSection>
 
           {/* Performance Section - matches PerformanceCard */}
-          <CollapsibleSection title="Performance">
+          <CollapsibleSection title={<>Performance<AutoSaveIndicator status={iperfStatus} /></>}>
             <div className="space-y-4">
               {/* Internet Speed (Speedtest) Subsection */}
               <div className="border-b border-surface-border pb-4">
@@ -1131,13 +1152,6 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     />
                   </label>
 
-                  <button
-                    onClick={saveTestsSettings}
-                    disabled={savingTests}
-                    className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
-                  >
-                    {savingTests ? 'Saving...' : 'Save Speedtest Settings'}
-                  </button>
                 </div>
               </div>
 
@@ -1274,31 +1288,13 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 </p>
               </div>
 
-              {/* Save Button */}
-              <button
-                onClick={saveIperfSettings}
-                disabled={savingIperf}
-                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
-              >
-                {savingIperf ? 'Saving...' : 'Save LAN Speed Settings'}
-              </button>
-
-                  {iperfMessage && (
-                    <p
-                      className={`text-xs text-center ${
-                        iperfMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'
-                      }`}
-                    >
-                      {iperfMessage}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
           </CollapsibleSection>
 
           {/* Thresholds Section */}
-          <CollapsibleSection title="Thresholds">
+          <CollapsibleSection title={<>Thresholds<AutoSaveIndicator status={thresholdsStatus} /></>}>
             <div className="space-y-3">
               {/* DNS Thresholds */}
               <div className="p-3 bg-surface-base rounded border border-surface-border">
@@ -1450,25 +1446,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 </div>
               </div>
 
-              {/* Save Button */}
-              <button
-                onClick={saveThresholds}
-                disabled={saving}
-                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
-              >
-                {saving ? 'Saving...' : 'Save Thresholds'}
-              </button>
-
-              {saveMessage && (
-                <p className={`text-sm text-center ${saveMessage.includes('Error') || saveMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'}`}>
-                  {saveMessage}
-                </p>
-              )}
             </div>
           </CollapsibleSection>
 
           {/* FAB Options Section */}
-          <CollapsibleSection title="Run All Tests (FAB)">
+          <CollapsibleSection title={<>Run All Tests (FAB)<AutoSaveIndicator status={fabStatus} /></>}>
             <div className="space-y-3">
               <p className="text-xs text-text-muted">
                 Configure which tests run when the FAB button is pressed. Order matches card display.
@@ -1590,23 +1572,6 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <button
-                onClick={saveFabOptions}
-                disabled={savingFab}
-                className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
-              >
-                {savingFab ? 'Saving...' : 'Save FAB Options'}
-              </button>
-
-              {fabMessage && (
-                <p
-                  className={`text-xs text-center ${
-                    fabMessage.includes('Failed') ? 'text-status-error' : 'text-status-success'
-                  }`}
-                >
-                  {fabMessage}
-                </p>
-              )}
             </div>
           </CollapsibleSection>
 
@@ -1658,7 +1623,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           <section className="pt-4 border-t border-surface-border">
             <h3 className="text-sm font-medium text-text-muted mb-2">About</h3>
             <p className="text-xs text-text-muted">
-              NetScope v0.8.2
+              NetScope v0.8.7
               <br />
               Network Diagnostic Tool
             </p>

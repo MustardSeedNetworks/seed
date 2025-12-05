@@ -186,9 +186,16 @@ func GetVersion() (string, error) {
 		return "", fmt.Errorf("failed to get iperf3 version: %w", err)
 	}
 	// Output is like "iperf 3.16 (cJSON 1.7.17)\n..."
+	// Extract just the version number (e.g., "3.16")
 	lines := strings.Split(string(out), "\n")
 	if len(lines) > 0 {
-		return strings.TrimSpace(lines[0]), nil
+		line := strings.TrimSpace(lines[0])
+		// Parse "iperf X.XX" format
+		parts := strings.Fields(line)
+		if len(parts) >= 2 {
+			return "v" + parts[1], nil
+		}
+		return line, nil
 	}
 	return "unknown", nil
 }

@@ -2,7 +2,7 @@ import { useState, ReactNode } from 'react';
 import { Status } from './Card';
 
 interface CollapsibleSectionProps {
-  title: string;
+  title: ReactNode;
   defaultOpen?: boolean;
   children: ReactNode;
   /** Number of items to display in header, e.g., "Server Results (2)" */

@@ -612,7 +612,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	export := ExportData{
-		Version:   "0.7.3",
+		Version:   "0.8.7",
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Device: ExportDeviceInfo{
 			Interface: currentIface,
@@ -740,6 +740,43 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 			"length":    cableResult.Length,
 			"status":    cableResult.Status,
 			"faults":    cableResult.Faults,
+		}
+	}
+
+	// Collect Speedtest data
+	if s.speedtestTester != nil {
+		if result := s.speedtestTester.GetLastResult(); result != nil {
+			export.Cards["speedtest"] = map[string]interface{}{
+				"download":     result.Download,
+				"upload":       result.Upload,
+				"latency":      result.Latency,
+				"server":       result.Server,
+				"location":     result.Location,
+				"host":         result.Host,
+				"distance":     result.Distance,
+				"timestamp":    result.Timestamp,
+				"testDuration": result.TestDuration,
+			}
+		}
+	}
+
+	// Collect iperf3 data
+	if s.iperfManager != nil {
+		if result := s.iperfManager.GetLastResult(); result != nil {
+			export.Cards["iperf"] = map[string]interface{}{
+				"bandwidth":    result.Bandwidth,
+				"transfer":     result.Transfer,
+				"retransmits":  result.Retransmits,
+				"jitter":       result.Jitter,
+				"lostPackets":  result.LostPackets,
+				"lostPercent":  result.LostPercent,
+				"protocol":     result.Protocol,
+				"direction":    result.Direction,
+				"duration":     result.Duration,
+				"server":       result.Server,
+				"port":         result.Port,
+				"timestamp":    result.Timestamp,
+			}
 		}
 	}
 
