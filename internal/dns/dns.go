@@ -66,12 +66,19 @@ func DefaultThresholds() Thresholds {
 	}
 }
 
+// ConfiguredServer represents a user-configured DNS server.
+type ConfiguredServer struct {
+	Address string
+	Enabled bool
+}
+
 // Tester performs DNS tests with timing.
 type Tester struct {
-	server       string
-	testHostname string
-	thresholds   Thresholds
-	resolver     *net.Resolver
+	server            string
+	testHostname      string
+	thresholds        Thresholds
+	resolver          *net.Resolver
+	configuredServers []ConfiguredServer
 }
 
 // NewTester creates a new DNS tester.
@@ -122,6 +129,11 @@ func (t *Tester) SetServer(server string) {
 	} else {
 		t.resolver = net.DefaultResolver
 	}
+}
+
+// SetConfiguredServers updates the list of user-configured DNS servers.
+func (t *Tester) SetConfiguredServers(servers []ConfiguredServer) {
+	t.configuredServers = servers
 }
 
 // getStatus determines status based on timing and thresholds.
@@ -340,6 +352,19 @@ func (t *Tester) TestServer(ctx context.Context, server string) *ServerTestResul
 // Test performs a complete DNS test (forward and reverse) for both IPv4 and IPv6.
 func (t *Tester) Test(ctx context.Context) *TestResult {
 	servers := GetSystemDNS()
+
+	// Add enabled configured servers to the list (avoiding duplicates)
+	serverSet := make(map[string]bool)
+	for _, s := range servers {
+		serverSet[s] = true
+	}
+	for _, cs := range t.configuredServers {
+		if cs.Enabled && cs.Address != "" && !serverSet[cs.Address] {
+			servers = append(servers, cs.Address)
+			serverSet[cs.Address] = true
+		}
+	}
+
 	result := &TestResult{
 		Server:       t.server,
 		TestHostname: t.testHostname,

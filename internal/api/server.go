@@ -80,6 +80,18 @@ func NewServer(cfg *config.Config, configPath string, netMgr *network.Manager) *
 	// Set up link state change callback
 	s.linkMonitor.OnStateChange(s.onLinkStateChange)
 
+	// Initialize DNS tester with configured servers from config
+	if len(cfg.DNS.Servers) > 0 {
+		configuredServers := make([]dns.ConfiguredServer, 0, len(cfg.DNS.Servers))
+		for _, d := range cfg.DNS.Servers {
+			configuredServers = append(configuredServers, dns.ConfiguredServer{
+				Address: d.Address,
+				Enabled: d.Enabled,
+			})
+		}
+		s.dnsTester.SetConfiguredServers(configuredServers)
+	}
+
 	s.wsHub = NewHub()
 	s.setupRoutes()
 

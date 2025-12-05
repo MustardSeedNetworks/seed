@@ -67,6 +67,13 @@ type DiscoveryConfig struct {
 type DNSConfig struct {
 	TestHostname string        `yaml:"test_hostname"`
 	Timeout      time.Duration `yaml:"timeout"`
+	Servers      []DNSServer   `yaml:"servers,omitempty"` // Additional DNS servers to test
+}
+
+// DNSServer represents a DNS server configuration.
+type DNSServer struct {
+	Address string `yaml:"address"`
+	Enabled bool   `yaml:"enabled"`
 }
 
 // TestsConfig contains custom test configurations.

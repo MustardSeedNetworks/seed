@@ -14,6 +14,7 @@ import (
 
 	"github.com/krisarmstrong/netscope/internal/config"
 	"github.com/krisarmstrong/netscope/internal/dhcp"
+	"github.com/krisarmstrong/netscope/internal/dns"
 	"github.com/krisarmstrong/netscope/internal/gateway"
 	"github.com/krisarmstrong/netscope/internal/iperf"
 	"github.com/krisarmstrong/netscope/internal/network"
@@ -1342,11 +1343,18 @@ func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 // TestsSettingsResponse represents the custom tests configuration.
 type TestsSettingsResponse struct {
 	DNSHostname   string                    `json:"dnsHostname"`
+	DNSServers    []DNSServerResponse       `json:"dnsServers"`
 	PingTargets   []PingTargetResponse      `json:"pingTargets"`
 	TCPPorts      []TCPPortResponse         `json:"tcpPorts"`
 	UDPPorts      []UDPPortResponse         `json:"udpPorts"`
 	HTTPEndpoints []HTTPEndpointResponse    `json:"httpEndpoints"`
 	Speedtest     SpeedtestSettingsResponse `json:"speedtest"`
+}
+
+// DNSServerResponse represents a DNS server for testing.
+type DNSServerResponse struct {
+	Address string `json:"address"`
+	Enabled bool   `json:"enabled"`
 }
 
 type PingTargetResponse struct {
@@ -1396,6 +1404,7 @@ func (s *Server) handleTestsSettings(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 	resp := TestsSettingsResponse{
 		DNSHostname:   s.config.DNS.TestHostname,
+		DNSServers:    make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
 		PingTargets:   make([]PingTargetResponse, 0, len(s.config.Tests.PingTargets)),
 		TCPPorts:      make([]TCPPortResponse, 0, len(s.config.Tests.TCPPorts)),
 		UDPPorts:      make([]UDPPortResponse, 0, len(s.config.Tests.UDPPorts)),
@@ -1404,6 +1413,14 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 			ServerID:      s.config.Speedtest.ServerID,
 			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
 		},
+	}
+
+	// DNS servers
+	for _, d := range s.config.DNS.Servers {
+		resp.DNSServers = append(resp.DNSServers, DNSServerResponse{
+			Address: d.Address,
+			Enabled: d.Enabled,
+		})
 	}
 
 	for _, p := range s.config.Tests.PingTargets {
@@ -1459,6 +1476,26 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 		if s.dnsTester != nil {
 			s.dnsTester.SetTestHostname(req.DNSHostname)
 		}
+	}
+
+	// Update DNS servers
+	s.config.DNS.Servers = make([]config.DNSServer, 0, len(req.DNSServers))
+	for _, d := range req.DNSServers {
+		s.config.DNS.Servers = append(s.config.DNS.Servers, config.DNSServer{
+			Address: d.Address,
+			Enabled: d.Enabled,
+		})
+	}
+	// Update the DNS tester with the configured servers
+	if s.dnsTester != nil {
+		configuredServers := make([]dns.ConfiguredServer, 0, len(s.config.DNS.Servers))
+		for _, d := range s.config.DNS.Servers {
+			configuredServers = append(configuredServers, dns.ConfiguredServer{
+				Address: d.Address,
+				Enabled: d.Enabled,
+			})
+		}
+		s.dnsTester.SetConfiguredServers(configuredServers)
 	}
 
 	// Update ping targets
