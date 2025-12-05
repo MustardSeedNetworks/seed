@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { useWebSocket, ConnectionStatus, Message, CardUpdate } from './useWebSocket';
+import { renderHook, act } from '@testing-library/react';
+import { useWebSocket, Message, CardUpdate } from './useWebSocket';
 
 // Mock WebSocket
 class MockWebSocket {
@@ -60,11 +60,6 @@ class MockWebSocket {
       this.onmessage({ data: JSON.stringify(data) } as MessageEvent);
     }
   }
-}
-
-// Type guard for MockWebSocket
-function isMockWebSocket(ws: WebSocket | MockWebSocket): ws is MockWebSocket {
-  return 'simulateOpen' in ws;
 }
 
 describe('useWebSocket', () => {

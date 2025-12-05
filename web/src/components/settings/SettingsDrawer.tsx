@@ -129,6 +129,16 @@ interface IperfSettings {
   enableServer: boolean;
 }
 
+interface NetworkDiscoverySettings {
+  enabled: boolean;
+  arpScanWorkers: number;
+  pingTimeoutMs: number;
+  scanTimeoutMs: number;
+  autoScan: boolean;
+  scanIntervalMs: number;
+  ouiFilePath: string;
+}
+
 interface SettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -194,6 +204,16 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     serverPort: 5201,
     enableServer: false,
   });
+  // Network Discovery settings
+  const [networkDiscoverySettings, setNetworkDiscoverySettings] = useState<NetworkDiscoverySettings>({
+    enabled: true,
+    arpScanWorkers: 50,
+    pingTimeoutMs: 500,
+    scanTimeoutMs: 30000,
+    autoScan: false,
+    scanIntervalMs: 0,
+    ouiFilePath: 'oui.txt',
+  });
   // Auto-save status for each section
   type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
   const [thresholdsStatus, setThresholdsStatus] = useState<SaveStatus>('idle');
@@ -201,6 +221,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const [wifiStatus, setWifiStatus] = useState<SaveStatus>('idle');
   const [iperfStatus, setIperfStatus] = useState<SaveStatus>('idle');
   const [fabStatus, setFabStatus] = useState<SaveStatus>('idle');
+  const [networkDiscoveryStatus, setNetworkDiscoveryStatus] = useState<SaveStatus>('idle');
 
   // Refs to track initial load (skip auto-save on first load)
   const initialLoadRef = useRef(true);
@@ -209,6 +230,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const wifiInitRef = useRef(true);
   const iperfInitRef = useRef(true);
   const fabInitRef = useRef(true);
+  const networkDiscoveryInitRef = useRef(true);
 
   // Debounce timers
   const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -216,6 +238,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const wifiTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const iperfTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const fabTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Legacy state (keep for IP settings which still needs manual apply)
   const [savingIP, setSavingIP] = useState(false);
@@ -334,6 +357,52 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     }
   }, []);
 
+  // Fetch Network Discovery settings from API
+  const fetchNetworkDiscoverySettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/devices/settings`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNetworkDiscoverySettings({
+          enabled: data.enabled ?? true,
+          arpScanWorkers: data.arpScanWorkers ?? 50,
+          pingTimeoutMs: data.pingTimeoutMs ?? 500,
+          scanTimeoutMs: data.scanTimeoutMs ?? 30000,
+          autoScan: data.autoScan ?? false,
+          scanIntervalMs: data.scanIntervalMs ?? 0,
+          ouiFilePath: data.ouiFilePath ?? 'oui.txt',
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch network discovery settings:', err);
+    }
+  }, []);
+
+  // Save Network Discovery settings to API
+  const saveNetworkDiscoverySettings = useCallback(async () => {
+    setNetworkDiscoveryStatus('saving');
+    try {
+      const response = await fetch(`${API_BASE}/api/devices/settings`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(networkDiscoverySettings),
+      });
+      if (response.ok) {
+        setNetworkDiscoveryStatus('saved');
+        setTimeout(() => setNetworkDiscoveryStatus('idle'), 2000);
+      } else {
+        setNetworkDiscoveryStatus('error');
+      }
+    } catch {
+      setNetworkDiscoveryStatus('error');
+    }
+  }, [networkDiscoverySettings]);
+
   useEffect(() => {
     if (isOpen) {
       // Reset init refs on open
@@ -343,6 +412,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       wifiInitRef.current = true;
       iperfInitRef.current = true;
       fabInitRef.current = true;
+      networkDiscoveryInitRef.current = true;
 
       fetchThresholds();
       fetchIPSettings();
@@ -350,6 +420,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       fetchWifiSettings();
       loadIperfSettings();
       loadFabOptions();
+      fetchNetworkDiscoverySettings();
 
       // Mark initial load as done after a short delay
       setTimeout(() => {
@@ -359,9 +430,10 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         wifiInitRef.current = false;
         iperfInitRef.current = false;
         fabInitRef.current = false;
+        networkDiscoveryInitRef.current = false;
       }, 500);
     }
-  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings, loadFabOptions]);
+  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings, loadFabOptions, fetchNetworkDiscoverySettings]);
 
   const saveThresholds = useCallback(async () => {
     setThresholdsStatus('saving');
@@ -549,6 +621,18 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       if (fabTimerRef.current) clearTimeout(fabTimerRef.current);
     };
   }, [fabOptions]);
+
+  // Auto-save Network Discovery settings with debounce
+  useEffect(() => {
+    if (networkDiscoveryInitRef.current) return;
+    if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
+    networkDiscoveryTimerRef.current = setTimeout(() => {
+      saveNetworkDiscoverySettings();
+    }, 800);
+    return () => {
+      if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
+    };
+  }, [networkDiscoverySettings, saveNetworkDiscoverySettings]);
 
   // Validate IP address format
   const isValidIP = (ip: string): boolean => {
@@ -887,6 +971,157 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   {wifiSettings.isWireless
                     ? 'Currently monitoring a wireless interface'
                     : 'No wireless interface detected'}
+                </p>
+              </div>
+
+            </div>
+          </CollapsibleSection>
+
+          {/* Network Discovery Section */}
+          <CollapsibleSection title={<>Network Discovery<AutoSaveIndicator status={networkDiscoveryStatus} /></>}>
+            <div className="space-y-4">
+              <p className="text-xs text-text-muted">
+                Configure ARP-based device discovery for finding devices on the local network.
+              </p>
+
+              {/* Enable Discovery */}
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">Enable Discovery</span>
+                <input
+                  type="checkbox"
+                  checked={networkDiscoverySettings.enabled}
+                  onChange={(e) =>
+                    setNetworkDiscoverySettings((prev) => ({ ...prev, enabled: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              {/* Auto-Scan */}
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <div>
+                  <span className="text-sm text-text-primary">Auto-Scan on Startup</span>
+                  <p className="text-xs text-text-muted">Scan when interface comes up</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={networkDiscoverySettings.autoScan}
+                  onChange={(e) =>
+                    setNetworkDiscoverySettings((prev) => ({ ...prev, autoScan: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              {/* Scan Workers */}
+              <div>
+                <label className="text-xs text-text-muted">Concurrent Scan Workers</label>
+                <input
+                  type="number"
+                  value={networkDiscoverySettings.arpScanWorkers}
+                  onChange={(e) =>
+                    setNetworkDiscoverySettings((prev) => ({
+                      ...prev,
+                      arpScanWorkers: parseInt(e.target.value) || 50,
+                    }))
+                  }
+                  min={1}
+                  max={100}
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  More workers = faster scan (default: 50)
+                </p>
+              </div>
+
+              {/* Ping Timeout */}
+              <div>
+                <label className="text-xs text-text-muted">Ping Timeout (ms)</label>
+                <input
+                  type="number"
+                  value={networkDiscoverySettings.pingTimeoutMs}
+                  onChange={(e) =>
+                    setNetworkDiscoverySettings((prev) => ({
+                      ...prev,
+                      pingTimeoutMs: parseInt(e.target.value) || 500,
+                    }))
+                  }
+                  min={100}
+                  max={5000}
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  Timeout per host ping (default: 500ms)
+                </p>
+              </div>
+
+              {/* Scan Timeout */}
+              <div>
+                <label className="text-xs text-text-muted">Total Scan Timeout (ms)</label>
+                <input
+                  type="number"
+                  value={networkDiscoverySettings.scanTimeoutMs}
+                  onChange={(e) =>
+                    setNetworkDiscoverySettings((prev) => ({
+                      ...prev,
+                      scanTimeoutMs: parseInt(e.target.value) || 30000,
+                    }))
+                  }
+                  min={5000}
+                  max={120000}
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  Max time for entire scan (default: 30s)
+                </p>
+              </div>
+
+              {/* Scan Interval */}
+              <div>
+                <label className="text-xs text-text-muted">Auto-Scan Interval (ms)</label>
+                <input
+                  type="number"
+                  value={networkDiscoverySettings.scanIntervalMs}
+                  onChange={(e) =>
+                    setNetworkDiscoverySettings((prev) => ({
+                      ...prev,
+                      scanIntervalMs: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  min={0}
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  0 = disabled, otherwise interval between automatic scans
+                </p>
+              </div>
+
+              {/* OUI File Path */}
+              <div>
+                <label className="text-xs text-text-muted">OUI Database File Path</label>
+                <input
+                  type="text"
+                  value={networkDiscoverySettings.ouiFilePath}
+                  onChange={(e) =>
+                    setNetworkDiscoverySettings((prev) => ({
+                      ...prev,
+                      ouiFilePath: e.target.value,
+                    }))
+                  }
+                  placeholder="oui.txt"
+                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                />
+                <p className="text-xs text-text-muted mt-1">
+                  Path to IEEE OUI file for vendor lookup (download from{' '}
+                  <a
+                    href="https://standards-oui.ieee.org/oui/oui.txt"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-primary hover:underline"
+                  >
+                    IEEE
+                  </a>
+                  )
                 </p>
               </div>
 
