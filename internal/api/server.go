@@ -28,6 +28,7 @@ import (
 	"github.com/krisarmstrong/netscope/internal/wifi"
 	"github.com/krisarmstrong/netscope/internal/cable"
 	"github.com/krisarmstrong/netscope/internal/iperf"
+	"github.com/krisarmstrong/netscope/internal/publicip"
 	"github.com/krisarmstrong/netscope/internal/speedtest"
 )
 
@@ -51,6 +52,7 @@ type Server struct {
 	cableTester      *cable.Tester
 	speedtestTester  *speedtest.Tester
 	iperfManager     *iperf.Manager
+	publicipChecker  *publicip.Checker
 }
 
 // NewServer creates a new server instance.
@@ -77,6 +79,7 @@ func NewServer(cfg *config.Config, configPath string, netMgr *network.Manager) *
 		cableTester:      cable.NewTester(cfg.Interface.Default),
 		speedtestTester:  speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 		iperfManager:     iperf.NewManager(),
+		publicipChecker:  publicip.NewChecker(),
 	}
 
 	// Set up link state change callback
@@ -194,6 +197,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/devices/status", s.handleDevicesStatus)
 	s.mux.HandleFunc("/api/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc("/api/devices/subnets", s.handleDevicesSubnets)
+	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)

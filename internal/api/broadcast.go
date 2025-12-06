@@ -57,6 +57,11 @@ func (s *Server) broadcastAllCards() {
 	if switchData := s.collectDiscoveryData(); switchData != nil {
 		s.wsHub.BroadcastCardUpdate("switch", switchData)
 	}
+
+	// Public IP card
+	if publicIPData := s.collectPublicIPData(); publicIPData != nil {
+		s.wsHub.BroadcastCardUpdate("publicip", publicIPData)
+	}
 }
 
 // collectLinkData gathers link status data for the current interface.
@@ -193,5 +198,28 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 		"portDescription":   neighbor.PortDescription,
 		"managementIp":      neighbor.ManagementAddress,
 		"systemDescription": neighbor.SystemDescription,
+	}
+}
+
+// collectPublicIPData gathers public IP address information.
+func (s *Server) collectPublicIPData() map[string]interface{} {
+	if s.publicipChecker == nil {
+		return nil
+	}
+
+	// Use cached result (non-blocking call with short timeout context)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	result := s.publicipChecker.GetPublicIP(ctx)
+	if result == nil {
+		return nil
+	}
+
+	return map[string]interface{}{
+		"ipv4":        result.IPv4,
+		"ipv6":        result.IPv6,
+		"lastChecked": result.LastChecked.Format(time.RFC3339),
+		"error":       result.Error,
 	}
 }
