@@ -3,6 +3,8 @@ import { Skeleton } from '../ui/Skeleton';
 
 export interface LinkData {
   linkUp: boolean;
+  carrier: boolean;    // Physical link/carrier detected (Layer 2)
+  hasIP: boolean;      // Has routable IP address (Layer 3)
   speed: string;
   duplex: string;
   advertisedSpeeds: string[];
@@ -34,18 +36,33 @@ export function LinkCard({ data, loading }: LinkCardProps) {
     );
   }
 
-  const status: Status = data.linkUp ? 'success' : 'error';
+  // Determine status based on carrier (L2) and IP (L3)
+  const getStatus = (): Status => {
+    if (!data.carrier) return 'error';      // No physical link
+    if (!data.hasIP) return 'warning';      // Carrier but no IP
+    return 'success';                        // Fully connected
+  };
+
+  const getStatusText = (): string => {
+    if (!data.carrier) return 'No Carrier';
+    if (!data.hasIP) return 'No IP';
+    return data.speed || 'Connected';
+  };
+
+  const status = getStatus();
 
   return (
     <Card title="Link" status={status}>
       <CardValue
-        value={data.linkUp ? data.speed || 'Connected' : 'Down'}
+        value={getStatusText()}
         size="lg"
         status={status}
       />
-      {data.linkUp && (
+      <CardDivider />
+      <CardRow label="Carrier" value={data.carrier ? 'Connected' : 'No Signal'} />
+      <CardRow label="IP Status" value={data.hasIP ? 'Assigned' : 'None'} />
+      {data.carrier && (
         <>
-          <CardDivider />
           <CardRow label="Duplex" value={data.duplex || 'Unknown'} />
           {data.mtu && <CardRow label="MTU" value={data.mtu.toString()} />}
           {data.autoNeg !== undefined && (

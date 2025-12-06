@@ -93,6 +93,8 @@ function App() {
           ...prev,
           link: {
             linkUp: data.linkUp,
+            carrier: data.carrier ?? data.linkUp,  // Fallback for compatibility
+            hasIP: data.hasIP ?? data.linkUp,      // Fallback for compatibility
             speed: data.speed || '',
             duplex: data.duplex || '',
             advertisedSpeeds: data.advertisedSpeeds || [],

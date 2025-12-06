@@ -309,10 +309,12 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// LinkResponse represents the link status for an interface (Layer 2 only).
+// LinkResponse represents the link status for an interface.
 type LinkResponse struct {
 	Interface  string   `json:"interface"`
-	LinkUp     bool     `json:"linkUp"`
+	LinkUp     bool     `json:"linkUp"`     // Deprecated: use Carrier && HasIP for accurate status
+	Carrier    bool     `json:"carrier"`    // Physical link/carrier detected (Layer 2)
+	HasIP      bool     `json:"hasIP"`      // Has routable IP address (Layer 3)
 	Speed      string   `json:"speed"`
 	Duplex     string   `json:"duplex"`
 	Advertised []string `json:"advertisedSpeeds"`
@@ -351,6 +353,8 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 
 	if linkStatus != nil {
 		resp.LinkUp = linkStatus.LinkUp
+		resp.Carrier = linkStatus.Carrier
+		resp.HasIP = linkStatus.HasIP
 		resp.Speed = linkStatus.Speed
 		resp.Duplex = linkStatus.Duplex
 		resp.Advertised = linkStatus.Advertised

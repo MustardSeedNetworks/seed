@@ -39,7 +39,9 @@ type InterfaceInfo struct {
 type LinkStatus struct {
 	Speed      string   `json:"speed"`      // e.g., "1000Mb/s"
 	Duplex     string   `json:"duplex"`     // "full" or "half"
-	LinkUp     bool     `json:"linkUp"`
+	LinkUp     bool     `json:"linkUp"`     // Deprecated: use Carrier && HasIP for accurate status
+	Carrier    bool     `json:"carrier"`    // Physical link/carrier detected (Layer 2)
+	HasIP      bool     `json:"hasIP"`      // Has routable IP address (Layer 3)
 	Advertised []string `json:"advertised"` // Advertised link modes
 	AutoNeg    bool     `json:"autoNeg"`    // Auto-negotiation enabled
 }
@@ -175,13 +177,15 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 		return nil, fmt.Errorf("interface %s not found", name)
 	}
 
-	// Determine if link is actually up:
-	// - Interface must have Running flag
-	// - For ethernet, also check if we have a routable IP (not just link-local)
-	linkUp := info.Running && hasRoutableAddress(info.Addresses)
+	// Separate carrier (Layer 2) from IP assignment (Layer 3)
+	carrier := info.Running                        // Physical link/carrier detected
+	hasIP := hasRoutableAddress(info.Addresses)    // Has routable IP address
+	linkUp := carrier && hasIP                     // Legacy: both conditions met
 
 	status := &LinkStatus{
-		LinkUp: linkUp,
+		LinkUp:  linkUp,
+		Carrier: carrier,
+		HasIP:   hasIP,
 	}
 
 	// Try to read speed from sysfs (Linux only)
