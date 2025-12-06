@@ -63,13 +63,22 @@ function App() {
   const handleMessage = useCallback((message: Message) => {
     if (message.type === 'initial_state') {
       setLoading(false);
-      const payload = message.payload as { interface?: string; isWireless?: boolean; cards?: CardState };
+      const payload = message.payload as { interface?: string; isWireless?: boolean; cards?: Partial<CardState> };
       if (payload.interface) {
         setCurrentInterface(payload.interface);
       }
       // Use isWireless from payload if available (works for macOS and Linux)
       if (payload.isWireless !== undefined) {
         setIsWifi(payload.isWireless);
+      }
+      // Use initial card data from WebSocket
+      if (payload.cards) {
+        setCards((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            Object.entries(payload.cards!).filter(([, v]) => v !== null)
+          ),
+        }));
       }
     }
   }, []);
@@ -563,10 +572,19 @@ function App() {
     };
   }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
 
-  // Fetch data on mount and periodically
+  // WebSocket connection for real-time updates
+  const { status: wsStatus, reconnect } = useWebSocket({
+    url: '/ws',
+    token,
+    onMessage: handleMessage,
+    onCardUpdate: handleCardUpdate,
+  });
+
+  // Fetch data on mount (initial load) and data not covered by WebSocket
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    // Initial fetch of all data
     fetchLinkData();
     fetchIPConfig();
     fetchInterfaces();
@@ -578,7 +596,27 @@ function App() {
     fetchCableData();
     fetchNetworkDiscovery();
     setLoading(false);
+  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData, fetchNetworkDiscovery]);
 
+  // Fallback REST polling when WebSocket is not connected
+  // When WS is connected, backend pushes updates every 5 seconds via card_update messages
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Only poll if WebSocket is not connected
+    if (wsStatus === 'connected') {
+      // WebSocket provides real-time updates, no need for aggressive polling
+      // Still poll some endpoints that aren't broadcast (interfaces, wifi details)
+      const slowInterval = setInterval(() => {
+        fetchInterfaces();
+        fetchWiFiData(); // WiFi details not broadcast via WS
+        fetchCableData(); // Cable test not broadcast via WS
+      }, 30000); // 30 second interval for non-WS data
+
+      return () => clearInterval(slowInterval);
+    }
+
+    // Fallback: Poll when WebSocket disconnected
     const interval = setInterval(() => {
       fetchLinkData();
       fetchIPConfig();
@@ -587,11 +625,10 @@ function App() {
       fetchGatewayData();
       fetchVLANData();
       fetchWiFiData();
-      // Cable test and network discovery not refreshed periodically (can take time)
-    }, 10000); // Refresh every 10 seconds (gateway ping takes time)
+    }, 10000); // 10 second fallback
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData, fetchNetworkDiscovery]);
+  }, [isAuthenticated, wsStatus, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
 
   // Auto-scan network devices on mount (respects FAB option)
   useEffect(() => {
@@ -620,13 +657,6 @@ function App() {
     }
   }, [isAuthenticated, triggerDeviceScan]);
 
-  const { status, reconnect } = useWebSocket({
-    url: '/ws',
-    token,
-    onMessage: handleMessage,
-    onCardUpdate: handleCardUpdate,
-  });
-
   // Login form
   if (!isAuthenticated) {
     return <LoginForm onLogin={login} isLoading={isLoading} error={error} />;
@@ -642,7 +672,7 @@ function App() {
             <span className="text-xl font-bold text-brand-primary flex-shrink-0">◉</span>
             <h1 className="text-lg font-semibold hidden xs:block sm:block">NetScope</h1>
             <div className="hidden sm:block">
-              <ConnectionStatus status={status} onReconnect={reconnect} />
+              <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
             </div>
           </div>
 
@@ -718,7 +748,7 @@ function App() {
 
         {/* Mobile connection status - show below header on small screens */}
         <div className="sm:hidden mt-2 flex items-center justify-center">
-          <ConnectionStatus status={status} onReconnect={reconnect} />
+          <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
         </div>
       </header>
 
@@ -754,7 +784,7 @@ function App() {
         {/* Development notice */}
         <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-            NetScope v0.9.5 - Network Discovery
+            NetScope v0.11.0 - WebSocket Real-time Updates
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-text-muted">
             Tap the play button to run all tests.

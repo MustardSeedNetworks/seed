@@ -251,6 +251,9 @@ func (s *Server) Start() error {
 	// Start WebSocket hub
 	go s.wsHub.Run()
 
+	// Start WebSocket broadcast loop
+	s.startBroadcastLoop()
+
 	// Start link state monitor
 	if err := s.linkMonitor.Start(); err != nil {
 		log.Printf("Warning: Link monitor failed to start: %v", err)

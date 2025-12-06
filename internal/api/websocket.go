@@ -290,13 +290,36 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 // sendInitialState sends the current state to a newly connected client.
 func (s *Server) sendInitialState(client *Client) {
-	// TODO: Send actual card data
+	// Check if current interface is wireless
+	isWireless := false
+	if s.wifiManager != nil {
+		isWireless = s.wifiManager.IsWireless()
+	}
+
+	// Build initial state with actual card data
+	cards := make(map[string]interface{})
+
+	// Collect current card data
+	if linkData := s.collectLinkData(); linkData != nil {
+		cards["link"] = linkData
+	}
+	if gatewayData := s.collectGatewayData(); gatewayData != nil {
+		cards["gateway"] = gatewayData
+	}
+	if dnsData := s.collectDNSData(); dnsData != nil {
+		cards["dns"] = dnsData
+	}
+	if switchData := s.collectDiscoveryData(); switchData != nil {
+		cards["switch"] = switchData
+	}
+
 	msg := Message{
 		Type: "initial_state",
 		Payload: map[string]interface{}{
-			"status":    "connected",
-			"interface": s.config.Interface.Default,
-			"cards":     []interface{}{},
+			"status":     "connected",
+			"interface":  s.config.Interface.Default,
+			"isWireless": isWireless,
+			"cards":      cards,
 		},
 	}
 
