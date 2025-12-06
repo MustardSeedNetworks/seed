@@ -115,39 +115,6 @@ func (s *ARPScanner) getSubnet() (*net.IPNet, net.IP, error) {
 	return nil, nil, fmt.Errorf("no IPv4 address found on interface %s", s.interfaceName)
 }
 
-// generateHosts returns all host IPs in the subnet (excluding network and broadcast).
-func (s *ARPScanner) generateHosts(subnet *net.IPNet) []net.IP {
-	var hosts []net.IP
-	ip := subnet.IP.Mask(subnet.Mask)
-
-	// Calculate max hosts to scan (limit to /16 = 65534 hosts)
-	ones, bits := subnet.Mask.Size()
-	maxHosts := 1 << (bits - ones)
-	if maxHosts > 65536 {
-		maxHosts = 65536
-	}
-
-	for i := 1; i < maxHosts-1; i++ {
-		hostIP := make(net.IP, len(ip))
-		copy(hostIP, ip)
-
-		// Add offset
-		for j := len(hostIP) - 1; j >= 0 && i > 0; j-- {
-			hostIP[j] += byte(i & 0xff)
-			i >>= 8
-			i = 0 // Only do this once
-		}
-
-		// Calculate host IP properly
-		hostIP = incrementIP(ip, i)
-		if hostIP != nil && !hostIP.Equal(s.localIP) {
-			hosts = append(hosts, hostIP)
-		}
-	}
-
-	return hosts
-}
-
 // incrementIP adds n to an IP address.
 func incrementIP(ip net.IP, n int) net.IP {
 	ip = ip.To4()

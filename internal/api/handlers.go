@@ -9,6 +9,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1681,7 +1682,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		}
 		name := target.Name
 		if name == "" {
-			name = fmt.Sprintf("%s:%d", target.Host, target.Port)
+			name = net.JoinHostPort(target.Host, strconv.Itoa(target.Port))
 		}
 
 		testResult := CustomTestResult{
@@ -1710,7 +1711,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		}
 		name := target.Name
 		if name == "" {
-			name = fmt.Sprintf("%s:%d", target.Host, target.Port)
+			name = net.JoinHostPort(target.Host, strconv.Itoa(target.Port))
 		}
 
 		testResult := CustomTestResult{
@@ -1816,38 +1817,12 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-// runPingTest runs a ping test and returns latency in ms.
-func runPingTest(host string) (float64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Use Go's net.Dial to test ICMP-like connectivity
-	// For actual ICMP ping, we'd need raw sockets (root)
-	// Using TCP dial to a common port as fallback indicator
-	start := time.Now()
-	conn, err := (&net.Dialer{}).DialContext(ctx, "ip:icmp", host)
-	if err != nil {
-		// Try TCP 80 as fallback (won't work for all hosts but gives connectivity indication)
-		conn, err = (&net.Dialer{}).DialContext(ctx, "tcp", host+":80")
-		if err != nil {
-			// Try TCP 443
-			conn, err = (&net.Dialer{}).DialContext(ctx, "tcp", host+":443")
-			if err != nil {
-				return 0, fmt.Errorf("host unreachable")
-			}
-		}
-	}
-	latency := time.Since(start).Seconds() * 1000
-	conn.Close()
-	return latency, nil
-}
-
 // runTCPTest runs a TCP port test and returns latency in ms.
 func runTCPTest(host string, port int) (float64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	addr := fmt.Sprintf("%s:%d", host, port)
+	addr := net.JoinHostPort(host, strconv.Itoa(port))
 	start := time.Now()
 	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", addr)
 	if err != nil {
@@ -1978,7 +1953,7 @@ func runUDPTest(host string, port int) (float64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	addr := fmt.Sprintf("%s:%d", host, port)
+	addr := net.JoinHostPort(host, strconv.Itoa(port))
 
 	// For DNS port, try a simple DNS query
 	if port == 53 {
