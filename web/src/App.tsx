@@ -24,6 +24,8 @@ import {
   CableData,
   NetworkDiscoveryCard,
   NetworkDiscoveryData,
+  PublicIPCard,
+  PublicIPData,
 } from './components/cards';
 import { PerformanceCard } from './components/cards/PerformanceCard';
 import { HealthCheckCard } from './components/cards/HealthCheckCard';
@@ -38,6 +40,7 @@ interface CardState {
   dhcp: DHCPData | null;
   dns: DNSData | null;
   gateway: GatewayData | null;
+  publicip: PublicIPData | null;
 }
 
 function App() {
@@ -53,6 +56,7 @@ function App() {
     dhcp: null,
     dns: null,
     gateway: null,
+    publicip: null,
   });
   const [loading, setLoading] = useState(true);
   const [currentInterface, setCurrentInterface] = useState('eth0');
@@ -770,6 +774,7 @@ function App() {
 
           {/* Layer 7: Application */}
           <DNSCard data={cards.dns} loading={loading} />
+          <PublicIPCard data={cards.publicip} loading={loading} />
 
           {/* Health Checks - tests configured endpoints */}
           <HealthCheckCard loading={loading} />

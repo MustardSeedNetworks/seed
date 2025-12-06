@@ -2799,3 +2799,28 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 		"message": "Subnet deleted",
 	})
 }
+
+// handlePublicIP returns the public IPv4 and IPv6 addresses.
+func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
+	if s.publicipChecker == nil {
+		http.Error(w, "Public IP checker not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		// Return cached result or fetch if cache expired
+		result := s.publicipChecker.GetPublicIP(r.Context())
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
+
+	case http.MethodPost:
+		// Force refresh
+		result := s.publicipChecker.Refresh(r.Context())
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
