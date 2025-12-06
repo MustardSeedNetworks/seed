@@ -21,7 +21,7 @@ describe('Card', () => {
       </Card>
     );
 
-    const statusIcon = screen.getByText('●');
+    const statusIcon = screen.getByLabelText('Status: success');
     expect(statusIcon).toHaveClass('text-status-success');
   });
 
@@ -32,7 +32,7 @@ describe('Card', () => {
       </Card>
     );
 
-    const statusIcon = screen.getByText('●');
+    const statusIcon = screen.getByLabelText('Status: warning');
     expect(statusIcon).toHaveClass('text-status-warning');
   });
 
@@ -43,7 +43,7 @@ describe('Card', () => {
       </Card>
     );
 
-    const statusIcon = screen.getByText('●');
+    const statusIcon = screen.getByLabelText('Status: error');
     expect(statusIcon).toHaveClass('text-status-error');
   });
 
@@ -54,7 +54,7 @@ describe('Card', () => {
       </Card>
     );
 
-    const statusIcon = screen.getByText('○');
+    const statusIcon = screen.getByLabelText('Status: unknown');
     expect(statusIcon).toHaveClass('text-text-muted');
   });
 
@@ -65,8 +65,9 @@ describe('Card', () => {
       </Card>
     );
 
-    const statusIcon = screen.getByText('◐');
-    expect(statusIcon).toHaveClass('animate-spin');
+    const statusIcon = screen.getByLabelText('Status: loading');
+    const spinner = statusIcon.querySelector('.animate-spin');
+    expect(spinner).toBeInTheDocument();
   });
 
   it('handles click events', () => {

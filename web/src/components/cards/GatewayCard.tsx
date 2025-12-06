@@ -73,7 +73,17 @@ export function GatewayCard({ data, loading, thresholds }: GatewayCardProps) {
 
   return (
     <Card title="Gateway" status={status}>
-      <CardValue value={data.gateway} size="lg" />
+      <div className="flex items-center justify-between gap-2">
+        <CardValue value={data.gateway} size="lg" />
+        <span
+          className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            data.reachable ? 'text-status-success bg-status-success/10' : 'text-status-error bg-status-error/10'
+          }`}
+          aria-label={`Gateway status: ${data.reachable ? 'reachable' : 'unreachable'}`}
+        >
+          {data.reachable ? 'Reachable' : 'Down'}
+        </span>
+      </div>
       <p className="text-xs text-text-muted">
         {data.reachable ? 'Reachable' : 'Unreachable'}
       </p>

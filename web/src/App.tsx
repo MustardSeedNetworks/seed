@@ -719,10 +719,10 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-base text-text-primary">
+    <div className="min-h-screen bg-surface-base text-text-primary font-body">
       {/* Header */}
-      <header className="border-b border-surface-border bg-surface-raised px-3 py-2 sm:px-4 sm:py-3">
-        <div className="flex items-center justify-between gap-2">
+      <header className="border-b border-surface-border bg-surface-raised">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
           {/* Logo and title - hide title on very small screens */}
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl font-bold text-brand-primary flex-shrink-0">◉</span>
@@ -803,14 +803,15 @@ function App() {
         </div>
 
         {/* Mobile connection status - show below header on small screens */}
-        <div className="sm:hidden mt-2 flex items-center justify-center">
+        <div className="sm:hidden mt-2 flex items-center justify-center px-3 pb-2">
           <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
         </div>
       </header>
 
       {/* Main content */}
-      <main className="p-3 sm:p-4">
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <main className="py-3 sm:py-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {/* Layer 1-2: Physical */}
           <LinkCard data={cards.link} loading={loading} />
           {cards.cable?.supported && <CableCard data={cards.cable} loading={loading} />}
@@ -835,10 +836,10 @@ function App() {
 
           {/* Network Discovery - device scanning (last) */}
           <NetworkDiscoveryCard data={networkDiscovery} loading={loading} onScan={triggerDeviceScan} />
-        </div>
+          </div>
 
-        {/* Development notice */}
-        <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
+          {/* Development notice */}
+          <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-semibold text-text-muted">
             NetScope v0.11.2 - Public IP in IP Config Card
           </h2>
@@ -848,6 +849,7 @@ function App() {
             <span className="sm:hidden"> </span>
             Use the Network Discovery card to scan for devices on your network.
           </p>
+          </div>
         </div>
       </main>
 
@@ -950,20 +952,34 @@ interface ConnectionStatusProps {
 
 function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
   const statusConfig = {
-    connecting: { color: 'text-status-warning', label: 'Connecting...' },
-    connected: { color: 'text-status-success', label: 'Connected' },
-    disconnected: { color: 'text-status-error', label: 'Disconnected' },
-    error: { color: 'text-status-error', label: 'Error' },
+    connecting: { color: 'text-status-warning', label: 'Connecting...', icon: 'spinner' },
+    connected: { color: 'text-status-success', label: 'Connected', icon: 'dot' },
+    disconnected: { color: 'text-status-error', label: 'Disconnected', icon: 'dot' },
+    error: { color: 'text-status-error', label: 'Error', icon: 'dot' },
   };
 
   const config = statusConfig[status];
 
   return (
     <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
-      <span className={`flex items-center gap-1.5 text-xs ${config.color}`}>
-        <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 8 8" aria-hidden="true">
-          <circle cx="4" cy="4" r="4" />
-        </svg>
+      <span className={`inline-flex items-center gap-1.5 text-xs ${config.color}`}>
+        <span
+          className={`inline-flex items-center justify-center rounded-full ${config.color} ${
+            config.icon === 'spinner' ? 'bg-status-info/10 p-1' : 'bg-current/10 p-1'
+          }`}
+          aria-label={`WebSocket status: ${config.label}`}
+        >
+          {config.icon === 'spinner' ? (
+            <svg className="w-3 h-3 animate-spin" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
+            </svg>
+          ) : (
+            <svg className="w-3 h-3" viewBox="0 0 8 8" fill="currentColor" aria-hidden="true">
+              <circle cx="4" cy="4" r="4" />
+            </svg>
+          )}
+        </span>
         {config.label}
       </span>
       {(status === 'disconnected' || status === 'error') && (

@@ -4,6 +4,11 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        display: ['"Inter"', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        body: ['"Inter"', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+      },
       colors: {
         // WiFi Vigilante color scheme
         brand: {

@@ -9,14 +9,14 @@
   --color-brand-primary: #1d4ed8;
   --color-brand-accent: #2563eb;
 
-  --color-surface-base: #e2e8f0;
-  --color-surface-raised: #f8fafc;
-  --color-surface-border: #94a3b8;
-  --color-surface-hover: #cbd5e1;
+  --color-surface-base: #e5edf5;
+  --color-surface-raised: #f9fbfd;
+  --color-surface-border: #8fa3ba;
+  --color-surface-hover: #d4deea;
 
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #1e293b;
-  --color-text-muted: #475569;
+  --color-text-primary: #0b1220;
+  --color-text-secondary: #1b2737;
+  --color-text-muted: #334155;
   --color-text-accent: #1d4ed8;
   --color-text-inverse: #f8fafc;
 
@@ -31,14 +31,14 @@
   --color-brand-primary: #93c5fd;
   --color-brand-accent: #60a5fa;
 
-  --color-surface-base: #0f172a;
-  --color-surface-raised: #1e293b;
-  --color-surface-border: #475569;
-  --color-surface-hover: #334155;
+  --color-surface-base: #0c1626;
+  --color-surface-raised: #131f32;
+  --color-surface-border: #2a3a52;
+  --color-surface-hover: #1c2a40;
 
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #e2e8f0;
-  --color-text-muted: #cbd5e1;
+  --color-text-primary: #f8fbff;
+  --color-text-secondary: #dbe5f3;
+  --color-text-muted: #b8c5d9;
   --color-text-accent: #93c5fd;
   --color-text-inverse: #0f172a;
 
@@ -49,10 +49,18 @@
 }
 
 body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   background-color: var(--color-surface-base);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility to ensure cards/forms respect consistent spacing rhythm */
+.content-max {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Toast animation */

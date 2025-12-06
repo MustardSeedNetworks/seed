@@ -63,9 +63,9 @@ describe('FAB', () => {
 
     expect(button).toBeDisabled();
 
-    // Fast forward 30 seconds
+    // Fast forward fallback timeout (60s)
     act(() => {
-      vi.advanceTimersByTime(30000);
+      vi.advanceTimersByTime(60000);
     });
 
     expect(button).not.toBeDisabled();

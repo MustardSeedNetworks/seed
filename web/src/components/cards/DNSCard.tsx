@@ -50,20 +50,34 @@ function LookupRow({
 }) {
   if (!lookup) return null;
 
+  const statusBadge = lookup.status;
+  const statusColor =
+    statusBadge === 'success'
+      ? 'text-status-success'
+      : statusBadge === 'warning'
+      ? 'text-status-warning'
+      : 'text-status-error';
+  const statusBg =
+    statusBadge === 'success'
+      ? 'bg-status-success/10'
+      : statusBadge === 'warning'
+      ? 'bg-status-warning/10'
+      : 'bg-status-error/10';
+
   return (
     <div className="mb-2">
       <div className="flex items-center justify-between">
         <span className="text-xs text-text-muted">{label}</span>
-        <span
-          className={`text-xs font-medium ${
-            lookup.status === 'success'
-              ? 'text-status-success'
-              : lookup.status === 'warning'
-              ? 'text-status-warning'
-              : 'text-status-error'
-          }`}
-        >
-          {formatTime(lookup.timeMs || lookup.time)}
+        <span className="inline-flex items-center gap-2">
+          <span
+            className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor} ${statusBg}`}
+            aria-label={`Status: ${statusBadge}`}
+          >
+            {statusBadge === 'success' ? 'OK' : statusBadge === 'warning' ? 'Warn' : 'Fail'}
+          </span>
+          <span className={`text-xs font-medium ${statusColor}`}>
+            {formatTime(lookup.timeMs || lookup.time)}
+          </span>
         </span>
       </div>
       <p className="text-sm truncate" title={lookup.result}>
@@ -175,32 +189,68 @@ export function DNSCard({ data, loading }: DNSCardProps) {
                 {server.forward && (
                   <div className="flex justify-between text-xs text-text-muted">
                     <span>A</span>
-                    <span
-                      className={
-                        server.forward.status === 'success'
-                          ? 'text-status-success'
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          server.forward.status === 'success'
+                            ? 'text-status-success bg-status-success/10'
+                            : server.forward.status === 'warning'
+                            ? 'text-status-warning bg-status-warning/10'
+                            : 'text-status-error bg-status-error/10'
+                        }`}
+                        aria-label={`Status: ${server.forward.status}`}
+                      >
+                        {server.forward.status === 'success'
+                          ? 'OK'
                           : server.forward.status === 'warning'
-                          ? 'text-status-warning'
-                          : 'text-status-error'
-                      }
-                    >
-                      {server.forward.result === 'No A record' ? 'N/A' : formatTime(server.forward.timeMs)}
+                          ? 'Warn'
+                          : 'Fail'}
+                      </span>
+                      <span
+                        className={
+                          server.forward.status === 'success'
+                            ? 'text-status-success'
+                            : server.forward.status === 'warning'
+                            ? 'text-status-warning'
+                            : 'text-status-error'
+                        }
+                      >
+                        {server.forward.result === 'No A record' ? 'N/A' : formatTime(server.forward.timeMs)}
+                      </span>
                     </span>
                   </div>
                 )}
                 {server.forwardIpv6 && (
                   <div className="flex justify-between text-xs text-text-muted">
                     <span>AAAA</span>
-                    <span
-                      className={
-                        server.forwardIpv6.status === 'success'
-                          ? 'text-status-success'
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          server.forwardIpv6.status === 'success'
+                            ? 'text-status-success bg-status-success/10'
+                            : server.forwardIpv6.status === 'warning'
+                            ? 'text-status-warning bg-status-warning/10'
+                            : 'text-status-error bg-status-error/10'
+                        }`}
+                        aria-label={`Status: ${server.forwardIpv6.status}`}
+                      >
+                        {server.forwardIpv6.status === 'success'
+                          ? 'OK'
                           : server.forwardIpv6.status === 'warning'
-                          ? 'text-status-warning'
-                          : 'text-status-error'
-                      }
-                    >
-                      {server.forwardIpv6.result === 'No AAAA record' ? 'N/A' : formatTime(server.forwardIpv6.timeMs)}
+                          ? 'Warn'
+                          : 'Fail'}
+                      </span>
+                      <span
+                        className={
+                          server.forwardIpv6.status === 'success'
+                            ? 'text-status-success'
+                            : server.forwardIpv6.status === 'warning'
+                            ? 'text-status-warning'
+                            : 'text-status-error'
+                        }
+                      >
+                        {server.forwardIpv6.result === 'No AAAA record' ? 'N/A' : formatTime(server.forwardIpv6.timeMs)}
+                      </span>
                     </span>
                   </div>
                 )}

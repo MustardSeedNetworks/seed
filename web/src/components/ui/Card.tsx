@@ -10,47 +10,104 @@ interface CardProps {
   onClick?: () => void;
 }
 
-const statusConfig: Record<Status, { icon: string; color: string; bgColor: string }> = {
+const statusConfig: Record<
+  Status,
+  { icon: ReactNode; color: string; bgColor: string; label: string }
+> = {
   success: {
-    icon: '●',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path
+          fillRule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-10.707a1 1 0 00-1.414-1.414L9 9.172 7.707 7.879a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+          clipRule="evenodd"
+        />
+      </svg>
+    ),
     color: 'text-status-success',
     bgColor: 'bg-status-success/10',
+    label: 'Status: success',
   },
   warning: {
-    icon: '●',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path
+          fillRule="evenodd"
+          d="M8.257 3.099c.765-1.36 2.72-1.36 3.485 0l6.518 11.6c.75 1.334-.214 3.001-1.742 3.001H3.48c-1.528 0-2.492-1.667-1.742-3.001l6.52-11.6zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
+          clipRule="evenodd"
+        />
+      </svg>
+    ),
     color: 'text-status-warning',
     bgColor: 'bg-status-warning/10',
+    label: 'Status: warning',
   },
   error: {
-    icon: '●',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path
+          fillRule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.293-5.293a1 1 0 011.414 0L10 12.586l.879-.879a1 1 0 111.414 1.414L11.414 14l.879.879a1 1 0 01-1.414 1.414L10 15.414l-.879.879a1 1 0 11-1.414-1.414L8.586 14l-.879-.879a1 1 0 010-1.414z"
+          clipRule="evenodd"
+        />
+      </svg>
+    ),
     color: 'text-status-error',
     bgColor: 'bg-status-error/10',
+    label: 'Status: error',
   },
   unknown: {
-    icon: '○',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M9 7a1 1 0 012 0c0 1.5-2 1.5-2 3h2c0-1.5 2-1.5 2-3a3 3 0 10-6 0h2z" />
+        <circle cx="10" cy="14" r="1" />
+      </svg>
+    ),
     color: 'text-text-muted',
     bgColor: 'bg-surface-hover',
+    label: 'Status: unknown',
   },
   loading: {
-    icon: '◐',
-    color: 'text-status-info animate-spin',
+    icon: (
+      <svg className="w-4 h-4 animate-spin" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="3" />
+        <path className="opacity-75" fill="currentColor" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
+      </svg>
+    ),
+    color: 'text-status-info',
     bgColor: 'bg-status-info/10',
+    label: 'Status: loading',
   },
 };
 
 export function Card({ title, status, children, className = '', onClick }: CardProps) {
   const config = statusConfig[status];
+  const isInteractive = typeof onClick === 'function';
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!isInteractive) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick?.();
+    }
+  };
 
   return (
     <div
-      className={`rounded-lg border border-surface-border bg-surface-raised p-3 sm:p-4 transition-all hover:border-brand-primary/50 touch-manipulation ${
-        onClick ? 'cursor-pointer active:scale-[0.98]' : ''
+      className={`rounded-lg border border-surface-border bg-surface-raised p-3 sm:p-4 transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none ${
+        isInteractive ? 'cursor-pointer active:scale-[0.98]' : ''
       } ${className}`}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : -1}
+      aria-pressed={undefined}
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-text-primary text-base sm:text-lg">{title}</h3>
-        <span className={`text-lg ${config.color}`}>{config.icon}</span>
+        <h3 className="font-semibold text-text-primary text-base sm:text-lg leading-tight font-display">{title}</h3>
+        <span className={`inline-flex items-center justify-center rounded-full ${config.color} ${config.bgColor} p-1`} aria-label={config.label}>
+          {config.icon}
+        </span>
       </div>
       <div className="mt-2 sm:mt-3">{children}</div>
     </div>
@@ -68,8 +125,8 @@ interface CardValueProps {
 export function CardValue({ label, value, unit, size = 'md', status }: CardValueProps) {
   const sizeClasses = {
     sm: 'text-sm',
-    md: 'text-base font-medium',
-    lg: 'text-lg font-semibold',
+    md: 'text-base font-medium leading-snug',
+    lg: 'text-lg font-semibold leading-snug',
   };
 
   return (

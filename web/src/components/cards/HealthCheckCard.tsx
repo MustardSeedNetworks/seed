@@ -150,16 +150,17 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
 
   const renderTestResult = (result: TestResult, type: 'ping' | 'tcp' | 'udp' | 'http') => {
     // Use testStatus for threshold-based coloring, fall back to success/error
-    let statusColor = 'text-status-error';
-    if (result.success) {
-      if (result.testStatus === 'warning') {
-        statusColor = 'text-status-warning';
-      } else if (result.testStatus === 'error') {
-        statusColor = 'text-status-error';
-      } else {
-        statusColor = 'text-status-success';
-      }
-    }
+    const statusLabel = result.success
+      ? result.testStatus === 'warning'
+        ? 'warning'
+        : 'success'
+      : 'error';
+    const statusColor =
+      statusLabel === 'success'
+        ? 'text-status-success'
+        : statusLabel === 'warning'
+          ? 'text-status-warning'
+          : 'text-status-error';
 
     // Display name - backend already formats as host:port when name is empty
     // Only add HTTP status code, not ports (already in name)
@@ -181,8 +182,16 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
           <span className="text-sm text-text-muted truncate flex-1" title={displayName}>
             {displayName}{details}
           </span>
-          <span className={`text-sm font-medium ${statusColor}`}>
-            {result.success ? formatLatency(result.latency) : 'fail'}
+          <span className="inline-flex items-center gap-2">
+            <span
+              className={`inline-flex items-center justify-center rounded-full ${statusColor} ${statusLabel === 'warning' ? 'bg-status-warning/10' : statusLabel === 'success' ? 'bg-status-success/10' : 'bg-status-error/10'} px-2 py-0.5 text-xs font-medium`}
+              aria-label={`Status: ${statusLabel}`}
+            >
+              {statusLabel === 'success' ? 'OK' : statusLabel === 'warning' ? 'Warn' : 'Fail'}
+            </span>
+            <span className={`text-sm font-medium ${statusColor}`}>
+              {result.success ? formatLatency(result.latency) : 'fail'}
+            </span>
           </span>
         </div>
         {extendedInfo && (

@@ -114,6 +114,7 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
     <div
       role="alert"
       className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${typeStyles[toast.type]} animate-slide-in`}
+      aria-label={`Notification: ${toast.type}`}
     >
       {icons[toast.type]}
       <p className="text-sm font-medium flex-1">{toast.message}</p>

@@ -158,6 +158,13 @@ interface SettingsDrawerProps {
 
 export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const { theme, setTheme, isDark } = useTheme();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Smooth scroll to top when opened
+  useEffect(() => {
+    if (isOpen && scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [isOpen]);
   const [thresholds, setThresholds] = useState<Thresholds>({
     dns: { good: 50, warning: 100 },
     gateway: { good: 20, warning: 50 },
@@ -992,15 +999,18 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-drawer-title"
-        className="fixed right-0 top-0 h-full w-full sm:w-96 bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
+        className="fixed right-0 top-0 h-full w-full sm:w-[28rem] lg:w-[32rem] bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
-          <h2 id="settings-drawer-title" className="text-lg font-semibold text-text-primary">Settings</h2>
+        <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
+          <div className="space-y-0.5">
+            <h2 id="settings-drawer-title" className="text-lg font-semibold text-text-primary leading-tight">Settings</h2>
+            <p className="text-xs sm:text-sm text-text-muted">Adjust thresholds, network, and display</p>
+          </div>
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            className="p-2.5 rounded hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            className="p-2.5 rounded hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised"
             aria-label="Close settings"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1009,17 +1019,17 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           </button>
         </div>
 
-        <div className="p-4 pb-8 space-y-4 text-base sm:text-sm">
+        <div className="px-4 sm:px-5 pb-10 pt-4 space-y-6 text-sm leading-relaxed">
           {/* Network Section */}
           <CollapsibleSection title="Network">
             {/* IP Configuration */}
             <div className="space-y-3">
-              <p className="text-xs text-text-muted font-medium">IP Configuration</p>
+              <p className="text-xs uppercase tracking-wide text-text-muted font-semibold">IP Configuration</p>
               {/* Mode Toggle */}
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setIPSettings((prev) => ({ ...prev, mode: 'dhcp' }))}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                  className={`py-2.5 px-3 rounded text-sm font-medium transition-colors ${
                     ipSettings.mode === 'dhcp'
                       ? 'bg-brand-primary text-text-inverse'
                       : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover'
@@ -1029,7 +1039,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 </button>
                 <button
                   onClick={() => setIPSettings((prev) => ({ ...prev, mode: 'static' }))}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+                  className={`py-2.5 px-3 rounded text-sm font-medium transition-colors ${
                     ipSettings.mode === 'static'
                       ? 'bg-brand-primary text-text-inverse'
                       : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover'
@@ -1041,9 +1051,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* Static IP Fields */}
               {ipSettings.mode === 'static' && (
-                <div className="space-y-2 pt-2 border-t border-surface-border">
+                <div className="space-y-3 pt-3 border-t border-surface-border">
                   <div>
-                    <label className="text-xs text-text-muted">IP Address *</label>
+                    <label className="text-xs text-text-muted font-medium">IP Address *</label>
                     <input
                       type="text"
                       value={ipSettings.address}
@@ -1059,7 +1069,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted">Subnet Mask *</label>
+                    <label className="text-xs text-text-muted font-medium">Subnet Mask *</label>
                     <input
                       type="text"
                       value={ipSettings.netmask}
@@ -1067,11 +1077,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         setIPSettings((prev) => ({ ...prev, netmask: e.target.value }))
                       }
                       placeholder="24 or 255.255.255.0"
-                      className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted">Gateway</label>
+                    <label className="text-xs text-text-muted font-medium">Gateway</label>
                     <input
                       type="text"
                       value={ipSettings.gateway}
@@ -1087,13 +1097,13 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted">DNS Servers (comma-separated)</label>
+                    <label className="text-xs text-text-muted font-medium">DNS Servers (comma-separated)</label>
                     <input
                       type="text"
                       value={dnsInput}
                       onChange={(e) => setDnsInput(e.target.value)}
                       placeholder="8.8.8.8, 8.8.4.4"
-                      className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                     />
                   </div>
                 </div>
@@ -1130,9 +1140,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               <p className="text-xs text-text-muted font-medium mb-2">
                 Display Options <AutoSaveIndicator status={displayStatus} />
               </p>
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <div>
-                  <span className="text-sm text-text-primary">Show Public IP</span>
+                  <span className="text-sm text-text-primary font-medium">Show Public IP</span>
                   <p className="text-xs text-text-muted">Display in IP Config card</p>
                 </div>
                 <input
@@ -1158,7 +1168,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     onChange={(e) =>
                       setWifiSettings((prev) => ({ ...prev, interface: e.target.value }))
                     }
-                    className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                    className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                   >
                     {wifiSettings.availableWifi.map((iface) => (
                       <option key={iface} value={iface}>
@@ -1174,7 +1184,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       setWifiSettings((prev) => ({ ...prev, interface: e.target.value }))
                     }
                     placeholder="wlan0 or en0"
-                    className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                    className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                   />
                 )}
                 <p className="text-xs text-text-muted mt-1">
@@ -1200,7 +1210,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     setTestsSettings((prev) => ({ ...prev, dnsHostname: e.target.value }))
                   }
                   placeholder="google.com"
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
                 <p className="text-xs text-text-muted mt-1">
                   Hostname used for DNS forward/reverse lookups
@@ -1228,7 +1238,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       value={server.address}
                       onChange={(e) => updateDNSServer(idx, 'address', e.target.value)}
                       placeholder="DNS Server IP"
-                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <button
                       onClick={() => removeDNSServer(idx)}
@@ -1248,11 +1258,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             <div className="space-y-4">
               {/* Ping Targets */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-text-muted font-medium">Ping Targets</span>
-                  <button
-                    onClick={addPingTarget}
-                    className="text-xs text-brand-primary hover:text-brand-accent"
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-text-muted font-medium">Ping Targets</span>
+                <button
+                  onClick={addPingTarget}
+                  className="text-xs text-brand-primary hover:text-brand-accent"
                   >
                     + Add
                   </button>
@@ -1267,14 +1277,14 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       value={target.name}
                       onChange={(e) => updatePingTarget(idx, 'name', e.target.value)}
                       placeholder="Name"
-                      className="w-20 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <input
                       type="text"
                       value={target.host}
                       onChange={(e) => updatePingTarget(idx, 'host', e.target.value)}
                       placeholder="Host/IP"
-                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <input
                       type="number"
@@ -1283,7 +1293,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       min={1}
                       max={10}
                       title="Number of pings"
-                      className="w-12 px-1 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary text-center"
+                      className="w-14 px-2 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary text-center"
                     />
                     <button
                       onClick={() => removePingTarget(idx)}
@@ -1313,21 +1323,21 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       value={port.name}
                       onChange={(e) => updateTCPPort(idx, 'name', e.target.value)}
                       placeholder="Name"
-                      className="w-20 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <input
                       type="text"
                       value={port.host}
                       onChange={(e) => updateTCPPort(idx, 'host', e.target.value)}
                       placeholder="Host"
-                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <input
                       type="number"
                       value={port.port}
                       onChange={(e) => updateTCPPort(idx, 'port', parseInt(e.target.value) || 80)}
                       placeholder="Port"
-                      className="w-16 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="w-20 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <button
                       onClick={() => removeTCPPort(idx)}
@@ -1360,21 +1370,21 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       value={port.name}
                       onChange={(e) => updateUDPPort(idx, 'name', e.target.value)}
                       placeholder="Name"
-                      className="w-20 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <input
                       type="text"
                       value={port.host}
                       onChange={(e) => updateUDPPort(idx, 'host', e.target.value)}
                       placeholder="Host"
-                      className="flex-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <input
                       type="number"
                       value={port.port}
                       onChange={(e) => updateUDPPort(idx, 'port', parseInt(e.target.value) || 53)}
                       placeholder="Port"
-                      className="w-16 px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                      className="w-20 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
                     />
                     <button
                       onClick={() => removeUDPPort(idx)}
@@ -1405,14 +1415,14 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         value={endpoint.name}
                         onChange={(e) => updateHTTPEndpoint(idx, 'name', e.target.value)}
                         placeholder="Name"
-                        className="flex-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                        className="flex-1 px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
                       />
                       <input
                         type="number"
                         value={endpoint.expectedStatus}
                         onChange={(e) => updateHTTPEndpoint(idx, 'expectedStatus', parseInt(e.target.value) || 200)}
                         placeholder="Status"
-                        className="w-16 px-2 py-1 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                        className="w-20 px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
                       />
                       <button
                         onClick={() => removeHTTPEndpoint(idx)}
@@ -1426,7 +1436,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       value={endpoint.url}
                       onChange={(e) => updateHTTPEndpoint(idx, 'url', e.target.value)}
                       placeholder="https://example.com/health"
-                      className="w-full px-2 py-1 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                      className="w-full px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
                     />
                   </div>
                 ))}
@@ -1440,10 +1450,10 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             <div className="space-y-4">
               {/* Internet Speed (Speedtest) Subsection */}
               <div className="border-b border-surface-border pb-4">
-                <h4 className="text-sm font-medium text-text-primary mb-3">Internet Speed (Speedtest)</h4>
-                <div className="space-y-3 pl-2">
+                <h4 className="text-sm font-semibold text-text-primary mb-2 uppercase tracking-wide">Internet Speed (Speedtest)</h4>
+                <div className="space-y-3 pl-1">
                   <div>
-                    <label className="text-xs text-text-muted">Server ID (optional)</label>
+                    <label className="text-xs text-text-muted font-medium">Server ID (optional)</label>
                     <input
                       type="text"
                       value={testsSettings.speedtest.serverId}
@@ -1454,14 +1464,14 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         }))
                       }
                       placeholder="Auto (closest server)"
-                      className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                     />
                     <p className="text-xs text-text-muted mt-1">
                       Leave empty for auto-selection
                     </p>
                   </div>
 
-                  <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                  <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                     <span className="text-sm text-text-primary">Auto-run on link up</span>
                     <input
                       type="checkbox"
@@ -1481,15 +1491,15 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* LAN Speed (iperf3) Subsection */}
               <div>
-                <h4 className="text-sm font-medium text-text-primary mb-3">LAN Speed (iperf3)</h4>
-                <div className="space-y-3 pl-2">
+                <h4 className="text-sm font-semibold text-text-primary mb-2 uppercase tracking-wide">LAN Speed (iperf3)</h4>
+                <div className="space-y-3 pl-1">
                   <p className="text-xs text-text-muted">
                 Configure iperf3 client settings for LAN speed tests.
               </p>
 
               {/* Server Address */}
               <div>
-                <label className="text-xs text-text-muted">Server Address</label>
+                <label className="text-xs text-text-muted font-medium">Server Address</label>
                 <input
                   type="text"
                   value={iperfSettings.server}
@@ -1497,26 +1507,26 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     setIperfSettings((prev) => ({ ...prev, server: e.target.value }))
                   }
                   placeholder="192.168.1.100 or hostname"
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
               </div>
 
               {/* Port */}
               <div>
-                <label className="text-xs text-text-muted">Port</label>
+                <label className="text-xs text-text-muted font-medium">Port</label>
                 <input
                   type="number"
                   value={iperfSettings.port}
                   onChange={(e) =>
                     setIperfSettings((prev) => ({ ...prev, port: parseInt(e.target.value) || 5201 }))
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
               </div>
 
               {/* Protocol Toggle */}
               <div>
-                <label className="text-xs text-text-muted block mb-1">Protocol</label>
+                <label className="text-xs text-text-muted font-medium block mb-1">Protocol</label>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setIperfSettings((prev) => ({ ...prev, protocol: 'tcp' }))}
@@ -1543,7 +1553,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* Direction Toggle */}
               <div>
-                <label className="text-xs text-text-muted block mb-1">Direction</label>
+                <label className="text-xs text-text-muted font-medium block mb-1">Direction</label>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setIperfSettings((prev) => ({ ...prev, direction: 'download' }))}
@@ -1570,7 +1580,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* Duration */}
               <div>
-                <label className="text-xs text-text-muted">Duration (seconds)</label>
+                <label className="text-xs text-text-muted font-medium">Duration (seconds)</label>
                 <input
                   type="number"
                   value={iperfSettings.duration}
@@ -1579,13 +1589,13 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   }
                   min={1}
                   max={60}
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
               </div>
 
               {/* Server Mode */}
               <div className="border-t border-surface-border pt-3">
-                <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border mb-2">
+                <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border mb-2">
                   <span className="text-sm text-text-primary">Enable iperf3 Server</span>
                   <input
                     type="checkbox"
@@ -1597,14 +1607,14 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   />
                 </label>
                 <div>
-                  <label className="text-xs text-text-muted">Server Port</label>
+                  <label className="text-xs text-text-muted font-medium">Server Port</label>
                   <input
                     type="number"
                     value={iperfSettings.serverPort}
                     onChange={(e) =>
                       setIperfSettings((prev) => ({ ...prev, serverPort: parseInt(e.target.value) || 5201 }))
                     }
-                    className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                    className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                   />
                 </div>
                 <p className="text-xs text-text-muted mt-1">
@@ -1625,7 +1635,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               </p>
 
               {/* Enable Discovery */}
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm text-text-primary">Enable Discovery</span>
                 <input
                   type="checkbox"
@@ -1639,7 +1649,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* Scan Workers */}
               <div>
-                <label className="text-xs text-text-muted">Concurrent Scan Workers</label>
+                <label className="text-xs text-text-muted font-medium">Concurrent Scan Workers</label>
                 <input
                   type="number"
                   value={networkDiscoverySettings.arpScanWorkers}
@@ -1651,7 +1661,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   }
                   min={1}
                   max={100}
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
                 <p className="text-xs text-text-muted mt-1">
                   More workers = faster scan (default: 50)
@@ -1660,7 +1670,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* Ping Timeout */}
               <div>
-                <label className="text-xs text-text-muted">Ping Timeout (ms)</label>
+                <label className="text-xs text-text-muted font-medium">Ping Timeout (ms)</label>
                 <input
                   type="number"
                   value={networkDiscoverySettings.pingTimeoutMs}
@@ -1672,7 +1682,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   }
                   min={100}
                   max={5000}
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
                 <p className="text-xs text-text-muted mt-1">
                   Timeout per host ping (default: 500ms)
@@ -1681,7 +1691,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* Scan Timeout */}
               <div>
-                <label className="text-xs text-text-muted">Total Scan Timeout (ms)</label>
+                <label className="text-xs text-text-muted font-medium">Total Scan Timeout (ms)</label>
                 <input
                   type="number"
                   value={networkDiscoverySettings.scanTimeoutMs}
@@ -1693,7 +1703,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   }
                   min={5000}
                   max={120000}
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
                 <p className="text-xs text-text-muted mt-1">
                   Max time for entire scan (default: 30s)
@@ -1702,7 +1712,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* Scan Interval */}
               <div>
-                <label className="text-xs text-text-muted">Auto-Scan Interval (ms)</label>
+                <label className="text-xs text-text-muted font-medium">Auto-Scan Interval (ms)</label>
                 <input
                   type="number"
                   value={networkDiscoverySettings.scanIntervalMs}
@@ -1713,7 +1723,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     }))
                   }
                   min={0}
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
                 <p className="text-xs text-text-muted mt-1">
                   0 = disabled, otherwise interval between automatic scans
@@ -1722,7 +1732,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               {/* OUI File Path */}
               <div>
-                <label className="text-xs text-text-muted">OUI Database File Path</label>
+                <label className="text-xs text-text-muted font-medium">OUI Database File Path</label>
                 <input
                   type="text"
                   value={networkDiscoverySettings.ouiFilePath}
@@ -1733,7 +1743,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     }))
                   }
                   placeholder="oui.txt"
-                  className="w-full mt-1 px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                 />
                 <p className="text-xs text-text-muted mt-1">
                   Path to IEEE OUI file for vendor lookup (download from{' '}
@@ -1803,21 +1813,21 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       setSubnetError(null);
                     }}
                     placeholder="CIDR (e.g., 10.0.0.0/24)"
-                    className="w-full px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                    className="w-full px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                   />
                   <input
                     type="text"
                     value={newSubnetName}
                     onChange={(e) => setNewSubnetName(e.target.value)}
                     placeholder="Name (optional, e.g., Server VLAN)"
-                    className="w-full px-2 py-1 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                    className="w-full px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                   />
                   {subnetError && (
                     <p className="text-xs text-status-error">{subnetError}</p>
                   )}
                   <button
                     onClick={addSubnet}
-                    className="w-full px-2 py-1 bg-brand-primary hover:bg-brand-accent text-white rounded text-sm"
+                    className="w-full px-3 py-2 bg-brand-primary hover:bg-brand-accent text-white rounded text-sm"
                   >
                     + Add Subnet
                   </button>
@@ -1990,7 +2000,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 Configure which tests run when the FAB button is pressed. Order matches card display.
               </p>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm text-text-primary">Link</span>
                 <input
                   type="checkbox"
@@ -2002,7 +2012,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm text-text-primary">Nearest Switch</span>
                 <input
                   type="checkbox"
@@ -2014,7 +2024,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm text-text-primary">VLAN</span>
                 <input
                   type="checkbox"
@@ -2026,7 +2036,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm text-text-primary">IP Config</span>
                 <input
                   type="checkbox"
@@ -2038,7 +2048,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm text-text-primary">Gateway</span>
                 <input
                   type="checkbox"
@@ -2050,7 +2060,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm text-text-primary">DNS</span>
                 <input
                   type="checkbox"
@@ -2062,7 +2072,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm text-text-primary">Health Checks</span>
                 <input
                   type="checkbox"
@@ -2076,7 +2086,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
               <p className="text-xs text-text-muted font-medium pt-2">Performance Tests</p>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border ml-3">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border ml-3">
                 <div>
                   <span className="text-sm text-text-primary">Internet Speed</span>
                   <p className="text-xs text-text-muted">Uses bandwidth</p>
@@ -2091,7 +2101,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border ml-3">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border ml-3">
                 <div>
                   <span className="text-sm text-text-primary">LAN Speed (iperf3)</span>
                   <p className="text-xs text-text-muted">Requires server</p>
@@ -2106,7 +2116,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
                 <div>
                   <span className="text-sm text-text-primary">Network Discovery</span>
                   <p className="text-xs text-text-muted">Scan for devices</p>
@@ -2121,7 +2131,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border ml-3">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border ml-3">
                 <div>
                   <span className="text-sm text-text-primary">Auto-Scan on Link</span>
                   <p className="text-xs text-text-muted">Scan when interface comes up</p>

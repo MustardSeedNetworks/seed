@@ -88,7 +88,7 @@ describe('useWebSocket', () => {
 
   it('connects to WebSocket on mount', () => {
     renderHook(() =>
-      useWebSocket({ url: '/ws' })
+      useWebSocket({ url: '/ws', token: 'test-token' })
     );
 
     expect(MockWebSocket.instances.length).toBe(1);
@@ -96,7 +96,7 @@ describe('useWebSocket', () => {
 
   it('transitions to connected status on open', async () => {
     const { result } = renderHook(() =>
-      useWebSocket({ url: '/ws' })
+      useWebSocket({ url: '/ws', token: 'test-token' })
     );
 
     const ws = MockWebSocket.instances[0];
@@ -109,7 +109,7 @@ describe('useWebSocket', () => {
 
   it('transitions to error status on WebSocket error', async () => {
     const { result } = renderHook(() =>
-      useWebSocket({ url: '/ws' })
+      useWebSocket({ url: '/ws', token: 'test-token' })
     );
 
     const ws = MockWebSocket.instances[0];
@@ -122,7 +122,7 @@ describe('useWebSocket', () => {
 
   it('transitions to disconnected status on close', async () => {
     const { result } = renderHook(() =>
-      useWebSocket({ url: '/ws' })
+      useWebSocket({ url: '/ws', token: 'test-token' })
     );
 
     const ws = MockWebSocket.instances[0];
@@ -140,7 +140,7 @@ describe('useWebSocket', () => {
   it('calls onMessage callback when receiving message', async () => {
     const onMessage = vi.fn();
     renderHook(() =>
-      useWebSocket({ url: '/ws', onMessage })
+      useWebSocket({ url: '/ws', token: 'test-token', onMessage })
     );
 
     const ws = MockWebSocket.instances[0];
@@ -159,7 +159,7 @@ describe('useWebSocket', () => {
   it('calls onCardUpdate for card_update messages', async () => {
     const onCardUpdate = vi.fn();
     renderHook(() =>
-      useWebSocket({ url: '/ws', onCardUpdate })
+      useWebSocket({ url: '/ws', token: 'test-token', onCardUpdate })
     );
 
     const ws = MockWebSocket.instances[0];
@@ -177,7 +177,7 @@ describe('useWebSocket', () => {
 
   it('send function sends message when connected', async () => {
     const { result } = renderHook(() =>
-      useWebSocket({ url: '/ws' })
+      useWebSocket({ url: '/ws', token: 'test-token' })
     );
 
     const ws = MockWebSocket.instances[0];
@@ -196,7 +196,7 @@ describe('useWebSocket', () => {
 
   it('reconnect function reconnects the WebSocket', async () => {
     const { result } = renderHook(() =>
-      useWebSocket({ url: '/ws' })
+      useWebSocket({ url: '/ws', token: 'test-token' })
     );
 
     const initialWs = MockWebSocket.instances[0];
@@ -216,7 +216,7 @@ describe('useWebSocket', () => {
 
   it('cleans up WebSocket on unmount', () => {
     const { unmount } = renderHook(() =>
-      useWebSocket({ url: '/ws' })
+      useWebSocket({ url: '/ws', token: 'test-token' })
     );
 
     const ws = MockWebSocket.instances[0];
@@ -240,11 +240,11 @@ describe('useWebSocket', () => {
     });
 
     renderHook(() =>
-      useWebSocket({ url: '/ws/updates' })
+      useWebSocket({ url: '/ws/updates', token: 'token' })
     );
 
     const ws = MockWebSocket.instances[0];
-    expect(ws.url).toBe('ws://localhost:8080/ws/updates');
+    expect(ws.url).toBe('ws://localhost:8080/ws/updates?token=token');
   });
 
   it('uses wss for https pages', () => {
@@ -257,25 +257,25 @@ describe('useWebSocket', () => {
     });
 
     renderHook(() =>
-      useWebSocket({ url: '/ws' })
+      useWebSocket({ url: '/ws', token: 'token' })
     );
 
     const ws = MockWebSocket.instances[0];
-    expect(ws.url).toBe('wss://example.com/ws');
+    expect(ws.url).toBe('wss://example.com/ws?token=token');
   });
 
   it('uses provided URL directly if it starts with ws', () => {
     renderHook(() =>
-      useWebSocket({ url: 'ws://custom-server.com/socket' })
+      useWebSocket({ url: 'ws://custom-server.com/socket', token: 'token' })
     );
 
     const ws = MockWebSocket.instances[0];
-    expect(ws.url).toBe('ws://custom-server.com/socket');
+    expect(ws.url).toBe('ws://custom-server.com/socket?token=token');
   });
 
   it('attempts reconnection after close', async () => {
     renderHook(() =>
-      useWebSocket({ url: '/ws', reconnectInterval: 1000, maxReconnectAttempts: 3 })
+      useWebSocket({ url: '/ws', token: 'token', reconnectInterval: 1000, maxReconnectAttempts: 3 })
     );
 
     const ws = MockWebSocket.instances[0];
@@ -300,7 +300,7 @@ describe('useWebSocket', () => {
 
   it('respects maxReconnectAttempts', async () => {
     renderHook(() =>
-      useWebSocket({ url: '/ws', reconnectInterval: 100, maxReconnectAttempts: 2 })
+      useWebSocket({ url: '/ws', token: 'token', reconnectInterval: 100, maxReconnectAttempts: 2 })
     );
 
     // First WebSocket
