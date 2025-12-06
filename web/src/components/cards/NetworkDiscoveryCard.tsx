@@ -348,14 +348,18 @@ export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscovery
           count={deviceCount}
         >
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {sortedDevices.map((device) => (
-              <DeviceRow
-                key={device.mac}
-                device={device}
-                isExpanded={expandedDevices.has(device.mac)}
-                onToggle={() => toggleDevice(device.mac)}
-              />
-            ))}
+            {sortedDevices.map((device) => {
+              // Use MAC as key, but fall back to IP for PING_ONLY devices (no MAC)
+              const deviceKey = device.mac || `ip:${device.ip}`;
+              return (
+                <DeviceRow
+                  key={deviceKey}
+                  device={device}
+                  isExpanded={expandedDevices.has(deviceKey)}
+                  onToggle={() => toggleDevice(deviceKey)}
+                />
+              );
+            })}
           </div>
         </CollapsibleSection>
       )}

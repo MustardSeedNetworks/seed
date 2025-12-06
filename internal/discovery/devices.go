@@ -160,13 +160,20 @@ func (d *DeviceDiscovery) aggregateResults() {
 	// Start with ARP entries
 	for _, arp := range d.arpScanner.GetEntries() {
 		mac := arp.MAC
-		device, exists := d.devices[mac]
+		// Use IP as key for PING_ONLY entries (no MAC available)
+		// This prevents all PING_ONLY entries from colliding on empty string key
+		key := mac
+		if key == "" {
+			key = "ip:" + arp.IP
+		}
+
+		device, exists := d.devices[key]
 		if !exists {
 			device = &DiscoveredDevice{
 				MAC:             mac,
 				DiscoveryMethod: []DiscoveryMethod{},
 			}
-			d.devices[mac] = device
+			d.devices[key] = device
 		}
 
 		// Update from ARP data
