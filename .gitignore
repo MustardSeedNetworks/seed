@@ -77,3 +77,4 @@ certs/
 # Local files
 *.png
 config.yaml
+CLAUDE.md
