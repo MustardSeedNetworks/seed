@@ -398,7 +398,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   };
 
   return (
-    <Card title="Performance" status={getStatus()}>
+    <Card title="Performance Tests" subtitle="Speedtest & iPerf" status={getStatus()}>
       {/* Internet Speed Section */}
       <p className="text-xs font-medium text-text-secondary mb-2">Internet Speed</p>
 

@@ -329,11 +329,19 @@ func (s *Server) sendInitialState(client *Client) {
 		return
 	}
 
-	select {
-	case client.send <- data:
-	default:
-		log.Printf("Failed to send initial state to client")
-	}
+	// Safely attempt to send; channel may already be closed if the client dropped.
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("Skipped initial state send (client gone): %v", r)
+			}
+		}()
+		select {
+		case client.send <- data:
+		default:
+			log.Printf("Failed to send initial state to client")
+		}
+	}()
 }
 
 // readPump pumps messages from the WebSocket connection to the hub.

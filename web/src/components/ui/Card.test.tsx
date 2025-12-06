@@ -5,12 +5,13 @@ import { Card, CardValue, CardRow, CardDivider } from './Card';
 describe('Card', () => {
   it('renders with title and children', () => {
     render(
-      <Card title="Test Card" status="success">
+      <Card title="Test Card" subtitle="Sub" status="success">
         <span>Card content</span>
       </Card>
     );
 
     expect(screen.getByText('Test Card')).toBeInTheDocument();
+    expect(screen.getByText('Sub')).toBeInTheDocument();
     expect(screen.getByText('Card content')).toBeInTheDocument();
   });
 
