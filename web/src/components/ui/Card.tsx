@@ -4,6 +4,7 @@ export type Status = 'success' | 'warning' | 'error' | 'unknown' | 'loading';
 
 interface CardProps {
   title: string;
+  subtitle?: string;
   status: Status;
   children: ReactNode;
   className?: string;
@@ -80,7 +81,7 @@ const statusConfig: Record<
   },
 };
 
-export function Card({ title, status, children, className = '', onClick }: CardProps) {
+export function Card({ title, subtitle, status, children, className = '', onClick }: CardProps) {
   const config = statusConfig[status];
   const isInteractive = typeof onClick === 'function';
 
@@ -104,7 +105,10 @@ export function Card({ title, status, children, className = '', onClick }: CardP
       aria-pressed={undefined}
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-text-primary text-base sm:text-lg leading-tight font-display">{title}</h3>
+        <div className="flex flex-col">
+          <h3 className="font-semibold text-text-primary text-base sm:text-lg leading-tight font-display">{title}</h3>
+          {subtitle && <p className="text-xs text-text-muted leading-tight">{subtitle}</p>}
+        </div>
         <span className={`inline-flex items-center justify-center rounded-full ${config.color} ${config.bgColor} p-1`} aria-label={config.label}>
           {config.icon}
         </span>
@@ -120,19 +124,29 @@ interface CardValueProps {
   unit?: string;
   size?: 'sm' | 'md' | 'lg';
   status?: Status;
+  mono?: boolean;
+  allowWrap?: boolean;
 }
 
-export function CardValue({ label, value, unit, size = 'md', status }: CardValueProps) {
+export function CardValue({ label, value, unit, size = 'md', status, mono = false, allowWrap = false }: CardValueProps) {
   const sizeClasses = {
     sm: 'text-sm',
     md: 'text-base font-medium leading-snug',
     lg: 'text-lg font-semibold leading-snug',
   };
 
+  const textMods = [
+    status ? statusConfig[status].color : 'text-text-primary',
+    mono ? 'font-mono tabular-nums' : '',
+    allowWrap ? 'break-all whitespace-pre-wrap' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div>
       {label && <p className="text-xs text-text-muted mb-1">{label}</p>}
-      <p className={`${sizeClasses[size]} ${status ? statusConfig[status].color : 'text-text-primary'}`}>
+      <p className={`${sizeClasses[size]} ${textMods}`}>
         {value}
         {unit && <span className="text-sm font-normal text-text-muted ml-1">{unit}</span>}
       </p>
@@ -144,14 +158,17 @@ interface CardRowProps {
   label: string;
   value: string | number;
   status?: Status;
+  wrap?: boolean;
+  mono?: boolean;
+  align?: 'left' | 'right';
 }
 
-export function CardRow({ label, value, status }: CardRowProps) {
+export function CardRow({ label, value, status, wrap = false, mono = false, align = 'right' }: CardRowProps) {
   return (
-    <div className="flex items-center justify-between gap-2 py-1">
+    <div className={`flex ${wrap ? 'items-start' : 'items-center'} justify-between gap-2 py-1`}>
       <span className="text-sm text-text-muted shrink-0">{label}</span>
       <span
-        className={`text-sm font-medium text-right truncate ${status ? statusConfig[status].color : 'text-text-primary'}`}
+        className={`text-sm font-medium ${align === 'right' ? 'text-right' : 'text-left'} ${wrap ? 'break-all whitespace-pre-wrap' : 'truncate'} ${mono ? 'font-mono tabular-nums' : ''} ${status ? statusConfig[status].color : 'text-text-primary'}`}
         title={String(value)}
       >
         {value}
