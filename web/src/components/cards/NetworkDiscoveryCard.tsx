@@ -32,7 +32,7 @@ export interface EDPInfo {
   vlan?: number;
 }
 
-export type DiscoveryMethod = 'arp' | 'lldp' | 'cdp' | 'edp' | 'mdns';
+export type DiscoveryMethod = 'arp' | 'lldp' | 'cdp' | 'edp' | 'mdns' | 'ping';
 
 export interface DiscoveredDevice {
   ip: string;
@@ -91,6 +91,7 @@ function MethodBadge({ method }: { method: DiscoveryMethod }) {
     cdp: 'bg-orange-500/20 text-orange-400',
     edp: 'bg-purple-500/20 text-purple-400',
     mdns: 'bg-teal-500/20 text-teal-400',
+    ping: 'bg-cyan-500/20 text-cyan-400',
   };
 
   return (
