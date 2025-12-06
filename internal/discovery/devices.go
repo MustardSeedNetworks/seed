@@ -15,6 +15,7 @@ const (
 	MethodCDP  DiscoveryMethod = "cdp"
 	MethodEDP  DiscoveryMethod = "edp"
 	MethodMDNS DiscoveryMethod = "mdns"
+	MethodPING DiscoveryMethod = "ping"
 )
 
 // DiscoveredDevice represents a network device with aggregated discovery info.
@@ -186,9 +187,15 @@ func (d *DeviceDiscovery) aggregateResults() {
 			device.Hostname = arp.Hostname
 		}
 
-		// Add ARP method if not present
-		if !containsMethod(device.DiscoveryMethod, MethodARP) {
-			device.DiscoveryMethod = append(device.DiscoveryMethod, MethodARP)
+		// Use correct discovery method based on whether we have MAC (ARP) or not (PING)
+		if mac != "" {
+			if !containsMethod(device.DiscoveryMethod, MethodARP) {
+				device.DiscoveryMethod = append(device.DiscoveryMethod, MethodARP)
+			}
+		} else {
+			if !containsMethod(device.DiscoveryMethod, MethodPING) {
+				device.DiscoveryMethod = append(device.DiscoveryMethod, MethodPING)
+			}
 		}
 	}
 
