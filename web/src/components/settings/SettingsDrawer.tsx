@@ -86,6 +86,10 @@ interface FABOptions {
   runNetworkDiscovery: boolean;  // Network Discovery card (default ON)
 }
 
+interface DisplayOptions {
+  showPublicIP: boolean;         // Show Public IP in IP Config card (default ON)
+}
+
 interface TCPPort {
   name: string;
   host: string;
@@ -195,6 +199,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     runIperf: false,            // Performance: LAN Speed (default OFF)
     runNetworkDiscovery: true,  // Network Discovery card (default ON)
   });
+
+  // Display Options (stored in localStorage)
+  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
+    showPublicIP: true,         // Show Public IP in IP Config card (default ON)
+  });
   const [wifiSettings, setWifiSettings] = useState<WiFiSettings>({
     interface: '',
     availableWifi: [],
@@ -236,6 +245,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const [iperfStatus, setIperfStatus] = useState<SaveStatus>('idle');
   const [fabStatus, setFabStatus] = useState<SaveStatus>('idle');
   const [networkDiscoveryStatus, setNetworkDiscoveryStatus] = useState<SaveStatus>('idle');
+  const [displayStatus, setDisplayStatus] = useState<SaveStatus>('idle');
 
   // Refs to track initial load (skip auto-save on first load)
   const initialLoadRef = useRef(true);
@@ -245,6 +255,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const iperfInitRef = useRef(true);
   const fabInitRef = useRef(true);
   const networkDiscoveryInitRef = useRef(true);
+  const displayInitRef = useRef(true);
 
   // Debounce timers
   const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -253,6 +264,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const iperfTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const fabTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const displayTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Legacy state (keep for IP settings which still needs manual apply)
   const [savingIP, setSavingIP] = useState(false);
@@ -368,6 +380,19 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       }
     } catch (err) {
       console.error('Failed to load FAB options:', err);
+    }
+  }, []);
+
+  // Load Display options from localStorage
+  const loadDisplayOptions = useCallback(() => {
+    try {
+      const saved = localStorage.getItem('netscope-display-options');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setDisplayOptions((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch (err) {
+      console.error('Failed to load display options:', err);
     }
   }, []);
 
@@ -547,6 +572,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       iperfInitRef.current = true;
       fabInitRef.current = true;
       networkDiscoveryInitRef.current = true;
+      displayInitRef.current = true;
 
       fetchThresholds();
       fetchIPSettings();
@@ -554,6 +580,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       fetchWifiSettings();
       loadIperfSettings();
       loadFabOptions();
+      loadDisplayOptions();
       fetchNetworkDiscoverySettings();
       fetchSubnets();
 
@@ -566,9 +593,10 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
         iperfInitRef.current = false;
         fabInitRef.current = false;
         networkDiscoveryInitRef.current = false;
+        displayInitRef.current = false;
       }, 500);
     }
-  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings, loadFabOptions, fetchNetworkDiscoverySettings, fetchSubnets]);
+  }, [isOpen, fetchThresholds, fetchIPSettings, fetchTestsSettings, fetchWifiSettings, loadIperfSettings, loadFabOptions, loadDisplayOptions, fetchNetworkDiscoverySettings, fetchSubnets]);
 
   const saveThresholds = useCallback(async () => {
     setThresholdsStatus('saving');
@@ -756,6 +784,22 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       if (fabTimerRef.current) clearTimeout(fabTimerRef.current);
     };
   }, [fabOptions]);
+
+  // Auto-save Display options with debounce
+  useEffect(() => {
+    if (displayInitRef.current) return;
+    if (displayTimerRef.current) clearTimeout(displayTimerRef.current);
+    displayTimerRef.current = setTimeout(() => {
+      setDisplayStatus('saving');
+      localStorage.setItem('netscope-display-options', JSON.stringify(displayOptions));
+      window.dispatchEvent(new CustomEvent('displayOptionsUpdated', { detail: displayOptions }));
+      setDisplayStatus('saved');
+      setTimeout(() => setDisplayStatus('idle'), 2000);
+    }, 800);
+    return () => {
+      if (displayTimerRef.current) clearTimeout(displayTimerRef.current);
+    };
+  }, [displayOptions]);
 
   // Auto-save Network Discovery settings with debounce
   useEffect(() => {
@@ -1069,6 +1113,27 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               <p className="text-xs text-text-muted">
                 Note: Requires root/admin privileges to apply
               </p>
+            </div>
+
+            {/* Display Options */}
+            <div className="border-t border-surface-border pt-3 mt-3">
+              <p className="text-xs text-text-muted font-medium mb-2">
+                Display Options <AutoSaveIndicator status={displayStatus} />
+              </p>
+              <label className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border">
+                <div>
+                  <span className="text-sm text-text-primary">Show Public IP</span>
+                  <p className="text-xs text-text-muted">Display in IP Config card</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={displayOptions.showPublicIP}
+                  onChange={(e) =>
+                    setDisplayOptions((prev) => ({ ...prev, showPublicIP: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
             </div>
           </CollapsibleSection>
 

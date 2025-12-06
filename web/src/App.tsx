@@ -24,7 +24,6 @@ import {
   CableData,
   NetworkDiscoveryCard,
   NetworkDiscoveryData,
-  PublicIPCard,
   PublicIPData,
 } from './components/cards';
 import { PerformanceCard } from './components/cards/PerformanceCard';
@@ -63,6 +62,35 @@ function App() {
   const [isWifi, setIsWifi] = useState(false);
   const [interfaces, setInterfaces] = useState<Array<{ name: string; type: string; up: boolean }>>([]);
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
+  const [showPublicIP, setShowPublicIP] = useState(true);
+
+  // Load display options from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('netscope-display-options');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.showPublicIP !== undefined) {
+          setShowPublicIP(parsed.showPublicIP);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load display options:', err);
+    }
+  }, []);
+
+  // Listen for display options updates from settings drawer
+  useEffect(() => {
+    const handleDisplayOptionsUpdate = (event: CustomEvent) => {
+      if (event.detail && event.detail.showPublicIP !== undefined) {
+        setShowPublicIP(event.detail.showPublicIP);
+      }
+    };
+    window.addEventListener('displayOptionsUpdated', handleDisplayOptionsUpdate as EventListener);
+    return () => {
+      window.removeEventListener('displayOptionsUpdated', handleDisplayOptionsUpdate as EventListener);
+    };
+  }, []);
 
   const handleMessage = useCallback((message: Message) => {
     if (message.type === 'initial_state') {
@@ -370,6 +398,29 @@ function App() {
     }
   }, []);
 
+  // Fetch Public IP data
+  const fetchPublicIP = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/publicip`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCards((prev) => ({
+          ...prev,
+          publicip: {
+            ipv4: data.ipv4 || undefined,
+            ipv6: data.ipv6 || undefined,
+            lastChecked: data.lastChecked || new Date().toISOString(),
+            error: data.error || undefined,
+          },
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch Public IP data:', err);
+    }
+  }, []);
+
   // Fetch Network Discovery data (devices and status)
   const fetchNetworkDiscovery = useCallback(async () => {
     try {
@@ -598,9 +649,10 @@ function App() {
     fetchVLANData();
     fetchWiFiData();
     fetchCableData();
+    fetchPublicIP();
     fetchNetworkDiscovery();
     setLoading(false);
-  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData, fetchNetworkDiscovery]);
+  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData, fetchPublicIP, fetchNetworkDiscovery]);
 
   // Fallback REST polling when WebSocket is not connected
   // When WS is connected, backend pushes updates every 5 seconds via card_update messages
@@ -769,12 +821,11 @@ function App() {
           <VLANCard data={cards.vlan} loading={loading} />
 
           {/* Layer 3: Network */}
-          <DHCPCard data={cards.dhcp} loading={loading} />
+          <DHCPCard data={cards.dhcp} publicip={cards.publicip} loading={loading} showPublicIP={showPublicIP} />
           <GatewayCard data={cards.gateway} loading={loading} />
 
           {/* Layer 7: Application */}
           <DNSCard data={cards.dns} loading={loading} />
-          <PublicIPCard data={cards.publicip} loading={loading} />
 
           {/* Health Checks - tests configured endpoints */}
           <HealthCheckCard loading={loading} />
@@ -789,7 +840,7 @@ function App() {
         {/* Development notice */}
         <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-            NetScope v0.11.0 - WebSocket Real-time Updates
+            NetScope v0.11.2 - Public IP in IP Config Card
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-text-muted">
             Tap the play button to run all tests.

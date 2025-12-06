@@ -32,9 +32,18 @@ export interface DHCPData {
   timing: DHCPTiming | null;
 }
 
+export interface PublicIPInfo {
+  ipv4?: string;
+  ipv6?: string;
+  lastChecked: string;
+  error?: string;
+}
+
 interface DHCPCardProps {
   data: DHCPData | null;
+  publicip?: PublicIPInfo | null;
   loading?: boolean;
+  showPublicIP?: boolean;
   thresholds?: {
     total: { warning: number; critical: number };
     perPhase: { warning: number; critical: number };
@@ -141,7 +150,7 @@ function compressIPv6(address: string): string {
   return before.join(':') + '::' + after.join(':');
 }
 
-export function DHCPCard({ data, loading, thresholds }: DHCPCardProps) {
+export function DHCPCard({ data, publicip, loading, showPublicIP = true, thresholds }: DHCPCardProps) {
   const defaultThresholds = {
     total: { warning: 500, critical: 2000 },
     perPhase: { warning: 200, critical: 1000 },
@@ -281,6 +290,31 @@ export function DHCPCard({ data, loading, thresholds }: DHCPCardProps) {
               />
             </div>
           </div>
+        </>
+      )}
+
+      {/* Public IP Section */}
+      {showPublicIP && publicip && (publicip.ipv4 || publicip.ipv6) && (
+        <>
+          <CardDivider />
+          <p className="text-xs text-text-muted mb-1 font-medium">Public IP</p>
+          {publicip.ipv4 && (
+            <CardRow label="IPv4" value={publicip.ipv4} />
+          )}
+          {publicip.ipv6 && (
+            <div className="flex items-center justify-between text-xs gap-2">
+              <span className="text-text-muted">IPv6</span>
+              <span
+                className="font-mono text-text-primary truncate flex-1 min-w-0 text-right"
+                title={publicip.ipv6}
+              >
+                {compressIPv6(publicip.ipv6)}
+              </span>
+            </div>
+          )}
+          {publicip.error && (
+            <p className="text-xs text-status-error mt-1">{publicip.error}</p>
+          )}
         </>
       )}
     </Card>
