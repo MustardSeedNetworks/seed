@@ -3,7 +3,6 @@ package discovery
 
 import (
 	"context"
-	"encoding/binary"
 	"log"
 	"net"
 	"os"
@@ -361,14 +360,3 @@ func MustHaveICMPPrivileges() {
 	}
 }
 
-// parseICMPEchoReply extracts ID, Seq from raw ICMP echo reply payload.
-// Used as fallback when icmp.ParseMessage fails.
-func parseICMPEchoReply(data []byte) (id, seq int, ok bool) {
-	if len(data) < 8 {
-		return 0, 0, false
-	}
-	// ICMP header: Type (1) + Code (1) + Checksum (2) + ID (2) + Seq (2)
-	id = int(binary.BigEndian.Uint16(data[4:6]))
-	seq = int(binary.BigEndian.Uint16(data[6:8]))
-	return id, seq, true
-}

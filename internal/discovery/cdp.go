@@ -2,7 +2,6 @@ package discovery
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"sync"
 	"time"
@@ -215,27 +214,6 @@ func parseCDPCapabilities(caps layers.CDPCapabilities) []string {
 	}
 
 	return result
-}
-
-// parseCDPTLVs manually parses CDP TLVs from raw data.
-// This is a fallback if gopacket doesn't parse all TLVs.
-func parseCDPTLVs(data []byte) map[uint16][]byte {
-	tlvs := make(map[uint16][]byte)
-
-	offset := 0
-	for offset+4 <= len(data) {
-		tlvType := binary.BigEndian.Uint16(data[offset : offset+2])
-		tlvLen := binary.BigEndian.Uint16(data[offset+2 : offset+4])
-
-		if tlvLen < 4 || offset+int(tlvLen) > len(data) {
-			break
-		}
-
-		tlvs[tlvType] = data[offset+4 : offset+int(tlvLen)]
-		offset += int(tlvLen)
-	}
-
-	return tlvs
 }
 
 // IsRunning returns true if capture is active.
