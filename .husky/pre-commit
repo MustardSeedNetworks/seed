@@ -54,6 +54,9 @@ if [ -n "$STAGED_WEB_FILES" ]; then
     if [ -f "web/node_modules/.bin/lint-staged" ]; then
       echo "Running frontend linting..."
       cd web
+      echo "Current directory: $(pwd)"
+      echo "Files in current directory:"
+      ls -l
       if ! npx lint-staged 2>&1; then
         echo "Frontend linting failed!"
         FAILED=1
