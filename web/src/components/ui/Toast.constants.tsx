@@ -1,5 +1,3 @@
-import React from "react"; // Import React for JSX in icons
-
 export type ToastType = "success" | "error" | "warning" | "info";
 
 export const typeStyles = {
