@@ -102,6 +102,9 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
+      - name: Install libpcap-dev
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+
       - name: Install govulncheck
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
 

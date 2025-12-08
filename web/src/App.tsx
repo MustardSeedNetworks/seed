@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useWebSocket, Message, CardUpdate } from './hooks/useWebSocket';
-import { useAuth, getAuthHeaders } from './hooks/useAuth';
-import { useTheme } from './hooks/useTheme';
-import { SettingsDrawer } from './components/settings/SettingsDrawer';
+import { useCallback, useEffect, useState } from "react";
+import { useWebSocket, Message, CardUpdate } from "./hooks/useWebSocket";
+import { useAuth, getAuthHeaders } from "./hooks/useAuth";
+import { useTheme } from "./hooks/useTheme";
+import { SettingsDrawer } from "./components/settings/SettingsDrawer";
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 import {
   LinkCard,
   LinkData,
@@ -25,10 +25,10 @@ import {
   NetworkDiscoveryCard,
   NetworkDiscoveryData,
   PublicIPData,
-} from './components/cards';
-import { PerformanceCard } from './components/cards/PerformanceCard';
-import { HealthCheckCard } from './components/cards/HealthCheckCard';
-import { FAB } from './components/ui/FAB';
+} from "./components/cards";
+import { PerformanceCard } from "./components/cards/PerformanceCard";
+import { HealthCheckCard } from "./components/cards/HealthCheckCard";
+import { FAB } from "./components/ui/FAB";
 
 interface CardState {
   link: LinkData | null;
@@ -58,24 +58,27 @@ function App() {
     publicip: null,
   });
   const [loading, setLoading] = useState(true);
-  const [currentInterface, setCurrentInterface] = useState('eth0');
+  const [currentInterface, setCurrentInterface] = useState("eth0");
   const [isWifi, setIsWifi] = useState(false);
-  const [interfaces, setInterfaces] = useState<Array<{ name: string; type: string; up: boolean }>>([]);
-  const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
+  const [interfaces, setInterfaces] = useState<
+    Array<{ name: string; type: string; up: boolean }>
+  >([]);
+  const [networkDiscovery, setNetworkDiscovery] =
+    useState<NetworkDiscoveryData | null>(null);
   const [showPublicIP, setShowPublicIP] = useState(true);
 
   // Load display options from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('netscope-display-options');
+      const saved = localStorage.getItem("netscope-display-options");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.showPublicIP !== undefined) {
-          setShowPublicIP(parsed.showPublicIP);
+          setTimeout(() => setShowPublicIP(parsed.showPublicIP), 0);
         }
       }
     } catch (err) {
-      console.error('Failed to load display options:', err);
+      console.error("Failed to load display options:", err);
     }
   }, []);
 
@@ -86,16 +89,26 @@ function App() {
         setShowPublicIP(event.detail.showPublicIP);
       }
     };
-    window.addEventListener('displayOptionsUpdated', handleDisplayOptionsUpdate as EventListener);
+    window.addEventListener(
+      "displayOptionsUpdated",
+      handleDisplayOptionsUpdate as EventListener,
+    );
     return () => {
-      window.removeEventListener('displayOptionsUpdated', handleDisplayOptionsUpdate as EventListener);
+      window.removeEventListener(
+        "displayOptionsUpdated",
+        handleDisplayOptionsUpdate as EventListener,
+      );
     };
   }, []);
 
   const handleMessage = useCallback((message: Message) => {
-    if (message.type === 'initial_state') {
+    if (message.type === "initial_state") {
       setLoading(false);
-      const payload = message.payload as { interface?: string; isWireless?: boolean; cards?: Partial<CardState> };
+      const payload = message.payload as {
+        interface?: string;
+        isWireless?: boolean;
+        cards?: Partial<CardState>;
+      };
       if (payload.interface) {
         setCurrentInterface(payload.interface);
       }
@@ -108,7 +121,7 @@ function App() {
         setCards((prev) => ({
           ...prev,
           ...Object.fromEntries(
-            Object.entries(payload.cards!).filter(([, v]) => v !== null)
+            Object.entries(payload.cards!).filter(([, v]) => v !== null),
           ),
         }));
       }
@@ -134,20 +147,20 @@ function App() {
           ...prev,
           link: {
             linkUp: data.linkUp,
-            carrier: data.carrier ?? data.linkUp,  // Fallback for compatibility
-            hasIP: data.hasIP ?? data.linkUp,      // Fallback for compatibility
-            speed: data.speed || '',
-            duplex: data.duplex || '',
+            carrier: data.carrier ?? data.linkUp, // Fallback for compatibility
+            hasIP: data.hasIP ?? data.linkUp, // Fallback for compatibility
+            speed: data.speed || "",
+            duplex: data.duplex || "",
             advertisedSpeeds: data.advertisedSpeeds || [],
             mtu: data.mtu || 0,
             autoNeg: data.autoNeg,
           },
         }));
-        setCurrentInterface(data.interface || 'unknown');
+        setCurrentInterface(data.interface || "unknown");
         // isWifi is now set by fetchWiFiData which properly detects wireless interfaces
       }
     } catch (err) {
-      console.error('Failed to fetch link data:', err);
+      console.error("Failed to fetch link data:", err);
     }
   }, []);
 
@@ -162,8 +175,8 @@ function App() {
         setCards((prev) => ({
           ...prev,
           dhcp: {
-            mac: data.mac || '',
-            mode: data.mode || 'auto',
+            mac: data.mac || "",
+            mode: data.mode || "auto",
             ipv4: data.ipv4 || null,
             ipv6: data.ipv6 || [],
             dns: data.dns || [],
@@ -172,7 +185,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error('Failed to fetch IP config:', err);
+      console.error("Failed to fetch IP config:", err);
     }
   }, []);
 
@@ -187,7 +200,7 @@ function App() {
         setInterfaces(data);
       }
     } catch (err) {
-      console.error('Failed to fetch interfaces:', err);
+      console.error("Failed to fetch interfaces:", err);
     }
   }, []);
 
@@ -205,7 +218,7 @@ function App() {
           setCards((prev) => ({
             ...prev,
             switch: {
-              protocol: neighbor.protocol as SwitchData['protocol'],
+              protocol: neighbor.protocol as SwitchData["protocol"],
               switchName: neighbor.systemName || neighbor.chassisId || null,
               portId: neighbor.portId || null,
               portDescription: neighbor.portDescription || null,
@@ -221,7 +234,7 @@ function App() {
         }
       }
     } catch (err) {
-      console.error('Failed to fetch discovery data:', err);
+      console.error("Failed to fetch discovery data:", err);
     }
   }, []);
 
@@ -236,46 +249,54 @@ function App() {
         setCards((prev) => ({
           ...prev,
           dns: {
-            server: data.server || 'Unknown',
+            server: data.server || "Unknown",
             servers: data.servers || [],
-            testHostname: data.testHostname || 'google.com',
-            forward: data.forward ? {
-              result: data.forward.result,
-              time: data.forward.time || data.forward.timeMs || 0,
-              timeMs: data.forward.timeMs || data.forward.time || 0,
-              status: data.forward.status,
-              error: data.forward.error,
-              resolved: data.forward.resolved,
-            } : null,
-            forwardIpv6: data.forwardIpv6 ? {
-              result: data.forwardIpv6.result,
-              time: data.forwardIpv6.time || data.forwardIpv6.timeMs || 0,
-              timeMs: data.forwardIpv6.timeMs || data.forwardIpv6.time || 0,
-              status: data.forwardIpv6.status,
-              error: data.forwardIpv6.error,
-              resolved: data.forwardIpv6.resolved,
-            } : null,
-            reverse: data.reverse ? {
-              result: data.reverse.result,
-              time: data.reverse.time || data.reverse.timeMs || 0,
-              timeMs: data.reverse.timeMs || data.reverse.time || 0,
-              status: data.reverse.status,
-              error: data.reverse.error,
-              resolved: data.reverse.resolved,
-            } : null,
-            reverseIpv6: data.reverseIpv6 ? {
-              result: data.reverseIpv6.result,
-              time: data.reverseIpv6.time || data.reverseIpv6.timeMs || 0,
-              timeMs: data.reverseIpv6.timeMs || data.reverseIpv6.time || 0,
-              status: data.reverseIpv6.status,
-              error: data.reverseIpv6.error,
-              resolved: data.reverseIpv6.resolved,
-            } : null,
+            testHostname: data.testHostname || "google.com",
+            forward: data.forward
+              ? {
+                  result: data.forward.result,
+                  time: data.forward.time || data.forward.timeMs || 0,
+                  timeMs: data.forward.timeMs || data.forward.time || 0,
+                  status: data.forward.status,
+                  error: data.forward.error,
+                  resolved: data.forward.resolved,
+                }
+              : null,
+            forwardIpv6: data.forwardIpv6
+              ? {
+                  result: data.forwardIpv6.result,
+                  time: data.forwardIpv6.time || data.forwardIpv6.timeMs || 0,
+                  timeMs: data.forwardIpv6.timeMs || data.forwardIpv6.time || 0,
+                  status: data.forwardIpv6.status,
+                  error: data.forwardIpv6.error,
+                  resolved: data.forwardIpv6.resolved,
+                }
+              : null,
+            reverse: data.reverse
+              ? {
+                  result: data.reverse.result,
+                  time: data.reverse.time || data.reverse.timeMs || 0,
+                  timeMs: data.reverse.timeMs || data.reverse.time || 0,
+                  status: data.reverse.status,
+                  error: data.reverse.error,
+                  resolved: data.reverse.resolved,
+                }
+              : null,
+            reverseIpv6: data.reverseIpv6
+              ? {
+                  result: data.reverseIpv6.result,
+                  time: data.reverseIpv6.time || data.reverseIpv6.timeMs || 0,
+                  timeMs: data.reverseIpv6.timeMs || data.reverseIpv6.time || 0,
+                  status: data.reverseIpv6.status,
+                  error: data.reverseIpv6.error,
+                  resolved: data.reverseIpv6.resolved,
+                }
+              : null,
           },
         }));
       }
     } catch (err) {
-      console.error('Failed to fetch DNS data:', err);
+      console.error("Failed to fetch DNS data:", err);
     }
   }, []);
 
@@ -298,7 +319,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error('Failed to fetch VLAN data:', err);
+      console.error("Failed to fetch VLAN data:", err);
     }
   }, []);
 
@@ -313,7 +334,7 @@ function App() {
         setCards((prev) => ({
           ...prev,
           gateway: {
-            gateway: data.gateway || '',
+            gateway: data.gateway || "",
             reachable: data.reachable || false,
             sent: data.sent || 0,
             received: data.received || 0,
@@ -322,24 +343,26 @@ function App() {
             maxTime: data.maxTime || 0,
             avgTime: data.avgTime || 0,
             lastTime: data.lastTime || 0,
-            status: data.status || 'unknown',
-            ipv6: data.ipv6 ? {
-              gateway: data.ipv6.gateway || '',
-              reachable: data.ipv6.reachable || false,
-              sent: data.ipv6.sent || 0,
-              received: data.ipv6.received || 0,
-              lossPercent: data.ipv6.lossPercent || 0,
-              minTime: data.ipv6.minTime || 0,
-              maxTime: data.ipv6.maxTime || 0,
-              avgTime: data.ipv6.avgTime || 0,
-              lastTime: data.ipv6.lastTime || 0,
-              status: data.ipv6.status || 'unknown',
-            } : undefined,
+            status: data.status || "unknown",
+            ipv6: data.ipv6
+              ? {
+                  gateway: data.ipv6.gateway || "",
+                  reachable: data.ipv6.reachable || false,
+                  sent: data.ipv6.sent || 0,
+                  received: data.ipv6.received || 0,
+                  lossPercent: data.ipv6.lossPercent || 0,
+                  minTime: data.ipv6.minTime || 0,
+                  maxTime: data.ipv6.maxTime || 0,
+                  avgTime: data.ipv6.avgTime || 0,
+                  lastTime: data.ipv6.lastTime || 0,
+                  status: data.ipv6.status || "unknown",
+                }
+              : undefined,
           },
         }));
       }
     } catch (err) {
-      console.error('Failed to fetch Gateway data:', err);
+      console.error("Failed to fetch Gateway data:", err);
     }
   }, []);
 
@@ -356,12 +379,12 @@ function App() {
           setCards((prev) => ({
             ...prev,
             wifi: {
-              ssid: data.ssid || '',
-              bssid: data.bssid || '',
+              ssid: data.ssid || "",
+              bssid: data.bssid || "",
               signal: data.signal || 0,
               channel: data.channel || 0,
               frequency: data.frequency || 0,
-              security: data.security || 'Unknown',
+              security: data.security || "Unknown",
             },
           }));
           setIsWifi(true);
@@ -371,7 +394,7 @@ function App() {
         }
       }
     } catch (err) {
-      console.error('Failed to fetch Wi-Fi data:', err);
+      console.error("Failed to fetch Wi-Fi data:", err);
     }
   }, []);
 
@@ -388,13 +411,13 @@ function App() {
           cable: {
             supported: data.supported || false,
             length: data.length || null,
-            status: data.status || 'unknown',
+            status: data.status || "unknown",
             faults: data.faults || [],
           },
         }));
       }
     } catch (err) {
-      console.error('Failed to fetch Cable data:', err);
+      console.error("Failed to fetch Cable data:", err);
     }
   }, []);
 
@@ -417,7 +440,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error('Failed to fetch Public IP data:', err);
+      console.error("Failed to fetch Public IP data:", err);
     }
   }, []);
 
@@ -439,15 +462,15 @@ function App() {
           status: status || {
             scanning: false,
             deviceCount: 0,
-            lastScan: '',
-            subnet: '',
-            localIP: '',
+            lastScan: "",
+            subnet: "",
+            localIP: "",
             interface: currentInterface,
           },
         });
       }
     } catch (err) {
-      console.error('Failed to fetch network discovery data:', err);
+      console.error("Failed to fetch network discovery data:", err);
     }
   }, [currentInterface]);
 
@@ -455,13 +478,17 @@ function App() {
   const triggerDeviceScan = useCallback(async () => {
     try {
       // Update status to show scanning
-      setNetworkDiscovery((prev) => prev ? {
-        ...prev,
-        status: { ...prev.status, scanning: true },
-      } : null);
+      setNetworkDiscovery((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: { ...prev.status, scanning: true },
+            }
+          : null,
+      );
 
       const response = await fetch(`${API_BASE}/api/devices/scan`, {
-        method: 'POST',
+        method: "POST",
         headers: getAuthHeaders(),
       });
 
@@ -484,44 +511,60 @@ function App() {
         setTimeout(() => clearInterval(pollInterval), 60000);
       }
     } catch (err) {
-      console.error('Failed to trigger device scan:', err);
-      setNetworkDiscovery((prev) => prev ? {
-        ...prev,
-        status: { ...prev.status, scanning: false },
-      } : null);
+      console.error("Failed to trigger device scan:", err);
+      setNetworkDiscovery((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: { ...prev.status, scanning: false },
+            }
+          : null,
+      );
     }
   }, [fetchNetworkDiscovery]);
 
   // Change interface on backend
-  const changeInterface = useCallback(async (interfaceName: string) => {
-    try {
-      const response = await fetch(`${API_BASE}/api/interface`, {
-        method: 'PUT',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ interface: interfaceName }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentInterface(interfaceName);
-        // Use isWireless from API response (works for macOS and Linux)
-        setIsWifi(data.isWireless === true);
-        // Refresh data for new interface
-        fetchLinkData();
-        fetchIPConfig();
-        fetchDiscoveryData();
-        fetchDNSData();
-        fetchGatewayData();
-        fetchVLANData();
-        fetchWiFiData();
-        fetchCableData();
+  const changeInterface = useCallback(
+    async (interfaceName: string) => {
+      try {
+        const response = await fetch(`${API_BASE}/api/interface`, {
+          method: "PUT",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ interface: interfaceName }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentInterface(interfaceName);
+          // Use isWireless from API response (works for macOS and Linux)
+          setIsWifi(data.isWireless === true);
+          // Refresh data for new interface
+          fetchLinkData();
+          fetchIPConfig();
+          fetchDiscoveryData();
+          fetchDNSData();
+          fetchGatewayData();
+          fetchVLANData();
+          fetchWiFiData();
+          fetchCableData();
+        }
+      } catch (err) {
+        console.error("Failed to change interface:", err);
       }
-    } catch (err) {
-      console.error('Failed to change interface:', err);
-    }
-  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
+    },
+    [
+      fetchLinkData,
+      fetchIPConfig,
+      fetchDiscoveryData,
+      fetchDNSData,
+      fetchGatewayData,
+      fetchVLANData,
+      fetchWiFiData,
+      fetchCableData,
+    ],
+  );
 
   // Listen for FAB "run all tests" event with options
   useEffect(() => {
@@ -529,24 +572,24 @@ function App() {
       // Read FAB options from localStorage (matches SettingsDrawer FABOptions interface)
       let fabOptions = {
         // Order matches card display order
-        runLink: true,              // Link card
-        runSwitch: true,            // Nearest Switch card
-        runVLAN: true,              // VLAN card
-        runIPConfig: true,          // IP Config (DHCP) card
-        runGateway: true,           // Gateway card
-        runDNS: true,               // DNS card
-        runHealthChecks: true,      // Health Checks card
-        runSpeedtest: false,        // Performance: Internet Speed (default OFF)
-        runIperf: false,            // Performance: LAN Speed (default OFF)
-        runNetworkDiscovery: true,  // Network Discovery card (default ON)
+        runLink: true, // Link card
+        runSwitch: true, // Nearest Switch card
+        runVLAN: true, // VLAN card
+        runIPConfig: true, // IP Config (DHCP) card
+        runGateway: true, // Gateway card
+        runDNS: true, // DNS card
+        runHealthChecks: true, // Health Checks card
+        runSpeedtest: false, // Performance: Internet Speed (default OFF)
+        runIperf: false, // Performance: LAN Speed (default OFF)
+        runNetworkDiscovery: true, // Network Discovery card (default ON)
       };
       try {
-        const saved = localStorage.getItem('netscope-fab-options');
+        const saved = localStorage.getItem("netscope-fab-options");
         if (saved) {
           fabOptions = { ...fabOptions, ...JSON.parse(saved) };
         }
       } catch (err) {
-        console.error('Failed to load FAB options:', err);
+        console.error("Failed to load FAB options:", err);
       }
 
       // Build array of fetch promises based on FAB options
@@ -554,7 +597,7 @@ function App() {
 
       if (fabOptions.runLink) {
         fetchPromises.push(fetchLinkData());
-        fetchPromises.push(fetchWiFiData());  // WiFi is part of Link layer
+        fetchPromises.push(fetchWiFiData()); // WiFi is part of Link layer
         fetchPromises.push(fetchCableData()); // Cable is part of Link layer
       }
       if (fabOptions.runSwitch) {
@@ -585,13 +628,13 @@ function App() {
 
       // Determine how many card-managed tests we need to wait for
       const cardTestsToWait: string[] = [];
-      if (fabOptions.runSpeedtest) cardTestsToWait.push('speedtest');
-      if (fabOptions.runIperf) cardTestsToWait.push('iperf');
-      if (fabOptions.runHealthChecks) cardTestsToWait.push('healthchecks');
+      if (fabOptions.runSpeedtest) cardTestsToWait.push("speedtest");
+      if (fabOptions.runIperf) cardTestsToWait.push("iperf");
+      if (fabOptions.runHealthChecks) cardTestsToWait.push("healthchecks");
 
       // If no card-managed tests, signal completion immediately
       if (cardTestsToWait.length === 0) {
-        window.dispatchEvent(new CustomEvent('testsComplete'));
+        window.dispatchEvent(new CustomEvent("testsComplete"));
         return;
       }
 
@@ -603,33 +646,54 @@ function App() {
           completed.add(testName);
           // Check if all expected tests are done
           if (completed.size === cardTestsToWait.length) {
-            window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
-            window.dispatchEvent(new CustomEvent('testsComplete'));
+            window.removeEventListener(
+              "cardTestComplete",
+              handleCardComplete as EventListener,
+            );
+            window.dispatchEvent(new CustomEvent("testsComplete"));
           }
         }
       };
 
       // Listen for card test completions
-      window.addEventListener('cardTestComplete', handleCardComplete as EventListener);
+      window.addEventListener(
+        "cardTestComplete",
+        handleCardComplete as EventListener,
+      );
 
       // Failsafe timeout (90s) in case a card doesn't report completion
       setTimeout(() => {
-        window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
+        window.removeEventListener(
+          "cardTestComplete",
+          handleCardComplete as EventListener,
+        );
         if (completed.size < cardTestsToWait.length) {
-          console.warn('FAB timeout: Not all card tests completed, signaling done anyway');
-          window.dispatchEvent(new CustomEvent('testsComplete'));
+          console.warn(
+            "FAB timeout: Not all card tests completed, signaling done anyway",
+          );
+          window.dispatchEvent(new CustomEvent("testsComplete"));
         }
       }, 90000);
     };
-    window.addEventListener('runAllTests', handleRunAllTests);
+    window.addEventListener("runAllTests", handleRunAllTests);
     return () => {
-      window.removeEventListener('runAllTests', handleRunAllTests);
+      window.removeEventListener("runAllTests", handleRunAllTests);
     };
-  }, [fetchLinkData, fetchIPConfig, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
+  }, [
+    fetchLinkData,
+    fetchIPConfig,
+    fetchDiscoveryData,
+    fetchDNSData,
+    fetchGatewayData,
+    fetchVLANData,
+    fetchWiFiData,
+    fetchCableData,
+    triggerDeviceScan,
+  ]);
 
   // WebSocket connection for real-time updates
   const { status: wsStatus, reconnect } = useWebSocket({
-    url: '/ws',
+    url: "/ws",
     token,
     onMessage: handleMessage,
     onCardUpdate: handleCardUpdate,
@@ -640,19 +704,34 @@ function App() {
     if (!isAuthenticated) return;
 
     // Initial fetch of all data
-    fetchLinkData();
-    fetchIPConfig();
-    fetchInterfaces();
-    fetchDiscoveryData();
-    fetchDNSData();
-    fetchGatewayData();
-    fetchVLANData();
-    fetchWiFiData();
-    fetchCableData();
-    fetchPublicIP();
-    fetchNetworkDiscovery();
-    setLoading(false);
-  }, [isAuthenticated, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData, fetchPublicIP, fetchNetworkDiscovery]);
+    setTimeout(() => {
+      fetchLinkData();
+      fetchIPConfig();
+      fetchInterfaces();
+      fetchDiscoveryData();
+      fetchDNSData();
+      fetchGatewayData();
+      fetchVLANData();
+      fetchWiFiData();
+      fetchCableData();
+      fetchPublicIP();
+      fetchNetworkDiscovery();
+      setLoading(false);
+    }, 0);
+  }, [
+    isAuthenticated,
+    fetchLinkData,
+    fetchIPConfig,
+    fetchInterfaces,
+    fetchDiscoveryData,
+    fetchDNSData,
+    fetchGatewayData,
+    fetchVLANData,
+    fetchWiFiData,
+    fetchCableData,
+    fetchPublicIP,
+    fetchNetworkDiscovery,
+  ]);
 
   // Fallback REST polling when WebSocket is not connected
   // When WS is connected, backend pushes updates every 5 seconds via card_update messages
@@ -660,7 +739,7 @@ function App() {
     if (!isAuthenticated) return;
 
     // Only poll if WebSocket is not connected
-    if (wsStatus === 'connected') {
+    if (wsStatus === "connected") {
       // WebSocket provides real-time updates, no need for aggressive polling
       // Still poll some endpoints that aren't broadcast (interfaces, wifi details)
       const slowInterval = setInterval(() => {
@@ -684,7 +763,19 @@ function App() {
     }, 10000); // 10 second fallback
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, wsStatus, fetchLinkData, fetchIPConfig, fetchInterfaces, fetchDiscoveryData, fetchDNSData, fetchGatewayData, fetchVLANData, fetchWiFiData, fetchCableData]);
+  }, [
+    isAuthenticated,
+    wsStatus,
+    fetchLinkData,
+    fetchIPConfig,
+    fetchInterfaces,
+    fetchDiscoveryData,
+    fetchDNSData,
+    fetchGatewayData,
+    fetchVLANData,
+    fetchWiFiData,
+    fetchCableData,
+  ]);
 
   // Auto-scan network devices on mount (respects FAB option)
   useEffect(() => {
@@ -693,7 +784,7 @@ function App() {
     // Check if network discovery auto-scan is enabled in FAB options
     let shouldAutoScan = true; // Default to true
     try {
-      const saved = localStorage.getItem('netscope-fab-options');
+      const saved = localStorage.getItem("netscope-fab-options");
       if (saved) {
         const fabOptions = JSON.parse(saved);
         if (fabOptions.runNetworkDiscovery === false) {
@@ -701,7 +792,7 @@ function App() {
         }
       }
     } catch (err) {
-      console.error('Failed to load FAB options for auto-scan:', err);
+      console.error("Failed to load FAB options for auto-scan:", err);
     }
 
     if (shouldAutoScan) {
@@ -725,8 +816,12 @@ function App() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
           {/* Logo and title - hide title on very small screens */}
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xl font-bold text-brand-primary flex-shrink-0">◉</span>
-            <h1 className="text-lg font-semibold hidden xs:block sm:block">NetScope</h1>
+            <span className="text-xl font-bold text-brand-primary flex-shrink-0">
+              ◉
+            </span>
+            <h1 className="text-lg font-semibold hidden xs:block sm:block">
+              NetScope
+            </h1>
             <div className="hidden sm:block">
               <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
             </div>
@@ -735,7 +830,9 @@ function App() {
           {/* Controls */}
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Interface selector */}
-            <label htmlFor="interface-select" className="sr-only">Select network interface</label>
+            <label htmlFor="interface-select" className="sr-only">
+              Select network interface
+            </label>
             <select
               id="interface-select"
               className="rounded border border-surface-border bg-surface-base px-2 py-1.5 text-sm min-w-0 max-w-[100px] sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary"
@@ -745,10 +842,13 @@ function App() {
             >
               {interfaces.length > 0 ? (
                 interfaces
-                  .filter((iface) => iface.type === 'ethernet' || iface.type === 'wifi')
+                  .filter(
+                    (iface) =>
+                      iface.type === "ethernet" || iface.type === "wifi",
+                  )
                   .map((iface) => (
                     <option key={iface.name} value={iface.name}>
-                      {iface.name} {!iface.up && '(down)'}
+                      {iface.name} {!iface.up && "(down)"}
                     </option>
                   ))
               ) : (
@@ -760,15 +860,31 @@ function App() {
             <button
               className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={toggleTheme}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={
+                isDark ? "Switch to light mode" : "Switch to dark mode"
+              }
             >
               {isDark ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
                   <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               )}
             </button>
@@ -777,9 +893,25 @@ function App() {
               onClick={() => setSettingsOpen(true)}
               aria-label="Open settings"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
             </button>
             <button
@@ -795,8 +927,19 @@ function App() {
               onClick={logout}
               aria-label="Logout"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
               </svg>
             </button>
           </div>
@@ -812,49 +955,68 @@ function App() {
       <main className="py-3 sm:py-4">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {/* Layer 1-2: Physical */}
-          <LinkCard data={cards.link} loading={loading} />
-          {cards.cable?.supported && <CableCard data={cards.cable} loading={loading} />}
-          {isWifi && cards.wifi?.ssid && <WiFiCard data={cards.wifi} loading={loading} visible={true} />}
+            {/* Layer 1-2: Physical */}
+            <LinkCard data={cards.link} loading={loading} />
+            {cards.cable?.supported && (
+              <CableCard data={cards.cable} loading={loading} />
+            )}
+            {isWifi && cards.wifi?.ssid && (
+              <WiFiCard data={cards.wifi} loading={loading} visible={true} />
+            )}
 
-          {/* Layer 2: Discovery */}
-          <SwitchCard data={cards.switch} loading={loading} />
-          <VLANCard data={cards.vlan} loading={loading} />
+            {/* Layer 2: Discovery */}
+            <SwitchCard data={cards.switch} loading={loading} />
+            <VLANCard data={cards.vlan} loading={loading} />
 
-          {/* Layer 3: Network */}
-          <DHCPCard data={cards.dhcp} publicip={cards.publicip} loading={loading} showPublicIP={showPublicIP} />
-          <GatewayCard data={cards.gateway} loading={loading} />
+            {/* Layer 3: Network */}
+            <DHCPCard
+              data={cards.dhcp}
+              publicip={cards.publicip}
+              loading={loading}
+              showPublicIP={showPublicIP}
+            />
+            <GatewayCard data={cards.gateway} loading={loading} />
 
-          {/* Layer 7: Application */}
-          <DNSCard data={cards.dns} loading={loading} />
+            {/* Layer 7: Application */}
+            <DNSCard data={cards.dns} loading={loading} />
 
-          {/* Health Checks - tests configured endpoints */}
-          <HealthCheckCard loading={loading} />
+            {/* Health Checks - tests configured endpoints */}
+            <HealthCheckCard loading={loading} />
 
-          {/* Performance Testing */}
-          <PerformanceCard loading={loading} />
+            {/* Performance Testing */}
+            <PerformanceCard loading={loading} />
 
-          {/* Network Discovery - device scanning (last) */}
-          <NetworkDiscoveryCard data={networkDiscovery} loading={loading} onScan={triggerDeviceScan} />
+            {/* Network Discovery - device scanning (last) */}
+            <NetworkDiscoveryCard
+              data={networkDiscovery}
+              loading={loading}
+              onScan={triggerDeviceScan}
+            />
           </div>
 
           {/* Development notice */}
           <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
-          <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-            NetScope v0.11.2 - Public IP in IP Config Card
-          </h2>
-          <p className="mt-2 text-xs sm:text-sm text-text-muted">
-            Tap the play button to run all tests.
-            <span className="hidden sm:inline"><br /></span>
-            <span className="sm:hidden"> </span>
-            Use the Network Discovery card to scan for devices on your network.
-          </p>
+            <h2 className="text-base sm:text-lg font-semibold text-text-muted">
+              NetScope v0.11.2 - Public IP in IP Config Card
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-text-muted">
+              Tap the play button to run all tests.
+              <span className="hidden sm:inline">
+                <br />
+              </span>
+              <span className="sm:hidden"> </span>
+              Use the Network Discovery card to scan for devices on your
+              network.
+            </p>
           </div>
         </div>
       </main>
 
       {/* Settings Drawer */}
-      <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsDrawer
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
 
       {/* FAB - Run All Tests */}
       <FAB />
@@ -869,8 +1031,8 @@ interface LoginFormProps {
 }
 
 function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -882,7 +1044,9 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <span className="text-4xl font-bold text-brand-primary">◉</span>
-          <h1 className="text-2xl font-bold text-text-primary mt-2">NetScope</h1>
+          <h1 className="text-2xl font-bold text-text-primary mt-2">
+            NetScope
+          </h1>
           <p className="text-text-muted mt-1">Network Diagnostic Tool</p>
         </div>
 
@@ -933,7 +1097,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             disabled={isLoading}
             className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
           >
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? "Logging in..." : "Login"}
           </button>
 
           <p className="mt-4 text-xs text-text-muted text-center">
@@ -946,43 +1110,84 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
 }
 
 interface ConnectionStatusProps {
-  status: 'connecting' | 'connected' | 'disconnected' | 'error';
+  status: "connecting" | "connected" | "disconnected" | "error";
   onReconnect: () => void;
 }
 
 function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
   const statusConfig = {
-    connecting: { color: 'text-status-warning', label: 'Connecting...', icon: 'spinner' },
-    connected: { color: 'text-status-success', label: 'Connected', icon: 'dot' },
-    disconnected: { color: 'text-status-error', label: 'Disconnected', icon: 'dot' },
-    error: { color: 'text-status-error', label: 'Error', icon: 'dot' },
+    connecting: {
+      color: "text-status-warning",
+      label: "Connecting...",
+      icon: "spinner",
+    },
+    connected: {
+      color: "text-status-success",
+      label: "Connected",
+      icon: "dot",
+    },
+    disconnected: {
+      color: "text-status-error",
+      label: "Disconnected",
+      icon: "dot",
+    },
+    error: { color: "text-status-error", label: "Error", icon: "dot" },
   };
 
   const config = statusConfig[status];
 
   return (
-    <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
-      <span className={`inline-flex items-center gap-1.5 text-xs ${config.color}`}>
+    <div
+      className="flex items-center gap-2 ml-4"
+      role="status"
+      aria-live="polite"
+    >
+      <span
+        className={`inline-flex items-center gap-1.5 text-xs ${config.color}`}
+      >
         <span
           className={`inline-flex items-center justify-center rounded-full ${config.color} ${
-            config.icon === 'spinner' ? 'bg-status-info/10 p-1' : 'bg-current/10 p-1'
+            config.icon === "spinner"
+              ? "bg-status-info/10 p-1"
+              : "bg-current/10 p-1"
           }`}
           aria-label={`WebSocket status: ${config.label}`}
         >
-          {config.icon === 'spinner' ? (
-            <svg className="w-3 h-3 animate-spin" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="3" />
-              <path className="opacity-75" fill="currentColor" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
+          {config.icon === "spinner" ? (
+            <svg
+              className="w-3 h-3 animate-spin"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                className="opacity-25"
+                cx="10"
+                cy="10"
+                r="8"
+                stroke="currentColor"
+                strokeWidth="3"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z"
+              />
             </svg>
           ) : (
-            <svg className="w-3 h-3" viewBox="0 0 8 8" fill="currentColor" aria-hidden="true">
+            <svg
+              className="w-3 h-3"
+              viewBox="0 0 8 8"
+              fill="currentColor"
+              aria-hidden="true"
+            >
               <circle cx="4" cy="4" r="4" />
             </svg>
           )}
         </span>
         {config.label}
       </span>
-      {(status === 'disconnected' || status === 'error') && (
+      {(status === "disconnected" || status === "error") && (
         <button
           onClick={onReconnect}
           className="text-xs text-brand-primary hover:underline focus:outline-none focus:ring-2 focus:ring-brand-primary rounded"

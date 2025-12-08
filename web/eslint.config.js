@@ -7,11 +7,19 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   { ignores: ['dist', 'node_modules', 'coverage'] },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: {
       ecmaVersion: 2024,
       globals: globals.browser,
+      parser: tseslint.parser, // Explicitly set the parser
+      parserOptions: {
+        // Point ESLint at the project's tsconfig; run paths are already rooted in /web
+        project: ['./tsconfig.json'],
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
     },
     plugins: {
       'react-hooks': reactHooks,
@@ -32,3 +40,4 @@ export default tseslint.config(
     },
   }
 );
+
