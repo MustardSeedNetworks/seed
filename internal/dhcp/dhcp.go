@@ -218,6 +218,10 @@ func GetLeaseInfo(interfaceName string) (*LeaseInfo, error) {
 }
 
 // getLeaseInfoDarwin reads DHCP info on macOS using ipconfig.
+// getLeaseInfoDarwin retrieves DHCP lease information for the specified network interface on Darwin (macOS) systems.
+// It executes the "ipconfig getpacket" command to obtain DHCP details such as server identifier, gateway, lease time, and DNS servers.
+// The parsed information is returned as a LeaseInfo struct.
+// Returns an error if the command fails or the output cannot be parsed.
 func getLeaseInfoDarwin(interfaceName string) (*LeaseInfo, error) {
 	cmd := exec.Command("ipconfig", "getpacket", interfaceName)
 	output, err := cmd.Output()

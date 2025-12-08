@@ -1,3 +1,34 @@
+#------------------------------------------------------------------------------
+# build-iperf3.sh
+#
+# This script automates the process of downloading, building, and bundling the
+# latest release of iperf3 from source for use with NetScope. It performs the
+# following steps:
+#
+# 1. Detects the operating system and architecture to ensure compatibility.
+# 2. Creates necessary build and output directories.
+# 3. Fetches the latest iperf3 release version from GitHub.
+# 4. Checks if the latest version is already built and skips rebuild if so.
+# 5. Downloads and extracts the iperf3 source tarball.
+# 6. Ensures required build dependencies (autoconf, automake, libtool) are installed.
+# 7. Configures the build for static linking where possible for portability.
+# 8. Builds iperf3 from source.
+# 9. Copies the built binary to the output directory, naming it according to OS/arch.
+# 10. Verifies the built binary and displays its version.
+#
+# Usage:
+#   ./build-iperf3.sh
+#
+# Requirements:
+#   - curl
+#   - autoconf, automake, libtool (will attempt to install if missing)
+#   - make, gcc (standard build tools)
+#
+# Output:
+#   The built iperf3 binary will be placed in the bin/ directory of the project,
+#   named according to the detected OS and architecture.
+#
+#------------------------------------------------------------------------------
 #!/bin/bash
 # Build iperf3 from source for bundling with NetScope
 # This script downloads the latest iperf3 release from GitHub and compiles it
@@ -34,8 +65,8 @@ echo "Fetching latest iperf3 release..."
 LATEST_VERSION=$(curl -s https://api.github.com/repos/esnet/iperf/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
 
 if [ -z "$LATEST_VERSION" ]; then
-    echo "Failed to fetch latest version, using fallback 3.17.1"
-    LATEST_VERSION="3.17.1"
+    echo "Failed to fetch latest version, using fallback v3.20"
+    LATEST_VERSION="v3.20"
 fi
 
 echo "Latest iperf3 version: $LATEST_VERSION"
@@ -50,7 +81,9 @@ fi
 
 if [ -f "$BINARY_PATH" ]; then
     EXISTING_VERSION=$("$BINARY_PATH" --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "")
-    if [ "$EXISTING_VERSION" = "${LATEST_VERSION#v}" ] || [ "$EXISTING_VERSION" = "$LATEST_VERSION" ]; then
+    EXISTING_VERSION_STRIPPED="${EXISTING_VERSION#v}"
+    LATEST_VERSION_STRIPPED="${LATEST_VERSION#v}"
+    if [ "$EXISTING_VERSION_STRIPPED" = "$LATEST_VERSION_STRIPPED" ]; then
         echo "iperf3 $EXISTING_VERSION already built at $BINARY_PATH"
         exit 0
     fi
@@ -63,18 +96,23 @@ TARBALL_FILE="$BUILD_DIR/iperf3-$LATEST_VERSION.tar.gz"
 if [ ! -f "$TARBALL_FILE" ]; then
     echo "Downloading iperf3 source..."
     curl -L -o "$TARBALL_FILE" "$TARBALL_URL"
-fi
-
 # Extract
 echo "Extracting source..."
 cd "$BUILD_DIR"
-rm -rf "iperf-$LATEST_VERSION" "iperf-${LATEST_VERSION#v}"
+# Remove all old iperf-* directories to avoid confusion
+find . -maxdepth 1 -type d -name "iperf-*" -exec rm -rf {} +
 tar -xzf "$TARBALL_FILE"
 
-# Find the extracted directory (could be iperf-3.17.1 or iperf-v3.17.1)
-SOURCE_DIR=$(ls -d iperf-* 2>/dev/null | head -1)
+# Find the extracted directory (should match the version)
+SOURCE_DIR=$(find . -maxdepth 1 -type d -name "iperf-${LATEST_VERSION#v}" | head -1)
+if [ -z "$SOURCE_DIR" ]; then
+    # Fallback: try matching with the full tag name
+    SOURCE_DIR=$(find . -maxdepth 1 -type d -name "iperf-$LATEST_VERSION" | head -1)
+fi
 if [ -z "$SOURCE_DIR" ]; then
     echo "Error: Could not find extracted source directory"
+    exit 1
+fi
     exit 1
 fi
 
@@ -87,6 +125,7 @@ if ! command -v autoconf &> /dev/null; then
     if [ "$OS" = "darwin" ]; then
         brew install autoconf automake libtool
     elif command -v apt-get &> /dev/null; then
+        sudo apt-get update
         sudo apt-get install -y autoconf automake libtool
     elif command -v yum &> /dev/null; then
         sudo yum install -y autoconf automake libtool
@@ -111,10 +150,14 @@ fi
 
 echo "Building iperf3..."
 make clean 2>/dev/null || true
-make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
-
-echo "Installing to $BUILD_DIR/install..."
-make install
+# Copy binary to output directory
+if [ ! -f "$BUILD_DIR/install/bin/iperf3" ]; then
+    echo "Error: Built iperf3 binary not found at $BUILD_DIR/install/bin/iperf3"
+    exit 1
+fi
+echo "Copying binary to $BINARY_PATH..."
+cp "$BUILD_DIR/install/bin/iperf3" "$BINARY_PATH"
+chmod +x "$BINARY_PATH"
 
 # Copy binary to output directory
 echo "Copying binary to $BINARY_PATH..."

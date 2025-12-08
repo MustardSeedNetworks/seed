@@ -3,16 +3,16 @@ Business Source License 1.1
 License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
 "Business Source License" is a trademark of MariaDB Corporation Ab.
 
------------------------------------------------------------------------------
+---
 
 Parameters
 
-Licensor:             Kris Armstrong
-Licensed Work:        NetScope
-                      The Licensed Work is (c) 2025 Kris Armstrong.
+Licensor: Kris Armstrong
+Licensed Work: NetScope
+The Licensed Work is (c) 2025 Kris Armstrong.
 Additional Use Grant: You may make use of the Licensed Work, provided that
-                      you do not use the Licensed Work for a Network
-                      Diagnostic Service.
+you do not use the Licensed Work for a Network
+Diagnostic Service.
 
                       A "Network Diagnostic Service" is a commercial offering
                       that allows third parties (other than your employees
@@ -20,11 +20,11 @@ Additional Use Grant: You may make use of the Licensed Work, provided that
                       Licensed Work by providing network diagnostic,
                       monitoring, or troubleshooting capabilities.
 
-Change Date:          2029-12-01
+Change Date: 2029-12-01
 
-Change License:       Apache License, Version 2.0
+Change License: Apache License, Version 2.0
 
------------------------------------------------------------------------------
+---
 
 Terms
 
@@ -72,7 +72,7 @@ MariaDB hereby grants you permission to use this License's text to license
 your works, and to refer to it using the trademark "Business Source License",
 as long as you comply with the Covenants of Licensor below.
 
------------------------------------------------------------------------------
+---
 
 Covenants of Licensor
 
@@ -95,7 +95,7 @@ other recipients of the licensed work to be provided by Licensor:
 
 4. Not to modify this License in any other way.
 
------------------------------------------------------------------------------
+---
 
 Notice
 
