@@ -1,5 +1,5 @@
-import { Card, CardValue, CardDivider, Status } from '../ui/Card';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { Card, CardValue, CardDivider, Status } from "../ui/Card";
+import { CollapsibleSection } from "../ui/CollapsibleSection";
 
 interface LookupResult {
   result: string;
@@ -52,17 +52,17 @@ function LookupRow({
 
   const statusBadge = lookup.status;
   const statusColor =
-    statusBadge === 'success'
-      ? 'text-status-success'
-      : statusBadge === 'warning'
-      ? 'text-status-warning'
-      : 'text-status-error';
+    statusBadge === "success"
+      ? "text-status-success"
+      : statusBadge === "warning"
+        ? "text-status-warning"
+        : "text-status-error";
   const statusBg =
-    statusBadge === 'success'
-      ? 'bg-status-success/10'
-      : statusBadge === 'warning'
-      ? 'bg-status-warning/10'
-      : 'bg-status-error/10';
+    statusBadge === "success"
+      ? "bg-status-success/10"
+      : statusBadge === "warning"
+        ? "bg-status-warning/10"
+        : "bg-status-error/10";
 
   return (
     <div className="mb-2">
@@ -73,7 +73,11 @@ function LookupRow({
             className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor} ${statusBg}`}
             aria-label={`Status: ${statusBadge}`}
           >
-            {statusBadge === 'success' ? 'OK' : statusBadge === 'warning' ? 'Warn' : 'Fail'}
+            {statusBadge === "success"
+              ? "OK"
+              : statusBadge === "warning"
+                ? "Warn"
+                : "Fail"}
           </span>
           <span className={`text-xs font-medium ${statusColor}`}>
             {formatTime(lookup.timeMs || lookup.time)}
@@ -105,16 +109,22 @@ export function DNSCard({ data, loading }: DNSCardProps) {
   }
 
   // Determine overall status based on forward/reverse lookups
-  let overallStatus: Status = 'success';
-  const lookups = [data.forward, data.forwardIpv6, data.reverse, data.reverseIpv6];
-  if (lookups.some((l) => l?.status === 'error')) {
-    overallStatus = 'error';
-  } else if (lookups.some((l) => l?.status === 'warning')) {
-    overallStatus = 'warning';
+  let overallStatus: Status = "success";
+  const lookups = [
+    data.forward,
+    data.forwardIpv6,
+    data.reverse,
+    data.reverseIpv6,
+  ];
+  if (lookups.some((l) => l?.status === "error")) {
+    overallStatus = "error";
+  } else if (lookups.some((l) => l?.status === "warning")) {
+    overallStatus = "warning";
   }
 
   // Show all DNS servers if available
-  const servers = data.servers && data.servers.length > 0 ? data.servers : [data.server];
+  const servers =
+    data.servers && data.servers.length > 0 ? data.servers : [data.server];
 
   return (
     <Card title="DNS" status={overallStatus}>
@@ -163,24 +173,26 @@ export function DNSCard({ data, loading }: DNSCardProps) {
             count={data.perServerResults.length}
             variant="compact"
             status={
-              data.perServerResults.some((s) => s.status === 'error')
-                ? 'error'
-                : data.perServerResults.some((s) => s.status === 'warning')
-                ? 'warning'
-                : 'success'
+              data.perServerResults.some((s) => s.status === "error")
+                ? "error"
+                : data.perServerResults.some((s) => s.status === "warning")
+                  ? "warning"
+                  : "success"
             }
           >
             {data.perServerResults.map((server) => (
               <div key={server.server} className="py-1">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono text-text-primary">{server.server}</span>
+                  <span className="text-xs font-mono text-text-primary">
+                    {server.server}
+                  </span>
                   <span
                     className={`text-xs font-medium ${
-                      server.status === 'success'
-                        ? 'text-status-success'
-                        : server.status === 'warning'
-                        ? 'text-status-warning'
-                        : 'text-status-error'
+                      server.status === "success"
+                        ? "text-status-success"
+                        : server.status === "warning"
+                          ? "text-status-warning"
+                          : "text-status-error"
                     }`}
                   >
                     {formatTime(server.avgTimeMs)}
@@ -192,30 +204,32 @@ export function DNSCard({ data, loading }: DNSCardProps) {
                     <span className="inline-flex items-center gap-2">
                       <span
                         className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          server.forward.status === 'success'
-                            ? 'text-status-success bg-status-success/10'
-                            : server.forward.status === 'warning'
-                            ? 'text-status-warning bg-status-warning/10'
-                            : 'text-status-error bg-status-error/10'
+                          server.forward.status === "success"
+                            ? "text-status-success bg-status-success/10"
+                            : server.forward.status === "warning"
+                              ? "text-status-warning bg-status-warning/10"
+                              : "text-status-error bg-status-error/10"
                         }`}
                         aria-label={`Status: ${server.forward.status}`}
                       >
-                        {server.forward.status === 'success'
-                          ? 'OK'
-                          : server.forward.status === 'warning'
-                          ? 'Warn'
-                          : 'Fail'}
+                        {server.forward.status === "success"
+                          ? "OK"
+                          : server.forward.status === "warning"
+                            ? "Warn"
+                            : "Fail"}
                       </span>
                       <span
                         className={
-                          server.forward.status === 'success'
-                            ? 'text-status-success'
-                            : server.forward.status === 'warning'
-                            ? 'text-status-warning'
-                            : 'text-status-error'
+                          server.forward.status === "success"
+                            ? "text-status-success"
+                            : server.forward.status === "warning"
+                              ? "text-status-warning"
+                              : "text-status-error"
                         }
                       >
-                        {server.forward.result === 'No A record' ? 'N/A' : formatTime(server.forward.timeMs)}
+                        {server.forward.result === "No A record"
+                          ? "N/A"
+                          : formatTime(server.forward.timeMs)}
                       </span>
                     </span>
                   </div>
@@ -226,30 +240,32 @@ export function DNSCard({ data, loading }: DNSCardProps) {
                     <span className="inline-flex items-center gap-2">
                       <span
                         className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          server.forwardIpv6.status === 'success'
-                            ? 'text-status-success bg-status-success/10'
-                            : server.forwardIpv6.status === 'warning'
-                            ? 'text-status-warning bg-status-warning/10'
-                            : 'text-status-error bg-status-error/10'
+                          server.forwardIpv6.status === "success"
+                            ? "text-status-success bg-status-success/10"
+                            : server.forwardIpv6.status === "warning"
+                              ? "text-status-warning bg-status-warning/10"
+                              : "text-status-error bg-status-error/10"
                         }`}
                         aria-label={`Status: ${server.forwardIpv6.status}`}
                       >
-                        {server.forwardIpv6.status === 'success'
-                          ? 'OK'
-                          : server.forwardIpv6.status === 'warning'
-                          ? 'Warn'
-                          : 'Fail'}
+                        {server.forwardIpv6.status === "success"
+                          ? "OK"
+                          : server.forwardIpv6.status === "warning"
+                            ? "Warn"
+                            : "Fail"}
                       </span>
                       <span
                         className={
-                          server.forwardIpv6.status === 'success'
-                            ? 'text-status-success'
-                            : server.forwardIpv6.status === 'warning'
-                            ? 'text-status-warning'
-                            : 'text-status-error'
+                          server.forwardIpv6.status === "success"
+                            ? "text-status-success"
+                            : server.forwardIpv6.status === "warning"
+                              ? "text-status-warning"
+                              : "text-status-error"
                         }
                       >
-                        {server.forwardIpv6.result === 'No AAAA record' ? 'N/A' : formatTime(server.forwardIpv6.timeMs)}
+                        {server.forwardIpv6.result === "No AAAA record"
+                          ? "N/A"
+                          : formatTime(server.forwardIpv6.timeMs)}
                       </span>
                     </span>
                   </div>

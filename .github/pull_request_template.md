@@ -5,7 +5,8 @@
 ## Changes
 
 <!-- List the key changes made -->
-- 
+
+-
 
 ## Type of Change
 
@@ -19,6 +20,7 @@
 ## Testing
 
 <!-- Describe how you tested these changes -->
+
 - [ ] Unit tests pass (`go test ./...`)
 - [ ] Frontend builds (`cd web && npm run build`)
 - [ ] Manual testing on Ubuntu VM
@@ -26,6 +28,7 @@
 ## Related Issues
 
 <!-- Link to related issues using "closes #XX" or "fixes #XX" -->
+
 Closes #
 
 ## Checklist

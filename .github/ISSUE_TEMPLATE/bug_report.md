@@ -1,9 +1,9 @@
 ---
 name: Bug Report
 about: Report a bug to help us improve
-title: '[BUG] '
-labels: 'type: bug'
-assignees: ''
+title: "[BUG] "
+labels: "type: bug"
+assignees: ""
 ---
 
 ## Description

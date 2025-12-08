@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { useState } from "react";
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { CollapsibleSection } from "../ui/CollapsibleSection";
 
 export interface LLDPInfo {
   chassisId: string;
@@ -32,7 +32,7 @@ export interface EDPInfo {
   vlan?: number;
 }
 
-export type DiscoveryMethod = 'arp' | 'lldp' | 'cdp' | 'edp' | 'mdns' | 'ping';
+export type DiscoveryMethod = "arp" | "lldp" | "cdp" | "edp" | "mdns" | "ping";
 
 export interface DiscoveredDevice {
   ip: string;
@@ -69,16 +69,16 @@ interface NetworkDiscoveryCardProps {
 }
 
 function formatLastSeen(dateStr: string): string {
-  if (!dateStr) return 'Never';
+  if (!dateStr) return "Never";
   const date = new Date(dateStr);
   // Check for invalid date or Go's zero time (year 1 or epoch)
-  if (isNaN(date.getTime()) || date.getFullYear() < 2000) return 'Never';
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) return "Never";
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
 
-  if (diffSec < 0) return 'Never'; // Future date = invalid
-  if (diffSec < 60) return 'Just now';
+  if (diffSec < 0) return "Never"; // Future date = invalid
+  if (diffSec < 60) return "Just now";
   if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
   if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
   return `${Math.floor(diffSec / 86400)}d ago`;
@@ -86,22 +86,28 @@ function formatLastSeen(dateStr: string): string {
 
 function MethodBadge({ method }: { method: DiscoveryMethod }) {
   const colors: Record<DiscoveryMethod, string> = {
-    arp: 'bg-blue-500/20 text-blue-400',
-    lldp: 'bg-green-500/20 text-green-400',
-    cdp: 'bg-orange-500/20 text-orange-400',
-    edp: 'bg-purple-500/20 text-purple-400',
-    mdns: 'bg-teal-500/20 text-teal-400',
-    ping: 'bg-cyan-500/20 text-cyan-400',
+    arp: "bg-blue-500/20 text-blue-400",
+    lldp: "bg-green-500/20 text-green-400",
+    cdp: "bg-orange-500/20 text-orange-400",
+    edp: "bg-purple-500/20 text-purple-400",
+    mdns: "bg-teal-500/20 text-teal-400",
+    ping: "bg-cyan-500/20 text-cyan-400",
   };
 
   return (
-    <span className={`px-1.5 py-0.5 rounded text-xs font-medium uppercase ${colors[method]}`}>
+    <span
+      className={`px-1.5 py-0.5 rounded text-xs font-medium uppercase ${colors[method]}`}
+    >
       {method}
     </span>
   );
 }
 
-function DeviceRow({ device, isExpanded, onToggle }: {
+function DeviceRow({
+  device,
+  isExpanded,
+  onToggle,
+}: {
   device: DiscoveredDevice;
   isExpanded: boolean;
   onToggle: () => void;
@@ -119,10 +125,13 @@ function DeviceRow({ device, isExpanded, onToggle }: {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono text-sm text-text-primary">
-                {device.ip || 'No IP'}
+                {device.ip || "No IP"}
               </span>
               {device.hostname && (
-                <span className="text-xs text-text-muted truncate max-w-[120px]" title={device.hostname}>
+                <span
+                  className="text-xs text-text-muted truncate max-w-[120px]"
+                  title={device.hostname}
+                >
                   ({device.hostname})
                 </span>
               )}
@@ -131,8 +140,11 @@ function DeviceRow({ device, isExpanded, onToggle }: {
               {device.discoveryMethod.map((method) => (
                 <MethodBadge key={method} method={method} />
               ))}
-              {device.vendor && device.vendor !== 'Unknown' && (
-                <span className="text-xs text-text-muted truncate max-w-[100px]" title={device.vendor}>
+              {device.vendor && device.vendor !== "Unknown" && (
+                <span
+                  className="text-xs text-text-muted truncate max-w-[100px]"
+                  title={device.vendor}
+                >
                   {device.vendor}
                 </span>
               )}
@@ -144,8 +156,10 @@ function DeviceRow({ device, isExpanded, onToggle }: {
                 {device.osGuess}
               </span>
             )}
-            <span className={`text-lg transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-              {hasDetails ? '▼' : '○'}
+            <span
+              className={`text-lg transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            >
+              {hasDetails ? "▼" : "○"}
             </span>
           </div>
         </div>
@@ -156,9 +170,14 @@ function DeviceRow({ device, isExpanded, onToggle }: {
           <div className="space-y-1 text-xs">
             <CardRow label="MAC" value={device.mac} />
             {device.vendor && <CardRow label="Vendor" value={device.vendor} />}
-            {device.osGuess && <CardRow label="OS Guess" value={device.osGuess} />}
+            {device.osGuess && (
+              <CardRow label="OS Guess" value={device.osGuess} />
+            )}
             {device.ttl && <CardRow label="TTL" value={device.ttl} />}
-            <CardRow label="Last Seen" value={formatLastSeen(device.lastSeen)} />
+            <CardRow
+              label="Last Seen"
+              value={formatLastSeen(device.lastSeen)}
+            />
 
             {device.lldpInfo && (
               <>
@@ -167,19 +186,35 @@ function DeviceRow({ device, isExpanded, onToggle }: {
                 <CardRow label="Chassis ID" value={device.lldpInfo.chassisId} />
                 <CardRow label="Port ID" value={device.lldpInfo.portId} />
                 {device.lldpInfo.systemName && (
-                  <CardRow label="System Name" value={device.lldpInfo.systemName} />
+                  <CardRow
+                    label="System Name"
+                    value={device.lldpInfo.systemName}
+                  />
                 )}
                 {device.lldpInfo.portDescription && (
-                  <CardRow label="Port Desc" value={device.lldpInfo.portDescription} />
+                  <CardRow
+                    label="Port Desc"
+                    value={device.lldpInfo.portDescription}
+                  />
                 )}
                 {device.lldpInfo.systemDescription && (
-                  <CardRow label="System Desc" value={device.lldpInfo.systemDescription} />
+                  <CardRow
+                    label="System Desc"
+                    value={device.lldpInfo.systemDescription}
+                  />
                 )}
-                {device.lldpInfo.capabilities && device.lldpInfo.capabilities.length > 0 && (
-                  <CardRow label="Capabilities" value={device.lldpInfo.capabilities.join(', ')} />
-                )}
+                {device.lldpInfo.capabilities &&
+                  device.lldpInfo.capabilities.length > 0 && (
+                    <CardRow
+                      label="Capabilities"
+                      value={device.lldpInfo.capabilities.join(", ")}
+                    />
+                  )}
                 {device.lldpInfo.managementAddress && (
-                  <CardRow label="Mgmt IP" value={device.lldpInfo.managementAddress} />
+                  <CardRow
+                    label="Mgmt IP"
+                    value={device.lldpInfo.managementAddress}
+                  />
                 )}
               </>
             )}
@@ -194,16 +229,29 @@ function DeviceRow({ device, isExpanded, onToggle }: {
                   <CardRow label="Platform" value={device.cdpInfo.platform} />
                 )}
                 {device.cdpInfo.softwareVersion && (
-                  <CardRow label="Software" value={device.cdpInfo.softwareVersion} />
+                  <CardRow
+                    label="Software"
+                    value={device.cdpInfo.softwareVersion}
+                  />
                 )}
-                {device.cdpInfo.capabilities && device.cdpInfo.capabilities.length > 0 && (
-                  <CardRow label="Capabilities" value={device.cdpInfo.capabilities.join(', ')} />
-                )}
+                {device.cdpInfo.capabilities &&
+                  device.cdpInfo.capabilities.length > 0 && (
+                    <CardRow
+                      label="Capabilities"
+                      value={device.cdpInfo.capabilities.join(", ")}
+                    />
+                  )}
                 {device.cdpInfo.nativeVlan && (
-                  <CardRow label="Native VLAN" value={device.cdpInfo.nativeVlan} />
+                  <CardRow
+                    label="Native VLAN"
+                    value={device.cdpInfo.nativeVlan}
+                  />
                 )}
                 {device.cdpInfo.managementAddress && (
-                  <CardRow label="Mgmt IP" value={device.cdpInfo.managementAddress} />
+                  <CardRow
+                    label="Mgmt IP"
+                    value={device.cdpInfo.managementAddress}
+                  />
                 )}
               </>
             )}
@@ -214,14 +262,20 @@ function DeviceRow({ device, isExpanded, onToggle }: {
                 <p className="font-medium text-text-primary mb-1">EDP Info</p>
                 <CardRow label="Device ID" value={device.edpInfo.deviceId} />
                 {device.edpInfo.displayName && (
-                  <CardRow label="Display Name" value={device.edpInfo.displayName} />
+                  <CardRow
+                    label="Display Name"
+                    value={device.edpInfo.displayName}
+                  />
                 )}
                 <CardRow label="Port ID" value={device.edpInfo.portId} />
                 {device.edpInfo.platform && (
                   <CardRow label="Platform" value={device.edpInfo.platform} />
                 )}
                 {device.edpInfo.softwareVersion && (
-                  <CardRow label="Software" value={device.edpInfo.softwareVersion} />
+                  <CardRow
+                    label="Software"
+                    value={device.edpInfo.softwareVersion}
+                  />
                 )}
                 {device.edpInfo.vlan && (
                   <CardRow label="VLAN" value={device.edpInfo.vlan} />
@@ -235,8 +289,14 @@ function DeviceRow({ device, isExpanded, onToggle }: {
   );
 }
 
-export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscoveryCardProps) {
-  const [expandedDevices, setExpandedDevices] = useState<Set<string>>(new Set());
+export function NetworkDiscoveryCard({
+  data,
+  loading,
+  onScan,
+}: NetworkDiscoveryCardProps) {
+  const [expandedDevices, setExpandedDevices] = useState<Set<string>>(
+    new Set(),
+  );
 
   const toggleDevice = (mac: string) => {
     setExpandedDevices((prev) => {
@@ -281,9 +341,9 @@ export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscovery
   const deviceCount = devices.length;
 
   const getOverallStatus = (): Status => {
-    if (status.scanning) return 'loading';
-    if (deviceCount === 0) return 'warning';
-    return 'success';
+    if (status.scanning) return "loading";
+    if (deviceCount === 0) return "warning";
+    return "success";
   };
 
   const cardStatus = getOverallStatus();
@@ -294,8 +354,8 @@ export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscovery
       return b.discoveryMethod.length - a.discoveryMethod.length;
     }
     // Sort by IP numerically
-    const ipA = a.ip.split('.').map(Number);
-    const ipB = b.ip.split('.').map(Number);
+    const ipA = a.ip.split(".").map(Number);
+    const ipB = b.ip.split(".").map(Number);
     for (let i = 0; i < 4; i++) {
       if (ipA[i] !== ipB[i]) return (ipA[i] || 0) - (ipB[i] || 0);
     }
@@ -306,7 +366,7 @@ export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscovery
     <Card title="Network Discovery" status={cardStatus}>
       <div className="flex items-center justify-between gap-2">
         <CardValue
-          value={`${deviceCount} device${deviceCount !== 1 ? 's' : ''}`}
+          value={`${deviceCount} device${deviceCount !== 1 ? "s" : ""}`}
           size="lg"
         />
         {onScan && (
@@ -322,7 +382,7 @@ export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscovery
                 Scanning...
               </>
             ) : (
-              'Scan'
+              "Scan"
             )}
           </button>
         )}
@@ -331,11 +391,19 @@ export function NetworkDiscoveryCard({ data, loading, onScan }: NetworkDiscovery
       <CardDivider />
 
       {/* Network Info - Collapsible */}
-      <CollapsibleSection title="Network Info" variant="compact" defaultOpen={false}>
+      <CollapsibleSection
+        title="Network Info"
+        variant="compact"
+        defaultOpen={false}
+      >
         <div className="space-y-1 text-xs">
           {status.subnet && <CardRow label="Subnet" value={status.subnet} />}
-          {status.localIP && <CardRow label="Local IP" value={status.localIP} />}
-          {status.interface && <CardRow label="Interface" value={status.interface} />}
+          {status.localIP && (
+            <CardRow label="Local IP" value={status.localIP} />
+          )}
+          {status.interface && (
+            <CardRow label="Interface" value={status.interface} />
+          )}
           <CardRow label="Last Scan" value={formatLastSeen(status.lastScan)} />
         </div>
       </CollapsibleSection>

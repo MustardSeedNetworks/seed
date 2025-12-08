@@ -1,9 +1,9 @@
 ---
 name: Task
 about: Track a development task
-title: ''
-labels: ''
-assignees: ''
+title: ""
+labels: ""
+assignees: ""
 ---
 
 ## Description

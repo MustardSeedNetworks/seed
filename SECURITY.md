@@ -30,12 +30,12 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 
 ### Severity Levels
 
-| Level | Description | Target Resolution |
-|-------|-------------|-------------------|
-| Critical | Remote code execution, auth bypass | 24-48 hours |
-| High | Data exposure, privilege escalation | 7 days |
-| Medium | Limited impact vulnerabilities | 30 days |
-| Low | Minor issues, hardening | Next release |
+| Level    | Description                         | Target Resolution |
+| -------- | ----------------------------------- | ----------------- |
+| Critical | Remote code execution, auth bypass  | 24-48 hours       |
+| High     | Data exposure, privilege escalation | 7 days            |
+| Medium   | Limited impact vulnerabilities      | 30 days           |
+| Low      | Minor issues, hardening             | Next release      |
 
 ## Security Best Practices
 

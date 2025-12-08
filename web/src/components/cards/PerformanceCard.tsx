@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
-import { getAuthHeaders } from '../../hooks/useAuth';
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { getAuthHeaders } from "../../hooks/useAuth";
 
 // Speedtest types
 interface SpeedtestData {
@@ -65,86 +65,94 @@ interface PerformanceCardProps {
 interface IperfSettings {
   server: string;
   port: number;
-  protocol: 'tcp' | 'udp';
-  direction: 'upload' | 'download';
+  protocol: "tcp" | "udp";
+  direction: "upload" | "download";
   duration: number;
   serverPort: number;
   enableServer: boolean;
 }
 
 const speedtestPhaseLabels: Record<string, string> = {
-  idle: 'Ready',
-  finding_server: 'Finding server...',
-  testing_latency: 'Testing latency...',
-  testing_download: 'Testing download...',
-  testing_upload: 'Testing upload...',
-  complete: 'Complete',
+  idle: "Ready",
+  finding_server: "Finding server...",
+  testing_latency: "Testing latency...",
+  testing_download: "Testing download...",
+  testing_upload: "Testing upload...",
+  complete: "Complete",
 };
 
 const iperfPhaseLabels: Record<string, string> = {
-  idle: 'Ready',
-  connecting: 'Connecting...',
-  testing: 'Testing...',
-  complete: 'Complete',
+  idle: "Ready",
+  connecting: "Connecting...",
+  testing: "Testing...",
+  complete: "Complete",
 };
 
 export function PerformanceCard({ loading }: PerformanceCardProps) {
   // Speedtest state
-  const [speedtestStatus, setSpeedtestStatus] = useState<SpeedtestStatus | null>(null);
-  const [speedtestResult, setSpeedtestResult] = useState<SpeedtestData | null>(null);
+  const [speedtestStatus, setSpeedtestStatus] =
+    useState<SpeedtestStatus | null>(null);
+  const [speedtestResult, setSpeedtestResult] = useState<SpeedtestData | null>(
+    null,
+  );
   const [speedtestError, setSpeedtestError] = useState<string | null>(null);
   const [speedtestRunning, setSpeedtestRunning] = useState(false);
 
   // iperf3 state
   const [iperfInfo, setIperfInfo] = useState<IperfInfo | null>(null);
-  const [iperfClientStatus, setIperfClientStatus] = useState<IperfClientStatus | null>(null);
+  const [iperfClientStatus, setIperfClientStatus] =
+    useState<IperfClientStatus | null>(null);
   const [iperfResult, setIperfResult] = useState<IperfResult | null>(null);
-  const [iperfServerStatus, setIperfServerStatus] = useState<IperfServerStatus | null>(null);
+  const [iperfServerStatus, setIperfServerStatus] =
+    useState<IperfServerStatus | null>(null);
   const [iperfError, setIperfError] = useState<string | null>(null);
   const [iperfClientRunning, setIperfClientRunning] = useState(false);
 
   // iperf3 settings (loaded from localStorage/Settings)
   const [iperfSettings, setIperfSettings] = useState<IperfSettings>({
-    server: '',
+    server: "",
     port: 5201,
-    protocol: 'tcp',
-    direction: 'download',
+    protocol: "tcp",
+    direction: "download",
     duration: 10,
     serverPort: 5201,
     enableServer: false,
   });
 
   // Start/stop iperf server based on settings
-  const manageIperfServer = useCallback(async (shouldRun: boolean, port: number) => {
-    try {
-      const action = shouldRun ? 'start' : 'stop';
-      const res = await fetch('/api/iperf/server', {
-        method: 'POST',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action, port }),
-      });
-      if (res.ok) {
-        const statusRes = await fetch('/api/iperf/server/status', {
-          headers: getAuthHeaders(),
+  const manageIperfServer = useCallback(
+    async (shouldRun: boolean, port: number) => {
+      try {
+        const action = shouldRun ? "start" : "stop";
+        const res = await fetch("/api/iperf/server", {
+          method: "POST",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action, port }),
         });
-        if (statusRes.ok) {
-          setIperfServerStatus(await statusRes.json());
+        if (res.ok) {
+          const statusRes = await fetch("/api/iperf/server/status", {
+            headers: getAuthHeaders(),
+          });
+          if (statusRes.ok) {
+            setIperfServerStatus(await statusRes.json());
+          }
         }
+      } catch (err) {
+        console.error("Failed to manage iperf server:", err);
       }
-    } catch (err) {
-      console.error('Failed to manage iperf server:', err);
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Fetch initial status
   useEffect(() => {
     const fetchStatus = async () => {
       try {
         // Fetch speedtest status
-        const speedRes = await fetch('/api/speedtest/status', {
+        const speedRes = await fetch("/api/speedtest/status", {
           headers: getAuthHeaders(),
         });
         if (speedRes.ok) {
@@ -157,7 +165,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
         }
 
         // Fetch iperf3 info
-        const iperfInfoRes = await fetch('/api/iperf/info', {
+        const iperfInfoRes = await fetch("/api/iperf/info", {
           headers: getAuthHeaders(),
         });
         if (iperfInfoRes.ok) {
@@ -165,7 +173,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
         }
 
         // Fetch iperf3 client status
-        const iperfClientRes = await fetch('/api/iperf/client/status', {
+        const iperfClientRes = await fetch("/api/iperf/client/status", {
           headers: getAuthHeaders(),
         });
         if (iperfClientRes.ok) {
@@ -178,14 +186,14 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
         }
 
         // Fetch iperf3 server status
-        const iperfServerRes = await fetch('/api/iperf/server/status', {
+        const iperfServerRes = await fetch("/api/iperf/server/status", {
           headers: getAuthHeaders(),
         });
         if (iperfServerRes.ok) {
           setIperfServerStatus(await iperfServerRes.json());
         }
       } catch (err) {
-        console.error('Failed to fetch performance status:', err);
+        console.error("Failed to fetch performance status:", err);
       }
     };
     fetchStatus();
@@ -195,7 +203,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   useEffect(() => {
     const loadSettings = () => {
       try {
-        const saved = localStorage.getItem('netscope-iperf-settings');
+        const saved = localStorage.getItem("netscope-iperf-settings");
         if (saved) {
           const parsed = JSON.parse(saved) as Partial<IperfSettings>;
           setIperfSettings((prev) => {
@@ -208,7 +216,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
           });
         }
       } catch (err) {
-        console.error('Failed to load iperf settings:', err);
+        console.error("Failed to load iperf settings:", err);
       }
     };
 
@@ -219,16 +227,25 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       setIperfSettings((prev) => {
         const newSettings = { ...prev, ...e.detail };
         // Manage server based on enableServer setting
-        if (newSettings.enableServer !== prev.enableServer || newSettings.serverPort !== prev.serverPort) {
+        if (
+          newSettings.enableServer !== prev.enableServer ||
+          newSettings.serverPort !== prev.serverPort
+        ) {
           manageIperfServer(newSettings.enableServer, newSettings.serverPort);
         }
         return newSettings;
       });
     };
 
-    window.addEventListener('iperfSettingsUpdated', handleSettingsUpdate as EventListener);
+    window.addEventListener(
+      "iperfSettingsUpdated",
+      handleSettingsUpdate as EventListener,
+    );
     return () => {
-      window.removeEventListener('iperfSettingsUpdated', handleSettingsUpdate as EventListener);
+      window.removeEventListener(
+        "iperfSettingsUpdated",
+        handleSettingsUpdate as EventListener,
+      );
     };
   }, [manageIperfServer, iperfInfo?.installed]);
 
@@ -238,7 +255,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('/api/speedtest/status', {
+        const res = await fetch("/api/speedtest/status", {
           headers: getAuthHeaders(),
         });
         if (res.ok) {
@@ -250,11 +267,15 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
               setSpeedtestResult(data.last);
             }
             // Signal FAB that speedtest is complete
-            window.dispatchEvent(new CustomEvent('cardTestComplete', { detail: { test: 'speedtest' } }));
+            window.dispatchEvent(
+              new CustomEvent("cardTestComplete", {
+                detail: { test: "speedtest" },
+              }),
+            );
           }
         }
       } catch (err) {
-        console.error('Failed to poll speedtest status:', err);
+        console.error("Failed to poll speedtest status:", err);
       }
     }, 1000);
 
@@ -267,7 +288,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('/api/iperf/client/status', {
+        const res = await fetch("/api/iperf/client/status", {
           headers: getAuthHeaders(),
         });
         if (res.ok) {
@@ -279,11 +300,15 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
               setIperfResult(data.last);
             }
             // Signal FAB that iperf is complete
-            window.dispatchEvent(new CustomEvent('cardTestComplete', { detail: { test: 'iperf' } }));
+            window.dispatchEvent(
+              new CustomEvent("cardTestComplete", {
+                detail: { test: "iperf" },
+              }),
+            );
           }
         }
       } catch (err) {
-        console.error('Failed to poll iperf status:', err);
+        console.error("Failed to poll iperf status:", err);
       }
     }, 1000);
 
@@ -293,57 +318,59 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   const runSpeedtest = useCallback(async () => {
     setSpeedtestError(null);
     setSpeedtestRunning(true);
-    setSpeedtestStatus({ running: true, phase: 'finding_server', progress: 0 });
+    setSpeedtestStatus({ running: true, phase: "finding_server", progress: 0 });
 
     try {
-      const res = await fetch('/api/speedtest', {
-        method: 'POST',
+      const res = await fetch("/api/speedtest", {
+        method: "POST",
         headers: getAuthHeaders(),
       });
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(text || 'Speedtest failed');
+        throw new Error(text || "Speedtest failed");
       }
     } catch (err) {
-      setSpeedtestError(err instanceof Error ? err.message : 'Speedtest failed');
-      setSpeedtestStatus({ running: false, phase: 'idle', progress: 0 });
+      setSpeedtestError(
+        err instanceof Error ? err.message : "Speedtest failed",
+      );
+      setSpeedtestStatus({ running: false, phase: "idle", progress: 0 });
       setSpeedtestRunning(false);
     }
   }, []);
 
   const runIperfClient = useCallback(async () => {
     if (!iperfSettings.server) {
-      setIperfError('Server not configured');
+      setIperfError("Server not configured");
       return;
     }
 
     setIperfError(null);
     setIperfClientRunning(true);
-    setIperfClientStatus({ running: true, phase: 'connecting', progress: 0 });
+    setIperfClientStatus({ running: true, phase: "connecting", progress: 0 });
 
     try {
-      const res = await fetch('/api/iperf/client', {
-        method: 'POST',
+      const res = await fetch("/api/iperf/client", {
+        method: "POST",
         headers: {
           ...getAuthHeaders(),
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           server: iperfSettings.server,
           port: iperfSettings.port,
           protocol: iperfSettings.protocol,
-          reverse: iperfSettings.direction === 'download',
+          reverse: iperfSettings.direction === "download",
           duration: iperfSettings.duration,
           parallel: 1,
         }),
       });
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(text || 'iperf3 test failed');
+        throw new Error(text || "iperf3 test failed");
       }
     } catch (err) {
-      setIperfError(err instanceof Error ? err.message : 'iperf3 test failed');
-      setIperfClientStatus({ running: false, phase: 'idle', progress: 0 });
+      setIperfError(err instanceof Error ? err.message : "iperf3 test failed");
+      setIperfClientStatus({ running: false, phase: "idle", progress: 0 });
       setIperfClientRunning(false);
     }
   }, [iperfSettings]);
@@ -353,17 +380,17 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
     const handleRunAllTests = () => {
       // Check FAB options from localStorage
       let fabOptions = {
-        runSpeedtest: false,  // Default OFF (bandwidth-intensive)
-        runIperf: false,      // Default OFF (bandwidth-intensive)
+        runSpeedtest: false, // Default OFF (bandwidth-intensive)
+        runIperf: false, // Default OFF (bandwidth-intensive)
       };
       try {
-        const saved = localStorage.getItem('netscope-fab-options');
+        const saved = localStorage.getItem("netscope-fab-options");
         if (saved) {
           const parsed = JSON.parse(saved);
           fabOptions = { ...fabOptions, ...parsed };
         }
       } catch (err) {
-        console.error('Failed to read FAB options:', err);
+        console.error("Failed to read FAB options:", err);
       }
 
       // Run speedtest if enabled
@@ -371,40 +398,61 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
         runSpeedtest();
       }
       // Run iperf client test if enabled and configured
-      if (fabOptions.runIperf && !iperfClientRunning && iperfSettings.server && iperfInfo?.installed) {
+      if (
+        fabOptions.runIperf &&
+        !iperfClientRunning &&
+        iperfSettings.server &&
+        iperfInfo?.installed
+      ) {
         // Delay slightly so tests don't all hammer at once
         setTimeout(() => runIperfClient(), 500);
       }
     };
 
-    window.addEventListener('runAllTests', handleRunAllTests);
+    window.addEventListener("runAllTests", handleRunAllTests);
     return () => {
-      window.removeEventListener('runAllTests', handleRunAllTests);
+      window.removeEventListener("runAllTests", handleRunAllTests);
     };
-  }, [runSpeedtest, runIperfClient, speedtestRunning, iperfClientRunning, iperfSettings.server, iperfInfo?.installed]);
+  }, [
+    runSpeedtest,
+    runIperfClient,
+    speedtestRunning,
+    iperfClientRunning,
+    iperfSettings.server,
+    iperfInfo?.installed,
+  ]);
 
   const formatSpeed = (mbps: number): string => {
     if (mbps >= 1000) {
-      return `${(mbps / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Gbps`;
+      return `${(mbps / 1000).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Gbps`;
     }
-    return `${mbps.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
+    return `${mbps.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
   };
 
   const getStatus = (): Status => {
-    if (loading || speedtestRunning || iperfClientRunning) return 'loading';
-    if (speedtestError || iperfError) return 'error';
-    if (speedtestResult || iperfResult) return 'success';
-    return 'unknown';
+    if (loading || speedtestRunning || iperfClientRunning) return "loading";
+    if (speedtestError || iperfError) return "error";
+    if (speedtestResult || iperfResult) return "success";
+    return "unknown";
   };
 
   return (
-    <Card title="Performance Tests" subtitle="Speedtest & iPerf" status={getStatus()}>
+    <Card
+      title="Performance Tests"
+      subtitle="Speedtest & iPerf"
+      status={getStatus()}
+    >
       {/* Internet Speed Section */}
-      <p className="text-xs font-medium text-text-secondary mb-2">Internet Speed</p>
+      <p className="text-xs font-medium text-text-secondary mb-2">
+        Internet Speed
+      </p>
 
       {speedtestRunning && speedtestStatus && (
         <div className="space-y-2 mb-3">
-          <p className="text-sm text-text-muted" id="speedtest-progress-label">{speedtestPhaseLabels[speedtestStatus.phase] || speedtestStatus.phase}</p>
+          <p className="text-sm text-text-muted" id="speedtest-progress-label">
+            {speedtestPhaseLabels[speedtestStatus.phase] ||
+              speedtestStatus.phase}
+          </p>
           <div
             role="progressbar"
             aria-valuenow={speedtestStatus.progress}
@@ -424,10 +472,23 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       {!speedtestRunning && speedtestResult && (
         <div className="mb-3">
           <div className="grid grid-cols-2 gap-4">
-            <CardValue label="Download" value={formatSpeed(speedtestResult.download)} size="md" status="success" />
-            <CardValue label="Upload" value={formatSpeed(speedtestResult.upload)} size="md" status="success" />
+            <CardValue
+              label="Download"
+              value={formatSpeed(speedtestResult.download)}
+              size="md"
+              status="success"
+            />
+            <CardValue
+              label="Upload"
+              value={formatSpeed(speedtestResult.upload)}
+              size="md"
+              status="success"
+            />
           </div>
-          <CardRow label="Latency" value={`${speedtestResult.latency.toFixed(0)} ms`} />
+          <CardRow
+            label="Latency"
+            value={`${speedtestResult.latency.toFixed(0)} ms`}
+          />
           <CardRow label="Server" value={speedtestResult.location} />
         </div>
       )}
@@ -446,7 +507,9 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       <p className="text-xs font-medium text-text-secondary mb-2 mt-2">
         LAN Speed (iperf3)
         {iperfInfo?.version && (
-          <span className="text-text-muted font-normal ml-2">{iperfInfo.version}</span>
+          <span className="text-text-muted font-normal ml-2">
+            {iperfInfo.version}
+          </span>
         )}
       </p>
 
@@ -463,11 +526,16 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
             <div className="text-xs text-text-muted mb-3 p-2 bg-surface-hover rounded">
               <div className="flex justify-between">
                 <span>Server:</span>
-                <span className="text-text-primary">{iperfSettings.server}:{iperfSettings.port}</span>
+                <span className="text-text-primary">
+                  {iperfSettings.server}:{iperfSettings.port}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Test:</span>
-                <span className="text-text-primary">{iperfSettings.protocol.toUpperCase()} {iperfSettings.direction}</span>
+                <span className="text-text-primary">
+                  {iperfSettings.protocol.toUpperCase()}{" "}
+                  {iperfSettings.direction}
+                </span>
               </div>
             </div>
           ) : (
@@ -479,7 +547,10 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
           {/* Client Status/Results */}
           {iperfClientRunning && iperfClientStatus && (
             <div className="space-y-2 mb-3">
-              <p className="text-sm text-text-muted" id="iperf-progress-label">{iperfPhaseLabels[iperfClientStatus.phase] || iperfClientStatus.phase}</p>
+              <p className="text-sm text-text-muted" id="iperf-progress-label">
+                {iperfPhaseLabels[iperfClientStatus.phase] ||
+                  iperfClientStatus.phase}
+              </p>
               <div
                 role="progressbar"
                 aria-valuenow={iperfClientStatus.progress}
@@ -499,19 +570,34 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
           {!iperfClientRunning && iperfResult && (
             <div className="mb-3">
               <CardValue
-                label={iperfResult.direction === 'download' ? 'Download' : 'Upload'}
+                label={
+                  iperfResult.direction === "download" ? "Download" : "Upload"
+                }
                 value={formatSpeed(iperfResult.bandwidth)}
                 size="md"
                 status="success"
               />
-              <CardRow label="Transfer" value={`${iperfResult.transfer.toFixed(1)} MB`} />
-              {iperfResult.protocol === 'tcp' && iperfResult.retransmits > 0 && (
-                <CardRow label="Retransmits" value={iperfResult.retransmits.toString()} />
-              )}
-              {iperfResult.protocol === 'udp' && (
+              <CardRow
+                label="Transfer"
+                value={`${iperfResult.transfer.toFixed(1)} MB`}
+              />
+              {iperfResult.protocol === "tcp" &&
+                iperfResult.retransmits > 0 && (
+                  <CardRow
+                    label="Retransmits"
+                    value={iperfResult.retransmits.toString()}
+                  />
+                )}
+              {iperfResult.protocol === "udp" && (
                 <>
-                  <CardRow label="Jitter" value={`${iperfResult.jitter.toFixed(2)} ms`} />
-                  <CardRow label="Packet Loss" value={`${iperfResult.lostPercent.toFixed(2)}%`} />
+                  <CardRow
+                    label="Jitter"
+                    value={`${iperfResult.jitter.toFixed(2)} ms`}
+                  />
+                  <CardRow
+                    label="Packet Loss"
+                    value={`${iperfResult.lostPercent.toFixed(2)}%`}
+                  />
                 </>
               )}
             </div>
@@ -525,8 +611,16 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
           {iperfSettings.enableServer && (
             <div className="text-xs text-text-muted flex items-center justify-between p-2 bg-surface-hover rounded">
               <span>Server Mode</span>
-              <span className={iperfServerStatus?.running ? 'text-status-success' : 'text-text-muted'}>
-                {iperfServerStatus?.running ? `Listening :${iperfServerStatus.port}` : 'Stopped'}
+              <span
+                className={
+                  iperfServerStatus?.running
+                    ? "text-status-success"
+                    : "text-text-muted"
+                }
+              >
+                {iperfServerStatus?.running
+                  ? `Listening :${iperfServerStatus.port}`
+                  : "Stopped"}
               </span>
             </div>
           )}
