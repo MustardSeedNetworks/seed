@@ -29,7 +29,8 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
-          version: v2.7.2
+          # Use a recent golangci-lint; older versions don't support --out-format used by the action
+          version: v1.60.3
           args: --timeout=5m
 
       - name: Run go vet
