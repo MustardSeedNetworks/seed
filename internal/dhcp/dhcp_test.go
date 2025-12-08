@@ -248,9 +248,9 @@ func TestExtractValue(t *testing.T) {
 }
 
 func TestGetLeaseInfo(t *testing.T) {
-	// This will return nil or actual data depending on the system
+	// On different platforms and network configurations, this may return nil or populated LeaseInfo.
+	// The test only verifies that GetLeaseInfo does not panic or crash.
 	info, err := GetLeaseInfo("eth0")
-	// Just verify it doesn't panic
 	_ = info
 	_ = err
 }
@@ -320,7 +320,7 @@ func TestConcurrentMonitorAccess(t *testing.T) {
 }
 
 func TestGetLeaseInfoDarwin(t *testing.T) {
-	// Will only work on macOS and if connected to DHCP network
+	// This test is only meaningful on macOS; skip or ignore on other platforms.
 	info, err := getLeaseInfoDarwin("en0")
 	// Just verify it doesn't panic
 	_ = info
@@ -328,7 +328,7 @@ func TestGetLeaseInfoDarwin(t *testing.T) {
 }
 
 func TestGetLeaseInfoLinux(t *testing.T) {
-	// Will only work on Linux
+	// This test is only meaningful on Linux; on other platforms it is effectively skipped.
 	info, err := getLeaseInfoLinux("eth0")
 	// Just verify it doesn't panic
 	_ = info
@@ -405,6 +405,11 @@ func TestCalculateTimingWithZeroTimes(t *testing.T) {
 	}
 }
 
+// TestCalculateTimingPartialPhases verifies that the timing calculation correctly handles
+// transactions with only partial phase timestamps (specifically, only Discover and Ack times).
+// It checks that the total time is computed as the difference between Discover and Ack,
+// and that intermediate phase durations (such as Discover) are zero when their corresponding
+// timestamps are missing.
 func TestCalculateTimingPartialPhases(t *testing.T) {
 	monitor := NewMonitor("eth0")
 

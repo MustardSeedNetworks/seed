@@ -1,16 +1,14 @@
 /**
- * Commitlint configuration
+ * @file Commitlint configuration
+ * @description Enforces conventional commit message format: type(scope?): subject
  *
- * Enforces conventional commit message format:
- * type(scope?): subject
- *
- * Examples:
- * - feat(dhcp): add phase timing breakdown
- * - fix(websocket): resolve connection drop
- * - docs: update installation instructions
- * - chore(deps): upgrade gopacket
+ * @example
+ * feat(dhcp): add phase timing breakdown
+ * fix(websocket): resolve connection drop
+ * docs: update installation instructions
+ * chore(deps): upgrade gopacket
  */
-export default {
+module.exports = {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'type-enum': [
@@ -61,10 +59,12 @@ export default {
         'release',
       ],
     ],
+    // Disallow subject lines in start-case, pascal-case, or upper-case to enforce concise, lowercase commit subjects
     'subject-case': [2, 'never', ['start-case', 'pascal-case', 'upper-case']],
-    'subject-empty': [2, 'never'],
+    // Conventional commits do not end the subject line with a period.
     'subject-full-stop': [2, 'never', '.'],
     'type-case': [2, 'always', 'lower-case'],
+    'type-empty': [2, 'never'],
     'type-empty': [2, 'never'],
   },
 };
