@@ -32,6 +32,7 @@ jobs:
           # Use a recent golangci-lint; older versions don't support --out-format used by the action
           version: latest
           args: --timeout=5m
+          install-mode: goinstall
 
       - name: Run go vet
         run: go vet ./...
