@@ -27,7 +27,7 @@ jobs:
         run: go mod download
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
           # Use a recent golangci-lint; older versions don't support --out-format used by the action
           version: latest
