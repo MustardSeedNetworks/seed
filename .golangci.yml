@@ -20,12 +20,12 @@ linters:
     - gosec
     - prealloc
 
+    - shadow
+
 linters-settings:
   errcheck:
     check-type-assertions: true
     check-blank: true
-  govet:
-    check-shadowing: true
   gofmt:
     simplify: true
   goimports:
@@ -49,10 +49,5 @@ issues:
       linters:
         - errcheck
         - gosec
-    # Ignore shadow check in main
-    - path: cmd/
-      linters:
-        - govet
-      text: "shadow"
   max-issues-per-linter: 50
   max-same-issues: 10
