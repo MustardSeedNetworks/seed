@@ -1,9 +1,9 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 
 export interface CableData {
   supported: boolean;
   length: number | null; // meters
-  status: 'ok' | 'open' | 'short' | 'impedance_mismatch' | 'unknown';
+  status: "ok" | "open" | "short" | "impedance_mismatch" | "unknown";
   faults: string[];
 }
 
@@ -13,11 +13,11 @@ interface CableCardProps {
 }
 
 const statusLabels: Record<string, { label: string; status: Status }> = {
-  ok: { label: 'OK', status: 'success' },
-  open: { label: 'Open', status: 'error' },
-  short: { label: 'Short', status: 'error' },
-  impedance_mismatch: { label: 'Impedance Mismatch', status: 'warning' },
-  unknown: { label: 'Unknown', status: 'unknown' },
+  ok: { label: "OK", status: "success" },
+  open: { label: "Open", status: "error" },
+  short: { label: "Short", status: "error" },
+  impedance_mismatch: { label: "Impedance Mismatch", status: "warning" },
+  unknown: { label: "Unknown", status: "unknown" },
 };
 
 export function CableCard({ data, loading }: CableCardProps) {
@@ -52,7 +52,11 @@ export function CableCard({ data, loading }: CableCardProps) {
 
   return (
     <Card title="Cable Test" status={statusInfo.status}>
-      <CardValue value={statusInfo.label} size="lg" status={statusInfo.status} />
+      <CardValue
+        value={statusInfo.label}
+        size="lg"
+        status={statusInfo.status}
+      />
       {data.length !== null && (
         <>
           <CardDivider />

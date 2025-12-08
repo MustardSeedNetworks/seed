@@ -1,4 +1,4 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 
 export interface GatewayData {
   gateway: string;
@@ -22,15 +22,15 @@ interface GatewayCardProps {
 
 function getLatencyStatus(
   value: number,
-  thresholds: { warning: number; critical: number }
+  thresholds: { warning: number; critical: number },
 ): Status {
-  if (value >= thresholds.critical) return 'error';
-  if (value >= thresholds.warning) return 'warning';
-  return 'success';
+  if (value >= thresholds.critical) return "error";
+  if (value >= thresholds.warning) return "warning";
+  return "success";
 }
 
 function formatTime(ms: number): string {
-  if (ms < 1) return '<1ms';
+  if (ms < 1) return "<1ms";
   if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
   return `${Math.round(ms * 10) / 10}ms`;
 }
@@ -50,25 +50,27 @@ export function GatewayCard({ data, loading, thresholds }: GatewayCardProps) {
     return (
       <Card title="Gateway" status="unknown">
         <CardValue value="No gateway" size="md" />
-        <p className="text-xs text-text-muted mt-1">Unable to detect default gateway</p>
+        <p className="text-xs text-text-muted mt-1">
+          Unable to detect default gateway
+        </p>
       </Card>
     );
   }
 
   // Map API status to card status
-  let status: Status = 'unknown';
+  let status: Status = "unknown";
   switch (data.status) {
-    case 'success':
-      status = 'success';
+    case "success":
+      status = "success";
       break;
-    case 'warning':
-      status = 'warning';
+    case "warning":
+      status = "warning";
       break;
-    case 'error':
-      status = 'error';
+    case "error":
+      status = "error";
       break;
     default:
-      status = data.reachable ? getLatencyStatus(data.avgTime, t) : 'error';
+      status = data.reachable ? getLatencyStatus(data.avgTime, t) : "error";
   }
 
   return (
@@ -77,15 +79,17 @@ export function GatewayCard({ data, loading, thresholds }: GatewayCardProps) {
         <CardValue value={data.gateway} size="lg" />
         <span
           className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            data.reachable ? 'text-status-success bg-status-success/10' : 'text-status-error bg-status-error/10'
+            data.reachable
+              ? "text-status-success bg-status-success/10"
+              : "text-status-error bg-status-error/10"
           }`}
-          aria-label={`Gateway status: ${data.reachable ? 'reachable' : 'unreachable'}`}
+          aria-label={`Gateway status: ${data.reachable ? "reachable" : "unreachable"}`}
         >
-          {data.reachable ? 'Reachable' : 'Down'}
+          {data.reachable ? "Reachable" : "Down"}
         </span>
       </div>
       <p className="text-xs text-text-muted">
-        {data.reachable ? 'Reachable' : 'Unreachable'}
+        {data.reachable ? "Reachable" : "Unreachable"}
       </p>
       <CardDivider />
 
@@ -93,41 +97,50 @@ export function GatewayCard({ data, loading, thresholds }: GatewayCardProps) {
       <div className="grid grid-cols-3 gap-2 mb-2">
         <div className="text-center">
           <p className="text-xs text-text-muted">Min</p>
-          <p className={`text-sm font-medium ${
-            data.minTime > 0 ? getLatencyStatus(data.minTime, t) === 'success'
-              ? 'text-status-success'
-              : getLatencyStatus(data.minTime, t) === 'warning'
-              ? 'text-status-warning'
-              : 'text-status-error'
-            : 'text-text-muted'
-          }`}>
-            {data.minTime > 0 ? formatTime(data.minTime) : '-'}
+          <p
+            className={`text-sm font-medium ${
+              data.minTime > 0
+                ? getLatencyStatus(data.minTime, t) === "success"
+                  ? "text-status-success"
+                  : getLatencyStatus(data.minTime, t) === "warning"
+                    ? "text-status-warning"
+                    : "text-status-error"
+                : "text-text-muted"
+            }`}
+          >
+            {data.minTime > 0 ? formatTime(data.minTime) : "-"}
           </p>
         </div>
         <div className="text-center">
           <p className="text-xs text-text-muted">Avg</p>
-          <p className={`text-sm font-medium ${
-            data.avgTime > 0 ? getLatencyStatus(data.avgTime, t) === 'success'
-              ? 'text-status-success'
-              : getLatencyStatus(data.avgTime, t) === 'warning'
-              ? 'text-status-warning'
-              : 'text-status-error'
-            : 'text-text-muted'
-          }`}>
-            {data.avgTime > 0 ? formatTime(data.avgTime) : '-'}
+          <p
+            className={`text-sm font-medium ${
+              data.avgTime > 0
+                ? getLatencyStatus(data.avgTime, t) === "success"
+                  ? "text-status-success"
+                  : getLatencyStatus(data.avgTime, t) === "warning"
+                    ? "text-status-warning"
+                    : "text-status-error"
+                : "text-text-muted"
+            }`}
+          >
+            {data.avgTime > 0 ? formatTime(data.avgTime) : "-"}
           </p>
         </div>
         <div className="text-center">
           <p className="text-xs text-text-muted">Max</p>
-          <p className={`text-sm font-medium ${
-            data.maxTime > 0 ? getLatencyStatus(data.maxTime, t) === 'success'
-              ? 'text-status-success'
-              : getLatencyStatus(data.maxTime, t) === 'warning'
-              ? 'text-status-warning'
-              : 'text-status-error'
-            : 'text-text-muted'
-          }`}>
-            {data.maxTime > 0 ? formatTime(data.maxTime) : '-'}
+          <p
+            className={`text-sm font-medium ${
+              data.maxTime > 0
+                ? getLatencyStatus(data.maxTime, t) === "success"
+                  ? "text-status-success"
+                  : getLatencyStatus(data.maxTime, t) === "warning"
+                    ? "text-status-warning"
+                    : "text-status-error"
+                : "text-text-muted"
+            }`}
+          >
+            {data.maxTime > 0 ? formatTime(data.maxTime) : "-"}
           </p>
         </div>
       </div>
@@ -135,13 +148,19 @@ export function GatewayCard({ data, loading, thresholds }: GatewayCardProps) {
       <CardRow
         label="Packets"
         value={`${data.received}/${data.sent}`}
-        status={data.lossPercent === 0 ? 'success' : data.lossPercent < 50 ? 'warning' : 'error'}
+        status={
+          data.lossPercent === 0
+            ? "success"
+            : data.lossPercent < 50
+              ? "warning"
+              : "error"
+        }
       />
       {data.lossPercent > 0 && (
         <CardRow
           label="Packet Loss"
           value={`${Math.round(data.lossPercent)}%`}
-          status={data.lossPercent >= 50 ? 'error' : 'warning'}
+          status={data.lossPercent >= 50 ? "error" : "warning"}
         />
       )}
 
@@ -149,56 +168,73 @@ export function GatewayCard({ data, loading, thresholds }: GatewayCardProps) {
       {data.ipv6 && data.ipv6.gateway && (
         <>
           <CardDivider />
-          <p className="text-xs text-text-muted mb-1 font-medium">IPv6 Gateway</p>
+          <p className="text-xs text-text-muted mb-1 font-medium">
+            IPv6 Gateway
+          </p>
           <CardValue value={data.ipv6.gateway} size="md" />
           <p className="text-xs text-text-muted mb-2">
-            {data.ipv6.reachable ? 'Reachable' : 'Unreachable'}
+            {data.ipv6.reachable ? "Reachable" : "Unreachable"}
           </p>
           <div className="grid grid-cols-3 gap-2 mb-2">
             <div className="text-center">
               <p className="text-xs text-text-muted">Min</p>
-              <p className={`text-sm font-medium ${
-                data.ipv6.minTime > 0 ? getLatencyStatus(data.ipv6.minTime, t) === 'success'
-                  ? 'text-status-success'
-                  : getLatencyStatus(data.ipv6.minTime, t) === 'warning'
-                  ? 'text-status-warning'
-                  : 'text-status-error'
-                : 'text-text-muted'
-              }`}>
-                {data.ipv6.minTime > 0 ? formatTime(data.ipv6.minTime) : '-'}
+              <p
+                className={`text-sm font-medium ${
+                  data.ipv6.minTime > 0
+                    ? getLatencyStatus(data.ipv6.minTime, t) === "success"
+                      ? "text-status-success"
+                      : getLatencyStatus(data.ipv6.minTime, t) === "warning"
+                        ? "text-status-warning"
+                        : "text-status-error"
+                    : "text-text-muted"
+                }`}
+              >
+                {data.ipv6.minTime > 0 ? formatTime(data.ipv6.minTime) : "-"}
               </p>
             </div>
             <div className="text-center">
               <p className="text-xs text-text-muted">Avg</p>
-              <p className={`text-sm font-medium ${
-                data.ipv6.avgTime > 0 ? getLatencyStatus(data.ipv6.avgTime, t) === 'success'
-                  ? 'text-status-success'
-                  : getLatencyStatus(data.ipv6.avgTime, t) === 'warning'
-                  ? 'text-status-warning'
-                  : 'text-status-error'
-                : 'text-text-muted'
-              }`}>
-                {data.ipv6.avgTime > 0 ? formatTime(data.ipv6.avgTime) : '-'}
+              <p
+                className={`text-sm font-medium ${
+                  data.ipv6.avgTime > 0
+                    ? getLatencyStatus(data.ipv6.avgTime, t) === "success"
+                      ? "text-status-success"
+                      : getLatencyStatus(data.ipv6.avgTime, t) === "warning"
+                        ? "text-status-warning"
+                        : "text-status-error"
+                    : "text-text-muted"
+                }`}
+              >
+                {data.ipv6.avgTime > 0 ? formatTime(data.ipv6.avgTime) : "-"}
               </p>
             </div>
             <div className="text-center">
               <p className="text-xs text-text-muted">Max</p>
-              <p className={`text-sm font-medium ${
-                data.ipv6.maxTime > 0 ? getLatencyStatus(data.ipv6.maxTime, t) === 'success'
-                  ? 'text-status-success'
-                  : getLatencyStatus(data.ipv6.maxTime, t) === 'warning'
-                  ? 'text-status-warning'
-                  : 'text-status-error'
-                : 'text-text-muted'
-              }`}>
-                {data.ipv6.maxTime > 0 ? formatTime(data.ipv6.maxTime) : '-'}
+              <p
+                className={`text-sm font-medium ${
+                  data.ipv6.maxTime > 0
+                    ? getLatencyStatus(data.ipv6.maxTime, t) === "success"
+                      ? "text-status-success"
+                      : getLatencyStatus(data.ipv6.maxTime, t) === "warning"
+                        ? "text-status-warning"
+                        : "text-status-error"
+                    : "text-text-muted"
+                }`}
+              >
+                {data.ipv6.maxTime > 0 ? formatTime(data.ipv6.maxTime) : "-"}
               </p>
             </div>
           </div>
           <CardRow
             label="Packets"
             value={`${data.ipv6.received}/${data.ipv6.sent}`}
-            status={data.ipv6.lossPercent === 0 ? 'success' : data.ipv6.lossPercent < 50 ? 'warning' : 'error'}
+            status={
+              data.ipv6.lossPercent === 0
+                ? "success"
+                : data.ipv6.lossPercent < 50
+                  ? "warning"
+                  : "error"
+            }
           />
         </>
       )}

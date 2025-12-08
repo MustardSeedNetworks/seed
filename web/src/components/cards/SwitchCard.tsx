@@ -1,7 +1,7 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 
 export interface SwitchData {
-  protocol: 'lldp' | 'cdp' | 'edp' | 'fdp' | 'unknown';
+  protocol: "lldp" | "cdp" | "edp" | "fdp" | "unknown";
   switchName: string | null;
   portId: string | null;
   portDescription: string | null;
@@ -15,11 +15,11 @@ interface SwitchCardProps {
 }
 
 const protocolLabels: Record<string, string> = {
-  lldp: 'LLDP',
-  cdp: 'CDP',
-  edp: 'EDP',
-  fdp: 'FDP',
-  unknown: 'Unknown',
+  lldp: "LLDP",
+  cdp: "CDP",
+  edp: "EDP",
+  fdp: "FDP",
+  unknown: "Unknown",
 };
 
 export function SwitchCard({ data, loading }: SwitchCardProps) {
@@ -42,7 +42,7 @@ export function SwitchCard({ data, loading }: SwitchCardProps) {
     );
   }
 
-  const status: Status = 'success';
+  const status: Status = "success";
 
   return (
     <Card title="Nearest Switch" status={status}>

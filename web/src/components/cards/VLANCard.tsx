@@ -1,4 +1,4 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 
 export interface VLANData {
   nativeVlan: number | null;
@@ -36,7 +36,7 @@ export function VLANCard({ data, loading }: VLANCardProps) {
     data.nativeVlan !== null ||
     data.taggedVlans.length > 0 ||
     data.voiceVlan !== null;
-  const status: Status = hasVlanInfo ? 'success' : 'unknown';
+  const status: Status = hasVlanInfo ? "success" : "unknown";
 
   return (
     <Card title="VLAN" status={status}>

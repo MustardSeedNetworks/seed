@@ -1,10 +1,10 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from "react";
 
 interface FABProps {
   className?: string;
 }
 
-export function FAB({ className = '' }: FABProps) {
+export function FAB({ className = "" }: FABProps) {
   const [isRunning, setIsRunning] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -18,9 +18,9 @@ export function FAB({ className = '' }: FABProps) {
       }
     };
 
-    window.addEventListener('testsComplete', handleTestsComplete);
+    window.addEventListener("testsComplete", handleTestsComplete);
     return () => {
-      window.removeEventListener('testsComplete', handleTestsComplete);
+      window.removeEventListener("testsComplete", handleTestsComplete);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -33,7 +33,7 @@ export function FAB({ className = '' }: FABProps) {
     setIsRunning(true);
 
     // Dispatch event to trigger all tests
-    window.dispatchEvent(new CustomEvent('runAllTests'));
+    window.dispatchEvent(new CustomEvent("runAllTests"));
 
     // Fallback timeout in case testsComplete event doesn't fire
     timeoutRef.current = setTimeout(() => {
@@ -46,17 +46,13 @@ export function FAB({ className = '' }: FABProps) {
       onClick={handleClick}
       disabled={isRunning}
       className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all flex items-center justify-center touch-manipulation z-50 focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base ${
-        isRunning ? 'opacity-75 cursor-not-allowed' : ''
+        isRunning ? "opacity-75 cursor-not-allowed" : ""
       } ${className}`}
       title="Run All Tests"
       aria-label="Run All Tests"
     >
       {isRunning ? (
-        <svg
-          className="w-6 h-6 animate-spin"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
+        <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle
             className="opacity-25"
             cx="12"
@@ -72,11 +68,7 @@ export function FAB({ className = '' }: FABProps) {
           />
         </svg>
       ) : (
-        <svg
-          className="w-6 h-6"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
+        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
           <path d="M8 5v14l11-7z" />
         </svg>
       )}

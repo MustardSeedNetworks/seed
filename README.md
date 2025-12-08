@@ -23,7 +23,7 @@ NetScope is a professional-grade network diagnostic appliance designed for netwo
 
 ## Screenshots
 
-*Coming soon*
+_Coming soon_
 
 ## Quick Start
 
@@ -56,6 +56,7 @@ sudo ./netscope
 Open `https://<device-ip>:8443` in your browser.
 
 Default credentials:
+
 - Username: `admin`
 - Password: `netscope`
 

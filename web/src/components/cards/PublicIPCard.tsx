@@ -1,4 +1,4 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 
 export interface PublicIPData {
   ipv4?: string;
@@ -19,7 +19,7 @@ function formatLastChecked(isoDate: string): string {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return 'just now';
+    if (diffMins < 1) return "just now";
     if (diffMins < 60) return `${diffMins}m ago`;
 
     const diffHours = Math.floor(diffMins / 60);
@@ -27,7 +27,7 @@ function formatLastChecked(isoDate: string): string {
 
     return date.toLocaleDateString();
   } catch {
-    return 'unknown';
+    return "unknown";
   }
 }
 
@@ -44,17 +44,19 @@ export function PublicIPCard({ data, loading }: PublicIPCardProps) {
     return (
       <Card title="Public IP" status="unknown">
         <CardValue value="No data" size="md" />
-        <p className="text-xs text-text-muted mt-1">Unable to detect public IP</p>
+        <p className="text-xs text-text-muted mt-1">
+          Unable to detect public IP
+        </p>
       </Card>
     );
   }
 
   // Determine status
-  let status: Status = 'unknown';
+  let status: Status = "unknown";
   if (data.error && !data.ipv4 && !data.ipv6) {
-    status = 'error';
+    status = "error";
   } else if (data.ipv4 || data.ipv6) {
-    status = 'success';
+    status = "success";
   }
 
   return (
@@ -78,7 +80,9 @@ export function PublicIPCard({ data, loading }: PublicIPCardProps) {
       {data.ipv6 ? (
         <>
           <p className="text-xs text-text-muted font-medium">IPv6</p>
-          <p className="text-sm font-mono break-all text-text-primary">{data.ipv6}</p>
+          <p className="text-sm font-mono break-all text-text-primary">
+            {data.ipv6}
+          </p>
         </>
       ) : (
         <>

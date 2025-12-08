@@ -20,7 +20,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           cache: true
 
       - name: Install dependencies
@@ -30,7 +30,7 @@ jobs:
         uses: golangci/golangci-lint-action@v4
         with:
           # Use a recent golangci-lint; older versions don't support --out-format used by the action
-          version: v1.60.3
+          version: latest
           args: --timeout=5m
 
       - name: Run go vet
@@ -71,8 +71,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: web/package-lock.json
 
       - name: Install dependencies
@@ -100,7 +100,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           cache: true
 
       - name: Install libpcap-dev
@@ -115,7 +115,7 @@ jobs:
       - name: Run gosec
         uses: securego/gosec@master
         with:
-          args: '-no-fail -fmt sarif -out gosec-results.sarif ./...'
+          args: "-no-fail -fmt sarif -out gosec-results.sarif ./..."
 
       - name: Upload gosec results
         if: ${{ always() && (github.repository_visibility == 'public' || env.ENABLE_CODEQL == 'true') }}
@@ -126,8 +126,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: web/package-lock.json
 
       - name: Run npm audit
@@ -204,14 +204,14 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           cache: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: web/package-lock.json
 
       - name: Build frontend

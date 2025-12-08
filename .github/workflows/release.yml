@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -99,14 +99,14 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           cache: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
-          cache: 'npm'
+          node-version: "lts/*"
+          cache: "npm"
           cache-dependency-path: web/package-lock.json
 
       - name: Install build dependencies
@@ -159,18 +159,18 @@ jobs:
           mkdir -p $DEB_DIR/etc/netscope
           mkdir -p $DEB_DIR/etc/systemd/system
           mkdir -p $DEB_DIR/usr/share/netscope
-          
+
           cp dist/netscope-linux-${{ matrix.arch }} $DEB_DIR/usr/local/bin/netscope
           cp bin/iperf3-linux-${{ matrix.arch }} $DEB_DIR/usr/local/bin/iperf3
           chmod +x $DEB_DIR/usr/local/bin/*
           cp -r configs/* $DEB_DIR/etc/netscope/
           cp -r web/dist $DEB_DIR/usr/share/netscope/web
           cp packaging/netscope.service $DEB_DIR/etc/systemd/system/
-          
+
           # Create control file
           sed "s/__VERSION__/${{ github.ref_name }}/" packaging/control > $DEB_DIR/DEBIAN/control
           sed -i "s/__ARCHITECTURE__/${{ matrix.arch }}/" $DEB_DIR/DEBIAN/control
-          
+
           # Copy postinst script
           cp packaging/postinst $DEB_DIR/DEBIAN/
           chmod +x $DEB_DIR/DEBIAN/postinst
@@ -185,13 +185,12 @@ jobs:
           elif [ "${{ matrix.arch }}" = "arm64" ]; then
             RPM_ARCH="aarch64"
           fi
-          
+
           SPEC_FILE="packaging/netscope.spec"
           sed "s/__VERSION__/${{ github.ref_name }}/" $SPEC_FILE > netscope.spec
           sed -i "s/__ARCHITECTURE__/${{ matrix.arch }}/" netscope.spec
 
           rpmbuild --define "_topdir $(pwd)/rpmbuild" --define "_rpmdir $(pwd)/release" -bb netscope.spec
-
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4

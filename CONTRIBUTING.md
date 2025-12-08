@@ -60,6 +60,7 @@ type(scope): description
 ```
 
 **Types:**
+
 - `feat` - New feature
 - `fix` - Bug fix
 - `docs` - Documentation changes
@@ -72,6 +73,7 @@ type(scope): description
 - `build` - Build system changes
 
 **Examples:**
+
 ```
 feat(dhcp): add phase timing breakdown
 fix(websocket): resolve connection drop on idle
@@ -91,6 +93,7 @@ chore(deps): upgrade gopacket to v1.2.0
 ### PR Title Format
 
 Use the same format as commit messages:
+
 ```
 feat(dhcp): add phase timing breakdown (#123)
 ```
@@ -149,6 +152,7 @@ make test-e2e
 ### Bug Reports
 
 Include:
+
 - NetScope version
 - OS and architecture
 - Steps to reproduce
@@ -158,6 +162,7 @@ Include:
 ### Feature Requests
 
 Include:
+
 - Clear description of the feature
 - Use case / problem it solves
 - Proposed implementation (if any)

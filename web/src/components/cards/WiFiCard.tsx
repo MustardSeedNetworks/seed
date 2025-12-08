@@ -1,4 +1,4 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from '../ui/Card';
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 
 export interface WiFiData {
   ssid: string;
@@ -18,11 +18,11 @@ interface WiFiCardProps {
 
 function getSignalStatus(
   signal: number,
-  thresholds: { warning: number; critical: number }
+  thresholds: { warning: number; critical: number },
 ): Status {
-  if (signal <= thresholds.critical) return 'error';
-  if (signal <= thresholds.warning) return 'warning';
-  return 'success';
+  if (signal <= thresholds.critical) return "error";
+  if (signal <= thresholds.warning) return "warning";
+  return "success";
 }
 
 function signalToPercentage(signal: number): number {
@@ -33,10 +33,10 @@ function signalToPercentage(signal: number): number {
 
 function getSignalBars(signal: number): string {
   const percent = signalToPercentage(signal);
-  if (percent >= 75) return '▂▄▆█';
-  if (percent >= 50) return '▂▄▆░';
-  if (percent >= 25) return '▂▄░░';
-  return '▂░░░';
+  if (percent >= 75) return "▂▄▆█";
+  if (percent >= 50) return "▂▄▆░";
+  if (percent >= 25) return "▂▄░░";
+  return "▂░░░";
 }
 
 export function WiFiCard({

@@ -1,83 +1,83 @@
 server:
-    port: 8080
-    https: false
-    cert_file: ""
-    key_file: ""
+  port: 8080
+  https: false
+  cert_file: ""
+  key_file: ""
 interface:
-    default: eth0
-    fallbacks:
-        - enp0s3
-        - wlan0
+  default: eth0
+  fallbacks:
+    - enp0s3
+    - wlan0
 vlan:
-    enabled: false
-    id: 0
+  enabled: false
+  id: 0
 ip:
-    mode: dhcp
+  mode: dhcp
 discovery:
-    protocol: auto
-    timeout: 30s
+  protocol: auto
+  timeout: 30s
 dns:
-    test_hostname: google.com
-    timeout: 5s
+  test_hostname: google.com
+  timeout: 5s
 tests:
-    ping_targets:
-        - name: ""
-          host: www.google.com
-          enabled: true
-    tcp_ports:
-        - name: ""
-          host: www.google.com
-          port: 80
-          enabled: true
-    udp_ports:
-        - name: ""
-          host: ""
-          port: 53
-          enabled: true
-    http_endpoints:
-        - name: ""
-          url: https://www.google.com
-          expected_status: 200
-          enabled: true
+  ping_targets:
+    - name: ""
+      host: www.google.com
+      enabled: true
+  tcp_ports:
+    - name: ""
+      host: www.google.com
+      port: 80
+      enabled: true
+  udp_ports:
+    - name: ""
+      host: ""
+      port: 53
+      enabled: true
+  http_endpoints:
+    - name: ""
+      url: https://www.google.com
+      expected_status: 200
+      enabled: true
 speedtest:
-    server_id: ""
-    auto_run_on_link: false
+  server_id: ""
+  auto_run_on_link: false
 thresholds:
-    dhcp:
-        total:
-            warning: 500ms
-            critical: 2s
-        per_phase:
-            warning: 200ms
-            critical: 1s
-    dns:
-        warning: 100ms
-        critical: 500ms
+  dhcp:
+    total:
+      warning: 500ms
+      critical: 2s
+    per_phase:
+      warning: 200ms
+      critical: 1s
+  dns:
+    warning: 100ms
+    critical: 500ms
+  ping:
+    warning: 50ms
+    critical: 200ms
+  wifi:
+    signal:
+      warning: -70
+      critical: -80
+  custom_tests:
     ping:
-        warning: 50ms
-        critical: 200ms
-    wifi:
-        signal:
-            warning: -70
-            critical: -80
-    custom_tests:
-        ping:
-            warning: 50ms
-            critical: 100ms
-        tcp:
-            warning: 100ms
-            critical: 500ms
-        udp:
-            warning: 100ms
-            critical: 500ms
-        http:
-            warning: 500ms
-            critical: 2s
-        cert_expiry:
-            warning: 30
-            critical: 7
+      warning: 50ms
+      critical: 100ms
+    tcp:
+      warning: 100ms
+      critical: 500ms
+    udp:
+      warning: 100ms
+      critical: 500ms
+    http:
+      warning: 500ms
+      critical: 2s
+    cert_expiry:
+      warning: 30
+      critical: 7
 auth:
-    default_username: admin
-    default_password_hash: $2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52
-    session_timeout: 24h0m0s
-    jwt_secret: "6203b0868d2f0f3630a20fdc882f953fcd13330a659eba71870eca445180379f"
+  default_username: admin
+  default_password_hash: $2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52
+  session_timeout: 24h0m0s
+  jwt_secret: "6203b0868d2f0f3630a20fdc882f953fcd13330a659eba71870eca445180379f"

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -21,9 +21,9 @@ interface UseAuthReturn {
   error: string | null;
 }
 
-const TOKEN_KEY = 'netscope_token';
-const USERNAME_KEY = 'netscope_username';
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const TOKEN_KEY = "netscope_token";
+const USERNAME_KEY = "netscope_username";
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 export function useAuth(): UseAuthReturn {
   const [state, setState] = useState<AuthState>({
@@ -48,42 +48,45 @@ export function useAuth(): UseAuthReturn {
     }
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
+  const login = useCallback(
+    async (username: string, password: string): Promise<boolean> => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
+        if (!response.ok) {
+          throw new Error("Invalid credentials");
+        }
+
+        const data: LoginResponse = await response.json();
+
+        localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(USERNAME_KEY, username);
+
+        setState({
+          isAuthenticated: true,
+          token: data.token,
+          username,
+        });
+
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Login failed");
+        return false;
+      } finally {
+        setIsLoading(false);
       }
-
-      const data: LoginResponse = await response.json();
-
-      localStorage.setItem(TOKEN_KEY, data.token);
-      localStorage.setItem(USERNAME_KEY, username);
-
-      setState({
-        isAuthenticated: true,
-        token: data.token,
-        username,
-      });
-
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
@@ -97,7 +100,7 @@ export function useAuth(): UseAuthReturn {
 
     // Call logout endpoint (fire and forget)
     fetch(`${API_BASE}/api/auth/logout`, {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${state.token}`,
       },

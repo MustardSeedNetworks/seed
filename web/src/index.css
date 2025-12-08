@@ -49,7 +49,12 @@
 }
 
 body {
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   background-color: var(--color-surface-base);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
