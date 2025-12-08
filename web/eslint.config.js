@@ -15,7 +15,7 @@ export default tseslint.config(
       parser: tseslint.parser, // Explicitly set the parser
       parserOptions: {
         // Point ESLint at the project's tsconfig; run paths are already rooted in /web
-        project: ['./tsconfig.json'],
+        project: ['web/tsconfig.json'],
         ecmaFeatures: {
           jsx: true,
         },
