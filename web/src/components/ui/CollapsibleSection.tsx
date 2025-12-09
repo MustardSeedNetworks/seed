@@ -1,5 +1,6 @@
 import { useState, ReactNode } from "react";
 import { Status } from "./Card";
+import { StatusBadge } from "./StatusBadge";
 
 interface CollapsibleSectionProps {
   title: ReactNode;
@@ -12,14 +13,6 @@ interface CollapsibleSectionProps {
   /** Use compact styling for inside cards */
   variant?: "default" | "compact";
 }
-
-const statusColors: Record<Status, string> = {
-  success: "bg-status-success",
-  warning: "bg-status-warning",
-  error: "bg-status-error",
-  loading: "bg-text-muted animate-pulse",
-  unknown: "bg-text-muted",
-};
 
 export function CollapsibleSection({
   title,
@@ -63,9 +56,7 @@ export function CollapsibleSection({
               d="M9 5l7 7-7 7"
             />
           </svg>
-          {status && (
-            <span className={`w-2 h-2 rounded-full ${statusColors[status]}`} />
-          )}
+          {status && <StatusBadge status={status} variant="dot" size="sm" />}
           <span
             className={`font-medium text-text-primary ${isCompact ? "text-xs" : "text-sm"}`}
           >

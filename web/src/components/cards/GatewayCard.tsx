@@ -1,4 +1,5 @@
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { StatusBadge } from "../ui/StatusBadge";
 
 export interface GatewayData {
   gateway: string;
@@ -77,20 +78,8 @@ export function GatewayCard({ data, loading, thresholds }: GatewayCardProps) {
     <Card title="Gateway" status={status}>
       <div className="flex items-center justify-between gap-2">
         <CardValue value={data.gateway} size="lg" />
-        <span
-          className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            data.reachable
-              ? "text-status-success bg-status-success/10"
-              : "text-status-error bg-status-error/10"
-          }`}
-          aria-label={`Gateway status: ${data.reachable ? "reachable" : "unreachable"}`}
-        >
-          {data.reachable ? "Reachable" : "Down"}
-        </span>
+        <StatusBadge status={data.reachable ? "success" : "error"} size="sm" />
       </div>
-      <p className="text-xs text-text-muted">
-        {data.reachable ? "Reachable" : "Unreachable"}
-      </p>
       <CardDivider />
 
       {/* Latency stats */}

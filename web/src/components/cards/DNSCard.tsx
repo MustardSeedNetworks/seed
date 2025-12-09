@@ -1,4 +1,5 @@
 import { Card, CardValue, CardDivider, Status } from "../ui/Card";
+import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 
 interface LookupResult {
@@ -57,28 +58,13 @@ function LookupRow({
       : statusBadge === "warning"
         ? "text-status-warning"
         : "text-status-error";
-  const statusBg =
-    statusBadge === "success"
-      ? "bg-status-success/10"
-      : statusBadge === "warning"
-        ? "bg-status-warning/10"
-        : "bg-status-error/10";
 
   return (
     <div className="mb-2">
       <div className="flex items-center justify-between">
         <span className="text-xs text-text-muted">{label}</span>
         <span className="inline-flex items-center gap-2">
-          <span
-            className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor} ${statusBg}`}
-            aria-label={`Status: ${statusBadge}`}
-          >
-            {statusBadge === "success"
-              ? "OK"
-              : statusBadge === "warning"
-                ? "Warn"
-                : "Fail"}
-          </span>
+          <StatusBadge status={statusBadge} size="sm" />
           <span className={`text-xs font-medium ${statusColor}`}>
             {formatTime(lookup.timeMs || lookup.time)}
           </span>
@@ -202,22 +188,7 @@ export function DNSCard({ data, loading }: DNSCardProps) {
                   <div className="flex justify-between text-xs text-text-muted">
                     <span>A</span>
                     <span className="inline-flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          server.forward.status === "success"
-                            ? "text-status-success bg-status-success/10"
-                            : server.forward.status === "warning"
-                              ? "text-status-warning bg-status-warning/10"
-                              : "text-status-error bg-status-error/10"
-                        }`}
-                        aria-label={`Status: ${server.forward.status}`}
-                      >
-                        {server.forward.status === "success"
-                          ? "OK"
-                          : server.forward.status === "warning"
-                            ? "Warn"
-                            : "Fail"}
-                      </span>
+                      <StatusBadge status={server.forward.status} size="sm" />
                       <span
                         className={
                           server.forward.status === "success"
@@ -238,22 +209,10 @@ export function DNSCard({ data, loading }: DNSCardProps) {
                   <div className="flex justify-between text-xs text-text-muted">
                     <span>AAAA</span>
                     <span className="inline-flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          server.forwardIpv6.status === "success"
-                            ? "text-status-success bg-status-success/10"
-                            : server.forwardIpv6.status === "warning"
-                              ? "text-status-warning bg-status-warning/10"
-                              : "text-status-error bg-status-error/10"
-                        }`}
-                        aria-label={`Status: ${server.forwardIpv6.status}`}
-                      >
-                        {server.forwardIpv6.status === "success"
-                          ? "OK"
-                          : server.forwardIpv6.status === "warning"
-                            ? "Warn"
-                            : "Fail"}
-                      </span>
+                      <StatusBadge
+                        status={server.forwardIpv6.status}
+                        size="sm"
+                      />
                       <span
                         className={
                           server.forwardIpv6.status === "success"

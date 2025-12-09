@@ -3,6 +3,20 @@ import { useWebSocket, Message, CardUpdate } from "./hooks/useWebSocket";
 import { useAuth, getAuthHeaders } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import { SettingsDrawer } from "./components/settings/SettingsDrawer";
+import { HelpModal, HelpSection, HelpItem } from "./components/ui/HelpModal";
+import {
+  HTTP_TIMING_HELP,
+  LINK_HELP,
+  DNS_HELP,
+  PERFORMANCE_HELP,
+  DISCOVERY_HELP,
+  CABLE_HELP,
+  WIFI_HELP,
+  SWITCH_HELP,
+  VLAN_HELP,
+  DHCP_HELP,
+  GATEWAY_HELP,
+} from "./components/help/HelpContent";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 import {
@@ -61,6 +75,7 @@ function App() {
   const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [cards, setCards] = useState<CardState>({
     link: null,
@@ -1067,6 +1082,26 @@ function App() {
             </button>
             <button
               className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+              onClick={() => setHelpOpen(true)}
+              aria-label="Open help"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </button>
+            <button
+              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={() => setSettingsOpen(true)}
               aria-label="Open settings"
             >
@@ -1184,7 +1219,7 @@ function App() {
           {/* Development notice */}
           <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
             <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-              NetScope v0.11.2 - Public IP in IP Config Card
+              NetScope v0.12.4
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-text-muted">
               Tap the play button to run all tests.
@@ -1204,6 +1239,126 @@ function App() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+
+      {/* Help Modal - sections ordered to match card/settings order */}
+      <HelpModal
+        isOpen={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        title="NetScope Help"
+      >
+        {/* 1. Link Status (matches LinkCard) */}
+        <HelpSection title="Link Status">
+          <HelpItem term="Carrier" description={LINK_HELP.Carrier} />
+          <HelpItem term="Speed" description={LINK_HELP.Speed} />
+          <HelpItem term="Duplex" description={LINK_HELP.Duplex} />
+          <HelpItem term="Auto-Neg" description={LINK_HELP.AutoNeg} />
+          <HelpItem term="MTU" description={LINK_HELP.MTU} />
+        </HelpSection>
+
+        {/* 2. Cable Test (matches CableCard) */}
+        <HelpSection title="Cable Test">
+          <HelpItem term="TDR" description={CABLE_HELP["TDR Test"]} />
+          <HelpItem term="Status" description={CABLE_HELP["Cable Status"]} />
+          <HelpItem
+            term="Distance"
+            description={CABLE_HELP["Fault Distance"]}
+          />
+          <HelpItem term="Pairs" description={CABLE_HELP.Pairs} />
+        </HelpSection>
+
+        {/* 3. WiFi Status (matches WiFiCard) */}
+        <HelpSection title="WiFi Status">
+          <HelpItem term="SSID" description={WIFI_HELP.SSID} />
+          <HelpItem term="BSSID" description={WIFI_HELP.BSSID} />
+          <HelpItem term="Signal" description={WIFI_HELP.Signal} />
+          <HelpItem term="Channel" description={WIFI_HELP.Channel} />
+          <HelpItem term="Security" description={WIFI_HELP.Security} />
+          <HelpItem term="Frequency" description={WIFI_HELP.Frequency} />
+        </HelpSection>
+
+        {/* 4. Switch / LLDP (matches SwitchCard) */}
+        <HelpSection title="Switch (LLDP/CDP)">
+          <HelpItem term="Protocol" description={SWITCH_HELP.Protocol} />
+          <HelpItem term="Switch" description={SWITCH_HELP["Switch Name"]} />
+          <HelpItem term="Port" description={SWITCH_HELP.Port} />
+          <HelpItem term="Mgmt IP" description={SWITCH_HELP["Management IP"]} />
+        </HelpSection>
+
+        {/* 5. VLAN (matches VLANCard) */}
+        <HelpSection title="VLAN">
+          <HelpItem term="VLAN ID" description={VLAN_HELP["VLAN ID"]} />
+          <HelpItem term="Interface" description={VLAN_HELP.Interface} />
+        </HelpSection>
+
+        {/* 6. DHCP (matches DHCPCard) */}
+        <HelpSection title="DHCP">
+          <HelpItem term="Lease" description={DHCP_HELP.Lease} />
+          <HelpItem term="Server" description={DHCP_HELP.Server} />
+          <HelpItem term="Gateway" description={DHCP_HELP.Gateway} />
+          <HelpItem term="DNS" description={DHCP_HELP.DNS} />
+        </HelpSection>
+
+        {/* 7. Gateway (matches GatewayCard) */}
+        <HelpSection title="Gateway">
+          <HelpItem term="IPv4" description={GATEWAY_HELP["IPv4 Gateway"]} />
+          <HelpItem term="IPv6" description={GATEWAY_HELP["IPv6 Gateway"]} />
+          <HelpItem term="Reachable" description={GATEWAY_HELP.Reachability} />
+          <HelpItem term="Latency" description={GATEWAY_HELP.Latency} />
+        </HelpSection>
+
+        {/* 8. DNS Tests (matches DNSCard) */}
+        <HelpSection title="DNS Tests">
+          <HelpItem term="Forward" description={DNS_HELP["Forward Lookup"]} />
+          <HelpItem term="Reverse" description={DNS_HELP["Reverse Lookup"]} />
+          <HelpItem term="IPv6" description={DNS_HELP["IPv6 Lookup"]} />
+        </HelpSection>
+
+        {/* 9. Health Checks / HTTP Timing (matches HealthCheckCard) */}
+        <HelpSection title="Health Checks - HTTP Timing">
+          <HelpItem
+            term="DNS"
+            description={HTTP_TIMING_HELP.DNS}
+            color="bg-blue-400"
+          />
+          <HelpItem
+            term="TCP"
+            description={HTTP_TIMING_HELP.TCP}
+            color="bg-cyan-400"
+          />
+          <HelpItem
+            term="TLS"
+            description={HTTP_TIMING_HELP.TLS}
+            color="bg-purple-400"
+          />
+          <HelpItem
+            term="Wait"
+            description={HTTP_TIMING_HELP.Wait}
+            color="bg-amber-400"
+          />
+          <HelpItem
+            term="Download"
+            description={HTTP_TIMING_HELP.Download}
+            color="bg-green-400"
+          />
+        </HelpSection>
+
+        {/* 10. Performance Tests (matches PerformanceCard) */}
+        <HelpSection title="Performance Tests">
+          <HelpItem
+            term="Internet"
+            description={PERFORMANCE_HELP["Internet Speed"]}
+          />
+          <HelpItem term="LAN" description={PERFORMANCE_HELP["LAN Speed"]} />
+          <HelpItem term="Jitter" description={PERFORMANCE_HELP.Jitter} />
+        </HelpSection>
+
+        {/* 11. Network Discovery (matches NetworkDiscoveryCard) */}
+        <HelpSection title="Network Discovery">
+          <HelpItem term="Scan" description={DISCOVERY_HELP["Network Scan"]} />
+          <HelpItem term="MAC" description={DISCOVERY_HELP.MAC} />
+          <HelpItem term="Vendor" description={DISCOVERY_HELP.Vendor} />
+        </HelpSection>
+      </HelpModal>
 
       {/* FAB - Run All Tests */}
       <FAB />

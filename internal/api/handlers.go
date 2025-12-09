@@ -1700,16 +1700,17 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 
 // CustomTestResult represents the result of a single custom test.
 type CustomTestResult struct {
-	Name       string  `json:"name"`
-	Host       string  `json:"host"`
-	Port       int     `json:"port,omitempty"`
-	URL        string  `json:"url,omitempty"`
-	Success    bool    `json:"success"`
-	Latency    float64 `json:"latency"` // ms
-	DNSLatency float64 `json:"dnsLatency,omitempty"`
-	TCPConnect float64 `json:"tcpConnect,omitempty"`
-	TLSLatency float64 `json:"tlsLatency,omitempty"`
-	Error      string  `json:"error,omitempty"`
+	Name        string  `json:"name"`
+	Host        string  `json:"host"`
+	Port        int     `json:"port,omitempty"`
+	URL         string  `json:"url,omitempty"`
+	Success     bool    `json:"success"`
+	Latency     float64 `json:"latency"` // ms
+	DNSLatency  float64 `json:"dnsLatency,omitempty"`
+	TCPConnect  float64 `json:"tcpConnect,omitempty"`
+	TLSLatency  float64 `json:"tlsLatency,omitempty"`
+	TTFBLatency float64 `json:"ttfbLatency,omitempty"` // Time to first byte (server processing + wait)
+	Error       string  `json:"error,omitempty"`
 	Status     int     `json:"status,omitempty"`     // HTTP status code
 	TestStatus string  `json:"testStatus,omitempty"` // success, warning, error
 	// Extended ping fields
@@ -1916,6 +1917,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		testResult.DNSLatency = timings.DNS
 		testResult.TCPConnect = timings.Connect
 		testResult.TLSLatency = timings.TLS
+		testResult.TTFBLatency = timings.TTFB
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
@@ -1969,6 +1971,7 @@ type httpTimings struct {
 	DNS     float64
 	Connect float64
 	TLS     float64
+	TTFB    float64 // Time to first byte (from request sent to first response byte)
 	Total   float64
 }
 
@@ -1989,7 +1992,7 @@ func runHTTPTest(url string, expectedStatus int) (status int, timing httpTimings
 		return 0, timing, err
 	}
 
-	var dnsStart, connStart, tlsStart time.Time
+	var dnsStart, connStart, tlsStart, wroteRequest time.Time
 
 	trace := &httptrace.ClientTrace{
 		DNSStart: func(httptrace.DNSStartInfo) {
@@ -2014,6 +2017,14 @@ func runHTTPTest(url string, expectedStatus int) (status int, timing httpTimings
 		TLSHandshakeDone: func(tls.ConnectionState, error) {
 			if !tlsStart.IsZero() {
 				timing.TLS += time.Since(tlsStart).Seconds() * 1000
+			}
+		},
+		WroteRequest: func(httptrace.WroteRequestInfo) {
+			wroteRequest = time.Now()
+		},
+		GotFirstResponseByte: func() {
+			if !wroteRequest.IsZero() {
+				timing.TTFB = time.Since(wroteRequest).Seconds() * 1000
 			}
 		},
 	}

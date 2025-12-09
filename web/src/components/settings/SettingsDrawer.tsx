@@ -1824,7 +1824,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     <span
                       className={`text-xs text-text-muted ${!testsSettings.runPerformance || !testsSettings.runSpeedtest ? "opacity-60" : ""}`}
                     >
-                      Run at link up
+                      Auto-run on link up
                     </span>
                     <input
                       type="checkbox"
@@ -1872,7 +1872,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     <span
                       className={`text-xs text-text-muted ${!testsSettings.runPerformance || !testsSettings.runIperf ? "opacity-60" : ""}`}
                     >
-                      Run at link up
+                      Auto-run on link up
                     </span>
                     <input
                       type="checkbox"
@@ -2909,10 +2909,10 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               </label>
 
               {/* Performance tests block */}
-              <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-2">
+              <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-3">
                 <label className="flex items-center justify-between">
-                  <span className="text-sm text-text-primary">
-                    Performance Tests (card + runs)
+                  <span className="text-sm font-medium text-text-primary">
+                    Performance
                   </span>
                   <input
                     type="checkbox"
@@ -2927,9 +2927,13 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   />
                 </label>
 
-                <div className="pl-4 space-y-2 text-sm text-text-primary">
+                <div className="pl-4 space-y-2 border-l-2 border-surface-border">
                   <label className="flex items-center justify-between">
-                    <span>Speedtest</span>
+                    <span
+                      className={`text-sm text-text-primary ${!fabOptions.runPerformance ? "opacity-60" : ""}`}
+                    >
+                      Internet Speed (Speedtest)
+                    </span>
                     <input
                       type="checkbox"
                       disabled={!fabOptions.runPerformance}
@@ -2944,7 +2948,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     />
                   </label>
                   <label className="flex items-center justify-between">
-                    <span>iperf3</span>
+                    <span
+                      className={`text-sm text-text-primary ${!fabOptions.runPerformance ? "opacity-60" : ""}`}
+                    >
+                      LAN Speed (iperf3)
+                    </span>
                     <input
                       type="checkbox"
                       disabled={!fabOptions.runPerformance}
@@ -2962,44 +2970,51 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               </div>
 
               {/* Network discovery block */}
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm text-text-primary">
-                  Network Discovery
-                </span>
-                <input
-                  type="checkbox"
-                  checked={fabOptions.runNetworkDiscovery}
-                  onChange={(e) =>
-                    setFabOptions((prev) => ({
-                      ...prev,
-                      runNetworkDiscovery: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
-
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border ml-3">
-                <div>
-                  <span className="text-sm text-text-primary">
-                    Auto-Scan on Link
+              <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-3">
+                <label className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-text-primary">
+                    Network Discovery
                   </span>
-                  <p className="text-xs text-text-muted">
-                    Scan when interface comes up
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={fabOptions.autoScanOnLink}
-                  onChange={(e) =>
-                    setFabOptions((prev) => ({
-                      ...prev,
-                      autoScanOnLink: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
+                  <input
+                    type="checkbox"
+                    checked={fabOptions.runNetworkDiscovery}
+                    onChange={(e) =>
+                      setFabOptions((prev) => ({
+                        ...prev,
+                        runNetworkDiscovery: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between pl-4 border-l-2 border-surface-border">
+                  <div>
+                    <span
+                      className={`text-sm text-text-primary ${!fabOptions.runNetworkDiscovery ? "opacity-60" : ""}`}
+                    >
+                      Auto-Scan on Link
+                    </span>
+                    <p
+                      className={`text-xs text-text-muted ${!fabOptions.runNetworkDiscovery ? "opacity-60" : ""}`}
+                    >
+                      Scan when interface comes up
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    disabled={!fabOptions.runNetworkDiscovery}
+                    checked={fabOptions.autoScanOnLink}
+                    onChange={(e) =>
+                      setFabOptions((prev) => ({
+                        ...prev,
+                        autoScanOnLink: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4"
+                  />
+                </label>
+              </div>
             </div>
           </CollapsibleSection>
 
@@ -3053,7 +3068,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               <p className="text-xs text-status-error mt-2">{logError}</p>
             )}
             {!logError && logPreview.length > 0 && (
-              <pre className="mt-2 max-h-48 overflow-y-auto text-[11px] leading-5 bg-surface-base border border-surface-border rounded px-3 py-2 text-text-primary whitespace-pre-wrap">
+              <pre className="mt-2 max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border rounded px-3 py-2 text-text-primary whitespace-pre-wrap">
                 {logPreview.join("\n")}
               </pre>
             )}
@@ -3091,7 +3106,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           <section className="pt-4 border-t border-surface-border">
             <h3 className="text-sm font-medium text-text-muted mb-2">About</h3>
             <p className="text-xs text-text-muted">
-              NetScope v0.8.7
+              NetScope v0.12.4
               <br />
               Network Diagnostic Tool
             </p>

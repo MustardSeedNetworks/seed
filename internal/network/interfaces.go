@@ -219,6 +219,11 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 		}
 	}
 
+	// Get ethtool settings (autoneg, advertised modes) on Linux
+	autoNeg, advertised := getEthtoolSettings(name)
+	status.AutoNeg = autoNeg
+	status.Advertised = advertised
+
 	return status, nil
 }
 
