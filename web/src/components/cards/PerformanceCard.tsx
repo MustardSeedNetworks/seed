@@ -380,8 +380,8 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
     const handleRunAllTests = () => {
       // Check FAB options from localStorage
       let fabOptions = {
-        runSpeedtest: false, // Default OFF (bandwidth-intensive)
-        runIperf: false, // Default OFF (bandwidth-intensive)
+        runSpeedtest: true, // Default ON
+        runIperf: true, // Default ON
       };
       try {
         const saved = localStorage.getItem("netscope-fab-options");

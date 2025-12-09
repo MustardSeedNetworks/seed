@@ -93,8 +93,8 @@ interface FABOptions {
   runGateway: boolean; // Gateway card
   runDNS: boolean; // DNS card
   runHealthChecks: boolean; // Health Checks card
-  runSpeedtest: boolean; // Performance: Internet Speed (default OFF)
-  runIperf: boolean; // Performance: LAN Speed (default OFF)
+  runSpeedtest: boolean; // Performance: Internet Speed
+  runIperf: boolean; // Performance: LAN Speed
   runNetworkDiscovery: boolean; // Network Discovery card (default ON)
   autoScanOnLink: boolean; // Auto-scan network on link up (default ON when discovery enabled)
 }
@@ -136,6 +136,7 @@ interface TestsSettings {
   tcpPorts: TCPPort[];
   udpPorts: UDPPort[];
   httpEndpoints: HTTPEndpoint[];
+  runPerformance: boolean; // master toggle for speedtest + iperf
   speedtest: {
     serverId: string;
     autoRunOnLink: boolean;
@@ -204,6 +205,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     tcpPorts: [],
     udpPorts: [],
     httpEndpoints: [],
+    runPerformance: true,
     speedtest: {
       serverId: "",
       autoRunOnLink: false,
@@ -220,8 +222,8 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     runGateway: true, // Gateway card
     runDNS: true, // DNS card
     runHealthChecks: true, // Health Checks card
-    runSpeedtest: false, // Performance: Internet Speed (default OFF)
-    runIperf: false, // Performance: LAN Speed (default OFF)
+    runSpeedtest: true, // Performance: Internet Speed (default ON)
+    runIperf: true, // Performance: LAN Speed (default ON)
     runNetworkDiscovery: true, // Network Discovery card (default ON)
     autoScanOnLink: true, // Auto-scan network on link up (default ON)
   });
@@ -361,6 +363,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           tcpPorts: data.tcpPorts || [],
           udpPorts: data.udpPorts || [],
           httpEndpoints: data.httpEndpoints || [],
+          runPerformance: data.runPerformance ?? true,
           speedtest: {
             serverId: data.speedtest?.serverId || "",
             autoRunOnLink: data.speedtest?.autoRunOnLink || false,
@@ -750,13 +753,14 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const saveTestsSettings = useCallback(async () => {
     setTestsStatus("saving");
     try {
+      const payload = { ...testsSettings };
       const response = await fetch(`${API_BASE}/api/tests/settings`, {
         method: "PUT",
         headers: {
           ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(testsSettings),
+        body: JSON.stringify(payload),
       });
       if (response.ok) {
         setTestsStatus("saved");
@@ -1700,6 +1704,23 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             }
           >
             <div className="space-y-4">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">
+                  Enable Performance Tests
+                </span>
+                <input
+                  type="checkbox"
+                  checked={testsSettings.runPerformance}
+                  onChange={(e) =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      runPerformance: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
               {/* Internet Speed (Speedtest) Subsection */}
               <div className="border-b border-surface-border pb-4">
                 <h4 className="text-sm font-semibold text-text-primary mb-2 uppercase tracking-wide">
@@ -1725,9 +1746,23 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       placeholder="Auto (closest server)"
                       className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
                     />
-                    <p className="text-xs text-text-muted mt-1">
-                      Leave empty for auto-selection
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-xs text-text-muted">
+                        Leave empty to auto-select nearest server
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTestsSettings((prev) => ({
+                            ...prev,
+                            speedtest: { ...prev.speedtest, serverId: "" },
+                          }))
+                        }
+                        className="text-xs text-brand-primary hover:underline"
+                      >
+                        Reset to Auto
+                      </button>
+                    </div>
                   </div>
 
                   <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
