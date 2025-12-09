@@ -579,8 +579,8 @@ function App() {
         runGateway: true, // Gateway card
         runDNS: true, // DNS card
         runHealthChecks: true, // Health Checks card
-        runSpeedtest: false, // Performance: Internet Speed (default OFF)
-        runIperf: false, // Performance: LAN Speed (default OFF)
+        runSpeedtest: true, // Performance: Internet Speed
+        runIperf: true, // Performance: LAN Speed
         runNetworkDiscovery: true, // Network Discovery card (default ON)
       };
       try {
@@ -622,7 +622,7 @@ function App() {
       }
 
       // Wait for all fetches to complete
-      // Note: runSpeedtest, runIperf, and runHealthChecks are handled by
+      // Note: runSpeedtest/runIperf and runHealthChecks are handled by
       // their respective card components listening for the 'runAllTests' event
       await Promise.all(fetchPromises);
 

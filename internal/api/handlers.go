@@ -1449,6 +1449,7 @@ type TestsSettingsResponse struct {
 	UDPPorts      []UDPPortResponse         `json:"udpPorts"`
 	HTTPEndpoints []HTTPEndpointResponse    `json:"httpEndpoints"`
 	Speedtest     SpeedtestSettingsResponse `json:"speedtest"`
+	RunPerformance bool                     `json:"runPerformance"`
 }
 
 // DNSServerResponse represents a DNS server for testing.
@@ -1509,6 +1510,7 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 		TCPPorts:      make([]TCPPortResponse, 0, len(s.config.Tests.TCPPorts)),
 		UDPPorts:      make([]UDPPortResponse, 0, len(s.config.Tests.UDPPorts)),
 		HTTPEndpoints: make([]HTTPEndpointResponse, 0, len(s.config.Tests.HTTPEndpoints)),
+		RunPerformance: s.config.Tests.RunPerformance,
 		Speedtest: SpeedtestSettingsResponse{
 			ServerID:      s.config.Speedtest.ServerID,
 			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
@@ -1644,6 +1646,9 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 			Enabled:        h.Enabled,
 		})
 	}
+
+	// Update performance toggle
+	s.config.Tests.RunPerformance = req.RunPerformance
 
 	// Update speedtest settings
 	s.config.Speedtest.ServerID = req.Speedtest.ServerID

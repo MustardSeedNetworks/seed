@@ -106,6 +106,7 @@ type TestsConfig struct {
 	TCPPorts      []TCPPortTest  `yaml:"tcp_ports"`
 	UDPPorts      []UDPPortTest  `yaml:"udp_ports"`
 	HTTPEndpoints []HTTPEndpoint `yaml:"http_endpoints"`
+	RunPerformance bool          `yaml:"run_performance"` // Master toggle for speedtest + iperf
 }
 
 // PingTarget represents a custom ping target.
@@ -251,6 +252,7 @@ func DefaultConfig() *Config {
 			TCPPorts:      []TCPPortTest{},
 			UDPPorts:      []UDPPortTest{},
 			HTTPEndpoints: []HTTPEndpoint{},
+			RunPerformance: true,
 		},
 		Speedtest: SpeedtestConfig{
 			ServerID:      "",    // Auto-select closest
