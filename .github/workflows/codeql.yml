@@ -11,7 +11,7 @@ on:
 jobs:
   analyze:
     # Skip CodeQL on private repos unless explicitly enabled
-    if: ${{ github.repository_visibility == 'public' || env.ENABLE_CODEQL == 'true' }}
+    if: ${{ github.repository_visibility == 'public' || vars.ENABLE_CODEQL == 'true' }}
     name: Analyze
     runs-on: ubuntu-latest
     permissions:
