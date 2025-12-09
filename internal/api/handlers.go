@@ -1459,6 +1459,7 @@ type TestsSettingsResponse struct {
 	UDPPorts       []UDPPortResponse         `json:"udpPorts"`
 	HTTPEndpoints  []HTTPEndpointResponse    `json:"httpEndpoints"`
 	Speedtest      SpeedtestSettingsResponse `json:"speedtest"`
+	Iperf          IperfSettingsResponse     `json:"iperf"`
 	RunPerformance bool                      `json:"runPerformance"`
 	RunSpeedtest   bool                      `json:"runSpeedtest"`
 	RunIperf       bool                      `json:"runIperf"`
@@ -1503,6 +1504,10 @@ type SpeedtestSettingsResponse struct {
 	AutoRunOnLink bool   `json:"autoRunOnLink"`
 }
 
+type IperfSettingsResponse struct {
+	AutoRunOnLink bool `json:"autoRunOnLink"`
+}
+
 // handleTestsSettings handles GET/PUT for custom tests settings.
 func (s *Server) handleTestsSettings(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -1530,6 +1535,9 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 		Speedtest: SpeedtestSettingsResponse{
 			ServerID:      s.config.Speedtest.ServerID,
 			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
+		},
+		Iperf: IperfSettingsResponse{
+			AutoRunOnLink: s.config.Iperf.AutoRunOnLink,
 		},
 	}
 
@@ -1675,6 +1683,9 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	if s.speedtestTester != nil {
 		s.speedtestTester.SetServerID(req.Speedtest.ServerID)
 	}
+
+	// Update iperf settings
+	s.config.Iperf.AutoRunOnLink = req.Iperf.AutoRunOnLink
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
