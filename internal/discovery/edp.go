@@ -15,13 +15,13 @@ import (
 
 // EDP TLV Types (Extreme Discovery Protocol)
 const (
-	EDPTLVNull       uint8 = 0x00
-	EDPTLVDisplay    uint8 = 0x01
-	EDPTLVInfo       uint8 = 0x02
-	EDPTLVVlan       uint8 = 0x05
-	EDPTLVESRP       uint8 = 0x06
-	EDPTLVUnknown    uint8 = 0x07
-	EDPTLVIPAddr     uint8 = 0x99
+	EDPTLVNull    uint8 = 0x00
+	EDPTLVDisplay uint8 = 0x01
+	EDPTLVInfo    uint8 = 0x02
+	EDPTLVVlan    uint8 = 0x05
+	EDPTLVESRP    uint8 = 0x06
+	EDPTLVUnknown uint8 = 0x07
+	EDPTLVIPAddr  uint8 = 0x99
 )
 
 // EDPNeighbor represents a discovered EDP neighbor.

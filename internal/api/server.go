@@ -18,24 +18,25 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/netscope/internal/auth"
+	"github.com/krisarmstrong/netscope/internal/cable"
 	"github.com/krisarmstrong/netscope/internal/config"
 	"github.com/krisarmstrong/netscope/internal/dhcp"
 	"github.com/krisarmstrong/netscope/internal/discovery"
 	"github.com/krisarmstrong/netscope/internal/dns"
 	"github.com/krisarmstrong/netscope/internal/gateway"
-	"github.com/krisarmstrong/netscope/internal/network"
-	"github.com/krisarmstrong/netscope/internal/vlan"
-	"github.com/krisarmstrong/netscope/internal/wifi"
-	"github.com/krisarmstrong/netscope/internal/cable"
 	"github.com/krisarmstrong/netscope/internal/iperf"
+	"github.com/krisarmstrong/netscope/internal/network"
 	"github.com/krisarmstrong/netscope/internal/publicip"
 	"github.com/krisarmstrong/netscope/internal/speedtest"
+	"github.com/krisarmstrong/netscope/internal/vlan"
+	"github.com/krisarmstrong/netscope/internal/wifi"
 )
 
 // Server represents the HTTP/HTTPS server.
 type Server struct {
 	config           *config.Config
 	configPath       string
+	logPath          string
 	httpServer       *http.Server
 	authManager      *auth.Manager
 	wsHub            *Hub
@@ -56,10 +57,11 @@ type Server struct {
 }
 
 // NewServer creates a new server instance.
-func NewServer(cfg *config.Config, configPath string, netMgr *network.Manager) *Server {
+func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.Manager) *Server {
 	s := &Server{
 		config:     cfg,
 		configPath: configPath,
+		logPath:    logPath,
 		mux:        http.NewServeMux(),
 		netManager: netMgr,
 		authManager: auth.NewManager(
@@ -198,6 +200,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc("/api/devices/subnets", s.handleDevicesSubnets)
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
+	s.mux.HandleFunc("/api/logs", s.handleLogs)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
@@ -329,7 +332,7 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 	}
 
 	// Ensure certs directory exists
-	if err := os.MkdirAll(certsDir, 0700); err != nil {
+	if err := os.MkdirAll(certsDir, 0o700); err != nil {
 		return "", "", err
 	}
 
@@ -371,7 +374,7 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 	}
 
 	// Write private key
-	keyOut, err := os.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return "", "", err
 	}

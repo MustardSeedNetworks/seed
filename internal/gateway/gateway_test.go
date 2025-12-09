@@ -789,10 +789,8 @@ func TestTesterPingToInvalidHost(t *testing.T) {
 	// We just verify the error path doesn't panic
 	if result.Success {
 		t.Log("ping unexpectedly succeeded - skip this check")
-	} else {
-		if result.Error == "" {
-			t.Error("expected non-empty error for failed ping")
-		}
+	} else if result.Error == "" {
+		t.Error("expected non-empty error for failed ping")
 	}
 }
 

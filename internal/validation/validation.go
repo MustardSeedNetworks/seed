@@ -15,7 +15,7 @@ var validHostnameRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-z
 // validInterfaceRegex matches valid network interface names
 // Linux: eth0, enp0s3, wlan0, docker0, br-xxx, vethXXX, lo
 // macOS: en0, en1, lo0, bridge0, utun0
-var validInterfaceRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]{0,14}[0-9]?$`)
+var validInterfaceRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]{0,14}\d?$`)
 
 // IsValidIP checks if the string is a valid IPv4 or IPv6 address.
 func IsValidIP(s string) bool {

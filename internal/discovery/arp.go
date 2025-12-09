@@ -35,10 +35,10 @@ type ARPScanner struct {
 	entries           map[string]*ARPEntry // Key by IP
 	subnet            *net.IPNet
 	localIP           net.IP
-	additionalSubnets []*net.IPNet           // Additional subnets to scan
-	pingResponders    []string               // IPs that responded to ping (for remote subnets)
-	pingResults       map[string]PingResult  // Cached ping results with TTL info
-	pinger            *ICMPPinger            // Raw socket ICMP pinger
+	additionalSubnets []*net.IPNet          // Additional subnets to scan
+	pingResponders    []string              // IPs that responded to ping (for remote subnets)
+	pingResults       map[string]PingResult // Cached ping results with TTL info
+	pinger            *ICMPPinger           // Raw socket ICMP pinger
 	scanning          bool
 	lastScan          time.Time
 }
@@ -142,7 +142,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		return fmt.Errorf("scan already in progress")
 	}
 	s.scanning = true
-	s.pingResponders = nil // Clear previous ping responders
+	s.pingResponders = nil                   // Clear previous ping responders
 	additionalSubnets := s.additionalSubnets // Copy while holding lock
 	s.mu.Unlock()
 
@@ -176,7 +176,9 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 			return ctx.Err()
 		default:
 			// Continue scanning additional subnets even if some fail
-			_ = s.pingSweep(ctx, additionalSubnet)
+			if err := s.pingSweep(ctx, additionalSubnet); err != nil {
+				log.Printf("ping sweep failed for subnet %s: %v", additionalSubnet, err)
+			}
 		}
 	}
 
@@ -597,7 +599,7 @@ func (s *ARPScanner) Count() int {
 }
 
 // GetSubnetInfo returns the current subnet and local IP.
-func (s *ARPScanner) GetSubnetInfo() (subnet string, localIP string) {
+func (s *ARPScanner) GetSubnetInfo() (subnet, localIP string) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 

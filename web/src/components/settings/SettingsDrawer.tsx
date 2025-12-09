@@ -124,6 +124,11 @@ interface HTTPEndpoint {
   enabled: boolean;
 }
 
+interface LogsResponse {
+  path: string;
+  lines: string[];
+}
+
 interface TestsSettings {
   dnsHostname: string;
   dnsServers: DNSServer[];
@@ -258,6 +263,10 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const [newSubnetCidr, setNewSubnetCidr] = useState("");
   const [newSubnetName, setNewSubnetName] = useState("");
   const [subnetError, setSubnetError] = useState<string | null>(null);
+  // Log preview (debug)
+  const [logPreview, setLogPreview] = useState<string[]>([]);
+  const [logLoading, setLogLoading] = useState(false);
+  const [logError, setLogError] = useState<string | null>(null);
   const [subnetsStatus, setSubnetsStatus] = useState<SaveStatus>("idle");
   // Auto-save status for each section
   type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -456,6 +465,29 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       }
     } catch (err) {
       console.error("Failed to fetch subnets:", err);
+    }
+  }, []);
+
+  // Fetch a small tail of the application log (debug)
+  const fetchLogPreview = useCallback(async () => {
+    setLogLoading(true);
+    setLogError(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/logs?lines=200`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error("Unable to load logs");
+      }
+      const data = (await response.json()) as LogsResponse;
+      setLogPreview(data.lines || []);
+    } catch (err) {
+      setLogPreview([]);
+      setLogError(
+        err instanceof Error ? err.message : "Failed to load log file",
+      );
+    } finally {
+      setLogLoading(false);
     }
   }, []);
 
@@ -2647,6 +2679,34 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               </button>
             </div>
           </CollapsibleSection>
+
+          {/* Logs (debug) */}
+          <section className="pt-4 border-t border-surface-border">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-text-muted">
+                  Logs (debug)
+                </h3>
+                <p className="text-xs text-text-muted">
+                  Rotating file; use only for troubleshooting.
+                </p>
+              </div>
+              <button
+                onClick={fetchLogPreview}
+                className="text-xs px-3 py-1 border border-surface-border rounded text-text-muted hover:text-text-primary hover:border-text-muted transition-colors"
+              >
+                {logLoading ? "Loading…" : "View"}
+              </button>
+            </div>
+            {logError && (
+              <p className="text-xs text-status-error mt-2">{logError}</p>
+            )}
+            {!logError && logPreview.length > 0 && (
+              <pre className="mt-2 max-h-48 overflow-y-auto text-[11px] leading-5 bg-surface-base border border-surface-border rounded px-3 py-2 text-text-primary whitespace-pre-wrap">
+                {logPreview.join("\n")}
+              </pre>
+            )}
+          </section>
 
           {/* Export Section */}
           <section className="pt-4 border-t border-surface-border">

@@ -14,11 +14,11 @@ import (
 type Status string
 
 const (
-	StatusOK               Status = "ok"
-	StatusOpen             Status = "open"
-	StatusShort            Status = "short"
+	StatusOK                Status = "ok"
+	StatusOpen              Status = "open"
+	StatusShort             Status = "short"
 	StatusImpedanceMismatch Status = "impedance_mismatch"
-	StatusUnknown          Status = "unknown"
+	StatusUnknown           Status = "unknown"
 )
 
 // TestResult contains the cable test results.
@@ -172,16 +172,17 @@ func parseTDROutput(output string, result *TestResult) *TestResult {
 
 		// Parse status
 		lineLower := strings.ToLower(line)
-		if strings.Contains(lineLower, "open") {
+		switch {
+		case strings.Contains(lineLower, "open"):
 			result.Status = StatusOpen
 			result.Faults = append(result.Faults, "Open circuit detected")
-		} else if strings.Contains(lineLower, "short") {
+		case strings.Contains(lineLower, "short"):
 			result.Status = StatusShort
 			result.Faults = append(result.Faults, "Short circuit detected")
-		} else if strings.Contains(lineLower, "impedance") {
+		case strings.Contains(lineLower, "impedance"):
 			result.Status = StatusImpedanceMismatch
 			result.Faults = append(result.Faults, "Impedance mismatch")
-		} else if strings.Contains(lineLower, "ok") || strings.Contains(lineLower, "pass") {
+		case strings.Contains(lineLower, "ok") || strings.Contains(lineLower, "pass"):
 			result.Status = StatusOK
 		}
 	}
@@ -199,26 +200,26 @@ func parseCableTestOutput(output string, result *TestResult) *TestResult {
 
 		// Look for pair status (Pair A, B, C, D for gigabit Ethernet)
 		if strings.Contains(lineLower, "pair") {
-			if strings.Contains(lineLower, "ok") || strings.Contains(lineLower, "terminated") {
+			switch {
+			case strings.Contains(lineLower, "ok") || strings.Contains(lineLower, "terminated"):
 				if result.Status == StatusUnknown {
 					result.Status = StatusOK
 				}
-			} else if strings.Contains(lineLower, "open") {
+			case strings.Contains(lineLower, "open"):
 				result.Status = StatusOpen
 				result.Faults = append(result.Faults, line)
-			} else if strings.Contains(lineLower, "short") {
+			case strings.Contains(lineLower, "short"):
 				result.Status = StatusShort
 				result.Faults = append(result.Faults, line)
 			}
+		}
 
-			// Try to extract distance
-			re := regexp.MustCompile(`(\d+\.?\d*)\s*(m|meters?)`)
-			if matches := re.FindStringSubmatch(line); len(matches) >= 2 {
-				if length, err := strconv.ParseFloat(matches[1], 64); err == nil {
-					// Use the maximum length found
-					if result.Length == nil || length > *result.Length {
-						result.Length = &length
-					}
+		// Try to extract distance
+		re := regexp.MustCompile(`(\d+\.?\d*)\s*(m|meters?)`)
+		if matches := re.FindStringSubmatch(line); len(matches) >= 2 {
+			if length, err := strconv.ParseFloat(matches[1], 64); err == nil {
+				if result.Length == nil || length > *result.Length {
+					result.Length = &length
 				}
 			}
 		}

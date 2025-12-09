@@ -34,27 +34,27 @@ type PingResult struct {
 
 // pendingPing tracks an in-flight ping request.
 type pendingPing struct {
-	ip      string
-	seq     int
-	start   time.Time
-	result  chan PingResult
+	ip     string
+	seq    int
+	start  time.Time
+	result chan PingResult
 }
 
 // ICMPPinger provides raw socket ICMP ping functionality.
 // Uses a dedicated receiver goroutine to properly handle concurrent pings.
 type ICMPPinger struct {
-	conn     *icmp.PacketConn
-	timeout  time.Duration
-	id       int
-	seq      uint32
+	conn    *icmp.PacketConn
+	timeout time.Duration
+	id      int
+	seq     uint32
 
 	// Pending pings tracked by sequence number
 	pending   map[int]*pendingPing
 	pendingMu sync.Mutex
 
 	// Channels for coordinating
-	stopCh   chan struct{}
-	stopped  bool
+	stopCh    chan struct{}
+	stopped   bool
 	stoppedMu sync.Mutex
 }
 
@@ -66,10 +66,10 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	}
 
 	p := &ICMPPinger{
-		timeout:  timeout,
-		id:       os.Getpid() & 0xffff,
-		pending:  make(map[int]*pendingPing),
-		stopCh:   make(chan struct{}),
+		timeout: timeout,
+		id:      os.Getpid() & 0xffff,
+		pending: make(map[int]*pendingPing),
+		stopCh:  make(chan struct{}),
 	}
 
 	// Open privileged raw ICMP socket (requires root/CAP_NET_RAW)
@@ -82,6 +82,7 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	// Enable TTL in control messages for OS fingerprinting
 	if err := conn.IPv4PacketConn().SetControlMessage(ipv4.FlagTTL, true); err != nil {
 		// Non-fatal - TTL extraction may not work but ping will still function
+		log.Printf("warning: failed to enable TTL control message: %v", err)
 	}
 
 	// Start the receiver goroutine
@@ -122,7 +123,10 @@ func (p *ICMPPinger) receiver() {
 		}
 
 		// Set a short read deadline so we can check stopCh periodically
-		p.conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+		if err := p.conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond)); err != nil {
+			log.Printf("failed to set ICMP read deadline: %v", err)
+			continue
+		}
 
 		n, cm, _, err := p.conn.IPv4PacketConn().ReadFrom(reply)
 		if err != nil {
@@ -359,4 +363,3 @@ func MustHaveICMPPrivileges() {
 		os.Exit(1)
 	}
 }
-

@@ -103,10 +103,15 @@ func (m *Manager) Stop() {
 
 // GetNeighbors returns all discovered neighbors from all protocols.
 func (m *Manager) GetNeighbors() []*Neighbor {
-	var neighbors []*Neighbor
+	lldpNeighbors := m.lldp.GetNeighbors()
+	cdpNeighbors := m.cdp.GetNeighbors()
+	edpNeighbors := m.edp.GetNeighbors()
+
+	total := len(lldpNeighbors) + len(cdpNeighbors) + len(edpNeighbors)
+	neighbors := make([]*Neighbor, 0, total)
 
 	// Get LLDP neighbors
-	for _, n := range m.lldp.GetNeighbors() {
+	for _, n := range lldpNeighbors {
 		neighbors = append(neighbors, &Neighbor{
 			Protocol:          ProtocolLLDP,
 			ChassisID:         n.ChassisID,
@@ -123,7 +128,7 @@ func (m *Manager) GetNeighbors() []*Neighbor {
 	}
 
 	// Get CDP neighbors
-	for _, n := range m.cdp.GetNeighbors() {
+	for _, n := range cdpNeighbors {
 		neighbors = append(neighbors, &Neighbor{
 			Protocol:          ProtocolCDP,
 			ChassisID:         n.DeviceID,
@@ -140,7 +145,7 @@ func (m *Manager) GetNeighbors() []*Neighbor {
 	}
 
 	// Get EDP neighbors
-	for _, n := range m.edp.GetNeighbors() {
+	for _, n := range edpNeighbors {
 		systemName := n.DisplayName
 		if systemName == "" {
 			systemName = n.DeviceID

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/netscope/internal/validation"
 )
 
 // LinkState represents the current link state.
@@ -171,7 +173,8 @@ func (m *LinkMonitor) checkLinkState() LinkState {
 // checkLinkStateLinux reads carrier state from sysfs.
 func (m *LinkMonitor) checkLinkStateLinux() LinkState {
 	// Read /sys/class/net/<iface>/carrier
-	carrierPath := filepath.Join("/sys/class/net", m.interfaceName, "carrier")
+	carrierPath := filepath.Join("sys", "class", "net", m.interfaceName, "carrier")
+	carrierPath = string(os.PathSeparator) + carrierPath
 	data, err := os.ReadFile(carrierPath)
 	if err != nil {
 		// Interface might not exist or no carrier file
@@ -187,6 +190,11 @@ func (m *LinkMonitor) checkLinkStateLinux() LinkState {
 
 // checkLinkStateDarwin checks link state on macOS using ifconfig.
 func (m *LinkMonitor) checkLinkStateDarwin() LinkState {
+	if err := validation.ValidateInterface(m.interfaceName); err != nil {
+		return LinkStateUnknown
+	}
+
+	// #nosec G204 - interface name validated above
 	cmd := exec.Command("ifconfig", m.interfaceName)
 	output, err := cmd.Output()
 	if err != nil {
