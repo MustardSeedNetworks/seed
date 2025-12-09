@@ -103,8 +103,10 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	bodyBytes, _ := io.ReadAll(r.Body)
 	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.Unmarshal(bodyBytes, &req); err != nil {
+		log.Printf("login decode error: %v body=%q", err, string(bodyBytes))
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -330,6 +332,13 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 		if err := s.discoveryManager.SetInterface(req.Interface); err != nil {
 			// Log but don't fail - discovery may not work without root
 			log.Printf("failed to set discovery interface: %v", err)
+		}
+
+		// Update device discovery (ARP/protocol scans)
+		if s.deviceDiscovery != nil {
+			if err := s.deviceDiscovery.SetInterface(req.Interface); err != nil {
+				log.Printf("failed to set device discovery interface: %v", err)
+			}
 		}
 
 		// Update WiFi manager interface and check if wireless

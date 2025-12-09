@@ -134,6 +134,17 @@ func main() {
 		}
 	}
 
+	// If we found a usable interface, make it the active/default everywhere
+	if activeInterface != "" {
+		if activeInterface != cfg.Interface.Default {
+			log.Printf("Using detected active interface %s instead of configured default %s", activeInterface, cfg.Interface.Default)
+			cfg.Interface.Default = activeInterface
+		}
+		if err := netMgr.SetCurrentInterface(activeInterface); err != nil {
+			log.Printf("Warning: failed to set active interface %s: %v", activeInterface, err)
+		}
+	}
+
 	// Create and start the server
 	server := api.NewServer(cfg, *configPath, logPath, netMgr)
 
