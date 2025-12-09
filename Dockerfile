@@ -1,5 +1,5 @@
 # Stage 1: Build Go backend
-FROM golang:1.25 AS builder-backend
+FROM golang:1.25-alpine AS builder-backend
 WORKDIR /app
 RUN apk add --no-cache gcc musl-dev libpcap-dev
 COPY go.mod go.sum ./
