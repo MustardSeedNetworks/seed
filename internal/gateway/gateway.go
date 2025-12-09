@@ -2,14 +2,12 @@
 package gateway
 
 import (
+	"context"
 	"net"
-	"os/exec"
-	"regexp"
-	"runtime"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/netscope/internal/discovery"
 )
 
 // Status represents the status of a gateway ping operation.
@@ -77,17 +75,26 @@ type Tester struct {
 	mu          sync.RWMutex
 	stopCh      chan struct{}
 	running     bool
+	pinger      *discovery.ICMPPinger // Raw ICMP pinger (nil if unavailable)
 }
 
 // NewTester creates a new gateway tester.
 func NewTester(thresholds Thresholds) *Tester {
-	return &Tester{
+	t := &Tester{
 		thresholds:  thresholds,
 		pingCount:   3, // 3 pings matches the Min/Avg/Max display
 		pingTimeout: 2 * time.Second,
 		stats:       &PingStats{Status: StatusUnknown},
 		stopCh:      make(chan struct{}),
 	}
+
+	// Try to create ICMP pinger (requires CAP_NET_RAW or root)
+	pinger, err := discovery.NewICMPPinger(t.pingTimeout)
+	if err == nil {
+		t.pinger = pinger
+	}
+
+	return t
 }
 
 // SetGateway updates the gateway address to ping.
@@ -117,161 +124,25 @@ func (t *Tester) GetStats() *PingStats {
 }
 
 // DetectGateway attempts to detect the default gateway.
+// Uses netlink on Linux, exec commands on macOS.
 func DetectGateway() (string, error) {
-	switch runtime.GOOS {
-	case "darwin":
-		return detectGatewayDarwin()
-	case "linux":
-		return detectGatewayLinux()
-	default:
-		return "", nil
-	}
+	return detectGatewayPlatform()
 }
 
-// detectGatewayDarwin detects the default gateway on macOS.
-func detectGatewayDarwin() (string, error) {
-	// Use netstat -rn to get the default route
-	cmd := exec.Command("netstat", "-rn")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	// Parse output looking for default route
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		fields := strings.Fields(line)
-		if len(fields) >= 2 && fields[0] == "default" {
-			// The gateway is typically the second field
-			gateway := fields[1]
-			// Validate it's an IP address
-			if net.ParseIP(gateway) != nil {
-				return gateway, nil
-			}
-		}
-	}
-
-	// Try route -n get default
-	cmd = exec.Command("route", "-n", "get", "default")
-	output, err = cmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	// Parse "gateway:" line
-	lines = strings.Split(string(output), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "gateway:") {
-			gateway := strings.TrimSpace(strings.TrimPrefix(line, "gateway:"))
-			if net.ParseIP(gateway) != nil {
-				return gateway, nil
-			}
-		}
-	}
-
-	return "", nil
-}
-
-// detectGatewayLinux detects the default gateway on Linux.
-func detectGatewayLinux() (string, error) {
-	// Try ip route
-	cmd := exec.Command("ip", "route", "show", "default")
-	output, err := cmd.Output()
-	if err != nil {
-		// Fall back to reading /proc/net/route
-		return detectGatewayFromProc()
-	}
-
-	// Parse "default via X.X.X.X"
-	fields := strings.Fields(string(output))
-	for i, field := range fields {
-		if field == "via" && i+1 < len(fields) {
-			gateway := fields[i+1]
-			if net.ParseIP(gateway) != nil {
-				return gateway, nil
-			}
-		}
-	}
-
-	return "", nil
-}
-
-// detectGatewayFromProc reads gateway from /proc/net/route on Linux.
-func detectGatewayFromProc() (string, error) {
-	// This is a fallback - in production we'd parse /proc/net/route
-	return "", nil
-}
 
 // DetectGatewayIPv6 attempts to detect the default IPv6 gateway.
+// Uses netlink on Linux, exec commands on macOS.
 func DetectGatewayIPv6() (string, error) {
-	switch runtime.GOOS {
-	case "darwin":
-		return detectGatewayIPv6Darwin()
-	case "linux":
-		return detectGatewayIPv6Linux()
-	default:
-		return "", nil
-	}
+	return detectGatewayIPv6Platform()
 }
 
-// detectGatewayIPv6Darwin detects the default IPv6 gateway on macOS.
-func detectGatewayIPv6Darwin() (string, error) {
-	// Use netstat -rn to get the default IPv6 route
-	cmd := exec.Command("netstat", "-rn", "-f", "inet6")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
 
-	// Parse output looking for default route
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		fields := strings.Fields(line)
-		if len(fields) >= 2 && fields[0] == "default" {
-			gateway := fields[1]
-			// Remove interface scope suffix (e.g., %en0)
-			if idx := strings.Index(gateway, "%"); idx > 0 {
-				gateway = gateway[:idx]
-			}
-			// Validate it's an IPv6 address
-			if ip := net.ParseIP(gateway); ip != nil && ip.To4() == nil {
-				return gateway, nil
-			}
-		}
-	}
-
-	return "", nil
-}
-
-// detectGatewayIPv6Linux detects the default IPv6 gateway on Linux.
-func detectGatewayIPv6Linux() (string, error) {
-	// Try ip -6 route
-	cmd := exec.Command("ip", "-6", "route", "show", "default")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", nil
-	}
-
-	// Parse "default via XXXX:XXXX::X"
-	fields := strings.Fields(string(output))
-	for i, field := range fields {
-		if field == "via" && i+1 < len(fields) {
-			gateway := fields[i+1]
-			if ip := net.ParseIP(gateway); ip != nil && ip.To4() == nil {
-				return gateway, nil
-			}
-		}
-	}
-
-	return "", nil
-}
-
-// Ping performs a single ping to the gateway.
+// Ping performs a single ping to the gateway using raw ICMP sockets.
 func (t *Tester) Ping() *PingResult {
 	t.mu.RLock()
 	gateway := t.gateway
 	timeout := t.pingTimeout
+	pinger := t.pinger
 	t.mu.RUnlock()
 
 	if gateway == "" {
@@ -285,65 +156,37 @@ func (t *Tester) Ping() *PingResult {
 		Sequence: 1,
 	}
 
-	start := time.Now()
-
 	if net.ParseIP(gateway) == nil {
 		result.Success = false
 		result.Error = "invalid gateway address"
 		return result
 	}
 
-	// Use system ping command for ICMP (requires no special privileges on most systems)
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case "darwin":
-		// #nosec G204 - gateway validated above
-		cmd = exec.Command("ping", "-c", "1", "-W", strconv.Itoa(int(timeout.Milliseconds())), gateway)
-	case "linux":
-		// #nosec G204 - gateway validated above
-		cmd = exec.Command("ping", "-c", "1", "-W", strconv.Itoa(int(timeout.Seconds())), gateway)
-	default:
-		// #nosec G204 - gateway validated above
-		cmd = exec.Command("ping", "-c", "1", gateway)
-	}
+	// Use raw ICMP pinger if available
+	if pinger != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	output, err := cmd.Output()
-	elapsed := time.Since(start)
-
-	if err != nil {
-		result.Success = false
-		result.Error = "ping failed"
-		result.Time = elapsed
-		result.TimeMs = float64(elapsed.Milliseconds())
+		pingResult := pinger.Ping(ctx, gateway)
+		if pingResult.Reachable {
+			result.Success = true
+			result.Time = pingResult.RTT
+			result.TimeMs = float64(pingResult.RTT.Microseconds()) / 1000.0
+		} else {
+			result.Success = false
+			if pingResult.Error != nil {
+				result.Error = pingResult.Error.Error()
+			} else {
+				result.Error = "ping timeout"
+			}
+		}
 		return result
 	}
 
-	// Parse the RTT from ping output
-	rtt := parsePingRTT(string(output))
-	if rtt > 0 {
-		result.Time = time.Duration(rtt * float64(time.Millisecond))
-		result.TimeMs = rtt
-	} else {
-		result.Time = elapsed
-		result.TimeMs = float64(elapsed.Milliseconds())
-	}
-	result.Success = true
-
+	// Fallback: pinger unavailable (no CAP_NET_RAW)
+	result.Success = false
+	result.Error = "ICMP pinger unavailable - requires CAP_NET_RAW"
 	return result
-}
-
-// parsePingRTT extracts the RTT value from ping output.
-func parsePingRTT(output string) float64 {
-	// Look for patterns like "time=X.XX ms" or "time=X ms"
-	re := regexp.MustCompile(`time[=<](\d+\.?\d*)\s*ms`)
-	matches := re.FindStringSubmatch(output)
-	if len(matches) >= 2 {
-		rtt, err := strconv.ParseFloat(matches[1], 64)
-		if err == nil {
-			return rtt
-		}
-	}
-	return 0
 }
 
 // Test performs a complete ping test with multiple packets.
@@ -502,6 +345,17 @@ func (t *Tester) StopContinuous() {
 	if t.running {
 		close(t.stopCh)
 		t.running = false
+	}
+}
+
+// Close closes the tester and releases resources.
+func (t *Tester) Close() {
+	t.StopContinuous()
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.pinger != nil {
+		t.pinger.Close()
+		t.pinger = nil
 	}
 }
 

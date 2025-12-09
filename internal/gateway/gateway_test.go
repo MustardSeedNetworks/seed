@@ -83,53 +83,7 @@ func TestTesterGetStats(t *testing.T) {
 	}
 }
 
-func TestParsePingRTT(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected float64
-	}{
-		{
-			name:     "standard time=X.XX ms format",
-			input:    "64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=1.23 ms",
-			expected: 1.23,
-		},
-		{
-			name:     "whole number time=X ms format",
-			input:    "64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=5 ms",
-			expected: 5.0,
-		},
-		{
-			name:     "time<X ms format (Windows)",
-			input:    "Reply from 192.168.1.1: bytes=32 time<1ms TTL=64",
-			expected: 1.0,
-		},
-		{
-			name:     "no match returns 0",
-			input:    "ping: unknown host example.invalid",
-			expected: 0,
-		},
-		{
-			name:     "empty string",
-			input:    "",
-			expected: 0,
-		},
-		{
-			name:     "high latency",
-			input:    "64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=125.456 ms",
-			expected: 125.456,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := parsePingRTT(tt.input)
-			if result != tt.expected {
-				t.Errorf("parsePingRTT(%q) = %v, want %v", tt.input, result, tt.expected)
-			}
-		})
-	}
-}
+// Note: parsePingRTT tests removed - now using raw ICMP pinger instead of exec.Command ping
 
 func TestTesterPingNoGateway(t *testing.T) {
 	tester := NewTester(DefaultThresholds())
@@ -305,28 +259,7 @@ func TestDetectGateway(t *testing.T) {
 	_ = err
 }
 
-func TestDetectGatewayDarwin(t *testing.T) {
-	// Will only work on macOS
-	gateway, err := detectGatewayDarwin()
-	// Just verify it doesn't panic
-	_ = gateway
-	_ = err
-}
-
-func TestDetectGatewayLinux(t *testing.T) {
-	// Will only work on Linux
-	gateway, err := detectGatewayLinux()
-	// Just verify it doesn't panic
-	_ = gateway
-	_ = err
-}
-
-func TestDetectGatewayFromProc(t *testing.T) {
-	gateway, err := detectGatewayFromProc()
-	// Just verify it doesn't panic
-	_ = gateway
-	_ = err
-}
+// Note: Platform-specific gateway detection tests removed - now in platform files
 
 func TestTesterPingWithGateway(t *testing.T) {
 	if testing.Short() {
@@ -449,28 +382,7 @@ func TestThresholdsFields(t *testing.T) {
 	}
 }
 
-func TestParsePingRTTMoreCases(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected float64
-	}{
-		{"with equals", "time=0.123 ms", 0.123},
-		{"with less than", "time<1 ms", 1.0},
-		{"multi-line with time", "PING 127.0.0.1\n64 bytes from 127.0.0.1: time=0.5 ms", 0.5},
-		{"very large time", "time=99999.99 ms", 99999.99},
-		{"zero time", "time=0 ms", 0.0},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := parsePingRTT(tt.input)
-			if result != tt.expected {
-				t.Errorf("parsePingRTT(%q) = %v, want %v", tt.input, result, tt.expected)
-			}
-		})
-	}
-}
+// Note: parsePingRTTMoreCases tests removed - now using raw ICMP pinger
 
 func TestDetermineStatusEdgeCases(t *testing.T) {
 	thresholds := Thresholds{
@@ -749,28 +661,7 @@ func TestTesterCopyStats(t *testing.T) {
 	}
 }
 
-func TestParsePingRTTEdgeCases(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected float64
-	}{
-		{"whitespace around", "  time=10.5 ms  ", 10.5},
-		{"multiple time entries (takes first)", "time=5 ms foo time=10 ms", 5.0},
-		{"malformed time", "time=abc ms", 0},
-		{"partial match", "timeout=5 ms", 0},
-		{"time without equals", "time 5 ms", 0},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := parsePingRTT(tt.input)
-			if result != tt.expected {
-				t.Errorf("parsePingRTT(%q) = %v, want %v", tt.input, result, tt.expected)
-			}
-		})
-	}
-}
+// Note: parsePingRTTEdgeCases tests removed - now using raw ICMP pinger
 
 func TestTesterPingToInvalidHost(t *testing.T) {
 	if testing.Short() {
