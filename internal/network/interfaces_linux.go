@@ -1,0 +1,124 @@
+//go:build linux
+
+package network
+
+import (
+	"fmt"
+	"net"
+	"os/exec"
+
+	"github.com/vishvananda/netlink"
+
+	"github.com/krisarmstrong/netscope/internal/validation"
+)
+
+// configureStaticIPPlatform applies static IP on Linux using netlink.
+func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
+	// Validate interface name to prevent issues
+	if err := validation.ValidateInterface(iface); err != nil {
+		return fmt.Errorf("invalid interface: %w", err)
+	}
+
+	// Validate IP address
+	if !validation.IsValidIPv4(cfg.Address) {
+		return fmt.Errorf("invalid IP address: %s", cfg.Address)
+	}
+
+	// Validate gateway if provided
+	if cfg.Gateway != "" && !validation.IsValidIPv4(cfg.Gateway) {
+		return fmt.Errorf("invalid gateway address: %s", cfg.Gateway)
+	}
+
+	prefix, err := netmaskToCIDR(cfg.Netmask)
+	if err != nil {
+		return err
+	}
+
+	// Get the link
+	link, err := netlink.LinkByName(iface)
+	if err != nil {
+		return fmt.Errorf("interface not found: %w", err)
+	}
+
+	// Flush existing addresses
+	addrs, err := netlink.AddrList(link, netlink.FAMILY_V4)
+	if err != nil {
+		return fmt.Errorf("failed to list addresses: %w", err)
+	}
+	for _, addr := range addrs {
+		if err := netlink.AddrDel(link, &addr); err != nil {
+			return fmt.Errorf("failed to delete address %s: %w", addr.IPNet, err)
+		}
+	}
+
+	// Add new address
+	ip := net.ParseIP(cfg.Address)
+	ipNet := &net.IPNet{
+		IP:   ip,
+		Mask: net.CIDRMask(prefix, 32),
+	}
+	addr := &netlink.Addr{IPNet: ipNet}
+	if err := netlink.AddrAdd(link, addr); err != nil {
+		return fmt.Errorf("failed to add address: %w", err)
+	}
+
+	// Bring interface up
+	if err := netlink.LinkSetUp(link); err != nil {
+		return fmt.Errorf("failed to bring interface up: %w", err)
+	}
+
+	// Add default gateway if provided
+	if cfg.Gateway != "" {
+		gw := net.ParseIP(cfg.Gateway)
+		if gw == nil {
+			return fmt.Errorf("invalid gateway IP: %s", cfg.Gateway)
+		}
+
+		// Delete existing default route (ignore errors, might not exist)
+		routes, _ := netlink.RouteList(nil, netlink.FAMILY_V4)
+		for _, route := range routes {
+			if route.Dst == nil { // default route
+				_ = netlink.RouteDel(&route)
+			}
+		}
+
+		// Add new default route
+		route := &netlink.Route{
+			LinkIndex: link.Attrs().Index,
+			Gw:        gw,
+		}
+		if err := netlink.RouteAdd(route); err != nil {
+			return fmt.Errorf("failed to add default gateway: %w", err)
+		}
+	}
+
+	// Configure DNS (update /etc/resolv.conf)
+	if len(cfg.DNS) > 0 {
+		if err := updateResolvConf(cfg.DNS); err != nil {
+			return fmt.Errorf("failed to configure DNS: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// configureDHCPPlatform switches to DHCP on Linux.
+// Note: DHCP client invocation requires exec as there's no pure Go DHCP client library.
+func configureDHCPPlatform(iface string) error {
+	// Validate interface name to prevent command injection
+	if err := validation.ValidateInterface(iface); err != nil {
+		return fmt.Errorf("invalid interface: %w", err)
+	}
+
+	// Try dhclient first
+	if err := exec.Command("dhclient", "-r", iface).Run(); err == nil {
+		return exec.Command("dhclient", iface).Run()
+	}
+
+	// Try dhcpcd
+	if err := exec.Command("dhcpcd", "-k", iface).Run(); err == nil {
+		return exec.Command("dhcpcd", iface).Run()
+	}
+
+	return fmt.Errorf("no DHCP client found (tried dhclient, dhcpcd)")
+}
