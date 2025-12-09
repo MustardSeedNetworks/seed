@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1](https://github.com/krisarmstrong/netscope/compare/v0.12.0...v0.12.1) (2025-12-09)
+
+
+### Bug Fixes
+
+* **ci:** move libpcap-dev install to backend job for golangci-lint ([298d305](https://github.com/krisarmstrong/netscope/commit/298d30511d4faaf900e0caf43fb3511eb75a20e6))
+* **ci:** remove 'shadow' linter from .golangci.yml ([24ed597](https://github.com/krisarmstrong/netscope/commit/24ed597ca9cb01d5d266f3408437243635eaa060))
+* **ci:** remove accidental automerge.yml ([33a2b3f](https://github.com/krisarmstrong/netscope/commit/33a2b3f76eb6c0e7d77b04da4c469bd5bc62b89b))
+* **ci:** update golangci-lint version and format code ([5e58e96](https://github.com/krisarmstrong/netscope/commit/5e58e964055fc884a1064cec71e051f060214d4c))
+* **ci:** upgrade golangci-lint-action to v6 ([2496c06](https://github.com/krisarmstrong/netscope/commit/2496c060114d726daba19579034ec335159e6007))
+* **ci:** use goinstall for golangci-lint to resolve go version incompatibility ([1ecd63f](https://github.com/krisarmstrong/netscope/commit/1ecd63f988c010966931598c6f7ac55c6e82da70))
+* **frontend:** debug eslint tsconfig path ([c86ab94](https://github.com/krisarmstrong/netscope/commit/c86ab9493bec0d525affb96a05340147d6327a65))
+* **frontend:** remove parserOptions.project from eslint config ([5a4d710](https://github.com/krisarmstrong/netscope/commit/5a4d710f6c34fcc8343ff9838b52345e3d19bfd6))
+* make DNS tester thread-safe for race tests ([31d74bf](https://github.com/krisarmstrong/netscope/commit/31d74bfec7793b26d74d9bc02af616a9afa7980d))
+* **release:** remove deprecated inputs from release-please config ([a602821](https://github.com/krisarmstrong/netscope/commit/a6028217a9036068516b4f34ca468665a66957e8))
+
 ## [0.12.0](https://github.com/krisarmstrong/netscope/compare/v0.11.9...v0.12.0) (2025-12-08)
 
 ### Features
