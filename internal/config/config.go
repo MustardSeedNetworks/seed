@@ -102,11 +102,14 @@ type DNSServer struct {
 
 // TestsConfig contains custom test configurations.
 type TestsConfig struct {
-	PingTargets   []PingTarget   `yaml:"ping_targets"`
-	TCPPorts      []TCPPortTest  `yaml:"tcp_ports"`
-	UDPPorts      []UDPPortTest  `yaml:"udp_ports"`
-	HTTPEndpoints []HTTPEndpoint `yaml:"http_endpoints"`
-	RunPerformance bool          `yaml:"run_performance"` // Master toggle for speedtest + iperf
+	PingTargets    []PingTarget   `yaml:"ping_targets"`
+	TCPPorts       []TCPPortTest  `yaml:"tcp_ports"`
+	UDPPorts       []UDPPortTest  `yaml:"udp_ports"`
+	HTTPEndpoints  []HTTPEndpoint `yaml:"http_endpoints"`
+	RunPerformance bool           `yaml:"run_performance"` // Master toggle for speedtest + iperf
+	RunSpeedtest   bool           `yaml:"run_speedtest"`   // Toggle internet speed test
+	RunIperf       bool           `yaml:"run_iperf"`       // Toggle LAN iperf test
+	RunDiscovery   bool           `yaml:"run_discovery"`   // Toggle network discovery card
 }
 
 // PingTarget represents a custom ping target.
@@ -248,11 +251,14 @@ func DefaultConfig() *Config {
 			Timeout:      5 * time.Second,
 		},
 		Tests: TestsConfig{
-			PingTargets:   []PingTarget{},
-			TCPPorts:      []TCPPortTest{},
-			UDPPorts:      []UDPPortTest{},
-			HTTPEndpoints: []HTTPEndpoint{},
+			PingTargets:    []PingTarget{},
+			TCPPorts:       []TCPPortTest{},
+			UDPPorts:       []UDPPortTest{},
+			HTTPEndpoints:  []HTTPEndpoint{},
 			RunPerformance: true,
+			RunSpeedtest:   true,
+			RunIperf:       true,
+			RunDiscovery:   true,
 		},
 		Speedtest: SpeedtestConfig{
 			ServerID:      "",    // Auto-select closest

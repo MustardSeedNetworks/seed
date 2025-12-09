@@ -85,18 +85,14 @@ interface DNSServer {
 }
 
 interface FABOptions {
-  // Order matches card display order
-  runLink: boolean; // Link card
-  runSwitch: boolean; // Nearest Switch card
-  runVLAN: boolean; // VLAN card
-  runIPConfig: boolean; // IP Config (DHCP) card
-  runGateway: boolean; // Gateway card
-  runDNS: boolean; // DNS card
-  runHealthChecks: boolean; // Health Checks card
-  runSpeedtest: boolean; // Performance: Internet Speed
-  runIperf: boolean; // Performance: LAN Speed
-  runNetworkDiscovery: boolean; // Network Discovery card (default ON)
-  autoScanOnLink: boolean; // Auto-scan network on link up (default ON when discovery enabled)
+  runLink: boolean;
+  runSwitch: boolean;
+  runVLAN: boolean;
+  runIPConfig: boolean;
+  runGateway: boolean;
+  runDNS: boolean;
+  runHealthChecks: boolean;
+  autoScanOnLink: boolean;
 }
 
 interface DisplayOptions {
@@ -136,7 +132,10 @@ interface TestsSettings {
   tcpPorts: TCPPort[];
   udpPorts: UDPPort[];
   httpEndpoints: HTTPEndpoint[];
-  runPerformance: boolean; // master toggle for speedtest + iperf
+  runPerformance: boolean; // kept for backwards compatibility
+  runSpeedtest: boolean;
+  runIperf: boolean;
+  runDiscovery: boolean;
   speedtest: {
     serverId: string;
     autoRunOnLink: boolean;
@@ -213,6 +212,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     udpPorts: [],
     httpEndpoints: [],
     runPerformance: true,
+    runSpeedtest: true,
+    runIperf: true,
+    runDiscovery: true,
     speedtest: {
       serverId: "",
       autoRunOnLink: false,
@@ -221,18 +223,14 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
 
   // FAB Options (stored in localStorage)
   const [fabOptions, setFabOptions] = useState<FABOptions>({
-    // Order matches card display order
-    runLink: true, // Link card
-    runSwitch: true, // Nearest Switch card
-    runVLAN: true, // VLAN card
-    runIPConfig: true, // IP Config (DHCP) card
-    runGateway: true, // Gateway card
-    runDNS: true, // DNS card
-    runHealthChecks: true, // Health Checks card
-    runSpeedtest: true, // Performance: Internet Speed (default ON)
-    runIperf: true, // Performance: LAN Speed (default ON)
-    runNetworkDiscovery: true, // Network Discovery card (default ON)
-    autoScanOnLink: true, // Auto-scan network on link up (default ON)
+    runLink: true,
+    runSwitch: true,
+    runVLAN: true,
+    runIPConfig: true,
+    runGateway: true,
+    runDNS: true,
+    runHealthChecks: true,
+    autoScanOnLink: true,
   });
 
   // Display Options (stored in localStorage)
@@ -380,6 +378,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           udpPorts: data.udpPorts || [],
           httpEndpoints: data.httpEndpoints || [],
           runPerformance: data.runPerformance ?? true,
+          runSpeedtest: data.runSpeedtest ?? true,
+          runIperf: data.runIperf ?? true,
+          runDiscovery: data.runDiscovery ?? true,
           speedtest: {
             serverId: data.speedtest?.serverId || "",
             autoRunOnLink: data.speedtest?.autoRunOnLink || false,
@@ -859,18 +860,24 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     };
   }, [testsSettings, saveTestsSettings]);
 
-  // Broadcast performance toggle immediately to cards/FAB
+  // Broadcast tests settings changes to App/FAB listeners
   useEffect(() => {
-    localStorage.setItem(
-      "netscope-run-performance",
-      JSON.stringify(testsSettings.runPerformance),
-    );
     window.dispatchEvent(
-      new CustomEvent("performanceToggleUpdated", {
-        detail: testsSettings.runPerformance,
+      new CustomEvent("testsSettingsUpdated", {
+        detail: {
+          runDiscovery: testsSettings.runDiscovery,
+          runSpeedtest: testsSettings.runSpeedtest,
+          runIperf: testsSettings.runIperf,
+          runPerformance: testsSettings.runPerformance,
+        },
       }),
     );
-  }, [testsSettings.runPerformance]);
+  }, [
+    testsSettings.runDiscovery,
+    testsSettings.runSpeedtest,
+    testsSettings.runIperf,
+    testsSettings.runPerformance,
+  ]);
 
   // Auto-save wifi settings with debounce
   useEffect(() => {
@@ -927,9 +934,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   useEffect(() => {
     setNetworkDiscoverySettings((prev) => ({
       ...prev,
-      autoScan: fabOptions.autoScanOnLink && fabOptions.runNetworkDiscovery,
+      autoScan: fabOptions.autoScanOnLink,
     }));
-  }, [fabOptions.autoScanOnLink, fabOptions.runNetworkDiscovery]);
+  }, [fabOptions.autoScanOnLink]);
 
   // Auto-save Display options with debounce
   useEffect(() => {
@@ -1746,6 +1753,67 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             </div>
           </CollapsibleSection>
 
+          {/* Run All Tests toggles */}
+          <CollapsibleSection
+            title={
+              <>
+                Run All Tests
+                <AutoSaveIndicator status={testsStatus} />
+              </>
+            }
+          >
+            <div className="space-y-3">
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">
+                  Show Network Discovery card
+                </span>
+                <input
+                  type="checkbox"
+                  checked={testsSettings.runDiscovery}
+                  onChange={(e) =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      runDiscovery: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">
+                  Enable Internet Speed (Speedtest)
+                </span>
+                <input
+                  type="checkbox"
+                  checked={testsSettings.runSpeedtest}
+                  onChange={(e) =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      runSpeedtest: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">
+                  Enable LAN Speed (iperf3)
+                </span>
+                <input
+                  type="checkbox"
+                  checked={testsSettings.runIperf}
+                  onChange={(e) =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      runIperf: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+            </div>
+          </CollapsibleSection>
+
           {/* Performance Section - matches PerformanceCard */}
           <CollapsibleSection
             title={
@@ -1756,36 +1824,35 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             }
           >
             <div className="space-y-4">
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm text-text-primary">
-                  Enable Performance Tests
-                </span>
-                <input
-                  type="checkbox"
-                  checked={testsSettings.runPerformance}
-                  onChange={(e) =>
-                    setTestsSettings((prev) => ({
-                      ...prev,
-                      runPerformance: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
-
               {/* Internet Speed (Speedtest) Subsection */}
               <div className="border-b border-surface-border pb-4">
                 <h4 className="text-sm font-semibold text-text-primary mb-2 uppercase tracking-wide">
                   Internet Speed (Speedtest)
                 </h4>
                 <div className="space-y-3 pl-1">
+                  <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+                    <span className="text-sm text-text-primary">
+                      Enable Internet Speed test
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={testsSettings.runSpeedtest}
+                      onChange={(e) =>
+                        setTestsSettings((prev) => ({
+                          ...prev,
+                          runSpeedtest: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                  </label>
                   <div>
                     <label className="text-xs text-text-muted font-medium">
                       Server ID (optional)
                     </label>
                     <input
                       type="text"
-                      disabled={!testsSettings.runPerformance}
+                      disabled={!testsSettings.runSpeedtest}
                       value={testsSettings.speedtest.serverId}
                       onChange={(e) =>
                         setTestsSettings((prev) => ({
@@ -1805,7 +1872,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       </p>
                       <button
                         type="button"
-                        disabled={!testsSettings.runPerformance}
+                        disabled={!testsSettings.runSpeedtest}
                         onClick={() =>
                           setTestsSettings((prev) => ({
                             ...prev,
@@ -1825,7 +1892,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </span>
                     <input
                       type="checkbox"
-                      disabled={!testsSettings.runPerformance}
+                      disabled={!testsSettings.runSpeedtest}
                       checked={testsSettings.speedtest.autoRunOnLink}
                       onChange={(e) =>
                         setTestsSettings((prev) => ({
@@ -1851,6 +1918,22 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   <p className="text-xs text-text-muted">
                     Configure iperf3 client settings for LAN speed tests.
                   </p>
+                  <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+                    <span className="text-sm text-text-primary">
+                      Enable iperf3 test
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={testsSettings.runIperf}
+                      onChange={(e) =>
+                        setTestsSettings((prev) => ({
+                          ...prev,
+                          runIperf: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                  </label>
 
                   {/* Server Address */}
                   <div>
@@ -1859,7 +1942,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </label>
                     <input
                       type="text"
-                      disabled={!testsSettings.runPerformance}
+                      disabled={!testsSettings.runIperf}
                       value={iperfSettings.server}
                       onChange={(e) =>
                         setIperfSettings((prev) => ({
@@ -1874,7 +1957,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       <button
                         type="button"
                         disabled={
-                          !testsSettings.runPerformance ||
+                          !testsSettings.runIperf ||
                           iperfSuggestionsStatus === "loading"
                         }
                         onClick={fetchIperfSuggestions}
@@ -1947,7 +2030,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </label>
                     <input
                       type="number"
-                      disabled={!testsSettings.runPerformance}
+                      disabled={!testsSettings.runIperf}
                       value={iperfSettings.port}
                       onChange={(e) =>
                         setIperfSettings((prev) => ({
@@ -1969,7 +2052,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         <button
                           key={proto}
                           type="button"
-                          disabled={!testsSettings.runPerformance}
+                          disabled={!testsSettings.runIperf}
                           onClick={() =>
                             setIperfSettings((prev) => ({
                               ...prev,
@@ -2005,7 +2088,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         <button
                           key={option.value}
                           type="button"
-                          disabled={!testsSettings.runPerformance}
+                          disabled={!testsSettings.runIperf}
                           onClick={() =>
                             setIperfSettings((prev) => ({
                               ...prev,
@@ -2034,7 +2117,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </label>
                     <input
                       type="number"
-                      disabled={!testsSettings.runPerformance}
+                      disabled={!testsSettings.runIperf}
                       value={iperfSettings.duration}
                       onChange={(e) =>
                         setIperfSettings((prev) => ({
@@ -2056,7 +2139,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       </span>
                       <input
                         type="checkbox"
-                        disabled={!testsSettings.runPerformance}
+                        disabled={!testsSettings.runIperf}
                         checked={iperfSettings.enableServer}
                         onChange={(e) =>
                           setIperfSettings((prev) => ({
@@ -2073,7 +2156,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       </label>
                       <input
                         type="number"
-                        disabled={!testsSettings.runPerformance}
+                        disabled={!testsSettings.runIperf}
                         value={iperfSettings.serverPort}
                         onChange={(e) =>
                           setIperfSettings((prev) => ({
@@ -2107,24 +2190,6 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 Configure ARP-based device discovery for finding devices on the
                 local network.
               </p>
-
-              {/* Enable Discovery */}
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm text-text-primary">
-                  Enable Discovery
-                </span>
-                <input
-                  type="checkbox"
-                  checked={networkDiscoverySettings.enabled}
-                  onChange={(e) =>
-                    setNetworkDiscoverySettings((prev) => ({
-                      ...prev,
-                      enabled: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
 
               {/* Scan Workers */}
               <div>
@@ -2721,70 +2786,6 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 />
               </label>
 
-              <p className="text-xs text-text-muted font-medium pt-2">
-                Performance Tests
-              </p>
-
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border ml-3">
-                <div>
-                  <span className="text-sm text-text-primary">
-                    Internet Speed
-                  </span>
-                  <p className="text-xs text-text-muted">Uses bandwidth</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={fabOptions.runSpeedtest}
-                  onChange={(e) =>
-                    setFabOptions((prev) => ({
-                      ...prev,
-                      runSpeedtest: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
-
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border ml-3">
-                <div>
-                  <span className="text-sm text-text-primary">
-                    LAN Speed (iperf3)
-                  </span>
-                  <p className="text-xs text-text-muted">Requires server</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={fabOptions.runIperf}
-                  onChange={(e) =>
-                    setFabOptions((prev) => ({
-                      ...prev,
-                      runIperf: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
-
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-                <div>
-                  <span className="text-sm text-text-primary">
-                    Network Discovery
-                  </span>
-                  <p className="text-xs text-text-muted">Scan for devices</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={fabOptions.runNetworkDiscovery}
-                  onChange={(e) =>
-                    setFabOptions((prev) => ({
-                      ...prev,
-                      runNetworkDiscovery: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
-
               <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border ml-3">
                 <div>
                   <span className="text-sm text-text-primary">
@@ -2804,7 +2805,6 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     }))
                   }
                   className="w-4 h-4"
-                  disabled={!fabOptions.runNetworkDiscovery}
                 />
               </label>
             </div>

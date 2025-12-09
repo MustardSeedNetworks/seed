@@ -566,42 +566,69 @@ function App() {
     ],
   );
 
+  const [testsFlags, setTestsFlags] = useState({
+    runDiscovery: true,
+    runSpeedtest: true,
+    runIperf: true,
+  });
+
+  // Fetch tests flags on load
+  useEffect(() => {
+    const loadTestsFlags = async () => {
+      try {
+        const res = await fetch("/api/tests/settings", {
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setTestsFlags({
+            runDiscovery: data.runDiscovery ?? true,
+            runSpeedtest: data.runSpeedtest ?? true,
+            runIperf: data.runIperf ?? true,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load tests settings", err);
+      }
+    };
+    loadTestsFlags();
+
+    const handleSettingsUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<any>).detail;
+      if (detail) {
+        setTestsFlags((prev) => ({
+          runDiscovery: detail.runDiscovery ?? prev.runDiscovery,
+          runSpeedtest: detail.runSpeedtest ?? prev.runSpeedtest,
+          runIperf: detail.runIperf ?? prev.runIperf,
+        }));
+      }
+    };
+    window.addEventListener(
+      "testsSettingsUpdated",
+      handleSettingsUpdated as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "testsSettingsUpdated",
+        handleSettingsUpdated as EventListener,
+      );
+  }, []);
+
   // Listen for FAB "run all tests" event with options
   useEffect(() => {
     const handleRunAllTests = async () => {
-      // Read FAB options from localStorage (matches SettingsDrawer FABOptions interface)
-      let fabOptions = {
-        // Order matches card display order
-        runLink: true, // Link card
-        runSwitch: true, // Nearest Switch card
-        runVLAN: true, // VLAN card
-        runIPConfig: true, // IP Config (DHCP) card
-        runGateway: true, // Gateway card
-        runDNS: true, // DNS card
-        runHealthChecks: true, // Health Checks card
-        runSpeedtest: true, // Performance: Internet Speed
-        runIperf: true, // Performance: LAN Speed
-        runNetworkDiscovery: true, // Network Discovery card (default ON)
+      const fabOptions = {
+        runLink: true,
+        runSwitch: true,
+        runVLAN: true,
+        runIPConfig: true,
+        runGateway: true,
+        runDNS: true,
+        runHealthChecks: true,
+        runSpeedtest: testsFlags.runSpeedtest,
+        runIperf: testsFlags.runIperf,
+        runNetworkDiscovery: testsFlags.runDiscovery,
       };
-      try {
-        const saved = localStorage.getItem("netscope-fab-options");
-        if (saved) {
-          fabOptions = { ...fabOptions, ...JSON.parse(saved) };
-        }
-      } catch (err) {
-        console.error("Failed to load FAB options:", err);
-      }
-
-      // If performance tests are disabled globally, skip speedtest/iperf
-      try {
-        const perfToggle = localStorage.getItem("netscope-run-performance");
-        if (perfToggle !== null && JSON.parse(perfToggle) === false) {
-          fabOptions.runSpeedtest = false;
-          fabOptions.runIperf = false;
-        }
-      } catch (err) {
-        console.error("Failed to read performance toggle:", err);
-      }
 
       // Build array of fetch promises based on FAB options
       const fetchPromises: Promise<void>[] = [];
@@ -700,6 +727,9 @@ function App() {
     fetchWiFiData,
     fetchCableData,
     triggerDeviceScan,
+    testsFlags.runDiscovery,
+    testsFlags.runSpeedtest,
+    testsFlags.runIperf,
   ]);
 
   // WebSocket connection for real-time updates
@@ -995,14 +1025,20 @@ function App() {
             <HealthCheckCard loading={loading} />
 
             {/* Performance Testing */}
-            <PerformanceCard loading={loading} />
+            <PerformanceCard
+              loading={loading}
+              runSpeedtestEnabled={testsFlags.runSpeedtest}
+              runIperfEnabled={testsFlags.runIperf}
+            />
 
             {/* Network Discovery - device scanning (last) */}
-            <NetworkDiscoveryCard
-              data={networkDiscovery}
-              loading={loading}
-              onScan={triggerDeviceScan}
-            />
+            {testsFlags.runDiscovery && (
+              <NetworkDiscoveryCard
+                data={networkDiscovery}
+                loading={loading}
+                onScan={triggerDeviceScan}
+              />
+            )}
           </div>
 
           {/* Development notice */}

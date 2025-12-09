@@ -64,6 +64,8 @@ interface IperfServerStatus {
 
 interface PerformanceCardProps {
   loading?: boolean;
+  runSpeedtestEnabled?: boolean;
+  runIperfEnabled?: boolean;
 }
 
 interface IperfSettings {
@@ -92,7 +94,11 @@ const iperfPhaseLabels: Record<string, string> = {
   complete: "Complete",
 };
 
-export function PerformanceCard({ loading }: PerformanceCardProps) {
+export function PerformanceCard({
+  loading,
+  runSpeedtestEnabled = true,
+  runIperfEnabled = true,
+}: PerformanceCardProps) {
   // Speedtest state
   const [speedtestStatus, setSpeedtestStatus] =
     useState<SpeedtestStatus | null>(null);
@@ -111,7 +117,6 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
     useState<IperfServerStatus | null>(null);
   const [iperfError, setIperfError] = useState<string | null>(null);
   const [iperfClientRunning, setIperfClientRunning] = useState(false);
-  const [runPerformanceEnabled, setRunPerformanceEnabled] = useState(true);
 
   // iperf3 settings (loaded from localStorage/Settings)
   const [iperfSettings, setIperfSettings] = useState<IperfSettings>({
@@ -204,32 +209,24 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
     fetchStatus();
   }, []);
 
-  // Track master performance enable toggle from Settings
+  // Listen for settings updates (optional future use)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("netscope-run-performance");
-      if (saved !== null) {
-        setRunPerformanceEnabled(JSON.parse(saved));
+    const handleSettingsUpdate = (e: Event) => {
+      const detail = (e as CustomEvent<any>).detail;
+      if (detail) {
+        if (typeof detail.runSpeedtest === "boolean") {
+          // no local state needed; props drive
+        }
       }
-    } catch (err) {
-      console.error("Failed to read performance toggle:", err);
-    }
-
-    const handlePerfToggle = (e: Event) => {
-      const detail = (e as CustomEvent<boolean>).detail;
-      setRunPerformanceEnabled((prev) =>
-        typeof detail === "boolean" ? detail : prev,
-      );
     };
-
     window.addEventListener(
-      "performanceToggleUpdated",
-      handlePerfToggle as EventListener,
+      "testsSettingsUpdated",
+      handleSettingsUpdate as EventListener,
     );
     return () => {
       window.removeEventListener(
-        "performanceToggleUpdated",
-        handlePerfToggle as EventListener,
+        "testsSettingsUpdated",
+        handleSettingsUpdate as EventListener,
       );
     };
   }, []);
@@ -351,7 +348,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   }, [iperfClientRunning]);
 
   const runSpeedtest = useCallback(async () => {
-    if (!runPerformanceEnabled) {
+    if (!runSpeedtestEnabled) {
       setSpeedtestError("Performance tests are disabled in Settings");
       return;
     }
@@ -376,10 +373,10 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       setSpeedtestStatus({ running: false, phase: "idle", progress: 0 });
       setSpeedtestRunning(false);
     }
-  }, [runPerformanceEnabled]);
+  }, [runSpeedtestEnabled]);
 
   const runIperfClient = useCallback(async () => {
-    if (!runPerformanceEnabled) {
+    if (!runIperfEnabled) {
       setIperfError("Performance tests are disabled in Settings");
       return;
     }
@@ -419,36 +416,18 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       setIperfClientStatus({ running: false, phase: "idle", progress: 0 });
       setIperfClientRunning(false);
     }
-  }, [iperfSettings, runPerformanceEnabled]);
+  }, [iperfSettings, runIperfEnabled]);
 
   // Listen for FAB "run all tests" event
   useEffect(() => {
     const handleRunAllTests = () => {
-      if (!runPerformanceEnabled) {
-        return;
-      }
-      // Check FAB options from localStorage
-      let fabOptions = {
-        runSpeedtest: true, // Default ON
-        runIperf: true, // Default ON
-      };
-      try {
-        const saved = localStorage.getItem("netscope-fab-options");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          fabOptions = { ...fabOptions, ...parsed };
-        }
-      } catch (err) {
-        console.error("Failed to read FAB options:", err);
-      }
-
       // Run speedtest if enabled
-      if (fabOptions.runSpeedtest && !speedtestRunning) {
+      if (runSpeedtestEnabled && !speedtestRunning) {
         runSpeedtest();
       }
       // Run iperf client test if enabled and configured
       if (
-        fabOptions.runIperf &&
+        runIperfEnabled &&
         !iperfClientRunning &&
         iperfSettings.server &&
         iperfInfo?.installed
@@ -469,7 +448,8 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
     iperfClientRunning,
     iperfSettings.server,
     iperfInfo?.installed,
-    runPerformanceEnabled,
+    runSpeedtestEnabled,
+    runIperfEnabled,
   ]);
 
   const formatSpeed = (mbps: number): string => {
@@ -480,7 +460,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   };
 
   const getStatus = (): Status => {
-    if (!runPerformanceEnabled) return "unknown";
+    if (!runSpeedtestEnabled && !runIperfEnabled) return "unknown";
     if (loading || speedtestRunning || iperfClientRunning) return "loading";
     if (speedtestError || iperfError) return "error";
     if (speedtestResult || iperfResult) return "success";
@@ -493,12 +473,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       subtitle="Speedtest & iPerf"
       status={getStatus()}
     >
-      {!runPerformanceEnabled && (
-        <p className="text-sm text-text-muted mb-3">
-          Performance tests are disabled in Settings.
-        </p>
-      )}
-      <div className={runPerformanceEnabled ? "" : "opacity-50"}>
+      <div>
         {/* Internet Speed Section */}
         <p className="text-xs font-medium text-text-secondary mb-2">
           Internet Speed
