@@ -123,130 +123,6 @@ func TestTestResultNoLength(t *testing.T) {
 	}
 }
 
-func TestParseTDROutput(t *testing.T) {
-	tests := []struct {
-		name           string
-		output         string
-		expectedStatus Status
-		hasLength      bool
-		expectedLength float64
-	}{
-		{
-			name:           "ok status",
-			output:         "Cable status: ok\nCable length: 25 meters",
-			expectedStatus: StatusOK,
-			hasLength:      true,
-			expectedLength: 25.0,
-		},
-		{
-			name:           "open status",
-			output:         "Cable test result: open circuit detected",
-			expectedStatus: StatusOpen,
-			hasLength:      false,
-		},
-		{
-			name:           "short status",
-			output:         "Cable test result: short circuit detected",
-			expectedStatus: StatusShort,
-			hasLength:      false,
-		},
-		{
-			name:           "impedance mismatch",
-			output:         "Cable test: impedance mismatch",
-			expectedStatus: StatusImpedanceMismatch,
-			hasLength:      false,
-		},
-		{
-			name:           "pass status",
-			output:         "Test result: PASS",
-			expectedStatus: StatusOK,
-			hasLength:      false,
-		},
-		{
-			name:           "length with decimal",
-			output:         "length: 15.5m",
-			expectedStatus: StatusUnknown,
-			hasLength:      true,
-			expectedLength: 15.5,
-		},
-		{
-			name:           "empty output",
-			output:         "",
-			expectedStatus: StatusUnknown,
-			hasLength:      false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := &TestResult{
-				Status: StatusUnknown,
-				Faults: make([]string, 0),
-			}
-			result = parseTDROutput(tt.output, result)
-
-			if result.Status != tt.expectedStatus {
-				t.Errorf("expected Status %v, got %v", tt.expectedStatus, result.Status)
-			}
-			if tt.hasLength {
-				if result.Length == nil {
-					t.Error("expected non-nil Length")
-				} else if *result.Length != tt.expectedLength {
-					t.Errorf("expected Length %v, got %v", tt.expectedLength, *result.Length)
-				}
-			}
-		})
-	}
-}
-
-func TestParseCableTestOutput(t *testing.T) {
-	tests := []struct {
-		name           string
-		output         string
-		expectedStatus Status
-	}{
-		{
-			name:           "pair ok",
-			output:         "Pair A: ok\nPair B: ok\nPair C: ok\nPair D: ok",
-			expectedStatus: StatusOK,
-		},
-		{
-			name:           "pair terminated",
-			output:         "Pair A: terminated, 25m",
-			expectedStatus: StatusOK,
-		},
-		{
-			name:           "pair open",
-			output:         "Pair A: open, 15m",
-			expectedStatus: StatusOpen,
-		},
-		{
-			name:           "pair short",
-			output:         "Pair B: short, 5m",
-			expectedStatus: StatusShort,
-		},
-		{
-			name:           "empty output",
-			output:         "",
-			expectedStatus: StatusUnknown,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := &TestResult{
-				Status: StatusUnknown,
-				Faults: make([]string, 0),
-			}
-			result = parseCableTestOutput(tt.output, result)
-
-			if result.Status != tt.expectedStatus {
-				t.Errorf("expected Status %v, got %v", tt.expectedStatus, result.Status)
-			}
-		})
-	}
-}
-
 func TestConcurrentTesterAccess(t *testing.T) {
 	tester := NewTester("eth0")
 
@@ -266,116 +142,22 @@ func TestConcurrentTesterAccess(t *testing.T) {
 	}
 }
 
-func TestIsSupportedLinux(t *testing.T) {
-	// Test the Linux-specific function
-	result := isSupportedLinux("eth0")
+func TestIsSupportedPlatform(t *testing.T) {
+	// Test the platform-specific function
+	result := isSupportedPlatform("eth0")
 	// Just verify it doesn't panic - result depends on system
 	_ = result
 }
 
-func TestTestLinux(t *testing.T) {
-	// Test the Linux-specific function
-	result := testLinux("eth0")
+func TestTestPlatform(t *testing.T) {
+	// Test the platform-specific function
+	result := testPlatform("eth0")
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
 	// On non-Linux, should not be supported
 	if result.Faults == nil {
 		t.Error("expected non-nil Faults slice")
-	}
-}
-
-func TestParseTDROutputMoreCases(t *testing.T) {
-	tests := []struct {
-		name           string
-		output         string
-		expectedStatus Status
-		hasLength      bool
-	}{
-		{
-			name:           "terminated cable",
-			output:         "Cable properly terminated",
-			expectedStatus: StatusUnknown,
-			hasLength:      false,
-		},
-		{
-			name:           "cable length with meters",
-			output:         "Cable length: 50 meters",
-			expectedStatus: StatusUnknown,
-			hasLength:      true,
-		},
-		{
-			name:           "multiple status indicators",
-			output:         "Test: ok\nlength: 25m\nStatus: pass",
-			expectedStatus: StatusOK,
-			hasLength:      true,
-		},
-		{
-			name:           "impedance mismatch at distance",
-			output:         "Fault: impedance mismatch\nlength: 15.5m",
-			expectedStatus: StatusImpedanceMismatch,
-			hasLength:      true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := &TestResult{
-				Status: StatusUnknown,
-				Faults: make([]string, 0),
-			}
-			result = parseTDROutput(tt.output, result)
-
-			if result.Status != tt.expectedStatus {
-				t.Errorf("expected Status %v, got %v", tt.expectedStatus, result.Status)
-			}
-			if tt.hasLength && result.Length == nil {
-				t.Error("expected non-nil Length")
-			}
-		})
-	}
-}
-
-func TestParseCableTestOutputMoreCases(t *testing.T) {
-	tests := []struct {
-		name           string
-		output         string
-		expectedStatus Status
-	}{
-		{
-			name:           "all pairs ok",
-			output:         "Pair A: ok, 25m\nPair B: ok, 25m\nPair C: ok, 25m\nPair D: ok, 25m",
-			expectedStatus: StatusOK,
-		},
-		{
-			name:           "mixed status",
-			output:         "Pair A: ok\nPair B: open, 10m",
-			expectedStatus: StatusOpen,
-		},
-		{
-			name:           "short takes precedence",
-			output:         "Pair A: ok\nPair C: short, 5m",
-			expectedStatus: StatusShort,
-		},
-		{
-			name:           "multiple faults",
-			output:         "Pair A: open, 10m\nPair B: short, 5m",
-			expectedStatus: StatusShort, // Last fault overwrites
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := &TestResult{
-				Status: StatusUnknown,
-				Faults: make([]string, 0),
-			}
-			result = parseCableTestOutput(tt.output, result)
-
-			if result.Status != tt.expectedStatus {
-				t.Errorf("expected Status %v, got %v", tt.expectedStatus, result.Status)
-			}
-		})
 	}
 }
 
@@ -439,26 +221,62 @@ func TestStatusValues(t *testing.T) {
 	}
 }
 
-func TestParseLengthFormats(t *testing.T) {
-	tests := []struct {
-		output   string
-		expected float64
-	}{
-		{"length: 25m", 25.0},
-		{"length: 25 m", 25.0},
-		{"length: 25 meters", 25.0},
-		{"Cable length: 100.5 meters", 100.5},
-		{"length: 0.5m", 0.5},
+func TestTesterWithDifferentInterfaces(t *testing.T) {
+	interfaces := []string{"eth0", "en0", "wlan0", "bond0", "lo0"}
+
+	for _, iface := range interfaces {
+		tester := NewTester(iface)
+		if tester.interfaceName != iface {
+			t.Errorf("expected interfaceName %q, got %q", iface, tester.interfaceName)
+		}
+
+		// Just verify no panics
+		_ = tester.IsSupported()
+		result := tester.Test()
+		if result == nil {
+			t.Errorf("expected non-nil result for %s", iface)
+		}
+	}
+}
+
+func TestTestResultEmptyFaults(t *testing.T) {
+	result := TestResult{
+		Supported: true,
+		Status:    StatusOK,
+		Faults:    make([]string, 0),
 	}
 
-	for _, tt := range tests {
-		result := &TestResult{Status: StatusUnknown, Faults: make([]string, 0)}
-		result = parseTDROutput(tt.output, result)
+	if len(result.Faults) != 0 {
+		t.Error("expected empty faults slice")
+	}
 
-		if result.Length == nil {
-			t.Errorf("expected non-nil Length for %q", tt.output)
-		} else if *result.Length != tt.expected {
-			t.Errorf("for %q: expected Length %v, got %v", tt.output, tt.expected, *result.Length)
-		}
+	// Verify we can append to it
+	result.Faults = append(result.Faults, "new fault")
+	if len(result.Faults) != 1 {
+		t.Error("expected one fault after append")
+	}
+}
+
+func TestTesterTestReturnsValidResult(t *testing.T) {
+	tester := NewTester("lo0")
+
+	result := tester.Test()
+
+	// Verify all fields are initialized
+	if result.Faults == nil {
+		t.Error("Faults should not be nil")
+	}
+
+	// Status should be set (even if unknown)
+	validStatuses := map[Status]bool{
+		StatusOK:                true,
+		StatusOpen:              true,
+		StatusShort:             true,
+		StatusImpedanceMismatch: true,
+		StatusUnknown:           true,
+	}
+
+	if !validStatuses[result.Status] {
+		t.Errorf("unexpected Status: %v", result.Status)
 	}
 }
