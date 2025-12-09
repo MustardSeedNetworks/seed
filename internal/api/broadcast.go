@@ -70,7 +70,10 @@ func (s *Server) collectLinkData() map[string]interface{} {
 		return nil
 	}
 
-	s.netManager.RefreshInterfaces()
+	if err := s.netManager.RefreshInterfaces(); err != nil {
+		log.Printf("failed to refresh interfaces: %v", err)
+		return nil
+	}
 	currentIface := s.netManager.GetCurrentInterface()
 
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
@@ -78,7 +81,11 @@ func (s *Server) collectLinkData() map[string]interface{} {
 		return nil
 	}
 
-	linkStatus, _ := s.netManager.GetLinkStatus(currentIface)
+	linkStatus, err := s.netManager.GetLinkStatus(currentIface)
+	if err != nil {
+		log.Printf("failed to get link status for %s: %v", currentIface, err)
+		return nil
+	}
 
 	data := map[string]interface{}{
 		"interface": currentIface,

@@ -55,19 +55,19 @@ type ClientConfig struct {
 
 // Result contains the iperf3 test results
 type Result struct {
-	BitsPerSecond   float64   `json:"bitsPerSecond"`
-	Bandwidth       float64   `json:"bandwidth"`       // Mbps
-	Transfer        float64   `json:"transfer"`        // MB
-	Retransmits     int       `json:"retransmits"`     // TCP only
-	Jitter          float64   `json:"jitter"`          // UDP only, ms
-	LostPackets     int       `json:"lostPackets"`     // UDP only
-	LostPercent     float64   `json:"lostPercent"`     // UDP only
-	Protocol        string    `json:"protocol"`
-	Direction       string    `json:"direction"`       // "upload" or "download"
-	Duration        float64   `json:"duration"`        // seconds
-	Server          string    `json:"server"`
-	Port            int       `json:"port"`
-	Timestamp       time.Time `json:"timestamp"`
+	BitsPerSecond float64   `json:"bitsPerSecond"`
+	Bandwidth     float64   `json:"bandwidth"`   // Mbps
+	Transfer      float64   `json:"transfer"`    // MB
+	Retransmits   int       `json:"retransmits"` // TCP only
+	Jitter        float64   `json:"jitter"`      // UDP only, ms
+	LostPackets   int       `json:"lostPackets"` // UDP only
+	LostPercent   float64   `json:"lostPercent"` // UDP only
+	Protocol      string    `json:"protocol"`
+	Direction     string    `json:"direction"` // "upload" or "download"
+	Duration      float64   `json:"duration"`  // seconds
+	Server        string    `json:"server"`
+	Port          int       `json:"port"`
+	Timestamp     time.Time `json:"timestamp"`
 }
 
 // ServerStatus represents the iperf3 server status
@@ -308,7 +308,11 @@ func (m *Manager) StopServer() error {
 	}
 
 	if m.serverCmd != nil && m.serverCmd.Process != nil {
-		m.serverCmd.Process.Kill()
+		if err := m.serverCmd.Process.Kill(); err != nil {
+			// Log the error, but don't fail, as we are trying to stop the server
+			// and it might already be dead or unreachable.
+			fmt.Printf("Error killing iperf3 server process (PID %d): %v\n", m.serverCmd.Process.Pid, err)
+		}
 	}
 
 	m.serverStatus = ServerStatus{Running: false}
@@ -368,8 +372,7 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 	}
 
 	if config.Protocol == "udp" {
-		args = append(args, "-u")
-		args = append(args, "-b", "0") // Unlimited bandwidth for UDP
+		args = append(args, "-u", "-b", "0") // Unlimited bandwidth for UDP
 	}
 
 	if config.Reverse {

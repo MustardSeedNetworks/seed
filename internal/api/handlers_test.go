@@ -125,11 +125,11 @@ func TestIsUniqueLocal(t *testing.T) {
 
 func TestParseIPAddress(t *testing.T) {
 	tests := []struct {
-		name     string
-		addr     string
-		isIPv4   bool
-		prefix   int
-		scope    string
+		name   string
+		addr   string
+		isIPv4 bool
+		prefix int
+		scope  string
 	}{
 		{"IPv4 /24", "192.168.1.1/24", true, 0, "global"},
 		{"IPv4 /8", "10.0.0.1/8", true, 0, "global"},

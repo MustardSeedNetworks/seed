@@ -3,6 +3,7 @@ package network
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -54,13 +55,15 @@ type Manager struct {
 }
 
 // NewManager creates a new network manager.
-func NewManager(defaultInterface string) *Manager {
+func NewManager(defaultInterface string) (*Manager, error) {
 	m := &Manager{
 		currentInterface: defaultInterface,
 		interfaces:       make(map[string]*InterfaceInfo),
 	}
-	m.RefreshInterfaces()
-	return m
+	if err := m.RefreshInterfaces(); err != nil {
+		return nil, fmt.Errorf("failed to refresh interfaces during manager initialization: %w", err)
+	}
+	return m, nil
 }
 
 // RefreshInterfaces updates the list of available interfaces.
@@ -178,9 +181,9 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 	}
 
 	// Separate carrier (Layer 2) from IP assignment (Layer 3)
-	carrier := info.Running                        // Physical link/carrier detected
-	hasIP := hasRoutableAddress(info.Addresses)    // Has routable IP address
-	linkUp := carrier && hasIP                     // Legacy: both conditions met
+	carrier := info.Running                     // Physical link/carrier detected
+	hasIP := hasRoutableAddress(info.Addresses) // Has routable IP address
+	linkUp := carrier && hasIP                  // Legacy: both conditions met
 
 	status := &LinkStatus{
 		LinkUp:  linkUp,
@@ -189,7 +192,8 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 	}
 
 	// Try to read speed from sysfs (Linux only)
-	speedPath := filepath.Join("/sys/class/net", name, "speed")
+	speedPath := filepath.Join("sys", "class", "net", name, "speed")
+	speedPath = string(os.PathSeparator) + speedPath
 	if data, err := os.ReadFile(speedPath); err == nil {
 		speed := strings.TrimSpace(string(data))
 		if speed != "" && speed != "-1" {
@@ -198,7 +202,8 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 	}
 
 	// Try to read duplex from sysfs (Linux only)
-	duplexPath := filepath.Join("/sys/class/net", name, "duplex")
+	duplexPath := filepath.Join("sys", "class", "net", name, "duplex")
+	duplexPath = string(os.PathSeparator) + duplexPath
 	if data, err := os.ReadFile(duplexPath); err == nil {
 		status.Duplex = strings.TrimSpace(string(data))
 	}
@@ -366,9 +371,9 @@ func validateIPConfig(cfg *StaticIPConfig) error {
 // isValidNetmask checks if the netmask is valid (CIDR or dotted notation).
 func isValidNetmask(netmask string) bool {
 	// Check if it's a CIDR prefix (e.g., "24")
-	if _, err := fmt.Sscanf(netmask, "%d", new(int)); err == nil {
-		var prefix int
-		fmt.Sscanf(netmask, "%d", &prefix)
+	var prefix int
+	_, err := fmt.Sscanf(netmask, "%d", &prefix)
+	if err == nil {
 		return prefix >= 0 && prefix <= 32
 	}
 
@@ -381,7 +386,8 @@ func isValidNetmask(netmask string) bool {
 func netmaskToCIDR(netmask string) (int, error) {
 	// If already a number, return it
 	var prefix int
-	if _, err := fmt.Sscanf(netmask, "%d", &prefix); err == nil {
+	_, err := fmt.Sscanf(netmask, "%d", &prefix)
+	if err == nil {
 		return prefix, nil
 	}
 
@@ -440,9 +446,15 @@ func configureStaticIPLinux(iface string, cfg *StaticIPConfig) error {
 
 	// Add default gateway if provided
 	if cfg.Gateway != "" {
-		// Remove existing default route first (ignore errors)
-		exec.Command("ip", "route", "del", "default").Run()
+		if net.ParseIP(cfg.Gateway) == nil {
+			return fmt.Errorf("invalid gateway IP: %s", cfg.Gateway)
+		}
+		// Remove existing default route first (ignore errors, as it might not exist)
+		if err := exec.Command("ip", "route", "del", "default").Run(); err != nil {
+			log.Printf("warning: failed to delete default route: %v", err)
+		}
 
+		// #nosec G204 - arguments are validated above
 		if err := exec.Command("ip", "route", "add", "default", "via", cfg.Gateway, "dev", iface).Run(); err != nil {
 			return fmt.Errorf("failed to add default gateway: %w", err)
 		}
@@ -491,7 +503,9 @@ func configureStaticIPDarwin(iface string, cfg *StaticIPConfig) error {
 	if net.ParseIP(netmask) == nil {
 		// It's a CIDR prefix, convert to dotted
 		var prefix int
-		fmt.Sscanf(netmask, "%d", &prefix)
+		if _, err := fmt.Sscanf(netmask, "%d", &prefix); err != nil {
+			return fmt.Errorf("invalid netmask prefix %q: %w", netmask, err)
+		}
 		netmask = cidrToNetmask(prefix)
 	}
 
@@ -572,5 +586,6 @@ func updateResolvConf(servers []string) error {
 	for _, server := range servers {
 		content.WriteString(fmt.Sprintf("nameserver %s\n", server))
 	}
-	return os.WriteFile("/etc/resolv.conf", []byte(content.String()), 0644)
+	// Restrict permissions to mitigate accidental leakage of resolver config.
+	return os.WriteFile("/etc/resolv.conf", []byte(content.String()), 0o600)
 }

@@ -11,15 +11,15 @@ import (
 
 // Result contains the speedtest results
 type Result struct {
-	Download    float64   `json:"download"`    // Mbps
-	Upload      float64   `json:"upload"`      // Mbps
-	Latency     float64   `json:"latency"`     // ms
-	Server      string    `json:"server"`      // Server name
-	Location    string    `json:"location"`    // Server location
-	Host        string    `json:"host"`        // Server host
-	Distance    float64   `json:"distance"`    // km
-	Timestamp   time.Time `json:"timestamp"`
-	TestDuration float64  `json:"testDuration"` // seconds
+	Download     float64   `json:"download"` // Mbps
+	Upload       float64   `json:"upload"`   // Mbps
+	Latency      float64   `json:"latency"`  // ms
+	Server       string    `json:"server"`   // Server name
+	Location     string    `json:"location"` // Server location
+	Host         string    `json:"host"`     // Server host
+	Distance     float64   `json:"distance"` // km
+	Timestamp    time.Time `json:"timestamp"`
+	TestDuration float64   `json:"testDuration"` // seconds
 }
 
 // Status represents the current test status
@@ -31,10 +31,10 @@ type Status struct {
 
 // Tester handles speedtest operations
 type Tester struct {
-	mu          sync.RWMutex
-	status      Status
-	lastResult  *Result
-	serverID    string // Optional: specific server ID to use
+	mu         sync.RWMutex
+	status     Status
+	lastResult *Result
+	serverID   string // Optional: specific server ID to use
 }
 
 // NewTester creates a new speedtest tester

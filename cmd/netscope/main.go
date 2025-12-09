@@ -8,8 +8,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/krisarmstrong/netscope/internal/api"
 	"github.com/krisarmstrong/netscope/internal/config"
@@ -58,8 +61,20 @@ func main() {
 	discovery.MustHaveICMPPrivileges()
 
 	// Set up logging
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Printf("NetScope %s starting...", version)
+	logPath := filepath.Join("logs", "netscope.log")
+	if err := os.MkdirAll(filepath.Dir(logPath), 0o750); err != nil {
+		log.Fatalf("Failed to create log directory: %v", err)
+	}
+	rotator := &lumberjack.Logger{
+		Filename:   logPath,
+		MaxSize:    20, // megabytes
+		MaxBackups: 7,  // keep last 7 files
+		MaxAge:     30, // days
+		Compress:   true,
+	}
+	log.SetOutput(rotator)
+	log.SetFlags(log.LstdFlags | log.Lshortfile | log.LUTC)
+	log.Printf("NetScope %s starting, logging to %s", version, logPath)
 
 	// Load configuration
 	cfg, err := config.Load(*configPath)
@@ -76,7 +91,10 @@ func main() {
 	if cfg.Interface.Default == "" {
 		log.Fatalf("No default network interface specified in configuration")
 	}
-	netMgr := network.NewManager(cfg.Interface.Default)
+	netMgr, err := network.NewManager(cfg.Interface.Default)
+	if err != nil {
+		log.Fatalf("Failed to initialize network manager: %v", err)
+	}
 	preferred := append([]string{cfg.Interface.Default}, cfg.Interface.Fallbacks...)
 	activeInterface := netMgr.FindFirstAvailable(preferred)
 	retryCount := 0
@@ -109,7 +127,7 @@ func main() {
 	}
 
 	// Create and start the server
-	server := api.NewServer(cfg, *configPath, netMgr)
+	server := api.NewServer(cfg, *configPath, logPath, netMgr)
 
 	// Handle shutdown gracefully
 	done := make(chan struct{})

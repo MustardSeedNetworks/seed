@@ -115,7 +115,7 @@ func TestLoadInvalidYAML(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "invalid-config.yaml")
 
 	// Write invalid YAML
-	if err := os.WriteFile(configPath, []byte("invalid: [yaml: content"), 0600); err != nil {
+	if err := os.WriteFile(configPath, []byte("invalid: [yaml: content"), 0o600); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 

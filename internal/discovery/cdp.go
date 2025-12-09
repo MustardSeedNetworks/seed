@@ -13,18 +13,18 @@ import (
 
 // CDPNeighbor represents a discovered CDP neighbor.
 type CDPNeighbor struct {
-	DeviceID           string    `json:"deviceId"`
-	PortID             string    `json:"portId"`
-	Platform           string    `json:"platform"`
-	SoftwareVersion    string    `json:"softwareVersion"`
-	Capabilities       []string  `json:"capabilities"`
-	NativeVLAN         int       `json:"nativeVlan,omitempty"`
-	Duplex             string    `json:"duplex,omitempty"`
-	ManagementAddress  string    `json:"managementAddress,omitempty"`
-	VTPDomain          string    `json:"vtpDomain,omitempty"`
-	TTL                int       `json:"ttl"`
-	LastSeen           time.Time `json:"lastSeen"`
-	SourceMAC          string    `json:"sourceMAC"`
+	DeviceID          string    `json:"deviceId"`
+	PortID            string    `json:"portId"`
+	Platform          string    `json:"platform"`
+	SoftwareVersion   string    `json:"softwareVersion"`
+	Capabilities      []string  `json:"capabilities"`
+	NativeVLAN        int       `json:"nativeVlan,omitempty"`
+	Duplex            string    `json:"duplex,omitempty"`
+	ManagementAddress string    `json:"managementAddress,omitempty"`
+	VTPDomain         string    `json:"vtpDomain,omitempty"`
+	TTL               int       `json:"ttl"`
+	LastSeen          time.Time `json:"lastSeen"`
+	SourceMAC         string    `json:"sourceMAC"`
 }
 
 // CDPCapture handles CDP frame capture on an interface.

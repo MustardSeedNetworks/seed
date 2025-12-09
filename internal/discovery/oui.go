@@ -212,7 +212,7 @@ func (db *OUIDatabase) LoadFromFile(path string) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		// Skip comments and empty lines
-		if len(line) == 0 || line[0] == '#' {
+		if line == "" || line[0] == '#' {
 			continue
 		}
 		// Parse "AA:BB:CC\tVendor" or "AA-BB-CC\tVendor" format
@@ -223,7 +223,7 @@ func (db *OUIDatabase) LoadFromFile(path string) error {
 		prefix := strings.ToUpper(strings.TrimSpace(parts[0]))
 		prefix = strings.ReplaceAll(prefix, "-", ":")
 		vendor := strings.TrimSpace(parts[1])
-		if len(prefix) >= 8 && len(vendor) > 0 {
+		if len(prefix) >= 8 && vendor != "" {
 			db.vendors[prefix[:8]] = vendor
 		}
 	}
@@ -271,7 +271,7 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 		"/usr/share/ieee-data/oui.txt",
 		"/var/lib/ieee-data/oui.txt",
 		"/usr/local/share/oui.txt",
-		filepath.Join(os.Getenv("HOME"), ".config/netscope/oui.txt"),
+		filepath.Join(os.Getenv("HOME"), ".config", "netscope", "oui.txt"),
 	}
 
 	for _, loc := range locations {
