@@ -200,6 +200,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/iperf/client/status", s.handleIperfClientStatus)
 	s.mux.HandleFunc("/api/iperf/server", s.handleIperfServer)
 	s.mux.HandleFunc("/api/iperf/server/status", s.handleIperfServerStatus)
+	s.mux.HandleFunc("/api/iperf/suggestions", s.handleIperfSuggestions)
 	s.mux.HandleFunc("/api/devices", s.handleDevices)
 	s.mux.HandleFunc("/api/devices/scan", s.handleDevicesScan)
 	s.mux.HandleFunc("/api/devices/status", s.handleDevicesStatus)

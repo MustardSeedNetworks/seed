@@ -11,6 +11,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"os"
 	"strconv"
 	"strings"
@@ -1442,14 +1443,14 @@ func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 
 // TestsSettingsResponse represents the custom tests configuration.
 type TestsSettingsResponse struct {
-	DNSHostname   string                    `json:"dnsHostname"`
-	DNSServers    []DNSServerResponse       `json:"dnsServers"`
-	PingTargets   []PingTargetResponse      `json:"pingTargets"`
-	TCPPorts      []TCPPortResponse         `json:"tcpPorts"`
-	UDPPorts      []UDPPortResponse         `json:"udpPorts"`
-	HTTPEndpoints []HTTPEndpointResponse    `json:"httpEndpoints"`
-	Speedtest     SpeedtestSettingsResponse `json:"speedtest"`
-	RunPerformance bool                     `json:"runPerformance"`
+	DNSHostname    string                    `json:"dnsHostname"`
+	DNSServers     []DNSServerResponse       `json:"dnsServers"`
+	PingTargets    []PingTargetResponse      `json:"pingTargets"`
+	TCPPorts       []TCPPortResponse         `json:"tcpPorts"`
+	UDPPorts       []UDPPortResponse         `json:"udpPorts"`
+	HTTPEndpoints  []HTTPEndpointResponse    `json:"httpEndpoints"`
+	Speedtest      SpeedtestSettingsResponse `json:"speedtest"`
+	RunPerformance bool                      `json:"runPerformance"`
 }
 
 // DNSServerResponse represents a DNS server for testing.
@@ -1504,12 +1505,12 @@ func (s *Server) handleTestsSettings(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 	resp := TestsSettingsResponse{
-		DNSHostname:   s.config.DNS.TestHostname,
-		DNSServers:    make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
-		PingTargets:   make([]PingTargetResponse, 0, len(s.config.Tests.PingTargets)),
-		TCPPorts:      make([]TCPPortResponse, 0, len(s.config.Tests.TCPPorts)),
-		UDPPorts:      make([]UDPPortResponse, 0, len(s.config.Tests.UDPPorts)),
-		HTTPEndpoints: make([]HTTPEndpointResponse, 0, len(s.config.Tests.HTTPEndpoints)),
+		DNSHostname:    s.config.DNS.TestHostname,
+		DNSServers:     make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
+		PingTargets:    make([]PingTargetResponse, 0, len(s.config.Tests.PingTargets)),
+		TCPPorts:       make([]TCPPortResponse, 0, len(s.config.Tests.TCPPorts)),
+		UDPPorts:       make([]UDPPortResponse, 0, len(s.config.Tests.UDPPorts)),
+		HTTPEndpoints:  make([]HTTPEndpointResponse, 0, len(s.config.Tests.HTTPEndpoints)),
 		RunPerformance: s.config.Tests.RunPerformance,
 		Speedtest: SpeedtestSettingsResponse{
 			ServerID:      s.config.Speedtest.ServerID,
@@ -1676,6 +1677,9 @@ type CustomTestResult struct {
 	URL        string  `json:"url,omitempty"`
 	Success    bool    `json:"success"`
 	Latency    float64 `json:"latency"` // ms
+	DNSLatency float64 `json:"dnsLatency,omitempty"`
+	TCPConnect float64 `json:"tcpConnect,omitempty"`
+	TLSLatency float64 `json:"tlsLatency,omitempty"`
 	Error      string  `json:"error,omitempty"`
 	Status     int     `json:"status,omitempty"`     // HTTP status code
 	TestStatus string  `json:"testStatus,omitempty"` // success, warning, error
@@ -1862,31 +1866,34 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			URL:  url,
 		}
 
-		statusCode, latency, err := runHTTPTest(url, endpoint.ExpectedStatus)
+		statusCode, timings, err := runHTTPTest(url, endpoint.ExpectedStatus)
 
 		// If HTTPS failed and we can try HTTP fallback
 		if err != nil && tryHTTPFallback {
 			httpURL := "http://" + endpoint.URL
-			httpStatus, httpLatency, httpErr := runHTTPTest(httpURL, endpoint.ExpectedStatus)
+			httpStatus, httpTimings, httpErr := runHTTPTest(httpURL, endpoint.ExpectedStatus)
 			if httpErr == nil || httpStatus > 0 {
 				// HTTP worked (or at least connected) - use those results
 				url = httpURL
 				testResult.URL = httpURL
 				statusCode = httpStatus
-				latency = httpLatency
+				timings = httpTimings
 				err = httpErr
 			}
 		}
 
 		testResult.Status = statusCode
-		testResult.Latency = latency
+		testResult.Latency = timings.Total
+		testResult.DNSLatency = timings.DNS
+		testResult.TCPConnect = timings.Connect
+		testResult.TLSLatency = timings.TLS
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
 			testResult.TestStatus = "error"
 		} else {
 			testResult.Success = true
-			testResult.TestStatus = getTestStatus(latency, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
+			testResult.TestStatus = getTestStatus(timings.Total, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
 		}
 
 		// Check certificate expiry for HTTPS URLs only
@@ -1929,8 +1936,15 @@ func runTCPTest(host string, port int) (float64, error) {
 	return latency, nil
 }
 
-// runHTTPTest runs an HTTP test and returns status code, latency in ms.
-func runHTTPTest(url string, expectedStatus int) (status int, latency float64, err error) {
+type httpTimings struct {
+	DNS     float64
+	Connect float64
+	TLS     float64
+	Total   float64
+}
+
+// runHTTPTest runs an HTTP test and returns status code and timings in ms.
+func runHTTPTest(url string, expectedStatus int) (status int, timing httpTimings, err error) {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -1943,24 +1957,55 @@ func runHTTPTest(url string, expectedStatus int) (status int, latency float64, e
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
-		return 0, 0, err
+		return 0, timing, err
 	}
+
+	var dnsStart, connStart, tlsStart time.Time
+
+	trace := &httptrace.ClientTrace{
+		DNSStart: func(httptrace.DNSStartInfo) {
+			dnsStart = time.Now()
+		},
+		DNSDone: func(httptrace.DNSDoneInfo) {
+			if !dnsStart.IsZero() {
+				timing.DNS += time.Since(dnsStart).Seconds() * 1000
+			}
+		},
+		ConnectStart: func(_, _ string) {
+			connStart = time.Now()
+		},
+		ConnectDone: func(_, _ string, _ error) {
+			if !connStart.IsZero() {
+				timing.Connect += time.Since(connStart).Seconds() * 1000
+			}
+		},
+		TLSHandshakeStart: func() {
+			tlsStart = time.Now()
+		},
+		TLSHandshakeDone: func(tls.ConnectionState, error) {
+			if !tlsStart.IsZero() {
+				timing.TLS += time.Since(tlsStart).Seconds() * 1000
+			}
+		},
+	}
+
+	req = req.WithContext(httptrace.WithClientTrace(ctx, trace))
 
 	start := time.Now()
 	resp, err := client.Do(req)
-	latency = time.Since(start).Seconds() * 1000
+	timing.Total = time.Since(start).Seconds() * 1000
 
 	if err != nil {
-		return 0, latency, err
+		return 0, timing, err
 	}
 	defer resp.Body.Close()
 
 	status = resp.StatusCode
 	if expectedStatus > 0 && status != expectedStatus {
-		return status, latency, fmt.Errorf("expected %d, got %d", expectedStatus, status)
+		return status, timing, fmt.Errorf("expected %d, got %d", expectedStatus, status)
 	}
 
-	return status, latency, nil
+	return status, timing, nil
 }
 
 // getTestStatus returns status based on latency and thresholds.
@@ -2351,28 +2396,33 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 
 // IperfClientRequest is the request body for running an iperf3 client test
 type IperfClientRequest struct {
-	Server   string `json:"server"`
-	Port     int    `json:"port"`
-	Protocol string `json:"protocol"` // "tcp" or "udp"
-	Reverse  bool   `json:"reverse"`  // true = download, false = upload
-	Duration int    `json:"duration"` // seconds
-	Parallel int    `json:"parallel"` // number of streams
+	Server    string `json:"server"`
+	Port      int    `json:"port"`
+	Protocol  string `json:"protocol"`  // "tcp" or "udp"
+	Reverse   bool   `json:"reverse"`   // true = download, false = upload (legacy)
+	Direction string `json:"direction"` // "upload", "download", "bidirectional"
+	Duration  int    `json:"duration"`  // seconds
+	Parallel  int    `json:"parallel"`  // number of streams
 }
 
 // IperfResultResponse is the response for an iperf3 test result
 type IperfResultResponse struct {
-	Bandwidth   float64 `json:"bandwidth"`   // Mbps
-	Transfer    float64 `json:"transfer"`    // MB
-	Retransmits int     `json:"retransmits"` // TCP only
-	Jitter      float64 `json:"jitter"`      // UDP only, ms
-	LostPackets int     `json:"lostPackets"` // UDP only
-	LostPercent float64 `json:"lostPercent"` // UDP only
-	Protocol    string  `json:"protocol"`
-	Direction   string  `json:"direction"`
-	Duration    float64 `json:"duration"`
-	Server      string  `json:"server"`
-	Port        int     `json:"port"`
-	Timestamp   string  `json:"timestamp"`
+	Bandwidth         float64 `json:"bandwidth"`   // Mbps
+	Transfer          float64 `json:"transfer"`    // MB
+	Retransmits       int     `json:"retransmits"` // TCP only
+	Jitter            float64 `json:"jitter"`      // UDP only, ms
+	LostPackets       int     `json:"lostPackets"` // UDP only
+	LostPercent       float64 `json:"lostPercent"` // UDP only
+	Protocol          string  `json:"protocol"`
+	Direction         string  `json:"direction"`
+	Duration          float64 `json:"duration"`
+	Server            string  `json:"server"`
+	Port              int     `json:"port"`
+	Timestamp         string  `json:"timestamp"`
+	DownloadBandwidth float64 `json:"downloadBandwidth,omitempty"`
+	UploadBandwidth   float64 `json:"uploadBandwidth,omitempty"`
+	DownloadTransfer  float64 `json:"downloadTransfer,omitempty"`
+	UploadTransfer    float64 `json:"uploadTransfer,omitempty"`
 }
 
 // handleIperfClient runs an iperf3 client test
@@ -2394,12 +2444,13 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config := iperf.ClientConfig{
-		Server:   req.Server,
-		Port:     req.Port,
-		Protocol: req.Protocol,
-		Reverse:  req.Reverse,
-		Duration: req.Duration,
-		Parallel: req.Parallel,
+		Server:    req.Server,
+		Port:      req.Port,
+		Protocol:  req.Protocol,
+		Reverse:   req.Reverse,
+		Direction: req.Direction,
+		Duration:  req.Duration,
+		Parallel:  req.Parallel,
 	}
 
 	// Run test in background and return immediately
@@ -2440,18 +2491,22 @@ func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request)
 
 	if lastResult := s.iperfManager.GetLastResult(); lastResult != nil {
 		resp.Last = &IperfResultResponse{
-			Bandwidth:   lastResult.Bandwidth,
-			Transfer:    lastResult.Transfer,
-			Retransmits: lastResult.Retransmits,
-			Jitter:      lastResult.Jitter,
-			LostPackets: lastResult.LostPackets,
-			LostPercent: lastResult.LostPercent,
-			Protocol:    lastResult.Protocol,
-			Direction:   lastResult.Direction,
-			Duration:    lastResult.Duration,
-			Server:      lastResult.Server,
-			Port:        lastResult.Port,
-			Timestamp:   lastResult.Timestamp.Format(time.RFC3339),
+			Bandwidth:         lastResult.Bandwidth,
+			Transfer:          lastResult.Transfer,
+			Retransmits:       lastResult.Retransmits,
+			Jitter:            lastResult.Jitter,
+			LostPackets:       lastResult.LostPackets,
+			LostPercent:       lastResult.LostPercent,
+			Protocol:          lastResult.Protocol,
+			Direction:         lastResult.Direction,
+			Duration:          lastResult.Duration,
+			Server:            lastResult.Server,
+			Port:              lastResult.Port,
+			Timestamp:         lastResult.Timestamp.Format(time.RFC3339),
+			DownloadBandwidth: lastResult.DownloadBandwidth,
+			UploadBandwidth:   lastResult.UploadBandwidth,
+			DownloadTransfer:  lastResult.DownloadTransfer,
+			UploadTransfer:    lastResult.UploadTransfer,
 		}
 	}
 
@@ -2513,6 +2568,74 @@ func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request)
 
 	status := s.iperfManager.GetServerStatus()
 	sendJSONResponse(w, http.StatusOK, status)
+}
+
+// IperfSuggestion represents a discovered host that responds on the iperf port.
+type IperfSuggestion struct {
+	Host      string  `json:"host"`
+	Hostname  string  `json:"hostname,omitempty"`
+	Source    string  `json:"source,omitempty"`
+	LatencyMs float64 `json:"latencyMs,omitempty"`
+}
+
+// handleIperfSuggestions returns discovered devices that respond on the iperf port.
+func (s *Server) handleIperfSuggestions(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.deviceDiscovery == nil {
+		http.Error(w, "Device discovery not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	port := 5201
+	if p := r.URL.Query().Get("port"); p != "" {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
+			port = parsed
+		}
+	}
+
+	devices := s.deviceDiscovery.GetDevices()
+	suggestions := make([]IperfSuggestion, 0, len(devices))
+
+	for _, d := range devices {
+		if d.IP == "" {
+			continue
+		}
+
+		addr := net.JoinHostPort(d.IP, strconv.Itoa(port))
+		start := time.Now()
+		conn, err := net.DialTimeout("tcp", addr, 400*time.Millisecond)
+		if err != nil {
+			continue
+		}
+		latency := time.Since(start).Seconds() * 1000
+		_ = conn.Close()
+
+		var source string
+		if len(d.DiscoveryMethod) > 0 {
+			methods := make([]string, 0, len(d.DiscoveryMethod))
+			for _, m := range d.DiscoveryMethod {
+				methods = append(methods, string(m))
+			}
+			source = strings.Join(methods, ",")
+		}
+
+		suggestions = append(suggestions, IperfSuggestion{
+			Host:      d.IP,
+			Hostname:  d.Hostname,
+			Source:    source,
+			LatencyMs: latency,
+		})
+
+		if len(suggestions) >= 10 {
+			break
+		}
+	}
+
+	sendJSONResponse(w, http.StatusOK, suggestions)
 }
 
 // handleDevices returns all discovered network devices.

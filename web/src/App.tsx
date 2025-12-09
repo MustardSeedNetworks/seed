@@ -592,6 +592,17 @@ function App() {
         console.error("Failed to load FAB options:", err);
       }
 
+      // If performance tests are disabled globally, skip speedtest/iperf
+      try {
+        const perfToggle = localStorage.getItem("netscope-run-performance");
+        if (perfToggle !== null && JSON.parse(perfToggle) === false) {
+          fabOptions.runSpeedtest = false;
+          fabOptions.runIperf = false;
+        }
+      } catch (err) {
+        console.error("Failed to read performance toggle:", err);
+      }
+
       // Build array of fetch promises based on FAB options
       const fetchPromises: Promise<void>[] = [];
 

@@ -18,6 +18,9 @@ interface TestResult {
   jitter?: number;
   minLatency?: number;
   maxLatency?: number;
+  dnsLatency?: number;
+  tcpConnect?: number;
+  tlsLatency?: number;
   // Certificate expiry fields
   certDaysLeft?: number;
   certStatus?: "success" | "warning" | "error";
@@ -266,6 +269,23 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
       return `${Math.floor(days / 365)}y`;
     };
 
+    const timingBits: string[] = [];
+    const fmt = (ms?: number) =>
+      ms !== undefined
+        ? ms >= 1000
+          ? `${(ms / 1000).toFixed(1)}s`
+          : `${Math.round(ms)}ms`
+        : "";
+    if (result.dnsLatency !== undefined) {
+      timingBits.push(`DNS ${fmt(result.dnsLatency)}`);
+    }
+    if (result.tcpConnect !== undefined) {
+      timingBits.push(`TCP ${fmt(result.tcpConnect)}`);
+    }
+    if (result.tlsLatency !== undefined && result.tlsLatency > 0) {
+      timingBits.push(`TLS ${fmt(result.tlsLatency)}`);
+    }
+
     return (
       <div key={`http-${result.name}`} className="py-1">
         <div className="flex items-center justify-between">
@@ -280,6 +300,11 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
             {result.success ? formatLatency(result.latency) : "fail"}
           </span>
         </div>
+        {timingBits.length > 0 && (
+          <div className="text-xs text-text-muted mt-0.5">
+            {timingBits.join(" · ")}
+          </div>
+        )}
         {(hasTLS || hasCertInfo) && (
           <div className="text-xs mt-0.5 flex items-center gap-2">
             {hasTLS && (

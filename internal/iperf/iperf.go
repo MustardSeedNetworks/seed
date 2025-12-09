@@ -45,29 +45,36 @@ var iperfBinaryPath string
 
 // ClientConfig holds iperf3 client test configuration
 type ClientConfig struct {
-	Server   string `json:"server"`
-	Port     int    `json:"port"`
-	Protocol string `json:"protocol"` // "tcp" or "udp"
-	Reverse  bool   `json:"reverse"`  // true = download (server sends), false = upload (client sends)
-	Duration int    `json:"duration"` // seconds
-	Parallel int    `json:"parallel"` // number of streams
+	Server    string `json:"server"`
+	Port      int    `json:"port"`
+	Protocol  string `json:"protocol"`            // "tcp" or "udp"
+	Reverse   bool   `json:"reverse"`             // true = download (server sends), false = upload (client sends)
+	Direction string `json:"direction,omitempty"` // upload, download, bidirectional
+	Duration  int    `json:"duration"`            // seconds
+	Parallel  int    `json:"parallel"`            // number of streams
 }
 
 // Result contains the iperf3 test results
 type Result struct {
-	BitsPerSecond float64   `json:"bitsPerSecond"`
-	Bandwidth     float64   `json:"bandwidth"`   // Mbps
-	Transfer      float64   `json:"transfer"`    // MB
-	Retransmits   int       `json:"retransmits"` // TCP only
-	Jitter        float64   `json:"jitter"`      // UDP only, ms
-	LostPackets   int       `json:"lostPackets"` // UDP only
-	LostPercent   float64   `json:"lostPercent"` // UDP only
-	Protocol      string    `json:"protocol"`
-	Direction     string    `json:"direction"` // "upload" or "download"
-	Duration      float64   `json:"duration"`  // seconds
-	Server        string    `json:"server"`
-	Port          int       `json:"port"`
-	Timestamp     time.Time `json:"timestamp"`
+	BitsPerSecond         float64   `json:"bitsPerSecond"`
+	Bandwidth             float64   `json:"bandwidth"`   // Mbps
+	Transfer              float64   `json:"transfer"`    // MB
+	Retransmits           int       `json:"retransmits"` // TCP only
+	Jitter                float64   `json:"jitter"`      // UDP only, ms
+	LostPackets           int       `json:"lostPackets"` // UDP only
+	LostPercent           float64   `json:"lostPercent"` // UDP only
+	Protocol              string    `json:"protocol"`
+	Direction             string    `json:"direction"` // "upload" or "download"
+	Duration              float64   `json:"duration"`  // seconds
+	Server                string    `json:"server"`
+	Port                  int       `json:"port"`
+	Timestamp             time.Time `json:"timestamp"`
+	UploadBitsPerSecond   float64   `json:"uploadBitsPerSecond,omitempty"`
+	DownloadBitsPerSecond float64   `json:"downloadBitsPerSecond,omitempty"`
+	UploadBandwidth       float64   `json:"uploadBandwidth,omitempty"`   // Mbps
+	DownloadBandwidth     float64   `json:"downloadBandwidth,omitempty"` // Mbps
+	UploadTransfer        float64   `json:"uploadTransfer,omitempty"`    // MB
+	DownloadTransfer      float64   `json:"downloadTransfer,omitempty"`  // MB
 }
 
 // ServerStatus represents the iperf3 server status
@@ -362,6 +369,18 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 		config.Protocol = "tcp"
 	}
 
+	direction := strings.ToLower(config.Direction)
+	if direction == "" {
+		if config.Reverse {
+			direction = "download"
+		} else {
+			direction = "upload"
+		}
+	}
+	if direction != "download" && direction != "bidirectional" {
+		direction = "upload"
+	}
+
 	// Build command
 	args := []string{
 		"-c", config.Server,
@@ -375,8 +394,16 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 		args = append(args, "-u", "-b", "0") // Unlimited bandwidth for UDP
 	}
 
-	if config.Reverse {
+	switch direction {
+	case "download":
+		config.Reverse = true
 		args = append(args, "-R") // Reverse mode (server sends, client receives)
+	case "bidirectional":
+		// Bidirectional test (client <-> server)
+		args = append(args, "-d")
+		config.Reverse = false
+	default:
+		config.Reverse = false
 	}
 
 	m.mu.Lock()
@@ -416,17 +443,30 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 		Server:    config.Server,
 		Port:      config.Port,
 		Timestamp: time.Now(),
+		Direction: direction,
 	}
 
-	if config.Reverse {
-		result.Direction = "download"
+	switch direction {
+	case "download":
 		// In reverse mode, we care about what we received
 		result.BitsPerSecond = iperfOut.End.SumReceived.BitsPerSecond
 		result.Bandwidth = iperfOut.End.SumReceived.BitsPerSecond / 1_000_000
 		result.Transfer = iperfOut.End.SumReceived.Bytes / 1_000_000
 		result.Duration = iperfOut.End.SumReceived.Seconds
-	} else {
-		result.Direction = "upload"
+	case "bidirectional":
+		result.DownloadBitsPerSecond = iperfOut.End.SumReceived.BitsPerSecond
+		result.DownloadBandwidth = iperfOut.End.SumReceived.BitsPerSecond / 1_000_000
+		result.DownloadTransfer = iperfOut.End.SumReceived.Bytes / 1_000_000
+		result.UploadBitsPerSecond = iperfOut.End.SumSent.BitsPerSecond
+		result.UploadBandwidth = iperfOut.End.SumSent.BitsPerSecond / 1_000_000
+		result.UploadTransfer = iperfOut.End.SumSent.Bytes / 1_000_000
+		// Preserve legacy fields using download direction for compatibility
+		result.BitsPerSecond = result.DownloadBitsPerSecond
+		result.Bandwidth = result.DownloadBandwidth
+		result.Transfer = result.DownloadTransfer
+		result.Duration = iperfOut.End.Sum.Seconds
+		result.Retransmits = iperfOut.End.SumSent.Retransmits
+	default: // upload
 		// In normal mode, we care about what we sent
 		result.BitsPerSecond = iperfOut.End.SumSent.BitsPerSecond
 		result.Bandwidth = iperfOut.End.SumSent.BitsPerSecond / 1_000_000

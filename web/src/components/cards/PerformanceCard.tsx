@@ -42,6 +42,10 @@ interface IperfResult {
   server: string;
   port: number;
   timestamp: string;
+  downloadBandwidth?: number;
+  uploadBandwidth?: number;
+  downloadTransfer?: number;
+  uploadTransfer?: number;
 }
 
 interface IperfClientStatus {
@@ -66,7 +70,7 @@ interface IperfSettings {
   server: string;
   port: number;
   protocol: "tcp" | "udp";
-  direction: "upload" | "download";
+  direction: "upload" | "download" | "bidirectional";
   duration: number;
   serverPort: number;
   enableServer: boolean;
@@ -107,6 +111,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
     useState<IperfServerStatus | null>(null);
   const [iperfError, setIperfError] = useState<string | null>(null);
   const [iperfClientRunning, setIperfClientRunning] = useState(false);
+  const [runPerformanceEnabled, setRunPerformanceEnabled] = useState(true);
 
   // iperf3 settings (loaded from localStorage/Settings)
   const [iperfSettings, setIperfSettings] = useState<IperfSettings>({
@@ -197,6 +202,36 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       }
     };
     fetchStatus();
+  }, []);
+
+  // Track master performance enable toggle from Settings
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("netscope-run-performance");
+      if (saved !== null) {
+        setRunPerformanceEnabled(JSON.parse(saved));
+      }
+    } catch (err) {
+      console.error("Failed to read performance toggle:", err);
+    }
+
+    const handlePerfToggle = (e: Event) => {
+      const detail = (e as CustomEvent<boolean>).detail;
+      setRunPerformanceEnabled((prev) =>
+        typeof detail === "boolean" ? detail : prev,
+      );
+    };
+
+    window.addEventListener(
+      "performanceToggleUpdated",
+      handlePerfToggle as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "performanceToggleUpdated",
+        handlePerfToggle as EventListener,
+      );
+    };
   }, []);
 
   // Load iperf settings from localStorage and listen for updates
@@ -316,6 +351,11 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   }, [iperfClientRunning]);
 
   const runSpeedtest = useCallback(async () => {
+    if (!runPerformanceEnabled) {
+      setSpeedtestError("Performance tests are disabled in Settings");
+      return;
+    }
+
     setSpeedtestError(null);
     setSpeedtestRunning(true);
     setSpeedtestStatus({ running: true, phase: "finding_server", progress: 0 });
@@ -336,9 +376,14 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       setSpeedtestStatus({ running: false, phase: "idle", progress: 0 });
       setSpeedtestRunning(false);
     }
-  }, []);
+  }, [runPerformanceEnabled]);
 
   const runIperfClient = useCallback(async () => {
+    if (!runPerformanceEnabled) {
+      setIperfError("Performance tests are disabled in Settings");
+      return;
+    }
+
     if (!iperfSettings.server) {
       setIperfError("Server not configured");
       return;
@@ -359,6 +404,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
           server: iperfSettings.server,
           port: iperfSettings.port,
           protocol: iperfSettings.protocol,
+          direction: iperfSettings.direction,
           reverse: iperfSettings.direction === "download",
           duration: iperfSettings.duration,
           parallel: 1,
@@ -373,11 +419,14 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       setIperfClientStatus({ running: false, phase: "idle", progress: 0 });
       setIperfClientRunning(false);
     }
-  }, [iperfSettings]);
+  }, [iperfSettings, runPerformanceEnabled]);
 
   // Listen for FAB "run all tests" event
   useEffect(() => {
     const handleRunAllTests = () => {
+      if (!runPerformanceEnabled) {
+        return;
+      }
       // Check FAB options from localStorage
       let fabOptions = {
         runSpeedtest: true, // Default ON
@@ -420,6 +469,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
     iperfClientRunning,
     iperfSettings.server,
     iperfInfo?.installed,
+    runPerformanceEnabled,
   ]);
 
   const formatSpeed = (mbps: number): string => {
@@ -430,6 +480,7 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
   };
 
   const getStatus = (): Status => {
+    if (!runPerformanceEnabled) return "unknown";
     if (loading || speedtestRunning || iperfClientRunning) return "loading";
     if (speedtestError || iperfError) return "error";
     if (speedtestResult || iperfResult) return "success";
@@ -442,190 +493,247 @@ export function PerformanceCard({ loading }: PerformanceCardProps) {
       subtitle="Speedtest & iPerf"
       status={getStatus()}
     >
-      {/* Internet Speed Section */}
-      <p className="text-xs font-medium text-text-secondary mb-2">
-        Internet Speed
-      </p>
-
-      {speedtestRunning && speedtestStatus && (
-        <div className="space-y-2 mb-3">
-          <p className="text-sm text-text-muted" id="speedtest-progress-label">
-            {speedtestPhaseLabels[speedtestStatus.phase] ||
-              speedtestStatus.phase}
-          </p>
-          <div
-            role="progressbar"
-            aria-valuenow={speedtestStatus.progress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-labelledby="speedtest-progress-label"
-            className="w-full bg-surface-hover rounded-full h-2"
-          >
-            <div
-              className="bg-brand-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${speedtestStatus.progress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {!speedtestRunning && speedtestResult && (
-        <div className="mb-3">
-          <div className="grid grid-cols-2 gap-4">
-            <CardValue
-              label="Download"
-              value={formatSpeed(speedtestResult.download)}
-              size="md"
-              status="success"
-            />
-            <CardValue
-              label="Upload"
-              value={formatSpeed(speedtestResult.upload)}
-              size="md"
-              status="success"
-            />
-          </div>
-          <CardRow
-            label="Latency"
-            value={`${speedtestResult.latency.toFixed(0)} ms`}
-          />
-          <CardRow label="Server" value={speedtestResult.location} />
-        </div>
-      )}
-
-      {!speedtestRunning && !speedtestResult && !speedtestError && (
-        <p className="text-sm text-text-muted mb-2">No results yet</p>
-      )}
-
-      {speedtestError && (
-        <p className="text-sm text-status-error">{speedtestError}</p>
-      )}
-
-      <CardDivider />
-
-      {/* LAN Speed (iperf3) Section */}
-      <p className="text-xs font-medium text-text-secondary mb-2 mt-2">
-        LAN Speed (iperf3)
-        {iperfInfo?.version && (
-          <span className="text-text-muted font-normal ml-2">
-            {iperfInfo.version}
-          </span>
-        )}
-      </p>
-
-      {!iperfInfo?.installed && (
-        <p className="text-sm text-status-warning mb-3">
-          iperf3 not installed. Install it to enable LAN speed tests.
+      {!runPerformanceEnabled && (
+        <p className="text-sm text-text-muted mb-3">
+          Performance tests are disabled in Settings.
         </p>
       )}
+      <div className={runPerformanceEnabled ? "" : "opacity-50"}>
+        {/* Internet Speed Section */}
+        <p className="text-xs font-medium text-text-secondary mb-2">
+          Internet Speed
+        </p>
 
-      {iperfInfo?.installed && (
-        <>
-          {/* Config Summary */}
-          {iperfSettings.server ? (
-            <div className="text-xs text-text-muted mb-3 p-2 bg-surface-hover rounded">
-              <div className="flex justify-between">
-                <span>Server:</span>
-                <span className="text-text-primary">
-                  {iperfSettings.server}:{iperfSettings.port}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Test:</span>
-                <span className="text-text-primary">
-                  {iperfSettings.protocol.toUpperCase()}{" "}
-                  {iperfSettings.direction}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-text-muted mb-3">
-              Configure server in Settings
+        {speedtestRunning && speedtestStatus && (
+          <div className="space-y-2 mb-3">
+            <p
+              className="text-sm text-text-muted"
+              id="speedtest-progress-label"
+            >
+              {speedtestPhaseLabels[speedtestStatus.phase] ||
+                speedtestStatus.phase}
             </p>
-          )}
-
-          {/* Client Status/Results */}
-          {iperfClientRunning && iperfClientStatus && (
-            <div className="space-y-2 mb-3">
-              <p className="text-sm text-text-muted" id="iperf-progress-label">
-                {iperfPhaseLabels[iperfClientStatus.phase] ||
-                  iperfClientStatus.phase}
-              </p>
+            <div
+              role="progressbar"
+              aria-valuenow={speedtestStatus.progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-labelledby="speedtest-progress-label"
+              className="w-full bg-surface-hover rounded-full h-2"
+            >
               <div
-                role="progressbar"
-                aria-valuenow={iperfClientStatus.progress}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-labelledby="iperf-progress-label"
-                className="w-full bg-surface-hover rounded-full h-2"
-              >
-                <div
-                  className="bg-brand-primary h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${iperfClientStatus.progress}%` }}
-                />
-              </div>
+                className="bg-brand-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: `${speedtestStatus.progress}%` }}
+              />
             </div>
-          )}
+          </div>
+        )}
 
-          {!iperfClientRunning && iperfResult && (
-            <div className="mb-3">
+        {!speedtestRunning && speedtestResult && (
+          <div className="mb-3">
+            <div className="grid grid-cols-2 gap-4">
               <CardValue
-                label={
-                  iperfResult.direction === "download" ? "Download" : "Upload"
-                }
-                value={formatSpeed(iperfResult.bandwidth)}
+                label="Download"
+                value={formatSpeed(speedtestResult.download)}
                 size="md"
                 status="success"
               />
-              <CardRow
-                label="Transfer"
-                value={`${iperfResult.transfer.toFixed(1)} MB`}
+              <CardValue
+                label="Upload"
+                value={formatSpeed(speedtestResult.upload)}
+                size="md"
+                status="success"
               />
-              {iperfResult.protocol === "tcp" &&
-                iperfResult.retransmits > 0 && (
-                  <CardRow
-                    label="Retransmits"
-                    value={iperfResult.retransmits.toString()}
+            </div>
+            <CardRow
+              label="Latency"
+              value={`${speedtestResult.latency.toFixed(0)} ms`}
+            />
+            <CardRow label="Server" value={speedtestResult.location} />
+          </div>
+        )}
+
+        {!speedtestRunning && !speedtestResult && !speedtestError && (
+          <p className="text-sm text-text-muted mb-2">No results yet</p>
+        )}
+
+        {speedtestError && (
+          <p className="text-sm text-status-error">{speedtestError}</p>
+        )}
+
+        <CardDivider />
+
+        {/* LAN Speed (iperf3) Section */}
+        <p className="text-xs font-medium text-text-secondary mb-2 mt-2">
+          LAN Speed (iperf3)
+          {iperfInfo?.version && (
+            <span className="text-text-muted font-normal ml-2">
+              {iperfInfo.version}
+            </span>
+          )}
+        </p>
+
+        {!iperfInfo?.installed && (
+          <p className="text-sm text-status-warning mb-3">
+            iperf3 not installed. Install it to enable LAN speed tests.
+          </p>
+        )}
+
+        {iperfInfo?.installed && (
+          <>
+            {/* Config Summary */}
+            {iperfSettings.server ? (
+              <div className="text-xs text-text-muted mb-3 p-2 bg-surface-hover rounded">
+                <div className="flex justify-between">
+                  <span>Server:</span>
+                  <span className="text-text-primary">
+                    {iperfSettings.server}:{iperfSettings.port}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Test:</span>
+                  <span className="text-text-primary">
+                    {iperfSettings.protocol.toUpperCase()}{" "}
+                    {iperfSettings.direction === "bidirectional"
+                      ? "Both"
+                      : iperfSettings.direction}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-text-muted mb-3">
+                Configure server in Settings
+              </p>
+            )}
+
+            {/* Client Status/Results */}
+            {iperfClientRunning && iperfClientStatus && (
+              <div className="space-y-2 mb-3">
+                <p
+                  className="text-sm text-text-muted"
+                  id="iperf-progress-label"
+                >
+                  {iperfPhaseLabels[iperfClientStatus.phase] ||
+                    iperfClientStatus.phase}
+                </p>
+                <div
+                  role="progressbar"
+                  aria-valuenow={iperfClientStatus.progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-labelledby="iperf-progress-label"
+                  className="w-full bg-surface-hover rounded-full h-2"
+                >
+                  <div
+                    className="bg-brand-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${iperfClientStatus.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {!iperfClientRunning && iperfResult && (
+              <div className="mb-3 space-y-2">
+                {iperfResult.direction === "bidirectional" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <CardValue
+                      label="Download"
+                      value={formatSpeed(
+                        iperfResult.downloadBandwidth ?? iperfResult.bandwidth,
+                      )}
+                      size="md"
+                      status="success"
+                    />
+                    <CardValue
+                      label="Upload"
+                      value={formatSpeed(
+                        iperfResult.uploadBandwidth ?? iperfResult.bandwidth,
+                      )}
+                      size="md"
+                      status="success"
+                    />
+                  </div>
+                ) : (
+                  <CardValue
+                    label={
+                      iperfResult.direction === "download"
+                        ? "Download"
+                        : "Upload"
+                    }
+                    value={formatSpeed(iperfResult.bandwidth)}
+                    size="md"
+                    status="success"
                   />
                 )}
-              {iperfResult.protocol === "udp" && (
-                <>
-                  <CardRow
-                    label="Jitter"
-                    value={`${iperfResult.jitter.toFixed(2)} ms`}
-                  />
-                  <CardRow
-                    label="Packet Loss"
-                    value={`${iperfResult.lostPercent.toFixed(2)}%`}
-                  />
-                </>
-              )}
-            </div>
-          )}
 
-          {iperfError && (
-            <p className="text-sm text-status-error">{iperfError}</p>
-          )}
+                {iperfResult.direction === "bidirectional" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {iperfResult.downloadTransfer !== undefined && (
+                      <CardRow
+                        label="Download Transfer"
+                        value={`${iperfResult.downloadTransfer.toFixed(1)} MB`}
+                      />
+                    )}
+                    {iperfResult.uploadTransfer !== undefined && (
+                      <CardRow
+                        label="Upload Transfer"
+                        value={`${iperfResult.uploadTransfer.toFixed(1)} MB`}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <CardRow
+                    label="Transfer"
+                    value={`${iperfResult.transfer.toFixed(1)} MB`}
+                  />
+                )}
 
-          {/* Server status indicator (if enabled) */}
-          {iperfSettings.enableServer && (
-            <div className="text-xs text-text-muted flex items-center justify-between p-2 bg-surface-hover rounded">
-              <span>Server Mode</span>
-              <span
-                className={
-                  iperfServerStatus?.running
-                    ? "text-status-success"
-                    : "text-text-muted"
-                }
-              >
-                {iperfServerStatus?.running
-                  ? `Listening :${iperfServerStatus.port}`
-                  : "Stopped"}
-              </span>
-            </div>
-          )}
-        </>
-      )}
+                {iperfResult.protocol === "tcp" &&
+                  iperfResult.retransmits > 0 && (
+                    <CardRow
+                      label="Retransmits"
+                      value={iperfResult.retransmits.toString()}
+                    />
+                  )}
+                {iperfResult.protocol === "udp" && (
+                  <>
+                    <CardRow
+                      label="Jitter"
+                      value={`${iperfResult.jitter.toFixed(2)} ms`}
+                    />
+                    <CardRow
+                      label="Packet Loss"
+                      value={`${iperfResult.lostPercent.toFixed(2)}%`}
+                    />
+                  </>
+                )}
+              </div>
+            )}
+
+            {iperfError && (
+              <p className="text-sm text-status-error">{iperfError}</p>
+            )}
+
+            {/* Server status indicator (if enabled) */}
+            {iperfSettings.enableServer && (
+              <div className="text-xs text-text-muted flex items-center justify-between p-2 bg-surface-hover rounded">
+                <span>Server Mode</span>
+                <span
+                  className={
+                    iperfServerStatus?.running
+                      ? "text-status-success"
+                      : "text-text-muted"
+                  }
+                >
+                  {iperfServerStatus?.running
+                    ? `Listening :${iperfServerStatus.port}`
+                    : "Stopped"}
+                </span>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </Card>
   );
 }

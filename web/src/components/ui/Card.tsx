@@ -201,16 +201,26 @@ export function CardValue({
     .filter(Boolean)
     .join(" ");
 
+  const statusIcon =
+    status && statusConfig[status] ? statusConfig[status].icon : null;
+
   return (
     <div>
       {label && <p className="text-xs text-text-muted mb-1">{label}</p>}
-      <p className={`${sizeClasses[size]} ${textMods}`}>
-        {value}
-        {unit && (
-          <span className="text-sm font-normal text-text-muted ml-1">
-            {unit}
+      <p
+        className={`${sizeClasses[size]} ${textMods} flex items-center gap-1.5`}
+      >
+        {statusIcon && (
+          <span className={`inline-flex items-center justify-center`}>
+            <span className="w-4 h-4">{statusIcon}</span>
           </span>
         )}
+        <span className="flex items-baseline gap-1">
+          <span>{value}</span>
+          {unit && (
+            <span className="text-sm font-normal text-text-muted">{unit}</span>
+          )}
+        </span>
       </p>
     </div>
   );
@@ -233,16 +243,21 @@ export function CardRow({
   mono = false,
   align = "right",
 }: CardRowProps) {
+  const statusIcon =
+    status && statusConfig[status] ? statusConfig[status].icon : null;
+  const justifyClass = align === "right" ? "justify-end" : "justify-start";
+
   return (
     <div
       className={`flex ${wrap ? "items-start" : "items-center"} justify-between gap-2 py-1`}
     >
       <span className="text-sm text-text-muted shrink-0">{label}</span>
       <span
-        className={`text-sm font-medium ${align === "right" ? "text-right" : "text-left"} ${wrap ? "break-all whitespace-pre-wrap" : "truncate"} ${mono ? "font-mono tabular-nums" : ""} ${status ? statusConfig[status].color : "text-text-primary"}`}
+        className={`text-sm font-medium ${align === "right" ? "text-right" : "text-left"} ${wrap ? "break-all whitespace-pre-wrap" : "truncate"} ${mono ? "font-mono tabular-nums" : ""} ${status ? statusConfig[status].color : "text-text-primary"} flex items-center gap-1.5 ${justifyClass}`}
         title={String(value)}
       >
-        {value}
+        {statusIcon && <span className="w-4 h-4">{statusIcon}</span>}
+        <span>{value}</span>
       </span>
     </div>
   );

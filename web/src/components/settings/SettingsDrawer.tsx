@@ -147,10 +147,17 @@ interface IperfSettings {
   server: string;
   port: number;
   protocol: "tcp" | "udp";
-  direction: "upload" | "download";
+  direction: "upload" | "download" | "bidirectional";
   duration: number;
   serverPort: number;
   enableServer: boolean;
+}
+
+interface IperfSuggestion {
+  host: string;
+  hostname?: string;
+  latencyMs?: number;
+  source?: string;
 }
 
 interface NetworkDiscoverySettings {
@@ -249,6 +256,15 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     serverPort: 5201,
     enableServer: false,
   });
+  const [iperfSuggestions, setIperfSuggestions] = useState<IperfSuggestion[]>(
+    [],
+  );
+  const [iperfSuggestionsStatus, setIperfSuggestionsStatus] = useState<
+    "idle" | "loading" | "error"
+  >("idle");
+  const [iperfSuggestionsError, setIperfSuggestionsError] = useState<
+    string | null
+  >(null);
   // Network Discovery settings
   const [networkDiscoverySettings, setNetworkDiscoverySettings] =
     useState<NetworkDiscoverySettings>({
@@ -372,6 +388,29 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       }
     } catch (err) {
       console.error("Failed to fetch tests settings:", err);
+    }
+  }, []);
+
+  const fetchIperfSuggestions = useCallback(async () => {
+    setIperfSuggestionsStatus("loading");
+    setIperfSuggestionsError(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/iperf/suggestions`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setIperfSuggestions(Array.isArray(data) ? data : []);
+        setIperfSuggestionsStatus("idle");
+      } else {
+        setIperfSuggestionsStatus("error");
+        setIperfSuggestionsError("No iperf hosts found");
+      }
+    } catch (err) {
+      setIperfSuggestionsStatus("error");
+      setIperfSuggestionsError(
+        err instanceof Error ? err.message : "Failed to find iperf hosts",
+      );
     }
   }, []);
 
@@ -819,6 +858,19 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       if (testsTimerRef.current) clearTimeout(testsTimerRef.current);
     };
   }, [testsSettings, saveTestsSettings]);
+
+  // Broadcast performance toggle immediately to cards/FAB
+  useEffect(() => {
+    localStorage.setItem(
+      "netscope-run-performance",
+      JSON.stringify(testsSettings.runPerformance),
+    );
+    window.dispatchEvent(
+      new CustomEvent("performanceToggleUpdated", {
+        detail: testsSettings.runPerformance,
+      }),
+    );
+  }, [testsSettings.runPerformance]);
 
   // Auto-save wifi settings with debounce
   useEffect(() => {
@@ -1733,6 +1785,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </label>
                     <input
                       type="text"
+                      disabled={!testsSettings.runPerformance}
                       value={testsSettings.speedtest.serverId}
                       onChange={(e) =>
                         setTestsSettings((prev) => ({
@@ -1744,7 +1797,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         }))
                       }
                       placeholder="Auto (closest server)"
-                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
                     />
                     <div className="flex items-center justify-between mt-1">
                       <p className="text-xs text-text-muted">
@@ -1752,13 +1805,14 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       </p>
                       <button
                         type="button"
+                        disabled={!testsSettings.runPerformance}
                         onClick={() =>
                           setTestsSettings((prev) => ({
                             ...prev,
                             speedtest: { ...prev.speedtest, serverId: "" },
                           }))
                         }
-                        className="text-xs text-brand-primary hover:underline"
+                        className="text-xs text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         Reset to Auto
                       </button>
@@ -1771,6 +1825,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </span>
                     <input
                       type="checkbox"
+                      disabled={!testsSettings.runPerformance}
                       checked={testsSettings.speedtest.autoRunOnLink}
                       onChange={(e) =>
                         setTestsSettings((prev) => ({
@@ -1804,6 +1859,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </label>
                     <input
                       type="text"
+                      disabled={!testsSettings.runPerformance}
                       value={iperfSettings.server}
                       onChange={(e) =>
                         setIperfSettings((prev) => ({
@@ -1812,8 +1868,76 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                         }))
                       }
                       placeholder="192.168.1.100 or hostname"
-                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
                     />
+                    <div className="flex items-center justify-between mt-2">
+                      <button
+                        type="button"
+                        disabled={
+                          !testsSettings.runPerformance ||
+                          iperfSuggestionsStatus === "loading"
+                        }
+                        onClick={fetchIperfSuggestions}
+                        className="text-xs text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {iperfSuggestionsStatus === "loading"
+                          ? "Scanning..."
+                          : "Find iperf hosts on LAN"}
+                      </button>
+                      {iperfSuggestionsStatus === "loading" && (
+                        <svg
+                          className="w-4 h-4 animate-spin text-text-muted"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    {iperfSuggestionsStatus === "error" && (
+                      <p className="text-xs text-status-warning mt-1">
+                        {iperfSuggestionsError || "No iperf hosts responded"}
+                      </p>
+                    )}
+                    {iperfSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {iperfSuggestions.map((sugg) => (
+                          <button
+                            type="button"
+                            key={`${sugg.host}-${sugg.hostname || ""}`}
+                            className="px-3 py-1 rounded-full border border-surface-border bg-surface-base text-xs text-text-primary hover:bg-surface-hover"
+                            onClick={() =>
+                              setIperfSettings((prev) => ({
+                                ...prev,
+                                server: sugg.host,
+                              }))
+                            }
+                          >
+                            <span className="font-medium">
+                              {sugg.hostname || sugg.host}
+                            </span>
+                            <span className="text-text-muted ml-1">
+                              {sugg.hostname ? `(${sugg.host})` : ""}
+                              {sugg.latencyMs !== undefined
+                                ? ` · ${Math.round(sugg.latencyMs)}ms`
+                                : ""}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Port */}
@@ -1823,6 +1947,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </label>
                     <input
                       type="number"
+                      disabled={!testsSettings.runPerformance}
                       value={iperfSettings.port}
                       onChange={(e) =>
                         setIperfSettings((prev) => ({
@@ -1830,7 +1955,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                           port: parseInt(e.target.value) || 5201,
                         }))
                       }
-                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
                     />
                   </div>
 
@@ -1839,37 +1964,28 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     <label className="text-xs text-text-muted font-medium block mb-1">
                       Protocol
                     </label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          setIperfSettings((prev) => ({
-                            ...prev,
-                            protocol: "tcp",
-                          }))
-                        }
-                        className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
-                          iperfSettings.protocol === "tcp"
-                            ? "bg-brand-primary text-text-inverse"
-                            : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
-                        }`}
-                      >
-                        TCP
-                      </button>
-                      <button
-                        onClick={() =>
-                          setIperfSettings((prev) => ({
-                            ...prev,
-                            protocol: "udp",
-                          }))
-                        }
-                        className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
-                          iperfSettings.protocol === "udp"
-                            ? "bg-brand-primary text-text-inverse"
-                            : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
-                        }`}
-                      >
-                        UDP
-                      </button>
+                    <div className="flex flex-wrap gap-2">
+                      {(["tcp", "udp"] as const).map((proto) => (
+                        <button
+                          key={proto}
+                          type="button"
+                          disabled={!testsSettings.runPerformance}
+                          onClick={() =>
+                            setIperfSettings((prev) => ({
+                              ...prev,
+                              protocol: proto,
+                            }))
+                          }
+                          aria-pressed={iperfSettings.protocol === proto}
+                          className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
+                            iperfSettings.protocol === proto
+                              ? "bg-brand-primary text-text-inverse border-brand-primary"
+                              : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
+                          } ${!testsSettings.runPerformance ? "opacity-60 cursor-not-allowed" : ""}`}
+                        >
+                          {proto.toUpperCase()}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -1878,37 +1994,36 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     <label className="text-xs text-text-muted font-medium block mb-1">
                       Direction
                     </label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          setIperfSettings((prev) => ({
-                            ...prev,
-                            direction: "download",
-                          }))
-                        }
-                        className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
-                          iperfSettings.direction === "download"
-                            ? "bg-brand-primary text-text-inverse"
-                            : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
-                        }`}
-                      >
-                        Download
-                      </button>
-                      <button
-                        onClick={() =>
-                          setIperfSettings((prev) => ({
-                            ...prev,
-                            direction: "upload",
-                          }))
-                        }
-                        className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
-                          iperfSettings.direction === "upload"
-                            ? "bg-brand-primary text-text-inverse"
-                            : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
-                        }`}
-                      >
-                        Upload
-                      </button>
+                    <div className="flex flex-wrap gap-2">
+                      {(
+                        [
+                          { value: "download", label: "Download" },
+                          { value: "upload", label: "Upload" },
+                          { value: "bidirectional", label: "Both" },
+                        ] as const
+                      ).map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          disabled={!testsSettings.runPerformance}
+                          onClick={() =>
+                            setIperfSettings((prev) => ({
+                              ...prev,
+                              direction: option.value,
+                            }))
+                          }
+                          aria-pressed={
+                            iperfSettings.direction === option.value
+                          }
+                          className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
+                            iperfSettings.direction === option.value
+                              ? "bg-brand-primary text-text-inverse border-brand-primary"
+                              : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
+                          } ${!testsSettings.runPerformance ? "opacity-60 cursor-not-allowed" : ""}`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -1919,6 +2034,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     </label>
                     <input
                       type="number"
+                      disabled={!testsSettings.runPerformance}
                       value={iperfSettings.duration}
                       onChange={(e) =>
                         setIperfSettings((prev) => ({
@@ -1928,7 +2044,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       }
                       min={1}
                       max={60}
-                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                      className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
                     />
                   </div>
 
@@ -1940,6 +2056,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       </span>
                       <input
                         type="checkbox"
+                        disabled={!testsSettings.runPerformance}
                         checked={iperfSettings.enableServer}
                         onChange={(e) =>
                           setIperfSettings((prev) => ({
@@ -1956,6 +2073,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                       </label>
                       <input
                         type="number"
+                        disabled={!testsSettings.runPerformance}
                         value={iperfSettings.serverPort}
                         onChange={(e) =>
                           setIperfSettings((prev) => ({
@@ -1963,7 +2081,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                             serverPort: parseInt(e.target.value) || 5201,
                           }))
                         }
-                        className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                        className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
                       />
                     </div>
                     <p className="text-xs text-text-muted mt-1">
