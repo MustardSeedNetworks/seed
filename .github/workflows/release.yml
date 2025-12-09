@@ -202,6 +202,31 @@ jobs:
             release/*.rpm
 
   publish:
+    name: Publish Release Assets
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - name: Download amd64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-linux-amd64
+          path: artifacts/amd64
+
+      - name: Download arm64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-linux-arm64
+          path: artifacts/arm64
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            artifacts/amd64/*
+            artifacts/arm64/*
+
+  publish:
     name: Publish Release
     runs-on: ubuntu-latest
     needs: release
