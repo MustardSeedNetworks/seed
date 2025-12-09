@@ -33,20 +33,20 @@ type PingResult struct {
 
 // PingStats contains aggregated ping statistics.
 type PingStats struct {
-	Gateway     string        `json:"gateway"`
-	Sent        int           `json:"sent"`
-	Received    int           `json:"received"`
-	Lost        int           `json:"lost"`
-	LossPercent float64       `json:"lossPercent"`
-	MinTime     float64       `json:"minTime"`  // ms
-	MaxTime     float64       `json:"maxTime"`  // ms
-	AvgTime     float64       `json:"avgTime"`  // ms
-	LastTime    float64       `json:"lastTime"` // ms
-	Status      Status        `json:"status"`
-	Reachable   bool          `json:"reachable"`
-	Results     []PingResult  `json:"results,omitempty"`
-	LastUpdated time.Time     `json:"lastUpdated"`
-	IPv6        *PingStats    `json:"ipv6,omitempty"` // IPv6 gateway stats
+	Gateway     string       `json:"gateway"`
+	Sent        int          `json:"sent"`
+	Received    int          `json:"received"`
+	Lost        int          `json:"lost"`
+	LossPercent float64      `json:"lossPercent"`
+	MinTime     float64      `json:"minTime"`  // ms
+	MaxTime     float64      `json:"maxTime"`  // ms
+	AvgTime     float64      `json:"avgTime"`  // ms
+	LastTime    float64      `json:"lastTime"` // ms
+	Status      Status       `json:"status"`
+	Reachable   bool         `json:"reachable"`
+	Results     []PingResult `json:"results,omitempty"`
+	LastUpdated time.Time    `json:"lastUpdated"`
+	IPv6        *PingStats   `json:"ipv6,omitempty"` // IPv6 gateway stats
 }
 
 // Thresholds defines timing thresholds for gateway ping.
@@ -287,14 +287,23 @@ func (t *Tester) Ping() *PingResult {
 
 	start := time.Now()
 
+	if net.ParseIP(gateway) == nil {
+		result.Success = false
+		result.Error = "invalid gateway address"
+		return result
+	}
+
 	// Use system ping command for ICMP (requires no special privileges on most systems)
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
+		// #nosec G204 - gateway validated above
 		cmd = exec.Command("ping", "-c", "1", "-W", strconv.Itoa(int(timeout.Milliseconds())), gateway)
 	case "linux":
+		// #nosec G204 - gateway validated above
 		cmd = exec.Command("ping", "-c", "1", "-W", strconv.Itoa(int(timeout.Seconds())), gateway)
 	default:
+		// #nosec G204 - gateway validated above
 		cmd = exec.Command("ping", "-c", "1", gateway)
 	}
 

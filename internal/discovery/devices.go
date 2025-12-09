@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 )
@@ -84,7 +85,9 @@ type DeviceDiscovery struct {
 func NewDeviceDiscovery(interfaceName string) *DeviceDiscovery {
 	oui := NewOUIDatabase()
 	// Try to load extended OUI file if available
-	_ = oui.TryLoadIEEEFile()
+	if err := oui.TryLoadIEEEFile(); err != nil {
+		log.Printf("warning: failed to load IEEE OUI file: %v", err)
+	}
 
 	return &DeviceDiscovery{
 		interfaceName: interfaceName,
@@ -374,7 +377,7 @@ func (d *DeviceDiscovery) LastScan() time.Time {
 }
 
 // GetSubnetInfo returns network information.
-func (d *DeviceDiscovery) GetSubnetInfo() (subnet string, localIP string) {
+func (d *DeviceDiscovery) GetSubnetInfo() (subnet, localIP string) {
 	return d.arpScanner.GetSubnetInfo()
 }
 

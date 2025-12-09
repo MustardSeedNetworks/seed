@@ -47,8 +47,8 @@ type VLANConfig struct {
 
 // IPConfig contains IP configuration settings.
 type IPConfig struct {
-	Mode   string       `yaml:"mode"` // "dhcp" or "static"
-	Static *StaticIP    `yaml:"static,omitempty"`
+	Mode   string    `yaml:"mode"` // "dhcp" or "static"
+	Static *StaticIP `yaml:"static,omitempty"`
 }
 
 // StaticIP contains static IP configuration.
@@ -67,14 +67,14 @@ type DiscoveryConfig struct {
 
 // NetworkDiscoveryConfig contains network device discovery settings.
 type NetworkDiscoveryConfig struct {
-	Enabled           bool            `yaml:"enabled"`            // Enable network discovery
-	ARPScanWorkers    int             `yaml:"arp_scan_workers"`   // Number of concurrent ping workers (default 50)
-	PingTimeout       time.Duration   `yaml:"ping_timeout"`       // Timeout for each ping (default 500ms)
-	ScanTimeout       time.Duration   `yaml:"scan_timeout"`       // Total scan timeout (default 30s)
-	AutoScan          bool            `yaml:"auto_scan"`          // Auto-scan on startup/interface change
-	ScanInterval      time.Duration   `yaml:"scan_interval"`      // Interval for auto-scan (0 = disabled)
-	OUIFilePath       string          `yaml:"oui_file_path"`      // Path to IEEE OUI file (oui.txt)
-	AdditionalSubnets []SubnetConfig  `yaml:"additional_subnets"` // Additional subnets to scan
+	Enabled           bool           `yaml:"enabled"`            // Enable network discovery
+	ARPScanWorkers    int            `yaml:"arp_scan_workers"`   // Number of concurrent ping workers (default 50)
+	PingTimeout       time.Duration  `yaml:"ping_timeout"`       // Timeout for each ping (default 500ms)
+	ScanTimeout       time.Duration  `yaml:"scan_timeout"`       // Total scan timeout (default 30s)
+	AutoScan          bool           `yaml:"auto_scan"`          // Auto-scan on startup/interface change
+	ScanInterval      time.Duration  `yaml:"scan_interval"`      // Interval for auto-scan (0 = disabled)
+	OUIFilePath       string         `yaml:"oui_file_path"`      // Path to IEEE OUI file (oui.txt)
+	AdditionalSubnets []SubnetConfig `yaml:"additional_subnets"` // Additional subnets to scan
 }
 
 // SubnetConfig represents a configured subnet for network discovery.
@@ -138,25 +138,25 @@ type HTTPEndpoint struct {
 
 // SpeedtestConfig contains speedtest settings.
 type SpeedtestConfig struct {
-	ServerID      string `yaml:"server_id"`       // Specific server ID (empty = auto)
+	ServerID      string `yaml:"server_id"`        // Specific server ID (empty = auto)
 	AutoRunOnLink bool   `yaml:"auto_run_on_link"` // Run automatically when link comes up
 }
 
 // ThresholdsConfig contains all threshold settings.
 type ThresholdsConfig struct {
-	DHCP        DHCPThresholds    `yaml:"dhcp"`
-	DNS         Threshold         `yaml:"dns"`
-	Ping        Threshold         `yaml:"ping"`
-	WiFi        WiFiThresholds    `yaml:"wifi"`
-	CustomTests CustomThresholds  `yaml:"custom_tests"`
+	DHCP        DHCPThresholds   `yaml:"dhcp"`
+	DNS         Threshold        `yaml:"dns"`
+	Ping        Threshold        `yaml:"ping"`
+	WiFi        WiFiThresholds   `yaml:"wifi"`
+	CustomTests CustomThresholds `yaml:"custom_tests"`
 }
 
 // CustomThresholds contains thresholds for custom tests.
 type CustomThresholds struct {
-	Ping       Threshold        `yaml:"ping"`        // Custom ping targets
-	TCP        Threshold        `yaml:"tcp"`         // TCP port tests
-	UDP        Threshold        `yaml:"udp"`         // UDP port tests
-	HTTP       Threshold        `yaml:"http"`        // HTTP endpoint tests
+	Ping       Threshold           `yaml:"ping"`        // Custom ping targets
+	TCP        Threshold           `yaml:"tcp"`         // TCP port tests
+	UDP        Threshold           `yaml:"udp"`         // UDP port tests
+	HTTP       Threshold           `yaml:"http"`        // HTTP endpoint tests
 	CertExpiry CertExpiryThreshold `yaml:"cert_expiry"` // Certificate expiry (days)
 }
 
@@ -233,9 +233,9 @@ func DefaultConfig() *Config {
 			ARPScanWorkers:    50,
 			PingTimeout:       500 * time.Millisecond,
 			ScanTimeout:       30 * time.Second,
-			AutoScan:          true,            // Auto-scan on startup by default
-			ScanInterval:      0,               // Disabled by default
-			OUIFilePath:       "oui.txt",       // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
+			AutoScan:          true,             // Auto-scan on startup by default
+			ScanInterval:      0,                // Disabled by default
+			OUIFilePath:       "oui.txt",        // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
 			AdditionalSubnets: []SubnetConfig{}, // No additional subnets by default
 		},
 		DNS: DNSConfig{
@@ -306,5 +306,5 @@ func (c *Config) Save(path string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0600)
+	return os.WriteFile(path, data, 0o600)
 }

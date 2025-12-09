@@ -29,10 +29,10 @@ type Result struct {
 
 // Checker fetches and caches public IP addresses.
 type Checker struct {
-	mu          sync.RWMutex
-	cache       *Result
-	cacheTime   time.Time
-	httpClient  *http.Client
+	mu         sync.RWMutex
+	cache      *Result
+	cacheTime  time.Time
+	httpClient *http.Client
 }
 
 // NewChecker creates a new public IP checker.
@@ -153,7 +153,7 @@ func (c *Checker) fetchIPv6(ctx context.Context) (string, error) {
 }
 
 func (c *Checker) fetchFromService(ctx context.Context, url string, parser func([]byte) (string, error)) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return "", err
 	}
