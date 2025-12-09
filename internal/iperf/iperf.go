@@ -335,6 +335,8 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 	if err := validateServer(config.Server); err != nil {
 		return nil, err
 	}
+	config.Protocol = strings.ToLower(config.Protocol)
+	config.Direction = strings.ToLower(config.Direction)
 
 	m.mu.Lock()
 	if m.clientStatus.Running {
@@ -380,6 +382,7 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 	if direction != "download" && direction != "bidirectional" {
 		direction = "upload"
 	}
+	config.Direction = direction
 
 	// Build command
 	args := []string{
@@ -400,7 +403,7 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 		args = append(args, "-R") // Reverse mode (server sends, client receives)
 	case "bidirectional":
 		// Bidirectional test (client <-> server)
-		args = append(args, "-d")
+		args = append(args, "--bidir")
 		config.Reverse = false
 	default:
 		config.Reverse = false

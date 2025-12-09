@@ -2443,6 +2443,28 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.Protocol = strings.ToLower(req.Protocol)
+	if req.Protocol == "" {
+		req.Protocol = "tcp"
+	}
+	if req.Protocol != "tcp" && req.Protocol != "udp" {
+		http.Error(w, "protocol must be tcp or udp", http.StatusBadRequest)
+		return
+	}
+
+	req.Direction = strings.ToLower(req.Direction)
+	if req.Direction == "" {
+		if req.Reverse {
+			req.Direction = "download"
+		} else {
+			req.Direction = "upload"
+		}
+	}
+	if req.Direction != "upload" && req.Direction != "download" && req.Direction != "bidirectional" {
+		http.Error(w, "direction must be upload, download, or bidirectional", http.StatusBadRequest)
+		return
+	}
+
 	config := iperf.ClientConfig{
 		Server:    req.Server,
 		Port:      req.Port,
