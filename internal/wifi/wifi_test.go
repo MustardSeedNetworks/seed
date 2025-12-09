@@ -201,24 +201,14 @@ func TestConcurrentManagerAccess(t *testing.T) {
 	}
 }
 
-func TestIsWirelessDarwin(t *testing.T) {
+func TestIsWirelessPlatform(t *testing.T) {
 	// This will vary by system, just verify it doesn't panic
-	_ = isWirelessDarwin("en0")
+	_ = isWirelessPlatform("en0")
 }
 
-func TestIsWirelessLinux(t *testing.T) {
+func TestGetInfoPlatform(t *testing.T) {
 	// This will vary by system, just verify it doesn't panic
-	_ = isWirelessLinux("wlan0")
-}
-
-func TestGetInfoDarwin(t *testing.T) {
-	// This will vary by system, just verify it doesn't panic
-	_ = getInfoDarwin("en0")
-}
-
-func TestGetInfoLinux(t *testing.T) {
-	// This will vary by system, just verify it doesn't panic
-	_ = getInfoLinux("wlan0")
+	_ = getInfoPlatform("en0")
 }
 
 func TestGetInfo(t *testing.T) {
