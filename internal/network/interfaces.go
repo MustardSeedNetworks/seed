@@ -3,16 +3,11 @@ package network
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
-
-	"github.com/krisarmstrong/netscope/internal/validation"
 )
 
 // InterfaceType represents the type of network interface.
@@ -308,33 +303,21 @@ type StaticIPConfig struct {
 
 // ConfigureStaticIP applies a static IP configuration to an interface.
 // Requires root/administrator privileges.
+// Implementation is platform-specific (interfaces_linux.go, interfaces_darwin.go).
 func (m *Manager) ConfigureStaticIP(iface string, cfg *StaticIPConfig) error {
 	// Validate input
 	if err := validateIPConfig(cfg); err != nil {
 		return err
 	}
 
-	switch runtime.GOOS {
-	case "linux":
-		return configureStaticIPLinux(iface, cfg)
-	case "darwin":
-		return configureStaticIPDarwin(iface, cfg)
-	default:
-		return fmt.Errorf("static IP configuration not supported on %s", runtime.GOOS)
-	}
+	return configureStaticIPPlatform(iface, cfg)
 }
 
 // ConfigureDHCP switches an interface to DHCP mode.
 // Requires root/administrator privileges.
+// Implementation is platform-specific (interfaces_linux.go, interfaces_darwin.go).
 func (m *Manager) ConfigureDHCP(iface string) error {
-	switch runtime.GOOS {
-	case "linux":
-		return configureDHCPLinux(iface)
-	case "darwin":
-		return configureDHCPDarwin(iface)
-	default:
-		return fmt.Errorf("DHCP configuration not supported on %s", runtime.GOOS)
-	}
+	return configureDHCPPlatform(iface)
 }
 
 // validateIPConfig validates the static IP configuration.
@@ -409,173 +392,6 @@ func netmaskToCIDR(netmask string) (int, error) {
 	// Count bits
 	ones, _ := net.IPv4Mask(ip4[0], ip4[1], ip4[2], ip4[3]).Size()
 	return ones, nil
-}
-
-// configureStaticIPLinux applies static IP on Linux using ip command.
-func configureStaticIPLinux(iface string, cfg *StaticIPConfig) error {
-	// Validate interface name to prevent command injection
-	if err := validation.ValidateInterface(iface); err != nil {
-		return fmt.Errorf("invalid interface: %w", err)
-	}
-
-	// Validate IP address
-	if !validation.IsValidIPv4(cfg.Address) {
-		return fmt.Errorf("invalid IP address: %s", cfg.Address)
-	}
-
-	// Validate gateway if provided
-	if cfg.Gateway != "" && !validation.IsValidIPv4(cfg.Gateway) {
-		return fmt.Errorf("invalid gateway address: %s", cfg.Gateway)
-	}
-
-	prefix, err := netmaskToCIDR(cfg.Netmask)
-	if err != nil {
-		return err
-	}
-
-	// Flush existing addresses
-	if err := exec.Command("ip", "addr", "flush", "dev", iface).Run(); err != nil {
-		return fmt.Errorf("failed to flush addresses: %w", err)
-	}
-
-	// Add new address
-	addr := fmt.Sprintf("%s/%d", cfg.Address, prefix)
-	if err := exec.Command("ip", "addr", "add", addr, "dev", iface).Run(); err != nil {
-		return fmt.Errorf("failed to add address: %w", err)
-	}
-
-	// Bring interface up
-	if err := exec.Command("ip", "link", "set", iface, "up").Run(); err != nil {
-		return fmt.Errorf("failed to bring interface up: %w", err)
-	}
-
-	// Add default gateway if provided
-	if cfg.Gateway != "" {
-		if net.ParseIP(cfg.Gateway) == nil {
-			return fmt.Errorf("invalid gateway IP: %s", cfg.Gateway)
-		}
-		// Remove existing default route first (ignore errors, as it might not exist)
-		if err := exec.Command("ip", "route", "del", "default").Run(); err != nil {
-			log.Printf("warning: failed to delete default route: %v", err)
-		}
-
-		// #nosec G204 - arguments are validated above
-		if err := exec.Command("ip", "route", "add", "default", "via", cfg.Gateway, "dev", iface).Run(); err != nil {
-			return fmt.Errorf("failed to add default gateway: %w", err)
-		}
-	}
-
-	// Configure DNS (update /etc/resolv.conf)
-	if len(cfg.DNS) > 0 {
-		if err := updateResolvConf(cfg.DNS); err != nil {
-			return fmt.Errorf("failed to configure DNS: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// configureDHCPLinux switches to DHCP on Linux.
-func configureDHCPLinux(iface string) error {
-	// Validate interface name to prevent command injection
-	if err := validation.ValidateInterface(iface); err != nil {
-		return fmt.Errorf("invalid interface: %w", err)
-	}
-
-	// Try dhclient first
-	if err := exec.Command("dhclient", "-r", iface).Run(); err == nil {
-		return exec.Command("dhclient", iface).Run()
-	}
-
-	// Try dhcpcd
-	if err := exec.Command("dhcpcd", "-k", iface).Run(); err == nil {
-		return exec.Command("dhcpcd", iface).Run()
-	}
-
-	return fmt.Errorf("no DHCP client found (tried dhclient, dhcpcd)")
-}
-
-// configureStaticIPDarwin applies static IP on macOS using networksetup.
-func configureStaticIPDarwin(iface string, cfg *StaticIPConfig) error {
-	// Get the network service name for the interface
-	service, err := getNetworkServiceName(iface)
-	if err != nil {
-		return err
-	}
-
-	// Convert CIDR to dotted netmask if needed
-	netmask := cfg.Netmask
-	if net.ParseIP(netmask) == nil {
-		// It's a CIDR prefix, convert to dotted
-		var prefix int
-		if _, err := fmt.Sscanf(netmask, "%d", &prefix); err != nil {
-			return fmt.Errorf("invalid netmask prefix %q: %w", netmask, err)
-		}
-		netmask = cidrToNetmask(prefix)
-	}
-
-	// Set manual IP
-	args := []string{"-setmanual", service, cfg.Address, netmask}
-	if cfg.Gateway != "" {
-		args = append(args, cfg.Gateway)
-	}
-	if err := exec.Command("networksetup", args...).Run(); err != nil {
-		return fmt.Errorf("failed to set static IP: %w", err)
-	}
-
-	// Configure DNS if provided
-	if len(cfg.DNS) > 0 {
-		dnsArgs := append([]string{"-setdnsservers", service}, cfg.DNS...)
-		if err := exec.Command("networksetup", dnsArgs...).Run(); err != nil {
-			return fmt.Errorf("failed to configure DNS: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// configureDHCPDarwin switches to DHCP on macOS.
-func configureDHCPDarwin(iface string) error {
-	service, err := getNetworkServiceName(iface)
-	if err != nil {
-		return err
-	}
-
-	return exec.Command("networksetup", "-setdhcp", service).Run()
-}
-
-// getNetworkServiceName gets the macOS network service name for an interface.
-func getNetworkServiceName(iface string) (string, error) {
-	// Common mappings
-	serviceNames := map[string]string{
-		"en0": "Ethernet",
-		"en1": "Wi-Fi",
-	}
-
-	if name, ok := serviceNames[iface]; ok {
-		return name, nil
-	}
-
-	// Try to find the service by listing all
-	output, err := exec.Command("networksetup", "-listnetworkserviceorder").Output()
-	if err != nil {
-		return "", fmt.Errorf("failed to list network services: %w", err)
-	}
-
-	// Parse output looking for our interface
-	lines := strings.Split(string(output), "\n")
-	for i, line := range lines {
-		if strings.Contains(line, "Device: "+iface) && i > 0 {
-			// Service name is in the previous line
-			prev := lines[i-1]
-			// Format: "(1) Service Name"
-			if idx := strings.Index(prev, ") "); idx != -1 {
-				return strings.TrimSpace(prev[idx+2:]), nil
-			}
-		}
-	}
-
-	return "", fmt.Errorf("network service not found for interface %s", iface)
 }
 
 // cidrToNetmask converts a CIDR prefix to dotted decimal netmask.
