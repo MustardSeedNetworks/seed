@@ -19,6 +19,7 @@ type Config struct {
 	DNS              DNSConfig              `yaml:"dns"`
 	Tests            TestsConfig            `yaml:"tests"`
 	Speedtest        SpeedtestConfig        `yaml:"speedtest"`
+	Iperf            IperfConfig            `yaml:"iperf"`
 	Thresholds       ThresholdsConfig       `yaml:"thresholds"`
 	Auth             AuthConfig             `yaml:"auth"`
 	Security         SecurityConfig         `yaml:"security"`
@@ -147,6 +148,11 @@ type HTTPEndpoint struct {
 type SpeedtestConfig struct {
 	ServerID      string `yaml:"server_id"`        // Specific server ID (empty = auto)
 	AutoRunOnLink bool   `yaml:"auto_run_on_link"` // Run automatically when link comes up
+}
+
+// IperfConfig contains iperf3 settings.
+type IperfConfig struct {
+	AutoRunOnLink bool `yaml:"auto_run_on_link"` // Run automatically when link comes up
 }
 
 // ThresholdsConfig contains all threshold settings.

@@ -42,6 +42,21 @@ interface CardState {
   publicip: PublicIPData | null;
 }
 
+interface FABOptions {
+  runLink: boolean;
+  runSwitch: boolean;
+  runVLAN: boolean;
+  runIPConfig: boolean;
+  runGateway: boolean;
+  runDNS: boolean;
+  runHealthChecks: boolean;
+  runPerformance: boolean;
+  runSpeedtest: boolean;
+  runIperf: boolean;
+  runNetworkDiscovery: boolean;
+  autoScanOnLink: boolean;
+}
+
 function App() {
   const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -67,8 +82,8 @@ function App() {
   const [networkDiscovery, setNetworkDiscovery] =
     useState<NetworkDiscoveryData | null>(null);
   const [showPublicIP, setShowPublicIP] = useState(true);
-  const [fabOptions, setFabOptions] = useState(() => {
-    const defaults = {
+  const [fabOptions, setFabOptions] = useState<FABOptions>(() => {
+    const defaults: FABOptions = {
       runLink: true,
       runSwitch: true,
       runVLAN: true,
@@ -81,7 +96,7 @@ function App() {
       runIperf: true,
       runNetworkDiscovery: true,
       autoScanOnLink: true,
-    } as const;
+    };
 
     try {
       const saved = localStorage.getItem("netscope-fab-options");

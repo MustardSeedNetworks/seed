@@ -144,6 +144,9 @@ interface TestsSettings {
     serverId: string;
     autoRunOnLink: boolean;
   };
+  iperf: {
+    autoRunOnLink: boolean;
+  };
 }
 
 interface IperfSettings {
@@ -221,6 +224,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     runDiscovery: true,
     speedtest: {
       serverId: "",
+      autoRunOnLink: false,
+    },
+    iperf: {
       autoRunOnLink: false,
     },
   });
@@ -392,6 +398,9 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           speedtest: {
             serverId: data.speedtest?.serverId || "",
             autoRunOnLink: data.speedtest?.autoRunOnLink || false,
+          },
+          iperf: {
+            autoRunOnLink: data.iperf?.autoRunOnLink || false,
           },
         });
       }
@@ -1770,55 +1779,160 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               </>
             }
           >
-            <div className="space-y-3">
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm text-text-primary">
-                  Show Network Discovery card
-                </span>
-                <input
-                  type="checkbox"
-                  checked={testsSettings.runDiscovery}
-                  onChange={(e) =>
-                    setTestsSettings((prev) => ({
-                      ...prev,
-                      runDiscovery: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm text-text-primary">
-                  Enable Internet Speed (Speedtest)
-                </span>
-                <input
-                  type="checkbox"
-                  checked={testsSettings.runSpeedtest}
-                  onChange={(e) =>
-                    setTestsSettings((prev) => ({
-                      ...prev,
-                      runSpeedtest: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-                <span className="text-sm text-text-primary">
-                  Enable LAN Speed (iperf3)
-                </span>
-                <input
-                  type="checkbox"
-                  checked={testsSettings.runIperf}
-                  onChange={(e) =>
-                    setTestsSettings((prev) => ({
-                      ...prev,
-                      runIperf: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
-              </label>
+            <div className="space-y-4">
+              {/* Performance Card Section */}
+              <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-3">
+                <label className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-text-primary">
+                    Show Performance card
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={testsSettings.runPerformance}
+                    onChange={(e) =>
+                      setTestsSettings((prev) => ({
+                        ...prev,
+                        runPerformance: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4"
+                  />
+                </label>
+
+                {/* Speedtest sub-options */}
+                <div className="pl-4 space-y-2 border-l-2 border-surface-border">
+                  <label className="flex items-center justify-between">
+                    <span
+                      className={`text-sm text-text-primary ${!testsSettings.runPerformance ? "opacity-60" : ""}`}
+                    >
+                      Internet Speed (Speedtest)
+                    </span>
+                    <input
+                      type="checkbox"
+                      disabled={!testsSettings.runPerformance}
+                      checked={testsSettings.runSpeedtest}
+                      onChange={(e) =>
+                        setTestsSettings((prev) => ({
+                          ...prev,
+                          runSpeedtest: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between pl-4">
+                    <span
+                      className={`text-xs text-text-muted ${!testsSettings.runPerformance || !testsSettings.runSpeedtest ? "opacity-60" : ""}`}
+                    >
+                      Run at link up
+                    </span>
+                    <input
+                      type="checkbox"
+                      disabled={
+                        !testsSettings.runPerformance ||
+                        !testsSettings.runSpeedtest
+                      }
+                      checked={testsSettings.speedtest.autoRunOnLink}
+                      onChange={(e) =>
+                        setTestsSettings((prev) => ({
+                          ...prev,
+                          speedtest: {
+                            ...prev.speedtest,
+                            autoRunOnLink: e.target.checked,
+                          },
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                  </label>
+                </div>
+
+                {/* iperf sub-options */}
+                <div className="pl-4 space-y-2 border-l-2 border-surface-border">
+                  <label className="flex items-center justify-between">
+                    <span
+                      className={`text-sm text-text-primary ${!testsSettings.runPerformance ? "opacity-60" : ""}`}
+                    >
+                      LAN Speed (iperf3)
+                    </span>
+                    <input
+                      type="checkbox"
+                      disabled={!testsSettings.runPerformance}
+                      checked={testsSettings.runIperf}
+                      onChange={(e) =>
+                        setTestsSettings((prev) => ({
+                          ...prev,
+                          runIperf: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between pl-4">
+                    <span
+                      className={`text-xs text-text-muted ${!testsSettings.runPerformance || !testsSettings.runIperf ? "opacity-60" : ""}`}
+                    >
+                      Run at link up
+                    </span>
+                    <input
+                      type="checkbox"
+                      disabled={
+                        !testsSettings.runPerformance || !testsSettings.runIperf
+                      }
+                      checked={testsSettings.iperf.autoRunOnLink}
+                      onChange={(e) =>
+                        setTestsSettings((prev) => ({
+                          ...prev,
+                          iperf: {
+                            ...prev.iperf,
+                            autoRunOnLink: e.target.checked,
+                          },
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Network Discovery Card Section */}
+              <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-3">
+                <label className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-text-primary">
+                    Show Network Discovery card
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={testsSettings.runDiscovery}
+                    onChange={(e) =>
+                      setTestsSettings((prev) => ({
+                        ...prev,
+                        runDiscovery: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4"
+                  />
+                </label>
+                <label className="flex items-center justify-between pl-4 border-l-2 border-surface-border">
+                  <span
+                    className={`text-xs text-text-muted ${!testsSettings.runDiscovery ? "opacity-60" : ""}`}
+                  >
+                    Auto-scan on link up
+                  </span>
+                  <input
+                    type="checkbox"
+                    disabled={!testsSettings.runDiscovery}
+                    checked={fabOptions.autoScanOnLink}
+                    onChange={(e) =>
+                      setFabOptions((prev) => ({
+                        ...prev,
+                        autoScanOnLink: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4"
+                  />
+                </label>
+              </div>
             </div>
           </CollapsibleSection>
 
