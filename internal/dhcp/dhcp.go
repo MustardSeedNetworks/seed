@@ -3,8 +3,10 @@ package dhcp
 
 import (
 	"bufio"
+	"encoding/hex"
+	"net"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -217,67 +219,203 @@ func GetLeaseInfo(interfaceName string) (*LeaseInfo, error) {
 	}
 }
 
-// getLeaseInfoDarwin reads DHCP info on macOS using ipconfig.
-// getLeaseInfoDarwin retrieves DHCP lease information for the specified network interface on Darwin (macOS) systems.
-// It executes the "ipconfig getpacket" command to obtain DHCP details such as server identifier, gateway, lease time, and DNS servers.
-// The parsed information is returned as a LeaseInfo struct.
-// Returns an error if the command fails or the output cannot be parsed.
+// getLeaseInfoDarwin reads DHCP info on macOS from lease files.
+// macOS stores DHCP leases in /var/db/dhcpclient/leases/ as plist-like files.
+// The filename format is: ifname-1,<hardware_address>
 func getLeaseInfoDarwin(interfaceName string) (*LeaseInfo, error) {
-	cmd := exec.Command("ipconfig", "getpacket", interfaceName)
-	output, err := cmd.Output()
+	// Get hardware address for the interface to find the lease file
+	iface, err := net.InterfaceByName(interfaceName)
 	if err != nil {
 		return nil, err
 	}
 
-	info := &LeaseInfo{}
-	lines := strings.Split(string(output), "\n")
+	// macOS lease files are named like: en0-1,aa:bb:cc:dd:ee:ff
+	hwAddr := iface.HardwareAddr.String()
 
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
+	// Try both old and new lease file locations
+	leasePaths := []string{
+		filepath.Join("/var/db/dhcpclient/leases", interfaceName+"-1,"+hwAddr),
+		filepath.Join("/private/var/db/dhcpclient/leases", interfaceName+"-1,"+hwAddr),
+	}
 
-		// server_identifier (ip): 192.168.1.1
-		if strings.HasPrefix(line, "server_identifier") {
-			if idx := strings.LastIndex(line, ": "); idx != -1 {
-				info.DHCPServer = strings.TrimSpace(line[idx+2:])
-			}
+	for _, path := range leasePaths {
+		if info := parseDarwinLeaseFile(path); info != nil {
+			return info, nil
 		}
+	}
 
-		// router (ip_mult): {192.168.1.1}
-		if strings.HasPrefix(line, "router") {
-			if idx := strings.LastIndex(line, ": "); idx != -1 {
-				val := strings.TrimSpace(line[idx+2:])
-				val = strings.Trim(val, "{}")
-				if parts := strings.Split(val, ","); len(parts) > 0 {
-					info.Gateway = strings.TrimSpace(parts[0])
-				}
-			}
-		}
-
-		// lease_time (uint32): 86400
-		if strings.HasPrefix(line, "lease_time") {
-			if idx := strings.LastIndex(line, ": "); idx != -1 {
-				if lease, err := strconv.Atoi(strings.TrimSpace(line[idx+2:])); err == nil {
-					info.LeaseTime = lease
-				}
-			}
-		}
-
-		// domain_name_server (ip_mult): {8.8.8.8, 8.8.4.4}
-		if strings.HasPrefix(line, "domain_name_server") {
-			if idx := strings.LastIndex(line, ": "); idx != -1 {
-				val := strings.TrimSpace(line[idx+2:])
-				val = strings.Trim(val, "{}")
-				for _, dns := range strings.Split(val, ",") {
-					dns = strings.TrimSpace(dns)
-					if dns != "" {
-						info.DNS = append(info.DNS, dns)
-					}
+	// Fallback: scan the leases directory for any file matching the interface
+	leaseDir := "/var/db/dhcpclient/leases"
+	entries, err := os.ReadDir(leaseDir)
+	if err == nil {
+		for _, entry := range entries {
+			if strings.HasPrefix(entry.Name(), interfaceName+"-") {
+				if info := parseDarwinLeaseFile(filepath.Join(leaseDir, entry.Name())); info != nil {
+					return info, nil
 				}
 			}
 		}
 	}
 
-	return info, nil
+	return &LeaseInfo{}, nil
+}
+
+// parseDarwinLeaseFile parses a macOS DHCP lease file (plist-like format).
+func parseDarwinLeaseFile(path string) *LeaseInfo {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+
+	info := &LeaseInfo{}
+	content := string(data)
+
+	// The lease file is XML plist format
+	// Extract values using simple string parsing (avoiding plist dependency)
+
+	// <key>ServerIdentifier</key> followed by <data>hex_encoded_ip</data>
+	if server := extractPlistIP(content, "ServerIdentifier"); server != "" {
+		info.DHCPServer = server
+	}
+
+	// <key>RouterIPAddress</key> followed by <data>hex_encoded_ip</data>
+	if router := extractPlistIP(content, "RouterIPAddress"); router != "" {
+		info.Gateway = router
+	}
+	// Also try Router key
+	if info.Gateway == "" {
+		if router := extractPlistIP(content, "Router"); router != "" {
+			info.Gateway = router
+		}
+	}
+
+	// <key>LeaseLength</key> followed by <integer>value</integer>
+	if lease := extractPlistInteger(content, "LeaseLength"); lease > 0 {
+		info.LeaseTime = lease
+	}
+
+	// DNS servers - may be in array format
+	if dns := extractPlistIPArray(content, "DomainNameServer"); len(dns) > 0 {
+		info.DNS = dns
+	}
+
+	if info.DHCPServer != "" || info.Gateway != "" {
+		return info
+	}
+	return nil
+}
+
+// extractPlistIP extracts an IP address from a plist data field.
+func extractPlistIP(content, key string) string {
+	keyTag := "<key>" + key + "</key>"
+	idx := strings.Index(content, keyTag)
+	if idx == -1 {
+		return ""
+	}
+
+	// Look for <data> tag after the key
+	remaining := content[idx+len(keyTag):]
+	dataStart := strings.Index(remaining, "<data>")
+	if dataStart == -1 {
+		return ""
+	}
+	dataEnd := strings.Index(remaining[dataStart:], "</data>")
+	if dataEnd == -1 {
+		return ""
+	}
+
+	hexData := strings.TrimSpace(remaining[dataStart+6 : dataStart+dataEnd])
+	return hexToIP(hexData)
+}
+
+// extractPlistInteger extracts an integer value from a plist.
+func extractPlistInteger(content, key string) int {
+	keyTag := "<key>" + key + "</key>"
+	idx := strings.Index(content, keyTag)
+	if idx == -1 {
+		return 0
+	}
+
+	remaining := content[idx+len(keyTag):]
+	intStart := strings.Index(remaining, "<integer>")
+	if intStart == -1 {
+		return 0
+	}
+	intEnd := strings.Index(remaining[intStart:], "</integer>")
+	if intEnd == -1 {
+		return 0
+	}
+
+	valStr := strings.TrimSpace(remaining[intStart+9 : intStart+intEnd])
+	val, _ := strconv.Atoi(valStr)
+	return val
+}
+
+// extractPlistIPArray extracts array of IPs from plist.
+func extractPlistIPArray(content, key string) []string {
+	var ips []string
+	keyTag := "<key>" + key + "</key>"
+	idx := strings.Index(content, keyTag)
+	if idx == -1 {
+		return ips
+	}
+
+	remaining := content[idx+len(keyTag):]
+
+	// Try array format first
+	arrayStart := strings.Index(remaining, "<array>")
+	if arrayStart != -1 {
+		arrayEnd := strings.Index(remaining[arrayStart:], "</array>")
+		if arrayEnd != -1 {
+			arrayContent := remaining[arrayStart+7 : arrayStart+arrayEnd]
+			// Find all <data> tags within array
+			for {
+				dataStart := strings.Index(arrayContent, "<data>")
+				if dataStart == -1 {
+					break
+				}
+				dataEnd := strings.Index(arrayContent[dataStart:], "</data>")
+				if dataEnd == -1 {
+					break
+				}
+				hexData := strings.TrimSpace(arrayContent[dataStart+6 : dataStart+dataEnd])
+				if ip := hexToIP(hexData); ip != "" {
+					ips = append(ips, ip)
+				}
+				arrayContent = arrayContent[dataStart+dataEnd+7:]
+			}
+		}
+	}
+
+	// Try single data format
+	if len(ips) == 0 {
+		if ip := extractPlistIP(content, key); ip != "" {
+			ips = append(ips, ip)
+		}
+	}
+
+	return ips
+}
+
+// hexToIP converts hex-encoded IP address to string.
+func hexToIP(hexStr string) string {
+	// Remove any whitespace/newlines from base64-ish encoding
+	hexStr = strings.ReplaceAll(hexStr, "\n", "")
+	hexStr = strings.ReplaceAll(hexStr, "\t", "")
+	hexStr = strings.ReplaceAll(hexStr, " ", "")
+
+	// Try decoding as hex
+	if bytes, err := hex.DecodeString(hexStr); err == nil && len(bytes) == 4 {
+		return net.IP(bytes).String()
+	}
+
+	// macOS sometimes uses raw bytes in base64 - try that too
+	// The data might actually be raw bytes interpreted as string
+	if len(hexStr) == 4 {
+		return net.IP([]byte(hexStr)).String()
+	}
+
+	return ""
 }
 
 // getLeaseInfoLinux reads DHCP info on Linux from lease files.
