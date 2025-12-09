@@ -178,11 +178,13 @@ interface SubnetConfig {
 interface SettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  version?: string;
 }
 
 export const SettingsDrawer = memo(function SettingsDrawer({
   isOpen,
   onClose,
+  version = "dev",
 }: SettingsDrawerProps) {
   const { theme, setTheme, isDark } = useTheme();
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -910,25 +912,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       if (testsTimerRef.current) clearTimeout(testsTimerRef.current);
     };
   }, [testsSettings, saveTestsSettings]);
-
-  // Broadcast tests settings changes to App/FAB listeners
-  useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent("testsSettingsUpdated", {
-        detail: {
-          runDiscovery: testsSettings.runDiscovery,
-          runSpeedtest: testsSettings.runSpeedtest,
-          runIperf: testsSettings.runIperf,
-          runPerformance: testsSettings.runPerformance,
-        },
-      }),
-    );
-  }, [
-    testsSettings.runDiscovery,
-    testsSettings.runSpeedtest,
-    testsSettings.runIperf,
-    testsSettings.runPerformance,
-  ]);
 
   // Auto-save wifi settings with debounce
   useEffect(() => {
@@ -1800,172 +1783,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                 ))}
-              </div>
-            </div>
-          </CollapsibleSection>
-
-          {/* Optional Cards visibility */}
-          <CollapsibleSection
-            title={
-              <>
-                Optional Cards
-                <AutoSaveIndicator status={testsStatus} />
-              </>
-            }
-          >
-            <div className="space-y-4">
-              {/* Performance Card Section */}
-              <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-3">
-                <label className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-text-primary">
-                    Show Performance card
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={testsSettings.runPerformance}
-                    onChange={(e) =>
-                      setTestsSettings((prev) => ({
-                        ...prev,
-                        runPerformance: e.target.checked,
-                      }))
-                    }
-                    className="w-4 h-4"
-                  />
-                </label>
-
-                {/* Speedtest sub-options */}
-                <div className="pl-4 space-y-2 border-l-2 border-surface-border">
-                  <label className="flex items-center justify-between">
-                    <span
-                      className={`text-sm text-text-primary ${!testsSettings.runPerformance ? "opacity-60" : ""}`}
-                    >
-                      Internet Speed (Speedtest)
-                    </span>
-                    <input
-                      type="checkbox"
-                      disabled={!testsSettings.runPerformance}
-                      checked={testsSettings.runSpeedtest}
-                      onChange={(e) =>
-                        setTestsSettings((prev) => ({
-                          ...prev,
-                          runSpeedtest: e.target.checked,
-                        }))
-                      }
-                      className="w-4 h-4"
-                    />
-                  </label>
-                  <label className="flex items-center justify-between pl-4">
-                    <span
-                      className={`text-xs text-text-muted ${!testsSettings.runPerformance || !testsSettings.runSpeedtest ? "opacity-60" : ""}`}
-                    >
-                      Auto-run on link up
-                    </span>
-                    <input
-                      type="checkbox"
-                      disabled={
-                        !testsSettings.runPerformance ||
-                        !testsSettings.runSpeedtest
-                      }
-                      checked={testsSettings.speedtest.autoRunOnLink}
-                      onChange={(e) =>
-                        setTestsSettings((prev) => ({
-                          ...prev,
-                          speedtest: {
-                            ...prev.speedtest,
-                            autoRunOnLink: e.target.checked,
-                          },
-                        }))
-                      }
-                      className="w-4 h-4"
-                    />
-                  </label>
-                </div>
-
-                {/* iperf sub-options */}
-                <div className="pl-4 space-y-2 border-l-2 border-surface-border">
-                  <label className="flex items-center justify-between">
-                    <span
-                      className={`text-sm text-text-primary ${!testsSettings.runPerformance ? "opacity-60" : ""}`}
-                    >
-                      LAN Speed (iperf3)
-                    </span>
-                    <input
-                      type="checkbox"
-                      disabled={!testsSettings.runPerformance}
-                      checked={testsSettings.runIperf}
-                      onChange={(e) =>
-                        setTestsSettings((prev) => ({
-                          ...prev,
-                          runIperf: e.target.checked,
-                        }))
-                      }
-                      className="w-4 h-4"
-                    />
-                  </label>
-                  <label className="flex items-center justify-between pl-4">
-                    <span
-                      className={`text-xs text-text-muted ${!testsSettings.runPerformance || !testsSettings.runIperf ? "opacity-60" : ""}`}
-                    >
-                      Auto-run on link up
-                    </span>
-                    <input
-                      type="checkbox"
-                      disabled={
-                        !testsSettings.runPerformance || !testsSettings.runIperf
-                      }
-                      checked={testsSettings.iperf.autoRunOnLink}
-                      onChange={(e) =>
-                        setTestsSettings((prev) => ({
-                          ...prev,
-                          iperf: {
-                            ...prev.iperf,
-                            autoRunOnLink: e.target.checked,
-                          },
-                        }))
-                      }
-                      className="w-4 h-4"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {/* Network Discovery Card Section */}
-              <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-3">
-                <label className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-text-primary">
-                    Show Network Discovery card
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={testsSettings.runDiscovery}
-                    onChange={(e) =>
-                      setTestsSettings((prev) => ({
-                        ...prev,
-                        runDiscovery: e.target.checked,
-                      }))
-                    }
-                    className="w-4 h-4"
-                  />
-                </label>
-                <label className="flex items-center justify-between pl-4 border-l-2 border-surface-border">
-                  <span
-                    className={`text-xs text-text-muted ${!testsSettings.runDiscovery ? "opacity-60" : ""}`}
-                  >
-                    Auto-scan on link up
-                  </span>
-                  <input
-                    type="checkbox"
-                    disabled={!testsSettings.runDiscovery}
-                    checked={fabOptions.autoScanOnLink}
-                    onChange={(e) =>
-                      setFabOptions((prev) => ({
-                        ...prev,
-                        autoScanOnLink: e.target.checked,
-                      }))
-                    }
-                    className="w-4 h-4"
-                  />
-                </label>
               </div>
             </div>
           </CollapsibleSection>
@@ -3323,7 +3140,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           <section className="pt-4 border-t border-surface-border">
             <h3 className="text-sm font-medium text-text-muted mb-2">About</h3>
             <p className="text-xs text-text-muted">
-              NetScope v0.12.4
+              NetScope {version}
               <br />
               Network Diagnostic Tool
             </p>

@@ -97,6 +97,7 @@ function App() {
   const [networkDiscovery, setNetworkDiscovery] =
     useState<NetworkDiscoveryData | null>(null);
   const [showPublicIP, setShowPublicIP] = useState(true);
+  const [appVersion, setAppVersion] = useState("dev");
   const [fabOptions, setFabOptions] = useState<FABOptions>(() => {
     const defaults: FABOptions = {
       runLink: true,
@@ -310,6 +311,23 @@ function App() {
       }
     } catch (err) {
       console.error("Failed to fetch interfaces:", err);
+    }
+  }, []);
+
+  // Fetch app version from status endpoint
+  const fetchVersion = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/status`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.version) {
+          setAppVersion(data.version);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch version:", err);
     }
   }, []);
 
@@ -675,68 +693,10 @@ function App() {
     ],
   );
 
-  const [testsFlags, setTestsFlags] = useState({
-    runPerformance: true,
-    runDiscovery: true,
-    runSpeedtest: true,
-    runIperf: true,
-  });
-
-  // Fetch tests flags on load
-  useEffect(() => {
-    const loadTestsFlags = async () => {
-      try {
-        const res = await fetch("/api/tests/settings", {
-          headers: getAuthHeaders(),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setTestsFlags({
-            runPerformance: data.runPerformance ?? true,
-            runDiscovery: data.runDiscovery ?? true,
-            runSpeedtest: data.runSpeedtest ?? true,
-            runIperf: data.runIperf ?? true,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load tests settings", err);
-      }
-    };
-    loadTestsFlags();
-
-    type TestsSettingsDetail = Partial<{
-      runPerformance: boolean;
-      runDiscovery: boolean;
-      runSpeedtest: boolean;
-      runIperf: boolean;
-    }>;
-
-    const handleSettingsUpdated = (e: Event) => {
-      const detail = (e as CustomEvent<TestsSettingsDetail>).detail;
-      if (detail) {
-        setTestsFlags((prev) => ({
-          runPerformance: detail.runPerformance ?? prev.runPerformance,
-          runDiscovery: detail.runDiscovery ?? prev.runDiscovery,
-          runSpeedtest: detail.runSpeedtest ?? prev.runSpeedtest,
-          runIperf: detail.runIperf ?? prev.runIperf,
-        }));
-      }
-    };
-    window.addEventListener(
-      "testsSettingsUpdated",
-      handleSettingsUpdated as EventListener,
-    );
-    return () =>
-      window.removeEventListener(
-        "testsSettingsUpdated",
-        handleSettingsUpdated as EventListener,
-      );
-  }, []);
-
   // Listen for FAB "run all tests" event with options
   useEffect(() => {
     const handleRunAllTests = async () => {
-      // Combine FAB toggles with backend test settings
+      // Use FAB options to determine which tests to run
       const runOpts = {
         runLink: fabOptions.runLink,
         runSwitch: fabOptions.runSwitch,
@@ -745,17 +705,10 @@ function App() {
         runGateway: fabOptions.runGateway,
         runDNS: fabOptions.runDNS,
         runHealthChecks: fabOptions.runHealthChecks,
-        runPerformance: fabOptions.runPerformance && testsFlags.runPerformance,
-        runSpeedtest:
-          fabOptions.runPerformance &&
-          fabOptions.runSpeedtest &&
-          testsFlags.runSpeedtest,
-        runIperf:
-          fabOptions.runPerformance &&
-          fabOptions.runIperf &&
-          testsFlags.runIperf,
-        runNetworkDiscovery:
-          fabOptions.runNetworkDiscovery && testsFlags.runDiscovery,
+        runPerformance: fabOptions.runPerformance,
+        runSpeedtest: fabOptions.runPerformance && fabOptions.runSpeedtest,
+        runIperf: fabOptions.runPerformance && fabOptions.runIperf,
+        runNetworkDiscovery: fabOptions.runNetworkDiscovery,
       };
 
       // Build array of fetch promises based on FAB options
@@ -868,10 +821,6 @@ function App() {
     fabOptions.runSpeedtest,
     fabOptions.runIperf,
     fabOptions.runNetworkDiscovery,
-    testsFlags.runPerformance,
-    testsFlags.runDiscovery,
-    testsFlags.runSpeedtest,
-    testsFlags.runIperf,
   ]);
 
   // WebSocket connection for real-time updates
@@ -891,6 +840,7 @@ function App() {
       fetchLinkData();
       fetchIPConfig();
       fetchInterfaces();
+      fetchVersion();
       fetchDiscoveryData();
       fetchDNSData();
       fetchGatewayData();
@@ -906,6 +856,7 @@ function App() {
     fetchLinkData,
     fetchIPConfig,
     fetchInterfaces,
+    fetchVersion,
     fetchDiscoveryData,
     fetchDNSData,
     fetchGatewayData,
@@ -1199,15 +1150,13 @@ function App() {
             {fabOptions.runPerformance && (
               <PerformanceCard
                 loading={loading}
-                runSpeedtestEnabled={
-                  fabOptions.runSpeedtest && testsFlags.runSpeedtest
-                }
-                runIperfEnabled={fabOptions.runIperf && testsFlags.runIperf}
+                runSpeedtestEnabled={fabOptions.runSpeedtest}
+                runIperfEnabled={fabOptions.runIperf}
               />
             )}
 
             {/* Network Discovery - device scanning (last) */}
-            {fabOptions.runNetworkDiscovery && testsFlags.runDiscovery && (
+            {fabOptions.runNetworkDiscovery && (
               <NetworkDiscoveryCard
                 data={networkDiscovery}
                 loading={loading}
@@ -1219,7 +1168,7 @@ function App() {
           {/* Development notice */}
           <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
             <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-              NetScope v0.12.4
+              NetScope {appVersion}
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-text-muted">
               Tap the play button to run all tests.
@@ -1238,6 +1187,7 @@ function App() {
       <SettingsDrawer
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        version={appVersion}
       />
 
       {/* Help Modal - sections ordered to match card/settings order */}
