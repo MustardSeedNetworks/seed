@@ -4,11 +4,12 @@ interface FABProps {
   className?: string;
 }
 
+// Floating action button that triggers "runAllTests" and shows a spinner while running.
 export function FAB({ className = "" }: FABProps) {
   const [isRunning, setIsRunning] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Listen for testsComplete event to stop spinning
+  // Stop spinner when testsComplete fires
   useEffect(() => {
     const handleTestsComplete = () => {
       setIsRunning(false);
@@ -29,16 +30,14 @@ export function FAB({ className = "" }: FABProps) {
 
   const handleClick = useCallback(() => {
     if (isRunning) return;
-
     setIsRunning(true);
 
-    // Dispatch event to trigger all tests
     window.dispatchEvent(new CustomEvent("runAllTests"));
 
-    // Fallback timeout in case testsComplete event doesn't fire
+    // Fallback timeout in case testsComplete never fires
     timeoutRef.current = setTimeout(() => {
       setIsRunning(false);
-    }, 60000); // 60s fallback for long-running tests like speedtest
+    }, 60000);
   }, [isRunning]);
 
   return (
