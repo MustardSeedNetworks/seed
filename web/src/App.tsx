@@ -46,6 +46,7 @@ function App() {
   const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [cards, setCards] = useState<CardState>({
     link: null,
     cable: null,
@@ -66,6 +67,30 @@ function App() {
   const [networkDiscovery, setNetworkDiscovery] =
     useState<NetworkDiscoveryData | null>(null);
   const [showPublicIP, setShowPublicIP] = useState(true);
+  const [fabOptions, setFabOptions] = useState(() => {
+    const defaults = {
+      runLink: true,
+      runSwitch: true,
+      runVLAN: true,
+      runIPConfig: true,
+      runGateway: true,
+      runDNS: true,
+      runHealthChecks: true,
+      runPerformance: true,
+      runSpeedtest: true,
+      runIperf: true,
+      runNetworkDiscovery: true,
+      autoScanOnLink: true,
+    } as const;
+
+    try {
+      const saved = localStorage.getItem("netscope-fab-options");
+      if (saved) return { ...defaults, ...JSON.parse(saved) };
+    } catch (err) {
+      console.error("Failed to load FAB options:", err);
+    }
+    return { ...defaults };
+  });
 
   // Load display options from localStorage on mount
   useEffect(() => {
@@ -101,6 +126,26 @@ function App() {
     };
   }, []);
 
+  // Listen for FAB option updates
+  useEffect(() => {
+    const handleFabUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<Partial<typeof fabOptions>>).detail;
+      if (detail) {
+        setFabOptions((prev) => ({ ...prev, ...detail }));
+      }
+    };
+
+    window.addEventListener(
+      "fabOptionsUpdated",
+      handleFabUpdated as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "fabOptionsUpdated",
+        handleFabUpdated as EventListener,
+      );
+  }, []);
+
   const handleMessage = useCallback((message: Message) => {
     if (message.type === "initial_state") {
       setLoading(false);
@@ -127,6 +172,40 @@ function App() {
       }
     }
   }, []);
+
+  // Catch unauthorized API responses once and force logout to stop noisy 401 spam
+  useEffect(() => {
+    const originalFetch = window.fetch;
+
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await originalFetch(input, init);
+
+      try {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof Request
+              ? input.url
+              : input.toString();
+
+        const isApiCall = url.includes("/api/");
+        const isAuthEndpoint = url.includes("/api/auth/");
+
+        if (response.status === 401 && isApiCall && !isAuthEndpoint) {
+          setSessionExpired(true);
+          logout();
+        }
+      } catch (err) {
+        console.warn("Failed to inspect fetch response", err);
+      }
+
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [logout]);
 
   const handleCardUpdate = useCallback((update: CardUpdate) => {
     setCards((prev) => ({
@@ -567,6 +646,7 @@ function App() {
   );
 
   const [testsFlags, setTestsFlags] = useState({
+    runPerformance: true,
     runDiscovery: true,
     runSpeedtest: true,
     runIperf: true,
@@ -582,6 +662,7 @@ function App() {
         if (res.ok) {
           const data = await res.json();
           setTestsFlags({
+            runPerformance: data.runPerformance ?? true,
             runDiscovery: data.runDiscovery ?? true,
             runSpeedtest: data.runSpeedtest ?? true,
             runIperf: data.runIperf ?? true,
@@ -593,10 +674,18 @@ function App() {
     };
     loadTestsFlags();
 
+    type TestsSettingsDetail = Partial<{
+      runPerformance: boolean;
+      runDiscovery: boolean;
+      runSpeedtest: boolean;
+      runIperf: boolean;
+    }>;
+
     const handleSettingsUpdated = (e: Event) => {
-      const detail = (e as CustomEvent<any>).detail;
+      const detail = (e as CustomEvent<TestsSettingsDetail>).detail;
       if (detail) {
         setTestsFlags((prev) => ({
+          runPerformance: detail.runPerformance ?? prev.runPerformance,
           runDiscovery: detail.runDiscovery ?? prev.runDiscovery,
           runSpeedtest: detail.runSpeedtest ?? prev.runSpeedtest,
           runIperf: detail.runIperf ?? prev.runIperf,
@@ -617,45 +706,54 @@ function App() {
   // Listen for FAB "run all tests" event with options
   useEffect(() => {
     const handleRunAllTests = async () => {
-      const fabOptions = {
-        runLink: true,
-        runSwitch: true,
-        runVLAN: true,
-        runIPConfig: true,
-        runGateway: true,
-        runDNS: true,
-        runHealthChecks: true,
-        runSpeedtest: testsFlags.runSpeedtest,
-        runIperf: testsFlags.runIperf,
-        runNetworkDiscovery: testsFlags.runDiscovery,
+      // Combine FAB toggles with backend test settings
+      const runOpts = {
+        runLink: fabOptions.runLink,
+        runSwitch: fabOptions.runSwitch,
+        runVLAN: fabOptions.runVLAN,
+        runIPConfig: fabOptions.runIPConfig,
+        runGateway: fabOptions.runGateway,
+        runDNS: fabOptions.runDNS,
+        runHealthChecks: fabOptions.runHealthChecks,
+        runPerformance: fabOptions.runPerformance && testsFlags.runPerformance,
+        runSpeedtest:
+          fabOptions.runPerformance &&
+          fabOptions.runSpeedtest &&
+          testsFlags.runSpeedtest,
+        runIperf:
+          fabOptions.runPerformance &&
+          fabOptions.runIperf &&
+          testsFlags.runIperf,
+        runNetworkDiscovery:
+          fabOptions.runNetworkDiscovery && testsFlags.runDiscovery,
       };
 
       // Build array of fetch promises based on FAB options
       const fetchPromises: Promise<void>[] = [];
 
-      if (fabOptions.runLink) {
+      if (runOpts.runLink) {
         fetchPromises.push(fetchLinkData());
         fetchPromises.push(fetchWiFiData()); // WiFi is part of Link layer
         fetchPromises.push(fetchCableData()); // Cable is part of Link layer
       }
-      if (fabOptions.runSwitch) {
+      if (runOpts.runSwitch) {
         fetchPromises.push(fetchDiscoveryData());
       }
-      if (fabOptions.runVLAN) {
+      if (runOpts.runVLAN) {
         fetchPromises.push(fetchVLANData());
       }
-      if (fabOptions.runIPConfig) {
+      if (runOpts.runIPConfig) {
         fetchPromises.push(fetchIPConfig());
       }
-      if (fabOptions.runGateway) {
+      if (runOpts.runGateway) {
         fetchPromises.push(fetchGatewayData());
       }
-      if (fabOptions.runDNS) {
+      if (runOpts.runDNS) {
         fetchPromises.push(fetchDNSData());
       }
 
       // Trigger network discovery if enabled
-      if (fabOptions.runNetworkDiscovery) {
+      if (runOpts.runNetworkDiscovery) {
         triggerDeviceScan();
       }
 
@@ -666,9 +764,11 @@ function App() {
 
       // Determine how many card-managed tests we need to wait for
       const cardTestsToWait: string[] = [];
-      if (fabOptions.runSpeedtest) cardTestsToWait.push("speedtest");
-      if (fabOptions.runIperf) cardTestsToWait.push("iperf");
-      if (fabOptions.runHealthChecks) cardTestsToWait.push("healthchecks");
+      if (runOpts.runPerformance && runOpts.runSpeedtest)
+        cardTestsToWait.push("speedtest");
+      if (runOpts.runPerformance && runOpts.runIperf)
+        cardTestsToWait.push("iperf");
+      if (runOpts.runHealthChecks) cardTestsToWait.push("healthchecks");
 
       // If no card-managed tests, signal completion immediately
       if (cardTestsToWait.length === 0) {
@@ -727,6 +827,18 @@ function App() {
     fetchWiFiData,
     fetchCableData,
     triggerDeviceScan,
+    fabOptions.runPerformance,
+    fabOptions.runLink,
+    fabOptions.runSwitch,
+    fabOptions.runVLAN,
+    fabOptions.runIPConfig,
+    fabOptions.runGateway,
+    fabOptions.runDNS,
+    fabOptions.runHealthChecks,
+    fabOptions.runSpeedtest,
+    fabOptions.runIperf,
+    fabOptions.runNetworkDiscovery,
+    testsFlags.runPerformance,
     testsFlags.runDiscovery,
     testsFlags.runSpeedtest,
     testsFlags.runIperf,
@@ -822,19 +934,7 @@ function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Check if network discovery auto-scan is enabled in FAB options
-    let shouldAutoScan = true; // Default to true
-    try {
-      const saved = localStorage.getItem("netscope-fab-options");
-      if (saved) {
-        const fabOptions = JSON.parse(saved);
-        if (fabOptions.runNetworkDiscovery === false) {
-          shouldAutoScan = false;
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load FAB options for auto-scan:", err);
-    }
+    const shouldAutoScan = fabOptions.runNetworkDiscovery !== false;
 
     if (shouldAutoScan) {
       // Small delay to let other data load first
@@ -843,11 +943,32 @@ function App() {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, triggerDeviceScan]);
+  }, [isAuthenticated, triggerDeviceScan, fabOptions.runNetworkDiscovery]);
 
   // Login form
+  const authError = sessionExpired
+    ? "Session expired. Please log in again."
+    : error;
+
+  const handleLogin = useCallback(
+    async (username: string, password: string) => {
+      const success = await login(username, password);
+      if (success) {
+        setSessionExpired(false);
+      }
+      return success;
+    },
+    [login],
+  );
+
   if (!isAuthenticated) {
-    return <LoginForm onLogin={login} isLoading={isLoading} error={error} />;
+    return (
+      <LoginForm
+        onLogin={handleLogin}
+        isLoading={isLoading}
+        error={authError}
+      />
+    );
   }
 
   return (
@@ -1025,14 +1146,18 @@ function App() {
             <HealthCheckCard loading={loading} />
 
             {/* Performance Testing */}
-            <PerformanceCard
-              loading={loading}
-              runSpeedtestEnabled={testsFlags.runSpeedtest}
-              runIperfEnabled={testsFlags.runIperf}
-            />
+            {fabOptions.runPerformance && (
+              <PerformanceCard
+                loading={loading}
+                runSpeedtestEnabled={
+                  fabOptions.runSpeedtest && testsFlags.runSpeedtest
+                }
+                runIperfEnabled={fabOptions.runIperf && testsFlags.runIperf}
+              />
+            )}
 
             {/* Network Discovery - device scanning (last) */}
-            {testsFlags.runDiscovery && (
+            {fabOptions.runNetworkDiscovery && testsFlags.runDiscovery && (
               <NetworkDiscoveryCard
                 data={networkDiscovery}
                 loading={loading}

@@ -98,20 +98,28 @@ export function useWebSocket({
       };
 
       wsRef.current.onmessage = (event) => {
-        try {
-          const message: Message = JSON.parse(event.data);
+        // Server may coalesce multiple JSON messages in one frame separated by newlines.
+        const payloads = String(event.data).split(/\n+/).filter(Boolean);
 
-          // Handle card updates specifically
-          if (message.type === "card_update" && onCardUpdate) {
-            onCardUpdate(message.payload as CardUpdate);
-          }
+        for (const payload of payloads) {
+          try {
+            const message: Message = JSON.parse(payload);
 
-          // Call general message handler
-          if (onMessage) {
-            onMessage(message);
+            if (message.type === "card_update" && onCardUpdate) {
+              onCardUpdate(message.payload as CardUpdate);
+            }
+
+            if (onMessage) {
+              onMessage(message);
+            }
+          } catch (error) {
+            console.error(
+              "Failed to parse WebSocket message:",
+              error,
+              "payload=",
+              payload,
+            );
           }
-        } catch (error) {
-          console.error("Failed to parse WebSocket message:", error);
         }
       };
     } catch (error) {
@@ -145,6 +153,22 @@ export function useWebSocket({
 
     setStatus("disconnected");
   }, []);
+
+  // (Re)connect whenever auth state changes
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    timer = setTimeout(() => {
+      if (token) {
+        connect();
+      } else {
+        disconnect();
+      }
+    }, 0);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [token, connect, disconnect]);
 
   const send = useCallback((message: Message) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

@@ -92,6 +92,10 @@ interface FABOptions {
   runGateway: boolean;
   runDNS: boolean;
   runHealthChecks: boolean;
+  runNetworkDiscovery: boolean;
+  runSpeedtest: boolean;
+  runIperf: boolean;
+  runPerformance: boolean;
   autoScanOnLink: boolean;
 }
 
@@ -230,6 +234,10 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     runGateway: true,
     runDNS: true,
     runHealthChecks: true,
+    runNetworkDiscovery: true,
+    runSpeedtest: true,
+    runIperf: true,
+    runPerformance: true,
     autoScanOnLink: true,
   });
 
@@ -2780,6 +2788,77 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                     setFabOptions((prev) => ({
                       ...prev,
                       runHealthChecks: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
+              </label>
+
+              {/* Performance tests block */}
+              <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-2">
+                <label className="flex items-center justify-between">
+                  <span className="text-sm text-text-primary">
+                    Performance Tests (card + runs)
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={fabOptions.runPerformance}
+                    onChange={(e) =>
+                      setFabOptions((prev) => ({
+                        ...prev,
+                        runPerformance: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4"
+                  />
+                </label>
+
+                <div className="pl-4 space-y-2 text-sm text-text-primary">
+                  <label className="flex items-center justify-between">
+                    <span>Speedtest</span>
+                    <input
+                      type="checkbox"
+                      disabled={!fabOptions.runPerformance}
+                      checked={fabOptions.runSpeedtest}
+                      onChange={(e) =>
+                        setFabOptions((prev) => ({
+                          ...prev,
+                          runSpeedtest: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between">
+                    <span>iperf3</span>
+                    <input
+                      type="checkbox"
+                      disabled={!fabOptions.runPerformance}
+                      checked={fabOptions.runIperf}
+                      onChange={(e) =>
+                        setFabOptions((prev) => ({
+                          ...prev,
+                          runIperf: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Network discovery block */}
+              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+                <span className="text-sm text-text-primary">
+                  Network Discovery
+                </span>
+                <input
+                  type="checkbox"
+                  checked={fabOptions.runNetworkDiscovery}
+                  onChange={(e) =>
+                    setFabOptions((prev) => ({
+                      ...prev,
+                      runNetworkDiscovery: e.target.checked,
                     }))
                   }
                   className="w-4 h-4"
