@@ -2,10 +2,6 @@
 package wifi
 
 import (
-	"os/exec"
-	"regexp"
-	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -46,14 +42,7 @@ func (m *Manager) IsWireless() bool {
 	iface := m.interfaceName
 	m.mu.RUnlock()
 
-	switch runtime.GOOS {
-	case "darwin":
-		return isWirelessDarwin(iface)
-	case "linux":
-		return isWirelessLinux(iface)
-	default:
-		return false
-	}
+	return isWirelessPlatform(iface)
 }
 
 // GetInfo returns current wireless network information.
@@ -62,191 +51,9 @@ func (m *Manager) GetInfo() *Info {
 	iface := m.interfaceName
 	m.mu.RUnlock()
 
-	switch runtime.GOOS {
-	case "darwin":
-		return getInfoDarwin(iface)
-	case "linux":
-		return getInfoLinux(iface)
-	default:
-		return nil
-	}
+	return getInfoPlatform(iface)
 }
 
-// isWirelessDarwin checks if interface is wireless on macOS.
-func isWirelessDarwin(iface string) bool {
-	// On macOS, Wi-Fi interface is typically en0 or starts with en
-	// We can use networksetup to check
-	cmd := exec.Command("networksetup", "-listallhardwareports")
-	output, err := cmd.Output()
-	if err != nil {
-		return strings.HasPrefix(iface, "en")
-	}
-
-	lines := strings.Split(string(output), "\n")
-	foundWiFi := false
-	for _, line := range lines {
-		if strings.Contains(line, "Wi-Fi") {
-			foundWiFi = true
-		}
-		if foundWiFi && strings.Contains(line, "Device:") {
-			device := strings.TrimPrefix(line, "Device: ")
-			device = strings.TrimSpace(device)
-			if device == iface {
-				return true
-			}
-			foundWiFi = false
-		}
-	}
-	return false
-}
-
-// isWirelessLinux checks if interface is wireless on Linux.
-func isWirelessLinux(iface string) bool {
-	// Check if interface has wireless extensions
-	cmd := exec.Command("iw", "dev", iface, "info")
-	err := cmd.Run()
-	return err == nil
-}
-
-// getInfoDarwin gets Wi-Fi info on macOS.
-func getInfoDarwin(iface string) *Info {
-	// Use airport command for Wi-Fi info
-	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-	cmd := exec.Command(airportPath, "-I")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil
-	}
-
-	info := &Info{}
-	lines := strings.Split(string(output), "\n")
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		parts := strings.SplitN(line, ":", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		switch key {
-		case "SSID":
-			info.SSID = value
-		case "BSSID":
-			info.BSSID = value
-		case "agrCtlRSSI":
-			if sig, err := strconv.Atoi(value); err == nil {
-				info.Signal = sig
-			}
-		case "channel":
-			// Format can be "6" or "6,1" (for 80MHz channels)
-			parts := strings.Split(value, ",")
-			if ch, err := strconv.Atoi(parts[0]); err == nil {
-				info.Channel = ch
-			}
-		case "link auth":
-			info.Security = mapSecurityType(value)
-		}
-	}
-
-	// Calculate frequency from channel if we got a channel
-	if info.Channel > 0 {
-		info.Frequency = channelToFrequency(info.Channel)
-	}
-
-	// If no security info, try to get it another way
-	if info.Security == "" && info.SSID != "" {
-		info.Security = "WPA2" // Default assumption
-	}
-
-	if info.SSID == "" {
-		return nil
-	}
-
-	return info
-}
-
-// getInfoLinux gets Wi-Fi info on Linux.
-func getInfoLinux(iface string) *Info {
-	info := &Info{}
-
-	// Get connection info using iw
-	cmd := exec.Command("iw", "dev", iface, "link")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil
-	}
-
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-
-		switch {
-		case strings.HasPrefix(line, "SSID:"):
-			info.SSID = strings.TrimPrefix(line, "SSID: ")
-		case strings.HasPrefix(line, "signal:"):
-			// Format: "signal: -65 dBm"
-			re := regexp.MustCompile(`-?\d+`)
-			if match := re.FindString(line); match != "" {
-				if sig, err := strconv.Atoi(match); err == nil {
-					info.Signal = sig
-				}
-			}
-		case strings.HasPrefix(line, "freq:"):
-			// Format: "freq: 5180"
-			re := regexp.MustCompile(`\d+`)
-			if match := re.FindString(line); match != "" {
-				if freq, err := strconv.Atoi(match); err == nil {
-					info.Frequency = freq
-				}
-			}
-		case strings.Contains(line, "Connected to"):
-			// Format: "Connected to 00:11:22:33:44:55"
-			re := regexp.MustCompile(`([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}`)
-			if match := re.FindString(line); match != "" {
-				info.BSSID = match
-			}
-		}
-	}
-
-	// Get channel from frequency
-	if info.Frequency > 0 {
-		info.Channel = frequencyToChannel(info.Frequency)
-	}
-
-	// Get security info using iwconfig
-	cmd = exec.Command("iwconfig", iface)
-	output, err = cmd.Output()
-	if err == nil {
-		outStr := string(output)
-		if strings.Contains(outStr, "Encryption key:on") {
-			info.Security = "WPA2" // Simplified
-		} else if strings.Contains(outStr, "Encryption key:off") {
-			info.Security = "Open"
-		}
-	}
-
-	// Try wpa_cli for better security info
-	cmd = exec.Command("wpa_cli", "-i", iface, "status")
-	output, err = cmd.Output()
-	if err == nil {
-		lines = strings.Split(string(output), "\n")
-		for _, line := range lines {
-			if strings.HasPrefix(line, "key_mgmt=") {
-				keyMgmt := strings.TrimPrefix(line, "key_mgmt=")
-				info.Security = mapSecurityType(keyMgmt)
-			}
-		}
-	}
-
-	if info.SSID == "" {
-		return nil
-	}
-
-	return info
-}
 
 // mapSecurityType maps security protocol to display string.
 func mapSecurityType(secType string) string {
