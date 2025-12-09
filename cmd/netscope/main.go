@@ -82,6 +82,14 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
+	// Optional log access token override via environment
+	if token := os.Getenv("LOG_ACCESS_TOKEN"); token != "" {
+		cfg.Server.LogAccessToken = token
+	}
+	if hdr := os.Getenv("LOG_ACCESS_HEADER"); hdr != "" {
+		cfg.Server.LogAccessHeader = hdr
+	}
+
 	if *devMode {
 		log.Println("Running in development mode")
 		cfg.Server.HTTPS = false // Use HTTP in dev mode

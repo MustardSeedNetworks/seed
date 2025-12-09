@@ -2893,6 +2893,23 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Optional token gate
+	if s.logAccessToken != "" || s.requireLogToken {
+		headerName := s.logAccessHeader
+		if headerName == "" {
+			headerName = "X-Log-Token"
+		}
+		token := r.Header.Get(headerName)
+		if token == "" {
+			// allow query param fallback
+			token = r.URL.Query().Get("token")
+		}
+		if token == "" || (s.logAccessToken != "" && token != s.logAccessToken) {
+			http.Error(w, "Log access requires token", http.StatusForbidden)
+			return
+		}
+	}
+
 	if s.logPath == "" {
 		http.Error(w, "Log path not configured", http.StatusInternalServerError)
 		return

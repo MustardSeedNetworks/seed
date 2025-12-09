@@ -26,10 +26,13 @@ type Config struct {
 
 // ServerConfig contains HTTP server settings.
 type ServerConfig struct {
-	Port     int    `yaml:"port"`
-	HTTPS    bool   `yaml:"https"`
-	CertFile string `yaml:"cert_file"`
-	KeyFile  string `yaml:"key_file"`
+	Port             int    `yaml:"port"`
+	HTTPS            bool   `yaml:"https"`
+	CertFile         string `yaml:"cert_file"`
+	KeyFile          string `yaml:"key_file"`
+	LogAccessToken   string `yaml:"log_access_token,omitempty"`   // Optional token required to read /api/logs
+	LogAccessHeader  string `yaml:"log_access_header,omitempty"`  // Header name to supply the token (default: X-Log-Token)
+	RequireLogAccess bool   `yaml:"require_log_access,omitempty"` // Force token check even if empty token (future-proof)
 }
 
 // InterfaceConfig contains network interface settings.
@@ -210,8 +213,9 @@ type SecurityConfig struct {
 func DefaultConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port:  8443,
-			HTTPS: true,
+			Port:            8443,
+			HTTPS:           true,
+			LogAccessHeader: "X-Log-Token",
 		},
 		Interface: InterfaceConfig{
 			Default:   "eth0",

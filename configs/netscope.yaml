@@ -3,6 +3,10 @@ server:
   https: false
   cert_file: ""
   key_file: ""
+  # Optional log access protection (leave empty to disable):
+  # log_access_token: ""
+  # log_access_header: "X-Log-Token"
+  # require_log_access: false
 interface:
   default: eth0
   fallbacks:

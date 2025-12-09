@@ -54,6 +54,9 @@ type Server struct {
 	speedtestTester  *speedtest.Tester
 	iperfManager     *iperf.Manager
 	publicipChecker  *publicip.Checker
+	logAccessToken   string
+	logAccessHeader  string
+	requireLogToken  bool
 }
 
 // NewServer creates a new server instance.
@@ -82,6 +85,9 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		speedtestTester:  speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 		iperfManager:     iperf.NewManager(),
 		publicipChecker:  publicip.NewChecker(),
+		logAccessToken:   cfg.Server.LogAccessToken,
+		logAccessHeader:  cfg.Server.LogAccessHeader,
+		requireLogToken:  cfg.Server.RequireLogAccess,
 	}
 
 	// Set up link state change callback

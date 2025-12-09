@@ -472,9 +472,14 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   const fetchLogPreview = useCallback(async () => {
     setLogLoading(true);
     setLogError(null);
+    const logToken = import.meta.env.VITE_LOG_ACCESS_TOKEN;
+    const logHeader = import.meta.env.VITE_LOG_ACCESS_HEADER || "X-Log-Token";
     try {
       const response = await fetch(`${API_BASE}/api/logs?lines=200`, {
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(),
+          ...(logToken ? { [logHeader]: logToken } : {}),
+        },
       });
       if (!response.ok) {
         throw new Error("Unable to load logs");
