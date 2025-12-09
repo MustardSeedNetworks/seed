@@ -212,8 +212,8 @@ export function CardValue({
         data-testid="card-value"
       >
         {statusIcon && (
-          <span className={`inline-flex items-center justify-center`}>
-            <span className="w-4 h-4">{statusIcon}</span>
+          <span className="inline-flex items-center justify-center w-3 h-3 shrink-0 text-current">
+            {statusIcon}
           </span>
         )}
         <span className="flex items-baseline gap-1">
@@ -258,7 +258,9 @@ export function CardRow({
         title={String(value)}
         data-testid="card-row-value"
       >
-        {statusIcon && <span className="w-4 h-4">{statusIcon}</span>}
+        {statusIcon && (
+          <span className="w-3 h-3 shrink-0 text-current">{statusIcon}</span>
+        )}
         <span>{value}</span>
       </span>
     </div>
