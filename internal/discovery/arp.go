@@ -1,13 +1,10 @@
 package discovery
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"net"
-	"os/exec"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -25,6 +22,7 @@ type ARPEntry struct {
 	OSGuess      string    `json:"osGuess,omitempty"`
 	LastSeen     time.Time `json:"lastSeen"`
 	ResponseTime int64     `json:"responseTime,omitempty"` // in milliseconds
+	IsLocal      bool      `json:"isLocal"`                // true if on local subnet, false for additional subnets
 }
 
 // ARPScanner performs active network discovery via ARP.
@@ -188,6 +186,11 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		return fmt.Errorf("failed to read ARP table: %w", err)
 	}
 
+	// Mark ARP entries as local (ARP only works on local subnet)
+	for _, entry := range entries {
+		entry.IsLocal = true
+	}
+
 	// Merge ping responders that aren't in ARP table (remote subnets)
 	s.mu.RLock()
 	responders := make([]string, len(s.pingResponders))
@@ -200,7 +203,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		existingIPs[entry.IP] = true
 	}
 
-	// Add ping responders not in ARP table
+	// Add ping responders not in ARP table (these are from remote/additional subnets)
 	for _, ip := range responders {
 		if !existingIPs[ip] {
 			entries = append(entries, &ARPEntry{
@@ -208,6 +211,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 				MAC:      "", // No MAC for remote hosts (ARP doesn't work across routers)
 				State:    "PING_ONLY",
 				LastSeen: time.Now(),
+				IsLocal:  false, // Remote subnet - not local
 			})
 		}
 	}
@@ -281,183 +285,9 @@ func (s *ARPScanner) Close() error {
 }
 
 // readARPTable reads the system ARP table.
+// Uses netlink on Linux, exec commands on macOS.
 func (s *ARPScanner) readARPTable() ([]*ARPEntry, error) {
-	switch runtime.GOOS {
-	case "darwin":
-		return s.readARPTableDarwin()
-	case "linux":
-		return s.readARPTableLinux()
-	default:
-		return nil, fmt.Errorf("unsupported OS: %s", runtime.GOOS)
-	}
-}
-
-// readARPTableDarwin reads ARP table on macOS.
-func (s *ARPScanner) readARPTableDarwin() ([]*ARPEntry, error) {
-	cmd := exec.Command("arp", "-a")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	var entries []*ARPEntry
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		// Format: hostname (IP) at MAC on interface [ifscope ...]
-		// Example: ? (192.168.1.1) at 00:11:22:33:44:55 on en0 ifscope [ethernet]
-
-		entry := s.parseARPLineDarwin(line)
-		if entry != nil && s.isInSubnet(entry.IP) {
-			entries = append(entries, entry)
-		}
-	}
-
-	return entries, scanner.Err()
-}
-
-// parseARPLineDarwin parses a single ARP line on macOS.
-func (s *ARPScanner) parseARPLineDarwin(line string) *ARPEntry {
-	// Find IP in parentheses
-	start := strings.Index(line, "(")
-	end := strings.Index(line, ")")
-	if start < 0 || end < 0 || end <= start {
-		return nil
-	}
-	ip := line[start+1 : end]
-
-	// Find MAC after "at "
-	atIdx := strings.Index(line, " at ")
-	if atIdx < 0 {
-		return nil
-	}
-	rest := line[atIdx+4:]
-
-	// MAC is next token
-	parts := strings.Fields(rest)
-	if len(parts) < 1 {
-		return nil
-	}
-	mac := parts[0]
-
-	// Skip incomplete entries
-	if mac == "(incomplete)" {
-		return nil
-	}
-
-	// Find interface after "on "
-	var iface string
-	onIdx := strings.Index(rest, " on ")
-	if onIdx >= 0 {
-		ifaceParts := strings.Fields(rest[onIdx+4:])
-		if len(ifaceParts) > 0 {
-			iface = ifaceParts[0]
-		}
-	}
-
-	// Normalize MAC format
-	mac = normalizeMac(mac)
-
-	return &ARPEntry{
-		IP:        ip,
-		MAC:       mac,
-		Interface: iface,
-		State:     "REACHABLE",
-		LastSeen:  time.Now(),
-	}
-}
-
-// readARPTableLinux reads ARP table on Linux.
-func (s *ARPScanner) readARPTableLinux() ([]*ARPEntry, error) {
-	// Use ip neigh for more detailed info
-	cmd := exec.Command("ip", "neigh", "show")
-	output, err := cmd.Output()
-	if err != nil {
-		// Fallback to arp -a
-		return s.readARPTableLinuxFallback()
-	}
-
-	var entries []*ARPEntry
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		// Format: IP dev INTERFACE lladdr MAC STATE
-		// Example: 192.168.1.1 dev eth0 lladdr 00:11:22:33:44:55 REACHABLE
-
-		entry := s.parseIPNeighLine(line)
-		if entry != nil && s.isInSubnet(entry.IP) {
-			entries = append(entries, entry)
-		}
-	}
-
-	return entries, scanner.Err()
-}
-
-// parseIPNeighLine parses a line from `ip neigh show`.
-func (s *ARPScanner) parseIPNeighLine(line string) *ARPEntry {
-	parts := strings.Fields(line)
-	if len(parts) < 4 {
-		return nil
-	}
-
-	ip := parts[0]
-	var mac, iface, state string
-
-	for i := 1; i < len(parts); i++ {
-		switch parts[i] {
-		case "dev":
-			if i+1 < len(parts) {
-				iface = parts[i+1]
-				i++
-			}
-		case "lladdr":
-			if i+1 < len(parts) {
-				mac = parts[i+1]
-				i++
-			}
-		case "REACHABLE", "STALE", "DELAY", "PROBE", "PERMANENT", "NOARP", "INCOMPLETE", "FAILED":
-			state = parts[i]
-		}
-	}
-
-	// Skip entries without MAC
-	if mac == "" || state == "INCOMPLETE" || state == "FAILED" {
-		return nil
-	}
-
-	mac = normalizeMac(mac)
-
-	return &ARPEntry{
-		IP:        ip,
-		MAC:       mac,
-		Interface: iface,
-		State:     state,
-		LastSeen:  time.Now(),
-	}
-}
-
-// readARPTableLinuxFallback reads ARP table using arp -a on Linux.
-func (s *ARPScanner) readARPTableLinuxFallback() ([]*ARPEntry, error) {
-	cmd := exec.Command("arp", "-a")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	var entries []*ARPEntry
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		entry := s.parseARPLineDarwin(line) // Similar format
-		if entry != nil && s.isInSubnet(entry.IP) {
-			entries = append(entries, entry)
-		}
-	}
-
-	return entries, scanner.Err()
+	return s.readARPTablePlatform()
 }
 
 // isInSubnet checks if an IP is in the current subnet or any additional subnets.
