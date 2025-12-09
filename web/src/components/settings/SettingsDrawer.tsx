@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useTheme } from "../../hooks/useTheme";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
@@ -31,30 +31,23 @@ function AutoSaveIndicator({
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+interface ThresholdPair {
+  good: number;
+  warning: number;
+}
+
 interface Thresholds {
-  dns: {
-    good: number;
-    warning: number;
-  };
-  gateway: {
-    good: number;
-    warning: number;
-  };
-  wifi: {
-    good: number;
-    warning: number;
-  };
-  customPing: {
-    good: number;
-    warning: number;
-  };
-  customTcp: {
-    good: number;
-    warning: number;
-  };
-  customHttp: {
-    good: number;
-    warning: number;
+  dns: ThresholdPair;
+  gateway: ThresholdPair;
+  wifi: ThresholdPair;
+  customPing: ThresholdPair;
+  customTcp: ThresholdPair;
+  customHttp: ThresholdPair;
+  httpTimings: {
+    dns: ThresholdPair;
+    tcp: ThresholdPair;
+    tls: ThresholdPair;
+    ttfb: ThresholdPair;
   };
 }
 
@@ -187,14 +180,31 @@ interface SettingsDrawerProps {
   onClose: () => void;
 }
 
-export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
+export const SettingsDrawer = memo(function SettingsDrawer({
+  isOpen,
+  onClose,
+}: SettingsDrawerProps) {
   const { theme, setTheme, isDark } = useTheme();
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Track if health check settings were modified - dispatch event on drawer close
+  const testsSettingsChangedRef = useRef(false);
+  const prevIsOpenRef = useRef(isOpen);
+
   // Smooth scroll to top when opened
   useEffect(() => {
     if (isOpen && scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
+  }, [isOpen]);
+
+  // When drawer closes, dispatch healthChecksUpdated if test settings changed
+  useEffect(() => {
+    if (prevIsOpenRef.current && !isOpen && testsSettingsChangedRef.current) {
+      // Drawer just closed and test settings were changed
+      window.dispatchEvent(new CustomEvent("healthChecksUpdated"));
+      testsSettingsChangedRef.current = false;
+    }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen]);
   const [thresholds, setThresholds] = useState<Thresholds>({
     dns: { good: 50, warning: 100 },
@@ -203,6 +213,12 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     customPing: { good: 50, warning: 100 },
     customTcp: { good: 100, warning: 500 },
     customHttp: { good: 500, warning: 2000 },
+    httpTimings: {
+      dns: { good: 100, warning: 500 },
+      tcp: { good: 100, warning: 500 },
+      tls: { good: 150, warning: 500 },
+      ttfb: { good: 500, warning: 2000 },
+    },
   });
   const [ipSettings, setIPSettings] = useState<IPSettings>({
     mode: "dhcp",
@@ -756,7 +772,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   }, [thresholds]);
 
   const updateThreshold = (
-    category: keyof Thresholds,
+    category: keyof Omit<Thresholds, "httpTimings">,
     level: "good" | "warning",
     value: number,
   ) => {
@@ -765,6 +781,23 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       [category]: {
         ...prev[category],
         [level]: value,
+      },
+    }));
+  };
+
+  const updateHttpTimingThreshold = (
+    phase: keyof Thresholds["httpTimings"],
+    level: "good" | "warning",
+    value: number,
+  ) => {
+    setThresholds((prev) => ({
+      ...prev,
+      httpTimings: {
+        ...prev.httpTimings,
+        [phase]: {
+          ...prev.httpTimings[phase],
+          [level]: value,
+        },
       },
     }));
   };
@@ -822,7 +855,8 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       if (response.ok) {
         setTestsStatus("saved");
         setTimeout(() => setTestsStatus("idle"), 2000);
-        window.dispatchEvent(new CustomEvent("healthChecksUpdated"));
+        // Mark that test settings changed - event dispatched on drawer close
+        testsSettingsChangedRef.current = true;
       } else {
         setTestsStatus("error");
       }
@@ -1770,11 +1804,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
             </div>
           </CollapsibleSection>
 
-          {/* Run All Tests toggles */}
+          {/* Optional Cards visibility */}
           <CollapsibleSection
             title={
               <>
-                Run All Tests
+                Optional Cards
                 <AutoSaveIndicator status={testsStatus} />
               </>
             }
@@ -2741,45 +2775,228 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 </div>
               </div>
 
-              {/* Health Check HTTP Thresholds */}
+              {/* HTTP Thresholds (Total + Timing Phases) */}
               <div className="p-3 bg-surface-base rounded border border-surface-border">
                 <span className="text-sm font-medium text-text-primary block mb-2">
-                  Health Check: HTTP (ms)
+                  HTTP Thresholds (ms)
                 </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs text-text-muted">
-                      Good (&lt;)
-                    </label>
-                    <input
-                      type="number"
-                      value={thresholds.customHttp.good}
-                      onChange={(e) =>
-                        updateThreshold(
-                          "customHttp",
-                          "good",
-                          Number(e.target.value),
-                        )
-                      }
-                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
-                    />
+
+                {/* Total */}
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-text-primary block mb-1">
+                    Total Response Time
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Good (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.customHttp.good}
+                        onChange={(e) =>
+                          updateThreshold(
+                            "customHttp",
+                            "good",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Warning (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.customHttp.warning}
+                        onChange={(e) =>
+                          updateThreshold(
+                            "customHttp",
+                            "warning",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs text-text-muted">
-                      Warning (&lt;)
-                    </label>
-                    <input
-                      type="number"
-                      value={thresholds.customHttp.warning}
-                      onChange={(e) =>
-                        updateThreshold(
-                          "customHttp",
-                          "warning",
-                          Number(e.target.value),
-                        )
-                      }
-                      className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
-                    />
+                </div>
+
+                <p className="text-xs text-text-muted mb-3 border-t border-surface-border pt-2">
+                  Per-phase thresholds:
+                </p>
+
+                {/* DNS */}
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-text-primary block mb-1">
+                    DNS Lookup
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Good (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.httpTimings.dns.good}
+                        onChange={(e) =>
+                          updateHttpTimingThreshold(
+                            "dns",
+                            "good",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Warning (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.httpTimings.dns.warning}
+                        onChange={(e) =>
+                          updateHttpTimingThreshold(
+                            "dns",
+                            "warning",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* TCP */}
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-text-primary block mb-1">
+                    TCP Connect
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Good (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.httpTimings.tcp.good}
+                        onChange={(e) =>
+                          updateHttpTimingThreshold(
+                            "tcp",
+                            "good",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Warning (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.httpTimings.tcp.warning}
+                        onChange={(e) =>
+                          updateHttpTimingThreshold(
+                            "tcp",
+                            "warning",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* TLS */}
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-text-primary block mb-1">
+                    TLS Handshake
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Good (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.httpTimings.tls.good}
+                        onChange={(e) =>
+                          updateHttpTimingThreshold(
+                            "tls",
+                            "good",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Warning (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.httpTimings.tls.warning}
+                        onChange={(e) =>
+                          updateHttpTimingThreshold(
+                            "tls",
+                            "warning",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* TTFB */}
+                <div>
+                  <span className="text-xs font-medium text-text-primary block mb-1">
+                    TTFB (Server Wait)
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Good (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.httpTimings.ttfb.good}
+                        onChange={(e) =>
+                          updateHttpTimingThreshold(
+                            "ttfb",
+                            "good",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-text-muted">
+                        Warning (&lt;)
+                      </label>
+                      <input
+                        type="number"
+                        value={thresholds.httpTimings.ttfb.warning}
+                        onChange={(e) =>
+                          updateHttpTimingThreshold(
+                            "ttfb",
+                            "warning",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded text-sm text-text-primary"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3115,4 +3332,4 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       </div>
     </>
   );
-}
+});
