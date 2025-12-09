@@ -43,7 +43,7 @@ type ServerTestResult struct {
 // TestResult contains the complete DNS test results.
 type TestResult struct {
 	Server           string              `json:"server"`
-	Servers          []string            `json:"servers"`          // All configured DNS servers
+	Servers          []string            `json:"servers"` // All configured DNS servers
 	TestHostname     string              `json:"testHostname"`
 	Forward          *LookupResult       `json:"forward"`          // IPv4 forward lookup (A record)
 	ForwardIPv6      *LookupResult       `json:"forwardIpv6"`      // IPv6 forward lookup (AAAA record)
@@ -338,11 +338,12 @@ func (t *Tester) TestServer(ctx context.Context, server string) *ServerTestResul
 		result.AvgTimeMs = totalTime / count
 	}
 
-	if hasError {
+	switch {
+	case hasError:
 		result.Status = StatusError
-	} else if hasWarning {
+	case hasWarning:
 		result.Status = StatusWarning
-	} else {
+	default:
 		result.Status = StatusSuccess
 	}
 

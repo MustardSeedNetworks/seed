@@ -1,14 +1,17 @@
 package api
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +25,54 @@ import (
 	"github.com/krisarmstrong/netscope/internal/validation"
 	"github.com/krisarmstrong/netscope/internal/version"
 )
+
+// sendJSONResponse is a helper to send JSON responses and handle encoding errors.
+func sendJSONResponse(w http.ResponseWriter, status int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("Error encoding JSON response: %v", err)
+	}
+}
+
+func readLastLines(path string, maxBytes int64, maxLines int) ([]string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	info, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	var start int64
+	if info.Size() > maxBytes {
+		start = info.Size() - maxBytes
+	}
+	if start > 0 {
+		if _, err := f.Seek(start, io.SeekStart); err != nil {
+			return nil, err
+		}
+	}
+
+	scanner := bufio.NewScanner(f)
+	// Allow long lines (up to 1MB)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+
+	lines := make([]string, 0, maxLines)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+		if len(lines) > maxLines {
+			lines = lines[1:]
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return lines, nil
+}
 
 // LoginRequest represents a login request.
 type LoginRequest struct {
@@ -65,11 +116,10 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	resp := LoginResponse{
 		Token:   token,
-		Expires: int64(s.config.Auth.SessionTimeout.Seconds()),
+		Expires: time.Now().Add(s.config.Auth.SessionTimeout).Unix(),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // handleLogout handles user logout.
@@ -81,8 +131,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 
 	// JWT is stateless, so we just acknowledge the logout
 	// Client should discard the token
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "logged out"})
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "logged out"})
 }
 
 // handleStatus returns the system status.
@@ -105,8 +154,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		IsWireless: isWireless,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // handleSettings handles settings get/update.
@@ -162,8 +210,7 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(settings)
+	sendJSONResponse(w, http.StatusOK, settings)
 }
 
 func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
@@ -225,8 +272,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "updated"})
 }
 
 // handleInterfaces returns available network interfaces.
@@ -241,11 +287,13 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.netManager.RefreshInterfaces()
+	if err := s.netManager.RefreshInterfaces(); err != nil {
+		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		return
+	}
 	interfaces := s.netManager.GetInterfaces()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(interfaces)
+	sendJSONResponse(w, http.StatusOK, interfaces)
 }
 
 // SetInterfaceRequest represents a request to change the current interface.
@@ -262,8 +310,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
+		sendJSONResponse(w, http.StatusOK, map[string]string{
 			"interface": s.netManager.GetCurrentInterface(),
 		})
 	case http.MethodPut:
@@ -281,6 +328,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 		// Also update discovery manager to use new interface
 		if err := s.discoveryManager.SetInterface(req.Interface); err != nil {
 			// Log but don't fail - discovery may not work without root
+			log.Printf("failed to set discovery interface: %v", err)
 		}
 
 		// Update WiFi manager interface and check if wireless
@@ -299,8 +347,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			isWireless = s.wifiManager.IsWireless()
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
 			"status":     "ok",
 			"interface":  req.Interface,
 			"isWireless": isWireless,
@@ -335,7 +382,10 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.netManager.RefreshInterfaces()
+	if err := s.netManager.RefreshInterfaces(); err != nil {
+		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		return
+	}
 	currentIface := s.netManager.GetCurrentInterface()
 
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
@@ -344,7 +394,10 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	linkStatus, _ := s.netManager.GetLinkStatus(currentIface)
+	linkStatus, err := s.netManager.GetLinkStatus(currentIface)
+	if err != nil {
+		log.Printf("failed to get link status for %s: %v", currentIface, err)
+	}
 
 	resp := LinkResponse{
 		Interface: currentIface,
@@ -362,8 +415,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		resp.AutoNeg = linkStatus.AutoNeg
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // IPv4Info represents IPv4 address configuration.
@@ -415,7 +467,10 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.netManager.RefreshInterfaces()
+	if err := s.netManager.RefreshInterfaces(); err != nil {
+		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		return
+	}
 	currentIface := s.netManager.GetCurrentInterface()
 
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
@@ -488,8 +543,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // ipAddrInfo holds parsed IP address information.
@@ -523,11 +577,12 @@ func parseIPAddress(addr string) ipAddrInfo {
 		info.prefix = parsePrefix(prefixStr)
 
 		// Determine IPv6 scope
-		if isLinkLocal(info.address) {
+		switch {
+		case isLinkLocal(info.address):
 			info.scope = "link-local"
-		} else if isUniqueLocal(info.address) {
+		case isUniqueLocal(info.address):
 			info.scope = "unique-local"
-		} else {
+		default:
 			info.scope = "global"
 		}
 
@@ -611,7 +666,10 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentIface := s.netManager.GetCurrentInterface()
-	s.netManager.RefreshInterfaces()
+	if err := s.netManager.RefreshInterfaces(); err != nil {
+		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		return
+	}
 
 	// Get interface info
 	var mac string
@@ -793,7 +851,9 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=netscope-export.json")
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
-	encoder.Encode(export)
+	if err := encoder.Encode(export); err != nil {
+		log.Printf("Error encoding export response: %v", err)
+	}
 }
 
 // DiscoveryResponse contains all discovered neighbors.
@@ -846,13 +906,10 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 			Capabilities:      n.Capabilities,
 			ManagementAddress: n.ManagementAddress,
 			TTL:               n.TTL,
-			LastSeen:          n.LastSeen.Format("2006-01-02T15:04:05Z07:00"),
-			SourceMAC:         n.SourceMAC,
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // DNSLookupResult represents a DNS lookup result for the API.
@@ -983,8 +1040,7 @@ func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // GatewayResponse represents the gateway ping test results for the API.
@@ -1052,8 +1108,7 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // VLANResponse represents the VLAN information for the API.
@@ -1109,8 +1164,7 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 	resp.Configured.Enabled = info.Configured.Enabled
 	resp.Configured.ID = info.Configured.ID
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // WiFiResponse represents the Wi-Fi information for the API.
@@ -1165,8 +1219,7 @@ func (s *Server) getWiFiSettings(w http.ResponseWriter, r *http.Request) {
 		IsWireless:    s.wifiManager != nil && s.wifiManager.IsWireless(),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
@@ -1191,8 +1244,7 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "WiFi settings updated",
 	})
@@ -1212,8 +1264,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 
 	// Check if interface is wireless
 	if !s.wifiManager.IsWireless() {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
 			"wireless": false,
 			"message":  "Current interface is not a wireless adapter",
 		})
@@ -1223,7 +1274,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 	info := s.wifiManager.GetInfo()
 	if info == nil {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
 			"wireless":  true,
 			"connected": false,
 			"message":   "Not connected to a wireless network",
@@ -1240,8 +1291,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 		Security:  info.Security,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // CableResponse represents the cable test results for the API.
@@ -1295,8 +1345,7 @@ func (s *Server) handleIPSettingsGet(w http.ResponseWriter, r *http.Request) {
 		resp.DNS = s.config.IP.Static.DNS
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // handleIPSettingsPut updates the IP configuration settings.
@@ -1356,10 +1405,12 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Refresh interface data
-	s.netManager.RefreshInterfaces()
+	if err := s.netManager.RefreshInterfaces(); err != nil {
+		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		return
+	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "IP configuration updated",
 	})
@@ -1386,8 +1437,7 @@ func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 		Faults:    result.Faults,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // TestsSettingsResponse represents the custom tests configuration.
@@ -1508,8 +1558,7 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
@@ -1608,8 +1657,7 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "Tests settings updated",
 	})
@@ -1707,11 +1755,12 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			testResult.Jitter = pingStats.Jitter
 
 			// Determine status based on latency or packet loss
-			if pingStats.PacketLoss > 50 {
+			switch {
+			case pingStats.PacketLoss > 50:
 				testResult.TestStatus = "error"
-			} else if pingStats.PacketLoss > 10 {
+			case pingStats.PacketLoss > 10:
 				testResult.TestStatus = "warning"
-			} else {
+			default:
 				testResult.TestStatus = getTestStatus(pingStats.AvgLatency, pingThreshold.Warning.Milliseconds(), pingThreshold.Critical.Milliseconds())
 			}
 		}
@@ -1856,8 +1905,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		result.HTTPResults = append(result.HTTPResults, testResult)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	sendJSONResponse(w, http.StatusOK, result)
 }
 
 // runTCPTest runs a TCP port test and returns latency in ms.
@@ -1877,7 +1925,7 @@ func runTCPTest(host string, port int) (float64, error) {
 }
 
 // runHTTPTest runs an HTTP test and returns status code, latency in ms.
-func runHTTPTest(url string, expectedStatus int) (int, float64, error) {
+func runHTTPTest(url string, expectedStatus int) (status int, latency float64, err error) {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -1885,20 +1933,29 @@ func runHTTPTest(url string, expectedStatus int) (int, float64, error) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+	if err != nil {
+		return 0, 0, err
+	}
+
 	start := time.Now()
-	resp, err := client.Get(url)
-	latency := time.Since(start).Seconds() * 1000
+	resp, err := client.Do(req)
+	latency = time.Since(start).Seconds() * 1000
 
 	if err != nil {
 		return 0, latency, err
 	}
 	defer resp.Body.Close()
 
-	if expectedStatus > 0 && resp.StatusCode != expectedStatus {
-		return resp.StatusCode, latency, fmt.Errorf("expected %d, got %d", expectedStatus, resp.StatusCode)
+	status = resp.StatusCode
+	if expectedStatus > 0 && status != expectedStatus {
+		return status, latency, fmt.Errorf("expected %d, got %d", expectedStatus, status)
 	}
 
-	return resp.StatusCode, latency, nil
+	return status, latency, nil
 }
 
 // getTestStatus returns status based on latency and thresholds.
@@ -2014,7 +2071,9 @@ func runUDPTest(host string, port int) (float64, error) {
 	defer conn.Close()
 
 	// Set deadline for response
-	conn.SetDeadline(time.Now().Add(3 * time.Second))
+	if err := conn.SetDeadline(time.Now().Add(3 * time.Second)); err != nil {
+		return 0, err
+	}
 
 	// Send a small probe packet
 	_, err = conn.Write([]byte{0x00})
@@ -2085,7 +2144,7 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 		host = host[:idx]
 	}
 	if idx := strings.Index(host, ":"); idx == -1 {
-		host = host + ":443"
+		host += ":443"
 	}
 
 	// Connect with TLS
@@ -2093,6 +2152,7 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 		&net.Dialer{Timeout: 5 * time.Second},
 		"tcp",
 		host,
+		// #nosec G402 - certificate verification intentionally skipped to inspect expiry
 		&tls.Config{InsecureSkipVerify: true}, // We want to check expiry even for self-signed
 	)
 	if err != nil {
@@ -2131,13 +2191,14 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 	info.DaysLeft = daysLeft
 
 	// Determine status
-	if daysLeft <= 0 {
+	switch {
+	case daysLeft <= 0:
 		info.Status = "error" // Expired
-	} else if daysLeft <= criticalDays {
+	case daysLeft <= criticalDays:
 		info.Status = "error" // Critical
-	} else if daysLeft <= warningDays {
+	case daysLeft <= warningDays:
 		info.Status = "warning" // Warning
-	} else {
+	default:
 		info.Status = "success" // OK
 	}
 
@@ -2211,8 +2272,7 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// Return immediately with "started" status
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
 		"status":  "started",
 		"message": "Speedtest started. Poll /api/speedtest/status for results.",
 	})
@@ -2252,8 +2312,7 @@ func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // iperf3 handlers
@@ -2282,8 +2341,7 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 		resp.Version = version
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // IperfClientRequest is the request body for running an iperf3 client test
@@ -2343,11 +2401,12 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Duration+30)*time.Second)
 		defer cancel()
-		s.iperfManager.RunClient(ctx, config)
+		if _, err := s.iperfManager.RunClient(ctx, config); err != nil {
+			log.Printf("iperf client failed: %v", err)
+		}
 	}()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"message": "iperf3 test started. Poll /api/iperf/client/status for results.",
 	})
 }
@@ -2391,8 +2450,7 @@ func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // IperfServerRequest is the request body for starting/stopping the iperf3 server
@@ -2424,8 +2482,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
 			"message": fmt.Sprintf("iperf3 server started on port %d", port),
 			"port":    port,
 		})
@@ -2434,8 +2491,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
+		sendJSONResponse(w, http.StatusOK, map[string]string{
 			"message": "iperf3 server stopped",
 		})
 	default:
@@ -2451,8 +2507,7 @@ func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request)
 	}
 
 	status := s.iperfManager.GetServerStatus()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(status)
+	sendJSONResponse(w, http.StatusOK, status)
 }
 
 // handleDevices returns all discovered network devices.
@@ -2475,8 +2530,7 @@ func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 		"status":  status,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // handleDevicesScan triggers a network device scan.
@@ -2493,8 +2547,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 
 	// Check if scan is already in progress
 	if s.deviceDiscovery.IsScanning() {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
 			"message":  "Scan already in progress",
 			"scanning": true,
 		})
@@ -2520,8 +2573,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		})
 	}()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
 		"message":  "Scan started",
 		"scanning": true,
 	})
@@ -2540,8 +2592,7 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status := s.deviceDiscovery.GetStatus()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(status)
+	sendJSONResponse(w, http.StatusOK, status)
 }
 
 // NetworkDiscoverySettingsResponse represents network discovery settings.
@@ -2578,8 +2629,7 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		OUIFilePath:    s.config.NetworkDiscovery.OUIFilePath,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
@@ -2611,8 +2661,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "Network discovery settings updated",
 	})
@@ -2658,8 +2707,7 @@ func (s *Server) getDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(subnets)
+	sendJSONResponse(w, http.StatusOK, subnets)
 }
 
 func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
@@ -2713,8 +2761,7 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "Subnet added",
 	})
@@ -2761,8 +2808,7 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "Subnet updated",
 	})
@@ -2811,8 +2857,7 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "Subnet deleted",
 	})
@@ -2829,16 +2874,51 @@ func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// Return cached result or fetch if cache expired
 		result := s.publicipChecker.GetPublicIP(r.Context())
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		sendJSONResponse(w, http.StatusOK, result)
 
 	case http.MethodPost:
 		// Force refresh
 		result := s.publicipChecker.Refresh(r.Context())
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		sendJSONResponse(w, http.StatusOK, result)
 
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+// handleLogs returns the tail of the application log file for troubleshooting.
+func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.logPath == "" {
+		http.Error(w, "Log path not configured", http.StatusInternalServerError)
+		return
+	}
+
+	linesParam := r.URL.Query().Get("lines")
+	maxLines := 200
+	if linesParam != "" {
+		if n, err := strconv.Atoi(linesParam); err == nil && n > 0 {
+			if n > 1000 {
+				n = 1000
+			}
+			maxLines = n
+		}
+	}
+
+	const maxBytes int64 = 500 * 1024 // limit read size to 500KB
+	lines, err := readLastLines(s.logPath, maxBytes, maxLines)
+	if err != nil {
+		log.Printf("failed to read log file: %v", err)
+		http.Error(w, "Failed to read log file", http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"path":  s.logPath,
+		"lines": lines,
+	})
 }

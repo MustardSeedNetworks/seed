@@ -14,7 +14,7 @@ import (
 type Info struct {
 	SSID      string `json:"ssid"`
 	BSSID     string `json:"bssid"`
-	Signal    int    `json:"signal"`    // dBm
+	Signal    int    `json:"signal"` // dBm
 	Channel   int    `json:"channel"`
 	Frequency int    `json:"frequency"` // MHz
 	Security  string `json:"security"`
@@ -183,9 +183,10 @@ func getInfoLinux(iface string) *Info {
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 
-		if strings.HasPrefix(line, "SSID:") {
+		switch {
+		case strings.HasPrefix(line, "SSID:"):
 			info.SSID = strings.TrimPrefix(line, "SSID: ")
-		} else if strings.HasPrefix(line, "signal:") {
+		case strings.HasPrefix(line, "signal:"):
 			// Format: "signal: -65 dBm"
 			re := regexp.MustCompile(`-?\d+`)
 			if match := re.FindString(line); match != "" {
@@ -193,7 +194,7 @@ func getInfoLinux(iface string) *Info {
 					info.Signal = sig
 				}
 			}
-		} else if strings.HasPrefix(line, "freq:") {
+		case strings.HasPrefix(line, "freq:"):
 			// Format: "freq: 5180"
 			re := regexp.MustCompile(`\d+`)
 			if match := re.FindString(line); match != "" {
@@ -201,7 +202,7 @@ func getInfoLinux(iface string) *Info {
 					info.Frequency = freq
 				}
 			}
-		} else if strings.Contains(line, "Connected to") {
+		case strings.Contains(line, "Connected to"):
 			// Format: "Connected to 00:11:22:33:44:55"
 			re := regexp.MustCompile(`([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}`)
 			if match := re.FindString(line); match != "" {
