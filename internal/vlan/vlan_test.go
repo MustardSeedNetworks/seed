@@ -212,25 +212,9 @@ func TestConcurrentManagerAccess(t *testing.T) {
 	}
 }
 
-func TestDetectVlanSubinterfacesDarwin(t *testing.T) {
-	// This will return empty on non-macOS systems or if no VLANs configured
-	vlans := detectVlanSubinterfacesDarwin("en0")
-	if vlans == nil {
-		t.Error("expected non-nil slice, even if empty")
-	}
-}
-
-func TestDetectVlanSubinterfacesLinux(t *testing.T) {
-	// This will return empty on non-Linux systems or if no VLANs configured
-	vlans := detectVlanSubinterfacesLinux("eth0")
-	if vlans == nil {
-		t.Error("expected non-nil slice, even if empty")
-	}
-}
-
-func TestDetectVlansFromProc(t *testing.T) {
-	// This will return empty on non-Linux systems or if /proc/net/vlan/config doesn't exist
-	vlans := detectVlansFromProc("eth0")
+func TestDetectVlanSubinterfacesPlatform(t *testing.T) {
+	// This will return empty if no VLANs configured
+	vlans := detectVlanSubinterfacesPlatform("eth0")
 	if vlans == nil {
 		t.Error("expected non-nil slice, even if empty")
 	}
@@ -243,19 +227,11 @@ func TestCreateVlanInterface(t *testing.T) {
 	_ = err
 }
 
-func TestCreateVlanInterfaceLinux(t *testing.T) {
-	// This requires root privileges
-	err := createVlanInterfaceLinux("eth0", 100)
-	// Error is expected without root
+func TestCreateVlanInterfacePlatform(t *testing.T) {
+	// This requires root privileges on Linux
+	err := createVlanInterfacePlatform("eth0", 100)
+	// Error is expected without root or on macOS (returns nil)
 	_ = err
-}
-
-func TestCreateVlanInterfaceDarwin(t *testing.T) {
-	// macOS function returns nil (not implemented)
-	err := createVlanInterfaceDarwin("en0", 100)
-	if err != nil {
-		t.Error("expected nil error for Darwin stub")
-	}
 }
 
 func TestDeleteVlanInterface(t *testing.T) {
