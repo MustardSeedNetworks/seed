@@ -59,7 +59,6 @@ export function LinkCard({ data, loading }: LinkCardProps) {
         label="Carrier"
         value={data.carrier ? "Connected" : "No Signal"}
       />
-      <CardRow label="IP Status" value={data.hasIP ? "Assigned" : "None"} />
       {data.carrier && (
         <>
           <CardRow label="Duplex" value={data.duplex || "Unknown"} />

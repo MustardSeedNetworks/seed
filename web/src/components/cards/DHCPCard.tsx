@@ -293,7 +293,7 @@ export function DHCPCard({
               <div className="space-y-2">
                 {groupedIPv6.map((group, groupIdx) => (
                   <div key={groupIdx} className="space-y-1">
-                    <p className="text-[11px] uppercase tracking-wide text-text-muted font-semibold">
+                    <p className="text-2xs uppercase tracking-wide text-text-muted font-semibold">
                       {group.label}
                     </p>
                     {group.entries.map((ip, idx) => (

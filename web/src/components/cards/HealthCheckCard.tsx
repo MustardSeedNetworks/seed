@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card, Status } from "../ui/Card";
+import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
+import { Tooltip } from "../ui/Tooltip";
 import { getAuthHeaders } from "../../hooks/useAuth";
+import { HTTP_TIMING_HELP } from "../help/HelpContent";
 
 interface TestResult {
   name: string;
@@ -21,6 +24,7 @@ interface TestResult {
   dnsLatency?: number;
   tcpConnect?: number;
   tlsLatency?: number;
+  ttfbLatency?: number;
   // Certificate expiry fields
   certDaysLeft?: number;
   certStatus?: "success" | "warning" | "error";
@@ -209,16 +213,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
             {details}
           </span>
           <span className="inline-flex items-center gap-2">
-            <span
-              className={`inline-flex items-center justify-center rounded-full ${statusColor} ${statusLabel === "warning" ? "bg-status-warning/10" : statusLabel === "success" ? "bg-status-success/10" : "bg-status-error/10"} px-2 py-0.5 text-xs font-medium`}
-              aria-label={`Status: ${statusLabel}`}
-            >
-              {statusLabel === "success"
-                ? "OK"
-                : statusLabel === "warning"
-                  ? "Warn"
-                  : "Fail"}
-            </span>
+            <StatusBadge status={statusLabel} size="sm" />
             <span className={`text-sm font-medium ${statusColor}`}>
               {result.success ? formatLatency(result.latency) : "fail"}
             </span>
@@ -227,6 +222,71 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
         {extendedInfo && (
           <div className="text-xs text-text-muted mt-0.5">{extendedInfo}</div>
         )}
+      </div>
+    );
+  };
+
+  // Timing bar component for HTTP requests
+  const TimingBar = ({ result }: { result: TestResult }) => {
+    const total = result.latency || 0;
+    // Guard against NaN, Infinity, and zero/negative values
+    if (!total || !Number.isFinite(total) || total <= 0) return null;
+
+    // Safely extract timing values, treating NaN/undefined as 0
+    const safeNum = (v: number | undefined) =>
+      v !== undefined && Number.isFinite(v) ? v : 0;
+    const dns = safeNum(result.dnsLatency);
+    const tcp = safeNum(result.tcpConnect);
+    const tls = safeNum(result.tlsLatency);
+    const ttfb = safeNum(result.ttfbLatency);
+    // Download time is what's left after subtracting known phases
+    const download = Math.max(0, total - dns - tcp - tls - ttfb);
+
+    const segments = [
+      { label: "DNS", value: dns, color: "bg-blue-400" },
+      { label: "TCP", value: tcp, color: "bg-cyan-400" },
+      { label: "TLS", value: tls, color: "bg-purple-400" },
+      { label: "Wait", value: ttfb, color: "bg-amber-400" },
+      { label: "Download", value: download, color: "bg-green-400" },
+    ].filter((s) => s.value > 0 && Number.isFinite(s.value));
+
+    if (segments.length === 0) return null;
+
+    const fmt = (ms: number) =>
+      ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
+
+    return (
+      <div className="mt-1.5">
+        {/* Stacked bar */}
+        <div className="h-2 rounded-full overflow-hidden flex bg-bg-tertiary">
+          {segments.map((seg, i) => (
+            <div
+              key={seg.label}
+              className={`${seg.color} ${i === 0 ? "rounded-l-full" : ""} ${i === segments.length - 1 ? "rounded-r-full" : ""}`}
+              style={{
+                width: `${Math.min(100, Math.max(0, (seg.value / total) * 100))}%`,
+              }}
+              title={`${seg.label}: ${fmt(seg.value)}`}
+            />
+          ))}
+        </div>
+        {/* Legend with tooltips */}
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-text-muted">
+          {segments.map((seg) => (
+            <Tooltip
+              key={seg.label}
+              content={HTTP_TIMING_HELP[seg.label] || seg.label}
+              position="bottom"
+            >
+              <span className="inline-flex items-center gap-1">
+                <span
+                  className={`inline-block w-2 h-2 rounded-full ${seg.color}`}
+                />
+                {seg.label} {fmt(seg.value)}
+              </span>
+            </Tooltip>
+          ))}
+        </div>
       </div>
     );
   };
@@ -269,25 +329,15 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
       return `${Math.floor(days / 365)}y`;
     };
 
-    const timingBits: string[] = [];
-    const fmt = (ms?: number) =>
-      ms !== undefined
-        ? ms >= 1000
-          ? `${(ms / 1000).toFixed(1)}s`
-          : `${Math.round(ms)}ms`
-        : "";
-    if (result.dnsLatency !== undefined) {
-      timingBits.push(`DNS ${fmt(result.dnsLatency)}`);
-    }
-    if (result.tcpConnect !== undefined) {
-      timingBits.push(`TCP ${fmt(result.tcpConnect)}`);
-    }
-    if (result.tlsLatency !== undefined && result.tlsLatency > 0) {
-      timingBits.push(`TLS ${fmt(result.tlsLatency)}`);
-    }
+    // Check if we have timing breakdown data
+    const hasTimingData =
+      result.dnsLatency !== undefined ||
+      result.tcpConnect !== undefined ||
+      result.tlsLatency !== undefined ||
+      result.ttfbLatency !== undefined;
 
     return (
-      <div key={`http-${result.name}`} className="py-1">
+      <div key={`http-${result.name}`} className="py-1.5">
         <div className="flex items-center justify-between">
           <span
             className="text-sm text-text-muted truncate flex-1"
@@ -300,13 +350,9 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
             {result.success ? formatLatency(result.latency) : "fail"}
           </span>
         </div>
-        {timingBits.length > 0 && (
-          <div className="text-xs text-text-muted mt-0.5">
-            {timingBits.join(" · ")}
-          </div>
-        )}
+        {hasTimingData && result.success && <TimingBar result={result} />}
         {(hasTLS || hasCertInfo) && (
-          <div className="text-xs mt-0.5 flex items-center gap-2">
+          <div className="text-xs mt-1 flex items-center gap-2">
             {hasTLS && (
               <span className="text-text-muted">{result.tlsVersion}</span>
             )}

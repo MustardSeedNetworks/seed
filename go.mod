@@ -13,6 +13,8 @@ require (
 
 require gopkg.in/natefinch/lumberjack.v2 v2.2.1
 
+require github.com/safchain/ethtool v0.7.0 // indirect
+
 require (
 	golang.org/x/net v0.47.0
 	golang.org/x/sys v0.39.0 // indirect

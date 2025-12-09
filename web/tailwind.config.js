@@ -4,6 +4,12 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
+      fontSize: {
+        "2xs": ["0.6875rem", { lineHeight: "1rem" }], // 11px - replaces text-[11px]
+      },
+      maxHeight: {
+        modal: "85vh", // replaces max-h-[85vh]
+      },
       fontFamily: {
         display: [
           '"Inter"',
