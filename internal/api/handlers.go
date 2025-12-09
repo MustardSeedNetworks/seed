@@ -210,6 +210,24 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 				"good":    s.config.Thresholds.CustomTests.HTTP.Warning.Milliseconds(),
 				"warning": s.config.Thresholds.CustomTests.HTTP.Critical.Milliseconds(),
 			},
+			"httpTimings": map[string]map[string]int64{
+				"dns": {
+					"good":    s.config.Thresholds.CustomTests.HTTPTimings.DNS.Warning.Milliseconds(),
+					"warning": s.config.Thresholds.CustomTests.HTTPTimings.DNS.Critical.Milliseconds(),
+				},
+				"tcp": {
+					"good":    s.config.Thresholds.CustomTests.HTTPTimings.TCP.Warning.Milliseconds(),
+					"warning": s.config.Thresholds.CustomTests.HTTPTimings.TCP.Critical.Milliseconds(),
+				},
+				"tls": {
+					"good":    s.config.Thresholds.CustomTests.HTTPTimings.TLS.Warning.Milliseconds(),
+					"warning": s.config.Thresholds.CustomTests.HTTPTimings.TLS.Critical.Milliseconds(),
+				},
+				"ttfb": {
+					"good":    s.config.Thresholds.CustomTests.HTTPTimings.TTFB.Warning.Milliseconds(),
+					"warning": s.config.Thresholds.CustomTests.HTTPTimings.TTFB.Critical.Milliseconds(),
+				},
+			},
 		},
 	}
 
@@ -271,6 +289,40 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			}
 			if warning, ok := customHttp["warning"].(float64); ok {
 				s.config.Thresholds.CustomTests.HTTP.Critical = time.Duration(warning) * time.Millisecond
+			}
+		}
+		if httpTimings, ok := thresholds["httpTimings"].(map[string]interface{}); ok {
+			if dns, ok := httpTimings["dns"].(map[string]interface{}); ok {
+				if good, ok := dns["good"].(float64); ok {
+					s.config.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(good) * time.Millisecond
+				}
+				if warning, ok := dns["warning"].(float64); ok {
+					s.config.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(warning) * time.Millisecond
+				}
+			}
+			if tcp, ok := httpTimings["tcp"].(map[string]interface{}); ok {
+				if good, ok := tcp["good"].(float64); ok {
+					s.config.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(good) * time.Millisecond
+				}
+				if warning, ok := tcp["warning"].(float64); ok {
+					s.config.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(warning) * time.Millisecond
+				}
+			}
+			if tls, ok := httpTimings["tls"].(map[string]interface{}); ok {
+				if good, ok := tls["good"].(float64); ok {
+					s.config.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(good) * time.Millisecond
+				}
+				if warning, ok := tls["warning"].(float64); ok {
+					s.config.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(warning) * time.Millisecond
+				}
+			}
+			if ttfb, ok := httpTimings["ttfb"].(map[string]interface{}); ok {
+				if good, ok := ttfb["good"].(float64); ok {
+					s.config.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(good) * time.Millisecond
+				}
+				if warning, ok := ttfb["warning"].(float64); ok {
+					s.config.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(warning) * time.Millisecond
+				}
 			}
 		}
 	}
@@ -1711,8 +1763,13 @@ type CustomTestResult struct {
 	TLSLatency  float64 `json:"tlsLatency,omitempty"`
 	TTFBLatency float64 `json:"ttfbLatency,omitempty"` // Time to first byte (server processing + wait)
 	Error       string  `json:"error,omitempty"`
-	Status     int     `json:"status,omitempty"`     // HTTP status code
-	TestStatus string  `json:"testStatus,omitempty"` // success, warning, error
+	Status      int     `json:"status,omitempty"`     // HTTP status code
+	TestStatus  string  `json:"testStatus,omitempty"` // success, warning, error
+	// Per-phase status fields for HTTP timing breakdown
+	DNSStatus  string `json:"dnsStatus,omitempty"`  // success, warning, error
+	TCPStatus  string `json:"tcpStatus,omitempty"`  // success, warning, error
+	TLSStatus  string `json:"tlsStatus,omitempty"`  // success, warning, error
+	TTFBStatus string `json:"ttfbStatus,omitempty"` // success, warning, error
 	// Extended ping fields
 	PacketLoss float64 `json:"packetLoss,omitempty"` // Percentage
 	Jitter     float64 `json:"jitter,omitempty"`     // ms
@@ -1762,6 +1819,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 	tcpThreshold := s.config.Thresholds.CustomTests.TCP
 	udpThreshold := s.config.Thresholds.CustomTests.UDP
 	httpThreshold := s.config.Thresholds.CustomTests.HTTP
+	httpTimingThresholds := s.config.Thresholds.CustomTests.HTTPTimings
 	certThreshold := s.config.Thresholds.CustomTests.CertExpiry
 
 	// Run extended ping tests (with packet loss and jitter)
@@ -1924,7 +1982,22 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			testResult.TestStatus = "error"
 		} else {
 			testResult.Success = true
-			testResult.TestStatus = getTestStatus(timings.Total, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
+			// Evaluate each phase against its threshold
+			testResult.DNSStatus = getTestStatus(timings.DNS, httpTimingThresholds.DNS.Warning.Milliseconds(), httpTimingThresholds.DNS.Critical.Milliseconds())
+			testResult.TCPStatus = getTestStatus(timings.Connect, httpTimingThresholds.TCP.Warning.Milliseconds(), httpTimingThresholds.TCP.Critical.Milliseconds())
+			testResult.TLSStatus = getTestStatus(timings.TLS, httpTimingThresholds.TLS.Warning.Milliseconds(), httpTimingThresholds.TLS.Critical.Milliseconds())
+			testResult.TTFBStatus = getTestStatus(timings.TTFB, httpTimingThresholds.TTFB.Warning.Milliseconds(), httpTimingThresholds.TTFB.Critical.Milliseconds())
+
+			// Overall test status: error if any phase is error, warning if any warning, else use total time
+			if testResult.DNSStatus == "error" || testResult.TCPStatus == "error" ||
+				testResult.TLSStatus == "error" || testResult.TTFBStatus == "error" {
+				testResult.TestStatus = "error"
+			} else if testResult.DNSStatus == "warning" || testResult.TCPStatus == "warning" ||
+				testResult.TLSStatus == "warning" || testResult.TTFBStatus == "warning" {
+				testResult.TestStatus = "warning"
+			} else {
+				testResult.TestStatus = getTestStatus(timings.Total, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
+			}
 		}
 
 		// Check certificate expiry for HTTPS URLs only
@@ -1977,8 +2050,13 @@ type httpTimings struct {
 
 // runHTTPTest runs an HTTP test and returns status code and timings in ms.
 func runHTTPTest(url string, expectedStatus int) (status int, timing httpTimings, err error) {
+	// Disable connection reuse to get accurate DNS/TCP/TLS timing for each request
+	transport := &http.Transport{
+		DisableKeepAlives: true,
+	}
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Transport: transport,
+		Timeout:   10 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse // Don't follow redirects
 		},
