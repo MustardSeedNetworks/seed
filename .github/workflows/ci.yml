@@ -212,6 +212,9 @@ jobs:
           npm ci
           npm run build
 
+      - name: Install libpcap (cgo dependency)
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+
       - name: Build Go binary
         run: go build -o netscope ./cmd/netscope
 
