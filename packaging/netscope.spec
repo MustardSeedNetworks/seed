@@ -4,6 +4,7 @@ Release:    1%{?dist}
 Summary:    Portable Network Diagnostic Tool with Real-Time Web UI
 License:    BSL 1.1
 URL:        https://github.com/krisarmstrong/netscope
+BuildArch:  __RPM_ARCH__
 
 Requires:   libpcap, systemd
 
@@ -19,17 +20,17 @@ mkdir -p %{buildroot}/lib/systemd/system
 mkdir -p %{buildroot}/usr/share/netscope
 
 # Copy binaries
-install -m 755 dist/netscope-linux-__ARCHITECTURE__ %{buildroot}/usr/local/bin/netscope
-install -m 755 bin/iperf3-linux-__ARCHITECTURE__ %{buildroot}/usr/local/bin/iperf3
+install -m 755 %{_repo_root}/dist/netscope-linux-__ARCHITECTURE__ %{buildroot}/usr/local/bin/netscope
+install -m 755 %{_repo_root}/bin/iperf3-linux-__ARCHITECTURE__ %{buildroot}/usr/local/bin/iperf3
 
 # Copy config files
-cp -r configs/* %{buildroot}/etc/netscope/
+cp -r %{_repo_root}/configs/* %{buildroot}/etc/netscope/
 
 # Copy web assets
-cp -r web/dist %{buildroot}/usr/share/netscope/web
+cp -r %{_repo_root}/web/dist %{buildroot}/usr/share/netscope/web
 
 # Copy systemd service file
-install -m 644 packaging/netscope.service %{buildroot}/lib/systemd/system/netscope.service
+install -m 644 %{_repo_root}/packaging/netscope.service %{buildroot}/lib/systemd/system/netscope.service
 
 %files
 /usr/local/bin/netscope

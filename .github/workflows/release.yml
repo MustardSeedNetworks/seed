@@ -142,15 +142,18 @@ jobs:
 
       - name: Create release packages
         run: |
+          VERSION="${{ github.ref_name }}"
+          PKG_VERSION="${VERSION#v}"
+
           # Create .tar.gz package
-          mkdir -p release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}
-          cp dist/netscope-linux-${{ matrix.arch }} release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/netscope
-          cp bin/iperf3-linux-${{ matrix.arch }} release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/iperf3
-          chmod +x release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/*
-          cp -r configs release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/
-          cp -r web/dist release/netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}/web/
+          mkdir -p release/netscope-${VERSION}-linux-${{ matrix.arch }}
+          cp dist/netscope-linux-${{ matrix.arch }} release/netscope-${VERSION}-linux-${{ matrix.arch }}/netscope
+          cp bin/iperf3-linux-${{ matrix.arch }} release/netscope-${VERSION}-linux-${{ matrix.arch }}/iperf3
+          chmod +x release/netscope-${VERSION}-linux-${{ matrix.arch }}/*
+          cp -r configs release/netscope-${VERSION}-linux-${{ matrix.arch }}/
+          cp -r web/dist release/netscope-${VERSION}-linux-${{ matrix.arch }}/web/
           cd release
-          tar -czvf netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}.tar.gz netscope-${{ github.ref_name }}-linux-${{ matrix.arch }}
+          tar -czvf netscope-${VERSION}-linux-${{ matrix.arch }}.tar.gz netscope-${VERSION}-linux-${{ matrix.arch }}
           cd ..
 
           # Create .deb package
@@ -169,7 +172,7 @@ jobs:
           cp packaging/netscope.service $DEB_DIR/etc/systemd/system/
 
           # Create control file
-          sed "s/__VERSION__/${{ github.ref_name }}/" packaging/control > $DEB_DIR/DEBIAN/control
+          sed "s/__VERSION__/${PKG_VERSION}/" packaging/control > $DEB_DIR/DEBIAN/control
           sed -i "s/__ARCHITECTURE__/${{ matrix.arch }}/" $DEB_DIR/DEBIAN/control
 
           # Copy postinst script
@@ -188,10 +191,15 @@ jobs:
           fi
 
           SPEC_FILE="packaging/netscope.spec"
-          sed "s/__VERSION__/${{ github.ref_name }}/" $SPEC_FILE > netscope.spec
+          sed "s/__VERSION__/${PKG_VERSION}/" $SPEC_FILE > netscope.spec
           sed -i "s/__ARCHITECTURE__/${{ matrix.arch }}/" netscope.spec
+          sed -i "s/__RPM_ARCH__/${RPM_ARCH}/" netscope.spec
 
-          rpmbuild --define "_topdir $(pwd)/rpmbuild" --define "_rpmdir $(pwd)/release" -bb netscope.spec
+          rpmbuild --target "${RPM_ARCH}" \
+            --define "_repo_root $(pwd)" \
+            --define "_topdir $(pwd)/rpmbuild" \
+            --define "_rpmdir $(pwd)/release" \
+            -bb netscope.spec
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
