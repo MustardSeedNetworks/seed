@@ -112,7 +112,16 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          sudo dpkg --add-architecture arm64
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            sudo dpkg --add-architecture arm64
+            sudo tee /etc/apt/sources.list.d/ports-arm64.list >/dev/null <<'EOF'
+deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe multiverse restricted
+deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe multiverse restricted
+deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main universe multiverse restricted
+deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main universe multiverse restricted
+EOF
+          fi
+
           sudo apt-get update
           sudo apt-get install -y rpm
           if [ "${{ matrix.arch }}" = "arm64" ]; then
