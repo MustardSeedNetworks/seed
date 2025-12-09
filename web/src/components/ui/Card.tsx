@@ -209,6 +209,7 @@ export function CardValue({
       {label && <p className="text-xs text-text-muted mb-1">{label}</p>}
       <p
         className={`${sizeClasses[size]} ${textMods} flex items-center gap-1.5`}
+        data-testid="card-value"
       >
         {statusIcon && (
           <span className={`inline-flex items-center justify-center`}>
@@ -255,6 +256,7 @@ export function CardRow({
       <span
         className={`text-sm font-medium ${align === "right" ? "text-right" : "text-left"} ${wrap ? "break-all whitespace-pre-wrap" : "truncate"} ${mono ? "font-mono tabular-nums" : ""} ${status ? statusConfig[status].color : "text-text-primary"} flex items-center gap-1.5 ${justifyClass}`}
         title={String(value)}
+        data-testid="card-row-value"
       >
         {statusIcon && <span className="w-4 h-4">{statusIcon}</span>}
         <span>{value}</span>

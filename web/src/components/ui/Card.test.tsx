@@ -117,18 +117,18 @@ describe("CardValue", () => {
 
   it("applies size classes correctly", () => {
     const { rerender } = render(<CardValue value="100" size="sm" />);
-    expect(screen.getByText("100")).toHaveClass("text-sm");
+    expect(screen.getByTestId("card-value")).toHaveClass("text-sm");
 
     rerender(<CardValue value="100" size="md" />);
-    expect(screen.getByText("100")).toHaveClass("text-base");
+    expect(screen.getByTestId("card-value")).toHaveClass("text-base");
 
     rerender(<CardValue value="100" size="lg" />);
-    expect(screen.getByText("100")).toHaveClass("text-lg");
+    expect(screen.getByTestId("card-value")).toHaveClass("text-lg");
   });
 
   it("applies status color", () => {
     render(<CardValue value="Error" status="error" />);
-    expect(screen.getByText("Error")).toHaveClass("text-status-error");
+    expect(screen.getByTestId("card-value")).toHaveClass("text-status-error");
   });
 });
 
@@ -147,12 +147,14 @@ describe("CardRow", () => {
 
   it("applies status color to value", () => {
     render(<CardRow label="Status" value="Failed" status="error" />);
-    expect(screen.getByText("Failed")).toHaveClass("text-status-error");
+    expect(screen.getByTestId("card-row-value")).toHaveClass(
+      "text-status-error",
+    );
   });
 
   it("sets title attribute for truncation", () => {
     render(<CardRow label="Long Value" value="This is a very long value" />);
-    const valueElement = screen.getByText("This is a very long value");
+    const valueElement = screen.getByTestId("card-row-value");
     expect(valueElement).toHaveAttribute("title", "This is a very long value");
   });
 });
