@@ -29,6 +29,7 @@ type DiscoveredDevice struct {
 	TTL             int               `json:"ttl,omitempty"`
 	DiscoveryMethod []DiscoveryMethod `json:"discoveryMethod"`
 	LastSeen        time.Time         `json:"lastSeen"`
+	IsLocal         bool              `json:"isLocal"` // true if device is on local subnet
 
 	// Protocol-specific details (populated if discovered via that protocol)
 	LLDPInfo *LLDPDeviceInfo `json:"lldpInfo,omitempty"`
@@ -186,6 +187,7 @@ func (d *DeviceDiscovery) aggregateResults() {
 		device.TTL = arp.TTL
 		device.OSGuess = arp.OSGuess
 		device.LastSeen = arp.LastSeen
+		device.IsLocal = arp.IsLocal
 		if arp.Hostname != "" {
 			device.Hostname = arp.Hostname
 		}

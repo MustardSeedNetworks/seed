@@ -43,6 +43,7 @@ export interface DiscoveredDevice {
   ttl?: number;
   discoveryMethod: DiscoveryMethod[];
   lastSeen: string;
+  isLocal: boolean; // true if on local subnet, false for extended networks
   lldpInfo?: LLDPInfo;
   cdpInfo?: CDPInfo;
   edpInfo?: EDPInfo;
@@ -348,12 +349,17 @@ export function NetworkDiscoveryCard({
 
   const cardStatus = getOverallStatus();
 
-  // Sort devices: those with more discovery methods first, then by IP
+  // Sort devices: local first, then by discovery methods, then by IP
   const sortedDevices = [...devices].sort((a, b) => {
+    // Local devices first
+    if (a.isLocal !== b.isLocal) {
+      return a.isLocal ? -1 : 1;
+    }
+    // Then by discovery method count
     if (b.discoveryMethod.length !== a.discoveryMethod.length) {
       return b.discoveryMethod.length - a.discoveryMethod.length;
     }
-    // Sort by IP numerically
+    // Then by IP numerically
     const ipA = a.ip.split(".").map(Number);
     const ipB = b.ip.split(".").map(Number);
     for (let i = 0; i < 4; i++) {
@@ -361,6 +367,10 @@ export function NetworkDiscoveryCard({
     }
     return 0;
   });
+
+  // Separate into local and extended for display
+  const localDevices = sortedDevices.filter((d) => d.isLocal);
+  const extendedDevices = sortedDevices.filter((d) => !d.isLocal);
 
   return (
     <Card title="Network Discovery" status={cardStatus}>
@@ -408,17 +418,40 @@ export function NetworkDiscoveryCard({
         </div>
       </CollapsibleSection>
 
-      {/* Device List - Collapsible */}
-      {deviceCount > 0 && (
+      {/* Local Devices - Collapsible */}
+      {localDevices.length > 0 && (
         <CollapsibleSection
-          title="Discovered Devices"
+          title="Local Network"
+          variant="compact"
+          defaultOpen={true}
+          count={localDevices.length}
+        >
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {localDevices.map((device) => {
+              const deviceKey = device.mac || `ip:${device.ip}`;
+              return (
+                <DeviceRow
+                  key={deviceKey}
+                  device={device}
+                  isExpanded={expandedDevices.has(deviceKey)}
+                  onToggle={() => toggleDevice(deviceKey)}
+                />
+              );
+            })}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Extended Networks - Collapsible */}
+      {extendedDevices.length > 0 && (
+        <CollapsibleSection
+          title="Extended Networks"
           variant="compact"
           defaultOpen={false}
-          count={deviceCount}
+          count={extendedDevices.length}
         >
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {sortedDevices.map((device) => {
-              // Use MAC as key, but fall back to IP for PING_ONLY devices (no MAC)
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {extendedDevices.map((device) => {
               const deviceKey = device.mac || `ip:${device.ip}`;
               return (
                 <DeviceRow

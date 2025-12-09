@@ -6,6 +6,8 @@ import { Tooltip } from "../ui/Tooltip";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { HTTP_TIMING_HELP } from "../help/HelpContent";
 
+type StatusValue = "success" | "warning" | "error";
+
 interface TestResult {
   name: string;
   host?: string;
@@ -15,7 +17,7 @@ interface TestResult {
   latency: number;
   error?: string;
   status?: number;
-  testStatus?: "success" | "warning" | "error";
+  testStatus?: StatusValue;
   // Extended ping fields
   packetLoss?: number;
   jitter?: number;
@@ -25,9 +27,14 @@ interface TestResult {
   tcpConnect?: number;
   tlsLatency?: number;
   ttfbLatency?: number;
+  // Per-phase status fields
+  dnsStatus?: StatusValue;
+  tcpStatus?: StatusValue;
+  tlsStatus?: StatusValue;
+  ttfbStatus?: StatusValue;
   // Certificate expiry fields
   certDaysLeft?: number;
-  certStatus?: "success" | "warning" | "error";
+  certStatus?: StatusValue;
   certExpiry?: string;
   certCommonName?: string;
   tlsVersion?: string;
@@ -76,9 +83,10 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
     fetchTests();
   }, [fetchTests]);
 
-  // Listen for settings changes to auto-refresh
+  // Listen for settings changes (fired when settings drawer closes after test config changes)
   useEffect(() => {
     const handleHealthChecksUpdated = () => {
+      // Re-run tests with new configuration
       fetchTests();
     };
     window.addEventListener("healthChecksUpdated", handleHealthChecksUpdated);
@@ -242,12 +250,50 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
     // Download time is what's left after subtracting known phases
     const download = Math.max(0, total - dns - tcp - tls - ttfb);
 
+    // Get status-based colors for each segment
+    const getStatusColor = (status?: StatusValue, defaultColor?: string) => {
+      if (status === "error") return "bg-status-error";
+      if (status === "warning") return "bg-status-warning";
+      return defaultColor || "bg-status-success";
+    };
+
+    const getStatusTextColor = (status?: StatusValue) => {
+      if (status === "error") return "text-status-error";
+      if (status === "warning") return "text-status-warning";
+      return "text-text-muted";
+    };
+
     const segments = [
-      { label: "DNS", value: dns, color: "bg-blue-400" },
-      { label: "TCP", value: tcp, color: "bg-cyan-400" },
-      { label: "TLS", value: tls, color: "bg-purple-400" },
-      { label: "Wait", value: ttfb, color: "bg-amber-400" },
-      { label: "Download", value: download, color: "bg-green-400" },
+      {
+        label: "DNS",
+        value: dns,
+        color: getStatusColor(result.dnsStatus, "bg-blue-400"),
+        status: result.dnsStatus,
+      },
+      {
+        label: "TCP",
+        value: tcp,
+        color: getStatusColor(result.tcpStatus, "bg-cyan-400"),
+        status: result.tcpStatus,
+      },
+      {
+        label: "TLS",
+        value: tls,
+        color: getStatusColor(result.tlsStatus, "bg-purple-400"),
+        status: result.tlsStatus,
+      },
+      {
+        label: "Wait",
+        value: ttfb,
+        color: getStatusColor(result.ttfbStatus, "bg-amber-400"),
+        status: result.ttfbStatus,
+      },
+      {
+        label: "Download",
+        value: download,
+        color: "bg-green-400",
+        status: undefined,
+      },
     ].filter((s) => s.value > 0 && Number.isFinite(s.value));
 
     if (segments.length === 0) return null;
@@ -266,19 +312,21 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
               style={{
                 width: `${Math.min(100, Math.max(0, (seg.value / total) * 100))}%`,
               }}
-              title={`${seg.label}: ${fmt(seg.value)}`}
+              title={`${seg.label}: ${fmt(seg.value)}${seg.status && seg.status !== "success" ? ` (${seg.status})` : ""}`}
             />
           ))}
         </div>
         {/* Legend with tooltips */}
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-text-muted">
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs">
           {segments.map((seg) => (
             <Tooltip
               key={seg.label}
               content={HTTP_TIMING_HELP[seg.label] || seg.label}
               position="bottom"
             >
-              <span className="inline-flex items-center gap-1">
+              <span
+                className={`inline-flex items-center gap-1 ${getStatusTextColor(seg.status)}`}
+              >
                 <span
                   className={`inline-block w-2 h-2 rounded-full ${seg.color}`}
                 />

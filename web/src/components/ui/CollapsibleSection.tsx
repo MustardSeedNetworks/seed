@@ -56,7 +56,7 @@ export function CollapsibleSection({
               d="M9 5l7 7-7 7"
             />
           </svg>
-          {status && <StatusBadge status={status} variant="dot" size="sm" />}
+          {status && <StatusBadge status={status} size="sm" />}
           <span
             className={`font-medium text-text-primary ${isCompact ? "text-xs" : "text-sm"}`}
           >

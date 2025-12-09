@@ -166,11 +166,20 @@ type ThresholdsConfig struct {
 
 // CustomThresholds contains thresholds for custom tests.
 type CustomThresholds struct {
-	Ping       Threshold           `yaml:"ping"`        // Custom ping targets
-	TCP        Threshold           `yaml:"tcp"`         // TCP port tests
-	UDP        Threshold           `yaml:"udp"`         // UDP port tests
-	HTTP       Threshold           `yaml:"http"`        // HTTP endpoint tests
-	CertExpiry CertExpiryThreshold `yaml:"cert_expiry"` // Certificate expiry (days)
+	Ping        Threshold            `yaml:"ping"`         // Custom ping targets
+	TCP         Threshold            `yaml:"tcp"`          // TCP port tests
+	UDP         Threshold            `yaml:"udp"`          // UDP port tests
+	HTTP        Threshold            `yaml:"http"`         // HTTP endpoint tests (total time)
+	HTTPTimings HTTPTimingThresholds `yaml:"http_timings"` // Per-phase HTTP timing thresholds
+	CertExpiry  CertExpiryThreshold  `yaml:"cert_expiry"`  // Certificate expiry (days)
+}
+
+// HTTPTimingThresholds contains per-phase thresholds for HTTP requests.
+type HTTPTimingThresholds struct {
+	DNS  Threshold `yaml:"dns"`  // DNS resolution time
+	TCP  Threshold `yaml:"tcp"`  // TCP connection time
+	TLS  Threshold `yaml:"tls"`  // TLS handshake time
+	TTFB Threshold `yaml:"ttfb"` // Time to first byte (server response)
 }
 
 // CertExpiryThreshold contains certificate expiry thresholds in days.
@@ -281,10 +290,16 @@ func DefaultConfig() *Config {
 				Signal: SignalThreshold{Warning: -70, Critical: -80},
 			},
 			CustomTests: CustomThresholds{
-				Ping:       Threshold{Warning: 50 * time.Millisecond, Critical: 100 * time.Millisecond},
-				TCP:        Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-				UDP:        Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-				HTTP:       Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
+				Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 100 * time.Millisecond},
+				TCP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+				UDP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+				HTTP: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
+				HTTPTimings: HTTPTimingThresholds{
+					DNS:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+					TCP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+					TLS:  Threshold{Warning: 150 * time.Millisecond, Critical: 500 * time.Millisecond},
+					TTFB: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
+				},
 				CertExpiry: CertExpiryThreshold{Warning: 30, Critical: 7}, // Days
 			},
 		},
