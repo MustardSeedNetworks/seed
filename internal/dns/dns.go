@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -79,6 +80,7 @@ type Tester struct {
 	thresholds        Thresholds
 	resolver          *net.Resolver
 	configuredServers []ConfiguredServer
+	mu                sync.RWMutex
 }
 
 // NewTester creates a new DNS tester.
@@ -110,11 +112,14 @@ func NewTester(server, testHostname string, thresholds Thresholds) *Tester {
 
 // SetTestHostname updates the hostname used for testing.
 func (t *Tester) SetTestHostname(hostname string) {
+	t.mu.Lock()
 	t.testHostname = hostname
+	t.mu.Unlock()
 }
 
 // SetServer updates the DNS server to use.
 func (t *Tester) SetServer(server string) {
+	t.mu.Lock()
 	t.server = server
 	if server != "" {
 		t.resolver = &net.Resolver{
@@ -129,35 +134,40 @@ func (t *Tester) SetServer(server string) {
 	} else {
 		t.resolver = net.DefaultResolver
 	}
+	t.mu.Unlock()
 }
 
 // SetConfiguredServers updates the list of user-configured DNS servers.
 func (t *Tester) SetConfiguredServers(servers []ConfiguredServer) {
+	t.mu.Lock()
 	t.configuredServers = servers
+	t.mu.Unlock()
 }
 
 // getStatus determines status based on timing and thresholds.
 func (t *Tester) getStatus(duration time.Duration, hasError bool) Status {
-	if hasError {
-		return StatusError
-	}
-	if duration >= t.thresholds.Critical {
-		return StatusError
-	}
-	if duration >= t.thresholds.Warning {
-		return StatusWarning
-	}
-	return StatusSuccess
+	t.mu.RLock()
+	th := t.thresholds
+	t.mu.RUnlock()
+	return t.getStatusWith(th, duration, hasError)
 }
 
 // ForwardLookup performs a forward DNS lookup (hostname to IP) with timing.
 func (t *Tester) ForwardLookup(ctx context.Context, hostname string) *LookupResult {
+	t.mu.RLock()
+	if hostname == "" {
+		hostname = t.testHostname
+	}
+	resolver := t.resolver
+	thresholds := t.thresholds
+	t.mu.RUnlock()
+
 	if hostname == "" {
 		hostname = t.testHostname
 	}
 
 	start := time.Now()
-	addrs, err := t.resolver.LookupHost(ctx, hostname)
+	addrs, err := resolver.LookupHost(ctx, hostname)
 	elapsed := time.Since(start)
 
 	result := &LookupResult{
@@ -178,19 +188,36 @@ func (t *Tester) ForwardLookup(ctx context.Context, hostname string) *LookupResu
 	} else {
 		result.Result = "No results"
 	}
-	result.Status = t.getStatus(elapsed, false)
+	result.Status = t.getStatusWith(thresholds, elapsed, false)
 
 	return result
 }
 
+func (t *Tester) getStatusWith(th Thresholds, duration time.Duration, hasError bool) Status {
+	if hasError {
+		return StatusError
+	}
+	if duration >= th.Critical {
+		return StatusError
+	}
+	if duration >= th.Warning {
+		return StatusWarning
+	}
+	return StatusSuccess
+}
+
 // ForwardLookupIPv4 performs an IPv4-only forward DNS lookup (A record).
 func (t *Tester) ForwardLookupIPv4(ctx context.Context, hostname string) *LookupResult {
+	t.mu.RLock()
 	if hostname == "" {
 		hostname = t.testHostname
 	}
+	resolver := t.resolver
+	thresholds := t.thresholds
+	t.mu.RUnlock()
 
 	start := time.Now()
-	addrs, err := t.resolver.LookupIP(ctx, "ip4", hostname)
+	addrs, err := resolver.LookupIP(ctx, "ip4", hostname)
 	elapsed := time.Since(start)
 
 	result := &LookupResult{
@@ -218,19 +245,23 @@ func (t *Tester) ForwardLookupIPv4(ctx context.Context, hostname string) *Lookup
 		result.Status = StatusWarning
 		return result
 	}
-	result.Status = t.getStatus(elapsed, false)
+	result.Status = t.getStatusWith(thresholds, elapsed, false)
 
 	return result
 }
 
 // ForwardLookupIPv6 performs an IPv6-only forward DNS lookup (AAAA record).
 func (t *Tester) ForwardLookupIPv6(ctx context.Context, hostname string) *LookupResult {
+	t.mu.RLock()
 	if hostname == "" {
 		hostname = t.testHostname
 	}
+	resolver := t.resolver
+	thresholds := t.thresholds
+	t.mu.RUnlock()
 
 	start := time.Now()
-	addrs, err := t.resolver.LookupIP(ctx, "ip6", hostname)
+	addrs, err := resolver.LookupIP(ctx, "ip6", hostname)
 	elapsed := time.Since(start)
 
 	result := &LookupResult{
@@ -258,15 +289,20 @@ func (t *Tester) ForwardLookupIPv6(ctx context.Context, hostname string) *Lookup
 		result.Status = StatusWarning
 		return result
 	}
-	result.Status = t.getStatus(elapsed, false)
+	result.Status = t.getStatusWith(thresholds, elapsed, false)
 
 	return result
 }
 
 // ReverseLookup performs a reverse DNS lookup (IP to hostname) with timing.
 func (t *Tester) ReverseLookup(ctx context.Context, ip string) *LookupResult {
+	t.mu.RLock()
+	resolver := t.resolver
+	thresholds := t.thresholds
+	t.mu.RUnlock()
+
 	start := time.Now()
-	names, err := t.resolver.LookupAddr(ctx, ip)
+	names, err := resolver.LookupAddr(ctx, ip)
 	elapsed := time.Since(start)
 
 	result := &LookupResult{
@@ -289,7 +325,7 @@ func (t *Tester) ReverseLookup(ctx context.Context, ip string) *LookupResult {
 		result.Status = StatusWarning
 		return result
 	}
-	result.Status = t.getStatus(elapsed, false)
+	result.Status = t.getStatusWith(thresholds, elapsed, false)
 
 	return result
 }
@@ -297,17 +333,22 @@ func (t *Tester) ReverseLookup(ctx context.Context, ip string) *LookupResult {
 // TestServer performs a DNS test against a specific server.
 func (t *Tester) TestServer(ctx context.Context, server string) *ServerTestResult {
 	// Create a temporary tester for this specific server
-	tempTester := NewTester(server, t.testHostname, t.thresholds)
+	t.mu.RLock()
+	host := t.testHostname
+	th := t.thresholds
+	t.mu.RUnlock()
+
+	tempTester := NewTester(server, host, th)
 
 	result := &ServerTestResult{
 		Server: server,
 	}
 
 	// IPv4 forward lookup (A record)
-	result.Forward = tempTester.ForwardLookupIPv4(ctx, t.testHostname)
+	result.Forward = tempTester.ForwardLookupIPv4(ctx, host)
 
 	// IPv6 forward lookup (AAAA record)
-	result.ForwardIPv6 = tempTester.ForwardLookupIPv6(ctx, t.testHostname)
+	result.ForwardIPv6 = tempTester.ForwardLookupIPv6(ctx, host)
 
 	// Calculate overall status and average time
 	var totalTime int64
@@ -352,6 +393,12 @@ func (t *Tester) TestServer(ctx context.Context, server string) *ServerTestResul
 
 // Test performs a complete DNS test (forward and reverse) for both IPv4 and IPv6.
 func (t *Tester) Test(ctx context.Context) *TestResult {
+	t.mu.RLock()
+	cfgServers := append([]ConfiguredServer(nil), t.configuredServers...)
+	host := t.testHostname
+	selectedServer := t.server
+	t.mu.RUnlock()
+
 	servers := GetSystemDNS()
 
 	// Add enabled configured servers to the list (avoiding duplicates)
@@ -359,7 +406,7 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	for _, s := range servers {
 		serverSet[s] = true
 	}
-	for _, cs := range t.configuredServers {
+	for _, cs := range cfgServers {
 		if cs.Enabled && cs.Address != "" && !serverSet[cs.Address] {
 			servers = append(servers, cs.Address)
 			serverSet[cs.Address] = true
@@ -367,20 +414,20 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	}
 
 	result := &TestResult{
-		Server:       t.server,
-		TestHostname: t.testHostname,
+		Server:       selectedServer,
+		TestHostname: host,
 		Servers:      servers,
 	}
 
-	if t.server == "" {
+	if selectedServer == "" {
 		result.Server = "System Default"
 	}
 
 	// IPv4 forward lookup (A record)
-	result.Forward = t.ForwardLookupIPv4(ctx, t.testHostname)
+	result.Forward = t.ForwardLookupIPv4(ctx, host)
 
 	// IPv6 forward lookup (AAAA record)
-	result.ForwardIPv6 = t.ForwardLookupIPv6(ctx, t.testHostname)
+	result.ForwardIPv6 = t.ForwardLookupIPv6(ctx, host)
 
 	// Reverse lookup on the first IPv4 result
 	if result.Forward.Status != StatusError && len(result.Forward.Resolved) > 0 {
