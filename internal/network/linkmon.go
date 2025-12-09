@@ -2,15 +2,13 @@
 package network
 
 import (
+	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/krisarmstrong/netscope/internal/validation"
 )
 
 // LinkState represents the current link state.
@@ -188,35 +186,23 @@ func (m *LinkMonitor) checkLinkStateLinux() LinkState {
 	return LinkStateDown
 }
 
-// checkLinkStateDarwin checks link state on macOS using ifconfig.
+// checkLinkStateDarwin checks link state on macOS using net.Interface.
 func (m *LinkMonitor) checkLinkStateDarwin() LinkState {
-	if err := validation.ValidateInterface(m.interfaceName); err != nil {
-		return LinkStateUnknown
-	}
-
-	// #nosec G204 - interface name validated above
-	cmd := exec.Command("ifconfig", m.interfaceName)
-	output, err := cmd.Output()
+	iface, err := net.InterfaceByName(m.interfaceName)
 	if err != nil {
 		return LinkStateUnknown
 	}
 
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		// Look for "status: active" or "status: inactive"
-		if strings.Contains(line, "status:") {
-			if strings.Contains(line, "active") {
-				return LinkStateUp
-			}
-			return LinkStateDown
-		}
+	// Check if interface is UP and RUNNING (has carrier)
+	// net.FlagUp means administratively up
+	// net.FlagRunning means operationally up (link active)
+	if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagRunning != 0 {
+		return LinkStateUp
 	}
 
-	// Fallback: check if interface has "RUNNING" flag
-	for _, line := range lines {
-		if strings.Contains(line, "flags=") && strings.Contains(line, "RUNNING") {
-			return LinkStateUp
-		}
+	// If interface is up but not running, link is down
+	if iface.Flags&net.FlagUp != 0 {
+		return LinkStateDown
 	}
 
 	return LinkStateUnknown
