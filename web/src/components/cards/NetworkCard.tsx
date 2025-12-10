@@ -159,7 +159,7 @@ function compressIPv6(address: string): string {
   return before.join(":") + "::" + after.join(":");
 }
 
-export function DHCPCard({
+export function NetworkCard({
   data,
   publicip,
   loading,
@@ -241,7 +241,7 @@ export function DHCPCard({
       : primaryIPRaw;
 
   return (
-    <Card title="IP Configuration" status={status}>
+    <Card title="Network" status={status}>
       <CardValue value={primaryIP} size="lg" mono allowWrap />
 
       <CardDivider />

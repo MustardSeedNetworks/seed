@@ -1042,10 +1042,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         <div className="px-4 sm:px-5 pb-10 pt-4 space-y-6 text-sm leading-relaxed">
           {/* Network Section */}
           <CollapsibleSection title="Network">
-            {/* IP Configuration */}
+            {/* Network Configuration */}
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-wide text-text-muted font-semibold">
-                IP Configuration
+                Network Configuration
               </p>
               {/* Mode Toggle */}
               <div className="grid grid-cols-2 gap-2">
@@ -1192,7 +1192,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     Show Public IP
                   </span>
                   <p className="text-xs text-text-muted">
-                    Display in IP Config card
+                    Display in Network card
                   </p>
                 </div>
                 <input

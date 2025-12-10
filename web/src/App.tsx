@@ -25,13 +25,12 @@ import {
   LinkData,
   SwitchCard,
   SwitchData,
-  DHCPCard,
+  NetworkCard,
   DHCPData,
   DNSCard,
   type DNSData,
   GatewayCard,
   GatewayData,
-  VLANCard,
   VLANData,
   WiFiCard,
   WiFiData,
@@ -1039,11 +1038,14 @@ function App() {
             )}
 
             {/* Layer 2: Discovery */}
-            <SwitchCard data={cards.switch} loading={loading} />
-            <VLANCard data={cards.vlan} loading={loading} />
+            <SwitchCard
+              data={cards.switch}
+              vlanData={cards.vlan}
+              loading={loading}
+            />
 
             {/* Layer 3: Network */}
-            <DHCPCard
+            <NetworkCard
               data={cards.dhcp}
               publicip={cards.publicip}
               loading={loading}
@@ -1151,8 +1153,8 @@ function App() {
           <HelpItem term="Interface" description={VLAN_HELP.Interface} />
         </HelpSection>
 
-        {/* 6. DHCP (matches DHCPCard) */}
-        <HelpSection title="DHCP">
+        {/* 6. Network (matches NetworkCard) */}
+        <HelpSection title="Network">
           <HelpItem term="Lease" description={DHCP_HELP.Lease} />
           <HelpItem term="Server" description={DHCP_HELP.Server} />
           <HelpItem term="Gateway" description={DHCP_HELP.Gateway} />
