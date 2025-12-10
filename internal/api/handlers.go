@@ -19,6 +19,7 @@ import (
 
 	"github.com/krisarmstrong/netscope/internal/config"
 	"github.com/krisarmstrong/netscope/internal/dhcp"
+	"github.com/krisarmstrong/netscope/internal/discovery"
 	"github.com/krisarmstrong/netscope/internal/dns"
 	"github.com/krisarmstrong/netscope/internal/gateway"
 	"github.com/krisarmstrong/netscope/internal/iperf"
@@ -1046,6 +1047,105 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 			ManagementAddress: n.ManagementAddress,
 			TTL:               n.TTL,
 		})
+	}
+
+	sendJSONResponse(w, http.StatusOK, resp)
+}
+
+// TCPProbeRequest represents a TCP probe request.
+type TCPProbeRequest struct {
+	Target  string `json:"target"`  // IP or hostname
+	Port    int    `json:"port"`    // Single port
+	Ports   []int  `json:"ports"`   // Multiple ports
+	Timeout int    `json:"timeout"` // Timeout in ms (default 1000)
+}
+
+// TCPProbeResponse represents TCP probe results.
+type TCPProbeResponse struct {
+	Target  string                    `json:"target"`
+	Results []discovery.TCPProbeResult `json:"results"`
+}
+
+// handleTCPProbe handles TCP port probe requests.
+func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req TCPProbeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate target
+	if req.Target == "" {
+		http.Error(w, "Target is required", http.StatusBadRequest)
+		return
+	}
+
+	// Resolve hostname if needed
+	ip := net.ParseIP(req.Target)
+	if ip == nil {
+		// Try to resolve hostname
+		ips, err := net.LookupIP(req.Target)
+		if err != nil || len(ips) == 0 {
+			http.Error(w, "Unable to resolve hostname", http.StatusBadRequest)
+			return
+		}
+		// Use first IPv4 address
+		for _, resolvedIP := range ips {
+			if resolvedIP.To4() != nil {
+				ip = resolvedIP
+				break
+			}
+		}
+		if ip == nil {
+			ip = ips[0]
+		}
+	}
+
+	// Build port list
+	var ports []int
+	if req.Port > 0 {
+		ports = append(ports, req.Port)
+	}
+	ports = append(ports, req.Ports...)
+	if len(ports) == 0 {
+		http.Error(w, "At least one port is required", http.StatusBadRequest)
+		return
+	}
+
+	// Limit ports to prevent abuse
+	if len(ports) > 100 {
+		http.Error(w, "Maximum 100 ports allowed", http.StatusBadRequest)
+		return
+	}
+
+	// Set timeout
+	timeout := time.Second
+	if req.Timeout > 0 && req.Timeout <= 10000 {
+		timeout = time.Duration(req.Timeout) * time.Millisecond
+	}
+
+	// Create prober
+	prober, err := discovery.NewTCPProber(timeout)
+	if err != nil {
+		http.Error(w, "Failed to create prober: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer prober.Close()
+
+	// Run probes
+	ctx, cancel := context.WithTimeout(r.Context(), timeout*time.Duration(len(ports))+5*time.Second)
+	defer cancel()
+
+	results := prober.ScanPorts(ctx, ip.String(), ports, 10)
+
+	resp := TCPProbeResponse{
+		Target:  req.Target,
+		Results: results,
 	}
 
 	sendJSONResponse(w, http.StatusOK, resp)
