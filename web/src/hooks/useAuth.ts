@@ -22,8 +22,20 @@ interface UseAuthReturn {
 }
 
 const TOKEN_KEY = "netscope_token";
+const TOKEN_EXPIRY_KEY = "netscope_token_expiry";
 const USERNAME_KEY = "netscope_username";
 const API_BASE = import.meta.env.VITE_API_BASE || "";
+
+// Check if a stored token has expired
+function isTokenExpired(): boolean {
+  const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+  if (!expiry) {
+    return true; // No expiry stored means we can't verify, treat as expired
+  }
+  // Add 30 second buffer to avoid edge cases where token expires during request
+  const expiryTime = parseInt(expiry, 10) * 1000; // Convert seconds to ms
+  return Date.now() >= expiryTime - 30000;
+}
 
 export function useAuth(): UseAuthReturn {
   const [state, setState] = useState<AuthState>({
@@ -34,12 +46,21 @@ export function useAuth(): UseAuthReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check for existing token on mount
+  // Check for existing token on mount and validate expiry
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     const username = localStorage.getItem(USERNAME_KEY);
 
     if (token) {
+      // Check if token has expired
+      if (isTokenExpired()) {
+        // Token expired, clear storage and stay logged out
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_EXPIRY_KEY);
+        localStorage.removeItem(USERNAME_KEY);
+        return;
+      }
+
       setState({
         isAuthenticated: true,
         token,
@@ -69,6 +90,7 @@ export function useAuth(): UseAuthReturn {
         const data: LoginResponse = await response.json();
 
         localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(TOKEN_EXPIRY_KEY, String(data.expires));
         localStorage.setItem(USERNAME_KEY, username);
 
         setState({
@@ -90,6 +112,7 @@ export function useAuth(): UseAuthReturn {
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXPIRY_KEY);
     localStorage.removeItem(USERNAME_KEY);
 
     setState({
