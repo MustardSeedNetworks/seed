@@ -50,6 +50,11 @@ type LinkMonitor struct {
 	stopCh        chan struct{}
 	running       bool
 	pollInterval  time.Duration
+	// History tracking
+	history      []LinkEvent
+	maxHistory   int
+	flapCount24h int
+	startTime    time.Time
 }
 
 // NewLinkMonitor creates a new link state monitor.
@@ -59,6 +64,9 @@ func NewLinkMonitor(interfaceName string) *LinkMonitor {
 		callbacks:     make([]LinkStateCallback, 0),
 		lastState:     LinkStateUnknown,
 		pollInterval:  500 * time.Millisecond, // Check every 500ms
+		history:       make([]LinkEvent, 0),
+		maxHistory:    100, // Keep last 100 events
+		startTime:     time.Now(),
 	}
 }
 
@@ -136,16 +144,25 @@ func (m *LinkMonitor) pollLoop() {
 			oldState := m.lastState
 			if newState != oldState {
 				m.lastState = newState
-				callbacks := make([]LinkStateCallback, len(m.callbacks))
-				copy(callbacks, m.callbacks)
-				m.mu.Unlock()
 
-				// Notify callbacks
+				// Create event
 				event := LinkEvent{
 					Interface: m.interfaceName,
 					State:     newState,
 					Timestamp: time.Now(),
 				}
+
+				// Record in history
+				m.history = append(m.history, event)
+				if len(m.history) > m.maxHistory {
+					m.history = m.history[1:]
+				}
+
+				callbacks := make([]LinkStateCallback, len(m.callbacks))
+				copy(callbacks, m.callbacks)
+				m.mu.Unlock()
+
+				// Notify callbacks
 				for _, cb := range callbacks {
 					go cb(event)
 				}
@@ -207,6 +224,36 @@ func (m *LinkMonitor) checkLinkStateDarwin() LinkState {
 	}
 
 	return LinkStateUnknown
+}
+
+// GetHistory returns the recent link state change events.
+func (m *LinkMonitor) GetHistory() []LinkEvent {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	result := make([]LinkEvent, len(m.history))
+	copy(result, m.history)
+	return result
+}
+
+// GetFlapCount24h returns the number of link state changes in the last 24 hours.
+func (m *LinkMonitor) GetFlapCount24h() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	cutoff := time.Now().Add(-24 * time.Hour)
+	count := 0
+	for _, event := range m.history {
+		if event.Timestamp.After(cutoff) {
+			count++
+		}
+	}
+	return count
+}
+
+// GetUptime returns how long the monitor has been running.
+func (m *LinkMonitor) GetUptime() time.Duration {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return time.Since(m.startTime)
 }
 
 // WaitForLinkUp blocks until link comes up or timeout.
