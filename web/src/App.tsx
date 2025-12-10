@@ -87,9 +87,6 @@ function App() {
   const [networkDiscovery, setNetworkDiscovery] =
     useState<NetworkDiscoveryData | null>(null);
   const [appVersion, setAppVersion] = useState("dev");
-  // showPublicIP now comes from displayOptions.showPublicIP in context
-  // FAB options and display options are now managed by SettingsContext
-  // Event listeners for fabOptionsUpdated/displayOptionsUpdated are no longer needed here
 
   const handleMessage = useCallback((message: Message) => {
     if (message.type === "initial_state") {
