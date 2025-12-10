@@ -66,6 +66,10 @@ thresholds:
     signal:
       warning: -70
       critical: -80
+  link:
+    flap_count_24h:
+      warning: 3
+      critical: 5
   custom_tests:
     ping:
       warning: 50ms

@@ -198,7 +198,19 @@ type ThresholdsConfig struct {
 	DNS         Threshold        `yaml:"dns"`
 	Ping        Threshold        `yaml:"ping"`
 	WiFi        WiFiThresholds   `yaml:"wifi"`
+	Link        LinkThresholds   `yaml:"link"`
 	CustomTests CustomThresholds `yaml:"custom_tests"`
+}
+
+// LinkThresholds contains thresholds for link stability.
+type LinkThresholds struct {
+	FlapCount24h IntThreshold `yaml:"flap_count_24h"` // Number of link flaps in 24h
+}
+
+// IntThreshold contains warning and critical thresholds for integer values.
+type IntThreshold struct {
+	Warning  int `yaml:"warning"`
+	Critical int `yaml:"critical"`
 }
 
 // CustomThresholds contains thresholds for custom tests.
@@ -325,6 +337,9 @@ func DefaultConfig() *Config {
 			Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 200 * time.Millisecond},
 			WiFi: WiFiThresholds{
 				Signal: SignalThreshold{Warning: -70, Critical: -80},
+			},
+			Link: LinkThresholds{
+				FlapCount24h: IntThreshold{Warning: 3, Critical: 5}, // 3+ flaps = warning, 5+ = critical
 			},
 			CustomTests: CustomThresholds{
 				Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 100 * time.Millisecond},
