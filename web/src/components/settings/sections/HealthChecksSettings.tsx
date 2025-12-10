@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import {
@@ -8,6 +9,7 @@ import {
   UDPPort,
   HTTPEndpoint,
 } from "../../../types/settings";
+import { generateId } from "../../../utils/id";
 
 interface HealthChecksSettingsProps {
   testsSettings: TestsSettings;
@@ -15,134 +17,152 @@ interface HealthChecksSettingsProps {
   testsStatus: SaveStatus;
 }
 
-export function HealthChecksSettings({
+export const HealthChecksSettings = memo(function HealthChecksSettings({
   testsSettings,
   setTestsSettings,
   testsStatus,
 }: HealthChecksSettingsProps) {
   // Ping target helpers
-  const addPingTarget = () => {
+  const addPingTarget = useCallback(() => {
     setTestsSettings((prev) => ({
       ...prev,
       pingTargets: [
         ...prev.pingTargets,
-        { name: "", host: "", enabled: true, count: 3 },
+        { id: generateId(), name: "", host: "", enabled: true, count: 3 },
       ],
     }));
-  };
+  }, [setTestsSettings]);
 
-  const removePingTarget = (index: number) => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      pingTargets: prev.pingTargets.filter((_, i) => i !== index),
-    }));
-  };
+  const removePingTarget = useCallback(
+    (id: string) => {
+      setTestsSettings((prev) => ({
+        ...prev,
+        pingTargets: prev.pingTargets.filter((t) => t.id !== id),
+      }));
+    },
+    [setTestsSettings],
+  );
 
-  const updatePingTarget = (
-    index: number,
-    field: keyof PingTarget,
-    value: string | boolean | number,
-  ) => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      pingTargets: prev.pingTargets.map((t, i) =>
-        i === index ? { ...t, [field]: value } : t,
-      ),
-    }));
-  };
+  const updatePingTarget = useCallback(
+    (id: string, field: keyof PingTarget, value: string | boolean | number) => {
+      setTestsSettings((prev) => ({
+        ...prev,
+        pingTargets: prev.pingTargets.map((t) =>
+          t.id === id ? { ...t, [field]: value } : t,
+        ),
+      }));
+    },
+    [setTestsSettings],
+  );
 
   // TCP port helpers
-  const addTCPPort = () => {
+  const addTCPPort = useCallback(() => {
     setTestsSettings((prev) => ({
       ...prev,
       tcpPorts: [
         ...prev.tcpPorts,
-        { name: "", host: "", port: 80, enabled: true },
+        { id: generateId(), name: "", host: "", port: 80, enabled: true },
       ],
     }));
-  };
+  }, [setTestsSettings]);
 
-  const removeTCPPort = (index: number) => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      tcpPorts: prev.tcpPorts.filter((_, i) => i !== index),
-    }));
-  };
+  const removeTCPPort = useCallback(
+    (id: string) => {
+      setTestsSettings((prev) => ({
+        ...prev,
+        tcpPorts: prev.tcpPorts.filter((p) => p.id !== id),
+      }));
+    },
+    [setTestsSettings],
+  );
 
-  const updateTCPPort = (
-    index: number,
-    field: keyof TCPPort,
-    value: string | boolean | number,
-  ) => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      tcpPorts: prev.tcpPorts.map((p, i) =>
-        i === index ? { ...p, [field]: value } : p,
-      ),
-    }));
-  };
+  const updateTCPPort = useCallback(
+    (id: string, field: keyof TCPPort, value: string | boolean | number) => {
+      setTestsSettings((prev) => ({
+        ...prev,
+        tcpPorts: prev.tcpPorts.map((p) =>
+          p.id === id ? { ...p, [field]: value } : p,
+        ),
+      }));
+    },
+    [setTestsSettings],
+  );
 
   // UDP port helpers
-  const addUDPPort = () => {
+  const addUDPPort = useCallback(() => {
     setTestsSettings((prev) => ({
       ...prev,
       udpPorts: [
         ...prev.udpPorts,
-        { name: "", host: "", port: 53, enabled: true },
+        { id: generateId(), name: "", host: "", port: 53, enabled: true },
       ],
     }));
-  };
+  }, [setTestsSettings]);
 
-  const removeUDPPort = (index: number) => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      udpPorts: prev.udpPorts.filter((_, i) => i !== index),
-    }));
-  };
+  const removeUDPPort = useCallback(
+    (id: string) => {
+      setTestsSettings((prev) => ({
+        ...prev,
+        udpPorts: prev.udpPorts.filter((p) => p.id !== id),
+      }));
+    },
+    [setTestsSettings],
+  );
 
-  const updateUDPPort = (
-    index: number,
-    field: keyof UDPPort,
-    value: string | boolean | number,
-  ) => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      udpPorts: prev.udpPorts.map((p, i) =>
-        i === index ? { ...p, [field]: value } : p,
-      ),
-    }));
-  };
+  const updateUDPPort = useCallback(
+    (id: string, field: keyof UDPPort, value: string | boolean | number) => {
+      setTestsSettings((prev) => ({
+        ...prev,
+        udpPorts: prev.udpPorts.map((p) =>
+          p.id === id ? { ...p, [field]: value } : p,
+        ),
+      }));
+    },
+    [setTestsSettings],
+  );
 
   // HTTP endpoint helpers
-  const addHTTPEndpoint = () => {
+  const addHTTPEndpoint = useCallback(() => {
     setTestsSettings((prev) => ({
       ...prev,
       httpEndpoints: [
         ...prev.httpEndpoints,
-        { name: "", url: "", expectedStatus: 200, enabled: true },
+        {
+          id: generateId(),
+          name: "",
+          url: "",
+          expectedStatus: 200,
+          enabled: true,
+        },
       ],
     }));
-  };
+  }, [setTestsSettings]);
 
-  const removeHTTPEndpoint = (index: number) => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      httpEndpoints: prev.httpEndpoints.filter((_, i) => i !== index),
-    }));
-  };
+  const removeHTTPEndpoint = useCallback(
+    (id: string) => {
+      setTestsSettings((prev) => ({
+        ...prev,
+        httpEndpoints: prev.httpEndpoints.filter((e) => e.id !== id),
+      }));
+    },
+    [setTestsSettings],
+  );
 
-  const updateHTTPEndpoint = (
-    index: number,
-    field: keyof HTTPEndpoint,
-    value: string | boolean | number,
-  ) => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      httpEndpoints: prev.httpEndpoints.map((e, i) =>
-        i === index ? { ...e, [field]: value } : e,
-      ),
-    }));
-  };
+  const updateHTTPEndpoint = useCallback(
+    (
+      id: string,
+      field: keyof HTTPEndpoint,
+      value: string | boolean | number,
+    ) => {
+      setTestsSettings((prev) => ({
+        ...prev,
+        httpEndpoints: prev.httpEndpoints.map((e) =>
+          e.id === id ? { ...e, [field]: value } : e,
+        ),
+      }));
+    },
+    [setTestsSettings],
+  );
 
   return (
     <CollapsibleSection
@@ -170,19 +190,23 @@ export function HealthChecksSettings({
           <p className="text-xs text-text-muted mb-2">
             Default: 3 pings per target
           </p>
-          {testsSettings.pingTargets.map((target, idx) => (
-            <div key={idx} className="flex gap-2 mb-2">
+          {testsSettings.pingTargets.map((target) => (
+            <div key={target.id || target.host} className="flex gap-2 mb-2">
               <input
                 type="text"
                 value={target.name}
-                onChange={(e) => updatePingTarget(idx, "name", e.target.value)}
+                onChange={(e) =>
+                  updatePingTarget(target.id!, "name", e.target.value)
+                }
                 placeholder="Name"
                 className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
               />
               <input
                 type="text"
                 value={target.host}
-                onChange={(e) => updatePingTarget(idx, "host", e.target.value)}
+                onChange={(e) =>
+                  updatePingTarget(target.id!, "host", e.target.value)
+                }
                 placeholder="Host/IP"
                 className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
               />
@@ -190,7 +214,11 @@ export function HealthChecksSettings({
                 type="number"
                 value={target.count || 3}
                 onChange={(e) =>
-                  updatePingTarget(idx, "count", parseInt(e.target.value) || 3)
+                  updatePingTarget(
+                    target.id!,
+                    "count",
+                    parseInt(e.target.value) || 3,
+                  )
                 }
                 min={1}
                 max={10}
@@ -198,7 +226,7 @@ export function HealthChecksSettings({
                 className="w-14 px-2 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary text-center"
               />
               <button
-                onClick={() => removePingTarget(idx)}
+                onClick={() => removePingTarget(target.id!)}
                 className="text-status-error hover:text-status-error/80 px-1"
               >
                 x
@@ -220,19 +248,26 @@ export function HealthChecksSettings({
               + Add
             </button>
           </div>
-          {testsSettings.tcpPorts.map((port, idx) => (
-            <div key={idx} className="flex gap-2 mb-2">
+          {testsSettings.tcpPorts.map((port) => (
+            <div
+              key={port.id || `${port.host}:${port.port}`}
+              className="flex gap-2 mb-2"
+            >
               <input
                 type="text"
                 value={port.name}
-                onChange={(e) => updateTCPPort(idx, "name", e.target.value)}
+                onChange={(e) =>
+                  updateTCPPort(port.id!, "name", e.target.value)
+                }
                 placeholder="Name"
                 className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
               />
               <input
                 type="text"
                 value={port.host}
-                onChange={(e) => updateTCPPort(idx, "host", e.target.value)}
+                onChange={(e) =>
+                  updateTCPPort(port.id!, "host", e.target.value)
+                }
                 placeholder="Host"
                 className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
               />
@@ -240,13 +275,17 @@ export function HealthChecksSettings({
                 type="number"
                 value={port.port}
                 onChange={(e) =>
-                  updateTCPPort(idx, "port", parseInt(e.target.value) || 80)
+                  updateTCPPort(
+                    port.id!,
+                    "port",
+                    parseInt(e.target.value) || 80,
+                  )
                 }
                 placeholder="Port"
                 className="w-20 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
               />
               <button
-                onClick={() => removeTCPPort(idx)}
+                onClick={() => removeTCPPort(port.id!)}
                 className="text-status-error hover:text-status-error/80 px-1"
               >
                 x
@@ -271,19 +310,26 @@ export function HealthChecksSettings({
           <p className="text-xs text-text-muted mb-2">
             Test UDP services (DNS:53, NTP:123, etc.)
           </p>
-          {testsSettings.udpPorts.map((port, idx) => (
-            <div key={idx} className="flex gap-2 mb-2">
+          {testsSettings.udpPorts.map((port) => (
+            <div
+              key={port.id || `${port.host}:${port.port}`}
+              className="flex gap-2 mb-2"
+            >
               <input
                 type="text"
                 value={port.name}
-                onChange={(e) => updateUDPPort(idx, "name", e.target.value)}
+                onChange={(e) =>
+                  updateUDPPort(port.id!, "name", e.target.value)
+                }
                 placeholder="Name"
                 className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
               />
               <input
                 type="text"
                 value={port.host}
-                onChange={(e) => updateUDPPort(idx, "host", e.target.value)}
+                onChange={(e) =>
+                  updateUDPPort(port.id!, "host", e.target.value)
+                }
                 placeholder="Host"
                 className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
               />
@@ -291,13 +337,17 @@ export function HealthChecksSettings({
                 type="number"
                 value={port.port}
                 onChange={(e) =>
-                  updateUDPPort(idx, "port", parseInt(e.target.value) || 53)
+                  updateUDPPort(
+                    port.id!,
+                    "port",
+                    parseInt(e.target.value) || 53,
+                  )
                 }
                 placeholder="Port"
                 className="w-20 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
               />
               <button
-                onClick={() => removeUDPPort(idx)}
+                onClick={() => removeUDPPort(port.id!)}
                 className="text-status-error hover:text-status-error/80 px-1"
               >
                 x
@@ -319,9 +369,9 @@ export function HealthChecksSettings({
               + Add
             </button>
           </div>
-          {testsSettings.httpEndpoints.map((endpoint, idx) => (
+          {testsSettings.httpEndpoints.map((endpoint) => (
             <div
-              key={idx}
+              key={endpoint.id || endpoint.url}
               className="space-y-1 mb-3 p-2 bg-surface-base rounded border border-surface-border"
             >
               <div className="flex gap-2">
@@ -329,7 +379,7 @@ export function HealthChecksSettings({
                   type="text"
                   value={endpoint.name}
                   onChange={(e) =>
-                    updateHTTPEndpoint(idx, "name", e.target.value)
+                    updateHTTPEndpoint(endpoint.id!, "name", e.target.value)
                   }
                   placeholder="Name"
                   className="flex-1 px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
@@ -339,7 +389,7 @@ export function HealthChecksSettings({
                   value={endpoint.expectedStatus}
                   onChange={(e) =>
                     updateHTTPEndpoint(
-                      idx,
+                      endpoint.id!,
                       "expectedStatus",
                       parseInt(e.target.value) || 200,
                     )
@@ -348,7 +398,7 @@ export function HealthChecksSettings({
                   className="w-20 px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
                 />
                 <button
-                  onClick={() => removeHTTPEndpoint(idx)}
+                  onClick={() => removeHTTPEndpoint(endpoint.id!)}
                   className="text-status-error hover:text-status-error/80 px-1"
                 >
                   x
@@ -357,7 +407,9 @@ export function HealthChecksSettings({
               <input
                 type="text"
                 value={endpoint.url}
-                onChange={(e) => updateHTTPEndpoint(idx, "url", e.target.value)}
+                onChange={(e) =>
+                  updateHTTPEndpoint(endpoint.id!, "url", e.target.value)
+                }
                 placeholder="https://example.com/health"
                 className="w-full px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
               />
@@ -367,4 +419,4 @@ export function HealthChecksSettings({
       </div>
     </CollapsibleSection>
   );
-}
+});

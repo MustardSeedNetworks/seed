@@ -63,6 +63,7 @@ export interface DisplayOptions {
 // ============================================================================
 
 export interface PingTarget {
+  id?: string; // Stable unique ID for React key
   name: string;
   host: string;
   enabled: boolean;
@@ -70,11 +71,13 @@ export interface PingTarget {
 }
 
 export interface DNSServer {
+  id?: string; // Stable unique ID for React key
   address: string;
   enabled: boolean;
 }
 
 export interface TCPPort {
+  id?: string; // Stable unique ID for React key
   name: string;
   host: string;
   port: number;
@@ -82,6 +85,7 @@ export interface TCPPort {
 }
 
 export interface UDPPort {
+  id?: string; // Stable unique ID for React key
   name: string;
   host: string;
   port: number;
@@ -89,6 +93,7 @@ export interface UDPPort {
 }
 
 export interface HTTPEndpoint {
+  id?: string; // Stable unique ID for React key
   name: string;
   url: string;
   expectedStatus: number;
