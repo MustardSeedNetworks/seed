@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/krisarmstrong/netscope/internal/auth"
@@ -30,6 +31,7 @@ import (
 	"github.com/krisarmstrong/netscope/internal/speedtest"
 	"github.com/krisarmstrong/netscope/internal/vlan"
 	"github.com/krisarmstrong/netscope/internal/wifi"
+	"github.com/krisarmstrong/netscope/web"
 )
 
 // Server represents the HTTP/HTTPS server.
@@ -212,8 +214,15 @@ func (s *Server) setupRoutes() {
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
 
-	// Static files (frontend)
-	s.mux.Handle("/", http.FileServer(http.Dir("web/dist")))
+	// Static files (frontend) - use embedded FS in production, filesystem in dev
+	frontendFS, err := web.GetFS()
+	if err != nil {
+		log.Printf("Warning: Failed to get embedded frontend FS: %v, falling back to disk", err)
+		s.mux.Handle("/", http.FileServer(http.Dir("web/dist")))
+	} else {
+		log.Printf("Serving frontend from embedded filesystem (embedded=%v)", web.IsEmbedded())
+		s.mux.Handle("/", spaHandler(http.FS(frontendFS)))
+	}
 }
 
 // corsMiddleware adds CORS headers with origin validation.
@@ -245,6 +254,49 @@ func corsMiddleware(next http.Handler) http.Handler {
 // Uses the same configurable origin checking as WebSocket.
 func isAllowedOrigin(origin string) bool {
 	return isAllowedWSOrigin(origin)
+}
+
+// spaHandler wraps a file server to support SPA (Single Page Application) routing.
+// It serves index.html for any path that doesn't match a static file, enabling
+// client-side routing in React/Vue/Angular apps.
+func spaHandler(fsys http.FileSystem) http.Handler {
+	fileServer := http.FileServer(fsys)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+
+		// Try to open the file
+		f, err := fsys.Open(path)
+		if err != nil {
+			// File doesn't exist - check if it's an API or WS route (shouldn't happen, but be safe)
+			if strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/ws") {
+				http.NotFound(w, r)
+				return
+			}
+			// Serve index.html for SPA routing
+			r.URL.Path = "/"
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+		defer f.Close()
+
+		// Check if it's a directory - serve index.html from it
+		stat, err := f.Stat()
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		if stat.IsDir() {
+			// Try to serve index.html from the directory
+			indexPath := strings.TrimSuffix(path, "/") + "/index.html"
+			if idx, err := fsys.Open(indexPath); err == nil {
+				idx.Close()
+				r.URL.Path = indexPath
+			}
+		}
+
+		// File exists - serve it
+		fileServer.ServeHTTP(w, r)
+	})
 }
 
 // Start starts the HTTP/HTTPS server.
