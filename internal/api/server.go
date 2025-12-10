@@ -195,6 +195,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/discovery", s.handleDiscovery)
 	s.mux.HandleFunc("/api/discovery/probe", s.handleTCPProbe)
 	s.mux.HandleFunc("/api/discovery/traceroute", s.handleTraceroute)
+	s.mux.HandleFunc("/api/discovery/portscan", s.handlePortScan)
 	s.mux.HandleFunc("/api/dns", s.handleDNS)
 	s.mux.HandleFunc("/api/gateway", s.handleGateway)
 	s.mux.HandleFunc("/api/vlan", s.handleVLAN)
