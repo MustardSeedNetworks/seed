@@ -42,6 +42,7 @@ type Server struct {
 	logPath          string
 	httpServer       *http.Server
 	authManager      *auth.Manager
+	loginRateLimiter *RateLimiter
 	wsHub            *Hub
 	mux              *http.ServeMux
 	netManager       *network.Manager
@@ -76,6 +77,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 			cfg.Auth.DefaultUsername,
 			cfg.Auth.DefaultPasswordHash,
 		),
+		loginRateLimiter: NewRateLimiter(DefaultRateLimitConfig()),
 		linkMonitor:      network.NewLinkMonitor(cfg.Interface.Default),
 		discoveryManager: discovery.NewManager(cfg.Interface.Default),
 		deviceDiscovery:  discovery.NewDeviceDiscovery(cfg.Interface.Default),
@@ -468,6 +470,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.wsHub.Shutdown()
 	s.linkMonitor.Stop()
 	s.discoveryManager.Stop()
+	s.loginRateLimiter.Stop()
 	return s.httpServer.Shutdown(ctx)
 }
 
