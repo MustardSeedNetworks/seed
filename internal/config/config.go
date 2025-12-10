@@ -2,10 +2,18 @@
 package config
 
 import (
+	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	// ErrInsecureCredentials is returned when default credentials are detected.
+	ErrInsecureCredentials = errors.New("insecure default credentials detected")
 )
 
 // Config represents the application configuration.
@@ -305,8 +313,9 @@ func DefaultConfig() *Config {
 		},
 		Auth: AuthConfig{
 			DefaultUsername:     "admin",
-			DefaultPasswordHash: "$2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52", // "netscope"
+			DefaultPasswordHash: "", // Empty = requires first-boot setup
 			SessionTimeout:      24 * time.Hour,
+			JWTSecret:           "", // Empty = will be generated and persisted
 		},
 		Security: SecurityConfig{
 			AllowedOrigins: []string{}, // Empty = use RFC 1918 defaults
@@ -340,4 +349,89 @@ func (c *Config) Save(path string) error {
 		return err
 	}
 	return os.WriteFile(path, data, 0o600)
+}
+
+// SetupResult holds information about first-boot credential setup.
+type SetupResult struct {
+	IsFirstBoot     bool
+	GeneratedCreds  bool
+	Username        string
+	Password        string // Only set if credentials were generated (display once!)
+	JWTSecretStored bool
+}
+
+// EnsureConfig handles first-boot setup and credential security.
+// It checks for insecure default credentials and generates secure ones if needed.
+// Returns SetupResult with credentials to display if they were generated.
+//
+// The function will:
+// 1. Create config directory if it doesn't exist
+// 2. Load existing config or create default
+// 3. Check if using insecure default credentials (admin/netscope)
+// 4. Generate and persist secure credentials if needed
+// 5. Ensure JWT secret is persisted
+func EnsureConfig(path string, checkDefaultPassword func(hash string) bool) (*Config, *SetupResult, error) {
+	result := &SetupResult{}
+
+	// Ensure config directory exists
+	dir := filepath.Dir(path)
+	if dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			return nil, nil, fmt.Errorf("failed to create config directory: %w", err)
+		}
+	}
+
+	// Check if config file exists
+	_, err := os.Stat(path)
+	isFirstBoot := os.IsNotExist(err)
+	result.IsFirstBoot = isFirstBoot
+
+	// Load or create config
+	cfg, err := Load(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	needsSave := false
+
+	// Check for insecure or missing credentials
+	// Empty password hash = first boot, needs credential generation
+	// Default password hash = insecure, needs credential generation
+	if cfg.Auth.DefaultPasswordHash == "" ||
+		(checkDefaultPassword != nil && checkDefaultPassword(cfg.Auth.DefaultPasswordHash)) {
+		// Generate new secure credentials
+		result.GeneratedCreds = true
+		result.Username = cfg.Auth.DefaultUsername
+
+		// Return error to signal caller needs to generate credentials
+		return cfg, result, ErrInsecureCredentials
+	}
+
+	// Ensure JWT secret is set and persisted
+	if cfg.Auth.JWTSecret == "" {
+		needsSave = true
+		result.JWTSecretStored = true
+	}
+
+	if needsSave && !isFirstBoot {
+		if err := cfg.Save(path); err != nil {
+			return nil, nil, fmt.Errorf("failed to save config: %w", err)
+		}
+	}
+
+	return cfg, result, nil
+}
+
+// UpdateCredentials updates the authentication credentials in the config.
+func (c *Config) UpdateCredentials(username, passwordHash, jwtSecret string) {
+	c.Auth.DefaultUsername = username
+	c.Auth.DefaultPasswordHash = passwordHash
+	if jwtSecret != "" {
+		c.Auth.JWTSecret = jwtSecret
+	}
+}
+
+// UpdateJWTSecret updates only the JWT secret in the config.
+func (c *Config) UpdateJWTSecret(secret string) {
+	c.Auth.JWTSecret = secret
 }
