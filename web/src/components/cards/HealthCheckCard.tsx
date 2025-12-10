@@ -244,42 +244,38 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
     // Download time is what's left after subtracting known phases
     const download = Math.max(0, total - dns - tcp - tls - ttfb);
 
-    // Get status-based colors for each segment
-    const getStatusColor = (status?: StatusValue, defaultColor?: string) => {
-      if (status === "error") return "bg-status-error";
-      if (status === "warning") return "bg-status-warning";
-      return defaultColor || "bg-status-success";
-    };
-
+    // Get status-based text color for legend (bar colors stay fixed for phase identification)
     const getStatusTextColor = (status?: StatusValue) => {
       if (status === "error") return "text-status-error";
       if (status === "warning") return "text-status-warning";
       return "text-text-muted";
     };
 
+    // Segment colors are fixed per-phase for consistent identification
+    // Status is indicated only via text color in the legend
     const segments = [
       {
         label: "DNS",
         value: dns,
-        color: getStatusColor(result.dnsStatus, "bg-blue-400"),
+        color: "bg-blue-400",
         status: result.dnsStatus,
       },
       {
         label: "TCP",
         value: tcp,
-        color: getStatusColor(result.tcpStatus, "bg-cyan-400"),
+        color: "bg-cyan-400",
         status: result.tcpStatus,
       },
       {
         label: "TLS",
         value: tls,
-        color: getStatusColor(result.tlsStatus, "bg-purple-400"),
+        color: "bg-purple-400",
         status: result.tlsStatus,
       },
       {
         label: "Wait",
         value: ttfb,
-        color: getStatusColor(result.ttfbStatus, "bg-amber-400"),
+        color: "bg-amber-400",
         status: result.ttfbStatus,
       },
       {
