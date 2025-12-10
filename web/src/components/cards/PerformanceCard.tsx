@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { getAuthHeaders } from "../../hooks/useAuth";
+import { useSettings } from "../../contexts/SettingsContext";
 
 // Speedtest types
 interface SpeedtestData {
@@ -68,16 +69,6 @@ interface PerformanceCardProps {
   runIperfEnabled?: boolean;
 }
 
-interface IperfSettings {
-  server: string;
-  port: number;
-  protocol: "tcp" | "udp";
-  direction: "upload" | "download" | "bidirectional";
-  duration: number;
-  serverPort: number;
-  enableServer: boolean;
-}
-
 const speedtestPhaseLabels: Record<string, string> = {
   idle: "Ready",
   finding_server: "Finding server...",
@@ -99,6 +90,9 @@ export function PerformanceCard({
   runSpeedtestEnabled = true,
   runIperfEnabled = true,
 }: PerformanceCardProps) {
+  // Get iperf settings from context
+  const { iperfSettings } = useSettings();
+
   // Speedtest state
   const [speedtestStatus, setSpeedtestStatus] =
     useState<SpeedtestStatus | null>(null);
@@ -117,17 +111,6 @@ export function PerformanceCard({
     useState<IperfServerStatus | null>(null);
   const [iperfError, setIperfError] = useState<string | null>(null);
   const [iperfClientRunning, setIperfClientRunning] = useState(false);
-
-  // iperf3 settings (loaded from localStorage/Settings)
-  const [iperfSettings, setIperfSettings] = useState<IperfSettings>({
-    server: "",
-    port: 5201,
-    protocol: "tcp",
-    direction: "download",
-    duration: 10,
-    serverPort: 5201,
-    enableServer: false,
-  });
 
   // Start/stop iperf server based on settings
   const manageIperfServer = useCallback(
@@ -209,77 +192,33 @@ export function PerformanceCard({
     fetchStatus();
   }, []);
 
-  // Listen for settings updates (optional future use)
+  // Track previous server settings to detect changes
+  const prevServerSettings = useState({
+    enableServer: iperfSettings.enableServer,
+    serverPort: iperfSettings.serverPort,
+  })[0];
+
+  // Manage iperf server based on settings from context
   useEffect(() => {
-    const handleSettingsUpdate = (e: Event) => {
-      const detail = (e as CustomEvent<any>).detail;
-      if (detail) {
-        if (typeof detail.runSpeedtest === "boolean") {
-          // no local state needed; props drive
-        }
-      }
-    };
-    window.addEventListener(
-      "testsSettingsUpdated",
-      handleSettingsUpdate as EventListener,
-    );
-    return () => {
-      window.removeEventListener(
-        "testsSettingsUpdated",
-        handleSettingsUpdate as EventListener,
-      );
-    };
-  }, []);
+    // Only manage server on settings changes after iperf3 is confirmed installed
+    if (!iperfInfo?.installed) return;
 
-  // Load iperf settings from localStorage and listen for updates
-  useEffect(() => {
-    const loadSettings = () => {
-      try {
-        const saved = localStorage.getItem("netscope-iperf-settings");
-        if (saved) {
-          const parsed = JSON.parse(saved) as Partial<IperfSettings>;
-          setIperfSettings((prev) => {
-            const newSettings = { ...prev, ...parsed };
-            // Auto-start server if enabled
-            if (newSettings.enableServer && iperfInfo?.installed) {
-              manageIperfServer(true, newSettings.serverPort);
-            }
-            return newSettings;
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load iperf settings:", err);
-      }
-    };
-
-    loadSettings();
-
-    // Listen for settings updates from SettingsDrawer
-    const handleSettingsUpdate = (e: CustomEvent<IperfSettings>) => {
-      setIperfSettings((prev) => {
-        const newSettings = { ...prev, ...e.detail };
-        // Manage server based on enableServer setting
-        if (
-          newSettings.enableServer !== prev.enableServer ||
-          newSettings.serverPort !== prev.serverPort
-        ) {
-          manageIperfServer(newSettings.enableServer, newSettings.serverPort);
-        }
-        return newSettings;
-      });
-    };
-
-    window.addEventListener(
-      "iperfSettingsUpdated",
-      handleSettingsUpdate as EventListener,
-    );
-    return () => {
-      window.removeEventListener(
-        "iperfSettingsUpdated",
-        handleSettingsUpdate as EventListener,
-      );
-    };
-  }, [manageIperfServer, iperfInfo?.installed]);
+    // Check if server settings changed
+    if (
+      iperfSettings.enableServer !== prevServerSettings.enableServer ||
+      iperfSettings.serverPort !== prevServerSettings.serverPort
+    ) {
+      manageIperfServer(iperfSettings.enableServer, iperfSettings.serverPort);
+      prevServerSettings.enableServer = iperfSettings.enableServer;
+      prevServerSettings.serverPort = iperfSettings.serverPort;
+    }
+  }, [
+    iperfSettings.enableServer,
+    iperfSettings.serverPort,
+    iperfInfo?.installed,
+    manageIperfServer,
+    prevServerSettings,
+  ]);
 
   // Poll speedtest status while running
   useEffect(() => {
