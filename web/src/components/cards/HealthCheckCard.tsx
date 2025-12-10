@@ -5,6 +5,7 @@ import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Tooltip } from "../ui/Tooltip";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { HTTP_TIMING_HELP } from "../help/HelpContent";
+import { useSettings } from "../../contexts/SettingsContext";
 
 type StatusValue = "success" | "warning" | "error";
 
@@ -54,6 +55,7 @@ interface HealthCheckCardProps {
 }
 
 export function HealthCheckCard({ loading }: HealthCheckCardProps) {
+  const { fabOptions } = useSettings();
   const [data, setData] = useState<HealthCheckData | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,17 +103,9 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
   // Listen for FAB "run all tests" event
   useEffect(() => {
     const handleRunAllTests = async () => {
-      // Check FAB options from localStorage
-      try {
-        const saved = localStorage.getItem("netscope-fab-options");
-        if (saved) {
-          const fabOptions = JSON.parse(saved);
-          if (fabOptions.runHealthChecks === false) {
-            return; // Skip health checks if disabled
-          }
-        }
-      } catch (err) {
-        console.error("Failed to read FAB options:", err);
+      // Check FAB options from context - skip if health checks disabled
+      if (fabOptions.runHealthChecks === false) {
+        return;
       }
 
       if (!isRunning) {
@@ -128,7 +122,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
     return () => {
       window.removeEventListener("runAllTests", handleRunAllTests);
     };
-  }, [fetchTests, isRunning]);
+  }, [fetchTests, isRunning, fabOptions.runHealthChecks]);
 
   // Don't render card if no tests are configured
   if (!data?.hasTests && !loading && !isRunning) {
