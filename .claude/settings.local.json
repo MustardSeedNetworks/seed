@@ -43,7 +43,15 @@
       "Bash(git checkout:*)",
       "Bash(git ls-tree:*)",
       "Bash(route -n get:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "WebFetch(domain:golangci-lint.run)",
+      "WebFetch(domain:github.com)",
+      "Bash(go install:*)",
+      "Bash(golangci-lint run:*)",
+      "Bash(go env:*)",
+      "Bash(/Users/krisarmstrong/go/bin/golangci-lint run:*)",
+      "Bash(gh label list:*)",
+      "Bash(gofmt:*)"
     ],
     "deny": [],
     "ask": []
