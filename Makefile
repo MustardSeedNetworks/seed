@@ -1,40 +1,168 @@
-.PHONY: all build build-frontend build-backend build-iperf3 clean test lint run dev help
+.PHONY: all build build-frontend build-backend build-backend-dev \
+        build-iperf3 build-iperf3-linux build-iperf3-linux-amd64 build-iperf3-linux-arm64 build-iperf3-all \
+        build-linux-amd64 build-linux-arm64 build-linux-docker \
+        clean clean-all test test-backend test-frontend test-coverage \
+        lint lint-backend lint-frontend \
+        run dev dev-frontend \
+        deploy smoke-test smoke-test-local \
+        deps deps-update logs logs-100 help
 
 # Variables
 BINARY_NAME=netscope
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-LDFLAGS=-ldflags="-s -w -X main.version=$(VERSION)"
+COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_TIME?=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+LDFLAGS=-ldflags="-s -w \
+    -X github.com/krisarmstrong/netscope/internal/version.Version=$(VERSION) \
+    -X github.com/krisarmstrong/netscope/internal/version.Commit=$(COMMIT) \
+    -X github.com/krisarmstrong/netscope/internal/version.BuildTime=$(BUILD_TIME)"
+
+# Deploy configuration
+DEPLOY_HOST?=192.168.64.7
+DEPLOY_USER?=krisarmstrong
+DEPLOY_PATH?=/home/$(DEPLOY_USER)/netscope
+DEPLOY_PORT?=8443
 
 # Default target
 all: build
 
 ## Build
 
-build: build-iperf3 build-frontend build-backend ## Build everything
+build: build-frontend build-backend ## Build everything (frontend embedded in binary)
+	@echo "Build complete: $(BINARY_NAME) ($(VERSION))"
 
-build-iperf3: ## Build iperf3 from source
-	@echo "Building iperf3..."
+build-iperf3: ## Build iperf3 from source (native platform)
+	@echo "Building iperf3 for native platform..."
 	@./scripts/build-iperf3.sh
 
-build-backend: ## Build Go backend
+build-iperf3-linux: ## Build iperf3 for Linux (AMD64 + ARM64 via Docker)
+	@echo "Cross-compiling iperf3 for Linux (all architectures)..."
+	@./scripts/build-iperf3-linux.sh all
+
+build-iperf3-linux-amd64: ## Build iperf3 for Linux AMD64 only
+	@./scripts/build-iperf3-linux.sh amd64
+
+build-iperf3-linux-arm64: ## Build iperf3 for Linux ARM64 only
+	@./scripts/build-iperf3-linux.sh arm64
+
+build-iperf3-all: build-iperf3 build-iperf3-linux ## Build iperf3 for all platforms
+
+build-backend: ## Build Go backend with embedded frontend
 	CGO_ENABLED=1 go build $(LDFLAGS) -o $(BINARY_NAME) ./cmd/netscope
+
+build-backend-dev: ## Build Go backend in dev mode (reads frontend from disk)
+	CGO_ENABLED=1 go build -tags dev $(LDFLAGS) -o $(BINARY_NAME) ./cmd/netscope
 
 build-frontend: ## Build React frontend
 	cd web && npm ci && npm run build
 
-build-linux-amd64: ## Build for Linux AMD64
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build $(LDFLAGS) -o $(BINARY_NAME)-linux-amd64 ./cmd/netscope
+build-linux-amd64: build-frontend ## Build for Linux AMD64 (requires Linux or Docker)
+	@echo "Building for Linux AMD64..."
+	@echo "Note: Requires CGO. Run on Linux or use 'make build-linux-docker'"
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-gnu-gcc \
+		go build $(LDFLAGS) -o $(BINARY_NAME)-linux-amd64 ./cmd/netscope
 
-build-linux-arm64: ## Build for Linux ARM64 (Raspberry Pi)
-	GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build $(LDFLAGS) -o $(BINARY_NAME)-linux-arm64 ./cmd/netscope
+build-linux-arm64: build-frontend ## Build for Linux ARM64 (Raspberry Pi)
+	@echo "Building for Linux ARM64..."
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc \
+		go build $(LDFLAGS) -o $(BINARY_NAME)-linux-arm64 ./cmd/netscope
+
+build-linux-docker: build-frontend ## Build for Linux AMD64 using Docker (cross-platform)
+	@echo "Building for Linux AMD64 using Docker..."
+	docker run --rm -v "$(PWD):/build" -w /build golang:1.23 bash -c "\
+		apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
+		go build $(LDFLAGS) -o $(BINARY_NAME)-linux-amd64 ./cmd/netscope"
+	@echo "Built: $(BINARY_NAME)-linux-amd64"
+
+## Deployment
+
+deploy: ## Deploy to Ubuntu server (builds via Docker if needed)
+	@# Build Linux binary - try direct first, fallback to Docker
+	@if [ ! -f $(BINARY_NAME)-linux-amd64 ] || [ "$(REBUILD)" = "1" ]; then \
+		if command -v x86_64-linux-gnu-gcc > /dev/null 2>&1; then \
+			$(MAKE) build-linux-amd64; \
+		else \
+			echo "Cross-compiler not found, using Docker..."; \
+			$(MAKE) build-linux-docker; \
+		fi; \
+	fi
+	@echo "Deploying to $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)..."
+	@# Check for iperf3-linux-amd64
+	@if [ ! -f bin/iperf3-linux-amd64 ]; then \
+		echo "Warning: bin/iperf3-linux-amd64 not found."; \
+		echo "Run 'make build-iperf3-linux' first for iperf3 support."; \
+	fi
+	@# Create remote directory if needed
+	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "mkdir -p $(DEPLOY_PATH)/bin"
+	@# Rsync binary
+	rsync -avz --progress $(BINARY_NAME)-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/$(BINARY_NAME)
+	@# Rsync iperf3 if it exists
+	@if [ -f bin/iperf3-linux-amd64 ]; then \
+		rsync -avz --progress bin/iperf3-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/bin/iperf3; \
+	fi
+	@# Rsync configs if they exist
+	@if [ -d configs ]; then \
+		rsync -avz --progress configs/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/configs/; \
+	fi
+	@# Set capabilities and restart
+	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
+		cd $(DEPLOY_PATH) && \
+		chmod +x $(BINARY_NAME) && \
+		if [ -f bin/iperf3 ]; then chmod +x bin/iperf3; fi && \
+		pkill -9 $(BINARY_NAME) 2>/dev/null || true && \
+		sleep 1 && \
+		sudo setcap cap_net_raw=+ep ./$(BINARY_NAME) && \
+		nohup ./$(BINARY_NAME) > $(BINARY_NAME).log 2>&1 & \
+		sleep 3 && \
+		ps aux | grep '[n]etscope' || echo 'Warning: Server may not have started'"
+	@echo ""
+	@echo "Deployment complete. Running smoke tests..."
+	@$(MAKE) smoke-test
+
+smoke-test: ## Run smoke tests against deployed server
+	@echo ""
+	@echo "=== Smoke Tests for $(DEPLOY_HOST):$(DEPLOY_PORT) ==="
+	@echo ""
+	@echo "1. Checking server process..."
+	@ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "pgrep -x $(BINARY_NAME) > /dev/null" && \
+		echo "   PASS: Server process running" || \
+		(echo "   FAIL: Server process not found" && exit 1)
+	@echo ""
+	@echo "2. Checking API /api/status..."
+	@curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/api/status" > /dev/null && \
+		echo "   PASS: API responding" || \
+		(echo "   FAIL: API not responding" && exit 1)
+	@echo ""
+	@echo "3. Checking frontend loads..."
+	@curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/" | grep -q "<!DOCTYPE" && \
+		echo "   PASS: Frontend HTML served" || \
+		(echo "   FAIL: Frontend not loading" && exit 1)
+	@echo ""
+	@echo "4. Checking iperf3 availability..."
+	@curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/api/iperf/info" | grep -q '"installed":true' && \
+		echo "   PASS: iperf3 available" || \
+		echo "   WARN: iperf3 not available (optional)"
+	@echo ""
+	@echo "=== All smoke tests passed! ==="
+	@echo "Server running at: https://$(DEPLOY_HOST):$(DEPLOY_PORT)"
+
+smoke-test-local: ## Run smoke tests against local server (port 8443)
+	@echo "Running local smoke tests..."
+	@echo "1. API /api/status..."
+	@curl -sf -k "https://localhost:8443/api/status" > /dev/null && \
+		echo "   PASS" || (echo "   FAIL" && exit 1)
+	@echo "2. Frontend loads..."
+	@curl -sf -k "https://localhost:8443/" | grep -q "<!DOCTYPE" && \
+		echo "   PASS" || (echo "   FAIL" && exit 1)
+	@echo "All local tests passed!"
 
 ## Development
 
 run: ## Run the application (requires sudo for packet capture)
 	sudo go run ./cmd/netscope
 
-dev: ## Run backend in development mode
-	go run ./cmd/netscope -dev
+dev: ## Run backend in development mode (reads frontend from disk)
+	go run -tags dev ./cmd/netscope
 
 dev-frontend: ## Run frontend in development mode
 	cd web && npm run dev
@@ -69,7 +197,10 @@ lint-frontend: ## Run frontend linter
 clean: ## Clean build artifacts
 	rm -f $(BINARY_NAME) $(BINARY_NAME)-*
 	rm -f coverage.out coverage.html
-	rm -rf web/dist web/node_modules
+	rm -rf web/dist
+
+clean-all: clean ## Clean everything including dependencies
+	rm -rf web/node_modules
 	rm -rf build/iperf3 bin/iperf3*
 
 ## Dependencies
@@ -82,6 +213,14 @@ deps-update: ## Update dependencies
 	go get -u ./...
 	go mod tidy
 	cd web && npm update
+
+## Logs
+
+logs: ## Tail server logs on remote
+	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "tail -f $(DEPLOY_PATH)/$(BINARY_NAME).log"
+
+logs-100: ## Show last 100 lines of remote logs
+	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "tail -100 $(DEPLOY_PATH)/$(BINARY_NAME).log"
 
 ## Help
 

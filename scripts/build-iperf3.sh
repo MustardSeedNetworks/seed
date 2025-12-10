@@ -1,3 +1,4 @@
+#!/bin/bash
 #------------------------------------------------------------------------------
 # build-iperf3.sh
 #
@@ -29,9 +30,6 @@
 #   named according to the detected OS and architecture.
 #
 #------------------------------------------------------------------------------
-#!/bin/bash
-# Build iperf3 from source for bundling with NetScope
-# This script downloads the latest iperf3 release from GitHub and compiles it
 
 set -e
 
@@ -71,13 +69,13 @@ fi
 
 echo "Latest iperf3 version: $LATEST_VERSION"
 
-# Check if we already have this version built
+# Determine binary name based on OS/arch
+# For consistency, always use platform suffix except for local dev
 BINARY_NAME="iperf3"
-if [ "$OS" = "darwin" ]; then
-    BINARY_PATH="$OUTPUT_DIR/$BINARY_NAME"
-else
-    BINARY_PATH="$OUTPUT_DIR/$BINARY_NAME-$OS-$ARCH"
-fi
+BINARY_PATH="$OUTPUT_DIR/$BINARY_NAME-$OS-$ARCH"
+
+# Also create a symlink without suffix for local dev convenience
+LOCAL_BINARY="$OUTPUT_DIR/$BINARY_NAME"
 
 if [ -f "$BINARY_PATH" ]; then
     EXISTING_VERSION=$("$BINARY_PATH" --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "")
@@ -96,6 +94,8 @@ TARBALL_FILE="$BUILD_DIR/iperf3-$LATEST_VERSION.tar.gz"
 if [ ! -f "$TARBALL_FILE" ]; then
     echo "Downloading iperf3 source..."
     curl -L -o "$TARBALL_FILE" "$TARBALL_URL"
+fi
+
 # Extract
 echo "Extracting source..."
 cd "$BUILD_DIR"
@@ -111,8 +111,6 @@ if [ -z "$SOURCE_DIR" ]; then
 fi
 if [ -z "$SOURCE_DIR" ]; then
     echo "Error: Could not find extracted source directory"
-    exit 1
-fi
     exit 1
 fi
 
@@ -150,6 +148,9 @@ fi
 
 echo "Building iperf3..."
 make clean 2>/dev/null || true
+make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+make install
+
 # Copy binary to output directory
 if [ ! -f "$BUILD_DIR/install/bin/iperf3" ]; then
     echo "Error: Built iperf3 binary not found at $BUILD_DIR/install/bin/iperf3"
@@ -159,10 +160,11 @@ echo "Copying binary to $BINARY_PATH..."
 cp "$BUILD_DIR/install/bin/iperf3" "$BINARY_PATH"
 chmod +x "$BINARY_PATH"
 
-# Copy binary to output directory
-echo "Copying binary to $BINARY_PATH..."
-cp "$BUILD_DIR/install/bin/iperf3" "$BINARY_PATH"
-chmod +x "$BINARY_PATH"
+# Create local symlink for dev convenience
+if [ "$BINARY_PATH" != "$LOCAL_BINARY" ]; then
+    ln -sf "$(basename "$BINARY_PATH")" "$LOCAL_BINARY"
+    echo "Created symlink: $LOCAL_BINARY -> $(basename "$BINARY_PATH")"
+fi
 
 # Verify the binary works
 echo "Verifying build..."
@@ -171,3 +173,6 @@ echo "Verifying build..."
 echo ""
 echo "Successfully built iperf3 at: $BINARY_PATH"
 echo "Version: $("$BINARY_PATH" --version | head -1)"
+echo ""
+echo "Available binaries:"
+ls -la "$OUTPUT_DIR"/iperf3* 2>/dev/null || true

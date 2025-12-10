@@ -1,4 +1,12 @@
-# Stage 1: Build Go backend (Ubuntu-based for CGO with libpcap)
+# Stage 1: Build frontend
+FROM node:20-noble AS builder-frontend
+WORKDIR /app/web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ .
+RUN npm run build
+
+# Stage 2: Build Go backend with embedded frontend
 FROM golang:1.25-noble AS builder-backend
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -7,15 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /netscope ./cmd/netscope
-
-# Stage 2: Build frontend
-FROM node:20-noble AS builder-frontend
-WORKDIR /app/web
-COPY web/package.json web/package-lock.json ./
-RUN npm ci
-COPY web/ .
-RUN npm run build
+# Copy built frontend for embedding
+COPY --from=builder-frontend /app/web/dist ./web/dist
+# Build with embedded frontend
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /netscope ./cmd/netscope
 
 # Stage 3: Final runtime image (Ubuntu-based, slim)
 FROM ubuntu:24.04
@@ -23,7 +26,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpcap0.8 iperf3 ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=builder-backend /netscope /usr/local/bin/netscope
-COPY --from=builder-frontend /app/web/dist /usr/share/netscope/web
 COPY configs /etc/netscope
 EXPOSE 8443
 ENTRYPOINT ["/usr/local/bin/netscope"]
