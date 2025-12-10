@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -20,7 +21,10 @@ var (
 )
 
 // Config represents the application configuration.
+// All API handlers must use Lock/Unlock for writes or RLock/RUnlock for reads
+// to prevent concurrent config update race conditions.
 type Config struct {
+	mu               sync.RWMutex           `yaml:"-"` // Protects concurrent access
 	Server           ServerConfig           `yaml:"server"`
 	Interface        InterfaceConfig        `yaml:"interface"`
 	VLAN             VLANConfig             `yaml:"vlan"`
@@ -34,6 +38,28 @@ type Config struct {
 	Thresholds       ThresholdsConfig       `yaml:"thresholds"`
 	Auth             AuthConfig             `yaml:"auth"`
 	Security         SecurityConfig         `yaml:"security"`
+}
+
+// Lock acquires a write lock on the config.
+// Must be called before modifying config and followed by Unlock.
+func (c *Config) Lock() {
+	c.mu.Lock()
+}
+
+// Unlock releases the write lock on the config.
+func (c *Config) Unlock() {
+	c.mu.Unlock()
+}
+
+// RLock acquires a read lock on the config.
+// Must be called before reading config and followed by RUnlock.
+func (c *Config) RLock() {
+	c.mu.RLock()
+}
+
+// RUnlock releases the read lock on the config.
+func (c *Config) RUnlock() {
+	c.mu.RUnlock()
 }
 
 // ServerConfig contains HTTP server settings.
