@@ -1,6 +1,9 @@
 export { AutoSaveIndicator } from "./AutoSaveIndicator";
 export { AppearanceSettings } from "./AppearanceSettings";
+export { DiscoverySettings } from "./DiscoverySettings";
 export { DNSSettings } from "./DNSSettings";
 export { FABOptionsSettings } from "./FABOptionsSettings";
 export { HealthChecksSettings } from "./HealthChecksSettings";
+export { PerformanceSettings } from "./PerformanceSettings";
+export { ThresholdsSettings } from "./ThresholdsSettings";
 export { WiFiSettings } from "./WiFiSettings";
