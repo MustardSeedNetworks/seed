@@ -134,8 +134,14 @@ make test
 # Go tests with coverage
 go test -coverprofile=coverage.out ./...
 
+# Go tests with race detection (recommended for concurrent code)
+go test -race ./...
+
 # Frontend tests
 cd web && npm test
+
+# Frontend tests with coverage
+cd web && npm test -- --coverage
 
 # E2E tests (requires running server)
 make test-e2e
@@ -146,6 +152,242 @@ make test-e2e
 - Unit tests for business logic
 - Integration tests for API endpoints
 - Aim for >80% coverage on new code
+
+---
+
+## Testing Guidelines
+
+### Go Backend Testing
+
+#### Table-Driven Tests
+
+Use table-driven tests to cover multiple test cases efficiently:
+
+```go
+func TestValidateURL(t *testing.T) {
+    tests := []struct {
+        name    string
+        input   string
+        wantErr bool
+    }{
+        {"valid http", "http://example.com", false},
+        {"valid https", "https://example.com", false},
+        {"missing scheme", "example.com", true},
+        {"empty string", "", true},
+        {"private IP blocked", "http://192.168.1.1", true},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            err := ValidateURL(tt.input)
+            if (err != nil) != tt.wantErr {
+                t.Errorf("ValidateURL(%q) error = %v, wantErr %v",
+                    tt.input, err, tt.wantErr)
+            }
+        })
+    }
+}
+```
+
+#### Test Isolation with Temporary Resources
+
+Use temporary directories and files for tests that involve disk operations:
+
+```go
+func TestConfigLoad(t *testing.T) {
+    // Create temp directory
+    tmpDir := t.TempDir() // Auto-cleaned after test
+
+    // Create test config file
+    configPath := filepath.Join(tmpDir, "test-config.yaml")
+    testConfig := []byte(`interface: eth0\nport: 8080`)
+    if err := os.WriteFile(configPath, testConfig, 0644); err != nil {
+        t.Fatal(err)
+    }
+
+    // Test config loading
+    cfg, err := LoadConfig(configPath)
+    if err != nil {
+        t.Fatalf("LoadConfig() error = %v", err)
+    }
+    // assertions...
+}
+```
+
+#### Mocking External Dependencies
+
+Use interfaces for dependencies that need mocking:
+
+```go
+// Define interface for the dependency
+type HTTPClient interface {
+    Do(req *http.Request) (*http.Response, error)
+}
+
+// Production code uses the interface
+type Service struct {
+    client HTTPClient
+}
+
+// Test with mock
+type mockHTTPClient struct {
+    response *http.Response
+    err      error
+}
+
+func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+    return m.response, m.err
+}
+
+func TestServiceFetch(t *testing.T) {
+    mock := &mockHTTPClient{
+        response: &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader("OK"))},
+    }
+    svc := &Service{client: mock}
+    // test svc.Fetch()...
+}
+```
+
+#### Race Condition Checks
+
+Always run tests with `-race` for concurrent code:
+
+```bash
+go test -race ./internal/websocket/...
+```
+
+### React Frontend Testing
+
+#### Test File Organization
+
+Tests are co-located with source files:
+- `Component.tsx` → `Component.test.tsx`
+- `useHook.ts` → `useHook.test.ts`
+
+#### Using the Test Setup
+
+Import mocks from the setup file:
+
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import {
+  mockFetch,
+  mockLocalStorage,
+  MockWebSocket,
+  createMockResponse,
+  createMockAuthToken,
+} from "../test/setup";
+
+describe("MyComponent", () => {
+  it("fetches data on mount", async () => {
+    mockFetch.mockResolvedValueOnce(
+      createMockResponse({ data: "test" })
+    );
+
+    render(<MyComponent />);
+
+    await screen.findByText("test");
+    expect(mockFetch).toHaveBeenCalledWith("/api/data", expect.any(Object));
+  });
+});
+```
+
+#### Mocking Strategies
+
+**Mocking fetch:**
+```typescript
+mockFetch.mockImplementation((url: string) => {
+  if (url.includes("/api/auth")) {
+    return createMockResponse({ token: "test" });
+  }
+  return createMockResponse({});
+});
+```
+
+**Mocking WebSocket:**
+```typescript
+beforeEach(() => {
+  global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+});
+
+it("handles WebSocket messages", () => {
+  render(<Component />);
+  const ws = MockWebSocket.instances[0];
+  ws.simulateOpen();
+  ws.simulateMessage({ type: "update", data: {} });
+  // assertions...
+});
+```
+
+**Mocking localStorage:**
+```typescript
+it("persists auth token", () => {
+  mockLocalStorage.setItem("token", "test-token");
+  render(<AuthComponent />);
+  expect(mockLocalStorage.setItem).toHaveBeenCalledWith("token", "test-token");
+});
+```
+
+#### Testing Async Code
+
+Use `waitFor` for async operations:
+
+```typescript
+import { waitFor } from "@testing-library/react";
+
+it("loads data asynchronously", async () => {
+  mockFetch.mockResolvedValueOnce(createMockResponse({ items: [] }));
+
+  render(<DataList />);
+
+  await waitFor(() => {
+    expect(screen.getByRole("list")).toBeInTheDocument();
+  });
+});
+```
+
+#### Testing Context Providers
+
+Wrap components with providers:
+
+```typescript
+import { SettingsProvider } from "../contexts/SettingsContext";
+
+function renderWithProviders(ui: React.ReactElement) {
+  return render(
+    <SettingsProvider>{ui}</SettingsProvider>
+  );
+}
+
+it("uses settings context", () => {
+  renderWithProviders(<SettingsConsumer />);
+  // assertions...
+});
+```
+
+### Test Data Factories
+
+Use factories for consistent test data:
+
+```typescript
+// From setup.ts
+import { createMockAuthToken, createMockThresholds } from "../test/setup";
+
+it("handles expired token", () => {
+  const expiredToken = createMockAuthToken(-3600); // Expired 1 hour ago
+  mockLocalStorage.setItem("token", expiredToken.token);
+  // ...
+});
+```
+
+### Common Patterns
+
+1. **Arrange-Act-Assert** - Structure tests clearly
+2. **One assertion per test** (when practical)
+3. **Descriptive test names** - `it("shows error when login fails")`
+4. **Avoid testing implementation details** - Test behavior, not internals
+5. **Clean up after tests** - The setup file handles this automatically
 
 ## Issue Guidelines
 
