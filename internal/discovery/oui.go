@@ -199,6 +199,7 @@ func NewOUIDatabase() *OUIDatabase {
 // LoadFromFile loads additional OUI entries from a file.
 // File format: AA:BB:CC<tab>Vendor Name
 func (db *OUIDatabase) LoadFromFile(path string) error {
+	//nolint:gosec // G304: Path is user-provided configuration for OUI database
 	file, err := os.Open(path)
 	if err != nil {
 		return err

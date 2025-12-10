@@ -173,6 +173,7 @@ func (m *LinkMonitor) checkLinkStateLinux() LinkState {
 	// Read /sys/class/net/<iface>/carrier
 	carrierPath := filepath.Join("sys", "class", "net", m.interfaceName, "carrier")
 	carrierPath = string(os.PathSeparator) + carrierPath
+	//nolint:gosec // G304: carrierPath is constructed from validated interface name in sysfs
 	data, err := os.ReadFile(carrierPath)
 	if err != nil {
 		// Interface might not exist or no carrier file

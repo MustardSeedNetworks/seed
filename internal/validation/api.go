@@ -40,6 +40,7 @@ func WriteJSONErrorWithCode(w http.ResponseWriter, status int, message, code str
 		Error: message,
 		Code:  code,
 	}
+	//nolint:errcheck // Response body encode errors are not actionable in HTTP handlers
 	json.NewEncoder(w).Encode(resp)
 }
 
@@ -52,6 +53,7 @@ func WriteValidationError(w http.ResponseWriter, fields []FieldError) {
 		Code:   "VALIDATION_ERROR",
 		Fields: fields,
 	}
+	//nolint:errcheck // Response body encode errors are not actionable in HTTP handlers
 	json.NewEncoder(w).Encode(resp)
 }
 

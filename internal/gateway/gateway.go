@@ -129,13 +129,11 @@ func DetectGateway() (string, error) {
 	return detectGatewayPlatform()
 }
 
-
 // DetectGatewayIPv6 attempts to detect the default IPv6 gateway.
 // Uses netlink on Linux, exec commands on macOS.
 func DetectGatewayIPv6() (string, error) {
 	return detectGatewayIPv6Platform()
 }
-
 
 // Ping performs a single ping to the gateway using raw ICMP sockets.
 func (t *Tester) Ping() *PingResult {

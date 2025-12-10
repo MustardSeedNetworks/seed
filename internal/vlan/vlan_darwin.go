@@ -60,6 +60,7 @@ func getVlanInfo(ifname string) (parent string, vlanID int) {
 	copy(req.name[:], ifname)
 
 	// Perform ioctl to get VLAN info
+	//nolint:gosec // G103: unsafe.Pointer is required for syscall ioctl
 	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
 		uintptr(fd),

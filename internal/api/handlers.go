@@ -37,6 +37,7 @@ func sendJSONResponse(w http.ResponseWriter, status int, data interface{}) {
 }
 
 func readLastLines(path string, maxBytes int64, maxLines int) ([]string, error) {
+	//nolint:gosec // G304: path is from config for log file location
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -112,14 +113,18 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Retry-After", "900") // 15 minutes
 		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
 		sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-			"error":             "Too many failed login attempts",
-			"retry_after":       900,
+			"error":              "Too many failed login attempts",
+			"retry_after":        900,
 			"remaining_attempts": remaining,
 		})
 		return
 	}
 
-	bodyBytes, _ := io.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
 	var req LoginRequest
 	if err := json.Unmarshal(bodyBytes, &req); err != nil {
 		log.Printf("login decode error: %v body=%q", err, string(bodyBytes))
@@ -136,15 +141,15 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		if blocked {
 			w.Header().Set("Retry-After", "900")
 			sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-				"error":             "Too many failed login attempts. Account temporarily locked.",
-				"retry_after":       900,
+				"error":              "Too many failed login attempts. Account temporarily locked.",
+				"retry_after":        900,
 				"remaining_attempts": 0,
 			})
 			return
 		}
 
 		sendJSONResponse(w, http.StatusUnauthorized, map[string]interface{}{
-			"error":             "Invalid credentials",
+			"error":              "Invalid credentials",
 			"remaining_attempts": remaining,
 		})
 		return
@@ -288,19 +293,19 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Apply threshold updates
 	if thresholds, ok := updates["thresholds"].(map[string]interface{}); ok {
-		if dns, ok := thresholds["dns"].(map[string]interface{}); ok {
-			if good, ok := dns["good"].(float64); ok {
+		if dnsThresh, ok := thresholds["dns"].(map[string]interface{}); ok {
+			if good, ok := dnsThresh["good"].(float64); ok {
 				s.config.Thresholds.DNS.Warning = time.Duration(good) * time.Millisecond
 			}
-			if warning, ok := dns["warning"].(float64); ok {
+			if warning, ok := dnsThresh["warning"].(float64); ok {
 				s.config.Thresholds.DNS.Critical = time.Duration(warning) * time.Millisecond
 			}
 		}
-		if gateway, ok := thresholds["gateway"].(map[string]interface{}); ok {
-			if good, ok := gateway["good"].(float64); ok {
+		if gwThresh, ok := thresholds["gateway"].(map[string]interface{}); ok {
+			if good, ok := gwThresh["good"].(float64); ok {
 				s.config.Thresholds.Ping.Warning = time.Duration(good) * time.Millisecond
 			}
-			if warning, ok := gateway["warning"].(float64); ok {
+			if warning, ok := gwThresh["warning"].(float64); ok {
 				s.config.Thresholds.Ping.Critical = time.Duration(warning) * time.Millisecond
 			}
 		}
@@ -337,27 +342,27 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if httpTimings, ok := thresholds["httpTimings"].(map[string]interface{}); ok {
-			if dns, ok := httpTimings["dns"].(map[string]interface{}); ok {
-				if good, ok := dns["good"].(float64); ok {
+			if dnsT, ok := httpTimings["dns"].(map[string]interface{}); ok {
+				if good, ok := dnsT["good"].(float64); ok {
 					s.config.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(good) * time.Millisecond
 				}
-				if warning, ok := dns["warning"].(float64); ok {
+				if warning, ok := dnsT["warning"].(float64); ok {
 					s.config.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(warning) * time.Millisecond
 				}
 			}
-			if tcp, ok := httpTimings["tcp"].(map[string]interface{}); ok {
-				if good, ok := tcp["good"].(float64); ok {
+			if tcpT, ok := httpTimings["tcp"].(map[string]interface{}); ok {
+				if good, ok := tcpT["good"].(float64); ok {
 					s.config.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(good) * time.Millisecond
 				}
-				if warning, ok := tcp["warning"].(float64); ok {
+				if warning, ok := tcpT["warning"].(float64); ok {
 					s.config.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(warning) * time.Millisecond
 				}
 			}
-			if tls, ok := httpTimings["tls"].(map[string]interface{}); ok {
-				if good, ok := tls["good"].(float64); ok {
+			if tlsT, ok := httpTimings["tls"].(map[string]interface{}); ok {
+				if good, ok := tlsT["good"].(float64); ok {
 					s.config.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(good) * time.Millisecond
 				}
-				if warning, ok := tls["warning"].(float64); ok {
+				if warning, ok := tlsT["warning"].(float64); ok {
 					s.config.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(warning) * time.Millisecond
 				}
 			}
@@ -2042,13 +2047,14 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			testResult.TTFBStatus = getTestStatus(timings.TTFB, httpTimingThresholds.TTFB.Warning.Milliseconds(), httpTimingThresholds.TTFB.Critical.Milliseconds())
 
 			// Overall test status: error if any phase is error, warning if any warning, else use total time
-			if testResult.DNSStatus == "error" || testResult.TCPStatus == "error" ||
-				testResult.TLSStatus == "error" || testResult.TTFBStatus == "error" {
+			switch {
+			case testResult.DNSStatus == "error" || testResult.TCPStatus == "error" ||
+				testResult.TLSStatus == "error" || testResult.TTFBStatus == "error":
 				testResult.TestStatus = "error"
-			} else if testResult.DNSStatus == "warning" || testResult.TCPStatus == "warning" ||
-				testResult.TLSStatus == "warning" || testResult.TTFBStatus == "warning" {
+			case testResult.DNSStatus == "warning" || testResult.TCPStatus == "warning" ||
+				testResult.TLSStatus == "warning" || testResult.TTFBStatus == "warning":
 				testResult.TestStatus = "warning"
-			} else {
+			default:
 				testResult.TestStatus = getTestStatus(timings.Total, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
 			}
 		}
@@ -2426,8 +2432,8 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 }
 
 // getTLSVersionString converts TLS version to human-readable string.
-func getTLSVersionString(version uint16) string {
-	switch version {
+func getTLSVersionString(tlsVersion uint16) string {
+	switch tlsVersion {
 	case tls.VersionTLS10:
 		return "TLS 1.0"
 	case tls.VersionTLS11:
@@ -2552,13 +2558,13 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := IperfInfoResponse{}
-	version, err := iperf.GetVersion()
+	iperfVersion, err := iperf.GetVersion()
 	if err != nil {
 		resp.Installed = false
 		resp.Error = err.Error()
 	} else {
 		resp.Installed = true
-		resp.Version = version
+		resp.Version = iperfVersion
 	}
 
 	sendJSONResponse(w, http.StatusOK, resp)
@@ -2635,7 +2641,7 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config := iperf.ClientConfig{
+	iperfConfig := iperf.ClientConfig{
 		Server:    req.Server,
 		Port:      req.Port,
 		Protocol:  req.Protocol,
@@ -2649,7 +2655,7 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Duration+30)*time.Second)
 		defer cancel()
-		if _, err := s.iperfManager.RunClient(ctx, config); err != nil {
+		if _, err := s.iperfManager.RunClient(ctx, &iperfConfig); err != nil {
 			log.Printf("iperf client failed: %v", err)
 		}
 	}()

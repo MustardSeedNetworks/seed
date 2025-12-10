@@ -356,6 +356,7 @@ func DefaultConfig() *Config {
 func Load(path string) (*Config, error) {
 	cfg := DefaultConfig()
 
+	//nolint:gosec // G304: path is user-provided configuration file path, validated by caller
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -539,7 +540,8 @@ func detectActiveInterface() string {
 	}
 
 	// Priority order: prefer ethernet over wifi, physical over virtual
-	var candidates []string
+	// Pre-allocate slice with expected capacity
+	candidates := make([]string, 0, len(interfaces))
 
 	for _, iface := range interfaces {
 		// Skip loopback and down interfaces
