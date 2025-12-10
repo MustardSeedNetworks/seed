@@ -1,0 +1,182 @@
+// Package vlan provides VLAN detection and configuration functionality.
+package vlan
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
+)
+
+// Traffic represents per-VLAN traffic statistics.
+type Traffic struct {
+	ID       int       `json:"id"`
+	Packets  uint64    `json:"packets"`
+	Bytes    uint64    `json:"bytes"`
+	LastSeen time.Time `json:"lastSeen"`
+}
+
+// TrafficMonitor captures and tracks 802.1Q VLAN-tagged traffic.
+type TrafficMonitor struct {
+	interfaceName string
+	handle        *pcap.Handle
+	stats         map[int]*Traffic // keyed by VLAN ID
+	mu            sync.RWMutex
+	ctx           context.Context
+	cancel        context.CancelFunc
+	started       bool
+}
+
+// NewTrafficMonitor creates a new VLAN traffic monitor.
+func NewTrafficMonitor(interfaceName string) *TrafficMonitor {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &TrafficMonitor{
+		interfaceName: interfaceName,
+		stats:         make(map[int]*Traffic),
+		ctx:           ctx,
+		cancel:        cancel,
+	}
+}
+
+// Start begins capturing VLAN-tagged traffic.
+func (m *TrafficMonitor) Start() error {
+	m.mu.Lock()
+	if m.started {
+		m.mu.Unlock()
+		return nil
+	}
+
+	// Open capture handle
+	handle, err := pcap.OpenLive(m.interfaceName, 128, true, pcap.BlockForever)
+	if err != nil {
+		m.mu.Unlock()
+		return fmt.Errorf("failed to open capture: %w", err)
+	}
+
+	// Set BPF filter for 802.1Q tagged frames (EtherType 0x8100)
+	if err := handle.SetBPFFilter("vlan"); err != nil {
+		handle.Close()
+		m.mu.Unlock()
+		return fmt.Errorf("failed to set BPF filter: %w", err)
+	}
+
+	m.handle = handle
+	m.started = true
+	m.mu.Unlock()
+
+	go m.captureLoop()
+	return nil
+}
+
+// Stop stops capturing VLAN traffic.
+func (m *TrafficMonitor) Stop() {
+	m.cancel()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.handle != nil {
+		m.handle.Close()
+		m.handle = nil
+	}
+	m.started = false
+}
+
+// SetInterface updates the interface to monitor.
+func (m *TrafficMonitor) SetInterface(name string) error {
+	m.mu.Lock()
+	wasRunning := m.started
+	m.mu.Unlock()
+
+	if wasRunning {
+		m.Stop()
+	}
+
+	m.mu.Lock()
+	m.interfaceName = name
+	m.ctx, m.cancel = context.WithCancel(context.Background())
+	m.mu.Unlock()
+
+	if wasRunning {
+		return m.Start()
+	}
+	return nil
+}
+
+// GetStats returns traffic statistics for all observed VLANs.
+func (m *TrafficMonitor) GetStats() []Traffic {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	result := make([]Traffic, 0, len(m.stats))
+	for _, t := range m.stats {
+		result = append(result, *t)
+	}
+	return result
+}
+
+// Reset clears all collected statistics.
+func (m *TrafficMonitor) Reset() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.stats = make(map[int]*Traffic)
+}
+
+// captureLoop continuously captures and processes VLAN-tagged frames.
+func (m *TrafficMonitor) captureLoop() {
+	packetSource := gopacket.NewPacketSource(m.handle, m.handle.LinkType())
+
+	for {
+		select {
+		case <-m.ctx.Done():
+			return
+		case packet, ok := <-packetSource.Packets():
+			if !ok {
+				return
+			}
+			m.processPacket(packet)
+		}
+	}
+}
+
+// processPacket extracts VLAN information from a captured packet.
+func (m *TrafficMonitor) processPacket(packet gopacket.Packet) {
+	// Look for 802.1Q (Dot1Q) layer
+	dot1qLayer := packet.Layer(layers.LayerTypeDot1Q)
+	if dot1qLayer == nil {
+		return
+	}
+
+	dot1q, ok := dot1qLayer.(*layers.Dot1Q)
+	if !ok {
+		return
+	}
+
+	vlanID := int(dot1q.VLANIdentifier)
+	packetLen := uint64(len(packet.Data()))
+
+	m.mu.Lock()
+	if stats, exists := m.stats[vlanID]; exists {
+		stats.Packets++
+		stats.Bytes += packetLen
+		stats.LastSeen = time.Now()
+	} else {
+		m.stats[vlanID] = &Traffic{
+			ID:       vlanID,
+			Packets:  1,
+			Bytes:    packetLen,
+			LastSeen: time.Now(),
+		}
+	}
+	m.mu.Unlock()
+}
+
+// IsRunning returns true if capture is active.
+func (m *TrafficMonitor) IsRunning() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.started
+}

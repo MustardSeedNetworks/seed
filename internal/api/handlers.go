@@ -1556,6 +1556,51 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, resp)
 }
 
+// VLANTrafficResponse represents the VLAN traffic statistics for the API.
+type VLANTrafficResponse struct {
+	VLANs   []VLANTrafficEntry `json:"vlans"`
+	Running bool               `json:"running"`
+}
+
+// VLANTrafficEntry represents traffic statistics for a single VLAN.
+type VLANTrafficEntry struct {
+	ID       int    `json:"id"`
+	Packets  uint64 `json:"packets"`
+	Bytes    uint64 `json:"bytes"`
+	LastSeen string `json:"lastSeen"`
+}
+
+// handleVLANTraffic returns VLAN traffic statistics from frame capture.
+func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if s.vlanTrafficMonitor == nil {
+		http.Error(w, "VLAN traffic monitor not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	stats := s.vlanTrafficMonitor.GetStats()
+	entries := make([]VLANTrafficEntry, 0, len(stats))
+	for _, stat := range stats {
+		entries = append(entries, VLANTrafficEntry{
+			ID:       stat.ID,
+			Packets:  stat.Packets,
+			Bytes:    stat.Bytes,
+			LastSeen: stat.LastSeen.Format("2006-01-02T15:04:05Z07:00"),
+		})
+	}
+
+	resp := VLANTrafficResponse{
+		VLANs:   entries,
+		Running: s.vlanTrafficMonitor.IsRunning(),
+	}
+
+	sendJSONResponse(w, http.StatusOK, resp)
+}
+
 // WiFiResponse represents the Wi-Fi information for the API.
 type WiFiResponse struct {
 	SSID      string `json:"ssid"`

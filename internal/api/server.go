@@ -52,8 +52,9 @@ type Server struct {
 	dnsTester        *dns.Tester
 	dhcpMonitor      *dhcp.Monitor
 	gatewayTester    *gateway.Tester
-	vlanManager      *vlan.Manager
-	wifiManager      *wifi.Manager
+	vlanManager        *vlan.Manager
+	vlanTrafficMonitor *vlan.TrafficMonitor
+	wifiManager        *wifi.Manager
 	cableTester      *cable.Tester
 	speedtestTester  *speedtest.Tester
 	iperfManager     *iperf.Manager
@@ -86,8 +87,9 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		dnsTester:        dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dhcpMonitor:      dhcp.NewMonitor(cfg.Interface.Default),
 		gatewayTester:    gateway.NewTester(gateway.DefaultThresholds()),
-		vlanManager:      vlan.NewManager(cfg.Interface.Default),
-		wifiManager:      wifi.NewManager(cfg.Interface.Default),
+		vlanManager:        vlan.NewManager(cfg.Interface.Default),
+		vlanTrafficMonitor: vlan.NewTrafficMonitor(cfg.Interface.Default),
+		wifiManager:        wifi.NewManager(cfg.Interface.Default),
 		cableTester:      cable.NewTester(cfg.Interface.Default),
 		speedtestTester:  speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 		iperfManager:     iperf.NewManager(),
@@ -199,6 +201,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/dns", s.handleDNS)
 	s.mux.HandleFunc("/api/gateway", s.handleGateway)
 	s.mux.HandleFunc("/api/vlan", s.handleVLAN)
+	s.mux.HandleFunc("/api/vlan/traffic", s.handleVLANTraffic)
 	s.mux.HandleFunc("/api/wifi", s.handleWiFi)
 	s.mux.HandleFunc("/api/wifi/settings", s.handleWiFiSettings)
 	s.mux.HandleFunc("/api/cable", s.handleCable)
@@ -369,6 +372,13 @@ func (s *Server) Start() error {
 		log.Println("Discovery capture started")
 	}
 
+	// Start VLAN traffic monitor (requires root/CAP_NET_RAW)
+	if err := s.vlanTrafficMonitor.Start(); err != nil {
+		log.Printf("Warning: VLAN traffic monitor failed to start (may require root): %v", err)
+	} else {
+		log.Println("VLAN traffic monitor started")
+	}
+
 	if s.config.Server.HTTPS {
 		return s.startHTTPS()
 	}
@@ -487,6 +497,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.wsHub.Shutdown()
 	s.linkMonitor.Stop()
 	s.discoveryManager.Stop()
+	s.vlanTrafficMonitor.Stop()
 	s.loginRateLimiter.Stop()
 	return s.httpServer.Shutdown(ctx)
 }
