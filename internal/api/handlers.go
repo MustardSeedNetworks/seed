@@ -89,11 +89,12 @@ type LoginResponse struct {
 
 // StatusResponse represents the system status.
 type StatusResponse struct {
-	Status     string `json:"status"`
-	Version    string `json:"version"`
-	Uptime     int64  `json:"uptime"`
-	Interface  string `json:"interface"`
-	IsWireless bool   `json:"isWireless"`
+	Status        string `json:"status"`
+	Version       string `json:"version"`
+	Uptime        int64  `json:"uptime"`
+	Interface     string `json:"interface"`
+	IsWireless    bool   `json:"isWireless"`
+	ICMPAvailable bool   `json:"icmpAvailable"`
 }
 
 // handleLogin handles user authentication.
@@ -186,10 +187,11 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := StatusResponse{
-		Status:     "ok",
-		Version:    version.Version,
-		Interface:  s.config.Interface.Default,
-		IsWireless: isWireless,
+		Status:        "ok",
+		Version:       version.Version,
+		Interface:     s.config.Interface.Default,
+		IsWireless:    isWireless,
+		ICMPAvailable: s.icmpAvailable,
 	}
 
 	sendJSONResponse(w, http.StatusOK, resp)
