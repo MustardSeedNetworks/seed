@@ -1,5 +1,6 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { useSettings } from "../../contexts/SettingsContext";
+import { SimpleBaseCard } from "./BaseCard";
 
 export interface WiFiData {
   ssid: string;
@@ -53,38 +54,35 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
     return null;
   }
 
-  if (loading) {
-    return (
-      <Card title="Wi-Fi" status="loading">
-        <CardValue value="Scanning..." size="lg" />
-      </Card>
-    );
-  }
-
-  if (!data) {
-    return (
-      <Card title="Wi-Fi" status="unknown">
-        <CardValue value="Not connected" size="md" />
-      </Card>
-    );
-  }
-
-  const status = getSignalStatus(data.signal, t);
+  const status = data ? getSignalStatus(data.signal, t) : "unknown";
 
   return (
-    <Card title="Wi-Fi" status={status}>
-      <CardValue value={data.ssid} size="lg" />
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-lg font-mono">{getSignalBars(data.signal)}</span>
-        <span className="text-sm text-text-muted">
-          {data.signal} dBm ({signalToPercentage(data.signal)}%)
-        </span>
-      </div>
-      <CardDivider />
-      <CardRow label="BSSID" value={data.bssid} />
-      <CardRow label="Channel" value={data.channel.toString()} />
-      <CardRow label="Frequency" value={`${data.frequency} MHz`} />
-      <CardRow label="Security" value={data.security} />
-    </Card>
+    <SimpleBaseCard
+      title="Wi-Fi"
+      status={loading ? "loading" : status}
+      loading={loading}
+      loadingContent={<CardValue value="Scanning..." size="lg" />}
+    >
+      {!data ? (
+        <CardValue value="Not connected" size="md" />
+      ) : (
+        <>
+          <CardValue value={data.ssid} size="lg" />
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-lg font-mono">
+              {getSignalBars(data.signal)}
+            </span>
+            <span className="text-sm text-text-muted">
+              {data.signal} dBm ({signalToPercentage(data.signal)}%)
+            </span>
+          </div>
+          <CardDivider />
+          <CardRow label="BSSID" value={data.bssid} />
+          <CardRow label="Channel" value={data.channel.toString()} />
+          <CardRow label="Frequency" value={`${data.frequency} MHz`} />
+          <CardRow label="Security" value={data.security} />
+        </>
+      )}
+    </SimpleBaseCard>
   );
 }

@@ -1,4 +1,5 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { BaseCard } from "./BaseCard";
 
 export interface PublicIPData {
   ipv4?: string;
@@ -31,84 +32,74 @@ function formatLastChecked(isoDate: string): string {
   }
 }
 
+function getStatus(data: PublicIPData): Status {
+  if (data.error && !data.ipv4 && !data.ipv6) return "error";
+  if (data.ipv4 || data.ipv6) return "success";
+  return "unknown";
+}
+
 export function PublicIPCard({ data, loading }: PublicIPCardProps) {
-  if (loading) {
-    return (
-      <Card title="Public IP" status="loading">
-        <CardValue value="Checking..." size="lg" />
-      </Card>
-    );
-  }
-
-  if (!data) {
-    return (
-      <Card title="Public IP" status="unknown">
-        <CardValue value="No data" size="md" />
-        <p className="text-xs text-text-muted mt-1">
-          Unable to detect public IP
-        </p>
-      </Card>
-    );
-  }
-
-  // Determine status
-  let status: Status = "unknown";
-  if (data.error && !data.ipv4 && !data.ipv6) {
-    status = "error";
-  } else if (data.ipv4 || data.ipv6) {
-    status = "success";
-  }
-
   return (
-    <Card title="Public IP" status={status}>
-      {/* IPv4 Address */}
-      {data.ipv4 ? (
+    <BaseCard
+      title="Public IP"
+      data={data}
+      loading={loading}
+      getStatus={getStatus}
+      loadingContent={<CardValue value="Checking..." size="lg" />}
+      emptyMessage="Unable to detect public IP"
+    >
+      {(ipData) => (
         <>
-          <p className="text-xs text-text-muted font-medium">IPv4</p>
-          <CardValue value={data.ipv4} size="lg" />
-        </>
-      ) : (
-        <>
-          <p className="text-xs text-text-muted font-medium">IPv4</p>
-          <p className="text-sm text-text-muted">Not available</p>
-        </>
-      )}
+          {/* IPv4 Address */}
+          {ipData.ipv4 ? (
+            <>
+              <p className="text-xs text-text-muted font-medium">IPv4</p>
+              <CardValue value={ipData.ipv4} size="lg" />
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-text-muted font-medium">IPv4</p>
+              <p className="text-sm text-text-muted">Not available</p>
+            </>
+          )}
 
-      <CardDivider />
-
-      {/* IPv6 Address */}
-      {data.ipv6 ? (
-        <>
-          <p className="text-xs text-text-muted font-medium">IPv6</p>
-          <p className="text-sm font-mono break-all text-text-primary">
-            {data.ipv6}
-          </p>
-        </>
-      ) : (
-        <>
-          <p className="text-xs text-text-muted font-medium">IPv6</p>
-          <p className="text-sm text-text-muted">Not available</p>
-        </>
-      )}
-
-      {/* Last checked */}
-      {data.lastChecked && (
-        <>
           <CardDivider />
-          <CardRow
-            label="Last checked"
-            value={formatLastChecked(data.lastChecked)}
-          />
-        </>
-      )}
 
-      {/* Error if any */}
-      {data.error && (
-        <>
-          <CardDivider />
-          <p className="text-xs text-status-error">{data.error}</p>
+          {/* IPv6 Address */}
+          {ipData.ipv6 ? (
+            <>
+              <p className="text-xs text-text-muted font-medium">IPv6</p>
+              <p className="text-sm font-mono break-all text-text-primary">
+                {ipData.ipv6}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-text-muted font-medium">IPv6</p>
+              <p className="text-sm text-text-muted">Not available</p>
+            </>
+          )}
+
+          {/* Last checked */}
+          {ipData.lastChecked && (
+            <>
+              <CardDivider />
+              <CardRow
+                label="Last checked"
+                value={formatLastChecked(ipData.lastChecked)}
+              />
+            </>
+          )}
+
+          {/* Error if any */}
+          {ipData.error && (
+            <>
+              <CardDivider />
+              <p className="text-xs text-status-error">{ipData.error}</p>
+            </>
+          )}
         </>
       )}
-    </Card>
+    </BaseCard>
   );
 }
