@@ -26,6 +26,7 @@ import (
 	"github.com/krisarmstrong/netscope/internal/network"
 	"github.com/krisarmstrong/netscope/internal/validation"
 	"github.com/krisarmstrong/netscope/internal/version"
+	"github.com/krisarmstrong/netscope/internal/vlan"
 )
 
 // sendJSONResponse is a helper to send JSON responses and handle encoding errors.
@@ -1599,6 +1600,104 @@ func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, http.StatusOK, resp)
+}
+
+// VLANInterfaceRequest represents the request to create/delete a VLAN interface.
+type VLANInterfaceRequest struct {
+	Interface string `json:"interface"`
+	VlanID    int    `json:"vlanId"`
+}
+
+// handleVLANInterface handles POST (create) and DELETE (remove) for VLAN subinterfaces.
+func (s *Server) handleVLANInterface(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.createVLANInterface(w, r)
+	case http.MethodDelete:
+		s.deleteVLANInterface(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// createVLANInterface creates an 802.1Q VLAN subinterface.
+func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request) {
+	var req VLANInterfaceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate VLAN ID (1-4094)
+	if req.VlanID < 1 || req.VlanID > 4094 {
+		http.Error(w, "VLAN ID must be between 1 and 4094", http.StatusBadRequest)
+		return
+	}
+
+	// Use current interface if not specified
+	iface := req.Interface
+	if iface == "" {
+		iface = s.netManager.GetCurrentInterface()
+	}
+
+	// Validate interface name
+	if err := validation.ValidateInterface(iface); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid interface: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Create the VLAN interface
+	if err := vlan.CreateVlanInterface(iface, req.VlanID); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create VLAN interface: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"status":    "success",
+		"message":   "VLAN interface created",
+		"interface": iface,
+		"vlanId":    req.VlanID,
+	})
+}
+
+// deleteVLANInterface removes an 802.1Q VLAN subinterface.
+func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request) {
+	var req VLANInterfaceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate VLAN ID (1-4094)
+	if req.VlanID < 1 || req.VlanID > 4094 {
+		http.Error(w, "VLAN ID must be between 1 and 4094", http.StatusBadRequest)
+		return
+	}
+
+	// Use current interface if not specified
+	iface := req.Interface
+	if iface == "" {
+		iface = s.netManager.GetCurrentInterface()
+	}
+
+	// Validate interface name
+	if err := validation.ValidateInterface(iface); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid interface: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Delete the VLAN interface
+	if err := vlan.DeleteVlanInterface(iface, req.VlanID); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to delete VLAN interface: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"status":    "success",
+		"message":   "VLAN interface deleted",
+		"interface": iface,
+		"vlanId":    req.VlanID,
+	})
 }
 
 // WiFiResponse represents the Wi-Fi information for the API.

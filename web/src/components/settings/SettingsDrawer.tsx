@@ -160,6 +160,187 @@ interface SubnetConfig {
   enabled: boolean;
 }
 
+// VLANControl component for creating/deleting VLAN subinterfaces
+const VLANControl = memo(function VLANControl() {
+  const [vlanId, setVlanId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{
+    text: string;
+    isError: boolean;
+  } | null>(null);
+
+  const handleCreate = async () => {
+    const id = parseInt(vlanId, 10);
+    if (isNaN(id) || id < 1 || id > 4094) {
+      setMessage({ text: "VLAN ID must be 1-4094", isError: true });
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/vlan/interface`, {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ vlanId: id }),
+      });
+      if (response.ok) {
+        setMessage({ text: `VLAN ${id} created`, isError: false });
+        setVlanId("");
+      } else {
+        const text = await response.text();
+        setMessage({ text: text || "Failed to create VLAN", isError: true });
+      }
+    } catch {
+      setMessage({ text: "Network error", isError: true });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
+  const handleDelete = async () => {
+    const id = parseInt(vlanId, 10);
+    if (isNaN(id) || id < 1 || id > 4094) {
+      setMessage({ text: "VLAN ID must be 1-4094", isError: true });
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/vlan/interface`, {
+        method: "DELETE",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ vlanId: id }),
+      });
+      if (response.ok) {
+        setMessage({ text: `VLAN ${id} deleted`, isError: false });
+        setVlanId("");
+      } else {
+        const text = await response.text();
+        setMessage({ text: text || "Failed to delete VLAN", isError: true });
+      }
+    } catch {
+      setMessage({ text: "Network error", isError: true });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          type="number"
+          min="1"
+          max="4094"
+          value={vlanId}
+          onChange={(e) => setVlanId(e.target.value)}
+          placeholder="VLAN ID (1-4094)"
+          className="flex-1 px-2 py-1.5 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+          disabled={loading}
+        />
+        <button
+          onClick={handleCreate}
+          disabled={loading || !vlanId}
+          className="px-3 py-1.5 bg-brand-primary text-text-inverse rounded text-sm font-medium hover:bg-brand-accent disabled:opacity-50"
+        >
+          Add
+        </button>
+        <button
+          onClick={handleDelete}
+          disabled={loading || !vlanId}
+          className="px-3 py-1.5 bg-status-error text-text-inverse rounded text-sm font-medium hover:opacity-80 disabled:opacity-50"
+        >
+          Remove
+        </button>
+      </div>
+      {message && (
+        <p
+          className={`text-xs ${message.isError ? "text-status-error" : "text-status-success"}`}
+        >
+          {message.text}
+        </p>
+      )}
+      <p className="text-xs text-text-muted">
+        Creates/removes 802.1Q VLAN subinterface. Requires root.
+      </p>
+    </div>
+  );
+});
+
+// MTUControl component for setting interface MTU
+const MTUControl = memo(function MTUControl() {
+  const [mtu, setMtu] = useState("1500");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{
+    text: string;
+    isError: boolean;
+  } | null>(null);
+
+  const handleApply = async () => {
+    const mtuVal = parseInt(mtu, 10);
+    if (isNaN(mtuVal) || mtuVal < 68 || mtuVal > 9000) {
+      setMessage({ text: "MTU must be 68-9000", isError: true });
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/network/mtu`, {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ mtu: mtuVal }),
+      });
+      if (response.ok) {
+        setMessage({ text: `MTU set to ${mtuVal}`, isError: false });
+      } else {
+        const text = await response.text();
+        setMessage({ text: text || "Failed to set MTU", isError: true });
+      }
+    } catch {
+      setMessage({ text: "Network error", isError: true });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          type="number"
+          min="68"
+          max="9000"
+          value={mtu}
+          onChange={(e) => setMtu(e.target.value)}
+          placeholder="1500"
+          className="flex-1 px-2 py-1.5 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+          disabled={loading}
+        />
+        <button
+          onClick={handleApply}
+          disabled={loading}
+          className="px-4 py-1.5 bg-brand-primary text-text-inverse rounded text-sm font-medium hover:bg-brand-accent disabled:opacity-50"
+        >
+          {loading ? "Applying..." : "Apply"}
+        </button>
+      </div>
+      {message && (
+        <p
+          className={`text-xs ${message.isError ? "text-status-error" : "text-status-success"}`}
+        >
+          {message.text}
+        </p>
+      )}
+      <p className="text-xs text-text-muted">
+        Standard: 1500, Jumbo frames: up to 9000. Requires root.
+      </p>
+    </div>
+  );
+});
+
 interface SettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -1207,6 +1388,22 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                   className="w-4 h-4"
                 />
               </label>
+            </div>
+
+            {/* VLAN Configuration */}
+            <div className="border-t border-surface-border pt-3 mt-3">
+              <p className="text-xs uppercase tracking-wide text-text-muted font-semibold mb-2">
+                VLAN Tag (802.1Q)
+              </p>
+              <VLANControl />
+            </div>
+
+            {/* MTU Configuration */}
+            <div className="border-t border-surface-border pt-3 mt-3">
+              <p className="text-xs uppercase tracking-wide text-text-muted font-semibold mb-2">
+                MTU Setting
+              </p>
+              <MTUControl />
             </div>
           </CollapsibleSection>
 
