@@ -341,4 +341,201 @@ describe("useWebSocket", () => {
 
     expect(MockWebSocket.instances.length).toBe(currentCount);
   });
+
+  it("stays disconnected when no token provided", () => {
+    const { result } = renderHook(() =>
+      useWebSocket({ url: "/ws", token: null }),
+    );
+
+    // Should stay disconnected without creating a WebSocket
+    expect(result.current.status).toBe("disconnected");
+    expect(MockWebSocket.instances.length).toBe(0);
+  });
+
+  it("disconnects when token becomes null", () => {
+    const { result, rerender } = renderHook(
+      ({ token }) => useWebSocket({ url: "/ws", token }),
+      { initialProps: { token: "valid-token" as string | null } },
+    );
+
+    const ws = MockWebSocket.instances[0];
+    act(() => {
+      ws.simulateOpen();
+    });
+    expect(result.current.status).toBe("connected");
+
+    // Token becomes null (logout)
+    rerender({ token: null });
+
+    // Allow effect to run
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    expect(ws.closeWasCalled).toBe(true);
+  });
+
+  it("encodes token in URL", () => {
+    const specialToken = "token with spaces & special=chars";
+    renderHook(() => useWebSocket({ url: "/ws", token: specialToken }));
+
+    const ws = MockWebSocket.instances[0];
+    expect(ws.url).toContain(encodeURIComponent(specialToken));
+  });
+
+  it("handles multiple messages in one frame", async () => {
+    const onMessage = vi.fn();
+    renderHook(() => useWebSocket({ url: "/ws", token: "token", onMessage }));
+
+    const ws = MockWebSocket.instances[0];
+    act(() => {
+      ws.simulateOpen();
+    });
+
+    // Simulate multiple JSON messages separated by newlines
+    const multiMessage =
+      '{"type":"message1","payload":{}}\n{"type":"message2","payload":{}}';
+    act(() => {
+      if (ws.onmessage) {
+        ws.onmessage({ data: multiMessage } as MessageEvent);
+      }
+    });
+
+    expect(onMessage).toHaveBeenCalledTimes(2);
+    expect(onMessage).toHaveBeenCalledWith({
+      type: "message1",
+      payload: {},
+    });
+    expect(onMessage).toHaveBeenCalledWith({
+      type: "message2",
+      payload: {},
+    });
+  });
+
+  it("handles invalid JSON message gracefully", async () => {
+    const onMessage = vi.fn();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    renderHook(() => useWebSocket({ url: "/ws", token: "token", onMessage }));
+
+    const ws = MockWebSocket.instances[0];
+    act(() => {
+      ws.simulateOpen();
+    });
+
+    // Send invalid JSON
+    act(() => {
+      if (ws.onmessage) {
+        ws.onmessage({ data: "not valid json" } as MessageEvent);
+      }
+    });
+
+    expect(onMessage).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+  });
+
+  it("send warns when not connected", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const { result } = renderHook(() =>
+      useWebSocket({ url: "/ws", token: "token" }),
+    );
+
+    // Don't open the connection
+    const message: Message = { type: "test", payload: {} };
+    act(() => {
+      result.current.send(message);
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "WebSocket not connected, cannot send message",
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it("reconnect resets attempt counter", async () => {
+    const { result } = renderHook(() =>
+      useWebSocket({
+        url: "/ws",
+        token: "token",
+        reconnectInterval: 100,
+        maxReconnectAttempts: 2,
+      }),
+    );
+
+    const ws = MockWebSocket.instances[0];
+    act(() => {
+      ws.simulateOpen();
+    });
+
+    // Close and exhaust reconnect attempts
+    act(() => {
+      ws.simulateClose();
+    });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    const ws2 = MockWebSocket.instances[MockWebSocket.instances.length - 1];
+    act(() => {
+      ws2.simulateClose();
+    });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    const countBeforeManualReconnect = MockWebSocket.instances.length;
+
+    // Manual reconnect should reset counter and allow reconnection
+    act(() => {
+      result.current.reconnect();
+    });
+
+    // Should have created a new WebSocket
+    expect(MockWebSocket.instances.length).toBe(countBeforeManualReconnect + 1);
+  });
+
+  it("resets reconnect attempts on successful connection", async () => {
+    renderHook(() =>
+      useWebSocket({
+        url: "/ws",
+        token: "token",
+        reconnectInterval: 100,
+        maxReconnectAttempts: 3,
+      }),
+    );
+
+    // First connection
+    let ws = MockWebSocket.instances[0];
+    act(() => {
+      ws.simulateOpen();
+    });
+
+    // Close to trigger reconnect
+    act(() => {
+      ws.simulateClose();
+    });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // Reconnected WebSocket opens successfully
+    ws = MockWebSocket.instances[MockWebSocket.instances.length - 1];
+    act(() => {
+      ws.simulateOpen();
+    });
+
+    // Close again - should still be able to reconnect (counter was reset)
+    act(() => {
+      ws.simulateClose();
+    });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // Should have created another WebSocket
+    expect(MockWebSocket.instances.length).toBeGreaterThanOrEqual(3);
+  });
 });
