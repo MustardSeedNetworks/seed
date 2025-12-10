@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 	"unicode"
@@ -141,12 +140,6 @@ func HashPassword(password string) (string, error) {
 // Middleware returns an HTTP middleware that validates JWT tokens.
 func (m *Manager) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Development bypass: set NETSCOPE_NO_AUTH=1 to disable auth checks.
-		if os.Getenv("NETSCOPE_NO_AUTH") == "1" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		// Skip auth for login endpoint
 		if r.URL.Path == "/api/auth/login" {
 			next.ServeHTTP(w, r)
