@@ -1,0 +1,513 @@
+// Package discovery provides network discovery functionality.
+package discovery
+
+import (
+	"context"
+	"fmt"
+	"net"
+	"syscall"
+	"time"
+
+	"golang.org/x/net/icmp"
+	"golang.org/x/net/ipv4"
+)
+
+// TracerouteHop represents a single hop in a traceroute.
+type TracerouteHop struct {
+	TTL      int           `json:"ttl"`
+	IP       string        `json:"ip,omitempty"`
+	Hostname string        `json:"hostname,omitempty"`
+	RTT      time.Duration `json:"rtt"`
+	State    string        `json:"state"` // "reply", "timeout", "unreachable"
+}
+
+// TracerouteResult contains the complete traceroute result.
+type TracerouteResult struct {
+	Target    string          `json:"target"`
+	TargetIP  string          `json:"targetIp"`
+	Protocol  string          `json:"protocol"` // "icmp", "udp", "tcp"
+	Port      int             `json:"port,omitempty"`
+	Hops      []TracerouteHop `json:"hops"`
+	Completed bool            `json:"completed"`
+	Error     string          `json:"error,omitempty"`
+}
+
+// Tracer provides traceroute functionality.
+type Tracer struct {
+	timeout    time.Duration
+	maxHops    int
+	retries    int
+	resolvePtr bool
+}
+
+// NewTracer creates a new Tracer instance.
+func NewTracer(timeout time.Duration, maxHops int) *Tracer {
+	if timeout == 0 {
+		timeout = 3 * time.Second
+	}
+	if maxHops == 0 {
+		maxHops = 30
+	}
+	return &Tracer{
+		timeout:    timeout,
+		maxHops:    maxHops,
+		retries:    2,
+		resolvePtr: true,
+	}
+}
+
+// TraceICMP performs an ICMP-based traceroute.
+func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult {
+	result := &TracerouteResult{
+		Target:   target,
+		Protocol: "icmp",
+		Hops:     make([]TracerouteHop, 0, t.maxHops),
+	}
+
+	// Resolve target
+	ips, err := net.LookupIP(target)
+	if err != nil || len(ips) == 0 {
+		result.Error = fmt.Sprintf("failed to resolve target: %v", err)
+		return result
+	}
+
+	var targetIP net.IP
+	for _, ip := range ips {
+		if ip4 := ip.To4(); ip4 != nil {
+			targetIP = ip4
+			break
+		}
+	}
+	if targetIP == nil {
+		result.Error = "no IPv4 address found for target"
+		return result
+	}
+	result.TargetIP = targetIP.String()
+
+	// Create ICMP connection for sending
+	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
+		return result
+	}
+	defer conn.Close()
+
+	// Get IPv4 packet conn for setting TTL
+	pconn := conn.IPv4PacketConn()
+
+	dst := &net.IPAddr{IP: targetIP}
+	seq := 0
+
+	for ttl := 1; ttl <= t.maxHops; ttl++ {
+		select {
+		case <-ctx.Done():
+			result.Error = "traceroute canceled"
+			return result
+		default:
+		}
+
+		hop := TracerouteHop{
+			TTL:   ttl,
+			State: "timeout",
+		}
+
+		// Set TTL using ipv4 package
+		if err := pconn.SetTTL(ttl); err != nil {
+			hop.State = "error"
+			result.Hops = append(result.Hops, hop)
+			continue
+		}
+
+		// Try multiple times for this TTL
+		for retry := 0; retry < t.retries; retry++ {
+			seq++
+			start := time.Now()
+
+			// Build ICMP echo request
+			msg := &icmp.Message{
+				Type: ipv4.ICMPTypeEcho,
+				Code: 0,
+				Body: &icmp.Echo{
+					ID:   1,
+					Seq:  seq,
+					Data: []byte("NETSCOPE"),
+				},
+			}
+			msgBytes, err := msg.Marshal(nil)
+			if err != nil {
+				continue
+			}
+
+			// Send packet
+			if _, err := conn.WriteTo(msgBytes, dst); err != nil {
+				continue
+			}
+
+			// Set read deadline
+			//nolint:errcheck // Best-effort deadline setting
+			conn.SetReadDeadline(time.Now().Add(t.timeout))
+
+			// Read response
+			reply := make([]byte, 1500)
+			n, peer, err := conn.ReadFrom(reply)
+			rtt := time.Since(start)
+
+			if err != nil {
+				// Timeout or error
+				continue
+			}
+
+			// Parse the response
+			rm, err := icmp.ParseMessage(1, reply[:n]) // 1 = ICMP for IPv4
+			if err != nil {
+				continue
+			}
+
+			hop.RTT = rtt
+			if peerIP, ok := peer.(*net.IPAddr); ok {
+				hop.IP = peerIP.IP.String()
+				if t.resolvePtr {
+					if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
+						hop.Hostname = names[0]
+					}
+				}
+			}
+
+			switch rm.Type {
+			case ipv4.ICMPTypeEchoReply:
+				// Reached the destination
+				hop.State = "reply"
+				result.Hops = append(result.Hops, hop)
+				result.Completed = true
+				return result
+
+			case ipv4.ICMPTypeTimeExceeded:
+				// TTL exceeded - intermediate hop
+				hop.State = "reply"
+
+			case ipv4.ICMPTypeDestinationUnreachable:
+				hop.State = "unreachable"
+				result.Hops = append(result.Hops, hop)
+				result.Completed = true
+				return result
+			}
+
+			// Got a response, no need to retry
+			break
+		}
+
+		result.Hops = append(result.Hops, hop)
+
+		// Check if we reached the destination
+		if hop.IP == targetIP.String() {
+			result.Completed = true
+			return result
+		}
+	}
+
+	return result
+}
+
+// TraceUDP performs a UDP-based traceroute.
+func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *TracerouteResult {
+	result := &TracerouteResult{
+		Target:   target,
+		Protocol: "udp",
+		Port:     port,
+		Hops:     make([]TracerouteHop, 0, t.maxHops),
+	}
+
+	if port == 0 {
+		port = 33434 // Traditional traceroute start port
+	}
+
+	// Resolve target
+	ips, err := net.LookupIP(target)
+	if err != nil || len(ips) == 0 {
+		result.Error = fmt.Sprintf("failed to resolve target: %v", err)
+		return result
+	}
+
+	var targetIP net.IP
+	for _, ip := range ips {
+		if ip4 := ip.To4(); ip4 != nil {
+			targetIP = ip4
+			break
+		}
+	}
+	if targetIP == nil {
+		result.Error = "no IPv4 address found for target"
+		return result
+	}
+	result.TargetIP = targetIP.String()
+
+	// Create ICMP listener for receiving TTL exceeded messages
+	icmpConn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
+		return result
+	}
+	defer icmpConn.Close()
+
+	for ttl := 1; ttl <= t.maxHops; ttl++ {
+		select {
+		case <-ctx.Done():
+			result.Error = "traceroute canceled"
+			return result
+		default:
+		}
+
+		hop := TracerouteHop{
+			TTL:   ttl,
+			State: "timeout",
+		}
+
+		// Create UDP socket with specific TTL
+		udpConn, err := net.DialUDP("udp4", nil, &net.UDPAddr{
+			IP:   targetIP,
+			Port: port + ttl - 1, // Increment port for each hop
+		})
+		if err != nil {
+			hop.State = "error"
+			result.Hops = append(result.Hops, hop)
+			continue
+		}
+
+		// Set TTL on socket
+		rawConn, err := udpConn.SyscallConn()
+		if err != nil {
+			udpConn.Close()
+			hop.State = "error"
+			result.Hops = append(result.Hops, hop)
+			continue
+		}
+
+		var setErr error
+		//nolint:errcheck // Control callback handles its own error
+		rawConn.Control(func(fd uintptr) {
+			setErr = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL, ttl)
+		})
+		if setErr != nil {
+			udpConn.Close()
+			hop.State = "error"
+			result.Hops = append(result.Hops, hop)
+			continue
+		}
+
+		for retry := 0; retry < t.retries; retry++ {
+			start := time.Now()
+
+			// Send UDP packet
+			_, err = udpConn.Write([]byte("NETSCOPE"))
+			if err != nil {
+				continue
+			}
+
+			// Wait for ICMP response
+			//nolint:errcheck // Best-effort deadline setting
+			icmpConn.SetReadDeadline(time.Now().Add(t.timeout))
+			reply := make([]byte, 1500)
+			n, peer, err := icmpConn.ReadFrom(reply)
+			rtt := time.Since(start)
+
+			if err != nil {
+				continue
+			}
+
+			rm, err := icmp.ParseMessage(1, reply[:n])
+			if err != nil {
+				continue
+			}
+
+			hop.RTT = rtt
+			if peerIP, ok := peer.(*net.IPAddr); ok {
+				hop.IP = peerIP.IP.String()
+				if t.resolvePtr {
+					if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
+						hop.Hostname = names[0]
+					}
+				}
+			}
+
+			switch rm.Type {
+			case ipv4.ICMPTypeTimeExceeded:
+				hop.State = "reply"
+
+			case ipv4.ICMPTypeDestinationUnreachable:
+				// Port unreachable means we reached the destination
+				hop.State = "reply"
+				result.Hops = append(result.Hops, hop)
+				result.Completed = true
+				udpConn.Close()
+				return result
+			}
+
+			break
+		}
+
+		udpConn.Close()
+		result.Hops = append(result.Hops, hop)
+
+		if hop.IP == targetIP.String() {
+			result.Completed = true
+			return result
+		}
+	}
+
+	return result
+}
+
+// TraceTCP performs a TCP-based traceroute using SYN packets.
+func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *TracerouteResult {
+	result := &TracerouteResult{
+		Target:   target,
+		Protocol: "tcp",
+		Port:     port,
+		Hops:     make([]TracerouteHop, 0, t.maxHops),
+	}
+
+	if port == 0 {
+		port = 80 // Default to HTTP
+	}
+
+	// Resolve target
+	ips, err := net.LookupIP(target)
+	if err != nil || len(ips) == 0 {
+		result.Error = fmt.Sprintf("failed to resolve target: %v", err)
+		return result
+	}
+
+	var targetIP net.IP
+	for _, ip := range ips {
+		if ip4 := ip.To4(); ip4 != nil {
+			targetIP = ip4
+			break
+		}
+	}
+	if targetIP == nil {
+		result.Error = "no IPv4 address found for target"
+		return result
+	}
+	result.TargetIP = targetIP.String()
+
+	// Create ICMP listener for receiving TTL exceeded messages
+	icmpConn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
+		return result
+	}
+	defer icmpConn.Close()
+
+	for ttl := 1; ttl <= t.maxHops; ttl++ {
+		select {
+		case <-ctx.Done():
+			result.Error = "traceroute canceled"
+			return result
+		default:
+		}
+
+		hop := TracerouteHop{
+			TTL:   ttl,
+			State: "timeout",
+		}
+
+		for retry := 0; retry < t.retries; retry++ {
+			start := time.Now()
+
+			// Use TCP connect with timeout - simpler than raw SYN
+			dialer := net.Dialer{
+				Timeout: t.timeout,
+				Control: func(network, address string, c syscall.RawConn) error {
+					var setErr error
+					//nolint:errcheck // Control callback handles its own error
+					c.Control(func(fd uintptr) {
+						setErr = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL, ttl)
+					})
+					return setErr
+				},
+			}
+
+			// Start connection attempt in goroutine
+			connCh := make(chan net.Conn, 1)
+			errCh := make(chan error, 1)
+			go func() {
+				conn, err := dialer.DialContext(ctx, "tcp4", fmt.Sprintf("%s:%d", targetIP, port))
+				if err != nil {
+					errCh <- err
+				} else {
+					connCh <- conn
+				}
+			}()
+
+			// Also listen for ICMP TTL exceeded
+			//nolint:errcheck // Best-effort deadline setting
+			icmpConn.SetReadDeadline(time.Now().Add(t.timeout))
+			icmpReply := make([]byte, 1500)
+
+			// Wait for either TCP response, ICMP response, or timeout
+			select {
+			case conn := <-connCh:
+				// TCP connection succeeded - reached destination
+				rtt := time.Since(start)
+				conn.Close()
+				hop.RTT = rtt
+				hop.IP = targetIP.String()
+				hop.State = "reply"
+				if t.resolvePtr {
+					if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
+						hop.Hostname = names[0]
+					}
+				}
+				result.Hops = append(result.Hops, hop)
+				result.Completed = true
+				return result
+
+			case tcpErr := <-errCh:
+				rtt := time.Since(start)
+				// Check if it's a refused connection (RST) - still means we reached target
+				if opErr, ok := tcpErr.(*net.OpError); ok {
+					if sysErr, ok := opErr.Err.(*syscall.Errno); ok && *sysErr == syscall.ECONNREFUSED {
+						hop.RTT = rtt
+						hop.IP = targetIP.String()
+						hop.State = "reply"
+						if t.resolvePtr {
+							if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
+								hop.Hostname = names[0]
+							}
+						}
+						result.Hops = append(result.Hops, hop)
+						result.Completed = true
+						return result
+					}
+				}
+
+				// Check for ICMP response
+				n, peer, err := icmpConn.ReadFrom(icmpReply)
+				if err == nil {
+					rm, err := icmp.ParseMessage(1, icmpReply[:n])
+					if err == nil && rm.Type == ipv4.ICMPTypeTimeExceeded {
+						hop.RTT = rtt
+						if peerIP, ok := peer.(*net.IPAddr); ok {
+							hop.IP = peerIP.IP.String()
+							if t.resolvePtr {
+								if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
+									hop.Hostname = names[0]
+								}
+							}
+						}
+						hop.State = "reply"
+						break
+					}
+				}
+				continue
+
+			case <-time.After(t.timeout):
+				continue
+			}
+		}
+
+		result.Hops = append(result.Hops, hop)
+	}
+
+	return result
+}

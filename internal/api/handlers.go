@@ -1151,6 +1151,94 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, resp)
 }
 
+// TracerouteRequest represents a traceroute request.
+type TracerouteRequest struct {
+	Target   string `json:"target"`   // IP or hostname
+	Protocol string `json:"protocol"` // "icmp", "udp", "tcp" (default: icmp)
+	Port     int    `json:"port"`     // Port for TCP/UDP (default: 80 for TCP, 33434 for UDP)
+	MaxHops  int    `json:"maxHops"`  // Max TTL (default: 30)
+	Timeout  int    `json:"timeout"`  // Per-hop timeout in ms (default: 3000)
+}
+
+// handleTraceroute handles traceroute requests.
+func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req TracerouteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate target
+	if req.Target == "" {
+		http.Error(w, "Target is required", http.StatusBadRequest)
+		return
+	}
+
+	// Validate target for security (must be valid IP or resolvable hostname)
+	ip := net.ParseIP(req.Target)
+	if ip == nil {
+		// Not an IP, check if it looks like a valid hostname
+		if err := validation.ValidateServerAddress(req.Target); err != nil {
+			http.Error(w, "Invalid target: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Set defaults
+	protocol := req.Protocol
+	if protocol == "" {
+		protocol = "icmp"
+	}
+	if protocol != "icmp" && protocol != "udp" && protocol != "tcp" {
+		http.Error(w, "Protocol must be icmp, udp, or tcp", http.StatusBadRequest)
+		return
+	}
+
+	maxHops := req.MaxHops
+	if maxHops <= 0 || maxHops > 64 {
+		maxHops = 30
+	}
+
+	timeout := time.Duration(req.Timeout) * time.Millisecond
+	if timeout <= 0 || timeout > 10*time.Second {
+		timeout = 3 * time.Second
+	}
+
+	port := req.Port
+	if port <= 0 {
+		if protocol == "tcp" {
+			port = 80
+		} else {
+			port = 33434
+		}
+	}
+
+	// Create tracer
+	tracer := discovery.NewTracer(timeout, maxHops)
+
+	// Set overall timeout for the operation
+	ctx, cancel := context.WithTimeout(r.Context(), timeout*time.Duration(maxHops)+10*time.Second)
+	defer cancel()
+
+	// Run traceroute based on protocol
+	var result *discovery.TracerouteResult
+	switch protocol {
+	case "icmp":
+		result = tracer.TraceICMP(ctx, req.Target)
+	case "udp":
+		result = tracer.TraceUDP(ctx, req.Target, port)
+	case "tcp":
+		result = tracer.TraceTCP(ctx, req.Target, port)
+	}
+
+	sendJSONResponse(w, http.StatusOK, result)
+}
+
 // DNSLookupResult represents a DNS lookup result for the API.
 type DNSLookupResult struct {
 	Result   string   `json:"result"`
