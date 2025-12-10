@@ -3,18 +3,21 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/krisarmstrong/netscope/internal/api"
+	"github.com/krisarmstrong/netscope/internal/auth"
 	"github.com/krisarmstrong/netscope/internal/config"
 	"github.com/krisarmstrong/netscope/internal/discovery"
 	"github.com/krisarmstrong/netscope/internal/network"
@@ -76,10 +79,38 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.LUTC)
 	log.Printf("NetScope %s starting, logging to %s", version, logPath)
 
-	// Load configuration
-	cfg, err := config.Load(*configPath)
+	// Load configuration with first-boot security check
+	cfg, setupResult, err := config.EnsureConfig(*configPath, auth.IsDefaultPasswordHash)
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		if errors.Is(err, config.ErrInsecureCredentials) {
+			// Generate secure credentials
+			creds, credErr := auth.GenerateInitialCredentials(cfg.Auth.DefaultUsername)
+			if credErr != nil {
+				log.Fatalf("Failed to generate secure credentials: %v", credErr)
+			}
+
+			// Update config with new credentials
+			cfg.UpdateCredentials(creds.Username, creds.PasswordHash, creds.JWTSecret)
+
+			// Save the updated config
+			if saveErr := cfg.Save(*configPath); saveErr != nil {
+				log.Fatalf("Failed to save config with new credentials: %v", saveErr)
+			}
+
+			// Display credentials to console (this is the only time they're shown!)
+			printCredentialsBanner(creds.Username, creds.Password, setupResult.IsFirstBoot)
+		} else {
+			log.Fatalf("Failed to load configuration: %v", err)
+		}
+	} else if setupResult != nil && setupResult.JWTSecretStored {
+		// JWT secret was empty and needs to be generated and persisted
+		jwtSecret := auth.GenerateJWTSecret()
+		cfg.UpdateJWTSecret(jwtSecret)
+		if saveErr := cfg.Save(*configPath); saveErr != nil {
+			log.Printf("Warning: Failed to persist JWT secret: %v", saveErr)
+		} else {
+			log.Println("JWT secret generated and persisted to config file")
+		}
 	}
 
 	// Optional log access token override via environment
@@ -173,4 +204,52 @@ func main() {
 
 	<-done
 	log.Println("NetScope stopped")
+}
+
+// printCredentialsBanner displays the generated credentials prominently.
+// This is the only time the password is shown - it's not stored in plain text.
+func printCredentialsBanner(username, password string, isFirstBoot bool) {
+	banner := `
+╔══════════════════════════════════════════════════════════════════╗
+║                    NETSCOPE SECURITY SETUP                       ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  %s  ║
+║                                                                  ║
+║  Your login credentials have been generated:                     ║
+║                                                                  ║
+║    Username: %-48s ║
+║    Password: %-48s ║
+║                                                                  ║
+║  ⚠️  IMPORTANT: Save this password now!                          ║
+║     It will NOT be shown again.                                  ║
+║                                                                  ║
+║  The password has been securely hashed and stored in:            ║
+║    %s  ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+`
+	var setupType string
+	if isFirstBoot {
+		setupType = "First-time setup - generating secure credentials"
+	} else {
+		setupType = "Security upgrade - replacing default credentials"
+	}
+
+	// Pad the setup type and config path to fit the banner
+	setupType = fmt.Sprintf("%-52s", setupType)
+
+	// Use fmt.Fprintf to stderr so it's visible even when stdout is redirected
+	fmt.Fprintf(os.Stderr, banner, setupType, username, password, padRight("configs/netscope.yaml", 44))
+
+	// Also log it (will go to log file)
+	log.Printf("Generated new credentials for user '%s' - password displayed in console", username)
+}
+
+// padRight pads a string to the specified length.
+func padRight(s string, length int) string {
+	if len(s) >= length {
+		return s[:length]
+	}
+	return s + strings.Repeat(" ", length-len(s))
 }
