@@ -157,3 +157,234 @@ func TestThresholdDefaults(t *testing.T) {
 		t.Errorf("expected cert expiry critical 7 days, got %d", cfg.Thresholds.CustomTests.CertExpiry.Critical)
 	}
 }
+
+// ========== EnsureConfig Tests ==========
+
+func TestEnsureConfigFirstBoot(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "new-config.yaml")
+
+	// First boot - no existing config file
+	cfg, result, err := EnsureConfig(configPath, nil)
+
+	// Should return ErrInsecureCredentials because password hash is empty
+	if err != ErrInsecureCredentials {
+		t.Errorf("expected ErrInsecureCredentials for first boot, got %v", err)
+	}
+	if cfg == nil {
+		t.Fatal("expected config even with error")
+	}
+	if result == nil {
+		t.Fatal("expected result")
+	}
+	if !result.IsFirstBoot {
+		t.Error("expected IsFirstBoot=true")
+	}
+	if !result.GeneratedCreds {
+		t.Error("expected GeneratedCreds=true")
+	}
+}
+
+func TestEnsureConfigDetectsInsecurePassword(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "insecure-config.yaml")
+
+	// Create config with a known insecure password hash
+	cfg := DefaultConfig()
+	cfg.Auth.DefaultPasswordHash = "$2a$10$InsecureHashThatWillBeDetected"
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("failed to save initial config: %v", err)
+	}
+
+	// checkDefaultPassword function that always returns true (simulates insecure)
+	checkInsecure := func(_ string) bool { return true }
+
+	_, result, err := EnsureConfig(configPath, checkInsecure)
+
+	if err != ErrInsecureCredentials {
+		t.Errorf("expected ErrInsecureCredentials for insecure password, got %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected result")
+	}
+	if result.IsFirstBoot {
+		t.Error("expected IsFirstBoot=false for existing config")
+	}
+	if !result.GeneratedCreds {
+		t.Error("expected GeneratedCreds=true for insecure password")
+	}
+}
+
+func TestEnsureConfigSecurePassword(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "secure-config.yaml")
+
+	// Create config with a secure password hash
+	cfg := DefaultConfig()
+	cfg.Auth.DefaultPasswordHash = "$2a$10$SecureHashThatIsNotDefault"
+	cfg.Auth.JWTSecret = "existing-secure-secret"
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("failed to save initial config: %v", err)
+	}
+
+	// checkDefaultPassword function that returns false (not insecure)
+	checkSecure := func(_ string) bool { return false }
+
+	loadedCfg, result, err := EnsureConfig(configPath, checkSecure)
+
+	if err != nil {
+		t.Errorf("expected no error for secure config, got %v", err)
+	}
+	if loadedCfg == nil {
+		t.Fatal("expected config")
+	}
+	if result == nil {
+		t.Fatal("expected result")
+	}
+	if result.GeneratedCreds {
+		t.Error("expected GeneratedCreds=false for secure password")
+	}
+}
+
+func TestEnsureConfigEmptyJWTSecret(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "empty-jwt-config.yaml")
+
+	// Create config with secure password but empty JWT secret
+	cfg := DefaultConfig()
+	cfg.Auth.DefaultPasswordHash = "$2a$10$SecureHashThatIsNotDefault"
+	cfg.Auth.JWTSecret = "" // Empty - needs generation
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("failed to save initial config: %v", err)
+	}
+
+	checkSecure := func(_ string) bool { return false }
+
+	_, result, err := EnsureConfig(configPath, checkSecure)
+
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected result")
+	}
+	if !result.JWTSecretStored {
+		t.Error("expected JWTSecretStored=true when JWT secret is empty")
+	}
+}
+
+// ========== UpdateCredentials Tests ==========
+
+func TestUpdateCredentials(t *testing.T) {
+	cfg := DefaultConfig()
+
+	// Update credentials
+	cfg.UpdateCredentials("newuser", "newhash123", "newsecret456")
+
+	if cfg.Auth.DefaultUsername != "newuser" {
+		t.Errorf("expected username 'newuser', got %q", cfg.Auth.DefaultUsername)
+	}
+	if cfg.Auth.DefaultPasswordHash != "newhash123" {
+		t.Errorf("expected password hash 'newhash123', got %q", cfg.Auth.DefaultPasswordHash)
+	}
+	if cfg.Auth.JWTSecret != "newsecret456" {
+		t.Errorf("expected JWT secret 'newsecret456', got %q", cfg.Auth.JWTSecret)
+	}
+}
+
+func TestUpdateCredentialsEmptyJWT(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Auth.JWTSecret = "originalsecret"
+
+	// Update with empty JWT secret - should preserve original
+	cfg.UpdateCredentials("newuser", "newhash", "")
+
+	if cfg.Auth.JWTSecret != "originalsecret" {
+		t.Errorf("expected JWT secret preserved, got %q", cfg.Auth.JWTSecret)
+	}
+}
+
+func TestUpdateJWTSecret(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Auth.JWTSecret = "oldsecret"
+
+	cfg.UpdateJWTSecret("brandnewsecret")
+
+	if cfg.Auth.JWTSecret != "brandnewsecret" {
+		t.Errorf("expected JWT secret 'brandnewsecret', got %q", cfg.Auth.JWTSecret)
+	}
+}
+
+// ========== Persistence Tests ==========
+
+func TestCredentialsPersistence(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "persist-test.yaml")
+
+	// Create and save config with credentials
+	cfg := DefaultConfig()
+	cfg.UpdateCredentials("persistuser", "persisted-hash", "persisted-jwt-secret")
+
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("failed to save config: %v", err)
+	}
+
+	// Load config and verify credentials persisted
+	loaded, err := Load(configPath)
+	if err != nil {
+		t.Fatalf("failed to load config: %v", err)
+	}
+
+	if loaded.Auth.DefaultUsername != "persistuser" {
+		t.Errorf("expected persisted username 'persistuser', got %q", loaded.Auth.DefaultUsername)
+	}
+	if loaded.Auth.DefaultPasswordHash != "persisted-hash" {
+		t.Errorf("expected persisted hash 'persisted-hash', got %q", loaded.Auth.DefaultPasswordHash)
+	}
+	if loaded.Auth.JWTSecret != "persisted-jwt-secret" {
+		t.Errorf("expected persisted JWT secret, got %q", loaded.Auth.JWTSecret)
+	}
+}
+
+// ========== File Permission Tests ==========
+
+func TestConfigSavePermissions(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "perms-test.yaml")
+
+	cfg := DefaultConfig()
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("failed to save config: %v", err)
+	}
+
+	// Check file permissions
+	info, err := os.Stat(configPath)
+	if err != nil {
+		t.Fatalf("failed to stat config file: %v", err)
+	}
+
+	perms := info.Mode().Perm()
+	// Should be 0600 (owner read/write only) for security
+	if perms != 0o600 {
+		t.Errorf("expected permissions 0600, got %04o", perms)
+	}
+}
+
+func TestEnsureConfigCreatesDirectory(t *testing.T) {
+	tmpDir := t.TempDir()
+	// Nested path that doesn't exist - EnsureConfig should create it
+	configPath := filepath.Join(tmpDir, "nested", "deep", "config.yaml")
+
+	// EnsureConfig creates the directory structure
+	_, _, err := EnsureConfig(configPath, nil)
+	// Will return ErrInsecureCredentials because password is empty, but directory should exist
+	if err != nil && err != ErrInsecureCredentials {
+		t.Fatalf("EnsureConfig failed unexpectedly: %v", err)
+	}
+
+	// Verify directory was created
+	dir := filepath.Dir(configPath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		t.Error("EnsureConfig did not create nested directory")
+	}
+}
