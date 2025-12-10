@@ -147,7 +147,8 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 func (s *Server) onLinkStateChange(event network.LinkEvent) {
 	log.Printf("Link state change: %s -> %s", event.Interface, event.State)
 
-	if event.State == network.LinkStateUp {
+	switch event.State {
+	case network.LinkStateUp:
 		// Link came up - restart discovery to catch LLDP/CDP frames
 		log.Println("Link up - restarting discovery capture")
 		s.discoveryManager.Stop()
@@ -164,7 +165,7 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 				"timestamp": event.Timestamp.Format(time.RFC3339),
 			},
 		})
-	} else if event.State == network.LinkStateDown {
+	case network.LinkStateDown:
 		// Link went down - notify clients
 		log.Println("Link down - notifying clients")
 		s.wsHub.Broadcast(Message{
@@ -312,11 +313,20 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 			}
 			f.Close()
 			f = f2
-			stat, _ = f.Stat()
+			stat, err = f.Stat()
+			if err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		// Serve the file with proper content type
-		http.ServeContent(w, r, stat.Name(), stat.ModTime(), f.(io.ReadSeeker))
+		rs, ok := f.(io.ReadSeeker)
+		if !ok {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		http.ServeContent(w, r, stat.Name(), stat.ModTime(), rs)
 	})
 }
 
@@ -444,6 +454,7 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 	}
 
 	// Write certificate
+	//nolint:gosec // G304: certFile is from config for TLS certificate location
 	certOut, err := os.Create(certFile)
 	if err != nil {
 		return "", "", err
@@ -454,6 +465,7 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 	}
 
 	// Write private key
+	//nolint:gosec // G304: keyFile is from config for TLS private key location
 	keyOut, err := os.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return "", "", err

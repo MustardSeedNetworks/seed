@@ -54,7 +54,6 @@ func (m *Manager) GetInfo() *Info {
 	return getInfoPlatform(iface)
 }
 
-
 // mapSecurityType maps security protocol to display string.
 func mapSecurityType(secType string) string {
 	secType = strings.ToUpper(secType)

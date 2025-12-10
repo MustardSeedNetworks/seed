@@ -107,11 +107,6 @@ func GetDefaultGatewayInterface() (string, error) {
 	return "", nil
 }
 
-// isNetlinkAvailable returns false on macOS where netlink is not available.
-func isNetlinkAvailable() bool {
-	return false
-}
-
 // detectGatewayPlatform is the platform-specific gateway detection.
 // On macOS, this uses golang.org/x/net/route for reliable parsing.
 func detectGatewayPlatform() (string, error) {
@@ -185,7 +180,10 @@ func detectGatewayIPv6Platform() (string, error) {
 	}
 
 	// Second pass: accept link-local addresses
-	msgs, _ = route.ParseRIB(syscall.NET_RT_DUMP, rib)
+	msgs, err = route.ParseRIB(syscall.NET_RT_DUMP, rib)
+	if err != nil {
+		return "", nil
+	}
 	for _, msg := range msgs {
 		rm, ok := msg.(*route.RouteMessage)
 		if !ok {

@@ -121,10 +121,7 @@ func (rl *RateLimiter) IsBlocked(ip string) bool {
 
 	// Check if block has expired (use blockTime, not window)
 	if info.blocked {
-		if time.Since(info.blockedAt) > rl.blockTime {
-			return false
-		}
-		return true
+		return time.Since(info.blockedAt) <= rl.blockTime
 	}
 
 	return false

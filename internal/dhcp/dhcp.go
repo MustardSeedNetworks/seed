@@ -233,9 +233,10 @@ func getLeaseInfoDarwin(interfaceName string) (*LeaseInfo, error) {
 	hwAddr := iface.HardwareAddr.String()
 
 	// Try both old and new lease file locations
+	// Note: Using filepath.Join with absolute path is intentional to construct full paths
 	leasePaths := []string{
-		filepath.Join("/var/db/dhcpclient/leases", interfaceName+"-1,"+hwAddr),
-		filepath.Join("/private/var/db/dhcpclient/leases", interfaceName+"-1,"+hwAddr),
+		"/var/db/dhcpclient/leases/" + interfaceName + "-1," + hwAddr,
+		"/private/var/db/dhcpclient/leases/" + interfaceName + "-1," + hwAddr,
 	}
 
 	for _, path := range leasePaths {
@@ -262,6 +263,7 @@ func getLeaseInfoDarwin(interfaceName string) (*LeaseInfo, error) {
 
 // parseDarwinLeaseFile parses a macOS DHCP lease file (plist-like format).
 func parseDarwinLeaseFile(path string) *LeaseInfo {
+	//nolint:gosec // G304: path is from known DHCP lease file locations in system directories
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil
@@ -347,7 +349,10 @@ func extractPlistInteger(content, key string) int {
 	}
 
 	valStr := strings.TrimSpace(remaining[intStart+9 : intStart+intEnd])
-	val, _ := strconv.Atoi(valStr)
+	val, err := strconv.Atoi(valStr)
+	if err != nil {
+		return 0
+	}
 	return val
 }
 
@@ -460,6 +465,7 @@ func getLeaseInfoLinux(interfaceName string) (*LeaseInfo, error) {
 
 // parseDHClientLeaseFile parses a dhclient lease file.
 func parseDHClientLeaseFile(path, interfaceName string) *LeaseInfo {
+	//nolint:gosec // G304: path is from known dhclient lease file locations in system directories
 	file, err := os.Open(path)
 	if err != nil {
 		return nil
@@ -528,6 +534,7 @@ func parseDHClientLeaseFile(path, interfaceName string) *LeaseInfo {
 
 // parseNMLeaseFile parses NetworkManager internal lease file.
 func parseNMLeaseFile(path string) *LeaseInfo {
+	//nolint:gosec // G304: path is from known NetworkManager lease file locations in system directories
 	file, err := os.Open(path)
 	if err != nil {
 		return nil
@@ -573,6 +580,7 @@ func parseNMLeaseFile(path string) *LeaseInfo {
 
 // parseNetworkdLeaseFile parses systemd-networkd lease file.
 func parseNetworkdLeaseFile(path string) *LeaseInfo {
+	//nolint:gosec // G304: path is from known systemd-networkd lease file locations
 	file, err := os.Open(path)
 	if err != nil {
 		return nil

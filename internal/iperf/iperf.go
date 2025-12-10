@@ -231,6 +231,7 @@ func GetVersion() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	//nolint:gosec // G204: binaryPath is from findIperf3Binary() which validates the path
 	out, err := exec.Command(binaryPath, "--version").Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to get iperf3 version: %w", err)
@@ -289,6 +290,7 @@ func (m *Manager) StartServer(port int) error {
 	m.serverCancel = cancel
 
 	// Start iperf3 server: iperf3 -s -p <port> -D (daemon mode doesn't work well, use background)
+	//nolint:gosec // G204: binaryPath is from findIperf3Binary() which validates the path
 	cmd := exec.CommandContext(ctx, binaryPath, "-s", "-p", fmt.Sprintf("%d", port))
 	if err := cmd.Start(); err != nil {
 		cancel()
@@ -345,7 +347,7 @@ func (m *Manager) StopServer() error {
 }
 
 // RunClient runs an iperf3 client test
-func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, error) {
+func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result, error) {
 	// Validate server address to prevent command injection
 	if err := validateServer(config.Server); err != nil {
 		return nil, err
@@ -430,6 +432,7 @@ func (m *Manager) RunClient(ctx context.Context, config ClientConfig) (*Result, 
 	m.mu.Unlock()
 
 	// Run iperf3
+	//nolint:gosec // G204: binaryPath is from findIperf3Binary() and args are validated
 	cmd := exec.CommandContext(ctx, binaryPath, args...)
 	output, err := cmd.Output()
 	if err != nil {
