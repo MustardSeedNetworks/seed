@@ -1763,16 +1763,12 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update HTTP endpoints
+	// Store URL as-is to preserve user intent - scheme-less URLs enable HTTPS->HTTP fallback at test time
 	s.config.Tests.HTTPEndpoints = make([]config.HTTPEndpoint, 0, len(req.HTTPEndpoints))
 	for _, h := range req.HTTPEndpoints {
-		// Auto-prefix URL with https:// if missing scheme
-		url := h.URL
-		if url != "" && !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-			url = "https://" + url
-		}
 		s.config.Tests.HTTPEndpoints = append(s.config.Tests.HTTPEndpoints, config.HTTPEndpoint{
 			Name:           h.Name,
-			URL:            url,
+			URL:            h.URL,
 			ExpectedStatus: h.ExpectedStatus,
 			Enabled:        h.Enabled,
 		})
