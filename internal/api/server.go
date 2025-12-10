@@ -193,6 +193,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/ipconfig", s.handleIPConfig)
 	s.mux.HandleFunc("/api/ipconfig/settings", s.handleIPSettings)
 	s.mux.HandleFunc("/api/discovery", s.handleDiscovery)
+	s.mux.HandleFunc("/api/discovery/probe", s.handleTCPProbe)
 	s.mux.HandleFunc("/api/dns", s.handleDNS)
 	s.mux.HandleFunc("/api/gateway", s.handleGateway)
 	s.mux.HandleFunc("/api/vlan", s.handleVLAN)
