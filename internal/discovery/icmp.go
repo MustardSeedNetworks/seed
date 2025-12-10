@@ -3,6 +3,7 @@ package discovery
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -353,13 +354,14 @@ func TTLToOS(ttl int) string {
 	}
 }
 
-// MustHaveICMPPrivileges exits the program if raw ICMP privileges are not available.
-// This should be called at program startup for tools that require raw socket access.
-func MustHaveICMPPrivileges() {
+// ErrICMPPrivileges is returned when raw ICMP socket privileges are unavailable.
+var ErrICMPPrivileges = fmt.Errorf("raw ICMP socket privileges unavailable")
+
+// CheckICMPPrivilegesWithMessage checks if the current process has privileges to use raw ICMP sockets.
+// Returns nil if privileged, a descriptive error otherwise.
+func CheckICMPPrivilegesWithMessage() error {
 	if err := CheckICMPPrivileges(); err != nil {
-		os.Stderr.WriteString("Error: NetScope requires elevated privileges for raw socket operations.\n")
-		os.Stderr.WriteString("Run with: sudo ./netscope\n")
-		os.Stderr.WriteString("Or grant capability: sudo setcap cap_net_raw=+ep ./netscope\n")
-		os.Exit(1)
+		return fmt.Errorf("%w: %v (run with sudo or grant CAP_NET_RAW capability)", ErrICMPPrivileges, err)
 	}
+	return nil
 }

@@ -59,9 +59,16 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Check for required privileges (raw socket access for ICMP ping)
-	// This is a Linux-only tool that requires root or CAP_NET_RAW
-	discovery.MustHaveICMPPrivileges()
+	// Check for ICMP privileges (raw socket access for ping features)
+	// Continues gracefully if unavailable - ICMP features will be disabled
+	icmpAvailable := true
+	if err := discovery.CheckICMPPrivilegesWithMessage(); err != nil {
+		icmpAvailable = false
+		log.Printf("Warning: ICMP features disabled - %v", err)
+		fmt.Fprintln(os.Stderr, "Warning: Running without ICMP privileges - ping features will be unavailable")
+		fmt.Fprintln(os.Stderr, "For full functionality, run with: sudo ./netscope")
+		fmt.Fprintln(os.Stderr, "Or grant capability: sudo setcap cap_net_raw=+ep ./netscope")
+	}
 
 	// Set up logging
 	logPath := filepath.Join("logs", "netscope.log")
@@ -177,7 +184,7 @@ func main() {
 	}
 
 	// Create and start the server
-	server := api.NewServer(cfg, *configPath, logPath, netMgr)
+	server := api.NewServer(cfg, *configPath, logPath, netMgr, icmpAvailable)
 
 	// Handle shutdown gracefully
 	done := make(chan struct{})

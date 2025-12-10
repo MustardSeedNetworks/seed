@@ -61,16 +61,18 @@ type Server struct {
 	logAccessToken   string
 	logAccessHeader  string
 	requireLogToken  bool
+	icmpAvailable    bool // Whether raw ICMP sockets are available
 }
 
 // NewServer creates a new server instance.
-func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.Manager) *Server {
+func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.Manager, icmpAvailable bool) *Server {
 	s := &Server{
-		config:     cfg,
-		configPath: configPath,
-		logPath:    logPath,
-		mux:        http.NewServeMux(),
-		netManager: netMgr,
+		config:        cfg,
+		configPath:    configPath,
+		logPath:       logPath,
+		mux:           http.NewServeMux(),
+		netManager:    netMgr,
+		icmpAvailable: icmpAvailable,
 		authManager: auth.NewManager(
 			cfg.Auth.JWTSecret,
 			cfg.Auth.SessionTimeout,
