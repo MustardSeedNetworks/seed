@@ -889,9 +889,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         "netscope-iperf-settings",
         JSON.stringify(iperfSettings),
       );
-      window.dispatchEvent(
-        new CustomEvent("iperfSettingsUpdated", { detail: iperfSettings }),
-      );
       setIperfStatus("saved");
       setTimeout(() => setIperfStatus("idle"), 2000);
     }, 800);
@@ -907,9 +904,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     fabTimerRef.current = setTimeout(() => {
       setFabStatus("saving");
       localStorage.setItem("netscope-fab-options", JSON.stringify(fabOptions));
-      window.dispatchEvent(
-        new CustomEvent("fabOptionsUpdated", { detail: fabOptions }),
-      );
       setFabStatus("saved");
       setTimeout(() => setFabStatus("idle"), 2000);
     }, 800);
@@ -935,9 +929,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       localStorage.setItem(
         "netscope-display-options",
         JSON.stringify(displayOptions),
-      );
-      window.dispatchEvent(
-        new CustomEvent("displayOptionsUpdated", { detail: displayOptions }),
       );
       setDisplayStatus("saved");
       setTimeout(() => setDisplayStatus("idle"), 2000);

@@ -224,13 +224,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<FABOptions>) => {
       setFabOptions((prev) => {
         const next = { ...prev, ...updates };
-        // Schedule save with the new value
         debounceSave("fab", () => {
           localStorage.setItem(STORAGE_KEYS.FAB_OPTIONS, JSON.stringify(next));
-          // Dispatch event for backwards compatibility with components not yet migrated
-          window.dispatchEvent(
-            new CustomEvent("fabOptionsUpdated", { detail: next }),
-          );
         });
         return next;
       });
@@ -247,9 +242,6 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
             STORAGE_KEYS.DISPLAY_OPTIONS,
             JSON.stringify(next),
           );
-          window.dispatchEvent(
-            new CustomEvent("displayOptionsUpdated", { detail: next }),
-          );
         });
         return next;
       });
@@ -265,9 +257,6 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
           localStorage.setItem(
             STORAGE_KEYS.IPERF_SETTINGS,
             JSON.stringify(next),
-          );
-          window.dispatchEvent(
-            new CustomEvent("iperfSettingsUpdated", { detail: next }),
           );
         });
         return next;
