@@ -487,9 +487,9 @@ type LinkResponse struct {
 	Advertised   []string           `json:"advertisedSpeeds"`
 	MTU          int                `json:"mtu"`
 	AutoNeg      bool               `json:"autoNeg"`
-	FlapCount24h int                `json:"flapCount24h"`        // Link flap count in last 24 hours
-	History      []LinkHistoryEvent `json:"history,omitempty"`   // Recent link state changes
-	UptimeMs     int64              `json:"uptimeMs,omitempty"`  // Monitor uptime in milliseconds
+	FlapCount24h int                `json:"flapCount24h"`       // Link flap count in last 24 hours
+	History      []LinkHistoryEvent `json:"history,omitempty"`  // Recent link state changes
+	UptimeMs     int64              `json:"uptimeMs,omitempty"` // Monitor uptime in milliseconds
 }
 
 // handleLink returns link status for the current interface.
@@ -1062,7 +1062,7 @@ type TCPProbeRequest struct {
 
 // TCPProbeResponse represents TCP probe results.
 type TCPProbeResponse struct {
-	Target  string                    `json:"target"`
+	Target  string                     `json:"target"`
 	Results []discovery.TCPProbeResult `json:"results"`
 }
 
@@ -1234,6 +1234,68 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 		result = tracer.TraceUDP(ctx, req.Target, port)
 	case "tcp":
 		result = tracer.TraceTCP(ctx, req.Target, port)
+	}
+
+	sendJSONResponse(w, http.StatusOK, result)
+}
+
+// PortScanRequest represents a port scan request.
+type PortScanRequest struct {
+	Target  string `json:"target"`            // IP or hostname
+	Ports   []int  `json:"ports,omitempty"`   // Specific ports (optional, defaults to common ports)
+	Profile string `json:"profile,omitempty"` // "quick", "web", "full" (default: quick)
+	Workers int    `json:"workers,omitempty"` // Concurrent workers (default: 20)
+}
+
+// handlePortScan handles port scanning with service detection.
+func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req PortScanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+		return
+	}
+
+	// Validate target
+	if err := validation.ValidateServerAddress(req.Target); err != nil {
+		sendJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Invalid target: %v", err)})
+		return
+	}
+
+	// Create scanner
+	scanner, err := discovery.NewPortScanner(3 * time.Second)
+	if err != nil {
+		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("Failed to create scanner: %v", err)})
+		return
+	}
+	defer scanner.Close()
+
+	// Set timeout for operation
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
+	defer cancel()
+
+	var result *discovery.PortScanResult
+
+	// Determine scan type
+	if len(req.Ports) > 0 {
+		workers := req.Workers
+		if workers <= 0 {
+			workers = 20
+		}
+		result = scanner.ScanWithBanners(ctx, req.Target, req.Ports, workers)
+	} else {
+		switch req.Profile {
+		case "web":
+			result = scanner.WebScan(ctx, req.Target)
+		case "full":
+			result = scanner.FullScan(ctx, req.Target)
+		default: // "quick" or unspecified
+			result = scanner.QuickScan(ctx, req.Target)
+		}
 	}
 
 	sendJSONResponse(w, http.StatusOK, result)
