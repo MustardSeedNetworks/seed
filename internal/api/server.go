@@ -203,6 +203,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/gateway", s.handleGateway)
 	s.mux.HandleFunc("/api/vlan", s.handleVLAN)
 	s.mux.HandleFunc("/api/vlan/traffic", s.handleVLANTraffic)
+	s.mux.HandleFunc("/api/vlan/interface", s.handleVLANInterface)
 	s.mux.HandleFunc("/api/wifi", s.handleWiFi)
 	s.mux.HandleFunc("/api/wifi/settings", s.handleWiFiSettings)
 	s.mux.HandleFunc("/api/cable", s.handleCable)
