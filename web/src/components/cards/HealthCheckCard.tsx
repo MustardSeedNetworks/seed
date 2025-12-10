@@ -433,7 +433,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
       {!isRunning && data && (
         <>
           {/* Ping Results */}
-          {data.pingResults.length > 0 && (
+          {data.pingResults && data.pingResults.length > 0 && (
             <CollapsibleSection
               title="Ping"
               count={data.pingResults.length}
@@ -454,7 +454,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
           )}
 
           {/* TCP Results */}
-          {data.tcpResults.length > 0 && (
+          {data.tcpResults && data.tcpResults.length > 0 && (
             <CollapsibleSection
               title="TCP Ports"
               count={data.tcpResults.length}
@@ -496,7 +496,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
           )}
 
           {/* HTTP Results */}
-          {data.httpResults.length > 0 && (
+          {data.httpResults && data.httpResults.length > 0 && (
             <CollapsibleSection
               title="HTTP"
               count={data.httpResults.length}
