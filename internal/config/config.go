@@ -4,8 +4,11 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -434,4 +437,124 @@ func (c *Config) UpdateCredentials(username, passwordHash, jwtSecret string) {
 // UpdateJWTSecret updates only the JWT secret in the config.
 func (c *Config) UpdateJWTSecret(secret string) {
 	c.Auth.JWTSecret = secret
+}
+
+// GetActiveInterface returns an active network interface with an IPv4 address.
+// It first tries the configured default, then fallbacks, then auto-detects.
+// Returns the interface name and whether fallback was used.
+func (c *Config) GetActiveInterface() (string, bool) {
+	// Try the configured default interface first
+	if c.Interface.Default != "" {
+		if hasIPv4Address(c.Interface.Default) {
+			return c.Interface.Default, false
+		}
+		log.Printf("Warning: configured interface %q has no IPv4 address or doesn't exist", c.Interface.Default)
+	}
+
+	// Try fallback interfaces
+	for _, iface := range c.Interface.Fallbacks {
+		if hasIPv4Address(iface) {
+			log.Printf("Using fallback interface: %s", iface)
+			return iface, true
+		}
+	}
+
+	// Auto-detect: scan all interfaces for one with an IPv4 address
+	detected := detectActiveInterface()
+	if detected != "" {
+		log.Printf("Auto-detected active interface: %s", detected)
+		return detected, true
+	}
+
+	// Last resort: return the configured default even if it might not work
+	if c.Interface.Default != "" {
+		log.Printf("Warning: no active interface found, using configured default: %s", c.Interface.Default)
+		return c.Interface.Default, true
+	}
+
+	return "eth0", true // Ultimate fallback
+}
+
+// hasIPv4Address checks if an interface exists and has at least one IPv4 address.
+func hasIPv4Address(ifaceName string) bool {
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return false
+	}
+
+	// Check if interface is up
+	if iface.Flags&net.FlagUp == 0 {
+		return false
+	}
+
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return false
+	}
+
+	for _, addr := range addrs {
+		// Check for IPv4 address (not loopback)
+		if ipNet, ok := addr.(*net.IPNet); ok {
+			if ipv4 := ipNet.IP.To4(); ipv4 != nil && !ipv4.IsLoopback() {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// detectActiveInterface scans all network interfaces and returns the first
+// non-loopback interface with an IPv4 address that is up.
+func detectActiveInterface() string {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return ""
+	}
+
+	// Priority order: prefer ethernet over wifi, physical over virtual
+	var candidates []string
+
+	for _, iface := range interfaces {
+		// Skip loopback and down interfaces
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		if iface.Flags&net.FlagUp == 0 {
+			continue
+		}
+
+		// Skip virtual/bridge interfaces (common prefixes)
+		name := iface.Name
+		if strings.HasPrefix(name, "docker") ||
+			strings.HasPrefix(name, "br-") ||
+			strings.HasPrefix(name, "veth") ||
+			strings.HasPrefix(name, "virbr") ||
+			strings.HasPrefix(name, "vbox") {
+			continue
+		}
+
+		// Check if it has an IPv4 address
+		if !hasIPv4Address(name) {
+			continue
+		}
+
+		candidates = append(candidates, name)
+	}
+
+	if len(candidates) == 0 {
+		return ""
+	}
+
+	// Sort candidates by preference (ethernet before wifi)
+	// Common ethernet: eth*, enp*, eno*, ens*
+	// Common wifi: wlan*, wlp*
+	for _, c := range candidates {
+		if strings.HasPrefix(c, "eth") || strings.HasPrefix(c, "en") {
+			return c
+		}
+	}
+
+	// Return first candidate if no ethernet found
+	return candidates[0]
 }
