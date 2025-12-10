@@ -31,8 +31,12 @@ _Coming soon_
 
 - Raspberry Pi 4 (or any Linux system)
 - Go 1.22+
-- Node.js 22+
+- Node.js 24+ (LTS)
 - libpcap-dev
+
+**Note:** NetScope requires raw ICMP socket access for ping functionality. On Linux, this requires either:
+- Running as root (`sudo ./netscope`), or
+- Setting capabilities: `sudo setcap cap_net_raw=+ep ./netscope`
 
 ### Installation
 
@@ -45,7 +49,7 @@ cd netscope
 make build
 
 # Build frontend
-cd web && npm install && npm run build && cd ..
+cd web && npm ci && npm run build && cd ..
 
 # Run
 sudo ./netscope
@@ -64,12 +68,12 @@ Default credentials:
 
 ## Configuration
 
-Configuration is stored in `configs/netscope.yaml`:
+Configuration is stored in `netscope.yaml`. Default settings:
 
 ```yaml
 server:
-  port: 8443
-  https: true
+  port: 8443     # Default HTTPS port
+  https: true    # HTTPS enabled by default
 
 interface:
   default: eth0
@@ -89,8 +93,13 @@ thresholds:
 ## Development
 
 ```bash
-# Run backend in development mode
-go run cmd/netscope/main.go
+# Run backend in development mode (requires privileges for ICMP)
+sudo go run cmd/netscope/main.go
+
+# Or build and set capabilities (preferred for repeated runs)
+go build -o netscope ./cmd/netscope
+sudo setcap cap_net_raw=+ep ./netscope
+./netscope
 
 # Run frontend in development mode
 cd web && npm run dev

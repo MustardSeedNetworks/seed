@@ -1,6 +1,8 @@
+# Sample configuration file for development.
+# Production defaults: port 8443, https true (see code defaults in internal/config/config.go)
 server:
-  port: 8080
-  https: false
+  port: 8080        # Development port (production default: 8443)
+  https: false      # Disabled for local development (production default: true)
   cert_file: ""
   key_file: ""
   # Optional log access protection (leave empty to disable):
