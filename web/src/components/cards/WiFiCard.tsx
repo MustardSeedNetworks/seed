@@ -1,4 +1,5 @@
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { useSettings } from "../../contexts/SettingsContext";
 
 export interface WiFiData {
   ssid: string;
@@ -12,7 +13,6 @@ export interface WiFiData {
 interface WiFiCardProps {
   data: WiFiData | null;
   loading?: boolean;
-  thresholds?: { warning: number; critical: number };
   visible?: boolean;
 }
 
@@ -39,13 +39,14 @@ function getSignalBars(signal: number): string {
   return "▂░░░";
 }
 
-export function WiFiCard({
-  data,
-  loading,
-  thresholds,
-  visible = true,
-}: WiFiCardProps) {
-  const t = thresholds || { warning: -70, critical: -80 };
+export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
+  const { thresholds } = useSettings();
+  // Map context ThresholdPair (good/warning) to card format (warning/critical)
+  // For WiFi: good = -50 dBm, warning = -70 dBm (higher is better, so critical = warning)
+  const t = {
+    warning: thresholds.wifi.good,
+    critical: thresholds.wifi.warning,
+  };
 
   // Don't render if not on WiFi
   if (!visible) {
