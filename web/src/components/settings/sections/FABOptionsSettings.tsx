@@ -194,52 +194,21 @@ export function FABOptionsSettings({
           </div>
         </div>
 
-        {/* Network discovery block */}
-        <div className="p-2.5 bg-surface-base rounded border border-surface-border space-y-3">
-          <label className="flex items-center justify-between">
-            <span className="text-sm font-medium text-text-primary">
-              Network Discovery
-            </span>
-            <input
-              type="checkbox"
-              checked={fabOptions.runNetworkDiscovery}
-              onChange={(e) =>
-                setFabOptions((prev) => ({
-                  ...prev,
-                  runNetworkDiscovery: e.target.checked,
-                }))
-              }
-              className="w-4 h-4"
-            />
-          </label>
-
-          <label className="flex items-center justify-between pl-4 border-l-2 border-surface-border">
-            <div>
-              <span
-                className={`text-sm text-text-primary ${!fabOptions.runNetworkDiscovery ? "opacity-60" : ""}`}
-              >
-                Auto-Scan on Link
-              </span>
-              <p
-                className={`text-xs text-text-muted ${!fabOptions.runNetworkDiscovery ? "opacity-60" : ""}`}
-              >
-                Scan when interface comes up
-              </p>
-            </div>
-            <input
-              type="checkbox"
-              disabled={!fabOptions.runNetworkDiscovery}
-              checked={fabOptions.autoScanOnLink}
-              onChange={(e) =>
-                setFabOptions((prev) => ({
-                  ...prev,
-                  autoScanOnLink: e.target.checked,
-                }))
-              }
-              className="w-4 h-4"
-            />
-          </label>
-        </div>
+        {/* Network discovery */}
+        <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+          <span className="text-sm text-text-primary">Network Discovery</span>
+          <input
+            type="checkbox"
+            checked={fabOptions.runNetworkDiscovery}
+            onChange={(e) =>
+              setFabOptions((prev) => ({
+                ...prev,
+                runNetworkDiscovery: e.target.checked,
+              }))
+            }
+            className="w-4 h-4"
+          />
+        </label>
       </div>
     </CollapsibleSection>
   );

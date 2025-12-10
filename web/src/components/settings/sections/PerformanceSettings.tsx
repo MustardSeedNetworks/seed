@@ -34,41 +34,29 @@ export function PerformanceSettings({
     <CollapsibleSection
       title={
         <>
-          Performance
+          Performance Configuration
           <AutoSaveIndicator status={iperfStatus} />
         </>
       }
     >
       <div className="space-y-4">
+        <p className="text-xs text-text-muted">
+          Configure settings for performance tests. Enable/disable tests in Test
+          Options.
+        </p>
+
         {/* Internet Speed (Speedtest) Subsection */}
         <div className="border-b border-surface-border pb-4">
           <h4 className="text-sm font-semibold text-text-primary mb-2 uppercase tracking-wide">
             Internet Speed (Speedtest)
           </h4>
           <div className="space-y-3 pl-1">
-            <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-              <span className="text-sm text-text-primary">
-                Enable Internet Speed test
-              </span>
-              <input
-                type="checkbox"
-                checked={testsSettings.runSpeedtest}
-                onChange={(e) =>
-                  setTestsSettings((prev) => ({
-                    ...prev,
-                    runSpeedtest: e.target.checked,
-                  }))
-                }
-                className="w-4 h-4"
-              />
-            </label>
             <div>
               <label className="text-xs text-text-muted font-medium">
                 Server ID (optional)
               </label>
               <input
                 type="text"
-                disabled={!testsSettings.runSpeedtest}
                 value={testsSettings.speedtest.serverId}
                 onChange={(e) =>
                   setTestsSettings((prev) => ({
@@ -80,7 +68,7 @@ export function PerformanceSettings({
                   }))
                 }
                 placeholder="Auto (closest server)"
-                className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
+                className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
               />
               <div className="flex items-center justify-between mt-1">
                 <p className="text-xs text-text-muted">
@@ -88,40 +76,18 @@ export function PerformanceSettings({
                 </p>
                 <button
                   type="button"
-                  disabled={!testsSettings.runSpeedtest}
                   onClick={() =>
                     setTestsSettings((prev) => ({
                       ...prev,
                       speedtest: { ...prev.speedtest, serverId: "" },
                     }))
                   }
-                  className="text-xs text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="text-xs text-brand-primary hover:underline"
                 >
                   Reset to Auto
                 </button>
               </div>
             </div>
-
-            <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-              <span className="text-sm text-text-primary">
-                Auto-run on link up
-              </span>
-              <input
-                type="checkbox"
-                disabled={!testsSettings.runSpeedtest}
-                checked={testsSettings.speedtest.autoRunOnLink}
-                onChange={(e) =>
-                  setTestsSettings((prev) => ({
-                    ...prev,
-                    speedtest: {
-                      ...prev.speedtest,
-                      autoRunOnLink: e.target.checked,
-                    },
-                  }))
-                }
-                className="w-4 h-4"
-              />
-            </label>
           </div>
         </div>
 
@@ -134,22 +100,6 @@ export function PerformanceSettings({
             <p className="text-xs text-text-muted">
               Configure iperf3 client settings for LAN speed tests.
             </p>
-            <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-              <span className="text-sm text-text-primary">
-                Enable iperf3 test
-              </span>
-              <input
-                type="checkbox"
-                checked={testsSettings.runIperf}
-                onChange={(e) =>
-                  setTestsSettings((prev) => ({
-                    ...prev,
-                    runIperf: e.target.checked,
-                  }))
-                }
-                className="w-4 h-4"
-              />
-            </label>
 
             {/* Server Address */}
             <div>
@@ -158,7 +108,6 @@ export function PerformanceSettings({
               </label>
               <input
                 type="text"
-                disabled={!testsSettings.runIperf}
                 value={iperfSettings.server}
                 onChange={(e) =>
                   setIperfSettings((prev) => ({
@@ -172,10 +121,7 @@ export function PerformanceSettings({
               <div className="flex items-center justify-between mt-2">
                 <button
                   type="button"
-                  disabled={
-                    !testsSettings.runIperf ||
-                    iperfSuggestionsStatus === "loading"
-                  }
+                  disabled={iperfSuggestionsStatus === "loading"}
                   onClick={fetchIperfSuggestions}
                   className="text-xs text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
                 >
@@ -246,7 +192,6 @@ export function PerformanceSettings({
               </label>
               <input
                 type="number"
-                disabled={!testsSettings.runIperf}
                 value={iperfSettings.port}
                 onChange={(e) =>
                   setIperfSettings((prev) => ({
@@ -268,7 +213,6 @@ export function PerformanceSettings({
                   <button
                     key={proto}
                     type="button"
-                    disabled={!testsSettings.runIperf}
                     onClick={() =>
                       setIperfSettings((prev) => ({
                         ...prev,
@@ -280,7 +224,7 @@ export function PerformanceSettings({
                       iperfSettings.protocol === proto
                         ? "bg-brand-primary text-text-inverse border-brand-primary"
                         : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
-                    } ${!testsSettings.runIperf ? "opacity-60 cursor-not-allowed" : ""}`}
+                    }`}
                   >
                     {proto.toUpperCase()}
                   </button>
@@ -304,7 +248,6 @@ export function PerformanceSettings({
                   <button
                     key={option.value}
                     type="button"
-                    disabled={!testsSettings.runIperf}
                     onClick={() =>
                       setIperfSettings((prev) => ({
                         ...prev,
@@ -316,7 +259,7 @@ export function PerformanceSettings({
                       iperfSettings.direction === option.value
                         ? "bg-brand-primary text-text-inverse border-brand-primary"
                         : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
-                    } ${!testsSettings.runIperf ? "opacity-60 cursor-not-allowed" : ""}`}
+                    }`}
                   >
                     {option.label}
                   </button>
@@ -331,7 +274,6 @@ export function PerformanceSettings({
               </label>
               <input
                 type="number"
-                disabled={!testsSettings.runIperf}
                 value={iperfSettings.duration}
                 onChange={(e) =>
                   setIperfSettings((prev) => ({
@@ -353,7 +295,6 @@ export function PerformanceSettings({
                 </span>
                 <input
                   type="checkbox"
-                  disabled={!testsSettings.runIperf}
                   checked={iperfSettings.enableServer}
                   onChange={(e) =>
                     setIperfSettings((prev) => ({
@@ -370,7 +311,6 @@ export function PerformanceSettings({
                 </label>
                 <input
                   type="number"
-                  disabled={!testsSettings.runIperf}
                   value={iperfSettings.serverPort}
                   onChange={(e) =>
                     setIperfSettings((prev) => ({

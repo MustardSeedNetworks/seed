@@ -5,5 +5,6 @@ export { DNSSettings } from "./DNSSettings";
 export { FABOptionsSettings } from "./FABOptionsSettings";
 export { HealthChecksSettings } from "./HealthChecksSettings";
 export { PerformanceSettings } from "./PerformanceSettings";
+export { TestOptionsSettings } from "./TestOptionsSettings";
 export { ThresholdsSettings } from "./ThresholdsSettings";
 export { WiFiSettings } from "./WiFiSettings";

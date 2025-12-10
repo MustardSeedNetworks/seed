@@ -10,6 +10,7 @@ import {
   FABOptionsSettings,
   HealthChecksSettings,
   PerformanceSettings,
+  TestOptionsSettings,
   ThresholdsSettings,
   WiFiSettings,
 } from "./sections";
@@ -1458,6 +1459,15 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             thresholds={thresholds}
             setThresholds={setThresholds}
             thresholdsStatus={thresholdsStatus}
+          />
+
+          <TestOptionsSettings
+            testsSettings={testsSettings}
+            setTestsSettings={setTestsSettings}
+            fabOptions={fabOptions}
+            setFabOptions={setFabOptions}
+            testsStatus={testsStatus}
+            fabStatus={fabStatus}
           />
 
           {/* FAB Options Section */}
