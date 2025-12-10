@@ -2084,11 +2084,10 @@ type httpTimings struct {
 }
 
 // runHTTPTest runs an HTTP test and returns status code and timings in ms.
+// Uses SafeTransport to prevent DNS rebinding SSRF attacks.
 func runHTTPTest(url string, expectedStatus int) (status int, timing httpTimings, err error) {
-	// Disable connection reuse to get accurate DNS/TCP/TLS timing for each request
-	transport := &http.Transport{
-		DisableKeepAlives: true,
-	}
+	// Use SafeTransport to block connections to private IPs (prevents DNS rebinding)
+	transport := validation.SafeTransport()
 	client := &http.Client{
 		Transport: transport,
 		Timeout:   10 * time.Second,

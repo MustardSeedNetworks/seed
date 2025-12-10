@@ -2,11 +2,15 @@
 package validation
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens)
@@ -140,7 +144,7 @@ func ValidateURL(rawURL string) error {
 
 	// Check for private/internal IP addresses (SSRF prevention)
 	if ip := net.ParseIP(host); ip != nil {
-		if isPrivateIP(ip) {
+		if IsPrivateIP(ip) {
 			return fmt.Errorf("URLs targeting private/internal IP addresses are not allowed")
 		}
 	}
@@ -148,8 +152,9 @@ func ValidateURL(rawURL string) error {
 	return nil
 }
 
-// isPrivateIP checks if an IP address is private/internal.
-func isPrivateIP(ip net.IP) bool {
+// IsPrivateIP checks if an IP address is private/internal.
+// This is exported for use by SafeTransport.
+func IsPrivateIP(ip net.IP) bool {
 	// Localhost
 	if ip.IsLoopback() {
 		return true
@@ -207,4 +212,62 @@ func ValidateNetmask(netmask string) error {
 	}
 
 	return nil
+}
+
+// ErrPrivateIPBlocked is returned when a connection attempt to a private IP is blocked.
+var ErrPrivateIPBlocked = errors.New("connection to private/internal IP address blocked")
+
+// SafeTransport returns an http.Transport that blocks connections to private IP addresses.
+// This prevents DNS rebinding attacks where a hostname resolves to a public IP during
+// validation but a private IP at connection time.
+func SafeTransport() *http.Transport {
+	dialer := &net.Dialer{
+		Timeout:   10 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+
+	return &http.Transport{
+		DisableKeepAlives: true,
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			// Extract host from address
+			host, port, err := net.SplitHostPort(addr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid address: %w", err)
+			}
+
+			// Resolve hostname to IP addresses
+			ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+			if err != nil {
+				return nil, fmt.Errorf("DNS lookup failed: %w", err)
+			}
+
+			if len(ips) == 0 {
+				return nil, errors.New("no IP addresses resolved")
+			}
+
+			// Check ALL resolved IPs for private addresses
+			for _, ip := range ips {
+				if IsPrivateIP(ip.IP) {
+					return nil, fmt.Errorf("%w: %s resolved to %s", ErrPrivateIPBlocked, host, ip.IP)
+				}
+			}
+
+			// Connect to the first resolved IP
+			targetAddr := net.JoinHostPort(ips[0].IP.String(), port)
+			return dialer.DialContext(ctx, network, targetAddr)
+		},
+	}
+}
+
+// SafeHTTPClient returns an http.Client using SafeTransport.
+func SafeHTTPClient(timeout time.Duration) *http.Client {
+	return &http.Client{
+		Transport: SafeTransport(),
+		Timeout:   timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// Don't follow redirects automatically - let the caller handle them
+			// This prevents redirect-based SSRF attacks
+			return http.ErrUseLastResponse
+		},
+	}
 }
