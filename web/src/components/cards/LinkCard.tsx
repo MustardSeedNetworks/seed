@@ -1,5 +1,6 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
+import { BaseCard } from "./BaseCard";
 
 export interface LinkData {
   linkUp: boolean;
@@ -17,72 +18,96 @@ interface LinkCardProps {
   loading?: boolean;
 }
 
-export function LinkCard({ data, loading }: LinkCardProps) {
-  if (loading || !data) {
-    return (
-      <Card title="Link" status="loading">
-        <Skeleton className="h-8 w-32 mb-3" />
-        <div className="space-y-2 mt-4">
-          <div className="flex justify-between">
-            <Skeleton className="h-3 w-16" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-          <div className="flex justify-between">
-            <Skeleton className="h-3 w-12" />
-            <Skeleton className="h-3 w-8" />
-          </div>
-        </div>
-      </Card>
-    );
-  }
+// Determine status based on carrier (L2) and IP (L3)
+function getStatus(data: LinkData): Status {
+  if (!data.carrier) return "error"; // No physical link
+  if (!data.hasIP) return "warning"; // Carrier but no IP
+  return "success"; // Fully connected
+}
 
-  // Determine status based on carrier (L2) and IP (L3)
-  const getStatus = (): Status => {
-    if (!data.carrier) return "error"; // No physical link
-    if (!data.hasIP) return "warning"; // Carrier but no IP
-    return "success"; // Fully connected
-  };
+function getStatusText(data: LinkData): string {
+  if (!data.carrier) return "No Carrier";
+  if (!data.hasIP) return "No IP";
+  return data.speed || "Connected";
+}
 
-  const getStatusText = (): string => {
-    if (!data.carrier) return "No Carrier";
-    if (!data.hasIP) return "No IP";
-    return data.speed || "Connected";
-  };
-
-  const status = getStatus();
-
+function LinkLoadingSkeleton() {
   return (
-    <Card title="Link" status={status}>
-      <CardValue value={getStatusText()} size="lg" status={status} />
-      <CardDivider />
-      <CardRow
-        label="Carrier"
-        value={data.carrier ? "Connected" : "No Signal"}
-      />
-      {data.carrier && (
-        <>
-          <CardRow label="Duplex" value={data.duplex || "Unknown"} />
-          {data.mtu && <CardRow label="MTU" value={data.mtu.toString()} />}
-          {data.autoNeg !== undefined && (
-            <CardRow label="Auto-Neg" value={data.autoNeg ? "On" : "Off"} />
-          )}
-          {data.advertisedSpeeds && data.advertisedSpeeds.length > 0 && (
-            <div className="mt-2">
-              <p className="text-xs text-text-muted mb-1">Advertised Speeds</p>
-              <div className="flex flex-wrap gap-1">
-                {data.advertisedSpeeds.map((speed) => (
-                  <span
-                    key={speed}
-                    className="text-xs px-2 py-0.5 bg-surface-hover rounded"
-                  >
-                    {speed}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </Card>
+    <>
+      <Skeleton className="h-8 w-32 mb-3" />
+      <div className="space-y-2 mt-4">
+        <div className="flex justify-between">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <div className="flex justify-between">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-8" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+export function LinkCard({ data, loading }: LinkCardProps) {
+  return (
+    <BaseCard
+      title="Link"
+      data={data}
+      loading={loading}
+      getStatus={getStatus}
+      loadingContent={<LinkLoadingSkeleton />}
+      emptyMessage="No link data"
+    >
+      {(linkData) => {
+        const status = getStatus(linkData);
+        return (
+          <>
+            <CardValue
+              value={getStatusText(linkData)}
+              size="lg"
+              status={status}
+            />
+            <CardDivider />
+            <CardRow
+              label="Carrier"
+              value={linkData.carrier ? "Connected" : "No Signal"}
+            />
+            {linkData.carrier && (
+              <>
+                <CardRow label="Duplex" value={linkData.duplex || "Unknown"} />
+                {linkData.mtu && (
+                  <CardRow label="MTU" value={linkData.mtu.toString()} />
+                )}
+                {linkData.autoNeg !== undefined && (
+                  <CardRow
+                    label="Auto-Neg"
+                    value={linkData.autoNeg ? "On" : "Off"}
+                  />
+                )}
+                {linkData.advertisedSpeeds &&
+                  linkData.advertisedSpeeds.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs text-text-muted mb-1">
+                        Advertised Speeds
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {linkData.advertisedSpeeds.map((speed) => (
+                          <span
+                            key={speed}
+                            className="text-xs px-2 py-0.5 bg-surface-hover rounded"
+                          >
+                            {speed}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </>
+            )}
+          </>
+        );
+      }}
+    </BaseCard>
   );
 }

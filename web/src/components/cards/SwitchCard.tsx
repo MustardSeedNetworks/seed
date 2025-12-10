@@ -1,4 +1,5 @@
-import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { CardValue, CardRow, CardDivider } from "../ui/Card";
+import { SimpleBaseCard } from "./BaseCard";
 
 export interface SwitchData {
   protocol: "lldp" | "cdp" | "edp" | "fdp" | "unknown";
@@ -23,43 +24,42 @@ const protocolLabels: Record<string, string> = {
 };
 
 export function SwitchCard({ data, loading }: SwitchCardProps) {
-  if (loading) {
-    return (
-      <Card title="Nearest Switch" status="loading">
-        <CardValue value="Listening..." size="lg" />
-      </Card>
-    );
-  }
-
-  if (!data || !data.switchName) {
-    return (
-      <Card title="Nearest Switch" status="unknown">
-        <CardValue value="No discovery frames" size="md" />
-        <p className="text-xs text-text-muted mt-2">
-          Waiting for LLDP/CDP frames...
-        </p>
-      </Card>
-    );
-  }
-
-  const status: Status = "success";
+  // Determine status based on whether we have switch name
+  const hasSwitch = data?.switchName;
+  const status = loading ? "loading" : hasSwitch ? "success" : "unknown";
 
   return (
-    <Card title="Nearest Switch" status={status}>
-      <CardValue value={data.switchName} size="lg" />
-      <CardDivider />
-      {data.portId && <CardRow label="Port" value={data.portId} />}
-      {data.portDescription && (
-        <CardRow label="Description" value={data.portDescription} />
+    <SimpleBaseCard
+      title="Nearest Switch"
+      status={status}
+      loading={loading}
+      loadingContent={<CardValue value="Listening..." size="lg" />}
+    >
+      {!hasSwitch ? (
+        <>
+          <CardValue value="No discovery frames" size="md" />
+          <p className="text-xs text-text-muted mt-2">
+            Waiting for LLDP/CDP frames...
+          </p>
+        </>
+      ) : (
+        <>
+          <CardValue value={data!.switchName!} size="lg" />
+          <CardDivider />
+          {data!.portId && <CardRow label="Port" value={data!.portId} />}
+          {data!.portDescription && (
+            <CardRow label="Description" value={data!.portDescription} />
+          )}
+          {data!.managementIp && (
+            <CardRow label="Management IP" value={data!.managementIp} />
+          )}
+          <div className="mt-2">
+            <span className="text-xs px-2 py-0.5 bg-brand-primary/20 text-brand-primary rounded">
+              {protocolLabels[data!.protocol]}
+            </span>
+          </div>
+        </>
       )}
-      {data.managementIp && (
-        <CardRow label="Management IP" value={data.managementIp} />
-      )}
-      <div className="mt-2">
-        <span className="text-xs px-2 py-0.5 bg-brand-primary/20 text-brand-primary rounded">
-          {protocolLabels[data.protocol]}
-        </span>
-      </div>
-    </Card>
+    </SimpleBaseCard>
   );
 }
