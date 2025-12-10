@@ -52,7 +52,11 @@ export function GatewayCard({ data, loading }: GatewayCardProps) {
     );
   }
 
-  if (!data || !data.gateway) {
+  // Check if no gateways detected (neither IPv4 nor IPv6)
+  const hasIPv4Gateway = data && data.gateway;
+  const hasIPv6Gateway = data && data.ipv6 && data.ipv6.gateway;
+
+  if (!data || (!hasIPv4Gateway && !hasIPv6Gateway)) {
     return (
       <Card title="Gateway" status="unknown">
         <CardValue value="No gateway" size="md" />
