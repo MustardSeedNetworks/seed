@@ -11,12 +11,13 @@ import (
 // RateLimiter implements a simple in-memory rate limiter for login attempts.
 // It tracks failed attempts per IP and blocks requests that exceed the limit.
 type RateLimiter struct {
-	mu       sync.RWMutex
-	attempts map[string]*attemptInfo
-	limit    int           // Maximum attempts allowed
-	window   time.Duration // Time window for rate limiting
-	cleanup  time.Duration // How often to clean up old entries
-	stopCh   chan struct{}
+	mu        sync.RWMutex
+	attempts  map[string]*attemptInfo
+	limit     int           // Maximum attempts allowed
+	window    time.Duration // Time window for rate limiting
+	blockTime time.Duration // How long to block after exceeding limit
+	cleanup   time.Duration // How often to clean up old entries
+	stopCh    chan struct{}
 }
 
 type attemptInfo struct {
@@ -50,13 +51,17 @@ func NewRateLimiter(cfg RateLimitConfig) *RateLimiter {
 	if cfg.Window <= 0 {
 		cfg.Window = 15 * time.Minute
 	}
+	if cfg.BlockTime <= 0 {
+		cfg.BlockTime = 15 * time.Minute
+	}
 
 	rl := &RateLimiter{
-		attempts: make(map[string]*attemptInfo),
-		limit:    cfg.MaxAttempts,
-		window:   cfg.Window,
-		cleanup:  5 * time.Minute,
-		stopCh:   make(chan struct{}),
+		attempts:  make(map[string]*attemptInfo),
+		limit:     cfg.MaxAttempts,
+		window:    cfg.Window,
+		blockTime: cfg.BlockTime,
+		cleanup:   5 * time.Minute,
+		stopCh:    make(chan struct{}),
 	}
 
 	// Start cleanup goroutine
@@ -92,8 +97,8 @@ func (rl *RateLimiter) doCleanup() {
 			delete(rl.attempts, ip)
 			continue
 		}
-		// Remove if block has expired
-		if info.blocked && now.Sub(info.blockedAt) > rl.window {
+		// Remove if block has expired (use blockTime, not window)
+		if info.blocked && now.Sub(info.blockedAt) > rl.blockTime {
 			delete(rl.attempts, ip)
 		}
 	}
@@ -114,9 +119,9 @@ func (rl *RateLimiter) IsBlocked(ip string) bool {
 		return false
 	}
 
-	// Check if block has expired
+	// Check if block has expired (use blockTime, not window)
 	if info.blocked {
-		if time.Since(info.blockedAt) > rl.window {
+		if time.Since(info.blockedAt) > rl.blockTime {
 			return false
 		}
 		return true
@@ -148,9 +153,9 @@ func (rl *RateLimiter) RecordAttempt(ip string, success bool) bool {
 		info.blocked = false
 	}
 
-	// If already blocked, check if block has expired
+	// If already blocked, check if block has expired (use blockTime, not window)
 	if info.blocked {
-		if now.Sub(info.blockedAt) > rl.window {
+		if now.Sub(info.blockedAt) > rl.blockTime {
 			// Unblock but start fresh
 			info.blocked = false
 			info.count = 0
@@ -205,28 +210,18 @@ func (rl *RateLimiter) RemainingAttempts(ip string) int {
 	return remaining
 }
 
-// GetClientIP extracts the client IP from a request.
-// Checks X-Forwarded-For and X-Real-IP headers for proxied requests.
+// GetClientIP extracts the client IP from a request for rate limiting.
+// SECURITY: Always uses RemoteAddr to prevent X-Forwarded-For spoofing.
+// Attackers can trivially bypass rate limiting by spoofing X-Forwarded-For
+// headers if we trust them. For rate limiting purposes, we must use the
+// actual TCP connection source (RemoteAddr).
+//
+// If NetScope is behind a trusted reverse proxy, the proxy should be
+// configured to overwrite X-Forwarded-For and NetScope's RemoteAddr will
+// reflect the proxy's IP. For more sophisticated setups, consider using
+// a dedicated reverse proxy that handles rate limiting.
 func GetClientIP(r *http.Request) string {
-	// Check X-Forwarded-For header (may contain multiple IPs)
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		// Take the first IP (original client)
-		if idx := len(xff); idx > 0 {
-			for i := 0; i < len(xff); i++ {
-				if xff[i] == ',' {
-					return xff[:i]
-				}
-			}
-			return xff
-		}
-	}
-
-	// Check X-Real-IP header
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return xri
-	}
-
-	// Fall back to remote address
+	// Always use RemoteAddr for rate limiting to prevent header spoofing bypass
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

@@ -137,6 +137,8 @@ func TestRateLimiterDifferentIPsAreIndependent(t *testing.T) {
 }
 
 func TestGetClientIP(t *testing.T) {
+	// Tests verify that GetClientIP always uses RemoteAddr (never trusts headers)
+	// to prevent X-Forwarded-For spoofing attacks that could bypass rate limiting.
 	tests := []struct {
 		name       string
 		remoteAddr string
@@ -150,31 +152,31 @@ func TestGetClientIP(t *testing.T) {
 			expected:   "192.168.1.100",
 		},
 		{
-			name:       "X-Forwarded-For single IP",
+			name:       "X-Forwarded-For ignored for security",
 			remoteAddr: "127.0.0.1:8080",
 			headers:    map[string]string{"X-Forwarded-For": "10.0.0.1"},
-			expected:   "10.0.0.1",
+			expected:   "127.0.0.1", // Must use RemoteAddr, NOT the spoofable header
 		},
 		{
-			name:       "X-Forwarded-For multiple IPs",
+			name:       "X-Forwarded-For multiple IPs ignored",
 			remoteAddr: "127.0.0.1:8080",
 			headers:    map[string]string{"X-Forwarded-For": "10.0.0.1, 10.0.0.2, 10.0.0.3"},
-			expected:   "10.0.0.1",
+			expected:   "127.0.0.1", // Must use RemoteAddr
 		},
 		{
-			name:       "X-Real-IP header",
+			name:       "X-Real-IP header ignored for security",
 			remoteAddr: "127.0.0.1:8080",
 			headers:    map[string]string{"X-Real-IP": "172.16.0.50"},
-			expected:   "172.16.0.50",
+			expected:   "127.0.0.1", // Must use RemoteAddr
 		},
 		{
-			name:       "X-Forwarded-For takes precedence over X-Real-IP",
-			remoteAddr: "127.0.0.1:8080",
+			name:       "all headers ignored for security",
+			remoteAddr: "192.168.1.1:8080",
 			headers: map[string]string{
 				"X-Forwarded-For": "10.0.0.1",
 				"X-Real-IP":       "172.16.0.50",
 			},
-			expected: "10.0.0.1",
+			expected: "192.168.1.1", // Must use RemoteAddr
 		},
 		{
 			name:       "remote address without port",
