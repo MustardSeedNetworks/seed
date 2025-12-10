@@ -10,6 +10,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
 	"net/http"
@@ -260,9 +261,13 @@ func isAllowedOrigin(origin string) bool {
 // It serves index.html for any path that doesn't match a static file, enabling
 // client-side routing in React/Vue/Angular apps.
 func spaHandler(fsys http.FileSystem) http.Handler {
-	fileServer := http.FileServer(fsys)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
+
+		// Normalize root path to index.html
+		if path == "/" || path == "" {
+			path = "/index.html"
+		}
 
 		// Try to open the file
 		f, err := fsys.Open(path)
@@ -272,10 +277,13 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 				http.NotFound(w, r)
 				return
 			}
-			// Serve index.html for SPA routing
-			r.URL.Path = "/"
-			fileServer.ServeHTTP(w, r)
-			return
+			// Serve index.html for SPA routing (client-side routes)
+			path = "/index.html"
+			f, err = fsys.Open(path)
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
 		}
 		defer f.Close()
 
@@ -288,14 +296,23 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 		if stat.IsDir() {
 			// Try to serve index.html from the directory
 			indexPath := strings.TrimSuffix(path, "/") + "/index.html"
-			if idx, err := fsys.Open(indexPath); err == nil {
-				idx.Close()
-				r.URL.Path = indexPath
+			f2, err := fsys.Open(indexPath)
+			if err != nil {
+				// No index.html in directory - serve root index.html
+				path = "/index.html"
+				f2, err = fsys.Open(path)
+				if err != nil {
+					http.NotFound(w, r)
+					return
+				}
 			}
+			f.Close()
+			f = f2
+			stat, _ = f.Stat()
 		}
 
-		// File exists - serve it
-		fileServer.ServeHTTP(w, r)
+		// Serve the file with proper content type
+		http.ServeContent(w, r, stat.Name(), stat.ModTime(), f.(io.ReadSeeker))
 	})
 }
 

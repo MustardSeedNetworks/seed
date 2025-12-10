@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useWebSocket, Message, CardUpdate } from "./hooks/useWebSocket";
 import { useAuth, getAuthHeaders } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
+import { useSettings } from "./contexts/SettingsContext";
 import { SettingsDrawer } from "./components/settings/SettingsDrawer";
 import { HelpModal, HelpSection, HelpItem } from "./components/ui/HelpModal";
 import {
@@ -56,24 +57,13 @@ interface CardState {
   publicip: PublicIPData | null;
 }
 
-interface FABOptions {
-  runLink: boolean;
-  runSwitch: boolean;
-  runVLAN: boolean;
-  runIPConfig: boolean;
-  runGateway: boolean;
-  runDNS: boolean;
-  runHealthChecks: boolean;
-  runPerformance: boolean;
-  runSpeedtest: boolean;
-  runIperf: boolean;
-  runNetworkDiscovery: boolean;
-  autoScanOnLink: boolean;
-}
+// FABOptions type is now imported from contexts/SettingsContext via types/settings
 
 function App() {
   const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  // Use settings from context instead of local state
+  const { fabOptions, displayOptions } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -96,86 +86,10 @@ function App() {
   >([]);
   const [networkDiscovery, setNetworkDiscovery] =
     useState<NetworkDiscoveryData | null>(null);
-  const [showPublicIP, setShowPublicIP] = useState(true);
   const [appVersion, setAppVersion] = useState("dev");
-  const [fabOptions, setFabOptions] = useState<FABOptions>(() => {
-    const defaults: FABOptions = {
-      runLink: true,
-      runSwitch: true,
-      runVLAN: true,
-      runIPConfig: true,
-      runGateway: true,
-      runDNS: true,
-      runHealthChecks: true,
-      runPerformance: true,
-      runSpeedtest: true,
-      runIperf: true,
-      runNetworkDiscovery: true,
-      autoScanOnLink: true,
-    };
-
-    try {
-      const saved = localStorage.getItem("netscope-fab-options");
-      if (saved) return { ...defaults, ...JSON.parse(saved) };
-    } catch (err) {
-      console.error("Failed to load FAB options:", err);
-    }
-    return { ...defaults };
-  });
-
-  // Load display options from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("netscope-display-options");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.showPublicIP !== undefined) {
-          setTimeout(() => setShowPublicIP(parsed.showPublicIP), 0);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load display options:", err);
-    }
-  }, []);
-
-  // Listen for display options updates from settings drawer
-  useEffect(() => {
-    const handleDisplayOptionsUpdate = (event: CustomEvent) => {
-      if (event.detail && event.detail.showPublicIP !== undefined) {
-        setShowPublicIP(event.detail.showPublicIP);
-      }
-    };
-    window.addEventListener(
-      "displayOptionsUpdated",
-      handleDisplayOptionsUpdate as EventListener,
-    );
-    return () => {
-      window.removeEventListener(
-        "displayOptionsUpdated",
-        handleDisplayOptionsUpdate as EventListener,
-      );
-    };
-  }, []);
-
-  // Listen for FAB option updates
-  useEffect(() => {
-    const handleFabUpdated = (event: Event) => {
-      const detail = (event as CustomEvent<Partial<typeof fabOptions>>).detail;
-      if (detail) {
-        setFabOptions((prev) => ({ ...prev, ...detail }));
-      }
-    };
-
-    window.addEventListener(
-      "fabOptionsUpdated",
-      handleFabUpdated as EventListener,
-    );
-    return () =>
-      window.removeEventListener(
-        "fabOptionsUpdated",
-        handleFabUpdated as EventListener,
-      );
-  }, []);
+  // showPublicIP now comes from displayOptions.showPublicIP in context
+  // FAB options and display options are now managed by SettingsContext
+  // Event listeners for fabOptionsUpdated/displayOptionsUpdated are no longer needed here
 
   const handleMessage = useCallback((message: Message) => {
     if (message.type === "initial_state") {
@@ -1136,7 +1050,7 @@ function App() {
               data={cards.dhcp}
               publicip={cards.publicip}
               loading={loading}
-              showPublicIP={showPublicIP}
+              showPublicIP={displayOptions.showPublicIP}
             />
             <GatewayCard data={cards.gateway} loading={loading} />
 
