@@ -2,6 +2,11 @@ import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
 import { BaseCard } from "./BaseCard";
 
+interface LinkHistoryEvent {
+  state: string;
+  timestamp: string;
+}
+
 export interface LinkData {
   linkUp: boolean;
   carrier: boolean; // Physical link/carrier detected (Layer 2)
@@ -11,6 +16,9 @@ export interface LinkData {
   advertisedSpeeds: string[];
   mtu?: number;
   autoNeg?: boolean;
+  flapCount24h?: number;
+  history?: LinkHistoryEvent[];
+  uptimeMs?: number;
 }
 
 interface LinkCardProps {
@@ -83,6 +91,12 @@ export function LinkCard({ data, loading }: LinkCardProps) {
                   <CardRow
                     label="Auto-Neg"
                     value={linkData.autoNeg ? "On" : "Off"}
+                  />
+                )}
+                {linkData.flapCount24h !== undefined && (
+                  <CardRow
+                    label="Flaps (24h)"
+                    value={linkData.flapCount24h.toString()}
                   />
                 )}
                 {linkData.advertisedSpeeds &&

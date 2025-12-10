@@ -469,17 +469,26 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// LinkHistoryEvent represents a link state change event for the API.
+type LinkHistoryEvent struct {
+	State     string `json:"state"`
+	Timestamp string `json:"timestamp"`
+}
+
 // LinkResponse represents the link status for an interface.
 type LinkResponse struct {
-	Interface  string   `json:"interface"`
-	LinkUp     bool     `json:"linkUp"`  // Deprecated: use Carrier && HasIP for accurate status
-	Carrier    bool     `json:"carrier"` // Physical link/carrier detected (Layer 2)
-	HasIP      bool     `json:"hasIP"`   // Has routable IP address (Layer 3)
-	Speed      string   `json:"speed"`
-	Duplex     string   `json:"duplex"`
-	Advertised []string `json:"advertisedSpeeds"`
-	MTU        int      `json:"mtu"`
-	AutoNeg    bool     `json:"autoNeg"`
+	Interface    string             `json:"interface"`
+	LinkUp       bool               `json:"linkUp"`  // Deprecated: use Carrier && HasIP for accurate status
+	Carrier      bool               `json:"carrier"` // Physical link/carrier detected (Layer 2)
+	HasIP        bool               `json:"hasIP"`   // Has routable IP address (Layer 3)
+	Speed        string             `json:"speed"`
+	Duplex       string             `json:"duplex"`
+	Advertised   []string           `json:"advertisedSpeeds"`
+	MTU          int                `json:"mtu"`
+	AutoNeg      bool               `json:"autoNeg"`
+	FlapCount24h int                `json:"flapCount24h"`        // Link flap count in last 24 hours
+	History      []LinkHistoryEvent `json:"history,omitempty"`   // Recent link state changes
+	UptimeMs     int64              `json:"uptimeMs,omitempty"`  // Monitor uptime in milliseconds
 }
 
 // handleLink returns link status for the current interface.
@@ -525,6 +534,24 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		resp.Duplex = linkStatus.Duplex
 		resp.Advertised = linkStatus.Advertised
 		resp.AutoNeg = linkStatus.AutoNeg
+	}
+
+	// Add link flap history from monitor
+	if s.linkMonitor != nil {
+		resp.FlapCount24h = s.linkMonitor.GetFlapCount24h()
+		resp.UptimeMs = s.linkMonitor.GetUptime().Milliseconds()
+
+		// Convert history events to API format
+		history := s.linkMonitor.GetHistory()
+		if len(history) > 0 {
+			resp.History = make([]LinkHistoryEvent, len(history))
+			for i, event := range history {
+				resp.History[i] = LinkHistoryEvent{
+					State:     event.State.String(),
+					Timestamp: event.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
+				}
+			}
+		}
 	}
 
 	sendJSONResponse(w, http.StatusOK, resp)
