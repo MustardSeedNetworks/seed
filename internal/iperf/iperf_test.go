@@ -222,7 +222,7 @@ func TestManagerRunClientAlreadyRunning(t *testing.T) {
 	manager.mu.Unlock()
 
 	ctx := context.Background()
-	_, err := manager.RunClient(ctx, ClientConfig{Server: "localhost"})
+	_, err := manager.RunClient(ctx, &ClientConfig{Server: "localhost"})
 	if err == nil {
 		t.Error("expected error when test already in progress")
 	}

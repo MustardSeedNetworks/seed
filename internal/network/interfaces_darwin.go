@@ -33,6 +33,7 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 	if cfg.Gateway != "" {
 		args = append(args, cfg.Gateway)
 	}
+	//nolint:gosec // G204: networksetup is a known macOS system binary, args are validated
 	if err := exec.Command("networksetup", args...).Run(); err != nil {
 		return fmt.Errorf("failed to set static IP: %w", err)
 	}
@@ -40,6 +41,7 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 	// Configure DNS if provided
 	if len(cfg.DNS) > 0 {
 		dnsArgs := append([]string{"-setdnsservers", service}, cfg.DNS...)
+		//nolint:gosec // G204: networksetup is a known macOS system binary, args are validated
 		if err := exec.Command("networksetup", dnsArgs...).Run(); err != nil {
 			return fmt.Errorf("failed to configure DNS: %w", err)
 		}
@@ -55,6 +57,7 @@ func configureDHCPPlatform(iface string) error {
 		return err
 	}
 
+	//nolint:gosec // G204: networksetup is a known macOS system binary, service is from validated iface
 	return exec.Command("networksetup", "-setdhcp", service).Run()
 }
 

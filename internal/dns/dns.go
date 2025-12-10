@@ -355,18 +355,20 @@ func (t *Tester) TestServer(ctx context.Context, server string) *ServerTestResul
 	if result.Forward != nil {
 		totalTime += result.Forward.TimeMs
 		count++
-		if result.Forward.Status == StatusError {
+		switch result.Forward.Status {
+		case StatusError:
 			hasError = true
-		} else if result.Forward.Status == StatusWarning {
+		case StatusWarning:
 			hasWarning = true
 		}
 	}
 	if result.ForwardIPv6 != nil {
 		totalTime += result.ForwardIPv6.TimeMs
 		count++
-		if result.ForwardIPv6.Status == StatusError {
+		switch result.ForwardIPv6.Status {
+		case StatusError:
 			hasError = true
-		} else if result.ForwardIPv6.Status == StatusWarning {
+		case StatusWarning:
 			hasWarning = true
 		}
 	}

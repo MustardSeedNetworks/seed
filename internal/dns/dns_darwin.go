@@ -56,6 +56,7 @@ func getSystemDNSPlatform() []string {
 func parseResolvConfDarwin(path string) []string {
 	servers := []string{}
 
+	//nolint:gosec // G304: path is system resolv.conf path from known locations
 	file, err := os.Open(path)
 	if err != nil {
 		return servers

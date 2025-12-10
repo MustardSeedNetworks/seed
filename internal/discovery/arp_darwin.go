@@ -17,6 +17,7 @@ const rtfLLData = 0x400
 func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 	// Use sysctl to get ARP entries via the routing table
 	// NET_RT_FLAGS with 0 returns all routes, we filter for LLDATA below
+	//nolint:staticcheck // SA1019: syscall.RouteRIB works for our use case
 	rib, err := syscall.RouteRIB(syscall.NET_RT_FLAGS, 0)
 	if err != nil {
 		return nil, fmt.Errorf("RouteRIB: %w", err)
@@ -206,6 +207,7 @@ func getNativeEndian() interface {
 	Uint32([]byte) uint32
 } {
 	buf := [2]byte{}
+	//nolint:gosec // G103: unsafe is required for endianness detection
 	*(*uint16)(unsafe.Pointer(&buf[0])) = 0x0102
 	if buf[0] == 0x01 {
 		return bigEndian{}
