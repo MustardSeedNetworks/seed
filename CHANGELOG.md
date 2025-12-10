@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0](https://github.com/krisarmstrong/netscope/compare/v0.12.1...v1.0.0) (2025-12-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **security:** Default credentials no longer work on fresh installations.
+
+### Features
+
+* enhance settings, health check, and discovery cards ([8b64742](https://github.com/krisarmstrong/netscope/commit/8b647423f66b9047a8d5256b1ee47e6c635ebefa))
+* improve perf tests UX and timings (fixes [#141](https://github.com/krisarmstrong/netscope/issues/141), fixes [#142](https://github.com/krisarmstrong/netscope/issues/142)) ([7fee21b](https://github.com/krisarmstrong/netscope/commit/7fee21bd94bca1b58702674f29d5b586d4e6acdc))
+* optional log access token + favicon refresh ([0a0995b](https://github.com/krisarmstrong/netscope/commit/0a0995b581644a38f23be905a851db8534f6da38))
+* restructure Run All Tests with hierarchical toggles ([aec6eee](https://github.com/krisarmstrong/netscope/commit/aec6eeed11e654fb3c0fe929441363b2356d7976))
+* **security:** add first-boot credential setup and JWT persistence (closes [#65](https://github.com/krisarmstrong/netscope/issues/65)) ([947d965](https://github.com/krisarmstrong/netscope/commit/947d9654ffa8e5885575c342a4e506eb5b626ea6))
+* **ui:** unify status badges and expand help system (closes [#124](https://github.com/krisarmstrong/netscope/issues/124)) ([e39a841](https://github.com/krisarmstrong/netscope/commit/e39a841f54047638cf4a38281a9cd202758597e5))
+
+
+### Bug Fixes
+
+* persist run toggles & tidy performance UX ([69cf034](https://github.com/krisarmstrong/netscope/commit/69cf03451c3f057025a275f9d5584c145c4d7224))
+* restore FAB toggles and improve ws parsing ([8887b49](https://github.com/krisarmstrong/netscope/commit/8887b49355bb02fc8897c7dbe59b15827905e5ee))
+* separate speedtest/iperf toggles; add performance master switch ([4d35d3d](https://github.com/krisarmstrong/netscope/commit/4d35d3db762f710238ad1b05907f632c7e72385d))
+
 ## [0.12.1](https://github.com/krisarmstrong/netscope/compare/v0.12.0...v0.12.1) (2025-12-09)
 
 
