@@ -103,6 +103,21 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get client IP for rate limiting
+	clientIP := GetClientIP(r)
+
+	// Check if IP is rate limited
+	if s.loginRateLimiter.IsBlocked(clientIP) {
+		w.Header().Set("Retry-After", "900") // 15 minutes
+		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
+		sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+			"error":             "Too many failed login attempts",
+			"retry_after":       900,
+			"remaining_attempts": remaining,
+		})
+		return
+	}
+
 	bodyBytes, _ := io.ReadAll(r.Body)
 	var req LoginRequest
 	if err := json.Unmarshal(bodyBytes, &req); err != nil {
@@ -113,9 +128,29 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	token, err := s.authManager.Authenticate(req.Username, req.Password)
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		// Record failed attempt
+		blocked := s.loginRateLimiter.RecordAttempt(clientIP, false)
+		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
+
+		if blocked {
+			w.Header().Set("Retry-After", "900")
+			sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+				"error":             "Too many failed login attempts. Account temporarily locked.",
+				"retry_after":       900,
+				"remaining_attempts": 0,
+			})
+			return
+		}
+
+		sendJSONResponse(w, http.StatusUnauthorized, map[string]interface{}{
+			"error":             "Invalid credentials",
+			"remaining_attempts": remaining,
+		})
 		return
 	}
+
+	// Record successful attempt (clears previous failures)
+	s.loginRateLimiter.RecordAttempt(clientIP, true)
 
 	resp := LoginResponse{
 		Token:   token,
