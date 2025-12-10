@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useTheme } from "../../hooks/useTheme";
 import { getAuthHeaders } from "../../hooks/useAuth";
+import { useSettings } from "../../contexts/SettingsContext";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import {
   AutoSaveIndicator,
@@ -63,24 +64,7 @@ interface DNSServer {
   enabled: boolean;
 }
 
-interface FABOptions {
-  runLink: boolean;
-  runSwitch: boolean;
-  runVLAN: boolean;
-  runIPConfig: boolean;
-  runGateway: boolean;
-  runDNS: boolean;
-  runHealthChecks: boolean;
-  runNetworkDiscovery: boolean;
-  runSpeedtest: boolean;
-  runIperf: boolean;
-  runPerformance: boolean;
-  autoScanOnLink: boolean;
-}
-
-interface DisplayOptions {
-  showPublicIP: boolean; // Show Public IP in IP Config card (default ON)
-}
+// FABOptions and DisplayOptions are imported from SettingsContext via types/settings.ts
 
 interface TCPPort {
   name: string;
@@ -128,15 +112,7 @@ interface TestsSettings {
   };
 }
 
-interface IperfSettings {
-  server: string;
-  port: number;
-  protocol: "tcp" | "udp";
-  direction: "upload" | "download" | "bidirectional";
-  duration: number;
-  serverPort: number;
-  enableServer: boolean;
-}
+// IperfSettings is imported from SettingsContext via types/settings.ts
 
 interface IperfSuggestion {
   host: string;
@@ -354,6 +330,46 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   version = "dev",
 }: SettingsDrawerProps) {
   const { theme, setTheme, isDark } = useTheme();
+
+  // Get settings from context - single source of truth
+  const {
+    fabOptions,
+    displayOptions,
+    iperfSettings,
+    status: settingsStatus,
+    updateFabOptions,
+    updateDisplayOptions,
+    updateIperfSettings,
+  } = useSettings();
+
+  // Create setter wrappers that use context update methods
+  const setFabOptions = useCallback(
+    (updater: React.SetStateAction<typeof fabOptions>) => {
+      const newValue =
+        typeof updater === "function" ? updater(fabOptions) : updater;
+      updateFabOptions(newValue);
+    },
+    [fabOptions, updateFabOptions],
+  );
+
+  const setDisplayOptions = useCallback(
+    (updater: React.SetStateAction<typeof displayOptions>) => {
+      const newValue =
+        typeof updater === "function" ? updater(displayOptions) : updater;
+      updateDisplayOptions(newValue);
+    },
+    [displayOptions, updateDisplayOptions],
+  );
+
+  const setIperfSettings = useCallback(
+    (updater: React.SetStateAction<typeof iperfSettings>) => {
+      const newValue =
+        typeof updater === "function" ? updater(iperfSettings) : updater;
+      updateIperfSettings(newValue);
+    },
+    [iperfSettings, updateIperfSettings],
+  );
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
   // Track if health check settings were modified - dispatch event on drawer close
   const testsSettingsChangedRef = useRef(false);
@@ -416,43 +432,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     },
   });
 
-  // FAB Options (stored in localStorage)
-  const [fabOptions, setFabOptions] = useState<FABOptions>({
-    runLink: true,
-    runSwitch: true,
-    runVLAN: true,
-    runIPConfig: true,
-    runGateway: true,
-    runDNS: true,
-    runHealthChecks: true,
-    runNetworkDiscovery: true,
-    runSpeedtest: true,
-    runIperf: true,
-    runPerformance: true,
-    autoScanOnLink: true,
-  });
+  // FAB Options, Display Options, and iperf Settings now come from SettingsContext above
 
-  // Display Options (stored in localStorage)
-  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
-    showPublicIP: true, // Show Public IP in IP Config card (default ON)
-  });
   const [wifiSettings, setWifiSettings] = useState<WiFiSettings>({
     interface: "",
     availableWifi: [],
     isWireless: false,
   });
   const [dnsInput, setDnsInput] = useState("");
-
-  // iperf3/LAN Speed settings
-  const [iperfSettings, setIperfSettings] = useState<IperfSettings>({
-    server: "",
-    port: 5201,
-    protocol: "tcp",
-    direction: "download",
-    duration: 10,
-    serverPort: 5201,
-    enableServer: false,
-  });
   const [iperfSuggestions, setIperfSuggestions] = useState<IperfSuggestion[]>(
     [],
   );
@@ -488,32 +475,28 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const [thresholdsStatus, setThresholdsStatus] = useState<SaveStatus>("idle");
   const [testsStatus, setTestsStatus] = useState<SaveStatus>("idle");
   const [wifiStatus, setWifiStatus] = useState<SaveStatus>("idle");
-  const [iperfStatus, setIperfStatus] = useState<SaveStatus>("idle");
-  const [fabStatus, setFabStatus] = useState<SaveStatus>("idle");
+  // Status for fab, display, iperf comes from context (settingsStatus)
+  const fabStatus = settingsStatus.fab;
+  const displayStatus = settingsStatus.display;
+  const iperfStatus = settingsStatus.iperf;
+
   const [networkDiscoveryStatus, setNetworkDiscoveryStatus] =
     useState<SaveStatus>("idle");
-  const [displayStatus, setDisplayStatus] = useState<SaveStatus>("idle");
 
   // Refs to track initial load (skip auto-save on first load)
   const initialLoadRef = useRef(true);
   const thresholdsInitRef = useRef(true);
   const testsInitRef = useRef(true);
   const wifiInitRef = useRef(true);
-  const iperfInitRef = useRef(true);
-  const fabInitRef = useRef(true);
   const networkDiscoveryInitRef = useRef(true);
-  const displayInitRef = useRef(true);
 
-  // Debounce timers
+  // Debounce timers (fab, display, iperf now handled by context)
   const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const testsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wifiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const iperfTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fabTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const displayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Legacy state (keep for IP settings which still needs manual apply)
   const [savingIP, setSavingIP] = useState(false);
@@ -636,44 +619,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     }
   }, []);
 
-  // Load iperf settings from localStorage
-  const loadIperfSettings = useCallback(() => {
-    try {
-      const saved = localStorage.getItem("netscope-iperf-settings");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setIperfSettings((prev) => ({ ...prev, ...parsed }));
-      }
-    } catch (err) {
-      console.error("Failed to load iperf settings:", err);
-    }
-  }, []);
-
-  // Load FAB options from localStorage
-  const loadFabOptions = useCallback(() => {
-    try {
-      const saved = localStorage.getItem("netscope-fab-options");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setFabOptions((prev) => ({ ...prev, ...parsed }));
-      }
-    } catch (err) {
-      console.error("Failed to load FAB options:", err);
-    }
-  }, []);
-
-  // Load Display options from localStorage
-  const loadDisplayOptions = useCallback(() => {
-    try {
-      const saved = localStorage.getItem("netscope-display-options");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setDisplayOptions((prev) => ({ ...prev, ...parsed }));
-      }
-    } catch (err) {
-      console.error("Failed to load display options:", err);
-    }
-  }, []);
+  // FAB options, display options, and iperf settings now come from SettingsContext
+  // (loaded automatically by the context provider)
 
   // Fetch Network Discovery settings from API
   const fetchNetworkDiscoverySettings = useCallback(async () => {
@@ -878,18 +825,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       thresholdsInitRef.current = true;
       testsInitRef.current = true;
       wifiInitRef.current = true;
-      iperfInitRef.current = true;
-      fabInitRef.current = true;
       networkDiscoveryInitRef.current = true;
-      displayInitRef.current = true;
 
       fetchThresholds();
       fetchIPSettings();
       fetchTestsSettings();
       fetchWifiSettings();
-      loadIperfSettings();
-      loadFabOptions();
-      loadDisplayOptions();
+      // FAB options, display options, and iperf settings come from SettingsContext
       fetchNetworkDiscoverySettings();
       fetchSubnets();
 
@@ -899,10 +841,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         thresholdsInitRef.current = false;
         testsInitRef.current = false;
         wifiInitRef.current = false;
-        iperfInitRef.current = false;
-        fabInitRef.current = false;
         networkDiscoveryInitRef.current = false;
-        displayInitRef.current = false;
       }, 500);
     }
   }, [
@@ -911,9 +850,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     fetchIPSettings,
     fetchTestsSettings,
     fetchWifiSettings,
-    loadIperfSettings,
-    loadFabOptions,
-    loadDisplayOptions,
     fetchNetworkDiscoverySettings,
     fetchSubnets,
   ]);
@@ -1061,38 +997,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     };
   }, [wifiSettings.interface, saveWifiSettings]);
 
-  // Auto-save iperf settings with debounce
-  useEffect(() => {
-    if (iperfInitRef.current) return;
-    if (iperfTimerRef.current) clearTimeout(iperfTimerRef.current);
-    iperfTimerRef.current = setTimeout(() => {
-      setIperfStatus("saving");
-      localStorage.setItem(
-        "netscope-iperf-settings",
-        JSON.stringify(iperfSettings),
-      );
-      setIperfStatus("saved");
-      setTimeout(() => setIperfStatus("idle"), 2000);
-    }, 800);
-    return () => {
-      if (iperfTimerRef.current) clearTimeout(iperfTimerRef.current);
-    };
-  }, [iperfSettings]);
-
-  // Auto-save FAB options with debounce
-  useEffect(() => {
-    if (fabInitRef.current) return;
-    if (fabTimerRef.current) clearTimeout(fabTimerRef.current);
-    fabTimerRef.current = setTimeout(() => {
-      setFabStatus("saving");
-      localStorage.setItem("netscope-fab-options", JSON.stringify(fabOptions));
-      setFabStatus("saved");
-      setTimeout(() => setFabStatus("idle"), 2000);
-    }, 800);
-    return () => {
-      if (fabTimerRef.current) clearTimeout(fabTimerRef.current);
-    };
-  }, [fabOptions]);
+  // FAB options, display options, and iperf settings auto-save is handled by SettingsContext
 
   // Sync autoScanOnLink with networkDiscoverySettings.autoScan for backend compatibility
   useEffect(() => {
@@ -1101,24 +1006,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       autoScan: fabOptions.autoScanOnLink,
     }));
   }, [fabOptions.autoScanOnLink]);
-
-  // Auto-save Display options with debounce
-  useEffect(() => {
-    if (displayInitRef.current) return;
-    if (displayTimerRef.current) clearTimeout(displayTimerRef.current);
-    displayTimerRef.current = setTimeout(() => {
-      setDisplayStatus("saving");
-      localStorage.setItem(
-        "netscope-display-options",
-        JSON.stringify(displayOptions),
-      );
-      setDisplayStatus("saved");
-      setTimeout(() => setDisplayStatus("idle"), 2000);
-    }, 800);
-    return () => {
-      if (displayTimerRef.current) clearTimeout(displayTimerRef.current);
-    };
-  }, [displayOptions]);
 
   // Auto-save Network Discovery settings with debounce
   useEffect(() => {
