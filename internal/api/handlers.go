@@ -1858,6 +1858,50 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// SetMTURequest represents the request to set interface MTU.
+type SetMTURequest struct {
+	Interface string `json:"interface"`
+	MTU       int    `json:"mtu"`
+}
+
+// handleSetMTU handles POST requests to set interface MTU.
+func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req SetMTURequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Use current interface if not specified
+	iface := req.Interface
+	if iface == "" {
+		iface = s.netManager.GetCurrentInterface()
+	}
+
+	// Set the MTU
+	if err := s.netManager.SetMTU(iface, req.MTU); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to set MTU: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Refresh interface data
+	if err := s.netManager.RefreshInterfaces(); err != nil {
+		log.Printf("Warning: Failed to refresh interfaces after MTU change: %v", err)
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"status":    "success",
+		"message":   "MTU updated",
+		"interface": iface,
+		"mtu":       req.MTU,
+	})
+}
+
 // handleCable performs a cable test and returns results.
 func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

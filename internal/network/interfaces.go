@@ -322,6 +322,19 @@ func (m *Manager) ConfigureDHCP(iface string) error {
 	return configureDHCPPlatform(iface)
 }
 
+// SetMTU sets the MTU (Maximum Transmission Unit) for an interface.
+// Valid MTU range is typically 68-9000 (Ethernet jumbo frames).
+// Requires root/administrator privileges.
+// Implementation is platform-specific (interfaces_linux.go, interfaces_darwin.go).
+func (m *Manager) SetMTU(iface string, mtu int) error {
+	// Validate MTU range
+	if mtu < 68 || mtu > 9000 {
+		return fmt.Errorf("invalid MTU %d: must be between 68 and 9000", mtu)
+	}
+
+	return setMTUPlatform(iface, mtu)
+}
+
 // validateIPConfig validates the static IP configuration.
 func validateIPConfig(cfg *StaticIPConfig) error {
 	if cfg.Address == "" {

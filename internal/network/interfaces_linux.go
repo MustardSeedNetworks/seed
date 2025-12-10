@@ -168,3 +168,24 @@ func configureDHCPPlatform(iface string) error {
 
 	return fmt.Errorf("no DHCP client found (tried dhclient, dhcpcd)")
 }
+
+// setMTUPlatform sets the MTU on Linux using netlink.
+func setMTUPlatform(iface string, mtu int) error {
+	// Validate interface name
+	if err := validation.ValidateInterface(iface); err != nil {
+		return fmt.Errorf("invalid interface: %w", err)
+	}
+
+	// Get the link
+	link, err := netlink.LinkByName(iface)
+	if err != nil {
+		return fmt.Errorf("interface not found: %w", err)
+	}
+
+	// Set the MTU
+	if err := netlink.LinkSetMTU(link, mtu); err != nil {
+		return fmt.Errorf("failed to set MTU: %w", err)
+	}
+
+	return nil
+}

@@ -194,6 +194,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/link", s.handleLink)
 	s.mux.HandleFunc("/api/ipconfig", s.handleIPConfig)
 	s.mux.HandleFunc("/api/ipconfig/settings", s.handleIPSettings)
+	s.mux.HandleFunc("/api/network/mtu", s.handleSetMTU)
 	s.mux.HandleFunc("/api/discovery", s.handleDiscovery)
 	s.mux.HandleFunc("/api/discovery/probe", s.handleTCPProbe)
 	s.mux.HandleFunc("/api/discovery/traceroute", s.handleTraceroute)

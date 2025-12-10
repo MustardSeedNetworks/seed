@@ -94,3 +94,20 @@ func getNetworkServiceName(iface string) (string, error) {
 
 	return "", fmt.Errorf("network service not found for interface %s", iface)
 }
+
+// setMTUPlatform sets the MTU on macOS using ifconfig.
+func setMTUPlatform(iface string, mtu int) error {
+	// Validate interface name exists
+	_, err := net.InterfaceByName(iface)
+	if err != nil {
+		return fmt.Errorf("interface not found: %w", err)
+	}
+
+	// Use ifconfig to set MTU
+	//nolint:gosec // G204: ifconfig is a known macOS system binary, args are validated
+	if err := exec.Command("ifconfig", iface, "mtu", fmt.Sprintf("%d", mtu)).Run(); err != nil {
+		return fmt.Errorf("failed to set MTU: %w", err)
+	}
+
+	return nil
+}
