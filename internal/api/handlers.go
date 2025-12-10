@@ -208,6 +208,10 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
+	// Lock config for read access
+	s.config.RLock()
+	defer s.config.RUnlock()
+
 	settings := map[string]interface{}{
 		"interface": map[string]interface{}{
 			"current":   s.config.Interface.Default,
@@ -275,6 +279,10 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+
+	// Lock config for write access
+	s.config.Lock()
+	defer s.config.Unlock()
 
 	// Apply threshold updates
 	if thresholds, ok := updates["thresholds"].(map[string]interface{}); ok {
@@ -1328,6 +1336,10 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Lock config for write access
+	s.config.Lock()
+	defer s.config.Unlock()
+
 	// Update WiFi interface in config
 	s.config.Interface.WiFi = req.Interface
 
@@ -1458,6 +1470,10 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Mode must be 'dhcp' or 'static'", http.StatusBadRequest)
 		return
 	}
+
+	// Lock config for write access
+	s.config.Lock()
+	defer s.config.Unlock()
 
 	currentIface := s.netManager.GetCurrentInterface()
 
@@ -1680,6 +1696,10 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+
+	// Lock config for write access
+	s.config.Lock()
+	defer s.config.Unlock()
 
 	// Update DNS hostname
 	if req.DNSHostname != "" {
