@@ -45,9 +45,9 @@ describe("useAuth", () => {
 
   it("restores auth state from localStorage on mount", async () => {
     const futureExpiry = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-    mockLocalStorage.setItem("netscope_token", "existing-token");
-    mockLocalStorage.setItem("netscope_token_expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope_username", "testuser");
+    mockLocalStorage.setItem("netscope-token", "existing-token");
+    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
+    mockLocalStorage.setItem("netscope-username", "testuser");
 
     const { result } = renderHook(() => useAuth());
 
@@ -76,11 +76,11 @@ describe("useAuth", () => {
     expect(result.current.token).toBe("new-token");
     expect(result.current.username).toBe("admin");
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      "netscope_token",
+      "netscope-token",
       "new-token",
     );
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      "netscope_username",
+      "netscope-username",
       "admin",
     );
   });
@@ -144,9 +144,9 @@ describe("useAuth", () => {
 
   it("logout clears auth state", async () => {
     const futureExpiry = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-    mockLocalStorage.setItem("netscope_token", "token");
-    mockLocalStorage.setItem("netscope_token_expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope_username", "user");
+    mockLocalStorage.setItem("netscope-token", "token");
+    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
+    mockLocalStorage.setItem("netscope-username", "user");
 
     // Mock the logout fetch
     mockFetch.mockResolvedValueOnce({ ok: true });
@@ -165,9 +165,9 @@ describe("useAuth", () => {
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.token).toBeNull();
     expect(result.current.username).toBeNull();
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope_token");
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token");
     expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-      "netscope_username",
+      "netscope-username",
     );
   });
 
@@ -186,7 +186,7 @@ describe("useAuth", () => {
     });
 
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      "netscope_token_expiry",
+      "netscope-token-expiry",
       String(futureExpiry),
     );
   });
@@ -194,9 +194,9 @@ describe("useAuth", () => {
   it("clears expired token on mount", async () => {
     // Set token with expired timestamp (1 hour ago)
     const pastExpiry = Math.floor(Date.now() / 1000) - 3600;
-    mockLocalStorage.setItem("netscope_token", "expired-token");
-    mockLocalStorage.setItem("netscope_token_expiry", String(pastExpiry));
-    mockLocalStorage.setItem("netscope_username", "testuser");
+    mockLocalStorage.setItem("netscope-token", "expired-token");
+    mockLocalStorage.setItem("netscope-token-expiry", String(pastExpiry));
+    mockLocalStorage.setItem("netscope-username", "testuser");
 
     const { result } = renderHook(() => useAuth());
 
@@ -205,21 +205,21 @@ describe("useAuth", () => {
       expect(result.current.isAuthenticated).toBe(false);
     });
 
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope_token");
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token");
     expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-      "netscope_token_expiry",
+      "netscope-token-expiry",
     );
     expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-      "netscope_username",
+      "netscope-username",
     );
   });
 
   it("keeps valid token on mount when not expired", async () => {
     // Set token with future expiry (1 hour from now)
     const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockLocalStorage.setItem("netscope_token", "valid-token");
-    mockLocalStorage.setItem("netscope_token_expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope_username", "testuser");
+    mockLocalStorage.setItem("netscope-token", "valid-token");
+    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
+    mockLocalStorage.setItem("netscope-username", "testuser");
 
     const { result } = renderHook(() => useAuth());
 
@@ -232,9 +232,9 @@ describe("useAuth", () => {
 
   it("treats token as expired when no expiry is stored", async () => {
     // Set token without expiry
-    mockLocalStorage.setItem("netscope_token", "token-no-expiry");
-    mockLocalStorage.setItem("netscope_username", "testuser");
-    // Don't set netscope_token_expiry
+    mockLocalStorage.setItem("netscope-token", "token-no-expiry");
+    mockLocalStorage.setItem("netscope-username", "testuser");
+    // Don't set netscope-token-expiry
 
     const { result } = renderHook(() => useAuth());
 
@@ -242,14 +242,14 @@ describe("useAuth", () => {
       expect(result.current.isAuthenticated).toBe(false);
     });
 
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope_token");
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token");
   });
 
   it("logout clears token expiry from localStorage", async () => {
     const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockLocalStorage.setItem("netscope_token", "token");
-    mockLocalStorage.setItem("netscope_token_expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope_username", "user");
+    mockLocalStorage.setItem("netscope-token", "token");
+    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
+    mockLocalStorage.setItem("netscope-username", "user");
 
     mockFetch.mockResolvedValueOnce({ ok: true });
 
@@ -264,15 +264,15 @@ describe("useAuth", () => {
     });
 
     expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-      "netscope_token_expiry",
+      "netscope-token-expiry",
     );
   });
 
   it("logout calls backend logout endpoint with token", async () => {
     const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockLocalStorage.setItem("netscope_token", "my-token");
-    mockLocalStorage.setItem("netscope_token_expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope_username", "user");
+    mockLocalStorage.setItem("netscope-token", "my-token");
+    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
+    mockLocalStorage.setItem("netscope-username", "user");
 
     mockFetch.mockResolvedValueOnce({ ok: true });
 
@@ -299,9 +299,9 @@ describe("useAuth", () => {
 
   it("logout handles backend error gracefully", async () => {
     const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockLocalStorage.setItem("netscope_token", "token");
-    mockLocalStorage.setItem("netscope_token_expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope_username", "user");
+    mockLocalStorage.setItem("netscope-token", "token");
+    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
+    mockLocalStorage.setItem("netscope-username", "user");
 
     // Make logout endpoint fail
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
@@ -334,7 +334,7 @@ describe("getAuthHeaders", () => {
   });
 
   it("returns Authorization header when token exists", () => {
-    mockLocalStorage.setItem("netscope_token", "test-token");
+    mockLocalStorage.setItem("netscope-token", "test-token");
 
     const headers = getAuthHeaders();
     expect(headers).toEqual({

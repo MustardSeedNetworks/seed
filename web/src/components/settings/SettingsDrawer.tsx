@@ -15,127 +15,18 @@ import {
   ThresholdsSettings,
   WiFiSettings,
 } from "./sections";
+import type {
+  SettingsThresholds,
+  WiFiSettings as WiFiSettingsType,
+  IPSettings,
+  LogsResponse,
+  TestsSettings,
+  IperfSuggestion,
+  NetworkDiscoverySettings,
+  SubnetConfig,
+} from "../../types/settings";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
-
-interface ThresholdPair {
-  good: number;
-  warning: number;
-}
-
-interface Thresholds {
-  dns: ThresholdPair;
-  gateway: ThresholdPair;
-  wifi: ThresholdPair;
-  customPing: ThresholdPair;
-  customTcp: ThresholdPair;
-  customHttp: ThresholdPair;
-  httpTimings: {
-    dns: ThresholdPair;
-    tcp: ThresholdPair;
-    tls: ThresholdPair;
-    ttfb: ThresholdPair;
-  };
-}
-
-interface WiFiSettings {
-  interface: string;
-  availableWifi: string[];
-  isWireless: boolean;
-}
-
-interface IPSettings {
-  mode: "dhcp" | "static";
-  address: string;
-  netmask: string;
-  gateway: string;
-  dns: string[];
-}
-
-interface PingTarget {
-  name: string;
-  host: string;
-  enabled: boolean;
-  count?: number; // Number of pings (default 3)
-}
-
-interface DNSServer {
-  address: string;
-  enabled: boolean;
-}
-
-// FABOptions and DisplayOptions are imported from SettingsContext via types/settings.ts
-
-interface TCPPort {
-  name: string;
-  host: string;
-  port: number;
-  enabled: boolean;
-}
-
-interface UDPPort {
-  name: string;
-  host: string;
-  port: number;
-  enabled: boolean;
-}
-
-interface HTTPEndpoint {
-  name: string;
-  url: string;
-  expectedStatus: number;
-  enabled: boolean;
-}
-
-interface LogsResponse {
-  path: string;
-  lines: string[];
-}
-
-interface TestsSettings {
-  dnsHostname: string;
-  dnsServers: DNSServer[];
-  pingTargets: PingTarget[];
-  tcpPorts: TCPPort[];
-  udpPorts: UDPPort[];
-  httpEndpoints: HTTPEndpoint[];
-  runPerformance: boolean; // kept for backwards compatibility
-  runSpeedtest: boolean;
-  runIperf: boolean;
-  runDiscovery: boolean;
-  speedtest: {
-    serverId: string;
-    autoRunOnLink: boolean;
-  };
-  iperf: {
-    autoRunOnLink: boolean;
-  };
-}
-
-// IperfSettings is imported from SettingsContext via types/settings.ts
-
-interface IperfSuggestion {
-  host: string;
-  hostname?: string;
-  latencyMs?: number;
-  source?: string;
-}
-
-interface NetworkDiscoverySettings {
-  enabled: boolean;
-  arpScanWorkers: number;
-  pingTimeoutMs: number;
-  scanTimeoutMs: number;
-  autoScan: boolean;
-  scanIntervalMs: number;
-  ouiFilePath: string;
-}
-
-interface SubnetConfig {
-  cidr: string;
-  name: string;
-  enabled: boolean;
-}
 
 // VLANControl component for creating/deleting VLAN subinterfaces
 const VLANControl = memo(function VLANControl() {
@@ -391,7 +282,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen]);
-  const [thresholds, setThresholds] = useState<Thresholds>({
+  const [thresholds, setThresholds] = useState<SettingsThresholds>({
     dns: { good: 50, warning: 100 },
     gateway: { good: 20, warning: 50 },
     wifi: { good: -50, warning: -70 },
@@ -434,7 +325,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
   // FAB Options, Display Options, and iperf Settings now come from SettingsContext above
 
-  const [wifiSettings, setWifiSettings] = useState<WiFiSettings>({
+  const [wifiSettings, setWifiSettings] = useState<WiFiSettingsType>({
     interface: "",
     availableWifi: [],
     isWireless: false,

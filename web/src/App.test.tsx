@@ -271,9 +271,9 @@ describe("App", () => {
     beforeEach(() => {
       // Set up authenticated state
       const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-      mockLocalStorage.setItem("netscope_token", "test-token");
-      mockLocalStorage.setItem("netscope_token_expiry", String(futureExpiry));
-      mockLocalStorage.setItem("netscope_username", "admin");
+      mockLocalStorage.setItem("netscope-token", "test-token");
+      mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
+      mockLocalStorage.setItem("netscope-username", "admin");
     });
 
     it("renders main dashboard when authenticated", async () => {

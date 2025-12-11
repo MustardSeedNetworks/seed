@@ -21,10 +21,40 @@ interface UseAuthReturn {
   error: string | null;
 }
 
-const TOKEN_KEY = "netscope_token";
-const TOKEN_EXPIRY_KEY = "netscope_token_expiry";
-const USERNAME_KEY = "netscope_username";
+// New standardized localStorage keys (hyphen-separated)
+const TOKEN_KEY = "netscope-token";
+const TOKEN_EXPIRY_KEY = "netscope-token-expiry";
+const USERNAME_KEY = "netscope-username";
 const API_BASE = import.meta.env.VITE_API_BASE || "";
+
+// Legacy keys for migration (underscore-separated)
+const LEGACY_TOKEN_KEY = "netscope_token";
+const LEGACY_TOKEN_EXPIRY_KEY = "netscope_token_expiry";
+const LEGACY_USERNAME_KEY = "netscope_username";
+
+// One-time migration from old underscore keys to new hyphen keys
+function migrateStorageKeys(): void {
+  const legacyToken = localStorage.getItem(LEGACY_TOKEN_KEY);
+  if (legacyToken) {
+    // Migrate old keys to new format
+    localStorage.setItem(TOKEN_KEY, legacyToken);
+    const legacyExpiry = localStorage.getItem(LEGACY_TOKEN_EXPIRY_KEY);
+    if (legacyExpiry) {
+      localStorage.setItem(TOKEN_EXPIRY_KEY, legacyExpiry);
+    }
+    const legacyUsername = localStorage.getItem(LEGACY_USERNAME_KEY);
+    if (legacyUsername) {
+      localStorage.setItem(USERNAME_KEY, legacyUsername);
+    }
+    // Remove legacy keys
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_EXPIRY_KEY);
+    localStorage.removeItem(LEGACY_USERNAME_KEY);
+  }
+}
+
+// Run migration on module load
+migrateStorageKeys();
 
 // Check if a stored token has expired
 function isTokenExpired(): boolean {
