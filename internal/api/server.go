@@ -19,6 +19,9 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/acme"
+	"golang.org/x/crypto/acme/autocert"
+
 	"github.com/krisarmstrong/netscope/internal/auth"
 	"github.com/krisarmstrong/netscope/internal/cable"
 	"github.com/krisarmstrong/netscope/internal/config"
@@ -395,10 +398,19 @@ func (s *Server) startHTTP() error {
 
 // startHTTPS starts the server in HTTPS mode.
 func (s *Server) startHTTPS() error {
+	// Priority 1: ACME/Let's Encrypt automatic certificates
+	if s.config.Server.ACME.Enabled {
+		if s.config.Server.ACME.Domain == "" {
+			return fmt.Errorf("ACME enabled but no domain specified")
+		}
+		return s.startHTTPSWithACME()
+	}
+
+	// Priority 2: Manual certificates from config
 	certFile := s.config.Server.CertFile
 	keyFile := s.config.Server.KeyFile
 
-	// Generate self-signed cert if not provided
+	// Priority 3: Self-signed certificate (fallback)
 	if certFile == "" || keyFile == "" {
 		var err error
 		certFile, keyFile, err = s.ensureSelfSignedCert()
@@ -421,6 +433,56 @@ func (s *Server) startHTTPS() error {
 
 	log.Printf("Starting HTTPS server on %s", s.httpServer.Addr)
 	return s.httpServer.ListenAndServeTLS(certFile, keyFile)
+}
+
+// startHTTPSWithACME starts the server with automatic Let's Encrypt certificates.
+func (s *Server) startHTTPSWithACME() error {
+	cacheDir := s.config.Server.ACME.CacheDir
+	if cacheDir == "" {
+		cacheDir = "certs/acme"
+	}
+
+	// Ensure cache directory exists
+	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
+		return fmt.Errorf("failed to create ACME cache dir: %w", err)
+	}
+
+	manager := &autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(s.config.Server.ACME.Domain),
+		Cache:      autocert.DirCache(cacheDir),
+		Email:      s.config.Server.ACME.Email,
+	}
+
+	// Use Let's Encrypt staging server for testing (certs won't be trusted by browsers)
+	if s.config.Server.ACME.Staging {
+		manager.Client = &acme.Client{
+			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+		}
+		log.Println("ACME: Using Let's Encrypt STAGING server (certificates will not be trusted)")
+	}
+
+	// Configure TLS with ACME
+	tlsConfig := manager.TLSConfig()
+	tlsConfig.MinVersion = tls.VersionTLS12
+
+	s.httpServer.TLSConfig = tlsConfig
+
+	log.Printf("Starting HTTPS server with ACME on %s (domain: %s)",
+		s.httpServer.Addr, s.config.Server.ACME.Domain)
+
+	// Start HTTP-01 challenge handler on port 80
+	// This is required for Let's Encrypt domain validation
+	go func() {
+		h := manager.HTTPHandler(nil)
+		log.Printf("Starting HTTP-01 challenge handler on :80")
+		if err := http.ListenAndServe(":80", h); err != nil {
+			log.Printf("HTTP-01 handler error: %v", err)
+		}
+	}()
+
+	// ListenAndServeTLS with empty cert/key paths uses GetCertificate from TLSConfig
+	return s.httpServer.ListenAndServeTLS("", "")
 }
 
 // ensureSelfSignedCert generates a self-signed certificate if needed.

@@ -73,6 +73,18 @@ type ServerConfig struct {
 	LogAccessToken   string `yaml:"log_access_token,omitempty"`   // Optional token required to read /api/logs
 	LogAccessHeader  string `yaml:"log_access_header,omitempty"`  // Header name to supply the token (default: X-Log-Token)
 	RequireLogAccess bool   `yaml:"require_log_access,omitempty"` // Force token check even if empty token (future-proof)
+
+	// ACME/Let's Encrypt automatic certificate management
+	ACME ACMEConfig `yaml:"acme,omitempty"`
+}
+
+// ACMEConfig contains ACME/Let's Encrypt certificate settings.
+type ACMEConfig struct {
+	Enabled  bool   `yaml:"enabled"`            // Enable automatic certificate management
+	Domain   string `yaml:"domain"`             // Domain name for the certificate (e.g., "netscope.example.com")
+	Email    string `yaml:"email"`              // Contact email for Let's Encrypt notifications
+	CacheDir string `yaml:"cache_dir,omitempty"` // Directory to cache certificates (default: "certs/acme")
+	Staging  bool   `yaml:"staging,omitempty"`   // Use Let's Encrypt staging server (for testing)
 }
 
 // InterfaceConfig contains network interface settings.
