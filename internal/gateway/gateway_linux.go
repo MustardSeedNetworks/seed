@@ -3,6 +3,8 @@
 package gateway
 
 import (
+	"net"
+
 	"github.com/vishvananda/netlink"
 )
 
@@ -14,8 +16,10 @@ func detectGatewayNetlink() (string, error) {
 	}
 
 	for _, route := range routes {
-		// Default route has nil Dst
-		if route.Dst == nil && route.Gw != nil {
+		// Default route has nil Dst OR 0.0.0.0/0
+		isDefault := route.Dst == nil ||
+			(route.Dst != nil && route.Dst.IP.Equal(net.IPv4zero) && route.Dst.Mask.String() == "00000000")
+		if isDefault && route.Gw != nil {
 			return route.Gw.String(), nil
 		}
 	}
@@ -120,7 +124,10 @@ func GetDefaultGatewayInterface() (string, error) {
 	}
 
 	for _, route := range routes {
-		if route.Dst == nil && route.LinkIndex > 0 {
+		// Default route has nil Dst OR 0.0.0.0/0
+		isDefault := route.Dst == nil ||
+			(route.Dst != nil && route.Dst.IP.Equal(net.IPv4zero) && route.Dst.Mask.String() == "00000000")
+		if isDefault && route.LinkIndex > 0 {
 			link, err := netlink.LinkByIndex(route.LinkIndex)
 			if err == nil {
 				return link.Attrs().Name, nil
