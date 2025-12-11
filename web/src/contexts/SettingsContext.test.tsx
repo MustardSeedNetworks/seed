@@ -11,7 +11,6 @@ import {
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_IPERF_SETTINGS,
   DEFAULT_THRESHOLDS,
-  STORAGE_KEYS,
 } from "../types/settings";
 
 // Mock localStorage
@@ -120,68 +119,94 @@ describe("SettingsContext", () => {
     });
   });
 
-  describe("localStorage loading", () => {
-    it("loads FAB options from localStorage", async () => {
+  describe("API loading", () => {
+    it("loads FAB options from API", async () => {
       const savedFabOptions = {
         ...DEFAULT_FAB_OPTIONS,
         runLink: false,
         runDNS: false,
       };
-      mockLocalStorage.setItem(
-        STORAGE_KEYS.FAB_OPTIONS,
-        JSON.stringify(savedFabOptions),
-      );
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            thresholds: DEFAULT_THRESHOLDS,
+            fabOptions: savedFabOptions,
+          }),
+      });
 
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.fabOptions.runLink).toBe(false);
-      expect(result.current.fabOptions.runDNS).toBe(false);
+      await waitFor(() => {
+        expect(result.current.fabOptions.runLink).toBe(false);
+        expect(result.current.fabOptions.runDNS).toBe(false);
+      });
     });
 
-    it("loads display options from localStorage", async () => {
+    it("loads display options from API", async () => {
       const savedDisplayOptions = { showPublicIP: false };
-      mockLocalStorage.setItem(
-        STORAGE_KEYS.DISPLAY_OPTIONS,
-        JSON.stringify(savedDisplayOptions),
-      );
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            thresholds: DEFAULT_THRESHOLDS,
+            displayOptions: savedDisplayOptions,
+          }),
+      });
 
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.displayOptions.showPublicIP).toBe(false);
+      await waitFor(() => {
+        expect(result.current.displayOptions.showPublicIP).toBe(false);
+      });
     });
 
-    it("loads iperf settings from localStorage", async () => {
+    it("loads iperf settings from API", async () => {
       const savedIperfSettings = {
         ...DEFAULT_IPERF_SETTINGS,
         server: "192.168.1.100",
         port: 5202,
       };
-      mockLocalStorage.setItem(
-        STORAGE_KEYS.IPERF_SETTINGS,
-        JSON.stringify(savedIperfSettings),
-      );
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            thresholds: DEFAULT_THRESHOLDS,
+            iperf: savedIperfSettings,
+          }),
+      });
 
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.iperfSettings.server).toBe("192.168.1.100");
-      expect(result.current.iperfSettings.port).toBe(5202);
+      await waitFor(() => {
+        expect(result.current.iperfSettings.server).toBe("192.168.1.100");
+        expect(result.current.iperfSettings.port).toBe(5202);
+      });
     });
 
-    it("handles invalid JSON in localStorage gracefully", () => {
-      mockLocalStorage.setItem(STORAGE_KEYS.FAB_OPTIONS, "not-valid-json");
+    it("handles API error gracefully and uses defaults", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      mockFetch.mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoaded).toBe(true);
       });
 
       // Should fall back to defaults
       expect(result.current.fabOptions).toEqual(DEFAULT_FAB_OPTIONS);
+      consoleSpy.mockRestore();
     });
   });
 
@@ -313,7 +338,7 @@ describe("SettingsContext", () => {
   });
 
   describe("refreshSettings", () => {
-    it("reloads settings from localStorage", async () => {
+    it("reloads settings from API", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
@@ -323,15 +348,19 @@ describe("SettingsContext", () => {
         expect(result.current.isLoaded).toBe(true);
       });
 
-      // Modify localStorage
+      // Set up new response for refresh
       const newFabOptions = {
         ...DEFAULT_FAB_OPTIONS,
         runLink: false,
       };
-      mockLocalStorage.setItem(
-        STORAGE_KEYS.FAB_OPTIONS,
-        JSON.stringify(newFabOptions),
-      );
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            thresholds: DEFAULT_THRESHOLDS,
+            fabOptions: newFabOptions,
+          }),
+      });
 
       // Refresh
       await act(async () => {
@@ -341,7 +370,7 @@ describe("SettingsContext", () => {
       expect(result.current.fabOptions.runLink).toBe(false);
     });
 
-    it("fetches thresholds from API again", async () => {
+    it("fetches all settings from API again", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
@@ -395,37 +424,42 @@ describe("SettingsContext with fake timers", () => {
   });
 
   describe("debounced saves", () => {
-    it("saves FAB options to localStorage after debounce", async () => {
+    it("saves FAB options to backend API after debounce", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
+
+      // Clear initial fetch calls
+      mockFetch.mockClear();
 
       act(() => {
         result.current.updateFabOptions({ runLink: false });
       });
 
-      // Not saved yet
-      const calls1 = mockLocalStorage.setItem.mock.calls.filter(
-        ([key]: [string]) => key === STORAGE_KEYS.FAB_OPTIONS,
+      // Not saved yet (no PUT calls)
+      const putCalls1 = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT",
       );
-      expect(calls1.length).toBe(0);
+      expect(putCalls1.length).toBe(0);
 
       // After debounce
       await act(async () => {
         vi.advanceTimersByTime(900);
       });
 
-      const calls2 = mockLocalStorage.setItem.mock.calls.filter(
-        ([key]: [string]) => key === STORAGE_KEYS.FAB_OPTIONS,
+      const putCalls2 = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT",
       );
-      expect(calls2.length).toBe(1);
-      expect(calls2[0][1]).toContain('"runLink":false');
+      expect(putCalls2.length).toBe(1);
+      expect(putCalls2[0][1].body).toContain('"runLink":false');
     });
 
-    it("saves display options to localStorage after debounce", async () => {
+    it("saves display options to backend API after debounce", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
+
+      mockFetch.mockClear();
 
       act(() => {
         result.current.updateDisplayOptions({ showPublicIP: false });
@@ -435,17 +469,19 @@ describe("SettingsContext with fake timers", () => {
         vi.advanceTimersByTime(900);
       });
 
-      const calls = mockLocalStorage.setItem.mock.calls.filter(
-        ([key]: [string]) => key === STORAGE_KEYS.DISPLAY_OPTIONS,
+      const putCalls = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT",
       );
-      expect(calls.length).toBe(1);
-      expect(calls[0][1]).toBe('{"showPublicIP":false}');
+      expect(putCalls.length).toBe(1);
+      expect(putCalls[0][1].body).toContain('"showPublicIP":false');
     });
 
-    it("saves iperf settings to localStorage after debounce", async () => {
+    it("saves iperf settings to backend API after debounce", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
+
+      mockFetch.mockClear();
 
       act(() => {
         result.current.updateIperfSettings({ server: "10.0.0.1" });
@@ -455,17 +491,19 @@ describe("SettingsContext with fake timers", () => {
         vi.advanceTimersByTime(900);
       });
 
-      const calls = mockLocalStorage.setItem.mock.calls.filter(
-        ([key]: [string]) => key === STORAGE_KEYS.IPERF_SETTINGS,
+      const putCalls = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT",
       );
-      expect(calls.length).toBe(1);
-      expect(calls[0][1]).toContain('"server":"10.0.0.1"');
+      expect(putCalls.length).toBe(1);
+      expect(putCalls[0][1].body).toContain('"server":"10.0.0.1"');
     });
 
     it("debounces multiple rapid FAB updates", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
+
+      mockFetch.mockClear();
 
       act(() => {
         result.current.updateFabOptions({ runLink: false });
@@ -484,12 +522,12 @@ describe("SettingsContext with fake timers", () => {
       });
 
       // Only the final state should be saved (once)
-      const calls = mockLocalStorage.setItem.mock.calls.filter(
-        ([key]: [string]) => key === STORAGE_KEYS.FAB_OPTIONS,
+      const putCalls = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT",
       );
-      expect(calls.length).toBe(1);
-      expect(calls[0][1]).toContain('"runLink":false');
-      expect(calls[0][1]).toContain('"runDNS":false');
+      expect(putCalls.length).toBe(1);
+      expect(putCalls[0][1].body).toContain('"runLink":false');
+      expect(putCalls[0][1].body).toContain('"runDNS":false');
     });
 
     it("sets status to saved after debounce completes", async () => {

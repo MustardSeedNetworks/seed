@@ -38,6 +38,8 @@ type Config struct {
 	Thresholds       ThresholdsConfig       `yaml:"thresholds"`
 	Auth             AuthConfig             `yaml:"auth"`
 	Security         SecurityConfig         `yaml:"security"`
+	FABOptions       FABOptionsConfig       `yaml:"fab_options"`
+	DisplayOptions   DisplayOptionsConfig   `yaml:"display_options"`
 }
 
 // Lock acquires a write lock on the config.
@@ -189,7 +191,35 @@ type SpeedtestConfig struct {
 
 // IperfConfig contains iperf3 settings.
 type IperfConfig struct {
-	AutoRunOnLink bool `yaml:"auto_run_on_link"` // Run automatically when link comes up
+	AutoRunOnLink bool   `yaml:"auto_run_on_link"` // Run automatically when link comes up
+	Server        string `yaml:"server"`           // iperf3 server address
+	Port          int    `yaml:"port"`             // iperf3 server port (default 5201)
+	Protocol      string `yaml:"protocol"`         // "tcp" or "udp"
+	Direction     string `yaml:"direction"`        // "upload", "download", or "bidirectional"
+	Duration      int    `yaml:"duration"`         // Test duration in seconds
+	ServerPort    int    `yaml:"server_port"`      // Port for local iperf server mode
+	EnableServer  bool   `yaml:"enable_server"`    // Enable local iperf server mode
+}
+
+// FABOptionsConfig contains FAB (Floating Action Button) settings.
+type FABOptionsConfig struct {
+	RunLink             bool `yaml:"run_link"`
+	RunSwitch           bool `yaml:"run_switch"`
+	RunVLAN             bool `yaml:"run_vlan"`
+	RunIPConfig         bool `yaml:"run_ip_config"`
+	RunGateway          bool `yaml:"run_gateway"`
+	RunDNS              bool `yaml:"run_dns"`
+	RunHealthChecks     bool `yaml:"run_health_checks"`
+	RunNetworkDiscovery bool `yaml:"run_network_discovery"`
+	RunSpeedtest        bool `yaml:"run_speedtest"`
+	RunIperf            bool `yaml:"run_iperf"`
+	RunPerformance      bool `yaml:"run_performance"`
+	AutoScanOnLink      bool `yaml:"auto_scan_on_link"`
+}
+
+// DisplayOptionsConfig contains display/UI settings.
+type DisplayOptionsConfig struct {
+	ShowPublicIP bool `yaml:"show_public_ip"`
 }
 
 // ThresholdsConfig contains all threshold settings.
@@ -363,6 +393,33 @@ func DefaultConfig() *Config {
 		},
 		Security: SecurityConfig{
 			AllowedOrigins: []string{}, // Empty = use RFC 1918 defaults
+		},
+		Iperf: IperfConfig{
+			AutoRunOnLink: false,
+			Server:        "",
+			Port:          5201,
+			Protocol:      "tcp",
+			Direction:     "download",
+			Duration:      10,
+			ServerPort:    5201,
+			EnableServer:  false,
+		},
+		FABOptions: FABOptionsConfig{
+			RunLink:             true,
+			RunSwitch:           true,
+			RunVLAN:             true,
+			RunIPConfig:         true,
+			RunGateway:          true,
+			RunDNS:              true,
+			RunHealthChecks:     true,
+			RunNetworkDiscovery: false,
+			RunSpeedtest:        false,
+			RunIperf:            false,
+			RunPerformance:      false,
+			AutoScanOnLink:      true,
+		},
+		DisplayOptions: DisplayOptionsConfig{
+			ShowPublicIP: true,
 		},
 	}
 }
