@@ -2,10 +2,10 @@
  * SettingsContext - Centralized settings management
  *
  * Provides a React Context for settings that are accessed by multiple components.
- * Settings are loaded from localStorage and backend API, with auto-save on changes.
+ * Settings are loaded from and saved to the backend API config file.
  *
- * Phase 1: FABOptions, DisplayOptions, IperfSettings (most commonly accessed)
- * Future phases will migrate more settings from SettingsDrawer.
+ * All settings (FABOptions, DisplayOptions, IperfSettings, Thresholds) are
+ * persisted to the backend config file for persistence across sessions.
  */
 
 import {
@@ -28,7 +28,6 @@ import {
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_IPERF_SETTINGS,
   DEFAULT_THRESHOLDS,
-  STORAGE_KEYS,
 } from "../types/settings";
 
 // ============================================================================
@@ -56,7 +55,7 @@ interface SettingsContextValue {
   updateIperfSettings: (updates: Partial<IperfSettings>) => void;
   updateThresholds: (updates: Partial<SettingsThresholds>) => void;
 
-  // Full refresh from storage/API
+  // Full refresh from API
   refreshSettings: () => Promise<void>;
 
   // Flag to check if initial load is complete
@@ -76,47 +75,14 @@ interface SettingsProviderProps {
   children: ReactNode;
 }
 
-// Helper to load initial values synchronously
-function loadInitialFabOptions(): FABOptions {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEYS.FAB_OPTIONS);
-    if (saved) return { ...DEFAULT_FAB_OPTIONS, ...JSON.parse(saved) };
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_FAB_OPTIONS;
-}
-
-function loadInitialDisplayOptions(): DisplayOptions {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEYS.DISPLAY_OPTIONS);
-    if (saved) return { ...DEFAULT_DISPLAY_OPTIONS, ...JSON.parse(saved) };
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_DISPLAY_OPTIONS;
-}
-
-function loadInitialIperfSettings(): IperfSettings {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEYS.IPERF_SETTINGS);
-    if (saved) return { ...DEFAULT_IPERF_SETTINGS, ...JSON.parse(saved) };
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_IPERF_SETTINGS;
-}
-
 export function SettingsProvider({ children }: SettingsProviderProps) {
-  // State - initialized with values from localStorage
-  const [fabOptions, setFabOptions] = useState<FABOptions>(
-    loadInitialFabOptions,
-  );
+  // State - initialized with defaults, will be updated from API
+  const [fabOptions, setFabOptions] = useState<FABOptions>(DEFAULT_FAB_OPTIONS);
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(
-    loadInitialDisplayOptions,
+    DEFAULT_DISPLAY_OPTIONS,
   );
   const [iperfSettings, setIperfSettings] = useState<IperfSettings>(
-    loadInitialIperfSettings,
+    DEFAULT_IPERF_SETTINGS,
   );
   const [thresholds, setThresholds] =
     useState<SettingsThresholds>(DEFAULT_THRESHOLDS);
@@ -136,38 +102,51 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   );
 
   // ============================================================================
-  // Load Thresholds from API (only async load needed)
+  // Load All Settings from API
   // ============================================================================
 
-  const loadThresholdsFromAPI = useCallback(async () => {
+  const loadSettingsFromAPI = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/settings`, {
         headers: getAuthHeaders(),
       });
       if (response.ok) {
         const data = await response.json();
+
+        // Load thresholds
         if (data.thresholds) {
           setThresholds((prev) => ({ ...prev, ...data.thresholds }));
         }
+
+        // Load FAB options
+        if (data.fabOptions) {
+          setFabOptions((prev) => ({ ...prev, ...data.fabOptions }));
+        }
+
+        // Load display options
+        if (data.displayOptions) {
+          setDisplayOptions((prev) => ({ ...prev, ...data.displayOptions }));
+        }
+
+        // Load iperf settings
+        if (data.iperf) {
+          setIperfSettings((prev) => ({ ...prev, ...data.iperf }));
+        }
       }
     } catch (err) {
-      console.error("Failed to fetch thresholds:", err);
+      console.error("Failed to fetch settings:", err);
     }
   }, []);
 
   const refreshSettings = useCallback(async () => {
-    // Re-load from localStorage
-    setFabOptions(loadInitialFabOptions());
-    setDisplayOptions(loadInitialDisplayOptions());
-    setIperfSettings(loadInitialIperfSettings());
-    await loadThresholdsFromAPI();
-  }, [loadThresholdsFromAPI]);
+    await loadSettingsFromAPI();
+  }, [loadSettingsFromAPI]);
 
-  // Initial load - only fetch thresholds from API
+  // Initial load - fetch all settings from API
   useEffect(() => {
     let mounted = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial data fetch pattern
-    loadThresholdsFromAPI().finally(() => {
+    loadSettingsFromAPI().finally(() => {
       if (mounted) {
         setIsLoadedState(true);
       }
@@ -175,7 +154,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     return () => {
       mounted = false;
     };
-  }, [loadThresholdsFromAPI]);
+  }, [loadSettingsFromAPI]);
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -217,16 +196,32 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   );
 
   // ============================================================================
-  // Update Methods - update state and trigger debounced save
+  // Save to Backend API Helper
+  // ============================================================================
+
+  const saveToBackend = async (updates: Record<string, unknown>) => {
+    const response = await fetch(`${API_BASE}/api/settings`, {
+      method: "PUT",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to save settings");
+    }
+  };
+
+  // ============================================================================
+  // Update Methods - update state and trigger debounced save to backend
   // ============================================================================
 
   const updateFabOptions = useCallback(
     (updates: Partial<FABOptions>) => {
       setFabOptions((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("fab", () => {
-          localStorage.setItem(STORAGE_KEYS.FAB_OPTIONS, JSON.stringify(next));
-        });
+        debounceSave("fab", () => saveToBackend({ fabOptions: next }));
         return next;
       });
     },
@@ -237,12 +232,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<DisplayOptions>) => {
       setDisplayOptions((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("display", () => {
-          localStorage.setItem(
-            STORAGE_KEYS.DISPLAY_OPTIONS,
-            JSON.stringify(next),
-          );
-        });
+        debounceSave("display", () => saveToBackend({ displayOptions: next }));
         return next;
       });
     },
@@ -253,12 +243,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<IperfSettings>) => {
       setIperfSettings((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("iperf", () => {
-          localStorage.setItem(
-            STORAGE_KEYS.IPERF_SETTINGS,
-            JSON.stringify(next),
-          );
-        });
+        debounceSave("iperf", () => saveToBackend({ iperf: next }));
         return next;
       });
     },
@@ -269,19 +254,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<SettingsThresholds>) => {
       setThresholds((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("thresholds", async () => {
-          const response = await fetch(`${API_BASE}/api/settings`, {
-            method: "PUT",
-            headers: {
-              ...getAuthHeaders(),
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ thresholds: next }),
-          });
-          if (!response.ok) {
-            throw new Error("Failed to save thresholds");
-          }
-        });
+        debounceSave("thresholds", () => saveToBackend({ thresholds: next }));
         return next;
       });
     },
