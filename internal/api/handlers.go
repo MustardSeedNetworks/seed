@@ -277,6 +277,43 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 				},
 			},
 		},
+		"tests": map[string]interface{}{
+			"runPerformance": s.config.Tests.RunPerformance,
+			"runSpeedtest":   s.config.Tests.RunSpeedtest,
+			"runIperf":       s.config.Tests.RunIperf,
+			"runDiscovery":   s.config.Tests.RunDiscovery,
+		},
+		"speedtest": map[string]interface{}{
+			"serverId":      s.config.Speedtest.ServerID,
+			"autoRunOnLink": s.config.Speedtest.AutoRunOnLink,
+		},
+		"iperf": map[string]interface{}{
+			"autoRunOnLink": s.config.Iperf.AutoRunOnLink,
+			"server":        s.config.Iperf.Server,
+			"port":          s.config.Iperf.Port,
+			"protocol":      s.config.Iperf.Protocol,
+			"direction":     s.config.Iperf.Direction,
+			"duration":      s.config.Iperf.Duration,
+			"serverPort":    s.config.Iperf.ServerPort,
+			"enableServer":  s.config.Iperf.EnableServer,
+		},
+		"fabOptions": map[string]interface{}{
+			"runLink":             s.config.FABOptions.RunLink,
+			"runSwitch":           s.config.FABOptions.RunSwitch,
+			"runVLAN":             s.config.FABOptions.RunVLAN,
+			"runIPConfig":         s.config.FABOptions.RunIPConfig,
+			"runGateway":          s.config.FABOptions.RunGateway,
+			"runDNS":              s.config.FABOptions.RunDNS,
+			"runHealthChecks":     s.config.FABOptions.RunHealthChecks,
+			"runNetworkDiscovery": s.config.FABOptions.RunNetworkDiscovery,
+			"runSpeedtest":        s.config.FABOptions.RunSpeedtest,
+			"runIperf":            s.config.FABOptions.RunIperf,
+			"runPerformance":      s.config.FABOptions.RunPerformance,
+			"autoScanOnLink":      s.config.FABOptions.AutoScanOnLink,
+		},
+		"displayOptions": map[string]interface{}{
+			"showPublicIP": s.config.DisplayOptions.ShowPublicIP,
+		},
 	}
 
 	sendJSONResponse(w, http.StatusOK, settings)
@@ -377,6 +414,113 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
+	}
+
+	// Apply tests updates
+	if tests, ok := updates["tests"].(map[string]interface{}); ok {
+		if runPerformance, ok := tests["runPerformance"].(bool); ok {
+			s.config.Tests.RunPerformance = runPerformance
+		}
+		if runSpeedtest, ok := tests["runSpeedtest"].(bool); ok {
+			s.config.Tests.RunSpeedtest = runSpeedtest
+		}
+		if runIperf, ok := tests["runIperf"].(bool); ok {
+			s.config.Tests.RunIperf = runIperf
+		}
+		if runDiscovery, ok := tests["runDiscovery"].(bool); ok {
+			s.config.Tests.RunDiscovery = runDiscovery
+		}
+	}
+
+	// Apply speedtest updates
+	if speedtest, ok := updates["speedtest"].(map[string]interface{}); ok {
+		if serverId, ok := speedtest["serverId"].(string); ok {
+			s.config.Speedtest.ServerID = serverId
+		}
+		if autoRunOnLink, ok := speedtest["autoRunOnLink"].(bool); ok {
+			s.config.Speedtest.AutoRunOnLink = autoRunOnLink
+		}
+	}
+
+	// Apply iperf updates
+	if iperf, ok := updates["iperf"].(map[string]interface{}); ok {
+		if autoRunOnLink, ok := iperf["autoRunOnLink"].(bool); ok {
+			s.config.Iperf.AutoRunOnLink = autoRunOnLink
+		}
+		if server, ok := iperf["server"].(string); ok {
+			s.config.Iperf.Server = server
+		}
+		if port, ok := iperf["port"].(float64); ok {
+			s.config.Iperf.Port = int(port)
+		}
+		if protocol, ok := iperf["protocol"].(string); ok {
+			s.config.Iperf.Protocol = protocol
+		}
+		if direction, ok := iperf["direction"].(string); ok {
+			s.config.Iperf.Direction = direction
+		}
+		if duration, ok := iperf["duration"].(float64); ok {
+			s.config.Iperf.Duration = int(duration)
+		}
+		if serverPort, ok := iperf["serverPort"].(float64); ok {
+			s.config.Iperf.ServerPort = int(serverPort)
+		}
+		if enableServer, ok := iperf["enableServer"].(bool); ok {
+			s.config.Iperf.EnableServer = enableServer
+		}
+	}
+
+	// Apply fabOptions updates
+	if fabOptions, ok := updates["fabOptions"].(map[string]interface{}); ok {
+		if runLink, ok := fabOptions["runLink"].(bool); ok {
+			s.config.FABOptions.RunLink = runLink
+		}
+		if runSwitch, ok := fabOptions["runSwitch"].(bool); ok {
+			s.config.FABOptions.RunSwitch = runSwitch
+		}
+		if runVLAN, ok := fabOptions["runVLAN"].(bool); ok {
+			s.config.FABOptions.RunVLAN = runVLAN
+		}
+		if runIPConfig, ok := fabOptions["runIPConfig"].(bool); ok {
+			s.config.FABOptions.RunIPConfig = runIPConfig
+		}
+		if runGateway, ok := fabOptions["runGateway"].(bool); ok {
+			s.config.FABOptions.RunGateway = runGateway
+		}
+		if runDNS, ok := fabOptions["runDNS"].(bool); ok {
+			s.config.FABOptions.RunDNS = runDNS
+		}
+		if runHealthChecks, ok := fabOptions["runHealthChecks"].(bool); ok {
+			s.config.FABOptions.RunHealthChecks = runHealthChecks
+		}
+		if runNetworkDiscovery, ok := fabOptions["runNetworkDiscovery"].(bool); ok {
+			s.config.FABOptions.RunNetworkDiscovery = runNetworkDiscovery
+		}
+		if runSpeedtest, ok := fabOptions["runSpeedtest"].(bool); ok {
+			s.config.FABOptions.RunSpeedtest = runSpeedtest
+		}
+		if runIperf, ok := fabOptions["runIperf"].(bool); ok {
+			s.config.FABOptions.RunIperf = runIperf
+		}
+		if runPerformance, ok := fabOptions["runPerformance"].(bool); ok {
+			s.config.FABOptions.RunPerformance = runPerformance
+		}
+		if autoScanOnLink, ok := fabOptions["autoScanOnLink"].(bool); ok {
+			s.config.FABOptions.AutoScanOnLink = autoScanOnLink
+		}
+	}
+
+	// Apply displayOptions updates
+	if displayOptions, ok := updates["displayOptions"].(map[string]interface{}); ok {
+		if showPublicIP, ok := displayOptions["showPublicIP"].(bool); ok {
+			s.config.DisplayOptions.ShowPublicIP = showPublicIP
+		}
+	}
+
+	// Save config to file
+	if err := s.config.Save(s.configPath); err != nil {
+		http.Error(w, "Failed to save config: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "updated"})
