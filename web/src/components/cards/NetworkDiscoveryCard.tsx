@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 
@@ -290,7 +290,7 @@ function DeviceRow({
   );
 }
 
-export function NetworkDiscoveryCard({
+export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   data,
   loading,
   onScan,
@@ -473,4 +473,4 @@ export function NetworkDiscoveryCard({
       )}
     </Card>
   );
-}
+});

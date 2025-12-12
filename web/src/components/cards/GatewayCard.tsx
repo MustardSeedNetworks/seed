@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { useSettings } from "../../contexts/SettingsContext";
@@ -36,7 +37,10 @@ function formatTime(ms: number): string {
   return `${Math.round(ms * 10) / 10}ms`;
 }
 
-export function GatewayCard({ data, loading }: GatewayCardProps) {
+export const GatewayCard = memo(function GatewayCard({
+  data,
+  loading,
+}: GatewayCardProps) {
   const { thresholds } = useSettings();
   // Map context ThresholdPair (good/warning) to card format (warning/critical)
   const t = {
@@ -238,4 +242,4 @@ export function GatewayCard({ data, loading }: GatewayCardProps) {
       )}
     </Card>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { BaseCard } from "./BaseCard";
 
@@ -38,7 +39,10 @@ function getStatus(data: PublicIPData): Status {
   return "unknown";
 }
 
-export function PublicIPCard({ data, loading }: PublicIPCardProps) {
+export const PublicIPCard = memo(function PublicIPCard({
+  data,
+  loading,
+}: PublicIPCardProps) {
   return (
     <BaseCard
       title="Public IP"
@@ -102,4 +106,4 @@ export function PublicIPCard({ data, loading }: PublicIPCardProps) {
       )}
     </BaseCard>
   );
-}
+});

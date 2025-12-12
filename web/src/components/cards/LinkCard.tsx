@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
 import { BaseCard } from "./BaseCard";
@@ -57,7 +58,10 @@ function LinkLoadingSkeleton() {
   );
 }
 
-export function LinkCard({ data, loading }: LinkCardProps) {
+export const LinkCard = memo(function LinkCard({
+  data,
+  loading,
+}: LinkCardProps) {
   return (
     <BaseCard
       title="Link"
@@ -124,4 +128,4 @@ export function LinkCard({ data, loading }: LinkCardProps) {
       }}
     </BaseCard>
   );
-}
+});

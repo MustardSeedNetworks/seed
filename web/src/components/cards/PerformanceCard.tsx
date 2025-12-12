@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { useSettings } from "../../contexts/SettingsContext";
@@ -85,7 +85,7 @@ const iperfPhaseLabels: Record<string, string> = {
   complete: "Complete",
 };
 
-export function PerformanceCard({
+export const PerformanceCard = memo(function PerformanceCard({
   loading,
   runSpeedtestEnabled = true,
   runIperfEnabled = true,
@@ -650,4 +650,4 @@ export function PerformanceCard({
       </div>
     </Card>
   );
-}
+});

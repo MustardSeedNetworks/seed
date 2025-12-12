@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardValue, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
@@ -77,7 +78,7 @@ function LookupRow({
   );
 }
 
-export function DNSCard({ data, loading }: DNSCardProps) {
+export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
   if (loading) {
     return (
       <Card title="DNS" status="loading">
@@ -236,4 +237,4 @@ export function DNSCard({ data, loading }: DNSCardProps) {
       )}
     </Card>
   );
-}
+});

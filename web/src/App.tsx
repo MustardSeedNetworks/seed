@@ -114,37 +114,18 @@ function App() {
     }
   }, []);
 
-  // Catch unauthorized API responses once and force logout to stop noisy 401 spam
+  // Handle session expiration via API client callback
   useEffect(() => {
-    const originalFetch = window.fetch;
-
-    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-      const response = await originalFetch(input, init);
-
-      try {
-        const url =
-          typeof input === "string"
-            ? input
-            : input instanceof Request
-              ? input.url
-              : input.toString();
-
-        const isApiCall = url.includes("/api/");
-        const isAuthEndpoint = url.includes("/api/auth/");
-
-        if (response.status === 401 && isApiCall && !isAuthEndpoint) {
-          setSessionExpired(true);
-          logout();
-        }
-      } catch (err) {
-        console.warn("Failed to inspect fetch response", err);
-      }
-
-      return response;
-    };
-
+    import("./lib/api").then(({ setSessionExpiredCallback }) => {
+      setSessionExpiredCallback(() => {
+        setSessionExpired(true);
+        logout();
+      });
+    });
     return () => {
-      window.fetch = originalFetch;
+      import("./lib/api").then(({ setSessionExpiredCallback }) => {
+        setSessionExpiredCallback(() => {});
+      });
     };
   }, [logout]);
 
@@ -1260,10 +1241,14 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           className="bg-surface-raised rounded-lg border border-surface-border p-6"
         >
           <div className="mb-4">
-            <label className="block text-sm font-medium text-text-primary mb-1">
+            <label
+              htmlFor="login-username"
+              className="block text-sm font-medium text-text-primary mb-1"
+            >
               Username
             </label>
             <input
+              id="login-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -1274,10 +1259,14 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-text-primary mb-1">
+            <label
+              htmlFor="login-password"
+              className="block text-sm font-medium text-text-primary mb-1"
+            >
               Password
             </label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Card, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
@@ -54,7 +54,9 @@ interface HealthCheckCardProps {
   loading?: boolean;
 }
 
-export function HealthCheckCard({ loading }: HealthCheckCardProps) {
+export const HealthCheckCard = memo(function HealthCheckCard({
+  loading,
+}: HealthCheckCardProps) {
   const { fabOptions } = useSettings();
   const [data, setData] = useState<HealthCheckData | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -524,4 +526,4 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps) {
       {error && <p className="text-sm text-status-error">{error}</p>}
     </Card>
   );
-}
+});
