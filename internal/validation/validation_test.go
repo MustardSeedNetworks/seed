@@ -168,3 +168,223 @@ func TestIsValidHostname(t *testing.T) {
 		})
 	}
 }
+
+func TestIsValidIPv4(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       string
+		expected bool
+	}{
+		{"valid IPv4", "192.168.1.1", true},
+		{"valid IPv4 zero", "0.0.0.0", true},
+		{"valid IPv4 broadcast", "255.255.255.255", true},
+		{"IPv6", "2001:db8::1", false},
+		{"IPv6 loopback", "::1", false},
+		{"invalid", "not-an-ip", false},
+		{"empty", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsValidIPv4(tt.ip)
+			if got != tt.expected {
+				t.Errorf("IsValidIPv4(%q) = %v, want %v", tt.ip, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestIsValidHostOrIP(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{"valid hostname", "example.com", true},
+		{"valid IPv4", "192.168.1.1", true},
+		{"valid IPv6", "2001:db8::1", true},
+		{"invalid", "!!invalid!!", false},
+		{"empty", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsValidHostOrIP(tt.input)
+			if got != tt.expected {
+				t.Errorf("IsValidHostOrIP(%q) = %v, want %v", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidateServerAddress(t *testing.T) {
+	tests := []struct {
+		name    string
+		server  string
+		wantErr bool
+	}{
+		{"valid IP", "8.8.8.8", false},
+		{"valid hostname", "dns.google.com", false},
+		{"empty", "", true},
+		{"too long", string(make([]byte, 254)), true},
+		{"invalid chars", "!!bad!!", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateServerAddress(tt.server)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateServerAddress(%q) error = %v, wantErr %v", tt.server, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestIsValidInterface(t *testing.T) {
+	tests := []struct {
+		name     string
+		iface    string
+		expected bool
+	}{
+		{"eth0", "eth0", true},
+		{"enp0s3", "enp0s3", true},
+		{"wlan0", "wlan0", true},
+		{"lo", "lo", true},
+		{"en0", "en0", true},
+		{"empty", "", false},
+		{"too long", "verylonginterfacename", false},
+		{"starts with number", "0eth", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsValidInterface(tt.iface)
+			if got != tt.expected {
+				t.Errorf("IsValidInterface(%q) = %v, want %v", tt.iface, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidateInterface(t *testing.T) {
+	tests := []struct {
+		name    string
+		iface   string
+		wantErr bool
+	}{
+		{"valid eth0", "eth0", false},
+		{"valid en0", "en0", false},
+		{"empty", "", true},
+		{"too long", "verylonginterfacename", true},
+		{"invalid", "0invalid", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateInterface(tt.iface)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateInterface(%q) error = %v, wantErr %v", tt.iface, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestIsValidURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		expected bool
+	}{
+		{"https url", "https://example.com", true},
+		{"http url", "http://example.com", true},
+		{"with path", "https://example.com/path", true},
+		{"with port", "https://example.com:8080", true},
+		{"empty", "", false},
+		{"no scheme", "example.com", false},
+		{"ftp scheme", "ftp://example.com", false},
+		{"no host", "https://", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsValidURL(tt.url)
+			if got != tt.expected {
+				t.Errorf("IsValidURL(%q) = %v, want %v", tt.url, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidatePort(t *testing.T) {
+	tests := []struct {
+		name    string
+		port    int
+		wantErr bool
+	}{
+		{"valid 80", 80, false},
+		{"valid 443", 443, false},
+		{"valid 1", 1, false},
+		{"valid 65535", 65535, false},
+		{"zero", 0, true},
+		{"negative", -1, true},
+		{"too high", 65536, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePort(tt.port)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidatePort(%d) error = %v, wantErr %v", tt.port, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateNetmask(t *testing.T) {
+	tests := []struct {
+		name    string
+		netmask string
+		wantErr bool
+	}{
+		{"valid /24", "255.255.255.0", false},
+		{"valid /16", "255.255.0.0", false},
+		{"valid /8", "255.0.0.0", false},
+		{"invalid format", "not-a-netmask", true},
+		{"IPv6", "::1", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateNetmask(tt.netmask)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateNetmask(%q) error = %v, wantErr %v", tt.netmask, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestIsPrivateIPLinkLocal(t *testing.T) {
+	// Test link-local addresses
+	tests := []struct {
+		name     string
+		ip       string
+		expected bool
+	}{
+		{"link-local IPv4", "169.254.1.1", true},
+		{"link-local IPv6", "fe80::1", true},
+		{"multicast", "224.0.0.1", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ip := net.ParseIP(tt.ip)
+			if ip == nil {
+				t.Fatalf("failed to parse IP: %s", tt.ip)
+			}
+			got := IsPrivateIP(ip)
+			if got != tt.expected {
+				t.Errorf("IsPrivateIP(%s) = %v, want %v", tt.ip, got, tt.expected)
+			}
+		})
+	}
+}
