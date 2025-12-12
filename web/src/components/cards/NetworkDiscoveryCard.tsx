@@ -35,6 +35,31 @@ export interface EDPInfo {
 
 export type DiscoveryMethod = "arp" | "lldp" | "cdp" | "edp" | "mdns" | "ping";
 
+// Auto-profiling types from backend
+export interface OpenPort {
+  port: number;
+  protocol: string;
+  service?: string;
+  banner?: string;
+  isOpen: boolean;
+}
+
+export interface HTTPInfo {
+  port: number;
+  statusCode: number;
+  title?: string;
+  server?: string;
+  isHttps: boolean;
+}
+
+export interface DeviceProfile {
+  profiledAt: string;
+  openPorts?: OpenPort[];
+  httpInfo?: HTTPInfo;
+  deviceType?: string;
+  deviceIcons?: string[];
+}
+
 export interface DiscoveredDevice {
   ip: string;
   mac: string;
@@ -48,6 +73,7 @@ export interface DiscoveredDevice {
   lldpInfo?: LLDPInfo;
   cdpInfo?: CDPInfo;
   edpInfo?: EDPInfo;
+  profile?: DeviceProfile;
 }
 
 export interface DiscoveryStatus {
@@ -121,6 +147,53 @@ function MethodBadge({ method }: { method: DiscoveryMethod }) {
   );
 }
 
+// Icon mapping for device profile icons
+const ICON_SYMBOLS: Record<string, string> = {
+  ssh: "S",
+  telnet: "T",
+  web: "W",
+  "web-secure": "Ws",
+  ftp: "F",
+  mail: "M",
+  dns: "D",
+  snmp: "N",
+  database: "DB",
+  cache: "C",
+  printer: "P",
+  router: "R",
+  switch: "Sw",
+  firewall: "Fw",
+  storage: "St",
+  server: "Sv",
+};
+
+function ProfileIcons({
+  icons,
+  deviceType,
+}: {
+  icons?: string[];
+  deviceType?: string;
+}) {
+  if (!icons || icons.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-0.5 flex-wrap">
+      {icons.slice(0, 5).map((icon) => (
+        <span
+          key={icon}
+          className="px-1 py-0.5 rounded text-[10px] font-medium bg-indigo-500/20 text-indigo-400"
+          title={`${icon}${deviceType ? ` (${deviceType})` : ""}`}
+        >
+          {ICON_SYMBOLS[icon] || icon[0]?.toUpperCase()}
+        </span>
+      ))}
+      {icons.length > 5 && (
+        <span className="text-[10px] text-text-muted">+{icons.length - 5}</span>
+      )}
+    </div>
+  );
+}
+
 // Common port to service name mapping
 const PORT_SERVICES: Record<number, string> = {
   21: "FTP",
@@ -164,8 +237,11 @@ function DeviceRow({
   isScanning?: boolean;
   scanResult?: DeepScanResult;
 }) {
-  const hasDetails = device.lldpInfo || device.cdpInfo || device.edpInfo;
+  const hasDetails =
+    device.lldpInfo || device.cdpInfo || device.edpInfo || device.profile;
   const openPorts = scanResult?.results.filter((r) => r.state === "open") || [];
+  const profileOpenPorts =
+    device.profile?.openPorts?.filter((p) => p.isOpen) || [];
 
   const handleDeepScan = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -200,6 +276,13 @@ function DeviceRow({
                   {openPorts.length} open
                 </span>
               )}
+              {device.profile?.deviceIcons &&
+                device.profile.deviceIcons.length > 0 && (
+                  <ProfileIcons
+                    icons={device.profile.deviceIcons}
+                    deviceType={device.profile.deviceType}
+                  />
+                )}
             </div>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               {device.discoveryMethod.map((method) => (
@@ -286,6 +369,61 @@ function DeviceRow({
                   </div>
                 ) : (
                   <p className="text-text-muted">No open ports found</p>
+                )}
+              </>
+            )}
+
+            {/* Auto-Profile Results */}
+            {device.profile && (
+              <>
+                <CardDivider />
+                <p className="font-medium text-text-primary mb-1">
+                  Auto-Profile
+                  {device.profile.deviceType &&
+                    device.profile.deviceType !== "unknown" && (
+                      <span className="ml-2 text-xs font-normal text-text-muted">
+                        ({device.profile.deviceType})
+                      </span>
+                    )}
+                </p>
+                {device.profile.httpInfo && (
+                  <div className="space-y-0.5 mb-1">
+                    <CardRow
+                      label={device.profile.httpInfo.isHttps ? "HTTPS" : "HTTP"}
+                      value={`Port ${device.profile.httpInfo.port} (${device.profile.httpInfo.statusCode})`}
+                    />
+                    {device.profile.httpInfo.title && (
+                      <CardRow
+                        label="Title"
+                        value={device.profile.httpInfo.title}
+                      />
+                    )}
+                    {device.profile.httpInfo.server && (
+                      <CardRow
+                        label="Server"
+                        value={device.profile.httpInfo.server}
+                      />
+                    )}
+                  </div>
+                )}
+                {profileOpenPorts.length > 0 && (
+                  <div className="space-y-0.5">
+                    <p className="text-text-muted text-[10px] uppercase tracking-wide mb-0.5">
+                      Open Ports
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {profileOpenPorts.map((port) => (
+                        <span
+                          key={port.port}
+                          className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400"
+                          title={port.banner || port.service || undefined}
+                        >
+                          {port.port}
+                          {port.service && `/${port.service}`}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </>
             )}

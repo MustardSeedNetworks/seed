@@ -35,6 +35,9 @@ type DiscoveredDevice struct {
 	LLDPInfo *LLDPDeviceInfo `json:"lldpInfo,omitempty"`
 	CDPInfo  *CDPDeviceInfo  `json:"cdpInfo,omitempty"`
 	EDPInfo  *EDPDeviceInfo  `json:"edpInfo,omitempty"`
+
+	// Auto-profiling results
+	Profile *DeviceProfile `json:"profile,omitempty"`
 }
 
 // LLDPDeviceInfo contains LLDP-specific device information.

@@ -15,6 +15,7 @@ type Service struct {
 	cfg            *config.Config
 	interfaceName  string
 	deviceDiscovery *DeviceDiscovery
+	profiler        *DeviceProfiler
 
 	// Runtime state
 	mu              sync.RWMutex
@@ -44,6 +45,7 @@ func NewService(cfg *config.Config, interfaceName string) *Service {
 		cfg:             cfg,
 		interfaceName:   interfaceName,
 		deviceDiscovery: NewDeviceDiscovery(interfaceName),
+		profiler:        NewDeviceProfiler(DefaultProfilerConfig()),
 		activeProfile:   cfg.NetworkDiscovery.Profile,
 	}
 }
@@ -69,6 +71,9 @@ func (s *Service) Start() error {
 	}
 
 	s.running = true
+
+	// Start the profiler
+	s.profiler.Start()
 
 	// Start background rescan loop if configured
 	rescanInterval := s.cfg.NetworkDiscovery.Timing.RescanInterval
@@ -99,6 +104,7 @@ func (s *Service) Stop() {
 	}
 
 	s.deviceDiscovery.Stop()
+	s.profiler.Stop()
 	s.running = false
 	log.Printf("Discovery service stopped")
 }
@@ -282,9 +288,23 @@ func (s *Service) SetInterface(name string) error {
 	return s.deviceDiscovery.SetInterface(name)
 }
 
-// GetDevices returns all discovered devices.
+// GetDevices returns all discovered devices with their profiles attached.
 func (s *Service) GetDevices() []*DiscoveredDevice {
-	return s.deviceDiscovery.GetDevices()
+	devices := s.deviceDiscovery.GetDevices()
+
+	// Attach profiles and queue profiling for unprofiled devices
+	for _, device := range devices {
+		if device.IP != "" {
+			if profile := s.profiler.GetProfile(device.IP); profile != nil {
+				device.Profile = profile
+			} else if !s.profiler.IsProfiling(device.IP) {
+				// Queue for profiling
+				s.profiler.QueueProfile(device.IP)
+			}
+		}
+	}
+
+	return devices
 }
 
 // GetDevice returns a specific device by MAC address.
@@ -378,9 +398,10 @@ func (s *Service) GetProfile() config.DiscoveryProfile {
 	return s.activeProfile
 }
 
-// ClearDevices removes all discovered devices from memory.
+// ClearDevices removes all discovered devices and profiles from memory.
 func (s *Service) ClearDevices() {
 	s.deviceDiscovery.ClearDevices()
+	s.profiler.ClearProfiles()
 }
 
 // DeviceDiscovery returns the underlying DeviceDiscovery for direct access if needed.
