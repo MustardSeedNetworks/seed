@@ -145,14 +145,44 @@ export interface IperfSuggestion {
 // Network Discovery Settings
 // ============================================================================
 
+export type DiscoveryProfile = "stealth" | "standard" | "full_scan" | "custom";
+
+export interface DiscoveryCustomOptions {
+  passiveListen: boolean;
+  arpScan: boolean;
+  icmpScan: boolean;
+  portScan: {
+    enabled: boolean;
+    ports: number[];
+    topPorts: number;
+  };
+  traceroute: boolean;
+  snmpQuery: boolean;
+}
+
+export interface DiscoveryServiceStatus {
+  running: boolean;
+  profile: DiscoveryProfile;
+  scanning: boolean;
+  deviceCount: number;
+  lastScan: string;
+  subnet: string;
+  localIP: string;
+  interface: string;
+  activeMethods: string[];
+  rescanInterval: number;
+}
+
 export interface NetworkDiscoverySettings {
   enabled: boolean;
+  profile: DiscoveryProfile;
   arpScanWorkers: number;
   pingTimeoutMs: number;
   scanTimeoutMs: number;
   autoScan: boolean;
   scanIntervalMs: number;
   ouiFilePath: string;
+  customOptions: DiscoveryCustomOptions;
 }
 
 export interface SubnetConfig {
@@ -262,12 +292,25 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
 
 export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
   enabled: true,
+  profile: "standard",
   arpScanWorkers: 50,
   pingTimeoutMs: 500,
   scanTimeoutMs: 30000,
   autoScan: false,
   scanIntervalMs: 300000,
   ouiFilePath: "",
+  customOptions: {
+    passiveListen: true,
+    arpScan: true,
+    icmpScan: true,
+    portScan: {
+      enabled: false,
+      ports: [],
+      topPorts: 100,
+    },
+    traceroute: false,
+    snmpQuery: false,
+  },
 };
 
 // ============================================================================
