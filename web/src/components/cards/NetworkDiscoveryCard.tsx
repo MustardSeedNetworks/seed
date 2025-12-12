@@ -1,6 +1,7 @@
-import { useState, memo } from "react";
+import { useState, memo, useCallback } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
+import { getAuthHeaders } from "../../hooks/useAuth";
 
 export interface LLDPInfo {
   chassisId: string;
@@ -63,6 +64,22 @@ export interface NetworkDiscoveryData {
   status: DiscoveryStatus;
 }
 
+// Deep Scan (Port Scan) Types
+export interface PortScanResult {
+  ip: string;
+  port: number;
+  state: "open" | "closed" | "filtered";
+  ttl: number;
+  rtt: number; // nanoseconds
+}
+
+export interface DeepScanResult {
+  target: string;
+  results: PortScanResult[];
+  osGuess?: string;
+  scannedAt: Date;
+}
+
 interface NetworkDiscoveryCardProps {
   data: NetworkDiscoveryData | null;
   loading?: boolean;
@@ -104,16 +121,58 @@ function MethodBadge({ method }: { method: DiscoveryMethod }) {
   );
 }
 
+// Common port to service name mapping
+const PORT_SERVICES: Record<number, string> = {
+  21: "FTP",
+  22: "SSH",
+  23: "Telnet",
+  25: "SMTP",
+  53: "DNS",
+  80: "HTTP",
+  110: "POP3",
+  143: "IMAP",
+  443: "HTTPS",
+  445: "SMB",
+  993: "IMAPS",
+  995: "POP3S",
+  3306: "MySQL",
+  3389: "RDP",
+  5432: "PostgreSQL",
+  5900: "VNC",
+  6379: "Redis",
+  8080: "HTTP-Alt",
+  8443: "HTTPS-Alt",
+  27017: "MongoDB",
+};
+
+function getServiceName(port: number): string {
+  return PORT_SERVICES[port] || `Port ${port}`;
+}
+
 function DeviceRow({
   device,
   isExpanded,
   onToggle,
+  onDeepScan,
+  isScanning,
+  scanResult,
 }: {
   device: DiscoveredDevice;
   isExpanded: boolean;
   onToggle: () => void;
+  onDeepScan?: (ip: string) => void;
+  isScanning?: boolean;
+  scanResult?: DeepScanResult;
 }) {
   const hasDetails = device.lldpInfo || device.cdpInfo || device.edpInfo;
+  const openPorts = scanResult?.results.filter((r) => r.state === "open") || [];
+
+  const handleDeepScan = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDeepScan && device.ip) {
+      onDeepScan(device.ip);
+    }
+  };
 
   return (
     <div className="border border-surface-border rounded-lg overflow-hidden">
@@ -134,6 +193,11 @@ function DeviceRow({
                   title={device.hostname}
                 >
                   ({device.hostname})
+                </span>
+              )}
+              {openPorts.length > 0 && (
+                <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">
+                  {openPorts.length} open
                 </span>
               )}
             </div>
@@ -157,10 +221,27 @@ function DeviceRow({
                 {device.osGuess}
               </span>
             )}
+            {onDeepScan && device.ip && (
+              <button
+                type="button"
+                onClick={handleDeepScan}
+                disabled={isScanning}
+                className="px-2 py-1 text-xs bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Deep Scan - scan common ports"
+              >
+                {isScanning ? (
+                  <span className="flex items-center gap-1">
+                    <span className="animate-spin">◐</span>
+                  </span>
+                ) : (
+                  "Scan"
+                )}
+              </button>
+            )}
             <span
               className={`text-lg transition-transform ${isExpanded ? "rotate-180" : ""}`}
             >
-              {hasDetails ? "▼" : "○"}
+              {hasDetails || scanResult ? "▼" : "○"}
             </span>
           </div>
         </div>
@@ -179,6 +260,35 @@ function DeviceRow({
               label="Last Seen"
               value={formatLastSeen(device.lastSeen)}
             />
+
+            {/* Deep Scan Results */}
+            {scanResult && (
+              <>
+                <CardDivider />
+                <p className="font-medium text-text-primary mb-1">
+                  Port Scan Results
+                </p>
+                {openPorts.length > 0 ? (
+                  <div className="space-y-0.5">
+                    {openPorts.map((result) => (
+                      <div
+                        key={result.port}
+                        className="flex items-center justify-between py-0.5"
+                      >
+                        <span className="text-green-400">
+                          {result.port}/{getServiceName(result.port)}
+                        </span>
+                        <span className="text-text-muted">
+                          {(result.rtt / 1000000).toFixed(1)}ms
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-text-muted">No open ports found</p>
+                )}
+              </>
+            )}
 
             {device.lldpInfo && (
               <>
@@ -290,6 +400,12 @@ function DeviceRow({
   );
 }
 
+// Common ports to scan for Deep Scan
+const COMMON_PORTS = [
+  21, 22, 23, 25, 53, 80, 110, 143, 443, 445, 993, 995, 3306, 3389, 5432, 5900,
+  6379, 8080, 8443, 27017,
+];
+
 export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   data,
   loading,
@@ -297,6 +413,12 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 }: NetworkDiscoveryCardProps) {
   const [expandedDevices, setExpandedDevices] = useState<Set<string>>(
     new Set(),
+  );
+  const [scanningDevices, setScanningDevices] = useState<Set<string>>(
+    new Set(),
+  );
+  const [scanResults, setScanResults] = useState<Map<string, DeepScanResult>>(
+    new Map(),
   );
 
   const toggleDevice = (mac: string) => {
@@ -310,6 +432,50 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       return next;
     });
   };
+
+  const handleDeepScan = useCallback(async (ip: string) => {
+    setScanningDevices((prev) => new Set(prev).add(ip));
+
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE || "";
+      const response = await fetch(`${apiBase}/api/discovery/portscan`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          target: ip,
+          ports: COMMON_PORTS,
+          timeout: 2000,
+        }),
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          target: string;
+          results: PortScanResult[];
+        };
+        setScanResults((prev) => {
+          const next = new Map(prev);
+          next.set(ip, {
+            target: data.target,
+            results: data.results,
+            scannedAt: new Date(),
+          });
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error("Deep scan failed:", error);
+    } finally {
+      setScanningDevices((prev) => {
+        const next = new Set(prev);
+        next.delete(ip);
+        return next;
+      });
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -435,6 +601,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
                   device={device}
                   isExpanded={expandedDevices.has(deviceKey)}
                   onToggle={() => toggleDevice(deviceKey)}
+                  onDeepScan={handleDeepScan}
+                  isScanning={scanningDevices.has(device.ip)}
+                  scanResult={scanResults.get(device.ip)}
                 />
               );
             })}
@@ -459,6 +628,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
                   device={device}
                   isExpanded={expandedDevices.has(deviceKey)}
                   onToggle={() => toggleDevice(deviceKey)}
+                  onDeepScan={handleDeepScan}
+                  isScanning={scanningDevices.has(device.ip)}
+                  scanResult={scanResults.get(device.ip)}
                 />
               );
             })}
