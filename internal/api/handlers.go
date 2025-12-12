@@ -451,7 +451,10 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			s.config.Iperf.Server = server
 		}
 		if port, ok := iperf["port"].(float64); ok {
-			s.config.Iperf.Port = int(port)
+			p := int(port)
+			if validation.ValidatePort(p) == nil {
+				s.config.Iperf.Port = p
+			}
 		}
 		if protocol, ok := iperf["protocol"].(string); ok {
 			s.config.Iperf.Protocol = protocol
@@ -463,7 +466,10 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			s.config.Iperf.Duration = int(duration)
 		}
 		if serverPort, ok := iperf["serverPort"].(float64); ok {
-			s.config.Iperf.ServerPort = int(serverPort)
+			p := int(serverPort)
+			if validation.ValidatePort(p) == nil {
+				s.config.Iperf.ServerPort = p
+			}
 		}
 		if enableServer, ok := iperf["enableServer"].(bool); ok {
 			s.config.Iperf.EnableServer = enableServer

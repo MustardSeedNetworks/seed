@@ -18,6 +18,31 @@ const (
 	StatusError   Status = "error"
 )
 
+// DNS timeout bounds for validation.
+const (
+	MinDNSTimeout = 100 * time.Millisecond
+	MaxDNSTimeout = 30 * time.Second
+)
+
+// ValidateDNSTimeout validates that a DNS timeout is within acceptable bounds.
+func ValidateDNSTimeout(timeout time.Duration) error {
+	if timeout < MinDNSTimeout || timeout > MaxDNSTimeout {
+		return &TimeoutError{timeout, MinDNSTimeout, MaxDNSTimeout}
+	}
+	return nil
+}
+
+// TimeoutError represents an invalid timeout configuration.
+type TimeoutError struct {
+	Value time.Duration
+	Min   time.Duration
+	Max   time.Duration
+}
+
+func (e *TimeoutError) Error() string {
+	return "DNS timeout " + e.Value.String() + " must be between " + e.Min.String() + " and " + e.Max.String()
+}
+
 // LookupResult contains the result of a DNS lookup with timing.
 type LookupResult struct {
 	Result   string        `json:"result"`
