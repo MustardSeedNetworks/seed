@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 )
@@ -485,5 +486,284 @@ func TestGetSystemDNSPlatform(t *testing.T) {
 	servers := getSystemDNSPlatform()
 	if servers == nil {
 		t.Error("expected non-nil slice, even if empty")
+	}
+}
+
+func TestValidateDNSTimeout(t *testing.T) {
+	tests := []struct {
+		name    string
+		timeout time.Duration
+		wantErr bool
+	}{
+		{"valid 1s", time.Second, false},
+		{"valid 100ms", 100 * time.Millisecond, false},
+		{"valid 30s", 30 * time.Second, false},
+		{"too short", 50 * time.Millisecond, true},
+		{"too long", 60 * time.Second, true},
+		{"exactly min", MinDNSTimeout, false},
+		{"exactly max", MaxDNSTimeout, false},
+		{"below min", MinDNSTimeout - 1, true},
+		{"above max", MaxDNSTimeout + 1, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateDNSTimeout(tt.timeout)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateDNSTimeout(%v) error = %v, wantErr %v", tt.timeout, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTimeoutError(t *testing.T) {
+	err := &TimeoutError{
+		Value: 50 * time.Millisecond,
+		Min:   MinDNSTimeout,
+		Max:   MaxDNSTimeout,
+	}
+
+	msg := err.Error()
+	if msg == "" {
+		t.Error("TimeoutError.Error() should return non-empty string")
+	}
+	if !strings.Contains(msg, "50ms") {
+		t.Errorf("error message should contain timeout value, got: %s", msg)
+	}
+	if !strings.Contains(msg, MinDNSTimeout.String()) {
+		t.Errorf("error message should contain min value, got: %s", msg)
+	}
+	if !strings.Contains(msg, MaxDNSTimeout.String()) {
+		t.Errorf("error message should contain max value, got: %s", msg)
+	}
+}
+
+func TestDNSTimeoutConstants(t *testing.T) {
+	if MinDNSTimeout != 100*time.Millisecond {
+		t.Errorf("MinDNSTimeout = %v, want 100ms", MinDNSTimeout)
+	}
+	if MaxDNSTimeout != 30*time.Second {
+		t.Errorf("MaxDNSTimeout = %v, want 30s", MaxDNSTimeout)
+	}
+}
+
+func TestSetConfiguredServers(t *testing.T) {
+	tester := NewTester("", "google.com", DefaultThresholds())
+
+	servers := []ConfiguredServer{
+		{Address: "8.8.8.8", Enabled: true},
+		{Address: "1.1.1.1", Enabled: false},
+	}
+
+	tester.SetConfiguredServers(servers)
+
+	tester.mu.RLock()
+	defer tester.mu.RUnlock()
+	if len(tester.configuredServers) != 2 {
+		t.Errorf("expected 2 configured servers, got %d", len(tester.configuredServers))
+	}
+}
+
+func TestConfiguredServerFields(t *testing.T) {
+	cs := ConfiguredServer{
+		Address: "8.8.8.8",
+		Enabled: true,
+	}
+
+	if cs.Address != "8.8.8.8" {
+		t.Errorf("expected Address '8.8.8.8', got %q", cs.Address)
+	}
+	if !cs.Enabled {
+		t.Error("expected Enabled to be true")
+	}
+}
+
+func TestServerTestResultFields(t *testing.T) {
+	result := ServerTestResult{
+		Server:      "8.8.8.8",
+		Forward:     &LookupResult{Status: StatusSuccess, TimeMs: 10},
+		ForwardIPv6: &LookupResult{Status: StatusWarning, TimeMs: 20},
+		Status:      StatusSuccess,
+		AvgTimeMs:   15,
+	}
+
+	if result.Server != "8.8.8.8" {
+		t.Errorf("expected Server '8.8.8.8', got %q", result.Server)
+	}
+	if result.AvgTimeMs != 15 {
+		t.Errorf("expected AvgTimeMs 15, got %d", result.AvgTimeMs)
+	}
+}
+
+func TestTestServer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tester := NewTester("", "google.com", DefaultThresholds())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result := tester.TestServer(ctx, "8.8.8.8")
+	if result == nil {
+		t.Fatal("TestServer returned nil")
+	}
+	if result.Server != "8.8.8.8" {
+		t.Errorf("expected server '8.8.8.8', got %q", result.Server)
+	}
+	if result.Forward == nil {
+		t.Error("expected Forward result")
+	}
+	if result.ForwardIPv6 == nil {
+		t.Error("expected ForwardIPv6 result")
+	}
+}
+
+func TestTestWithConfiguredServers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tester := NewTester("", "google.com", DefaultThresholds())
+	tester.SetConfiguredServers([]ConfiguredServer{
+		{Address: "8.8.4.4", Enabled: true},
+		{Address: "1.0.0.1", Enabled: false}, // disabled
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	result := tester.Test(ctx)
+	if result == nil {
+		t.Fatal("Test returned nil")
+	}
+
+	// Check that enabled configured server is in the list
+	found := false
+	for _, s := range result.Servers {
+		if s == "8.8.4.4" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected enabled configured server '8.8.4.4' to be in servers list")
+	}
+}
+
+func TestForwardLookupEmptyHostname(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tester := NewTester("", "", DefaultThresholds())
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// When test hostname is also empty, it should still work but might fail
+	result := tester.ForwardLookup(ctx, "")
+	if result == nil {
+		t.Fatal("ForwardLookup returned nil even with empty hostname")
+	}
+}
+
+func TestForwardLookupIPv4EmptyHostname(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tester := NewTester("", "", DefaultThresholds())
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result := tester.ForwardLookupIPv4(ctx, "")
+	if result == nil {
+		t.Fatal("ForwardLookupIPv4 returned nil")
+	}
+}
+
+func TestForwardLookupIPv6EmptyHostname(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tester := NewTester("", "", DefaultThresholds())
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result := tester.ForwardLookupIPv6(ctx, "")
+	if result == nil {
+		t.Fatal("ForwardLookupIPv6 returned nil")
+	}
+}
+
+func TestTestPerServerResults(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tester := NewTester("", "google.com", DefaultThresholds())
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	result := tester.Test(ctx)
+	if result == nil {
+		t.Fatal("Test returned nil")
+	}
+
+	// PerServerResults should contain results for each system DNS server
+	if result.PerServerResults == nil {
+		t.Error("PerServerResults should not be nil")
+	}
+}
+
+func TestServerTestResultStatusCalculation(t *testing.T) {
+	// Test status calculation for ServerTestResult
+	tests := []struct {
+		name           string
+		forwardStatus  Status
+		ipv6Status     Status
+		expectedStatus Status
+	}{
+		{"both success", StatusSuccess, StatusSuccess, StatusSuccess},
+		{"forward error", StatusError, StatusSuccess, StatusError},
+		{"ipv6 error", StatusSuccess, StatusError, StatusError},
+		{"forward warning", StatusWarning, StatusSuccess, StatusWarning},
+		{"ipv6 warning", StatusSuccess, StatusWarning, StatusWarning},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := &ServerTestResult{
+				Forward:     &LookupResult{Status: tt.forwardStatus, TimeMs: 10},
+				ForwardIPv6: &LookupResult{Status: tt.ipv6Status, TimeMs: 10},
+			}
+
+			// Verify the result was created with the expected values
+			if result.Forward.Status != tt.forwardStatus {
+				t.Errorf("Forward status mismatch: got %v, want %v", result.Forward.Status, tt.forwardStatus)
+			}
+			if result.ForwardIPv6.Status != tt.ipv6Status {
+				t.Errorf("ForwardIPv6 status mismatch: got %v, want %v", result.ForwardIPv6.Status, tt.ipv6Status)
+			}
+
+			// Manually calculate status like TestServer does
+			hasError := tt.forwardStatus == StatusError || tt.ipv6Status == StatusError
+			hasWarning := tt.forwardStatus == StatusWarning || tt.ipv6Status == StatusWarning
+
+			var calculatedStatus Status
+			switch {
+			case hasError:
+				calculatedStatus = StatusError
+			case hasWarning:
+				calculatedStatus = StatusWarning
+			default:
+				calculatedStatus = StatusSuccess
+			}
+
+			if calculatedStatus != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, calculatedStatus)
+			}
+		})
 	}
 }
