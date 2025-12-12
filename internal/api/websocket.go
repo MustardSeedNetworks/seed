@@ -148,9 +148,10 @@ type CardUpdate struct {
 
 // Client represents a WebSocket client.
 type Client struct {
-	hub  *Hub
-	conn *websocket.Conn
-	send chan []byte
+	hub       *Hub
+	conn      *websocket.Conn
+	send      chan []byte
+	closeOnce sync.Once // Ensures connection is closed only once
 }
 
 // Hub maintains the set of active clients and broadcasts messages.
@@ -344,12 +345,17 @@ func (s *Server) sendInitialState(client *Client) {
 	}()
 }
 
-// readPump pumps messages from the WebSocket connection to the hub.
-func (c *Client) readPump() {
-	defer func() {
+// close safely closes the client connection exactly once.
+func (c *Client) close() {
+	c.closeOnce.Do(func() {
 		c.hub.unregister <- c
 		c.conn.Close()
-	}()
+	})
+}
+
+// readPump pumps messages from the WebSocket connection to the hub.
+func (c *Client) readPump() {
+	defer c.close()
 
 	c.conn.SetReadLimit(maxMessageSize)
 	if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
@@ -389,7 +395,7 @@ func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		c.close()
 	}()
 
 	for {
