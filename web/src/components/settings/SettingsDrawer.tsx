@@ -344,12 +344,25 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const [networkDiscoverySettings, setNetworkDiscoverySettings] =
     useState<NetworkDiscoverySettings>({
       enabled: true,
+      profile: "standard",
       arpScanWorkers: 50,
       pingTimeoutMs: 500,
       scanTimeoutMs: 30000,
       autoScan: false,
       scanIntervalMs: 0,
       ouiFilePath: "oui.txt",
+      customOptions: {
+        passiveListen: true,
+        arpScan: true,
+        icmpScan: true,
+        portScan: {
+          enabled: false,
+          ports: [],
+          topPorts: 100,
+        },
+        traceroute: false,
+        snmpQuery: false,
+      },
     });
   // Additional subnets for scanning
   const [subnets, setSubnets] = useState<SubnetConfig[]>([]);
@@ -523,12 +536,25 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         const data = await response.json();
         setNetworkDiscoverySettings({
           enabled: data.enabled ?? true,
+          profile: data.profile ?? "standard",
           arpScanWorkers: data.arpScanWorkers ?? 50,
           pingTimeoutMs: data.pingTimeoutMs ?? 500,
           scanTimeoutMs: data.scanTimeoutMs ?? 30000,
           autoScan: data.autoScan ?? false,
           scanIntervalMs: data.scanIntervalMs ?? 0,
           ouiFilePath: data.ouiFilePath ?? "oui.txt",
+          customOptions: data.customOptions ?? {
+            passiveListen: true,
+            arpScan: true,
+            icmpScan: true,
+            portScan: {
+              enabled: false,
+              ports: [],
+              topPorts: 100,
+            },
+            traceroute: false,
+            snmpQuery: false,
+          },
         });
       }
     } catch (err) {
