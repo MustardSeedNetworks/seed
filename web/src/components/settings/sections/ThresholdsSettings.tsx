@@ -50,11 +50,11 @@ export function ThresholdsSettings({
   return (
     <CollapsibleSection
       title={
-        <>
+        <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4" />
-          Thresholds
+          <span>Thresholds</span>
           <AutoSaveIndicator status={thresholdsStatus} />
-        </>
+        </div>
       }
     >
       <div className="space-y-3">

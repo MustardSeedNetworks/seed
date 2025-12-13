@@ -3,6 +3,7 @@ import { Server } from "lucide-react";
 import { BaseCard } from "./BaseCard";
 import { CardRow, CardDivider } from "../ui/Card";
 import { Status } from "../ui/StatusBadge";
+import { getAuthHeaders } from "../../hooks/useAuth";
 
 interface SystemHealth {
   cpuPercent: number;
@@ -100,7 +101,9 @@ export function SystemHealthCard() {
 
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetch("/api/system/health");
+      const response = await fetch("/api/system/health", {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -112,7 +115,7 @@ export function SystemHealthCard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     fetchHealth();

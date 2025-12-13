@@ -1,5 +1,6 @@
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { Wifi } from "../../ui/Icons";
 import {
   WiFiSettings as WiFiSettingsType,
   SaveStatus,
@@ -19,10 +20,11 @@ export function WiFiSettings({
   return (
     <CollapsibleSection
       title={
-        <>
-          WiFi
+        <div className="flex items-center gap-2">
+          <Wifi className="w-4 h-4" />
+          <span>WiFi</span>
           <AutoSaveIndicator status={wifiStatus} />
-        </>
+        </div>
       }
     >
       <div className="space-y-3">

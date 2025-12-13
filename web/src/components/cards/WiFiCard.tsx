@@ -1,6 +1,7 @@
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { useSettings } from "../../contexts/SettingsContext";
 import { SimpleBaseCard } from "./BaseCard";
+import { Wifi } from "../ui/Icons";
 
 export interface WiFiData {
   ssid: string;
@@ -59,6 +60,7 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
   return (
     <SimpleBaseCard
       title="Wi-Fi"
+      icon={<Wifi className="w-5 h-5" />}
       status={loading ? "loading" : status}
       loading={loading}
       loadingContent={<CardValue value="Scanning..." size="lg" />}

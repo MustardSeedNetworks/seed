@@ -1,5 +1,6 @@
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { Gauge } from "../../ui/Icons";
 import {
   TestsSettings,
   IperfSettings,
@@ -33,10 +34,11 @@ export function PerformanceSettings({
   return (
     <CollapsibleSection
       title={
-        <>
-          Performance Configuration
+        <div className="flex items-center gap-2">
+          <Gauge className="w-4 h-4" />
+          <span>Performance Configuration</span>
           <AutoSaveIndicator status={iperfStatus} />
-        </>
+        </div>
       }
     >
       <div className="space-y-4">

@@ -1,6 +1,7 @@
 import { memo, useCallback } from "react";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { Globe } from "../../ui/Icons";
 import { TestsSettings, SaveStatus, DNSServer } from "../../../types/settings";
 import { generateId } from "../../../utils/id";
 
@@ -50,10 +51,11 @@ export const DNSSettings = memo(function DNSSettings({
   return (
     <CollapsibleSection
       title={
-        <>
-          DNS
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4" />
+          <span>DNS</span>
           <AutoSaveIndicator status={testsStatus} />
-        </>
+        </div>
       }
     >
       <div className="space-y-4">

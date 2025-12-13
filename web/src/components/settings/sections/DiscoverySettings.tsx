@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { ScanSearch } from "../../ui/Icons";
 import {
   NetworkDiscoverySettings as NetworkDiscoverySettingsType,
   SubnetConfig,
@@ -113,10 +114,11 @@ export function DiscoverySettings({
   return (
     <CollapsibleSection
       title={
-        <>
-          Network Discovery
+        <div className="flex items-center gap-2">
+          <ScanSearch className="w-4 h-4" />
+          <span>Network Discovery</span>
           <AutoSaveIndicator status={networkDiscoveryStatus} />
-        </>
+        </div>
       }
     >
       <div className="space-y-4">

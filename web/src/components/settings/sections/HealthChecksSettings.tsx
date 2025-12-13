@@ -1,6 +1,7 @@
 import { memo, useCallback } from "react";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { HeartPulse } from "../../ui/Icons";
 import {
   TestsSettings,
   SaveStatus,
@@ -167,10 +168,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
   return (
     <CollapsibleSection
       title={
-        <>
-          Health Checks
+        <div className="flex items-center gap-2">
+          <HeartPulse className="w-4 h-4" />
+          <span>Health Checks</span>
           <AutoSaveIndicator status={testsStatus} />
-        </>
+        </div>
       }
     >
       <div className="space-y-4">

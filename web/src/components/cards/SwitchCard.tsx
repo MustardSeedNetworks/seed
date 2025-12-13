@@ -1,5 +1,6 @@
 import { CardValue, CardRow, CardDivider } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
+import { Network } from "../ui/Icons";
 
 export interface SwitchData {
   protocol: "lldp" | "cdp" | "edp" | "fdp" | "unknown";
@@ -51,6 +52,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
   return (
     <SimpleBaseCard
       title="Nearest Switch"
+      icon={<Network className="w-5 h-5" />}
       status={status}
       loading={loading}
       loadingContent={<CardValue value="Listening..." size="lg" />}

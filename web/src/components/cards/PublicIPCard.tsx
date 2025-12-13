@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { BaseCard } from "./BaseCard";
+import { Globe } from "../ui/Icons";
 
 export interface PublicIPData {
   ipv4?: string;
@@ -46,6 +47,7 @@ export const PublicIPCard = memo(function PublicIPCard({
   return (
     <BaseCard
       title="Public IP"
+      icon={<Globe className="w-5 h-5" />}
       data={data}
       loading={loading}
       getStatus={getStatus}

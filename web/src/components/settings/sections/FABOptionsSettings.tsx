@@ -1,5 +1,6 @@
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { Play } from "../../ui/Icons";
 import { FABOptions, SaveStatus } from "../../../types/settings";
 
 interface FABOptionsSettingsProps {
@@ -16,10 +17,11 @@ export function FABOptionsSettings({
   return (
     <CollapsibleSection
       title={
-        <>
-          Run All Tests (FAB)
+        <div className="flex items-center gap-2">
+          <Play className="w-4 h-4" />
+          <span>Run All Tests (FAB)</span>
           <AutoSaveIndicator status={fabStatus} />
-        </>
+        </div>
       }
     >
       <div className="space-y-3">

@@ -1,5 +1,6 @@
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
+import { Cable } from "../ui/Icons";
 
 export interface CableData {
   supported: boolean;
@@ -30,6 +31,7 @@ export function CableCard({ data, loading }: CableCardProps) {
   return (
     <SimpleBaseCard
       title="Cable Test"
+      icon={<Cable className="w-5 h-5" />}
       status={loading ? "loading" : getCardStatus(data)}
       loading={loading}
       loadingContent={<CardValue value="Testing..." size="lg" />}

@@ -1,4 +1,5 @@
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
+import { Palette } from "../../ui/Icons";
 
 interface AppearanceSettingsProps {
   theme: "light" | "dark" | "system";
@@ -12,7 +13,14 @@ export function AppearanceSettings({
   isDark,
 }: AppearanceSettingsProps) {
   return (
-    <CollapsibleSection title="Appearance">
+    <CollapsibleSection
+      title={
+        <div className="flex items-center gap-2">
+          <Palette className="w-4 h-4" />
+          <span>Appearance</span>
+        </div>
+      }
+    >
       <div className="space-y-2">
         <label className="flex items-center justify-between p-3 bg-surface-base rounded border border-surface-border">
           <span className="text-sm text-text-primary">Theme</span>

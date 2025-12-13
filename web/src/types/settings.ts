@@ -234,10 +234,10 @@ export const DEFAULT_FAB_OPTIONS: FABOptions = {
   runGateway: true,
   runDNS: true,
   runHealthChecks: true,
-  runNetworkDiscovery: false,
-  runSpeedtest: false,
+  runNetworkDiscovery: true,
+  runSpeedtest: true,
   runIperf: false,
-  runPerformance: false,
+  runPerformance: true,
   autoScanOnLink: true,
 };
 

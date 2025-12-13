@@ -92,6 +92,8 @@ export {
   Columns3,
   // Settings icons
   SlidersHorizontal,
+  Palette,
+  Eye as EyeOpen,
 } from "lucide-react";
 
 // Icon size presets for consistency

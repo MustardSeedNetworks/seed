@@ -1,5 +1,6 @@
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { Settings } from "../../ui/Icons";
 import { TestsSettings, FABOptions, SaveStatus } from "../../../types/settings";
 
 interface TestOptionsSettingsProps {
@@ -22,8 +23,9 @@ export function TestOptionsSettings({
   return (
     <CollapsibleSection
       title={
-        <>
-          Test Options
+        <div className="flex items-center gap-2">
+          <Settings className="w-4 h-4" />
+          <span>Test Options</span>
           <AutoSaveIndicator
             status={
               testsStatus === "saving" || fabStatus === "saving"
@@ -35,7 +37,7 @@ export function TestOptionsSettings({
                     : "idle"
             }
           />
-        </>
+        </div>
       }
     >
       <div className="space-y-4">
