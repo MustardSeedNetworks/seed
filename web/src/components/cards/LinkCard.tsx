@@ -2,6 +2,7 @@ import { memo } from "react";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
 import { BaseCard } from "./BaseCard";
+import { Cable } from "../ui/Icons";
 
 interface LinkHistoryEvent {
   state: string;
@@ -65,6 +66,7 @@ export const LinkCard = memo(function LinkCard({
   return (
     <BaseCard
       title="Link"
+      icon={<Cable className="w-5 h-5" />}
       data={data}
       loading={loading}
       getStatus={getStatus}

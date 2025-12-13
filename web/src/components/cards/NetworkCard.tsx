@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { SimpleBaseCard } from "./BaseCard";
+import { Network } from "../ui/Icons";
 
 export interface DHCPTiming {
   discover: number; // ms
@@ -241,7 +243,12 @@ export function NetworkCard({
       : primaryIPRaw;
 
   return (
-    <Card title="Network" status={status}>
+    <SimpleBaseCard
+      title="Network"
+      icon={<Network className="w-5 h-5" />}
+      status={status}
+      loading={loading}
+    >
       <CardValue value={primaryIP} size="lg" mono allowWrap />
 
       <CardDivider />
@@ -394,6 +401,6 @@ export function NetworkCard({
           )}
         </>
       )}
-    </Card>
+    </SimpleBaseCard>
   );
 }

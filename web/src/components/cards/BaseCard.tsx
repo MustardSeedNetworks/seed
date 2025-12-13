@@ -5,6 +5,7 @@ import { Skeleton } from "../ui/Skeleton";
 interface BaseCardProps<T> {
   title: string;
   subtitle?: string;
+  icon?: ReactNode;
   data: T | null;
   loading?: boolean;
   error?: string | null;
@@ -43,6 +44,7 @@ interface BaseCardProps<T> {
 export function BaseCard<T>({
   title,
   subtitle,
+  icon,
   data,
   loading = false,
   error = null,
@@ -59,6 +61,7 @@ export function BaseCard<T>({
       <Card
         title={title}
         subtitle={subtitle}
+        icon={icon}
         status="loading"
         className={className}
       >
@@ -73,6 +76,7 @@ export function BaseCard<T>({
       <Card
         title={title}
         subtitle={subtitle}
+        icon={icon}
         status="error"
         className={className}
       >
@@ -88,6 +92,7 @@ export function BaseCard<T>({
       <Card
         title={title}
         subtitle={subtitle}
+        icon={icon}
         status="unknown"
         className={className}
       >
@@ -103,6 +108,7 @@ export function BaseCard<T>({
     <Card
       title={title}
       subtitle={subtitle}
+      icon={icon}
       status={status}
       className={className}
       onClick={onClick}
@@ -145,6 +151,7 @@ function DefaultLoadingSkeleton() {
 interface SimpleBaseCardProps {
   title: string;
   subtitle?: string;
+  icon?: ReactNode;
   status: Status;
   loading?: boolean;
   error?: string | null;
@@ -157,6 +164,7 @@ interface SimpleBaseCardProps {
 export function SimpleBaseCard({
   title,
   subtitle,
+  icon,
   status,
   loading = false,
   error = null,
@@ -171,6 +179,7 @@ export function SimpleBaseCard({
       <Card
         title={title}
         subtitle={subtitle}
+        icon={icon}
         status="loading"
         className={className}
       >
@@ -185,6 +194,7 @@ export function SimpleBaseCard({
       <Card
         title={title}
         subtitle={subtitle}
+        icon={icon}
         status="error"
         className={className}
       >
@@ -198,6 +208,7 @@ export function SimpleBaseCard({
     <Card
       title={title}
       subtitle={subtitle}
+      icon={icon}
       status={status}
       className={className}
       onClick={onClick}

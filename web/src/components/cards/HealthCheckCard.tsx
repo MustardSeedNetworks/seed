@@ -6,6 +6,7 @@ import { Tooltip } from "../ui/Tooltip";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { HTTP_TIMING_HELP } from "../help/HelpContent";
 import { useSettings } from "../../contexts/SettingsContext";
+import { HeartPulse } from "../ui/Icons";
 
 type StatusValue = "success" | "warning" | "error";
 
@@ -425,7 +426,11 @@ export const HealthCheckCard = memo(function HealthCheckCard({
   };
 
   return (
-    <Card title="Health Checks" status={getStatus()}>
+    <Card
+      title="Health Checks"
+      icon={<HeartPulse className="w-5 h-5" />}
+      status={getStatus()}
+    >
       {isRunning && <p className="text-sm text-text-muted">Running tests...</p>}
 
       {!isRunning && data && (
