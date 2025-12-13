@@ -42,6 +42,7 @@ import {
 } from "./components/cards";
 import { PerformanceCard } from "./components/cards/PerformanceCard";
 import { HealthCheckCard } from "./components/cards/HealthCheckCard";
+import { SystemHealthCard } from "./components/cards/SystemHealthCard";
 import { FAB } from "./components/ui/FAB";
 
 interface CardState {
@@ -1076,6 +1077,19 @@ function App() {
                   onScan={triggerDeviceScan}
                 />
               )}
+            </div>
+          </section>
+
+          {/* Section: System */}
+          <section aria-labelledby="system-heading" className="mb-6">
+            <h2
+              id="system-heading"
+              className="text-xs font-medium uppercase tracking-wider text-text-muted mb-3"
+            >
+              System
+            </h2>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <SystemHealthCard />
             </div>
           </section>
 

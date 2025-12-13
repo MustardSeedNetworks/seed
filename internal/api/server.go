@@ -232,6 +232,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/discovery/fingerprint", s.handleAdvancedFingerprint)
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
 	s.mux.HandleFunc("/api/logs", s.handleLogs)
+	s.mux.HandleFunc("/api/system/health", s.handleSystemHealth)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)

@@ -24,6 +24,7 @@ import (
 	"github.com/krisarmstrong/netscope/internal/gateway"
 	"github.com/krisarmstrong/netscope/internal/iperf"
 	"github.com/krisarmstrong/netscope/internal/network"
+	"github.com/krisarmstrong/netscope/internal/system"
 	"github.com/krisarmstrong/netscope/internal/validation"
 	"github.com/krisarmstrong/netscope/internal/version"
 	"github.com/krisarmstrong/netscope/internal/vlan"
@@ -3994,4 +3995,22 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 	result := fingerprinter.ProbeDevice(ctx, req.IP, existingProfile)
 
 	sendJSONResponse(w, http.StatusOK, result)
+}
+
+// handleSystemHealth handles GET /api/system/health - returns system health metrics.
+func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	health, err := system.GetHealth()
+	if err != nil {
+		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
+			"error": "Failed to get system health: " + err.Error(),
+		})
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, health)
 }
