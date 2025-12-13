@@ -12,6 +12,7 @@ interface CardProps {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
+  icon?: ReactNode;
 }
 
 export function Card({
@@ -21,6 +22,7 @@ export function Card({
   children,
   className = "",
   onClick,
+  icon,
 }: CardProps) {
   const isInteractive = typeof onClick === "function";
 
@@ -44,13 +46,20 @@ export function Card({
       aria-pressed={undefined}
     >
       <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <h3 className="font-semibold text-text-primary text-base sm:text-lg leading-tight font-display">
-            {title}
-          </h3>
-          {subtitle && (
-            <p className="text-xs text-text-muted leading-tight">{subtitle}</p>
+        <div className="flex items-center gap-2">
+          {icon && (
+            <span className="text-text-muted w-5 h-5 shrink-0">{icon}</span>
           )}
+          <div className="flex flex-col">
+            <h3 className="font-semibold text-text-primary text-base sm:text-lg leading-tight font-display">
+              {title}
+            </h3>
+            {subtitle && (
+              <p className="text-xs text-text-muted leading-tight">
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
         <StatusBadge status={status} size="md" />
       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { useSettings } from "../../contexts/SettingsContext";
+import { Gauge } from "../ui/Icons";
 
 // Speedtest types
 interface SpeedtestData {
@@ -410,6 +411,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     <Card
       title="Performance Tests"
       subtitle="Speedtest & iPerf"
+      icon={<Gauge className="w-5 h-5" />}
       status={getStatus()}
     >
       <div>

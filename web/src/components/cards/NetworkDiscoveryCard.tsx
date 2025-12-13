@@ -2,6 +2,7 @@ import { useState, memo, useCallback } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { getAuthHeaders } from "../../hooks/useAuth";
+import { ScanSearch } from "../ui/Icons";
 
 export interface LLDPInfo {
   chassisId: string;
@@ -617,7 +618,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
   if (loading) {
     return (
-      <Card title="Network Discovery" status="loading">
+      <Card
+        title="Network Discovery"
+        icon={<ScanSearch className="w-5 h-5" />}
+        status="loading"
+      >
         <CardValue value="Scanning..." size="lg" />
       </Card>
     );
@@ -625,7 +630,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
   if (!data) {
     return (
-      <Card title="Network Discovery" status="unknown">
+      <Card
+        title="Network Discovery"
+        icon={<ScanSearch className="w-5 h-5" />}
+        status="unknown"
+      >
         <CardValue value="No data" size="md" />
         {onScan && (
           <button
@@ -677,7 +686,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const extendedDevices = sortedDevices.filter((d) => !d.isLocal);
 
   return (
-    <Card title="Network Discovery" status={cardStatus}>
+    <Card
+      title="Network Discovery"
+      icon={<ScanSearch className="w-5 h-5" />}
+      status={cardStatus}
+    >
       <div className="flex items-center justify-between gap-2">
         <CardValue
           value={`${deviceCount} device${deviceCount !== 1 ? "s" : ""}`}

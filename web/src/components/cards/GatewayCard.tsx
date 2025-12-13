@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { useSettings } from "../../contexts/SettingsContext";
+import { Router } from "../ui/Icons";
 
 export interface GatewayData {
   gateway: string;
@@ -50,7 +51,11 @@ export const GatewayCard = memo(function GatewayCard({
 
   if (loading) {
     return (
-      <Card title="Gateway" status="loading">
+      <Card
+        title="Gateway"
+        icon={<Router className="w-5 h-5" />}
+        status="loading"
+      >
         <CardValue value="Pinging..." size="lg" />
       </Card>
     );
@@ -62,7 +67,11 @@ export const GatewayCard = memo(function GatewayCard({
 
   if (!data || (!hasIPv4Gateway && !hasIPv6Gateway)) {
     return (
-      <Card title="Gateway" status="unknown">
+      <Card
+        title="Gateway"
+        icon={<Router className="w-5 h-5" />}
+        status="unknown"
+      >
         <CardValue value="No gateway" size="md" />
         <p className="text-xs text-text-muted mt-1">
           Unable to detect default gateway
@@ -88,7 +97,7 @@ export const GatewayCard = memo(function GatewayCard({
   }
 
   return (
-    <Card title="Gateway" status={status}>
+    <Card title="Gateway" icon={<Router className="w-5 h-5" />} status={status}>
       <div className="flex items-center justify-between gap-2">
         <CardValue value={data.gateway} size="lg" />
         <StatusBadge status={data.reachable ? "success" : "error"} size="sm" />

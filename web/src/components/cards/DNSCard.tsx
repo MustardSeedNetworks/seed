@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Card, CardValue, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
+import { Globe } from "../ui/Icons";
 
 interface LookupResult {
   result: string;
@@ -81,7 +82,7 @@ function LookupRow({
 export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
   if (loading) {
     return (
-      <Card title="DNS" status="loading">
+      <Card title="DNS" icon={<Globe className="w-5 h-5" />} status="loading">
         <CardValue value="Testing..." size="lg" />
       </Card>
     );
@@ -89,7 +90,7 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
 
   if (!data) {
     return (
-      <Card title="DNS" status="unknown">
+      <Card title="DNS" icon={<Globe className="w-5 h-5" />} status="unknown">
         <CardValue value="No data" size="md" />
       </Card>
     );
@@ -114,7 +115,11 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
     data.servers && data.servers.length > 0 ? data.servers : [data.server];
 
   return (
-    <Card title="DNS" status={overallStatus}>
+    <Card
+      title="DNS"
+      icon={<Globe className="w-5 h-5" />}
+      status={overallStatus}
+    >
       {/* DNS Servers */}
       <div className="mb-2">
         <p className="text-xs text-text-muted mb-1">DNS Servers</p>
