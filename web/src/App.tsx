@@ -1249,8 +1249,108 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
     <div className="min-h-screen bg-surface-base flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <span className="text-4xl font-bold text-brand-primary">◉</span>
-          <h1 className="text-2xl font-bold text-text-primary mt-2">
+          <div className="w-16 h-16 mx-auto text-brand-primary">
+            <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
+              <circle
+                cx="24"
+                cy="24"
+                r="20"
+                stroke="currentColor"
+                strokeWidth="2"
+                opacity="0.3"
+              />
+              <circle
+                cx="24"
+                cy="24"
+                r="14"
+                stroke="currentColor"
+                strokeWidth="2"
+                opacity="0.5"
+              />
+              <circle cx="24" cy="24" r="4" fill="currentColor" />
+              <line
+                x1="24"
+                y1="10"
+                x2="24"
+                y2="18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="24"
+                y1="30"
+                x2="24"
+                y2="38"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="10"
+                y1="24"
+                x2="18"
+                y2="24"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="30"
+                y1="24"
+                x2="38"
+                y2="24"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="14.1"
+                y1="14.1"
+                x2="19.1"
+                y2="19.1"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="28.9"
+                y1="28.9"
+                x2="33.9"
+                y2="33.9"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="33.9"
+                y1="14.1"
+                x2="28.9"
+                y2="19.1"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="14.1"
+                y1="33.9"
+                x2="19.1"
+                y2="28.9"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <circle cx="24" cy="8" r="3" fill="currentColor" />
+              <circle cx="24" cy="40" r="3" fill="currentColor" />
+              <circle cx="8" cy="24" r="3" fill="currentColor" />
+              <circle cx="40" cy="24" r="3" fill="currentColor" />
+              <circle cx="12.3" cy="12.3" r="2.5" fill="currentColor" />
+              <circle cx="35.7" cy="35.7" r="2.5" fill="currentColor" />
+              <circle cx="35.7" cy="12.3" r="2.5" fill="currentColor" />
+              <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-text-primary mt-3">
             NetScope
           </h1>
           <p className="text-text-muted mt-1">Network Diagnostic Tool</p>
