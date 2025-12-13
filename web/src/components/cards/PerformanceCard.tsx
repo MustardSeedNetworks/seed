@@ -3,6 +3,7 @@ import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { useSettings } from "../../contexts/SettingsContext";
 import { Gauge } from "../ui/Icons";
+import { SpeedGauge, ProgressRing, PulsingDot } from "../ui/SpeedGauge";
 
 // Speedtest types
 interface SpeedtestData {
@@ -421,44 +422,49 @@ export const PerformanceCard = memo(function PerformanceCard({
         </p>
 
         {speedtestRunning && speedtestStatus && (
-          <div className="space-y-2 mb-3">
-            <p
-              className="text-sm text-text-muted"
-              id="speedtest-progress-label"
-            >
-              {speedtestPhaseLabels[speedtestStatus.phase] ||
-                speedtestStatus.phase}
-            </p>
-            <div
-              role="progressbar"
-              aria-valuenow={speedtestStatus.progress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-labelledby="speedtest-progress-label"
-              className="w-full bg-surface-hover rounded-full h-2"
-            >
+          <div className="flex items-center gap-4 mb-3 p-3 bg-surface-hover rounded-lg">
+            <ProgressRing
+              progress={speedtestStatus.progress}
+              size={56}
+              strokeWidth={5}
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <PulsingDot color="primary" size="sm" />
+                <span className="text-sm font-medium text-text-primary">
+                  {speedtestPhaseLabels[speedtestStatus.phase] ||
+                    speedtestStatus.phase}
+                </span>
+              </div>
               <div
-                className="bg-brand-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${speedtestStatus.progress}%` }}
-              />
+                role="progressbar"
+                aria-valuenow={speedtestStatus.progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Speedtest progress"
+                className="mt-2 w-full bg-surface-base rounded-full h-1.5"
+              >
+                <div
+                  className="bg-brand-primary h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${speedtestStatus.progress}%` }}
+                />
+              </div>
             </div>
           </div>
         )}
 
         {!speedtestRunning && speedtestResult && (
           <div className="mb-3">
-            <div className="grid grid-cols-2 gap-4">
-              <CardValue
+            <div className="flex justify-center gap-6 py-2">
+              <SpeedGauge
+                value={speedtestResult.download}
                 label="Download"
-                value={formatSpeed(speedtestResult.download)}
                 size="md"
-                status="success"
               />
-              <CardValue
+              <SpeedGauge
+                value={speedtestResult.upload}
                 label="Upload"
-                value={formatSpeed(speedtestResult.upload)}
                 size="md"
-                status="success"
               />
             </div>
             <CardRow
@@ -524,26 +530,33 @@ export const PerformanceCard = memo(function PerformanceCard({
 
             {/* Client Status/Results */}
             {iperfClientRunning && iperfClientStatus && (
-              <div className="space-y-2 mb-3">
-                <p
-                  className="text-sm text-text-muted"
-                  id="iperf-progress-label"
-                >
-                  {iperfPhaseLabels[iperfClientStatus.phase] ||
-                    iperfClientStatus.phase}
-                </p>
-                <div
-                  role="progressbar"
-                  aria-valuenow={iperfClientStatus.progress}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-labelledby="iperf-progress-label"
-                  className="w-full bg-surface-hover rounded-full h-2"
-                >
+              <div className="flex items-center gap-4 mb-3 p-3 bg-surface-hover rounded-lg">
+                <ProgressRing
+                  progress={iperfClientStatus.progress}
+                  size={56}
+                  strokeWidth={5}
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <PulsingDot color="primary" size="sm" />
+                    <span className="text-sm font-medium text-text-primary">
+                      {iperfPhaseLabels[iperfClientStatus.phase] ||
+                        iperfClientStatus.phase}
+                    </span>
+                  </div>
                   <div
-                    className="bg-brand-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${iperfClientStatus.progress}%` }}
-                  />
+                    role="progressbar"
+                    aria-valuenow={iperfClientStatus.progress}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="iPerf progress"
+                    className="mt-2 w-full bg-surface-base rounded-full h-1.5"
+                  >
+                    <div
+                      className="bg-brand-primary h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${iperfClientStatus.progress}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             )}
