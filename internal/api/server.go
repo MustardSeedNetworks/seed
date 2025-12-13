@@ -229,6 +229,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/devices/subnets", s.handleDevicesSubnets)
 	s.mux.HandleFunc("/api/discovery/profile", s.handleDiscoveryProfile)
 	s.mux.HandleFunc("/api/discovery/service/status", s.handleDiscoveryServiceStatus)
+	s.mux.HandleFunc("/api/discovery/fingerprint", s.handleAdvancedFingerprint)
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
 	s.mux.HandleFunc("/api/logs", s.handleLogs)
 

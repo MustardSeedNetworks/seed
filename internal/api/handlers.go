@@ -3952,3 +3952,46 @@ func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Req
 	status := s.discoveryService.GetStatus()
 	sendJSONResponse(w, http.StatusOK, status)
 }
+
+// handleAdvancedFingerprint performs advanced OS/service fingerprinting on a device.
+// POST /api/discovery/fingerprint with JSON body: {"ip": "192.168.1.1"}
+func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		IP string `json:"ip"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.IP == "" {
+		http.Error(w, "IP address is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get existing device profile if available
+	var existingProfile *discovery.DeviceProfile
+	if device := s.discoveryService.GetDeviceByIP(req.IP); device != nil {
+		existingProfile = device.Profile
+	}
+
+	// Create fingerprinter with config timeout
+	timeout := s.config.NetworkDiscovery.ScanTimeout
+	if timeout == 0 {
+		timeout = 10 * time.Second
+	}
+	fingerprinter := discovery.NewFingerprinter(timeout)
+
+	// Perform advanced probing
+	ctx, cancel := context.WithTimeout(r.Context(), timeout)
+	defer cancel()
+
+	result := fingerprinter.ProbeDevice(ctx, req.IP, existingProfile)
+
+	sendJSONResponse(w, http.StatusOK, result)
+}
