@@ -4,10 +4,10 @@ set -e
 # Reload systemd manager configuration
 systemctl daemon-reload
 
-# Enable netscope service to start on boot
-systemctl enable netscope.service
+# Enable luminetiq service to start on boot
+systemctl enable luminetiq.service
 
-# Start netscope service
-systemctl start netscope.service
+# Start luminetiq service
+systemctl start luminetiq.service
 
 exit 0

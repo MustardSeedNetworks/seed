@@ -2,7 +2,7 @@
 package version
 
 // Version information set via ldflags at build time.
-// Build with: go build -ldflags "-X github.com/krisarmstrong/netscope/internal/version.Version=v1.0.0"
+// Build with: go build -ldflags "-X github.com/krisarmstrong/luminetiq/internal/version.Version=v1.0.0"
 var (
 	// Version is the semantic version (set via ldflags)
 	Version = "dev"

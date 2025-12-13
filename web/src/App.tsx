@@ -5,6 +5,7 @@ import { useTheme } from "./hooks/useTheme";
 import { useSettings } from "./contexts/SettingsContext";
 import { SettingsDrawer } from "./components/settings/SettingsDrawer";
 import { HelpModal, HelpSection, HelpItem } from "./components/ui/HelpModal";
+import { SetupWizard, checkSetupStatus } from "./components/setup/SetupWizard";
 import {
   HTTP_TIMING_HELP,
   LINK_HELP,
@@ -67,6 +68,14 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
+
+  // Check if setup is needed on mount
+  useEffect(() => {
+    checkSetupStatus().then((status) => {
+      setNeedsSetup(status.needsSetup);
+    });
+  }, []);
   const [cards, setCards] = useState<CardState>({
     link: null,
     cable: null,
@@ -834,6 +843,20 @@ function App() {
     [login],
   );
 
+  // Show setup wizard if needed (before auth check)
+  if (needsSetup === true) {
+    return <SetupWizard onComplete={() => setNeedsSetup(false)} />;
+  }
+
+  // Show loading while checking setup status
+  if (needsSetup === null) {
+    return (
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
+        <div className="text-text-muted">Loading...</div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <LoginForm
@@ -855,7 +878,7 @@ function App() {
               ◉
             </span>
             <h1 className="text-lg font-semibold hidden xs:block sm:block">
-              NetScope
+              LuminetIQ
             </h1>
             <div className="hidden sm:block">
               <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
@@ -1096,7 +1119,7 @@ function App() {
           {/* Footer notice */}
           <footer className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
             <h2 className="text-base sm:text-lg font-semibold text-text-muted">
-              NetScope {appVersion}
+              LuminetIQ {appVersion}
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-text-muted">
               Tap the play button to run all tests.
@@ -1122,7 +1145,7 @@ function App() {
       <HelpModal
         isOpen={helpOpen}
         onClose={() => setHelpOpen(false)}
-        title="NetScope Help"
+        title="LuminetIQ Help"
       >
         {/* 1. Link Status (matches LinkCard) */}
         <HelpSection title="Link Status">
@@ -1365,9 +1388,9 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-text-primary mt-3">
-            NetScope
+            LuminetIQ
           </h1>
-          <p className="text-text-muted mt-1">Network Diagnostic Tool</p>
+          <p className="text-text-muted mt-1">Illuminate Your Network</p>
         </div>
 
         <form
@@ -1429,7 +1452,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           </button>
 
           <p className="mt-4 text-xs text-text-muted text-center">
-            Default: admin / netscope
+            Default: admin / luminetiq
           </p>
         </form>
       </div>

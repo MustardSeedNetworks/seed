@@ -1,11 +1,11 @@
-# NetScope
+# LuminetIQ
 
 > Portable Network Diagnostic Tool with Real-Time Web UI
 
 [![CI](https://github.com/krisarmstrong/netscope/actions/workflows/ci.yml/badge.svg)](https://github.com/krisarmstrong/netscope/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 
-NetScope is a professional-grade network diagnostic appliance designed for network technicians and engineers. Plug it into any network jack and instantly see link status, switch information, DHCP details, DNS health, and gateway connectivity through a modern web interface.
+LuminetIQ is a professional-grade network diagnostic appliance designed for network technicians and engineers. Plug it into any network jack and instantly see link status, switch information, DHCP details, DNS health, and gateway connectivity through a modern web interface.
 
 ## Features
 
@@ -34,9 +34,9 @@ _Coming soon_
 - Node.js 24+ (LTS)
 - libpcap-dev
 
-**Note:** NetScope requires raw ICMP socket access for ping functionality. On Linux, this requires either:
-- Running as root (`sudo ./netscope`), or
-- Setting capabilities: `sudo setcap cap_net_raw=+ep ./netscope`
+**Note:** LuminetIQ requires raw ICMP socket access for ping functionality. On Linux, this requires either:
+- Running as root (`sudo ./luminetiq`), or
+- Setting capabilities: `sudo setcap cap_net_raw=+ep ./luminetiq`
 
 ### Installation
 
@@ -52,7 +52,7 @@ make build
 cd web && npm ci && npm run build && cd ..
 
 # Run
-sudo ./netscope
+sudo ./luminetiq
 ```
 
 ### Access
@@ -62,13 +62,13 @@ Open `https://<device-ip>:8443` in your browser.
 Default credentials:
 
 - Username: `admin`
-- Password: `netscope`
+- Password: `luminetiq`
 
 **Change these on first login!**
 
 ## Configuration
 
-Configuration is stored in `netscope.yaml`. Default settings:
+Configuration is stored in `luminetiq.yaml`. Default settings:
 
 ```yaml
 server:
@@ -97,9 +97,9 @@ thresholds:
 sudo go run cmd/netscope/main.go
 
 # Or build and set capabilities (preferred for repeated runs)
-go build -o netscope ./cmd/netscope
-sudo setcap cap_net_raw=+ep ./netscope
-./netscope
+go build -o luminetiq ./cmd/netscope
+sudo setcap cap_net_raw=+ep ./luminetiq
+./luminetiq
 
 # Run frontend in development mode
 cd web && npm run dev

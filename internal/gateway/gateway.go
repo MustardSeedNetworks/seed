@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/netscope/internal/discovery"
+	"github.com/krisarmstrong/luminetiq/internal/discovery"
 )
 
 // Status represents the status of a gateway ping operation.
