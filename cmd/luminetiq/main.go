@@ -1,4 +1,4 @@
-// Package main is the entry point for NetScope.
+// Package main is the entry point for LuminetIQ.
 package main
 
 import (
@@ -16,23 +16,23 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/krisarmstrong/netscope/internal/api"
-	"github.com/krisarmstrong/netscope/internal/auth"
-	"github.com/krisarmstrong/netscope/internal/config"
-	"github.com/krisarmstrong/netscope/internal/discovery"
-	"github.com/krisarmstrong/netscope/internal/network"
+	"github.com/krisarmstrong/luminetiq/internal/api"
+	"github.com/krisarmstrong/luminetiq/internal/auth"
+	"github.com/krisarmstrong/luminetiq/internal/config"
+	"github.com/krisarmstrong/luminetiq/internal/discovery"
+	"github.com/krisarmstrong/luminetiq/internal/network"
 )
 
 var version = "dev"
 
-// main starts the NetScope network discovery and monitoring application.
+// main starts the LuminetIQ network discovery and monitoring application.
 // It initializes configuration from a YAML file, sets up logging, validates
 // network interface availability, and starts the API server with graceful shutdown handling.
 //
 // Command-line flags:
 //
 //	-version: Display the application version and exit
-//	-config: Path to the YAML configuration file (default: "configs/netscope.yaml")
+//	-config: Path to the YAML configuration file (default: "configs/luminetiq.yaml")
 //	-dev: Run in development mode using HTTP instead of HTTPS
 //
 // The application requires elevated privileges (root or CAP_NET_RAW) for ICMP ping operations
@@ -50,12 +50,12 @@ var version = "dev"
 func main() {
 	// Parse command line flags
 	showVersion := flag.Bool("version", false, "Show version")
-	configPath := flag.String("config", "configs/netscope.yaml", "Path to configuration file")
+	configPath := flag.String("config", "configs/luminetiq.yaml", "Path to configuration file")
 	devMode := flag.Bool("dev", false, "Run in development mode")
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Printf("NetScope %s\n", version)
+		fmt.Printf("LuminetIQ %s\n", version)
 		os.Exit(0)
 	}
 
@@ -66,12 +66,12 @@ func main() {
 		icmpAvailable = false
 		log.Printf("Warning: ICMP features disabled - %v", err)
 		fmt.Fprintln(os.Stderr, "Warning: Running without ICMP privileges - ping features will be unavailable")
-		fmt.Fprintln(os.Stderr, "For full functionality, run with: sudo ./netscope")
-		fmt.Fprintln(os.Stderr, "Or grant capability: sudo setcap cap_net_raw=+ep ./netscope")
+		fmt.Fprintln(os.Stderr, "For full functionality, run with: sudo ./luminetiq")
+		fmt.Fprintln(os.Stderr, "Or grant capability: sudo setcap cap_net_raw=+ep ./luminetiq")
 	}
 
 	// Set up logging
-	logPath := filepath.Join("logs", "netscope.log")
+	logPath := filepath.Join("logs", "luminetiq.log")
 	if err := os.MkdirAll(filepath.Dir(logPath), 0o750); err != nil {
 		log.Fatalf("Failed to create log directory: %v", err)
 	}
@@ -84,7 +84,7 @@ func main() {
 	}
 	log.SetOutput(rotator)
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.LUTC)
-	log.Printf("NetScope %s starting, logging to %s", version, logPath)
+	log.Printf("LuminetIQ %s starting, logging to %s", version, logPath)
 
 	// Load configuration with first-boot security check
 	cfg, setupResult, err := config.EnsureConfig(*configPath, auth.IsDefaultPasswordHash)
@@ -210,7 +210,7 @@ func main() {
 	}
 
 	<-done
-	log.Println("NetScope stopped")
+	log.Println("LuminetIQ stopped")
 }
 
 // printCredentialsBanner displays the generated credentials prominently.
@@ -218,7 +218,7 @@ func main() {
 func printCredentialsBanner(username, password string, isFirstBoot bool) {
 	banner := `
 ╔══════════════════════════════════════════════════════════════════╗
-║                    NETSCOPE SECURITY SETUP                       ║
+║                    LUMINETIQ SECURITY SETUP                      ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
 ║  %s  ║
@@ -247,7 +247,7 @@ func printCredentialsBanner(username, password string, isFirstBoot bool) {
 	setupType = fmt.Sprintf("%-52s", setupType)
 
 	// Use fmt.Fprintf to stderr so it's visible even when stdout is redirected
-	fmt.Fprintf(os.Stderr, banner, setupType, username, password, padRight("configs/netscope.yaml", 44))
+	fmt.Fprintf(os.Stderr, banner, setupType, username, password, padRight("configs/luminetiq.yaml", 44))
 
 	// Also log it (will go to log file)
 	log.Printf("Generated new credentials for user '%s' - password displayed in console", username)

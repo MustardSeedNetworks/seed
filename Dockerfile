@@ -18,15 +18,15 @@ COPY . .
 # Copy built frontend for embedding
 COPY --from=builder-frontend /app/web/dist ./web/dist
 # Build with embedded frontend
-RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /netscope ./cmd/netscope
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /luminetiq ./cmd/netscope
 
 # Stage 3: Final runtime image (Ubuntu-based, slim)
 FROM ubuntu:24.04
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpcap0.8 iperf3 ca-certificates && \
     rm -rf /var/lib/apt/lists/*
-COPY --from=builder-backend /netscope /usr/local/bin/netscope
-COPY configs /etc/netscope
+COPY --from=builder-backend /luminetiq /usr/local/bin/luminetiq
+COPY configs /etc/luminetiq
 EXPOSE 8443
-ENTRYPOINT ["/usr/local/bin/netscope"]
-CMD ["--config", "/etc/netscope/netscope.yaml"]
+ENTRYPOINT ["/usr/local/bin/luminetiq"]
+CMD ["--config", "/etc/luminetiq/luminetiq.yaml"]

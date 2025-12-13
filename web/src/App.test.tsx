@@ -103,6 +103,12 @@ describe("App", () => {
 
     // Default API mocks
     mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/setup/status")) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
+        });
+      }
       if (url.includes("/api/settings")) {
         return Promise.resolve({
           ok: true,
@@ -131,11 +137,13 @@ describe("App", () => {
   });
 
   describe("unauthenticated state", () => {
-    it("renders login form when not authenticated", () => {
+    it("renders login form when not authenticated", async () => {
       renderWithProviders(<App />);
 
-      expect(screen.getByText("NetScope")).toBeInTheDocument();
-      expect(screen.getByText("Network Diagnostic Tool")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText("LuminetIQ")).toBeInTheDocument();
+      });
+      expect(screen.getByText("Illuminate Your Network")).toBeInTheDocument();
       expect(screen.getByPlaceholderText("admin")).toBeInTheDocument();
       expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument();
       expect(
@@ -143,16 +151,25 @@ describe("App", () => {
       ).toBeInTheDocument();
     });
 
-    it("shows default credentials hint", () => {
+    it("shows default credentials hint", async () => {
       renderWithProviders(<App />);
 
-      expect(
-        screen.getByText(/Default: admin \/ netscope/i),
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Default: admin \/ luminetiq/i),
+        ).toBeInTheDocument();
+      });
     });
 
     it("handles login form submission", async () => {
       mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/api/setup/status")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
+          });
+        }
         if (url.includes("/api/auth/login")) {
           return Promise.resolve({
             ok: true,
@@ -177,6 +194,10 @@ describe("App", () => {
 
       renderWithProviders(<App />);
 
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("admin")).toBeInTheDocument();
+      });
+
       const usernameInput = screen.getByPlaceholderText("admin");
       const passwordInput = screen.getByPlaceholderText("••••••••");
       const loginButton = screen.getByRole("button", { name: /login/i });
@@ -195,6 +216,13 @@ describe("App", () => {
 
     it("shows error message on login failure", async () => {
       mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/api/setup/status")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
+          });
+        }
         if (url.includes("/api/auth/login")) {
           return Promise.resolve({
             ok: false,
@@ -214,6 +242,10 @@ describe("App", () => {
 
       renderWithProviders(<App />);
 
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("admin")).toBeInTheDocument();
+      });
+
       const usernameInput = screen.getByPlaceholderText("admin");
       const passwordInput = screen.getByPlaceholderText("••••••••");
       const loginButton = screen.getByRole("button", { name: /login/i });
@@ -230,6 +262,13 @@ describe("App", () => {
     it("disables login button while loading", async () => {
       let resolveLogin: (value: unknown) => void;
       mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/api/setup/status")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
+          });
+        }
         if (url.includes("/api/auth/login")) {
           return new Promise((resolve) => {
             resolveLogin = resolve;
@@ -245,6 +284,10 @@ describe("App", () => {
       });
 
       renderWithProviders(<App />);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("admin")).toBeInTheDocument();
+      });
 
       const usernameInput = screen.getByPlaceholderText("admin");
       const passwordInput = screen.getByPlaceholderText("••••••••");
@@ -280,7 +323,7 @@ describe("App", () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText("NetScope")).toBeInTheDocument();
+        expect(screen.getByText("LuminetIQ")).toBeInTheDocument();
       });
 
       // Should show logout button(s) - desktop and mobile versions may both render
@@ -369,6 +412,12 @@ describe("LoginForm input validation", () => {
     vi.clearAllMocks();
 
     mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/setup/status")) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
+        });
+      }
       if (url.includes("/api/settings")) {
         return Promise.resolve({
           ok: true,
@@ -382,8 +431,12 @@ describe("LoginForm input validation", () => {
     });
   });
 
-  it("username and password inputs are required", () => {
+  it("username and password inputs are required", async () => {
     renderWithProviders(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("admin")).toBeInTheDocument();
+    });
 
     const usernameInput = screen.getByPlaceholderText("admin");
     const passwordInput = screen.getByPlaceholderText("••••••••");
@@ -392,17 +445,23 @@ describe("LoginForm input validation", () => {
     expect(passwordInput).toBeRequired();
   });
 
-  it("password input has type password", () => {
+  it("password input has type password", async () => {
     renderWithProviders(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument();
+    });
 
     const passwordInput = screen.getByPlaceholderText("••••••••");
     expect(passwordInput).toHaveAttribute("type", "password");
   });
 
-  it("shows form labels", () => {
+  it("shows form labels", async () => {
     renderWithProviders(<App />);
 
-    expect(screen.getByText("Username")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Username")).toBeInTheDocument();
+    });
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 });

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/netscope/internal/config"
+	"github.com/krisarmstrong/luminetiq/internal/config"
 )
 
 // Service is the unified discovery orchestrator that applies profile-based

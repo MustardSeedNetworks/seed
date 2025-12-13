@@ -11,7 +11,7 @@ import (
 
 	"github.com/vishvananda/netlink"
 
-	"github.com/krisarmstrong/netscope/internal/validation"
+	"github.com/krisarmstrong/luminetiq/internal/validation"
 )
 
 // netmaskToCIDR converts a dotted decimal netmask to CIDR prefix length.

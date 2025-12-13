@@ -17,17 +17,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/netscope/internal/config"
-	"github.com/krisarmstrong/netscope/internal/dhcp"
-	"github.com/krisarmstrong/netscope/internal/discovery"
-	"github.com/krisarmstrong/netscope/internal/dns"
-	"github.com/krisarmstrong/netscope/internal/gateway"
-	"github.com/krisarmstrong/netscope/internal/iperf"
-	"github.com/krisarmstrong/netscope/internal/network"
-	"github.com/krisarmstrong/netscope/internal/system"
-	"github.com/krisarmstrong/netscope/internal/validation"
-	"github.com/krisarmstrong/netscope/internal/version"
-	"github.com/krisarmstrong/netscope/internal/vlan"
+	"github.com/krisarmstrong/luminetiq/internal/auth"
+	"github.com/krisarmstrong/luminetiq/internal/config"
+	"github.com/krisarmstrong/luminetiq/internal/dhcp"
+	"github.com/krisarmstrong/luminetiq/internal/discovery"
+	"github.com/krisarmstrong/luminetiq/internal/dns"
+	"github.com/krisarmstrong/luminetiq/internal/gateway"
+	"github.com/krisarmstrong/luminetiq/internal/iperf"
+	"github.com/krisarmstrong/luminetiq/internal/network"
+	"github.com/krisarmstrong/luminetiq/internal/system"
+	"github.com/krisarmstrong/luminetiq/internal/validation"
+	"github.com/krisarmstrong/luminetiq/internal/version"
+	"github.com/krisarmstrong/luminetiq/internal/vlan"
 )
 
 // sendJSONResponse is a helper to send JSON responses and handle encoding errors.
@@ -4013,4 +4014,96 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, http.StatusOK, health)
+}
+
+// SetupStatusResponse represents the setup status response.
+type SetupStatusResponse struct {
+	NeedsSetup bool   `json:"needsSetup"`
+	Username   string `json:"username,omitempty"`
+}
+
+// handleSetupStatus handles GET /api/setup/status - returns whether initial setup is needed.
+func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	s.config.RLock()
+	needsSetup := s.config.Auth.DefaultPasswordHash == ""
+	username := s.config.Auth.DefaultUsername
+	s.config.RUnlock()
+
+	sendJSONResponse(w, http.StatusOK, SetupStatusResponse{
+		NeedsSetup: needsSetup,
+		Username:   username,
+	})
+}
+
+// SetupCompleteRequest represents the initial setup request.
+type SetupCompleteRequest struct {
+	Password string `json:"password"`
+}
+
+// handleSetupComplete handles POST /api/setup/complete - completes initial setup with admin password.
+func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Check if setup is still needed
+	s.config.RLock()
+	needsSetup := s.config.Auth.DefaultPasswordHash == ""
+	s.config.RUnlock()
+
+	if !needsSetup {
+		sendJSONResponse(w, http.StatusBadRequest, map[string]string{
+			"error": "Setup already completed",
+		})
+		return
+	}
+
+	var req SetupCompleteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendJSONResponse(w, http.StatusBadRequest, map[string]string{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	// Validate password
+	if len(req.Password) < 8 {
+		sendJSONResponse(w, http.StatusBadRequest, map[string]string{
+			"error": "Password must be at least 8 characters",
+		})
+		return
+	}
+
+	// Hash the password
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
+			"error": "Failed to hash password",
+		})
+		return
+	}
+
+	// Update config with new password hash
+	s.config.Lock()
+	s.config.Auth.DefaultPasswordHash = hashedPassword
+	configPath := s.configPath
+	s.config.Unlock()
+
+	// Save config
+	if err := s.config.Save(configPath); err != nil {
+		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
+			"error": "Failed to save configuration: " + err.Error(),
+		})
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]string{
+		"status": "Setup completed successfully",
+	})
 }

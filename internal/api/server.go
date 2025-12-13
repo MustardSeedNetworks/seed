@@ -22,20 +22,20 @@ import (
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 
-	"github.com/krisarmstrong/netscope/internal/auth"
-	"github.com/krisarmstrong/netscope/internal/cable"
-	"github.com/krisarmstrong/netscope/internal/config"
-	"github.com/krisarmstrong/netscope/internal/dhcp"
-	"github.com/krisarmstrong/netscope/internal/discovery"
-	"github.com/krisarmstrong/netscope/internal/dns"
-	"github.com/krisarmstrong/netscope/internal/gateway"
-	"github.com/krisarmstrong/netscope/internal/iperf"
-	"github.com/krisarmstrong/netscope/internal/network"
-	"github.com/krisarmstrong/netscope/internal/publicip"
-	"github.com/krisarmstrong/netscope/internal/speedtest"
-	"github.com/krisarmstrong/netscope/internal/vlan"
-	"github.com/krisarmstrong/netscope/internal/wifi"
-	"github.com/krisarmstrong/netscope/web"
+	"github.com/krisarmstrong/luminetiq/internal/auth"
+	"github.com/krisarmstrong/luminetiq/internal/cable"
+	"github.com/krisarmstrong/luminetiq/internal/config"
+	"github.com/krisarmstrong/luminetiq/internal/dhcp"
+	"github.com/krisarmstrong/luminetiq/internal/discovery"
+	"github.com/krisarmstrong/luminetiq/internal/dns"
+	"github.com/krisarmstrong/luminetiq/internal/gateway"
+	"github.com/krisarmstrong/luminetiq/internal/iperf"
+	"github.com/krisarmstrong/luminetiq/internal/network"
+	"github.com/krisarmstrong/luminetiq/internal/publicip"
+	"github.com/krisarmstrong/luminetiq/internal/speedtest"
+	"github.com/krisarmstrong/luminetiq/internal/vlan"
+	"github.com/krisarmstrong/luminetiq/internal/wifi"
+	"github.com/krisarmstrong/luminetiq/web"
 )
 
 // Server represents the HTTP/HTTPS server.
@@ -233,6 +233,10 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
 	s.mux.HandleFunc("/api/logs", s.handleLogs)
 	s.mux.HandleFunc("/api/system/health", s.handleSystemHealth)
+
+	// Setup routes (no auth required for initial setup)
+	s.mux.HandleFunc("/api/setup/status", s.handleSetupStatus)
+	s.mux.HandleFunc("/api/setup/complete", s.handleSetupComplete)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
