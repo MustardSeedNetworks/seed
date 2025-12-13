@@ -12,6 +12,7 @@ server:
 interface:
   default: eth0
   fallbacks:
+    - enp0s1
     - enp0s3
     - wlan0
 vlan:

@@ -17,6 +17,7 @@ const (
 	InterfaceTypeEthernet InterfaceType = "ethernet"
 	InterfaceTypeWiFi     InterfaceType = "wifi"
 	InterfaceTypeLoopback InterfaceType = "loopback"
+	InterfaceTypeVirtual  InterfaceType = "virtual"
 	InterfaceTypeOther    InterfaceType = "other"
 )
 
@@ -145,21 +146,67 @@ func (m *Manager) SetCurrentInterface(name string) error {
 }
 
 // FindFirstAvailable finds the first available interface from a list.
+// If no preferred interface is found, it auto-detects the best physical interface:
+// Priority: Ethernet with IP > WiFi with IP > Ethernet up > WiFi up
+// Virtual interfaces (docker, bridge, veth, etc.) are excluded from auto-detection.
 func (m *Manager) FindFirstAvailable(preferred []string) string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	// First, try preferred interfaces in order
 	for _, name := range preferred {
 		if info, ok := m.interfaces[name]; ok && info.Up {
 			return name
 		}
 	}
 
-	// Fall back to first non-loopback interface
+	// Auto-detect: collect candidate interfaces (exclude loopback and virtual)
+	var ethernetWithIP, wifiWithIP, ethernetUp, wifiUp []string
+
 	for name, info := range m.interfaces {
-		if info.Type != InterfaceTypeLoopback && info.Up {
-			return name
+		// Skip loopback and virtual interfaces
+		if info.Type == InterfaceTypeLoopback || info.Type == InterfaceTypeVirtual {
+			continue
 		}
+		if !info.Up {
+			continue
+		}
+
+		hasIP := hasRoutableAddress(info.Addresses)
+
+		switch info.Type {
+		case InterfaceTypeEthernet:
+			if hasIP {
+				ethernetWithIP = append(ethernetWithIP, name)
+			} else {
+				ethernetUp = append(ethernetUp, name)
+			}
+		case InterfaceTypeWiFi:
+			if hasIP {
+				wifiWithIP = append(wifiWithIP, name)
+			} else {
+				wifiUp = append(wifiUp, name)
+			}
+		default:
+			// For "other" type interfaces, treat like ethernet if they have IP
+			if hasIP {
+				ethernetWithIP = append(ethernetWithIP, name)
+			}
+		}
+	}
+
+	// Return best match in priority order
+	if len(ethernetWithIP) > 0 {
+		return ethernetWithIP[0]
+	}
+	if len(wifiWithIP) > 0 {
+		return wifiWithIP[0]
+	}
+	if len(ethernetUp) > 0 {
+		return ethernetUp[0]
+	}
+	if len(wifiUp) > 0 {
+		return wifiUp[0]
 	}
 
 	return ""
@@ -262,6 +309,14 @@ func detectInterfaceType(name string) InterfaceType {
 	// Loopback
 	if name == "lo" || name == "lo0" {
 		return InterfaceTypeLoopback
+	}
+
+	// Virtual interfaces (docker, bridge, veth, tun, tap, virbr, etc.)
+	virtualPrefixes := []string{"docker", "br-", "veth", "virbr", "tun", "tap", "vnet", "vmnet", "vboxnet", "utun"}
+	for _, prefix := range virtualPrefixes {
+		if strings.HasPrefix(name, prefix) {
+			return InterfaceTypeVirtual
+		}
 	}
 
 	// WiFi interfaces
