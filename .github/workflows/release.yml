@@ -25,6 +25,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set iperf3 version
+        id: iperf_ver
+        run: echo "version=v3.20" >> "$GITHUB_OUTPUT"
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -33,19 +37,14 @@ jobs:
             sudo apt-get install -y gcc-aarch64-linux-gnu
           fi
 
-      - name: Get latest iperf3 version
-        id: iperf3_version
-        run: |
-          LATEST=$(curl -s https://api.github.com/repos/esnet/iperf/releases/latest | jq -r '.tag_name')
-          echo "version=$LATEST" >> $GITHUB_OUTPUT
-          echo "Latest iperf3 version: $LATEST"
-
       - name: Download and build iperf3
         env:
           CC: ${{ matrix.cc }}
         run: |
-          VERSION="${{ steps.iperf3_version.outputs.version }}"
+          VERSION="${{ steps.iperf_ver.outputs.version }}"
+          SHA256="e6cfb22e549d9328b5b9f3a4e3f7f07a44d6c9e672bf7e9ba4d3b641c385e8c8"
           curl -L -o iperf3.tar.gz "https://github.com/esnet/iperf/archive/refs/tags/${VERSION}.tar.gz"
+          echo "$SHA256  iperf3.tar.gz" | sha256sum -c -
           tar -xzf iperf3.tar.gz
           cd iperf-*
 
@@ -72,6 +71,7 @@ jobs:
       - name: Verify iperf3 binary
         run: |
           file dist/iperf3-linux-${{ matrix.arch }}
+          dist/iperf3-linux-${{ matrix.arch }} --version
 
       - name: Upload iperf3 artifact
         uses: actions/upload-artifact@v4
@@ -83,6 +83,9 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     needs: build-iperf3
+    permissions:
+      contents: write
+      packages: write
 
     strategy:
       matrix:

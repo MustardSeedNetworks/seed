@@ -19,13 +19,15 @@
 #
 #------------------------------------------------------------------------------
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 OUTPUT_DIR="$PROJECT_ROOT/bin"
 
-IPERF_VERSION="${IPERF_VERSION:-3.17.1}"
+IPERF_VERSION="${IPERF_VERSION:-v3.20}"
+# sha256 from upstream release tarball (https://github.com/esnet/iperf/releases)
+IPERF_SHA256="${IPERF_SHA256:-e6cfb22e549d9328b5b9f3a4e3f7f07a44d6c9e672bf7e9ba4d3b641c385e8c8}"
 TARGET_ARCH="${1:-all}"  # amd64, arm64, or all
 
 # Create output directory
@@ -84,6 +86,7 @@ build_for_arch() {
 
         echo '==> Downloading iperf3 source...'
         curl -sL -o iperf3.tar.gz https://github.com/esnet/iperf/archive/refs/tags/$IPERF_VERSION.tar.gz
+        echo \"$IPERF_SHA256  iperf3.tar.gz\" | sha256sum -c -
         tar xzf iperf3.tar.gz
         cd iperf-${IPERF_VERSION#v}
 

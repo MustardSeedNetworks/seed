@@ -31,7 +31,7 @@
 #
 #------------------------------------------------------------------------------
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -52,22 +52,16 @@ case "$ARCH" in
         ;;
 esac
 
-echo "Building iperf3 for $OS-$ARCH"
+# Pin iperf3 version (update with care)
+IPERF_VERSION="${IPERF_VERSION:-v3.20}"
+# sha256 from upstream release tarball (https://github.com/esnet/iperf/releases)
+IPERF_SHA256="${IPERF_SHA256:-e6cfb22e549d9328b5b9f3a4e3f7f07a44d6c9e672bf7e9ba4d3b641c385e8c8}"
+
+echo "Building iperf3 $IPERF_VERSION for $OS-$ARCH"
 
 # Create directories
 mkdir -p "$BUILD_DIR"
 mkdir -p "$OUTPUT_DIR"
-
-# Get latest release version from GitHub API
-echo "Fetching latest iperf3 release..."
-LATEST_VERSION=$(curl -s https://api.github.com/repos/esnet/iperf/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
-
-if [ -z "$LATEST_VERSION" ]; then
-    echo "Failed to fetch latest version, using fallback v3.20"
-    LATEST_VERSION="v3.20"
-fi
-
-echo "Latest iperf3 version: $LATEST_VERSION"
 
 # Determine binary name based on OS/arch
 # For consistency, always use platform suffix except for local dev
@@ -80,21 +74,24 @@ LOCAL_BINARY="$OUTPUT_DIR/$BINARY_NAME"
 if [ -f "$BINARY_PATH" ]; then
     EXISTING_VERSION=$("$BINARY_PATH" --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "")
     EXISTING_VERSION_STRIPPED="${EXISTING_VERSION#v}"
-    LATEST_VERSION_STRIPPED="${LATEST_VERSION#v}"
-    if [ "$EXISTING_VERSION_STRIPPED" = "$LATEST_VERSION_STRIPPED" ]; then
+    TARGET_VERSION_STRIPPED="${IPERF_VERSION#v}"
+    if [ "$EXISTING_VERSION_STRIPPED" = "$TARGET_VERSION_STRIPPED" ]; then
         echo "iperf3 $EXISTING_VERSION already built at $BINARY_PATH"
         exit 0
     fi
 fi
 
 # Download source
-TARBALL_URL="https://github.com/esnet/iperf/archive/refs/tags/$LATEST_VERSION.tar.gz"
-TARBALL_FILE="$BUILD_DIR/iperf3-$LATEST_VERSION.tar.gz"
+TARBALL_URL="https://github.com/esnet/iperf/archive/refs/tags/$IPERF_VERSION.tar.gz"
+TARBALL_FILE="$BUILD_DIR/iperf3-$IPERF_VERSION.tar.gz"
 
 if [ ! -f "$TARBALL_FILE" ]; then
     echo "Downloading iperf3 source..."
     curl -L -o "$TARBALL_FILE" "$TARBALL_URL"
 fi
+
+echo "Verifying checksum..."
+echo "$IPERF_SHA256  $TARBALL_FILE" | sha256sum -c -
 
 # Extract
 echo "Extracting source..."
@@ -104,10 +101,10 @@ find . -maxdepth 1 -type d -name "iperf-*" -exec rm -rf {} +
 tar -xzf "$TARBALL_FILE"
 
 # Find the extracted directory (should match the version)
-SOURCE_DIR=$(find . -maxdepth 1 -type d -name "iperf-${LATEST_VERSION#v}" | head -1)
+SOURCE_DIR=$(find . -maxdepth 1 -type d -name "iperf-${IPERF_VERSION#v}" | head -1)
 if [ -z "$SOURCE_DIR" ]; then
     # Fallback: try matching with the full tag name
-    SOURCE_DIR=$(find . -maxdepth 1 -type d -name "iperf-$LATEST_VERSION" | head -1)
+    SOURCE_DIR=$(find . -maxdepth 1 -type d -name "iperf-$IPERF_VERSION" | head -1)
 fi
 if [ -z "$SOURCE_DIR" ]; then
     echo "Error: Could not find extracted source directory"
