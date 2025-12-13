@@ -847,7 +847,7 @@ function App() {
     <div className="min-h-screen bg-surface-base text-text-primary font-body">
       {/* Header */}
       <header className="border-b border-surface-border bg-surface-raised">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between gap-2">
           {/* Logo and title - hide title on very small screens */}
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl font-bold text-brand-primary flex-shrink-0">
@@ -1006,61 +1006,81 @@ function App() {
       </header>
 
       {/* Main content */}
-      <main className="py-3 sm:py-4">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {/* Layer 1-2: Physical */}
-            <LinkCard data={cards.link} loading={loading} />
-            {cards.cable?.supported && (
-              <CableCard data={cards.cable} loading={loading} />
-            )}
-            {isWifi && cards.wifi?.ssid && (
-              <WiFiCard data={cards.wifi} loading={loading} visible={true} />
-            )}
-
-            {/* Layer 2: Discovery */}
-            <SwitchCard
-              data={cards.switch}
-              vlanData={cards.vlan}
-              loading={loading}
-            />
-
-            {/* Layer 3: Network */}
-            <NetworkCard
-              data={cards.dhcp}
-              publicip={cards.publicip}
-              loading={loading}
-              showPublicIP={displayOptions.showPublicIP}
-            />
-            <GatewayCard data={cards.gateway} loading={loading} />
-
-            {/* Layer 7: Application */}
-            <DNSCard data={cards.dns} loading={loading} />
-
-            {/* Health Checks - tests configured endpoints */}
-            <HealthCheckCard loading={loading} />
-
-            {/* Performance Testing */}
-            {fabOptions.runPerformance && (
-              <PerformanceCard
+      <main className="py-4 sm:py-6">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section: Primary Connectivity */}
+          <section aria-labelledby="connectivity-heading" className="mb-6">
+            <h2
+              id="connectivity-heading"
+              className="text-xs font-medium uppercase tracking-wider text-text-muted mb-3"
+            >
+              Connectivity
+            </h2>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <LinkCard data={cards.link} loading={loading} />
+              {cards.cable?.supported && (
+                <CableCard data={cards.cable} loading={loading} />
+              )}
+              {isWifi && cards.wifi?.ssid && (
+                <WiFiCard data={cards.wifi} loading={loading} visible={true} />
+              )}
+              <SwitchCard
+                data={cards.switch}
+                vlanData={cards.vlan}
                 loading={loading}
-                runSpeedtestEnabled={fabOptions.runSpeedtest}
-                runIperfEnabled={fabOptions.runIperf}
               />
-            )}
+            </div>
+          </section>
 
-            {/* Network Discovery - device scanning (last) */}
-            {fabOptions.runNetworkDiscovery && (
-              <NetworkDiscoveryCard
-                data={networkDiscovery}
+          {/* Section: Network Services */}
+          <section aria-labelledby="network-heading" className="mb-6">
+            <h2
+              id="network-heading"
+              className="text-xs font-medium uppercase tracking-wider text-text-muted mb-3"
+            >
+              Network
+            </h2>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <NetworkCard
+                data={cards.dhcp}
+                publicip={cards.publicip}
                 loading={loading}
-                onScan={triggerDeviceScan}
+                showPublicIP={displayOptions.showPublicIP}
               />
-            )}
-          </div>
+              <GatewayCard data={cards.gateway} loading={loading} />
+              <DNSCard data={cards.dns} loading={loading} />
+            </div>
+          </section>
 
-          {/* Development notice */}
-          <div className="mt-6 sm:mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
+          {/* Section: Testing & Discovery */}
+          <section aria-labelledby="performance-heading" className="mb-6">
+            <h2
+              id="performance-heading"
+              className="text-xs font-medium uppercase tracking-wider text-text-muted mb-3"
+            >
+              Testing & Discovery
+            </h2>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <HealthCheckCard loading={loading} />
+              {fabOptions.runPerformance && (
+                <PerformanceCard
+                  loading={loading}
+                  runSpeedtestEnabled={fabOptions.runSpeedtest}
+                  runIperfEnabled={fabOptions.runIperf}
+                />
+              )}
+              {fabOptions.runNetworkDiscovery && (
+                <NetworkDiscoveryCard
+                  data={networkDiscovery}
+                  loading={loading}
+                  onScan={triggerDeviceScan}
+                />
+              )}
+            </div>
+          </section>
+
+          {/* Footer notice */}
+          <footer className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
             <h2 className="text-base sm:text-lg font-semibold text-text-muted">
               NetScope {appVersion}
             </h2>
@@ -1073,7 +1093,7 @@ function App() {
               Use the Network Discovery card to scan for devices on your
               network.
             </p>
-          </div>
+          </footer>
         </div>
       </main>
 

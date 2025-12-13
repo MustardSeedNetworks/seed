@@ -7,6 +7,9 @@ export default {
       fontSize: {
         "2xs": ["0.6875rem", { lineHeight: "1rem" }], // 11px - replaces text-[11px]
       },
+      maxWidth: {
+        "8xl": "88rem", // 1408px - wider container for dashboard
+      },
       maxHeight: {
         modal: "85vh", // replaces max-h-[85vh]
       },
