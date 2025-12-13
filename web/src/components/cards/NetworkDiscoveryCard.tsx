@@ -16,6 +16,12 @@ import {
   Shield,
   HardDrive,
   Container,
+  Monitor,
+  Smartphone,
+  Wifi,
+  Clock,
+  CheckCircle,
+  RefreshCw,
 } from "../ui/Icons";
 import type { LucideIcon } from "lucide-react";
 
@@ -214,6 +220,175 @@ function ProfileIcons({
       })}
       {icons.length > 5 && (
         <span className="text-[10px] text-text-muted">+{icons.length - 5}</span>
+      )}
+    </div>
+  );
+}
+
+// Device type categorization based on profile icons and device type
+function categorizeDevices(devices: DiscoveredDevice[]) {
+  const categories = {
+    routers: 0,
+    servers: 0,
+    workstations: 0,
+    printers: 0,
+    mobile: 0,
+    network: 0, // switches, APs
+    other: 0,
+  };
+
+  devices.forEach((device) => {
+    const deviceType = device.profile?.deviceType?.toLowerCase() || "";
+    const icons = device.profile?.deviceIcons || [];
+
+    if (
+      icons.includes("router") ||
+      deviceType.includes("router") ||
+      device.cdpInfo?.capabilities?.some((c) =>
+        c.toLowerCase().includes("router"),
+      ) ||
+      device.lldpInfo?.capabilities?.some((c) =>
+        c.toLowerCase().includes("router"),
+      )
+    ) {
+      categories.routers++;
+    } else if (
+      icons.includes("switch") ||
+      deviceType.includes("switch") ||
+      device.cdpInfo?.capabilities?.some((c) =>
+        c.toLowerCase().includes("switch"),
+      ) ||
+      device.lldpInfo?.capabilities?.some((c) =>
+        c.toLowerCase().includes("bridge"),
+      )
+    ) {
+      categories.network++;
+    } else if (icons.includes("printer") || deviceType.includes("printer")) {
+      categories.printers++;
+    } else if (
+      icons.includes("server") ||
+      deviceType.includes("server") ||
+      icons.includes("database") ||
+      icons.includes("dns") ||
+      icons.includes("mail")
+    ) {
+      categories.servers++;
+    } else if (
+      deviceType.includes("phone") ||
+      deviceType.includes("mobile") ||
+      device.vendor?.toLowerCase().includes("apple") ||
+      device.vendor?.toLowerCase().includes("samsung")
+    ) {
+      categories.mobile++;
+    } else if (
+      device.osGuess?.toLowerCase().includes("windows") ||
+      device.osGuess?.toLowerCase().includes("linux") ||
+      device.osGuess?.toLowerCase().includes("macos")
+    ) {
+      categories.workstations++;
+    } else {
+      categories.other++;
+    }
+  });
+
+  return categories;
+}
+
+// Summary bar component
+function DiscoverySummary({
+  status,
+  deviceCount,
+  categories,
+}: {
+  status: DiscoveryStatus;
+  deviceCount: number;
+  categories: ReturnType<typeof categorizeDevices>;
+}) {
+  // Build stat items with non-zero counts
+  const stats = [
+    {
+      icon: Router,
+      label: "Routers",
+      count: categories.routers,
+      color: "text-blue-400",
+    },
+    {
+      icon: Server,
+      label: "Servers",
+      count: categories.servers,
+      color: "text-purple-400",
+    },
+    {
+      icon: Monitor,
+      label: "Workstations",
+      count: categories.workstations,
+      color: "text-green-400",
+    },
+    {
+      icon: Printer,
+      label: "Printers",
+      count: categories.printers,
+      color: "text-orange-400",
+    },
+    {
+      icon: Smartphone,
+      label: "Mobile",
+      count: categories.mobile,
+      color: "text-cyan-400",
+    },
+    {
+      icon: Wifi,
+      label: "Network",
+      count: categories.network,
+      color: "text-teal-400",
+    },
+  ].filter((s) => s.count > 0);
+
+  return (
+    <div className="bg-surface-hover rounded-lg p-3 space-y-2">
+      {/* Status row */}
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center gap-2">
+          {status.scanning ? (
+            <>
+              <RefreshCw className="w-4 h-4 text-blue-400 animate-spin" />
+              <span className="text-blue-400 font-medium">Scanning...</span>
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span className="text-green-400 font-medium">Complete</span>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 text-text-muted">
+          <Clock className="w-3.5 h-3.5" />
+          <span className="text-xs">{formatLastSeen(status.lastScan)}</span>
+        </div>
+      </div>
+
+      {/* Network info row */}
+      <div className="flex items-center justify-between text-xs text-text-muted">
+        <span className="font-mono">{status.subnet || "Unknown subnet"}</span>
+        <span>
+          {deviceCount} device{deviceCount !== 1 ? "s" : ""} found
+        </span>
+      </div>
+
+      {/* Category stats row */}
+      {stats.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap pt-1">
+          {stats.map(({ icon: Icon, label, count, color }) => (
+            <div
+              key={label}
+              className="flex items-center gap-1"
+              title={`${count} ${label}`}
+            >
+              <Icon className={`w-3.5 h-3.5 ${color}`} />
+              <span className="text-xs text-text-secondary">{count}</span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -678,6 +853,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const devices = Array.isArray(rawDevices) ? rawDevices : [];
   const deviceCount = devices.length;
 
+  // Categorize devices for summary
+  const categories = categorizeDevices(devices);
+
   const getOverallStatus = (): Status => {
     if (status.scanning) return "loading";
     if (deviceCount === 0) return "warning";
@@ -714,32 +892,32 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       title="Network Discovery"
       icon={<ScanSearch className="w-5 h-5" />}
       status={cardStatus}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <CardValue
-          value={`${deviceCount} device${deviceCount !== 1 ? "s" : ""}`}
-          size="lg"
-        />
-        {onScan && (
+      headerAction={
+        onScan && (
           <button
             type="button"
             onClick={onScan}
             disabled={status.scanning}
-            className="py-1.5 px-3 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            className="py-1 px-2.5 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
             {status.scanning ? (
               <>
-                <span className="animate-spin">◐</span>
-                Scanning...
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                Scan
               </>
             ) : (
               "Scan"
             )}
           </button>
-        )}
-      </div>
-
-      <CardDivider />
+        )
+      }
+    >
+      {/* Discovery Summary */}
+      <DiscoverySummary
+        status={status}
+        deviceCount={deviceCount}
+        categories={categories}
+      />
 
       {/* Network Info - Collapsible */}
       <CollapsibleSection
@@ -748,14 +926,12 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         defaultOpen={false}
       >
         <div className="space-y-1 text-xs">
-          {status.subnet && <CardRow label="Subnet" value={status.subnet} />}
           {status.localIP && (
             <CardRow label="Local IP" value={status.localIP} />
           )}
           {status.interface && (
             <CardRow label="Interface" value={status.interface} />
           )}
-          <CardRow label="Last Scan" value={formatLastSeen(status.lastScan)} />
         </div>
       </CollapsibleSection>
 

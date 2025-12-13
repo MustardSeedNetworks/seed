@@ -13,6 +13,7 @@ interface CardProps {
   className?: string;
   onClick?: () => void;
   icon?: ReactNode;
+  headerAction?: ReactNode;
 }
 
 export function Card({
@@ -23,6 +24,7 @@ export function Card({
   className = "",
   onClick,
   icon,
+  headerAction,
 }: CardProps) {
   const isInteractive = typeof onClick === "function";
 
@@ -61,7 +63,10 @@ export function Card({
             )}
           </div>
         </div>
-        <StatusBadge status={status} size="md" />
+        <div className="flex items-center gap-2">
+          {headerAction}
+          <StatusBadge status={status} size="md" />
+        </div>
       </div>
       <div className="mt-2 sm:mt-3">{children}</div>
     </div>
