@@ -1,4 +1,4 @@
-import { useState, memo, useCallback } from "react";
+import { useState, memo, useCallback, useMemo } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { getAuthHeaders } from "../../hooks/useAuth";
@@ -22,6 +22,10 @@ import {
   Clock,
   CheckCircle,
   RefreshCw,
+  Search,
+  X,
+  ChevronUp,
+  ChevronDown,
 } from "../ui/Icons";
 import type { LucideIcon } from "lucide-react";
 
@@ -132,6 +136,94 @@ interface NetworkDiscoveryCardProps {
   data: NetworkDiscoveryData | null;
   loading?: boolean;
   onScan?: () => void;
+}
+
+// Sorting types
+type SortField = "ip" | "hostname" | "vendor" | "lastSeen" | null;
+type SortDirection = "asc" | "desc";
+
+// Search bar component
+function DeviceSearchBar({
+  searchQuery,
+  onSearchChange,
+  sortField,
+  sortDirection,
+  onSortChange,
+  deviceCount,
+  filteredCount,
+}: {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSortChange: (field: SortField) => void;
+  deviceCount: number;
+  filteredCount: number;
+}) {
+  return (
+    <div className="space-y-2">
+      {/* Search input */}
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search devices by IP, hostname, vendor, MAC..."
+          className="w-full pl-9 pr-8 py-1.5 text-sm bg-surface-base border border-surface-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => onSearchChange("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Sort buttons row */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-text-muted">Sort:</span>
+          {(["ip", "hostname", "vendor", "lastSeen"] as SortField[]).map(
+            (field) => (
+              <button
+                key={field}
+                type="button"
+                onClick={() => onSortChange(field)}
+                className={`px-2 py-0.5 text-xs rounded transition-colors flex items-center gap-1 ${
+                  sortField === field
+                    ? "bg-brand-primary/20 text-brand-primary"
+                    : "bg-surface-hover text-text-muted hover:text-text-primary"
+                }`}
+              >
+                {field === "ip"
+                  ? "IP"
+                  : field === "hostname"
+                    ? "Name"
+                    : field === "vendor"
+                      ? "Vendor"
+                      : "Seen"}
+                {sortField === field &&
+                  (sortDirection === "asc" ? (
+                    <ChevronUp className="w-3 h-3" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3" />
+                  ))}
+              </button>
+            ),
+          )}
+        </div>
+        {searchQuery && (
+          <span className="text-xs text-text-muted">
+            {filteredCount} of {deviceCount}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function formatLastSeen(dateStr: string): string {
@@ -758,6 +850,29 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const [scanResults, setScanResults] = useState<Map<string, DeepScanResult>>(
     new Map(),
   );
+  // Search and sort state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  // Toggle sort field/direction
+  const handleSortChange = useCallback(
+    (field: SortField) => {
+      if (sortField === field) {
+        // Toggle direction or clear
+        if (sortDirection === "asc") {
+          setSortDirection("desc");
+        } else {
+          setSortField(null);
+          setSortDirection("asc");
+        }
+      } else {
+        setSortField(field);
+        setSortDirection("asc");
+      }
+    },
+    [sortField, sortDirection],
+  );
 
   const toggleDevice = (mac: string) => {
     setExpandedDevices((prev) => {
@@ -815,6 +930,114 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     }
   }, []);
 
+  // Extract data with safe defaults (must come before any hooks to avoid conditional hook calls)
+  const rawDevices = data?.devices;
+  const status = data?.status;
+  // Ensure devices is an array (defensive check for malformed API responses)
+  const devices = useMemo(
+    () => (Array.isArray(rawDevices) ? rawDevices : []),
+    [rawDevices],
+  );
+  const deviceCount = devices.length;
+
+  // Helper function for IP to numeric conversion
+  const ipToNum = useCallback((ip: string) => {
+    const parts = ip.split(".").map(Number);
+    return parts[0] * 16777216 + parts[1] * 65536 + parts[2] * 256 + parts[3];
+  }, []);
+
+  // Filter and sort devices
+  const filteredDevices = useMemo(() => {
+    let result = [...devices];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((device) => {
+        return (
+          device.ip?.toLowerCase().includes(query) ||
+          device.hostname?.toLowerCase().includes(query) ||
+          device.vendor?.toLowerCase().includes(query) ||
+          device.mac?.toLowerCase().includes(query) ||
+          device.osGuess?.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply sorting
+    if (sortField) {
+      result.sort((a, b) => {
+        let aVal: string | number | null = null;
+        let bVal: string | number | null = null;
+
+        switch (sortField) {
+          case "ip":
+            // Sort IP numerically
+            aVal = a.ip ? ipToNum(a.ip) : 0;
+            bVal = b.ip ? ipToNum(b.ip) : 0;
+            break;
+          case "hostname":
+            aVal = a.hostname?.toLowerCase() || "";
+            bVal = b.hostname?.toLowerCase() || "";
+            break;
+          case "vendor":
+            aVal = a.vendor?.toLowerCase() || "";
+            bVal = b.vendor?.toLowerCase() || "";
+            break;
+          case "lastSeen":
+            aVal = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
+            bVal = b.lastSeen ? new Date(b.lastSeen).getTime() : 0;
+            break;
+        }
+
+        if (aVal === null && bVal === null) return 0;
+        if (aVal === null) return 1;
+        if (bVal === null) return -1;
+
+        let comparison = 0;
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          comparison = aVal - bVal;
+        } else {
+          comparison = String(aVal).localeCompare(String(bVal));
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return result;
+  }, [devices, searchQuery, sortField, sortDirection, ipToNum]);
+
+  const filteredCount = filteredDevices.length;
+
+  // If no user sort applied, use default sorting: local first, then by discovery methods, then by IP
+  const sortedDevices = useMemo(() => {
+    // If user has applied search/sort, use filtered devices
+    if (searchQuery.trim() || sortField) {
+      return filteredDevices;
+    }
+
+    // Default sorting when no user filters applied
+    return [...devices].sort((a, b) => {
+      // Local devices first
+      if (a.isLocal !== b.isLocal) {
+        return a.isLocal ? -1 : 1;
+      }
+      // Then by discovery method count
+      if (b.discoveryMethod.length !== a.discoveryMethod.length) {
+        return b.discoveryMethod.length - a.discoveryMethod.length;
+      }
+      // Then by IP numerically
+      const ipA = a.ip.split(".").map(Number);
+      const ipB = b.ip.split(".").map(Number);
+      for (let i = 0; i < 4; i++) {
+        if (ipA[i] !== ipB[i]) return (ipA[i] || 0) - (ipB[i] || 0);
+      }
+      return 0;
+    });
+  }, [devices, filteredDevices, searchQuery, sortField]);
+
+  // Early returns for loading/error states (after all hooks)
   if (loading) {
     return (
       <Card
@@ -827,7 +1050,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     );
   }
 
-  if (!data) {
+  if (!data || !status) {
     return (
       <Card
         title="Network Discovery"
@@ -848,11 +1071,6 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     );
   }
 
-  const { devices: rawDevices, status } = data;
-  // Ensure devices is an array (defensive check for malformed API responses)
-  const devices = Array.isArray(rawDevices) ? rawDevices : [];
-  const deviceCount = devices.length;
-
   // Categorize devices for summary
   const categories = categorizeDevices(devices);
 
@@ -863,25 +1081,6 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   };
 
   const cardStatus = getOverallStatus();
-
-  // Sort devices: local first, then by discovery methods, then by IP
-  const sortedDevices = [...devices].sort((a, b) => {
-    // Local devices first
-    if (a.isLocal !== b.isLocal) {
-      return a.isLocal ? -1 : 1;
-    }
-    // Then by discovery method count
-    if (b.discoveryMethod.length !== a.discoveryMethod.length) {
-      return b.discoveryMethod.length - a.discoveryMethod.length;
-    }
-    // Then by IP numerically
-    const ipA = a.ip.split(".").map(Number);
-    const ipB = b.ip.split(".").map(Number);
-    for (let i = 0; i < 4; i++) {
-      if (ipA[i] !== ipB[i]) return (ipA[i] || 0) - (ipB[i] || 0);
-    }
-    return 0;
-  });
 
   // Separate into local and extended for display
   const localDevices = sortedDevices.filter((d) => d.isLocal);
@@ -918,6 +1117,19 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         deviceCount={deviceCount}
         categories={categories}
       />
+
+      {/* Device Search/Sort Bar - show when there are devices */}
+      {deviceCount > 0 && (
+        <DeviceSearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
+          deviceCount={deviceCount}
+          filteredCount={filteredCount}
+        />
+      )}
 
       {/* Network Info - Collapsible */}
       <CollapsibleSection
