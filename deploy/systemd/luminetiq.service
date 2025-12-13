@@ -1,0 +1,30 @@
+[Unit]
+Description=LuminetIQ Network Diagnostics
+Documentation=https://github.com/krisarmstrong/luminetiq
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=luminetiq
+Group=luminetiq
+WorkingDirectory=/usr/local/luminetiq
+ExecStartPre=/sbin/setcap cap_net_raw=+ep /usr/local/luminetiq/luminetiq
+ExecStart=/usr/local/luminetiq/luminetiq
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=no
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/usr/local/luminetiq/configs /usr/local/luminetiq/logs
+PrivateTmp=true
+
+# Environment
+Environment=HOME=/usr/local/luminetiq
+
+[Install]
+WantedBy=multi-user.target
