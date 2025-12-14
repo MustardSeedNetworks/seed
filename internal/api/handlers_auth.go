@@ -3,7 +3,6 @@ package api
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -45,14 +44,13 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		return
-	}
+	// Limit request body size to prevent memory exhaustion (1KB is plenty for login)
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+
 	var req LoginRequest
-	if err := json.Unmarshal(bodyBytes, &req); err != nil {
-		log.Printf("login decode error: %v body=%q", err, string(bodyBytes))
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// Log error without exposing credentials
+		log.Printf("login decode error from %s: %v", clientIP, err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -146,8 +144,12 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Limit request body size to prevent memory exhaustion
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+
 	var req SetupCompleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("setup decode error: %v", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
