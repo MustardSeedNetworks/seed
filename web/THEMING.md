@@ -13,39 +13,44 @@ The theming system consists of three layers:
 ## Color Tokens
 
 ### Brand Colors
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
+
+| Token                   | Light     | Dark      | Usage                  |
+| ----------------------- | --------- | --------- | ---------------------- |
 | `--color-brand-primary` | `#1d4ed8` | `#93c5fd` | Primary actions, links |
-| `--color-brand-accent` | `#2563eb` | `#60a5fa` | Hover states |
+| `--color-brand-accent`  | `#2563eb` | `#60a5fa` | Hover states           |
 
 ### Surface Colors
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `--color-surface-base` | `#e5edf5` | `#0c1626` | Page background |
-| `--color-surface-raised` | `#f9fbfd` | `#131f32` | Cards, modals |
-| `--color-surface-border` | `#8fa3ba` | `#2a3a52` | Borders |
-| `--color-surface-hover` | `#d4deea` | `#1c2a40` | Hover backgrounds |
+
+| Token                    | Light     | Dark      | Usage             |
+| ------------------------ | --------- | --------- | ----------------- |
+| `--color-surface-base`   | `#e5edf5` | `#0c1626` | Page background   |
+| `--color-surface-raised` | `#f9fbfd` | `#131f32` | Cards, modals     |
+| `--color-surface-border` | `#8fa3ba` | `#2a3a52` | Borders           |
+| `--color-surface-hover`  | `#d4deea` | `#1c2a40` | Hover backgrounds |
 
 ### Text Colors
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `--color-text-primary` | `#0b1220` | `#f8fbff` | Main text |
-| `--color-text-secondary` | `#1b2737` | `#dbe5f3` | Secondary text |
-| `--color-text-muted` | `#334155` | `#b8c5d9` | Subtle text |
-| `--color-text-accent` | `#1d4ed8` | `#93c5fd` | Links, highlights |
-| `--color-text-inverse` | `#f8fafc` | `#0f172a` | Text on colored backgrounds |
+
+| Token                    | Light     | Dark      | Usage                       |
+| ------------------------ | --------- | --------- | --------------------------- |
+| `--color-text-primary`   | `#0b1220` | `#f8fbff` | Main text                   |
+| `--color-text-secondary` | `#1b2737` | `#dbe5f3` | Secondary text              |
+| `--color-text-muted`     | `#334155` | `#b8c5d9` | Subtle text                 |
+| `--color-text-accent`    | `#1d4ed8` | `#93c5fd` | Links, highlights           |
+| `--color-text-inverse`   | `#f8fafc` | `#0f172a` | Text on colored backgrounds |
 
 ### Status Colors (Industry Standard)
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
+
+| Token                    | Light     | Dark      | Usage          |
+| ------------------------ | --------- | --------- | -------------- |
 | `--color-status-success` | `#047857` | `#86efac` | Success states |
 | `--color-status-warning` | `#92400e` | `#fcd34d` | Warning states |
-| `--color-status-error` | `#b91c1c` | `#fca5a5` | Error states |
-| `--color-status-info` | `#1d4ed8` | `#93c5fd` | Informational |
+| `--color-status-error`   | `#b91c1c` | `#fca5a5` | Error states   |
+| `--color-status-info`    | `#1d4ed8` | `#93c5fd` | Informational  |
 
 ## Using Tailwind Classes
 
 ### Text Colors
+
 ```tsx
 // Good - uses design tokens
 <span className="text-text-primary">Main text</span>
@@ -60,6 +65,7 @@ The theming system consists of three layers:
 ```
 
 ### Background Colors
+
 ```tsx
 // Good
 <div className="bg-surface-base">Page</div>
@@ -72,6 +78,7 @@ The theming system consists of three layers:
 ```
 
 ### Status Colors
+
 ```tsx
 // Good - uses design tokens
 <span className="text-status-success">Success</span>
@@ -175,7 +182,7 @@ import { category } from '../styles/theme';
 For SVG elements that need dynamic colors, use CSS variables:
 
 ```tsx
-import { gauge } from '../styles/theme';
+import { gauge } from "../styles/theme";
 
 // Get color based on percentage
 const color = gauge.getColor(percentage);
@@ -186,7 +193,7 @@ const color = gauge.getColor(percentage);
 
 <svg>
   <circle fill={color} />
-</svg>
+</svg>;
 ```
 
 ## Dark Mode Implementation
@@ -194,7 +201,7 @@ const color = gauge.getColor(percentage);
 Dark mode is implemented via the `useTheme` hook:
 
 ```tsx
-import { useTheme } from '../hooks/useTheme';
+import { useTheme } from "../hooks/useTheme";
 
 function Component() {
   const { theme, setTheme, actualTheme } = useTheme();
@@ -203,7 +210,7 @@ function Component() {
   // actualTheme: 'light' | 'dark' (resolved value)
 
   return (
-    <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+    <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
       Toggle Theme
     </button>
   );
@@ -215,6 +222,7 @@ The `.dark` class is applied to the `<html>` element, and all CSS variables auto
 ## Color Accessibility
 
 All color combinations meet WCAG AA contrast requirements:
+
 - Light mode text: 4.5:1 minimum contrast ratio
 - Dark mode text: 4.5:1 minimum contrast ratio
 - Status colors: Adjusted for readability in both modes
@@ -229,6 +237,7 @@ All color combinations meet WCAG AA contrast requirements:
 ## Anti-Patterns to Avoid
 
 ### Don't use hardcoded colors
+
 ```tsx
 // Bad
 <span className="text-white">Text</span>
@@ -241,6 +250,7 @@ All color combinations meet WCAG AA contrast requirements:
 ```
 
 ### Don't use arbitrary Tailwind colors without dark mode variants
+
 ```tsx
 // Bad - breaks in dark mode
 <span className="text-blue-400">Text</span>
@@ -253,6 +263,7 @@ All color combinations meet WCAG AA contrast requirements:
 ```
 
 ### Don't hardcode hex in JavaScript for SVG/Canvas
+
 ```tsx
 // Bad
 const color = "#ef4444";
@@ -262,3 +273,31 @@ const color = gauge.getColor(percentage);
 // or
 const color = "var(--color-status-error)";
 ```
+
+## Exceptions: Opacity Variants
+
+These patterns are **allowed** because they work consistently in both light/dark modes:
+
+### Modal/Dialog Overlays
+
+```tsx
+// Allowed - semi-transparent black for dimming background
+<div className="bg-black/50">Modal overlay</div>;
+
+// Better - use design system
+import { modal } from "../styles/theme";
+<div className={modal.overlay}>Modal overlay</div>;
+```
+
+### Hover Effects on Colored Backgrounds
+
+```tsx
+// Allowed - subtle brightening on colored buttons/toasts
+<button className="bg-status-success hover:bg-white/20">...</button>
+```
+
+These work because:
+
+- `bg-black/50` always darkens regardless of theme
+- `bg-white/20` always lightens regardless of theme
+- They don't establish foreground/background contrast that would break in dark mode

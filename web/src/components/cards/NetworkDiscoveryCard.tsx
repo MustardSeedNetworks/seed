@@ -1141,7 +1141,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           <button
             type="button"
             onClick={onScan}
-            className="mt-3 w-full py-2 px-4 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors font-medium text-sm"
+            className="mt-3 w-full py-2 px-4 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90 transition-colors font-medium text-sm"
           >
             Start Scan
           </button>
@@ -1176,7 +1176,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             type="button"
             onClick={onScan}
             disabled={status.scanning}
-            className="py-1 px-2.5 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            className="py-1 px-2.5 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90 transition-colors font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
             {status.scanning ? (
               <>
