@@ -155,9 +155,10 @@ export const button = {
   },
 
   size: {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-6 py-3 text-lg",
+    xs: "px-2 py-1 text-xs", // Tiny buttons, badges
+    sm: "px-3 py-1.5 text-sm", // Small buttons
+    md: "px-4 py-2 text-base", // Default buttons
+    lg: "px-6 py-3 text-lg", // Large CTAs
   },
 } as const;
 
@@ -165,7 +166,7 @@ export const button = {
  * Input variants - consistent form input styling
  */
 export const input = {
-  base: "w-full rounded border bg-surface-raised px-3 py-2 text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed",
+  base: "w-full rounded border bg-surface-raised text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed",
 
   state: {
     default: "border-surface-border",
@@ -174,9 +175,9 @@ export const input = {
   },
 
   size: {
-    sm: "px-2 py-1 text-sm",
-    md: "px-3 py-2 text-base",
-    lg: "px-4 py-3 text-lg",
+    sm: "px-2 py-1.5 text-sm", // Compact inputs
+    md: "px-2.5 py-2 text-sm", // Default inputs (most common)
+    lg: "px-3 py-2.5 text-base", // Large inputs
   },
 } as const;
 

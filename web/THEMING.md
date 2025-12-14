@@ -153,12 +153,22 @@ import { typography } from '../styles/theme';
 Import utilities from `src/styles/theme.ts`:
 
 ```tsx
-import { cn, buttonClass, cardClass, badgeClass, severity, timing, category } from '../styles/theme';
+import { cn, buttonClass, cardClass, badgeClass, inputClass, button, input } from '../styles/theme';
 
-// Button classes
-<button className={buttonClass('primary', 'md')}>Primary</button>
+// Button classes - use buttonClass() helper
+<button className={buttonClass('primary', 'md')}>Primary Button</button>
 <button className={buttonClass('secondary', 'sm')}>Secondary</button>
 <button className={buttonClass('danger', 'lg')}>Danger</button>
+<button className={buttonClass('ghost', 'xs')}>Tiny Action</button>
+
+// Or use button tokens directly
+<button className={cn(button.base, button.variant.primary, button.size.md)}>
+  Primary
+</button>
+
+// Input classes - use inputClass() helper
+<input className={inputClass('default', 'md')} />  // Most common
+<input className={inputClass('error', 'sm')} />    // Compact with error state
 
 // Card classes
 <div className={cardClass('default', 'md')}>Card content</div>
@@ -167,6 +177,19 @@ import { cn, buttonClass, cardClass, badgeClass, severity, timing, category } fr
 <span className={badgeClass('success')}>Success</span>
 <span className={badgeClass('error')}>Error</span>
 ```
+
+### Button & Input Sizes
+
+Use consistent sizes for buttons and inputs:
+
+| Size | Button Padding | Input Padding | Usage                            |
+| ---- | -------------- | ------------- | -------------------------------- |
+| `xs` | `px-2 py-1`    | -             | Tiny buttons, icon actions       |
+| `sm` | `px-3 py-1.5`  | `px-2 py-1.5` | Compact forms, secondary actions |
+| `md` | `px-4 py-2`    | `px-2.5 py-2` | Default size (most common)       |
+| `lg` | `px-6 py-3`    | `px-3 py-2.5` | Large CTAs, prominent inputs     |
+
+**Important**: Always use `buttonClass()` or `inputClass()` helpers instead of raw Tailwind padding classes to ensure consistency.
 
 ## Spacing & Layout
 
