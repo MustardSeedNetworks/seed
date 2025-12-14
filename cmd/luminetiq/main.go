@@ -90,22 +90,18 @@ func main() {
 	cfg, setupResult, err := config.EnsureConfig(*configPath, auth.IsDefaultPasswordHash)
 	if err != nil {
 		if errors.Is(err, config.ErrInsecureCredentials) {
-			// Generate secure credentials
-			creds, credErr := auth.GenerateInitialCredentials(cfg.Auth.DefaultUsername)
-			if credErr != nil {
-				log.Fatalf("Failed to generate secure credentials: %v", credErr)
+			// Don't auto-generate credentials - let the web wizard handle it
+			// Just ensure we have a JWT secret for the server to start
+			if cfg.Auth.JWTSecret == "" {
+				jwtSecret := auth.GenerateJWTSecret()
+				cfg.UpdateJWTSecret(jwtSecret)
+				if saveErr := cfg.Save(*configPath); saveErr != nil {
+					log.Printf("Warning: Failed to persist JWT secret: %v", saveErr)
+				}
 			}
-
-			// Update config with new credentials
-			cfg.UpdateCredentials(creds.Username, creds.PasswordHash, creds.JWTSecret)
-
-			// Save the updated config
-			if saveErr := cfg.Save(*configPath); saveErr != nil {
-				log.Fatalf("Failed to save config with new credentials: %v", saveErr)
-			}
-
-			// Display credentials to console (this is the only time they're shown!)
-			printCredentialsBanner(creds.Username, creds.Password, setupResult.IsFirstBoot)
+			// Log that setup is needed
+			log.Println("Initial setup required - visit the web UI to set your admin password")
+			printSetupBanner(cfg.Server.Port, cfg.Server.HTTPS)
 		} else {
 			log.Fatalf("Failed to load configuration: %v", err)
 		}
@@ -213,44 +209,33 @@ func main() {
 	log.Println("LuminetIQ stopped")
 }
 
-// printCredentialsBanner displays the generated credentials prominently.
-// This is the only time the password is shown - it's not stored in plain text.
-func printCredentialsBanner(username, password string, isFirstBoot bool) {
+// printSetupBanner displays a message directing users to the web UI for setup.
+func printSetupBanner(port int, https bool) {
+	protocol := "http"
+	if https {
+		protocol = "https"
+	}
 	banner := `
 ╔══════════════════════════════════════════════════════════════════╗
-║                    LUMINETIQ SECURITY SETUP                      ║
+║                    LUMINETIQ INITIAL SETUP                       ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  %s  ║
+║  Welcome to LuminetIQ! Initial setup is required.                ║
 ║                                                                  ║
-║  Your login credentials have been generated:                     ║
+║  Please open your web browser and navigate to:                   ║
 ║                                                                  ║
-║    Username: %-48s ║
-║    Password: %-48s ║
+║    %s://localhost:%-42d ║
 ║                                                                  ║
-║  ⚠️  IMPORTANT: Save this password now!                          ║
-║     It will NOT be shown again.                                  ║
-║                                                                  ║
-║  The password has been securely hashed and stored in:            ║
-║    %s  ║
+║  You will be prompted to set your admin password.                ║
+║  A secure password will be suggested for you.                    ║
 ║                                                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 `
-	var setupType string
-	if isFirstBoot {
-		setupType = "First-time setup - generating secure credentials"
-	} else {
-		setupType = "Security upgrade - replacing default credentials"
-	}
-
-	// Pad the setup type and config path to fit the banner
-	setupType = fmt.Sprintf("%-52s", setupType)
-
 	// Use fmt.Fprintf to stderr so it's visible even when stdout is redirected
-	fmt.Fprintf(os.Stderr, banner, setupType, username, password, padRight("configs/luminetiq.yaml", 44))
+	fmt.Fprintf(os.Stderr, banner, protocol, port)
 
-	// Also log it (will go to log file)
-	log.Printf("Generated new credentials for user '%s' - password displayed in console", username)
+	// Also log it
+	log.Printf("Setup required - visit %s://localhost:%d to complete setup", protocol, port)
 }
 
 // padRight pads a string to the specified length.

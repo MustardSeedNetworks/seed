@@ -69,11 +69,17 @@ function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
+  const [suggestedPassword, setSuggestedPassword] = useState<
+    string | undefined
+  >(undefined);
 
   // Check if setup is needed on mount
   useEffect(() => {
     checkSetupStatus().then((status) => {
       setNeedsSetup(status.needsSetup);
+      if (status.suggestedPassword) {
+        setSuggestedPassword(status.suggestedPassword);
+      }
     });
   }, []);
   const [cards, setCards] = useState<CardState>({
@@ -845,7 +851,12 @@ function App() {
 
   // Show setup wizard if needed (before auth check)
   if (needsSetup === true) {
-    return <SetupWizard onComplete={() => setNeedsSetup(false)} />;
+    return (
+      <SetupWizard
+        onComplete={() => setNeedsSetup(false)}
+        suggestedPassword={suggestedPassword}
+      />
+    );
   }
 
   // Show loading while checking setup status

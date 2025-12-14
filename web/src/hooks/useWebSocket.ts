@@ -65,10 +65,10 @@ export function useWebSocket({
       const baseUrl = url.startsWith("ws")
         ? url
         : `${protocol}//${window.location.host}${url}`;
-      // Add token as query parameter (browsers can't send custom headers with WebSocket)
-      const wsUrl = `${baseUrl}?token=${encodeURIComponent(token)}`;
 
-      wsRef.current = new WebSocket(wsUrl);
+      // Use Sec-WebSocket-Protocol header for secure token transmission
+      // This prevents tokens from appearing in server logs, browser history, etc.
+      wsRef.current = new WebSocket(baseUrl, ["access_token", token]);
 
       wsRef.current.onopen = () => {
         setStatus("connected");
