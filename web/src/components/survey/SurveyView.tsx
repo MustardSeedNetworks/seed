@@ -1,10 +1,10 @@
 /**
  * SurveyView Component (~539 lines)
- * 
+ *
  * Purpose: Full-featured WiFi site survey editor and viewer. Allows users to create
  * detailed signal strength and performance heatmaps by recording samples at physical
  * locations on a floor plan, supporting passive scanning, active testing, and iperf3.
- * 
+ *
  * Key Features:
  * - Floor plan canvas: Interactive image-based coordinate system for sample placement
  * - Floor plan upload: Users can upload custom floor plan images
@@ -15,7 +15,7 @@
  * - Sample management: Create, update, delete sample points
  * - Export data: Save survey results for analysis
  * - Real-time updates: Reflect changes immediately in UI
- * 
+ *
  * Usage:
  * ```typescript
  * <SurveyView
@@ -24,7 +24,7 @@
  *   onUpdate={handleUpdate}
  * />
  * ```
- * 
+ *
  * Dependencies: FloorPlanCanvas, useAuth, useSurvey hook, API communication
  * State: survey data, sampling status, heatmap metric selection, upload progress
  */
@@ -39,6 +39,7 @@ import type {
   ThroughputSample,
 } from "../../hooks/useSurvey";
 import { X, Upload, Play, Pause, CheckCircle, Loader } from "../ui/Icons";
+import { radius, layout } from "../../styles/theme";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -323,12 +324,12 @@ export function SurveyView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className={`${layout.inline.default}`}>
             {/* Status controls */}
             {survey.status === "created" && (
               <button
                 onClick={() => handleStatusChange("start")}
-                className="px-4 py-2 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90 flex items-center gap-2"
+                className={`px-4 py-2 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default}`}
               >
                 <Play className="h-4 w-4" />
                 Start Survey
@@ -339,14 +340,14 @@ export function SurveyView({
               <>
                 <button
                   onClick={() => handleStatusChange("pause")}
-                  className="px-4 py-2 border border-surface-border rounded-md hover:bg-surface-hover flex items-center gap-2"
+                  className={`px-4 py-2 border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
                 >
                   <Pause className="h-4 w-4" />
                   Pause
                 </button>
                 <button
                   onClick={() => handleStatusChange("complete")}
-                  className="px-4 py-2 bg-status-success text-text-inverse rounded-md hover:bg-status-success/90 flex items-center gap-2"
+                  className={`px-4 py-2 bg-status-success text-text-inverse ${radius.md} hover:bg-status-success/90 ${layout.inline.default}`}
                 >
                   <CheckCircle className="h-4 w-4" />
                   Complete
@@ -358,14 +359,14 @@ export function SurveyView({
               <>
                 <button
                   onClick={() => handleStatusChange("start")}
-                  className="px-4 py-2 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90 flex items-center gap-2"
+                  className={`px-4 py-2 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default}`}
                 >
                   <Play className="h-4 w-4" />
                   Resume
                 </button>
                 <button
                   onClick={() => handleStatusChange("complete")}
-                  className="px-4 py-2 bg-status-success text-text-inverse rounded-md hover:bg-status-success/90 flex items-center gap-2"
+                  className={`px-4 py-2 bg-status-success text-text-inverse ${radius.md} hover:bg-status-success/90 ${layout.inline.default}`}
                 >
                   <CheckCircle className="h-4 w-4" />
                   Complete
@@ -375,7 +376,7 @@ export function SurveyView({
 
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-surface-border rounded-md hover:bg-surface-hover flex items-center gap-2"
+              className={`px-4 py-2 border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
             >
               <X className="h-4 w-4" />
               Close
@@ -387,13 +388,17 @@ export function SurveyView({
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         {error && (
-          <div className="bg-status-error/10 border border-status-error/20 text-status-error px-4 py-3 rounded-md mb-4">
+          <div
+            className={`bg-status-error/10 border border-status-error/20 text-status-error px-4 py-3 ${radius.md} mb-4`}
+          >
             {error}
           </div>
         )}
 
         {sampling && (
-          <div className="bg-status-info/10 border border-status-info/20 text-status-info px-4 py-3 rounded-md mb-4 flex items-center gap-2">
+          <div
+            className={`bg-status-info/10 border border-status-info/20 text-status-info px-4 py-3 ${radius.md} mb-4 ${layout.inline.default}`}
+          >
             <Loader className="h-4 w-4 animate-spin" />
             Taking measurement...
           </div>
@@ -402,14 +407,16 @@ export function SurveyView({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Floor plan */}
           <div className="lg:col-span-2">
-            <div className="bg-surface-raised rounded-md border border-surface-border p-4">
+            <div
+              className={`bg-surface-raised ${radius.md} border border-surface-border p-4`}
+            >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="heading-3">Floor Plan</h2>
                 {heatmapMetric === null && survey.samples.length > 0 && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => setHeatmapMetric("rssi")}
-                      className="px-3 py-1 body-small border border-surface-border rounded-md hover:bg-surface-hover"
+                      className={`px-3 py-1 body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
                     >
                       RSSI Heatmap
                     </button>
@@ -417,13 +424,13 @@ export function SurveyView({
                       <>
                         <button
                           onClick={() => setHeatmapMetric("throughput")}
-                          className="px-3 py-1 body-small border border-surface-border rounded-md hover:bg-surface-hover"
+                          className={`px-3 py-1 body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
                         >
                           Throughput
                         </button>
                         <button
                           onClick={() => setHeatmapMetric("latency")}
-                          className="px-3 py-1 body-small border border-surface-border rounded-md hover:bg-surface-hover"
+                          className={`px-3 py-1 body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
                         >
                           Latency
                         </button>
@@ -434,7 +441,7 @@ export function SurveyView({
                 {heatmapMetric !== null && (
                   <button
                     onClick={() => setHeatmapMetric(null)}
-                    className="px-3 py-1 body-small bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90"
+                    className={`px-3 py-1 body-small bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90`}
                   >
                     Hide Heatmap
                   </button>
@@ -442,12 +449,16 @@ export function SurveyView({
               </div>
 
               {!survey.floorPlan ? (
-                <div className="border-2 border-dashed border-surface-border rounded-md p-12 text-center">
+                <div
+                  className={`border-2 border-dashed border-surface-border ${radius.md} p-12 text-center`}
+                >
                   <Upload className="h-12 w-12 mx-auto text-text-muted mb-4" />
                   <p className="text-text-muted mb-4">
                     Upload a floor plan to begin
                   </p>
-                  <label className="inline-block px-4 py-2 bg-brand-primary text-text-inverse rounded-md cursor-pointer hover:bg-brand-primary/90">
+                  <label
+                    className={`inline-block px-4 py-2 bg-brand-primary text-text-inverse ${radius.md} cursor-pointer hover:bg-brand-primary/90`}
+                  >
                     {uploadingFloorPlan ? "Uploading..." : "Choose File"}
                     <input
                       type="file"
@@ -486,7 +497,9 @@ export function SurveyView({
 
           {/* Sample list */}
           <div className="lg:col-span-1">
-            <div className="bg-surface-raised rounded-md border border-surface-border p-4">
+            <div
+              className={`bg-surface-raised ${radius.md} border border-surface-border p-4`}
+            >
               <h2 className="heading-3 mb-4">
                 Samples ({survey.samples.length})
               </h2>
@@ -502,7 +515,7 @@ export function SurveyView({
                   survey.samples.map((sample, idx) => (
                     <div
                       key={idx}
-                      className="border border-surface-border rounded-md p-3 body-small"
+                      className={`border border-surface-border ${radius.md} p-3 body-small`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold">#{idx + 1}</span>

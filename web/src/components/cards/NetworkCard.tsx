@@ -1,6 +1,6 @@
 /**
  * Network Configuration Card Component
- * 
+ *
  * Displays DHCP/network configuration information including:
  * - IPv4 and IPv6 addresses and configuration
  * - MAC address and DHCP mode
@@ -8,14 +8,14 @@
  * - Public IP information (if available)
  * - DNS servers
  * - Lease time information
- * 
+ *
  * Features:
  * - Color-coded status based on DHCP timing thresholds
  * - Automatic unit formatting (ms vs seconds for times)
  * - Lease time human-readable formatting (days, hours)
  * - IPv6 scope and source type display
  * - Public IP information with last check timestamp
- * 
+ *
  * The card is part of the main network monitoring dashboard and provides
  * insight into network layer 3 configuration and DHCP performance.
  */
@@ -24,36 +24,42 @@ import { useMemo, useState } from "react";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
 import { Network } from "../ui/Icons";
-import { cn, layout, radius, icon as iconTokens, border } from "../../styles/theme";
+import {
+  cn,
+  layout,
+  radius,
+  icon as iconTokens,
+  border,
+} from "../../styles/theme";
 
 /**
  * DHCP timing information for each phase of address assignment
  */
 export interface DHCPTiming {
   discover: number; // Time for DISCOVER phase (ms)
-  offer: number;    // Time for OFFER phase (ms)
-  request: number;  // Time for REQUEST phase (ms)
-  ack: number;      // Time for ACK phase (ms)
-  total: number;    // Total DHCP negotiation time (ms)
+  offer: number; // Time for OFFER phase (ms)
+  request: number; // Time for REQUEST phase (ms)
+  ack: number; // Time for ACK phase (ms)
+  total: number; // Total DHCP negotiation time (ms)
 }
 
 /**
  * IPv4 address and configuration information
  */
 export interface IPv4Info {
-  address: string;        // IPv4 address assigned
-  subnet: string;         // Subnet mask (CIDR notation)
+  address: string; // IPv4 address assigned
+  subnet: string; // Subnet mask (CIDR notation)
   gateway: string | null; // Default gateway IP
   dhcpServer: string | null; // DHCP server IP that assigned address
-  leaseTime: number | null;  // Lease duration in seconds
+  leaseTime: number | null; // Lease duration in seconds
 }
 
 /**
  * IPv6 address and configuration information
  */
 export interface IPv6Info {
-  address: string;                              // IPv6 address
-  prefix: number;                               // Prefix length (0-128)
+  address: string; // IPv6 address
+  prefix: number; // Prefix length (0-128)
   scope: "global" | "link-local" | "unique-local"; // Address scope
   source: "slaac" | "dhcpv6" | "static" | "temporary"; // How address was configured
 }
@@ -62,11 +68,11 @@ export interface IPv6Info {
  * DHCP configuration data from the backend
  */
 export interface DHCPData {
-  mac: string;           // MAC address of interface
+  mac: string; // MAC address of interface
   mode: "dhcp" | "static" | "auto"; // Address assignment mode
   ipv4: IPv4Info | null; // IPv4 configuration (or null if not configured)
-  ipv6: IPv6Info[];      // Array of IPv6 addresses
-  dns: string[];         // DNS servers in use
+  ipv6: IPv6Info[]; // Array of IPv6 addresses
+  dns: string[]; // DNS servers in use
   timing: DHCPTiming | null; // DHCP timing info (or null if not DHCP)
 }
 
@@ -74,19 +80,19 @@ export interface DHCPData {
  * Public IP and geolocation information
  */
 export interface PublicIPInfo {
-  ipv4?: string;      // Public IPv4 address
-  ipv6?: string;      // Public IPv6 address
+  ipv4?: string; // Public IPv4 address
+  ipv6?: string; // Public IPv6 address
   lastChecked: string; // ISO 8601 timestamp of last check
-  error?: string;     // Error message if check failed
+  error?: string; // Error message if check failed
 }
 
 /**
  * Props for the DHCP/Network Card
  */
 interface DHCPCardProps {
-  data: DHCPData | null;  // DHCP/network configuration data
+  data: DHCPData | null; // DHCP/network configuration data
   publicip?: PublicIPInfo | null; // Optional public IP information
-  loading?: boolean;      // True while loading data
+  loading?: boolean; // True while loading data
   showPublicIP?: boolean; // Whether to display public IP info
   thresholds?: {
     total: { warning: number; critical: number };
@@ -97,7 +103,7 @@ interface DHCPCardProps {
 /**
  * Determines status indicator color based on DHCP timing thresholds.
  * Higher timing = more degradation.
- * 
+ *
  * @param value - Timing value in milliseconds
  * @param thresholds - Warning and critical thresholds in ms
  * @returns Status color ('success', 'warning', 'error')
@@ -374,17 +380,32 @@ export function NetworkCard({
             <>
               <CardDivider />
               <div className={cn(layout.flex.between, "mb-1")}>
-                <p className="caption font-medium">
-                  DHCP Timing
-                </p>
-                <button
-                  type="button"
-                  className={cn("caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary px-1", radius.default)}
-                  onClick={() => setShowTiming((v) => !v)}
-                  aria-expanded={showTiming}
-                >
-                  {showTiming ? "Hide" : "Show"}
-                </button>
+                <p className="caption font-medium">DHCP Timing</p>
+                {showTiming ? (
+                  <button
+                    type="button"
+                    className={cn(
+                      "caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary px-1",
+                      radius.default,
+                    )}
+                    onClick={() => setShowTiming(false)}
+                    aria-expanded="true"
+                  >
+                    Hide
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={cn(
+                      "caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary px-1",
+                      radius.default,
+                    )}
+                    onClick={() => setShowTiming(true)}
+                    aria-expanded="false"
+                  >
+                    Show
+                  </button>
+                )}
               </div>
               {showTiming && (
                 <div className="stack-xs">
@@ -418,9 +439,7 @@ export function NetworkCard({
           {hasData && !timing && (
             <>
               <CardDivider />
-              <p className="caption">
-                DHCP timing not yet recorded
-              </p>
+              <p className="caption">DHCP timing not yet recorded</p>
             </>
           )}
 
@@ -428,9 +447,7 @@ export function NetworkCard({
           {showPublicIP && publicip && (publicip.ipv4 || publicip.ipv6) && (
             <>
               <CardDivider />
-              <p className="caption font-medium mb-1">
-                Public IP
-              </p>
+              <p className="caption font-medium mb-1">Public IP</p>
               {publicip.ipv4 && <CardRow label="IPv4" value={publicip.ipv4} />}
               {publicip.ipv6 && (
                 <CardRow

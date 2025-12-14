@@ -449,12 +449,12 @@ export const PerformanceCard = memo(function PerformanceCard({
     >
       <div>
         {/* Internet Speed Section */}
-        <p className="caption font-medium mb-2">
-          Internet Speed
-        </p>
+        <p className="caption font-medium mb-2">Internet Speed</p>
 
-          {speedtestRunning && speedtestStatus && (
-          <div className={`${layout.inline.spacious} mb-3 p-3 bg-surface-hover ${radius.lg}`}>
+        {speedtestRunning && speedtestStatus && (
+          <div
+            className={`${layout.inline.spacious} mb-3 p-3 bg-surface-hover ${radius.lg}`}
+          >
             <ProgressRing
               progress={speedtestStatus.progress}
               size={56}
@@ -471,18 +471,12 @@ export const PerformanceCard = memo(function PerformanceCard({
               {(() => {
                 const sp = Math.min(Math.max(speedtestStatus.progress, 0), 100);
                 return (
-                  <div
-                    role="progressbar"
-                    aria-valuenow={sp}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
+                  <progress
+                    value={sp}
+                    max={100}
                     aria-label="Speedtest progress"
-                    className={`mt-2 w-full bg-surface-base ${radius.full} h-1.5`}
-                  >
-                    <div
-                      className={`bg-brand-primary h-1.5 ${radius.full} transition-all duration-300 w-[${sp}%]`}
-                    />
-                  </div>
+                    className={`mt-2 w-full ${radius.full}`}
+                  />
                 );
               })()}
             </div>
@@ -541,7 +535,9 @@ export const PerformanceCard = memo(function PerformanceCard({
           <>
             {/* Config Summary */}
             {iperfSettings.server ? (
-              <div className={`caption mb-3 p-2 bg-surface-hover ${radius.default}`}>
+              <div
+                className={`caption mb-3 p-2 bg-surface-hover ${radius.default}`}
+              >
                 <div className={layout.flex.between}>
                   <span>Server:</span>
                   <span className="text-text-primary">
@@ -559,14 +555,14 @@ export const PerformanceCard = memo(function PerformanceCard({
                 </div>
               </div>
             ) : (
-              <p className="caption mb-3">
-                Configure server in Settings
-              </p>
+              <p className="caption mb-3">Configure server in Settings</p>
             )}
 
             {/* Client Status/Results */}
             {iperfClientRunning && iperfClientStatus && (
-              <div className={`${layout.inline.spacious} mb-3 p-3 bg-surface-hover ${radius.lg}`}>
+              <div
+                className={`${layout.inline.spacious} mb-3 p-3 bg-surface-hover ${radius.lg}`}
+              >
                 <ProgressRing
                   progress={iperfClientStatus.progress}
                   size={56}
@@ -581,20 +577,17 @@ export const PerformanceCard = memo(function PerformanceCard({
                     </span>
                   </div>
                   {(() => {
-                    const pp = Math.min(Math.max(iperfClientStatus.progress, 0), 100);
+                    const pp = Math.min(
+                      Math.max(iperfClientStatus.progress, 0),
+                      100,
+                    );
                     return (
-                      <div
-                        role="progressbar"
-                        aria-valuenow={pp}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
+                      <progress
+                        value={pp}
+                        max={100}
                         aria-label="iPerf progress"
-                        className={`mt-2 w-full bg-surface-base ${radius.full} h-1.5`}
-                      >
-                        <div
-                          className={`bg-brand-primary h-1.5 ${radius.full} transition-all duration-300 w-[${pp}%]`}
-                        />
-                      </div>
+                        className={`mt-2 w-full ${radius.full}`}
+                      />
                     );
                   })()}
                 </div>
@@ -685,7 +678,9 @@ export const PerformanceCard = memo(function PerformanceCard({
 
             {/* Server status indicator (if enabled) */}
             {iperfSettings.enableServer && (
-              <div className={`caption ${layout.flex.between} p-2 bg-surface-hover ${radius.default}`}>
+              <div
+                className={`caption ${layout.flex.between} p-2 bg-surface-hover ${radius.default}`}
+              >
                 <span>Server Mode</span>
                 <span
                   className={

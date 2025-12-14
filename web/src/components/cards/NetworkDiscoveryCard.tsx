@@ -34,6 +34,7 @@ import {
   discoveryMethod as discoveryMethodTheme,
   category as categoryTheme,
   severity as severityTheme,
+  radius,
 } from "../../styles/theme";
 
 export interface LLDPInfo {
@@ -201,7 +202,7 @@ function DeviceSearchBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search devices by IP, hostname, vendor, MAC..."
-          className="w-full pl-9 pr-8 py-1.5 body-small bg-surface-base border border-surface-border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted"
+          className={`w-full pl-9 pr-8 py-1.5 body-small bg-surface-base border border-surface-border ${radius.md} focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted`}
         />
         {searchQuery && (
           <button
@@ -225,7 +226,7 @@ function DeviceSearchBar({
                 key={field}
                 type="button"
                 onClick={() => onSortChange(field)}
-                className={`px-2 py-0.5 caption rounded-md transition-colors flex items-center gap-1 ${
+                className={`px-2 py-0.5 caption ${radius.md} transition-colors flex items-center gap-1 ${
                   sortField === field
                     ? "bg-brand-primary/20 text-brand-primary"
                     : "bg-surface-hover text-text-muted hover:text-text-primary"
@@ -289,7 +290,7 @@ const discoveryMethodColors: Record<DiscoveryMethod, string> = {
 function MethodBadge({ method }: { method: DiscoveryMethod }) {
   return (
     <span
-      className={`px-1.5 py-0.5 rounded-md caption font-medium uppercase ${discoveryMethodColors[method]}`}
+      className={`px-1.5 py-0.5 ${radius.md} caption font-medium uppercase ${discoveryMethodColors[method]}`}
     >
       {method}
     </span>
@@ -332,7 +333,7 @@ function ProfileIcons({
         return (
           <span
             key={icon}
-            className="p-1 rounded-md bg-brand-primary/20 text-brand-primary flex items-center justify-center"
+            className={`p-1 ${radius.md} bg-brand-primary/20 text-brand-primary flex items-center justify-center`}
             title={`${icon}${deviceType ? ` (${deviceType})` : ""}`}
           >
             {IconComponent ? (
@@ -473,7 +474,7 @@ function DiscoverySummary({
   ].filter((s) => s.count > 0);
 
   return (
-    <div className="bg-surface-hover rounded-md p-3 stack-sm">
+    <div className={`bg-surface-hover ${radius.md} p-3 stack-sm`}>
       {/* Status row */}
       <div className="flex items-center justify-between body-small">
         <div className="flex items-center gap-2">
@@ -582,7 +583,9 @@ function DeviceRow({
   };
 
   return (
-    <div className="border border-surface-border rounded-md overflow-hidden">
+    <div
+      className={`border border-surface-border ${radius.md} overflow-hidden`}
+    >
       <button
         type="button"
         onClick={onToggle}
@@ -613,7 +616,9 @@ function DeviceRow({
                 </span>
               )}
               {openPorts.length > 0 && (
-                <span className="caption bg-status-success/20 text-status-success px-1.5 py-0.5 rounded-md">
+                <span
+                  className={`caption bg-status-success/20 text-status-success px-1.5 py-0.5 ${radius.md}`}
+                >
                   {openPorts.length} open
                 </span>
               )}
@@ -631,7 +636,7 @@ function DeviceRow({
                     e.stopPropagation();
                     onVulnerabilityClick?.(device.ip);
                   }}
-                  className={`inline-flex items-center gap-1 caption px-1.5 py-0.5 rounded-md cursor-pointer hover:opacity-80 transition-opacity ${
+                  className={`inline-flex items-center gap-1 caption px-1.5 py-0.5 ${radius.md} cursor-pointer hover:opacity-80 transition-opacity ${
                     device.vulnerabilities.highestSeverity === "CRITICAL"
                       ? `${severityTheme.critical.bg} ${severityTheme.critical.text}`
                       : device.vulnerabilities.highestSeverity === "HIGH"
@@ -672,7 +677,7 @@ function DeviceRow({
                 type="button"
                 onClick={handleDeepScan}
                 disabled={isScanning}
-                className="px-2 py-1 caption bg-status-info/20 text-status-info rounded-md hover:bg-status-info/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-2 py-1 caption bg-status-info/20 text-status-info ${radius.md} hover:bg-status-info/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                 title="Deep Scan - scan common ports"
               >
                 {isScanning ? (
@@ -788,7 +793,7 @@ function DeviceRow({
                       {profileOpenPorts.map((port) => (
                         <span
                           key={port.port}
-                          className="px-1.5 py-0.5 rounded-md text-[10px] bg-status-success/20 text-status-success"
+                          className={`px-1.5 py-0.5 ${radius.md} text-[10px] bg-status-success/20 text-status-success`}
                           title={port.banner || port.service || undefined}
                         >
                           {port.port}
@@ -1148,7 +1153,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           <button
             type="button"
             onClick={onScan}
-            className="mt-3 w-full py-2 px-4 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90 transition-colors font-medium body-small"
+            className={`mt-3 w-full py-2 px-4 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium body-small`}
           >
             Start Scan
           </button>
@@ -1183,7 +1188,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             type="button"
             onClick={onScan}
             disabled={status.scanning}
-            className="py-1 px-2.5 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            className={`py-1 px-2.5 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5`}
           >
             {status.scanning ? (
               <>

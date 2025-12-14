@@ -60,9 +60,12 @@ export function WiFiSettings({
     >
       <div className="stack-sm">
         <div>
-          <label className="caption text-text-muted">WiFi Interface</label>
+          <label className="caption text-text-muted" htmlFor="wifi-interface">
+            WiFi Interface
+          </label>
           {wifiSettings.availableWifi.length > 0 ? (
             <select
+              id="wifi-interface"
               value={wifiSettings.interface}
               onChange={(e) =>
                 setWifiSettings((prev) => ({
@@ -80,6 +83,7 @@ export function WiFiSettings({
             </select>
           ) : (
             <input
+              id="wifi-interface-input"
               type="text"
               value={wifiSettings.interface}
               onChange={(e) =>

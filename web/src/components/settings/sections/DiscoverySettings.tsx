@@ -124,7 +124,9 @@ export function DiscoverySettings({
     >
       <div className="stack">
         {/* Enable Toggle */}
-        <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
+        <label
+          className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+        >
           <div>
             <span className="body-small text-text-primary font-medium">
               Enable Discovery
@@ -145,7 +147,9 @@ export function DiscoverySettings({
         </label>
 
         {/* Auto-Scan on Link Up */}
-        <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
+        <label
+          className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+        >
           <div>
             <span className="body-small text-text-primary font-medium">
               Auto-Scan on Link Up
@@ -328,7 +332,9 @@ export function DiscoverySettings({
                   }
                   className={iconTokens.size.sm}
                 />
-                <span className="body-small text-text-primary">ARP Scanning</span>
+                <span className="body-small text-text-primary">
+                  ARP Scanning
+                </span>
               </label>
               <label className={layout.inline.default}>
                 <input
@@ -375,7 +381,9 @@ export function DiscoverySettings({
                   }
                   className={iconTokens.size.sm}
                 />
-                <span className="body-small text-text-primary">Port Scanning</span>
+                <span className="body-small text-text-primary">
+                  Port Scanning
+                </span>
               </label>
               <label className={layout.inline.default}>
                 <input
@@ -413,7 +421,9 @@ export function DiscoverySettings({
                   }
                   className={iconTokens.size.sm}
                 />
-                <span className="body-small text-text-primary">SNMP Queries</span>
+                <span className="body-small text-text-primary">
+                  SNMP Queries
+                </span>
               </label>
             </div>
           </div>
@@ -427,10 +437,14 @@ export function DiscoverySettings({
 
           {/* Scan Workers */}
           <div className="mt-2">
-            <label className="caption text-text-muted">
+            <label
+              className="caption text-text-muted"
+              htmlFor="discovery-workers"
+            >
               Concurrent Scan Workers
             </label>
             <input
+              id="discovery-workers"
               type="number"
               value={networkDiscoverySettings.arpScanWorkers}
               onChange={(e) =>
@@ -450,8 +464,14 @@ export function DiscoverySettings({
 
           {/* Ping Timeout */}
           <div className="mt-3">
-            <label className="caption text-text-muted">Ping Timeout (ms)</label>
+            <label
+              className="caption text-text-muted"
+              htmlFor="discovery-ping-timeout"
+            >
+              Ping Timeout (ms)
+            </label>
             <input
+              id="discovery-ping-timeout"
               type="number"
               value={networkDiscoverySettings.pingTimeoutMs}
               onChange={(e) =>
@@ -468,10 +488,14 @@ export function DiscoverySettings({
 
           {/* Scan Timeout */}
           <div className="mt-3">
-            <label className="caption text-text-muted">
+            <label
+              className="caption text-text-muted"
+              htmlFor="discovery-scan-timeout"
+            >
               Total Scan Timeout (ms)
             </label>
             <input
+              id="discovery-scan-timeout"
               type="number"
               value={networkDiscoverySettings.scanTimeoutMs}
               onChange={(e) =>
@@ -488,10 +512,14 @@ export function DiscoverySettings({
 
           {/* Rescan Interval */}
           <div className="mt-3">
-            <label className="caption text-text-muted">
+            <label
+              className="caption text-text-muted"
+              htmlFor="discovery-rescan-interval"
+            >
               Auto-Rescan Interval (ms)
             </label>
             <input
+              id="discovery-rescan-interval"
               type="number"
               value={networkDiscoverySettings.scanIntervalMs}
               onChange={(e) =>
@@ -511,10 +539,14 @@ export function DiscoverySettings({
 
         {/* OUI File Path */}
         <div className="border-t border-surface-border pt-3">
-          <label className="caption text-text-muted font-medium">
+          <label
+            className="caption text-text-muted font-medium"
+            htmlFor="discovery-oui-path"
+          >
             OUI Database File Path
           </label>
           <input
+            id="discovery-oui-path"
             type="text"
             value={networkDiscoverySettings.ouiFilePath}
             onChange={(e) =>

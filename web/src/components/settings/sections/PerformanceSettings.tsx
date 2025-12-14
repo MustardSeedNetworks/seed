@@ -83,7 +83,9 @@ export function PerformanceSettings({
       <div className="stack">
         {/* Enable/Disable Toggles */}
         <div className="stack-sm">
-          <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
+          <label
+            className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+          >
             <div>
               <span className="body-small text-text-primary font-medium">
                 Enable Speedtest
@@ -104,7 +106,9 @@ export function PerformanceSettings({
               className={iconTokens.size.sm}
             />
           </label>
-          <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
+          <label
+            className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+          >
             <div>
               <span className="body-small text-text-primary font-medium">
                 Enable iPerf
@@ -133,7 +137,9 @@ export function PerformanceSettings({
             Auto-Run on Link Up
           </span>
           <div className="mt-2 stack-sm">
-            <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
+            <label
+              className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+            >
               <span className="body-small text-text-primary">Speedtest</span>
               <input
                 type="checkbox"
@@ -150,7 +156,9 @@ export function PerformanceSettings({
                 className={iconTokens.size.sm}
               />
             </label>
-            <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
+            <label
+              className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+            >
               <span className="body-small text-text-primary">iPerf</span>
               <input
                 type="checkbox"
@@ -312,10 +320,14 @@ export function PerformanceSettings({
 
             {/* Port */}
             <div>
-              <label className="caption text-text-muted font-medium">
+              <label
+                className="caption text-text-muted font-medium"
+                htmlFor="iperf-port"
+              >
                 Port
               </label>
               <input
+                id="iperf-port"
                 type="number"
                 value={iperfSettings.port}
                 onChange={(e) =>
@@ -333,27 +345,40 @@ export function PerformanceSettings({
               <label className="caption text-text-muted font-medium block mb-1">
                 Protocol
               </label>
-              <div className="flex flex-wrap gap-2">
-                {(["tcp", "udp"] as const).map((proto) => (
-                  <button
-                    key={proto}
-                    type="button"
-                    onClick={() =>
-                      setIperfSettings((prev) => ({
-                        ...prev,
-                        protocol: proto,
-                      }))
-                    }
-                    aria-pressed={iperfSettings.protocol === proto}
-                    className={`px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
-                      iperfSettings.protocol === proto
-                        ? "bg-brand-primary text-text-inverse border-brand-primary"
-                        : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
-                    }`}
-                  >
-                    {proto.toUpperCase()}
-                  </button>
-                ))}
+              <div
+                className="flex flex-wrap gap-2"
+                role="radiogroup"
+                aria-label="Protocol selection"
+              >
+                {(["tcp", "udp"] as const).map((proto) => {
+                  const checked = iperfSettings.protocol === proto;
+                  return (
+                    <label
+                      key={proto}
+                      className={`cursor-pointer px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
+                        checked
+                          ? "bg-brand-primary text-text-inverse border-brand-primary"
+                          : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="iperf-protocol"
+                        value={proto}
+                        checked={checked}
+                        onChange={() =>
+                          setIperfSettings((prev) => ({
+                            ...prev,
+                            protocol: proto,
+                          }))
+                        }
+                        className="sr-only"
+                        aria-label={`${proto.toUpperCase()} protocol`}
+                      />
+                      {proto.toUpperCase()}
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
@@ -362,42 +387,59 @@ export function PerformanceSettings({
               <label className="caption text-text-muted font-medium block mb-1">
                 Direction
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div
+                className="flex flex-wrap gap-2"
+                role="radiogroup"
+                aria-label="Direction selection"
+              >
                 {(
                   [
                     { value: "download", label: "Download" },
                     { value: "upload", label: "Upload" },
                     { value: "bidirectional", label: "Both" },
                   ] as const
-                ).map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() =>
-                      setIperfSettings((prev) => ({
-                        ...prev,
-                        direction: option.value,
-                      }))
-                    }
-                    aria-pressed={iperfSettings.direction === option.value}
-                    className={`px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
-                      iperfSettings.direction === option.value
-                        ? "bg-brand-primary text-text-inverse border-brand-primary"
-                        : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+                ).map((option) => {
+                  const checked = iperfSettings.direction === option.value;
+                  return (
+                    <label
+                      key={option.value}
+                      className={`cursor-pointer px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
+                        checked
+                          ? "bg-brand-primary text-text-inverse border-brand-primary"
+                          : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="iperf-direction"
+                        value={option.value}
+                        checked={checked}
+                        onChange={() =>
+                          setIperfSettings((prev) => ({
+                            ...prev,
+                            direction: option.value,
+                          }))
+                        }
+                        className="sr-only"
+                        aria-label={`${option.label} direction`}
+                      />
+                      {option.label}
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
             {/* Duration */}
             <div>
-              <label className="caption text-text-muted font-medium">
+              <label
+                className="caption text-text-muted font-medium"
+                htmlFor="iperf-duration"
+              >
                 Duration (seconds)
               </label>
               <input
+                id="iperf-duration"
                 type="number"
                 value={iperfSettings.duration}
                 onChange={(e) =>
@@ -414,7 +456,9 @@ export function PerformanceSettings({
 
             {/* Server Mode */}
             <div className="border-t border-surface-border pt-3">
-              <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border mb-2`}>
+              <label
+                className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border mb-2`}
+              >
                 <span className="body-small text-text-primary">
                   Enable iperf3 Server
                 </span>
@@ -431,10 +475,14 @@ export function PerformanceSettings({
                 />
               </label>
               <div>
-                <label className="caption text-text-muted font-medium">
+                <label
+                  className="caption text-text-muted font-medium"
+                  htmlFor="iperf-server-port"
+                >
                   Server Port
                 </label>
                 <input
+                  id="iperf-server-port"
                   type="number"
                   value={iperfSettings.serverPort}
                   onChange={(e) =>

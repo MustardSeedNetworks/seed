@@ -78,8 +78,11 @@ export function ThresholdsSettings({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="caption text-text-muted">Good (&lt;)</label>
+              <label className="caption text-text-muted" htmlFor="dns-good">
+                Good (&lt;)
+              </label>
               <input
+                id="dns-good"
                 type="number"
                 value={thresholds.dns.good}
                 onChange={(e) =>
@@ -89,8 +92,11 @@ export function ThresholdsSettings({
               />
             </div>
             <div>
-              <label className="caption text-text-muted">Warning (&lt;)</label>
+              <label className="caption text-text-muted" htmlFor="dns-warning">
+                Warning (&lt;)
+              </label>
               <input
+                id="dns-warning"
                 type="number"
                 value={thresholds.dns.warning}
                 onChange={(e) =>
@@ -116,8 +122,11 @@ export function ThresholdsSettings({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="caption text-text-muted">Good (&lt;)</label>
+              <label className="caption text-text-muted" htmlFor="gateway-good">
+                Good (&lt;)
+              </label>
               <input
+                id="gateway-good"
                 type="number"
                 value={thresholds.gateway.good}
                 onChange={(e) =>
@@ -127,8 +136,14 @@ export function ThresholdsSettings({
               />
             </div>
             <div>
-              <label className="caption text-text-muted">Warning (&lt;)</label>
+              <label
+                className="caption text-text-muted"
+                htmlFor="gateway-warning"
+              >
+                Warning (&lt;)
+              </label>
               <input
+                id="gateway-warning"
                 type="number"
                 value={thresholds.gateway.warning}
                 onChange={(e) =>
@@ -154,8 +169,11 @@ export function ThresholdsSettings({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="caption text-text-muted">Good (&gt;)</label>
+              <label className="caption text-text-muted" htmlFor="wifi-good">
+                Good (&gt;)
+              </label>
               <input
+                id="wifi-good"
                 type="number"
                 value={thresholds.wifi.good}
                 onChange={(e) =>
@@ -165,8 +183,11 @@ export function ThresholdsSettings({
               />
             </div>
             <div>
-              <label className="caption text-text-muted">Warning (&gt;)</label>
+              <label className="caption text-text-muted" htmlFor="wifi-warning">
+                Warning (&gt;)
+              </label>
               <input
+                id="wifi-warning"
                 type="number"
                 value={thresholds.wifi.warning}
                 onChange={(e) =>
@@ -195,8 +216,11 @@ export function ThresholdsSettings({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="caption text-text-muted">Good (&lt;)</label>
+              <label className="caption text-text-muted" htmlFor="ping-good">
+                Good (&lt;)
+              </label>
               <input
+                id="ping-good"
                 type="number"
                 value={thresholds.customPing.good}
                 onChange={(e) =>
@@ -206,8 +230,11 @@ export function ThresholdsSettings({
               />
             </div>
             <div>
-              <label className="caption text-text-muted">Warning (&lt;)</label>
+              <label className="caption text-text-muted" htmlFor="ping-warning">
+                Warning (&lt;)
+              </label>
               <input
+                id="ping-warning"
                 type="number"
                 value={thresholds.customPing.warning}
                 onChange={(e) =>
@@ -240,8 +267,11 @@ export function ThresholdsSettings({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="caption text-text-muted">Good (&lt;)</label>
+              <label className="caption text-text-muted" htmlFor="tcp-good">
+                Good (&lt;)
+              </label>
               <input
+                id="tcp-good"
                 type="number"
                 value={thresholds.customTcp.good}
                 onChange={(e) =>
@@ -251,8 +281,11 @@ export function ThresholdsSettings({
               />
             </div>
             <div>
-              <label className="caption text-text-muted">Warning (&lt;)</label>
+              <label className="caption text-text-muted" htmlFor="tcp-warning">
+                Warning (&lt;)
+              </label>
               <input
+                id="tcp-warning"
                 type="number"
                 value={thresholds.customTcp.warning}
                 onChange={(e) =>
@@ -288,8 +321,14 @@ export function ThresholdsSettings({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="caption text-text-muted">Good (&lt;)</label>
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-total-good"
+                >
+                  Good (&lt;)
+                </label>
                 <input
+                  id="http-total-good"
                   type="number"
                   value={thresholds.customHttp.good}
                   onChange={(e) =>
@@ -303,10 +342,14 @@ export function ThresholdsSettings({
                 />
               </div>
               <div>
-                <label className="caption text-text-muted">
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-total-warning"
+                >
                   Warning (&lt;)
                 </label>
                 <input
+                  id="http-total-warning"
                   type="number"
                   value={thresholds.customHttp.warning}
                   onChange={(e) =>
@@ -338,8 +381,14 @@ export function ThresholdsSettings({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="caption text-text-muted">Good (&lt;)</label>
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-dns-good"
+                >
+                  Good (&lt;)
+                </label>
                 <input
+                  id="http-dns-good"
                   type="number"
                   value={thresholds.httpTimings.dns.good}
                   onChange={(e) =>
@@ -353,10 +402,14 @@ export function ThresholdsSettings({
                 />
               </div>
               <div>
-                <label className="caption text-text-muted">
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-dns-warning"
+                >
                   Warning (&lt;)
                 </label>
                 <input
+                  id="http-dns-warning"
                   type="number"
                   value={thresholds.httpTimings.dns.warning}
                   onChange={(e) =>
@@ -384,8 +437,14 @@ export function ThresholdsSettings({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="caption text-text-muted">Good (&lt;)</label>
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-tcp-good"
+                >
+                  Good (&lt;)
+                </label>
                 <input
+                  id="http-tcp-good"
                   type="number"
                   value={thresholds.httpTimings.tcp.good}
                   onChange={(e) =>
@@ -399,10 +458,14 @@ export function ThresholdsSettings({
                 />
               </div>
               <div>
-                <label className="caption text-text-muted">
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-tcp-warning"
+                >
                   Warning (&lt;)
                 </label>
                 <input
+                  id="http-tcp-warning"
                   type="number"
                   value={thresholds.httpTimings.tcp.warning}
                   onChange={(e) =>
@@ -430,8 +493,14 @@ export function ThresholdsSettings({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="caption text-text-muted">Good (&lt;)</label>
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-tls-good"
+                >
+                  Good (&lt;)
+                </label>
                 <input
+                  id="http-tls-good"
                   type="number"
                   value={thresholds.httpTimings.tls.good}
                   onChange={(e) =>
@@ -445,10 +514,14 @@ export function ThresholdsSettings({
                 />
               </div>
               <div>
-                <label className="caption text-text-muted">
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-tls-warning"
+                >
                   Warning (&lt;)
                 </label>
                 <input
+                  id="http-tls-warning"
                   type="number"
                   value={thresholds.httpTimings.tls.warning}
                   onChange={(e) =>
@@ -476,8 +549,14 @@ export function ThresholdsSettings({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="caption text-text-muted">Good (&lt;)</label>
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-ttfb-good"
+                >
+                  Good (&lt;)
+                </label>
                 <input
+                  id="http-ttfb-good"
                   type="number"
                   value={thresholds.httpTimings.ttfb.good}
                   onChange={(e) =>
@@ -491,10 +570,14 @@ export function ThresholdsSettings({
                 />
               </div>
               <div>
-                <label className="caption text-text-muted">
+                <label
+                  className="caption text-text-muted"
+                  htmlFor="http-ttfb-warning"
+                >
                   Warning (&lt;)
                 </label>
                 <input
+                  id="http-ttfb-warning"
                   type="number"
                   value={thresholds.httpTimings.ttfb.warning}
                   onChange={(e) =>
