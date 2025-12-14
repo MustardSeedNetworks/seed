@@ -17,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/luminetiq/internal/auth"
 	"github.com/krisarmstrong/luminetiq/internal/config"
 	"github.com/krisarmstrong/luminetiq/internal/dhcp"
 	"github.com/krisarmstrong/luminetiq/internal/discovery"
@@ -81,18 +80,6 @@ func readLastLines(path string, maxBytes int64, maxLines int) ([]string, error) 
 	return lines, nil
 }
 
-// LoginRequest represents a login request.
-type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-// LoginResponse represents a login response.
-type LoginResponse struct {
-	Token   string `json:"token"`
-	Expires int64  `json:"expires"`
-}
-
 // StatusResponse represents the system status.
 type StatusResponse struct {
 	Status        string `json:"status"`
@@ -101,86 +88,6 @@ type StatusResponse struct {
 	Interface     string `json:"interface"`
 	IsWireless    bool   `json:"isWireless"`
 	ICMPAvailable bool   `json:"icmpAvailable"`
-}
-
-// handleLogin handles user authentication.
-func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Get client IP for rate limiting
-	clientIP := GetClientIP(r)
-
-	// Check if IP is rate limited
-	if s.loginRateLimiter.IsBlocked(clientIP) {
-		w.Header().Set("Retry-After", "900") // 15 minutes
-		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
-		sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-			"error":              "Too many failed login attempts",
-			"retry_after":        900,
-			"remaining_attempts": remaining,
-		})
-		return
-	}
-
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		return
-	}
-	var req LoginRequest
-	if err := json.Unmarshal(bodyBytes, &req); err != nil {
-		log.Printf("login decode error: %v body=%q", err, string(bodyBytes))
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	token, err := s.authManager.Authenticate(req.Username, req.Password)
-	if err != nil {
-		// Record failed attempt
-		blocked := s.loginRateLimiter.RecordAttempt(clientIP, false)
-		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
-
-		if blocked {
-			w.Header().Set("Retry-After", "900")
-			sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-				"error":              "Too many failed login attempts. Account temporarily locked.",
-				"retry_after":        900,
-				"remaining_attempts": 0,
-			})
-			return
-		}
-
-		sendJSONResponse(w, http.StatusUnauthorized, map[string]interface{}{
-			"error":              "Invalid credentials",
-			"remaining_attempts": remaining,
-		})
-		return
-	}
-
-	// Record successful attempt (clears previous failures)
-	s.loginRateLimiter.RecordAttempt(clientIP, true)
-
-	resp := LoginResponse{
-		Token:   token,
-		Expires: time.Now().Add(s.config.Auth.SessionTimeout).Unix(),
-	}
-
-	sendJSONResponse(w, http.StatusOK, resp)
-}
-
-// handleLogout handles user logout.
-func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// JWT is stateless, so we just acknowledge the logout
-	// Client should discard the token
-	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "logged out"})
 }
 
 // handleStatus returns the system status.
@@ -4424,111 +4331,6 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 // SetupStatusResponse represents the setup status response.
-type SetupStatusResponse struct {
-	NeedsSetup        bool   `json:"needsSetup"`
-	Username          string `json:"username,omitempty"`
-	SuggestedPassword string `json:"suggestedPassword,omitempty"`
-}
-
-// handleSetupStatus handles GET /api/setup/status - returns whether initial setup is needed.
-func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	s.config.RLock()
-	needsSetup := s.config.Auth.DefaultPasswordHash == ""
-	username := s.config.Auth.DefaultUsername
-	s.config.RUnlock()
-
-	response := SetupStatusResponse{
-		NeedsSetup: needsSetup,
-		Username:   username,
-	}
-
-	// Generate a suggested password if setup is needed
-	if needsSetup {
-		suggestedPassword, err := auth.GenerateSecurePassword(16)
-		if err == nil {
-			response.SuggestedPassword = suggestedPassword
-		}
-	}
-
-	sendJSONResponse(w, http.StatusOK, response)
-}
-
-// SetupCompleteRequest represents the initial setup request.
-type SetupCompleteRequest struct {
-	Password string `json:"password"`
-}
-
-// handleSetupComplete handles POST /api/setup/complete - completes initial setup with admin password.
-func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Check if setup is still needed
-	s.config.RLock()
-	needsSetup := s.config.Auth.DefaultPasswordHash == ""
-	s.config.RUnlock()
-
-	if !needsSetup {
-		sendJSONResponse(w, http.StatusBadRequest, map[string]string{
-			"error": "Setup already completed",
-		})
-		return
-	}
-
-	var req SetupCompleteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendJSONResponse(w, http.StatusBadRequest, map[string]string{
-			"error": "Invalid request body",
-		})
-		return
-	}
-
-	// Validate password
-	if len(req.Password) < 8 {
-		sendJSONResponse(w, http.StatusBadRequest, map[string]string{
-			"error": "Password must be at least 8 characters",
-		})
-		return
-	}
-
-	// Hash the password
-	hashedPassword, err := auth.HashPassword(req.Password)
-	if err != nil {
-		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
-			"error": "Failed to hash password",
-		})
-		return
-	}
-
-	// Update config with new password hash
-	s.config.Lock()
-	s.config.Auth.DefaultPasswordHash = hashedPassword
-	configPath := s.configPath
-	s.config.Unlock()
-
-	// Save config
-	if err := s.config.Save(configPath); err != nil {
-		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
-			"error": "Failed to save configuration: " + err.Error(),
-		})
-		return
-	}
-
-	// Update the auth manager's in-memory password hash so login works immediately
-	s.authManager.UpdatePasswordHash(hashedPassword)
-
-	sendJSONResponse(w, http.StatusOK, map[string]string{
-		"status": "Setup completed successfully",
-	})
-}
-
 // WiFi Survey API Handlers
 
 type CreateSurveyRequest struct {

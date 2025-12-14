@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -209,7 +210,7 @@ func TestRunTCPTest(t *testing.T) {
 	}
 
 	// Test against a known-working port
-	latency, err := runTCPTest("google.com", 80)
+	latency, err := runTCPTest(context.Background(), "google.com", 80)
 	if err != nil {
 		t.Skipf("network test failed (may be offline): %v", err)
 	}
@@ -223,7 +224,7 @@ func TestRunTCPTestInvalidHost(t *testing.T) {
 		t.Skip("skipping network test in short mode")
 	}
 
-	_, err := runTCPTest("invalid.invalid.invalid", 80)
+	_, err := runTCPTest(context.Background(), "invalid.invalid.invalid", 80)
 	if err == nil {
 		t.Error("expected error for invalid host")
 	}
