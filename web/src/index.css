@@ -117,33 +117,73 @@ body {
    ============================================================================ */
 
 @layer components {
-  /* Typography utilities */
+  /* ========================================================================
+     TYPOGRAPHY SCALE
+     ========================================================================
+     Based on a 1.25 (Major Third) type scale with Inter font.
+     Each heading includes responsive sizing for mobile-first design.
+
+     Usage:
+       <h1 className="heading-1">Page Title</h1>
+       <h2 className="heading-2">Section Title</h2>
+       <h2 className="section-title">CATEGORY LABEL</h2>
+       <h3 className="heading-3">Card/Modal Title</h3>
+       <p className="body">Regular paragraph</p>
+       <p className="body-small">Secondary text</p>
+       <span className="caption">Metadata</span>
+     ======================================================================== */
+
+  /* Page titles - largest, used sparingly (login, major pages) */
   .heading-1 {
-    @apply text-3xl font-bold text-text-primary;
+    @apply text-2xl sm:text-3xl font-bold text-text-primary leading-tight tracking-tight;
   }
 
+  /* Section/modal titles - prominent but secondary to h1 */
   .heading-2 {
-    @apply text-2xl font-semibold text-text-primary;
+    @apply text-xl sm:text-2xl font-semibold text-text-primary leading-snug;
   }
 
+  /* Card titles, subsections - most common heading */
   .heading-3 {
-    @apply text-xl font-semibold text-text-primary;
+    @apply text-lg sm:text-xl font-semibold text-text-primary leading-snug;
   }
 
+  /* Card subtitles, form section headers */
+  .heading-4 {
+    @apply text-base sm:text-lg font-medium text-text-primary leading-snug;
+  }
+
+  /* Section labels - small uppercase labels for grouping (Connectivity, Network, etc.) */
+  .section-title {
+    @apply text-xs font-medium uppercase tracking-wider text-text-muted;
+  }
+
+  /* Body text variants */
   .body-large {
-    @apply text-lg text-text-primary;
+    @apply text-lg text-text-primary leading-relaxed;
   }
 
   .body {
-    @apply text-base text-text-primary;
+    @apply text-base text-text-primary leading-relaxed;
   }
 
   .body-small {
-    @apply text-sm text-text-secondary;
+    @apply text-sm text-text-secondary leading-relaxed;
   }
 
+  /* Smallest text - metadata, timestamps, badges */
   .caption {
-    @apply text-xs text-text-muted;
+    @apply text-xs text-text-muted leading-normal;
+  }
+
+  /* Labels for form fields and data */
+  .label {
+    @apply text-sm font-medium text-text-primary;
+  }
+
+  /* Code/monospace text */
+  .code {
+    @apply font-mono text-sm bg-surface-hover px-1.5 py-0.5 rounded;
   }
 
   /* Layout utilities */

@@ -47,6 +47,63 @@ The theming system consists of three layers:
 | `--color-status-error`   | `#b91c1c` | `#fca5a5` | Error states   |
 | `--color-status-info`    | `#1d4ed8` | `#93c5fd` | Informational  |
 
+## Typography Scale
+
+LuminetIQ uses a semantic typography system with responsive sizing. Use these CSS utility classes instead of raw Tailwind size classes.
+
+### Heading Classes
+
+| Class            | Size (mobile/desktop) | Weight   | Usage                                      |
+| ---------------- | --------------------- | -------- | ------------------------------------------ |
+| `.heading-1`     | 24px / 30px           | Bold     | Page titles (login, major pages)           |
+| `.heading-2`     | 20px / 24px           | Semibold | Section titles, modal headers              |
+| `.heading-3`     | 18px / 20px           | Semibold | Card titles, subsection headers            |
+| `.heading-4`     | 16px / 18px           | Medium   | Form sections, minor headings              |
+| `.section-title` | 12px (uppercase)      | Medium   | Category labels (Connectivity, Network...) |
+
+### Body Text Classes
+
+| Class         | Size | Color     | Usage                             |
+| ------------- | ---- | --------- | --------------------------------- |
+| `.body-large` | 18px | Primary   | Emphasized paragraphs             |
+| `.body`       | 16px | Primary   | Default paragraph text            |
+| `.body-small` | 14px | Secondary | Secondary content, descriptions   |
+| `.caption`    | 12px | Muted     | Metadata, timestamps, badges      |
+| `.label`      | 14px | Primary   | Form field labels (medium weight) |
+| `.code`       | 14px | Primary   | Inline code with background       |
+
+### Usage Examples
+
+```tsx
+// Headings - use semantic HTML with utility classes
+<h1 className="heading-1">Welcome to LuminetIQ</h1>
+<h2 className="heading-2">Network Overview</h2>
+<h2 className="section-title">Connectivity</h2>  // Category label
+<h3 className="heading-3">DNS Status</h3>         // Card title
+
+// Body text
+<p className="body">Regular paragraph content.</p>
+<p className="body-small">Secondary explanation text.</p>
+<span className="caption">Last updated: 5 min ago</span>
+
+// Form labels
+<label className="label">Server Address</label>
+
+// Inline code
+<code className="code">192.168.1.1</code>
+```
+
+### TypeScript Imports
+
+```tsx
+import { typography } from '../styles/theme';
+
+// Access class names programmatically
+<h1 className={typography.heading.h1}>Title</h1>
+<p className={typography.body.default}>Text</p>
+<span className={typography.body.caption}>Metadata</span>
+```
+
 ## Using Tailwind Classes
 
 ### Text Colors
@@ -109,6 +166,56 @@ import { cn, buttonClass, cardClass, badgeClass, severity, timing, category } fr
 // Badge classes
 <span className={badgeClass('success')}>Success</span>
 <span className={badgeClass('error')}>Error</span>
+```
+
+## Spacing & Layout
+
+### Spacing Scale
+
+Use these consistent spacing values (based on 4px grid):
+
+| Token         | Value | Pixels | Usage                         |
+| ------------- | ----- | ------ | ----------------------------- |
+| `tight`       | 0.5   | 2px    | Inline elements, tight gaps   |
+| `compact`     | 2     | 8px    | Compact layouts, small gaps   |
+| `default`     | 3     | 12px   | Default spacing, card padding |
+| `comfortable` | 4     | 16px   | Comfortable spacing           |
+| `spacious`    | 6     | 24px   | Section separation            |
+| `section`     | 8     | 32px   | Major section gaps            |
+| `major`       | 12    | 48px   | Page-level separation         |
+
+### Common Patterns
+
+```tsx
+// Card padding (responsive)
+<div className="p-3 sm:p-4">
+
+// Container padding (responsive)
+<div className="px-4 sm:px-6 lg:px-8">
+
+// Section gaps
+<div className="space-y-6">  // Between sections
+<div className="space-y-3">  // Within sections
+<div className="gap-4">      // Grid/flex gaps
+```
+
+### Layout Utilities
+
+```tsx
+// CSS utilities defined in index.css
+<div className="content-max">        // max-w-7xl mx-auto px-4
+<div className="content-grid">       // Responsive 1-2-3 column grid
+<div className="flex-center">        // flex items-center justify-center
+<div className="flex-between">       // flex items-center justify-between
+```
+
+### Dashboard Grid
+
+The main dashboard uses a responsive grid:
+
+```tsx
+// 1 column on mobile, 2 on tablet, 3 on desktop, 4 on large screens
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 ```
 
 ## Severity Colors (CVE/Vulnerability)
