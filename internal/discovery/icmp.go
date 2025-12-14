@@ -1,4 +1,7 @@
-// Package discovery provides network discovery functionality.
+// Package discovery implements multi-protocol network device discovery.
+// ICMP ping support enables active probing of devices to verify reachability,
+// measure latency, and identify responsive hosts on the network. Supports both
+// sequential pinging and broadcast ping sweeps for network enumeration.
 package discovery
 
 import (

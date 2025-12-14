@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Card, CardValue, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
+import { layout, spacing } from "../../styles/theme";
 
 interface BaseCardProps<T> {
   title: string;
@@ -81,7 +82,7 @@ export function BaseCard<T>({
         className={className}
       >
         <CardValue value="Error" size="md" status="error" />
-        <p className="text-xs text-status-error mt-1">{error}</p>
+        <p className="caption text-status-error mt-1">{error}</p>
       </Card>
     );
   }
@@ -126,16 +127,16 @@ function DefaultLoadingSkeleton() {
   return (
     <>
       <Skeleton className="h-8 w-32 mb-3" />
-      <div className="space-y-2 mt-4">
-        <div className="flex justify-between">
+      <div className={`${spacing.stack.sm} mt-4`}>
+        <div className={layout.flex.between}>
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
         </div>
-        <div className="flex justify-between">
+        <div className={layout.flex.between}>
           <Skeleton className="h-3 w-12" />
           <Skeleton className="h-3 w-16" />
         </div>
-        <div className="flex justify-between">
+        <div className={layout.flex.between}>
           <Skeleton className="h-3 w-20" />
           <Skeleton className="h-3 w-12" />
         </div>
@@ -199,7 +200,7 @@ export function SimpleBaseCard({
         className={className}
       >
         <CardValue value="Error" size="md" status="error" />
-        <p className="text-xs text-status-error mt-1">{error}</p>
+        <p className="caption text-status-error mt-1">{error}</p>
       </Card>
     );
   }

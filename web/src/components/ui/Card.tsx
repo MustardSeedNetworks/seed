@@ -1,21 +1,66 @@
+/**
+ * Card Component
+ * 
+ * Base card container used throughout the application for displaying information.
+ * 
+ * Features:
+ * - Status badge with color coding (success, warning, error, loading, unknown)
+ * - Header with title, optional subtitle, icon, and custom actions
+ * - Keyboard accessibility (Enter/Space to activate)
+ * - Optional click handler for interactive cards
+ * - Responsive padding (mobile and desktop)
+ * - Smooth transitions and hover effects
+ * - Focus ring for keyboard navigation
+ * 
+ * Usage:
+ * ```tsx
+ * <Card
+ *   title="Link Status"
+ *   subtitle="eth0"
+ *   status="success"
+ *   icon={<CableIcon />}
+ *   onClick={() => handleCardClick()}
+ * >
+ *   <CardRow label="Speed" value="1000 Mbps" />
+ *   <CardDivider />
+ *   <CardRow label="Duplex" value="Full" />
+ * </Card>
+ * ```
+ */
+
 import { ReactNode } from "react";
 import { StatusBadge, statusConfig, Status } from "./StatusBadge";
+import { cn, card, layout, icon as iconTokens } from "../../styles/theme";
 
 // Re-export Status and statusConfig for backwards compatibility
 export type { Status };
 export { statusConfig };
 
+/**
+ * Props for the Card component
+ */
 interface CardProps {
+  /** Card title (required) */
   title: string;
+  /** Optional subtitle or description */
   subtitle?: string;
+  /** Status indicator color (success, warning, error, loading, unknown) */
   status: Status;
+  /** Card content */
   children: ReactNode;
+  /** Additional CSS classes */
   className?: string;
+  /** Callback when card is clicked */
   onClick?: () => void;
+  /** Optional icon displayed in header */
   icon?: ReactNode;
+  /** Optional action element in header (right side) */
   headerAction?: ReactNode;
 }
 
+/**
+ * Card component - displays information in a styled container with status badge.
+ */
 export function Card({
   title,
   subtitle,
@@ -26,8 +71,13 @@ export function Card({
   icon,
   headerAction,
 }: CardProps) {
+  // Card is interactive if click handler is provided
   const isInteractive = typeof onClick === "function";
 
+  /**
+   * Handle keyboard activation (Enter/Space) for interactive cards.
+   * Provides accessibility for keyboard navigation.
+   */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (!isInteractive) return;
     if (e.key === "Enter" || e.key === " ") {
@@ -36,28 +86,34 @@ export function Card({
     }
   };
 
+  const interactiveProps = isInteractive ? { role: "button" as const, tabIndex: 0 } : {};
+
   return (
     <div
-      className={`rounded-lg border border-surface-border bg-surface-raised p-3 sm:p-4 transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none ${
-        isInteractive ? "cursor-pointer active:scale-[0.98]" : ""
-      } ${className}`}
+      className={cn(
+        card.base,
+        card.variant.default,
+        "p-3 sm:p-4 transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none",
+        isInteractive && "cursor-pointer active:scale-[0.98]",
+        className,
+      )}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      role={isInteractive ? "button" : undefined}
-      tabIndex={isInteractive ? 0 : -1}
-      aria-pressed={undefined}
+      {...interactiveProps}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className={layout.flex.between}>
+        <div className={layout.inline.default}>
           {icon && (
-            <span className="text-text-muted w-5 h-5 shrink-0">{icon}</span>
+            <span className={cn("text-text-muted shrink-0", iconTokens.size.md)}>
+              {icon}
+            </span>
           )}
-          <div className="flex flex-col">
+          <div className={layout.flex.col}>
             <h3 className="heading-4 font-display">{title}</h3>
             {subtitle && <p className="caption leading-tight">{subtitle}</p>}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className={layout.inline.default}>
           {headerAction}
           <StatusBadge status={status} size="md" />
         </div>
@@ -87,9 +143,9 @@ export function CardValue({
   allowWrap = false,
 }: CardValueProps) {
   const sizeClasses = {
-    sm: "text-sm",
-    md: "text-base font-medium leading-snug",
-    lg: "text-lg font-semibold leading-snug",
+    sm: "body-small",
+    md: "body font-medium leading-snug",
+    lg: "body-large font-semibold leading-snug",
   };
 
   const textMods = [
@@ -107,19 +163,23 @@ export function CardValue({
     <div>
       {label && <p className="caption mb-1">{label}</p>}
       <p
-        className={`${sizeClasses[size]} ${textMods} flex items-center gap-1.5`}
+        className={cn(sizeClasses[size], textMods, layout.inline.tight)}
         data-testid="card-value"
       >
         {statusIcon && (
-          <span className="inline-flex items-center justify-center w-3 h-3 shrink-0 text-current">
+          <span
+            className={cn(
+              layout.flex.center,
+              iconTokens.size.xs,
+              "shrink-0 text-current",
+            )}
+          >
             {statusIcon}
           </span>
         )}
-        <span className="flex items-baseline gap-1">
+        <span className={cn(layout.inline.tight, "items-baseline")}>
           <span>{value}</span>
-          {unit && (
-            <span className="text-sm font-normal text-text-muted">{unit}</span>
-          )}
+          {unit && <span className="body-small font-normal text-text-muted">{unit}</span>}
         </span>
       </p>
     </div>
@@ -149,16 +209,30 @@ export function CardRow({
 
   return (
     <div
-      className={`flex ${wrap ? "items-start" : "items-center"} justify-between gap-2 py-1`}
+      className={cn(
+        "flex justify-between py-1",
+        layout.inline.default,
+        wrap ? "items-start" : "items-center",
+      )}
     >
       <span className="body-small shrink-0">{label}</span>
       <span
-        className={`text-sm font-medium ${align === "right" ? "text-right" : "text-left"} ${wrap ? "break-all whitespace-pre-wrap" : "truncate"} ${mono ? "font-mono tabular-nums" : ""} ${status ? statusConfig[status].color : "text-text-primary"} flex items-center gap-1.5 ${justifyClass}`}
+        className={cn(
+          "body-small font-medium",
+          layout.inline.tight,
+          justifyClass,
+          align === "right" ? "text-right" : "text-left",
+          wrap ? "break-all whitespace-pre-wrap" : "truncate",
+          mono && "font-mono tabular-nums",
+          status ? statusConfig[status].color : "text-text-primary",
+        )}
         title={String(value)}
         data-testid="card-row-value"
       >
         {statusIcon && (
-          <span className="w-3 h-3 shrink-0 text-current">{statusIcon}</span>
+          <span className={cn(iconTokens.size.xs, "shrink-0 text-current")}>
+            {statusIcon}
+          </span>
         )}
         <span>{value}</span>
       </span>
@@ -171,5 +245,5 @@ interface CardDividerProps {
 }
 
 export function CardDivider({ className = "" }: CardDividerProps) {
-  return <hr className={`border-surface-border my-3 ${className}`} />;
+  return <hr className={cn("border-surface-border my-3", className)} />;
 }

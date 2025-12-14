@@ -1,3 +1,21 @@
+// Package discovery provides OUI (Organizationally Unique Identifier) database for MAC address vendor lookups.
+//
+// This file implements a MAC address vendor lookup system using IEEE OUI assignments. It includes
+// embedded common vendor prefixes for offline operation and supports loading full OUI databases
+// from files or downloading from IEEE.
+//
+// Features:
+//   - Embedded database of 1000+ common MAC prefixes (Apple, Cisco, Dell, HP, etc.)
+//   - Load full IEEE OUI database from local file
+//   - Download latest OUI database from IEEE website
+//   - Thread-safe concurrent lookups
+//   - Automatic cache updates with configurable refresh intervals
+//
+// Usage:
+//
+//	db := NewOUIDatabase()
+//	db.LoadFromFile("oui.txt")  // Optional: Load full database
+//	vendor := db.LookupVendor("00:1A:2B:3C:4D:5E")
 package discovery
 
 import (

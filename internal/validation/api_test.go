@@ -1,3 +1,5 @@
+// Package validation provides input validation utilities and standardized API error responses.
+// Test suite validates JSON error responses, status codes, and error formatting.
 package validation
 
 import (

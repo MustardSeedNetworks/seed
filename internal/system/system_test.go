@@ -1,3 +1,5 @@
+// Package system provides system health metrics collection.
+// Test suite validates CPU, memory, disk, and uptime metrics collection.
 package system
 
 import (

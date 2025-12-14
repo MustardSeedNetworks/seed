@@ -1,6 +1,35 @@
+/**
+ * SwitchCard Component
+ *
+ * Purpose: Displays switch/network device information learned via Layer 2 discovery protocols
+ * (LLDP, CDP, EDP, FDP). Shows switch name, connected port, VLAN configuration, and management IP.
+ *
+ * Key Features:
+ * - Protocol detection: identifies which discovery protocol learned the info (LLDP/CDP/EDP/FDP)
+ * - Switch identification: switch name, management IP, system description
+ * - Port information: port ID and description from switch
+ * - VLAN support: native VLAN, tagged VLANs, voice VLAN detection and configuration
+ * - Dual data: combines switch info and VLAN data into single view
+ * - Status determination: success if switch/VLAN info available, unknown if none
+ * - Compact layout: horizontal cards showing each section
+ *
+ * Usage:
+ * ```typescript
+ * <SwitchCard
+ *   data={switchInfo}
+ *   vlanData={vlanInfo}
+ *   loading={isScanning}
+ * />
+ * ```
+ *
+ * Dependencies: BaseCard (SimpleBaseCard), Card UI components, Icons, theme utilities
+ * State: Receives data from parent component via props
+ */
+
 import { CardValue, CardRow, CardDivider } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
 import { Network } from "../ui/Icons";
+import { cn, layout, radius, icon as iconTokens, border } from "../../styles/theme";
 
 export interface SwitchData {
   protocol: "lldp" | "cdp" | "edp" | "fdp" | "unknown";
@@ -52,7 +81,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
   return (
     <SimpleBaseCard
       title="Nearest Switch"
-      icon={<Network className="w-5 h-5" />}
+      icon={<Network className={iconTokens.size.md} />}
       status={status}
       loading={loading}
       loadingContent={<CardValue value="Listening..." size="lg" />}
@@ -61,7 +90,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
       {!hasSwitch ? (
         <>
           <CardValue value="No discovery frames" size="md" />
-          <p className="text-xs text-text-muted mt-2">
+          <p className="caption mt-2">
             Waiting for LLDP/CDP frames...
           </p>
         </>
@@ -77,7 +106,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
             <CardRow label="Management IP" value={data!.managementIp} />
           )}
           <div className="mt-2">
-            <span className="text-xs px-2 py-0.5 bg-brand-primary/20 text-brand-primary rounded">
+            <span className={cn("caption px-2 py-0.5 bg-brand-primary/20 text-brand-primary", radius.default)}>
               {protocolLabels[data!.protocol]}
             </span>
           </div>
@@ -88,7 +117,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
       {vlanData && (
         <>
           <CardDivider />
-          <p className="text-xs uppercase tracking-wide text-text-muted font-semibold mb-2">
+          <p className="section-title mb-2">
             VLANs
           </p>
           {vlanData.nativeVlan !== null ? (
@@ -104,12 +133,12 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
           )}
           {vlanData.taggedVlans.length > 0 && (
             <div className="mt-2">
-              <p className="text-xs text-text-muted mb-1">Tagged VLANs</p>
-              <div className="flex flex-wrap gap-1">
+              <p className="caption mb-1">Tagged VLANs</p>
+              <div className={layout.inline.wrap}>
                 {vlanData.taggedVlans.map((vlan) => (
                   <span
                     key={vlan}
-                    className="text-xs px-2 py-0.5 bg-surface-hover rounded"
+                    className={cn("caption px-2 py-0.5 bg-surface-hover", radius.default)}
                   >
                     {vlan}
                   </span>
@@ -118,7 +147,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
             </div>
           )}
           {vlanData.configured.enabled && (
-            <div className="mt-3 pt-2 border-t border-surface-border">
+            <div className={cn("mt-3 pt-2", border.divider)}>
               <CardRow
                 label="Configured Tag"
                 value={`VLAN ${vlanData.configured.id}`}

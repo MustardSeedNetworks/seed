@@ -1,3 +1,28 @@
+/**
+ * WiFiSurveyCard Component
+ *
+ * Purpose: Manages WiFi site surveys - allows creating floor plan-based WiFi signal mapping campaigns.
+ * Shows active and completed surveys with ability to create, pause, complete, and delete surveys.
+ *
+ * Key Features:
+ * - Survey creation: dialog to create new survey with custom floor plan image
+ * - Survey types: supports different survey modes (e.g., signal mapping, interference detection)
+ * - Active surveys: shows in-progress and paused surveys with controls
+ * - Completed surveys: displays finished surveys with ability to view results
+ * - Survey controls: start, pause, complete, delete operations
+ * - Floor plan visualization: SurveyView component displays floor plan with sample points
+ * - Sample tracking: displays number of signal samples collected
+ * - Status: warning (active survey), success (completed), unknown (none)
+ *
+ * Usage:
+ * ```typescript
+ * <WiFiSurveyCard isWifi={wifiConnected} />
+ * ```
+ *
+ * Dependencies: useSurvey hook, SurveyView component, Card UI components, Icons
+ * State: Manages surveys list, selected survey, create dialog state, fetches from API
+ */
+
 import { useState } from "react";
 import { Card, Status } from "../ui/Card";
 import { useSurvey, type Survey, type SurveyType } from "../../hooks/useSurvey";
@@ -88,58 +113,58 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
               e.stopPropagation();
               setShowCreateDialog(true);
             }}
-            className="text-xs font-medium text-brand-primary hover:underline"
+            className="caption font-medium text-brand-primary hover:underline"
           >
             + New
           </button>
         }
       >
         {!isWifi && (
-          <div className="bg-status-warning/10 border border-status-warning/20 text-status-warning px-3 py-2 rounded text-sm mb-3">
+          <div className="bg-status-warning/10 border border-status-warning/20 text-status-warning px-3 py-2 rounded-md body-small mb-3">
             WiFi interface required for site surveys. Switch to a WiFi interface
             to create surveys.
           </div>
         )}
 
         {error && (
-          <div className="bg-status-error/10 border border-status-error/20 text-status-error px-3 py-2 rounded text-sm mb-3">
+          <div className="bg-status-error/10 border border-status-error/20 text-status-error px-3 py-2 rounded-md body-small mb-3">
             {error}
           </div>
         )}
 
         {loading && surveys.length === 0 ? (
-          <div className="text-center py-6 text-text-muted text-sm">
+          <div className="text-center py-6 text-text-muted body-small">
             Loading...
           </div>
         ) : surveys.length === 0 ? (
           <div className="text-center py-6 text-text-muted">
-            <p className="text-sm mb-2">No surveys yet</p>
+            <p className="body-small mb-2">No surveys yet</p>
             <button
               onClick={() => setShowCreateDialog(true)}
-              className="text-sm text-brand-primary hover:underline"
+              className="body-small text-brand-primary hover:underline"
             >
               Create your first survey
             </button>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="stack-sm">
             {surveys.slice(0, 3).map((survey) => (
               <div
                 key={survey.id}
-                className="border rounded p-2 hover:bg-surface-hover transition-colors cursor-pointer"
+                className="border rounded-md p-2 hover:bg-surface-hover transition-colors cursor-pointer"
                 onClick={() => setSelectedSurvey(survey)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-sm truncate">
+                      <h4 className="font-medium body-small truncate">
                         {survey.name}
                       </h4>
-                      <span className="text-xs text-text-muted">
+                      <span className="caption text-text-muted">
                         {getStatusLabel(survey.status)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-text-muted">
+                    <div className="flex items-center gap-3 mt-1 caption text-text-muted">
                       <span>{getSurveyTypeLabel(survey.surveyType)}</span>
                       <span>{survey.samples.length} samples</span>
                     </div>
@@ -151,7 +176,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                           e.stopPropagation();
                           startSurvey(survey.id);
                         }}
-                        className="px-2 py-1 text-xs border rounded hover:bg-surface-hover"
+                        className="px-2 py-1 caption border rounded-md hover:bg-surface-hover"
                         title="Start"
                       >
                         ▶
@@ -163,7 +188,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                           e.stopPropagation();
                           pauseSurvey(survey.id);
                         }}
-                        className="px-2 py-1 text-xs border rounded hover:bg-surface-hover"
+                        className="px-2 py-1 caption border rounded-md hover:bg-surface-hover"
                         title="Pause"
                       >
                         ⏸
@@ -176,7 +201,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                             e.stopPropagation();
                             startSurvey(survey.id);
                           }}
-                          className="px-2 py-1 text-xs border rounded hover:bg-surface-hover"
+                          className="px-2 py-1 caption border rounded-md hover:bg-surface-hover"
                           title="Resume"
                         >
                           ▶
@@ -186,7 +211,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                             e.stopPropagation();
                             completeSurvey(survey.id);
                           }}
-                          className="px-2 py-1 text-xs border rounded hover:bg-surface-hover"
+                          className="px-2 py-1 caption border rounded-md hover:bg-surface-hover"
                           title="Complete"
                         >
                           ✓
@@ -198,7 +223,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                         e.stopPropagation();
                         handleDelete(survey.id);
                       }}
-                      className="px-2 py-1 text-xs border rounded hover:bg-status-error/10 text-status-error"
+                      className="px-2 py-1 caption border rounded-md hover:bg-status-error/10 text-status-error"
                       title="Delete"
                     >
                       ×
@@ -208,7 +233,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
               </div>
             ))}
             {surveys.length > 3 && (
-              <div className="text-center text-xs text-text-muted pt-1">
+              <div className="text-center caption text-text-muted pt-1">
                 +{surveys.length - 3} more
               </div>
             )}
@@ -255,27 +280,28 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-surface-raised rounded-lg p-6 max-w-md w-full mx-4">
+      <div className="bg-surface-raised rounded-md p-6 max-w-md w-full mx-4">
         <h2 className="heading-2 mb-4">Create New Survey</h2>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
+          <div className="stack">
             <div>
               <label className="label block mb-1">Survey Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full border border-surface-border rounded px-3 py-2 bg-surface-base"
+                className="w-full border border-surface-border rounded-md px-3 py-2 bg-surface-base"
                 placeholder="e.g., Office Floor 1"
                 required
               />
             </div>
             <div>
-              <label className="label block mb-1">Survey Type</label>
+              <label className="label block mb-1" htmlFor="survey-type">Survey Type</label>
               <select
+                id="survey-type"
                 value={surveyType}
                 onChange={(e) => setSurveyType(e.target.value as SurveyType)}
-                className="w-full border border-surface-border rounded px-3 py-2 bg-surface-base"
+                className="w-full border border-surface-border rounded-md px-3 py-2 bg-surface-base"
               >
                 <option value="passive">Passive Scan (All Networks)</option>
                 <option value="active">Active Monitoring (Connection)</option>
@@ -287,13 +313,13 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-surface-border rounded hover:bg-surface-hover"
+              className="flex-1 px-4 py-2 border border-surface-border rounded-md hover:bg-surface-hover"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-brand-primary text-text-inverse rounded hover:bg-brand-primary/90"
+              className="flex-1 px-4 py-2 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90"
             >
               Create
             </button>

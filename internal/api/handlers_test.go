@@ -1,3 +1,6 @@
+// Package api provides the HTTP/WebSocket server.
+// Test suite validates handler helpers, CIDR splitting, JSON error responses,
+// and HTTP request parsing utilities.
 package api
 
 import (

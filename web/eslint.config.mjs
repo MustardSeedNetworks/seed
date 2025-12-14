@@ -1,3 +1,44 @@
+/**
+ * ESLint Configuration
+ * 
+ * Purpose: Configures ESLint rules and plugins for code quality in LuminetIQ frontend.
+ * Enforces TypeScript, React, and accessibility best practices across the codebase.
+ * 
+ * Configuration:
+ * - Base: JavaScript recommended config with TypeScript ESLint support
+ * - Language: ECMAScript 2024 with JSX/TSX support
+ * - Parser: typescript-eslint for TypeScript support
+ * - Plugins:
+ *   - react-hooks: Validates Hook usage (exhaustive-deps, rules of hooks)
+ *   - react-refresh: Warns if exports might break Fast Refresh
+ *   - typescript-eslint: Type-aware linting rules
+ * 
+ * Key Rules:
+ * - react-hooks/rules-of-hooks: Enforces rules of hooks (no hooks in loops)
+ * - react-hooks/exhaustive-deps: Validates dependency arrays
+ * - react-refresh/only-export-components: Exports should be components (with exceptions)
+ * - TypeScript: Recommends stricter type checking rules
+ * 
+ * Ignored Directories:
+ * - dist/ - Build output
+ * - node_modules/ - Dependencies
+ * - coverage/ - Test coverage reports
+ * 
+ * Usage:
+ * ```bash
+ * npm run lint              # Run ESLint check
+ * npm run lint:fix          # Auto-fix lint issues
+ * npm run lint -- --max-warnings 0  # Treat warnings as errors in CI/CD
+ * ```
+ * 
+ * Configuration Format:
+ * - Uses flat config format (ESLint v9+)
+ * - Module type: ES modules (.mjs extension)
+ * 
+ * Dependencies: eslint, typescript-eslint, eslint-plugin-react-hooks, eslint-plugin-react-refresh
+ * IDE Integration: Automatically applies rules in VS Code with ESLint extension
+ */
+
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";

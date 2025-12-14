@@ -1,3 +1,18 @@
+// Package wifi provides platform-specific WiFi scanning and interface management.
+//
+// This file contains platform-specific implementations for WiFi network scanning and
+// adapter management. Platform detection is handled at compile time via build tags.
+//
+// Platform support:
+//   - Darwin (macOS): CoreWLAN framework via system_profiler and airport utility
+//   - Linux: nl80211 netlink interface via iw/iwconfig commands
+//
+// The scanner provides:
+//   - Available network detection with SSID, BSSID, signal strength
+//   - Channel information and band detection (2.4GHz / 5GHz)
+//   - Security protocol identification (WPA2, WPA3, etc.)
+//   - WiFi adapter capabilities and current connection status
+
 //go:build linux
 
 package wifi

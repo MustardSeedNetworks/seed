@@ -1,9 +1,38 @@
+/**
+ * SystemHealthCard Component
+ *
+ * Purpose: Monitors system resources (CPU, memory, disk usage) and OS information.
+ * Displays real-time health metrics with status indicators and formatted values.
+ *
+ * Key Features:
+ * - CPU monitoring: CPU percentage usage, load averages (1/5/15 min)
+ * - Memory usage: percentage, used/total bytes with human-readable formatting
+ * - Disk usage: percentage, used/total bytes with formatting
+ * - System info: hostname, OS, architecture, CPU count, goroutines
+ * - Uptime: displays in human-readable format (days + hours, hours + minutes, or minutes)
+ * - Process info: memory usage of the NetScope process itself
+ * - Threshold-based status: warning/critical levels from settings context
+ * - Real-time updates: fetches metrics periodically from API
+ *
+ * Usage:
+ * ```typescript
+ * <SystemHealthCard
+ *   data={systemHealth}
+ *   loading={isFetching}
+ * />
+ * ```
+ *
+ * Dependencies: BaseCard, Card UI components, useSettings hook, auth hooks, Icons, theme utilities
+ * State: Manages system health data, fetches from /api/status/system endpoint, updates periodically
+ */
+
 import { useEffect, useState, useCallback } from "react";
 import { Server } from "lucide-react";
 import { BaseCard } from "./BaseCard";
 import { CardRow, CardDivider } from "../ui/Card";
 import { Status } from "../ui/StatusBadge";
 import { getAuthHeaders } from "../../hooks/useAuth";
+import { icon as iconTokens } from "../../styles/theme";
 
 interface SystemHealth {
   cpuPercent: number;
@@ -74,20 +103,24 @@ function ResourceBar({
   }[status];
 
   return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-xs">
-        <span className="text-text-muted">{label}</span>
+    <div className="stack-xs">
+      <div className="flex justify-between caption">
+        <span>{label}</span>
         <span className="text-text-primary font-medium">
           {percent.toFixed(0)}%
         </span>
       </div>
-      <div className="h-2 bg-surface-border rounded-full overflow-hidden">
-        <div
-          className={`h-full ${barColor} transition-all duration-300`}
-          style={{ width: `${Math.min(percent, 100)}%` }}
-        />
+      <div className="h-2 bg-surface-border rounded-md overflow-hidden">
+        {(() => {
+          const pct = Math.min(percent, 100);
+          return (
+            <div
+              className={`h-full ${barColor} transition-all duration-300 w-[${pct}%]`}
+            />
+          );
+        })()}
       </div>
-      <div className="text-xs text-text-muted">
+      <div className="caption">
         {formatBytes(used)} / {formatBytes(total)}
       </div>
     </div>
@@ -136,14 +169,14 @@ export function SystemHealthCard() {
     <BaseCard
       title="System Health"
       subtitle={data?.hostname}
-      icon={<Server className="w-5 h-5" />}
+      icon={<Server className={iconTokens.size.md} />}
       data={data}
       loading={loading}
       error={error}
       getStatus={getStatus}
     >
       {(health) => (
-        <div className="space-y-3">
+        <div className="stack">
           <ResourceBar
             label="CPU"
             percent={health.cpuPercent}
@@ -189,7 +222,7 @@ export function SystemHealthCard() {
             />
           </div>
 
-          <div className="text-xs text-text-muted text-center pt-1">
+          <div className="caption text-center pt-1">
             {health.os}/{health.arch} - {health.numCpu} CPUs
           </div>
         </div>

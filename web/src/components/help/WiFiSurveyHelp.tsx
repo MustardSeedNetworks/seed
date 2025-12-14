@@ -1,3 +1,28 @@
+/**
+ * WiFiSurveyHelp.tsx
+ * 
+ * Purpose: Comprehensive help documentation for WiFi Site Survey feature.
+ * Provides user guidance on survey creation, floor plan uploads, heatmap visualization,
+ * and interpreting survey results.
+ * 
+ * Key Features:
+ * - Overview section: WiFi survey purpose and use cases
+ * - Requirements section: Prerequisites for running surveys
+ * - Floor plan guide: How to upload and configure floor plans
+ * - Sample collection: Passive, active, and throughput measurement modes
+ * - Heatmap help: Interpreting color-coded signal strength and performance maps
+ * - Troubleshooting: Common issues and resolution steps
+ * - Data export: How to export survey results
+ * 
+ * Usage:
+ * ```typescript
+ * <HelpModal sections={[...WIFI_SURVEY_HELP]} />
+ * ```
+ * 
+ * Dependencies: None (pure data constants)
+ * Structure: Array of HelpSection with items containing question/answer pairs
+ */
+
 interface HelpItem {
   question: string;
   answer: string;

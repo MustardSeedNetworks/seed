@@ -1,3 +1,29 @@
+/**
+ * Toast.constants.tsx - Toast Notification Styling Constants
+ * 
+ * Purpose: Centralized styling configuration for toast notifications.
+ * Defines colors, icons, and CSS classes for different toast types (success, error, warning, info).
+ * 
+ * Key Features:
+ * - Type styles: CSS classes for each toast type with appropriate background and text colors
+ * - Toast icons: SVG icon definitions for success, error, warning, and info notifications
+ * - Icon size: Consistent sizing using theme icon tokens
+ * - Color mapping: Maps toast types to semantic colors (success/error/warning/brand)
+ * 
+ * Usage:
+ * ```typescript
+ * import { typeStyles, icons, ToastType } from './Toast.constants';
+ * 
+ * const className = typeStyles['success'];
+ * const icon = icons['success'];
+ * ```
+ * 
+ * Dependencies: theme icon tokens
+ * Exported Types: ToastType ('success' | 'error' | 'warning' | 'info')
+ */
+
+import { icon } from "../../styles/theme";
+
 export type ToastType = "success" | "error" | "warning" | "info";
 
 export const typeStyles = {
@@ -7,10 +33,13 @@ export const typeStyles = {
   info: "bg-brand-primary text-text-inverse",
 };
 
+// Icon size for toast notifications
+const toastIconSize = icon.size.md; // w-5 h-5
+
 export const icons = {
   success: (
     <svg
-      className="w-5 h-5"
+      className={toastIconSize}
       fill="currentColor"
       viewBox="0 0 20 20"
       aria-hidden="true"
@@ -24,7 +53,7 @@ export const icons = {
   ),
   error: (
     <svg
-      className="w-5 h-5"
+      className={toastIconSize}
       fill="currentColor"
       viewBox="0 0 20 20"
       aria-hidden="true"
@@ -38,7 +67,7 @@ export const icons = {
   ),
   warning: (
     <svg
-      className="w-5 h-5"
+      className={toastIconSize}
       fill="currentColor"
       viewBox="0 0 20 20"
       aria-hidden="true"
@@ -52,7 +81,7 @@ export const icons = {
   ),
   info: (
     <svg
-      className="w-5 h-5"
+      className={toastIconSize}
       fill="currentColor"
       viewBox="0 0 20 20"
       aria-hidden="true"

@@ -1,3 +1,29 @@
+/**
+ * BaseCard.test.tsx - BaseCard Component Tests
+ * 
+ * Purpose: Test suite for BaseCard and SimpleBaseCard components covering
+ * loading states, data rendering, status determination, and error scenarios.
+ * 
+ * Key Test Areas:
+ * - Loading state: skeleton display when loading=true
+ * - Custom loading content: override default loading UI
+ * - Data rendering: proper display of card content with data
+ * - Status derivation: getStatus() function determining card color/badge
+ * - Error handling: error message display and retry functionality
+ * - Keyboard accessibility: Enter/Space key support on card containers
+ * - SimpleBaseCard variant: simpler version without loading state
+ * 
+ * Test Framework: Vitest with React Testing Library
+ * Generic Type: TestData interface for type-safe test data
+ * 
+ * Usage:
+ * ```bash
+ * npm test -- BaseCard.test.tsx
+ * ```
+ * 
+ * Dependencies: vitest, @testing-library/react
+ */
+
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { BaseCard, SimpleBaseCard } from "./BaseCard";

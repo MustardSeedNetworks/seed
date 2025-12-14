@@ -1,3 +1,5 @@
+// Package vlan provides VLAN detection and configuration functionality.
+// Test suite validates VLAN detection, traffic analysis, and configuration operations.
 package vlan
 
 import (

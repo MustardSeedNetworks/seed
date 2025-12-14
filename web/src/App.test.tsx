@@ -1,3 +1,28 @@
+/**
+ * App.test.tsx - Application Component Tests
+ * 
+ * Purpose: Comprehensive test suite for the main App component covering card updates,
+ * WebSocket message handling, authentication flow, and error scenarios.
+ * 
+ * Key Test Areas:
+ * - Card state updates: CARD_UPDATED messages reflecting in UI
+ * - WebSocket connectivity: connection status display and message handling
+ * - Authentication: login/logout flows and session management
+ * - Settings: settings panel integration and persistence
+ * - Error handling: graceful error display and recovery
+ * - Component lifecycle: proper initialization and cleanup
+ * 
+ * Test Framework: Vitest with React Testing Library
+ * Mocks: localStorage, fetch API, WebSocket events
+ * 
+ * Usage:
+ * ```bash
+ * npm test -- App.test.tsx
+ * ```
+ * 
+ * Dependencies: vitest, @testing-library/react, @testing-library/user-event
+ */
+
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import App from "./App";

@@ -1,20 +1,61 @@
-import { useState, useEffect } from "react";
-import { buttonClass, inputClass, cardClass, cn } from "../../styles/theme";
+/**
+ * Initial Setup Wizard Component
+ * 
+ * Guides users through the first-time setup process for the LuminetIQ application.
+ * 
+ * Features:
+ * - Password setup with validation (minimum 8 characters)
+ * - Password confirmation requirement
+ * - Generated password suggestion option
+ * - Custom password entry mode
+ * - Automatic login after setup completion
+ * - Error handling and user feedback
+ * 
+ * Flow:
+ * 1. User enters password (or accepts suggested password)
+ * 2. Confirms password matches
+ * 3. SetupWizard sends POST /api/setup/complete with new password
+ * 4. Server hashes and stores password
+ * 5. Component automatically logs in user
+ * 6. Calls onComplete callback to exit setup flow
+ * 
+ * The wizard is shown when the system detects initial setup is needed
+ * (no admin password configured). It's displayed before the main application.
+ */
 
+import { useState, useEffect } from "react";
+import { buttonClass, inputClass, cardClass, cn, icon as iconTokens } from "../../styles/theme";
+
+// API base URL for setup endpoints
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+/**
+ * Props for SetupWizard component
+ */
 interface SetupWizardProps {
+  /** Callback invoked when setup is complete and user is logged in */
   onComplete: () => void;
+  /** Function to attempt login after password is set */
   onLogin: (username: string, password: string) => Promise<boolean>;
+  /** Optional pre-generated password suggestion to offer user */
   suggestedPassword?: string;
 }
 
+/**
+ * Response from /api/setup/status endpoint
+ */
 interface SetupStatusResponse {
-  needsSetup: boolean;
-  username?: string;
-  suggestedPassword?: string;
+  needsSetup: boolean;              // True if initial setup is required
+  username?: string;                // Default admin username
+  suggestedPassword?: string;       // Pre-generated password (secure random)
 }
 
+/**
+ * SetupWizard Component
+ * 
+ * Modal-like component that requires user to set admin password before
+ * accessing the main application.
+ */
 export function SetupWizard({
   onComplete,
   onLogin,
@@ -183,26 +224,26 @@ export function SetupWizard({
           </div>
 
           {/* Password mode selection */}
-          <div className="mb-6 space-y-3">
-            <p className="text-sm font-medium text-text-primary mb-2">
+          <div className="mb-6 stack-sm">
+            <p className="body-small font-medium text-text-primary mb-2">
               Choose how to set your password:
             </p>
 
             {/* Custom password option */}
-            <label className="flex items-start gap-3 p-3 rounded border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
+            <label className="flex items-start gap-3 p-3 rounded-md border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
               <input
                 type="radio"
                 name="passwordMode"
                 value="custom"
                 checked={passwordMode === "custom"}
                 onChange={() => handlePasswordModeChange("custom")}
-                className="mt-0.5 w-4 h-4 text-brand-primary focus:ring-brand-primary"
+                className={`mt-0.5 ${iconTokens.size.sm} text-brand-primary focus:ring-brand-primary`}
               />
               <div>
-                <span className="text-sm font-medium text-text-primary">
+                <span className="body-small font-medium text-text-primary">
                   Create my own password
                 </span>
-                <p className="text-xs text-text-muted mt-0.5">
+                <p className="caption text-text-muted mt-0.5">
                   Choose a password you'll remember
                 </p>
               </div>
@@ -210,26 +251,26 @@ export function SetupWizard({
 
             {/* Generated password option */}
             {suggestedPassword && (
-              <label className="flex items-start gap-3 p-3 rounded border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
+              <label className="flex items-start gap-3 p-3 rounded-md border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
                 <input
                   type="radio"
                   name="passwordMode"
                   value="generated"
                   checked={passwordMode === "generated"}
                   onChange={() => handlePasswordModeChange("generated")}
-                  className="mt-0.5 w-4 h-4 text-brand-primary focus:ring-brand-primary"
+                  className={`mt-0.5 ${iconTokens.size.sm} text-brand-primary focus:ring-brand-primary`}
                 />
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-text-primary">
+                  <span className="body-small font-medium text-text-primary">
                     Use generated secure password
                   </span>
-                  <p className="text-xs text-text-muted mt-0.5">
+                  <p className="caption text-text-muted mt-0.5">
                     Automatically generated strong password
                   </p>
                   {passwordMode === "generated" && (
                     <div className="mt-2 p-2 bg-surface-sunken rounded">
                       <div className="flex items-center gap-2">
-                        <code className="flex-1 font-mono text-sm text-brand-primary select-all break-all">
+                        <code className="flex-1 font-mono body-small text-brand-primary select-all break-all">
                           {suggestedPassword}
                         </code>
                         <button
@@ -237,12 +278,12 @@ export function SetupWizard({
                           onClick={() =>
                             navigator.clipboard.writeText(suggestedPassword)
                           }
-                          className="px-2 py-1 text-xs text-text-muted hover:text-text-primary border border-surface-border rounded hover:bg-surface-base transition-colors shrink-0"
+                          className="px-2 py-1 caption text-text-muted hover:text-text-primary border border-surface-border rounded-md hover:bg-surface-base transition-colors shrink-0"
                         >
                           Copy
                         </button>
                       </div>
-                      <p className="text-xs text-status-warning mt-2">
+                      <p className="caption text-status-warning mt-2">
                         Save this password somewhere safe before continuing!
                       </p>
                     </div>
@@ -257,7 +298,7 @@ export function SetupWizard({
               <div className="mb-4">
                 <label
                   htmlFor="setup-password"
-                  className="block text-sm font-medium text-text-primary mb-1"
+                  className="block body-small font-medium text-text-primary mb-1"
                 >
                   Password
                 </label>
@@ -279,7 +320,7 @@ export function SetupWizard({
                   >
                     {showPassword ? (
                       <svg
-                        className="w-5 h-5"
+                        className={iconTokens.size.md}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -293,7 +334,7 @@ export function SetupWizard({
                       </svg>
                     ) : (
                       <svg
-                        className="w-5 h-5"
+                        className={iconTokens.size.md}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -314,7 +355,7 @@ export function SetupWizard({
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-text-muted mt-1">
+                <p className="caption text-text-muted mt-1">
                   Minimum 8 characters
                 </p>
               </div>
@@ -322,7 +363,7 @@ export function SetupWizard({
               <div className="mb-6">
                 <label
                   htmlFor="setup-confirm-password"
-                  className="block text-sm font-medium text-text-primary mb-1"
+                  className="block body-small font-medium text-text-primary mb-1"
                 >
                   Confirm Password
                 </label>
@@ -343,7 +384,7 @@ export function SetupWizard({
             <div
               role="alert"
               aria-live="assertive"
-              className="mb-4 p-3 bg-status-error/10 border border-status-error/20 rounded text-status-error text-sm"
+              className="mb-4 p-3 bg-status-error/10 border border-status-error/20 rounded-md text-status-error body-small"
             >
               {error}
             </div>

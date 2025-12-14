@@ -1,5 +1,30 @@
+/**
+ * ImprovedHelpModal Component (~681 lines)
+ * 
+ * Purpose: Comprehensive application help modal providing user guidance across multiple topics.
+ * Features tabbed navigation, search functionality, and rich content for all major features.
+ * 
+ * Key Features:
+ * - Multi-section help: About, Network Discovery, WiFi, Cable/Link, Performance, etc.
+ * - Search functionality: Filter help content by keyword
+ * - Icon-based navigation: Visual section selector with icons
+ * - Rich content: Markdown-like formatting for help text
+ * - Modal overlay: Centered help dialog with close button
+ * - Responsive design: Adapts to different screen sizes
+ * - Keyboard support: ESC key closes modal
+ * - Scrollable sections: Long help content in scrollable containers
+ * 
+ * Usage:
+ * ```typescript
+ * <ImprovedHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+ * ```
+ * 
+ * Dependencies: Icons, theme utilities, useState for tab/search state management
+ * State: activeSection (current tab), searchQuery (help search text)
+ */
+
 import { ReactNode, useState } from "react";
-import { cn } from "../../styles/theme";
+import { cn, icon as iconTokens, layout, radius } from "../../styles/theme";
 import {
   Activity,
   Wifi,
@@ -24,8 +49,14 @@ interface HelpSection {
   content: ReactNode;
 }
 
+/**
+ * ImprovedHelpModal Component
+ * Renders a modal dialog with tabbed help content and search functionality
+ */
 export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
+  // Track which help section is currently active
   const [activeSection, setActiveSection] = useState<string>("about");
+  // Track search query for filtering help content
   const [searchQuery, setSearchQuery] = useState("");
 
   if (!isOpen) return null;
@@ -34,61 +65,61 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
     {
       id: "about",
       title: "About LuminetIQ",
-      icon: <Info className="w-4 h-4" />,
+      icon: <Info className={iconTokens.size.sm} />,
       content: <AboutSection />,
     },
     {
       id: "getting-started",
       title: "Getting Started",
-      icon: <LayoutDashboard className="w-4 h-4" />,
+      icon: <LayoutDashboard className={iconTokens.size.sm} />,
       content: <GettingStartedSection />,
     },
     {
       id: "link",
       title: "Link Status",
-      icon: <Activity className="w-4 h-4" />,
+      icon: <Activity className={iconTokens.size.sm} />,
       content: <LinkStatusSection />,
     },
     {
       id: "cable",
       title: "Cable Test",
-      icon: <Cable className="w-4 h-4" />,
+      icon: <Cable className={iconTokens.size.sm} />,
       content: <CableTestSection />,
     },
     {
       id: "wifi",
       title: "WiFi Status",
-      icon: <Wifi className="w-4 h-4" />,
+      icon: <Wifi className={iconTokens.size.sm} />,
       content: <WiFiStatusSection />,
     },
     {
       id: "network",
       title: "Network & DHCP",
-      icon: <Network className="w-4 h-4" />,
+      icon: <Network className={iconTokens.size.sm} />,
       content: <NetworkSection />,
     },
     {
       id: "gateway",
       title: "Gateway",
-      icon: <Server className="w-4 h-4" />,
+      icon: <Server className={iconTokens.size.sm} />,
       content: <GatewaySection />,
     },
     {
       id: "dns",
       title: "DNS Tests",
-      icon: <Search className="w-4 h-4" />,
+      icon: <Search className={iconTokens.size.sm} />,
       content: <DNSSection />,
     },
     {
       id: "performance",
       title: "Performance Tests",
-      icon: <Zap className="w-4 h-4" />,
+      icon: <Zap className={iconTokens.size.sm} />,
       content: <PerformanceSection />,
     },
     {
       id: "discovery",
       title: "Network Discovery",
-      icon: <Search className="w-4 h-4" />,
+      icon: <Search className={iconTokens.size.sm} />,
       content: <DiscoverySection />,
     },
   ];
@@ -112,22 +143,22 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
 
       {/* Modal */}
       <div
-        className="relative bg-surface-raised border border-surface-border rounded-lg shadow-xl w-full max-w-6xl max-h-modal flex flex-col overflow-hidden"
+        className={`relative bg-surface-raised border border-surface-border ${radius.lg} shadow-xl w-full max-w-6xl max-h-modal flex flex-col overflow-hidden`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-modal-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-surface-border shrink-0">
+        <div className={`${layout.flex.between} p-4 border-b border-surface-border shrink-0`}>
           <h2 id="help-modal-title" className="heading-3">
             LuminetIQ Help Center
           </h2>
           <button
             onClick={onClose}
-            className="p-2 text-text-muted hover:text-text-primary transition-colors rounded hover:bg-surface-hover"
+            className={`p-2 text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-hover`}
             aria-label="Close help"
           >
-            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <svg className={iconTokens.size.md} viewBox="0 0 20 20" fill="currentColor">
               <path
                 fillRule="evenodd"
                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -144,13 +175,13 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
             {/* Search */}
             <div className="p-3 border-b border-surface-border">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${iconTokens.size.sm} text-text-muted`} />
                 <input
                   type="text"
                   placeholder="Search help..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded border border-surface-border bg-surface-raised text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className={`w-full pl-9 pr-3 py-2 body-small ${radius.default} border border-surface-border bg-surface-raised text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary`}
                 />
               </div>
             </div>
@@ -165,7 +196,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors text-left",
+                    `w-full flex items-center gap-3 px-3 py-2.5 ${radius.default} body-small transition-colors text-left`,
                     activeSection === section.id
                       ? "bg-brand-primary/10 text-brand-primary font-medium"
                       : "text-text-secondary hover:bg-surface-hover hover:text-text-primary",
@@ -194,10 +225,10 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
 
 function AboutSection() {
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="section-gap max-w-3xl">
       <div>
         <h3 className="heading-2 mb-3">Welcome to LuminetIQ</h3>
-        <p className="body text-text-secondary leading-relaxed mb-4">
+        <p className="body leading-relaxed mb-4">
           LuminetIQ is a comprehensive network diagnostics and monitoring tool
           designed to illuminate every aspect of your network infrastructure.
         </p>
@@ -222,7 +253,7 @@ function AboutSection() {
         />
       </div>
 
-      <div className="border-l-4 border-brand-primary bg-brand-primary/5 p-4 rounded">
+      <div className={`border-l-4 border-brand-primary bg-brand-primary/5 p-4 ${radius.default}`}>
         <h4 className="font-semibold text-text-primary mb-2">
           Open Source & Customizable
         </h4>
@@ -234,7 +265,7 @@ function AboutSection() {
 
       <div>
         <h4 className="font-semibold text-text-primary mb-3">Version Info</h4>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 body-small">
           <dt className="text-text-muted">Current Version:</dt>
           <dd className="font-mono text-text-primary">v0.13.0</dd>
           <dt className="text-text-muted">Backend:</dt>
@@ -249,10 +280,10 @@ function AboutSection() {
 
 function GettingStartedSection() {
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="section-gap max-w-3xl">
       <h3 className="heading-2 mb-3">Getting Started</h3>
 
-      <div className="space-y-4">
+      <div className="stack-lg">
         <StepCard
           number={1}
           title="Dashboard Overview"
@@ -280,12 +311,12 @@ function GettingStartedSection() {
         />
       </div>
 
-      <div className="bg-surface-hover border border-surface-border rounded p-4 mt-6">
+      <div className={`bg-surface-hover border border-surface-border ${radius.default} p-4 mt-6`}>
         <h4 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
           <span className="text-status-info">💡</span>
           Pro Tips
         </h4>
-        <ul className="body-small text-text-secondary space-y-2 ml-6 list-disc">
+        <ul className="body-small stack-sm ml-6 list-disc">
           <li>
             Use the Network Discovery card to find all devices on your network
           </li>
@@ -367,7 +398,7 @@ function CableTestSection() {
           },
         ]}
       />
-      <div className="mt-4 bg-status-warning/10 border border-status-warning/20 rounded p-3">
+      <div className={`mt-4 bg-status-warning/10 border border-status-warning/20 ${radius.default} p-3`}>
         <p className="caption text-status-warning">
           <strong>Note:</strong> Cable testing requires compatible network
           hardware. Not all NICs support TDR.
@@ -618,7 +649,7 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="bg-surface-hover border border-surface-border rounded-lg p-4">
+    <div className={`bg-surface-hover border border-surface-border ${radius.lg} p-4`}>
       <h4 className="font-semibold text-text-primary mb-2">{title}</h4>
       <p className="body-small text-text-secondary">{description}</p>
     </div>
@@ -636,12 +667,12 @@ function StepCard({
 }) {
   return (
     <div className="flex gap-4">
-      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-primary text-text-inverse flex items-center justify-center font-semibold">
+      <div className={`shrink-0 w-8 h-8 ${radius.full} bg-brand-primary text-text-inverse ${layout.flex.center} font-semibold`}>
         {number}
       </div>
       <div className="flex-1">
-        <h4 className="font-semibold text-text-primary mb-1">{title}</h4>
-        <p className="body-small text-text-secondary">{description}</p>
+        <h4 className="font-semibold mb-1">{title}</h4>
+        <p className="body-small">{description}</p>
       </div>
     </div>
   );
@@ -668,7 +699,7 @@ function HelpTermList({
   items: Array<{ term: string; description: string }>;
 }) {
   return (
-    <dl className="space-y-4">
+    <dl className="stack-lg">
       {items.map((item, idx) => (
         <div key={idx} className="border-l-2 border-surface-border pl-4">
           <dt className="font-semibold text-text-primary mb-1">{item.term}</dt>

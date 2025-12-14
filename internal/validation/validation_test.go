@@ -1,3 +1,5 @@
+// Package validation provides input validation utilities.
+// Test suite validates IP checks, CIDR validation, URL validation, and request parsing helpers.
 package validation
 
 import (

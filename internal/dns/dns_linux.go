@@ -1,5 +1,8 @@
 //go:build linux
 
+// Package dns provides DNS testing and lookup functionality with timing.
+// Linux implementation reads /etc/resolv.conf to discover configured name servers
+// and performs DNS queries for nameserver enumeration.
 package dns
 
 import (

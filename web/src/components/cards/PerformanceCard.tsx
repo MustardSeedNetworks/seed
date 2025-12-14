@@ -1,9 +1,41 @@
+/**
+ * PerformanceCard Component
+ *
+ * Purpose: Internet speed and network performance testing with speedtest.net integration and
+ * iperf3 support. Displays download/upload speeds, latency, jitter, and packet loss metrics.
+ * (~670 lines - complex testing orchestration)
+ *
+ * Key Features:
+ * - Speedtest.net integration: download/upload speeds, latency, server info, distance
+ * - iperf3 support: UDP and TCP throughput testing, bandwidth, jitter, packet loss
+ * - Real-time progress: shows test phase and progress percentage
+ * - Multiple test result history: displays last completed test results
+ * - Visual gauges: SpeedGauge components for visual speed representation
+ * - Protocol metrics: separate IPv4/IPv6 results (when available)
+ * - Test controls: start/stop test, clear results
+ * - Latency thresholds: warning/critical levels from settings
+ * - System info: iperf3 installation status and version
+ *
+ * Usage:
+ * ```typescript
+ * <PerformanceCard
+ *   data={performanceData}
+ *   loading={isRunningTest}
+ * />
+ * ```
+ *
+ * Dependencies: Card UI components, SpeedGauge, useSettings hook, auth hooks,
+ *              Icons, theme utilities
+ * State: Manages test state, results history, current phase, progress tracking
+ */
+
 import { useState, useEffect, useCallback, memo } from "react";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { useSettings } from "../../contexts/SettingsContext";
 import { Gauge } from "../ui/Icons";
 import { SpeedGauge, ProgressRing, PulsingDot } from "../ui/SpeedGauge";
+import { icon as iconTokens, layout, radius } from "../../styles/theme";
 
 // Speedtest types
 interface SpeedtestData {
@@ -412,43 +444,47 @@ export const PerformanceCard = memo(function PerformanceCard({
     <Card
       title="Performance Tests"
       subtitle="Speedtest & iPerf"
-      icon={<Gauge className="w-5 h-5" />}
+      icon={<Gauge className={iconTokens.size.md} />}
       status={getStatus()}
     >
       <div>
         {/* Internet Speed Section */}
-        <p className="text-xs font-medium text-text-secondary mb-2">
+        <p className="caption font-medium mb-2">
           Internet Speed
         </p>
 
-        {speedtestRunning && speedtestStatus && (
-          <div className="flex items-center gap-4 mb-3 p-3 bg-surface-hover rounded-lg">
+          {speedtestRunning && speedtestStatus && (
+          <div className={`${layout.inline.spacious} mb-3 p-3 bg-surface-hover ${radius.lg}`}>
             <ProgressRing
               progress={speedtestStatus.progress}
               size={56}
               strokeWidth={5}
             />
             <div className="flex-1">
-              <div className="flex items-center gap-2">
+              <div className={layout.inline.default}>
                 <PulsingDot color="primary" size="sm" />
-                <span className="text-sm font-medium text-text-primary">
+                <span className="body-small font-medium">
                   {speedtestPhaseLabels[speedtestStatus.phase] ||
                     speedtestStatus.phase}
                 </span>
               </div>
-              <div
-                role="progressbar"
-                aria-valuenow={speedtestStatus.progress}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="Speedtest progress"
-                className="mt-2 w-full bg-surface-base rounded-full h-1.5"
-              >
-                <div
-                  className="bg-brand-primary h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${speedtestStatus.progress}%` }}
-                />
-              </div>
+              {(() => {
+                const sp = Math.min(Math.max(speedtestStatus.progress, 0), 100);
+                return (
+                  <div
+                    role="progressbar"
+                    aria-valuenow={sp}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Speedtest progress"
+                    className={`mt-2 w-full bg-surface-base ${radius.full} h-1.5`}
+                  >
+                    <div
+                      className={`bg-brand-primary h-1.5 ${radius.full} transition-all duration-300 w-[${sp}%]`}
+                    />
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -476,17 +512,17 @@ export const PerformanceCard = memo(function PerformanceCard({
         )}
 
         {!speedtestRunning && !speedtestResult && !speedtestError && (
-          <p className="text-sm text-text-muted mb-2">No results yet</p>
+          <p className="body-small mb-2">No results yet</p>
         )}
 
         {speedtestError && (
-          <p className="text-sm text-status-error">{speedtestError}</p>
+          <p className="body-small text-status-error">{speedtestError}</p>
         )}
 
         <CardDivider />
 
         {/* LAN Speed (iperf3) Section */}
-        <p className="text-xs font-medium text-text-secondary mb-2 mt-2">
+        <p className="caption font-medium mb-2 mt-2">
           LAN Speed (iperf3)
           {iperfInfo?.version && (
             <span className="text-text-muted font-normal ml-2">
@@ -496,7 +532,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         </p>
 
         {!iperfInfo?.installed && (
-          <p className="text-sm text-status-warning mb-3">
+          <p className="body-small text-status-warning mb-3">
             iperf3 not installed. Install it to enable LAN speed tests.
           </p>
         )}
@@ -505,14 +541,14 @@ export const PerformanceCard = memo(function PerformanceCard({
           <>
             {/* Config Summary */}
             {iperfSettings.server ? (
-              <div className="text-xs text-text-muted mb-3 p-2 bg-surface-hover rounded">
-                <div className="flex justify-between">
+              <div className={`caption mb-3 p-2 bg-surface-hover ${radius.default}`}>
+                <div className={layout.flex.between}>
                   <span>Server:</span>
                   <span className="text-text-primary">
                     {iperfSettings.server}:{iperfSettings.port}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className={layout.flex.between}>
                   <span>Test:</span>
                   <span className="text-text-primary">
                     {iperfSettings.protocol.toUpperCase()}{" "}
@@ -523,46 +559,50 @@ export const PerformanceCard = memo(function PerformanceCard({
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-text-muted mb-3">
+              <p className="caption mb-3">
                 Configure server in Settings
               </p>
             )}
 
             {/* Client Status/Results */}
             {iperfClientRunning && iperfClientStatus && (
-              <div className="flex items-center gap-4 mb-3 p-3 bg-surface-hover rounded-lg">
+              <div className={`${layout.inline.spacious} mb-3 p-3 bg-surface-hover ${radius.lg}`}>
                 <ProgressRing
                   progress={iperfClientStatus.progress}
                   size={56}
                   strokeWidth={5}
                 />
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className={layout.inline.default}>
                     <PulsingDot color="primary" size="sm" />
-                    <span className="text-sm font-medium text-text-primary">
+                    <span className="body-small font-medium">
                       {iperfPhaseLabels[iperfClientStatus.phase] ||
                         iperfClientStatus.phase}
                     </span>
                   </div>
-                  <div
-                    role="progressbar"
-                    aria-valuenow={iperfClientStatus.progress}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label="iPerf progress"
-                    className="mt-2 w-full bg-surface-base rounded-full h-1.5"
-                  >
-                    <div
-                      className="bg-brand-primary h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${iperfClientStatus.progress}%` }}
-                    />
-                  </div>
+                  {(() => {
+                    const pp = Math.min(Math.max(iperfClientStatus.progress, 0), 100);
+                    return (
+                      <div
+                        role="progressbar"
+                        aria-valuenow={pp}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="iPerf progress"
+                        className={`mt-2 w-full bg-surface-base ${radius.full} h-1.5`}
+                      >
+                        <div
+                          className={`bg-brand-primary h-1.5 ${radius.full} transition-all duration-300 w-[${pp}%]`}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
 
             {!iperfClientRunning && iperfResult && (
-              <div className="mb-3 space-y-2">
+              <div className="mb-3 stack-sm">
                 {iperfResult.direction === "bidirectional" ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <CardValue
@@ -640,12 +680,12 @@ export const PerformanceCard = memo(function PerformanceCard({
             )}
 
             {iperfError && (
-              <p className="text-sm text-status-error">{iperfError}</p>
+              <p className="body-small text-status-error">{iperfError}</p>
             )}
 
             {/* Server status indicator (if enabled) */}
             {iperfSettings.enableServer && (
-              <div className="text-xs text-text-muted flex items-center justify-between p-2 bg-surface-hover rounded">
+              <div className={`caption ${layout.flex.between} p-2 bg-surface-hover ${radius.default}`}>
                 <span>Server Mode</span>
                 <span
                   className={

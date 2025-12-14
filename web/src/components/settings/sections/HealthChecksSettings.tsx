@@ -1,7 +1,48 @@
+/**
+ * HealthChecksSettings Component (~449 lines)
+ *
+ * Purpose: Comprehensive health check configuration panel allowing users to define
+ * and customize ping targets, TCP/UDP ports, and HTTP endpoints for monitoring.
+ *
+ * Key Features:
+ * - Ping targets: add/remove/configure ping destinations with custom names and packet counts
+ * - TCP ports: configure TCP connectivity tests on specific ports
+ * - UDP ports: configure UDP reachability tests
+ * - HTTP endpoints: configure HTTP/HTTPS monitoring with customizable URLs
+ * - Enable/disable: toggle each test individually
+ * - Interval configuration: set how frequently tests run
+ * - Timeout settings: configure test timeout values per protocol
+ * - Port validation: validates port numbers (1-65535)
+ * - URL validation: validates HTTP endpoint URLs
+ * - CRUD operations: add/remove/update all test types
+ * - AutoSaveIndicator: shows persistent save status
+ * - HeartPulse icon: visual indicator in settings menu
+ *
+ * Usage:
+ * ```typescript
+ * <HealthChecksSettings
+ *   testsSettings={settings}
+ *   setTestsSettings={updateSettings}
+ *   testsStatus={saveStatus}
+ * />
+ * ```
+ *
+ * Dependencies: CollapsibleSection, AutoSaveIndicator, Icons, settings types, ID generation
+ * State: Manages multiple arrays of test configurations with CRUD callbacks
+ */
+
 import { memo, useCallback } from "react";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { HeartPulse } from "../../ui/Icons";
+import {
+  icon as iconTokens,
+  layout,
+  radius,
+  cn,
+  spacing,
+  input,
+} from "../../../styles/theme";
 import {
   TestsSettings,
   SaveStatus,
@@ -168,21 +209,27 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
-          <HeartPulse className="w-4 h-4" />
+        <div className={layout.inline.default}>
+          <HeartPulse className={iconTokens.size.sm} />
           <span>Health Checks</span>
           <AutoSaveIndicator status={testsStatus} />
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className={spacing.stack.default}>
         {/* Enable Toggle */}
-        <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+        <label
+          className={cn(
+            layout.flex.between,
+            "p-2.5 bg-surface-base border border-surface-border",
+            radius.default,
+          )}
+        >
           <div>
-            <span className="text-sm text-text-primary font-medium">
+            <span className="body-small text-text-primary font-medium">
               Enable Health Checks
             </span>
-            <p className="text-xs text-text-muted">
+            <p className="caption text-text-muted">
               Test ping, TCP, UDP, and HTTP targets
             </p>
           </div>
@@ -195,24 +242,24 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 runPerformance: e.target.checked,
               }))
             }
-            className="w-4 h-4"
+            className={iconTokens.size.sm}
           />
         </label>
 
         {/* Ping Targets */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-text-muted font-medium">
+          <div className={cn(layout.flex.between, "mb-2")}>
+            <span className="caption text-text-muted font-medium">
               Ping Targets
             </span>
             <button
               onClick={addPingTarget}
-              className="text-xs text-brand-primary hover:text-brand-accent"
+              className="caption text-brand-primary hover:text-brand-accent"
             >
               + Add
             </button>
           </div>
-          <p className="text-xs text-text-muted mb-2">
+          <p className="caption text-text-muted mb-2">
             Default: 3 pings per target
           </p>
           {testsSettings.pingTargets.map((target) => (
@@ -224,7 +271,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updatePingTarget(target.id!, "name", e.target.value)
                 }
                 placeholder="Name"
-                className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-24",
+                )}
               />
               <input
                 type="text"
@@ -233,7 +285,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updatePingTarget(target.id!, "host", e.target.value)
                 }
                 placeholder="Host/IP"
-                className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "flex-1",
+                )}
               />
               <input
                 type="number"
@@ -248,7 +305,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 min={1}
                 max={10}
                 title="Number of pings"
-                className="w-14 px-2 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary text-center"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-14 text-center",
+                )}
               />
               <button
                 onClick={() => removePingTarget(target.id!)}
@@ -262,13 +324,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
 
         {/* TCP Ports */}
         <div className="border-t border-surface-border pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-text-muted font-medium">
+          <div className={cn(layout.flex.between, "mb-2")}>
+            <span className="caption text-text-muted font-medium">
               TCP Port Tests
             </span>
             <button
               onClick={addTCPPort}
-              className="text-xs text-brand-primary hover:text-brand-accent"
+              className="caption text-brand-primary hover:text-brand-accent"
             >
               + Add
             </button>
@@ -285,7 +347,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateTCPPort(port.id!, "name", e.target.value)
                 }
                 placeholder="Name"
-                className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-24",
+                )}
               />
               <input
                 type="text"
@@ -294,7 +361,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateTCPPort(port.id!, "host", e.target.value)
                 }
                 placeholder="Host"
-                className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "flex-1",
+                )}
               />
               <input
                 type="number"
@@ -307,7 +379,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   )
                 }
                 placeholder="Port"
-                className="w-20 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-20",
+                )}
               />
               <button
                 onClick={() => removeTCPPort(port.id!)}
@@ -321,18 +398,18 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
 
         {/* UDP Ports */}
         <div className="border-t border-surface-border pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-text-muted font-medium">
+          <div className={cn(layout.flex.between, "mb-2")}>
+            <span className="caption text-text-muted font-medium">
               UDP Port Tests
             </span>
             <button
               onClick={addUDPPort}
-              className="text-xs text-brand-primary hover:text-brand-accent"
+              className="caption text-brand-primary hover:text-brand-accent"
             >
               + Add
             </button>
           </div>
-          <p className="text-xs text-text-muted mb-2">
+          <p className="caption text-text-muted mb-2">
             Test UDP services (DNS:53, NTP:123, etc.)
           </p>
           {testsSettings.udpPorts.map((port) => (
@@ -347,7 +424,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateUDPPort(port.id!, "name", e.target.value)
                 }
                 placeholder="Name"
-                className="w-24 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-24",
+                )}
               />
               <input
                 type="text"
@@ -356,7 +438,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateUDPPort(port.id!, "host", e.target.value)
                 }
                 placeholder="Host"
-                className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "flex-1",
+                )}
               />
               <input
                 type="number"
@@ -369,7 +456,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   )
                 }
                 placeholder="Port"
-                className="w-20 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-20",
+                )}
               />
               <button
                 onClick={() => removeUDPPort(port.id!)}
@@ -383,13 +475,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
 
         {/* HTTP Endpoints */}
         <div className="border-t border-surface-border pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-text-muted font-medium">
+          <div className={cn(layout.flex.between, "mb-2")}>
+            <span className="caption text-text-muted font-medium">
               HTTP Endpoints
             </span>
             <button
               onClick={addHTTPEndpoint}
-              className="text-xs text-brand-primary hover:text-brand-accent"
+              className="caption text-brand-primary hover:text-brand-accent"
             >
               + Add
             </button>
@@ -397,7 +489,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
           {testsSettings.httpEndpoints.map((endpoint) => (
             <div
               key={endpoint.id || endpoint.url}
-              className="space-y-1 mb-3 p-2 bg-surface-base rounded border border-surface-border"
+              className={cn(spacing.stack.xs, "mb-3 p-2 bg-surface-base border border-surface-border", radius.default)}
             >
               <div className="flex gap-2">
                 <input
@@ -407,7 +499,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     updateHTTPEndpoint(endpoint.id!, "name", e.target.value)
                   }
                   placeholder="Name"
-                  className="flex-1 px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="number"
@@ -420,7 +517,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     )
                   }
                   placeholder="Status"
-                  className="w-20 px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "w-20 bg-surface-raised",
+                  )}
                 />
                 <button
                   onClick={() => removeHTTPEndpoint(endpoint.id!)}
@@ -436,7 +538,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateHTTPEndpoint(endpoint.id!, "url", e.target.value)
                 }
                 placeholder="https://example.com/health"
-                className="w-full px-2.5 py-2 bg-surface-raised border border-surface-border rounded text-xs text-text-primary"
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "bg-surface-raised",
+                )}
               />
             </div>
           ))}

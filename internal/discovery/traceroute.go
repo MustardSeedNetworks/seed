@@ -1,4 +1,7 @@
-// Package discovery provides network discovery functionality.
+// Package discovery implements multi-protocol network device discovery.
+// Traceroute support enables path tracing to determine the network route (hop sequence)
+// that packets take to reach a target host. Supports ICMP, UDP, and TCP-based traceroute
+// for mapping network topology and identifying intermediate infrastructure.
 package discovery
 
 import (

@@ -1,10 +1,46 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+/**
+ * Floating Action Button (FAB) Component
+ * 
+ * Fixed-position button in the bottom-right corner for triggering quick actions.
+ * 
+ * Features:
+ * - Fixed positioning (bottom-right corner)
+ * - Loading spinner animation while tests are running
+ * - Dispatches 'runAllTests' custom event
+ * - Fallback 60-second timeout if event never completes
+ * - Disabled state during test execution
+ * - Keyboard accessible with focus ring
+ * - Touch-friendly sizing (56x56 pixels)
+ * 
+ * Usage:
+ * ```tsx
+ * // In app layout:
+ * <FAB />
+ * 
+ * // Listen for test completion:
+ * window.addEventListener('testsComplete', () => {
+ *   // Handle completion
+ * });
+ * ```
+ * 
+ * The FAB is rendered at the root App level and provides quick access
+ * to running all network diagnostics without opening settings.
+ */
 
+import { useState, useCallback, useEffect, useRef } from "react";
+import { cn, layout, radius, icon as iconTokens } from "../../styles/theme";
+
+/**
+ * Props for FAB component
+ */
 interface FABProps {
+  /** Additional CSS classes */
   className?: string;
 }
 
-// Floating action button that triggers "runAllTests" and shows a spinner while running.
+/**
+ * Floating Action Button - triggers all diagnostic tests
+ */
 export function FAB({ className = "" }: FABProps) {
   const [isRunning, setIsRunning] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,14 +80,22 @@ export function FAB({ className = "" }: FABProps) {
     <button
       onClick={handleClick}
       disabled={isRunning}
-      className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all flex items-center justify-center touch-manipulation z-50 focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base ${
-        isRunning ? "opacity-75 cursor-not-allowed" : ""
-      } ${className}`}
+      className={cn(
+        "fixed bottom-6 right-6 w-14 h-14 bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all touch-manipulation z-50 focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base",
+        layout.flex.center,
+        radius.full,
+        isRunning && "opacity-75 cursor-not-allowed",
+        className,
+      )}
       title="Run All Tests"
       aria-label="Run All Tests"
     >
       {isRunning ? (
-        <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+        <svg
+          className={cn(iconTokens.size.lg, "animate-spin")}
+          fill="none"
+          viewBox="0 0 24 24"
+        >
           <circle
             className="opacity-25"
             cx="12"
@@ -67,7 +111,11 @@ export function FAB({ className = "" }: FABProps) {
           />
         </svg>
       ) : (
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+        <svg
+          className={iconTokens.size.lg}
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path d="M8 5v14l11-7z" />
         </svg>
       )}

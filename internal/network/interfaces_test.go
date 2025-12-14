@@ -1,3 +1,6 @@
+// Package network handles network interface management.
+// Test suite validates interface detection, configuration, and cross-platform operations.
+// Tests cover interface enumeration, property detection, IP configuration, and DNS setup.
 package network
 
 import (

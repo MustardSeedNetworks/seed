@@ -1,3 +1,5 @@
+// Package cable provides TDR cable testing functionality.
+// Test suite validates cable test status constants and result interpretation.
 package cable
 
 import (

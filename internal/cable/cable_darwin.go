@@ -1,5 +1,8 @@
 //go:build darwin
 
+// Package cable provides TDR cable testing functionality.
+// macOS stub implementation provides no TDR support as macOS does not expose
+// Time Domain Reflectometry functionality through standard APIs.
 package cable
 
 // isSupportedPlatform checks if the NIC supports TDR on macOS.

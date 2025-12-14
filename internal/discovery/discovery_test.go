@@ -1,3 +1,7 @@
+// Package discovery implements multi-protocol network device discovery.
+// Test suite validates device discovery functionality across all discovery methods,
+// profile configurations, and state management operations. Ensures device aggregation,
+// protocol-specific information, and discovery timing work correctly.
 package discovery
 
 import (

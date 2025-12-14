@@ -1,3 +1,5 @@
+// Package api provides the HTTP/WebSocket server.
+// Integration tests validate JWT authentication enforcement across API endpoints.
 package api
 
 import (
@@ -321,7 +323,7 @@ func (ts *testServer) cleanup() {
 	// WebSocket hub doesn't require explicit cleanup in tests
 }
 
-func createTestServer(t *testing.T) *testServer {
+func createTestServer(_ *testing.T) *testServer {
 	server := NewTestServer()
 	handler := server.GetAuthenticatedHandler()
 

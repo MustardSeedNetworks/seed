@@ -1,6 +1,10 @@
 //go:build linux
 // +build linux
 
+// Package discovery implements multi-protocol network device discovery.
+// NDP (Neighbor Discovery Protocol) support for Linux enables IPv6 neighbor discovery
+// by reading from the kernel's neighbor table, allowing detection of IPv6-capable devices
+// and routers on the local network segment.
 package discovery
 
 import (
@@ -23,11 +27,11 @@ type NDPScanner struct {
 
 // NDPNeighbor represents an IPv6 neighbor.
 type NDPNeighbor struct {
-	IPv6      string
-	MAC       string
-	IsRouter  bool
-	State     string // NUD state: REACHABLE, STALE, DELAY, PROBE, etc.
-	LastSeen  time.Time
+	IPv6     string
+	MAC      string
+	IsRouter bool
+	State    string // NUD state: REACHABLE, STALE, DELAY, PROBE, etc.
+	LastSeen time.Time
 }
 
 // NewNDPScanner creates a new IPv6 NDP scanner.

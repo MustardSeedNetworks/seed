@@ -1,3 +1,5 @@
+// Package speedtest provides network bandwidth testing using speedtest.net infrastructure.
+// Test suite validates speedtest phases, progress tracking, and throughput measurement.
 package speedtest
 
 import (

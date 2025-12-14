@@ -1,3 +1,49 @@
+// Package discovery implements active network scanning via ARP and ICMP.
+//
+// This file provides active Layer 2 and Layer 3 network scanning to discover
+// devices on local and remote subnets. Unlike passive discovery protocols (LLDP/CDP),
+// ARP scanning actively probes the network to find all responsive devices.
+//
+// Scanning modes:
+//   - ARP scanning: Local subnet discovery using Address Resolution Protocol (Layer 2)
+//   - ICMP scanning: Remote subnet discovery using ICMP Echo Request/Reply (Layer 3)
+//
+// Local subnet scanning (ARP):
+//   - Sends ARP "who-has" requests for each IP in the subnet
+//   - Parses ARP replies to build device list with MAC addresses
+//   - Requires Layer 2 connectivity (same broadcast domain)
+//   - Fast and reliable for local networks
+//   - Identifies vendor from MAC OUI (Organizationally Unique Identifier)
+//
+// Remote subnet scanning (ICMP):
+//   - Sends ICMP Echo Request (ping) for each IP
+//   - Uses raw sockets for concurrent pinging (requires elevated privileges)
+//   - Examines TTL values to estimate operating system
+//   - Works across routers (Layer 3)
+//   - Slower than ARP but supports remote networks
+//
+// Additional subnets:
+//   - Configure via Discovery.AdditionalSubnets in config
+//   - Automatically selects ICMP for remote subnets (beyond local broadcast domain)
+//   - Results are merged with local ARP results
+//   - Marked with IsLocal flag to distinguish origin
+//
+// OS detection heuristics (based on initial TTL):
+//   - TTL 64: Linux/Unix (decremented from 64)
+//   - TTL 128: Windows (decremented from 128)
+//   - TTL 255: Network device (decremented from 255)
+//
+// Performance:
+//   - Concurrent scanning with rate limiting to avoid network flooding
+//   - Results cached with LastSeen timestamps
+//   - Hostname resolution performed asynchronously to avoid blocking
+//   - Vendor lookup via OUI database (IEEE MA-L assignments)
+//
+// Security considerations:
+//   - Active scanning generates network traffic (visible to IDS/IPS)
+//   - May trigger security alerts in monitored environments
+//   - Requires CAP_NET_RAW on Linux for ICMP scanning
+//   - Should be rate-limited in production environments
 package discovery
 
 import (
@@ -10,7 +56,16 @@ import (
 	"time"
 )
 
-// ARPEntry represents a discovered device from ARP scanning.
+// ARPEntry represents a discovered device from ARP or ICMP scanning.
+//
+// Entries are created from:
+//   - ARP replies during local subnet scanning (has MAC address)
+//   - ICMP Echo Replies during remote subnet scanning (may lack MAC)
+//   - System ARP cache queries (platform-specific implementation)
+//
+// The entry contains both Layer 2 (MAC, vendor) and Layer 3 (IP, hostname)
+// information when available. Remote devices discovered via ICMP may not
+// have MAC addresses.
 type ARPEntry struct {
 	IP           string    `json:"ip"`
 	MAC          string    `json:"mac"`

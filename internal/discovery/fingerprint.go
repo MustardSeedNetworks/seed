@@ -1,3 +1,17 @@
+// Package discovery provides device fingerprinting and OS/service detection capabilities.
+//
+// This file implements active fingerprinting to identify operating systems, service versions,
+// and TLS configurations of discovered network devices. It uses multiple techniques including
+// TTL analysis, banner grabbing, HTTP headers, and TLS certificate inspection.
+//
+// Detection methods:
+//   - OS fingerprinting via TCP/IP TTL values and TCP window sizes
+//   - Service version detection through banner grabbing on common ports
+//   - TLS/SSL certificate analysis and cipher suite detection
+//   - HTTP server identification via headers and response patterns
+//
+// The fingerprinter combines results from multiple methods and assigns confidence scores
+// to provide accurate device identification.
 package discovery
 
 import (
@@ -33,25 +47,25 @@ type ServiceVersion struct {
 // TLSInfo contains TLS certificate and configuration details.
 type TLSInfo struct {
 	Port              int       `json:"port"`
-	Version           string    `json:"version"`           // TLS 1.2, TLS 1.3, etc.
-	CipherSuite       string    `json:"cipherSuite"`       // Negotiated cipher
-	CommonName        string    `json:"commonName"`        // Certificate CN
-	Issuer            string    `json:"issuer"`            // Certificate issuer
-	ValidFrom         time.Time `json:"validFrom"`         // Certificate start
-	ValidTo           time.Time `json:"validTo"`           // Certificate expiry
-	DaysUntilExpiry   int       `json:"daysUntilExpiry"`   // Days until cert expires
-	SelfSigned        bool      `json:"selfSigned"`        // Is self-signed?
-	SubjectAltNames   []string  `json:"subjectAltNames"`   // SANs
-	CertificateErrors []string  `json:"certErrors"`        // Any validation errors
+	Version           string    `json:"version"`         // TLS 1.2, TLS 1.3, etc.
+	CipherSuite       string    `json:"cipherSuite"`     // Negotiated cipher
+	CommonName        string    `json:"commonName"`      // Certificate CN
+	Issuer            string    `json:"issuer"`          // Certificate issuer
+	ValidFrom         time.Time `json:"validFrom"`       // Certificate start
+	ValidTo           time.Time `json:"validTo"`         // Certificate expiry
+	DaysUntilExpiry   int       `json:"daysUntilExpiry"` // Days until cert expires
+	SelfSigned        bool      `json:"selfSigned"`      // Is self-signed?
+	SubjectAltNames   []string  `json:"subjectAltNames"` // SANs
+	CertificateErrors []string  `json:"certErrors"`      // Any validation errors
 }
 
 // AdvancedProbeResult contains results from advanced probing.
 type AdvancedProbeResult struct {
-	IP              string            `json:"ip"`
-	ProbedAt        time.Time         `json:"probedAt"`
-	OSFingerprint   *OSFingerprint    `json:"osFingerprint,omitempty"`
-	ServiceVersions []ServiceVersion  `json:"serviceVersions,omitempty"`
-	TLSInfo         []TLSInfo         `json:"tlsInfo,omitempty"`
+	IP              string           `json:"ip"`
+	ProbedAt        time.Time        `json:"probedAt"`
+	OSFingerprint   *OSFingerprint   `json:"osFingerprint,omitempty"`
+	ServiceVersions []ServiceVersion `json:"serviceVersions,omitempty"`
+	TLSInfo         []TLSInfo        `json:"tlsInfo,omitempty"`
 }
 
 // Fingerprinter performs advanced probing and fingerprinting.
@@ -456,15 +470,15 @@ func (f *Fingerprinter) probeTLS(ctx context.Context, ip string, port int) *TLSI
 	cert := state.PeerCertificates[0]
 
 	info := &TLSInfo{
-		Port:            port,
-		Version:         tlsVersionString(state.Version),
-		CipherSuite:     tls.CipherSuiteName(state.CipherSuite),
-		CommonName:      cert.Subject.CommonName,
-		ValidFrom:       cert.NotBefore,
-		ValidTo:         cert.NotAfter,
-		DaysUntilExpiry: int(time.Until(cert.NotAfter).Hours() / 24),
-		SelfSigned:      cert.Issuer.CommonName == cert.Subject.CommonName,
-		SubjectAltNames: cert.DNSNames,
+		Port:              port,
+		Version:           tlsVersionString(state.Version),
+		CipherSuite:       tls.CipherSuiteName(state.CipherSuite),
+		CommonName:        cert.Subject.CommonName,
+		ValidFrom:         cert.NotBefore,
+		ValidTo:           cert.NotAfter,
+		DaysUntilExpiry:   int(time.Until(cert.NotAfter).Hours() / 24),
+		SelfSigned:        cert.Issuer.CommonName == cert.Subject.CommonName,
+		SubjectAltNames:   cert.DNSNames,
 		CertificateErrors: []string{},
 	}
 
