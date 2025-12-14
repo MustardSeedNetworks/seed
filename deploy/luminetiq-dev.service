@@ -1,0 +1,23 @@
+[Unit]
+Description=LuminetIQ Network Diagnostics (Development)
+Documentation=https://github.com/krisarmstrong/luminetiq
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=krisarmstrong
+Group=krisarmstrong
+WorkingDirectory=/home/krisarmstrong/luminetiq
+ExecStartPre=/usr/sbin/setcap cap_net_raw=+ep /home/krisarmstrong/luminetiq/luminetiq
+ExecStart=/home/krisarmstrong/luminetiq/luminetiq
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+Environment=HOME=/home/krisarmstrong
+
+[Install]
+WantedBy=multi-user.target
