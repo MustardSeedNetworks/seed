@@ -277,6 +277,34 @@ import { sizing } from '../styles/theme';
 <div className="stack-lg">     // Consistent 16px spacing
 ```
 
+## Alert/Banner Components
+
+For inline error/warning/info messages, use the `alert` tokens:
+
+```tsx
+import { alert, cn } from '../styles/theme';
+
+// Error alert
+<div className={cn(alert.base, alert.variant.error)}>
+  Something went wrong!
+</div>
+
+// Warning alert
+<div className={cn(alert.base, alert.variant.warning)}>
+  Please review before continuing.
+</div>
+
+// Success alert
+<div className={cn(alert.base, alert.variant.success)}>
+  Operation completed successfully!
+</div>
+
+// Info alert
+<div className={cn(alert.base, alert.variant.info)}>
+  Here's some helpful information.
+</div>
+```
+
 ## Severity Colors (CVE/Vulnerability)
 
 For vulnerability severity, use the `severity` object from the theme:

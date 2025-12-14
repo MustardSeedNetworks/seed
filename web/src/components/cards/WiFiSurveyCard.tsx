@@ -95,14 +95,14 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
         }
       >
         {!isWifi && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-3 py-2 rounded text-sm mb-3">
+          <div className="bg-status-warning/10 border border-status-warning/20 text-status-warning px-3 py-2 rounded text-sm mb-3">
             WiFi interface required for site surveys. Switch to a WiFi interface
             to create surveys.
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm mb-3">
+          <div className="bg-status-error/10 border border-status-error/20 text-status-error px-3 py-2 rounded text-sm mb-3">
             {error}
           </div>
         )}
@@ -198,7 +198,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                         e.stopPropagation();
                         handleDelete(survey.id);
                       }}
-                      className="px-2 py-1 text-xs border rounded hover:bg-red-50 text-red-600"
+                      className="px-2 py-1 text-xs border rounded hover:bg-status-error/10 text-status-error"
                       title="Delete"
                     >
                       ×
