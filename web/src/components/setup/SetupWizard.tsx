@@ -1,21 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 interface SetupWizardProps {
   onComplete: () => void;
+  suggestedPassword?: string;
 }
 
 interface SetupStatusResponse {
   needsSetup: boolean;
   username?: string;
+  suggestedPassword?: string;
 }
 
-export function SetupWizard({ onComplete }: SetupWizardProps) {
+export function SetupWizard({
+  onComplete,
+  suggestedPassword,
+}: SetupWizardProps) {
+  // Default to custom password entry - more secure UX
+  const [passwordMode, setPasswordMode] = useState<"generated" | "custom">(
+    "custom",
+  );
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update password fields when switching to generated mode
+  useEffect(() => {
+    if (passwordMode === "generated" && suggestedPassword) {
+      setPassword(suggestedPassword);
+      setConfirmPassword(suggestedPassword);
+    }
+  }, [passwordMode, suggestedPassword]);
+
+  const handlePasswordModeChange = (mode: "generated" | "custom") => {
+    setPasswordMode(mode);
+    if (mode === "generated" && suggestedPassword) {
+      setPassword(suggestedPassword);
+      setConfirmPassword(suggestedPassword);
+      setShowPassword(true);
+    } else {
+      setPassword("");
+      setConfirmPassword("");
+      setShowPassword(false);
+    }
+    setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,43 +170,162 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
             </p>
           </div>
 
-          <div className="mb-4">
-            <label
-              htmlFor="setup-password"
-              className="block text-sm font-medium text-text-primary mb-1"
-            >
-              Password
+          {/* Password mode selection */}
+          <div className="mb-6 space-y-3">
+            <p className="text-sm font-medium text-text-primary mb-2">
+              Choose how to set your password:
+            </p>
+
+            {/* Custom password option */}
+            <label className="flex items-start gap-3 p-3 rounded border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
+              <input
+                type="radio"
+                name="passwordMode"
+                value="custom"
+                checked={passwordMode === "custom"}
+                onChange={() => handlePasswordModeChange("custom")}
+                className="mt-0.5 w-4 h-4 text-brand-primary focus:ring-brand-primary"
+              />
+              <div>
+                <span className="text-sm font-medium text-text-primary">
+                  Create my own password
+                </span>
+                <p className="text-xs text-text-muted mt-0.5">
+                  Choose a password you'll remember
+                </p>
+              </div>
             </label>
-            <input
-              id="setup-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
-              placeholder="Enter admin password"
-              required
-              minLength={8}
-            />
-            <p className="text-xs text-text-muted mt-1">Minimum 8 characters</p>
+
+            {/* Generated password option */}
+            {suggestedPassword && (
+              <label className="flex items-start gap-3 p-3 rounded border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
+                <input
+                  type="radio"
+                  name="passwordMode"
+                  value="generated"
+                  checked={passwordMode === "generated"}
+                  onChange={() => handlePasswordModeChange("generated")}
+                  className="mt-0.5 w-4 h-4 text-brand-primary focus:ring-brand-primary"
+                />
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-text-primary">
+                    Use generated secure password
+                  </span>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    Automatically generated strong password
+                  </p>
+                  {passwordMode === "generated" && (
+                    <div className="mt-2 p-2 bg-surface-sunken rounded">
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 font-mono text-sm text-brand-primary select-all break-all">
+                          {suggestedPassword}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigator.clipboard.writeText(suggestedPassword)
+                          }
+                          className="px-2 py-1 text-xs text-text-muted hover:text-text-primary border border-surface-border rounded hover:bg-surface-base transition-colors shrink-0"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                      <p className="text-xs text-status-warning mt-2">
+                        Save this password somewhere safe before continuing!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </label>
+            )}
           </div>
 
-          <div className="mb-6">
-            <label
-              htmlFor="setup-confirm-password"
-              className="block text-sm font-medium text-text-primary mb-1"
-            >
-              Confirm Password
-            </label>
-            <input
-              id="setup-confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
-              placeholder="Confirm your password"
-              required
-            />
-          </div>
+          {passwordMode === "custom" && (
+            <>
+              <div className="mb-4">
+                <label
+                  htmlFor="setup-password"
+                  className="block text-sm font-medium text-text-primary mb-1"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="setup-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-3 py-2 rounded border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary pr-10"
+                    placeholder="Enter admin password"
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                  >
+                    {showPassword ? (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-text-muted mt-1">
+                  Minimum 8 characters
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <label
+                  htmlFor="setup-confirm-password"
+                  className="block text-sm font-medium text-text-primary mb-1"
+                >
+                  Confirm Password
+                </label>
+                <input
+                  id="setup-confirm-password"
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2 rounded border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+            </>
+          )}
 
           {error && (
             <div

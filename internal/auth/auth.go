@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -83,11 +84,12 @@ func (m *Manager) Authenticate(username, password string) (string, error) {
 		return "", ErrInvalidCredentials
 	}
 
-	return m.generateToken(username)
+	return m.GenerateToken(username)
 }
 
-// generateToken creates a new JWT token.
-func (m *Manager) generateToken(username string) (string, error) {
+// GenerateToken creates a new JWT token for the given username.
+// This is primarily used for testing. For production use, use Authenticate().
+func (m *Manager) GenerateToken(username string) (string, error) {
 	now := time.Now()
 	claims := &Claims{
 		Username: username,
@@ -137,11 +139,43 @@ func HashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
+// extractTokenFromSubprotocol extracts the JWT token from WebSocket subprotocol header.
+// Supports formats:
+//   - "access_token, <token>"
+//   - "bearer, <token>"
+//   - Just "<token>" (fallback)
+func extractTokenFromSubprotocol(protocols string) string {
+	// Split by comma to handle multiple protocols
+	parts := strings.Split(protocols, ",")
+
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+
+		// Check if this part is the auth protocol indicator
+		if part == "access_token" || part == "bearer" {
+			// Next part should be the token
+			if i+1 < len(parts) {
+				return strings.TrimSpace(parts[i+1])
+			}
+		}
+	}
+
+	// Fallback: if no recognized protocol, treat the whole string as token
+	// This handles cases where client sends just the token
+	if len(parts) == 1 {
+		return strings.TrimSpace(parts[0])
+	}
+
+	return ""
+}
+
 // Middleware returns an HTTP middleware that validates JWT tokens.
 func (m *Manager) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip auth for login endpoint
-		if r.URL.Path == "/api/auth/login" {
+		// Skip auth for login and setup endpoints
+		if r.URL.Path == "/api/auth/login" ||
+			r.URL.Path == "/api/setup/status" ||
+			r.URL.Path == "/api/setup/complete" {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -154,12 +188,25 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 
 		var tokenString string
 
-		// For WebSocket connections, check query parameter first (browsers can't send headers)
+		// For WebSocket connections, support multiple auth methods
 		if strings.HasPrefix(r.URL.Path, "/ws") {
-			tokenString = r.URL.Query().Get("token")
+			// Method 1 (Preferred): Check Sec-WebSocket-Protocol header
+			// Format: "access_token, <token>" or "bearer, <token>"
+			protocols := r.Header.Get("Sec-WebSocket-Protocol")
+			if protocols != "" {
+				tokenString = extractTokenFromSubprotocol(protocols)
+			}
+
+			// Method 2 (Deprecated): Query parameter fallback for backwards compatibility
+			if tokenString == "" {
+				tokenString = r.URL.Query().Get("token")
+				if tokenString != "" {
+					log.Println("WARNING: WebSocket authentication via query parameter is deprecated. Use Sec-WebSocket-Protocol header instead.")
+				}
+			}
 		}
 
-		// If no query token, check Authorization header
+		// If no WebSocket token, check Authorization header
 		if tokenString == "" {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
@@ -292,6 +339,12 @@ func GenerateInitialCredentials(username string) (*InitialCredentials, error) {
 		PasswordHash: hash,
 		JWTSecret:    GenerateJWTSecret(),
 	}, nil
+}
+
+// UpdatePasswordHash updates the auth manager's password hash at runtime.
+// This is used when the password is changed via the setup wizard or settings.
+func (m *Manager) UpdatePasswordHash(hash string) {
+	m.passwordHash = hash
 }
 
 // IsDefaultPasswordHash checks if the given hash matches the default "netscope" password.
