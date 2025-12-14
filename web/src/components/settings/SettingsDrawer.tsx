@@ -1037,7 +1037,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-drawer-title"
-        className="fixed right-0 top-0 h-full w-full sm:w-[28rem] lg:w-[32rem] bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
+        className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
