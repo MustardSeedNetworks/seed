@@ -1,8 +1,8 @@
 /**
  * Initial Setup Wizard Component
- * 
+ *
  * Guides users through the first-time setup process for the LuminetIQ application.
- * 
+ *
  * Features:
  * - Password setup with validation (minimum 8 characters)
  * - Password confirmation requirement
@@ -10,7 +10,7 @@
  * - Custom password entry mode
  * - Automatic login after setup completion
  * - Error handling and user feedback
- * 
+ *
  * Flow:
  * 1. User enters password (or accepts suggested password)
  * 2. Confirms password matches
@@ -18,13 +18,20 @@
  * 4. Server hashes and stores password
  * 5. Component automatically logs in user
  * 6. Calls onComplete callback to exit setup flow
- * 
+ *
  * The wizard is shown when the system detects initial setup is needed
  * (no admin password configured). It's displayed before the main application.
  */
 
 import { useState, useEffect } from "react";
-import { buttonClass, inputClass, cardClass, cn, icon as iconTokens } from "../../styles/theme";
+import { radius } from "../../styles/theme";
+import {
+  buttonClass,
+  inputClass,
+  cardClass,
+  cn,
+  icon as iconTokens,
+} from "../../styles/theme";
 
 // API base URL for setup endpoints
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -45,14 +52,14 @@ interface SetupWizardProps {
  * Response from /api/setup/status endpoint
  */
 interface SetupStatusResponse {
-  needsSetup: boolean;              // True if initial setup is required
-  username?: string;                // Default admin username
-  suggestedPassword?: string;       // Pre-generated password (secure random)
+  needsSetup: boolean; // True if initial setup is required
+  username?: string; // Default admin username
+  suggestedPassword?: string; // Pre-generated password (secure random)
 }
 
 /**
  * SetupWizard Component
- * 
+ *
  * Modal-like component that requires user to set admin password before
  * accessing the main application.
  */
@@ -230,7 +237,9 @@ export function SetupWizard({
             </p>
 
             {/* Custom password option */}
-            <label className="flex items-start gap-3 p-3 rounded-md border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
+            <label
+              className={`flex items-start gap-3 p-3 ${radius.md} border border-surface-border cursor-pointer hover:bg-surface-base transition-colors`}
+            >
               <input
                 type="radio"
                 name="passwordMode"
@@ -251,7 +260,9 @@ export function SetupWizard({
 
             {/* Generated password option */}
             {suggestedPassword && (
-              <label className="flex items-start gap-3 p-3 rounded-md border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
+              <label
+                className={`flex items-start gap-3 p-3 ${radius.md} border border-surface-border cursor-pointer hover:bg-surface-base transition-colors`}
+              >
                 <input
                   type="radio"
                   name="passwordMode"
@@ -278,7 +289,7 @@ export function SetupWizard({
                           onClick={() =>
                             navigator.clipboard.writeText(suggestedPassword)
                           }
-                          className="px-2 py-1 caption text-text-muted hover:text-text-primary border border-surface-border rounded-md hover:bg-surface-base transition-colors shrink-0"
+                          className={`px-2 py-1 caption text-text-muted hover:text-text-primary border border-surface-border ${radius.md} hover:bg-surface-base transition-colors shrink-0`}
                         >
                           Copy
                         </button>
@@ -384,7 +395,7 @@ export function SetupWizard({
             <div
               role="alert"
               aria-live="assertive"
-              className="mb-4 p-3 bg-status-error/10 border border-status-error/20 rounded-md text-status-error body-small"
+              className={`mb-4 p-3 bg-status-error/10 border border-status-error/20 ${radius.md} text-status-error body-small`}
             >
               {error}
             </div>

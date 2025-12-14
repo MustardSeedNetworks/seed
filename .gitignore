@@ -78,3 +78,6 @@ certs/
 *.png
 config.yaml
 CLAUDE.md
+
+*storybook.log
+storybook-static

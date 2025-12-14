@@ -28,11 +28,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Server } from "lucide-react";
+import { radius, icon as iconTokens } from "../../styles/theme";
 import { BaseCard } from "./BaseCard";
 import { CardRow, CardDivider } from "../ui/Card";
 import { Status } from "../ui/StatusBadge";
 import { getAuthHeaders } from "../../hooks/useAuth";
-import { icon as iconTokens } from "../../styles/theme";
 
 interface SystemHealth {
   cpuPercent: number;
@@ -110,7 +110,7 @@ function ResourceBar({
           {percent.toFixed(0)}%
         </span>
       </div>
-      <div className="h-2 bg-surface-border rounded-md overflow-hidden">
+      <div className={`h-2 bg-surface-border ${radius.md} overflow-hidden`}>
         {(() => {
           const pct = Math.min(percent, 100);
           return (
