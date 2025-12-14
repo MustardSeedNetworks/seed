@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { buttonClass, inputClass, cardClass, cn } from "../../styles/theme";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -168,20 +169,15 @@ export function SetupWizard({
               <circle cx="40" cy="24" r="3" fill="currentColor" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-text-primary mt-3">
-            Welcome to LuminetIQ
-          </h1>
-          <p className="text-text-muted mt-1">
+          <h1 className="heading-2 mt-3">Welcome to LuminetIQ</h1>
+          <p className="body-small mt-1">
             Set up your admin password to get started
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-surface-raised rounded-lg border border-surface-border p-6"
-        >
+        <form onSubmit={handleSubmit} className={cardClass("default", "lg")}>
           <div className="mb-4">
-            <p className="text-sm text-text-muted mb-4">
+            <p className="body-small mb-4">
               Username: <strong>admin</strong> (cannot be changed)
             </p>
           </div>
@@ -271,7 +267,7 @@ export function SetupWizard({
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 rounded border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary pr-10"
+                    className={cn(inputClass("default", "md"), "pr-10")}
                     placeholder="Enter admin password"
                     required
                     minLength={8}
@@ -335,7 +331,7 @@ export function SetupWizard({
                   type={showPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 rounded border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
+                  className={inputClass("default", "md")}
                   placeholder="Confirm your password"
                   required
                 />
@@ -356,7 +352,7 @@ export function SetupWizard({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
+            className={buttonClass("primary", "md", "w-full")}
           >
             {isSubmitting ? "Setting up..." : "Complete Setup"}
           </button>
