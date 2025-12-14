@@ -66,20 +66,21 @@ export function FloorPlanCanvas({
         const y = sample.y * scaleY;
 
         // Draw point
-        // Note: Canvas API requires direct color values
+        // Note: Canvas API requires direct color values - CSS variables don't work
+        // These colors are intentionally hardcoded for Canvas compatibility
+        // See: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillStyle
         ctx.beginPath();
         ctx.arc(x, y, 8, 0, 2 * Math.PI);
         ctx.fillStyle = heatmapMetric
           ? "rgba(255, 255, 255, 0.8)" // white for visibility on heatmap
-          : "rgba(37, 99, 235, 0.8)"; // brand-primary blue
+          : "rgba(37, 99, 235, 0.8)"; // brand-primary (#2563eb at 80% opacity)
         ctx.fill();
         ctx.strokeStyle = "rgba(255, 255, 255, 1)"; // white border for visibility
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Draw point number
-        // Note: Canvas API requires direct color values, not CSS variables
-        // Using high-contrast colors for text visibility on point markers
+        // Draw point number - high contrast text for visibility
+        // Canvas API limitation: must use direct color values
         ctx.fillStyle = heatmapMetric ? "#1e293b" : "#f8fafc"; // slate-800 / slate-50
         ctx.font = "bold 10px sans-serif";
         ctx.textAlign = "center";

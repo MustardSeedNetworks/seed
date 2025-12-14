@@ -495,3 +495,35 @@ These work because:
 - `bg-black/50` always darkens regardless of theme
 - `bg-white/20` always lightens regardless of theme
 - They don't establish foreground/background contrast that would break in dark mode
+
+### Canvas API
+
+The HTML Canvas API (`<canvas>`) cannot use CSS variables directly. Colors must be hardcoded:
+
+```tsx
+// Canvas API limitation - must use direct color values
+ctx.fillStyle = "rgba(37, 99, 235, 0.8)"; // brand-primary blue
+ctx.strokeStyle = "#ffffff"; // white border
+
+// For SVG, CSS variables DO work:
+<svg>
+  <circle fill="var(--color-brand-primary)" />
+</svg>;
+```
+
+When using Canvas, document the color mapping in comments (e.g., `// brand-primary (#2563eb)`).
+
+### Discovery Method Colors
+
+Network discovery methods use distinct colors for visual identification. These use Tailwind colors with dark: variants:
+
+```tsx
+// Allowed - semantic colored badges with dark mode support
+const methodColors = {
+  arp: "bg-blue-500/20 text-blue-600 dark:text-blue-400",
+  lldp: "bg-green-500/20 text-green-600 dark:text-green-400",
+  cdp: "bg-orange-500/20 text-orange-600 dark:text-orange-400",
+};
+```
+
+These are intentionally colored to help users quickly distinguish protocol types.
