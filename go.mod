@@ -1,8 +1,6 @@
 module github.com/krisarmstrong/luminetiq
 
-go 1.25
-
-toolchain go1.25.5
+go 1.25.5
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
