@@ -256,13 +256,11 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-surface-raised rounded-lg p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-semibold mb-4">Create New Survey</h2>
+        <h2 className="heading-2 mb-4">Create New Survey</h2>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Survey Name
-              </label>
+              <label className="label block mb-1">Survey Name</label>
               <input
                 type="text"
                 value={name}
@@ -273,9 +271,7 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Survey Type
-              </label>
+              <label className="label block mb-1">Survey Type</label>
               <select
                 value={surveyType}
                 onChange={(e) => setSurveyType(e.target.value as SurveyType)}

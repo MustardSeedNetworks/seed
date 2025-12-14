@@ -53,14 +53,8 @@ export function Card({
             <span className="text-text-muted w-5 h-5 shrink-0">{icon}</span>
           )}
           <div className="flex flex-col">
-            <h3 className="font-semibold text-text-primary text-base sm:text-lg leading-tight font-display">
-              {title}
-            </h3>
-            {subtitle && (
-              <p className="text-xs text-text-muted leading-tight">
-                {subtitle}
-              </p>
-            )}
+            <h3 className="heading-4 font-display">{title}</h3>
+            {subtitle && <p className="caption leading-tight">{subtitle}</p>}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -111,7 +105,7 @@ export function CardValue({
 
   return (
     <div>
-      {label && <p className="text-xs text-text-muted mb-1">{label}</p>}
+      {label && <p className="caption mb-1">{label}</p>}
       <p
         className={`${sizeClasses[size]} ${textMods} flex items-center gap-1.5`}
         data-testid="card-value"
@@ -157,7 +151,7 @@ export function CardRow({
     <div
       className={`flex ${wrap ? "items-start" : "items-center"} justify-between gap-2 py-1`}
     >
-      <span className="text-sm text-text-muted shrink-0">{label}</span>
+      <span className="body-small shrink-0">{label}</span>
       <span
         className={`text-sm font-medium ${align === "right" ? "text-right" : "text-left"} ${wrap ? "break-all whitespace-pre-wrap" : "truncate"} ${mono ? "font-mono tabular-nums" : ""} ${status ? statusConfig[status].color : "text-text-primary"} flex items-center gap-1.5 ${justifyClass}`}
         title={String(value)}

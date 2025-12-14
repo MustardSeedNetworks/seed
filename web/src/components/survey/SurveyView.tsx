@@ -276,8 +276,8 @@ export function SurveyView({
       <div className="sticky top-0 bg-surface-raised border-b border-surface-border z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{survey.name}</h1>
-            <p className="text-sm text-text-muted mt-1">
+            <h1 className="heading-1">{survey.name}</h1>
+            <p className="body-small mt-1">
               {survey.surveyType.charAt(0).toUpperCase() +
                 survey.surveyType.slice(1)}{" "}
               Survey • {survey.samples.length} samples • {survey.status}
@@ -365,7 +365,7 @@ export function SurveyView({
           <div className="lg:col-span-2">
             <div className="bg-surface-raised rounded-lg border border-surface-border p-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Floor Plan</h2>
+                <h2 className="heading-3">Floor Plan</h2>
                 {heatmapMetric === null && survey.samples.length > 0 && (
                   <div className="flex gap-2">
                     <button
@@ -448,12 +448,12 @@ export function SurveyView({
           {/* Sample list */}
           <div className="lg:col-span-1">
             <div className="bg-surface-raised rounded-lg border border-surface-border p-4">
-              <h2 className="text-lg font-semibold mb-4">
+              <h2 className="heading-3 mb-4">
                 Samples ({survey.samples.length})
               </h2>
               <div className="space-y-2 max-h-[600px] overflow-y-auto">
                 {survey.samples.length === 0 ? (
-                  <p className="text-sm text-text-muted text-center py-8">
+                  <p className="body-small text-center py-8">
                     No samples yet.{" "}
                     {survey.status === "in_progress"
                       ? "Click on the floor plan to start."
@@ -467,7 +467,7 @@ export function SurveyView({
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold">#{idx + 1}</span>
-                        <span className="text-xs text-text-muted">
+                        <span className="caption">
                           {new Date(sample.timestamp).toLocaleTimeString()}
                         </span>
                       </div>

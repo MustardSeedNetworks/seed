@@ -1042,13 +1042,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
           <div className="space-y-0.5">
-            <h2
-              id="settings-drawer-title"
-              className="text-lg font-semibold text-text-primary leading-tight"
-            >
+            <h2 id="settings-drawer-title" className="heading-3">
               Settings
             </h2>
-            <p className="text-xs sm:text-sm text-text-muted">
+            <p className="body-small">
               Adjust thresholds, network, and display
             </p>
           </div>

@@ -33,10 +33,7 @@ export function HelpModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-surface-border bg-surface-raised shrink-0">
-          <h2
-            id="help-modal-title"
-            className="text-lg font-semibold text-text-primary"
-          >
+          <h2 id="help-modal-title" className="heading-3">
             {title}
           </h2>
           <button
@@ -69,7 +66,7 @@ interface HelpSectionProps {
 export function HelpSection({ title, children }: HelpSectionProps) {
   return (
     <div className="mb-6 last:mb-0">
-      <h3 className="text-sm font-semibold text-text-primary mb-3 pb-1 border-b border-surface-border">
+      <h3 className="heading-4 mb-3 pb-1 border-b border-surface-border">
         {title}
       </h3>
       <div className="space-y-2">{children}</div>

@@ -877,9 +877,7 @@ function App() {
             <span className="text-xl font-bold text-brand-primary flex-shrink-0">
               ◉
             </span>
-            <h1 className="text-lg font-semibold hidden xs:block sm:block">
-              LuminetIQ
-            </h1>
+            <h1 className="heading-4 hidden xs:block sm:block">LuminetIQ</h1>
             <div className="hidden sm:block">
               <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
             </div>
@@ -1034,10 +1032,7 @@ function App() {
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section: Primary Connectivity */}
           <section aria-labelledby="connectivity-heading" className="mb-6">
-            <h2
-              id="connectivity-heading"
-              className="text-xs font-medium uppercase tracking-wider text-text-muted mb-3"
-            >
+            <h2 id="connectivity-heading" className="section-title mb-3">
               Connectivity
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -1058,10 +1053,7 @@ function App() {
 
           {/* Section: Network Services */}
           <section aria-labelledby="network-heading" className="mb-6">
-            <h2
-              id="network-heading"
-              className="text-xs font-medium uppercase tracking-wider text-text-muted mb-3"
-            >
+            <h2 id="network-heading" className="section-title mb-3">
               Network
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -1078,10 +1070,7 @@ function App() {
 
           {/* Section: Testing & Discovery */}
           <section aria-labelledby="performance-heading" className="mb-6">
-            <h2
-              id="performance-heading"
-              className="text-xs font-medium uppercase tracking-wider text-text-muted mb-3"
-            >
+            <h2 id="performance-heading" className="section-title mb-3">
               Testing & Discovery
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -1106,10 +1095,7 @@ function App() {
 
           {/* Section: System */}
           <section aria-labelledby="system-heading" className="mb-6">
-            <h2
-              id="system-heading"
-              className="text-xs font-medium uppercase tracking-wider text-text-muted mb-3"
-            >
+            <h2 id="system-heading" className="section-title mb-3">
               System
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -1119,10 +1105,10 @@ function App() {
 
           {/* Footer notice */}
           <footer className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
-            <h2 className="text-base sm:text-lg font-semibold text-text-muted">
+            <h2 className="heading-4 text-text-muted">
               LuminetIQ {appVersion}
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-text-muted">
+            <p className="mt-2 body-small text-text-muted">
               Tap the play button to run all tests.
               <span className="hidden sm:inline">
                 <br />
@@ -1271,10 +1257,8 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-text-primary mt-3">
-            LuminetIQ
-          </h1>
-          <p className="text-text-muted mt-1">Illuminate Your Network</p>
+          <h1 className="heading-1 mt-3">LuminetIQ</h1>
+          <p className="body-small mt-1">Illuminate Your Network</p>
         </div>
 
         <form
@@ -1282,10 +1266,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           className="bg-surface-raised rounded-lg border border-surface-border p-6"
         >
           <div className="mb-4">
-            <label
-              htmlFor="login-username"
-              className="block text-sm font-medium text-text-primary mb-1"
-            >
+            <label htmlFor="login-username" className="label block mb-1">
               Username
             </label>
             <input
@@ -1300,10 +1281,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           </div>
 
           <div className="mb-6">
-            <label
-              htmlFor="login-password"
-              className="block text-sm font-medium text-text-primary mb-1"
-            >
+            <label htmlFor="login-password" className="label block mb-1">
               Password
             </label>
             <input
