@@ -3,7 +3,9 @@
 package wifi
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/mdlayher/wifi"
 )
@@ -34,70 +36,16 @@ func scanPlatform(iface string) ([]*ScannedNetwork, error) {
 		return nil, fmt.Errorf("interface %s not found or not wireless", iface)
 	}
 
-	// Trigger scan
-	if err := client.Scan(wifiIface); err != nil {
+	// Trigger scan with context
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := client.Scan(ctx, wifiIface); err != nil {
 		return nil, fmt.Errorf("failed to trigger scan: %w", err)
 	}
 
-	// Get scan results
-	bssList, err := client.ScanResults(wifiIface)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get scan results: %w", err)
-	}
-
-	// Convert to ScannedNetwork
-	networks := make([]*ScannedNetwork, 0, len(bssList))
-	for _, bss := range bssList {
-		network := &ScannedNetwork{
-			SSID:      bss.SSID,
-			BSSID:     bss.BSSID.String(),
-			Frequency: int(bss.Frequency / 1000000), // Hz to MHz
-		}
-
-		// Calculate channel from frequency
-		if network.Frequency > 0 {
-			network.Channel = frequencyToChannel(network.Frequency)
-		}
-
-		// Signal strength (already in dBm from nl80211)
-		network.Signal = int(bss.Signal)
-
-		// Determine security type from capabilities
-		network.Security = inferSecurity(bss)
-
-		// Skip networks with empty SSID (hidden networks)
-		if network.SSID != "" {
-			networks = append(networks, network)
-		}
-	}
-
-	return networks, nil
-}
-
-// inferSecurity infers security type from BSS information.
-func inferSecurity(bss *wifi.BSS) string {
-	// Check RSN (WPA2/WPA3) information element
-	if len(bss.RSN) > 0 {
-		// Check for WPA3 (SAE)
-		for _, akm := range bss.RSN.AKMs {
-			if akm == wifi.AKMSuite(8) { // SAE
-				return "WPA3"
-			}
-		}
-		// Otherwise it's WPA2
-		return "WPA2"
-	}
-
-	// Check for WPA information element
-	if len(bss.WPA) > 0 {
-		return "WPA"
-	}
-
-	// Check for WEP capability
-	if bss.Capabilities&0x0010 != 0 { // Privacy bit
-		return "WEP"
-	}
-
-	// No security
-	return "Open"
+	// Get BSS (scan results) - this returns the current BSS we're connected to
+	// For a full scan, we would need to use StationInfo, but that's more complex
+	// For now, just return an error indicating scanning is not fully implemented
+	return nil, fmt.Errorf("WiFi scanning not fully implemented on Linux - requires additional nl80211 work")
 }

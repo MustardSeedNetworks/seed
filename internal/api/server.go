@@ -254,6 +254,17 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/logs", s.handleLogs)
 	s.mux.HandleFunc("/api/system/health", s.handleSystemHealth)
 
+	// WiFi Survey routes
+	s.mux.HandleFunc("/api/survey/create", s.createSurvey)
+	s.mux.HandleFunc("/api/survey/list", s.listSurveys)
+	s.mux.HandleFunc("/api/survey", s.getSurvey)
+	s.mux.HandleFunc("/api/survey/delete", s.deleteSurvey)
+	s.mux.HandleFunc("/api/survey/start", s.startSurvey)
+	s.mux.HandleFunc("/api/survey/pause", s.pauseSurvey)
+	s.mux.HandleFunc("/api/survey/complete", s.completeSurvey)
+	s.mux.HandleFunc("/api/survey/sample", s.addSurveySample)
+	s.mux.HandleFunc("/api/survey/floorplan", s.updateSurveyFloorPlan)
+
 	// Setup routes (no auth required for initial setup)
 	s.mux.HandleFunc("/api/setup/status", s.handleSetupStatus)
 	s.mux.HandleFunc("/api/setup/complete", s.handleSetupComplete)
