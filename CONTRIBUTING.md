@@ -114,6 +114,26 @@ feat(dhcp): add phase timing breakdown (#123)
 - Use TypeScript strict mode
 - Write unit tests with Vitest
 - Use functional components with hooks
+- Develop components in isolation with Storybook
+
+#### Storybook
+
+We use [Storybook](https://storybook.js.org/) for developing and documenting UI components in isolation.
+
+```bash
+# Start Storybook development server
+cd web && npm run storybook
+
+# Build Storybook static site
+cd web && npm run build-storybook
+```
+
+When creating new UI components:
+
+1. Create a `.stories.tsx` file alongside your component
+2. Document all component variants and states
+3. Test accessibility with the built-in a11y addon
+4. Verify dark/light mode appearance
 
 ### General
 
@@ -408,6 +428,69 @@ Include:
 - Clear description of the feature
 - Use case / problem it solves
 - Proposed implementation (if any)
+
+## Hardware Testing Contributions
+
+NetScope's advanced features (WiFi scanning, cable diagnostics, etc.) depend on hardware support. We welcome hardware compatibility reports from the community!
+
+### Reporting Hardware Compatibility
+
+Use the **Hardware Report** issue template to document your experience with specific network adapters. Include:
+
+- **Hardware details**: Make, model, chipset
+- **Platform**: OS, kernel version, driver
+- **Features tested**: WiFi scanning, TDR, packet capture, etc.
+- **Test results**: What works, what doesn't, performance notes
+- **Configuration**: Any special setup required
+
+### Testing Guidelines
+
+1. **Reference HARDWARE.md** - Check our hardware compatibility guide first
+2. **Test systematically** - Document each feature (WiFi scan, speed test, cable diagnostics)
+3. **Include diagnostics** - Provide relevant command outputs (`lsusb`, `lspci`, `ethtool`)
+4. **Report issues** - Both successes and failures help improve compatibility
+5. **Update documentation** - Propose updates to HARDWARE.md via PR
+
+### What to Test
+
+**WiFi Adapters:**
+- Passive scanning (`internal/wifi/scanner_*.go`)
+- Channel availability
+- Signal strength accuracy
+- Packet injection (if applicable)
+
+**Ethernet NICs:**
+- Cable diagnostics/TDR (`internal/cable/cable_*.go`)
+- Link speed detection
+- Autonegotiation
+- Statistics accuracy
+
+**Platform-Specific:**
+- macOS WiFi scanning via CoreWLAN
+- Linux nl80211 support
+- Driver-specific quirks
+
+### Hardware Testing Label
+
+Issues labeled `hardware-testing` track compatibility testing efforts. Feel free to claim tests from the backlog or propose new hardware to test.
+
+### Example Hardware Report
+
+```markdown
+**Hardware**: Intel AX200 WiFi 6 Adapter
+**OS**: Ubuntu 22.04 LTS (kernel 5.15.0)
+**Driver**: iwlwifi
+**Chipset**: Intel AX200
+
+**Features Tested**:
+- ✅ Passive scanning: Works perfectly, all 2.4/5 GHz channels
+- ✅ Signal strength: Accurate RSSI readings
+- ✅ Interface switching: Seamless
+- ❌ Packet injection: Not tested
+
+**Notes**: Required `sudo` for scanning. Performance excellent.
+**Recommendation**: Highly recommended for WiFi survey features.
+```
 
 ## Questions?
 
