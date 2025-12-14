@@ -854,6 +854,7 @@ function App() {
     return (
       <SetupWizard
         onComplete={() => setNeedsSetup(false)}
+        onLogin={login}
         suggestedPassword={suggestedPassword}
       />
     );
