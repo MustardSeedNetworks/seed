@@ -1,6 +1,51 @@
+/**
+ * CollapsibleSection Component
+ *
+ * Purpose: Collapsible/accordion section for organizing content within cards and modals.
+ * Allows hiding/showing detailed information to reduce visual clutter.
+ *
+ * Key Features:
+ * - Two variants: "default" (standalone with border) and "compact" (inside cards)
+ * - Toggle control: click header to expand/collapse with smooth animation
+ * - Status indicators: optional status badge next to title
+ * - Item count: displays "(count)" next to title
+ * - Customizable title: can be string or React node for complex headers
+ * - Default open: optional defaultOpen prop to start expanded
+ * - Semantic HTML: uses <section> and <button> for accessibility
+ * - Keyboard support: button can be activated with Enter/Space
+ *
+ * Usage:
+ * ```typescript
+ * // Default variant (with border)
+ * <CollapsibleSection title="Advanced Options" defaultOpen={false}>
+ *   <p>Hidden by default, click to expand</p>
+ * </CollapsibleSection>
+ *
+ * // Compact variant (inside card)
+ * <CollapsibleSection 
+ *   title="Server Results"
+ *   count={3}
+ *   status="success"
+ *   variant="compact"
+ * >
+ *   <div>Results here</div>
+ * </CollapsibleSection>
+ * ```
+ *
+ * Dependencies: React hooks, theme utilities, StatusBadge
+ * State: Manages isOpen state with useState
+ */
+
 import { useState, ReactNode } from "react";
 import { Status } from "./Card";
 import { StatusBadge } from "./StatusBadge";
+import {
+  cn,
+  layout,
+  radius,
+  border,
+  icon as iconTokens,
+} from "../../styles/theme";
 
 interface CollapsibleSectionProps {
   title: ReactNode;
@@ -28,23 +73,29 @@ export function CollapsibleSection({
 
   return (
     <section
-      className={
-        isCompact
-          ? ""
-          : "border border-surface-border rounded-lg overflow-hidden"
-      }
+      className={cn(
+        !isCompact && border.card,
+        !isCompact && radius.lg,
+        !isCompact && "overflow-hidden",
+      )}
     >
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between transition-colors ${
+        className={cn(
+          "w-full transition-colors",
+          layout.flex.between,
           isCompact
-            ? "py-1.5 hover:bg-surface-hover/50 rounded"
-            : "p-3 bg-surface-base hover:bg-surface-hover"
-        }`}
+            ? cn("py-1.5 hover:bg-surface-hover/50", radius.default)
+            : "p-3 bg-surface-base hover:bg-surface-hover",
+        )}
       >
-        <div className="flex items-center gap-2">
+        <div className={layout.inline.default}>
           <svg
-            className={`w-3 h-3 text-text-muted transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
+            className={cn(
+              iconTokens.size.xs,
+              "text-text-muted transition-transform duration-200",
+              isOpen && "rotate-90",
+            )}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -58,7 +109,10 @@ export function CollapsibleSection({
           </svg>
           {status && <StatusBadge status={status} size="sm" />}
           <span
-            className={`font-medium text-text-primary ${isCompact ? "text-xs" : "text-sm"}`}
+            className={cn(
+              "font-medium text-text-primary",
+              isCompact ? "caption" : "body-small",
+            )}
           >
             {title}
             {count !== undefined && (
@@ -69,11 +123,11 @@ export function CollapsibleSection({
       </button>
       {isOpen && (
         <div
-          className={
+          className={cn(
             isCompact
-              ? "pl-5 pb-2 space-y-1"
-              : "p-3 border-t border-surface-border bg-surface-raised space-y-3"
-          }
+              ? "pl-5 pb-2 stack-xs"
+              : "p-3 border-t border-surface-border bg-surface-raised stack",
+          )}
         >
           {children}
         </div>

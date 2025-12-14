@@ -1,5 +1,8 @@
 //go:build linux
 
+// Package vlan provides VLAN detection and configuration functionality.
+// Linux implementation uses netlink sockets to query VLAN configurations
+// and detect VLAN interfaces on network switches.
 package vlan
 
 import (

@@ -1,5 +1,44 @@
+/**
+ * SpeedGauge Component (and related gauge utilities)
+ *
+ * Purpose: Visual speedometer gauge for displaying internet speed test results.
+ * Shows current speed with color-coded indicator (green→yellow→red) based on percentage.
+ * Includes ProgressRing for circular progress indicators and PulsingDot for animated indicators.
+ *
+ * Key Features:
+ * - SVG gauge: arc-based visual representation with animated stroke
+ * - Auto-scaling: converts Mbps to Gbps when value exceeds 1000 Mbps
+ * - Color-coded: green (good), yellow (medium), red (poor) based on percentage
+ * - Three sizes: sm (100x60), md (140x85), lg (180x110)
+ * - Running state: shows pulsing animation during active tests
+ * - Customizable range: maxValue prop sets gauge scale
+ * - ProgressRing: circular progress bar for percentage indicators
+ * - PulsingDot: animated dot indicator for "in progress" states
+ *
+ * Usage:
+ * ```typescript
+ * // Speed gauge
+ * <SpeedGauge
+ *   value={250}
+ *   maxValue={1000}
+ *   label="Download"
+ *   isRunning={false}
+ *   size="md"
+ * />
+ *
+ * // Progress ring (for percentages)
+ * <ProgressRing percent={75} size={100} />
+ *
+ * // Pulsing dot (for active states)
+ * <PulsingDot />
+ * ```
+ *
+ * Dependencies: React, memo/useMemo hooks, theme utilities (gauge config)
+ * State: Memoized calculations for display values and size configurations
+ */
+
 import { memo, useMemo } from "react";
-import { gauge } from "../../styles/theme";
+import { gauge, radius } from "../../styles/theme";
 
 interface SpeedGaugeProps {
   value: number; // Current speed in Mbps
@@ -87,7 +126,7 @@ export const SpeedGauge = memo(function SpeedGauge({
   return (
     <div className="flex flex-col items-center">
       {label && (
-        <p className="text-xs text-text-muted mb-1 uppercase tracking-wider">
+        <p className="caption text-text-muted mb-1 uppercase tracking-wider">
           {label}
         </p>
       )}
@@ -161,16 +200,20 @@ export const SpeedGauge = memo(function SpeedGauge({
 
         {/* Center value display */}
         <div
-          className="absolute inset-0 flex flex-col items-center justify-end pb-0"
-          style={{ paddingBottom: size === "sm" ? "2px" : "4px" }}
+          className={
+            "absolute inset-0 flex flex-col items-center justify-end " +
+            (size === "sm" ? "pb-0.5" : size === "md" ? "pb-1" : "pb-1.5")
+          }
         >
           <span
-            className="font-mono font-bold text-text-primary tabular-nums"
-            style={{ fontSize: sizeConfig.fontSize }}
+            className={
+              "font-mono font-bold text-text-primary tabular-nums " +
+              (size === "sm" ? "text-[12px]" : size === "md" ? "text-[14px]" : "text-[16px]")
+            }
           >
             {isRunning && value === 0 ? "—" : displayValue.value}
           </span>
-          <span className="text-xs text-text-muted -mt-1">
+          <span className="caption text-text-muted -mt-1">
             {displayValue.unit}
           </span>
         </div>
@@ -227,13 +270,13 @@ export const ProgressRing = memo(function ProgressRing({
         </svg>
         {/* Center percentage */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-medium text-text-primary tabular-nums">
+          <span className="caption font-medium text-text-primary tabular-nums">
             {Math.round(progress)}%
           </span>
         </div>
       </div>
       {label && (
-        <span className="text-xs text-text-muted mt-1 text-center">
+        <span className="caption text-text-muted mt-1 text-center">
           {label}
         </span>
       )}
@@ -266,10 +309,10 @@ export const PulsingDot = memo(function PulsingDot({
   return (
     <span className="relative flex">
       <span
-        className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${colorClasses[color]}`}
+        className={`animate-ping absolute inline-flex h-full w-full ${radius.full} opacity-75 ${colorClasses[color]}`}
       />
       <span
-        className={`relative inline-flex rounded-full ${sizeClasses[size]} ${colorClasses[color]}`}
+        className={`relative inline-flex ${radius.full} ${sizeClasses[size]} ${colorClasses[color]}`}
       />
     </span>
   );

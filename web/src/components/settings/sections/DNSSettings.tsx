@@ -1,9 +1,39 @@
+/**
+ * DNSSettings Component
+ *
+ * Purpose: Allows users to configure custom DNS servers for testing and specify
+ * test hostnames and other DNS test parameters.
+ *
+ * Key Features:
+ * - Multiple DNS servers: add/remove custom DNS server addresses
+ * - Enable/disable per-server: toggle which servers to test
+ * - Test hostname: configurable hostname for DNS resolution testing
+ * - IPv6 support: separate options for IPv4 and IPv6 queries
+ * - CRUD operations: add new servers, remove existing, update addresses
+ * - AutoSaveIndicator: shows save status while persisting changes
+ * - Globe icon: visual indicator in settings menu
+ * - ID generation: unique IDs for server entries
+ *
+ * Usage:
+ * ```typescript
+ * <DNSSettings
+ *   testsSettings={settings}
+ *   setTestsSettings={updateSettings}
+ *   testsStatus={saveStatus}
+ * />
+ * ```
+ *
+ * Dependencies: CollapsibleSection, AutoSaveIndicator, Globe icon, utilities for ID generation
+ * State: Receives test settings and save status from parent, callbacks for updates
+ */
+
 import { memo, useCallback } from "react";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Globe } from "../../ui/Icons";
 import { TestsSettings, SaveStatus, DNSServer } from "../../../types/settings";
 import { generateId } from "../../../utils/id";
+import { icon as iconTokens, layout, radius } from "../../../styles/theme";
 
 interface DNSSettingsProps {
   testsSettings: TestsSettings;
@@ -51,17 +81,17 @@ export const DNSSettings = memo(function DNSSettings({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
-          <Globe className="w-4 h-4" />
+        <div className={layout.inline.default}>
+          <Globe className={iconTokens.size.sm} />
           <span>DNS</span>
           <AutoSaveIndicator status={testsStatus} />
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="stack">
         {/* DNS Hostname */}
         <div>
-          <label className="text-xs text-text-muted">Test Hostname</label>
+          <label className="caption text-text-muted">Test Hostname</label>
           <input
             type="text"
             value={testsSettings.dnsHostname}
@@ -72,27 +102,27 @@ export const DNSSettings = memo(function DNSSettings({
               }))
             }
             placeholder="google.com"
-            className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+            className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
           />
-          <p className="text-xs text-text-muted mt-1">
+          <p className="caption text-text-muted mt-1">
             Hostname used for DNS forward/reverse lookups
           </p>
         </div>
 
         {/* DNS Servers for per-server testing */}
         <div className="border-t border-surface-border pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-text-muted font-medium">
+          <div className={`${layout.flex.between} mb-2`}>
+            <span className="caption text-text-muted font-medium">
               Additional DNS Servers
             </span>
             <button
               onClick={addDNSServer}
-              className="text-xs text-brand-primary hover:text-brand-accent"
+              className="caption text-brand-primary hover:text-brand-accent"
             >
               + Add
             </button>
           </div>
-          <p className="text-xs text-text-muted mb-2">
+          <p className="caption text-text-muted mb-2">
             Add servers to compare DNS response times (e.g., 8.8.8.8, 1.1.1.1)
           </p>
           {testsSettings.dnsServers.map((server) => (
@@ -104,7 +134,7 @@ export const DNSSettings = memo(function DNSSettings({
                   updateDNSServer(server.id!, "address", e.target.value)
                 }
                 placeholder="DNS Server IP"
-                className="flex-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-xs text-text-primary"
+                className={`flex-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} caption text-text-primary`}
               />
               <button
                 onClick={() => removeDNSServer(server.id!)}

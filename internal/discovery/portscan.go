@@ -1,4 +1,7 @@
-// Package discovery provides network discovery functionality.
+// Package discovery implements multi-protocol network device discovery.
+// Port scanning support enables detection of open services and their versions on discovered devices.
+// Performs banner grabbing to identify service types and versions, mapping active services
+// and potential vulnerabilities based on detected ports and versions.
 package discovery
 
 import (

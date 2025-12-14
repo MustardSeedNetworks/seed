@@ -1,5 +1,8 @@
 //go:build linux
 
+// Package network handles network interface management.
+// Linux-specific interface configuration module provides netlink-based interface detection,
+// static IP configuration, DHCP management, and hostname configuration for Linux systems.
 package network
 
 import (

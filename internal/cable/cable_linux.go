@@ -1,5 +1,8 @@
 //go:build linux
 
+// Package cable provides TDR cable testing functionality.
+// Linux implementation uses ethtool ioctl interface to perform Time Domain Reflectometry (TDR)
+// testing on network interfaces, detecting cable faults and cable length.
 package cable
 
 import (

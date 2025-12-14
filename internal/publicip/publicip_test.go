@@ -1,3 +1,5 @@
+// Package publicip provides public IP address detection with caching.
+// Test suite validates provider selection, caching behavior, and error handling.
 package publicip
 
 import (

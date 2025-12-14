@@ -1,5 +1,8 @@
 //go:build darwin
 
+// Package wifi provides wireless network information functionality.
+// macOS implementation uses airport command-line utility to scan wireless networks
+// and retrieve WiFi interface information from the System Configuration framework.
 package wifi
 
 import (

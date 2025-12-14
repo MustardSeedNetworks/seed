@@ -1,3 +1,6 @@
+// Package network handles network interface management.
+// LinkMonitor test suite validates real-time link state monitoring, state change detection,
+// and interface property change tracking across network transitions.
 package network
 
 import (

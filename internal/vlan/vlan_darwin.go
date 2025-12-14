@@ -1,5 +1,8 @@
 //go:build darwin
 
+// Package vlan provides VLAN detection and configuration functionality.
+// macOS implementation uses sysctl and IOKit to query VLAN configurations
+// and detect virtual LAN interfaces.
 package vlan
 
 import (

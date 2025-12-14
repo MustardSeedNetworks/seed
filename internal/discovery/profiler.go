@@ -1,3 +1,7 @@
+// Package discovery implements multi-protocol network device discovery.
+// Device profiler module performs deep inspection of discovered devices through HTTP,
+// SNMP, mDNS, and port scanning to gather detailed information about capabilities,
+// services, and device types. Enables intelligent device identification and visualization hints.
 package discovery
 
 import (
@@ -19,22 +23,22 @@ import (
 
 // DeviceProfile contains auto-discovered profile information about a device.
 type DeviceProfile struct {
-	ProfiledAt   time.Time       `json:"profiledAt"`
-	OpenPorts    []OpenPort      `json:"openPorts,omitempty"`
-	HTTPInfo     *HTTPInfo       `json:"httpInfo,omitempty"`
-	SNMPInfo     *SNMPInfo       `json:"snmpInfo,omitempty"`
-	MDNSServices []MDNSService   `json:"mdnsServices,omitempty"`
-	DeviceType   string          `json:"deviceType,omitempty"`   // Inferred type: router, switch, printer, server, etc.
-	DeviceIcons  []string        `json:"deviceIcons,omitempty"`  // Icon hints for UI: web, ssh, snmp, printer, etc.
+	ProfiledAt   time.Time     `json:"profiledAt"`
+	OpenPorts    []OpenPort    `json:"openPorts,omitempty"`
+	HTTPInfo     *HTTPInfo     `json:"httpInfo,omitempty"`
+	SNMPInfo     *SNMPInfo     `json:"snmpInfo,omitempty"`
+	MDNSServices []MDNSService `json:"mdnsServices,omitempty"`
+	DeviceType   string        `json:"deviceType,omitempty"`  // Inferred type: router, switch, printer, server, etc.
+	DeviceIcons  []string      `json:"deviceIcons,omitempty"` // Icon hints for UI: web, ssh, snmp, printer, etc.
 }
 
 // OpenPort represents an open port found during profiling.
 type OpenPort struct {
-	Port        int    `json:"port"`
-	Protocol    string `json:"protocol"` // tcp or udp
-	Service     string `json:"service,omitempty"`
-	Banner      string `json:"banner,omitempty"`
-	IsOpen      bool   `json:"isOpen"`
+	Port     int    `json:"port"`
+	Protocol string `json:"protocol"` // tcp or udp
+	Service  string `json:"service,omitempty"`
+	Banner   string `json:"banner,omitempty"`
+	IsOpen   bool   `json:"isOpen"`
 }
 
 // HTTPInfo contains HTTP/HTTPS probe results.
@@ -48,18 +52,18 @@ type HTTPInfo struct {
 
 // SNMPInfo contains SNMP probe results.
 type SNMPInfo struct {
-	SysDescr   string `json:"sysDescr,omitempty"`
-	SysName    string `json:"sysName,omitempty"`
-	SysContact string `json:"sysContact,omitempty"`
+	SysDescr    string `json:"sysDescr,omitempty"`
+	SysName     string `json:"sysName,omitempty"`
+	SysContact  string `json:"sysContact,omitempty"`
 	SysLocation string `json:"sysLocation,omitempty"`
 }
 
 // MDNSService represents an mDNS/Bonjour advertised service.
 type MDNSService struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Port     int    `json:"port,omitempty"`
-	TXT      map[string]string `json:"txt,omitempty"`
+	Name string            `json:"name"`
+	Type string            `json:"type"`
+	Port int               `json:"port,omitempty"`
+	TXT  map[string]string `json:"txt,omitempty"`
 }
 
 // ProfilerConfig holds configuration for the device profiler.

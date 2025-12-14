@@ -1,3 +1,43 @@
+// Package speedtest provides network bandwidth testing using speedtest.net infrastructure.
+//
+// This package wraps the showwin/speedtest-go library to provide internet speed testing
+// with progress tracking and server selection. Tests measure upload/download bandwidth
+// and latency to speedtest.net servers worldwide.
+//
+// Test phases:
+//  1. Finding server: Discovers nearby speedtest servers based on ping latency
+//  2. Testing latency: Performs ICMP pings to selected server
+//  3. Testing download: Downloads data to measure download bandwidth
+//  4. Testing upload: Uploads data to measure upload bandwidth
+//  5. Complete: Final results available
+//
+// Features:
+//   - Automatic server selection based on lowest latency
+//   - Optional manual server selection via server ID
+//   - Real-time progress updates via Status
+//   - Thread-safe concurrent access to status and results
+//   - Cancellable via context.Context
+//
+// Performance considerations:
+//   - Tests consume significant bandwidth (multiple MB of data transfer)
+//   - Test duration: typically 10-30 seconds depending on connection speed
+//   - Only one test should run at a time (enforced via Running flag)
+//   - Rate-limited in the API layer to prevent abuse
+//
+// Security considerations:
+//   - Tests connect to external speedtest.net servers (third-party infrastructure)
+//   - Data transferred during tests is non-sensitive (random data)
+//   - Server selection verifies certificates (HTTPS)
+//   - No user data or credentials are transmitted
+//
+// Typical usage:
+//
+//	tester := speedtest.NewTester()
+//	result, err := tester.RunTest(context.Background())
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Printf("Download: %.2f Mbps, Upload: %.2f Mbps\n", result.Download, result.Upload)
 package speedtest
 
 import (
@@ -9,7 +49,18 @@ import (
 	"github.com/showwin/speedtest-go/speedtest"
 )
 
-// Result contains the speedtest results
+// Result contains the complete speedtest results including bandwidth, latency, and server information.
+//
+// All bandwidth values are in megabits per second (Mbps). Latency is in milliseconds (ms).
+// The result includes metadata about the test server (name, location, distance) for
+// troubleshooting and reporting purposes.
+//
+// Typical values:
+//   - Residential DSL: 10-25 Mbps download, 1-5 Mbps upload
+//   - Cable: 100-400 Mbps download, 10-35 Mbps upload
+//   - Fiber: 500-1000+ Mbps symmetric
+//   - Mobile 4G: 20-100 Mbps download, 10-50 Mbps upload
+//   - Mobile 5G: 100-1000+ Mbps download, 50-100+ Mbps upload
 type Result struct {
 	Download     float64   `json:"download"` // Mbps
 	Upload       float64   `json:"upload"`   // Mbps

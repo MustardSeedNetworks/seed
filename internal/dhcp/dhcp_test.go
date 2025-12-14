@@ -1,3 +1,6 @@
+// Package dhcp provides DHCP transaction timing and monitoring.
+// Test suite validates DHCP transaction phases, timing measurements,
+// and protocol state management.
 package dhcp
 
 import (

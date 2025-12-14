@@ -1,3 +1,7 @@
+// Package discovery implements multi-protocol network device discovery.
+// It manages the aggregation of device information discovered through various protocols
+// including ARP, NDP, LLDP, CDP, EDP, mDNS, and ICMP ping. The package maintains a synchronized
+// view of all discovered devices and their protocol-specific metadata.
 package discovery
 
 import (

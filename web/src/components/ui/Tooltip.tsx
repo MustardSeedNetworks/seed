@@ -1,4 +1,35 @@
+/**
+ * Tooltip Component
+ *
+ * Purpose: Displays contextual help text on hover or focus. Provides accessible tooltips
+ * for explaining UI elements with customizable position (top/bottom).
+ *
+ * Key Features:
+ * - Position control: top (default) or bottom positioning
+ * - Hover and focus triggers: shows on mouseEnter or focus events
+ * - Accessible: uses role="tooltip" for screen readers
+ * - Max-width constraint: prevents long text from wrapping excessively
+ * - Smooth positioning: uses CSS transforms for centering
+ * - Theme-aware: uses surface-raised background and text-primary color
+ * - Z-layer management: uses z-50 to appear above other content
+ *
+ * Usage:
+ * ```typescript
+ * <Tooltip content="Click here to start scanning">
+ *   <button>Start</button>
+ * </Tooltip>
+ *
+ * <Tooltip content="CPU usage %" position="bottom">
+ *   <div>{cpuPercent}%</div>
+ * </Tooltip>
+ * ```
+ *
+ * Dependencies: React, theme utilities (cn, radius, border)
+ * State: Manages show/hide state on hover and focus
+ */
+
 import { ReactNode, useState } from "react";
+import { cn, radius, border } from "../../styles/theme";
 
 interface TooltipProps {
   content: string;
@@ -27,7 +58,13 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       </div>
       {show && (
         <div
-          className={`absolute z-50 ${positionClasses} px-2 py-1.5 text-xs bg-surface-raised border border-surface-border rounded shadow-lg max-w-xs text-text-primary`}
+          className={cn(
+            "absolute z-50 px-2 py-1.5 shadow-lg max-w-xs",
+            positionClasses,
+            radius.default,
+            border.card,
+            "bg-surface-raised text-text-primary caption",
+          )}
           role="tooltip"
         >
           {content}

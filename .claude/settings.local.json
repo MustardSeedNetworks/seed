@@ -86,7 +86,18 @@
       "Bash(echo:*)",
       "Bash(gh repo view:*)",
       "Bash(gh repo edit:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git -C /Users/krisarmstrong/Developer/projects/netscope diff -- web/eslint.config.mjs)",
+      "Bash(git -C /Users/krisarmstrong/Developer/projects/netscope add web/eslint.config.mjs web/THEMING.md web/src/components/cards/WiFiSurveyCard.tsx web/src/components/cards/NetworkDiscoveryCard.tsx web/src/components/settings/sections/DiscoverySettings.tsx web/src/components/survey/FloorPlanCanvas.tsx web/src/components/survey/SurveyView.tsx)",
+      "Bash(git -C /Users/krisarmstrong/Developer/projects/netscope commit -m \"$(cat <<''EOF''\nchore(lint): add ESLint rules to enforce design system colors\n\n- Add no-restricted-syntax rules for text-white, text-black, bg-white, \n  bg-black, text-gray-*, bg-gray-*\n- Allow opacity variants (bg-black/50, bg-white/20) for overlays/hovers\n- Fix remaining hardcoded colors in WiFiSurveyCard, SurveyView\n- Update THEMING.md to document exceptions for opacity variants\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -C /Users/krisarmstrong/Developer/projects/netscope push origin main)",
+      "Bash(git -C /Users/krisarmstrong/Developer/projects/netscope status --short -- web/)",
+      "Bash(git -C /Users/krisarmstrong/Developer/projects/netscope add:*)",
+      "Bash(git -C /Users/krisarmstrong/Developer/projects/netscope commit -m \"$(cat <<''EOF''\nfeat(ui): add semantic typography system with responsive sizing\n\n- Add heading classes (heading-1 to heading-4, section-title)\n- Add body text classes (body-large, body, body-small, caption, label, code)\n- All headings now have responsive mobile/desktop sizes\n- Add TypeScript typography helpers in theme.ts\n- Document typography scale and spacing patterns in THEMING.md\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -C /Users/krisarmstrong/Developer/projects/netscope commit:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

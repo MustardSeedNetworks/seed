@@ -1,5 +1,8 @@
 //go:build darwin
 
+// Package dns provides DNS testing and lookup functionality with timing.
+// macOS implementation uses scutil to query System Configuration framework
+// for DNS resolver configuration and nameserver discovery.
 package dns
 
 import (

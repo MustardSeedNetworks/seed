@@ -1,3 +1,34 @@
+/**
+ * Icons Module
+ *
+ * Purpose: Centralized icon library re-exporting Lucide React icons with consistent naming.
+ * Provides a single source of truth for icon usage across the application, making it easy
+ * to maintain icon consistency and switch icon libraries if needed.
+ *
+ * Icon Categories:
+ * - Card header icons: Activity, Cable, Globe, Network, Router, etc.
+ * - Status icons: CheckCircle, XCircle, AlertTriangle, AlertCircle, Info
+ * - Device type icons: Monitor, Smartphone, Printer, HardDrive, Laptop, Tablet, Tv
+ * - Navigation/action icons: ChevronDown/Up/Left/Right, X, Menu, RefreshCw, Play, Pause
+ * - UI icons: Eye, EyeOff, Copy, Check, More, Maximize, Minimize, Zap
+ * - Specialized icons: Mail, Lock, Terminal, Cloud, Shield, Database, Container, Help
+ *
+ * Usage:
+ * ```typescript
+ * import { CheckCircle, AlertTriangle, Router, Eye } from '../ui/Icons';
+ *
+ * // Use in components
+ * <CheckCircle className={iconTokens.size.md} />
+ * <AlertTriangle className={iconTokens.size.lg} />
+ * ```
+ *
+ * Best Practice: Always import from this module instead of directly from lucide-react.
+ * This makes future icon library changes centralized and easier to manage.
+ *
+ * Dependencies: lucide-react library
+ * Note: Some icons are aliased (e.g., Loader2 as Loader) for consistency
+ */
+
 // Re-export commonly used Lucide icons for consistency across the app
 // This provides a single source of truth for icon usage
 
@@ -48,6 +79,7 @@ export {
   EyeOff,
   Copy,
   Check,
+
   Trash2,
   Edit,
   Plus,

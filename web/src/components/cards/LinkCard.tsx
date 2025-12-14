@@ -1,34 +1,74 @@
+/**
+ * Link Status Card Component
+ * 
+ * Displays physical link layer (Layer 2) and network layer (Layer 3) status.
+ * 
+ * Features:
+ * - Link state detection (up/down)
+ * - Carrier signal detection (physical link present)
+ * - IP configuration status
+ * - Connection speed and duplex mode
+ * - Negotiated speeds (from auto-negotiation)
+ * - MTU and auto-negotiation settings
+ * - Link flap counting (24-hour window)
+ * - Uptime tracking
+ * - Link state history
+ * 
+ * Status Indicators:
+ * - **Error (Red)**: No physical carrier detected (L2 down)
+ * - **Warning (Yellow)**: Carrier present but no IP address (L3 down)
+ * - **Success (Green)**: Both L2 and L3 up, fully connected
+ * 
+ * The card is the primary indicator of network interface health.
+ */
+
 import { memo } from "react";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
 import { BaseCard } from "./BaseCard";
 import { Cable } from "../ui/Icons";
+import { layout, radius, icon as iconTokens } from "../../styles/theme";
 
+/**
+ * Historical link state event
+ */
 interface LinkHistoryEvent {
-  state: string;
-  timestamp: string;
+  state: string;      // State change ("up", "down", "flap", etc.)
+  timestamp: string;  // ISO 8601 timestamp
 }
 
+/**
+ * Link layer and network layer status data
+ */
 export interface LinkData {
-  linkUp: boolean;
-  carrier: boolean; // Physical link/carrier detected (Layer 2)
-  hasIP: boolean; // Has routable IP address (Layer 3)
-  speed: string;
-  duplex: string;
-  advertisedSpeeds: string[];
-  mtu?: number;
-  autoNeg?: boolean;
-  flapCount24h?: number;
-  history?: LinkHistoryEvent[];
-  uptimeMs?: number;
+  linkUp: boolean;         // Link is administratively up
+  carrier: boolean;        // Physical carrier/link detected (L2)
+  hasIP: boolean;          // Has routable IP address (L3)
+  speed: string;           // Current connection speed (e.g., "1000Mb/s")
+  duplex: string;          // Duplex mode ("full" or "half")
+  advertisedSpeeds: string[]; // Speeds supported by auto-negotiation
+  mtu?: number;            // Maximum transmission unit
+  autoNeg?: boolean;       // Auto-negotiation enabled
+  flapCount24h?: number;   // Number of link state changes in last 24h
+  history?: LinkHistoryEvent[]; // Recent link state events
+  uptimeMs?: number;       // Time since last state change (ms)
 }
 
+/**
+ * Props for Link Card
+ */
 interface LinkCardProps {
-  data: LinkData | null;
-  loading?: boolean;
+  data: LinkData | null; // Link status data
+  loading?: boolean;     // True while loading
 }
 
-// Determine status based on carrier (L2) and IP (L3)
+/**
+ * Determines card status based on link and IP state.
+ * Uses both L2 (carrier) and L3 (IP) information.
+ * 
+ * @param data - Link status data
+ * @returns Status indicator ('success', 'warning', 'error')
+ */
 function getStatus(data: LinkData): Status {
   if (!data.carrier) return "error"; // No physical link
   if (!data.hasIP) return "warning"; // Carrier but no IP
@@ -45,12 +85,12 @@ function LinkLoadingSkeleton() {
   return (
     <>
       <Skeleton className="h-8 w-32 mb-3" />
-      <div className="space-y-2 mt-4">
-        <div className="flex justify-between">
+      <div className="stack-sm mt-4">
+        <div className={layout.flex.between}>
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
         </div>
-        <div className="flex justify-between">
+        <div className={layout.flex.between}>
           <Skeleton className="h-3 w-12" />
           <Skeleton className="h-3 w-8" />
         </div>
@@ -66,7 +106,7 @@ export const LinkCard = memo(function LinkCard({
   return (
     <BaseCard
       title="Link"
-      icon={<Cable className="w-5 h-5" />}
+      icon={<Cable className={iconTokens.size.md} />}
       data={data}
       loading={loading}
       getStatus={getStatus}
@@ -108,14 +148,14 @@ export const LinkCard = memo(function LinkCard({
                 {linkData.advertisedSpeeds &&
                   linkData.advertisedSpeeds.length > 0 && (
                     <div className="mt-2">
-                      <p className="text-xs text-text-muted mb-1">
+                      <p className="caption mb-1">
                         Advertised Speeds
                       </p>
-                      <div className="flex flex-wrap gap-1">
+                      <div className={layout.inline.wrap}>
                         {linkData.advertisedSpeeds.map((speed) => (
                           <span
                             key={speed}
-                            className="text-xs px-2 py-0.5 bg-surface-hover rounded"
+                            className={`caption px-2 py-0.5 bg-surface-hover ${radius.default}`}
                           >
                             {speed}
                           </span>

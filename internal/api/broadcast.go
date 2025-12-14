@@ -1,3 +1,31 @@
+// Package api implements real-time dashboard data broadcasting via WebSocket.
+//
+// This file contains the broadcast loop that periodically collects network monitoring
+// data and pushes updates to all connected WebSocket clients. The broadcast mechanism
+// enables real-time dashboard updates without polling.
+//
+// Architecture:
+//   - Single background goroutine running the broadcast loop
+//   - Periodic tick every 5 seconds to collect and broadcast data
+//   - Skip collection when no clients are connected (performance optimization)
+//   - Each card type has a dedicated collector function
+//   - Data is cached briefly to avoid expensive repeated collection
+//
+// Broadcast cards (updated every 5 seconds):
+//   - Link: Interface status, speed, duplex, carrier state
+//   - Gateway: Gateway reachability, latency, packet loss
+//   - DNS: DNS resolution tests, latency, failures
+//   - Switch: LLDP/CDP discovered neighbors
+//   - Public IP: External IP address, geolocation
+//
+// Performance considerations:
+//   - Collectors use short timeouts to prevent blocking the broadcast loop
+//   - Results are cached to handle multiple concurrent WebSocket clients efficiently
+//   - Failed operations are logged but don't stop the broadcast loop
+//   - Collectors skip work when no clients are connected
+//
+// The broadcast loop is started automatically during server initialization
+// and runs until the WebSocket hub signals shutdown.
 package api
 
 import (
@@ -7,12 +35,42 @@ import (
 )
 
 const (
-	// broadcastInterval is how often we push updates to WebSocket clients.
+	// broadcastInterval specifies how frequently dashboard cards are updated and pushed
+	// to WebSocket clients. Set to 5 seconds to balance responsiveness with system load.
+	//
+	// Rationale:
+	//   - Network state changes (link, gateway, DNS) are typically not sub-second events
+	//   - 5 seconds provides near-real-time updates without excessive CPU usage
+	//   - Some operations (DNS tests, gateway pings) take 1-2 seconds, so 5s allows completion
+	//
+	// Adjust this value based on:
+	//   - Network volatility (unstable networks may benefit from shorter intervals)
+	//   - System resources (lower-power devices may need longer intervals)
+	//   - Number of concurrent clients (more clients = more broadcast overhead)
 	broadcastInterval = 5 * time.Second
 )
 
-// startBroadcastLoop starts a background goroutine that periodically
-// collects data and broadcasts card updates to all connected WebSocket clients.
+// startBroadcastLoop starts a background goroutine that periodically collects network
+// monitoring data and broadcasts card updates to all connected WebSocket clients.
+//
+// The loop runs indefinitely until the WebSocket hub signals shutdown. It:
+//   1. Wakes every broadcastInterval (5 seconds)
+//   2. Checks if any clients are connected (skips work if none)
+//   3. Collects data from all card collectors
+//   4. Broadcasts updates via the WebSocket hub
+//   5. Returns to sleep until next interval
+//
+// This function is called once during server initialization. Multiple calls will
+// create duplicate broadcast loops (avoid this - no deduplication).
+//
+// The broadcast loop is lightweight when no clients are connected - it only checks
+// the client count and immediately continues. Once clients connect, data collection
+// begins and continues as long as at least one client remains connected.
+//
+// Goroutine lifecycle:
+//   - Started: During server initialization after WebSocket hub is created
+//   - Runs: Until server shutdown or WebSocket hub shutdown signal
+//   - Cleanup: Ticker is stopped via defer, goroutine exits on shutdown signal
 func (s *Server) startBroadcastLoop() {
 	go func() {
 		ticker := time.NewTicker(broadcastInterval)
@@ -36,7 +94,23 @@ func (s *Server) startBroadcastLoop() {
 	log.Printf("WebSocket broadcast loop started (interval: %v)", broadcastInterval)
 }
 
-// broadcastAllCards collects and broadcasts all card data to connected clients.
+// broadcastAllCards collects and broadcasts all dashboard card data to connected clients.
+//
+// This function orchestrates the data collection process by calling individual collector
+// functions for each card type. Each collector:
+//   - Returns nil if data collection fails or is unavailable
+//   - Returns a map[string]interface{} with card-specific data on success
+//   - Uses short timeouts to prevent blocking the broadcast loop
+//   - May cache results briefly to reduce repeated expensive operations
+//
+// Collectors are independent - failure of one doesn't affect others. Failed collections
+// are logged but don't prevent other cards from being updated. This ensures partial
+// updates are still delivered to clients even if some data sources are unavailable.
+//
+// Card update order is not significant - all updates are sent concurrently by the hub.
+// The order here reflects typical user priority/importance rather than technical dependency.
+//
+// Called by: startBroadcastLoop every 5 seconds when clients are connected
 func (s *Server) broadcastAllCards() {
 	// Link card
 	if linkData := s.collectLinkData(); linkData != nil {
@@ -64,7 +138,34 @@ func (s *Server) broadcastAllCards() {
 	}
 }
 
-// collectLinkData gathers link status data for the current interface.
+// collectLinkData gathers physical and logical link status for the current network interface.
+//
+// Collected data includes:
+//   - Interface name, type, and hardware address
+//   - Physical link state: carrier detected (Layer 2), speed, duplex
+//   - Logical link state: interface up flag, running flag, has routable IP (Layer 3)
+//   - Network addresses: IPv4 and IPv6 addresses with prefix lengths
+//   - MTU (Maximum Transmission Unit)
+//
+// The function distinguishes between:
+//   - Carrier: Physical link detected (cable connected, WiFi associated) - Layer 2
+//   - HasIP: Routable IP address assigned (successful DHCP or static config) - Layer 3
+//   - Up: Interface administratively enabled (ifconfig up / ip link set up)
+//   - Running: Interface operational and ready for traffic
+//
+// This distinction is important for troubleshooting:
+//   - Carrier + no HasIP: Physical connection OK, DHCP/IP config failed
+//   - No carrier + has IP: Cable unplugged or WiFi disconnected (stale IP)
+//   - Both false: Cable unplugged or interface down
+//   - Both true: Fully operational connection
+//
+// Returns:
+//   - map[string]interface{} containing link status data, or
+//   - nil if network manager is unavailable or interface refresh fails
+//
+// Performance: This function refreshes the interface list on each call, which involves
+// system calls. The 5-second broadcast interval is chosen to balance update frequency
+// with this overhead.
 func (s *Server) collectLinkData() map[string]interface{} {
 	if s.netManager == nil {
 		return nil

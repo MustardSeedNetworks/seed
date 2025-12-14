@@ -1,3 +1,43 @@
+// Package api provides WebSocket functionality for real-time network monitoring updates.
+//
+// This file implements a WebSocket hub using the gorilla/websocket library to broadcast
+// real-time updates to connected clients. The hub manages multiple concurrent client
+// connections and handles message routing, connection lifecycle, and ping/pong heartbeats.
+//
+// WebSocket Protocol:
+//   - Endpoint: /ws
+//   - Protocol: RFC 6455 WebSocket over HTTP/HTTPS
+//   - Message format: JSON-encoded Message structs
+//   - Heartbeat: Ping every 54 seconds, expect pong within 60 seconds
+//   - Message size limit: 512 bytes for client->server messages
+//   - Write timeout: 10 seconds per message
+//
+// Message Types (client receives):
+//   - "linkState": Network link up/down events
+//   - "dhcpLease": DHCP lease changes
+//   - "rogueDetected": Rogue DHCP server alerts
+//   - "speedtestProgress": Real-time speedtest updates
+//   - "iperfProgress": iPerf throughput test updates
+//   - "scanProgress": Network device scan progress
+//   - "discovery": New neighbor discovered via LLDP/CDP
+//
+// Security:
+//   - CORS/Origin validation against configured allowed origins
+//   - Default: RFC 1918 private network addresses only
+//   - Configurable via Security.AllowedOrigins in config
+//   - Wildcard "*" allows all origins (use only in development)
+//
+// Clients must:
+//   - Respond to ping frames with pong within 60 seconds
+//   - Handle JSON-decoded messages with "type" and "payload" fields
+//   - Reconnect on connection loss (server does not persist messages)
+//
+// Implementation details:
+//   - Hub runs in a dedicated goroutine managing all client connections
+//   - Each client has separate read/write goroutines with independent timeouts
+//   - Broadcast messages are sent to all connected clients concurrently
+//   - Slow clients are automatically disconnected if write buffer fills
+//   - No message persistence - clients must handle reconnection gaps
 package api
 
 import (
@@ -12,45 +52,104 @@ import (
 )
 
 const (
-	// Time allowed to write a message to the peer.
+	// writeWait is the maximum time allowed to write a message to the peer.
+	// If a write takes longer, the connection is considered dead and closed.
+	// Set to 10 seconds to accommodate slow networks while preventing indefinite hangs.
 	writeWait = 10 * time.Second
 
-	// Time allowed to read the next pong message from the peer.
+	// pongWait is the maximum time allowed to read the next pong message from the peer.
+	// If no pong is received within this duration, the connection is considered dead.
+	// Set to 60 seconds to allow for network latency and busy clients.
 	pongWait = 60 * time.Second
 
-	// Send pings to peer with this period. Must be less than pongWait.
+	// pingPeriod specifies how often to send ping messages to the peer.
+	// Must be less than pongWait to ensure pings are sent before timeout.
+	// Calculated as 90% of pongWait (54 seconds) to provide safety margin.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer.
+	// maxMessageSize is the maximum size in bytes allowed for messages from peer.
+	// Client-to-server messages are currently unused, so this is kept small.
+	// Server-to-client broadcasts have no size limit (but should remain reasonable).
 	maxMessageSize = 512
 )
 
-// configuredOrigins holds explicitly configured origins from config.
-// Empty slice means use RFC 1918 defaults. "*" means allow all.
+// configuredOrigins holds explicitly configured WebSocket/CORS origins from the config file.
+//
+// Origin validation behavior:
+//   - Empty slice (default): Use RFC 1918 private network ranges (10.x, 172.16-31.x, 192.168.x)
+//   - Contains "*": Allow all origins (development/testing only - security risk in production)
+//   - Contains specific origins: Match exactly against Origin header (case-sensitive)
+//
+// Origins should include protocol and port: "https://192.168.1.100:8443"
 var configuredOrigins []string
 
-// SetAllowedOrigins configures the allowed WebSocket/CORS origins.
-// Called during server initialization with config values.
+// SetAllowedOrigins configures the allowed WebSocket/CORS origins from application config.
+//
+// This function is called during server initialization with values from the
+// Security.AllowedOrigins configuration field. Origin validation is enforced
+// in the WebSocket upgrader CheckOrigin function and CORS middleware.
+//
+// Parameters:
+//   - origins: List of allowed origin strings, or ["*"] to allow all
+//
+// Thread-safety: Should only be called during server initialization before
+// accepting WebSocket connections. Not protected by mutex.
 func SetAllowedOrigins(origins []string) {
 	configuredOrigins = origins
 }
 
+// upgrader configures the WebSocket protocol upgrade from HTTP.
+//
+// The upgrader handles the HTTP handshake to upgrade a connection to WebSocket protocol.
+// It validates the Origin header to prevent Cross-Site WebSocket Hijacking (CSWSH) attacks.
+//
+// Buffer sizes (1024 bytes each) are appropriate for JSON messages containing network
+// status updates. Adjust if implementing file transfer or large data payloads.
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	ReadBufferSize:  1024, // Buffer for incoming messages (client->server, currently unused)
+	WriteBufferSize: 1024, // Buffer for outgoing broadcasts (server->client, main data flow)
+	
+	// CheckOrigin validates the WebSocket upgrade request's Origin header.
+	// This prevents malicious web pages from connecting to our WebSocket endpoint.
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-		// Allow requests with no origin (same-origin)
+		
+		// Allow requests with no Origin header (same-origin requests, native apps, tools)
 		if origin == "" {
 			return true
 		}
-		// Check against allowed patterns using shared function
+		
+		// Validate origin against configured allowed list
 		return isAllowedWSOrigin(origin)
 	},
 }
 
-// isAllowedWSOrigin checks if the WebSocket origin is allowed.
-// Priority: 1) Configured origins, 2) RFC 1918 defaults if no config.
+// isAllowedWSOrigin checks if the WebSocket origin is allowed to connect.
+//
+// Origin validation follows this priority order:
+//   1. If configuredOrigins is set, use it exclusively (no fallback to defaults)
+//   2. If configuredOrigins is empty, allow RFC 1918 private networks only
+//
+// Configured origins matching:
+//   - Wildcard "*": Allow all origins (insecure, development only)
+//   - Exact match: "https://192.168.1.100:8443" matches exactly
+//   - Prefix match: "http://192.168." matches "http://192.168.1.x", "http://192.168.10.x", etc.
+//
+// RFC 1918 default matching (when no config):
+//   - 10.0.0.0/8: http://10.x.x.x
+//   - 172.16.0.0/12: http://172.16-31.x.x
+//   - 192.168.0.0/16: http://192.168.x.x
+//   - localhost: http://localhost, http://127.0.0.1, http://[::1]
+//
+// Security note: Origin validation is crucial to prevent Cross-Site WebSocket
+// Hijacking (CSWSH). Always configure explicit origins in production environments.
+//
+// Parameters:
+//   - origin: The Origin header value from the WebSocket upgrade request
+//
+// Returns:
+//   - true if the origin is allowed to establish a WebSocket connection
+//   - false if the origin should be rejected (connection will fail with 403)
 func isAllowedWSOrigin(origin string) bool {
 	// If explicit origins are configured, use them exclusively
 	if len(configuredOrigins) > 0 {
@@ -75,7 +174,29 @@ func isAllowedWSOrigin(origin string) bool {
 	return isRFC1918Origin(origin)
 }
 
-// isRFC1918Origin checks if origin is localhost or RFC 1918 private network.
+// isRFC1918Origin checks if the origin is localhost or an RFC 1918 private network address.
+//
+// This function implements the default origin validation when no explicit origins are configured.
+// It allows connections only from:
+//   - Localhost: http(s)://localhost, http(s)://127.0.0.1, http(s)://[::1]
+//   - Class A private: http(s)://10.0.0.0/8 (10.x.x.x)
+//   - Class B private: http(s)://172.16.0.0/12 (172.16.x.x through 172.31.x.x)
+//   - Class C private: http(s)://192.168.0.0/16 (192.168.x.x)
+//
+// All ports are accepted for these origins - the check is prefix-based to allow
+// various port numbers commonly used in development (3000, 8080, 8443, etc.).
+//
+// Security rationale: Private networks (RFC 1918) are assumed to be trusted local networks.
+// This provides reasonable security for home/office LANs while not requiring explicit
+// configuration. For public-facing deployments or zero-trust networks, explicitly
+// configure allowed origins.
+//
+// Parameters:
+//   - origin: The Origin header value from the WebSocket upgrade request
+//
+// Returns:
+//   - true if the origin is localhost or a private network address
+//   - false for public IP addresses or non-matching origins
 func isRFC1918Origin(origin string) bool {
 	allowedPatterns := []string{
 		"http://localhost",
@@ -135,19 +256,66 @@ func isRFC1918Origin(origin string) bool {
 	return false
 }
 
-// Message represents a WebSocket message.
+// Message represents a WebSocket message sent from server to client.
+//
+// All messages follow this JSON structure:
+//
+//	{
+//	  "type": "messageType",
+//	  "payload": { ... type-specific data ... }
+//	}
+//
+// Standard message types:
+//   - "linkState": Network interface up/down events
+//     Payload: {interface: string, state: "up"|"down", timestamp: string}
+//   - "dhcpLease": DHCP lease acquisition/renewal events
+//     Payload: {ip: string, mac: string, hostname: string, leaseTime: number}
+//   - "rogueDetected": Rogue DHCP server alert
+//     Payload: {serverIP: string, serverMAC: string, interface: string}
+//   - "speedtestProgress": Real-time speedtest updates
+//     Payload: {phase: string, bytesTransferred: number, elapsedMs: number}
+//   - "iperfProgress": iPerf3 throughput test updates
+//     Payload: {direction: "upload"|"download", mbps: number, progress: number}
+//   - "scanProgress": Network device scan progress
+//     Payload: {scanned: number, total: number, currentIP: string}
+//   - "discovery": New neighbor discovered via LLDP/CDP
+//     Payload: DiscoveryNeighborInfo object
+//
+// Clients must handle unknown message types gracefully (ignore or log).
 type Message struct {
-	Type    string      `json:"type"`
-	Payload interface{} `json:"payload"`
+	Type    string      `json:"type"`    // Message type identifier
+	Payload interface{} `json:"payload"` // Type-specific data (varies by Type)
 }
 
-// CardUpdate represents a card data update.
+// CardUpdate represents a dashboard card data update for periodic refreshes.
+//
+// Card updates are sent via "cardUpdate" messages to refresh specific dashboard
+// cards without requiring full page reloads. The Data field contains the complete
+// updated state for the identified card.
+//
+// This is used by the broadcast loop to push periodic updates for:
+//   - Link status (speed, duplex, carrier)
+//   - DNS test results (latency, failures)
+//   - Gateway ping (latency, packet loss)
+//   - DHCP monitor status
+//   - WiFi signal strength
+//   - Interface statistics
 type CardUpdate struct {
-	CardID string      `json:"cardId"`
-	Data   interface{} `json:"data"`
+	CardID string      `json:"cardId"` // Unique card identifier (e.g., "link", "dns", "gateway")
+	Data   interface{} `json:"data"`   // Complete card data (structure varies by CardID)
 }
 
-// Client represents a WebSocket client.
+// Client represents a single WebSocket client connection.
+//
+// Each client runs two goroutines:
+//   - writePump: Sends messages from the send channel to the WebSocket connection
+//   - readPump: Reads messages from the WebSocket connection (currently only for ping/pong)
+//
+// The client is automatically removed from the hub and cleaned up when:
+//   - The send channel is closed (server-initiated disconnect)
+//   - A write error occurs (network failure, slow client)
+//   - A read error occurs (client disconnected, ping/pong timeout)
+//   - No pong is received within pongWait (60 seconds)
 type Client struct {
 	hub       *Hub
 	conn      *websocket.Conn

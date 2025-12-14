@@ -1,3 +1,31 @@
+/**
+ * SettingsContext.test.tsx - Settings Context Tests
+ * 
+ * Purpose: Comprehensive test suite for SettingsContext and related hooks (useSettings, useSettingsOptional).
+ * Tests context provider setup, settings loading/saving, state updates, API integration, and error handling.
+ * 
+ * Key Test Areas:
+ * - Provider initialization: default settings loading and context creation
+ * - localStorage persistence: settings saved/loaded from browser storage
+ * - API integration: fetch calls to /api/config endpoint
+ * - useSettings hook: proper context value retrieval
+ * - useSettingsOptional hook: graceful handling without provider
+ * - State updates: FAB options, display options, iperf settings, thresholds
+ * - Error handling: API failure and retry logic
+ * - Async operations: proper loading/error state transitions
+ * - Cleanup: proper unmounting and resource cleanup
+ * 
+ * Test Framework: Vitest with React Testing Library hooks rendering
+ * Mocks: localStorage, fetch API calls
+ * 
+ * Usage:
+ * ```bash
+ * npm test -- SettingsContext.test.tsx
+ * ```
+ * 
+ * Dependencies: vitest, @testing-library/react
+ */
+
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { ReactNode } from "react";

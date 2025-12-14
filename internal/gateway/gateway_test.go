@@ -1,3 +1,6 @@
+// Package gateway provides gateway reachability testing and latency measurement.
+// Test suite validates gateway detection, ping testing, threshold evaluation,
+// and packet loss calculation for gateway health monitoring.
 package gateway
 
 import (

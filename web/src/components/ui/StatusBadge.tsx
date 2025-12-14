@@ -1,4 +1,35 @@
+/**
+ * StatusBadge Component
+ *
+ * Purpose: Displays system status with visual indicators (icon or dot) using a centralized
+ * status configuration system. Provides consistent color-coding and symbols across the UI
+ * for success, warning, error, unknown, and loading states.
+ *
+ * Key Features:
+ * - Variants: "icon" (large symbol) or "dot" (small indicator)
+ * - Sizes: "sm" (small), "md" (medium)
+ * - Status types: success (green), warning (yellow), error (red), unknown (gray), loading (spinner)
+ * - Centralized statusConfig mapping all visual properties for each status
+ * - Fully accessible with proper ARIA labels and semantics
+ *
+ * Usage:
+ * ```typescript
+ * // Icon variant (large status indicator)
+ * <StatusBadge status="success" variant="icon" />
+ *
+ * // Dot variant (compact indicator)
+ * <StatusBadge status="warning" variant="dot" size="sm" />
+ *
+ * // With custom styling
+ * <StatusBadge status="error" variant="icon" className="custom-class" />
+ * ```
+ *
+ * Dependencies: React, theme utilities (cn, icon tokens, radius, layout)
+ * State: None - purely presentational component
+ */
+
 import { ReactNode } from "react";
+import { cn, icon as iconTokens, radius, layout } from "../../styles/theme";
 
 export type Status = "success" | "warning" | "error" | "unknown" | "loading";
 
@@ -116,15 +147,15 @@ export const statusConfig: Record<
   },
 };
 
-// Size configurations
+// Size configurations using design tokens
 const sizeConfig = {
   sm: {
-    icon: "w-4 h-4",
+    icon: iconTokens.size.sm, // w-4 h-4
     dot: "w-2 h-2",
     padding: "p-0.5",
   },
   md: {
-    icon: "w-5 h-5",
+    icon: iconTokens.size.md, // w-5 h-5
     dot: "w-2.5 h-2.5",
     padding: "p-1",
   },
@@ -154,7 +185,13 @@ export function StatusBadge({
   if (variant === "dot") {
     return (
       <span
-        className={`inline-block ${sizes.dot} rounded-full ${config.bgColor.replace("/10", "")} ${className}`}
+        className={cn(
+          "inline-block",
+          sizes.dot,
+          radius.full,
+          config.bgColor.replace("/10", ""),
+          className,
+        )}
         aria-label={config.label}
       />
     );
@@ -162,7 +199,15 @@ export function StatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full ${config.color} ${config.bgColor} ${sizes.padding} ${className}`}
+      className={cn(
+        layout.flex.center,
+        "inline-flex",
+        radius.full,
+        config.color,
+        config.bgColor,
+        sizes.padding,
+        className,
+      )}
       aria-label={config.label}
     >
       <span className={sizes.icon}>{config.icon}</span>

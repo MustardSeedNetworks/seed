@@ -102,26 +102,13 @@ func main() {
 	log.Printf("LuminetIQ %s starting, logging to %s", version, logPath)
 
 	// Load configuration with first-boot security check
-	cfg, setupResult, err := config.EnsureConfig(*configPath, auth.IsDefaultPasswordHash)
-	if err != nil {
-		if errors.Is(err, config.ErrInsecureCredentials) {
-			// Don't auto-generate credentials - let the web wizard handle it
-			// Just ensure we have a JWT secret for the server to start
-			if cfg.Auth.JWTSecret == "" {
-				jwtSecret := auth.GenerateJWTSecret()
-				cfg.UpdateJWTSecret(jwtSecret)
-				if saveErr := cfg.Save(*configPath); saveErr != nil {
-					log.Printf("Warning: Failed to persist JWT secret: %v", saveErr)
-				}
-			}
-			// Log that setup is needed
-			log.Println("Initial setup required - visit the web UI to set your admin password")
-			printSetupBanner(cfg.Server.Port, cfg.Server.HTTPS)
-		} else {
-			log.Fatalf("Failed to load configuration: %v", err)
-		}
-	} else if setupResult != nil && setupResult.JWTSecretStored {
-		// JWT secret was empty and needs to be generated and persisted
+	cfg, _, err := config.EnsureConfig(*configPath, auth.IsDefaultPasswordHash)
+	if err != nil && !errors.Is(err, config.ErrInsecureCredentials) {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	// Ensure we have a JWT secret for the server to start
+	if cfg.Auth.JWTSecret == "" {
 		jwtSecret := auth.GenerateJWTSecret()
 		cfg.UpdateJWTSecret(jwtSecret)
 		if saveErr := cfg.Save(*configPath); saveErr != nil {
@@ -129,6 +116,12 @@ func main() {
 		} else {
 			log.Println("JWT secret generated and persisted to config file")
 		}
+	}
+
+	if errors.Is(err, config.ErrInsecureCredentials) {
+		// Log that setup is needed
+		log.Println("Initial setup required - visit the web UI to set your admin password")
+		printSetupBanner(cfg.Server.Port, cfg.Server.HTTPS)
 	}
 
 	// Encrypt SNMP credentials if they're in plaintext (fixes #518 - migration)
@@ -239,40 +232,39 @@ func main() {
 	// Create and start the server
 	server := api.NewServer(cfg, *configPath, logPath, netMgr, icmpAvailable)
 
-	// Handle shutdown gracefully (fixes #541)
-	// Buffer size 2 to catch second signal for force quit
-	done := make(chan struct{})
+	// Start the server in a goroutine to prevent blocking signal handling
+	serverErrors := make(chan error, 1)
 	go func() {
-		sigChan := make(chan os.Signal, 2)
-		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-		// First signal: graceful shutdown
-		<-sigChan
-		log.Println("Shutting down gracefully... (press Ctrl+C again to force)")
-
-		// Start graceful shutdown in goroutine
-		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-			if shutdownErr := server.Shutdown(ctx); shutdownErr != nil {
-				log.Printf("Error during shutdown: %v", shutdownErr)
-			}
-			close(done)
-		}()
-
-		// Second signal: force quit
-		<-sigChan
-		log.Println("Force quitting...")
-		os.Exit(1)
+		log.Printf("Starting server on port %d (HTTPS: %v)", cfg.Server.Port, cfg.Server.HTTPS)
+		serverErrors <- server.Start()
 	}()
 
-	// Start the server
-	log.Printf("Starting server on port %d (HTTPS: %v)", cfg.Server.Port, cfg.Server.HTTPS)
-	if err := server.Start(); err != nil {
-		log.Printf("Server error: %v", err)
+	// Handle shutdown gracefully (fixes #541)
+	sigChan := make(chan os.Signal, 2)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case err := <-serverErrors:
+		if err != nil {
+			log.Fatalf("Server error: %v", err)
+		}
+	case sig := <-sigChan:
+		log.Printf("Received signal %v. Shutting down gracefully... (press Ctrl+C again to force)", sig)
+
+		// Handle force quit on second signal
+		go func() {
+			<-sigChan
+			log.Println("Force quitting...")
+			os.Exit(1)
+		}()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Error during shutdown: %v", err)
+		}
 	}
 
-	<-done
 	log.Println("LuminetIQ stopped")
 }
 

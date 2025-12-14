@@ -1,3 +1,28 @@
+/**
+ * Card.test.tsx - Card Component Tests
+ * 
+ * Purpose: Test suite for Card, CardValue, CardRow, and CardDivider UI components.
+ * Tests rendering, status styling, subtitles, and subtext functionality.
+ * 
+ * Key Test Areas:
+ * - Rendering: proper display of title, subtitle, and content
+ * - Status styling: correct CSS classes for success/warning/error/unknown states
+ * - CardValue: displays values and units with proper alignment
+ * - CardRow: renders multiple values in horizontal layout
+ * - CardDivider: divider styling and spacing
+ * - Subtext: optional secondary text display
+ * - Icon rendering: status indicator icon display
+ * 
+ * Test Framework: Vitest with React Testing Library
+ * 
+ * Usage:
+ * ```bash
+ * npm test -- Card.test.tsx
+ * ```
+ * 
+ * Dependencies: vitest, @testing-library/react
+ */
+
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Card, CardValue, CardRow, CardDivider } from "./Card";
@@ -117,13 +142,13 @@ describe("CardValue", () => {
 
   it("applies size classes correctly", () => {
     const { rerender } = render(<CardValue value="100" size="sm" />);
-    expect(screen.getByTestId("card-value")).toHaveClass("text-sm");
+    expect(screen.getByTestId("card-value")).toHaveClass("body-small");
 
     rerender(<CardValue value="100" size="md" />);
-    expect(screen.getByTestId("card-value")).toHaveClass("text-base");
+    expect(screen.getByTestId("card-value")).toHaveClass("body");
 
     rerender(<CardValue value="100" size="lg" />);
-    expect(screen.getByTestId("card-value")).toHaveClass("text-lg");
+    expect(screen.getByTestId("card-value")).toHaveClass("body-large");
   });
 
   it("applies status color", () => {

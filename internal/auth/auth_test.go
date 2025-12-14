@@ -1,3 +1,5 @@
+// Package auth handles JWT authentication.
+// Test suite validates password hashing, JWT issuance/verification, and middleware behavior.
 package auth
 
 import (

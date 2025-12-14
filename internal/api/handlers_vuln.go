@@ -1,3 +1,17 @@
+// Package api provides HTTP handlers for vulnerability scanning and management.
+//
+// This file contains handlers for CVE vulnerability detection and reporting for discovered
+// network devices. It integrates with the NVD (National Vulnerability Database) to identify
+// known vulnerabilities based on device profiles.
+//
+// Key features:
+//   - Trigger vulnerability scans for all or specific devices
+//   - Retrieve vulnerability reports for devices
+//   - Mark vulnerabilities as acknowledged
+//   - Background scanning with timeout protection
+//
+// Dependencies:
+//   - internal/discovery: Device profile and CVE scanner
 package api
 
 import (

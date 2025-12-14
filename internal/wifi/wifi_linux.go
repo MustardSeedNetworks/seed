@@ -1,5 +1,8 @@
 //go:build linux
 
+// Package wifi provides wireless network information functionality.
+// Linux implementation uses nl80211 (netlink) to scan wireless networks,
+// detect access points, and retrieve WiFi interface properties.
 package wifi
 
 import (
