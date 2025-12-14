@@ -66,18 +66,21 @@ export function FloorPlanCanvas({
         const y = sample.y * scaleY;
 
         // Draw point
+        // Note: Canvas API requires direct color values
         ctx.beginPath();
         ctx.arc(x, y, 8, 0, 2 * Math.PI);
         ctx.fillStyle = heatmapMetric
-          ? "rgba(255, 255, 255, 0.8)"
-          : "rgba(37, 99, 235, 0.8)"; // blue-600
+          ? "rgba(255, 255, 255, 0.8)" // white for visibility on heatmap
+          : "rgba(37, 99, 235, 0.8)"; // brand-primary blue
         ctx.fill();
-        ctx.strokeStyle = "rgba(255, 255, 255, 1)";
+        ctx.strokeStyle = "rgba(255, 255, 255, 1)"; // white border for visibility
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // Draw point number
-        ctx.fillStyle = heatmapMetric ? "#000" : "#fff";
+        // Note: Canvas API requires direct color values, not CSS variables
+        // Using high-contrast colors for text visibility on point markers
+        ctx.fillStyle = heatmapMetric ? "#1e293b" : "#f8fafc"; // slate-800 / slate-50
         ctx.font = "bold 10px sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -91,7 +94,8 @@ export function FloorPlanCanvas({
 
   // Handle canvas click
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!interactive || !onPointClick || !canvasRef.current || !floorPlan) return;
+    if (!interactive || !onPointClick || !canvasRef.current || !floorPlan)
+      return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -128,7 +132,7 @@ function drawHeatmap(
   samples: SamplePoint[],
   metric: "rssi" | "throughput" | "latency",
   scaleX: number,
-  scaleY: number
+  scaleY: number,
 ) {
   if (samples.length === 0) return;
 
@@ -168,7 +172,7 @@ function drawHeatmap(
         const distance = Math.sqrt((x - sx) ** 2 + (y - sy) ** 2);
 
         // Inverse distance weighting (IDW)
-        const weight = distance === 0 ? 1000 : 1 / (distance ** 2);
+        const weight = distance === 0 ? 1000 : 1 / distance ** 2;
         totalWeight += weight;
         weightedValue += weight * values[idx];
       });
@@ -198,7 +202,7 @@ function drawHeatmap(
 // Get heatmap color based on normalized value (0-1)
 function getHeatmapColor(
   value: number,
-  metric: "rssi" | "throughput" | "latency"
+  metric: "rssi" | "throughput" | "latency",
 ): { r: number; g: number; b: number; a: number } {
   // For RSSI, lower is worse (invert)
   if (metric === "rssi") {

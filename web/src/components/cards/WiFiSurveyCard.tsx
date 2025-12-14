@@ -24,7 +24,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
 
   const activeSurveys = surveys.filter(
-    (s) => s.status === "in_progress" || s.status === "paused"
+    (s) => s.status === "in_progress" || s.status === "paused",
   );
   const completedSurveys = surveys.filter((s) => s.status === "completed");
 
@@ -37,7 +37,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
   const handleCreateSurvey = async (
     name: string,
     surveyType: SurveyType,
-    iface: string
+    iface: string,
   ) => {
     try {
       const newSurvey = await createSurvey({
@@ -96,7 +96,8 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
       >
         {!isWifi && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-3 py-2 rounded text-sm mb-3">
-            WiFi interface required for site surveys. Switch to a WiFi interface to create surveys.
+            WiFi interface required for site surveys. Switch to a WiFi interface
+            to create surveys.
           </div>
         )}
 
@@ -253,7 +254,7 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-surface-raised rounded-lg p-6 max-w-md w-full mx-4">
         <h2 className="text-xl font-semibold mb-4">Create New Survey</h2>
         <form onSubmit={handleSubmit}>
@@ -296,7 +297,7 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-brand-primary text-white rounded hover:bg-brand-primary/90"
+              className="flex-1 px-4 py-2 bg-brand-primary text-text-inverse rounded hover:bg-brand-primary/90"
             >
               Create
             </button>
@@ -306,4 +307,3 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
     </div>
   );
 }
-
