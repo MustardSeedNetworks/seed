@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -267,7 +268,45 @@ func (h *Hub) ClientCount() int {
 
 // handleWebSocket handles WebSocket connections.
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	// Extract token from Sec-WebSocket-Protocol header (modern, secure method)
+	// Frontend sends: new WebSocket(url, ["access_token", token])
+	// This comes through as: Sec-WebSocket-Protocol: access_token, <token>
+	var token string
+	protocols := r.Header.Get("Sec-WebSocket-Protocol")
+	if protocols != "" {
+		parts := strings.Split(protocols, ",")
+		if len(parts) == 2 && strings.TrimSpace(parts[0]) == "access_token" {
+			token = strings.TrimSpace(parts[1])
+		}
+	}
+
+	// Fallback: check query parameter (deprecated but kept for compatibility)
+	if token == "" {
+		token = r.URL.Query().Get("token")
+		if token != "" {
+			log.Println("Warning: WebSocket auth via query param is deprecated, use Sec-WebSocket-Protocol")
+		}
+	}
+
+	// Validate token
+	if token == "" {
+		http.Error(w, "Unauthorized: no token provided", http.StatusUnauthorized)
+		return
+	}
+
+	if _, err := s.authManager.ValidateToken(token); err != nil {
+		log.Printf("WebSocket auth failed: %v", err)
+		http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	// Set response header to accept the subprotocol
+	responseHeader := http.Header{}
+	if protocols != "" && strings.Contains(protocols, "access_token") {
+		responseHeader.Set("Sec-WebSocket-Protocol", "access_token")
+	}
+
+	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
 		log.Printf("WebSocket upgrade error: %v", err)
 		return

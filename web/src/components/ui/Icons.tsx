@@ -42,6 +42,7 @@ export {
   Play,
   Pause,
   RotateCcw,
+  Loader2 as Loader,
   // UI icons
   Eye,
   EyeOff,
