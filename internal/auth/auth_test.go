@@ -277,27 +277,32 @@ func TestValidatePasswordStrength(t *testing.T) {
 	}{
 		{
 			name:     "valid strong password",
-			password: "SecurePass1",
+			password: "SecurePass1!",
 			wantErr:  false,
 		},
 		{
 			name:     "too short",
-			password: "Short1",
+			password: "Short1!",
 			wantErr:  true,
 		},
 		{
 			name:     "no uppercase",
-			password: "lowercase123",
+			password: "lowercase123!",
 			wantErr:  true,
 		},
 		{
 			name:     "no lowercase",
-			password: "UPPERCASE123",
+			password: "UPPERCASE123!",
 			wantErr:  true,
 		},
 		{
 			name:     "no digits",
-			password: "NoDigitsHere",
+			password: "NoDigitsHere!",
+			wantErr:  true,
+		},
+		{
+			name:     "no special char",
+			password: "NoSpecial123",
 			wantErr:  true,
 		},
 		{
@@ -306,8 +311,8 @@ func TestValidatePasswordStrength(t *testing.T) {
 			wantErr:  true,
 		},
 		{
-			name:     "exactly 8 chars with requirements",
-			password: "Abcdef1!",
+			name:     "exactly 12 chars with all requirements",
+			password: "Abcdefgh123!",
 			wantErr:  false,
 		},
 	}

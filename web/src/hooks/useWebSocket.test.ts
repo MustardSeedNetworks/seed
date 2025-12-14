@@ -9,6 +9,7 @@ class MockWebSocket {
   static CLOSED = 3;
 
   url: string;
+  protocols?: string | string[];
   readyState: number = 0;
   onopen: ((event: Event) => void) | null = null;
   onclose: ((event: CloseEvent) => void) | null = null;
@@ -17,8 +18,9 @@ class MockWebSocket {
   closeWasCalled = false;
   sentMessages: string[] = [];
 
-  constructor(url: string) {
+  constructor(url: string, protocols?: string | string[]) {
     this.url = url;
+    this.protocols = protocols;
     MockWebSocket.instances.push(this);
   }
 
@@ -241,7 +243,8 @@ describe("useWebSocket", () => {
     renderHook(() => useWebSocket({ url: "/ws/updates", token: "token" }));
 
     const ws = MockWebSocket.instances[0];
-    expect(ws.url).toBe("ws://localhost:8080/ws/updates?token=token");
+    expect(ws.url).toBe("ws://localhost:8080/ws/updates");
+    expect(ws.protocols).toEqual(["access_token", "token"]);
   });
 
   it("uses wss for https pages", () => {
@@ -256,7 +259,8 @@ describe("useWebSocket", () => {
     renderHook(() => useWebSocket({ url: "/ws", token: "token" }));
 
     const ws = MockWebSocket.instances[0];
-    expect(ws.url).toBe("wss://example.com/ws?token=token");
+    expect(ws.url).toBe("wss://example.com/ws");
+    expect(ws.protocols).toEqual(["access_token", "token"]);
   });
 
   it("uses provided URL directly if it starts with ws", () => {
@@ -265,7 +269,8 @@ describe("useWebSocket", () => {
     );
 
     const ws = MockWebSocket.instances[0];
-    expect(ws.url).toBe("ws://custom-server.com/socket?token=token");
+    expect(ws.url).toBe("ws://custom-server.com/socket");
+    expect(ws.protocols).toEqual(["access_token", "token"]);
   });
 
   it("attempts reconnection after close", async () => {
@@ -375,12 +380,12 @@ describe("useWebSocket", () => {
     expect(ws.closeWasCalled).toBe(true);
   });
 
-  it("encodes token in URL", () => {
+  it("passes token in WebSocket protocol header", () => {
     const specialToken = "token with spaces & special=chars";
     renderHook(() => useWebSocket({ url: "/ws", token: specialToken }));
 
     const ws = MockWebSocket.instances[0];
-    expect(ws.url).toContain(encodeURIComponent(specialToken));
+    expect(ws.protocols).toEqual(["access_token", specialToken]);
   });
 
   it("handles multiple messages in one frame", async () => {

@@ -17,6 +17,10 @@ Welcome to the LuminetIQ Hardware Compatibility Wiki! This community-driven reso
 - [Realtek Ethernet NICs](Realtek-Ethernet)
 - [Marvell Ethernet NICs](Marvell-Ethernet)
 
+### Testing Guides
+
+- [DHCP Testing Environment](DHCP-Testing)
+
 ## 🎯 Purpose
 
 This Wiki collects **real-world test results** from the LuminetIQ community. Unlike vendor specifications, these reports show actual compatibility with LuminetIQ's diagnostic features.

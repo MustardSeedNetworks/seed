@@ -55,7 +55,7 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 	secret := jwtSecret
 	if secret == "" {
 		// Generate a random secret if not provided
-		secret = generateRandomSecret()
+		secret = GenerateJWTSecret()
 	}
 
 	return &Manager{
@@ -66,10 +66,11 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 	}
 }
 
-// generateRandomSecret creates a cryptographically secure random JWT secret.
+// GenerateJWTSecret creates a cryptographically secure JWT signing secret.
 // Note: This generates a new secret on each server restart, which will invalidate
 // existing tokens. For persistent sessions across restarts, configure jwt_secret in the config file.
-func generateRandomSecret() string {
+// Fixes #539: Consolidated JWT secret generation into single function.
+func GenerateJWTSecret() string {
 	bytes := make([]byte, 32) // 256-bit key
 	if _, err := rand.Read(bytes); err != nil {
 		// If crypto/rand fails, the system is critically insecure (fixes #543)
@@ -418,11 +419,6 @@ func GenerateSecurePassword(length int) (string, error) {
 	}
 
 	return string(password), nil
-}
-
-// GenerateJWTSecret creates a cryptographically secure JWT signing secret.
-func GenerateJWTSecret() string {
-	return generateRandomSecret()
 }
 
 // InitialCredentials holds the generated initial credentials for display.

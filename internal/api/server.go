@@ -45,10 +45,11 @@ type Server struct {
 	config           *config.Config
 	configPath       string
 	logPath          string
-	httpServer       *http.Server
-	authManager      *auth.Manager
-	loginRateLimiter *RateLimiter
-	wsHub            *Hub
+	httpServer          *http.Server
+	authManager         *auth.Manager
+	loginRateLimiter    *RateLimiter
+	endpointRateLimiter *EndpointRateLimiter // Rate limiter for expensive endpoints (fixes #530)
+	wsHub               *Hub
 	mux              *http.ServeMux
 	netManager       *network.Manager
 	linkMonitor      *network.LinkMonitor
@@ -92,8 +93,9 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 			cfg.Auth.DefaultUsername,
 			cfg.Auth.DefaultPasswordHash,
 		),
-		loginRateLimiter: NewRateLimiter(DefaultRateLimitConfig()),
-		linkMonitor:      network.NewLinkMonitor(cfg.Interface.Default),
+		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
+		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()), // Rate limit expensive endpoints (fixes #530)
+		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
 		discoveryManager: discovery.NewManager(cfg.Interface.Default),
 		deviceDiscovery:  discovery.NewDeviceDiscovery(cfg.Interface.Default),
 		discoveryService: discovery.NewService(cfg, cfg.Interface.Default),
@@ -263,18 +265,19 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/wifi/settings", s.handleWiFiSettings)
 	s.mux.HandleFunc("/api/snmp/settings", s.handleSNMPSettings)
 	s.mux.HandleFunc("/api/cable", s.handleCable)
-	s.mux.HandleFunc("/api/speedtest", s.handleSpeedtest)
+	// Rate-limited expensive endpoints (fixes #530)
+	s.mux.Handle("/api/speedtest", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)))
 	s.mux.HandleFunc("/api/speedtest/status", s.handleSpeedtestStatus)
 	s.mux.HandleFunc("/api/tests/settings", s.handleTestsSettings)
-	s.mux.HandleFunc("/api/tests/run", s.handleCustomTests)
+	s.mux.Handle("/api/tests/run", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleCustomTests)))
 	s.mux.HandleFunc("/api/iperf/info", s.handleIperfInfo)
-	s.mux.HandleFunc("/api/iperf/client", s.handleIperfClient)
+	s.mux.Handle("/api/iperf/client", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)))
 	s.mux.HandleFunc("/api/iperf/client/status", s.handleIperfClientStatus)
 	s.mux.HandleFunc("/api/iperf/server", s.handleIperfServer)
 	s.mux.HandleFunc("/api/iperf/server/status", s.handleIperfServerStatus)
 	s.mux.HandleFunc("/api/iperf/suggestions", s.handleIperfSuggestions)
 	s.mux.HandleFunc("/api/devices", s.handleDevices)
-	s.mux.HandleFunc("/api/devices/scan", s.handleDevicesScan)
+	s.mux.Handle("/api/devices/scan", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)))
 	s.mux.HandleFunc("/api/devices/status", s.handleDevicesStatus)
 	s.mux.HandleFunc("/api/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc("/api/devices/subnets", s.handleDevicesSubnets)
@@ -477,7 +480,7 @@ func (s *Server) Start() error {
 		Addr:         addr,
 		Handler:      handler,
 		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		WriteTimeout: 5 * time.Minute, // Increased for large file downloads/exports (fixes #529)
 		IdleTimeout:  60 * time.Second,
 	}
 
@@ -767,8 +770,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	log.Println("Stopping VLAN traffic monitor...")
 	s.vlanTrafficMonitor.Stop()
 
-	log.Println("Stopping rate limiter...")
+	log.Println("Stopping rate limiters...")
 	s.loginRateLimiter.Stop()
+	s.endpointRateLimiter.Stop()
 
 	// Shutdown main HTTP server
 	log.Println("Shutting down main HTTP server...")

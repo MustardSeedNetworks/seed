@@ -34,8 +34,8 @@ jobs:
     name: Backend (Go)
     runs-on: ubuntu-latest
     env:
-      GOMODCACHE: ${{ runner.temp }}/go/pkg/mod
-      GOCACHE: ${{ runner.temp }}/go/build
+      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
+      GOCACHE: ${{ github.workspace }}/.cache/go/build
 
     steps:
       - uses: actions/checkout@v6

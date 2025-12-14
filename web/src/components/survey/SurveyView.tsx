@@ -107,7 +107,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
       let sampleData: PassiveSample | ActiveSample | ThroughputSample;
 
       switch (survey.surveyType) {
-        case "passive":
+        case "passive": {
           // Fetch WiFi scan
           const scanRes = await fetch(`${API_BASE}/api/wifi/scan`, {
             headers: getAuthHeaders(),
@@ -116,8 +116,9 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
           const scanData = await scanRes.json();
           sampleData = { networks: scanData.networks || [] };
           break;
+        }
 
-        case "active":
+        case "active": {
           // Fetch current WiFi status
           const wifiRes = await fetch(`${API_BASE}/api/wifi`, {
             headers: getAuthHeaders(),
@@ -138,8 +139,9 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             roamingEvent,
           };
           break;
+        }
 
-        case "throughput":
+        case "throughput": {
           // Fetch WiFi status first
           const wifiRes2 = await fetch(`${API_BASE}/api/wifi`, {
             headers: getAuthHeaders(),
@@ -185,6 +187,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             packetLoss: iperfData.summary?.sum_received?.lost_percent || 0,
           };
           break;
+        }
 
         default:
           throw new Error("Unknown survey type");

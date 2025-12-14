@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
@@ -172,6 +171,11 @@ func main() {
 		cfg.Server.HTTPS = false // Use HTTP in dev mode
 		log.Println("Protocol: HTTP (development mode)")
 	}
+
+	// Validate configuration after all modifications (fixes #542)
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("Invalid configuration: %v", err)
+	}
 	// Initialize network manager
 	if cfg.Interface.Default == "" {
 		log.Fatalf("No default network interface specified in configuration")
@@ -183,9 +187,12 @@ func main() {
 	preferred := append([]string{cfg.Interface.Default}, cfg.Interface.Fallbacks...)
 	activeInterface := netMgr.FindFirstAvailable(preferred)
 	retryCount := 0
-	for activeInterface == "" && retryCount < 3 {
-		log.Println("Warning: No active network interface found. Retrying in 5 seconds...")
-		time.Sleep(5 * time.Second)
+	// Use configurable retry logic (fixes #528)
+	maxRetries := cfg.Interface.StartupRetries
+	retryWait := cfg.Interface.StartupRetryWait
+	for activeInterface == "" && retryCount < maxRetries {
+		log.Printf("Warning: No active network interface found. Retrying in %v...", retryWait)
+		time.Sleep(retryWait)
 		activeInterface = netMgr.FindFirstAvailable(preferred)
 		retryCount++
 	}

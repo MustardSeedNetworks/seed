@@ -76,7 +76,14 @@
       "Bash(npx eslint:*)",
       "Bash(go tool cover:*)",
       "Bash(pkill:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(gh workflow:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(for issue in 512 513 514 515 516 517 518 519 520 522 523 524 525 526 527 531 533 537 538 541 543)",
+      "Bash(do)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

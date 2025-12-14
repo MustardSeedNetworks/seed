@@ -225,3 +225,145 @@ func GetClientIP(r *http.Request) string {
 	}
 	return ip
 }
+
+// EndpointRateLimiter implements rate limiting for expensive API endpoints (fixes #530).
+// Uses a sliding window approach to limit requests per IP per time window.
+type EndpointRateLimiter struct {
+	mu       sync.RWMutex
+	requests map[string]*requestWindow
+	maxReqs  int           // Maximum requests per window
+	window   time.Duration // Time window for rate limiting
+	stopCh   chan struct{}
+}
+
+type requestWindow struct {
+	timestamps []time.Time
+}
+
+// EndpointRateLimitConfig holds configuration for endpoint rate limiting.
+type EndpointRateLimitConfig struct {
+	MaxRequests int           // Maximum requests per window (default: 5)
+	Window      time.Duration // Time window (default: 1 minute)
+}
+
+// DefaultEndpointRateLimitConfig returns the default endpoint rate limiting configuration.
+func DefaultEndpointRateLimitConfig() EndpointRateLimitConfig {
+	return EndpointRateLimitConfig{
+		MaxRequests: 5,
+		Window:      1 * time.Minute,
+	}
+}
+
+// NewEndpointRateLimiter creates a new endpoint rate limiter with the given configuration.
+func NewEndpointRateLimiter(cfg EndpointRateLimitConfig) *EndpointRateLimiter {
+	if cfg.MaxRequests <= 0 {
+		cfg.MaxRequests = 5
+	}
+	if cfg.Window <= 0 {
+		cfg.Window = 1 * time.Minute
+	}
+
+	erl := &EndpointRateLimiter{
+		requests: make(map[string]*requestWindow),
+		maxReqs:  cfg.MaxRequests,
+		window:   cfg.Window,
+		stopCh:   make(chan struct{}),
+	}
+
+	// Start cleanup goroutine
+	go erl.cleanupLoop()
+
+	return erl
+}
+
+// cleanupLoop periodically removes old entries.
+func (erl *EndpointRateLimiter) cleanupLoop() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			erl.doCleanup()
+		case <-erl.stopCh:
+			return
+		}
+	}
+}
+
+// doCleanup removes expired request windows.
+func (erl *EndpointRateLimiter) doCleanup() {
+	erl.mu.Lock()
+	defer erl.mu.Unlock()
+
+	now := time.Now()
+	for ip, window := range erl.requests {
+		// Remove timestamps outside the window
+		validTimestamps := []time.Time{}
+		for _, ts := range window.timestamps {
+			if now.Sub(ts) <= erl.window {
+				validTimestamps = append(validTimestamps, ts)
+			}
+		}
+
+		if len(validTimestamps) == 0 {
+			delete(erl.requests, ip)
+		} else {
+			window.timestamps = validTimestamps
+		}
+	}
+}
+
+// Stop stops the rate limiter cleanup goroutine.
+func (erl *EndpointRateLimiter) Stop() {
+	close(erl.stopCh)
+}
+
+// Allow checks if a request from an IP should be allowed.
+// Returns true if allowed, false if rate limit exceeded.
+func (erl *EndpointRateLimiter) Allow(ip string) bool {
+	erl.mu.Lock()
+	defer erl.mu.Unlock()
+
+	now := time.Now()
+
+	window, exists := erl.requests[ip]
+	if !exists {
+		window = &requestWindow{
+			timestamps: []time.Time{},
+		}
+		erl.requests[ip] = window
+	}
+
+	// Remove timestamps outside the window
+	validTimestamps := []time.Time{}
+	for _, ts := range window.timestamps {
+		if now.Sub(ts) <= erl.window {
+			validTimestamps = append(validTimestamps, ts)
+		}
+	}
+	window.timestamps = validTimestamps
+
+	// Check if we're at the limit
+	if len(window.timestamps) >= erl.maxReqs {
+		return false
+	}
+
+	// Record this request
+	window.timestamps = append(window.timestamps, now)
+	return true
+}
+
+// RateLimitMiddleware returns HTTP middleware that rate limits expensive endpoints.
+func (erl *EndpointRateLimiter) RateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := GetClientIP(r)
+
+		if !erl.Allow(ip) {
+			http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
