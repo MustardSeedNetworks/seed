@@ -4,6 +4,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 interface SetupWizardProps {
   onComplete: () => void;
+  onLogin: (username: string, password: string) => Promise<boolean>;
   suggestedPassword?: string;
 }
 
@@ -15,6 +16,7 @@ interface SetupStatusResponse {
 
 export function SetupWizard({
   onComplete,
+  onLogin,
   suggestedPassword,
 }: SetupWizardProps) {
   // Default to custom password entry - more secure UX
@@ -66,6 +68,7 @@ export function SetupWizard({
     setIsSubmitting(true);
 
     try {
+      // Step 1: Complete setup (set password on server)
       const response = await fetch(`${API_BASE}/api/setup/complete`, {
         method: "POST",
         headers: {
@@ -74,12 +77,25 @@ export function SetupWizard({
         body: JSON.stringify({ password }),
       });
 
-      if (response.ok) {
-        onComplete();
-      } else {
+      if (!response.ok) {
         const data = await response.json();
         setError(data.error || "Failed to complete setup");
+        return;
       }
+
+      // Step 2: Automatically log in with the new password
+      const defaultUsername = "admin"; // Default username from config
+      const loginSuccess = await onLogin(defaultUsername, password);
+
+      if (!loginSuccess) {
+        setError("Setup complete but login failed. Please log in manually.");
+        // Still call onComplete to exit setup wizard
+        onComplete();
+        return;
+      }
+
+      // Step 3: Setup complete and user is logged in
+      onComplete();
     } catch {
       setError("Network error. Please try again.");
     } finally {
