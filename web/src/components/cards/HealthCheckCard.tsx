@@ -255,36 +255,37 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     };
 
     // Segment colors are fixed per-phase for consistent identification
+    // Using dark mode aware colors from theme
     // Status is indicated only via text color in the legend
     const segments = [
       {
         label: "DNS",
         value: dns,
-        color: "bg-blue-400",
+        color: "bg-blue-500 dark:bg-blue-400",
         status: result.dnsStatus,
       },
       {
         label: "TCP",
         value: tcp,
-        color: "bg-cyan-400",
+        color: "bg-cyan-500 dark:bg-cyan-400",
         status: result.tcpStatus,
       },
       {
         label: "TLS",
         value: tls,
-        color: "bg-purple-400",
+        color: "bg-purple-500 dark:bg-purple-400",
         status: result.tlsStatus,
       },
       {
         label: "Wait",
         value: ttfb,
-        color: "bg-amber-400",
+        color: "bg-amber-500 dark:bg-amber-400",
         status: result.ttfbStatus,
       },
       {
         label: "Download",
         value: download,
-        color: "bg-green-400",
+        color: "bg-green-500 dark:bg-green-400",
         status: undefined,
       },
     ].filter((s) => s.value > 0 && Number.isFinite(s.value));

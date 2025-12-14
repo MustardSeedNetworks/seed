@@ -203,6 +203,103 @@ export const status = {
   withLabel: "inline-flex items-center gap-2",
 } as const;
 
+/**
+ * Severity colors - for CVE/vulnerability ratings (industry standard)
+ * Critical = Red, High = Orange, Medium = Yellow, Low = Green
+ */
+export const severity = {
+  critical: {
+    bg: "bg-status-error/15",
+    text: "text-status-error",
+    border: "border-status-error/30",
+    dot: "bg-status-error",
+  },
+  high: {
+    bg: "bg-orange-500/15 dark:bg-orange-400/15",
+    text: "text-orange-600 dark:text-orange-400",
+    border: "border-orange-500/30 dark:border-orange-400/30",
+    dot: "bg-orange-500 dark:bg-orange-400",
+  },
+  medium: {
+    bg: "bg-status-warning/15",
+    text: "text-status-warning",
+    border: "border-status-warning/30",
+    dot: "bg-status-warning",
+  },
+  low: {
+    bg: "bg-status-success/15",
+    text: "text-status-success",
+    border: "border-status-success/30",
+    dot: "bg-status-success",
+  },
+  info: {
+    bg: "bg-status-info/15",
+    text: "text-status-info",
+    border: "border-status-info/30",
+    dot: "bg-status-info",
+  },
+} as const;
+
+/**
+ * Timing/phase colors - for HTTP timing bars, performance metrics
+ * Following industry conventions for network timing visualization
+ */
+export const timing = {
+  dns: {
+    bg: "bg-blue-500 dark:bg-blue-400",
+    text: "text-blue-600 dark:text-blue-400",
+  },
+  tcp: {
+    bg: "bg-cyan-500 dark:bg-cyan-400",
+    text: "text-cyan-600 dark:text-cyan-400",
+  },
+  tls: {
+    bg: "bg-purple-500 dark:bg-purple-400",
+    text: "text-purple-600 dark:text-purple-400",
+  },
+  wait: {
+    bg: "bg-amber-500 dark:bg-amber-400",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  download: {
+    bg: "bg-green-500 dark:bg-green-400",
+    text: "text-green-600 dark:text-green-400",
+  },
+} as const;
+
+/**
+ * Category colors - for device types, network segments
+ */
+export const category = {
+  router: "text-blue-500 dark:text-blue-400",
+  server: "text-purple-500 dark:text-purple-400",
+  workstation: "text-green-500 dark:text-green-400",
+  printer: "text-orange-500 dark:text-orange-400",
+  mobile: "text-cyan-500 dark:text-cyan-400",
+  network: "text-teal-500 dark:text-teal-400",
+  unknown: "text-text-muted",
+} as const;
+
+/**
+ * Gauge colors - for speed gauges, progress indicators
+ * Returns CSS variable-compatible color based on percentage
+ */
+export const gauge = {
+  getColor: (percentage: number): string => {
+    if (percentage < 25) return "var(--color-status-error)";
+    if (percentage < 50) return "var(--color-status-warning)";
+    if (percentage < 75) return "var(--gauge-amber, #eab308)";
+    return "var(--color-status-success)";
+  },
+  // Tailwind class equivalents for non-SVG usage
+  class: {
+    critical: "text-status-error",
+    warning: "text-status-warning",
+    caution: "text-amber-500 dark:text-amber-400",
+    good: "text-status-success",
+  },
+} as const;
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================

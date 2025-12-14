@@ -67,6 +67,10 @@
   --color-status-warning: #92400e;
   --color-status-error: #b91c1c;
   --color-status-info: #1d4ed8;
+
+  /* Gauge/progress colors (for SVG) */
+  --gauge-amber: #d97706;
+  --gauge-orange: #ea580c;
 }
 
 .dark {
@@ -89,6 +93,10 @@
   --color-status-warning: #fcd34d;
   --color-status-error: #fca5a5;
   --color-status-info: #93c5fd;
+
+  /* Gauge/progress colors (for SVG) */
+  --gauge-amber: #fbbf24;
+  --gauge-orange: #fb923c;
 }
 
 body {

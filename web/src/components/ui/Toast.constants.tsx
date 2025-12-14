@@ -1,10 +1,10 @@
 export type ToastType = "success" | "error" | "warning" | "info";
 
 export const typeStyles = {
-  success: "bg-status-success text-white",
-  error: "bg-status-error text-white",
-  warning: "bg-status-warning text-black",
-  info: "bg-brand-primary text-white",
+  success: "bg-status-success text-text-inverse",
+  error: "bg-status-error text-text-inverse",
+  warning: "bg-status-warning text-text-inverse",
+  info: "bg-brand-primary text-text-inverse",
 };
 
 export const icons = {

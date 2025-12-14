@@ -269,14 +269,15 @@ function formatLastSeen(dateStr: string): string {
 }
 
 function MethodBadge({ method }: { method: DiscoveryMethod }) {
+  // Dark mode aware colors for discovery methods
   const colors: Record<DiscoveryMethod, string> = {
-    arp: "bg-blue-500/20 text-blue-400",
-    ndp: "bg-indigo-500/20 text-indigo-400",
-    lldp: "bg-green-500/20 text-green-400",
-    cdp: "bg-orange-500/20 text-orange-400",
-    edp: "bg-purple-500/20 text-purple-400",
-    mdns: "bg-teal-500/20 text-teal-400",
-    ping: "bg-cyan-500/20 text-cyan-400",
+    arp: "bg-blue-500/20 text-blue-600 dark:text-blue-400",
+    ndp: "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400",
+    lldp: "bg-green-500/20 text-green-600 dark:text-green-400",
+    cdp: "bg-orange-500/20 text-orange-600 dark:text-orange-400",
+    edp: "bg-purple-500/20 text-purple-600 dark:text-purple-400",
+    mdns: "bg-teal-500/20 text-teal-600 dark:text-teal-400",
+    ping: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
   };
 
   return (
@@ -424,42 +425,43 @@ function DiscoverySummary({
   categories: ReturnType<typeof categorizeDevices>;
 }) {
   // Build stat items with non-zero counts
+  // Using dark mode aware colors for device categories
   const stats = [
     {
       icon: Router,
       label: "Routers",
       count: categories.routers,
-      color: "text-blue-400",
+      color: "text-blue-600 dark:text-blue-400",
     },
     {
       icon: Server,
       label: "Servers",
       count: categories.servers,
-      color: "text-purple-400",
+      color: "text-purple-600 dark:text-purple-400",
     },
     {
       icon: Monitor,
       label: "Workstations",
       count: categories.workstations,
-      color: "text-green-400",
+      color: "text-green-600 dark:text-green-400",
     },
     {
       icon: Printer,
       label: "Printers",
       count: categories.printers,
-      color: "text-orange-400",
+      color: "text-orange-600 dark:text-orange-400",
     },
     {
       icon: Smartphone,
       label: "Mobile",
       count: categories.mobile,
-      color: "text-cyan-400",
+      color: "text-cyan-600 dark:text-cyan-400",
     },
     {
       icon: Wifi,
       label: "Network",
       count: categories.network,
-      color: "text-teal-400",
+      color: "text-teal-600 dark:text-teal-400",
     },
   ].filter((s) => s.count > 0);
 
@@ -470,13 +472,13 @@ function DiscoverySummary({
         <div className="flex items-center gap-2">
           {status.scanning ? (
             <>
-              <RefreshCw className="w-4 h-4 text-blue-400 animate-spin" />
-              <span className="text-blue-400 font-medium">Scanning...</span>
+              <RefreshCw className="w-4 h-4 text-status-info animate-spin" />
+              <span className="text-status-info font-medium">Scanning...</span>
             </>
           ) : (
             <>
-              <CheckCircle className="w-4 h-4 text-green-400" />
-              <span className="text-green-400 font-medium">Complete</span>
+              <CheckCircle className="w-4 h-4 text-status-success" />
+              <span className="text-status-success font-medium">Complete</span>
             </>
           )}
         </div>
@@ -587,7 +589,7 @@ function DeviceRow({
               </span>
               {device.ipv6 && (
                 <span
-                  className="font-mono text-xs text-blue-400"
+                  className="font-mono text-xs text-text-accent"
                   title={device.ipv6}
                 >
                   {device.ipv6.length > 20
@@ -604,7 +606,7 @@ function DeviceRow({
                 </span>
               )}
               {openPorts.length > 0 && (
-                <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">
+                <span className="text-xs bg-status-success/20 text-status-success px-1.5 py-0.5 rounded">
                   {openPorts.length} open
                 </span>
               )}
@@ -624,12 +626,12 @@ function DeviceRow({
                   }}
                   className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity ${
                     device.vulnerabilities.highestSeverity === "CRITICAL"
-                      ? "bg-red-500/20 text-red-400"
+                      ? "bg-status-error/20 text-status-error"
                       : device.vulnerabilities.highestSeverity === "HIGH"
-                        ? "bg-orange-500/20 text-orange-400"
+                        ? "bg-orange-500/20 text-orange-600 dark:text-orange-400"
                         : device.vulnerabilities.highestSeverity === "MEDIUM"
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : "bg-blue-500/20 text-blue-400"
+                          ? "bg-status-warning/20 text-status-warning"
+                          : "bg-status-info/20 text-status-info"
                   }`}
                   title="Click to view vulnerability details"
                 >
@@ -663,7 +665,7 @@ function DeviceRow({
                 type="button"
                 onClick={handleDeepScan}
                 disabled={isScanning}
-                className="px-2 py-1 text-xs bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 py-1 text-xs bg-status-info/20 text-status-info rounded hover:bg-status-info/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Deep Scan - scan common ports"
               >
                 {isScanning ? (
@@ -722,7 +724,7 @@ function DeviceRow({
                         key={result.port}
                         className="flex items-center justify-between py-0.5"
                       >
-                        <span className="text-green-400">
+                        <span className="text-status-success">
                           {result.port}/{getServiceName(result.port)}
                         </span>
                         <span className="text-text-muted">
@@ -779,7 +781,7 @@ function DeviceRow({
                       {profileOpenPorts.map((port) => (
                         <span
                           key={port.port}
-                          className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400"
+                          className="px-1.5 py-0.5 rounded text-[10px] bg-status-success/20 text-status-success"
                           title={port.banner || port.service || undefined}
                         >
                           {port.port}

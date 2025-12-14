@@ -1,4 +1,5 @@
 import { memo, useMemo } from "react";
+import { gauge } from "../../styles/theme";
 
 interface SpeedGaugeProps {
   value: number; // Current speed in Mbps
@@ -9,12 +10,9 @@ interface SpeedGaugeProps {
   size?: "sm" | "md" | "lg";
 }
 
-// Calculate gauge color based on speed percentage
+// Calculate gauge color based on speed percentage using CSS variables
 function getGaugeColor(percentage: number): string {
-  if (percentage < 25) return "#ef4444"; // red-500
-  if (percentage < 50) return "#f97316"; // orange-500
-  if (percentage < 75) return "#eab308"; // yellow-500
-  return "#22c55e"; // green-500
+  return gauge.getColor(percentage);
 }
 
 export const SpeedGauge = memo(function SpeedGauge({
