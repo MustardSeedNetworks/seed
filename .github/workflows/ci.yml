@@ -141,7 +141,8 @@ jobs:
         working-directory: web
         run: |
           npm ci
-          npm audit --audit-level=high || echo "::warning::npm audit found vulnerabilities"
+          # Fail build on high/critical vulnerabilities (closes #545)
+          npm audit --audit-level=high
 
   # Code quality checks
   quality:
@@ -219,9 +220,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libpcap-dev
 
       - name: Build Go binary
-        run: go build -o netscope ./cmd/netscope
+        run: go build -o luminetiq ./cmd/luminetiq
 
       - name: Verify binary
         run: |
-          ./netscope --version 2>/dev/null || echo "Binary built successfully"
-          ls -la netscope
+          ./luminetiq --version 2>/dev/null || echo "Binary built successfully"
+          ls -la luminetiq
