@@ -298,16 +298,17 @@ export const HealthCheckCard = memo(function HealthCheckCard({
       <div className="mt-1.5">
         {/* Stacked bar */}
         <div className="h-2 rounded-full overflow-hidden flex bg-bg-tertiary">
-          {segments.map((seg, i) => (
-            <div
-              key={seg.label}
-              className={`${seg.color} ${i === 0 ? "rounded-l-full" : ""} ${i === segments.length - 1 ? "rounded-r-full" : ""}`}
-              style={{
-                width: `${Math.min(100, Math.max(0, (seg.value / total) * 100))}%`,
-              }}
-              title={`${seg.label}: ${fmt(seg.value)}${seg.status && seg.status !== "success" ? ` (${seg.status})` : ""}`}
-            />
-          ))}
+          {segments.map((seg, i) => {
+            const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
+            const widthClass = `w-[${widthPercent}%]`;
+            return (
+              <div
+                key={seg.label}
+                className={`${seg.color} ${widthClass} ${i === 0 ? "rounded-l-full" : ""} ${i === segments.length - 1 ? "rounded-r-full" : ""}`}
+                title={`${seg.label}: ${fmt(seg.value)}${seg.status && seg.status !== "success" ? ` (${seg.status})` : ""}`}
+              />
+            );
+          })}
         </div>
         {/* Legend with tooltips */}
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs">

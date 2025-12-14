@@ -85,7 +85,8 @@
       "Bash(do)",
       "Bash(echo:*)",
       "Bash(gh repo view:*)",
-      "Bash(gh repo edit:*)"
+      "Bash(gh repo edit:*)",
+      "Bash(gh api:*)"
     ],
     "deny": [],
     "ask": []

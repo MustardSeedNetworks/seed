@@ -360,6 +360,9 @@ func TestLinkResponse(t *testing.T) {
 		AutoNeg:   true,
 	}
 
+	if resp.Interface != "eth0" {
+		t.Errorf("expected interface eth0, got %s", resp.Interface)
+	}
 	if !resp.LinkUp {
 		t.Error("expected link to be up")
 	}
@@ -387,6 +390,9 @@ func TestCustomTestResult(t *testing.T) {
 		TestStatus: "success",
 	}
 
+	if result.Name != "Test Server" {
+		t.Errorf("expected name 'Test Server', got %s", result.Name)
+	}
 	if result.Host == "" {
 		t.Error("expected host to be set")
 	}
@@ -464,6 +470,15 @@ func TestIperfClientRequest(t *testing.T) {
 	}
 	if req.Protocol != "tcp" && req.Protocol != "udp" {
 		t.Errorf("invalid protocol: %s", req.Protocol)
+	}
+	if !req.Reverse {
+		t.Error("expected reverse to be true")
+	}
+	if req.Duration != 10 {
+		t.Errorf("expected duration 10, got %d", req.Duration)
+	}
+	if req.Parallel != 4 {
+		t.Errorf("expected parallel 4, got %d", req.Parallel)
 	}
 }
 

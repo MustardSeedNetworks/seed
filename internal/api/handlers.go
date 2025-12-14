@@ -219,7 +219,7 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getSettings(w http.ResponseWriter, _ *http.Request) {
 	// Lock config for read access
 	s.config.RLock()
 	defer s.config.RUnlock()
@@ -2086,7 +2086,7 @@ func (s *Server) handleWiFiSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) getWiFiSettings(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getWiFiSettings(w http.ResponseWriter, _ *http.Request) {
 	// Get configured WiFi interface (or fall back to current)
 	wifiIface := s.config.Interface.WiFi
 	if wifiIface == "" {
@@ -2156,7 +2156,7 @@ func (s *Server) handleSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) getSNMPSettings(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getSNMPSettings(w http.ResponseWriter, _ *http.Request) {
 	s.config.RLock()
 	defer s.config.RUnlock()
 
@@ -2352,7 +2352,7 @@ func (s *Server) handleIPSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleIPSettingsGet returns the current IP configuration settings.
-func (s *Server) handleIPSettingsGet(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleIPSettingsGet(w http.ResponseWriter, _ *http.Request) {
 	resp := IPSettingsResponse{
 		Mode: s.config.IP.Mode,
 	}
@@ -2577,7 +2577,7 @@ func (s *Server) handleTestsSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getTestsSettings(w http.ResponseWriter, _ *http.Request) {
 	resp := TestsSettingsResponse{
 		DNSHostname:    s.config.DNS.TestHostname,
 		DNSServers:     make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
@@ -2885,7 +2885,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			Port: target.Port,
 		}
 
-		latency, err := runTCPTest(target.Host, target.Port)
+		latency, err := runTCPTest(r.Context(), target.Host, target.Port)
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
@@ -2959,12 +2959,12 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			URL:  url,
 		}
 
-		statusCode, timings, err := runHTTPTest(url, endpoint.ExpectedStatus)
+		statusCode, timings, err := runHTTPTest(r.Context(), url, endpoint.ExpectedStatus)
 
 		// If HTTPS failed and we can try HTTP fallback
 		if err != nil && tryHTTPFallback {
 			httpURL := "http://" + endpoint.URL
-			httpStatus, httpTimings, httpErr := runHTTPTest(httpURL, endpoint.ExpectedStatus)
+			httpStatus, httpTimings, httpErr := runHTTPTest(r.Context(), httpURL, endpoint.ExpectedStatus)
 			if httpErr == nil || httpStatus > 0 {
 				// HTTP worked (or at least connected) - use those results
 				url = httpURL
@@ -3030,9 +3030,9 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, result)
 }
 
-// runTCPTest runs a TCP port test and returns latency in ms.
-func runTCPTest(host string, port int) (float64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+// runTCPTest runs a TCP port test and returns latency in ms (fixes #534).
+func runTCPTest(ctx context.Context, host string, port int) (float64, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
@@ -3054,9 +3054,9 @@ type httpTimings struct {
 	Total   float64
 }
 
-// runHTTPTest runs an HTTP test and returns status code and timings in ms.
+// runHTTPTest runs an HTTP test and returns status code and timings in ms (fixes #534).
 // Uses SafeTransport to prevent DNS rebinding SSRF attacks.
-func runHTTPTest(url string, expectedStatus int) (status int, timing httpTimings, err error) {
+func runHTTPTest(ctx context.Context, url string, expectedStatus int) (status int, timing httpTimings, err error) {
 	// Use SafeTransport to block connections to private IPs (prevents DNS rebinding)
 	transport := validation.SafeTransport()
 	client := &http.Client{
@@ -3067,7 +3067,7 @@ func runHTTPTest(url string, expectedStatus int) (status int, timing httpTimings
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
+	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
@@ -3930,7 +3930,7 @@ func (s *Server) handleDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getDevicesSettings(w http.ResponseWriter, _ *http.Request) {
 	resp := NetworkDiscoverySettingsResponse{
 		Enabled:        s.config.NetworkDiscovery.Enabled,
 		ARPScanWorkers: s.config.NetworkDiscovery.ARPScanWorkers,
@@ -4009,7 +4009,7 @@ func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) getDevicesSubnets(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getDevicesSubnets(w http.ResponseWriter, _ *http.Request) {
 	subnets := make([]SubnetResponse, 0, len(s.config.NetworkDiscovery.AdditionalSubnets))
 	for _, subnet := range s.config.NetworkDiscovery.AdditionalSubnets {
 		subnets = append(subnets, SubnetResponse{
