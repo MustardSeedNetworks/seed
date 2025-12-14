@@ -67,7 +67,11 @@
       "Bash(done)",
       "Bash(go mod tidy:*)",
       "Bash(git mv:*)",
-      "Bash(./luminetiq:*)"
+      "Bash(./luminetiq:*)",
+      "Bash(timeout:*)",
+      "Bash(git log:*)",
+      "Bash(/Users/krisarmstrong/Developer/projects/netscope/bin/iperf3:*)",
+      "Bash(git remote:*)"
     ],
     "deny": [],
     "ask": []

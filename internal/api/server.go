@@ -33,6 +33,7 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/network"
 	"github.com/krisarmstrong/luminetiq/internal/publicip"
 	"github.com/krisarmstrong/luminetiq/internal/speedtest"
+	"github.com/krisarmstrong/luminetiq/internal/survey"
 	"github.com/krisarmstrong/luminetiq/internal/vlan"
 	"github.com/krisarmstrong/luminetiq/internal/wifi"
 	"github.com/krisarmstrong/luminetiq/web"
@@ -60,9 +61,11 @@ type Server struct {
 	vlanManager        *vlan.Manager
 	vlanTrafficMonitor *vlan.TrafficMonitor
 	wifiManager        *wifi.Manager
+	wifiScanner        *wifi.Scanner
 	cableTester      *cable.Tester
 	speedtestTester  *speedtest.Tester
 	iperfManager     *iperf.Manager
+	surveyManager    *survey.Manager
 	publicipChecker  *publicip.Checker
 	logAccessToken   string
 	logAccessHeader  string
@@ -101,6 +104,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		vlanManager:        vlan.NewManager(cfg.Interface.Default),
 		vlanTrafficMonitor: vlan.NewTrafficMonitor(cfg.Interface.Default),
 		wifiManager:        wifi.NewManager(cfg.Interface.Default),
+		wifiScanner:        wifi.NewScanner(cfg.Interface.Default),
 		cableTester:      cable.NewTester(cfg.Interface.Default),
 		speedtestTester:  speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 		iperfManager:     iperf.NewManager(),
@@ -140,6 +144,13 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 				log.Printf("Configured %d additional subnets for scanning", len(enabledCIDRs))
 			}
 		}
+	}
+
+	// Initialize survey manager
+	surveyStoragePath := "data/surveys"
+	s.surveyManager = survey.NewManager(surveyStoragePath, s.wifiScanner, s.wifiManager, s.iperfManager)
+	if err := s.surveyManager.LoadSurveys(); err != nil {
+		log.Printf("Warning: Failed to load surveys: %v", err)
 	}
 
 	// Configure security: allowed origins for CORS/WebSocket
