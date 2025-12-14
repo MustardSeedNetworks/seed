@@ -1,3 +1,27 @@
+// Package api provides HTTP handlers and API endpoints for the LuminetIQ network monitoring application.
+//
+// This file contains the core request handlers for network discovery, diagnostics, and configuration
+// management. Handlers follow a consistent pattern of input validation, operation execution, and
+// structured JSON response formatting.
+//
+// The handlers are organized into functional groups:
+//   - Discovery and scanning: handleDiscovery, handleTCPProbe, handleTraceroute, handlePortScan
+//   - Network diagnostics: handleDNS, handleGateway, handleLink
+//   - Device management: handleDevices, handleDevicesScan, handleAdvancedFingerprint
+//   - Configuration: handleSettings, handleIPSettings, handleTestsSettings
+//   - Testing: handleSpeedtest, handleCustomTests
+//   - Monitoring: handleVLAN, handleWiFi, handleCable, handlePublicIP
+//   - Export: handleExport for full network diagnostics in JSON format
+//
+// All handlers require authentication unless explicitly exempted (setup endpoints).
+// Rate limiting is applied to expensive operations (scan, speedtest) via middleware.
+//
+// Security considerations:
+//   - Input validation via internal/validation package
+//   - Authentication via JWT tokens (internal/auth)
+//   - CORS restrictions based on configured allowed origins
+//   - Rate limiting on resource-intensive endpoints
+//   - Secure credential handling with encryption for sensitive data (SNMP, WiFi)
 package api
 
 import (
@@ -16,7 +40,6 @@ import (
 
 	"github.com/krisarmstrong/luminetiq/internal/config"
 	"github.com/krisarmstrong/luminetiq/internal/dhcp"
-	"github.com/krisarmstrong/luminetiq/internal/discovery"
 	"github.com/krisarmstrong/luminetiq/internal/dns"
 	"github.com/krisarmstrong/luminetiq/internal/gateway"
 	"github.com/krisarmstrong/luminetiq/internal/iperf"
@@ -25,9 +48,49 @@ import (
 )
 
 
-// handleSettings handles settings get/update.
+// handleSettings handles GET and PUT requests for application settings.
+//
+// GET /api/settings returns the complete configuration including:
+//   - Server settings (port, HTTPS, timeouts)
+//   - Network interface configuration
+//   - Discovery settings (LLDP, CDP, ARP scanning profiles)
+//   - DNS and DHCP monitoring configuration
+//   - Test settings (ping targets, speedtest servers)
+//   - Threshold values for performance metrics
+//   - Authentication and security settings (sanitized - no passwords)
+//   - SNMP and WiFi settings (credentials masked)
+//
+// PUT /api/settings updates configuration with the provided JSON body.
+// The entire config is replaced - partial updates are not supported.
+// Changes are persisted to the configuration file and applied immediately.
+//
+// Authentication: Required
+// Rate limiting: None (configuration changes are infrequent)
+//
+// Request body (PUT): Complete SettingsResponse JSON object
+// Response: 200 OK with current settings, or 400/500 on error
 
-// handleInterfaces returns available network interfaces.
+// handleInterfaces returns available network interfaces with status information.
+//
+// GET /api/interfaces lists all network interfaces detected by the system including:
+//   - Interface name (eth0, en0, wlan0, etc.)
+//   - Type classification (ethernet, wifi, loopback, virtual)
+//   - Status flags (up, running, carrier detected)
+//   - Hardware (MAC) address
+//   - MTU (Maximum Transmission Unit)
+//   - Assigned IP addresses (IPv4 and IPv6)
+//   - Current link speed and duplex mode (if available)
+//
+// Interfaces are refreshed on each request to provide current status.
+// Useful for:
+//   - Interface selection in the UI
+//   - Troubleshooting connectivity issues
+//   - Monitoring link state changes
+//
+// Authentication: Required
+// Rate limiting: None (lightweight operation)
+//
+// Response: 200 OK with array of InterfaceInfo objects
 
 
 
@@ -47,28 +110,66 @@ import (
 
 
 
-// DiscoveryResponse contains all discovered neighbors.
+// DiscoveryResponse contains all discovered neighbors from link-layer discovery protocols.
+//
+// The response includes neighbors discovered via:
+//   - LLDP (Link Layer Discovery Protocol) - IEEE 802.1AB standard
+//   - CDP (Cisco Discovery Protocol) - Cisco proprietary
+//   - EDP (Extreme Discovery Protocol) - Extreme Networks proprietary
+//
+// Running indicates whether passive discovery capture is currently active.
 type DiscoveryResponse struct {
-	Running   bool                    `json:"running"`
-	Neighbors []DiscoveryNeighborInfo `json:"neighbors"`
+	Running   bool                    `json:"running"` // True if discovery managers are actively capturing
+	Neighbors []DiscoveryNeighborInfo `json:"neighbors"` // All discovered neighbors (deduplicated by ChassisID + PortID)
 }
 
-// DiscoveryNeighborInfo represents a discovered neighbor in the API.
+// DiscoveryNeighborInfo represents a single discovered neighbor device in the API response.
+//
+// Information is gathered from link-layer discovery protocol advertisements (LLDP/CDP/EDP).
+// Not all fields are present in every protocol - optional fields are omitted when empty.
 type DiscoveryNeighborInfo struct {
-	Protocol          string   `json:"protocol"`
-	ChassisID         string   `json:"chassisId"`
-	PortID            string   `json:"portId"`
-	PortDescription   string   `json:"portDescription,omitempty"`
-	SystemName        string   `json:"systemName,omitempty"`
-	SystemDescription string   `json:"systemDescription,omitempty"`
-	Capabilities      []string `json:"capabilities,omitempty"`
-	ManagementAddress string   `json:"managementAddress,omitempty"`
-	TTL               int      `json:"ttl"`
-	LastSeen          string   `json:"lastSeen"`
-	SourceMAC         string   `json:"sourceMAC"`
+	Protocol          string   `json:"protocol"`                    // "LLDP", "CDP", or "EDP"
+	ChassisID         string   `json:"chassisId"`                   // Unique identifier for the neighbor device
+	PortID            string   `json:"portId"`                      // Port/interface identifier on the neighbor
+	PortDescription   string   `json:"portDescription,omitempty"`   // Human-readable port description
+	SystemName        string   `json:"systemName,omitempty"`        // Hostname or system name of the neighbor
+	SystemDescription string   `json:"systemDescription,omitempty"` // Device type, model, or software version
+	Capabilities      []string `json:"capabilities,omitempty"`      // Device capabilities (bridge, router, etc.)
+	ManagementAddress string   `json:"managementAddress,omitempty"` // IP address for device management
+	TTL               int      `json:"ttl"`                         // Time-to-live in seconds until entry expires
+	LastSeen          string   `json:"lastSeen"`                    // ISO 8601 timestamp of most recent advertisement
+	SourceMAC         string   `json:"sourceMAC"`                   // MAC address of the advertising interface
 }
 
-// handleDiscovery returns discovery protocol neighbors.
+// handleDiscovery returns discovery protocol neighbors from LLDP, CDP, and EDP.
+//
+// GET /api/discovery aggregates neighbors discovered from all active link-layer
+// discovery protocols. The endpoint:
+//   - Returns currently cached neighbors (no active scanning)
+//   - Includes neighbors from LLDP (IEEE standard), CDP (Cisco), and EDP (Extreme)
+//   - Deduplicates entries based on ChassisID + PortID combination
+//   - Provides protocol-specific information when available
+//   - Indicates whether discovery capture is currently running
+//
+// Neighbor information includes:
+//   - Device identification (chassis ID, system name, management IP)
+//   - Port information (port ID, description)
+//   - Device capabilities (router, bridge, access point, etc.)
+//   - Advertisement metadata (protocol, TTL, last seen timestamp)
+//
+// Use cases:
+//   - Network topology mapping
+//   - Switch/router neighbor discovery
+//   - VLAN and network troubleshooting
+//   - Automatic network documentation
+//
+// Discovery must be started separately via the discovery service.
+// This endpoint only returns already-captured information.
+//
+// Authentication: Required
+// Rate limiting: None (read-only operation)
+//
+// Response: 200 OK with DiscoveryResponse containing neighbors array
 func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -101,255 +202,6 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, http.StatusOK, resp)
-}
-
-// TCPProbeRequest represents a TCP probe request.
-type TCPProbeRequest struct {
-	Target  string `json:"target"`  // IP or hostname
-	Port    int    `json:"port"`    // Single port
-	Ports   []int  `json:"ports"`   // Multiple ports
-	Timeout int    `json:"timeout"` // Timeout in ms (default 1000)
-}
-
-// TCPProbeResponse represents TCP probe results.
-type TCPProbeResponse struct {
-	Target  string                     `json:"target"`
-	Results []discovery.TCPProbeResult `json:"results"`
-}
-
-// handleTCPProbe handles TCP port probe requests.
-func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req TCPProbeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Validate target
-	if req.Target == "" {
-		http.Error(w, "Target is required", http.StatusBadRequest)
-		return
-	}
-
-	// Resolve hostname if needed
-	ip := net.ParseIP(req.Target)
-	if ip == nil {
-		// Try to resolve hostname
-		ips, err := net.LookupIP(req.Target)
-		if err != nil || len(ips) == 0 {
-			http.Error(w, "Unable to resolve hostname", http.StatusBadRequest)
-			return
-		}
-		// Use first IPv4 address
-		for _, resolvedIP := range ips {
-			if resolvedIP.To4() != nil {
-				ip = resolvedIP
-				break
-			}
-		}
-		if ip == nil {
-			ip = ips[0]
-		}
-	}
-
-	// Build port list
-	var ports []int
-	if req.Port > 0 {
-		ports = append(ports, req.Port)
-	}
-	ports = append(ports, req.Ports...)
-	if len(ports) == 0 {
-		http.Error(w, "At least one port is required", http.StatusBadRequest)
-		return
-	}
-
-	// Limit ports to prevent abuse
-	if len(ports) > 100 {
-		http.Error(w, "Maximum 100 ports allowed", http.StatusBadRequest)
-		return
-	}
-
-	// Set timeout
-	timeout := time.Second
-	if req.Timeout > 0 && req.Timeout <= 10000 {
-		timeout = time.Duration(req.Timeout) * time.Millisecond
-	}
-
-	// Create prober
-	prober, err := discovery.NewTCPProber(timeout)
-	if err != nil {
-		http.Error(w, "Failed to create prober: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer prober.Close()
-
-	// Run probes
-	ctx, cancel := context.WithTimeout(r.Context(), timeout*time.Duration(len(ports))+5*time.Second)
-	defer cancel()
-
-	results := prober.ScanPorts(ctx, ip.String(), ports, 10)
-
-	resp := TCPProbeResponse{
-		Target:  req.Target,
-		Results: results,
-	}
-
-	sendJSONResponse(w, http.StatusOK, resp)
-}
-
-// TracerouteRequest represents a traceroute request.
-type TracerouteRequest struct {
-	Target   string `json:"target"`   // IP or hostname
-	Protocol string `json:"protocol"` // "icmp", "udp", "tcp" (default: icmp)
-	Port     int    `json:"port"`     // Port for TCP/UDP (default: 80 for TCP, 33434 for UDP)
-	MaxHops  int    `json:"maxHops"`  // Max TTL (default: 30)
-	Timeout  int    `json:"timeout"`  // Per-hop timeout in ms (default: 3000)
-}
-
-// handleTraceroute handles traceroute requests.
-func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req TracerouteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Validate target
-	if req.Target == "" {
-		http.Error(w, "Target is required", http.StatusBadRequest)
-		return
-	}
-
-	// Validate target for security (must be valid IP or resolvable hostname)
-	ip := net.ParseIP(req.Target)
-	if ip == nil {
-		// Not an IP, check if it looks like a valid hostname
-		if err := validation.ValidateServerAddress(req.Target); err != nil {
-			http.Error(w, "Invalid target: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-	}
-
-	// Set defaults
-	protocol := req.Protocol
-	if protocol == "" {
-		protocol = "icmp"
-	}
-	if protocol != "icmp" && protocol != "udp" && protocol != "tcp" {
-		http.Error(w, "Protocol must be icmp, udp, or tcp", http.StatusBadRequest)
-		return
-	}
-
-	maxHops := req.MaxHops
-	if maxHops <= 0 || maxHops > 64 {
-		maxHops = 30
-	}
-
-	timeout := time.Duration(req.Timeout) * time.Millisecond
-	if timeout <= 0 || timeout > 10*time.Second {
-		timeout = 3 * time.Second
-	}
-
-	port := req.Port
-	if port <= 0 {
-		if protocol == "tcp" {
-			port = 80
-		} else {
-			port = 33434
-		}
-	}
-
-	// Create tracer
-	tracer := discovery.NewTracer(timeout, maxHops)
-
-	// Set overall timeout for the operation
-	ctx, cancel := context.WithTimeout(r.Context(), timeout*time.Duration(maxHops)+10*time.Second)
-	defer cancel()
-
-	// Run traceroute based on protocol
-	var result *discovery.TracerouteResult
-	switch protocol {
-	case "icmp":
-		result = tracer.TraceICMP(ctx, req.Target)
-	case "udp":
-		result = tracer.TraceUDP(ctx, req.Target, port)
-	case "tcp":
-		result = tracer.TraceTCP(ctx, req.Target, port)
-	}
-
-	sendJSONResponse(w, http.StatusOK, result)
-}
-
-// PortScanRequest represents a port scan request.
-type PortScanRequest struct {
-	Target  string `json:"target"`            // IP or hostname
-	Ports   []int  `json:"ports,omitempty"`   // Specific ports (optional, defaults to common ports)
-	Profile string `json:"profile,omitempty"` // "quick", "web", "full" (default: quick)
-	Workers int    `json:"workers,omitempty"` // Concurrent workers (default: 20)
-}
-
-// handlePortScan handles port scanning with service detection.
-func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req PortScanRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
-		return
-	}
-
-	// Validate target
-	if err := validation.ValidateServerAddress(req.Target); err != nil {
-		sendJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Invalid target: %v", err)})
-		return
-	}
-
-	// Create scanner
-	scanner, err := discovery.NewPortScanner(3 * time.Second)
-	if err != nil {
-		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("Failed to create scanner: %v", err)})
-		return
-	}
-	defer scanner.Close()
-
-	// Set timeout for operation
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
-	defer cancel()
-
-	var result *discovery.PortScanResult
-
-	// Determine scan type
-	if len(req.Ports) > 0 {
-		workers := req.Workers
-		if workers <= 0 {
-			workers = 20
-		}
-		result = scanner.ScanWithBanners(ctx, req.Target, req.Ports, workers)
-	} else {
-		switch req.Profile {
-		case "web":
-			result = scanner.WebScan(ctx, req.Target)
-		case "full":
-			result = scanner.FullScan(ctx, req.Target)
-		default: // "quick" or unspecified
-			result = scanner.QuickScan(ctx, req.Target)
-		}
-	}
-
-	sendJSONResponse(w, http.StatusOK, result)
 }
 
 // DNSLookupResult represents a DNS lookup result for the API.
@@ -2663,48 +2515,6 @@ func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Req
 }
 
 // handleAdvancedFingerprint performs advanced OS/service fingerprinting on a device.
-// POST /api/discovery/fingerprint with JSON body: {"ip": "192.168.1.1"}
-func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req struct {
-		IP string `json:"ip"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	if req.IP == "" {
-		http.Error(w, "IP address is required", http.StatusBadRequest)
-		return
-	}
-
-	// Get existing device profile if available
-	var existingProfile *discovery.DeviceProfile
-	if device := s.discoveryService.GetDeviceByIP(req.IP); device != nil {
-		existingProfile = device.Profile
-	}
-
-	// Create fingerprinter with config timeout
-	timeout := s.config.NetworkDiscovery.ScanTimeout
-	if timeout == 0 {
-		timeout = 10 * time.Second
-	}
-	fingerprinter := discovery.NewFingerprinter(timeout)
-
-	// Perform advanced probing
-	ctx, cancel := context.WithTimeout(r.Context(), timeout)
-	defer cancel()
-
-	result := fingerprinter.ProbeDevice(ctx, req.IP, existingProfile)
-
-	sendJSONResponse(w, http.StatusOK, result)
-}
-
 // SetupStatusResponse represents the setup status response.
 // WiFi Survey API Handlers
 
