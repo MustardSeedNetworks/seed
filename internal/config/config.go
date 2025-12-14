@@ -169,6 +169,9 @@ type NetworkDiscoveryConfig struct {
 
 	// Fingerprinting enables OS/service detection.
 	Fingerprinting FingerprintingConfig `yaml:"fingerprinting,omitempty"`
+
+	// IPv6Enabled enables IPv6 Neighbor Discovery Protocol (NDP) scanning.
+	IPv6Enabled bool `yaml:"ipv6_enabled"`
 }
 
 // DiscoveryCustomOptions provides fine-grained control when Profile is "custom".
@@ -488,6 +491,7 @@ func DefaultConfig() *Config {
 				OSDetection:   false,
 				ServiceProbes: false,
 			},
+			IPv6Enabled: true, // Enable IPv6 NDP scanning by default
 			// Legacy fields (for backward compatibility)
 			Enabled:           true,
 			ARPScanWorkers:    50,
