@@ -157,11 +157,13 @@ func main() {
 		}
 	}
 
-	// Optional log access token override via environment
+	// Optional log access token override via environment (fixes #538)
 	if token := os.Getenv("LOG_ACCESS_TOKEN"); token != "" {
+		log.Println("Environment variable override: LOG_ACCESS_TOKEN is set")
 		cfg.Server.LogAccessToken = token
 	}
 	if hdr := os.Getenv("LOG_ACCESS_HEADER"); hdr != "" {
+		log.Printf("Environment variable override: LOG_ACCESS_HEADER=%s", hdr)
 		cfg.Server.LogAccessHeader = hdr
 	}
 
@@ -230,21 +232,31 @@ func main() {
 	// Create and start the server
 	server := api.NewServer(cfg, *configPath, logPath, netMgr, icmpAvailable)
 
-	// Handle shutdown gracefully
+	// Handle shutdown gracefully (fixes #541)
+	// Buffer size 2 to catch second signal for force quit
 	done := make(chan struct{})
 	go func() {
-		sigChan := make(chan os.Signal, 1)
+		sigChan := make(chan os.Signal, 2)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+		// First signal: graceful shutdown
 		<-sigChan
+		log.Println("Shutting down gracefully... (press Ctrl+C again to force)")
 
-		log.Println("Shutting down...")
+		// Start graceful shutdown in goroutine
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			if shutdownErr := server.Shutdown(ctx); shutdownErr != nil {
+				log.Printf("Error during shutdown: %v", shutdownErr)
+			}
+			close(done)
+		}()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-		if shutdownErr := server.Shutdown(ctx); shutdownErr != nil {
-			log.Printf("Error during shutdown: %v", shutdownErr)
-		}
-		close(done)
+		// Second signal: force quit
+		<-sigChan
+		log.Println("Force quitting...")
+		os.Exit(1)
 	}()
 
 	// Start the server
@@ -284,12 +296,4 @@ func printSetupBanner(port int, https bool) {
 
 	// Also log it
 	log.Printf("Setup required - visit %s://localhost:%d to complete setup", protocol, port)
-}
-
-// padRight pads a string to the specified length.
-func padRight(s string, length int) string {
-	if len(s) >= length {
-		return s[:length]
-	}
-	return s + strings.Repeat(" ", length-len(s))
 }
