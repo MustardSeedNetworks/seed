@@ -12,6 +12,16 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/luminetiq/internal/validation"
+)
+
+const (
+	// Timeout durations for iperf3 operations
+	versionCheckTimeout = 5 * time.Second
+	serverStartTimeout  = 10 * time.Second
+	portCheckTimeout    = 2 * time.Second
+	expectedVersion     = "3.20"
 )
 
 // validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens)
@@ -158,6 +168,9 @@ func findIperf3Binary() (string, error) {
 		return iperfBinaryPath, nil
 	}
 
+	// Track all searched paths for better error message
+	var searchedPaths []string
+
 	// Get executable path to find bundled binary
 	execPath, err := os.Executable()
 	if err == nil {
@@ -171,9 +184,13 @@ func findIperf3Binary() (string, error) {
 		}
 
 		for _, path := range bundledPaths {
+			searchedPaths = append(searchedPaths, path)
 			if _, err := os.Stat(path); err == nil {
-				iperfBinaryPath = path
-				return path, nil
+				// Verify binary is executable
+				if info, err := os.Stat(path); err == nil && info.Mode()&0111 != 0 {
+					iperfBinaryPath = path
+					return path, nil
+				}
 			}
 		}
 	}
@@ -187,9 +204,12 @@ func findIperf3Binary() (string, error) {
 		}
 
 		for _, path := range devPaths {
+			searchedPaths = append(searchedPaths, path)
 			if _, err := os.Stat(path); err == nil {
-				iperfBinaryPath = path
-				return path, nil
+				if info, err := os.Stat(path); err == nil && info.Mode()&0111 != 0 {
+					iperfBinaryPath = path
+					return path, nil
+				}
 			}
 		}
 	}
@@ -203,16 +223,25 @@ func findIperf3Binary() (string, error) {
 		"/usr/sbin/iperf3",
 	}
 	for _, path := range systemPaths {
+		searchedPaths = append(searchedPaths, path)
 		if _, err := os.Stat(path); err == nil {
-			iperfBinaryPath = path
-			return path, nil
+			if info, err := os.Stat(path); err == nil && info.Mode()&0111 != 0 {
+				iperfBinaryPath = path
+				return path, nil
+			}
 		}
 	}
 
 	// Fall back to system PATH
 	path, err := exec.LookPath("iperf3")
 	if err != nil {
-		return "", fmt.Errorf("iperf3 not found: not bundled and not in system PATH")
+		// Build detailed error message
+		errMsg := "iperf3 not found. Searched paths:\n"
+		for _, p := range searchedPaths {
+			errMsg += fmt.Sprintf("  - %s\n", p)
+		}
+		errMsg += "\nTo build a bundled iperf3 binary, run:\n  scripts/build-iperf3.sh"
+		return "", fmt.Errorf("%s", errMsg)
 	}
 
 	iperfBinaryPath = path
@@ -231,11 +260,21 @@ func GetVersion() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	// Use timeout context to prevent indefinite blocking
+	ctx, cancel := context.WithTimeout(context.Background(), versionCheckTimeout)
+	defer cancel()
+
 	//nolint:gosec // G204: binaryPath is from findIperf3Binary() which validates the path
-	out, err := exec.Command(binaryPath, "--version").Output()
+	cmd := exec.CommandContext(ctx, binaryPath, "--version")
+	out, err := cmd.Output()
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("iperf3 version check timed out after %v", versionCheckTimeout)
+		}
 		return "", fmt.Errorf("failed to get iperf3 version: %w", err)
 	}
+
 	// Output is like "iperf 3.16 (cJSON 1.7.17)\n..."
 	// Extract just the version number (e.g., "3.16")
 	lines := strings.Split(string(out), "\n")
@@ -249,6 +288,44 @@ func GetVersion() (string, error) {
 		return line, nil
 	}
 	return "unknown", nil
+}
+
+// ValidateVersion checks if the installed iperf3 version matches the expected version
+func ValidateVersion() error {
+	version, err := GetVersion()
+	if err != nil {
+		return fmt.Errorf("failed to get version: %w", err)
+	}
+
+	// Remove 'v' prefix for comparison
+	version = strings.TrimPrefix(version, "v")
+	if version != expectedVersion {
+		return fmt.Errorf("iperf3 version mismatch: expected v%s, got v%s", expectedVersion, version)
+	}
+
+	return nil
+}
+
+// waitForPortReady checks if a TCP port is ready to accept connections
+func waitForPortReady(port int, timeout time.Duration) error {
+	// Validate port number
+	if err := validation.ValidatePort(port); err != nil {
+		return err
+	}
+
+	deadline := time.Now().Add(timeout)
+	addr := fmt.Sprintf("127.0.0.1:%d", port)
+
+	for time.Now().Before(deadline) {
+		conn, err := net.DialTimeout("tcp", addr, 100*time.Millisecond)
+		if err == nil {
+			conn.Close()
+			return nil
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return fmt.Errorf("port %d not ready after %v", port, timeout)
 }
 
 // GetServerStatus returns the current server status
@@ -281,20 +358,36 @@ func (m *Manager) StartServer(port int) error {
 		return fmt.Errorf("server already running on port %d", m.serverStatus.Port)
 	}
 
+	// Validate port number
+	if err := validation.ValidatePort(port); err != nil {
+		return err
+	}
+
 	binaryPath, err := findIperf3Binary()
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// Use timeout context for server startup monitoring
+	ctx, cancel := context.WithTimeout(context.Background(), serverStartTimeout)
 	m.serverCancel = cancel
 
-	// Start iperf3 server: iperf3 -s -p <port> -D (daemon mode doesn't work well, use background)
+	// Start iperf3 server: iperf3 -s -p <port>
 	//nolint:gosec // G204: binaryPath is from findIperf3Binary() which validates the path
 	cmd := exec.CommandContext(ctx, binaryPath, "-s", "-p", fmt.Sprintf("%d", port))
 	if err := cmd.Start(); err != nil {
 		cancel()
 		return fmt.Errorf("failed to start iperf3 server: %w", err)
+	}
+
+	// Wait for port to be ready
+	if err := waitForPortReady(port, portCheckTimeout); err != nil {
+		// Kill the process if port check fails
+		if cmd.Process != nil {
+			cmd.Process.Kill()
+		}
+		cancel()
+		return fmt.Errorf("iperf3 server failed to start listening: %w", err)
 	}
 
 	m.serverCmd = cmd
