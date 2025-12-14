@@ -4372,13 +4372,30 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 	sendJSONResponse(w, http.StatusOK, result)
 }
 
-// handleSystemHealth handles GET /api/system/health - returns system health metrics.
+// handleHealth handles GET /api/health - simple liveness check for load balancers (fixes #540).
+// Returns 200 OK if server is running, minimal response for fast health checks.
+func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Simple health check - just return OK
+	// For detailed health, use /api/system/health
+	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"status": "ok",
+		"uptime": time.Since(s.startTime).Seconds(),
+	})
+}
+
+// handleSystemHealth handles GET /api/system/health - returns comprehensive health metrics (fixes #540).
 func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// Get system health metrics
 	health, err := system.GetHealth()
 	if err != nil {
 		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
@@ -4387,7 +4404,23 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, health)
+	// Add application-specific health information
+	appHealth := map[string]interface{}{
+		"system": health,
+		"application": map[string]interface{}{
+			"version":     version.Version,
+			"uptime":      time.Since(s.startTime).Seconds(),
+			"uptime_text": time.Since(s.startTime).String(),
+		},
+		"services": map[string]interface{}{
+			"discovery_service": s.discoveryService != nil && s.discoveryService.IsRunning(),
+			"link_monitor":      s.linkMonitor != nil,
+			"websocket_hub":     s.wsHub != nil,
+			"vlan_monitor":      s.vlanTrafficMonitor != nil,
+		},
+	}
+
+	sendJSONResponse(w, http.StatusOK, appHealth)
 }
 
 // SetupStatusResponse represents the setup status response.

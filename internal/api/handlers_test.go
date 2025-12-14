@@ -287,6 +287,15 @@ func TestStatusResponseFields(t *testing.T) {
 	if resp.Version != "0.7.3" {
 		t.Errorf("expected version '0.7.3', got %q", resp.Version)
 	}
+	if resp.Uptime <= 0 {
+		t.Errorf("expected positive uptime, got %d", resp.Uptime)
+	}
+	if resp.Interface == "" {
+		t.Error("expected interface to be set")
+	}
+	if resp.IsWireless {
+		t.Error("expected wired interface for this test")
+	}
 }
 
 func TestIPSettingsRequestValidation(t *testing.T) {
@@ -357,6 +366,15 @@ func TestLinkResponse(t *testing.T) {
 	if resp.MTU != 1500 {
 		t.Errorf("expected MTU 1500, got %d", resp.MTU)
 	}
+	if resp.Speed == "" {
+		t.Error("expected speed to be set")
+	}
+	if resp.Duplex == "" {
+		t.Error("expected duplex to be set")
+	}
+	if !resp.AutoNeg {
+		t.Error("expected autonegotiation to be enabled")
+	}
 }
 
 func TestCustomTestResult(t *testing.T) {
@@ -367,6 +385,19 @@ func TestCustomTestResult(t *testing.T) {
 		Success:    true,
 		Latency:    25.5,
 		TestStatus: "success",
+	}
+
+	if result.Host == "" {
+		t.Error("expected host to be set")
+	}
+	if result.Port <= 0 {
+		t.Error("expected port to be positive")
+	}
+	if result.Latency <= 0 {
+		t.Error("expected latency to be positive")
+	}
+	if result.TestStatus != "success" && result.TestStatus != "warning" && result.TestStatus != "error" {
+		t.Errorf("invalid test status: %s", result.TestStatus)
 	}
 
 	if !result.Success {
@@ -394,6 +425,24 @@ func TestSpeedtestResponse(t *testing.T) {
 	}
 	if resp.Upload <= 0 {
 		t.Error("expected positive upload speed")
+	}
+	if resp.Latency <= 0 {
+		t.Error("expected positive latency")
+	}
+	if resp.Server == "" {
+		t.Error("expected server to be set")
+	}
+	if resp.Location == "" {
+		t.Error("expected location to be set")
+	}
+	if resp.Distance < 0 {
+		t.Error("expected non-negative distance")
+	}
+	if resp.Timestamp == "" {
+		t.Error("expected timestamp to be set")
+	}
+	if resp.TestDuration <= 0 {
+		t.Error("expected positive test duration")
 	}
 }
 
@@ -451,6 +500,18 @@ func TestWiFiResponse(t *testing.T) {
 	if resp.Signal > 0 {
 		t.Error("signal should be negative (dBm)")
 	}
+	if resp.BSSID == "" {
+		t.Error("expected BSSID to be set")
+	}
+	if resp.Channel <= 0 {
+		t.Error("expected channel to be positive")
+	}
+	if resp.Frequency <= 0 {
+		t.Error("expected frequency to be positive")
+	}
+	if resp.Security == "" {
+		t.Error("expected security to be set")
+	}
 }
 
 func TestCableResponse(t *testing.T) {
@@ -467,6 +528,12 @@ func TestCableResponse(t *testing.T) {
 	}
 	if resp.Length == nil || *resp.Length != 25.5 {
 		t.Error("expected length 25.5")
+	}
+	if resp.Status == "" {
+		t.Error("expected status to be set")
+	}
+	if resp.Faults == nil {
+		t.Error("expected faults slice to be non-nil (can be empty)")
 	}
 }
 
@@ -487,6 +554,21 @@ func TestDiscoveryNeighborInfo(t *testing.T) {
 	if info.TTL <= 0 {
 		t.Error("TTL should be positive")
 	}
+	if info.ChassisID == "" {
+		t.Error("expected chassis ID to be set")
+	}
+	if info.PortID == "" {
+		t.Error("expected port ID to be set")
+	}
+	if info.SystemName == "" {
+		t.Error("expected system name to be set")
+	}
+	if info.ManagementAddress == "" {
+		t.Error("expected management address to be set")
+	}
+	if info.LastSeen == "" {
+		t.Error("expected last seen timestamp to be set")
+	}
 }
 
 func TestDNSLookupResult(t *testing.T) {
@@ -503,6 +585,12 @@ func TestDNSLookupResult(t *testing.T) {
 	}
 	if len(result.Resolved) == 0 && result.Status == "success" {
 		t.Error("successful lookup should have resolved addresses")
+	}
+	if result.Result == "" {
+		t.Error("expected result to be set")
+	}
+	if result.Time <= 0 || result.TimeMs <= 0 {
+		t.Error("expected positive timing values")
 	}
 }
 
@@ -525,5 +613,17 @@ func TestGatewayResponse(t *testing.T) {
 	}
 	if resp.AvgTime < resp.MinTime || resp.AvgTime > resp.MaxTime {
 		t.Error("average time should be between min and max")
+	}
+	if resp.Gateway == "" {
+		t.Error("expected gateway to be set")
+	}
+	if resp.Sent <= 0 || resp.Received <= 0 {
+		t.Error("expected positive sent/received counts")
+	}
+	if resp.LastTime <= 0 {
+		t.Error("expected positive last time")
+	}
+	if resp.Status == "" {
+		t.Error("expected status to be set")
 	}
 }

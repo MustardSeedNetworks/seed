@@ -73,7 +73,8 @@ type Server struct {
 	logAccessToken    string
 	logAccessHeader   string
 	requireLogToken   bool
-	icmpAvailable     bool // Whether raw ICMP sockets are available
+	icmpAvailable     bool      // Whether raw ICMP sockets are available
+	startTime         time.Time // Application start time for uptime tracking (fixes #540)
 	redirectServer    *http.Server // HTTP→HTTPS redirect server (fixes #515)
 	redirectServerErr chan error    // Error channel for redirect server
 }
@@ -87,6 +88,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		mux:           http.NewServeMux(),
 		netManager:    netMgr,
 		icmpAvailable: icmpAvailable,
+		startTime:     time.Now(), // Track application start time (fixes #540)
 		authManager: auth.NewManager(
 			cfg.Auth.JWTSecret,
 			cfg.Auth.SessionTimeout,
@@ -286,6 +288,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/discovery/fingerprint", s.handleAdvancedFingerprint)
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
 	s.mux.HandleFunc("/api/logs", s.handleLogs)
+	s.mux.HandleFunc("/api/health", s.handleHealth)             // Simple liveness check (fixes #540)
 	s.mux.HandleFunc("/api/system/health", s.handleSystemHealth)
 
 	// WiFi Survey routes
