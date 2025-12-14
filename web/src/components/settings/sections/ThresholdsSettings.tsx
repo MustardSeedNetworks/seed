@@ -4,7 +4,12 @@ import { Tooltip } from "../../ui/Tooltip";
 import { THRESHOLD_HELP } from "../../help/HelpContent";
 import { SettingsThresholds, SaveStatus } from "../../../types/settings";
 import { Info, SlidersHorizontal } from "../../ui/Icons";
-import { layout, icon as iconTokens } from "../../../styles/theme";
+import {
+  layout,
+  icon as iconTokens,
+  radius,
+  input as inputTokens,
+} from "../../../styles/theme";
 
 interface ThresholdsSettingsProps {
   thresholds: SettingsThresholds;
@@ -60,8 +65,10 @@ export function ThresholdsSettings({
     >
       <div className="stack-sm">
         {/* DNS Thresholds */}
-        <div className="p-3 bg-surface-base rounded-md border border-surface-border">
-          <div className="flex items-center gap-1.5 mb-2">
+        <div
+          className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} mb-2`}>
             <span className="body-small font-medium text-text-primary">
               DNS Lookup (ms)
             </span>
@@ -78,7 +85,7 @@ export function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("dns", "good", Number(e.target.value))
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
             <div>
@@ -89,15 +96,17 @@ export function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("dns", "warning", Number(e.target.value))
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
           </div>
         </div>
 
         {/* Gateway Thresholds */}
-        <div className="p-3 bg-surface-base rounded-md border border-surface-border">
-          <div className="flex items-center gap-1.5 mb-2">
+        <div
+          className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} mb-2`}>
             <span className="body-small font-medium text-text-primary">
               Gateway Ping (ms)
             </span>
@@ -114,7 +123,7 @@ export function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("gateway", "good", Number(e.target.value))
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
             <div>
@@ -125,15 +134,17 @@ export function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("gateway", "warning", Number(e.target.value))
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
           </div>
         </div>
 
         {/* Wi-Fi Signal Thresholds */}
-        <div className="p-3 bg-surface-base rounded-md border border-surface-border">
-          <div className="flex items-center gap-1.5 mb-2">
+        <div
+          className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} mb-2`}>
             <span className="body-small font-medium text-text-primary">
               Wi-Fi Signal (dBm)
             </span>
@@ -150,7 +161,7 @@ export function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("wifi", "good", Number(e.target.value))
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
             <div>
@@ -161,15 +172,17 @@ export function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("wifi", "warning", Number(e.target.value))
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
           </div>
         </div>
 
         {/* Health Check Ping Thresholds */}
-        <div className="p-3 bg-surface-base rounded-md border border-surface-border">
-          <div className="flex items-center gap-1.5 mb-2">
+        <div
+          className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} mb-2`}>
             <span className="body-small font-medium text-text-primary">
               Health Check: Ping (ms)
             </span>
@@ -189,7 +202,7 @@ export function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("customPing", "good", Number(e.target.value))
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
             <div>
@@ -204,15 +217,17 @@ export function ThresholdsSettings({
                     Number(e.target.value),
                   )
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
           </div>
         </div>
 
         {/* Health Check TCP Thresholds */}
-        <div className="p-3 bg-surface-base rounded-md border border-surface-border">
-          <div className="flex items-center gap-1.5 mb-2">
+        <div
+          className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} mb-2`}>
             <span className="body-small font-medium text-text-primary">
               Health Check: TCP (ms)
             </span>
@@ -232,7 +247,7 @@ export function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("customTcp", "good", Number(e.target.value))
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
             <div>
@@ -247,21 +262,23 @@ export function ThresholdsSettings({
                     Number(e.target.value),
                   )
                 }
-                className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
               />
             </div>
           </div>
         </div>
 
         {/* HTTP Thresholds (Total + Timing Phases) */}
-        <div className="p-3 bg-surface-base rounded-md border border-surface-border">
+        <div
+          className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}
+        >
           <span className="body-small font-medium text-text-primary block mb-2">
             HTTP Thresholds (ms)
           </span>
 
           {/* Total */}
           <div className="mb-3">
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className={`${layout.inline.tight} mb-1`}>
               <span className="caption font-medium text-text-primary">
                 Total Response Time
               </span>
@@ -282,7 +299,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
               <div>
@@ -299,7 +316,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
             </div>
@@ -311,7 +328,7 @@ export function ThresholdsSettings({
 
           {/* DNS */}
           <div className="mb-3">
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className={`${layout.inline.tight} mb-1`}>
               <span className="caption font-medium text-text-primary">
                 DNS Lookup
               </span>
@@ -332,7 +349,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
               <div>
@@ -349,7 +366,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
             </div>
@@ -357,7 +374,7 @@ export function ThresholdsSettings({
 
           {/* TCP */}
           <div className="mb-3">
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className={`${layout.inline.tight} mb-1`}>
               <span className="caption font-medium text-text-primary">
                 TCP Connect
               </span>
@@ -378,7 +395,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
               <div>
@@ -395,7 +412,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
             </div>
@@ -403,7 +420,7 @@ export function ThresholdsSettings({
 
           {/* TLS */}
           <div className="mb-3">
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className={`${layout.inline.tight} mb-1`}>
               <span className="caption font-medium text-text-primary">
                 TLS Handshake
               </span>
@@ -424,7 +441,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
               <div>
@@ -441,7 +458,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
             </div>
@@ -449,7 +466,7 @@ export function ThresholdsSettings({
 
           {/* TTFB */}
           <div>
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className={`${layout.inline.tight} mb-1`}>
               <span className="caption font-medium text-text-primary">
                 TTFB (Server Wait)
               </span>
@@ -470,7 +487,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
               <div>
@@ -487,7 +504,7 @@ export function ThresholdsSettings({
                       Number(e.target.value),
                     )
                   }
-                  className="w-full mt-1 px-2 py-1 bg-surface-raised border border-surface-border rounded-md body-small text-text-primary"
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
                 />
               </div>
             </div>
