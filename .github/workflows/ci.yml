@@ -221,6 +221,49 @@ jobs:
           done
           echo "No sensitive files detected"
 
+      - name: Check for unsafe logging patterns
+        run: |
+          echo "Checking for dangerous logging patterns..."
+
+          # Patterns that may log sensitive data (excluding test files and logging package itself)
+          DANGEROUS_PATTERNS=(
+            'log\.Print.*r\.Body'
+            'log\.Print.*bodyBytes'
+            'log\.Print.*req\.Password'
+            'log\.Print.*\.password'
+            'log\.Print.*\.token'
+            'log\.Print.*Authorization'
+            'log\.Print.*X-Api-Key'
+            'io\.ReadAll.*r\.Body.*log'
+            'fmt\.Printf.*r\.Body'
+            'fmt\.Printf.*password'
+          )
+
+          VIOLATIONS=0
+          for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+            # Search Go files, excluding tests and the logging package
+            if grep -rn -E "$pattern" \
+              --include="*.go" \
+              --exclude="*_test.go" \
+              --exclude-dir=internal/logging \
+              --exclude-dir=.git \
+              --exclude-dir=node_modules \
+              internal/ cmd/ 2>/dev/null; then
+              echo "❌ Found dangerous logging pattern: $pattern"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done
+
+          if [ $VIOLATIONS -gt 0 ]; then
+            echo ""
+            echo "ERROR: Found $VIOLATIONS unsafe logging pattern(s)"
+            echo "Use internal/logging.Redact* functions to safely log data"
+            echo "See internal/logging/redact.go for examples"
+            exit 1
+          fi
+
+          echo "✅ No unsafe logging patterns detected"
+
   # ===========================================================================
   # Documentation Checks
   # ===========================================================================
