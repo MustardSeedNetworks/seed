@@ -6,7 +6,6 @@ package discovery
 import (
 	"fmt"
 	"log"
-	"net"
 	"sync"
 	"time"
 

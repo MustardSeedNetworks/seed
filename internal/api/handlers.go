@@ -25,6 +25,7 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/gateway"
 	"github.com/krisarmstrong/luminetiq/internal/iperf"
 	"github.com/krisarmstrong/luminetiq/internal/network"
+	"github.com/krisarmstrong/luminetiq/internal/survey"
 	"github.com/krisarmstrong/luminetiq/internal/system"
 	"github.com/krisarmstrong/luminetiq/internal/validation"
 	"github.com/krisarmstrong/luminetiq/internal/version"
@@ -4308,4 +4309,181 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status": "Setup completed successfully",
 	})
+}
+
+// WiFi Survey API Handlers
+
+type CreateSurveyRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	SurveyType  string `json:"surveyType"`
+	Interface   string `json:"interface"`
+}
+
+func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
+	var req CreateSurveyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		http.Error(w, "Survey name is required", http.StatusBadRequest)
+		return
+	}
+
+	if req.Interface == "" {
+		req.Interface = s.netManager.GetCurrentInterface()
+	}
+
+	newSurvey, err := s.surveyManager.CreateSurvey(req.Name, req.Description, req.Interface, survey.SurveyType(req.SurveyType))
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create survey: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, newSurvey)
+}
+
+func (s *Server) listSurveys(w http.ResponseWriter, r *http.Request) {
+	surveys := s.surveyManager.ListSurveys()
+	sendJSONResponse(w, http.StatusOK, surveys)
+}
+
+func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Survey ID required", http.StatusBadRequest)
+		return
+	}
+
+	survey, err := s.surveyManager.GetSurvey(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, survey)
+}
+
+func (s *Server) deleteSurvey(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Survey ID required", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.surveyManager.DeleteSurvey(id); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+func (s *Server) startSurvey(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Survey ID required", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.surveyManager.StartSurvey(id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "started"})
+}
+
+func (s *Server) pauseSurvey(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Survey ID required", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.surveyManager.PauseSurvey(id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "paused"})
+}
+
+func (s *Server) completeSurvey(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Survey ID required", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.surveyManager.CompleteSurvey(id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "completed"})
+}
+
+type AddSampleRequest struct {
+	X          int         `json:"x"`
+	Y          int         `json:"y"`
+	SampleData interface{} `json:"sampleData"`
+}
+
+func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Survey ID required", http.StatusBadRequest)
+		return
+	}
+
+	var req AddSampleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.surveyManager.AddSample(id, req.X, req.Y, req.SampleData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "sample added"})
+}
+
+type UpdateFloorPlanRequest struct {
+	ImageData string  `json:"imageData"`
+	Width     int     `json:"width"`
+	Height    int     `json:"height"`
+	ScaleM    float64 `json:"scaleM"`
+}
+
+func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Survey ID required", http.StatusBadRequest)
+		return
+	}
+
+	var req UpdateFloorPlanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	floorPlan := &survey.FloorPlan{
+		ImageData: req.ImageData,
+		Width:     req.Width,
+		Height:    req.Height,
+		ScaleM:    req.ScaleM,
+	}
+
+	if err := s.surveyManager.UpdateFloorPlan(id, floorPlan); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "floor plan updated"})
 }

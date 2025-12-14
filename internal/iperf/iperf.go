@@ -21,7 +21,7 @@ const (
 	versionCheckTimeout = 5 * time.Second
 	serverStartTimeout  = 10 * time.Second
 	portCheckTimeout    = 2 * time.Second
-	expectedVersion     = "3.20"
+	minSupportedVersion = "3.17" // Minimum supported iperf3 version
 )
 
 // validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens)
@@ -290,7 +290,7 @@ func GetVersion() (string, error) {
 	return "unknown", nil
 }
 
-// ValidateVersion checks if the installed iperf3 version matches the expected version
+// ValidateVersion checks if the installed iperf3 version meets minimum requirements
 func ValidateVersion() error {
 	version, err := GetVersion()
 	if err != nil {
@@ -299,11 +299,41 @@ func ValidateVersion() error {
 
 	// Remove 'v' prefix for comparison
 	version = strings.TrimPrefix(version, "v")
-	if version != expectedVersion {
-		return fmt.Errorf("iperf3 version mismatch: expected v%s, got v%s", expectedVersion, version)
+
+	// Compare version strings (simple lexicographic comparison works for x.y format)
+	if compareVersions(version, minSupportedVersion) < 0 {
+		return fmt.Errorf("iperf3 version %s is below minimum supported version %s", version, minSupportedVersion)
 	}
 
 	return nil
+}
+
+// compareVersions compares two version strings in format "x.y" or "x.y.z"
+// Returns: -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
+func compareVersions(v1, v2 string) int {
+	parts1 := strings.Split(v1, ".")
+	parts2 := strings.Split(v2, ".")
+
+	// Compare each part
+	for i := 0; i < len(parts1) || i < len(parts2); i++ {
+		var n1, n2 int
+
+		if i < len(parts1) {
+			fmt.Sscanf(parts1[i], "%d", &n1)
+		}
+		if i < len(parts2) {
+			fmt.Sscanf(parts2[i], "%d", &n2)
+		}
+
+		if n1 < n2 {
+			return -1
+		}
+		if n1 > n2 {
+			return 1
+		}
+	}
+
+	return 0
 }
 
 // waitForPortReady checks if a TCP port is ready to accept connections
