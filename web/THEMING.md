@@ -172,31 +172,58 @@ import { cn, buttonClass, cardClass, badgeClass, severity, timing, category } fr
 
 ### Spacing Scale
 
-Use these consistent spacing values (based on 4px grid):
+Use these consistent spacing values (based on 4px grid). **Prefer semantic CSS utility classes** over raw Tailwind values:
 
-| Token         | Value | Pixels | Usage                         |
-| ------------- | ----- | ------ | ----------------------------- |
-| `tight`       | 0.5   | 2px    | Inline elements, tight gaps   |
-| `compact`     | 2     | 8px    | Compact layouts, small gaps   |
-| `default`     | 3     | 12px   | Default spacing, card padding |
-| `comfortable` | 4     | 16px   | Comfortable spacing           |
-| `spacious`    | 6     | 24px   | Section separation            |
-| `section`     | 8     | 32px   | Major section gaps            |
-| `major`       | 12    | 48px   | Page-level separation         |
+| Raw Value | Pixels | Semantic Class   | Usage                       |
+| --------- | ------ | ---------------- | --------------------------- |
+| `1`       | 4px    | `stack-xs`       | Tight inline elements       |
+| `2`       | 8px    | `stack-sm`       | Compact layouts, small gaps |
+| `3`       | 12px   | `stack`          | Default vertical spacing    |
+| `4`       | 16px   | `stack-lg`       | Comfortable spacing         |
+| `6`       | 24px   | `stack-xl`       | Major section separation    |
+| `8`       | 32px   | `section-gap-lg` | Page-level separation       |
 
-### Common Patterns
+### Semantic Spacing Classes
 
 ```tsx
-// Card padding (responsive)
-<div className="p-3 sm:p-4">
+// Vertical stacking (use instead of space-y-*)
+<div className="stack-sm">      // 8px vertical gap
+<div className="stack">         // 12px vertical gap (default)
+<div className="stack-lg">      // 16px vertical gap
+<div className="stack-xl">      // 24px vertical gap
 
-// Container padding (responsive)
-<div className="px-4 sm:px-6 lg:px-8">
+// Section separators
+<div className="section-gap">   // 24px between major sections
+<div className="section-gap-lg"> // 32px for page-level sections
 
-// Section gaps
-<div className="space-y-6">  // Between sections
-<div className="space-y-3">  // Within sections
-<div className="gap-4">      // Grid/flex gaps
+// Flex/grid gaps (use instead of gap-*)
+<div className="gap-tight">      // 4px
+<div className="gap-compact">    // 8px
+<div className="gap-default">    // 12px
+<div className="gap-comfortable"> // 16px
+<div className="gap-spacious">   // 24px
+
+// Container padding (use instead of p-*)
+<div className="pad-sm">         // 12px padding
+<div className="pad">            // 16px padding (default)
+<div className="pad-lg">         // 24px padding
+
+// Inline gaps (for buttons, badges, icon groups)
+<div className="inline-gap-xs">  // 4px
+<div className="inline-gap-sm">  // 6px
+<div className="inline-gap">     // 8px (default)
+<div className="inline-gap-lg">  // 12px
+```
+
+### Spacing TypeScript Imports
+
+```tsx
+import { spacing } from '../styles/theme';
+
+// Access class names programmatically
+<div className={spacing.stack.default}>...</div>
+<div className={spacing.gap.comfortable}>...</div>
+<div className={spacing.pad.lg}>...</div>
 ```
 
 ### Layout Utilities
@@ -215,7 +242,39 @@ The main dashboard uses a responsive grid:
 
 ```tsx
 // 1 column on mobile, 2 on tablet, 3 on desktop, 4 on large screens
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-comfortable">
+```
+
+### Sizing Tokens
+
+For consistent heights and widths, use the sizing tokens instead of arbitrary values:
+
+```tsx
+import { sizing } from '../styles/theme';
+
+// Modal/drawer heights
+<div className={sizing.height.modal}>   // max-h-[85vh]
+<div className={sizing.height.panel}>   // max-h-[70vh]
+
+// Drawer/panel widths
+<div className={sizing.width.drawer}>     // w-80 (320px)
+<div className={sizing.width.drawerWide}> // w-96 (384px)
+<div className={sizing.width.dropdown}>   // w-64 (256px)
+```
+
+### Anti-Patterns for Spacing
+
+```tsx
+// Bad - arbitrary pixel values
+<div className="h-125">       // Use sizing tokens or vh units
+<div className="w-md">        // Use sizing.width.* for consistency
+<div className="mb-4 mt-2">   // Inconsistent margins
+
+// Good - use semantic classes
+<div className="max-h-modal">  // Defined in design system (85vh)
+<div className="max-h-[70vh]"> // Viewport-relative for panels
+<div className="w-96">         // Standard drawer width (384px)
+<div className="stack-lg">     // Consistent 16px spacing
 ```
 
 ## Severity Colors (CVE/Vulnerability)

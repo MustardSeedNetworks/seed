@@ -112,7 +112,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
 
       {/* Modal */}
       <div
-        className="relative bg-surface-raised border border-surface-border rounded-lg shadow-xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden"
+        className="relative bg-surface-raised border border-surface-border rounded-lg shadow-xl w-full max-w-6xl max-h-modal flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-modal-title"
