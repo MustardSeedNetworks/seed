@@ -1,4 +1,6 @@
-// Package gateway provides gateway ping testing functionality.
+// Package gateway provides gateway reachability testing and latency measurement.
+// Implements ICMP-based ping tests to verify gateway connectivity, measure round-trip times,
+// and detect gateway availability issues. Supports sequential and continuous gateway monitoring.
 package gateway
 
 import (

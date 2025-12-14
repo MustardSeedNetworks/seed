@@ -1,23 +1,66 @@
+/**
+ * WiFi Connection Status Card Component
+ * 
+ * Displays current WiFi connection information and signal strength.
+ * 
+ * Features:
+ * - SSID (network name) display
+ * - BSSID (access point MAC) identification
+ * - Signal strength in dBm with visual representation
+ * - Signal bars (▂▄▆█) visual indicator
+ * - WiFi channel and frequency information
+ * - Security protocol display
+ * - Threshold-based status coloring
+ * - Only visible when connected to WiFi
+ * 
+ * Signal Strength Conversion:
+ * - Typical range: -30 dBm (excellent, very close) to -90 dBm (poor, far away)
+ * - Displayed as percentage (0-100%) for easy interpretation
+ * - Visual bars updated in real-time
+ * 
+ * Status Indicators:
+ * - **Success (Green)**: Signal -50 dBm or better (strong signal)
+ * - **Warning (Yellow)**: Signal -50 to -70 dBm (acceptable but degrading)
+ * - **Error (Red)**: Signal -70 dBm or worse (poor signal)
+ * 
+ * The card is conditionally hidden when not connected to WiFi.
+ */
+
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { useSettings } from "../../contexts/SettingsContext";
 import { SimpleBaseCard } from "./BaseCard";
 import { Wifi } from "../ui/Icons";
+import { layout, icon as iconTokens } from "../../styles/theme";
 
+/**
+ * Current WiFi connection information
+ */
 export interface WiFiData {
-  ssid: string;
-  bssid: string;
-  signal: number; // dBm
-  channel: number;
-  frequency: number; // MHz
-  security: string;
+  ssid: string;          // Network name (Service Set Identifier)
+  bssid: string;         // Access point MAC address
+  signal: number;        // Signal strength in dBm (negative value)
+  channel: number;       // WiFi channel (1-13 for 2.4GHz, 36+ for 5GHz)
+  frequency: number;     // Frequency in MHz (2400-2500 or 5000-6000)
+  security: string;      // Security protocol (WPA2, WPA3, Open, etc.)
 }
 
+/**
+ * Props for WiFi Card
+ */
 interface WiFiCardProps {
-  data: WiFiData | null;
-  loading?: boolean;
-  visible?: boolean;
+  data: WiFiData | null; // Current WiFi connection
+  loading?: boolean;     // True while loading data
+  visible?: boolean;     // If false, card is not rendered (not on WiFi)
 }
 
+/**
+ * Determines card status based on signal strength and thresholds.
+ * Lower dBm (more negative) = weaker signal.
+ * 
+ * @param signal - Signal strength in dBm (negative value)
+ * @param thresholds - Good and warning dBm thresholds
+ * @returns Status indicator ('success', 'warning', 'error')
+ */
 function getSignalStatus(
   signal: number,
   thresholds: { warning: number; critical: number },
@@ -60,7 +103,7 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
   return (
     <SimpleBaseCard
       title="Wi-Fi"
-      icon={<Wifi className="w-5 h-5" />}
+      icon={<Wifi className={iconTokens.size.md} />}
       status={loading ? "loading" : status}
       loading={loading}
       loadingContent={<CardValue value="Scanning..." size="lg" />}
@@ -70,11 +113,11 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
       ) : (
         <>
           <CardValue value={data.ssid} size="lg" />
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-lg font-mono">
+          <div className={`${layout.inline.default} mt-1`}>
+            <span className="body-large font-mono">
               {getSignalBars(data.signal)}
             </span>
-            <span className="text-sm text-text-muted">
+            <span className="body-small text-text-muted">
               {data.signal} dBm ({signalToPercentage(data.signal)}%)
             </span>
           </div>

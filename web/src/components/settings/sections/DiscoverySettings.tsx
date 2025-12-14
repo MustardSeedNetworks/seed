@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { ScanSearch } from "../../ui/Icons";
+import { icon as iconTokens, layout, radius } from "../../../styles/theme";
 import {
   NetworkDiscoverySettings as NetworkDiscoverySettingsType,
   SubnetConfig,
@@ -114,21 +115,21 @@ export function DiscoverySettings({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
-          <ScanSearch className="w-4 h-4" />
+        <div className={layout.inline.default}>
+          <ScanSearch className={iconTokens.size.sm} />
           <span>Network Discovery</span>
           <AutoSaveIndicator status={networkDiscoveryStatus} />
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="stack">
         {/* Enable Toggle */}
-        <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+        <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
           <div>
-            <span className="text-sm text-text-primary font-medium">
+            <span className="body-small text-text-primary font-medium">
               Enable Discovery
             </span>
-            <p className="text-xs text-text-muted">Scan network for devices</p>
+            <p className="caption text-text-muted">Scan network for devices</p>
           </div>
           <input
             type="checkbox"
@@ -139,17 +140,17 @@ export function DiscoverySettings({
                 enabled: e.target.checked,
               }))
             }
-            className="w-4 h-4"
+            className={iconTokens.size.sm}
           />
         </label>
 
         {/* Auto-Scan on Link Up */}
-        <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+        <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
           <div>
-            <span className="text-sm text-text-primary font-medium">
+            <span className="body-small text-text-primary font-medium">
               Auto-Scan on Link Up
             </span>
-            <p className="text-xs text-text-muted">
+            <p className="caption text-text-muted">
               Start discovery when network connects
             </p>
           </div>
@@ -162,23 +163,23 @@ export function DiscoverySettings({
                 autoScan: e.target.checked,
               }))
             }
-            className="w-4 h-4"
+            className={iconTokens.size.sm}
           />
         </label>
 
         {/* Service Status Banner */}
         {serviceStatus && (
           <div
-            className={`p-3 rounded-lg border ${
+            className={`p-3 ${radius.lg} border ${
               serviceStatus.running
                 ? "bg-status-success/10 border-status-success/30"
                 : "bg-status-error/10 border-status-error/30"
             }`}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className={layout.flex.between}>
+              <div className={layout.inline.default}>
                 <div
-                  className={`w-2 h-2 rounded-full ${
+                  className={`w-2 h-2 ${radius.full} ${
                     serviceStatus.running
                       ? serviceStatus.scanning
                         ? "bg-status-warning animate-pulse"
@@ -186,7 +187,7 @@ export function DiscoverySettings({
                       : "bg-status-error"
                   }`}
                 />
-                <span className="text-sm font-medium text-text-primary">
+                <span className="body-small font-medium text-text-primary">
                   {serviceStatus.running
                     ? serviceStatus.scanning
                       ? "Scanning..."
@@ -197,13 +198,13 @@ export function DiscoverySettings({
               <button
                 onClick={fetchServiceStatus}
                 disabled={statusLoading}
-                className="text-xs text-text-muted hover:text-text-primary"
+                className="caption text-text-muted hover:text-text-primary"
               >
                 {statusLoading ? "..." : "Refresh"}
               </button>
             </div>
             {serviceStatus.running && (
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-text-muted">
+              <div className="mt-2 grid grid-cols-2 gap-2 caption text-text-muted">
                 <div>
                   <span className="font-medium">Devices:</span>{" "}
                   {serviceStatus.deviceCount}
@@ -228,7 +229,7 @@ export function DiscoverySettings({
                   {serviceStatus.activeMethods.map((method) => (
                     <span
                       key={method}
-                      className="px-1.5 py-0.5 bg-surface-base rounded text-xs text-text-muted"
+                      className={`px-1.5 py-0.5 bg-surface-base ${radius.default} caption text-text-muted`}
                     >
                       {method}
                     </span>
@@ -240,10 +241,10 @@ export function DiscoverySettings({
 
         {/* Discovery Profile Selector */}
         <div>
-          <label className="text-xs text-text-muted font-medium">
+          <label className="caption text-text-muted font-medium">
             Discovery Profile
           </label>
-          <div className="mt-2 space-y-2">
+          <div className="mt-2 stack-sm">
             {(
               [
                 "stealth",
@@ -254,7 +255,7 @@ export function DiscoverySettings({
             ).map((profile) => (
               <label
                 key={profile}
-                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                className={`${layout.inline.default} items-start p-3 ${radius.lg} border cursor-pointer transition-colors ${
                   currentProfile === profile
                     ? "border-brand-primary bg-brand-primary/5"
                     : "border-surface-border hover:border-brand-primary/50"
@@ -269,10 +270,10 @@ export function DiscoverySettings({
                   className="mt-0.5"
                 />
                 <div className="flex-1">
-                  <div className="text-sm font-medium text-text-primary">
+                  <div className="body-small font-medium text-text-primary">
                     {PROFILE_LABELS[profile]}
                   </div>
-                  <div className="text-xs text-text-muted mt-0.5">
+                  <div className="caption text-text-muted mt-0.5">
                     {PROFILE_DESCRIPTIONS[profile]}
                   </div>
                 </div>
@@ -284,11 +285,11 @@ export function DiscoverySettings({
         {/* Custom Options (only shown when Custom profile is selected) */}
         {showCustomOptions && (
           <div className="border-t border-surface-border pt-3">
-            <span className="text-xs text-text-muted font-medium">
+            <span className="caption text-text-muted font-medium">
               Custom Discovery Options
             </span>
-            <div className="mt-2 space-y-2">
-              <label className="flex items-center gap-2">
+            <div className="mt-2 stack-sm">
+              <label className={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={
@@ -304,13 +305,13 @@ export function DiscoverySettings({
                       },
                     }))
                   }
-                  className="w-4 h-4"
+                  className={iconTokens.size.sm}
                 />
-                <span className="text-sm text-text-primary">
+                <span className="body-small text-text-primary">
                   Passive Protocol Listeners (LLDP, CDP, EDP)
                 </span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={
@@ -325,11 +326,11 @@ export function DiscoverySettings({
                       },
                     }))
                   }
-                  className="w-4 h-4"
+                  className={iconTokens.size.sm}
                 />
-                <span className="text-sm text-text-primary">ARP Scanning</span>
+                <span className="body-small text-text-primary">ARP Scanning</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={
@@ -344,13 +345,13 @@ export function DiscoverySettings({
                       },
                     }))
                   }
-                  className="w-4 h-4"
+                  className={iconTokens.size.sm}
                 />
-                <span className="text-sm text-text-primary">
+                <span className="body-small text-text-primary">
                   ICMP Ping Sweep
                 </span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={
@@ -372,11 +373,11 @@ export function DiscoverySettings({
                       },
                     }))
                   }
-                  className="w-4 h-4"
+                  className={iconTokens.size.sm}
                 />
-                <span className="text-sm text-text-primary">Port Scanning</span>
+                <span className="body-small text-text-primary">Port Scanning</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={
@@ -391,11 +392,11 @@ export function DiscoverySettings({
                       },
                     }))
                   }
-                  className="w-4 h-4"
+                  className={iconTokens.size.sm}
                 />
-                <span className="text-sm text-text-primary">Traceroute</span>
+                <span className="body-small text-text-primary">Traceroute</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={
@@ -410,9 +411,9 @@ export function DiscoverySettings({
                       },
                     }))
                   }
-                  className="w-4 h-4"
+                  className={iconTokens.size.sm}
                 />
-                <span className="text-sm text-text-primary">SNMP Queries</span>
+                <span className="body-small text-text-primary">SNMP Queries</span>
               </label>
             </div>
           </div>
@@ -420,13 +421,13 @@ export function DiscoverySettings({
 
         {/* Timing Settings */}
         <div className="border-t border-surface-border pt-3">
-          <span className="text-xs text-text-muted font-medium">
+          <span className="caption text-text-muted font-medium">
             Timing Settings
           </span>
 
           {/* Scan Workers */}
           <div className="mt-2">
-            <label className="text-xs text-text-muted">
+            <label className="caption text-text-muted">
               Concurrent Scan Workers
             </label>
             <input
@@ -440,16 +441,16 @@ export function DiscoverySettings({
               }
               min={1}
               max={100}
-              className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
-            <p className="text-xs text-text-muted mt-1">
+            <p className="caption text-text-muted mt-1">
               More workers = faster scan (default: 50)
             </p>
           </div>
 
           {/* Ping Timeout */}
           <div className="mt-3">
-            <label className="text-xs text-text-muted">Ping Timeout (ms)</label>
+            <label className="caption text-text-muted">Ping Timeout (ms)</label>
             <input
               type="number"
               value={networkDiscoverySettings.pingTimeoutMs}
@@ -461,13 +462,13 @@ export function DiscoverySettings({
               }
               min={100}
               max={5000}
-              className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
           </div>
 
           {/* Scan Timeout */}
           <div className="mt-3">
-            <label className="text-xs text-text-muted">
+            <label className="caption text-text-muted">
               Total Scan Timeout (ms)
             </label>
             <input
@@ -481,13 +482,13 @@ export function DiscoverySettings({
               }
               min={5000}
               max={120000}
-              className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
           </div>
 
           {/* Rescan Interval */}
           <div className="mt-3">
-            <label className="text-xs text-text-muted">
+            <label className="caption text-text-muted">
               Auto-Rescan Interval (ms)
             </label>
             <input
@@ -500,9 +501,9 @@ export function DiscoverySettings({
                 }))
               }
               min={0}
-              className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
-            <p className="text-xs text-text-muted mt-1">
+            <p className="caption text-text-muted mt-1">
               0 = disabled, otherwise interval between automatic rescans
             </p>
           </div>
@@ -510,7 +511,7 @@ export function DiscoverySettings({
 
         {/* OUI File Path */}
         <div className="border-t border-surface-border pt-3">
-          <label className="text-xs text-text-muted font-medium">
+          <label className="caption text-text-muted font-medium">
             OUI Database File Path
           </label>
           <input
@@ -523,9 +524,9 @@ export function DiscoverySettings({
               }))
             }
             placeholder="oui.txt"
-            className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+            className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
           />
-          <p className="text-xs text-text-muted mt-1">
+          <p className="caption text-text-muted mt-1">
             Path to IEEE OUI file for vendor lookup (download from{" "}
             <a
               href="https://standards-oui.ieee.org/oui/oui.txt"
@@ -542,47 +543,47 @@ export function DiscoverySettings({
         {/* Target Networks (only for full_scan or custom profile) */}
         {showSubnets && (
           <div className="border-t border-surface-border pt-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-text-muted font-medium">
+            <div className={`${layout.flex.between} mb-2`}>
+              <span className="caption text-text-muted font-medium">
                 Target Networks <AutoSaveIndicator status={subnetsStatus} />
               </span>
             </div>
-            <p className="text-xs text-text-muted mb-2">
+            <p className="caption text-text-muted mb-2">
               Add subnets beyond the local interface to scan for devices (e.g.,
               server VLANs, remote networks).
             </p>
 
             {/* List of configured subnets */}
             {subnets.length > 0 && (
-              <div className="space-y-2 mb-3">
+              <div className="stack-sm mb-3">
                 {subnets.map((subnet) => (
                   <div
                     key={subnet.cidr}
-                    className="flex items-center justify-between p-2 bg-surface-base rounded border border-surface-border"
+                    className={`${layout.flex.between} p-2 bg-surface-base ${radius.default} border border-surface-border`}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-text-primary truncate">
+                      <div className="body-small text-text-primary truncate">
                         {subnet.name || subnet.cidr}
                       </div>
-                      <div className="text-xs text-text-muted">
+                      <div className="caption text-text-muted">
                         {subnet.cidr}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
+                    <div className={`${layout.inline.default} ml-2`}>
                       <input
                         type="checkbox"
                         checked={subnet.enabled}
                         onChange={(e) =>
                           toggleSubnet(subnet.cidr, e.target.checked)
                         }
-                        className="w-4 h-4"
+                        className={iconTokens.size.sm}
                         title={
                           subnet.enabled ? "Disable subnet" : "Enable subnet"
                         }
                       />
                       <button
                         onClick={() => deleteSubnet(subnet.cidr)}
-                        className="text-status-error hover:text-red-400 text-sm"
+                        className="text-status-error hover:text-status-error/70 body-small"
                         title="Remove subnet"
                       >
                         X
@@ -594,7 +595,7 @@ export function DiscoverySettings({
             )}
 
             {/* Add new subnet form */}
-            <div className="space-y-2">
+            <div className="stack-sm">
               <input
                 type="text"
                 value={newSubnetCidr}
@@ -603,21 +604,21 @@ export function DiscoverySettings({
                   setSubnetError(null);
                 }}
                 placeholder="CIDR (e.g., 10.0.0.0/24)"
-                className="w-full px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                className={`w-full px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
               />
               <input
                 type="text"
                 value={newSubnetName}
                 onChange={(e) => setNewSubnetName(e.target.value)}
                 placeholder="Name (optional, e.g., Server VLAN)"
-                className="w-full px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                className={`w-full px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
               />
               {subnetError && (
-                <p className="text-xs text-status-error">{subnetError}</p>
+                <p className="caption text-status-error">{subnetError}</p>
               )}
               <button
                 onClick={addSubnet}
-                className="w-full px-3 py-2 bg-brand-primary hover:bg-brand-accent text-text-inverse rounded text-sm"
+                className={`w-full px-3 py-2 bg-brand-primary hover:bg-brand-accent text-text-inverse ${radius.default} body-small`}
               >
                 + Add Subnet
               </button>

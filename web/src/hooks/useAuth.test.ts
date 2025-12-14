@@ -1,3 +1,31 @@
+/**
+ * useAuth.test.ts - Authentication Hook Tests
+ * 
+ * Purpose: Test suite for the useAuth hook and getAuthHeaders utility function.
+ * Tests authentication state management, JWT token handling, session expiry detection,
+ * and localStorage persistence.
+ * 
+ * Key Test Areas:
+ * - Token storage: JWT persisted in localStorage
+ * - Token retrieval: getAuthHeaders() returns proper Authorization header
+ * - Token expiry: isTokenExpired() detects expired tokens with 30-second buffer
+ * - Storage key migration: underscore to hyphen format migration
+ * - Login/logout flow: token state transitions
+ * - Session expiry: automatic detection and clearing of expired tokens
+ * - Header generation: proper Bearer token format in Authorization header
+ * - Multiple tokens: handling of auth and admin tokens
+ * 
+ * Test Framework: Vitest with React Testing Library hooks
+ * Mocks: localStorage, fetch API
+ * 
+ * Usage:
+ * ```bash
+ * npm test -- useAuth.test.ts
+ * ```
+ * 
+ * Dependencies: vitest, @testing-library/react
+ */
+
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useAuth, getAuthHeaders } from "./useAuth";

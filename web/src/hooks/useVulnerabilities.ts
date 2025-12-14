@@ -1,3 +1,35 @@
+/**
+ * Vulnerability Scanner Hook
+ * 
+ * Manages vulnerability scanning for network devices using the NVD (National Vulnerability Database).
+ * 
+ * Features:
+ * - Trigger vulnerability scans for all devices or specific IPs
+ * - Fetch scan status and progress
+ * - Retrieve vulnerability results with optional severity filtering
+ * - Configure scanner settings (API keys, database cache)
+ * 
+ * The scanner:
+ * - Fingerprints devices from network discovery
+ * - Looks up CVEs from NVD database based on device OS/vendor/version
+ * - Caches results for performance
+ * - Supports filtering by severity (critical, high, medium, low)
+ * 
+ * Usage:
+ * ```typescript
+ * const { triggerScan, fetchResults, isScanning } = useVulnerabilities();
+ * 
+ * // Scan all discovered devices
+ * await triggerScan();
+ * 
+ * // Scan specific device
+ * await triggerScan('192.168.1.100');
+ * 
+ * // Get results for critical vulnerabilities
+ * const criticalVulns = await fetchResults('critical');
+ * ```
+ */
+
 import { useState, useCallback } from "react";
 import { getAuthHeaders } from "./useAuth";
 import type {
@@ -6,17 +38,27 @@ import type {
   VulnerabilityScannerConfig,
 } from "../types/vulnerabilities";
 
+// API base URL for vulnerability endpoints
 const API_BASE = "";
 
+/** API response for scan initiation */
 interface ScanResponse {
-  status: string;
+  status: string; // "scan started" on success
 }
 
+/** API response for vulnerability results */
 interface ResultsResponse {
-  results: DeviceVulnerabilities[];
-  count: number;
+  results: DeviceVulnerabilities[]; // Array of device vulnerability reports
+  count: number;                     // Total number of results
 }
 
+/**
+ * Custom hook for managing vulnerability scanning operations.
+ * 
+ * Provides functions to trigger scans, check status, and retrieve results.
+ * 
+ * @returns Vulnerability scanning state and control functions
+ */
 export function useVulnerabilities() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);

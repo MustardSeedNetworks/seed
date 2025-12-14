@@ -1,3 +1,5 @@
+// Package dhcp provides DHCP monitoring including rogue DHCP server detection.
+// Test suite validates rogue server detection, packet parsing, and security alerts.
 package dhcp
 
 import (
@@ -20,8 +22,8 @@ func TestNewRogueDetector(t *testing.T) {
 
 	// Test with custom config
 	config := &RogueDetectorConfig{
-		Interface:       "wlan0",
-		KnownServers:    []string{"192.168.1.1", "192.168.1.2"},
+		Interface:        "wlan0",
+		KnownServers:     []string{"192.168.1.1", "192.168.1.2"},
 		AlertOnDetection: false,
 	}
 	rd = NewRogueDetector(config)
@@ -55,8 +57,8 @@ func TestRogueDetector_IsRunning(t *testing.T) {
 
 func TestRogueDetector_UpdateKnownServers(t *testing.T) {
 	config := &RogueDetectorConfig{
-		Interface:       "eth0",
-		KnownServers:    []string{"192.168.1.1"},
+		Interface:        "eth0",
+		KnownServers:     []string{"192.168.1.1"},
 		AlertOnDetection: true,
 	}
 	rd := NewRogueDetector(config)
@@ -64,11 +66,11 @@ func TestRogueDetector_UpdateKnownServers(t *testing.T) {
 	// Simulate detected servers
 	rd.mu.Lock()
 	rd.detectedServers["192.168.1.1"] = &RogueServer{
-		IP:          "192.168.1.1",
+		IP:           "192.168.1.1",
 		IsAuthorized: true,
 	}
 	rd.detectedServers["192.168.1.100"] = &RogueServer{
-		IP:          "192.168.1.100",
+		IP:           "192.168.1.100",
 		IsAuthorized: false,
 	}
 	rd.mu.Unlock()
@@ -105,19 +107,19 @@ func TestRogueDetector_GetDetectedServers(t *testing.T) {
 	now := time.Now()
 	rd.mu.Lock()
 	rd.detectedServers["192.168.1.1"] = &RogueServer{
-		IP:          "192.168.1.1",
-		MAC:         "aa:bb:cc:dd:ee:ff",
-		FirstSeen:   now,
-		LastSeen:    now,
-		OfferCount:  5,
+		IP:           "192.168.1.1",
+		MAC:          "aa:bb:cc:dd:ee:ff",
+		FirstSeen:    now,
+		LastSeen:     now,
+		OfferCount:   5,
 		IsAuthorized: true,
 	}
 	rd.detectedServers["192.168.1.100"] = &RogueServer{
-		IP:          "192.168.1.100",
-		MAC:         "11:22:33:44:55:66",
-		FirstSeen:   now.Add(-1 * time.Hour),
-		LastSeen:    now,
-		OfferCount:  3,
+		IP:           "192.168.1.100",
+		MAC:          "11:22:33:44:55:66",
+		FirstSeen:    now.Add(-1 * time.Hour),
+		LastSeen:     now,
+		OfferCount:   3,
 		IsAuthorized: false,
 	}
 	rd.mu.Unlock()
@@ -158,8 +160,8 @@ func TestRogueDetector_GetDetectedServers(t *testing.T) {
 
 func TestRogueDetector_GetRogueServers(t *testing.T) {
 	config := &RogueDetectorConfig{
-		Interface:       "eth0",
-		KnownServers:    []string{"192.168.1.1"},
+		Interface:        "eth0",
+		KnownServers:     []string{"192.168.1.1"},
 		AlertOnDetection: true,
 	}
 	rd := NewRogueDetector(config)
@@ -168,18 +170,18 @@ func TestRogueDetector_GetRogueServers(t *testing.T) {
 	now := time.Now()
 	rd.mu.Lock()
 	rd.detectedServers["192.168.1.1"] = &RogueServer{
-		IP:          "192.168.1.1",
-		FirstSeen:   now,
+		IP:           "192.168.1.1",
+		FirstSeen:    now,
 		IsAuthorized: true,
 	}
 	rd.detectedServers["192.168.1.100"] = &RogueServer{
-		IP:          "192.168.1.100",
-		FirstSeen:   now,
+		IP:           "192.168.1.100",
+		FirstSeen:    now,
 		IsAuthorized: false,
 	}
 	rd.detectedServers["192.168.1.200"] = &RogueServer{
-		IP:          "192.168.1.200",
-		FirstSeen:   now,
+		IP:           "192.168.1.200",
+		FirstSeen:    now,
 		IsAuthorized: false,
 	}
 	rd.mu.Unlock()
@@ -226,8 +228,8 @@ func TestRogueDetector_ClearDetectedServers(t *testing.T) {
 
 func TestRogueDetector_GetConfig(t *testing.T) {
 	originalConfig := &RogueDetectorConfig{
-		Interface:       "wlan0",
-		KnownServers:    []string{"192.168.1.1", "192.168.1.2"},
+		Interface:        "wlan0",
+		KnownServers:     []string{"192.168.1.1", "192.168.1.2"},
 		AlertOnDetection: false,
 	}
 	rd := NewRogueDetector(originalConfig)
@@ -260,8 +262,8 @@ func TestRogueDetector_GetConfig(t *testing.T) {
 
 func TestRogueDetector_Start_InvalidInterface(t *testing.T) {
 	config := &RogueDetectorConfig{
-		Interface:       "nonexistent999",
-		KnownServers:    []string{},
+		Interface:        "nonexistent999",
+		KnownServers:     []string{},
 		AlertOnDetection: false,
 	}
 	rd := NewRogueDetector(config)

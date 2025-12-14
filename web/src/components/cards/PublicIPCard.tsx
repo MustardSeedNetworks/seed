@@ -1,7 +1,32 @@
+/**
+ * PublicIPCard Component
+ *
+ * Purpose: Displays the public IPv4 and IPv6 addresses as seen from the internet.
+ * Shows when these addresses were last checked and any lookup errors.
+ *
+ * Key Features:
+ * - Dual-stack support: shows both IPv4 and IPv6 public addresses
+ * - Timestamp: displays when addresses were last verified (e.g., "5m ago", "just now")
+ * - Error handling: shows error message if lookup fails
+ * - Status indication: success (has IP), error (lookup failed), unknown (no data)
+ *
+ * Usage:
+ * ```typescript
+ * <PublicIPCard
+ *   data={publicIPData}
+ *   loading={isFetching}
+ * />
+ * ```
+ *
+ * Dependencies: BaseCard, Card UI components, Globe icon, theme utilities
+ * State: Receives data from parent component via props
+ */
+
 import { memo } from "react";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { BaseCard } from "./BaseCard";
 import { Globe } from "../ui/Icons";
+import { icon as iconTokens } from "../../styles/theme";
 
 export interface PublicIPData {
   ipv4?: string;
@@ -47,7 +72,7 @@ export const PublicIPCard = memo(function PublicIPCard({
   return (
     <BaseCard
       title="Public IP"
-      icon={<Globe className="w-5 h-5" />}
+      icon={<Globe className={iconTokens.size.md} />}
       data={data}
       loading={loading}
       getStatus={getStatus}
@@ -59,13 +84,13 @@ export const PublicIPCard = memo(function PublicIPCard({
           {/* IPv4 Address */}
           {ipData.ipv4 ? (
             <>
-              <p className="text-xs text-text-muted font-medium">IPv4</p>
+              <p className="caption font-medium">IPv4</p>
               <CardValue value={ipData.ipv4} size="lg" />
             </>
           ) : (
             <>
-              <p className="text-xs text-text-muted font-medium">IPv4</p>
-              <p className="text-sm text-text-muted">Not available</p>
+              <p className="caption font-medium">IPv4</p>
+              <p className="body-small text-text-muted">Not available</p>
             </>
           )}
 
@@ -74,15 +99,15 @@ export const PublicIPCard = memo(function PublicIPCard({
           {/* IPv6 Address */}
           {ipData.ipv6 ? (
             <>
-              <p className="text-xs text-text-muted font-medium">IPv6</p>
-              <p className="text-sm font-mono break-all text-text-primary">
+              <p className="caption font-medium">IPv6</p>
+              <p className="body-small font-mono break-all text-text-primary">
                 {ipData.ipv6}
               </p>
             </>
           ) : (
             <>
-              <p className="text-xs text-text-muted font-medium">IPv6</p>
-              <p className="text-sm text-text-muted">Not available</p>
+              <p className="caption font-medium">IPv6</p>
+              <p className="body-small text-text-muted">Not available</p>
             </>
           )}
 
@@ -101,7 +126,7 @@ export const PublicIPCard = memo(function PublicIPCard({
           {ipData.error && (
             <>
               <CardDivider />
-              <p className="text-xs text-status-error">{ipData.error}</p>
+              <p className="caption text-status-error">{ipData.error}</p>
             </>
           )}
         </>

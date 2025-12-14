@@ -1,78 +1,129 @@
+/**
+ * WiFi Survey Management Hook
+ * 
+ * Manages WiFi site surveys for signal strength mapping and coverage analysis.
+ * 
+ * Features:
+ * - Multiple survey types: passive scanning, active connection monitoring, throughput testing
+ * - Floor plan integration with coordinate mapping
+ * - Sample collection and storage
+ * - Survey lifecycle management (create, start, pause, resume, complete)
+ * - Real-time sampling with location tracking
+ * 
+ * Survey Types:
+ * - **Passive**: Scans for all available WiFi networks without connecting
+ * - **Active**: Monitors connected WiFi network performance (RSSI, data rate, roaming)
+ * - **Throughput**: Performs iperf3 speed tests at each sample point
+ * 
+ * Usage:
+ * ```typescript
+ * const { surveys, createSurvey, addSample, loading } = useSurvey();
+ * 
+ * // Create a new survey
+ * await createSurvey({
+ *   name: 'Office Coverage',
+ *   surveyType: 'passive',
+ *   interface: 'wlan0'
+ * });
+ * 
+ * // Add sample point at coordinates
+ * await addSample(surveyId, { x: 100, y: 200 });
+ * ```
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { getAuthHeaders } from "./useAuth";
 
+// API base URL for survey endpoints
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+/** Survey data collection mode */
 export type SurveyType = "passive" | "active" | "throughput";
+
+/** Survey lifecycle status */
 export type SurveyStatus = "created" | "in_progress" | "paused" | "completed";
 
+/** Floor plan image and scale information for coordinate mapping */
 export interface FloorPlan {
-  imageData: string; // Base64-encoded image
-  width: number;
-  height: number;
-  scaleM: number; // Meters per pixel
+  imageData: string; // Base64-encoded image data
+  width: number;     // Image width in pixels
+  height: number;    // Image height in pixels
+  scaleM: number;    // Scale factor: meters per pixel
 }
 
+/** Passive survey sample data (multiple networks scanned) */
 export interface PassiveSample {
   networks: Array<{
-    ssid: string;
-    bssid: string;
-    rssi: number;
-    channel: number;
-    frequency: number;
+    ssid: string;      // Network name
+    bssid: string;     // Access point MAC address
+    rssi: number;      // Received signal strength indicator (dBm)
+    channel: number;   // WiFi channel number
+    frequency: number; // Frequency in MHz
   }>;
 }
 
+/** Active survey sample data (connected network only) */
 export interface ActiveSample {
-  ssid: string;
-  bssid: string;
-  rssi: number;
-  dataRate: number;
-  roamingEvent: boolean;
+  ssid: string;        // Connected network name
+  bssid: string;       // Connected access point MAC
+  rssi: number;        // Signal strength (dBm)
+  dataRate: number;    // Current connection speed (Mbps)
+  roamingEvent: boolean; // True if this sample includes a roaming event
 }
 
+/** Throughput survey sample data (includes speed test results) */
 export interface ThroughputSample {
-  ssid: string;
-  bssid: string;
-  rssi: number;
-  downloadMbps: number;
-  uploadMbps: number;
-  latency: number;
-  jitter: number;
-  packetLoss: number;
+  ssid: string;         // Network name
+  bssid: string;        // Access point MAC
+  rssi: number;         // Signal strength (dBm)
+  downloadMbps: number; // Download speed from iperf3 test
+  uploadMbps: number;   // Upload speed from iperf3 test
+  latency: number;      // Average latency (ms)
+  jitter: number;       // Jitter/variance (ms)
+  packetLoss: number;   // Packet loss percentage
 }
 
+/** Sample point with location and measurement data */
 export interface SamplePoint {
-  x: number;
-  y: number;
-  timestamp: string;
-  sampleData: PassiveSample | ActiveSample | ThroughputSample;
+  x: number;          // X coordinate on floor plan (pixels)
+  y: number;          // Y coordinate on floor plan (pixels)
+  timestamp: string;  // ISO 8601 timestamp of sample
+  sampleData: PassiveSample | ActiveSample | ThroughputSample; // Measurement data
 }
 
+/** Complete survey object */
 export interface Survey {
-  id: string;
-  name: string;
-  description?: string;
-  floorPlan?: FloorPlan;
-  surveyType: SurveyType;
-  status: SurveyStatus;
-  createdAt: string;
-  updatedAt: string;
-  samples: SamplePoint[];
-  interface: string;
-  iperfServer?: string;
-  testDuration?: number;
+  id: string;              // Unique survey identifier
+  name: string;            // Survey name
+  description?: string;    // Optional description
+  floorPlan?: FloorPlan;   // Optional floor plan image
+  surveyType: SurveyType;  // Type of survey (passive/active/throughput)
+  status: SurveyStatus;    // Current lifecycle status
+  createdAt: string;       // Creation timestamp (ISO 8601)
+  updatedAt: string;       // Last update timestamp (ISO 8601)
+  samples: SamplePoint[];  // Collected sample points
+  interface: string;       // WiFi interface used for survey
+  iperfServer?: string;    // iperf3 server for throughput tests
+  testDuration?: number;   // Duration of throughput tests (seconds)
 }
 
+/** Request payload for creating a new survey */
 export interface CreateSurveyRequest {
-  name: string;
-  description?: string;
-  surveyType: SurveyType;
-  interface: string;
-  iperfServer?: string;
-  testDuration?: number;
+  name: string;            // Survey name (required)
+  description?: string;    // Optional description
+  surveyType: SurveyType;  // Type of survey to create
+  interface: string;       // WiFi interface to use
+  iperfServer?: string;    // Required for throughput surveys
+  testDuration?: number;   // Test duration for throughput surveys
 }
 
+/**
+ * Custom hook for managing WiFi site surveys.
+ * 
+ * Provides functions for survey lifecycle management and data collection.
+ * 
+ * @returns Survey state and control functions
+ */
 export function useSurvey() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(false);

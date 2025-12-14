@@ -1,6 +1,9 @@
 //go:build darwin
 // +build darwin
 
+// Package discovery implements multi-protocol network device discovery.
+// NDP (Neighbor Discovery Protocol) support for macOS is a stub implementation
+// as IPv6 neighbor discovery on macOS is complex and the primary production target is Linux.
 package discovery
 
 import (
@@ -19,11 +22,11 @@ type NDPScanner struct {
 
 // NDPNeighbor represents an IPv6 neighbor.
 type NDPNeighbor struct {
-	IPv6      string
-	MAC       string
-	IsRouter  bool
-	State     string
-	LastSeen  time.Time
+	IPv6     string
+	MAC      string
+	IsRouter bool
+	State    string
+	LastSeen time.Time
 }
 
 // NewNDPScanner creates a new IPv6 NDP scanner.

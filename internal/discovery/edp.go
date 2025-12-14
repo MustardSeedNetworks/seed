@@ -1,3 +1,7 @@
+// Package discovery implements multi-protocol network device discovery.
+// EDP (Extreme Discovery Protocol) support enables discovery of Extreme Networks equipment
+// and compatible devices that advertise their device ID, port information, VLAN membership,
+// and IP addressing via Ethernet frames.
 package discovery
 
 import (

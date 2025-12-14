@@ -1,3 +1,7 @@
+// Package discovery implements multi-protocol network device discovery.
+// CDP (Cisco Discovery Protocol) support enables discovery of Cisco networking equipment
+// and compatible devices that advertise their capabilities, platform, and management information
+// on the local network segment via Ethernet frames.
 package discovery
 
 import (

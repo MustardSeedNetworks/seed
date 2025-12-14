@@ -1,3 +1,35 @@
+/**
+ * FloorPlanCanvas Component (~234 lines)
+ * 
+ * Purpose: HTML5 Canvas-based floor plan visualization for WiFi survey heatmaps.
+ * Renders floor plan images with overlaid sample points and heatmap color gradients
+ * showing signal strength or performance metrics at each location.
+ * 
+ * Key Features:
+ * - Image rendering: Displays floor plan images maintaining aspect ratio
+ * - Sample markers: Shows measurement points as circles on the floor plan
+ * - Heatmap visualization: Color-coded overlays (red=weak, yellow=medium, green=strong)
+ * - Interactive mode: Click to add new sample points
+ * - Responsive sizing: Automatically adapts to container width
+ * - Metric selection: Display RSSI, throughput, or latency heatmaps
+ * - Interpolation: Smooth color gradient between sample points
+ * - Canvas optimization: Efficient rendering with minimal redraws
+ * 
+ * Usage:
+ * ```typescript
+ * <FloorPlanCanvas
+ *   floorPlan={floorPlanData}
+ *   samples={samplePoints}
+ *   onPointClick={handleClick}
+ *   interactive={true}
+ *   heatmapMetric="rssi"
+ * />
+ * ```
+ * 
+ * Dependencies: Canvas API, floor plan and sample point types
+ * State: Canvas dimensions, rendering state
+ */
+
 import { useRef, useEffect, useState } from "react";
 import type { FloorPlan, SamplePoint } from "../../hooks/useSurvey";
 
@@ -9,6 +41,10 @@ interface FloorPlanCanvasProps {
   heatmapMetric?: "rssi" | "throughput" | "latency" | null;
 }
 
+/**
+ * FloorPlanCanvas Component
+ * Renders floor plan with interactive sample points and heatmap visualization
+ */
 export function FloorPlanCanvas({
   floorPlan,
   samples,
@@ -16,8 +52,11 @@ export function FloorPlanCanvas({
   interactive = false,
   heatmapMetric = null,
 }: FloorPlanCanvasProps) {
+  // Canvas DOM reference for drawing
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Container reference to measure available space
   const containerRef = useRef<HTMLDivElement>(null);
+  // Track canvas dimensions for responsive sizing
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   // Calculate canvas dimensions maintaining aspect ratio
@@ -118,10 +157,11 @@ export function FloorPlanCanvas({
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
-        className={`border border-surface-border rounded ${
+        className={`border border-surface-border rounded-md ${
           interactive ? "cursor-crosshair" : ""
         }`}
-        style={{ maxWidth: "100%" }}
+        width={dimensions.width}
+        height={dimensions.height}
       />
     </div>
   );

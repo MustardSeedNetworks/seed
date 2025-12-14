@@ -1,5 +1,8 @@
 //go:build darwin
 
+// Package network handles network interface management.
+// macOS-specific interface configuration module uses networksetup command-line tool
+// for interface configuration, static IP assignment, DHCP management, and DNS setup.
 package network
 
 import (

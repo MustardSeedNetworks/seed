@@ -1,5 +1,8 @@
 //go:build linux
 
+// Package network handles network interface management.
+// ethtool integration module (Linux) retrieves network interface speed, duplex, and autonegotiation
+// settings using the ethtool interface, providing detailed link layer information.
 package network
 
 import (

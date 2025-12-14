@@ -30,6 +30,11 @@ import {
 } from "../ui/Icons";
 import type { LucideIcon } from "lucide-react";
 import { VulnerabilityDetailsModal } from "./VulnerabilityDetailsModal";
+import {
+  discoveryMethod as discoveryMethodTheme,
+  category as categoryTheme,
+  severity as severityTheme,
+} from "../../styles/theme";
 
 export interface LLDPInfo {
   chassisId: string;
@@ -187,7 +192,7 @@ function DeviceSearchBar({
   filteredCount: number;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="stack-sm">
       {/* Search input */}
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
@@ -196,13 +201,14 @@ function DeviceSearchBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search devices by IP, hostname, vendor, MAC..."
-          className="w-full pl-9 pr-8 py-1.5 text-sm bg-surface-base border border-surface-border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted"
+          className="w-full pl-9 pr-8 py-1.5 body-small bg-surface-base border border-surface-border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted"
         />
         {searchQuery && (
           <button
             type="button"
             onClick={() => onSearchChange("")}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+            aria-label="Clear search"
           >
             <X className="w-4 h-4" />
           </button>
@@ -212,14 +218,14 @@ function DeviceSearchBar({
       {/* Sort buttons row */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-1">
-          <span className="text-xs text-text-muted">Sort:</span>
+          <span className="caption text-text-muted">Sort:</span>
           {(["ip", "hostname", "vendor", "lastSeen"] as SortField[]).map(
             (field) => (
               <button
                 key={field}
                 type="button"
                 onClick={() => onSortChange(field)}
-                className={`px-2 py-0.5 text-xs rounded transition-colors flex items-center gap-1 ${
+                className={`px-2 py-0.5 caption rounded-md transition-colors flex items-center gap-1 ${
                   sortField === field
                     ? "bg-brand-primary/20 text-brand-primary"
                     : "bg-surface-hover text-text-muted hover:text-text-primary"
@@ -243,7 +249,7 @@ function DeviceSearchBar({
           )}
         </div>
         {searchQuery && (
-          <span className="text-xs text-text-muted">
+          <span className="caption text-text-muted">
             {filteredCount} of {deviceCount}
           </span>
         )}
@@ -268,22 +274,22 @@ function formatLastSeen(dateStr: string): string {
   return `${Math.floor(diffSec / 86400)}d ago`;
 }
 
-// Discovery method colors - dark mode aware
+// Discovery method colors - from theme tokens (dark mode aware)
 // These use colored backgrounds for visual distinction between methods
 const discoveryMethodColors: Record<DiscoveryMethod, string> = {
-  arp: "bg-blue-500/20 text-blue-600 dark:text-blue-400",
-  ndp: "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400",
-  lldp: "bg-green-500/20 text-green-600 dark:text-green-400",
-  cdp: "bg-orange-500/20 text-orange-600 dark:text-orange-400",
-  edp: "bg-purple-500/20 text-purple-600 dark:text-purple-400",
-  mdns: "bg-teal-500/20 text-teal-600 dark:text-teal-400",
-  ping: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
+  arp: discoveryMethodTheme.arp,
+  ndp: discoveryMethodTheme.ndp,
+  lldp: discoveryMethodTheme.lldp,
+  cdp: discoveryMethodTheme.cdp,
+  edp: discoveryMethodTheme.edp,
+  mdns: discoveryMethodTheme.mdns,
+  ping: discoveryMethodTheme.icmp, // ping uses ICMP
 };
 
 function MethodBadge({ method }: { method: DiscoveryMethod }) {
   return (
     <span
-      className={`px-1.5 py-0.5 rounded text-xs font-medium uppercase ${discoveryMethodColors[method]}`}
+      className={`px-1.5 py-0.5 rounded-md caption font-medium uppercase ${discoveryMethodColors[method]}`}
     >
       {method}
     </span>
@@ -326,7 +332,7 @@ function ProfileIcons({
         return (
           <span
             key={icon}
-            className="p-1 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center"
+            className="p-1 rounded-md bg-brand-primary/20 text-brand-primary flex items-center justify-center"
             title={`${icon}${deviceType ? ` (${deviceType})` : ""}`}
           >
             {IconComponent ? (
@@ -426,50 +432,50 @@ function DiscoverySummary({
   categories: ReturnType<typeof categorizeDevices>;
 }) {
   // Build stat items with non-zero counts
-  // Using dark mode aware colors for device categories
+  // Using theme tokens for device category colors (dark mode aware)
   const stats = [
     {
       icon: Router,
       label: "Routers",
       count: categories.routers,
-      color: "text-blue-600 dark:text-blue-400",
+      color: categoryTheme.router,
     },
     {
       icon: Server,
       label: "Servers",
       count: categories.servers,
-      color: "text-purple-600 dark:text-purple-400",
+      color: categoryTheme.server,
     },
     {
       icon: Monitor,
       label: "Workstations",
       count: categories.workstations,
-      color: "text-green-600 dark:text-green-400",
+      color: categoryTheme.workstation,
     },
     {
       icon: Printer,
       label: "Printers",
       count: categories.printers,
-      color: "text-orange-600 dark:text-orange-400",
+      color: categoryTheme.printer,
     },
     {
       icon: Smartphone,
       label: "Mobile",
       count: categories.mobile,
-      color: "text-cyan-600 dark:text-cyan-400",
+      color: categoryTheme.mobile,
     },
     {
       icon: Wifi,
       label: "Network",
       count: categories.network,
-      color: "text-teal-600 dark:text-teal-400",
+      color: categoryTheme.network,
     },
   ].filter((s) => s.count > 0);
 
   return (
-    <div className="bg-surface-hover rounded-lg p-3 space-y-2">
+    <div className="bg-surface-hover rounded-md p-3 stack-sm">
       {/* Status row */}
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center justify-between body-small">
         <div className="flex items-center gap-2">
           {status.scanning ? (
             <>
@@ -485,12 +491,12 @@ function DiscoverySummary({
         </div>
         <div className="flex items-center gap-1.5 text-text-muted">
           <Clock className="w-3.5 h-3.5" />
-          <span className="text-xs">{formatLastSeen(status.lastScan)}</span>
+          <span className="caption">{formatLastSeen(status.lastScan)}</span>
         </div>
       </div>
 
       {/* Network info row */}
-      <div className="flex items-center justify-between text-xs text-text-muted">
+      <div className="flex items-center justify-between caption text-text-muted">
         <span className="font-mono">{status.subnet || "Unknown subnet"}</span>
         <span>
           {deviceCount} device{deviceCount !== 1 ? "s" : ""} found
@@ -507,7 +513,7 @@ function DiscoverySummary({
               title={`${count} ${label}`}
             >
               <Icon className={`w-3.5 h-3.5 ${color}`} />
-              <span className="text-xs text-text-secondary">{count}</span>
+              <span className="caption text-text-secondary">{count}</span>
             </div>
           ))}
         </div>
@@ -576,7 +582,7 @@ function DeviceRow({
   };
 
   return (
-    <div className="border border-surface-border rounded-lg overflow-hidden">
+    <div className="border border-surface-border rounded-md overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
@@ -585,12 +591,12 @@ function DeviceRow({
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm text-text-primary">
+              <span className="font-mono body-small text-text-primary">
                 {device.ip || "No IP"}
               </span>
               {device.ipv6 && (
                 <span
-                  className="font-mono text-xs text-text-accent"
+                  className="font-mono caption text-text-accent"
                   title={device.ipv6}
                 >
                   {device.ipv6.length > 20
@@ -600,14 +606,14 @@ function DeviceRow({
               )}
               {device.hostname && (
                 <span
-                  className="text-xs text-text-muted truncate max-w-[120px]"
+                  className="caption text-text-muted truncate max-w-30"
                   title={device.hostname}
                 >
                   ({device.hostname})
                 </span>
               )}
               {openPorts.length > 0 && (
-                <span className="text-xs bg-status-success/20 text-status-success px-1.5 py-0.5 rounded">
+                <span className="caption bg-status-success/20 text-status-success px-1.5 py-0.5 rounded-md">
                   {openPorts.length} open
                 </span>
               )}
@@ -625,14 +631,14 @@ function DeviceRow({
                     e.stopPropagation();
                     onVulnerabilityClick?.(device.ip);
                   }}
-                  className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity ${
+                  className={`inline-flex items-center gap-1 caption px-1.5 py-0.5 rounded-md cursor-pointer hover:opacity-80 transition-opacity ${
                     device.vulnerabilities.highestSeverity === "CRITICAL"
-                      ? "bg-status-error/20 text-status-error"
+                      ? `${severityTheme.critical.bg} ${severityTheme.critical.text}`
                       : device.vulnerabilities.highestSeverity === "HIGH"
-                        ? "bg-orange-500/20 text-orange-600 dark:text-orange-400" // High severity = orange (industry standard)
+                        ? `${severityTheme.high.bg} ${severityTheme.high.text}`
                         : device.vulnerabilities.highestSeverity === "MEDIUM"
-                          ? "bg-status-warning/20 text-status-warning"
-                          : "bg-status-info/20 text-status-info"
+                          ? `${severityTheme.medium.bg} ${severityTheme.medium.text}`
+                          : `${severityTheme.low.bg} ${severityTheme.low.text}`
                   }`}
                   title="Click to view vulnerability details"
                 >
@@ -647,7 +653,7 @@ function DeviceRow({
               ))}
               {device.vendor && device.vendor !== "Unknown" && (
                 <span
-                  className="text-xs text-text-muted truncate max-w-[100px]"
+                  className="caption text-text-muted truncate max-w-25"
                   title={device.vendor}
                 >
                   {device.vendor}
@@ -655,9 +661,9 @@ function DeviceRow({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {device.osGuess && (
-              <span className="text-xs text-text-muted hidden sm:inline">
+              <span className="caption text-text-muted hidden sm:inline">
                 {device.osGuess}
               </span>
             )}
@@ -666,7 +672,7 @@ function DeviceRow({
                 type="button"
                 onClick={handleDeepScan}
                 disabled={isScanning}
-                className="px-2 py-1 text-xs bg-status-info/20 text-status-info rounded hover:bg-status-info/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 py-1 caption bg-status-info/20 text-status-info rounded-md hover:bg-status-info/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Deep Scan - scan common ports"
               >
                 {isScanning ? (
@@ -689,7 +695,7 @@ function DeviceRow({
 
       {isExpanded && (
         <div className="px-2 sm:px-3 pb-2 sm:pb-3 pt-1 border-t border-surface-border bg-surface-base">
-          <div className="space-y-1 text-xs">
+          <div className="stack-xs caption">
             <CardRow label="MAC" value={device.mac} />
             {device.ipv6 && <CardRow label="IPv6" value={device.ipv6} />}
             {device.ipv6Addresses && device.ipv6Addresses.length > 1 && (
@@ -719,7 +725,7 @@ function DeviceRow({
                   Port Scan Results
                 </p>
                 {openPorts.length > 0 ? (
-                  <div className="space-y-0.5">
+                  <div className="gap-y-0.5">
                     {openPorts.map((result) => (
                       <div
                         key={result.port}
@@ -748,13 +754,13 @@ function DeviceRow({
                   Auto-Profile
                   {device.profile.deviceType &&
                     device.profile.deviceType !== "unknown" && (
-                      <span className="ml-2 text-xs font-normal text-text-muted">
+                      <span className="ml-2 caption font-normal text-text-muted">
                         ({device.profile.deviceType})
                       </span>
                     )}
                 </p>
                 {device.profile.httpInfo && (
-                  <div className="space-y-0.5 mb-1">
+                  <div className="gap-y-0.5 mb-1">
                     <CardRow
                       label={device.profile.httpInfo.isHttps ? "HTTPS" : "HTTP"}
                       value={`Port ${device.profile.httpInfo.port} (${device.profile.httpInfo.statusCode})`}
@@ -774,7 +780,7 @@ function DeviceRow({
                   </div>
                 )}
                 {profileOpenPorts.length > 0 && (
-                  <div className="space-y-0.5">
+                  <div className="gap-y-0.5">
                     <p className="text-text-muted text-[10px] uppercase tracking-wide mb-0.5">
                       Open Ports
                     </p>
@@ -782,7 +788,7 @@ function DeviceRow({
                       {profileOpenPorts.map((port) => (
                         <span
                           key={port.port}
-                          className="px-1.5 py-0.5 rounded text-[10px] bg-status-success/20 text-status-success"
+                          className="px-1.5 py-0.5 rounded-md text-[10px] bg-status-success/20 text-status-success"
                           title={port.banner || port.service || undefined}
                         >
                           {port.port}
@@ -1142,7 +1148,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           <button
             type="button"
             onClick={onScan}
-            className="mt-3 w-full py-2 px-4 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90 transition-colors font-medium text-sm"
+            className="mt-3 w-full py-2 px-4 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90 transition-colors font-medium body-small"
           >
             Start Scan
           </button>
@@ -1177,7 +1183,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             type="button"
             onClick={onScan}
             disabled={status.scanning}
-            className="py-1 px-2.5 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90 transition-colors font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            className="py-1 px-2.5 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
             {status.scanning ? (
               <>
@@ -1217,7 +1223,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         variant="compact"
         defaultOpen={false}
       >
-        <div className="space-y-1 text-xs">
+        <div className="stack-xs caption">
           {status.localIP && (
             <CardRow label="Local IP" value={status.localIP} />
           )}
@@ -1235,7 +1241,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           defaultOpen={true}
           count={localDevices.length}
         >
-          <div className="space-y-2 max-h-60 overflow-y-auto">
+          <div className="stack-sm max-h-60 overflow-y-auto">
             {localDevices.map((device) => {
               const deviceKey = device.mac || `ip:${device.ip}`;
               return (
@@ -1263,7 +1269,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           defaultOpen={false}
           count={extendedDevices.length}
         >
-          <div className="space-y-2 max-h-60 overflow-y-auto">
+          <div className="stack-sm max-h-60 overflow-y-auto">
             {extendedDevices.map((device) => {
               const deviceKey = device.mac || `ip:${device.ip}`;
               return (
@@ -1284,7 +1290,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       )}
 
       {deviceCount === 0 && !status.scanning && (
-        <p className="text-sm text-text-muted text-center py-4">
+        <p className="body-small text-text-muted text-center py-4">
           No devices discovered. Click Scan to discover network devices.
         </p>
       )}

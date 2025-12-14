@@ -1,3 +1,29 @@
+/**
+ * HelpContent.tsx
+ * 
+ * Purpose: Centralized help text constants for all application tooltips and help modals.
+ * Provides user-facing documentation for networking concepts, metrics, and features.
+ * 
+ * Key Features:
+ * - HTTP timing metrics: DNS, TCP, TLS, Wait, Download explanations
+ * - Link status help: Carrier, Speed, Duplex, AutoNeg, MTU documentation
+ * - DNS operations: Forward/Reverse/IPv6 lookup and latency help
+ * - WiFi metrics: Signal strength, channel, frequency, security explanations
+ * - DHCP information: Lease timing, IP configuration help
+ * - Performance metrics: Throughput, latency, jitter explanations
+ * - Protocol help: TCP/UDP, ICMP, SNMP, iperf3 documentation
+ * - Gateway information: Route destination and metric help
+ * 
+ * Usage:
+ * ```typescript
+ * const httpHelp = HTTP_TIMING_HELP['DNS'];
+ * const linkHelp = LINK_HELP['Duplex'];
+ * ```
+ * 
+ * Dependencies: None (pure data constants)
+ * Structure: Record<string, string> for tooltip text lookup by metric name
+ */
+
 // Help text constants for tooltips and modal
 
 export const HTTP_TIMING_HELP: Record<string, string> = {

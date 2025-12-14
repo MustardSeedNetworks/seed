@@ -1,3 +1,31 @@
+/**
+ * useWebSocket.test.ts - WebSocket Hook Tests
+ * 
+ * Purpose: Comprehensive test suite for the useWebSocket hook covering connection
+ * management, reconnection logic, message handling, and error scenarios.
+ * 
+ * Key Test Areas:
+ * - Connection initialization: proper WebSocket creation and setup
+ * - Auto-reconnection: exponential backoff with retry attempts
+ * - Message handling: parsing and processing incoming messages
+ * - CardUpdate events: proper event dispatch on card data updates
+ * - Connection status: tracking connected/disconnected/error states
+ * - Auth token passing: token sent via Sec-WebSocket-Protocol header
+ * - Error handling: graceful error state and recovery
+ * - Cleanup: proper cleanup on unmount
+ * - Message type validation: proper Message and CardUpdate type handling
+ * 
+ * Test Framework: Vitest with React Testing Library hooks
+ * Mocks: WebSocket class with MockWebSocket implementation
+ * 
+ * Usage:
+ * ```bash
+ * npm test -- useWebSocket.test.ts
+ * ```
+ * 
+ * Dependencies: vitest, @testing-library/react
+ */
+
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useWebSocket, Message, CardUpdate } from "./useWebSocket";

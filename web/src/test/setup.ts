@@ -1,3 +1,30 @@
+/**
+ * Test Setup and Utilities
+ * 
+ * Purpose: Shared test configuration and mock utilities for Vitest.
+ * Provides mock implementations of browser APIs (localStorage, fetch, WebSocket, etc.)
+ * and common test helpers used across the test suite.
+ * 
+ * Key Utilities:
+ * - createMockLocalStorage(): Mock localStorage with spy functions
+ * - Mock implementations: localStorage, fetch, WebSocket, matchMedia
+ * - Test setup: beforeEach/afterEach hooks for test isolation
+ * - Environment mocks: Simulates browser APIs for testing
+ * 
+ * Usage:
+ * ```typescript
+ * import { createMockLocalStorage } from '../test/setup';
+ * 
+ * beforeEach(() => {
+ *   const localStorage = createMockLocalStorage();
+ *   Object.defineProperty(window, 'localStorage', { value: localStorage });
+ * });
+ * ```
+ * 
+ * Dependencies: vitest, @testing-library/jest-dom
+ * Applied In: All test files via vitest configuration
+ */
+
 import "@testing-library/jest-dom";
 import { vi, beforeEach, afterEach } from "vitest";
 

@@ -1,3 +1,6 @@
+// Package dns provides DNS testing and lookup functionality with timing.
+// Test suite validates DNS resolution performance, recursive queries,
+// and name server discovery.
 package dns
 
 import (

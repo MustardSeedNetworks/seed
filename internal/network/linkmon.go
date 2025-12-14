@@ -1,4 +1,6 @@
-// Package network handles network interface management.
+// Package network handles network interface management, monitoring, and configuration.
+// Link monitor module provides real-time network interface state tracking, detecting changes
+// in link status, speed, duplex, and other physical layer attributes across Linux and macOS.
 package network
 
 import (

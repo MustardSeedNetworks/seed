@@ -1,3 +1,5 @@
+// Package iperf provides network throughput testing using the iperf3 tool.
+// Test suite validates iperf3 client/server operations, result parsing, and bandwidth measurement.
 package iperf
 
 import (
@@ -756,7 +758,7 @@ func TestVersionComparison(t *testing.T) {
 		{"3.17", "3.17.1", -1},
 		{"4.0", "3.20", 1},
 		{"2.5", "3.0", -1},
-		{"3.9", "3.10", -1},  // Test string vs numeric comparison
+		{"3.9", "3.10", -1}, // Test string vs numeric comparison
 		{"3.10", "3.9", 1},
 	}
 

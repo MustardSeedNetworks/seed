@@ -1,3 +1,6 @@
+// Package survey provides WiFi site survey functionality.
+// Test suite validates survey persistence, floor plan handling, AP scan parsing,
+// and integration with iperf throughput measurements.
 package survey
 
 import (

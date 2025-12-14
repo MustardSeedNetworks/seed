@@ -1,4 +1,6 @@
-// Package network handles network interface management.
+// Package network handles network interface management, monitoring, and configuration.
+// Provides cross-platform interface enumeration, property detection (type, speed, duplex),
+// and platform-specific implementations for Linux and macOS interface introspection.
 package network
 
 import (

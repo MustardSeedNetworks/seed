@@ -1,3 +1,34 @@
+/**
+ * Toast Notification System
+ * 
+ * Provides non-modal notifications for user feedback (success, error, warning, info).
+ * 
+ * Features:
+ * - Multiple toast types with color coding (success, error, warning, info)
+ * - Auto-dismiss with configurable duration (default 5s)
+ * - React Context API for global access
+ * - Toast queue for multiple simultaneous notifications
+ * - Smooth animations (fade in/out)
+ * - Accessible with ARIA labels
+ * - Custom hooks for easy integration
+ * 
+ * Usage:
+ * ```tsx
+ * // Wrap app with provider:
+ * <ToastProvider>
+ *   <App />
+ * </ToastProvider>
+ * 
+ * // Use in components:
+ * const { addToast } = useToast();
+ * addToast('Operation completed', 'success', 3000);
+ * addToast('An error occurred', 'error');
+ * ```
+ * 
+ * Toast notifications appear in the bottom-right corner and automatically
+ * dismiss after the specified duration.
+ */
+
 import {
   useState,
   useEffect,
@@ -7,21 +38,42 @@ import {
   ReactNode,
 } from "react";
 import { ToastType, typeStyles, icons } from "./Toast.constants.tsx";
+import {
+  cn,
+  layout,
+  radius,
+  icon as iconTokens,
+} from "../../styles/theme";
 
+/**
+ * Individual toast notification
+ */
 interface Toast {
-  id: string;
-  message: string;
-  type: ToastType;
-  duration?: number;
+  id: string;          // Unique identifier
+  message: string;     // Notification message text
+  type: ToastType;     // Type (success, error, warning, info)
+  duration?: number;   // Auto-dismiss time in ms (0 = manual dismiss)
 }
 
+/**
+ * Context API value for toast management
+ */
 interface ToastContextType {
+  /** Add new toast notification */
   addToast: (message: string, type?: ToastType, duration?: number) => void;
+  /** Remove specific toast by ID */
   removeToast: (id: string) => void;
 }
 
+/** React Context for toast notifications */
 const ToastContext = createContext<ToastContextType | null>(null);
 
+/**
+ * Hook to access toast functions in any component.
+ * 
+ * @returns Toast context value with addToast and removeToast
+ * @throws Error if used outside ToastProvider
+ */
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
@@ -30,10 +82,17 @@ export function useToast() {
   return context;
 }
 
+/**
+ * Props for ToastProvider component
+ */
 interface ToastProviderProps {
+  /** Child components to wrap */
   children: ReactNode;
 }
 
+/**
+ * Toast Provider - wraps app to provide toast notifications globally
+ */
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -67,7 +126,10 @@ function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
     <div
       aria-live="polite"
       aria-label="Notifications"
-      className="fixed bottom-20 right-4 z-50 flex flex-col gap-2 max-w-sm"
+      className={cn(
+        "fixed bottom-20 right-4 z-50 max-w-sm",
+        layout.stack.default,
+      )}
     >
       {toasts.map((toast) => (
         <ToastItem
@@ -96,18 +158,26 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
   return (
     <div
       role="alert"
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${typeStyles[toast.type]} animate-slide-in`}
+      className={cn(
+        layout.inline.comfortable,
+        "px-4 py-3 shadow-lg animate-slide-in",
+        radius.lg,
+        typeStyles[toast.type],
+      )}
       aria-label={`Notification: ${toast.type}`}
     >
       {icons[toast.type]}
-      <p className="text-sm font-medium flex-1">{toast.message}</p>
+      <p className="body-small font-medium flex-1">{toast.message}</p>
       <button
         onClick={onClose}
-        className="p-1 rounded hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+        className={cn(
+          "p-1 hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border",
+          radius.default,
+        )}
         aria-label="Dismiss notification"
       >
         <svg
-          className="w-4 h-4"
+          className={iconTokens.size.sm}
           fill="currentColor"
           viewBox="0 0 20 20"
           aria-hidden="true"

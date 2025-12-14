@@ -1,47 +1,126 @@
-import { Component, ErrorInfo, ReactNode } from "react";
+/**
+ * Error Boundary Component (UI Utility)
+ * 
+ * A React Error Boundary class component for catching and handling errors in child component trees.
+ * Provides graceful error handling with an optional custom fallback UI or a default error alert.
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <ErrorBoundary fallback={<CustomErrorUI />}>
+ *   <YourComponent />
+ * </ErrorBoundary>
+ * ```
+ * 
+ * @remarks
+ * - Uses React's class component API (getDerivedStateFromError, componentDidCatch)
+ * - Logs errors to console for debugging
+ * - Provides a "Retry" button to attempt recovery by resetting state
+ * - Styled with theme tokens (status-error color, border, radius)
+ * - Displays an alert icon and error message when errors are caught
+ * - Different from the main ErrorBoundary.tsx - this is the UI utility version
+ */
 
+import { Component, ErrorInfo, ReactNode } from "react";
+import { icon as iconTokens, radius } from "../../styles/theme";
+
+/**
+ * Props for the ErrorBoundary component
+ * @interface Props
+ */
 interface Props {
+  /** Child components to be protected by error boundary */
   children: ReactNode;
+  /** Optional custom fallback UI to display when error occurs */
   fallback?: ReactNode;
 }
 
+/**
+ * State for the ErrorBoundary component
+ * @interface State
+ */
 interface State {
+  /** Flag indicating if an error has been caught */
   hasError: boolean;
+  /** The caught error object, or null if no error */
   error: Error | null;
 }
 
+/**
+ * Error Boundary Class Component
+ * 
+ * Implements React's Error Boundary pattern to gracefully handle errors in the component tree.
+ * - Catches JavaScript errors in child components
+ * - Logs error information to console for debugging
+ * - Displays error UI with retry functionality
+ * - Supports custom fallback UI as alternative to default error display
+ */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
+    // Initialize state: no error caught, error is null
     this.state = { hasError: false, error: null };
   }
 
+  /**
+   * React lifecycle method called when an error is thrown in a child component.
+   * Updates component state to indicate error state and stores the error object.
+   * 
+   * @param {Error} error - The error thrown by child component
+   * @returns {State} Updated state with error flag and error object
+   */
   static getDerivedStateFromError(error: Error): State {
+    // Mark that an error has been caught in the component tree
     return { hasError: true, error };
   }
 
+  /**
+   * React lifecycle method called after an error has been caught.
+   * Used for logging and error reporting to services.
+   * 
+   * @param {Error} error - The error that was caught
+   * @param {ErrorInfo} errorInfo - Object with componentStack property containing stack trace
+   */
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Log error and component stack for debugging and monitoring
     console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
+  /**
+   * Handler to reset error state and attempt recovery.
+   * Called when user clicks the "Retry" button in error UI.
+   */
   handleRetry = () => {
+    // Clear error state to allow components to re-render normally
     this.setState({ hasError: false, error: null });
   };
 
+  /**
+   * Render method that returns either error UI or child components.
+   * If error is caught and no custom fallback provided, displays default error alert UI.
+   * If custom fallback provided, displays that instead.
+   * Otherwise renders child components normally.
+   * 
+   * @returns {ReactNode} Error UI, custom fallback, or child components
+   */
   render() {
+    // If an error has been caught, display error UI
     if (this.state.hasError) {
+      // Use custom fallback if provided by consumer
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
+      // Render default error alert UI with icon, message, and retry button
       return (
         <div
           role="alert"
-          className="p-4 bg-status-error/10 border border-status-error/20 rounded-lg"
+          className={`p-4 bg-status-error/10 border border-status-error/20 ${radius.lg}`}
         >
           <div className="flex items-start gap-3">
+            {/* Error icon SVG */}
             <svg
-              className="w-5 h-5 text-status-error flex-shrink-0 mt-0.5"
+              className={`${iconTokens.size.md} text-status-error shrink-0 mt-0.5`}
               fill="currentColor"
               viewBox="0 0 20 20"
               aria-hidden="true"
@@ -52,16 +131,19 @@ export class ErrorBoundary extends Component<Props, State> {
                 clipRule="evenodd"
               />
             </svg>
+            {/* Error content: heading, message, and retry button */}
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-status-error">
+              <h3 className="body-small font-medium text-status-error">
                 Something went wrong
               </h3>
-              <p className="mt-1 text-sm text-text-muted">
+              <p className="mt-1 body-small text-text-muted">
+                {/* Display caught error message or generic fallback message */}
                 {this.state.error?.message || "An unexpected error occurred"}
               </p>
+              {/* Retry button to attempt recovery by resetting error state */}
               <button
                 onClick={this.handleRetry}
-                className="mt-3 px-3 py-1.5 text-sm font-medium text-text-inverse bg-status-error rounded hover:bg-status-error/90 focus:outline-none focus:ring-2 focus:ring-status-error focus:ring-offset-2"
+                className={`mt-3 px-3 py-1.5 body-small font-medium text-text-inverse bg-status-error ${radius.default} hover:bg-status-error/90 focus:outline-none focus:ring-2 focus:ring-status-error focus:ring-offset-2`}
               >
                 Try again
               </button>
@@ -71,6 +153,7 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
+    // If no error, render children normally
     return this.props.children;
   }
 }

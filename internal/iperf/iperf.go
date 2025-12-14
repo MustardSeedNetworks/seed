@@ -1,3 +1,66 @@
+// Package iperf provides network throughput testing using the iperf3 tool.
+//
+// This package wraps the iperf3 command-line tool to provide TCP and UDP bandwidth
+// testing between two endpoints. It supports both client and server modes, allowing
+// LuminetIQ to act as either end of an iperf3 test.
+//
+// iperf3 modes:
+//   - Client mode: Connects to a remote iperf3 server and performs throughput tests
+//   - Server mode: Runs an iperf3 server that listens for incoming client connections
+//
+// Test types:
+//   - TCP: Measures maximum achievable TCP throughput with congestion control
+//   - UDP: Sends datagrams at a specified rate to measure packet loss and jitter
+//   - Bidirectional: Tests both upload and download simultaneously (with --bidir flag)
+//
+// Features:
+//   - Real-time progress updates via JSON output parsing
+//   - Server lifecycle management (start, stop, health checks)
+//   - Version detection and compatibility checking
+//   - Port availability validation before server start
+//   - Command injection protection via input validation
+//   - Automatic cleanup of zombie processes
+//   - Reverse mode support (server sends, client receives)
+//
+// Requirements:
+//   - iperf3 binary must be installed and in PATH or at ./bin/iperf3
+//   - Minimum version: 3.17 (for reliable JSON output)
+//   - Server mode requires firewall rules allowing inbound connections on test port
+//   - Client mode requires network connectivity to target server
+//
+// Security considerations:
+//   - Input validation prevents command injection attacks
+//   - Server mode binds to 0.0.0.0 by default (accepts connections from any IP)
+//   - No authentication - servers accept connections from any client
+//   - Recommended: Use firewall rules to restrict server access to trusted networks
+//   - Server processes are tracked and automatically cleaned up on exit
+//
+// Performance:
+//   - TCP tests typically run for 10 seconds by default
+//   - UDP tests use 1 Mbps default target rate (configurable)
+//   - Results include throughput, retransmits (TCP), packet loss and jitter (UDP)
+//   - JSON output parsed in real-time for progress updates
+//
+// Platform support:
+//   - Linux: Full support with optimal performance
+//   - macOS: Full support
+//   - Windows: Requires iperf3.exe in PATH or ./bin/
+//
+// Typical usage:
+//
+//	// Start server mode
+//	mgr := iperf.NewManager()
+//	if err := mgr.StartServer(5201); err != nil {
+//	    log.Fatal(err)
+//	}
+//	defer mgr.StopServer()
+//
+//	// Run client test
+//	result, err := mgr.RunClient(ctx, "192.168.1.100", 5201, 10)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Printf("Throughput: %.2f Mbps\n", result.Throughput)
 package iperf
 
 import (
@@ -17,11 +80,22 @@ import (
 )
 
 const (
-	// Timeout durations for iperf3 operations
+	// versionCheckTimeout is the maximum time allowed for iperf3 --version to complete.
+	// Short timeout since version check should be instant for a healthy binary.
 	versionCheckTimeout = 5 * time.Second
-	serverStartTimeout  = 10 * time.Second
-	portCheckTimeout    = 2 * time.Second
-	minSupportedVersion = "3.17" // Minimum supported iperf3 version
+
+	// serverStartTimeout is the maximum time allowed for iperf3 server to start listening.
+	// Includes time to parse command, bind to port, and begin accepting connections.
+	serverStartTimeout = 10 * time.Second
+
+	// portCheckTimeout is the maximum time allowed for TCP port availability check.
+	// Short timeout since port bind should succeed or fail immediately.
+	portCheckTimeout = 2 * time.Second
+
+	// minSupportedVersion is the minimum iperf3 version required for reliable operation.
+	// Version 3.17+ provides stable JSON output format for programmatic parsing.
+	// Earlier versions have JSON parsing issues and missing fields.
+	minSupportedVersion = "3.17"
 )
 
 // validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens)

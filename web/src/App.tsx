@@ -1,3 +1,32 @@
+/**
+ * Main Application Component
+ * 
+ * The root component for the LuminetIQ/NetScope network monitoring application.
+ * 
+ * Responsibilities:
+ * - Authentication management and session handling
+ * - WebSocket connection for real-time data updates
+ * - Network interface monitoring and status tracking
+ * - Card-based dashboard state management
+ * - User settings and theme management
+ * - Setup wizard for first-time configuration
+ * - Floating Action Button (FAB) for quick actions
+ * 
+ * Architecture:
+ * - Uses WebSocket for real-time updates from backend
+ * - Card-based UI with independent data components
+ * - Persistent settings stored in localStorage via SettingsContext
+ * - JWT authentication with automatic session expiration
+ * 
+ * State Management:
+ * - Local state for cards, interface selection, and UI
+ * - Context-based settings (SettingsContext)
+ * - Custom hooks for auth, WebSocket, and theme
+ * 
+ * The component supports both initial setup flow and normal operation,
+ * automatically detecting if the system needs configuration.
+ */
+
 import { useCallback, useEffect, useState } from "react";
 import { useWebSocket, Message, CardUpdate } from "./hooks/useWebSocket";
 import { useAuth, getAuthHeaders } from "./hooks/useAuth";
@@ -7,6 +36,7 @@ import { SettingsDrawer } from "./components/settings/SettingsDrawer";
 import { ImprovedHelpModal } from "./components/help/ImprovedHelpModal";
 import { SetupWizard, checkSetupStatus } from "./components/setup/SetupWizard";
 
+// API base URL - configurable via environment variable
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 import {
   LinkCard,
@@ -33,21 +63,30 @@ import { HealthCheckCard } from "./components/cards/HealthCheckCard";
 import { SystemHealthCard } from "./components/cards/SystemHealthCard";
 import { WiFiSurveyCard } from "./components/cards/WiFiSurveyCard";
 import { FAB } from "./components/ui/FAB";
+import { radius } from "./styles/theme";
 
+/**
+ * Centralized state for all network monitoring cards.
+ * Each card can be null if not yet loaded or unavailable.
+ */
 interface CardState {
-  link: LinkData | null;
-  cable: CableData | null;
-  vlan: VLANData | null;
-  switch: SwitchData | null;
-  wifi: WiFiData | null;
-  dhcp: DHCPData | null;
-  dns: DNSData | null;
-  gateway: GatewayData | null;
-  publicip: PublicIPData | null;
+  link: LinkData | null;       // Network interface link status
+  cable: CableData | null;     // Ethernet cable diagnostics
+  vlan: VLANData | null;       // VLAN configuration and status
+  switch: SwitchData | null;   // Network switch information (LLDP/CDP)
+  wifi: WiFiData | null;       // WiFi connection and signal info
+  dhcp: DHCPData | null;       // DHCP configuration
+  dns: DNSData | null;         // DNS server and resolution info
+  gateway: GatewayData | null; // Gateway reachability
+  publicip: PublicIPData | null; // Public IP and location info
 }
 
-// FABOptions type is now imported from contexts/SettingsContext via types/settings
-
+/**
+ * Main App Component
+ * 
+ * Orchestrates the entire application, managing authentication,
+ * real-time data updates, and the dashboard interface.
+ */
 function App() {
   const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -874,7 +913,7 @@ function App() {
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between gap-2">
           {/* Logo and title - hide title on very small screens */}
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xl font-bold text-brand-primary flex-shrink-0">
+            <span className="text-xl font-bold text-brand-primary shrink-0">
               ◉
             </span>
             <h1 className="heading-4 hidden xs:block sm:block">LuminetIQ</h1>
@@ -891,7 +930,7 @@ function App() {
             </label>
             <select
               id="interface-select"
-              className="rounded border border-surface-border bg-surface-base px-2 py-1.5 text-sm min-w-0 max-w-[100px] sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              className="rounded-md border border-surface-border bg-surface-base px-2 py-1.5 body-small min-w-0 max-w-25 sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary"
               value={currentInterface}
               onChange={(e) => changeInterface(e.target.value)}
               aria-label="Select network interface"
@@ -914,7 +953,7 @@ function App() {
 
             {/* Touch-friendly buttons with larger tap targets */}
             <button
-              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={toggleTheme}
               aria-label={
                 isDark ? "Switch to light mode" : "Switch to dark mode"
@@ -945,7 +984,7 @@ function App() {
               )}
             </button>
             <button
-              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={() => setHelpOpen(true)}
               aria-label="Open help"
             >
@@ -965,7 +1004,7 @@ function App() {
               </svg>
             </button>
             <button
-              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={() => setSettingsOpen(true)}
               aria-label="Open settings"
             >
@@ -991,7 +1030,7 @@ function App() {
               </svg>
             </button>
             <button
-              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm hidden sm:block touch-manipulation"
+              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation"
               onClick={logout}
               aria-label="Logout"
             >
@@ -999,7 +1038,7 @@ function App() {
             </button>
             {/* Mobile logout icon */}
             <button
-              className="rounded p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation"
+              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation"
               onClick={logout}
               aria-label="Logout"
             >
@@ -1104,7 +1143,7 @@ function App() {
           </section>
 
           {/* Footer notice */}
-          <footer className="mt-8 rounded-lg border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
+          <footer className="mt-8 rounded-md border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
             <h2 className="heading-4 text-text-muted">
               LuminetIQ {appVersion}
             </h2>
@@ -1263,7 +1302,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
 
         <form
           onSubmit={handleSubmit}
-          className="bg-surface-raised rounded-lg border border-surface-border p-6"
+          className="bg-surface-raised rounded-md border border-surface-border p-6"
         >
           <div className="mb-4">
             <label htmlFor="login-username" className="label block mb-1">
@@ -1274,7 +1313,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 rounded border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
+              className="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
               placeholder="admin"
               required
             />
@@ -1289,7 +1328,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
+              className="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
               placeholder="••••••••"
               required
             />
@@ -1299,7 +1338,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             <div
               role="alert"
               aria-live="assertive"
-              className="mb-4 p-3 bg-status-error/10 border border-status-error/20 rounded text-status-error text-sm"
+              className="mb-4 p-3 bg-status-error/10 border border-status-error/20 rounded-md text-status-error body-small"
             >
               {error}
             </div>
@@ -1308,12 +1347,12 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
+            className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded-md font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
           >
             {isLoading ? "Logging in..." : "Login"}
           </button>
 
-          <p className="mt-4 text-xs text-text-muted text-center">
+          <p className="mt-4 caption text-text-muted text-center">
             Default: admin / luminetiq
           </p>
         </form>
@@ -1356,10 +1395,10 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
       aria-live="polite"
     >
       <span
-        className={`inline-flex items-center gap-1.5 text-xs ${config.color}`}
+        className={`inline-flex items-center gap-1.5 caption ${config.color}`}
       >
         <span
-          className={`inline-flex items-center justify-center rounded-full ${config.color} ${
+          className={`inline-flex items-center justify-center ${radius.full} ${config.color} ${
             config.icon === "spinner"
               ? "bg-status-info/10 p-1"
               : "bg-current/10 p-1"
@@ -1403,7 +1442,7 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
       {(status === "disconnected" || status === "error") && (
         <button
           onClick={onReconnect}
-          className="text-xs text-brand-primary hover:underline focus:outline-none focus:ring-2 focus:ring-brand-primary rounded"
+          className="caption text-brand-primary hover:underline focus:outline-none focus:ring-2 focus:ring-brand-primary rounded-md"
         >
           Reconnect
         </button>

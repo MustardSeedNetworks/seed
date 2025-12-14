@@ -1,3 +1,7 @@
+// Package discovery implements multi-protocol network device discovery.
+// Discovery service coordinates all discovery methods (ARP, NDP, LLDP, CDP, EDP, ICMP, profiling)
+// with profile-based configuration. Manages orchestration, timing, and aggregation of discovery results
+// according to user-selected discovery profiles (e.g., Quick, Standard, Comprehensive).
 package discovery
 
 import (

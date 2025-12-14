@@ -1,6 +1,32 @@
+/**
+ * CableCard Component
+ *
+ * Purpose: Displays Ethernet cable test results using Time Domain Reflectometry (TDR).
+ * Shows cable condition (OK, Open, Short, Impedance Mismatch) and length measurement in meters.
+ *
+ * Key Features:
+ * - Detects cable status: ok, open circuit, short circuit, impedance mismatch, unknown
+ * - Displays cable length measurement (in meters)
+ * - Shows list of detected faults (if any)
+ * - Gracefully handles unsupported NICs (displays "Not Supported" message)
+ * - Status color-coding: green (ok), red (open/short), yellow (impedance), gray (unknown)
+ *
+ * Usage:
+ * ```typescript
+ * <CableCard
+ *   data={cableTestData}
+ *   loading={isTesting}
+ * />
+ * ```
+ *
+ * Dependencies: BaseCard (SimpleBaseCard), Card UI components, Icons, theme utilities
+ * State: Receives data from parent component via props
+ */
+
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
 import { Cable } from "../ui/Icons";
+import { icon as iconTokens } from "../../styles/theme";
 
 export interface CableData {
   supported: boolean;
@@ -31,7 +57,7 @@ export function CableCard({ data, loading }: CableCardProps) {
   return (
     <SimpleBaseCard
       title="Cable Test"
-      icon={<Cable className="w-5 h-5" />}
+      icon={<Cable className={iconTokens.size.md} />}
       status={loading ? "loading" : getCardStatus(data)}
       loading={loading}
       loadingContent={<CardValue value="Testing..." size="lg" />}
@@ -41,7 +67,7 @@ export function CableCard({ data, loading }: CableCardProps) {
       ) : !data.supported ? (
         <>
           <CardValue value="Not Supported" size="md" />
-          <p className="text-xs text-text-muted mt-2">
+          <p className="caption mt-2">
             This NIC does not support TDR cable testing.
           </p>
         </>
@@ -61,8 +87,8 @@ export function CableCard({ data, loading }: CableCardProps) {
           {data.faults.length > 0 && (
             <>
               <CardDivider />
-              <p className="text-xs text-text-muted mb-1">Faults</p>
-              <ul className="text-sm text-status-error">
+              <p className="caption mb-1">Faults</p>
+              <ul className="body-small text-status-error">
                 {data.faults.map((fault, index) => (
                   <li key={index}>• {fault}</li>
                 ))}

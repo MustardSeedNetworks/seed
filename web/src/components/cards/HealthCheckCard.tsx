@@ -1,3 +1,31 @@
+/**
+ * HealthCheckCard Component
+ *
+ * Purpose: Comprehensive health check monitoring for remote services via ping, TCP, UDP, and HTTP(S).
+ * Tests end-to-end connectivity and provides detailed per-phase metrics (DNS, TCP, TLS, TTFB).
+ *
+ * Key Features:
+ * - Multi-protocol testing: ICMP ping, TCP connect, UDP, HTTP/HTTPS requests
+ * - Extended ping metrics: packet loss, jitter, min/max/avg latency
+ * - HTTP timing breakdown: DNS resolution, TCP connection, TLS handshake, Time-To-First-Byte (TTFB)
+ * - SSL/TLS certificate monitoring: expiry date, days remaining, issuer, common name, TLS version
+ * - Per-test latency thresholds: warning/critical levels from settings
+ * - CollapsibleSection for each test type to show detailed results
+ * - Status indicators for each phase: DNS, TCP, TLS, TTFB with color-coding
+ *
+ * Usage:
+ * ```typescript
+ * <HealthCheckCard
+ *   data={healthCheckResults}
+ *   loading={isRunning}
+ * />
+ * ```
+ *
+ * Dependencies: Card UI components, StatusBadge, CollapsibleSection, Tooltip, useSettings hook,
+ *              auth hooks for making secure test requests, Icons, theme utilities
+ * State: Manages test result data, fetches results periodically, uses SettingsContext for thresholds
+ */
+
 import { useState, useEffect, useCallback, memo } from "react";
 import { Card, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
@@ -7,7 +35,7 @@ import { getAuthHeaders } from "../../hooks/useAuth";
 import { HTTP_TIMING_HELP } from "../help/HelpContent";
 import { useSettings } from "../../contexts/SettingsContext";
 import { HeartPulse } from "../ui/Icons";
-import { timing } from "../../styles/theme";
+import { timing, icon as iconTokens, layout, radius } from "../../styles/theme";
 
 type StatusValue = "success" | "warning" | "error";
 
@@ -210,9 +238,9 @@ export const HealthCheckCard = memo(function HealthCheckCard({
 
     return (
       <div key={`${type}-${result.name}`} className="py-1">
-        <div className="flex items-center justify-between">
+        <div className={layout.flex.between}>
           <span
-            className="text-sm text-text-muted truncate flex-1"
+            className="body-small text-text-muted truncate flex-1"
             title={displayName}
           >
             {displayName}
@@ -220,13 +248,13 @@ export const HealthCheckCard = memo(function HealthCheckCard({
           </span>
           <span className="inline-flex items-center gap-2">
             <StatusBadge status={statusLabel} size="sm" />
-            <span className={`text-sm font-medium ${statusColor}`}>
+            <span className={`body-small font-medium ${statusColor}`}>
               {result.success ? formatLatency(result.latency) : "fail"}
             </span>
           </span>
         </div>
         {extendedInfo && (
-          <div className="text-xs text-text-muted mt-0.5">{extendedInfo}</div>
+          <div className="caption text-text-muted mt-0.5">{extendedInfo}</div>
         )}
       </div>
     );
@@ -299,7 +327,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     return (
       <div className="mt-1.5">
         {/* Stacked bar */}
-        <div className="h-2 rounded-full overflow-hidden flex bg-bg-tertiary">
+        <div className={`h-2 ${radius.full} overflow-hidden flex bg-bg-tertiary`}>
           {segments.map((seg, i) => {
             const widthPercent = Math.min(
               100,
@@ -316,7 +344,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
           })}
         </div>
         {/* Legend with tooltips */}
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs">
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 caption">
           {segments.map((seg) => (
             <Tooltip
               key={seg.label}
@@ -327,7 +355,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
                 className={`inline-flex items-center gap-1 ${getStatusTextColor(seg.status)}`}
               >
                 <span
-                  className={`inline-block w-2 h-2 rounded-full ${seg.color}`}
+                  className={`inline-block w-2 h-2 ${radius.full} ${seg.color}`}
                 />
                 {seg.label} {fmt(seg.value)}
               </span>
@@ -385,21 +413,21 @@ export const HealthCheckCard = memo(function HealthCheckCard({
 
     return (
       <div key={`http-${result.name}`} className="py-1.5">
-        <div className="flex items-center justify-between">
+        <div className={layout.flex.between}>
           <span
-            className="text-sm text-text-muted truncate flex-1"
+            className="body-small text-text-muted truncate flex-1"
             title={result.name}
           >
             {result.name}
             {result.status ? ` (${result.status})` : ""}
           </span>
-          <span className={`text-sm font-medium ${statusColor}`}>
+          <span className={`body-small font-medium ${statusColor}`}>
             {result.success ? formatLatency(result.latency) : "fail"}
           </span>
         </div>
         {hasTimingData && result.success && <TimingBar result={result} />}
         {(hasTLS || hasCertInfo) && (
-          <div className="text-xs mt-1 flex items-center gap-2">
+          <div className={`caption mt-1 ${layout.inline.default}`}>
             {hasTLS && (
               <span className="text-text-muted">{result.tlsVersion}</span>
             )}
@@ -434,10 +462,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({
   return (
     <Card
       title="Health Checks"
-      icon={<HeartPulse className="w-5 h-5" />}
+      icon={<HeartPulse className={iconTokens.size.md} />}
       status={getStatus()}
     >
-      {isRunning && <p className="text-sm text-text-muted">Running tests...</p>}
+      {isRunning && <p className="body-small text-text-muted">Running tests...</p>}
 
       {!isRunning && data && (
         <>
@@ -534,7 +562,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
         </>
       )}
 
-      {error && <p className="text-sm text-status-error">{error}</p>}
+      {error && <p className="body-small text-status-error">{error}</p>}
     </Card>
   );
 });

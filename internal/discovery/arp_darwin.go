@@ -1,3 +1,18 @@
+// Package discovery provides platform-specific ARP table management and neighbor discovery.
+//
+// This file contains OS-specific implementations for ARP cache reading and manipulation.
+// The implementation varies by platform to use native system calls and command-line tools.
+//
+// Platform support:
+//   - Darwin (macOS): Uses 'arp -an' command and route(4) system calls
+//   - Linux: Reads /proc/net/arp and uses netlink for real-time updates
+//
+// Features:
+//   - Read current ARP cache entries
+//   - Monitor ARP changes for neighbor discovery
+//   - Parse MAC addresses and IP mappings
+//   - Detect incomplete/failed ARP entries
+
 //go:build darwin
 
 package discovery

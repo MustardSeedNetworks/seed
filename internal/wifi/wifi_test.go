@@ -1,3 +1,5 @@
+// Package wifi provides wireless network information functionality.
+// Test suite validates WiFi scanning, interface detection, and property extraction.
 package wifi
 
 import (

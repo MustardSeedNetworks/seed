@@ -1,6 +1,45 @@
+/**
+ * PerformanceSettings Component (~421 lines)
+ *
+ * Purpose: Comprehensive performance testing configuration including speedtest.net and iperf3 settings.
+ * Allows users to configure test intervals, timeouts, and iperf3 server suggestions.
+ *
+ * Key Features:
+ * - Speedtest.net configuration: enable/disable, interval, timeout settings
+ * - iperf3 configuration: enable/disable, server setup, port configuration
+ * - Test interval: frequency of performance tests (in seconds)
+ * - Timeout settings: maximum duration for tests
+ * - iperf3 server suggestions: fetches and displays recommended public iperf servers
+ * - Server validation: validates iperf server addresses and ports
+ * - Port configuration: custom port for iperf3 tests
+ * - Bandwidth limits: configurable upload/download limits
+ * - Protocol selection: TCP/UDP selection for iperf tests
+ * - AutoSaveIndicator: shows persistent save status
+ * - Gauge icon: visual indicator in settings menu
+ *
+ * Usage:
+ * ```typescript
+ * <PerformanceSettings
+ *   testsSettings={settings}
+ *   setTestsSettings={updateSettings}
+ *   iperfSettings={iperfSettings}
+ *   setIperfSettings={updateIperf}
+ *   iperfStatus={saveStatus}
+ *   iperfSuggestions={suggestions}
+ *   iperfSuggestionsStatus={fetchStatus}
+ *   iperfSuggestionsError={error}
+ *   fetchIperfSuggestions={fetchSuggestions}
+ * />
+ * ```
+ *
+ * Dependencies: CollapsibleSection, AutoSaveIndicator, Gauge icon, settings types
+ * State: Manages speedtest, iperf, and suggestion configurations
+ */
+
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Gauge } from "../../ui/Icons";
+import { icon as iconTokens, layout, radius } from "../../../styles/theme";
 import {
   TestsSettings,
   IperfSettings,
@@ -34,22 +73,22 @@ export function PerformanceSettings({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
-          <Gauge className="w-4 h-4" />
+        <div className={layout.inline.default}>
+          <Gauge className={iconTokens.size.sm} />
           <span>Performance</span>
           <AutoSaveIndicator status={iperfStatus} />
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="stack">
         {/* Enable/Disable Toggles */}
-        <div className="space-y-2">
-          <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+        <div className="stack-sm">
+          <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
             <div>
-              <span className="text-sm text-text-primary font-medium">
+              <span className="body-small text-text-primary font-medium">
                 Enable Speedtest
               </span>
-              <p className="text-xs text-text-muted">
+              <p className="caption text-text-muted">
                 Test internet speed via Speedtest.net
               </p>
             </div>
@@ -62,15 +101,15 @@ export function PerformanceSettings({
                   runSpeedtest: e.target.checked,
                 }))
               }
-              className="w-4 h-4"
+              className={iconTokens.size.sm}
             />
           </label>
-          <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
+          <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
             <div>
-              <span className="text-sm text-text-primary font-medium">
+              <span className="body-small text-text-primary font-medium">
                 Enable iPerf
               </span>
-              <p className="text-xs text-text-muted">
+              <p className="caption text-text-muted">
                 Test LAN speed via iperf3
               </p>
             </div>
@@ -83,19 +122,19 @@ export function PerformanceSettings({
                   runIperf: e.target.checked,
                 }))
               }
-              className="w-4 h-4"
+              className={iconTokens.size.sm}
             />
           </label>
         </div>
 
         {/* Auto-Run on Link Up */}
         <div className="border-t border-surface-border pt-3">
-          <span className="text-xs text-text-muted font-medium">
+          <span className="caption text-text-muted font-medium">
             Auto-Run on Link Up
           </span>
-          <div className="mt-2 space-y-2">
-            <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-              <span className="text-sm text-text-primary">Speedtest</span>
+          <div className="mt-2 stack-sm">
+            <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
+              <span className="body-small text-text-primary">Speedtest</span>
               <input
                 type="checkbox"
                 checked={testsSettings.speedtest.autoRunOnLink}
@@ -108,11 +147,11 @@ export function PerformanceSettings({
                     },
                   }))
                 }
-                className="w-4 h-4"
+                className={iconTokens.size.sm}
               />
             </label>
-            <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border">
-              <span className="text-sm text-text-primary">iPerf</span>
+            <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}>
+              <span className="body-small text-text-primary">iPerf</span>
               <input
                 type="checkbox"
                 checked={testsSettings.iperf.autoRunOnLink}
@@ -125,7 +164,7 @@ export function PerformanceSettings({
                     },
                   }))
                 }
-                className="w-4 h-4"
+                className={iconTokens.size.sm}
               />
             </label>
           </div>
@@ -133,12 +172,12 @@ export function PerformanceSettings({
 
         {/* Internet Speed (Speedtest) Subsection */}
         <div className="border-t border-surface-border pt-3">
-          <h4 className="text-sm font-semibold text-text-primary mb-2 uppercase tracking-wide">
+          <h4 className="body-small font-semibold text-text-primary mb-2 uppercase tracking-wide">
             Internet Speed (Speedtest)
           </h4>
-          <div className="space-y-3 pl-1">
+          <div className="stack pl-1">
             <div>
-              <label className="text-xs text-text-muted font-medium">
+              <label className="caption text-text-muted font-medium">
                 Server ID (optional)
               </label>
               <input
@@ -154,10 +193,10 @@ export function PerformanceSettings({
                   }))
                 }
                 placeholder="Auto (closest server)"
-                className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary"
+                className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
               />
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-text-muted">
+              <div className={`${layout.flex.between} mt-1`}>
+                <p className="caption text-text-muted">
                   Leave empty to auto-select nearest server
                 </p>
                 <button
@@ -168,7 +207,7 @@ export function PerformanceSettings({
                       speedtest: { ...prev.speedtest, serverId: "" },
                     }))
                   }
-                  className="text-xs text-brand-primary hover:underline"
+                  className="caption text-brand-primary hover:underline"
                 >
                   Reset to Auto
                 </button>
@@ -179,17 +218,17 @@ export function PerformanceSettings({
 
         {/* LAN Speed (iperf3) Subsection */}
         <div>
-          <h4 className="text-sm font-semibold text-text-primary mb-2 uppercase tracking-wide">
+          <h4 className="body-small font-semibold text-text-primary mb-2 uppercase tracking-wide">
             LAN Speed (iperf3)
           </h4>
-          <div className="space-y-3 pl-1">
-            <p className="text-xs text-text-muted">
+          <div className="stack pl-1">
+            <p className="caption text-text-muted">
               Configure iperf3 client settings for LAN speed tests.
             </p>
 
             {/* Server Address */}
             <div>
-              <label className="text-xs text-text-muted font-medium">
+              <label className="caption text-text-muted font-medium">
                 Server Address
               </label>
               <input
@@ -202,14 +241,14 @@ export function PerformanceSettings({
                   }))
                 }
                 placeholder="192.168.1.100 or hostname"
-                className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
+                className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
               />
-              <div className="flex items-center justify-between mt-2">
+              <div className={`${layout.flex.between} mt-2`}>
                 <button
                   type="button"
                   disabled={iperfSuggestionsStatus === "loading"}
                   onClick={fetchIperfSuggestions}
-                  className="text-xs text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {iperfSuggestionsStatus === "loading"
                     ? "Scanning..."
@@ -217,7 +256,7 @@ export function PerformanceSettings({
                 </button>
                 {iperfSuggestionsStatus === "loading" && (
                   <svg
-                    className="w-4 h-4 animate-spin text-text-muted"
+                    className={`${iconTokens.size.sm} animate-spin text-text-muted`}
                     viewBox="0 0 24 24"
                     fill="none"
                   >
@@ -238,7 +277,7 @@ export function PerformanceSettings({
                 )}
               </div>
               {iperfSuggestionsStatus === "error" && (
-                <p className="text-xs text-status-warning mt-1">
+                <p className="caption text-status-warning mt-1">
                   {iperfSuggestionsError || "No iperf hosts responded"}
                 </p>
               )}
@@ -248,7 +287,7 @@ export function PerformanceSettings({
                     <button
                       type="button"
                       key={`${sugg.host}-${sugg.hostname || ""}`}
-                      className="px-3 py-1 rounded-full border border-surface-border bg-surface-base text-xs text-text-primary hover:bg-surface-hover"
+                      className={`px-3 py-1 ${radius.full} border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover`}
                       onClick={() =>
                         setIperfSettings((prev) => ({
                           ...prev,
@@ -273,7 +312,7 @@ export function PerformanceSettings({
 
             {/* Port */}
             <div>
-              <label className="text-xs text-text-muted font-medium">
+              <label className="caption text-text-muted font-medium">
                 Port
               </label>
               <input
@@ -285,13 +324,13 @@ export function PerformanceSettings({
                     port: parseInt(e.target.value) || 5201,
                   }))
                 }
-                className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
+                className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
               />
             </div>
 
             {/* Protocol Toggle */}
             <div>
-              <label className="text-xs text-text-muted font-medium block mb-1">
+              <label className="caption text-text-muted font-medium block mb-1">
                 Protocol
               </label>
               <div className="flex flex-wrap gap-2">
@@ -306,7 +345,7 @@ export function PerformanceSettings({
                       }))
                     }
                     aria-pressed={iperfSettings.protocol === proto}
-                    className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
+                    className={`px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
                       iperfSettings.protocol === proto
                         ? "bg-brand-primary text-text-inverse border-brand-primary"
                         : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
@@ -320,7 +359,7 @@ export function PerformanceSettings({
 
             {/* Direction Toggle */}
             <div>
-              <label className="text-xs text-text-muted font-medium block mb-1">
+              <label className="caption text-text-muted font-medium block mb-1">
                 Direction
               </label>
               <div className="flex flex-wrap gap-2">
@@ -341,7 +380,7 @@ export function PerformanceSettings({
                       }))
                     }
                     aria-pressed={iperfSettings.direction === option.value}
-                    className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
+                    className={`px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
                       iperfSettings.direction === option.value
                         ? "bg-brand-primary text-text-inverse border-brand-primary"
                         : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
@@ -355,7 +394,7 @@ export function PerformanceSettings({
 
             {/* Duration */}
             <div>
-              <label className="text-xs text-text-muted font-medium">
+              <label className="caption text-text-muted font-medium">
                 Duration (seconds)
               </label>
               <input
@@ -369,14 +408,14 @@ export function PerformanceSettings({
                 }
                 min={1}
                 max={60}
-                className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
+                className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
               />
             </div>
 
             {/* Server Mode */}
             <div className="border-t border-surface-border pt-3">
-              <label className="flex items-center justify-between p-2.5 bg-surface-base rounded border border-surface-border mb-2">
-                <span className="text-sm text-text-primary">
+              <label className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border mb-2`}>
+                <span className="body-small text-text-primary">
                   Enable iperf3 Server
                 </span>
                 <input
@@ -388,11 +427,11 @@ export function PerformanceSettings({
                       enableServer: e.target.checked,
                     }))
                   }
-                  className="w-4 h-4"
+                  className={iconTokens.size.sm}
                 />
               </label>
               <div>
-                <label className="text-xs text-text-muted font-medium">
+                <label className="caption text-text-muted font-medium">
                   Server Port
                 </label>
                 <input
@@ -404,10 +443,10 @@ export function PerformanceSettings({
                       serverPort: parseInt(e.target.value) || 5201,
                     }))
                   }
-                  className="w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border rounded text-sm text-text-primary disabled:opacity-60"
+                  className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
                 />
               </div>
-              <p className="text-xs text-text-muted mt-1">
+              <p className="caption text-text-muted mt-1">
                 When enabled, starts iperf3 server automatically
               </p>
             </div>

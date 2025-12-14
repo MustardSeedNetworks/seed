@@ -1,3 +1,19 @@
+// Package discovery provides CVE (Common Vulnerabilities and Exposures) scanning.
+//
+// This file integrates with the National Vulnerability Database (NVD) to identify known
+// security vulnerabilities in discovered network devices based on their fingerprinted
+// profiles (vendor, product, version).
+//
+// Features:
+//   - Query NVD API for CVE information
+//   - Match device profiles against vulnerability databases
+//   - Severity classification (Critical, High, Medium, Low)
+//   - CVE caching to reduce API load
+//   - Rate limiting for NVD API compliance
+//
+// The scanner uses device fingerprinting results (OS, services, versions) to identify
+// applicable CVEs and provides detailed vulnerability reports with remediation guidance.
+
 package discovery
 
 import (
@@ -12,8 +28,8 @@ import (
 )
 
 const (
-	nvdAPIBaseURL      = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-	nvdRateLimitNoKey  = 10 // requests per 30 seconds without API key
+	nvdAPIBaseURL       = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+	nvdRateLimitNoKey   = 10  // requests per 30 seconds without API key
 	nvdRateLimitWithKey = 100 // requests per 30 seconds with API key
 )
 
@@ -27,26 +43,26 @@ type NVDProvider struct {
 
 // nvdCVEResponse represents the NVD API response structure.
 type nvdCVEResponse struct {
-	ResultsPerPage int `json:"resultsPerPage"`
-	StartIndex     int `json:"startIndex"`
-	TotalResults   int `json:"totalResults"`
-	Format         string `json:"format"`
-	Version        string `json:"version"`
-	Timestamp      string `json:"timestamp"`
+	ResultsPerPage  int    `json:"resultsPerPage"`
+	StartIndex      int    `json:"startIndex"`
+	TotalResults    int    `json:"totalResults"`
+	Format          string `json:"format"`
+	Version         string `json:"version"`
+	Timestamp       string `json:"timestamp"`
 	Vulnerabilities []struct {
 		CVE struct {
-			ID          string `json:"id"`
+			ID               string `json:"id"`
 			SourceIdentifier string `json:"sourceIdentifier"`
-			Published   string `json:"published"`
-			LastModified string `json:"lastModified"`
-			VulnStatus  string `json:"vulnStatus"`
-			Descriptions []struct {
+			Published        string `json:"published"`
+			LastModified     string `json:"lastModified"`
+			VulnStatus       string `json:"vulnStatus"`
+			Descriptions     []struct {
 				Lang  string `json:"lang"`
 				Value string `json:"value"`
 			} `json:"descriptions"`
 			Metrics struct {
 				CVSSMetricV31 []struct {
-					Type    string `json:"type"`
+					Type     string `json:"type"`
 					CVSSData struct {
 						Version      string  `json:"version"`
 						VectorString string  `json:"vectorString"`
@@ -55,7 +71,7 @@ type nvdCVEResponse struct {
 					} `json:"cvssData"`
 				} `json:"cvssMetricV31"`
 				CVSSMetricV2 []struct {
-					Type    string `json:"type"`
+					Type     string `json:"type"`
 					CVSSData struct {
 						Version      string  `json:"version"`
 						VectorString string  `json:"vectorString"`
@@ -74,11 +90,11 @@ type nvdCVEResponse struct {
 					Operator string `json:"operator"`
 					Negate   bool   `json:"negate"`
 					CPEMatch []struct {
-						Vulnerable       bool   `json:"vulnerable"`
-						Criteria         string `json:"criteria"`
+						Vulnerable            bool   `json:"vulnerable"`
+						Criteria              string `json:"criteria"`
 						VersionStartIncluding string `json:"versionStartIncluding,omitempty"`
 						VersionEndExcluding   string `json:"versionEndExcluding,omitempty"`
-						MatchCriteriaID string `json:"matchCriteriaId"`
+						MatchCriteriaID       string `json:"matchCriteriaId"`
 					} `json:"cpeMatch"`
 				} `json:"nodes"`
 			} `json:"configurations"`

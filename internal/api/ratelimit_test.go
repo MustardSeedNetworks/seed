@@ -1,3 +1,5 @@
+// Package api provides the HTTP/WebSocket server.
+// Test suite validates rate limiter configuration, token bucket behavior, and HTTP middleware.
 package api
 
 import (

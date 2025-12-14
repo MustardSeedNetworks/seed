@@ -1,3 +1,34 @@
+/**
+ * SurveyView Component (~539 lines)
+ * 
+ * Purpose: Full-featured WiFi site survey editor and viewer. Allows users to create
+ * detailed signal strength and performance heatmaps by recording samples at physical
+ * locations on a floor plan, supporting passive scanning, active testing, and iperf3.
+ * 
+ * Key Features:
+ * - Floor plan canvas: Interactive image-based coordinate system for sample placement
+ * - Floor plan upload: Users can upload custom floor plan images
+ * - Passive sampling: Record RSSI (signal strength) measurements from WiFi beacons
+ * - Active sampling: Measure latency and packet loss to target server
+ * - Throughput sampling: Use iperf3 server for bandwidth measurements
+ * - Heatmap visualization: Color-coded overlays showing signal/performance gradients
+ * - Sample management: Create, update, delete sample points
+ * - Export data: Save survey results for analysis
+ * - Real-time updates: Reflect changes immediately in UI
+ * 
+ * Usage:
+ * ```typescript
+ * <SurveyView
+ *   survey={surveyData}
+ *   onClose={handleClose}
+ *   onUpdate={handleUpdate}
+ * />
+ * ```
+ * 
+ * Dependencies: FloorPlanCanvas, useAuth, useSurvey hook, API communication
+ * State: survey data, sampling status, heatmap metric selection, upload progress
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { FloorPlanCanvas } from "./FloorPlanCanvas";
 import { getAuthHeaders } from "../../hooks/useAuth";
@@ -17,14 +48,22 @@ interface SurveyViewProps {
   onUpdate: () => void;
 }
 
+/**
+ * SurveyView Component
+ * Main survey interface with floor plan, sampling controls, and heatmap visualization
+ */
 export function SurveyView({
   survey: initialSurvey,
   onClose,
   onUpdate,
 }: SurveyViewProps) {
+  // Current survey being edited
   const [survey, setSurvey] = useState(initialSurvey);
+  // Indicates if a sampling operation is in progress
   const [sampling, setSampling] = useState(false);
+  // Indicates if floor plan upload is in progress
   const [uploadingFloorPlan, setUploadingFloorPlan] = useState(false);
+  // Selected metric for heatmap visualization (rssi, throughput, latency)
   const [heatmapMetric, setHeatmapMetric] = useState<
     "rssi" | "throughput" | "latency" | null
   >(null);
@@ -289,7 +328,7 @@ export function SurveyView({
             {survey.status === "created" && (
               <button
                 onClick={() => handleStatusChange("start")}
-                className="px-4 py-2 bg-brand-primary text-text-inverse rounded hover:bg-brand-primary/90 flex items-center gap-2"
+                className="px-4 py-2 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90 flex items-center gap-2"
               >
                 <Play className="h-4 w-4" />
                 Start Survey
@@ -300,14 +339,14 @@ export function SurveyView({
               <>
                 <button
                   onClick={() => handleStatusChange("pause")}
-                  className="px-4 py-2 border border-surface-border rounded hover:bg-surface-hover flex items-center gap-2"
+                  className="px-4 py-2 border border-surface-border rounded-md hover:bg-surface-hover flex items-center gap-2"
                 >
                   <Pause className="h-4 w-4" />
                   Pause
                 </button>
                 <button
                   onClick={() => handleStatusChange("complete")}
-                  className="px-4 py-2 bg-status-success text-text-inverse rounded hover:bg-status-success/90 flex items-center gap-2"
+                  className="px-4 py-2 bg-status-success text-text-inverse rounded-md hover:bg-status-success/90 flex items-center gap-2"
                 >
                   <CheckCircle className="h-4 w-4" />
                   Complete
@@ -319,14 +358,14 @@ export function SurveyView({
               <>
                 <button
                   onClick={() => handleStatusChange("start")}
-                  className="px-4 py-2 bg-brand-primary text-text-inverse rounded hover:bg-brand-primary/90 flex items-center gap-2"
+                  className="px-4 py-2 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90 flex items-center gap-2"
                 >
                   <Play className="h-4 w-4" />
                   Resume
                 </button>
                 <button
                   onClick={() => handleStatusChange("complete")}
-                  className="px-4 py-2 bg-status-success text-text-inverse rounded hover:bg-status-success/90 flex items-center gap-2"
+                  className="px-4 py-2 bg-status-success text-text-inverse rounded-md hover:bg-status-success/90 flex items-center gap-2"
                 >
                   <CheckCircle className="h-4 w-4" />
                   Complete
@@ -336,7 +375,7 @@ export function SurveyView({
 
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-surface-border rounded hover:bg-surface-hover flex items-center gap-2"
+              className="px-4 py-2 border border-surface-border rounded-md hover:bg-surface-hover flex items-center gap-2"
             >
               <X className="h-4 w-4" />
               Close
@@ -348,13 +387,13 @@ export function SurveyView({
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         {error && (
-          <div className="bg-status-error/10 border border-status-error/20 text-status-error px-4 py-3 rounded mb-4">
+          <div className="bg-status-error/10 border border-status-error/20 text-status-error px-4 py-3 rounded-md mb-4">
             {error}
           </div>
         )}
 
         {sampling && (
-          <div className="bg-status-info/10 border border-status-info/20 text-status-info px-4 py-3 rounded mb-4 flex items-center gap-2">
+          <div className="bg-status-info/10 border border-status-info/20 text-status-info px-4 py-3 rounded-md mb-4 flex items-center gap-2">
             <Loader className="h-4 w-4 animate-spin" />
             Taking measurement...
           </div>
@@ -363,14 +402,14 @@ export function SurveyView({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Floor plan */}
           <div className="lg:col-span-2">
-            <div className="bg-surface-raised rounded-lg border border-surface-border p-4">
+            <div className="bg-surface-raised rounded-md border border-surface-border p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="heading-3">Floor Plan</h2>
                 {heatmapMetric === null && survey.samples.length > 0 && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => setHeatmapMetric("rssi")}
-                      className="px-3 py-1 text-sm border border-surface-border rounded hover:bg-surface-hover"
+                      className="px-3 py-1 body-small border border-surface-border rounded-md hover:bg-surface-hover"
                     >
                       RSSI Heatmap
                     </button>
@@ -378,13 +417,13 @@ export function SurveyView({
                       <>
                         <button
                           onClick={() => setHeatmapMetric("throughput")}
-                          className="px-3 py-1 text-sm border border-surface-border rounded hover:bg-surface-hover"
+                          className="px-3 py-1 body-small border border-surface-border rounded-md hover:bg-surface-hover"
                         >
                           Throughput
                         </button>
                         <button
                           onClick={() => setHeatmapMetric("latency")}
-                          className="px-3 py-1 text-sm border border-surface-border rounded hover:bg-surface-hover"
+                          className="px-3 py-1 body-small border border-surface-border rounded-md hover:bg-surface-hover"
                         >
                           Latency
                         </button>
@@ -395,7 +434,7 @@ export function SurveyView({
                 {heatmapMetric !== null && (
                   <button
                     onClick={() => setHeatmapMetric(null)}
-                    className="px-3 py-1 text-sm bg-brand-primary text-text-inverse rounded hover:bg-brand-primary/90"
+                    className="px-3 py-1 body-small bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90"
                   >
                     Hide Heatmap
                   </button>
@@ -403,12 +442,12 @@ export function SurveyView({
               </div>
 
               {!survey.floorPlan ? (
-                <div className="border-2 border-dashed border-surface-border rounded-lg p-12 text-center">
+                <div className="border-2 border-dashed border-surface-border rounded-md p-12 text-center">
                   <Upload className="h-12 w-12 mx-auto text-text-muted mb-4" />
                   <p className="text-text-muted mb-4">
                     Upload a floor plan to begin
                   </p>
-                  <label className="inline-block px-4 py-2 bg-brand-primary text-text-inverse rounded cursor-pointer hover:bg-brand-primary/90">
+                  <label className="inline-block px-4 py-2 bg-brand-primary text-text-inverse rounded-md cursor-pointer hover:bg-brand-primary/90">
                     {uploadingFloorPlan ? "Uploading..." : "Choose File"}
                     <input
                       type="file"
@@ -421,14 +460,14 @@ export function SurveyView({
                       disabled={uploadingFloorPlan}
                     />
                   </label>
-                  <p className="text-xs text-text-muted mt-2">
+                  <p className="caption text-text-muted mt-2">
                     PNG, JPG, GIF, WEBP, or SVG (max 10MB)
                   </p>
                 </div>
               ) : (
                 <div>
                   {survey.status === "in_progress" && (
-                    <p className="text-sm text-text-muted mb-2">
+                    <p className="body-small text-text-muted mb-2">
                       Click on the floor plan to take a measurement at that
                       location
                     </p>
@@ -447,11 +486,11 @@ export function SurveyView({
 
           {/* Sample list */}
           <div className="lg:col-span-1">
-            <div className="bg-surface-raised rounded-lg border border-surface-border p-4">
+            <div className="bg-surface-raised rounded-md border border-surface-border p-4">
               <h2 className="heading-3 mb-4">
                 Samples ({survey.samples.length})
               </h2>
-              <div className="space-y-2 max-h-[70vh] overflow-y-auto">
+              <div className="stack-sm max-h-[70vh] overflow-y-auto">
                 {survey.samples.length === 0 ? (
                   <p className="body-small text-center py-8">
                     No samples yet.{" "}
@@ -463,7 +502,7 @@ export function SurveyView({
                   survey.samples.map((sample, idx) => (
                     <div
                       key={idx}
-                      className="border border-surface-border rounded p-3 text-sm"
+                      className="border border-surface-border rounded-md p-3 body-small"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold">#{idx + 1}</span>
@@ -471,7 +510,7 @@ export function SurveyView({
                           {new Date(sample.timestamp).toLocaleTimeString()}
                         </span>
                       </div>
-                      <div className="text-xs space-y-1">
+                      <div className="caption stack-xs">
                         {renderSampleData(sample.sampleData, survey.surveyType)}
                       </div>
                     </div>
@@ -511,7 +550,7 @@ function renderSampleData(data: any, surveyType: string) {
         <div>RSSI: {activeData.rssi} dBm</div>
         <div>Rate: {activeData.dataRate} Mbps</div>
         {activeData.roamingEvent && (
-          <div className="text-yellow-600 font-semibold">⚠ Roaming</div>
+          <div className="text-status-warning font-semibold">⚠ Roaming</div>
         )}
       </>
     );
@@ -526,7 +565,7 @@ function renderSampleData(data: any, surveyType: string) {
         <div>↑ {throughputData.uploadMbps.toFixed(1)} Mbps</div>
         <div>Jitter: {throughputData.jitter.toFixed(1)} ms</div>
         {throughputData.packetLoss > 0 && (
-          <div className="text-red-600">
+          <div className="text-status-error">
             Loss: {throughputData.packetLoss.toFixed(1)}%
           </div>
         )}

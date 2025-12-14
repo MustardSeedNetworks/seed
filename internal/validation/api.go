@@ -1,3 +1,5 @@
+// Package validation provides input validation utilities and standardized API error responses.
+// Contains helpers to write JSON errors with consistent structure and HTTP status mapping.
 package validation
 
 import (
