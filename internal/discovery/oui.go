@@ -2,11 +2,16 @@ package discovery
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 // OUIDatabase provides MAC address manufacturer lookups.
@@ -281,4 +286,151 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 		}
 	}
 	return fmt.Errorf("no IEEE OUI file found")
+}
+
+// IEEE OUI database URLs
+const (
+	// IEEEOUIURL is the official IEEE OUI database URL
+	IEEEOUIURL = "https://standards-oui.ieee.org/oui/oui.txt"
+	// IEEEOUICSVUrl is the CSV format URL
+	IEEEOUI_CSV_URL = "https://standards-oui.ieee.org/oui/oui.csv"
+)
+
+// DownloadOUIDatabase downloads the IEEE OUI database from the official source.
+// It saves the file to the specified path and loads it into the database.
+func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string) error {
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 60 * time.Second,
+	}
+
+	// Create request with context
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, IEEEOUIURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set User-Agent to avoid being blocked
+	req.Header.Set("User-Agent", "LuminetIQ/1.0 (Network Discovery Tool)")
+
+	// Execute request
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to download OUI database: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	// Ensure destination directory exists
+	destDir := filepath.Dir(destPath)
+	if err := os.MkdirAll(destDir, 0750); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// Create temporary file for atomic write
+	tmpFile, err := os.CreateTemp(destDir, "oui-*.tmp")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmpFile.Name()
+	defer func() {
+		tmpFile.Close()
+		os.Remove(tmpPath) // Clean up temp file on error
+	}()
+
+	// Copy response body to temp file
+	written, err := io.Copy(tmpFile, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to write OUI database: %w", err)
+	}
+
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+
+	// Atomic rename
+	if err := os.Rename(tmpPath, destPath); err != nil {
+		return fmt.Errorf("failed to move OUI database: %w", err)
+	}
+
+	// Parse and load the downloaded file
+	if err := db.LoadFromIEEEFormat(destPath); err != nil {
+		return fmt.Errorf("failed to parse OUI database: %w", err)
+	}
+
+	fmt.Printf("Downloaded OUI database: %d bytes, %d entries\n", written, db.Count())
+	return nil
+}
+
+// LoadFromIEEEFormat loads OUI entries from the IEEE oui.txt format.
+// Format: "AA-BB-CC   (hex)\t\tVendor Name"
+func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
+	//nolint:gosec // G304: Path is user-provided configuration for OUI database
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	// IEEE format regex: "AA-BB-CC   (hex)\t\tVendor Name"
+	// or "AABBCC     (base 16)\t\tVendor Name"
+	hexPattern := regexp.MustCompile(`^([0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2})\s+\(hex\)\s+(.+)$`)
+	base16Pattern := regexp.MustCompile(`^([0-9A-Fa-f]{6})\s+\(base 16\)\s+(.+)$`)
+
+	scanner := bufio.NewScanner(file)
+	count := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Try hex format first (AA-BB-CC)
+		if matches := hexPattern.FindStringSubmatch(line); len(matches) == 3 {
+			prefix := strings.ToUpper(strings.ReplaceAll(matches[1], "-", ":"))
+			vendor := strings.TrimSpace(matches[2])
+			if vendor != "" {
+				db.vendors[prefix] = vendor
+				count++
+			}
+			continue
+		}
+
+		// Try base 16 format (AABBCC)
+		if matches := base16Pattern.FindStringSubmatch(line); len(matches) == 3 {
+			mac := strings.ToUpper(matches[1])
+			prefix := fmt.Sprintf("%s:%s:%s", mac[0:2], mac[2:4], mac[4:6])
+			vendor := strings.TrimSpace(matches[2])
+			if vendor != "" {
+				db.vendors[prefix] = vendor
+				count++
+			}
+		}
+	}
+
+	return scanner.Err()
+}
+
+// NeedsUpdate checks if the OUI database file needs updating.
+// Returns true if file doesn't exist or is older than maxAge.
+func (db *OUIDatabase) NeedsUpdate(path string, maxAge time.Duration) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return true // File doesn't exist
+	}
+	return time.Since(info.ModTime()) > maxAge
+}
+
+// UpdateIfNeeded downloads a fresh OUI database if the existing one is stale.
+// maxAge specifies how old the file can be before updating (e.g., 30*24*time.Hour for monthly).
+func (db *OUIDatabase) UpdateIfNeeded(ctx context.Context, path string, maxAge time.Duration) error {
+	if !db.NeedsUpdate(path, maxAge) {
+		// File is fresh, just load it
+		return db.LoadFromIEEEFormat(path)
+	}
+	// Download fresh copy
+	return db.DownloadOUIDatabase(ctx, path)
 }

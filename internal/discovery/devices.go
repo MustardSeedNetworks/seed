@@ -12,7 +12,7 @@ type DiscoveryMethod string
 
 const (
 	MethodARP  DiscoveryMethod = "arp"
-	MethodNDP  DiscoveryMethod = "ndp"  // IPv6 Neighbor Discovery
+	MethodNDP  DiscoveryMethod = "ndp" // IPv6 Neighbor Discovery
 	MethodLLDP DiscoveryMethod = "lldp"
 	MethodCDP  DiscoveryMethod = "cdp"
 	MethodEDP  DiscoveryMethod = "edp"
@@ -22,8 +22,8 @@ const (
 
 // DiscoveredDevice represents a network device with aggregated discovery info.
 type DiscoveredDevice struct {
-	IP              string            `json:"ip"`              // Primary IPv4 address
-	IPv6Address     string            `json:"ipv6,omitempty"`  // Primary IPv6 address
+	IP              string            `json:"ip"`                      // Primary IPv4 address
+	IPv6Address     string            `json:"ipv6,omitempty"`          // Primary IPv6 address
 	IPv6Addresses   []string          `json:"ipv6Addresses,omitempty"` // All IPv6 addresses
 	MAC             string            `json:"mac"`
 	Hostname        string            `json:"hostname,omitempty"`
@@ -32,7 +32,7 @@ type DiscoveredDevice struct {
 	TTL             int               `json:"ttl,omitempty"`
 	DiscoveryMethod []DiscoveryMethod `json:"discoveryMethod"`
 	LastSeen        time.Time         `json:"lastSeen"`
-	IsLocal         bool              `json:"isLocal"` // true if device is on local subnet
+	IsLocal         bool              `json:"isLocal"`            // true if device is on local subnet
 	IsRouter        bool              `json:"isRouter,omitempty"` // true if detected as IPv6 router via NDP
 
 	// Duplicate IP detection
@@ -84,8 +84,8 @@ type EDPDeviceInfo struct {
 
 // NDPDeviceInfo contains IPv6 NDP-specific device information.
 type NDPDeviceInfo struct {
-	LinkLayerAddress  string    `json:"linkLayerAddress"` // MAC from NDP
-	IsRouter          bool      `json:"isRouter"`         // From Router Advertisement
+	LinkLayerAddress  string    `json:"linkLayerAddress"`            // MAC from NDP
+	IsRouter          bool      `json:"isRouter"`                    // From Router Advertisement
 	ReachableTime     uint32    `json:"reachableTime,omitempty"`     // milliseconds
 	RetransTimer      uint32    `json:"retransTimer,omitempty"`      // milliseconds
 	Flags             uint8     `json:"flags,omitempty"`             // NDP flags
@@ -107,10 +107,44 @@ type DeviceDiscovery struct {
 
 // NewDeviceDiscovery creates a new device discovery aggregator.
 func NewDeviceDiscovery(interfaceName string) *DeviceDiscovery {
+	return NewDeviceDiscoveryWithOUI(interfaceName, "", 0)
+}
+
+// NewDeviceDiscoveryWithOUI creates a new device discovery aggregator with OUI configuration.
+// ouiPath specifies the path to store/load the OUI database file.
+// ouiMaxAge specifies how old the file can be before auto-downloading (0 = never auto-update).
+func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Duration) *DeviceDiscovery {
 	oui := NewOUIDatabase()
-	// Try to load extended OUI file if available
-	if err := oui.TryLoadIEEEFile(); err != nil {
-		log.Printf("warning: failed to load IEEE OUI file: %v", err)
+
+	// Try to load/update OUI database
+	if ouiPath != "" && ouiMaxAge > 0 {
+		// Auto-update enabled: download if needed, then load
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		if err := oui.UpdateIfNeeded(ctx, ouiPath, ouiMaxAge); err != nil {
+			log.Printf("warning: failed to update OUI database: %v", err)
+			// Try loading from standard locations as fallback
+			if err := oui.TryLoadIEEEFile(); err != nil {
+				log.Printf("warning: failed to load IEEE OUI file: %v", err)
+			}
+		} else {
+			log.Printf("OUI database loaded: %d entries", oui.Count())
+		}
+	} else if ouiPath != "" {
+		// Path provided but no auto-update: just load from file
+		if err := oui.LoadFromIEEEFormat(ouiPath); err != nil {
+			log.Printf("warning: failed to load OUI from %s: %v", ouiPath, err)
+			if err := oui.TryLoadIEEEFile(); err != nil {
+				log.Printf("warning: failed to load IEEE OUI file: %v", err)
+			}
+		} else {
+			log.Printf("OUI database loaded from %s: %d entries", ouiPath, oui.Count())
+		}
+	} else {
+		// No path provided: try standard locations
+		if err := oui.TryLoadIEEEFile(); err != nil {
+			log.Printf("warning: failed to load IEEE OUI file: %v", err)
+		}
 	}
 
 	return &DeviceDiscovery{

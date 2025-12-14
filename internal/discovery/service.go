@@ -12,31 +12,31 @@ import (
 // Service is the unified discovery orchestrator that applies profile-based
 // configuration to control which discovery methods are active.
 type Service struct {
-	cfg            *config.Config
-	interfaceName  string
+	cfg             *config.Config
+	interfaceName   string
 	deviceDiscovery *DeviceDiscovery
 	profiler        *DeviceProfiler
 
 	// Runtime state
-	mu              sync.RWMutex
-	running         bool
-	activeProfile   config.DiscoveryProfile
-	rescanTicker    *time.Ticker
-	stopCh          chan struct{}
+	mu            sync.RWMutex
+	running       bool
+	activeProfile config.DiscoveryProfile
+	rescanTicker  *time.Ticker
+	stopCh        chan struct{}
 }
 
 // ServiceStatus represents the current state of the discovery service.
 type ServiceStatus struct {
-	Running         bool                     `json:"running"`
-	Profile         config.DiscoveryProfile  `json:"profile"`
-	Scanning        bool                     `json:"scanning"`
-	DeviceCount     int                      `json:"deviceCount"`
-	LastScan        time.Time                `json:"lastScan"`
-	Subnet          string                   `json:"subnet"`
-	LocalIP         string                   `json:"localIP"`
-	Interface       string                   `json:"interface"`
-	ActiveMethods   []string                 `json:"activeMethods"`
-	RescanInterval  time.Duration            `json:"rescanInterval"`
+	Running        bool                    `json:"running"`
+	Profile        config.DiscoveryProfile `json:"profile"`
+	Scanning       bool                    `json:"scanning"`
+	DeviceCount    int                     `json:"deviceCount"`
+	LastScan       time.Time               `json:"lastScan"`
+	Subnet         string                  `json:"subnet"`
+	LocalIP        string                  `json:"localIP"`
+	Interface      string                  `json:"interface"`
+	ActiveMethods  []string                `json:"activeMethods"`
+	RescanInterval time.Duration           `json:"rescanInterval"`
 }
 
 // NewService creates a new unified discovery service.
@@ -44,7 +44,7 @@ func NewService(cfg *config.Config, interfaceName string) *Service {
 	return &Service{
 		cfg:             cfg,
 		interfaceName:   interfaceName,
-		deviceDiscovery: NewDeviceDiscovery(interfaceName),
+		deviceDiscovery: NewDeviceDiscoveryWithOUI(interfaceName, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
 		profiler:        NewDeviceProfiler(DefaultProfilerConfig(), &cfg.SNMP),
 		activeProfile:   cfg.NetworkDiscovery.Profile,
 	}

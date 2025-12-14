@@ -99,7 +99,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()), // Rate limit expensive endpoints (fixes #530)
 		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
 		discoveryManager: discovery.NewManager(cfg.Interface.Default),
-		deviceDiscovery:  discovery.NewDeviceDiscovery(cfg.Interface.Default),
+		deviceDiscovery:  discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
 		discoveryService: discovery.NewService(cfg, cfg.Interface.Default),
 		dnsTester:        dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dhcpMonitor:      dhcp.NewMonitor(cfg.Interface.Default),

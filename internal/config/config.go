@@ -168,6 +168,7 @@ type NetworkDiscoveryConfig struct {
 	AutoScan       bool          `yaml:"auto_scan"`        // Auto-scan on startup
 	ScanInterval   time.Duration `yaml:"scan_interval"`    // Interval for auto-scan
 	OUIFilePath    string        `yaml:"oui_file_path"`    // Path to IEEE OUI file
+	OUIMaxAge      time.Duration `yaml:"oui_max_age"`      // Max age before auto-download (0 = never auto-update)
 
 	// Fingerprinting enables OS/service detection.
 	Fingerprinting FingerprintingConfig `yaml:"fingerprinting,omitempty"`
@@ -505,8 +506,9 @@ func DefaultConfig() *Config {
 			ScanTimeout:       30 * time.Second,
 			AutoScan:          true,             // Auto-scan on startup by default
 			ScanInterval:      0,                // Disabled by default
-			OUIFilePath:       "oui.txt",        // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
-			AdditionalSubnets: []SubnetConfig{}, // No additional subnets by default
+			OUIFilePath:       "oui.txt",            // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
+			OUIMaxAge:         30 * 24 * time.Hour, // Auto-update OUI database monthly
+			AdditionalSubnets: []SubnetConfig{},   // No additional subnets by default
 		},
 		SNMP: SNMPConfig{
 			Communities: []string{"public"}, // Default read-only community
