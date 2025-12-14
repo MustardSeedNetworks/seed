@@ -1964,9 +1964,9 @@ func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate VLAN ID (1-4094)
-	if req.VlanID < 1 || req.VlanID > 4094 {
-		http.Error(w, "VLAN ID must be between 1 and 4094", http.StatusBadRequest)
+	// Validate VLAN ID (fixes #522)
+	if err := validation.ValidateVLANID(req.VlanID); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -2004,9 +2004,9 @@ func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate VLAN ID (1-4094)
-	if req.VlanID < 1 || req.VlanID > 4094 {
-		http.Error(w, "VLAN ID must be between 1 and 4094", http.StatusBadRequest)
+	// Validate VLAN ID (fixes #522)
+	if err := validation.ValidateVLANID(req.VlanID); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -2051,6 +2051,27 @@ type WiFiSettingsResponse struct {
 	Interface     string   `json:"interface"`
 	AvailableWiFi []string `json:"availableWifi"`
 	IsWireless    bool     `json:"isWireless"`
+}
+
+// SNMPSettingsResponse represents the SNMP configuration settings.
+type SNMPSettingsResponse struct {
+	Communities   []string                 `json:"communities"`
+	V3Credentials []SNMPv3CredentialResponse `json:"v3Credentials"`
+	Timeout       int                      `json:"timeout"` // milliseconds
+	Retries       int                      `json:"retries"`
+	Port          int                      `json:"port"`
+}
+
+// SNMPv3CredentialResponse represents an SNMPv3 credential for API responses.
+type SNMPv3CredentialResponse struct {
+	Name          string `json:"name"`
+	Username      string `json:"username"`
+	AuthProtocol  string `json:"authProtocol"`
+	AuthPassword  string `json:"authPassword"`
+	PrivProtocol  string `json:"privProtocol"`
+	PrivPassword  string `json:"privPassword"`
+	ContextName   string `json:"contextName"`
+	SecurityLevel string `json:"securityLevel"`
 }
 
 // handleWiFiSettings handles GET/PUT for WiFi settings.
@@ -2120,6 +2141,131 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "WiFi settings updated",
+	})
+}
+
+// handleSNMPSettings handles GET/PUT for SNMP settings.
+func (s *Server) handleSNMPSettings(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.getSNMPSettings(w, r)
+	case http.MethodPut:
+		s.updateSNMPSettings(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) getSNMPSettings(w http.ResponseWriter, r *http.Request) {
+	s.config.RLock()
+	defer s.config.RUnlock()
+
+	// Convert v3 credentials to response format (fixes #518)
+	// NEVER return actual passwords in GET responses - use placeholder instead
+	v3Creds := make([]SNMPv3CredentialResponse, len(s.config.SNMP.V3Credentials))
+	for i, cred := range s.config.SNMP.V3Credentials {
+		// Use "*****" placeholder for passwords (never expose actual values)
+		authPass := ""
+		if cred.AuthPassword != "" {
+			authPass = "*****"
+		}
+		privPass := ""
+		if cred.PrivPassword != "" {
+			privPass = "*****"
+		}
+
+		v3Creds[i] = SNMPv3CredentialResponse{
+			Name:          cred.Name,
+			Username:      cred.Username,
+			AuthProtocol:  cred.AuthProtocol,
+			AuthPassword:  authPass, // Never return actual password
+			PrivProtocol:  cred.PrivProtocol,
+			PrivPassword:  privPass, // Never return actual password
+			ContextName:   cred.ContextName,
+			SecurityLevel: cred.SecurityLevel,
+		}
+	}
+
+	resp := SNMPSettingsResponse{
+		Communities:   s.config.SNMP.Communities,
+		V3Credentials: v3Creds,
+		Timeout:       int(s.config.SNMP.Timeout.Milliseconds()),
+		Retries:       s.config.SNMP.Retries,
+		Port:          s.config.SNMP.Port,
+	}
+
+	sendJSONResponse(w, http.StatusOK, resp)
+}
+
+func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
+	var req SNMPSettingsResponse
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Lock config for write access
+	s.config.Lock()
+	defer s.config.Unlock()
+
+	// Convert request v3 credentials to config format (fixes #518)
+	v3Creds := make([]config.SNMPv3Credential, len(req.V3Credentials))
+	for i, cred := range req.V3Credentials {
+		newCred := config.SNMPv3Credential{
+			Name:          cred.Name,
+			Username:      cred.Username,
+			AuthProtocol:  cred.AuthProtocol,
+			PrivProtocol:  cred.PrivProtocol,
+			ContextName:   cred.ContextName,
+			SecurityLevel: cred.SecurityLevel,
+		}
+
+		// Handle AuthPassword: If "*****" placeholder, keep existing; otherwise encrypt new value
+		if cred.AuthPassword != "" && cred.AuthPassword != "*****" {
+			// New password provided - encrypt it
+			encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Failed to encrypt auth password: %v", err), http.StatusInternalServerError)
+				return
+			}
+			newCred.AuthPassword = encrypted
+		} else if i < len(s.config.SNMP.V3Credentials) {
+			// Keep existing password if placeholder or empty
+			newCred.AuthPassword = s.config.SNMP.V3Credentials[i].AuthPassword
+		}
+
+		// Handle PrivPassword: If "*****" placeholder, keep existing; otherwise encrypt new value
+		if cred.PrivPassword != "" && cred.PrivPassword != "*****" {
+			// New password provided - encrypt it
+			encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Failed to encrypt priv password: %v", err), http.StatusInternalServerError)
+				return
+			}
+			newCred.PrivPassword = encrypted
+		} else if i < len(s.config.SNMP.V3Credentials) {
+			// Keep existing password if placeholder or empty
+			newCred.PrivPassword = s.config.SNMP.V3Credentials[i].PrivPassword
+		}
+
+		v3Creds[i] = newCred
+	}
+
+	// Update SNMP settings
+	s.config.SNMP.Communities = req.Communities
+	s.config.SNMP.V3Credentials = v3Creds
+	s.config.SNMP.Timeout = time.Duration(req.Timeout) * time.Millisecond
+	s.config.SNMP.Retries = req.Retries
+	s.config.SNMP.Port = req.Port
+
+	// Save config (passwords are now encrypted)
+	if err := s.config.Save(s.configPath); err != nil {
+		log.Printf("Warning: Failed to save config: %v", err)
+	}
+
+	sendJSONResponse(w, http.StatusOK, map[string]string{
+		"status":  "success",
+		"message": "SNMP settings updated",
 	})
 }
 
@@ -3442,6 +3588,22 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate numeric parameters (fixes #522)
+	if req.Port != 0 {
+		if err := validation.ValidatePort(req.Port); err != nil {
+			http.Error(w, fmt.Sprintf("Invalid port: %v", err), http.StatusBadRequest)
+			return
+		}
+	}
+	if err := validation.ValidatePositiveInt(req.Duration, "duration"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := validation.ValidatePositiveInt(req.Parallel, "parallel streams"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	iperfConfig := iperf.ClientConfig{
 		Server:    req.Server,
 		Port:      req.Port,
@@ -3688,6 +3850,29 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 
 		if err := s.deviceDiscovery.Scan(ctx); err != nil {
 			log.Printf("Device scan error: %v", err)
+		}
+
+		// Auto-scan for vulnerabilities if enabled
+		if s.vulnScanner != nil && s.config.Security.VulnerabilityScanning.Enabled && s.config.Security.VulnerabilityScanning.AutoScan {
+			log.Printf("Auto-scan: triggering vulnerability scan for %d discovered devices", s.deviceDiscovery.Count())
+			devices := s.deviceDiscovery.GetDevices()
+
+			vulnCtx, vulnCancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer vulnCancel()
+
+			for _, device := range devices {
+				if _, err := s.vulnScanner.ScanDevice(vulnCtx, device); err != nil {
+					log.Printf("Auto vulnerability scan failed for %s: %v", device.IP, err)
+				}
+			}
+
+			// Broadcast vulnerability results
+			results := s.vulnScanner.GetAllVulnerabilities()
+			s.wsHub.BroadcastCardUpdate("vulnerabilities", map[string]interface{}{
+				"results": results,
+				"count":   len(results),
+			})
+			log.Printf("Auto-scan: completed vulnerability scan, found %d devices with vulnerabilities", len(results))
 		}
 
 		// Notify WebSocket clients when scan completes

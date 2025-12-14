@@ -12,6 +12,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/luminetiq/internal/config"
+	"github.com/krisarmstrong/luminetiq/internal/snmp"
 )
 
 // DeviceProfile contains auto-discovered profile information about a device.
@@ -88,6 +91,7 @@ func DefaultProfilerConfig() *ProfilerConfig {
 // DeviceProfiler automatically profiles newly discovered devices.
 type DeviceProfiler struct {
 	config     *ProfilerConfig
+	snmpConfig *config.SNMPConfig
 	httpClient *http.Client
 	mu         sync.RWMutex
 	profiles   map[string]*DeviceProfile // key by IP
@@ -98,22 +102,23 @@ type DeviceProfiler struct {
 }
 
 // NewDeviceProfiler creates a new device profiler.
-func NewDeviceProfiler(config *ProfilerConfig) *DeviceProfiler {
-	if config == nil {
-		config = DefaultProfilerConfig()
+func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceProfiler {
+	if cfg == nil {
+		cfg = DefaultProfilerConfig()
 	}
 
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // Profiling internal network devices
 		DialContext: (&net.Dialer{
-			Timeout: config.Timeout,
+			Timeout: cfg.Timeout,
 		}).DialContext,
 	}
 
 	return &DeviceProfiler{
-		config: config,
+		config:     cfg,
+		snmpConfig: snmpCfg,
 		httpClient: &http.Client{
-			Timeout:   config.Timeout,
+			Timeout:   cfg.Timeout,
 			Transport: transport,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse // Don't follow redirects
@@ -255,6 +260,16 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 		}
 	}
 
+	// Check SNMP if port 161 is open
+	for _, op := range profile.OpenPorts {
+		if op.Port == 161 && op.IsOpen {
+			if info := p.probeSNMP(ctx, ip); info != nil {
+				profile.SNMPInfo = info
+			}
+			break
+		}
+	}
+
 	// Infer device type and icons from profile
 	p.inferDeviceType(profile)
 
@@ -311,7 +326,7 @@ func (p *DeviceProfiler) probeHTTP(ctx context.Context, ip string, port int, isH
 	if err != nil {
 		return nil
 	}
-	req.Header.Set("User-Agent", "NetScope/1.0")
+	req.Header.Set("User-Agent", "LuminetIQ/1.0")
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
@@ -333,6 +348,26 @@ func (p *DeviceProfiler) probeHTTP(ctx context.Context, ip string, port int, isH
 	}
 
 	return info
+}
+
+// probeSNMP attempts to retrieve SNMP information from the device.
+func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
+	if p.snmpConfig == nil || len(p.snmpConfig.Communities) == 0 {
+		return nil
+	}
+
+	// Query system information
+	sysInfo, err := snmp.GetSystemInfo(ctx, ip, p.snmpConfig)
+	if err != nil {
+		return nil
+	}
+
+	return &SNMPInfo{
+		SysDescr:    sysInfo.SysDescr,
+		SysName:     sysInfo.SysName,
+		SysContact:  sysInfo.SysContact,
+		SysLocation: sysInfo.SysLocation,
+	}
 }
 
 // extractHTMLTitle extracts the <title> from HTML content.

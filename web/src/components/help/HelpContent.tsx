@@ -133,3 +133,44 @@ export const THRESHOLD_HELP: Record<string, string> = {
   "HTTP TTFB":
     "Time to First Byte - server processing time. High values indicate slow backend or database queries.",
 };
+
+export const HARDWARE_HELP: Record<string, string> = {
+  "Cable Diagnostics":
+    "TDR (Time Domain Reflectometry) cable testing requires specific network interface hardware. NOT all NICs support this feature.",
+  "Cable - Supported NICs":
+    "✅ Intel I350/I210/I225-V, Broadcom BCM5719/5720. ❌ Most Realtek consumer NICs (RTL8111/8125) do NOT support TDR.",
+  "Cable - Testing":
+    "Test if your NIC supports TDR: 'sudo ethtool --cable-test eth0'. If you see 'Operation not supported', your NIC cannot perform cable diagnostics.",
+  "WiFi Diagnostics":
+    "Advanced Wi-Fi diagnostics (monitor mode, site surveys) require nl80211-compatible chipsets. Built-in laptop Wi-Fi may have limited capabilities.",
+  "WiFi - Recommended":
+    "✅ Intel AX200/AX210 (Wi-Fi 6/6E), Atheros AR9271 (USB). ⚠️ Broadcom, Realtek have limited support. ❌ Apple Silicon built-in Wi-Fi not supported on Linux.",
+  "WiFi - Capabilities":
+    "Monitor mode allows packet capture and site surveys. Injection enables advanced testing. Check chipset compatibility before purchasing adapters.",
+  "Hardware Guide":
+    "See HARDWARE.md in the repository for complete compatibility matrix, testing procedures, and recommended hardware bundles by use case.",
+};
+
+export const HARDWARE_RECOMMENDATIONS = {
+  cable: {
+    supported: [
+      "Intel I350",
+      "Intel I210",
+      "Intel I225-V",
+      "Broadcom BCM5719",
+      "Broadcom BCM5720",
+    ],
+    notSupported: [
+      "Realtek RTL8111",
+      "Realtek RTL8125",
+      "Most USB Ethernet adapters",
+    ],
+    testCommand: "sudo ethtool --cable-test eth0",
+  },
+  wifi: {
+    recommended: ["Intel AX200", "Intel AX210", "Atheros AR9271"],
+    limited: ["Broadcom BCM43xx", "Realtek RTL88xx", "MediaTek MT7921"],
+    notSupported: ["Apple Silicon built-in Wi-Fi"],
+    testCommand: "iw list | grep -A 10 'Supported interface modes'",
+  },
+};

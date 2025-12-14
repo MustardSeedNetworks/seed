@@ -73,7 +73,10 @@
       "Bash(/Users/krisarmstrong/Developer/projects/netscope/bin/iperf3:*)",
       "Bash(git remote:*)",
       "Bash(./scripts/deploy-systemd.sh:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(go tool cover:*)",
+      "Bash(pkill:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

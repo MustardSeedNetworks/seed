@@ -213,8 +213,8 @@ func (rl *RateLimiter) RemainingAttempts(ip string) int {
 // headers if we trust them. For rate limiting purposes, we must use the
 // actual TCP connection source (RemoteAddr).
 //
-// If NetScope is behind a trusted reverse proxy, the proxy should be
-// configured to overwrite X-Forwarded-For and NetScope's RemoteAddr will
+// If LuminetIQ is behind a trusted reverse proxy, the proxy should be
+// configured to overwrite X-Forwarded-For and LuminetIQ's RemoteAddr will
 // reflect the proxy's IP. For more sophisticated setups, consider using
 // a dedicated reverse proxy that handles rate limiting.
 func GetClientIP(r *http.Request) string {

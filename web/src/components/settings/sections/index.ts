@@ -4,5 +4,6 @@ export { DiscoverySettings } from "./DiscoverySettings";
 export { DNSSettings } from "./DNSSettings";
 export { HealthChecksSettings } from "./HealthChecksSettings";
 export { PerformanceSettings } from "./PerformanceSettings";
+export { SNMPSettings } from "./SNMPSettings";
 export { ThresholdsSettings } from "./ThresholdsSettings";
 export { WiFiSettings } from "./WiFiSettings";

@@ -187,7 +187,33 @@ func IsPrivateIP(ip net.IP) bool {
 // ValidatePort checks if the port number is valid.
 func ValidatePort(port int) error {
 	if port < 1 || port > 65535 {
-		return fmt.Errorf("port must be between 1 and 65535")
+		return fmt.Errorf("port must be between 1 and 65535, got %d", port)
+	}
+	return nil
+}
+
+// ValidateVLANID checks if the VLAN ID is valid (fixes #522).
+// Valid VLAN IDs are 1-4094 (4095 is reserved, 0 is invalid).
+func ValidateVLANID(vlanID int) error {
+	if vlanID < 1 || vlanID > 4094 {
+		return fmt.Errorf("VLAN ID must be between 1 and 4094, got %d", vlanID)
+	}
+	return nil
+}
+
+// ValidatePositiveInt checks if the integer is non-negative (fixes #522).
+func ValidatePositiveInt(val int, fieldName string) error {
+	if val < 0 {
+		return fmt.Errorf("%s must be non-negative, got %d", fieldName, val)
+	}
+	return nil
+}
+
+// ValidateMTU checks if the MTU value is valid (fixes #522).
+// Standard Ethernet: 1500, Jumbo frames: up to 9000
+func ValidateMTU(mtu int) error {
+	if mtu < 68 || mtu > 9000 {
+		return fmt.Errorf("MTU must be between 68 and 9000, got %d", mtu)
 	}
 	return nil
 }

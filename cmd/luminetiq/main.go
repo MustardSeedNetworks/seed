@@ -70,11 +70,27 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Or grant capability: sudo setcap cap_net_raw=+ep ./luminetiq")
 	}
 
-	// Set up logging
+	// Set up logging with secure permissions (fixes #537)
 	logPath := filepath.Join("logs", "luminetiq.log")
 	if err := os.MkdirAll(filepath.Dir(logPath), 0o750); err != nil {
 		log.Fatalf("Failed to create log directory: %v", err)
 	}
+
+	// Create log file with restrictive permissions (0600) before lumberjack uses it
+	// This ensures log files containing sensitive information are only readable by owner
+	if _, err := os.Stat(logPath); os.IsNotExist(err) {
+		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
+			log.Fatalf("Failed to create log file with secure permissions: %v", err)
+		}
+		f.Close()
+	} else {
+		// If log file exists, ensure it has correct permissions
+		if err := os.Chmod(logPath, 0o600); err != nil {
+			log.Printf("Warning: Failed to set secure permissions on existing log file: %v", err)
+		}
+	}
+
 	rotator := &lumberjack.Logger{
 		Filename:   logPath,
 		MaxSize:    20, // megabytes
@@ -113,6 +129,31 @@ func main() {
 			log.Printf("Warning: Failed to persist JWT secret: %v", saveErr)
 		} else {
 			log.Println("JWT secret generated and persisted to config file")
+		}
+	}
+
+	// Encrypt SNMP credentials if they're in plaintext (fixes #518 - migration)
+	if cfg.Auth.JWTSecret != "" && len(cfg.SNMP.V3Credentials) > 0 {
+		needsSave := false
+		for i := range cfg.SNMP.V3Credentials {
+			cred := &cfg.SNMP.V3Credentials[i]
+			// Check if passwords need encryption
+			if (cred.AuthPassword != "" && !config.IsEncrypted(cred.AuthPassword)) ||
+				(cred.PrivPassword != "" && !config.IsEncrypted(cred.PrivPassword)) {
+				needsSave = true
+				break
+			}
+		}
+
+		if needsSave {
+			log.Println("Migrating SNMP credentials to encrypted format...")
+			if err := cfg.EncryptSNMPCredentials(); err != nil {
+				log.Printf("Warning: Failed to encrypt SNMP credentials: %v", err)
+			} else if saveErr := cfg.Save(*configPath); saveErr != nil {
+				log.Printf("Warning: Failed to persist encrypted SNMP credentials: %v", saveErr)
+			} else {
+				log.Println("SNMP credentials encrypted and saved securely")
+			}
 		}
 	}
 
@@ -173,6 +214,13 @@ func main() {
 		if activeInterface != cfg.Interface.Default {
 			log.Printf("Using detected active interface %s instead of configured default %s", activeInterface, cfg.Interface.Default)
 			cfg.Interface.Default = activeInterface
+
+			// Persist the updated interface to config (fixes #521)
+			if err := cfg.Save(*configPath); err != nil {
+				log.Printf("Warning: Failed to save updated interface to config: %v", err)
+			} else {
+				log.Printf("Updated config with active interface: %s", activeInterface)
+			}
 		}
 		if err := netMgr.SetCurrentInterface(activeInterface); err != nil {
 			log.Printf("Warning: failed to set active interface %s: %v", activeInterface, err)

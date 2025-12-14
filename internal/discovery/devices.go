@@ -35,6 +35,10 @@ type DiscoveredDevice struct {
 	IsLocal         bool              `json:"isLocal"` // true if device is on local subnet
 	IsRouter        bool              `json:"isRouter,omitempty"` // true if detected as IPv6 router via NDP
 
+	// Duplicate IP detection
+	HasDuplicateIP bool     `json:"hasDuplicateIP,omitempty"` // true if same IP seen with multiple MACs
+	DuplicateMACs  []string `json:"duplicateMACs,omitempty"`  // Other MACs seen with this IP
+
 	// Protocol-specific details (populated if discovered via that protocol)
 	LLDPInfo *LLDPDeviceInfo `json:"lldpInfo,omitempty"`
 	CDPInfo  *CDPDeviceInfo  `json:"cdpInfo,omitempty"`
@@ -363,6 +367,34 @@ func (d *DeviceDiscovery) aggregateResults() {
 		// Add NDP discovery method
 		if !containsMethod(device.DiscoveryMethod, MethodNDP) {
 			device.DiscoveryMethod = append(device.DiscoveryMethod, MethodNDP)
+		}
+	}
+
+	// Detect duplicate IPs (same IP with multiple MACs)
+	ipToMACs := make(map[string][]string) // Map IP to list of MACs
+	for _, device := range d.devices {
+		if device.IP != "" && device.MAC != "" {
+			ipToMACs[device.IP] = append(ipToMACs[device.IP], device.MAC)
+		}
+	}
+
+	// Flag devices with duplicate IPs
+	for ip, macs := range ipToMACs {
+		if len(macs) > 1 {
+			// Multiple MACs seen for this IP - mark all devices with this IP
+			for _, device := range d.devices {
+				if device.IP == ip && device.MAC != "" {
+					// Set duplicate flag
+					device.HasDuplicateIP = true
+					// Store other MACs (exclude this device's own MAC)
+					device.DuplicateMACs = []string{}
+					for _, mac := range macs {
+						if mac != device.MAC {
+							device.DuplicateMACs = append(device.DuplicateMACs, mac)
+						}
+					}
+				}
+			}
 		}
 	}
 

@@ -157,7 +157,7 @@ func (c *Checker) fetchFromService(ctx context.Context, url string, parser func(
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("User-Agent", "NetScope/1.0")
+	req.Header.Set("User-Agent", "LuminetIQ/1.0")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

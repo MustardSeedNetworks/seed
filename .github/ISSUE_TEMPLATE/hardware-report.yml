@@ -1,0 +1,239 @@
+name: 🔌 Hardware Compatibility Report
+description: Report hardware compatibility test results for Wi-Fi adapters or Ethernet NICs
+title: "[Hardware] "
+labels: ["hardware-report", "documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing hardware compatibility! Your report helps the community select compatible equipment.
+
+        **Please test thoroughly before submitting.** See [HARDWARE.md](../HARDWARE.md) for testing procedures.
+
+  - type: dropdown
+    id: hardware-type
+    attributes:
+      label: Hardware Type
+      description: What type of hardware are you reporting?
+      options:
+        - Wi-Fi Adapter
+        - Ethernet NIC (Cable Diagnostics)
+        - Both Wi-Fi and Ethernet
+    validations:
+      required: true
+
+  - type: input
+    id: chipset
+    attributes:
+      label: Chipset/Model
+      description: "Specific chipset or NIC model (run: lspci | grep -i 'network\|ethernet' OR lsusb for USB)"
+      placeholder: "e.g., Intel AX200, Realtek RTL8111, Atheros AR9271"
+    validations:
+      required: true
+
+  - type: input
+    id: driver
+    attributes:
+      label: Driver Name & Version
+      description: "Driver in use (run: ethtool -i eth0 or iw dev wlan0 info)"
+      placeholder: "e.g., iwlwifi 5.15, igb 5.10.0, r8169 2.3LK"
+    validations:
+      required: true
+
+  - type: input
+    id: kernel
+    attributes:
+      label: Kernel Version
+      description: "Linux kernel version (run: uname -r)"
+      placeholder: "e.g., 5.15.0-91-generic, 6.2.0-39-generic"
+    validations:
+      required: true
+
+  - type: input
+    id: distribution
+    attributes:
+      label: Distribution
+      description: "Linux distribution and version"
+      placeholder: "e.g., Ubuntu 22.04 LTS, Debian 12, Arch Linux"
+    validations:
+      required: true
+
+  - type: input
+    id: form-factor
+    attributes:
+      label: Form Factor
+      description: "How is the hardware connected?"
+      placeholder: "e.g., PCIe x1, M.2 2230, USB 3.0, Built-in laptop"
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: "## Wi-Fi Capabilities (if applicable)"
+
+  - type: dropdown
+    id: wifi-monitor-mode
+    attributes:
+      label: "Wi-Fi: Monitor Mode"
+      description: "Does the adapter support monitor mode?"
+      options:
+        - "N/A (Ethernet only)"
+        - "✅ Yes - Works perfectly"
+        - "⚠️ Partial - Works with limitations"
+        - "❌ No - Not supported"
+
+  - type: dropdown
+    id: wifi-injection
+    attributes:
+      label: "Wi-Fi: Packet Injection"
+      description: "Does the adapter support packet injection?"
+      options:
+        - "N/A (Ethernet only)"
+        - "✅ Yes - Works perfectly"
+        - "⚠️ Partial - Works with limitations"
+        - "❌ No - Not supported"
+        - "⚪ Not tested"
+
+  - type: dropdown
+    id: wifi-channel-switching
+    attributes:
+      label: "Wi-Fi: Channel Switching"
+      description: "Can you switch channels quickly without issues?"
+      options:
+        - "N/A (Ethernet only)"
+        - "✅ Fast - Sub-second switching"
+        - "⚠️ Slow - Multiple seconds per switch"
+        - "❌ Unreliable - Fails or hangs"
+
+  - type: dropdown
+    id: wifi-signal-quality
+    attributes:
+      label: "Wi-Fi: Signal Quality Reporting"
+      description: "Does it accurately report signal strength and quality?"
+      options:
+        - "N/A (Ethernet only)"
+        - "✅ Excellent - Accurate readings"
+        - "⚠️ Good - Minor inconsistencies"
+        - "❌ Poor - Inaccurate or missing data"
+
+  - type: markdown
+    attributes:
+      value: "## Ethernet Capabilities (if applicable)"
+
+  - type: dropdown
+    id: eth-tdr-support
+    attributes:
+      label: "Ethernet: TDR Cable Testing"
+      description: "Does the NIC support cable diagnostics via ethtool?"
+      options:
+        - "N/A (Wi-Fi only)"
+        - "✅ Full Support - Length, faults, distance to fault"
+        - "⚠️ Partial Support - Basic OK/fault only"
+        - "❌ Not Supported - 'Operation not supported' error"
+
+  - type: input
+    id: eth-tdr-test-command
+    attributes:
+      label: "Ethernet: TDR Test Command Output"
+      description: "If TDR supported, paste output of: sudo ethtool --cable-test eth0"
+      placeholder: |
+        Cable test started for eth0.
+        Cable test completed for eth0.
+        Pair A: OK, length 15m
+        Pair B: OK, length 15m
+      render: shell
+
+  - type: dropdown
+    id: eth-speed
+    attributes:
+      label: "Ethernet: Link Speed"
+      description: "Maximum link speed achieved"
+      options:
+        - "N/A (Wi-Fi only)"
+        - "10 Mbps"
+        - "100 Mbps"
+        - "1000 Mbps (1 Gbps)"
+        - "2500 Mbps (2.5 Gbps)"
+        - "5000 Mbps (5 Gbps)"
+        - "10000 Mbps (10 Gbps)"
+
+  - type: markdown
+    attributes:
+      value: "## Test Results"
+
+  - type: dropdown
+    id: luminetiq-compatible
+    attributes:
+      label: LuminetIQ Compatibility
+      description: Overall compatibility with LuminetIQ diagnostics
+      options:
+        - "✅ Excellent - All features work perfectly"
+        - "⚠️ Good - Most features work, minor issues"
+        - "⚠️ Limited - Basic features only"
+        - "❌ Poor - Significant functionality missing"
+        - "❌ Broken - Does not work at all"
+    validations:
+      required: true
+
+  - type: textarea
+    id: features-tested
+    attributes:
+      label: Features Tested
+      description: Which LuminetIQ features did you test with this hardware?
+      placeholder: |
+        - [x] Link status detection
+        - [x] Cable diagnostics (TDR)
+        - [x] Wi-Fi signal monitoring
+        - [ ] Wi-Fi site surveys
+        - [x] LLDP/CDP packet capture
+        - [x] Network discovery (ARP/ICMP)
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: |
+        Any quirks, special configuration needed, or recommendations?
+        E.g., "Required firmware update", "Works great for X but not Y", "Needs specific driver version"
+      placeholder: "Add any relevant notes, workarounds, or tips..."
+
+  - type: dropdown
+    id: recommendation
+    attributes:
+      label: Would you recommend this hardware?
+      description: Based on your testing, should others buy this for LuminetIQ?
+      options:
+        - "✅ Highly Recommend - Works great, good value"
+        - "⚠️ Recommend with caveats - Works but has limitations"
+        - "⚪ Neutral - Works for basic use only"
+        - "❌ Do not recommend - Better alternatives exist"
+        - "❌ Avoid - Broken or incompatible"
+    validations:
+      required: true
+
+  - type: textarea
+    id: purchase-info
+    attributes:
+      label: Purchase Information (Optional)
+      description: Where did you buy it? Approximate price? This helps others source the hardware.
+      placeholder: |
+        Vendor: Amazon
+        Price: $45 USD
+        Link: https://example.com/product (if allowed)
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Submission Checklist
+      description: Please confirm you've completed these steps
+      options:
+        - label: I have tested this hardware with LuminetIQ
+          required: true
+        - label: I have included kernel and driver versions
+          required: true
+        - label: My report is accurate to the best of my knowledge
+          required: true
+        - label: I give permission for this report to be added to the community wiki
+          required: true

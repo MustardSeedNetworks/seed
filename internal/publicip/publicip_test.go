@@ -211,8 +211,8 @@ func TestChecker_FetchFromService(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Verify User-Agent header
-				if ua := r.Header.Get("User-Agent"); ua != "NetScope/1.0" {
-					t.Errorf("User-Agent = %q, want %q", ua, "NetScope/1.0")
+				if ua := r.Header.Get("User-Agent"); ua != "LuminetIQ/1.0" {
+					t.Errorf("User-Agent = %q, want %q", ua, "LuminetIQ/1.0")
 				}
 				w.WriteHeader(tt.statusCode)
 				w.Write([]byte(tt.body))
