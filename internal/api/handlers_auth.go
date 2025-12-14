@@ -1,0 +1,193 @@
+// Package api provides the HTTP/WebSocket server.
+package api
+
+import (
+	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/krisarmstrong/luminetiq/internal/auth"
+)
+
+// LoginRequest represents a login request.
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// LoginResponse represents a successful login response.
+type LoginResponse struct {
+	Token   string `json:"token"`
+	Expires int64  `json:"expires"`
+}
+
+// handleLogin handles user login (fixes #544 - split from handlers.go).
+func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get client IP for rate limiting
+	clientIP := GetClientIP(r)
+
+	// Check if IP is rate limited
+	if s.loginRateLimiter.IsBlocked(clientIP) {
+		w.Header().Set("Retry-After", "900") // 15 minutes
+		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
+		sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+			"error":              "Too many failed login attempts",
+			"retry_after":        900,
+			"remaining_attempts": remaining,
+		})
+		return
+	}
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+	var req LoginRequest
+	if err := json.Unmarshal(bodyBytes, &req); err != nil {
+		log.Printf("login decode error: %v body=%q", err, string(bodyBytes))
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	token, err := s.authManager.Authenticate(req.Username, req.Password)
+	if err != nil {
+		// Record failed attempt
+		blocked := s.loginRateLimiter.RecordAttempt(clientIP, false)
+		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
+
+		if blocked {
+			w.Header().Set("Retry-After", "900")
+			sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+				"error":              "Too many failed login attempts. Account temporarily locked.",
+				"retry_after":        900,
+				"remaining_attempts": 0,
+			})
+			return
+		}
+
+		sendJSONResponse(w, http.StatusUnauthorized, map[string]interface{}{
+			"error":              "Invalid credentials",
+			"remaining_attempts": remaining,
+		})
+		return
+	}
+
+	// Record successful attempt (clears previous failures)
+	s.loginRateLimiter.RecordAttempt(clientIP, true)
+
+	resp := LoginResponse{
+		Token:   token,
+		Expires: time.Now().Add(s.config.Auth.SessionTimeout).Unix(),
+	}
+
+	sendJSONResponse(w, http.StatusOK, resp)
+}
+
+// handleLogout handles user logout (fixes #544 - split from handlers.go).
+func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// JWT is stateless, so we just acknowledge the logout
+	// Client should discard the token
+	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "logged out"})
+}
+
+// SetupStatusResponse represents the setup status response.
+type SetupStatusResponse struct {
+	NeedsSetup        bool   `json:"needsSetup"`
+	SuggestedPassword string `json:"suggestedPassword,omitempty"`
+}
+
+// handleSetupStatus checks if initial setup is required (fixes #544 - split from handlers.go).
+func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Check if using default password
+	needsSetup := auth.IsDefaultPasswordHash(s.config.Auth.DefaultPasswordHash)
+
+	resp := SetupStatusResponse{
+		NeedsSetup: needsSetup,
+	}
+
+	// If setup is needed, suggest a secure password
+	if needsSetup {
+		suggestedPassword, err := auth.GenerateSecurePassword(16)
+		if err == nil {
+			resp.SuggestedPassword = suggestedPassword
+		}
+	}
+
+	sendJSONResponse(w, http.StatusOK, resp)
+}
+
+// SetupCompleteRequest represents the setup completion request.
+type SetupCompleteRequest struct {
+	Password string `json:"password"`
+}
+
+// handleSetupComplete completes initial setup by setting admin password (fixes #544 - split from handlers.go).
+func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req SetupCompleteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate password strength
+	if err := auth.ValidatePasswordStrength(req.Password); err != nil {
+		sendJSONResponse(w, http.StatusBadRequest, map[string]string{
+			"error": "Password does not meet strength requirements",
+		})
+		return
+	}
+
+	// Hash the new password
+	hash, err := auth.HashPassword(req.Password)
+	if err != nil {
+		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
+			"error": "Failed to hash password",
+		})
+		return
+	}
+
+	// Update config with new password hash
+	s.config.Lock()
+	s.config.Auth.DefaultPasswordHash = hash
+	s.config.Unlock()
+
+	// Update auth manager
+	s.authManager.UpdatePasswordHash(hash)
+
+	// Save config to disk
+	if err := s.config.Save(s.configPath); err != nil {
+		log.Printf("Failed to save config after setup: %v", err)
+		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
+			"error": "Failed to save configuration",
+		})
+		return
+	}
+
+	log.Println("Initial setup completed successfully")
+	sendJSONResponse(w, http.StatusOK, map[string]string{
+		"status": "success",
+	})
+}
