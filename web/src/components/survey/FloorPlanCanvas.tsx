@@ -1,10 +1,10 @@
 /**
  * FloorPlanCanvas Component (~234 lines)
- * 
+ *
  * Purpose: HTML5 Canvas-based floor plan visualization for WiFi survey heatmaps.
  * Renders floor plan images with overlaid sample points and heatmap color gradients
  * showing signal strength or performance metrics at each location.
- * 
+ *
  * Key Features:
  * - Image rendering: Displays floor plan images maintaining aspect ratio
  * - Sample markers: Shows measurement points as circles on the floor plan
@@ -14,7 +14,7 @@
  * - Metric selection: Display RSSI, throughput, or latency heatmaps
  * - Interpolation: Smooth color gradient between sample points
  * - Canvas optimization: Efficient rendering with minimal redraws
- * 
+ *
  * Usage:
  * ```typescript
  * <FloorPlanCanvas
@@ -25,12 +25,13 @@
  *   heatmapMetric="rssi"
  * />
  * ```
- * 
+ *
  * Dependencies: Canvas API, floor plan and sample point types
  * State: Canvas dimensions, rendering state
  */
 
 import { useRef, useEffect, useState } from "react";
+import { radius } from "../../styles/theme";
 import type { FloorPlan, SamplePoint } from "../../hooks/useSurvey";
 
 interface FloorPlanCanvasProps {
@@ -157,7 +158,7 @@ export function FloorPlanCanvas({
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
-        className={`border border-surface-border rounded-md ${
+        className={`border border-surface-border ${radius.md} ${
           interactive ? "cursor-crosshair" : ""
         }`}
         width={dimensions.width}
