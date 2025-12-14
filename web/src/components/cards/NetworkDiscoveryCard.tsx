@@ -26,8 +26,10 @@ import {
   X,
   ChevronUp,
   ChevronDown,
+  AlertTriangle,
 } from "../ui/Icons";
 import type { LucideIcon } from "lucide-react";
+import { VulnerabilityDetailsModal } from "./VulnerabilityDetailsModal";
 
 export interface LLDPInfo {
   chassisId: string;
@@ -120,6 +122,10 @@ export interface DiscoveredDevice {
   edpInfo?: EDPInfo;
   ndpInfo?: NDPInfo;
   profile?: DeviceProfile;
+  vulnerabilities?: {
+    count: number;
+    highestSeverity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  };
 }
 
 export interface DiscoveryStatus {
@@ -542,6 +548,7 @@ function DeviceRow({
   onDeepScan,
   isScanning,
   scanResult,
+  onVulnerabilityClick,
 }: {
   device: DiscoveredDevice;
   isExpanded: boolean;
@@ -549,6 +556,7 @@ function DeviceRow({
   onDeepScan?: (ip: string) => void;
   isScanning?: boolean;
   scanResult?: DeepScanResult;
+  onVulnerabilityClick?: (ip: string) => void;
 }) {
   const hasDetails =
     device.lldpInfo || device.cdpInfo || device.edpInfo || device.profile;
@@ -607,6 +615,28 @@ function DeviceRow({
                     deviceType={device.profile.deviceType}
                   />
                 )}
+              {device.vulnerabilities && device.vulnerabilities.count > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onVulnerabilityClick?.(device.ip);
+                  }}
+                  className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity ${
+                    device.vulnerabilities.highestSeverity === "CRITICAL"
+                      ? "bg-red-500/20 text-red-400"
+                      : device.vulnerabilities.highestSeverity === "HIGH"
+                        ? "bg-orange-500/20 text-orange-400"
+                        : device.vulnerabilities.highestSeverity === "MEDIUM"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-blue-500/20 text-blue-400"
+                  }`}
+                  title="Click to view vulnerability details"
+                >
+                  <AlertTriangle className="w-3 h-3" />
+                  {device.vulnerabilities.count} CVE
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               {device.discoveryMethod.map((method) => (
@@ -896,6 +926,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  // Vulnerability modal state
+  const [selectedDeviceForVuln, setSelectedDeviceForVuln] = useState<
+    string | null
+  >(null);
 
   // Toggle sort field/direction
   const handleSortChange = useCallback(
@@ -1209,6 +1244,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
                   onDeepScan={handleDeepScan}
                   isScanning={scanningDevices.has(device.ip)}
                   scanResult={scanResults.get(device.ip)}
+                  onVulnerabilityClick={setSelectedDeviceForVuln}
                 />
               );
             })}
@@ -1236,6 +1272,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
                   onDeepScan={handleDeepScan}
                   isScanning={scanningDevices.has(device.ip)}
                   scanResult={scanResults.get(device.ip)}
+                  onVulnerabilityClick={setSelectedDeviceForVuln}
                 />
               );
             })}
@@ -1247,6 +1284,14 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         <p className="text-sm text-text-muted text-center py-4">
           No devices discovered. Click Scan to discover network devices.
         </p>
+      )}
+
+      {/* Vulnerability Details Modal */}
+      {selectedDeviceForVuln && (
+        <VulnerabilityDetailsModal
+          deviceIp={selectedDeviceForVuln}
+          onClose={() => setSelectedDeviceForVuln(null)}
+        />
       )}
     </Card>
   );

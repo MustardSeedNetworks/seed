@@ -10,6 +10,7 @@ import {
   DNSSettings,
   HealthChecksSettings,
   PerformanceSettings,
+  SNMPSettings,
   ThresholdsSettings,
   WiFiSettings,
 } from "./sections";
@@ -22,6 +23,7 @@ import type {
   IperfSuggestion,
   NetworkDiscoverySettings,
   SubnetConfig,
+  SNMPSettings as SNMPSettingsType,
 } from "../../types/settings";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -351,6 +353,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         snmpQuery: false,
       },
     });
+  // SNMP settings
+  const [snmpSettings, setSnmpSettings] = useState<SNMPSettingsType>({
+    communities: ["public"],
+    v3Credentials: [],
+    timeout: 5000,
+    retries: 2,
+    port: 161,
+  });
   // Additional subnets for scanning
   const [subnets, setSubnets] = useState<SubnetConfig[]>([]);
   const [newSubnetCidr, setNewSubnetCidr] = useState("");
@@ -366,6 +376,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const [thresholdsStatus, setThresholdsStatus] = useState<SaveStatus>("idle");
   const [testsStatus, setTestsStatus] = useState<SaveStatus>("idle");
   const [wifiStatus, setWifiStatus] = useState<SaveStatus>("idle");
+  const [snmpStatus, setSnmpStatus] = useState<SaveStatus>("idle");
   // Status for display, iperf comes from context (settingsStatus)
   const displayStatus = settingsStatus.display;
   const iperfStatus = settingsStatus.iperf;
@@ -379,6 +390,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const testsInitRef = useRef(true);
   const wifiInitRef = useRef(true);
   const networkDiscoveryInitRef = useRef(true);
+  const snmpInitRef = useRef(true);
 
   // Debounce timers (fab, display, iperf now handled by context)
   const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -387,6 +399,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const snmpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Legacy state (keep for IP settings which still needs manual apply)
   const [savingIP, setSavingIP] = useState(false);
@@ -545,6 +558,27 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       }
     } catch (err) {
       console.error("Failed to fetch network discovery settings:", err);
+    }
+  }, []);
+
+  // Fetch SNMP settings from API
+  const fetchSNMPSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/snmp/settings`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSnmpSettings({
+          communities: data.communities ?? ["public"],
+          v3Credentials: data.v3Credentials ?? [],
+          timeout: data.timeout ?? 5000,
+          retries: data.retries ?? 2,
+          port: data.port ?? 161,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch SNMP settings:", err);
     }
   }, []);
 
@@ -721,6 +755,28 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     }
   }, [networkDiscoverySettings]);
 
+  const saveSNMPSettings = useCallback(async () => {
+    setSnmpStatus("saving");
+    try {
+      const response = await fetch(`${API_BASE}/api/snmp/settings`, {
+        method: "PUT",
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(snmpSettings),
+      });
+      if (response.ok) {
+        setSnmpStatus("saved");
+        setTimeout(() => setSnmpStatus("idle"), 2000);
+      } else {
+        setSnmpStatus("error");
+      }
+    } catch {
+      setSnmpStatus("error");
+    }
+  }, [snmpSettings]);
+
   useEffect(() => {
     if (isOpen) {
       // Reset init refs on open
@@ -729,6 +785,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       testsInitRef.current = true;
       wifiInitRef.current = true;
       networkDiscoveryInitRef.current = true;
+      snmpInitRef.current = true;
 
       fetchThresholds();
       fetchIPSettings();
@@ -736,6 +793,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       fetchWifiSettings();
       // FAB options, display options, and iperf settings come from SettingsContext
       fetchNetworkDiscoverySettings();
+      fetchSNMPSettings();
       fetchSubnets();
 
       // Mark initial load as done after a short delay
@@ -745,6 +803,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         testsInitRef.current = false;
         wifiInitRef.current = false;
         networkDiscoveryInitRef.current = false;
+        snmpInitRef.current = false;
       }, 500);
     }
   }, [
@@ -754,6 +813,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     fetchTestsSettings,
     fetchWifiSettings,
     fetchNetworkDiscoverySettings,
+    fetchSNMPSettings,
     fetchSubnets,
   ]);
 
@@ -915,6 +975,18 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         clearTimeout(networkDiscoveryTimerRef.current);
     };
   }, [networkDiscoverySettings, saveNetworkDiscoverySettings]);
+
+  // Auto-save SNMP settings with debounce
+  useEffect(() => {
+    if (snmpInitRef.current) return;
+    if (snmpTimerRef.current) clearTimeout(snmpTimerRef.current);
+    snmpTimerRef.current = setTimeout(() => {
+      saveSNMPSettings();
+    }, 800);
+    return () => {
+      if (snmpTimerRef.current) clearTimeout(snmpTimerRef.current);
+    };
+  }, [snmpSettings, saveSNMPSettings]);
 
   // Validate IP address format
   const isValidIP = (ip: string): boolean => {
@@ -1235,6 +1307,12 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             addSubnet={addSubnet}
             toggleSubnet={toggleSubnet}
             deleteSubnet={deleteSubnet}
+          />
+
+          <SNMPSettings
+            snmpSettings={snmpSettings}
+            setSnmpSettings={setSnmpSettings}
+            snmpStatus={snmpStatus}
           />
 
           <ThresholdsSettings

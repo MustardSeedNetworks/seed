@@ -92,3 +92,10 @@ auth:
   default_password_hash: $2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52
   session_timeout: 24h0m0s
   jwt_secret: "6203b0868d2f0f3630a20fdc882f953fcd13330a659eba71870eca445180379f"
+snmp:
+  communities:
+    - public
+  v3_credentials: []
+  timeout: 5s
+  retries: 2
+  port: 161

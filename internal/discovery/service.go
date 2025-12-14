@@ -45,7 +45,7 @@ func NewService(cfg *config.Config, interfaceName string) *Service {
 		cfg:             cfg,
 		interfaceName:   interfaceName,
 		deviceDiscovery: NewDeviceDiscovery(interfaceName),
-		profiler:        NewDeviceProfiler(DefaultProfilerConfig()),
+		profiler:        NewDeviceProfiler(DefaultProfilerConfig(), &cfg.SNMP),
 		activeProfile:   cfg.NetworkDiscovery.Profile,
 	}
 }

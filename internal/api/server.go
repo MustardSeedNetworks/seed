@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -66,11 +67,14 @@ type Server struct {
 	speedtestTester  *speedtest.Tester
 	iperfManager     *iperf.Manager
 	surveyManager    *survey.Manager
-	publicipChecker  *publicip.Checker
-	logAccessToken   string
-	logAccessHeader  string
-	requireLogToken  bool
-	icmpAvailable    bool // Whether raw ICMP sockets are available
+	vulnScanner      *discovery.VulnerabilityScanner
+	publicipChecker   *publicip.Checker
+	logAccessToken    string
+	logAccessHeader   string
+	requireLogToken   bool
+	icmpAvailable     bool // Whether raw ICMP sockets are available
+	redirectServer    *http.Server // HTTP→HTTPS redirect server (fixes #515)
+	redirectServerErr chan error    // Error channel for redirect server
 }
 
 // NewServer creates a new server instance.
@@ -153,6 +157,32 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		log.Printf("Warning: Failed to load surveys: %v", err)
 	}
 
+	// Initialize WebSocket hub (fixes #512)
+	s.wsHub = NewHub()
+	// Start hub before setupRoutes to prevent race condition
+	go s.wsHub.Run()
+
+	// Initialize vulnerability scanner if enabled
+	if cfg.Security.VulnerabilityScanning.Enabled {
+		scannerCfg := &discovery.VulnerabilityScannerConfig{
+			Enabled:           cfg.Security.VulnerabilityScanning.Enabled,
+			CVEDatabase:       cfg.Security.VulnerabilityScanning.CVEDatabase,
+			NVDAPIKey:         cfg.Security.VulnerabilityScanning.NVDAPIKey,
+			UpdateInterval:    cfg.Security.VulnerabilityScanning.UpdateInterval,
+			SeverityThreshold: cfg.Security.VulnerabilityScanning.SeverityThreshold,
+			MaxConcurrent:     cfg.Security.VulnerabilityScanning.MaxConcurrent,
+		}
+
+		vulnScanner, err := discovery.NewVulnerabilityScanner(scannerCfg)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize vulnerability scanner: %v", err)
+		} else {
+			s.vulnScanner = vulnScanner
+			log.Printf("Vulnerability scanner initialized (CVE DB: %s, threshold: %s)",
+				scannerCfg.CVEDatabase, scannerCfg.SeverityThreshold)
+		}
+	}
+
 	// Configure security: allowed origins for CORS/WebSocket
 	SetAllowedOrigins(cfg.Security.AllowedOrigins)
 	if len(cfg.Security.AllowedOrigins) > 0 {
@@ -161,7 +191,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		log.Println("Using default RFC 1918 private network origins for CORS/WebSocket")
 	}
 
-	s.wsHub = NewHub()
+	// Setup routes (wsHub already initialized and running above)
 	s.setupRoutes()
 
 	return s
@@ -231,6 +261,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/vlan/interface", s.handleVLANInterface)
 	s.mux.HandleFunc("/api/wifi", s.handleWiFi)
 	s.mux.HandleFunc("/api/wifi/settings", s.handleWiFiSettings)
+	s.mux.HandleFunc("/api/snmp/settings", s.handleSNMPSettings)
 	s.mux.HandleFunc("/api/cable", s.handleCable)
 	s.mux.HandleFunc("/api/speedtest", s.handleSpeedtest)
 	s.mux.HandleFunc("/api/speedtest/status", s.handleSpeedtestStatus)
@@ -263,6 +294,13 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/survey/pause", s.pauseSurvey)
 	s.mux.HandleFunc("/api/survey/complete", s.completeSurvey)
 	s.mux.HandleFunc("/api/survey/sample", s.addSurveySample)
+
+	// Vulnerability scanner routes
+	s.mux.HandleFunc("/api/vulnerabilities/scan", s.handleVulnerabilityScan)
+	s.mux.HandleFunc("/api/vulnerabilities/status", s.handleVulnerabilityStatus)
+	s.mux.HandleFunc("/api/vulnerabilities/results", s.handleVulnerabilityResults)
+	s.mux.HandleFunc("/api/vulnerabilities/device", s.handleDeviceVulnerabilities)
+	s.mux.HandleFunc("/api/vulnerabilities/settings", s.handleVulnerabilitySettings)
 	s.mux.HandleFunc("/api/survey/floorplan", s.updateSurveyFloorPlan)
 
 	// Setup routes (no auth required for initial setup)
@@ -345,6 +383,21 @@ func isAllowedOrigin(origin string) bool {
 // spaHandler wraps a file server to support SPA (Single Page Application) routing.
 // It serves index.html for any path that doesn't match a static file, enabling
 // client-side routing in React/Vue/Angular apps.
+// recoverMiddleware recovers from panics in HTTP handlers (fixes #519).
+// Prevents a single panic from crashing the entire server.
+func recoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("PANIC in handler %s %s: %v\n%s",
+					r.Method, r.URL.Path, err, debug.Stack())
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
 func spaHandler(fsys http.FileSystem) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -414,8 +467,9 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
-	// Apply middleware stack: security headers → CORS → auth
-	handler := securityHeadersMiddleware(corsMiddleware(s.authManager.Middleware(s.mux)))
+	// Apply middleware stack: panic recovery → security headers → CORS → auth (fixes #519)
+	// Panic recovery is outermost to catch all panics
+	handler := recoverMiddleware(securityHeadersMiddleware(corsMiddleware(s.authManager.Middleware(s.mux))))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
@@ -425,9 +479,7 @@ func (s *Server) Start() error {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Start WebSocket hub
-	go s.wsHub.Run()
-
+	// WebSocket hub already running (started in NewServer to fix #512 race condition)
 	// Start WebSocket broadcast loop
 	s.startBroadcastLoop()
 
@@ -478,7 +530,8 @@ func (s *Server) startHTTP() error {
 	return s.httpServer.ListenAndServe()
 }
 
-// startHTTPRedirect starts an HTTP server that redirects all requests to HTTPS.
+// startHTTPRedirect starts an HTTP server that redirects all requests to HTTPS (fixes #515).
+// Properly tracks the server and allows shutdown.
 func (s *Server) startHTTPRedirect(port int) {
 	redirectHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Build HTTPS URL preserving the host and path
@@ -503,15 +556,24 @@ func (s *Server) startHTTPRedirect(port int) {
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Starting HTTP→HTTPS redirect server on %s", addr)
 
-	redirectServer := &http.Server{
+	// Store redirect server for proper shutdown (fixes #515)
+	s.redirectServer = &http.Server{
 		Addr:         addr,
 		Handler:      redirectHandler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
 
-	if err := redirectServer.ListenAndServe(); err != nil {
+	// Create error channel if not already created
+	if s.redirectServerErr == nil {
+		s.redirectServerErr = make(chan error, 1)
+	}
+
+	// Run server and report errors
+	err := s.redirectServer.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
 		log.Printf("HTTP redirect server error: %v", err)
+		s.redirectServerErr <- err
 	}
 }
 
@@ -538,19 +600,19 @@ func (s *Server) startHTTPS() error {
 		}
 	}
 
-	// Configure TLS
+	// Configure TLS 1.3 (fixes #523)
+	// CipherSuites is not set because TLS 1.3 uses its own mandatory cipher suites:
+	// - TLS_AES_128_GCM_SHA256
+	// - TLS_AES_256_GCM_SHA384
+	// - TLS_CHACHA20_POLY1305_SHA256
+	// Setting CipherSuites with TLS 1.3 is misleading as Go ignores them.
+	// If you need to control ciphers, use MinVersion: tls.VersionTLS12
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS13,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		},
 	}
 	s.httpServer.TLSConfig = tlsConfig
 
-	log.Printf("Starting HTTPS server on %s", s.httpServer.Addr)
+	log.Printf("Starting HTTPS server on %s with TLS 1.3", s.httpServer.Addr)
 	return s.httpServer.ListenAndServeTLS(certFile, keyFile)
 }
 
@@ -622,8 +684,8 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 		return "", "", err
 	}
 
-	// Generate private key
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	// Generate private key with 4096-bit RSA (fixes #533)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return "", "", err
 	}
@@ -632,15 +694,15 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"NetScope"},
-			CommonName:   "NetScope Self-Signed",
+			Organization: []string{"LuminetIQ"},
+			CommonName:   "LuminetIQ Self-Signed",
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(1, 0, 0), // Valid for 1 year
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		DNSNames:              []string{"localhost", "netscope.local"},
+		DNSNames:              []string{"localhost", "luminetiq.local"},
 	}
 
 	// Create certificate
@@ -675,14 +737,39 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 	return certFile, keyFile, nil
 }
 
-// Shutdown gracefully shuts down the server.
+// Shutdown gracefully shuts down the server (fixes #515, #524).
 func (s *Server) Shutdown(ctx context.Context) error {
+	log.Println("Shutting down server...")
+
+	// Shutdown HTTP redirect server if running (fixes #515)
+	if s.redirectServer != nil {
+		log.Println("Shutting down HTTP redirect server...")
+		if err := s.redirectServer.Shutdown(ctx); err != nil {
+			log.Printf("Error shutting down redirect server: %v", err)
+		}
+	}
+
+	// Stop all services (fixes #524 - services will complete gracefully)
+	log.Println("Stopping WebSocket hub...")
 	s.wsHub.Shutdown()
+
+	log.Println("Stopping link monitor...")
 	s.linkMonitor.Stop()
+
+	log.Println("Stopping discovery service...")
 	s.discoveryService.Stop()
+
+	log.Println("Stopping discovery manager...")
 	s.discoveryManager.Stop()
+
+	log.Println("Stopping VLAN traffic monitor...")
 	s.vlanTrafficMonitor.Stop()
+
+	log.Println("Stopping rate limiter...")
 	s.loginRateLimiter.Stop()
+
+	// Shutdown main HTTP server
+	log.Println("Shutting down main HTTP server...")
 	return s.httpServer.Shutdown(ctx)
 }
 

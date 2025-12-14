@@ -34,6 +34,13 @@ _Coming soon_
 - Node.js 24+ (LTS)
 - libpcap-dev
 
+**Hardware Considerations:**
+- **Wi-Fi Diagnostics:** Requires nl80211-compatible adapter (Intel AX200/210 recommended)
+- **Cable Diagnostics (TDR):** Requires Intel I350/I210 or Broadcom BCM5719/5720
+- **Basic Diagnostics:** Works with any network adapter
+
+See **[HARDWARE.md](HARDWARE.md)** for detailed compatibility guide and recommendations.
+
 **Note:** LuminetIQ requires raw ICMP socket access for ping functionality. On Linux, this requires either:
 - Running as root (`sudo ./luminetiq`), or
 - Setting capabilities: `sudo setcap cap_net_raw=+ep ./luminetiq`

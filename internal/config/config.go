@@ -411,10 +411,12 @@ type RogueDetectionConfig struct {
 // VulnerabilityScanConfig contains settings for CVE vulnerability scanning.
 type VulnerabilityScanConfig struct {
 	Enabled           bool   `yaml:"enabled"`
-	CVEDatabase       string `yaml:"cve_database"`        // "nvd" or "local"
-	NVDAPIKey         string `yaml:"nvd_api_key"`         // Optional NVD API key
-	UpdateInterval    int    `yaml:"update_interval"`     // Seconds between updates
-	SeverityThreshold string `yaml:"severity_threshold"`   // "low", "medium", "high", "critical"
+	CVEDatabase       string `yaml:"cve_database"`       // "nvd" or "local"
+	NVDAPIKey         string `yaml:"nvd_api_key"`        // Optional NVD API key
+	UpdateInterval    int    `yaml:"update_interval"`    // Seconds between updates
+	SeverityThreshold string `yaml:"severity_threshold"` // "low", "medium", "high", "critical"
+	MaxConcurrent     int    `yaml:"max_concurrent"`     // Max concurrent vulnerability checks
+	AutoScan          bool   `yaml:"auto_scan"`          // Auto-scan after device discovery
 }
 
 // SNMPConfig contains SNMP settings for device interrogation.
@@ -561,6 +563,15 @@ func DefaultConfig() *Config {
 		},
 		Security: SecurityConfig{
 			AllowedOrigins: []string{}, // Empty = use RFC 1918 defaults
+			VulnerabilityScanning: VulnerabilityScanConfig{
+				Enabled:           false,
+				CVEDatabase:       "nvd",
+				NVDAPIKey:         "",
+				UpdateInterval:    86400,  // 24 hours
+				SeverityThreshold: "medium",
+				MaxConcurrent:     5,
+				AutoScan:          false,
+			},
 		},
 		Iperf: IperfConfig{
 			AutoRunOnLink: false,

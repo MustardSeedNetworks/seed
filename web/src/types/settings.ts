@@ -214,6 +214,30 @@ export interface WiFiSettings {
 }
 
 // ============================================================================
+// SNMP Settings
+// ============================================================================
+
+export interface SNMPv3Credential {
+  id?: string; // Stable unique ID for React key
+  name: string;
+  username: string;
+  authProtocol: string; // "MD5", "SHA", "SHA256", "SHA512", or "" for noAuth
+  authPassword: string;
+  privProtocol: string; // "DES", "AES", "AES192", "AES256", or "" for noPriv
+  privPassword: string;
+  contextName: string;
+  securityLevel: string; // "noAuthNoPriv", "authNoPriv", "authPriv"
+}
+
+export interface SNMPSettings {
+  communities: string[];
+  v3Credentials: SNMPv3Credential[];
+  timeout: number; // milliseconds
+  retries: number;
+  port: number;
+}
+
+// ============================================================================
 // Logs
 // ============================================================================
 
@@ -311,6 +335,14 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
     traceroute: false,
     snmpQuery: false,
   },
+};
+
+export const DEFAULT_SNMP_SETTINGS: SNMPSettings = {
+  communities: ["public"],
+  v3Credentials: [],
+  timeout: 5000, // 5 seconds
+  retries: 2,
+  port: 161,
 };
 
 // ============================================================================
