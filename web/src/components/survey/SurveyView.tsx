@@ -451,7 +451,7 @@ export function SurveyView({
               <h2 className="heading-3 mb-4">
                 Samples ({survey.samples.length})
               </h2>
-              <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              <div className="space-y-2 max-h-[70vh] overflow-y-auto">
                 {survey.samples.length === 0 ? (
                   <p className="body-small text-center py-8">
                     No samples yet.{" "}

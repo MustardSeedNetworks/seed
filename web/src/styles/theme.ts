@@ -18,14 +18,57 @@
 // - 8 = 32px (section separation)
 // - 12 = 48px (major sections)
 
+/**
+ * Spacing scale - based on 4px grid
+ * Use these semantic spacing utilities for consistency.
+ * CSS utility classes are defined in index.css (@layer components)
+ */
 export const spacing = {
-  tight: "0.5", // 2px
-  compact: "2", // 8px
-  default: "3", // 12px
-  comfortable: "4", // 16px
-  spacious: "6", // 24px
-  section: "8", // 32px
-  major: "12", // 48px
+  // Raw Tailwind values (for reference)
+  values: {
+    xs: "1", // 4px
+    sm: "2", // 8px
+    default: "3", // 12px
+    md: "4", // 16px
+    lg: "6", // 24px
+    xl: "8", // 32px
+    "2xl": "12", // 48px
+  },
+
+  // Semantic CSS utility classes (preferred - use these)
+  stack: {
+    xs: "stack-xs", // 4px vertical
+    sm: "stack-sm", // 8px vertical
+    default: "stack", // 12px vertical
+    lg: "stack-lg", // 16px vertical
+    xl: "stack-xl", // 24px vertical
+  },
+
+  section: {
+    default: "section-gap", // 24px between sections
+    lg: "section-gap-lg", // 32px for page-level
+  },
+
+  gap: {
+    tight: "gap-tight", // 4px
+    compact: "gap-compact", // 8px
+    default: "gap-default", // 12px
+    comfortable: "gap-comfortable", // 16px
+    spacious: "gap-spacious", // 24px
+  },
+
+  inline: {
+    xs: "inline-gap-xs", // 4px
+    sm: "inline-gap-sm", // 6px
+    default: "inline-gap", // 8px
+    lg: "inline-gap-lg", // 12px
+  },
+
+  pad: {
+    sm: "pad-sm", // 12px
+    default: "pad", // 16px
+    lg: "pad-lg", // 24px
+  },
 } as const;
 
 // ============================================================================
@@ -171,6 +214,33 @@ export const badge = {
     error: "bg-status-error/10 text-status-error",
     info: "bg-status-info/10 text-status-info",
     primary: "bg-brand-primary/10 text-brand-primary",
+  },
+} as const;
+
+/**
+ * Sizing tokens - for consistent heights/widths
+ * Avoids arbitrary values like h-[500px] or w-[28rem]
+ */
+export const sizing = {
+  // Modal/drawer heights (viewport-relative)
+  height: {
+    modal: "max-h-modal", // 85vh - defined in @theme
+    drawer: "h-full", // Full height for side drawers
+    panel: "max-h-[70vh]", // Shorter panels
+  },
+
+  // Fixed widths for drawers, panels
+  width: {
+    drawer: "w-80", // 320px - standard drawer
+    drawerWide: "w-96", // 384px - wide drawer
+    panel: "w-72", // 288px - side panels
+    dropdown: "w-64", // 256px - dropdown menus
+  },
+
+  // Min/max constraints
+  minHeight: {
+    card: "min-h-[120px]", // Minimum card height
+    section: "min-h-[200px]", // Minimum section height
   },
 } as const;
 

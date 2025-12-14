@@ -186,6 +186,86 @@ body {
     @apply font-mono text-sm bg-surface-hover px-1.5 py-0.5 rounded;
   }
 
+  /* ========================================================================
+     SPACING SCALE
+     ========================================================================
+     Standardized spacing utilities to ensure consistency.
+     Based on 4px grid with semantic naming.
+
+     Usage:
+       <div className="stack-sm">...</div>     // 8px vertical gap
+       <div className="stack">...</div>        // 12px vertical gap (default)
+       <div className="stack-lg">...</div>     // 16px vertical gap
+       <div className="section-gap">...</div>  // 24px between sections
+     ======================================================================== */
+
+  /* Vertical stacking (space-y equivalents with semantic names) */
+  .stack-xs {
+    @apply space-y-1; /* 4px */
+  }
+  .stack-sm {
+    @apply space-y-2; /* 8px */
+  }
+  .stack {
+    @apply space-y-3; /* 12px - default */
+  }
+  .stack-lg {
+    @apply space-y-4; /* 16px */
+  }
+  .stack-xl {
+    @apply space-y-6; /* 24px */
+  }
+
+  /* Section separators */
+  .section-gap {
+    @apply space-y-6; /* 24px between major sections */
+  }
+  .section-gap-lg {
+    @apply space-y-8; /* 32px for page-level sections */
+  }
+
+  /* Component gaps (for flex/grid) */
+  .gap-tight {
+    @apply gap-1; /* 4px */
+  }
+  .gap-compact {
+    @apply gap-2; /* 8px */
+  }
+  .gap-default {
+    @apply gap-3; /* 12px */
+  }
+  .gap-comfortable {
+    @apply gap-4; /* 16px */
+  }
+  .gap-spacious {
+    @apply gap-6; /* 24px */
+  }
+
+  /* Card/container padding */
+  .pad-sm {
+    @apply p-3; /* 12px */
+  }
+  .pad {
+    @apply p-4; /* 16px - default card padding */
+  }
+  .pad-lg {
+    @apply p-6; /* 24px - modal/drawer padding */
+  }
+
+  /* Inline spacing (horizontal gaps for buttons, badges, etc.) */
+  .inline-gap-xs {
+    @apply gap-1; /* 4px */
+  }
+  .inline-gap-sm {
+    @apply gap-1.5; /* 6px */
+  }
+  .inline-gap {
+    @apply gap-2; /* 8px - default inline */
+  }
+  .inline-gap-lg {
+    @apply gap-3; /* 12px */
+  }
+
   /* Layout utilities */
   .content-max {
     @apply max-w-7xl mx-auto px-4;
