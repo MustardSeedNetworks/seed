@@ -218,6 +218,46 @@ export const badge = {
 } as const;
 
 /**
+ * Alert/Banner variants - for inline messages
+ * Use these for error/warning/info banners instead of hardcoded colors
+ */
+export const alert = {
+  base: "px-4 py-3 rounded border",
+
+  variant: {
+    error:
+      "bg-status-error/10 border-status-error/20 text-status-error dark:bg-status-error/15 dark:border-status-error/30",
+    warning:
+      "bg-status-warning/10 border-status-warning/20 text-status-warning dark:bg-status-warning/15 dark:border-status-warning/30",
+    success:
+      "bg-status-success/10 border-status-success/20 text-status-success dark:bg-status-success/15 dark:border-status-success/30",
+    info: "bg-status-info/10 border-status-info/20 text-status-info dark:bg-status-info/15 dark:border-status-info/30",
+  },
+} as const;
+
+/**
+ * Discovery method colors - for network discovery badges
+ * Use dark: variants for proper dark mode support
+ */
+export const discoveryMethod = {
+  arp: "bg-blue-500/20 text-blue-600 dark:text-blue-400",
+  icmp: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
+  lldp: "bg-green-500/20 text-green-600 dark:text-green-400",
+  cdp: "bg-orange-500/20 text-orange-600 dark:text-orange-400",
+  snmp: "bg-purple-500/20 text-purple-600 dark:text-purple-400",
+  edp: "bg-teal-500/20 text-teal-600 dark:text-teal-400",
+} as const;
+
+/**
+ * Progress bar colors - for timing/performance visualization
+ */
+export const progressBar = {
+  http: "bg-blue-500 dark:bg-blue-400",
+  tcp: "bg-amber-500 dark:bg-amber-400",
+  success: "bg-green-500 dark:bg-green-400",
+} as const;
+
+/**
  * Sizing tokens - for consistent heights/widths
  * Avoids arbitrary values like h-[500px] or w-[28rem]
  */

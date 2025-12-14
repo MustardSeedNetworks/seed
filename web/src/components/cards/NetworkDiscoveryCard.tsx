@@ -268,21 +268,22 @@ function formatLastSeen(dateStr: string): string {
   return `${Math.floor(diffSec / 86400)}d ago`;
 }
 
-function MethodBadge({ method }: { method: DiscoveryMethod }) {
-  // Dark mode aware colors for discovery methods
-  const colors: Record<DiscoveryMethod, string> = {
-    arp: "bg-blue-500/20 text-blue-600 dark:text-blue-400",
-    ndp: "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400",
-    lldp: "bg-green-500/20 text-green-600 dark:text-green-400",
-    cdp: "bg-orange-500/20 text-orange-600 dark:text-orange-400",
-    edp: "bg-purple-500/20 text-purple-600 dark:text-purple-400",
-    mdns: "bg-teal-500/20 text-teal-600 dark:text-teal-400",
-    ping: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
-  };
+// Discovery method colors - dark mode aware
+// These use colored backgrounds for visual distinction between methods
+const discoveryMethodColors: Record<DiscoveryMethod, string> = {
+  arp: "bg-blue-500/20 text-blue-600 dark:text-blue-400",
+  ndp: "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400",
+  lldp: "bg-green-500/20 text-green-600 dark:text-green-400",
+  cdp: "bg-orange-500/20 text-orange-600 dark:text-orange-400",
+  edp: "bg-purple-500/20 text-purple-600 dark:text-purple-400",
+  mdns: "bg-teal-500/20 text-teal-600 dark:text-teal-400",
+  ping: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
+};
 
+function MethodBadge({ method }: { method: DiscoveryMethod }) {
   return (
     <span
-      className={`px-1.5 py-0.5 rounded text-xs font-medium uppercase ${colors[method]}`}
+      className={`px-1.5 py-0.5 rounded text-xs font-medium uppercase ${discoveryMethodColors[method]}`}
     >
       {method}
     </span>
@@ -628,7 +629,7 @@ function DeviceRow({
                     device.vulnerabilities.highestSeverity === "CRITICAL"
                       ? "bg-status-error/20 text-status-error"
                       : device.vulnerabilities.highestSeverity === "HIGH"
-                        ? "bg-orange-500/20 text-orange-600 dark:text-orange-400"
+                        ? "bg-orange-500/20 text-orange-600 dark:text-orange-400" // High severity = orange (industry standard)
                         : device.vulnerabilities.highestSeverity === "MEDIUM"
                           ? "bg-status-warning/20 text-status-warning"
                           : "bg-status-info/20 text-status-info"

@@ -348,13 +348,13 @@ export function SurveyView({
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-status-error/10 border border-status-error/20 text-status-error px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
         {sampling && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-4 flex items-center gap-2">
+          <div className="bg-status-info/10 border border-status-info/20 text-status-info px-4 py-3 rounded mb-4 flex items-center gap-2">
             <Loader className="h-4 w-4 animate-spin" />
             Taking measurement...
           </div>

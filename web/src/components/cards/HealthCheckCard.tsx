@@ -7,6 +7,7 @@ import { getAuthHeaders } from "../../hooks/useAuth";
 import { HTTP_TIMING_HELP } from "../help/HelpContent";
 import { useSettings } from "../../contexts/SettingsContext";
 import { HeartPulse } from "../ui/Icons";
+import { timing } from "../../styles/theme";
 
 type StatusValue = "success" | "warning" | "error";
 
@@ -261,31 +262,31 @@ export const HealthCheckCard = memo(function HealthCheckCard({
       {
         label: "DNS",
         value: dns,
-        color: "bg-blue-500 dark:bg-blue-400",
+        color: timing.dns.bg,
         status: result.dnsStatus,
       },
       {
         label: "TCP",
         value: tcp,
-        color: "bg-cyan-500 dark:bg-cyan-400",
+        color: timing.tcp.bg,
         status: result.tcpStatus,
       },
       {
         label: "TLS",
         value: tls,
-        color: "bg-purple-500 dark:bg-purple-400",
+        color: timing.tls.bg,
         status: result.tlsStatus,
       },
       {
         label: "Wait",
         value: ttfb,
-        color: "bg-amber-500 dark:bg-amber-400",
+        color: timing.wait.bg,
         status: result.ttfbStatus,
       },
       {
         label: "Download",
         value: download,
-        color: "bg-green-500 dark:bg-green-400",
+        color: timing.download.bg,
         status: undefined,
       },
     ].filter((s) => s.value > 0 && Number.isFinite(s.value));
@@ -300,7 +301,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({
         {/* Stacked bar */}
         <div className="h-2 rounded-full overflow-hidden flex bg-bg-tertiary">
           {segments.map((seg, i) => {
-            const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
+            const widthPercent = Math.min(
+              100,
+              Math.max(0, (seg.value / total) * 100),
+            );
             const widthClass = `w-[${widthPercent}%]`;
             return (
               <div
