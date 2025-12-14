@@ -617,7 +617,7 @@ export function DiscoverySettings({
               )}
               <button
                 onClick={addSubnet}
-                className="w-full px-3 py-2 bg-brand-primary hover:bg-brand-accent text-white rounded text-sm"
+                className="w-full px-3 py-2 bg-brand-primary hover:bg-brand-accent text-text-inverse rounded text-sm"
               >
                 + Add Subnet
               </button>
