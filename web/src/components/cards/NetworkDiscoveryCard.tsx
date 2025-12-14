@@ -59,7 +59,23 @@ export interface EDPInfo {
   vlan?: number;
 }
 
-export type DiscoveryMethod = "arp" | "lldp" | "cdp" | "edp" | "mdns" | "ping";
+export interface NDPInfo {
+  linkLayerAddress: string;
+  isRouter: boolean;
+  reachableTime?: number;
+  retransTimer?: number;
+  flags?: number;
+  lastAdvertisement?: string;
+}
+
+export type DiscoveryMethod =
+  | "arp"
+  | "ndp"
+  | "lldp"
+  | "cdp"
+  | "edp"
+  | "mdns"
+  | "ping";
 
 // Auto-profiling types from backend
 export interface OpenPort {
@@ -88,6 +104,8 @@ export interface DeviceProfile {
 
 export interface DiscoveredDevice {
   ip: string;
+  ipv6?: string;
+  ipv6Addresses?: string[];
   mac: string;
   hostname?: string;
   vendor?: string;
@@ -96,9 +114,11 @@ export interface DiscoveredDevice {
   discoveryMethod: DiscoveryMethod[];
   lastSeen: string;
   isLocal: boolean; // true if on local subnet, false for extended networks
+  isRouter?: boolean;
   lldpInfo?: LLDPInfo;
   cdpInfo?: CDPInfo;
   edpInfo?: EDPInfo;
+  ndpInfo?: NDPInfo;
   profile?: DeviceProfile;
 }
 
@@ -245,6 +265,7 @@ function formatLastSeen(dateStr: string): string {
 function MethodBadge({ method }: { method: DiscoveryMethod }) {
   const colors: Record<DiscoveryMethod, string> = {
     arp: "bg-blue-500/20 text-blue-400",
+    ndp: "bg-indigo-500/20 text-indigo-400",
     lldp: "bg-green-500/20 text-green-400",
     cdp: "bg-orange-500/20 text-orange-400",
     edp: "bg-purple-500/20 text-purple-400",
@@ -531,7 +552,8 @@ function DeviceRow({
 }) {
   const hasDetails =
     device.lldpInfo || device.cdpInfo || device.edpInfo || device.profile;
-  const openPorts = scanResult?.results.filter((r) => r.state === "open") || [];
+  const openPorts =
+    scanResult?.results?.filter((r) => r.state === "open") || [];
   const profileOpenPorts =
     device.profile?.openPorts?.filter((p) => p.isOpen) || [];
 
@@ -555,6 +577,16 @@ function DeviceRow({
               <span className="font-mono text-sm text-text-primary">
                 {device.ip || "No IP"}
               </span>
+              {device.ipv6 && (
+                <span
+                  className="font-mono text-xs text-blue-400"
+                  title={device.ipv6}
+                >
+                  {device.ipv6.length > 20
+                    ? device.ipv6.substring(0, 20) + "..."
+                    : device.ipv6}
+                </span>
+              )}
               {device.hostname && (
                 <span
                   className="text-xs text-text-muted truncate max-w-[120px]"
@@ -626,6 +658,16 @@ function DeviceRow({
         <div className="px-2 sm:px-3 pb-2 sm:pb-3 pt-1 border-t border-surface-border bg-surface-base">
           <div className="space-y-1 text-xs">
             <CardRow label="MAC" value={device.mac} />
+            {device.ipv6 && <CardRow label="IPv6" value={device.ipv6} />}
+            {device.ipv6Addresses && device.ipv6Addresses.length > 1 && (
+              <CardRow
+                label="All IPv6"
+                value={device.ipv6Addresses.join(", ")}
+              />
+            )}
+            {device.isRouter && (
+              <CardRow label="Router" value="Yes (IPv6 NDP)" />
+            )}
             {device.vendor && <CardRow label="Vendor" value={device.vendor} />}
             {device.osGuess && (
               <CardRow label="OS Guess" value={device.osGuess} />

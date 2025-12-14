@@ -12,6 +12,7 @@ type DiscoveryMethod string
 
 const (
 	MethodARP  DiscoveryMethod = "arp"
+	MethodNDP  DiscoveryMethod = "ndp"  // IPv6 Neighbor Discovery
 	MethodLLDP DiscoveryMethod = "lldp"
 	MethodCDP  DiscoveryMethod = "cdp"
 	MethodEDP  DiscoveryMethod = "edp"
@@ -21,7 +22,9 @@ const (
 
 // DiscoveredDevice represents a network device with aggregated discovery info.
 type DiscoveredDevice struct {
-	IP              string            `json:"ip"`
+	IP              string            `json:"ip"`              // Primary IPv4 address
+	IPv6Address     string            `json:"ipv6,omitempty"`  // Primary IPv6 address
+	IPv6Addresses   []string          `json:"ipv6Addresses,omitempty"` // All IPv6 addresses
 	MAC             string            `json:"mac"`
 	Hostname        string            `json:"hostname,omitempty"`
 	Vendor          string            `json:"vendor,omitempty"`
@@ -30,11 +33,13 @@ type DiscoveredDevice struct {
 	DiscoveryMethod []DiscoveryMethod `json:"discoveryMethod"`
 	LastSeen        time.Time         `json:"lastSeen"`
 	IsLocal         bool              `json:"isLocal"` // true if device is on local subnet
+	IsRouter        bool              `json:"isRouter,omitempty"` // true if detected as IPv6 router via NDP
 
 	// Protocol-specific details (populated if discovered via that protocol)
 	LLDPInfo *LLDPDeviceInfo `json:"lldpInfo,omitempty"`
 	CDPInfo  *CDPDeviceInfo  `json:"cdpInfo,omitempty"`
 	EDPInfo  *EDPDeviceInfo  `json:"edpInfo,omitempty"`
+	NDPInfo  *NDPDeviceInfo  `json:"ndpInfo,omitempty"` // IPv6 Neighbor Discovery info
 
 	// Auto-profiling results
 	Profile *DeviceProfile `json:"profile,omitempty"`
@@ -73,11 +78,22 @@ type EDPDeviceInfo struct {
 	VLAN            int    `json:"vlan,omitempty"`
 }
 
+// NDPDeviceInfo contains IPv6 NDP-specific device information.
+type NDPDeviceInfo struct {
+	LinkLayerAddress  string    `json:"linkLayerAddress"` // MAC from NDP
+	IsRouter          bool      `json:"isRouter"`         // From Router Advertisement
+	ReachableTime     uint32    `json:"reachableTime,omitempty"`     // milliseconds
+	RetransTimer      uint32    `json:"retransTimer,omitempty"`      // milliseconds
+	Flags             uint8     `json:"flags,omitempty"`             // NDP flags
+	LastAdvertisement time.Time `json:"lastAdvertisement,omitempty"` // Last RA received
+}
+
 // DeviceDiscovery aggregates device discovery from all sources.
 type DeviceDiscovery struct {
 	interfaceName string
 	oui           *OUIDatabase
 	arpScanner    *ARPScanner
+	ndpScanner    *NDPScanner
 	protoManager  *Manager
 	mu            sync.RWMutex
 	devices       map[string]*DiscoveredDevice // Key by MAC
@@ -97,6 +113,7 @@ func NewDeviceDiscovery(interfaceName string) *DeviceDiscovery {
 		interfaceName: interfaceName,
 		oui:           oui,
 		arpScanner:    NewARPScanner(interfaceName, oui),
+		ndpScanner:    NewNDPScanner(interfaceName),
 		protoManager:  NewManager(interfaceName),
 		devices:       make(map[string]*DiscoveredDevice),
 	}
@@ -104,11 +121,17 @@ func NewDeviceDiscovery(interfaceName string) *DeviceDiscovery {
 
 // Start begins background protocol captures.
 func (d *DeviceDiscovery) Start() error {
+	// Start NDP scanner for IPv6 discovery
+	if err := d.ndpScanner.Start(); err != nil {
+		log.Printf("warning: failed to start NDP scanner: %v", err)
+		// Continue even if NDP fails (may be on macOS or no IPv6)
+	}
 	return d.protoManager.Start()
 }
 
 // Stop stops all discovery.
 func (d *DeviceDiscovery) Stop() {
+	d.ndpScanner.Stop()
 	d.protoManager.Stop()
 }
 
@@ -297,6 +320,52 @@ func (d *DeviceDiscovery) aggregateResults() {
 		}
 	}
 
+	// Merge NDP neighbors (IPv6)
+	for _, ndp := range d.ndpScanner.GetNeighbors() {
+		mac := normalizeMac(ndp.MAC)
+
+		// Try to find existing device by MAC
+		device := d.getOrCreateDevice(mac)
+
+		// Add IPv6 address to the device
+		if ndp.IPv6 != "" {
+			// Set primary IPv6 if not set
+			if device.IPv6Address == "" {
+				device.IPv6Address = ndp.IPv6
+			}
+
+			// Add to IPv6 addresses list if not already present
+			if !containsIPv6(device.IPv6Addresses, ndp.IPv6) {
+				device.IPv6Addresses = append(device.IPv6Addresses, ndp.IPv6)
+			}
+		}
+
+		// Update router status
+		if ndp.IsRouter {
+			device.IsRouter = true
+		}
+
+		// Create or update NDP info
+		if device.NDPInfo == nil {
+			device.NDPInfo = &NDPDeviceInfo{
+				LinkLayerAddress: ndp.MAC,
+				IsRouter:         ndp.IsRouter,
+			}
+		} else {
+			device.NDPInfo.IsRouter = ndp.IsRouter
+		}
+
+		// Update last seen
+		if ndp.LastSeen.After(device.LastSeen) {
+			device.LastSeen = ndp.LastSeen
+		}
+
+		// Add NDP discovery method
+		if !containsMethod(device.DiscoveryMethod, MethodNDP) {
+			device.DiscoveryMethod = append(device.DiscoveryMethod, MethodNDP)
+		}
+	}
+
 	// Ensure all devices have vendor info
 	for _, device := range d.devices {
 		if device.Vendor == "" && device.MAC != "" {
@@ -322,6 +391,16 @@ func (d *DeviceDiscovery) getOrCreateDevice(mac string) *DiscoveredDevice {
 func containsMethod(methods []DiscoveryMethod, method DiscoveryMethod) bool {
 	for _, m := range methods {
 		if m == method {
+			return true
+		}
+	}
+	return false
+}
+
+// containsIPv6 checks if an IPv6 address is in the slice.
+func containsIPv6(addresses []string, addr string) bool {
+	for _, a := range addresses {
+		if a == addr {
 			return true
 		}
 	}
