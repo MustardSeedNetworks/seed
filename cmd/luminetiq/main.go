@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -23,6 +24,12 @@ import (
 )
 
 var version = "dev"
+
+// Credential file constants for first-boot retrieval (fixes #489)
+const (
+	credentialsFileName = ".luminetiq-credentials"
+	credentialsFileMode = 0o600 // Owner read/write only
+)
 
 // main starts the LuminetIQ network discovery and monitoring application.
 // It initializes configuration from a YAML file, sets up logging, validates
@@ -47,6 +54,18 @@ var version = "dev"
 //   - Failed configuration loading
 //   - No default network interface specified in configuration
 func main() {
+	// Handle subcommands before flag parsing
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "credentials":
+			handleCredentialsCommand()
+			return
+		case "help", "--help", "-h":
+			printUsage()
+			return
+		}
+	}
+
 	// Parse command line flags
 	showVersion := flag.Bool("version", false, "Show version")
 	configPath := flag.String("config", "configs/luminetiq.yaml", "Path to configuration file")
@@ -295,4 +314,118 @@ func printSetupBanner(port int, https bool) {
 
 	// Also log it
 	log.Printf("Setup required - visit %s://localhost:%d to complete setup", protocol, port)
+}
+
+// printUsage displays the CLI usage information.
+func printUsage() {
+	fmt.Printf(`LuminetIQ %s - Network Diagnostics and Monitoring
+
+Usage:
+  luminetiq [flags]              Start the server
+  luminetiq credentials          Generate and display initial admin credentials
+  luminetiq help                 Show this help message
+
+Flags:
+  -version    Show version and exit
+  -config     Path to configuration file (default: configs/luminetiq.yaml)
+  -dev        Run in development mode (HTTP instead of HTTPS)
+
+First-Boot Credential Retrieval (fixes #489):
+  Run 'luminetiq credentials' to generate secure initial credentials.
+  This writes credentials to a secure file and displays them once.
+  Use this instead of parsing logs for systemd deployments.
+
+Examples:
+  luminetiq                      Start with default config
+  luminetiq -dev                 Start in development mode
+  luminetiq -config /etc/luminetiq/config.yaml  Start with custom config
+  luminetiq credentials          Generate initial admin credentials
+`, version)
+}
+
+// handleCredentialsCommand generates and outputs initial credentials for first-boot setup.
+// This provides a deterministic, non-log path for credential retrieval (fixes #489).
+func handleCredentialsCommand() {
+	// Parse credentials subcommand flags
+	credFlags := flag.NewFlagSet("credentials", flag.ExitOnError)
+	configPath := credFlags.String("config", "configs/luminetiq.yaml", "Path to configuration file")
+	outputJSON := credFlags.Bool("json", false, "Output credentials as JSON")
+	fileOutput := credFlags.String("file", "", "Write credentials to file (default: working directory)")
+	_ = credFlags.Parse(os.Args[2:])
+
+	// Load or create config
+	cfg, result, err := config.EnsureConfig(*configPath, auth.IsDefaultPasswordHash)
+	if err != nil && !errors.Is(err, config.ErrInsecureCredentials) {
+		fmt.Fprintf(os.Stderr, "Error: Failed to load configuration: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Check if credentials already exist and are secure
+	if err == nil && !result.GeneratedCreds {
+		fmt.Fprintln(os.Stderr, "Credentials are already configured. Use the web UI to change the password.")
+		fmt.Fprintln(os.Stderr, "If you've lost access, delete the config file and restart.")
+		os.Exit(0)
+	}
+
+	// Generate new credentials
+	creds, err := auth.GenerateInitialCredentials(cfg.Auth.DefaultUsername)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Failed to generate credentials: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Update config with new credentials
+	cfg.UpdateCredentials(creds.Username, creds.PasswordHash, creds.JWTSecret)
+
+	// Save the config
+	if err := cfg.Save(*configPath); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Failed to save configuration: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Prepare credential output
+	credOutput := struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Message  string `json:"message,omitempty"`
+	}{
+		Username: creds.Username,
+		Password: creds.Password,
+		Message:  "Save this password securely - it will not be shown again",
+	}
+
+	// Write to file if requested
+	if *fileOutput != "" {
+		credFilePath := *fileOutput
+		if err := writeCredentialsFile(credFilePath, credOutput.Username, credOutput.Password); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Failed to write credentials file: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stderr, "Credentials written to: %s (mode 0600)\n", credFilePath)
+	}
+
+	// Output credentials
+	if *outputJSON {
+		jsonData, _ := json.MarshalIndent(credOutput, "", "  ")
+		fmt.Println(string(jsonData))
+	} else {
+		fmt.Println("╔══════════════════════════════════════════════════════════════════╗")
+		fmt.Println("║                LUMINETIQ INITIAL CREDENTIALS                     ║")
+		fmt.Println("╠══════════════════════════════════════════════════════════════════╣")
+		fmt.Printf("║  Username: %-53s ║\n", credOutput.Username)
+		fmt.Printf("║  Password: %-53s ║\n", credOutput.Password)
+		fmt.Println("╠══════════════════════════════════════════════════════════════════╣")
+		fmt.Println("║  IMPORTANT: Save this password securely!                         ║")
+		fmt.Println("║  It will not be shown again.                                     ║")
+		fmt.Println("╚══════════════════════════════════════════════════════════════════╝")
+	}
+}
+
+// writeCredentialsFile writes credentials to a secure file with restrictive permissions.
+func writeCredentialsFile(path, username, password string) error {
+	content := fmt.Sprintf("# LuminetIQ Initial Credentials\n# Generated: %s\n# DELETE THIS FILE after retrieving credentials\n\nUsername: %s\nPassword: %s\n",
+		time.Now().Format(time.RFC3339), username, password)
+
+	// Write with restrictive permissions (owner read/write only)
+	return os.WriteFile(path, []byte(content), credentialsFileMode)
 }

@@ -165,8 +165,20 @@ if systemctl is-active --quiet luminetiq; then
         log_info "Configuration file created at: $INSTALL_DIR/configs/luminetiq.yaml"
     fi
 
-    # Check for first-run password in journal
-    echo "Check logs for initial admin password: journalctl -u luminetiq | grep Password"
+    # Generate and display initial credentials (fixes #489)
+    CRED_FILE="$INSTALL_DIR/.luminetiq-credentials"
+    log_info "Generating initial admin credentials..."
+    if "$INSTALL_DIR/$BINARY_NAME" credentials -config "$INSTALL_DIR/configs/luminetiq.yaml" -file "$CRED_FILE"; then
+        echo ""
+        cat "$CRED_FILE"
+        echo ""
+        log_warn "Credentials saved to: $CRED_FILE (mode 0600)"
+        log_warn "DELETE this file after saving the credentials securely!"
+        # Set ownership on credentials file
+        chown "$SERVICE_USER:$SERVICE_GROUP" "$CRED_FILE"
+    else
+        log_warn "Could not generate credentials. Visit the web UI to complete setup."
+    fi
 else
     log_error "LuminetIQ failed to start. Check logs with: journalctl -u luminetiq"
     exit 1

@@ -35,6 +35,51 @@ make test
 make lint
 ```
 
+### Systemd Service Installation (Ubuntu/Linux)
+
+For production or test deployments on Linux with systemd:
+
+```bash
+# Build the binary
+cd web && npm run build && cd ..
+go build -o luminetiq ./cmd/luminetiq
+
+# Install as systemd service (requires root)
+sudo ./deploy/systemd/install.sh
+
+# Service management
+sudo systemctl status luminetiq
+sudo systemctl stop luminetiq
+sudo systemctl restart luminetiq
+journalctl -u luminetiq -f      # View logs
+```
+
+**First-Boot Credential Retrieval:**
+
+The install script automatically generates and displays initial admin credentials.
+If you need to manually generate credentials (e.g., for headless deployments):
+
+```bash
+# Generate credentials and display on stdout
+luminetiq credentials
+
+# Generate credentials and save to secure file
+luminetiq credentials -file /path/to/credentials.txt
+
+# Output as JSON (for scripting)
+luminetiq credentials -json
+```
+
+The credentials file is created with mode 0600 (owner read/write only).
+**Delete this file immediately after retrieving the password.**
+
+**Uninstall:**
+
+```bash
+sudo ./deploy/systemd/uninstall.sh          # Keep configs
+sudo ./deploy/systemd/uninstall.sh --purge  # Remove everything
+```
+
 ## Development Workflow
 
 ### Branch Naming
