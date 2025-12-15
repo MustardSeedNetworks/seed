@@ -117,7 +117,7 @@ func GetSystemInfo(ctx context.Context, ip string, cfg *config.SNMPConfig) (*SNM
 func queryWithCommunity(ctx context.Context, ip, oid, community string, cfg *config.SNMPConfig) (string, error) {
 	params := &gosnmp.GoSNMP{
 		Target:    ip,
-		Port:      uint16(cfg.Port),
+		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
 		Community: community,
 		Version:   gosnmp.Version2c,
 		Timeout:   cfg.Timeout,
@@ -153,7 +153,7 @@ func queryWithCommunity(ctx context.Context, ip, oid, community string, cfg *con
 func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, community string, cfg *config.SNMPConfig) (map[string]string, error) {
 	params := &gosnmp.GoSNMP{
 		Target:    ip,
-		Port:      uint16(cfg.Port),
+		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
 		Community: community,
 		Version:   gosnmp.Version2c,
 		Timeout:   cfg.Timeout,
@@ -190,7 +190,7 @@ func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, c
 func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) (string, error) {
 	params := &gosnmp.GoSNMP{
 		Target:  ip,
-		Port:    uint16(cfg.Port),
+		Port:    uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
 		Version: gosnmp.Version3,
 		Timeout: cfg.Timeout,
 		Retries: cfg.Retries,
@@ -234,7 +234,7 @@ func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credent
 func queryMultipleWithV3(ctx context.Context, ip string, oids []string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) (map[string]string, error) {
 	params := &gosnmp.GoSNMP{
 		Target:  ip,
-		Port:    uint16(cfg.Port),
+		Port:    uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
 		Version: gosnmp.Version3,
 		Timeout: cfg.Timeout,
 		Retries: cfg.Retries,

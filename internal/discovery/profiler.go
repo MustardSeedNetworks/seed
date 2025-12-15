@@ -112,7 +112,7 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 	}
 
 	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // Profiling internal network devices
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // #nosec G402 -- Profiling internal network devices
 		DialContext: (&net.Dialer{
 			Timeout: cfg.Timeout,
 		}).DialContext,
