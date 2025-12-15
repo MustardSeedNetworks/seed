@@ -18,7 +18,7 @@ COPY . .
 # Copy built frontend for embedding
 COPY --from=builder-frontend /app/web/dist ./web/dist
 # Build with embedded frontend
-RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /luminetiq ./cmd/netscope
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /luminetiq ./cmd/luminetiq
 
 # Stage 3: Final runtime image (Ubuntu-based, slim)
 FROM ubuntu:24.04

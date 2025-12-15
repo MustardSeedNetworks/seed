@@ -29,11 +29,13 @@
 .PHONY: all build build-frontend frontend-deps build-backend build-backend-dev \
         build-iperf3 build-iperf3-linux build-iperf3-linux-amd64 build-iperf3-linux-arm64 build-iperf3-all \
         build-linux-amd64 build-linux-arm64 build-linux-docker \
-        clean clean-all test test-backend test-frontend test-coverage \
+        docker docker-build docker-test docker-push \
+        clean clean-all test test-backend test-frontend test-coverage test-integration \
         lint lint-backend lint-frontend fmt fmt-frontend fmt-all \
         run dev dev-frontend \
         deploy smoke-test smoke-test-local \
-        deps deps-update logs logs-100 help
+        deps deps-update logs logs-100 help \
+        verify release-check iso-info
 
 # =============================================================================
 # Configuration Variables
@@ -72,11 +74,15 @@ DEPLOY_USER?=krisarmstrong
 DEPLOY_PATH?=/home/$(DEPLOY_USER)/luminetiq
 DEPLOY_PORT?=8443
 
+# Docker image settings
+DOCKER_IMAGE?=luminetiq
+DOCKER_TAG?=$(VERSION)
+
 # =============================================================================
 # Default Target
 # =============================================================================
 
-all: build
+all: verify ## Full build and validation (recommended before release)
 
 # =============================================================================
 # Build Targets
@@ -164,6 +170,41 @@ build-linux-docker: build-frontend ## Build for Linux AMD64 using Docker (cross-
 		apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
 		go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-amd64 ./cmd/luminetiq"
 	@echo "Built: $(BINARY_NAME)-linux-amd64"
+
+# =============================================================================
+# Docker Targets
+# =============================================================================
+
+# Build Docker image (multi-stage build)
+docker-build: ## Build Docker image
+	@echo "Building Docker image: $(DOCKER_IMAGE):$(DOCKER_TAG)..."
+	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) -t $(DOCKER_IMAGE):latest .
+	@echo "Docker image built: $(DOCKER_IMAGE):$(DOCKER_TAG)"
+
+# Test Docker image starts correctly
+docker-test: docker-build ## Test Docker image starts and responds
+	@echo "Testing Docker image..."
+	@docker rm -f luminetiq-test 2>/dev/null || true
+	@docker run -d --name luminetiq-test -p 18443:8443 $(DOCKER_IMAGE):$(DOCKER_TAG)
+	@sleep 5
+	@curl -sf -k "https://localhost:18443/api/health" > /dev/null && \
+		echo "PASS: Docker container health check" || \
+		(echo "FAIL: Container not responding" && docker logs luminetiq-test && docker rm -f luminetiq-test && exit 1)
+	@docker rm -f luminetiq-test > /dev/null 2>&1
+
+# Full Docker target
+docker: docker-test ## Build and test Docker image
+
+# Push to registry (requires DOCKER_REGISTRY env var)
+docker-push: docker-build ## Push Docker image to registry
+	@if [ -z "$(DOCKER_REGISTRY)" ]; then \
+		echo "Error: DOCKER_REGISTRY not set"; \
+		exit 1; \
+	fi
+	docker tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
+	docker tag $(DOCKER_IMAGE):latest $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):latest
+	docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
+	docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):latest
 
 # =============================================================================
 # Deployment
@@ -309,6 +350,33 @@ test-coverage: ## Generate coverage report
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
 
+# Full integration test: deploy, install as systemd service, run tests
+test-integration: build-linux-docker ## Full integration test on Ubuntu server via systemd
+	@echo "Running integration tests on $(DEPLOY_HOST)..."
+	rsync -avz $(BINARY_NAME)-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):/tmp/luminetiq-test
+	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
+		sudo systemctl stop luminetiq-test 2>/dev/null || true && \
+		sudo cp /tmp/luminetiq-test /usr/local/bin/luminetiq-test && \
+		sudo chmod +x /usr/local/bin/luminetiq-test && \
+		sudo setcap cap_net_raw=+ep /usr/local/bin/luminetiq-test && \
+		echo '[Unit]' | sudo tee /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		echo 'Description=LuminetIQ Integration Test' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		echo '[Service]' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		echo 'Type=simple' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		echo 'ExecStart=/usr/local/bin/luminetiq-test' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		echo 'WorkingDirectory=/tmp' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		echo '[Install]' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		sudo systemctl daemon-reload && \
+		sudo systemctl start luminetiq-test && \
+		sleep 5 && \
+		sudo systemctl is-active luminetiq-test && \
+		curl -sf -k https://localhost:8443/api/health && \
+		echo 'PASS: Integration test passed' && \
+		sudo systemctl stop luminetiq-test && \
+		sudo rm -f /etc/systemd/system/luminetiq-test.service /usr/local/bin/luminetiq-test"
+	@echo "Integration tests completed successfully"
+
 # =============================================================================
 # Linting & Formatting
 # =============================================================================
@@ -396,3 +464,74 @@ help: ## Show this help
 	@echo "  make dev & make dev-frontend  Full development environment"
 	@echo "  make deploy REBUILD=1         Force rebuild and deploy"
 	@echo "  make deploy DEPLOY_HOST=x.x.x.x  Deploy to different server"
+
+# =============================================================================
+# Verification & Release Checks
+# =============================================================================
+
+# Full verification: builds, tests, lints, and validates everything
+# This is what 'make all' runs - use before releases
+# Docker tests are skipped if Docker is not available (e.g., on macOS without Docker)
+verify: lint test build ## Full verification (lint, test, build, docker if available)
+	@if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then \
+		$(MAKE) docker-test; \
+	else \
+		echo "SKIP: Docker not available - skipping docker-test"; \
+		echo "      Run 'make docker-test' manually when Docker is running"; \
+	fi
+	@echo ""
+	@echo "=============================================="
+	@echo "  VERIFICATION COMPLETE"
+	@echo "=============================================="
+	@echo "  Version:     $(VERSION)"
+	@echo "  Commit:      $(COMMIT)"
+	@echo "  Binary:      $(BINARY_NAME)"
+	@echo "  Docker:      $(DOCKER_IMAGE):$(DOCKER_TAG) (if Docker available)"
+	@echo "=============================================="
+	@echo ""
+	@echo "Ready for deployment. Run 'make deploy' to deploy."
+
+# =============================================================================
+# ISO Creation (Manual Process)
+# =============================================================================
+
+# Custom Ubuntu ISO creation is a separate, manual process
+iso-info: ## Show instructions for creating custom Ubuntu ISO
+	@echo ""
+	@echo "=== Custom Ubuntu ISO Creation ==="
+	@echo ""
+	@echo "Creating a custom Ubuntu ISO with LuminetIQ pre-installed requires:"
+	@echo "  1. Ubuntu host system (or VM)"
+	@echo "  2. cubic or live-build package"
+	@echo "  3. Built Linux binary (luminetiq-linux-amd64)"
+	@echo ""
+	@echo "Steps:"
+	@echo "  1. Install cubic: sudo apt install cubic"
+	@echo "  2. Download Ubuntu Server ISO"
+	@echo "  3. Run cubic and customize:"
+	@echo "     - Copy luminetiq-linux-amd64 to /usr/local/bin/luminetiq"
+	@echo "     - Copy deploy/systemd/luminetiq.service to /etc/systemd/system/"
+	@echo "     - Enable service: systemctl enable luminetiq"
+	@echo "  4. Generate ISO"
+
+# =============================================================================
+# Release Checks
+# =============================================================================
+
+# Pre-release checklist validation
+release-check: verify ## Full release validation (verify + install script check)
+	@echo "Running release checks..."
+	@bash -n deploy/systemd/install.sh && echo "PASS: install.sh syntax valid"
+	@bash -n deploy/systemd/uninstall.sh 2>/dev/null && echo "PASS: uninstall.sh syntax valid" || true
+	@if echo "$(VERSION)" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then \
+		echo "PASS: Version format valid ($(VERSION))"; \
+	else \
+		echo "WARN: Version $(VERSION) doesn't match vX.Y.Z format"; \
+	fi
+	@if git diff --quiet && git diff --staged --quiet; then \
+		echo "PASS: No uncommitted changes"; \
+	else \
+		echo "WARN: Uncommitted changes detected"; \
+	fi
+	@echo ""
+	@echo "Release checks complete. Ready for 'git tag $(VERSION) && git push --tags'"
