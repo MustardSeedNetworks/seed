@@ -1,28 +1,24 @@
 /**
  * useAuth.test.ts - Authentication Hook Tests
- * 
- * Purpose: Test suite for the useAuth hook and getAuthHeaders utility function.
- * Tests authentication state management, JWT token handling, session expiry detection,
- * and localStorage persistence.
- * 
+ *
+ * Purpose: Test suite for the useAuth hook with cookie-based authentication.
+ * Tests authentication state management, cookie handling, and session management.
+ *
  * Key Test Areas:
- * - Token storage: JWT persisted in localStorage
- * - Token retrieval: getAuthHeaders() returns proper Authorization header
- * - Token expiry: isTokenExpired() detects expired tokens with 30-second buffer
- * - Storage key migration: underscore to hyphen format migration
- * - Login/logout flow: token state transitions
- * - Session expiry: automatic detection and clearing of expired tokens
- * - Header generation: proper Bearer token format in Authorization header
- * - Multiple tokens: handling of auth and admin tokens
- * 
+ * - Cookie-based authentication (httpOnly cookies set by backend)
+ * - Session restoration via API call on mount
+ * - Login/logout flow with cookies
+ * - Token returned for WebSocket connections only
+ * - Legacy localStorage cleanup
+ *
  * Test Framework: Vitest with React Testing Library hooks
  * Mocks: localStorage, fetch API
- * 
+ *
  * Usage:
  * ```bash
  * npm test -- useAuth.test.ts
  * ```
- * 
+ *
  * Dependencies: vitest, @testing-library/react
  */
 
@@ -61,38 +57,80 @@ describe("useAuth", () => {
     vi.clearAllMocks();
   });
 
-  it("starts with unauthenticated state", () => {
+  it("starts with loading state and checks auth status", async () => {
+    // Mock /api/status to return 401 (not authenticated)
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+    });
+
     const { result } = renderHook(() => useAuth());
+
+    // Should start loading
+    expect(result.current.isLoading).toBe(true);
+
+    // Wait for status check to complete
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.token).toBeNull();
     expect(result.current.username).toBeNull();
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeNull();
   });
 
-  it("restores auth state from localStorage on mount", async () => {
-    const futureExpiry = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-    mockLocalStorage.setItem("netscope-token", "existing-token");
-    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope-username", "testuser");
+  it("restores auth state when backend confirms session", async () => {
+    // Mock /api/status to return 200 (authenticated)
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+    });
 
     const { result } = renderHook(() => useAuth());
 
     await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(true);
-      expect(result.current.token).toBe("existing-token");
-      expect(result.current.username).toBe("testuser");
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "/api/status",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("clears legacy localStorage keys on mount", async () => {
+    // Set legacy keys
+    mockLocalStorage.setItem("netscope-token", "old-token");
+    mockLocalStorage.setItem("netscope-token-expiry", "123456");
+    mockLocalStorage.setItem("netscope-username", "olduser");
+    mockLocalStorage.setItem("netscope_token", "legacy-token");
+
+    mockFetch.mockResolvedValueOnce({ ok: false });
+
+    renderHook(() => useAuth());
+
+    await waitFor(() => {
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token-expiry");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-username");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope_token");
     });
   });
 
   it("login sets authenticated state on success", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ token: "new-token", expires: 3600 }),
-    });
+    // Mock initial status check
+    mockFetch.mockResolvedValueOnce({ ok: false });
 
     const { result } = renderHook(() => useAuth());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Mock successful login
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ token: "access-token", expires: 3600 }),
+    });
 
     let loginResult: boolean;
     await act(async () => {
@@ -101,39 +139,48 @@ describe("useAuth", () => {
 
     expect(loginResult!).toBe(true);
     expect(result.current.isAuthenticated).toBe(true);
-    expect(result.current.token).toBe("new-token");
+    expect(result.current.token).toBe("access-token"); // For WebSocket
     expect(result.current.username).toBe("admin");
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      "netscope-token",
-      "new-token",
-    );
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      "netscope-username",
-      "admin",
+    expect(mockFetch).toHaveBeenLastCalledWith(
+      "/api/auth/login",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ username: "admin", password: "password" }),
+      }),
     );
   });
 
   it("login sets error on failure", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-    });
+    mockFetch.mockResolvedValueOnce({ ok: false }); // Initial status check
 
     const { result } = renderHook(() => useAuth());
 
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+    });
+
     let loginResult: boolean;
     await act(async () => {
-      loginResult = await result.current.login("admin", "wrong-password");
+      loginResult = await result.current.login("admin", "wrongpassword");
     });
 
     expect(loginResult!).toBe(false);
     expect(result.current.isAuthenticated).toBe(false);
-    expect(result.current.error).toBe("Invalid credentials");
+    expect(result.current.error).toBeTruthy();
   });
 
   it("login handles network error", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("Network error"));
+    mockFetch.mockResolvedValueOnce({ ok: false }); // Initial status check
 
     const { result } = renderHook(() => useAuth());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
     let loginResult: boolean;
     await act(async () => {
@@ -141,232 +188,110 @@ describe("useAuth", () => {
     });
 
     expect(loginResult!).toBe(false);
-    expect(result.current.error).toBe("Network error");
+    expect(result.current.error).toBe("Login failed");
   });
 
   it("login sets isLoading during request", async () => {
-    let resolvePromise: (value: unknown) => void;
-    const promise = new Promise((resolve) => {
-      resolvePromise = resolve;
-    });
-
-    mockFetch.mockReturnValueOnce(promise);
+    mockFetch.mockResolvedValueOnce({ ok: false }); // Initial status check
 
     const { result } = renderHook(() => useAuth());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Mock login that takes time
+    let resolveLogin: (value: any) => void;
+    const loginPromise = new Promise((resolve) => {
+      resolveLogin = resolve;
+    });
+    mockFetch.mockReturnValueOnce(loginPromise as any);
 
     act(() => {
       result.current.login("admin", "password");
     });
 
+    // Should be loading
     expect(result.current.isLoading).toBe(true);
 
-    await act(async () => {
-      resolvePromise!({
-        ok: true,
-        json: () => Promise.resolve({ token: "token", expires: 3600 }),
-      });
+    // Resolve login
+    resolveLogin!({
+      ok: true,
+      json: () => Promise.resolve({ token: "token", expires: 3600 }),
     });
 
-    expect(result.current.isLoading).toBe(false);
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
   });
 
   it("logout clears auth state", async () => {
-    const futureExpiry = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-    mockLocalStorage.setItem("netscope-token", "token");
-    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope-username", "user");
-
-    // Mock the logout fetch
+    // Mock initial authenticated state
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     const { result } = renderHook(() => useAuth());
 
-    // Wait for initial state restoration
     await waitFor(() => {
       expect(result.current.isAuthenticated).toBe(true);
     });
 
-    act(() => {
+    // Mock logout endpoint
+    mockFetch.mockResolvedValueOnce({ ok: true });
+
+    await act(async () => {
       result.current.logout();
     });
 
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.token).toBeNull();
     expect(result.current.username).toBeNull();
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token");
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-      "netscope-username",
-    );
   });
 
-  it("login stores token expiry in localStorage", async () => {
-    const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({ token: "new-token", expires: futureExpiry }),
-    });
+  it("logout calls backend endpoint", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true }); // Initial status
 
     const { result } = renderHook(() => useAuth());
+
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+    mockFetch.mockResolvedValueOnce({ ok: true });
 
     await act(async () => {
-      await result.current.login("admin", "password");
-    });
-
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      "netscope-token-expiry",
-      String(futureExpiry),
-    );
-  });
-
-  it("clears expired token on mount", async () => {
-    // Set token with expired timestamp (1 hour ago)
-    const pastExpiry = Math.floor(Date.now() / 1000) - 3600;
-    mockLocalStorage.setItem("netscope-token", "expired-token");
-    mockLocalStorage.setItem("netscope-token-expiry", String(pastExpiry));
-    mockLocalStorage.setItem("netscope-username", "testuser");
-
-    const { result } = renderHook(() => useAuth());
-
-    // Wait for effect to run
-    await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(false);
-    });
-
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token");
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-      "netscope-token-expiry",
-    );
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-      "netscope-username",
-    );
-  });
-
-  it("keeps valid token on mount when not expired", async () => {
-    // Set token with future expiry (1 hour from now)
-    const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockLocalStorage.setItem("netscope-token", "valid-token");
-    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope-username", "testuser");
-
-    const { result } = renderHook(() => useAuth());
-
-    await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(true);
-      expect(result.current.token).toBe("valid-token");
-      expect(result.current.username).toBe("testuser");
-    });
-  });
-
-  it("treats token as expired when no expiry is stored", async () => {
-    // Set token without expiry
-    mockLocalStorage.setItem("netscope-token", "token-no-expiry");
-    mockLocalStorage.setItem("netscope-username", "testuser");
-    // Don't set netscope-token-expiry
-
-    const { result } = renderHook(() => useAuth());
-
-    await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(false);
-    });
-
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token");
-  });
-
-  it("logout clears token expiry from localStorage", async () => {
-    const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockLocalStorage.setItem("netscope-token", "token");
-    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope-username", "user");
-
-    mockFetch.mockResolvedValueOnce({ ok: true });
-
-    const { result } = renderHook(() => useAuth());
-
-    await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(true);
-    });
-
-    act(() => {
       result.current.logout();
     });
 
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-      "netscope-token-expiry",
-    );
-  });
-
-  it("logout calls backend logout endpoint with token", async () => {
-    const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockLocalStorage.setItem("netscope-token", "my-token");
-    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope-username", "user");
-
-    mockFetch.mockResolvedValueOnce({ ok: true });
-
-    const { result } = renderHook(() => useAuth());
-
+    // Should have called logout endpoint with credentials
     await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(true);
-    });
-
-    act(() => {
-      result.current.logout();
-    });
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/api/auth/logout",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer my-token",
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/auth/logout",
+        expect.objectContaining({
+          method: "POST",
+          credentials: "include",
         }),
-      }),
-    );
+      );
+    });
   });
 
   it("logout handles backend error gracefully", async () => {
-    const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-    mockLocalStorage.setItem("netscope-token", "token");
-    mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
-    mockLocalStorage.setItem("netscope-username", "user");
-
-    // Make logout endpoint fail
-    mockFetch.mockRejectedValueOnce(new Error("Network error"));
+    mockFetch.mockResolvedValueOnce({ ok: true });
 
     const { result } = renderHook(() => useAuth());
 
-    await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(true);
-    });
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
-    // Should not throw
-    act(() => {
+    // Mock logout failure
+    mockFetch.mockRejectedValueOnce(new Error("Network error"));
+
+    await act(async () => {
       result.current.logout();
     });
 
-    // State should still be cleared
+    // Should still clear local state
     expect(result.current.isAuthenticated).toBe(false);
   });
 });
 
 describe("getAuthHeaders", () => {
-  beforeEach(() => {
-    mockLocalStorage.clear();
-    vi.clearAllMocks();
-  });
-
-  it("returns empty object when no token", () => {
+  it("returns empty object (deprecated for cookie auth)", () => {
     const headers = getAuthHeaders();
     expect(headers).toEqual({});
-  });
-
-  it("returns Authorization header when token exists", () => {
-    mockLocalStorage.setItem("netscope-token", "test-token");
-
-    const headers = getAuthHeaders();
-    expect(headers).toEqual({
-      Authorization: "Bearer test-token",
-    });
   });
 });

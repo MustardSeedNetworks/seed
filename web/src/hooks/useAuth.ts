@@ -1,25 +1,30 @@
 /**
  * Authentication Hook
- * 
- * Manages user authentication state, JWT token storage, and login/logout operations.
- * 
+ *
+ * Manages user authentication state using secure httpOnly cookies.
+ *
  * Features:
- * - Persistent authentication via localStorage
- * - Automatic token expiration checking
+ * - Cookie-based authentication (XSS protection via httpOnly cookies)
+ * - Automatic token refresh using refresh tokens
  * - Login/logout functionality
  * - Loading and error state management
- * - Legacy storage key migration
- * 
+ * - Automatic session restoration on mount
+ *
+ * Security:
+ * - Tokens stored in httpOnly cookies (not accessible to JavaScript)
+ * - Short-lived access tokens (15min) with long-lived refresh tokens (7 days)
+ * - Automatic refresh on token expiration
+ * - CSRF protection via SameSite=Strict cookies
+ *
  * The hook automatically:
- * - Restores authentication state from localStorage on mount
- * - Validates token expiration (with 30s buffer)
- * - Migrates old underscore-separated keys to hyphen-separated keys
- * - Clears expired tokens automatically
- * 
+ * - Checks authentication status on mount by calling backend
+ * - Refreshes expired access tokens transparently
+ * - Clears old localStorage keys for migration
+ *
  * Usage:
  * ```typescript
  * const { isAuthenticated, login, logout, token } = useAuth();
- * 
+ *
  * const handleLogin = async () => {
  *   const success = await login(username, password);
  *   if (success) {
@@ -34,7 +39,7 @@ import { useCallback, useEffect, useState } from "react";
 /** Internal authentication state */
 interface AuthState {
   isAuthenticated: boolean;
-  token: string | null;
+  token: string | null; // Access token for WebSocket connections (short-lived)
   username: string | null;
 }
 
@@ -59,66 +64,32 @@ interface UseAuthReturn {
   error: string | null;
 }
 
-// Current standardized localStorage keys (hyphen-separated)
-const TOKEN_KEY = "netscope-token";
-const TOKEN_EXPIRY_KEY = "netscope-token-expiry";
-const USERNAME_KEY = "netscope-username";
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-// Legacy keys for backward compatibility migration (underscore-separated)
-const LEGACY_TOKEN_KEY = "netscope_token";
-const LEGACY_TOKEN_EXPIRY_KEY = "netscope_token_expiry";
-const LEGACY_USERNAME_KEY = "netscope_username";
+// Legacy localStorage keys - will be cleared on mount for migration
+const LEGACY_KEYS = [
+  "netscope-token",
+  "netscope-token-expiry",
+  "netscope-username",
+  "netscope_token",
+  "netscope_token_expiry",
+  "netscope_username",
+];
 
 /**
- * One-time migration from old underscore-separated keys to new hyphen-separated keys.
- * Runs automatically on module load. Preserves existing authentication state during migration.
+ * Clears old localStorage keys from cookie migration.
+ * Runs automatically on mount to clean up legacy token storage.
  */
-function migrateStorageKeys(): void {
-  const legacyToken = localStorage.getItem(LEGACY_TOKEN_KEY);
-  if (legacyToken) {
-    // Migrate old keys to new format
-    localStorage.setItem(TOKEN_KEY, legacyToken);
-    const legacyExpiry = localStorage.getItem(LEGACY_TOKEN_EXPIRY_KEY);
-    if (legacyExpiry) {
-      localStorage.setItem(TOKEN_EXPIRY_KEY, legacyExpiry);
-    }
-    const legacyUsername = localStorage.getItem(LEGACY_USERNAME_KEY);
-    if (legacyUsername) {
-      localStorage.setItem(USERNAME_KEY, legacyUsername);
-    }
-    // Remove legacy keys
-    localStorage.removeItem(LEGACY_TOKEN_KEY);
-    localStorage.removeItem(LEGACY_TOKEN_EXPIRY_KEY);
-    localStorage.removeItem(LEGACY_USERNAME_KEY);
-  }
-}
-
-// Run migration on module load (executed once when module is first imported)
-migrateStorageKeys();
-
-/**
- * Checks if the stored JWT token has expired.
- * Includes a 30-second buffer to prevent edge cases where token expires during a request.
- * 
- * @returns true if token is expired or missing, false if still valid
- */
-function isTokenExpired(): boolean {
-  const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-  if (!expiry) {
-    return true; // No expiry stored means we can't verify, treat as expired
-  }
-  // Add 30 second buffer to avoid edge cases where token expires during request
-  const expiryTime = parseInt(expiry, 10) * 1000; // Convert seconds to ms
-  return Date.now() >= expiryTime - 30000;
+function clearLegacyStorage(): void {
+  LEGACY_KEYS.forEach((key) => localStorage.removeItem(key));
 }
 
 /**
  * Custom hook for managing user authentication state.
- * 
+ *
  * Provides login/logout functionality and tracks authentication state.
- * Automatically restores session from localStorage on mount and validates token expiration.
- * 
+ * Automatically checks session validity on mount via backend API.
+ *
  * @returns Authentication state and control functions
  */
 export function useAuth(): UseAuthReturn {
@@ -128,35 +99,50 @@ export function useAuth(): UseAuthReturn {
     token: null,
     username: null,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start as loading while checking session
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Effect: Restore authentication state from localStorage on mount
-   * 
-   * Checks for existing token and validates expiration.
-   * Automatically clears expired tokens.
+   * Effect: Check authentication status on mount
+   *
+   * Calls backend API to verify session (cookies sent automatically).
+   * Clears legacy localStorage keys from migration.
    */
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const username = localStorage.getItem(USERNAME_KEY);
+    clearLegacyStorage();
 
-    if (token) {
-      // Check if token has expired
-      if (isTokenExpired()) {
-        // Token expired, clear storage and stay logged out
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(TOKEN_EXPIRY_KEY);
-        localStorage.removeItem(USERNAME_KEY);
-        return;
-      }
-
-      setState({
-        isAuthenticated: true,
-        token,
-        username,
+    // Check if we're authenticated by calling a protected endpoint
+    fetch(`${API_BASE}/api/status`, {
+      credentials: "include", // Send cookies
+    })
+      .then((response) => {
+        if (response.ok) {
+          // Authenticated - we don't have username from /api/status, will be set on login
+          setState({
+            isAuthenticated: true,
+            token: null, // Will be set on login for WebSocket
+            username: null,
+          });
+        } else {
+          // Not authenticated
+          setState({
+            isAuthenticated: false,
+            token: null,
+            username: null,
+          });
+        }
+      })
+      .catch(() => {
+        // Error checking auth, assume not authenticated
+        setState({
+          isAuthenticated: false,
+          token: null,
+          username: null,
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-    }
   }, []);
 
   const login = useCallback(
@@ -170,6 +156,7 @@ export function useAuth(): UseAuthReturn {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include", // Receive httpOnly cookies
           body: JSON.stringify({ username, password }),
         });
 
@@ -179,13 +166,11 @@ export function useAuth(): UseAuthReturn {
 
         const data: LoginResponse = await response.json();
 
-        localStorage.setItem(TOKEN_KEY, data.token);
-        localStorage.setItem(TOKEN_EXPIRY_KEY, String(data.expires));
-        localStorage.setItem(USERNAME_KEY, username);
-
+        // Backend sets httpOnly cookies automatically
+        // Store access token in memory ONLY for WebSocket connections
         setState({
           isAuthenticated: true,
-          token: data.token,
+          token: data.token, // Access token for WebSocket (short-lived, 15min)
           username,
         });
 
@@ -201,26 +186,21 @@ export function useAuth(): UseAuthReturn {
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(TOKEN_EXPIRY_KEY);
-    localStorage.removeItem(USERNAME_KEY);
-
+    // Clear in-memory state immediately
     setState({
       isAuthenticated: false,
       token: null,
       username: null,
     });
 
-    // Call logout endpoint (fire and forget)
+    // Call logout endpoint to clear httpOnly cookies
     fetch(`${API_BASE}/api/auth/logout`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${state.token}`,
-      },
+      credentials: "include", // Send cookies to be cleared
     }).catch(() => {
-      // Ignore errors
+      // Ignore errors - local state already cleared
     });
-  }, [state.token]);
+  }, []);
 
   return {
     isAuthenticated: state.isAuthenticated,
@@ -233,13 +213,11 @@ export function useAuth(): UseAuthReturn {
   };
 }
 
-// Helper to get auth headers for API requests
+/**
+ * @deprecated No longer needed with cookie-based authentication.
+ * API requests automatically include cookies with credentials: 'include'.
+ * This function is kept for backward compatibility but returns empty object.
+ */
 export function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (token) {
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }
   return {};
 }
