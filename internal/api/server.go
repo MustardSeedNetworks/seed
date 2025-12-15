@@ -242,6 +242,7 @@ func (s *Server) setupRoutes() {
 	// API routes
 	s.mux.HandleFunc("/api/auth/login", s.handleLogin)
 	s.mux.HandleFunc("/api/auth/logout", s.handleLogout)
+	s.mux.HandleFunc("/api/auth/refresh", s.handleRefreshToken) // Token refresh (fixes #478)
 	s.mux.HandleFunc("/api/status", s.handleStatus)
 	s.mux.HandleFunc("/api/settings", s.handleSettings)
 	s.mux.HandleFunc("/api/interfaces", s.handleInterfaces)

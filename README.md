@@ -114,6 +114,13 @@ cd web && npm run dev
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
+### Frontend Development
+
+The frontend uses a centralized design system with semantic tokens. See:
+
+- **[web/THEMING.md](web/THEMING.md)** - Color tokens, typography, spacing, and component patterns
+- **[STYLE_GUIDE.md](STYLE_GUIDE.md)** - Naming conventions and code standards
+
 ## Architecture
 
 ```

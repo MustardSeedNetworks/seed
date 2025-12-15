@@ -62,6 +62,7 @@ func NewTestServer() *Server {
 		icmpAvailable:        true,
 		authManager:          auth.NewManager(testConfig.Auth.JWTSecret, testConfig.Auth.SessionTimeout, testConfig.Auth.DefaultUsername, testConfig.Auth.DefaultPasswordHash),
 		loginRateLimiter:     NewRateLimiter(DefaultRateLimitConfig()),
+		endpointRateLimiter:  NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()),
 		linkMonitor:          network.NewLinkMonitor(testConfig.Interface.Default),
 		discoveryManager:     discovery.NewManager(testConfig.Interface.Default),
 		deviceDiscovery:      discovery.NewDeviceDiscovery(testConfig.Interface.Default),

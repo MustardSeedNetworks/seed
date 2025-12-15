@@ -55,7 +55,8 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := s.authManager.Authenticate(req.Username, req.Password)
+	// Authenticate user (validates credentials)
+	_, err := s.authManager.Authenticate(req.Username, req.Password)
 	if err != nil {
 		// Record failed attempt
 		blocked := s.loginRateLimiter.RecordAttempt(clientIP, false)
@@ -81,9 +82,34 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	// Record successful attempt (clears previous failures)
 	s.loginRateLimiter.RecordAttempt(clientIP, true)
 
+	// Generate access and refresh tokens (fixes #478)
+	accessToken, err := s.authManager.GenerateAccessToken(req.Username)
+	if err != nil {
+		log.Printf("failed to generate access token: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	refreshToken, err := s.authManager.GenerateRefreshToken(req.Username)
+	if err != nil {
+		log.Printf("failed to generate refresh token: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Set httpOnly cookies (fixes #478)
+	cookieConfig := auth.DefaultCookieConfig()
+	// Allow insecure cookies in development (LUMINETIQ_DEV=1)
+	if !s.config.Server.HTTPS {
+		cookieConfig.Secure = false
+	}
+	auth.SetAccessTokenCookie(w, accessToken, cookieConfig)
+	auth.SetRefreshTokenCookie(w, refreshToken, cookieConfig)
+
+	// Also return access token in response for backwards compatibility (API clients)
 	resp := LoginResponse{
-		Token:   token,
-		Expires: time.Now().Add(s.config.Auth.SessionTimeout).Unix(),
+		Token:   accessToken,
+		Expires: time.Now().Add(auth.AccessTokenDuration).Unix(),
 	}
 
 	sendJSONResponse(w, http.StatusOK, resp)
@@ -96,9 +122,55 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// JWT is stateless, so we just acknowledge the logout
-	// Client should discard the token
+	// Clear authentication cookies (fixes #478)
+	cookieConfig := auth.DefaultCookieConfig()
+	if !s.config.Server.HTTPS {
+		cookieConfig.Secure = false
+	}
+	auth.ClearAuthCookies(w, cookieConfig)
+
 	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "logged out"})
+}
+
+// handleRefreshToken handles token refresh using refresh token (fixes #478).
+func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get refresh token from cookie
+	refreshToken, err := auth.GetRefreshTokenFromCookie(r)
+	if err != nil {
+		sendJSONResponse(w, http.StatusUnauthorized, map[string]string{
+			"error": "Refresh token not found",
+		})
+		return
+	}
+
+	// Generate new access token
+	newAccessToken, err := s.authManager.RefreshAccessToken(refreshToken)
+	if err != nil {
+		sendJSONResponse(w, http.StatusUnauthorized, map[string]string{
+			"error": "Invalid or expired refresh token",
+		})
+		return
+	}
+
+	// Set new access token cookie
+	cookieConfig := auth.DefaultCookieConfig()
+	if !s.config.Server.HTTPS {
+		cookieConfig.Secure = false
+	}
+	auth.SetAccessTokenCookie(w, newAccessToken, cookieConfig)
+
+	// Return new access token
+	resp := LoginResponse{
+		Token:   newAccessToken,
+		Expires: time.Now().Add(auth.AccessTokenDuration).Unix(),
+	}
+
+	sendJSONResponse(w, http.StatusOK, resp)
 }
 
 // SetupStatusResponse represents the setup status response.

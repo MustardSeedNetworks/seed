@@ -145,10 +145,9 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 			log.Printf("OUI database loaded from %s: %d entries", ouiPath, oui.Count())
 		}
 	} else {
-		// No path provided: try standard locations
-		if err := oui.TryLoadIEEEFile(); err != nil {
-			log.Printf("warning: failed to load IEEE OUI file: %v", err)
-		}
+		// No path provided: try standard locations silently
+		// Embedded OUI database has 200+ common vendors as fallback
+		_ = oui.TryLoadIEEEFile() // Ignore error - embedded data is sufficient
 	}
 
 	return &DeviceDiscovery{

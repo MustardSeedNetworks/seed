@@ -294,6 +294,15 @@ test-backend: ## Run Go tests
 test-frontend: ## Run frontend tests
 	cd web && npm test
 
+# Frontend E2E tests via Playwright (closes #482, #309)
+# Requires backend to be running on port 8443
+test-e2e: ## Run frontend E2E tests (requires backend running)
+	cd web && npm run test:e2e
+
+# Run E2E tests with UI mode for debugging
+test-e2e-ui: ## Run E2E tests with Playwright UI
+	cd web && npm run test:e2e:ui
+
 # Generate HTML coverage report
 test-coverage: ## Generate coverage report
 	go test -race -coverprofile=coverage.out ./...

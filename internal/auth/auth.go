@@ -37,6 +37,7 @@ const (
 type Claims struct {
 	Username     string `json:"username"`
 	TokenVersion int    `json:"token_version"` // For token revocation (fixes #525)
+	TokenType    string `json:"token_type"`    // "access" or "refresh"
 	jwt.RegisteredClaims
 }
 
@@ -109,6 +110,21 @@ func (m *Manager) Authenticate(username, password string) (string, error) {
 // GenerateToken creates a new JWT token for the given username.
 // This is primarily used for testing. For production use, use Authenticate().
 func (m *Manager) GenerateToken(username string) (string, error) {
+	return m.generateTokenWithType(username, "access", m.sessionTimeout)
+}
+
+// GenerateAccessToken creates a short-lived access token (fixes #478).
+func (m *Manager) GenerateAccessToken(username string) (string, error) {
+	return m.generateTokenWithType(username, "access", AccessTokenDuration)
+}
+
+// GenerateRefreshToken creates a long-lived refresh token (fixes #478).
+func (m *Manager) GenerateRefreshToken(username string) (string, error) {
+	return m.generateTokenWithType(username, "refresh", RefreshTokenDuration)
+}
+
+// generateTokenWithType creates a JWT token with specified type and duration.
+func (m *Manager) generateTokenWithType(username, tokenType string, duration time.Duration) (string, error) {
 	// Read token version with lock (fixes #520, #525)
 	m.mu.RLock()
 	currentVersion := m.tokenVersion
@@ -118,8 +134,9 @@ func (m *Manager) GenerateToken(username string) (string, error) {
 	claims := &Claims{
 		Username:     username,
 		TokenVersion: currentVersion, // Include version for revocation
+		TokenType:    tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(m.sessionTimeout)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    "LuminetIQ",
@@ -166,6 +183,34 @@ func (m *Manager) ValidateToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
+// ValidateRefreshToken validates a refresh token and returns the claims (fixes #478).
+// Ensures the token is actually a refresh token, not an access token.
+func (m *Manager) ValidateRefreshToken(tokenString string) (*Claims, error) {
+	claims, err := m.ValidateToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure it's a refresh token
+	if claims.TokenType != "refresh" {
+		return nil, ErrInvalidToken
+	}
+
+	return claims, nil
+}
+
+// RefreshAccessToken generates a new access token from a valid refresh token (fixes #478).
+// This allows short-lived access tokens with long-lived refresh tokens.
+func (m *Manager) RefreshAccessToken(refreshToken string) (string, error) {
+	claims, err := m.ValidateRefreshToken(refreshToken)
+	if err != nil {
+		return "", err
+	}
+
+	// Generate new access token with same username
+	return m.GenerateAccessToken(claims.Username)
+}
+
 // HashPassword creates a bcrypt hash of a password.
 func HashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -208,8 +253,9 @@ func extractTokenFromSubprotocol(protocols string) string {
 // Middleware returns an HTTP middleware that validates JWT tokens.
 func (m *Manager) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip auth for login and setup endpoints
+		// Skip auth for login, refresh, and setup endpoints (fixes #478)
 		if r.URL.Path == "/api/auth/login" ||
+			r.URL.Path == "/api/auth/refresh" ||
 			r.URL.Path == "/api/setup/status" ||
 			r.URL.Path == "/api/setup/complete" {
 			next.ServeHTTP(w, r)
@@ -224,7 +270,7 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 
 		var tokenString string
 
-		// For WebSocket connections, support multiple auth methods
+		// For WebSocket connections, check Sec-WebSocket-Protocol first (fixes #478)
 		if strings.HasPrefix(r.URL.Path, "/ws") {
 			// Method 1 (Preferred): Check Sec-WebSocket-Protocol header
 			// Format: "access_token, <token>" or "bearer, <token>"
@@ -232,31 +278,15 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 			if protocols != "" {
 				tokenString = extractTokenFromSubprotocol(protocols)
 			}
-
-			// Method 2 (Deprecated): Query parameter fallback for backwards compatibility
-			if tokenString == "" {
-				tokenString = r.URL.Query().Get("token")
-				if tokenString != "" {
-					log.Println("WARNING: WebSocket authentication via query parameter is deprecated. Use Sec-WebSocket-Protocol header instead.")
-				}
-			}
 		}
 
-		// If no WebSocket token, check Authorization header
+		// Use unified token extraction with cookie priority (fixes #478)
 		if tokenString == "" {
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
+			tokenString, _ = GetTokenFromRequest(r)
+			if tokenString == "" {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
-
-			// Parse Bearer token
-			parts := strings.Split(authHeader, " ")
-			if len(parts) != 2 || parts[0] != "Bearer" {
-				http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
-				return
-			}
-			tokenString = parts[1]
 		}
 
 		claims, err := m.ValidateToken(tokenString)
