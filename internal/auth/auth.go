@@ -378,6 +378,7 @@ func randomInt(n int) (int, error) {
 	var b [4]byte
 	// Use uint64 for calculation to avoid overflow
 	max := uint64(1) << 32
+	// #nosec G115 -- Result is always < 2^32 (max - remainder), safe for uint32
 	maxValid := uint32(max - (max % uint64(n)))
 
 	for {
@@ -386,6 +387,7 @@ func randomInt(n int) (int, error) {
 		}
 		val := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24
 		if val < maxValid {
+			// #nosec G115 -- val % uint32(n) is always < n, safe for int conversion
 			return int(val % uint32(n)), nil
 		}
 	}

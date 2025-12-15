@@ -455,7 +455,7 @@ func (f *Fingerprinter) probeTLS(ctx context.Context, ip string, port int) *TLSI
 
 	dialer := &net.Dialer{Timeout: f.timeout}
 	conn, err := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{
-		InsecureSkipVerify: true, //nolint:gosec // We want to inspect any certificate
+		InsecureSkipVerify: true, // #nosec G402 -- We want to inspect any certificate
 	})
 	if err != nil {
 		return nil

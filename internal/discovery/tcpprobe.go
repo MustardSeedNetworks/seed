@@ -101,7 +101,7 @@ func (p *TCPProber) nextSrcPort() uint16 {
 		atomic.StoreUint32(&p.srcPort, 40000)
 		port = 40000
 	}
-	//nolint:gosec // G115: port is bounded to 40000-60000, safe for uint16
+	// #nosec G115 -- port is bounded to 40000-60000, safe for uint16
 	return uint16(port)
 }
 
