@@ -21,7 +21,18 @@ linters:
     - prealloc       # Suggest preallocations
     # Pro linters - quality improvements
     - nilerr         # Check for returning nil when err is not nil
+    - nilnil         # Check for returning nil, nil
     - copyloopvar    # Detects loop variable capture issues (Go 1.22+)
+    - unparam        # Detect unused function parameters
+    - godot          # Check that comments end with a period
+    - nolintlint     # Ensure nolint directives are valid and explained
+    - revive         # Comprehensive linter (successor to golint)
+    - goconst        # Find repeated strings that could be constants
+    - dupl           # Detect code duplication
+    - gocyclo        # Check cyclomatic complexity
+    - maintidx       # Check maintainability index
+    - exhaustive     # Check exhaustiveness of enum switch statements
+    - intrange       # Find places where for loops could use integer range
 
   settings:
     errcheck:
@@ -38,6 +49,41 @@ linters:
     gosec:
       excludes:
         - G104  # Unhandled errors (covered by errcheck)
+    gocyclo:
+      min-complexity: 15
+    dupl:
+      threshold: 100
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    maintidx:
+      under: 20
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unused-parameter
+        - name: unreachable-code
+        - name: redefines-builtin-id
 
   exclusions:
     presets:
@@ -47,6 +93,8 @@ linters:
         linters:
           - errcheck
           - gosec
+          - dupl
+          - goconst
 
 output:
   sort-order:
