@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write # Required for cosign OIDC signing
 
 jobs:
   release-please:
@@ -19,9 +20,166 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
+      upload_url: ${{ steps.release.outputs.upload_url }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: go
+
+  # Build and release artifacts with SBOM + signatures (fixes #463)
+  build-release:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            artifact_name: luminetiq-linux-amd64
+          - goos: linux
+            goarch: arm64
+            artifact_name: luminetiq-linux-arm64
+          - goos: darwin
+            goarch: amd64
+            artifact_name: luminetiq-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            artifact_name: luminetiq-darwin-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '25'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: cd web && npm ci
+
+      - name: Build frontend
+        run: cd web && npm run build
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -trimpath -ldflags="-s -w -X main.version=${{ needs.release-please.outputs.version }}" \
+            -o ${{ matrix.artifact_name }} ./cmd/luminetiq
+
+      - name: Install Syft for SBOM generation
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Generate SBOM (CycloneDX JSON)
+        run: |
+          syft ${{ matrix.artifact_name }} -o cyclonedx-json > ${{ matrix.artifact_name }}.sbom.json
+
+      - name: Install Cosign for signing
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign binary with cosign (keyless OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          cosign sign-blob --yes \
+            --bundle ${{ matrix.artifact_name }}.cosign.bundle \
+            ${{ matrix.artifact_name }}
+
+      - name: Sign SBOM with cosign
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          cosign sign-blob --yes \
+            --bundle ${{ matrix.artifact_name }}.sbom.cosign.bundle \
+            ${{ matrix.artifact_name }}.sbom.json
+
+      - name: Upload binary to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-please.outputs.upload_url }}
+          asset_path: ./${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.artifact_name }}
+          asset_content_type: application/octet-stream
+
+      - name: Upload SBOM to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-please.outputs.upload_url }}
+          asset_path: ./${{ matrix.artifact_name }}.sbom.json
+          asset_name: ${{ matrix.artifact_name }}.sbom.json
+          asset_content_type: application/json
+
+      - name: Upload binary signature bundle
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-please.outputs.upload_url }}
+          asset_path: ./${{ matrix.artifact_name }}.cosign.bundle
+          asset_name: ${{ matrix.artifact_name }}.cosign.bundle
+          asset_content_type: application/octet-stream
+
+      - name: Upload SBOM signature bundle
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-please.outputs.upload_url }}
+          asset_path: ./${{ matrix.artifact_name }}.sbom.cosign.bundle
+          asset_name: ${{ matrix.artifact_name }}.sbom.cosign.bundle
+          asset_content_type: application/octet-stream
+
+  # Verification job to demonstrate signature validation (fixes #463)
+  verify-signatures:
+    needs: [release-please, build-release]
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Download release artifacts
+        run: |
+          gh release download ${{ needs.release-please.outputs.tag_name }} \
+            -p 'luminetiq-linux-amd64*' \
+            -R ${{ github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify binary signature
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          cosign verify-blob \
+            --bundle luminetiq-linux-amd64.cosign.bundle \
+            --certificate-identity-regexp='https://github.com/${{ github.repository }}' \
+            --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
+            luminetiq-linux-amd64
+
+      - name: Verify SBOM signature
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          cosign verify-blob \
+            --bundle luminetiq-linux-amd64.sbom.cosign.bundle \
+            --certificate-identity-regexp='https://github.com/${{ github.repository }}' \
+            --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
+            luminetiq-linux-amd64.sbom.json
+
+      - name: Verification success
+        run: echo "✅ All signatures verified successfully!"
