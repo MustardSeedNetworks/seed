@@ -1,16 +1,20 @@
 # Logging Package - Secure Logging with Automatic Redaction
 
-This package provides secure logging utilities that automatically redact sensitive data like passwords, tokens, and API keys.
+This package provides secure logging utilities that automatically redact sensitive data like
+passwords, tokens, and API keys.
 
 ## Why Use This Package?
 
-**Problem:** Logging request bodies, headers, or error messages can accidentally expose sensitive information like:
+**Problem:** Logging request bodies, headers, or error messages can accidentally expose sensitive
+information like:
+
 - Passwords in login requests
 - JWT tokens in Authorization headers
 - API keys in URL parameters
 - Session cookies
 
-**Solution:** This package provides drop-in replacements for `log.Printf` and utilities for safely logging HTTP requests, headers, and data structures.
+**Solution:** This package provides drop-in replacements for `log.Printf` and utilities for safely
+logging HTTP requests, headers, and data structures.
 
 ## Quick Start
 
@@ -77,6 +81,7 @@ logging.Logf("user %s login failed: %v", username, err)
 Redacts sensitive patterns from a string.
 
 **Redacted patterns:**
+
 - `password=...`
 - `token=...`
 - `api_key=...`
@@ -95,6 +100,7 @@ safe := logging.RedactString(msg)
 Returns headers with sensitive values redacted.
 
 **Redacted headers:**
+
 - `Authorization`
 - `Cookie`
 - `Set-Cookie`
@@ -113,6 +119,7 @@ log.Printf("request headers: %v", safeHeaders)
 Redacts fields with sensitive names or values.
 
 **Redacted field names:**
+
 - Contains "password"
 - Contains "secret"
 - Contains "token"
@@ -190,6 +197,7 @@ go test ./internal/logging/... -v
 ```
 
 Test coverage:
+
 - String pattern redaction
 - Header redaction
 - Map/JSON redaction
@@ -209,6 +217,7 @@ The CI pipeline includes automated checks for unsafe logging patterns:
 ```
 
 **Detected patterns:**
+
 - `log.Print.*r.Body`
 - `log.Print.*password`
 - `log.Print.*token`

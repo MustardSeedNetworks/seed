@@ -1,6 +1,7 @@
 # LuminetIQ Style Guide
 
-This document defines the official coding standards and naming conventions for the LuminetIQ project. All contributors should follow these guidelines to ensure consistency and maintainability.
+This document defines the official coding standards and naming conventions for the LuminetIQ
+project. All contributors should follow these guidelines to ensure consistency and maintainability.
 
 ## Table of Contents
 
@@ -280,14 +281,14 @@ function Button({ variant, onClick, children }: {
 
 Use consistent naming for REST endpoints:
 
-| Pattern                    | Method | Description              |
-| -------------------------- | ------ | ------------------------ |
-| `/api/devices`             | GET    | List all devices         |
-| `/api/devices`             | POST   | Create a device          |
-| `/api/devices/:id`         | GET    | Get a specific device    |
-| `/api/devices/:id`         | PUT    | Update a device          |
-| `/api/devices/:id`         | DELETE | Delete a device          |
-| `/api/devices/:id/scan`    | POST   | Trigger action on device |
+| Pattern                     | Method | Description              |
+| --------------------------- | ------ | ------------------------ |
+| `/api/devices`              | GET    | List all devices         |
+| `/api/devices`              | POST   | Create a device          |
+| `/api/devices/:id`          | GET    | Get a specific device    |
+| `/api/devices/:id`          | PUT    | Update a device          |
+| `/api/devices/:id`          | DELETE | Delete a device          |
+| `/api/devices/:id/scan`     | POST   | Trigger action on device |
 | `/api/devices/:id/settings` | GET    | Get sub-resource         |
 
 ### Naming Conventions
@@ -409,18 +410,18 @@ type(scope): description
 
 ### Types
 
-| Type       | Description                          |
-| ---------- | ------------------------------------ |
-| `feat`     | New feature                          |
-| `fix`      | Bug fix                              |
-| `docs`     | Documentation only                   |
-| `style`    | Code style (formatting, whitespace)  |
-| `refactor` | Code change without feature/fix      |
-| `perf`     | Performance improvement              |
-| `test`     | Adding or updating tests             |
-| `chore`    | Maintenance tasks                    |
-| `ci`       | CI/CD changes                        |
-| `build`    | Build system changes                 |
+| Type       | Description                         |
+| ---------- | ----------------------------------- |
+| `feat`     | New feature                         |
+| `fix`      | Bug fix                             |
+| `docs`     | Documentation only                  |
+| `style`    | Code style (formatting, whitespace) |
+| `refactor` | Code change without feature/fix     |
+| `perf`     | Performance improvement             |
+| `test`     | Adding or updating tests            |
+| `chore`    | Maintenance tasks                   |
+| `ci`       | CI/CD changes                       |
+| `build`    | Build system changes                |
 
 ### Scopes
 
@@ -458,4 +459,5 @@ refactor(api): extract rate limiting to middleware
 - [web/THEMING.md](web/THEMING.md) - Design system tokens and patterns
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [Effective Go](https://go.dev/doc/effective_go) - Go best practices
-- [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/) - React + TS patterns
+- [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/) - React + TS
+  patterns

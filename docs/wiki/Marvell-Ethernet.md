@@ -1,6 +1,7 @@
 # Marvell Ethernet NICs
 
-⚠️ **Limited TDR Support** - Marvell server NICs may support cable diagnostics, but consumer chipsets typically do not. **Intel preferred for reliability**.
+⚠️ **Limited TDR Support** - Marvell server NICs may support cable diagnostics, but consumer
+chipsets typically do not. **Intel preferred for reliability**.
 
 [← Back to Home](Home)
 
@@ -9,11 +10,13 @@
 ### Why Marvell is Uncommon
 
 **Market Position:**
+
 - Less common than Intel, Broadcom, or Realtek
 - Found in some older servers and specialty hardware
 - Driver support varies significantly by chipset
 
 **TDR Support:**
+
 - **Server chipsets:** May support basic TDR
 - **Consumer chipsets:** Usually no TDR support
 - **Documentation:** Limited compared to Intel
@@ -25,6 +28,7 @@
 ## 🔍 Common Marvell Chipsets
 
 ### Marvell 88E1512 (PHY Chip)
+
 **Often Found on Embedded Boards**
 
 - **Type:** PHY (Physical Layer) chip
@@ -33,16 +37,19 @@
 - **TDR Support:** ⚠️ **Varies** (depends on MAC driver)
 
 **Found In:**
+
 - Raspberry Pi Compute Module carrier boards
 - Industrial Ethernet devices
 - Embedded systems
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ⚠️ **Unknown** (test required)
 - Link Speed Detection: ✅ Accurate
 - Basic Diagnostics: ✅ Works
 
 **Testing:**
+
 ```bash
 sudo ethtool --cable-test eth0
 # May work, may not - depends on implementation
@@ -51,6 +58,7 @@ sudo ethtool --cable-test eth0
 ---
 
 ### Marvell Yukon 88E8056 (Consumer)
+
 **Common in Older Motherboards/Laptops**
 
 - **Chipset:** Marvell Yukon 88E8056
@@ -59,17 +67,20 @@ sudo ethtool --cable-test eth0
 - **Found In:** 2005-2010 era motherboards
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ❌ **Not supported**
 - Link Speed Detection: ✅ Accurate
 - Basic Diagnostics: ✅ Works
 
 **Notes:**
+
 - Older chipset, mostly replaced by Realtek/Intel
 - No TDR support in Linux driver
 
 ---
 
 ### Marvell 88E1111 (Legacy PHY)
+
 **Older Embedded/Server PHY**
 
 - **Type:** PHY chip
@@ -78,6 +89,7 @@ sudo ethtool --cable-test eth0
 - **TDR Support:** ❌ **Not typically supported**
 
 **Notes:**
+
 - Legacy chipset (pre-2010)
 - Found in older embedded systems
 
@@ -88,6 +100,7 @@ sudo ethtool --cable-test eth0
 ### Supported The Seed Features
 
 **✅ Generally Working:**
+
 - Link status detection
 - Speed/duplex detection
 - Auto-negotiation
@@ -95,11 +108,13 @@ sudo ethtool --cable-test eth0
 - Basic network diagnostics
 
 **❌ Usually Not Working:**
+
 - Cable diagnostics (TDR)
 - Cable length measurement
 - Fault detection
 
 **⚠️ Varies By Chipset:**
+
 - Some Marvell server NICs may support TDR
 - Most consumer/embedded chipsets do not
 
@@ -135,6 +150,7 @@ sudo ethtool --cable-test eth0
 ### Use for Basic Diagnostics
 
 Even without TDR, Marvell NICs work for:
+
 ```bash
 # Link status
 ethtool eth0
@@ -153,6 +169,7 @@ sudo ./seed --interface eth0
 ### ❌ **Don't Purchase** - For New Builds
 
 **Reasons:**
+
 - Limited availability (not as common as Intel/Realtek)
 - Uncertain TDR support
 - Limited documentation
@@ -161,6 +178,7 @@ sudo ./seed --interface eth0
 ### ✅ **Maybe** - If You Already Have It
 
 **If your system has Marvell:**
+
 1. Test for TDR support: `sudo ethtool --cable-test eth0`
 2. If TDR works: Great! Use it.
 3. If TDR fails: Works for basic diagnostics, add Intel card for TDR
@@ -174,6 +192,7 @@ sudo ./seed --interface eth0
 **Problem:** No documentation on whether specific Marvell model supports TDR
 
 **Solution:** Test empirically
+
 ```bash
 sudo ethtool --cable-test eth0
 # Either works or doesn't - only way to know
@@ -184,6 +203,7 @@ sudo ethtool --cable-test eth0
 **Symptom:** Network interface not detected
 
 **Solution:**
+
 ```bash
 # Try loading driver manually
 sudo modprobe sky2   # For Yukon chipsets
@@ -196,12 +216,15 @@ sudo modprobe mvneta # For embedded chipsets
 ## 📝 Community Test Reports
 
 ### Marvell Models with TDR
-*(Community will report which models support TDR)*
+
+_(Community will report which models support TDR)_
 
 ### Marvell Models WITHOUT TDR
-*(Community will report confirmed no-TDR models)*
+
+_(Community will report confirmed no-TDR models)_
 
 ### Submit Your Report
+
 [Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ⚠️ **Especially needed for Marvell!** - Documentation is sparse, community reports are valuable.
@@ -211,15 +234,17 @@ sudo modprobe mvneta # For embedded chipsets
 ## 🔗 Additional Resources
 
 ### Driver Documentation
+
 - [sky2 Driver](https://www.kernel.org/doc/html/latest/networking/device_drivers/ethernet/marvell/sky2.html)
 - [Marvell PHY Drivers](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/net/phy/marvell.c)
 
 ### Marvell Official
+
 - [Marvell Ethernet Solutions](https://www.marvell.com/products/ethernet-solutions.html)
 
 ---
 
-**Last Updated:** 2025-12-14
-**Recommendation:** Test if you have it, but buy Intel I210/I350 for new hardware.
+**Last Updated:** 2025-12-14 **Recommendation:** Test if you have it, but buy Intel I210/I350 for
+new hardware.
 
 [← Back to Home](Home) | [← Previous: Realtek Ethernet](Realtek-Ethernet)

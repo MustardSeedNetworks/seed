@@ -49,7 +49,8 @@ The theming system consists of three layers:
 
 ## Typography Scale
 
-LuminetIQ uses a semantic typography system with responsive sizing. Use these CSS utility classes instead of raw Tailwind size classes.
+LuminetIQ uses a semantic typography system with responsive sizing. Use these CSS utility classes
+instead of raw Tailwind size classes.
 
 ### Heading Classes
 
@@ -189,13 +190,15 @@ Use consistent sizes for buttons and inputs:
 | `md` | `px-4 py-2`    | `px-2.5 py-2` | Default size (most common)       |
 | `lg` | `px-6 py-3`    | `px-3 py-2.5` | Large CTAs, prominent inputs     |
 
-**Important**: Always use `buttonClass()` or `inputClass()` helpers instead of raw Tailwind padding classes to ensure consistency.
+**Important**: Always use `buttonClass()` or `inputClass()` helpers instead of raw Tailwind padding
+classes to ensure consistency.
 
 ## Spacing & Layout
 
 ### Spacing Scale
 
-Use these consistent spacing values (based on 4px grid). **Prefer semantic CSS utility classes** over raw Tailwind values:
+Use these consistent spacing values (based on 4px grid). **Prefer semantic CSS utility classes**
+over raw Tailwind values:
 
 | Raw Value | Pixels | Semantic Class   | Usage                       |
 | --------- | ------ | ---------------- | --------------------------- |
@@ -427,9 +430,7 @@ function Component() {
   // actualTheme: 'light' | 'dark' (resolved value)
 
   return (
-    <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-      Toggle Theme
-    </button>
+    <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>Toggle Theme</button>
   );
 }
 ```
@@ -538,7 +539,8 @@ When using Canvas, document the color mapping in comments (e.g., `// brand-prima
 
 ### Discovery Method Colors
 
-Network discovery methods use distinct colors for visual identification. These use Tailwind colors with dark: variants:
+Network discovery methods use distinct colors for visual identification. These use Tailwind colors
+with dark: variants:
 
 ```tsx
 // Allowed - semantic colored badges with dark mode support

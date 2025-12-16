@@ -1,12 +1,14 @@
 # Intel Ethernet NICs
 
-Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. The `igb` and `e1000e` drivers provide excellent TDR (Time Domain Reflectometry) support via `ethtool`.
+Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. The `igb` and
+`e1000e` drivers provide excellent TDR (Time Domain Reflectometry) support via `ethtool`.
 
 [← Back to Home](Home)
 
 ## 🎯 Recommended Models for TDR Cable Testing
 
 ### Intel I350 Gigabit (Best Overall)
+
 **Professional-Grade with Full TDR Support**
 
 - **Chipset:** Intel I350-T4 (quad-port) / I350-T2 (dual-port)
@@ -17,6 +19,7 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - **Price Range:** $40-80 USD (used), $150-250 USD (new)
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ✅ Excellent (full support)
 - Cable Length Detection: ✅ Yes (±5m accuracy)
 - Fault Detection: ✅ Yes (open, short, impedance mismatch)
@@ -25,6 +28,7 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - Packet Capture (LLDP/CDP): ✅ Excellent
 
 **TDR Capabilities:**
+
 - **All 4 pairs tested** (pair A, B, C, D)
 - **Cable status:** OK, Open, Short, CrossTalk, Impedance Mismatch
 - **Cable length:** 1m to 180m range
@@ -32,23 +36,25 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - **Test time:** ~10-30 seconds
 
 **Why Choose I350:**
+
 - **Proven reliability** - Industry standard for 10+ years
 - **Widely available** - Easy to find used on eBay
 - **Best TDR accuracy** - Reference standard
 - **4 ports** - Test multiple cables without swapping
 
 **Use Cases:**
+
 - Network technician field diagnostics
 - Cable plant troubleshooting
 - Data center cabling verification
 - Pre-termination testing
 
-**Tested Configurations:**
-*(Community reports will be added here)*
+**Tested Configurations:** _(Community reports will be added here)_
 
 ---
 
 ### Intel I210 Gigabit (Budget Option)
+
 **Single-Port with Full TDR**
 
 - **Chipset:** Intel I210-T1
@@ -59,6 +65,7 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - **Price Range:** $20-35 USD (used), $50-80 USD (new)
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ✅ Excellent
 - Cable Length Detection: ✅ Yes
 - Fault Detection: ✅ Yes
@@ -66,21 +73,23 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - Link Speed Detection: ✅ Accurate
 
 **Why Choose I210:**
+
 - **Budget-friendly** - Cheapest Intel TDR option
 - **PCIe x1** - Works in any PCIe slot
 - **Same TDR as I350** - Full capabilities
 - **Low profile** - Fits small form factor builds
 
 **Limitations vs I350:**
+
 - Only 1 port (vs 2 or 4)
 - PCIe x1 (vs x4, but gigabit doesn't need x4)
 
-**Tested Configurations:**
-*(Community reports will be added here)*
+**Tested Configurations:** _(Community reports will be added here)_
 
 ---
 
 ### Intel I225-V 2.5 Gigabit (Modern Option)
+
 **Latest Generation with 2.5GbE**
 
 - **Chipset:** Intel I225-V
@@ -91,6 +100,7 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - **Price Range:** $25-40 USD (add-in card), Built-in (free)
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ✅ Excellent
 - Cable Length Detection: ✅ Yes
 - Fault Detection: ✅ Yes
@@ -98,23 +108,25 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - 2.5GbE Support: ✅ Yes
 
 **Why Choose I225-V:**
+
 - **Modern** - Found on recent motherboards (2020+)
 - **2.5GbE** - Future-proof for multi-gig networks
 - **Built-in** - May already have it
 - **Same TDR capabilities** as I210/I350
 
 **Known Issue (Rev A0/A1):**
+
 - **Early revisions** had link drop bugs
 - **Rev A2+** fixed the issues
 - Check revision: `ethtool -i eth0` → shows "firmware-version"
 - **Recommendation:** Ensure rev A2 or newer
 
-**Tested Configurations:**
-*(Community reports will be added here)*
+**Tested Configurations:** _(Community reports will be added here)_
 
 ---
 
 ### Intel 82579LM/V Gigabit (Legacy)
+
 **Common in Older Laptops/Desktops**
 
 - **Chipset:** Intel 82579LM (laptop) / 82579V (desktop)
@@ -123,6 +135,7 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - **Speed:** 10/100/1000 Mbps
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ⚠️ Basic (limited functionality)
 - Cable Length Detection: ⚠️ Approximate only
 - Fault Detection: ✅ Yes (OK/fault status)
@@ -130,12 +143,12 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
 - Link Speed Detection: ✅ Accurate
 
 **Notes:**
+
 - Common in Intel-based PCs (2010-2015)
 - TDR support is **basic** - not as detailed as I210/I350
 - Detects cable faults but doesn't measure distance accurately
 
-**Tested Configurations:**
-*(Community reports will be added here)*
+**Tested Configurations:** _(Community reports will be added here)_
 
 ---
 
@@ -148,6 +161,7 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
    - I350: PCIe x4 (fits x4, x8, x16 slot)
 
 2. **Install card:**
+
    ```bash
    # Power off system
    # Insert card into PCIe slot
@@ -156,6 +170,7 @@ Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. T
    ```
 
 3. **Verify detection:**
+
    ```bash
    lspci | grep -i ethernet
    # Should show: Intel Corporation I210 Gigabit Network Connection
@@ -254,6 +269,7 @@ Pair D length: 45m
 ### Interpreting Results
 
 **Status Codes:**
+
 - **OK** - Pair is functioning normally
 - **Open** - Pair is disconnected (no connection)
 - **Short within Pair** - Wires within pair are touching
@@ -261,6 +277,7 @@ Pair D length: 45m
 - **Impedance Mismatch** - Wrong cable type or damaged insulation
 
 **Length Accuracy:**
+
 - **±2-5m typical** - Acceptable for fault locating
 - **Affected by:** Cable quality, temperature, installation
 - **Not calibrated** - For diagnostics, not surveying
@@ -272,22 +289,26 @@ Pair D length: 45m
 ### TDR Accuracy (I210/I350/I225-V)
 
 **Cable Length Detection:**
+
 - 1-10m cables: ±2m accuracy
 - 10-50m cables: ±3m accuracy
 - 50-100m cables: ±5m accuracy
-- >100m cables: ±10m accuracy
+- > 100m cables: ±10m accuracy
 
 **Fault Distance:**
+
 - Short circuits: ±2m accuracy
 - Opens: ±3m accuracy
 - Impedance mismatch: ±5m accuracy
 
 **Test Time:**
+
 - ~10 seconds for short cables (<10m)
 - ~20 seconds for medium cables (10-50m)
 - ~30 seconds for long cables (>50m)
 
 ### Link Detection Speed
+
 - 10/100/1000 auto-negotiation: <2 seconds
 - LLDP/CDP neighbor discovery: <30 seconds
 - Accurate speed/duplex reporting: 100%
@@ -299,6 +320,7 @@ Pair D length: 45m
 ### Issue: "Operation not supported" for TDR
 
 **Symptoms:**
+
 ```bash
 sudo ethtool --cable-test eth0
 netlink error: Operation not supported
@@ -307,6 +329,7 @@ netlink error: Operation not supported
 **Cause:** NIC doesn't support TDR (wrong chipset)
 
 **Solution:**
+
 - Verify chipset: `lspci | grep -i ethernet`
 - If not I210/I350/I225-V: TDR not supported
 - **Recommendation:** Purchase Intel I210 or I350
@@ -316,6 +339,7 @@ netlink error: Operation not supported
 **Symptoms:** `ethtool --cable-test` never completes
 
 **Solution:**
+
 ```bash
 # Kill hung test
 sudo pkill ethtool
@@ -333,11 +357,13 @@ sudo ethtool --cable-test eth0
 **Symptoms:** Length reported doesn't match known cable length
 
 **Possible Causes:**
+
 1. **Cable quality** - Low-quality cable affects TDR
 2. **Temperature** - Cold cables test longer
 3. **Solid vs stranded** - Different propagation velocities
 
 **Mitigation:**
+
 - Use known-good cables for calibration
 - Understand ±5m accuracy limitation
 - Compare multiple cables
@@ -349,6 +375,7 @@ sudo ethtool --cable-test eth0
 **Cause:** Firmware bug in early I225-V revisions
 
 **Solution:**
+
 ```bash
 # Check revision
 ethtool -i eth0 | grep firmware
@@ -365,31 +392,37 @@ ethtool -i eth0 | grep firmware
 ### New Cards
 
 **Intel I210:**
+
 - Amazon: $50-80 USD
 - Newegg: $50-75 USD
 - eBay (new): $45-70 USD
 
 **Intel I350:**
+
 - Amazon: $150-250 USD (quad-port)
 - Newegg: $180-220 USD
 - eBay (new): $120-200 USD
 
 **Intel I225-V:**
+
 - Amazon: $25-40 USD (add-in card)
 - Often built into motherboards (2020+)
 
 ### Used/Surplus (Best Value)
 
 **eBay:**
+
 - Intel I210: $20-30 USD
 - Intel I350 (pulled from servers): $40-80 USD
 
 **Server Liquidators:**
+
 - I350 quad-port: $30-60 USD
 - Often "pulls" from decommissioned servers
 - Test before buying (eBay money-back guarantee)
 
 **Recommended Searches:**
+
 - "Intel I210-T1 PCIe"
 - "Intel I350-T4 NIC"
 - "Intel I225-V Ethernet"
@@ -444,12 +477,15 @@ sudo ./seed --interface eth0
 ## 📝 Community Test Reports
 
 ### Successful TDR Tests
-*(Community will report working configurations here)*
+
+_(Community will report working configurations here)_
 
 ### Cable Fault Examples
-*(Community will share real-world fault detection here)*
+
+_(Community will share real-world fault detection here)_
 
 ### Submit Your Report
+
 [Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
@@ -457,20 +493,24 @@ sudo ./seed --interface eth0
 ## 🔗 Additional Resources
 
 ### Driver Documentation
+
 - [Intel igb Driver](https://www.kernel.org/doc/html/latest/networking/device_drivers/ethernet/intel/igb.html)
 - [Intel e1000e Driver](https://www.kernel.org/doc/html/latest/networking/device_drivers/ethernet/intel/e1000e.html)
 
 ### Ethtool Documentation
+
 - [ethtool cable-test](https://man7.org/linux/man-pages/man8/ethtool.8.html)
 - [TDR Implementation](https://git.kernel.org/pub/scm/network/ethtool/ethtool.git/tree/README)
 
 ### Intel Official
+
 - [Intel Ethernet Controllers](https://www.intel.com/content/www/us/en/products/details/ethernet/controllers.html)
 - [Intel ARK Database](https://ark.intel.com/)
 
 ---
 
-**Last Updated:** 2025-12-14
-**Recommendation:** **Intel I350 or I210 for professional cable diagnostics**
+**Last Updated:** 2025-12-14 **Recommendation:** **Intel I350 or I210 for professional cable
+diagnostics**
 
-[← Back to Home](Home) | [← Previous: MediaTek Wi-Fi](MediaTek-WiFi) | [Next: Broadcom Ethernet →](Broadcom-Ethernet)
+[← Back to Home](Home) | [← Previous: MediaTek Wi-Fi](MediaTek-WiFi) |
+[Next: Broadcom Ethernet →](Broadcom-Ethernet)

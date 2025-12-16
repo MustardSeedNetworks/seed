@@ -50,6 +50,7 @@ Each discovered device shows:
 ## Performance
 
 **Typical scan times:**
+
 - 50 devices (/24 subnet): 10-30 seconds
 - 200 devices: 30-60 seconds
 - 1,000 devices: 2-5 minutes
@@ -57,11 +58,13 @@ Each discovered device shows:
 ## Troubleshooting
 
 **No devices found:**
+
 - Check network interface (Settings → Network Interface)
 - Verify subnet (192.168.1.0/24 vs 192.168.0.0/24)
 - Try running with sudo (packet capture requires privileges)
 
 **Some devices missing:**
+
 - Enable all discovery methods (ARP, ICMP, TCP)
 - Increase timeout (some devices respond slowly)
 - Check firewall (may be blocking ICMP)

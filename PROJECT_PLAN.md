@@ -6,7 +6,9 @@
 
 ## Overview
 
-NetScope is a professional-grade network diagnostic appliance designed for network technicians and engineers. It provides real-time visibility into network connectivity through a modern card-based web interface.
+NetScope is a professional-grade network diagnostic appliance designed for network technicians and
+engineers. It provides real-time visibility into network connectivity through a modern card-based
+web interface.
 
 ### Target Platform
 
@@ -411,5 +413,4 @@ Issues will be created for each feature with labels:
 
 ---
 
-_Last updated: 2025-12-02_
-_Version: Draft 1.0_
+_Last updated: 2025-12-02_ _Version: Draft 1.0_

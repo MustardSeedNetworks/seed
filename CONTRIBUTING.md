@@ -1,6 +1,7 @@
 # Contributing to NetScope
 
-Thank you for your interest in contributing to NetScope! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to NetScope! This document provides guidelines and
+instructions for contributing.
 
 ## Code of Conduct
 
@@ -56,8 +57,8 @@ journalctl -u luminetiq -f      # View logs
 
 **First-Boot Credential Retrieval:**
 
-The install script automatically generates and displays initial admin credentials.
-If you need to manually generate credentials (e.g., for headless deployments):
+The install script automatically generates and displays initial admin credentials. If you need to
+manually generate credentials (e.g., for headless deployments):
 
 ```bash
 # Generate credentials and display on stdout
@@ -70,8 +71,8 @@ luminetiq credentials -file /path/to/credentials.txt
 luminetiq credentials -json
 ```
 
-The credentials file is created with mode 0600 (owner read/write only).
-**Delete this file immediately after retrieving the password.**
+The credentials file is created with mode 0600 (owner read/write only). **Delete this file
+immediately after retrieving the password.**
 
 **Uninstall:**
 
@@ -94,7 +95,8 @@ Use descriptive branch names with prefixes:
 
 ### Commit Messages
 
-We use [Conventional Commits](https://www.conventionalcommits.org/). All commits must follow this format:
+We use [Conventional Commits](https://www.conventionalcommits.org/). All commits must follow this
+format:
 
 ```
 type(scope): description
@@ -163,7 +165,8 @@ feat(dhcp): add phase timing breakdown (#123)
 
 #### Storybook
 
-We use [Storybook](https://storybook.js.org/) for developing and documenting UI components in isolation.
+We use [Storybook](https://storybook.js.org/) for developing and documenting UI components in
+isolation.
 
 ```bash
 # Start Storybook development server
@@ -326,6 +329,7 @@ go test -race ./internal/websocket/...
 #### Test File Organization
 
 Tests are co-located with source files:
+
 - `Component.tsx` → `Component.test.tsx`
 - `useHook.ts` → `useHook.test.ts`
 
@@ -361,6 +365,7 @@ describe("MyComponent", () => {
 #### Mocking Strategies
 
 **Mocking fetch:**
+
 ```typescript
 mockFetch.mockImplementation((url: string) => {
   if (url.includes("/api/auth")) {
@@ -371,6 +376,7 @@ mockFetch.mockImplementation((url: string) => {
 ```
 
 **Mocking WebSocket:**
+
 ```typescript
 beforeEach(() => {
   global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
@@ -386,6 +392,7 @@ it("handles WebSocket messages", () => {
 ```
 
 **Mocking localStorage:**
+
 ```typescript
 it("persists auth token", () => {
   mockLocalStorage.setItem("token", "test-token");
@@ -476,11 +483,13 @@ Include:
 
 ## Hardware Testing Contributions
 
-NetScope's advanced features (WiFi scanning, cable diagnostics, etc.) depend on hardware support. We welcome hardware compatibility reports from the community!
+NetScope's advanced features (WiFi scanning, cable diagnostics, etc.) depend on hardware support. We
+welcome hardware compatibility reports from the community!
 
 ### Reporting Hardware Compatibility
 
-Use the **Hardware Report** issue template to document your experience with specific network adapters. Include:
+Use the **Hardware Report** issue template to document your experience with specific network
+adapters. Include:
 
 - **Hardware details**: Make, model, chipset
 - **Platform**: OS, kernel version, driver
@@ -499,42 +508,45 @@ Use the **Hardware Report** issue template to document your experience with spec
 ### What to Test
 
 **WiFi Adapters:**
+
 - Passive scanning (`internal/wifi/scanner_*.go`)
 - Channel availability
 - Signal strength accuracy
 - Packet injection (if applicable)
 
 **Ethernet NICs:**
+
 - Cable diagnostics/TDR (`internal/cable/cable_*.go`)
 - Link speed detection
 - Autonegotiation
 - Statistics accuracy
 
 **Platform-Specific:**
+
 - macOS WiFi scanning via CoreWLAN
 - Linux nl80211 support
 - Driver-specific quirks
 
 ### Hardware Testing Label
 
-Issues labeled `hardware-testing` track compatibility testing efforts. Feel free to claim tests from the backlog or propose new hardware to test.
+Issues labeled `hardware-testing` track compatibility testing efforts. Feel free to claim tests from
+the backlog or propose new hardware to test.
 
 ### Example Hardware Report
 
 ```markdown
-**Hardware**: Intel AX200 WiFi 6 Adapter
-**OS**: Ubuntu 22.04 LTS (kernel 5.15.0)
-**Driver**: iwlwifi
-**Chipset**: Intel AX200
+**Hardware**: Intel AX200 WiFi 6 Adapter **OS**: Ubuntu 22.04 LTS (kernel 5.15.0) **Driver**:
+iwlwifi **Chipset**: Intel AX200
 
 **Features Tested**:
+
 - ✅ Passive scanning: Works perfectly, all 2.4/5 GHz channels
 - ✅ Signal strength: Accurate RSSI readings
 - ✅ Interface switching: Seamless
 - ❌ Packet injection: Not tested
 
-**Notes**: Required `sudo` for scanning. Performance excellent.
-**Recommendation**: Highly recommended for WiFi survey features.
+**Notes**: Required `sudo` for scanning. Performance excellent. **Recommendation**: Highly
+recommended for WiFi survey features.
 ```
 
 ## Questions?

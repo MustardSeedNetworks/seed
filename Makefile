@@ -20,7 +20,7 @@
 # Environment Variables:
 #   DEPLOY_HOST  - Target server IP (default: 192.168.64.7)
 #   DEPLOY_USER  - SSH user (default: krisarmstrong)
-#   DEPLOY_PATH  - Remote installation path (default: /home/$USER/luminetiq)
+#   DEPLOY_PATH  - Remote installation path (default: /home/$USER/seed)
 #   DEPLOY_PORT  - HTTPS port for smoke tests (default: 8443)
 #   REBUILD      - Set to 1 to force rebuild during deploy
 #
@@ -31,12 +31,12 @@
         build-linux-amd64 build-linux-arm64 build-linux-docker \
         docker docker-build docker-test docker-push \
         clean clean-all test test-all test-backend test-frontend test-coverage test-integration test-e2e test-e2e-ui test-e2e-install \
-        lint lint-backend lint-frontend fmt fmt-frontend fmt-all \
+        lint lint-backend lint-frontend fmt fmt-frontend fmt-all fmt-md \
         security security-backend security-frontend security-secrets security-trivy \
         storybook build-storybook test-storybook \
         run dev dev-frontend \
         deploy smoke-test smoke-test-local \
-        deps deps-update logs logs-100 help \
+        deps deps-update tools logs logs-100 help \
         verify release-check iso-info pre-commit pre-commit-install license-check license-report
 
 # =============================================================================
@@ -44,7 +44,7 @@
 # =============================================================================
 
 # Application name - used for binary output and process management
-BINARY_NAME=luminetiq
+BINARY_NAME=seed
 
 # Version information extracted from git
 # Falls back to "dev" if not in a git repository
@@ -62,9 +62,9 @@ GOFLAGS=-trimpath -buildvcs=false
 # -w: Omit DWARF symbol table
 # -X: Set package variables at link time
 LDFLAGS=-s -w \
-    -X github.com/krisarmstrong/luminetiq/internal/version.Version=$(VERSION) \
-    -X github.com/krisarmstrong/luminetiq/internal/version.Commit=$(COMMIT) \
-    -X github.com/krisarmstrong/luminetiq/internal/version.BuildTime=$(BUILD_TIME)
+    -X github.com/krisarmstrong/seed/internal/version.Version=$(VERSION) \
+    -X github.com/krisarmstrong/seed/internal/version.Commit=$(COMMIT) \
+    -X github.com/krisarmstrong/seed/internal/version.BuildTime=$(BUILD_TIME)
 
 # =============================================================================
 # Deployment Configuration
@@ -73,11 +73,11 @@ LDFLAGS=-s -w \
 # Remote server settings (override with environment variables)
 DEPLOY_HOST?=192.168.64.7
 DEPLOY_USER?=krisarmstrong
-DEPLOY_PATH?=/home/$(DEPLOY_USER)/luminetiq
+DEPLOY_PATH?=/home/$(DEPLOY_USER)/seed
 DEPLOY_PORT?=8443
 
 # Docker image settings
-DOCKER_IMAGE?=luminetiq
+DOCKER_IMAGE?=seed
 DOCKER_TAG?=$(VERSION)
 
 # =============================================================================
@@ -122,13 +122,13 @@ build-iperf3-all: build-iperf3 build-iperf3-linux ## Build iperf3 for all platfo
 # CGO is required for libpcap (packet capture) and ethtool bindings
 build-backend: ## Build Go backend with embedded frontend
 	@echo "🔨 Building backend..."
-	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/luminetiq
+	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/seed
 	@echo "✅ Backend build complete: $(BINARY_NAME)"
 
 # Development build that reads frontend from disk instead of embedding
 # Allows frontend hot-reload without rebuilding Go binary
 build-backend-dev: ## Build Go backend in dev mode (reads frontend from disk)
-	CGO_ENABLED=1 go build -tags dev $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/luminetiq
+	CGO_ENABLED=1 go build -tags dev $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/seed
 
 # -----------------------------------------------------------------------------
 # Frontend Build (closes #464, #467)
@@ -160,13 +160,13 @@ build-linux-amd64: build-frontend ## Build for Linux AMD64 (requires cross-compi
 	@echo "Building for Linux AMD64..."
 	@echo "Note: Requires CGO. Run on Linux or use 'make build-linux-docker'"
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-gnu-gcc \
-		go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-linux-amd64 ./cmd/luminetiq
+		go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-linux-amd64 ./cmd/seed
 
 # ARM64 build for Raspberry Pi and ARM servers
 build-linux-arm64: build-frontend ## Build for Linux ARM64 (Raspberry Pi, ARM servers)
 	@echo "Building for Linux ARM64..."
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc \
-		go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-linux-arm64 ./cmd/luminetiq
+		go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-linux-arm64 ./cmd/seed
 
 # Docker-based cross-compilation (works from any platform)
 # Uses official Go image with libpcap installed
@@ -174,7 +174,7 @@ build-linux-docker: build-frontend ## Build for Linux AMD64 using Docker (cross-
 	@echo "Building for Linux AMD64 using Docker..."
 	docker run --rm -v "$(PWD):/build" -w /build golang:1.25.5 bash -c "\
 		apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
-		go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-amd64 ./cmd/luminetiq"
+		go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-amd64 ./cmd/seed"
 	@echo "Built: $(BINARY_NAME)-linux-amd64"
 
 # =============================================================================
@@ -190,13 +190,13 @@ docker-build: ## Build Docker image
 # Test Docker image starts correctly
 docker-test: docker-build ## Test Docker image starts and responds
 	@echo "Testing Docker image..."
-	@docker rm -f luminetiq-test 2>/dev/null || true
-	@docker run -d --name luminetiq-test -p 18443:8443 $(DOCKER_IMAGE):$(DOCKER_TAG)
+	@docker rm -f seed-test 2>/dev/null || true
+	@docker run -d --name seed-test -p 18443:8443 $(DOCKER_IMAGE):$(DOCKER_TAG)
 	@sleep 5
 	@curl -sf -k "https://localhost:18443/api/health" > /dev/null && \
 		echo "PASS: Docker container health check" || \
-		(echo "FAIL: Container not responding" && docker logs luminetiq-test && docker rm -f luminetiq-test && exit 1)
-	@docker rm -f luminetiq-test > /dev/null 2>&1
+		(echo "FAIL: Container not responding" && docker logs seed-test && docker rm -f seed-test && exit 1)
+	@docker rm -f seed-test > /dev/null 2>&1
 
 # Full Docker target
 docker: docker-test ## Build and test Docker image
@@ -260,7 +260,7 @@ deploy: ## Deploy to Ubuntu server (builds via Docker if needed)
 		sudo setcap cap_net_raw=+ep ./$(BINARY_NAME) && \
 		nohup ./$(BINARY_NAME) > $(BINARY_NAME).log 2>&1 & \
 		sleep 3 && \
-		ps aux | grep '[l]uminetiq' || echo 'Warning: Server may not have started'"
+		ps aux | grep '[s]eed' || echo 'Warning: Server may not have started'"
 	@echo ""
 	@echo "Deployment complete. Running smoke tests..."
 	@$(MAKE) smoke-test
@@ -314,12 +314,12 @@ smoke-test-local: ## Run smoke tests against local server (port 8443)
 
 # Run with elevated privileges (required for raw socket operations)
 run: ## Run the application (requires sudo for packet capture)
-	sudo go run ./cmd/luminetiq
+	sudo go run ./cmd/seed
 
 # Development mode: backend reads frontend from disk
 # Run alongside 'make dev-frontend' for full hot-reload experience
 dev: ## Run backend in development mode (reads frontend from disk)
-	go run -tags dev ./cmd/luminetiq
+	go run -tags dev ./cmd/seed
 
 # Vite dev server with hot module replacement
 # Proxies API requests to backend on :8443
@@ -432,28 +432,28 @@ test-storybook: build-storybook ## Verify Storybook builds successfully
 # Full integration test: deploy, install as systemd service, run tests
 test-integration: build-linux-docker ## Full integration test on Ubuntu server via systemd
 	@echo "Running integration tests on $(DEPLOY_HOST)..."
-	rsync -avz $(BINARY_NAME)-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):/tmp/luminetiq-test
+	rsync -avz $(BINARY_NAME)-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):/tmp/seed-test
 	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
-		sudo systemctl stop luminetiq-test 2>/dev/null || true && \
-		sudo cp /tmp/luminetiq-test /usr/local/bin/luminetiq-test && \
-		sudo chmod +x /usr/local/bin/luminetiq-test && \
-		sudo setcap cap_net_raw=+ep /usr/local/bin/luminetiq-test && \
-		echo '[Unit]' | sudo tee /etc/systemd/system/luminetiq-test.service > /dev/null && \
-		echo 'Description=LuminetIQ Integration Test' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
-		echo '[Service]' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
-		echo 'Type=simple' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
-		echo 'ExecStart=/usr/local/bin/luminetiq-test' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
-		echo 'WorkingDirectory=/tmp' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
-		echo '[Install]' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
-		echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/luminetiq-test.service > /dev/null && \
+		sudo systemctl stop seed-test 2>/dev/null || true && \
+		sudo cp /tmp/seed-test /usr/local/bin/seed-test && \
+		sudo chmod +x /usr/local/bin/seed-test && \
+		sudo setcap cap_net_raw=+ep /usr/local/bin/seed-test && \
+		echo '[Unit]' | sudo tee /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'Description=LuminetIQ Integration Test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo '[Service]' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'Type=simple' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'ExecStart=/usr/local/bin/seed-test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'WorkingDirectory=/tmp' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo '[Install]' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
 		sudo systemctl daemon-reload && \
-		sudo systemctl start luminetiq-test && \
+		sudo systemctl start seed-test && \
 		sleep 5 && \
-		sudo systemctl is-active luminetiq-test && \
+		sudo systemctl is-active seed-test && \
 		curl -sf -k https://localhost:8443/api/health && \
 		echo 'PASS: Integration test passed' && \
-		sudo systemctl stop luminetiq-test && \
-		sudo rm -f /etc/systemd/system/luminetiq-test.service /usr/local/bin/luminetiq-test"
+		sudo systemctl stop seed-test && \
+		sudo rm -f /etc/systemd/system/seed-test.service /usr/local/bin/seed-test"
 	@echo "Integration tests completed successfully"
 
 # =============================================================================
@@ -486,8 +486,13 @@ fmt-frontend: ## Format frontend code with Prettier
 	cd web && npx prettier --write .
 	@echo "Frontend code formatted"
 
+# Format markdown files
+fmt-md: ## Format markdown files with Prettier
+	npm run format:md
+	@echo "Markdown files formatted"
+
 # Format all code
-fmt-all: fmt fmt-frontend ## Format all code (Go + frontend)
+fmt-all: fmt fmt-frontend fmt-md ## Format all code (Go + frontend + markdown)
 
 # =============================================================================
 # Security Scanning
@@ -586,12 +591,34 @@ clean-all: clean ## Clean everything including dependencies
 deps: ## Install dependencies
 	go mod download
 	cd web && npm ci
+	npm ci
 
 # Update dependencies to latest versions
 deps-update: ## Update dependencies
 	go get -u ./...
 	go mod tidy
 	cd web && npm update
+
+# Install all Go development tools (linters, security scanners, etc.)
+tools: ## Install all Go development tools
+	@echo "Installing Go development tools..."
+	@echo "  golangci-lint..."
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@echo "  staticcheck..."
+	@go install honnef.co/go/tools/cmd/staticcheck@latest
+	@echo "  gosec..."
+	@go install github.com/securego/gosec/v2/cmd/gosec@latest
+	@echo "  govulncheck..."
+	@go install golang.org/x/vuln/cmd/govulncheck@latest
+	@echo "  goimports..."
+	@go install golang.org/x/tools/cmd/goimports@latest
+	@echo "  gofumpt..."
+	@go install mvdan.cc/gofumpt@latest
+	@echo "  deadcode..."
+	@go install golang.org/x/tools/cmd/deadcode@latest
+	@echo ""
+	@echo "All Go tools installed to $(shell go env GOPATH)/bin"
+	@echo "Ensure $(shell go env GOPATH)/bin is in your PATH"
 
 # =============================================================================
 # Remote Logs
@@ -682,15 +709,15 @@ iso-info: ## Show instructions for creating custom Ubuntu ISO
 	@echo "Creating a custom Ubuntu ISO with LuminetIQ pre-installed requires:"
 	@echo "  1. Ubuntu host system (or VM)"
 	@echo "  2. cubic or live-build package"
-	@echo "  3. Built Linux binary (luminetiq-linux-amd64)"
+	@echo "  3. Built Linux binary (seed-linux-amd64)"
 	@echo ""
 	@echo "Steps:"
 	@echo "  1. Install cubic: sudo apt install cubic"
 	@echo "  2. Download Ubuntu Server ISO"
 	@echo "  3. Run cubic and customize:"
-	@echo "     - Copy luminetiq-linux-amd64 to /usr/local/bin/luminetiq"
-	@echo "     - Copy deploy/systemd/luminetiq.service to /etc/systemd/system/"
-	@echo "     - Enable service: systemctl enable luminetiq"
+	@echo "     - Copy seed-linux-amd64 to /usr/local/bin/seed"
+	@echo "     - Copy deploy/systemd/seed.service to /etc/systemd/system/"
+	@echo "     - Enable service: systemctl enable seed"
 	@echo "  4. Generate ISO"
 
 # =============================================================================

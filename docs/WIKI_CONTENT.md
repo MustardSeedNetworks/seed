@@ -1,6 +1,7 @@
 # GitHub Wiki Content Guide for The Seed
 
-**Purpose:** This document contains the complete content structure and pages for the GitHub Wiki at https://github.com/krisarmstrong/netscope/wiki
+**Purpose:** This document contains the complete content structure and pages for the GitHub Wiki at
+https://github.com/krisarmstrong/netscope/wiki
 
 **Status:** Wiki is enabled but empty - content below ready to copy/paste
 
@@ -55,16 +56,16 @@ Home
 ```markdown
 # Welcome to The Seed Wiki
 
-**The Seed** is an AI-powered network diagnostic platform that combines WiFi planning, network monitoring, vulnerability scanning, and compliance reporting in one affordable tool.
+**The Seed** is an AI-powered network diagnostic platform that combines WiFi planning, network
+monitoring, vulnerability scanning, and compliance reporting in one affordable tool.
 
 ## Quick Links
 
-📥 **[Installation](Installation-macOS)** - Get started in 30 minutes
-🚀 **[Quick Start Guide](Quick-Start-Guide)** - Your first network scan
-📚 **[Features](Features)** - What The Seed can do
-🔧 **[Configuration](Configuration)** - Customize your setup
-❓ **[FAQ](FAQ)** - Common questions answered
-🛠️ **[Troubleshooting](Troubleshooting)** - Solve common issues
+📥 **[Installation](Installation-macOS)** - Get started in 30 minutes 🚀
+**[Quick Start Guide](Quick-Start-Guide)** - Your first network scan 📚 **[Features](Features)** -
+What The Seed can do 🔧 **[Configuration](Configuration)** - Customize your setup ❓
+**[FAQ](FAQ)** - Common questions answered 🛠️ **[Troubleshooting](Troubleshooting)** - Solve common
+issues
 
 ## What's New
 
@@ -95,7 +96,7 @@ The Seed is open source! Contributions are welcome.
 
 ---
 
-*From a tiny seed, a mighty network grows.*
+_From a tiny seed, a mighty network grows._
 
 **Mustard Seed Networks**
 ```
@@ -108,7 +109,7 @@ The Seed is open source! Contributions are welcome.
 
 **Content:**
 
-```markdown
+````markdown
 # Installation on macOS
 
 ## System Requirements
@@ -128,6 +129,7 @@ The Seed is open source! Contributions are welcome.
 # Not yet available - planned for launch
 brew install mustardseednetworks/tap/seed
 ```
+````
 
 ### Method 2: Download Binary
 
@@ -136,6 +138,7 @@ brew install mustardseednetworks/tap/seed
    - [Download for Intel](https://github.com/krisarmstrong/netscope/releases/latest)
 
 2. **Extract** the archive:
+
    ```bash
    tar -xzf seed-darwin-arm64.tar.gz  # Apple Silicon
    # OR
@@ -143,6 +146,7 @@ brew install mustardseednetworks/tap/seed
    ```
 
 3. **Move** to your PATH:
+
    ```bash
    sudo mv seed /usr/local/bin/
    ```
@@ -159,6 +163,7 @@ See [Building from Source](Building-from-Source) guide.
 ## First Run
 
 1. **Launch** The Seed:
+
    ```bash
    seed
    ```
@@ -181,12 +186,14 @@ See [Building from Source](Building-from-Source) guide.
 The Seed requires elevated privileges for packet capture.
 
 **macOS Ventura 13+ (Recommended):**
+
 ```bash
 # Grant network access without full sudo
 sudo chmod +x /usr/local/bin/seed
 ```
 
 **Alternative:** Run with sudo:
+
 ```bash
 sudo seed
 ```
@@ -213,16 +220,20 @@ rm -rf ~/.config/seed
 ## Troubleshooting
 
 **Issue:** "seed: command not found"
+
 - **Solution:** Add `/usr/local/bin` to your PATH or move `seed` to `/usr/bin`
 
 **Issue:** "Operation not permitted" when capturing packets
+
 - **Solution:** Run with `sudo` or grant network access permissions
 
 **Issue:** Web UI doesn't load
+
 - **Solution:** Check if port 8080 is already in use: `lsof -i :8080`
 
 [More Troubleshooting →](Troubleshooting)
-```
+
+````
 
 ---
 
@@ -263,14 +274,16 @@ rm -rf ~/.config/seed
    ```bash
    sudo apt update
    sudo apt install libpcap0.8
-   ```
+````
 
-   **RHEL/AlmaLinux/Fedora:**
-   ```bash
-   sudo dnf install libpcap
-   ```
+**RHEL/AlmaLinux/Fedora:**
+
+```bash
+sudo dnf install libpcap
+```
 
 2. **Download** the latest release:
+
    ```bash
    wget https://github.com/krisarmstrong/netscope/releases/latest/download/seed-linux-amd64.tar.gz
    # OR for ARM64
@@ -278,17 +291,20 @@ rm -rf ~/.config/seed
    ```
 
 3. **Extract** the archive:
+
    ```bash
    tar -xzf seed-linux-amd64.tar.gz
    ```
 
 4. **Move** to your PATH:
+
    ```bash
    sudo mv seed /usr/local/bin/
    sudo chmod +x /usr/local/bin/seed
    ```
 
 5. **Grant network capture capabilities:**
+
    ```bash
    sudo setcap cap_net_raw=+ep /usr/local/bin/seed
    ```
@@ -307,11 +323,13 @@ See [Building from Source](Building-from-Source) guide.
 **Recommended for servers and production deployments.**
 
 1. **Create systemd service file:**
+
    ```bash
    sudo nano /etc/systemd/system/seed.service
    ```
 
 2. **Add configuration:**
+
    ```ini
    [Unit]
    Description=The Seed - AI-Powered Network Diagnostics
@@ -334,16 +352,19 @@ See [Building from Source](Building-from-Source) guide.
    ```
 
 3. **Create dedicated user:**
+
    ```bash
    sudo useradd -r -s /bin/false seed
    ```
 
 4. **Grant capabilities:**
+
    ```bash
    sudo setcap cap_net_raw=+ep /usr/local/bin/seed
    ```
 
 5. **Enable and start:**
+
    ```bash
    sudo systemctl daemon-reload
    sudo systemctl enable seed
@@ -351,6 +372,7 @@ See [Building from Source](Building-from-Source) guide.
    ```
 
 6. **Check status:**
+
    ```bash
    sudo systemctl status seed
    ```
@@ -365,11 +387,13 @@ See [Building from Source](Building-from-Source) guide.
 **Allow Web UI access (port 8080):**
 
 **UFW (Ubuntu):**
+
 ```bash
 sudo ufw allow 8080/tcp
 ```
 
 **firewalld (RHEL/Fedora):**
+
 ```bash
 sudo firewall-cmd --permanent --add-port=8080/tcp
 sudo firewall-cmd --reload
@@ -403,16 +427,20 @@ sudo rm -rf ~/.config/seed
 ## Troubleshooting
 
 **Issue:** "Operation not permitted" when running
+
 - **Solution:** Grant network capture capability: `sudo setcap cap_net_raw=+ep /usr/local/bin/seed`
 
 **Issue:** "Cannot bind to port 8080"
+
 - **Solution:** Port already in use. Stop conflicting service or change port in config.
 
 **Issue:** Service fails to start
+
 - **Solution:** Check logs: `sudo journalctl -u seed -n 50`
 
 [More Troubleshooting →](Troubleshooting)
-```
+
+````
 
 ---
 
@@ -439,7 +467,7 @@ Choose your platform:
 1. **Launch The Seed:**
    ```bash
    seed
-   ```
+````
 
 2. **Setup Wizard:**
    - Creates first admin user
@@ -447,6 +475,7 @@ Choose your platform:
    - Sets default configuration
 
 3. **Create Admin Account:**
+
    ```
    Username: admin
    Password: ******** (choose strong password)
@@ -482,21 +511,25 @@ Choose your platform:
 ## Step 5: Explore Features (10 minutes)
 
 ### WiFi Survey
+
 1. Click **"WiFi"** in sidebar
 2. View detected access points, signal strength, channels
 3. Upload floor plan (optional) for heatmap
 
 ### Speed Test
+
 1. Click **"Speed Test"** in sidebar
 2. Click "Run Test"
 3. View download/upload speeds, latency, jitter
 
 ### Vulnerability Scan
+
 1. Click **"Vulnerabilities"** in sidebar
 2. Click "Start Scan"
 3. View security findings and remediation steps
 
 ### Compliance Report
+
 1. Click **"Settings"** → **"Compliance"**
 2. Select report type (HIPAA, PCI-DSS)
 3. Click "Generate Report"
@@ -505,16 +538,19 @@ Choose your platform:
 ## Next Steps
 
 **Learn More:**
+
 - [Network Discovery Deep Dive](Network-Discovery)
 - [WiFi Survey Guide](WiFi-Survey-Planning)
 - [Configuration Options](Configuration)
 
 **Get Help:**
+
 - [FAQ](FAQ)
 - [Troubleshooting](Troubleshooting)
 - [Community Discord](https://discord.gg/mustardseed) (TBD)
 
 **Upgrade:**
+
 - [Pricing & Features](https://github.com/krisarmstrong/netscope/blob/main/docs/LICENSING_STRATEGY.md)
 - Free tier: 50 devices, no AI
 - Starter ($299/year): 200 devices, AI classification
@@ -525,10 +561,12 @@ Choose your platform:
 ---
 
 **Stuck? Need help?**
+
 - Check [Common Issues](Troubleshooting#common-issues)
 - Ask in [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
 - Email support@mustardseednetworks.com
-```
+
+````
 
 ---
 
@@ -624,7 +662,7 @@ Each discovered device shows:
 IP Address,MAC Address,Hostname,Type,Manufacturer,OS,Last Seen
 192.168.1.1,AA:BB:CC:DD:EE:FF,router.local,Router,Ubiquiti,UniFi OS,2024-12-15 10:30:00
 192.168.1.100,11:22:33:44:55:66,janes-macbook,Computer,Apple,macOS 14.2,2024-12-15 10:29:00
-```
+````
 
 ## Device Fingerprinting
 
@@ -636,6 +674,7 @@ The Seed uses **AI-powered fingerprinting** to identify:
 - **Services:** HTTP, SSH, RDP, SMB, SNMP (from port scan)
 
 **How it works:**
+
 1. Collect fingerprint data (TTL, TCP window size, open ports, etc.)
 2. AI model classifies device based on patterns
 3. Confidence score: High (>90%), Medium (70-90%), Low (<70%)
@@ -657,6 +696,7 @@ If you have managed switches with SNMP configured:
    - Color-coded for easy identification
 
 **Example:**
+
 - VLAN 10 (Office): 30 devices
 - VLAN 20 (Guest): 10 devices
 - VLAN 30 (IoT): 15 devices
@@ -666,16 +706,19 @@ If you have managed switches with SNMP configured:
 ### Subnet Notation
 
 **Single subnet:**
+
 ```
 192.168.1.0/24
 ```
 
 **Multiple subnets:**
+
 ```
 192.168.1.0/24,10.0.0.0/24,172.16.0.0/16
 ```
 
 **CIDR ranges:**
+
 - `/24` = 256 IPs (192.168.1.0 - 192.168.1.255)
 - `/16` = 65,536 IPs (10.0.0.0 - 10.0.255.255)
 - `/8` = 16,777,216 IPs (not recommended - very slow!)
@@ -697,6 +740,7 @@ Save common configurations as profiles:
    - Click "Run Discovery"
 
 **Built-in profiles:**
+
 - Default (current subnet, all methods)
 - Quick (ARP only, fast but limited)
 - Deep (all methods + port scan, slow but comprehensive)
@@ -704,17 +748,20 @@ Save common configurations as profiles:
 ## Performance
 
 **Scan times (typical):**
+
 - 50 devices (/24 subnet): 10-30 seconds
 - 200 devices (/23 subnet): 30-60 seconds
 - 1,000 devices (/22 subnet): 2-5 minutes
 
 **Factors affecting speed:**
+
 - Number of IPs to scan
 - Discovery methods enabled (ARP fastest, TCP slowest)
 - Network latency
 - Device responsiveness
 
 **Tips for faster scans:**
+
 - Limit subnets to active ranges (not entire /16)
 - Use ARP-only for local subnet (fastest)
 - Schedule scans during off-hours (less network congestion)
@@ -722,16 +769,19 @@ Save common configurations as profiles:
 ## Troubleshooting
 
 **Issue:** No devices found
+
 - **Check:** Is your interface correct? (Settings → Network Interface)
 - **Check:** Is subnet correct? (192.168.1.0/24 vs 192.168.0.0/24)
 - **Try:** Run as sudo (packet capture requires elevated privileges)
 
 **Issue:** Some devices missing
+
 - **Try:** Enable all discovery methods (ARP, ICMP, TCP)
 - **Try:** Increase timeout (some devices respond slowly)
 - **Check:** Firewall blocking ICMP? (try TCP scan)
 
 **Issue:** Wrong device types/OS
+
 - **Report:** GitHub issue with device details (helps improve AI model)
 
 [More Troubleshooting →](Troubleshooting)
@@ -741,7 +791,8 @@ Save common configurations as profiles:
 - [SNMP Configuration](SNMP-Settings)
 - [Vulnerability Scanning](Vulnerability-Scanning)
 - [API: Discovery Endpoints](API-Discovery)
-```
+
+````
 
 ---
 
@@ -810,11 +861,12 @@ Yes! The Seed is open source under the AGPL-3.0 license.
 **Linux:** Use `setcap` to grant network capabilities without full sudo:
 ```bash
 sudo setcap cap_net_raw=+ep /usr/local/bin/seed
-```
+````
 
 ### Can I run The Seed on a server without a GUI?
 
 Yes! The Seed is a web application:
+
 - Backend runs on server (headless)
 - Web UI accessed from any browser (on network)
 - Perfect for VM, cloud instance, Raspberry Pi
@@ -842,33 +894,39 @@ Example: Run on Ubuntu server, access UI from laptop browser.
 **Typical accuracy:** 85-95% compared to real-world survey.
 
 **Good enough for:**
+
 - Estimating AP count (how many do I need?)
 - Budget planning (before proposal)
 - Initial design (before site visit)
 
 **Not a replacement for:**
+
 - Final validation (always do on-site survey for critical deployments)
 - Complex RF environments (stadiums, warehouses with metal/concrete)
 
 ### Does The Seed replace SolarWinds / PRTG / Nagios?
 
 **For SMBs and healthcare:** Yes! The Seed covers 90% of use cases:
+
 - Network discovery
 - Device monitoring
 - Alerting
 - Performance metrics
 - WiFi monitoring
 
-**For large enterprises (10,000+ devices):** No. SolarWinds, Datadog, etc. are designed for massive scale and deep integrations. The Seed targets SMBs, not Fortune 500.
+**For large enterprises (10,000+ devices):** No. SolarWinds, Datadog, etc. are designed for massive
+scale and deep integrations. The Seed targets SMBs, not Fortune 500.
 
 ### Does The Seed replace Ekahau?
 
 **For small projects and predictive planning:** Yes! The Seed offers:
+
 - Predictive WiFi planning (Ekahau doesn't have this)
 - 60% cheaper ($1,999 vs $5,198)
 - Cross-platform (Ekahau is Windows-only)
 
 **For large consultant firms:** Maybe not. Ekahau is the industry standard with:
+
 - Extreme accuracy (critical for stadiums, warehouses)
 - Professional reports (clients expect Ekahau branding)
 - Deep AP vendor integrations
@@ -896,22 +954,26 @@ Yes! The Seed is designed for healthcare:
 - **Audit logs:** Track all user actions (who did what, when)
 - **Compliance reports:** Generate HIPAA security risk assessments
 
-**Note:** You are responsible for your overall HIPAA compliance. The Seed is a tool to *help* you comply, not a complete solution.
+**Note:** You are responsible for your overall HIPAA compliance. The Seed is a tool to _help_ you
+comply, not a complete solution.
 
 ### What data does The Seed collect?
 
 **During network scans:**
+
 - IP addresses, MAC addresses, hostnames
 - Open ports, services
 - OS fingerprints
 - SNMP data (if configured)
 
 **Stored locally:**
+
 - Scan results (in SQLite database)
 - Config files (YAML)
 - Logs (application logs, audit logs)
 
 **Never collected:**
+
 - Network traffic content (no DPI, no packet inspection beyond headers)
 - Passwords (except hashed admin passwords for web UI login)
 - Personal health information (PHI)
@@ -944,15 +1006,19 @@ Yes! The Seed is designed for healthcare:
 **Check:**
 
 1. **Is The Seed running?**
+
    ```bash
    ps aux | grep seed
    ```
+
    If not, start it: `seed` (or `sudo systemctl start seed` if using systemd)
 
 2. **Is port 8080 in use?**
+
    ```bash
    lsof -i :8080  # macOS/Linux
    ```
+
    If another service is using 8080, stop it or configure The Seed to use different port.
 
 3. **Firewall blocking?**
@@ -979,23 +1045,27 @@ Yes! The Seed is designed for healthcare:
 ### How do I reset the admin password?
 
 **Option 1: Reset via CLI (if you have shell access)**
+
 ```bash
 seed reset-password admin
 # Enter new password when prompted
 ```
 
 **Option 2: Reset via config file**
+
 1. Stop The Seed: `sudo systemctl stop seed`
 2. Delete user database: `rm ~/.config/seed/users.db`
 3. Start The Seed: `sudo systemctl start seed`
 4. Run setup wizard again (creates new admin user)
 
 **Option 3: Reset all data (nuclear option)**
+
 ```bash
 sudo systemctl stop seed
 rm -rf ~/.config/seed
 sudo systemctl start seed
 ```
+
 ⚠️ **Warning:** This deletes all scan history, settings, and user accounts.
 
 ---
@@ -1007,6 +1077,7 @@ sudo systemctl start seed
 **Yes!** The free tier has no time limit.
 
 **Free tier includes:**
+
 - Up to 50 devices
 - Network discovery
 - Basic WiFi scanning
@@ -1014,6 +1085,7 @@ sudo systemctl start seed
 - Community support (forum, GitHub)
 
 **Free tier does NOT include:**
+
 - AI features (device classification, root cause analysis)
 - Vulnerability scanning
 - Compliance reporting
@@ -1022,6 +1094,7 @@ sudo systemctl start seed
 ### What happens if I exceed the device limit?
 
 **Free tier (50 devices):**
+
 - Discovery will find all devices
 - UI will show all devices
 - But a banner will prompt you to upgrade
@@ -1029,6 +1102,7 @@ sudo systemctl start seed
 **You can continue using for free, but some features will be limited.**
 
 **Paid tiers:**
+
 - Starter: 200 devices (hard limit, won't scan beyond 200)
 - Professional: Unlimited devices
 - Premium: Unlimited devices
@@ -1039,6 +1113,7 @@ sudo systemctl start seed
 **No.** One license = all sites.
 
 **Example:** Enterprise tier ($4,999/year) covers:
+
 - Headquarters
 - 5 branch offices
 - 10 remote clinics
@@ -1049,10 +1124,12 @@ sudo systemctl start seed
 **Yes.** Licenses are tied to organization, not hardware.
 
 **How to transfer:**
+
 1. Deactivate license on old server (Settings → License → Deactivate)
 2. Activate license on new server (enter license key during setup)
 
 **Limitations:**
+
 - One active instance per license (can't run on 2 servers simultaneously)
 - Enterprise tier allows multi-site (multiple active instances)
 
@@ -1063,11 +1140,13 @@ sudo systemctl start seed
 ### How do I get help?
 
 **Free tier:**
+
 - Community forum (Discord, TBD)
 - GitHub Discussions: https://github.com/krisarmstrong/netscope/discussions
 - Documentation: This wiki
 
 **Paid tiers:**
+
 - Email support: support@mustardseednetworks.com
 - Priority support (Professional+)
 - Phone support (Premium+)
@@ -1079,7 +1158,8 @@ sudo systemctl start seed
 
 1. **Check existing issues:** https://github.com/krisarmstrong/netscope/issues
 2. **Create new issue** (if not already reported):
-   - Use [Bug Report template](https://github.com/krisarmstrong/netscope/issues/new?template=bug_report.md)
+   - Use
+     [Bug Report template](https://github.com/krisarmstrong/netscope/issues/new?template=bug_report.md)
    - Include: The Seed version, OS, steps to reproduce, logs
 3. **Expected response time:**
    - Free tier: Best-effort (community)
@@ -1087,7 +1167,8 @@ sudo systemctl start seed
 
 ### How do I request a feature?
 
-1. **Check existing requests:** https://github.com/krisarmstrong/netscope/discussions/categories/ideas
+1. **Check existing requests:**
+   https://github.com/krisarmstrong/netscope/discussions/categories/ideas
 2. **Create new discussion** (if not already requested)
 3. **Upvote** existing requests (helps us prioritize)
 
@@ -1118,11 +1199,13 @@ sudo systemctl start seed
 **DO NOT create a public GitHub issue.**
 
 **Instead:**
+
 - Email: security@mustardseednetworks.com
 - Subject: "Security Vulnerability Report"
 - Include: Description, steps to reproduce, impact
 
 **We commit to:**
+
 - Respond within 24 hours
 - Fix critical vulnerabilities within 7 days
 - Acknowledge your contribution (if you want credit)
@@ -1135,26 +1218,27 @@ sudo systemctl start seed
 
 ### The Seed vs Ekahau
 
-| Feature | The Seed | Ekahau AI Pro |
-|---------|----------|---------------|
-| **Price** | $1,999/year | $5,198 (year 1) |
-| **Predictive Planning** | ✅ Yes | ❌ No |
-| **WiFi Survey** | ✅ Yes | ✅ Yes (more accurate) |
-| **Network Diagnostics** | ✅ Yes | ❌ No |
-| **Platforms** | macOS, Linux | Windows only |
+| Feature                 | The Seed     | Ekahau AI Pro          |
+| ----------------------- | ------------ | ---------------------- |
+| **Price**               | $1,999/year  | $5,198 (year 1)        |
+| **Predictive Planning** | ✅ Yes       | ❌ No                  |
+| **WiFi Survey**         | ✅ Yes       | ✅ Yes (more accurate) |
+| **Network Diagnostics** | ✅ Yes       | ❌ No                  |
+| **Platforms**           | macOS, Linux | Windows only           |
 
 **When to choose The Seed:** Predictive planning, budget-conscious, need network diagnostics too
 
-**When to choose Ekahau:** Large consultant firm, need extreme accuracy, clients expect Ekahau branding
+**When to choose Ekahau:** Large consultant firm, need extreme accuracy, clients expect Ekahau
+branding
 
 ### The Seed vs SolarWinds
 
-| Feature | The Seed | SolarWinds NPM |
-|---------|----------|----------------|
-| **Price** | $799/year (unlimited) | $10,000+ (100 devices) |
-| **Target** | SMB, healthcare | Enterprise IT |
-| **Setup Time** | 30 minutes | Weeks |
-| **AI Diagnostics** | ✅ Yes | ❌ No |
+| Feature            | The Seed              | SolarWinds NPM         |
+| ------------------ | --------------------- | ---------------------- |
+| **Price**          | $799/year (unlimited) | $10,000+ (100 devices) |
+| **Target**         | SMB, healthcare       | Enterprise IT          |
+| **Setup Time**     | 30 minutes            | Weeks                  |
+| **AI Diagnostics** | ✅ Yes                | ❌ No                  |
 
 **When to choose The Seed:** SMB, healthcare, need simple + affordable
 
@@ -1162,12 +1246,12 @@ sudo systemctl start seed
 
 ### The Seed vs Nessus
 
-| Feature | The Seed | Nessus Professional |
-|---------|----------|---------------------|
-| **Price** | $1,999/year (Premium) | $4,620/year |
-| **Vulnerability Scanning** | ✅ Yes (10K+ checks) | ✅ Yes (170K+ checks) |
-| **Network Diagnostics** | ✅ Yes | ❌ No |
-| **WiFi Planning** | ✅ Yes | ❌ No |
+| Feature                    | The Seed              | Nessus Professional   |
+| -------------------------- | --------------------- | --------------------- |
+| **Price**                  | $1,999/year (Premium) | $4,620/year           |
+| **Vulnerability Scanning** | ✅ Yes (10K+ checks)  | ✅ Yes (170K+ checks) |
+| **Network Diagnostics**    | ✅ Yes                | ❌ No                 |
+| **WiFi Planning**          | ✅ Yes                | ❌ No                 |
 
 **When to choose The Seed:** Need all-in-one (network + WiFi + security)
 
@@ -1182,7 +1266,8 @@ sudo systemctl start seed
 - Ask in [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
 - Email support@mustardseednetworks.com
 - Join our Discord (TBD)
-```
+
+````
 
 ---
 
@@ -1216,7 +1301,7 @@ Wiki pages auto-link via [[Page-Name]] syntax.
 **Example:**
 ```markdown
 See the [Installation Guide](Installation-macOS) for setup instructions.
-```
+````
 
 or
 
@@ -1232,20 +1317,24 @@ Create a page named `_Sidebar.md` with navigation links:
 **The Seed Wiki**
 
 📥 **Getting Started**
+
 - [Installation (macOS)](Installation-macOS)
 - [Installation (Linux)](Installation-Linux)
 - [Quick Start](Quick-Start-Guide)
 
 🚀 **Features**
+
 - [Network Discovery](Network-Discovery)
 - [WiFi Survey](WiFi-Survey-Planning)
 - [Vulnerability Scanning](Vulnerability-Scanning)
 
 🔧 **Configuration**
+
 - [Network Interfaces](Configuration)
 - [SNMP Settings](SNMP-Settings)
 
 ❓ **Help**
+
 - [FAQ](FAQ)
 - [Troubleshooting](Troubleshooting)
 ```
@@ -1261,5 +1350,4 @@ Create a page named `_Sidebar.md` with navigation links:
 
 ---
 
-**Document Owner:** Kris Armstrong
-**Last Updated:** December 2025
+**Document Owner:** Kris Armstrong **Last Updated:** December 2025

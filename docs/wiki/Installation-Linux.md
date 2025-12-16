@@ -13,12 +13,14 @@
 ### 1. Install Dependencies
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt update
 sudo apt install libpcap0.8
 ```
 
 **RHEL/AlmaLinux/Fedora:**
+
 ```bash
 sudo dnf install libpcap
 ```
@@ -53,18 +55,21 @@ seed --version
 
 ## Running as a Service (systemd)
 
-See [deploy/systemd](https://github.com/krisarmstrong/netscope/tree/main/deploy/systemd) for systemd service installation.
+See [deploy/systemd](https://github.com/krisarmstrong/netscope/tree/main/deploy/systemd) for systemd
+service installation.
 
 ## Firewall Configuration
 
 Allow Web UI access (port 8080):
 
 **UFW (Ubuntu):**
+
 ```bash
 sudo ufw allow 8080/tcp
 ```
 
 **firewalld (RHEL/Fedora):**
+
 ```bash
 sudo firewall-cmd --permanent --add-port=8080/tcp
 sudo firewall-cmd --reload
@@ -78,7 +83,9 @@ sudo firewall-cmd --reload
 ## Troubleshooting
 
 **Issue:** "Operation not permitted"
+
 - **Solution:** Grant network capability: `sudo setcap cap_net_raw=+ep /usr/local/bin/seed`
 
 **Issue:** "Cannot bind to port 8080"
+
 - **Solution:** Port in use. Check: `sudo lsof -i :8080`

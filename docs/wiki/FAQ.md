@@ -4,7 +4,8 @@
 
 ### What is The Seed?
 
-The Seed is an AI-powered network diagnostic platform that combines WiFi planning, network monitoring, vulnerability scanning, and compliance reporting in one affordable tool.
+The Seed is an AI-powered network diagnostic platform that combines WiFi planning, network
+monitoring, vulnerability scanning, and compliance reporting in one affordable tool.
 
 ### Who is The Seed for?
 
@@ -18,6 +19,7 @@ The Seed is an AI-powered network diagnostic platform that combines WiFi plannin
 Yes! Free tier supports up to 50 devices with community support.
 
 **Paid tiers:**
+
 - Starter: $299/year (200 devices, AI classification)
 - Professional: $799/year (unlimited devices, full AI)
 - Premium: $1,999/year (predictive WiFi planning)
@@ -39,6 +41,7 @@ Yes, packet capture requires elevated privileges.
 **macOS:** Run with `sudo seed`
 
 **Linux:** Grant network capability:
+
 ```bash
 sudo setcap cap_net_raw=+ep /usr/local/bin/seed
 ```
@@ -46,6 +49,7 @@ sudo setcap cap_net_raw=+ep /usr/local/bin/seed
 ### Can I run The Seed on a server without a GUI?
 
 Yes! The Seed is a web application:
+
 - Backend runs on server (headless)
 - Access UI from any browser on your network
 
@@ -62,6 +66,7 @@ Upload a floor plan, place virtual APs, get instant coverage prediction. No comp
 **85-95%** compared to real-world surveys.
 
 Good enough for:
+
 - Estimating AP count
 - Budget planning
 - Initial design
@@ -87,6 +92,7 @@ Not a replacement for final validation in complex RF environments.
 ### Is The Seed HIPAA compliant?
 
 Yes! Designed for healthcare:
+
 - Self-hosted (data never leaves your network)
 - AES-256 encryption at rest
 - TLS 1.3 in transit

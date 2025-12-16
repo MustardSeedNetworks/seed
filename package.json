@@ -4,11 +4,15 @@
   "private": true,
   "description": "Portable Network Diagnostic Tool",
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "format:md": "prettier --write \"**/*.md\" --ignore-path .gitignore",
+    "format:md:check": "prettier --check \"**/*.md\" --ignore-path .gitignore",
+    "format": "npm run format:md"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "prettier": "^3.4.2"
   }
 }

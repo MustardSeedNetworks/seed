@@ -1,24 +1,25 @@
 # Technical Debt & Future Improvements
 
-This document tracks planned improvements and technical debt that requires preparation before implementation.
+This document tracks planned improvements and technical debt that requires preparation before
+implementation.
 
 ## Security
 
 ### Enable Strict `gosec` Failing in CI
 
-**Status**: TODO (requires noise reduction first)
-**Priority**: High
-**Tracking**: #553
+**Status**: TODO (requires noise reduction first) **Priority**: High **Tracking**: #553
 
 **Current State**:
+
 - `gosec` runs in CI with `-no-fail` flag (`.github/workflows/ci.yml` line 160)
 - Security findings are reported but don't block builds
 - Results are uploaded to GitHub Security tab via SARIF
 
-**Goal**:
-Enable `gosec` to fail CI builds on high-confidence security findings, aligning with enterprise security standards.
+**Goal**: Enable `gosec` to fail CI builds on high-confidence security findings, aligning with
+enterprise security standards.
 
 **Prerequisites** (must complete first):
+
 1. **Audit Current Findings**: Run `gosec ./...` locally and document all findings
 2. **Categorize Issues**: Separate true positives from false positives
 3. **Address True Positives**: Fix legitimate security issues
@@ -26,7 +27,9 @@ Enable `gosec` to fail CI builds on high-confidence security findings, aligning 
 5. **Reduce Noise**: Ensure clean baseline with minimal findings
 
 **Implementation Steps** (after prerequisites):
+
 1. Remove `-no-fail` from gosec command:
+
    ```yaml
    # Before
    args: "-no-fail -fmt sarif -out gosec-results.sarif ./..."
@@ -42,12 +45,14 @@ Enable `gosec` to fail CI builds on high-confidence security findings, aligning 
 3. Update CI documentation to reflect new security gate
 
 **Benefits**:
+
 - Catches security vulnerabilities earlier in development cycle
 - Enforces higher security standards
 - Aligns with enterprise best practices
 - Improves overall security posture
 
 **Timeline**:
+
 - Target completion: After security audit phase (TBD)
 - Estimated effort: 2-4 hours (prerequisite work) + 30 minutes (implementation)
 

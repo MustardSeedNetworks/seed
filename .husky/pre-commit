@@ -11,6 +11,27 @@ FAILED=0
 # Get staged files
 STAGED_GO_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' || true)
 STAGED_WEB_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '^web/' || true)
+STAGED_MD_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.md$' || true)
+
+# ============================================
+# Markdown Formatting Check
+# ============================================
+if [ -n "$STAGED_MD_FILES" ]; then
+  echo ""
+  echo "=== Markdown Formatting Check ==="
+
+  if command -v npx >/dev/null 2>&1 && [ -f "node_modules/.bin/prettier" ]; then
+    echo "Checking markdown formatting..."
+    if ! npx prettier --check $STAGED_MD_FILES 2>/dev/null; then
+      echo "Markdown formatting issues found! Run 'npm run format:md' to fix."
+      FAILED=1
+    else
+      echo "Markdown formatting OK"
+    fi
+  else
+    echo "Prettier not installed, skipping markdown check"
+  fi
+fi
 
 # ============================================
 # Go Backend Checks
@@ -19,15 +40,26 @@ if [ -n "$STAGED_GO_FILES" ]; then
   echo ""
   echo "=== Go Backend Checks ==="
 
-  # Run Go linting (if golangci-lint is installed)
+  # Find golangci-lint (check PATH and common locations)
+  GOLANGCI_LINT=""
   if command -v golangci-lint >/dev/null 2>&1; then
+    GOLANGCI_LINT="golangci-lint"
+  elif [ -x "$HOME/go/bin/golangci-lint" ]; then
+    GOLANGCI_LINT="$HOME/go/bin/golangci-lint"
+  elif [ -x "$(go env GOPATH)/bin/golangci-lint" ]; then
+    GOLANGCI_LINT="$(go env GOPATH)/bin/golangci-lint"
+  fi
+
+  # Run Go linting (if golangci-lint is found)
+  if [ -n "$GOLANGCI_LINT" ]; then
     echo "Running Go linter..."
-    if ! golangci-lint run --new-from-rev=HEAD~1 2>/dev/null; then
+    if ! $GOLANGCI_LINT run --new-from-rev=HEAD~1 2>/dev/null; then
       echo "Go linting failed!"
       FAILED=1
     fi
   else
     echo "golangci-lint not installed, skipping Go linting"
+    echo "  Install with: make tools"
   fi
 
   # Run Go tests (short mode for speed)

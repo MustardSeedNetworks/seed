@@ -1,6 +1,7 @@
 # Realtek Ethernet NICs
 
-❌ **No TDR Support** - Realtek consumer NICs do **NOT support cable diagnostics** via ethtool. **Not recommended for The Seed cable testing**.
+❌ **No TDR Support** - Realtek consumer NICs do **NOT support cable diagnostics** via ethtool.
+**Not recommended for The Seed cable testing**.
 
 [← Back to Home](Home)
 
@@ -9,28 +10,33 @@
 ### Why Realtek Doesn't Work
 
 **TDR Support:** ❌ **None** in Linux drivers
+
 - `r8169` driver: No cable testing support
 - `r8125` driver: No cable testing support
 - Consumer chipsets: No TDR hardware capability
 
 **Attempted Test:**
+
 ```bash
 sudo ethtool --cable-test eth0
 # Output: netlink error: Operation not supported
 ```
 
 **Why is this?**
+
 1. **Hardware limitation** - Consumer Realtek chips don't have TDR circuitry
 2. **Driver limitation** - Even if hardware supported it, Linux driver doesn't expose it
 3. **Windows only** - Some Realtek diagnostic tools exist for Windows, but not Linux-compatible
 
-**Bottom Line:** If you need cable diagnostics with The Seed, **you must use Intel or Broadcom server NICs**.
+**Bottom Line:** If you need cable diagnostics with The Seed, **you must use Intel or Broadcom
+server NICs**.
 
 ---
 
 ## 📊 Common Realtek Chipsets
 
 ### RTL8111/RTL8168 (Most Common)
+
 **Consumer Gigabit - No TDR**
 
 - **Chipset:** Realtek RTL8111 or RTL8168
@@ -40,12 +46,14 @@ sudo ethtool --cable-test eth0
 - **Price:** Usually built-in (free)
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ❌ **Not supported**
 - Link Speed Detection: ✅ Accurate
 - LLDP/CDP Capture: ✅ Works
 - Basic Diagnostics: ✅ Works (no cable testing)
 
 **Use Cases:**
+
 - Basic network diagnostics (link status, DHCP, DNS)
 - LLDP/CDP neighbor discovery
 - **NOT for cable testing**
@@ -53,6 +61,7 @@ sudo ethtool --cable-test eth0
 ---
 
 ### RTL8125 (2.5 Gigabit)
+
 **Modern Consumer 2.5GbE - No TDR**
 
 - **Chipset:** Realtek RTL8125
@@ -61,12 +70,14 @@ sudo ethtool --cable-test eth0
 - **Found In:** Modern motherboards (2019+)
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ❌ **Not supported**
 - 2.5GbE Support: ✅ Yes
 - Link Speed Detection: ✅ Accurate
 - Basic Diagnostics: ✅ Works (no cable testing)
 
 **Notes:**
+
 - Common on AMD B550/X570 and Intel Z490+ motherboards
 - Works great for basic diagnostics
 - **Still no TDR support** even though newer
@@ -74,6 +85,7 @@ sudo ethtool --cable-test eth0
 ---
 
 ### RTL8153 (USB Ethernet)
+
 **USB to Gigabit Adapter - No TDR**
 
 - **Chipset:** Realtek RTL8153
@@ -82,11 +94,13 @@ sudo ethtool --cable-test eth0
 - **Speed:** 10/100/1000 Mbps
 
 **The Seed Compatibility:**
+
 - TDR Cable Testing: ❌ **Not supported**
 - USB Adapter: ✅ Works
 - Basic Diagnostics: ✅ Works
 
 **Common Adapters:**
+
 - Anker USB-C to Ethernet
 - Cable Matters USB 3.0 to Gigabit
 - Many Amazon/AliExpress generic adapters
@@ -100,6 +114,7 @@ While Realtek doesn't support TDR cable testing, they work perfectly for:
 ### Supported The Seed Features
 
 **✅ Working Features:**
+
 - Link status detection (carrier, up/down)
 - Speed detection (10/100/1000/2500 Mbps)
 - Duplex detection (full/half)
@@ -113,6 +128,7 @@ While Realtek doesn't support TDR cable testing, they work perfectly for:
 - Network device discovery
 
 **❌ Not Working:**
+
 - Cable diagnostics (TDR)
 - Cable length measurement
 - Fault detection and location
@@ -120,6 +136,7 @@ While Realtek doesn't support TDR cable testing, they work perfectly for:
 ### Recommendation
 
 **If you have Realtek NIC:**
+
 - ✅ Use it for all diagnostics **except cable testing**
 - ✅ Add Intel I210 PCIe card ($20-35) for cable diagnostics
 - ✅ Best of both worlds: Use Realtek for general diagnostics, Intel for TDR
@@ -174,6 +191,7 @@ sudo ./seed --interface eth0
 ### ❌ **Don't Replace** - If You Don't Need TDR
 
 **Keep Realtek if:**
+
 - You only need link status, LLDP, DHCP, DNS testing
 - Motherboard has built-in Realtek (free)
 - Budget constrained
@@ -183,11 +201,13 @@ sudo ./seed --interface eth0
 ### ✅ **Add Intel Card** - If You Need TDR
 
 **Best Approach:**
+
 1. Keep using Realtek for general diagnostics
 2. Add Intel I210 PCIe card ($20-35) for cable testing
 3. Switch interfaces in The Seed when you need cable diagnostics
 
 **Installation:**
+
 ```bash
 # Install Intel I210 in PCIe slot
 # System now has two NICs: Realtek (eth0) + Intel (eth1)
@@ -211,6 +231,7 @@ sudo ./seed --interface eth1
 **Cause:** Realtek chipset behavior
 
 **Workaround:** Force speed/duplex (not recommended unless necessary)
+
 ```bash
 sudo ethtool -s eth0 speed 1000 duplex full autoneg off
 ```
@@ -220,6 +241,7 @@ sudo ethtool -s eth0 speed 1000 duplex full autoneg off
 **Symptom:** Link randomly disconnects during high traffic
 
 **Solutions:**
+
 1. Update kernel (newer `r8169` driver versions)
 2. Disable power saving:
    ```bash
@@ -235,6 +257,7 @@ sudo ethtool -s eth0 speed 1000 duplex full autoneg off
 **Symptom:** No network after boot
 
 **Solution:**
+
 ```bash
 # Load driver manually
 sudo modprobe r8169
@@ -248,12 +271,15 @@ echo "r8169" | sudo tee -a /etc/modules
 ## 📝 Community Test Reports
 
 ### Realtek Models Tested
-*(Community will report which models work for basic diagnostics)*
+
+_(Community will report which models work for basic diagnostics)_
 
 ### Workarounds and Tips
-*(Community will share Realtek-specific tips)*
+
+_(Community will share Realtek-specific tips)_
 
 ### Submit Your Report
+
 [Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
@@ -261,14 +287,17 @@ echo "r8169" | sudo tee -a /etc/modules
 ## 🔗 Additional Resources
 
 ### Driver Documentation
+
 - [r8169 Driver](https://www.kernel.org/doc/html/latest/networking/device_drivers/ethernet/realtek/r8169.html)
 
 ### Realtek Official
+
 - [Realtek Ethernet Controllers](https://www.realtek.com/en/products/communications-network-ics/item/rtl8111h)
 
 ---
 
-**Last Updated:** 2025-12-14
-**Recommendation:** Realtek works for 90% of diagnostics, but add Intel I210 ($20-35) if you need cable testing.
+**Last Updated:** 2025-12-14 **Recommendation:** Realtek works for 90% of diagnostics, but add Intel
+I210 ($20-35) if you need cable testing.
 
-[← Back to Home](Home) | [← Previous: Broadcom Ethernet](Broadcom-Ethernet) | [Next: Marvell Ethernet →](Marvell-Ethernet)
+[← Back to Home](Home) | [← Previous: Broadcom Ethernet](Broadcom-Ethernet) |
+[Next: Marvell Ethernet →](Marvell-Ethernet)

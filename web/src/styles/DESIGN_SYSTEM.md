@@ -1,6 +1,7 @@
 # LuminetIQ Design System
 
-This design system ensures consistent styling across the application. Instead of scattered utility classes, use the centralized theme tokens and component utilities.
+This design system ensures consistent styling across the application. Instead of scattered utility
+classes, use the centralized theme tokens and component utilities.
 
 ## Quick Start
 
@@ -251,9 +252,7 @@ import { section } from "../styles/theme";
 
 // Page container
 <div className={cn(section.container, section.width.lg)}>
-  <div className={section.spacing.default}>
-    {/* Content with consistent spacing */}
-  </div>
+  <div className={section.spacing.default}>{/* Content with consistent spacing */}</div>
 </div>;
 ```
 
@@ -308,11 +307,9 @@ import { buttonClass, cardClass } from '../styles/theme';
 
 ## Benefits
 
-✅ **Consistency**: All components use the same design tokens
-✅ **Maintainability**: Change once, update everywhere
-✅ **Type Safety**: TypeScript autocomplete for variants
-✅ **Accessibility**: Built-in focus states, contrast ratios
-✅ **Dark Mode**: Automatic theme switching via CSS variables
+✅ **Consistency**: All components use the same design tokens ✅ **Maintainability**: Change once,
+update everywhere ✅ **Type Safety**: TypeScript autocomplete for variants ✅ **Accessibility**:
+Built-in focus states, contrast ratios ✅ **Dark Mode**: Automatic theme switching via CSS variables
 ✅ **Performance**: No runtime CSS-in-JS overhead
 
 ## Best Practices

@@ -1,8 +1,7 @@
 # The Seed - Documentation Structure
 
-**Version:** 1.0
-**Last Updated:** December 2025
-**Purpose:** Complete guide to documentation organization
+**Version:** 1.0 **Last Updated:** December 2025 **Purpose:** Complete guide to documentation
+organization
 
 ---
 
@@ -13,7 +12,8 @@ The Seed maintains **two types of documentation**:
 1. **User-Facing:** Installation, features, troubleshooting (GitHub Wiki)
 2. **Team/Internal:** Strategy, sales, engineering (docs/ folder in repo)
 
-Since the repository is **private and proprietary**, both are currently in the same repo but serve different purposes.
+Since the repository is **private and proprietary**, both are currently in the same repo but serve
+different purposes.
 
 ---
 
@@ -54,6 +54,7 @@ netscope/ (private repo)
 **Purpose:** Help users install, configure, and use The Seed
 
 **Audience:**
+
 - Beta testers (with repo access)
 - Customers
 - Community contributors
@@ -61,6 +62,7 @@ netscope/ (private repo)
 **Location:** https://github.com/krisarmstrong/netscope/wiki
 
 **Content:**
+
 - Installation guides (macOS, Linux, Docker)
 - Quick start tutorial
 - Feature documentation (Network Discovery, WiFi Survey, etc.)
@@ -72,6 +74,7 @@ netscope/ (private repo)
 **Format:** Markdown (GitHub Wiki)
 
 **Update Frequency:**
+
 - With each release (new features, breaking changes)
 - As bugs/issues are discovered and fixed
 - When hardware is tested
@@ -83,6 +86,7 @@ netscope/ (private repo)
 **Purpose:** Internal knowledge base for team planning and execution
 
 **Audience:**
+
 - Kris Armstrong (founder)
 - Future employees (sales, support, engineering)
 - Contractors (with repo access)
@@ -92,27 +96,32 @@ netscope/ (private repo)
 **Content:**
 
 ### Business & Strategy
+
 - `BUSINESS_PLAN.md` - 3-year financial projections, SBA loan analysis, market sizing
 - `MARKETING_STRATEGY.md` - Go-to-market plan, budgets, ROI analysis
 - `LICENSING_STRATEGY.md` - Pricing tiers, enforcement, upgrade paths
 - `COMPETITIVE_ANALYSIS.md` - Detailed competitor analysis with battle cards
 
 ### Sales & Support
+
 - `SALES_PLAYBOOK.md` - Sales methodology, objection handling, demo scripts
 - `SUPPORT_STRATEGY.md` - Support tiers, SLAs, escalation procedures, TAM
 
 ### Product & Engineering
+
 - `AI_QA_STRATEGY.md` - AI-powered testing strategy (unit, E2E, security)
 - `AI_TOOLS_STRATEGY.md` - Which AI tools to use for development
 - `TESTING_REQUIREMENTS.md` - Hardware/software for test lab
 - `BRAND_GUIDELINES.md` - Visual identity, voice & tone, messaging
 
 ### Reference
+
 - `WIKI_CONTENT.md` - Source content for populating GitHub Wiki
 
 **Format:** Markdown
 
 **Update Frequency:**
+
 - Quarterly review (business plan, competitive analysis)
 - As needed (when strategy changes)
 - Before major milestones (launch, funding, hiring)
@@ -140,6 +149,7 @@ The GitHub Wiki is currently **empty** and needs to be initialized.
 ```
 
 This will:
+
 - Clone the wiki repository
 - Create 6 wiki pages with full content:
   - Home (welcome page)
@@ -164,6 +174,7 @@ When The Seed launches publicly, create a professional docs site:
 ### Recommended Tool: GitBook
 
 **Why GitBook:**
+
 - Beautiful UI (better than GitHub Wiki)
 - SEO-friendly (indexed by Google)
 - Versioning (docs for v1.0, v2.0, etc.)
@@ -171,16 +182,19 @@ When The Seed launches publicly, create a professional docs site:
 - Analytics (see what users read)
 
 **Pricing:**
+
 - Free for open-source docs (if you make docs public)
 - $29/month for private docs (team access)
 
 **Setup:**
+
 1. Create account at https://www.gitbook.com
 2. Connect to GitHub repo
 3. Auto-sync from `docs/user-guide/` folder
 4. Publish to `docs.mustardseednetworks.com`
 
 **Structure:**
+
 ```
 docs.mustardseednetworks.com/
 ├── Getting Started
@@ -208,6 +222,7 @@ docs.mustardseednetworks.com/
 ## Alternative: Docusaurus (Free, Open Source)
 
 **Why Docusaurus:**
+
 - 100% free (Facebook's tool)
 - React-based (customizable)
 - Versioning built-in
@@ -215,6 +230,7 @@ docs.mustardseednetworks.com/
 - Markdown-based (easy to write)
 
 **Setup:**
+
 ```bash
 npx create-docusaurus@latest seed-docs classic
 cd seed-docs
@@ -253,6 +269,7 @@ internal-docs/
 ```
 
 **Access Control:**
+
 - Employees: Full access
 - Contractors: Engineering only (no sales/business)
 - Partners: Support only (no engineering/sales)
@@ -262,6 +279,7 @@ internal-docs/
 **When:** Team grows to 3+ people
 
 **Why Notion:**
+
 - Non-technical team can contribute (sales, support)
 - Great search, templates, databases
 - Beautiful UI, easy collaboration
@@ -270,6 +288,7 @@ internal-docs/
 **Pricing:** Free for <10 users, $8/user/month after
 
 **Structure:**
+
 ```
 Mustard Seed Networks Workspace
 ├── 📚 Engineering
@@ -297,32 +316,38 @@ Mustard Seed Networks Workspace
 ### User-Facing (GitHub Wiki)
 
 **When to Update:**
+
 - New release (document new features)
 - Bug fixes (update troubleshooting)
 - Hardware tested (add to compatibility matrix)
 
 **Who Updates:**
+
 - Engineering team (feature docs)
 - Support team (FAQ, troubleshooting)
 - Community (via PRs to docs/ folder, then copied to wiki)
 
 **Review Process:**
+
 - Kris reviews all changes
 - Test docs before publishing (ensure accuracy)
 
 ### Team Documentation (docs/ folder)
 
 **When to Update:**
+
 - Quarterly reviews (business plan, competitive analysis)
 - Major milestones (funding, launch, hiring)
 - Strategy changes (pricing, positioning)
 
 **Who Updates:**
+
 - Kris (business, strategy)
 - Sales (playbooks, battle cards when hired)
 - Engineering (technical docs)
 
 **Review Process:**
+
 - No formal review (private to team)
 - Version controlled (git history)
 
@@ -331,14 +356,17 @@ Mustard Seed Networks Workspace
 ## Maintenance Schedule
 
 ### Weekly
+
 - Check GitHub issues for doc bugs
 - Update FAQ if new common questions emerge
 
 ### Monthly
+
 - Review wiki analytics (what are users reading?)
 - Identify gaps (what's missing?)
 
 ### Quarterly
+
 - Review and update:
   - BUSINESS_PLAN.md (financial projections)
   - COMPETITIVE_ANALYSIS.md (new competitors, pricing changes)
@@ -346,6 +374,7 @@ Mustard Seed Networks Workspace
 - Check for outdated screenshots/examples
 
 ### Annually
+
 - Major documentation refresh
 - Competitive deep-dive
 - User survey ("What docs do you need?")
@@ -354,24 +383,24 @@ Mustard Seed Networks Workspace
 
 ## Quick Reference: What Goes Where?
 
-| Content | Location | Audience |
-|---------|----------|----------|
-| Installation guide | GitHub Wiki | Users |
-| Quick start tutorial | GitHub Wiki | Users |
-| Feature documentation | GitHub Wiki | Users |
-| Hardware compatibility | GitHub Wiki (docs/wiki/) | Users |
-| API reference | GitHub Wiki | Developers |
-| Troubleshooting | GitHub Wiki | Users |
-| FAQ | GitHub Wiki | Users |
-| Business plan | docs/BUSINESS_PLAN.md | Team |
-| Sales playbook | docs/SALES_PLAYBOOK.md | Team (Sales) |
-| Marketing strategy | docs/MARKETING_STRATEGY.md | Team (Marketing) |
-| Support strategy | docs/SUPPORT_STRATEGY.md | Team (Support) |
-| Competitive analysis | docs/COMPETITIVE_ANALYSIS.md | Team (Sales) |
-| Brand guidelines | docs/BRAND_GUIDELINES.md | Team (Marketing) |
-| Testing requirements | docs/TESTING_REQUIREMENTS.md | Team (Engineering) |
-| Architecture decisions | Future: internal-docs/ | Team (Engineering) |
-| Customer notes | Future: internal-docs/ | Team (Support/Sales) |
+| Content                | Location                     | Audience             |
+| ---------------------- | ---------------------------- | -------------------- |
+| Installation guide     | GitHub Wiki                  | Users                |
+| Quick start tutorial   | GitHub Wiki                  | Users                |
+| Feature documentation  | GitHub Wiki                  | Users                |
+| Hardware compatibility | GitHub Wiki (docs/wiki/)     | Users                |
+| API reference          | GitHub Wiki                  | Developers           |
+| Troubleshooting        | GitHub Wiki                  | Users                |
+| FAQ                    | GitHub Wiki                  | Users                |
+| Business plan          | docs/BUSINESS_PLAN.md        | Team                 |
+| Sales playbook         | docs/SALES_PLAYBOOK.md       | Team (Sales)         |
+| Marketing strategy     | docs/MARKETING_STRATEGY.md   | Team (Marketing)     |
+| Support strategy       | docs/SUPPORT_STRATEGY.md     | Team (Support)       |
+| Competitive analysis   | docs/COMPETITIVE_ANALYSIS.md | Team (Sales)         |
+| Brand guidelines       | docs/BRAND_GUIDELINES.md     | Team (Marketing)     |
+| Testing requirements   | docs/TESTING_REQUIREMENTS.md | Team (Engineering)   |
+| Architecture decisions | Future: internal-docs/       | Team (Engineering)   |
+| Customer notes         | Future: internal-docs/       | Team (Support/Sales) |
 
 ---
 
@@ -387,6 +416,5 @@ Mustard Seed Networks Workspace
 
 ---
 
-**Document Owner:** Kris Armstrong
-**Last Updated:** December 2025
-**Next Review:** After wiki population, then quarterly
+**Document Owner:** Kris Armstrong **Last Updated:** December 2025 **Next Review:** After wiki
+population, then quarterly
