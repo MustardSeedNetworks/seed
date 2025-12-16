@@ -178,6 +178,21 @@ func TestTransactionFields(t *testing.T) {
 	if tx.XID != 12345 {
 		t.Errorf("expected XID 12345, got %d", tx.XID)
 	}
+	if !tx.Started.Equal(now) {
+		t.Errorf("expected Started %v, got %v", now, tx.Started)
+	}
+	if !tx.DiscoverTime.Equal(now) {
+		t.Errorf("expected DiscoverTime %v, got %v", now, tx.DiscoverTime)
+	}
+	if !tx.OfferTime.Equal(now.Add(50 * time.Millisecond)) {
+		t.Errorf("expected OfferTime %v, got %v", now.Add(50*time.Millisecond), tx.OfferTime)
+	}
+	if !tx.RequestTime.Equal(now.Add(60 * time.Millisecond)) {
+		t.Errorf("expected RequestTime %v, got %v", now.Add(60*time.Millisecond), tx.RequestTime)
+	}
+	if !tx.AckTime.Equal(now.Add(105 * time.Millisecond)) {
+		t.Errorf("expected AckTime %v, got %v", now.Add(105*time.Millisecond), tx.AckTime)
+	}
 	if !tx.Complete {
 		t.Error("expected Complete to be true")
 	}

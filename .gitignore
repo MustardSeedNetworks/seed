@@ -82,3 +82,22 @@ CLAUDE.md
 
 *storybook.log
 storybook-static
+
+# Playwright reports
+web/playwright-report/
+web/test-results/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Root dependencies
+node_modules/
+
+# Logs
+logs/
+
+# Data
+data/
+
+# Agent artifacts
+.gemini/
