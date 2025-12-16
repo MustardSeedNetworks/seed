@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { ScanSearch } from "../../ui/Icons";
@@ -13,9 +14,7 @@ import {
 
 interface DiscoverySettingsProps {
   networkDiscoverySettings: NetworkDiscoverySettingsType;
-  setNetworkDiscoverySettings: React.Dispatch<
-    React.SetStateAction<NetworkDiscoverySettingsType>
-  >;
+  setNetworkDiscoverySettings: React.Dispatch<React.SetStateAction<NetworkDiscoverySettingsType>>;
   networkDiscoveryStatus: SaveStatus;
   subnets: SubnetConfig[];
   subnetsStatus: SaveStatus;
@@ -30,20 +29,12 @@ interface DiscoverySettingsProps {
   deleteSubnet: (cidr: string) => void;
 }
 
-const PROFILE_DESCRIPTIONS: Record<DiscoveryProfile, string> = {
-  stealth: "Passive only - LLDP/CDP/EDP listeners, no active scanning",
-  standard: "Passive + ARP/ICMP scanning on local subnet",
-  full_scan: "All methods including port scanning and additional subnets",
-  custom: "Fine-grained control over individual discovery methods",
-};
+// Profile values for iteration
+const PROFILE_VALUES: DiscoveryProfile[] = ["stealth", "standard", "full_scan", "custom"];
 
-const PROFILE_LABELS: Record<DiscoveryProfile, string> = {
-  stealth: "Stealth",
-  standard: "Standard",
-  full_scan: "Full Scan",
-  custom: "Custom",
-};
-
+/**
+ *
+ */
 export function DiscoverySettings({
   networkDiscoverySettings,
   setNetworkDiscoverySettings,
@@ -60,9 +51,41 @@ export function DiscoverySettings({
   toggleSubnet,
   deleteSubnet,
 }: DiscoverySettingsProps) {
-  const [serviceStatus, setServiceStatus] =
-    useState<DiscoveryServiceStatus | null>(null);
+  const { t } = useTranslation("settings");
+  const [serviceStatus, setServiceStatus] = useState<DiscoveryServiceStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+
+  // Get translated profile label
+  const getProfileLabel = (profile: DiscoveryProfile) => {
+    switch (profile) {
+      case "stealth":
+        return t("discovery.profileStealth");
+      case "standard":
+        return t("discovery.profileStandard");
+      case "full_scan":
+        return t("discovery.profileFullScan");
+      case "custom":
+        return t("discovery.profileCustom");
+      default:
+        return profile;
+    }
+  };
+
+  // Get translated profile description
+  const getProfileDescription = (profile: DiscoveryProfile) => {
+    switch (profile) {
+      case "stealth":
+        return t("discovery.profileStealthDesc");
+      case "standard":
+        return t("discovery.profileStandardDesc");
+      case "full_scan":
+        return t("discovery.profileFullScanDesc");
+      case "custom":
+        return t("discovery.profileCustomDesc");
+      default:
+        return "";
+    }
+  };
 
   // Fetch service status
   const fetchServiceStatus = useCallback(async () => {
@@ -109,15 +132,14 @@ export function DiscoverySettings({
 
   const currentProfile = networkDiscoverySettings.profile || "standard";
   const showCustomOptions = currentProfile === "custom";
-  const showSubnets =
-    currentProfile === "full_scan" || currentProfile === "custom";
+  const showSubnets = currentProfile === "full_scan" || currentProfile === "custom";
 
   return (
     <CollapsibleSection
       title={
         <div className={layout.inline.default}>
           <ScanSearch className={iconTokens.size.sm} />
-          <span>Network Discovery</span>
+          <span>{t("sections.discovery")}</span>
           <AutoSaveIndicator status={networkDiscoveryStatus} />
         </div>
       }
@@ -129,9 +151,9 @@ export function DiscoverySettings({
         >
           <div>
             <span className="body-small text-text-primary font-medium">
-              Enable Discovery
+              {t("discovery.enableDiscovery")}
             </span>
-            <p className="caption text-text-muted">Scan network for devices</p>
+            <p className="caption text-text-muted">{t("discovery.scanForDevices")}</p>
           </div>
           <input
             type="checkbox"
@@ -152,11 +174,9 @@ export function DiscoverySettings({
         >
           <div>
             <span className="body-small text-text-primary font-medium">
-              Auto-Scan on Link Up
+              {t("discovery.autoScanOnLink")}
             </span>
-            <p className="caption text-text-muted">
-              Start discovery when network connects
-            </p>
+            <p className="caption text-text-muted">{t("discovery.autoScanDesc")}</p>
           </div>
           <input
             type="checkbox"
@@ -194,9 +214,9 @@ export function DiscoverySettings({
                 <span className="body-small font-medium text-text-primary">
                   {serviceStatus.running
                     ? serviceStatus.scanning
-                      ? "Scanning..."
-                      : "Running"
-                    : "Stopped"}
+                      ? t("discovery.serviceStatus.scanning")
+                      : t("discovery.serviceStatus.running")
+                    : t("discovery.serviceStatus.stopped")}
                 </span>
               </div>
               <button
@@ -204,59 +224,49 @@ export function DiscoverySettings({
                 disabled={statusLoading}
                 className="caption text-text-muted hover:text-text-primary"
               >
-                {statusLoading ? "..." : "Refresh"}
+                {statusLoading ? "..." : t("discovery.serviceStatus.refresh")}
               </button>
             </div>
             {serviceStatus.running && (
               <div className="mt-2 grid grid-cols-2 gap-2 caption text-text-muted">
                 <div>
-                  <span className="font-medium">Devices:</span>{" "}
+                  <span className="font-medium">{t("discovery.serviceStatus.devices")}:</span>{" "}
                   {serviceStatus.deviceCount}
                 </div>
                 <div>
-                  <span className="font-medium">Interface:</span>{" "}
+                  <span className="font-medium">{t("discovery.serviceStatus.interface")}:</span>{" "}
                   {serviceStatus.interface || "auto"}
                 </div>
                 <div>
-                  <span className="font-medium">Subnet:</span>{" "}
-                  {serviceStatus.subnet || "detecting..."}
+                  <span className="font-medium">{t("discovery.serviceStatus.subnet")}:</span>{" "}
+                  {serviceStatus.subnet || "..."}
                 </div>
                 <div>
-                  <span className="font-medium">Local IP:</span>{" "}
-                  {serviceStatus.localIP || "detecting..."}
+                  <span className="font-medium">{t("discovery.serviceStatus.localIP")}:</span>{" "}
+                  {serviceStatus.localIP || "..."}
                 </div>
               </div>
             )}
-            {serviceStatus.activeMethods &&
-              serviceStatus.activeMethods.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {serviceStatus.activeMethods.map((method) => (
-                    <span
-                      key={method}
-                      className={`px-1.5 py-0.5 bg-surface-base ${radius.default} caption text-text-muted`}
-                    >
-                      {method}
-                    </span>
-                  ))}
-                </div>
-              )}
+            {serviceStatus.activeMethods && serviceStatus.activeMethods.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {serviceStatus.activeMethods.map((method) => (
+                  <span
+                    key={method}
+                    className={`px-1.5 py-0.5 bg-surface-base ${radius.default} caption text-text-muted`}
+                  >
+                    {method}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* Discovery Profile Selector */}
         <div>
-          <label className="caption text-text-muted font-medium">
-            Discovery Profile
-          </label>
+          <label className="caption text-text-muted font-medium">{t("discovery.profile")}</label>
           <div className="mt-2 stack-sm">
-            {(
-              [
-                "stealth",
-                "standard",
-                "full_scan",
-                "custom",
-              ] as DiscoveryProfile[]
-            ).map((profile) => (
+            {PROFILE_VALUES.map((profile) => (
               <label
                 key={profile}
                 className={`${layout.inline.default} items-start p-3 ${radius.lg} border cursor-pointer transition-colors ${
@@ -275,10 +285,10 @@ export function DiscoverySettings({
                 />
                 <div className="flex-1">
                   <div className="body-small font-medium text-text-primary">
-                    {PROFILE_LABELS[profile]}
+                    {getProfileLabel(profile)}
                   </div>
                   <div className="caption text-text-muted mt-0.5">
-                    {PROFILE_DESCRIPTIONS[profile]}
+                    {getProfileDescription(profile)}
                   </div>
                 </div>
               </label>
@@ -290,16 +300,13 @@ export function DiscoverySettings({
         {showCustomOptions && (
           <div className="border-t border-surface-border pt-3">
             <span className="caption text-text-muted font-medium">
-              Custom Discovery Options
+              {t("discovery.customOptions")}
             </span>
             <div className="mt-2 stack-sm">
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    networkDiscoverySettings.customOptions?.passiveListen ??
-                    true
-                  }
+                  checked={networkDiscoverySettings.customOptions?.passiveListen ?? true}
                   onChange={(e) =>
                     setNetworkDiscoverySettings((prev) => ({
                       ...prev,
@@ -312,15 +319,13 @@ export function DiscoverySettings({
                   className={iconTokens.size.sm}
                 />
                 <span className="body-small text-text-primary">
-                  Passive Protocol Listeners (LLDP, CDP, EDP)
+                  {t("discovery.passiveListeners")}
                 </span>
               </label>
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    networkDiscoverySettings.customOptions?.arpScan ?? true
-                  }
+                  checked={networkDiscoverySettings.customOptions?.arpScan ?? true}
                   onChange={(e) =>
                     setNetworkDiscoverySettings((prev) => ({
                       ...prev,
@@ -332,16 +337,12 @@ export function DiscoverySettings({
                   }
                   className={iconTokens.size.sm}
                 />
-                <span className="body-small text-text-primary">
-                  ARP Scanning
-                </span>
+                <span className="body-small text-text-primary">{t("discovery.arpScanning")}</span>
               </label>
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    networkDiscoverySettings.customOptions?.icmpScan ?? true
-                  }
+                  checked={networkDiscoverySettings.customOptions?.icmpScan ?? true}
                   onChange={(e) =>
                     setNetworkDiscoverySettings((prev) => ({
                       ...prev,
@@ -353,17 +354,12 @@ export function DiscoverySettings({
                   }
                   className={iconTokens.size.sm}
                 />
-                <span className="body-small text-text-primary">
-                  ICMP Ping Sweep
-                </span>
+                <span className="body-small text-text-primary">{t("discovery.icmpPingSweep")}</span>
               </label>
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    networkDiscoverySettings.customOptions?.portScan?.enabled ??
-                    false
-                  }
+                  checked={networkDiscoverySettings.customOptions?.portScan?.enabled ?? false}
                   onChange={(e) =>
                     setNetworkDiscoverySettings((prev) => ({
                       ...prev,
@@ -373,24 +369,19 @@ export function DiscoverySettings({
                           ...prev.customOptions?.portScan,
                           enabled: e.target.checked,
                           ports: prev.customOptions?.portScan?.ports ?? [],
-                          topPorts:
-                            prev.customOptions?.portScan?.topPorts ?? 100,
+                          topPorts: prev.customOptions?.portScan?.topPorts ?? 100,
                         },
                       },
                     }))
                   }
                   className={iconTokens.size.sm}
                 />
-                <span className="body-small text-text-primary">
-                  Port Scanning
-                </span>
+                <span className="body-small text-text-primary">{t("discovery.portScanning")}</span>
               </label>
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    networkDiscoverySettings.customOptions?.traceroute ?? false
-                  }
+                  checked={networkDiscoverySettings.customOptions?.traceroute ?? false}
                   onChange={(e) =>
                     setNetworkDiscoverySettings((prev) => ({
                       ...prev,
@@ -402,14 +393,12 @@ export function DiscoverySettings({
                   }
                   className={iconTokens.size.sm}
                 />
-                <span className="body-small text-text-primary">Traceroute</span>
+                <span className="body-small text-text-primary">{t("discovery.traceroute")}</span>
               </label>
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    networkDiscoverySettings.customOptions?.snmpQuery ?? false
-                  }
+                  checked={networkDiscoverySettings.customOptions?.snmpQuery ?? false}
                   onChange={(e) =>
                     setNetworkDiscoverySettings((prev) => ({
                       ...prev,
@@ -421,9 +410,7 @@ export function DiscoverySettings({
                   }
                   className={iconTokens.size.sm}
                 />
-                <span className="body-small text-text-primary">
-                  SNMP Queries
-                </span>
+                <span className="body-small text-text-primary">{t("discovery.snmpQueries")}</span>
               </label>
             </div>
           </div>
@@ -432,16 +419,13 @@ export function DiscoverySettings({
         {/* Timing Settings */}
         <div className="border-t border-surface-border pt-3">
           <span className="caption text-text-muted font-medium">
-            Timing Settings
+            {t("discovery.timingSettings")}
           </span>
 
           {/* Scan Workers */}
           <div className="mt-2">
-            <label
-              className="caption text-text-muted"
-              htmlFor="discovery-workers"
-            >
-              Concurrent Scan Workers
+            <label className="caption text-text-muted" htmlFor="discovery-workers">
+              {t("discovery.concurrentWorkers")}
             </label>
             <input
               id="discovery-workers"
@@ -457,18 +441,13 @@ export function DiscoverySettings({
               max={100}
               className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
-            <p className="caption text-text-muted mt-1">
-              More workers = faster scan (default: 50)
-            </p>
+            <p className="caption text-text-muted mt-1">{t("discovery.workersDesc")}</p>
           </div>
 
           {/* Ping Timeout */}
           <div className="mt-3">
-            <label
-              className="caption text-text-muted"
-              htmlFor="discovery-ping-timeout"
-            >
-              Ping Timeout (ms)
+            <label className="caption text-text-muted" htmlFor="discovery-ping-timeout">
+              {t("discovery.pingTimeout")}
             </label>
             <input
               id="discovery-ping-timeout"
@@ -488,11 +467,8 @@ export function DiscoverySettings({
 
           {/* Scan Timeout */}
           <div className="mt-3">
-            <label
-              className="caption text-text-muted"
-              htmlFor="discovery-scan-timeout"
-            >
-              Total Scan Timeout (ms)
+            <label className="caption text-text-muted" htmlFor="discovery-scan-timeout">
+              {t("discovery.scanTimeout")}
             </label>
             <input
               id="discovery-scan-timeout"
@@ -512,11 +488,8 @@ export function DiscoverySettings({
 
           {/* Rescan Interval */}
           <div className="mt-3">
-            <label
-              className="caption text-text-muted"
-              htmlFor="discovery-rescan-interval"
-            >
-              Auto-Rescan Interval (ms)
+            <label className="caption text-text-muted" htmlFor="discovery-rescan-interval">
+              {t("discovery.rescanInterval")}
             </label>
             <input
               id="discovery-rescan-interval"
@@ -531,19 +504,14 @@ export function DiscoverySettings({
               min={0}
               className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
-            <p className="caption text-text-muted mt-1">
-              0 = disabled, otherwise interval between automatic rescans
-            </p>
+            <p className="caption text-text-muted mt-1">{t("discovery.rescanIntervalDesc")}</p>
           </div>
         </div>
 
         {/* OUI File Path */}
         <div className="border-t border-surface-border pt-3">
-          <label
-            className="caption text-text-muted font-medium"
-            htmlFor="discovery-oui-path"
-          >
-            OUI Database File Path
+          <label className="caption text-text-muted font-medium" htmlFor="discovery-oui-path">
+            {t("discovery.ouiFilePath")}
           </label>
           <input
             id="discovery-oui-path"
@@ -558,18 +526,7 @@ export function DiscoverySettings({
             placeholder="oui.txt"
             className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
           />
-          <p className="caption text-text-muted mt-1">
-            Path to IEEE OUI file for vendor lookup (download from{" "}
-            <a
-              href="https://standards-oui.ieee.org/oui/oui.txt"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-primary hover:underline"
-            >
-              IEEE
-            </a>
-            )
-          </p>
+          <p className="caption text-text-muted mt-1">{t("discovery.ouiFileDesc")}</p>
         </div>
 
         {/* Target Networks (only for full_scan or custom profile) */}
@@ -577,13 +534,10 @@ export function DiscoverySettings({
           <div className="border-t border-surface-border pt-3">
             <div className={`${layout.flex.between} mb-2`}>
               <span className="caption text-text-muted font-medium">
-                Target Networks <AutoSaveIndicator status={subnetsStatus} />
+                {t("discovery.targetNetworks")} <AutoSaveIndicator status={subnetsStatus} />
               </span>
             </div>
-            <p className="caption text-text-muted mb-2">
-              Add subnets beyond the local interface to scan for devices (e.g.,
-              server VLANs, remote networks).
-            </p>
+            <p className="caption text-text-muted mb-2">{t("discovery.targetNetworksDesc")}</p>
 
             {/* List of configured subnets */}
             {subnets.length > 0 && (
@@ -597,21 +551,15 @@ export function DiscoverySettings({
                       <div className="body-small text-text-primary truncate">
                         {subnet.name || subnet.cidr}
                       </div>
-                      <div className="caption text-text-muted">
-                        {subnet.cidr}
-                      </div>
+                      <div className="caption text-text-muted">{subnet.cidr}</div>
                     </div>
                     <div className={`${layout.inline.default} ml-2`}>
                       <input
                         type="checkbox"
                         checked={subnet.enabled}
-                        onChange={(e) =>
-                          toggleSubnet(subnet.cidr, e.target.checked)
-                        }
+                        onChange={(e) => toggleSubnet(subnet.cidr, e.target.checked)}
                         className={iconTokens.size.sm}
-                        title={
-                          subnet.enabled ? "Disable subnet" : "Enable subnet"
-                        }
+                        title={subnet.enabled ? "Disable subnet" : "Enable subnet"}
                       />
                       <button
                         onClick={() => deleteSubnet(subnet.cidr)}
@@ -635,24 +583,22 @@ export function DiscoverySettings({
                   setNewSubnetCidr(e.target.value);
                   setSubnetError(null);
                 }}
-                placeholder="CIDR (e.g., 10.0.0.0/24)"
+                placeholder={t("discovery.cidrPlaceholder")}
                 className={`w-full px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
               />
               <input
                 type="text"
                 value={newSubnetName}
                 onChange={(e) => setNewSubnetName(e.target.value)}
-                placeholder="Name (optional, e.g., Server VLAN)"
+                placeholder={t("discovery.namePlaceholder")}
                 className={`w-full px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
               />
-              {subnetError && (
-                <p className="caption text-status-error">{subnetError}</p>
-              )}
+              {subnetError && <p className="caption text-status-error">{subnetError}</p>}
               <button
                 onClick={addSubnet}
                 className={`w-full px-3 py-2 bg-brand-primary hover:bg-brand-accent text-text-inverse ${radius.default} body-small`}
               >
-                + Add Subnet
+                {t("discovery.addSubnet")}
               </button>
             </div>
           </div>

@@ -36,16 +36,12 @@
  * State: Manages speedtest, iperf, and suggestion configurations
  */
 
+import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Gauge } from "../../ui/Icons";
 import { icon as iconTokens, layout, radius } from "../../../styles/theme";
-import {
-  TestsSettings,
-  IperfSettings,
-  IperfSuggestion,
-  SaveStatus,
-} from "../../../types/settings";
+import { TestsSettings, IperfSettings, IperfSuggestion, SaveStatus } from "../../../types/settings";
 
 interface PerformanceSettingsProps {
   testsSettings: TestsSettings;
@@ -59,6 +55,9 @@ interface PerformanceSettingsProps {
   fetchIperfSuggestions: () => void;
 }
 
+/**
+ *
+ */
 export function PerformanceSettings({
   testsSettings,
   setTestsSettings,
@@ -70,12 +69,28 @@ export function PerformanceSettings({
   iperfSuggestionsError,
   fetchIperfSuggestions,
 }: PerformanceSettingsProps) {
+  const { t } = useTranslation("settings");
+
+  // Get translated direction label
+  const getDirectionLabel = (direction: string) => {
+    switch (direction) {
+      case "download":
+        return t("performance.download");
+      case "upload":
+        return t("performance.upload");
+      case "bidirectional":
+        return t("performance.both");
+      default:
+        return direction;
+    }
+  };
+
   return (
     <CollapsibleSection
       title={
         <div className={layout.inline.default}>
           <Gauge className={iconTokens.size.sm} />
-          <span>Performance</span>
+          <span>{t("sections.performance")}</span>
           <AutoSaveIndicator status={iperfStatus} />
         </div>
       }
@@ -88,11 +103,9 @@ export function PerformanceSettings({
           >
             <div>
               <span className="body-small text-text-primary font-medium">
-                Enable Speedtest
+                {t("performance.enableSpeedtest")}
               </span>
-              <p className="caption text-text-muted">
-                Test internet speed via Speedtest.net
-              </p>
+              <p className="caption text-text-muted">{t("performance.speedtestDesc")}</p>
             </div>
             <input
               type="checkbox"
@@ -111,11 +124,9 @@ export function PerformanceSettings({
           >
             <div>
               <span className="body-small text-text-primary font-medium">
-                Enable iPerf
+                {t("performance.enableIperf")}
               </span>
-              <p className="caption text-text-muted">
-                Test LAN speed via iperf3
-              </p>
+              <p className="caption text-text-muted">{t("performance.iperfDesc")}</p>
             </div>
             <input
               type="checkbox"
@@ -134,13 +145,13 @@ export function PerformanceSettings({
         {/* Auto-Run on Link Up */}
         <div className="border-t border-surface-border pt-3">
           <span className="caption text-text-muted font-medium">
-            Auto-Run on Link Up
+            {t("performance.autoRunOnLink")}
           </span>
           <div className="mt-2 stack-sm">
             <label
               className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
             >
-              <span className="body-small text-text-primary">Speedtest</span>
+              <span className="body-small text-text-primary">{t("performance.speedtest")}</span>
               <input
                 type="checkbox"
                 checked={testsSettings.speedtest.autoRunOnLink}
@@ -159,7 +170,7 @@ export function PerformanceSettings({
             <label
               className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
             >
-              <span className="body-small text-text-primary">iPerf</span>
+              <span className="body-small text-text-primary">{t("performance.iperf")}</span>
               <input
                 type="checkbox"
                 checked={testsSettings.iperf.autoRunOnLink}
@@ -181,12 +192,12 @@ export function PerformanceSettings({
         {/* Internet Speed (Speedtest) Subsection */}
         <div className="border-t border-surface-border pt-3">
           <h4 className="body-small font-semibold text-text-primary mb-2 uppercase tracking-wide">
-            Internet Speed (Speedtest)
+            {t("performance.internetSpeed")}
           </h4>
           <div className="stack pl-1">
             <div>
               <label className="caption text-text-muted font-medium">
-                Server ID (optional)
+                {t("performance.serverId")}
               </label>
               <input
                 type="text"
@@ -200,13 +211,11 @@ export function PerformanceSettings({
                     },
                   }))
                 }
-                placeholder="Auto (closest server)"
+                placeholder={t("performance.autoClosestServer")}
                 className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
               />
               <div className={`${layout.flex.between} mt-1`}>
-                <p className="caption text-text-muted">
-                  Leave empty to auto-select nearest server
-                </p>
+                <p className="caption text-text-muted">{t("performance.autoSelectDesc")}</p>
                 <button
                   type="button"
                   onClick={() =>
@@ -217,7 +226,7 @@ export function PerformanceSettings({
                   }
                   className="caption text-brand-primary hover:underline"
                 >
-                  Reset to Auto
+                  {t("performance.resetToAuto")}
                 </button>
               </div>
             </div>
@@ -227,17 +236,15 @@ export function PerformanceSettings({
         {/* LAN Speed (iperf3) Subsection */}
         <div>
           <h4 className="body-small font-semibold text-text-primary mb-2 uppercase tracking-wide">
-            LAN Speed (iperf3)
+            {t("performance.lanSpeed")}
           </h4>
           <div className="stack pl-1">
-            <p className="caption text-text-muted">
-              Configure iperf3 client settings for LAN speed tests.
-            </p>
+            <p className="caption text-text-muted">{t("performance.lanSpeedDesc")}</p>
 
             {/* Server Address */}
             <div>
               <label className="caption text-text-muted font-medium">
-                Server Address
+                {t("performance.serverAddress")}
               </label>
               <input
                 type="text"
@@ -248,7 +255,7 @@ export function PerformanceSettings({
                     server: e.target.value,
                   }))
                 }
-                placeholder="192.168.1.100 or hostname"
+                placeholder="192.168.1.100"
                 className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
               />
               <div className={`${layout.flex.between} mt-2`}>
@@ -259,8 +266,8 @@ export function PerformanceSettings({
                   className="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {iperfSuggestionsStatus === "loading"
-                    ? "Scanning..."
-                    : "Find iperf hosts on LAN"}
+                    ? t("performance.scanning")
+                    : t("performance.findIperfHosts")}
                 </button>
                 {iperfSuggestionsStatus === "loading" && (
                   <svg
@@ -286,7 +293,7 @@ export function PerformanceSettings({
               </div>
               {iperfSuggestionsStatus === "error" && (
                 <p className="caption text-status-warning mt-1">
-                  {iperfSuggestionsError || "No iperf hosts responded"}
+                  {iperfSuggestionsError || t("performance.noIperfHosts")}
                 </p>
               )}
               {iperfSuggestions.length > 0 && (
@@ -303,14 +310,10 @@ export function PerformanceSettings({
                         }))
                       }
                     >
-                      <span className="font-medium">
-                        {sugg.hostname || sugg.host}
-                      </span>
+                      <span className="font-medium">{sugg.hostname || sugg.host}</span>
                       <span className="text-text-muted ml-1">
                         {sugg.hostname ? `(${sugg.host})` : ""}
-                        {sugg.latencyMs !== undefined
-                          ? ` · ${Math.round(sugg.latencyMs)}ms`
-                          : ""}
+                        {sugg.latencyMs !== undefined ? ` · ${Math.round(sugg.latencyMs)}ms` : ""}
                       </span>
                     </button>
                   ))}
@@ -320,11 +323,8 @@ export function PerformanceSettings({
 
             {/* Port */}
             <div>
-              <label
-                className="caption text-text-muted font-medium"
-                htmlFor="iperf-port"
-              >
-                Port
+              <label className="caption text-text-muted font-medium" htmlFor="iperf-port">
+                {t("performance.port")}
               </label>
               <input
                 id="iperf-port"
@@ -343,7 +343,7 @@ export function PerformanceSettings({
             {/* Protocol Toggle */}
             <div>
               <label className="caption text-text-muted font-medium block mb-1">
-                Protocol
+                {t("performance.protocol")}
               </label>
               <div
                 className="flex flex-wrap gap-2"
@@ -385,24 +385,18 @@ export function PerformanceSettings({
             {/* Direction Toggle */}
             <div>
               <label className="caption text-text-muted font-medium block mb-1">
-                Direction
+                {t("performance.direction")}
               </label>
               <div
                 className="flex flex-wrap gap-2"
                 role="radiogroup"
                 aria-label="Direction selection"
               >
-                {(
-                  [
-                    { value: "download", label: "Download" },
-                    { value: "upload", label: "Upload" },
-                    { value: "bidirectional", label: "Both" },
-                  ] as const
-                ).map((option) => {
-                  const checked = iperfSettings.direction === option.value;
+                {(["download", "upload", "bidirectional"] as const).map((direction) => {
+                  const checked = iperfSettings.direction === direction;
                   return (
                     <label
-                      key={option.value}
+                      key={direction}
                       className={`cursor-pointer px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
                         checked
                           ? "bg-brand-primary text-text-inverse border-brand-primary"
@@ -412,18 +406,18 @@ export function PerformanceSettings({
                       <input
                         type="radio"
                         name="iperf-direction"
-                        value={option.value}
+                        value={direction}
                         checked={checked}
                         onChange={() =>
                           setIperfSettings((prev) => ({
                             ...prev,
-                            direction: option.value,
+                            direction: direction,
                           }))
                         }
                         className="sr-only"
-                        aria-label={`${option.label} direction`}
+                        aria-label={`${getDirectionLabel(direction)} direction`}
                       />
-                      {option.label}
+                      {getDirectionLabel(direction)}
                     </label>
                   );
                 })}
@@ -432,11 +426,8 @@ export function PerformanceSettings({
 
             {/* Duration */}
             <div>
-              <label
-                className="caption text-text-muted font-medium"
-                htmlFor="iperf-duration"
-              >
-                Duration (seconds)
+              <label className="caption text-text-muted font-medium" htmlFor="iperf-duration">
+                {t("performance.duration")}
               </label>
               <input
                 id="iperf-duration"
@@ -460,7 +451,7 @@ export function PerformanceSettings({
                 className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border mb-2`}
               >
                 <span className="body-small text-text-primary">
-                  Enable iperf3 Server
+                  {t("performance.enableServer")}
                 </span>
                 <input
                   type="checkbox"
@@ -475,11 +466,8 @@ export function PerformanceSettings({
                 />
               </label>
               <div>
-                <label
-                  className="caption text-text-muted font-medium"
-                  htmlFor="iperf-server-port"
-                >
-                  Server Port
+                <label className="caption text-text-muted font-medium" htmlFor="iperf-server-port">
+                  {t("performance.serverPort")}
                 </label>
                 <input
                   id="iperf-server-port"
@@ -494,9 +482,7 @@ export function PerformanceSettings({
                   className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
                 />
               </div>
-              <p className="caption text-text-muted mt-1">
-                When enabled, starts iperf3 server automatically
-              </p>
+              <p className="caption text-text-muted mt-1">{t("performance.serverAutoStart")}</p>
             </div>
           </div>
         </div>
