@@ -4,7 +4,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -108,7 +108,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(export); err != nil {
-		log.Printf("Error encoding export response: %v", err)
+		slog.Error("Error encoding export response", "error", err)
 	}
 }
 
@@ -252,7 +252,7 @@ func (s *Server) exportIperfCard(cards map[string]interface{}) {
 
 // handleLogs returns the tail of the application log file for troubleshooting (fixes #544 - split from handlers.go).
 // Requires JWT authentication (enforced by middleware).
-// Optionally requires an additional log access token for extra protection.
+// Security fix #301: Removed insecure LOG_ACCESS_TOKEN - JWT authentication is sufficient.
 func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -261,23 +261,6 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 
 	// JWT authentication is enforced by the global auth middleware
 	// X-Username header is set by the middleware after validating the JWT
-
-	// OPTIONAL: Additional log access token for extra protection
-	if s.logAccessToken != "" {
-		headerName := s.logAccessHeader
-		if headerName == "" {
-			headerName = "X-Log-Token"
-		}
-		token := r.Header.Get(headerName)
-		if token == "" {
-			// Allow query param fallback (deprecated, for backwards compatibility)
-			token = r.URL.Query().Get("log_token")
-		}
-		if token != s.logAccessToken {
-			http.Error(w, "Additional log access token required", http.StatusForbidden)
-			return
-		}
-	}
 
 	if s.logPath == "" {
 		http.Error(w, "Log path not configured", http.StatusInternalServerError)
@@ -298,7 +281,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	const maxBytes int64 = 500 * 1024 // limit read size to 500KB
 	lines, err := readLastLines(s.logPath, maxBytes, maxLines)
 	if err != nil {
-		log.Printf("failed to read log file: %v", err)
+		slog.Error("Failed to read log file", "error", err)
 		http.Error(w, "Failed to read log file", http.StatusInternalServerError)
 		return
 	}

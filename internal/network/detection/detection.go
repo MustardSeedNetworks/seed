@@ -4,7 +4,7 @@
 package detection
 
 import (
-	"log"
+	"log/slog"
 	"net"
 	"sort"
 	"strings"
@@ -104,7 +104,7 @@ func (d *Detector) ScoreInterface(iface net.Interface) InterfaceScore {
 	score.LinkStatus = iface.Flags&net.FlagRunning != 0
 	addrs, err := iface.Addrs()
 	if err != nil {
-		log.Printf("Warning: failed to get addresses for %s: %v", iface.Name, err)
+		slog.Warn("failed to get addresses for interface", "interface", iface.Name, "error", err)
 	}
 	for _, addr := range addrs {
 		score.Addresses = append(score.Addresses, addr.String())

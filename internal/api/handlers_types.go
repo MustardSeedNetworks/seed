@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 )
@@ -16,7 +16,7 @@ func sendJSONResponse(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		log.Printf("Error encoding JSON response: %v", err)
+		slog.Error("Error encoding JSON response", "error", err)
 	}
 }
 

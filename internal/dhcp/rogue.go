@@ -4,7 +4,7 @@ package dhcp
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"sync"
 	"time"
@@ -104,7 +104,7 @@ func (rd *RogueDetector) Start() error {
 	// Start packet capture goroutine
 	go rd.capturePackets(ctx)
 
-	log.Printf("Rogue DHCP detector started on interface %s", rd.config.Interface)
+	slog.Info("Rogue DHCP detector started", "interface", rd.config.Interface)
 	return nil
 }
 
@@ -131,7 +131,7 @@ func (rd *RogueDetector) Stop() error {
 	rd.handle = nil
 	rd.cancel = nil
 
-	log.Printf("Rogue DHCP detector stopped")
+	slog.Info("Rogue DHCP detector stopped")
 	return nil
 }
 
@@ -229,7 +229,7 @@ func (rd *RogueDetector) processPacket(packet gopacket.Packet) {
 
 		// Alert if it's a rogue server
 		if !isKnown && rd.config.AlertOnDetection {
-			log.Printf("ALERT: Rogue DHCP server detected! IP: %s, MAC: %s", serverIP, serverMAC)
+			slog.Warn("Rogue DHCP server detected", "ip", serverIP, "mac", serverMAC)
 		}
 	} else {
 		// Update existing server

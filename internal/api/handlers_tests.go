@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 	"net"
 	"net/http"
@@ -418,7 +418,7 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file (no longer holding lock)
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{
@@ -612,7 +612,7 @@ func (s *Server) runHTTPTests(ctx context.Context) []CustomTestResult {
 		}
 
 		if err := validation.ValidateURL(endpoint.URL); err != nil {
-			log.Printf("Skipping invalid HTTP endpoint URL %q: %v", endpoint.URL, err)
+			slog.Warn("Skipping invalid HTTP endpoint URL", "url", endpoint.URL, "error", err)
 			continue
 		}
 
@@ -1128,7 +1128,7 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 		ctx := context.Background()
 		_, err := s.speedtestTester.RunTest(ctx)
 		if err != nil {
-			log.Printf("Speedtest failed: %v", err)
+			slog.Error("Speedtest failed", "error", err)
 		}
 	}()
 
@@ -1307,7 +1307,7 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Duration+30)*time.Second)
 		defer cancel()
 		if _, err := s.iperfManager.RunClient(ctx, &iperfConfig); err != nil {
-			log.Printf("iperf client failed: %v", err)
+			slog.Error("iperf client failed", "error", err)
 		}
 	}()
 

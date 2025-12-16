@@ -6,7 +6,7 @@ package discovery
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -67,7 +67,7 @@ func (s *Service) Start() error {
 	profile := s.cfg.NetworkDiscovery.Profile
 	s.activeProfile = profile
 
-	log.Printf("Starting discovery service with profile: %s", profile)
+	slog.Info("Starting discovery service", "profile", profile)
 
 	// Apply profile settings
 	if err := s.applyProfile(profile); err != nil {
@@ -110,7 +110,7 @@ func (s *Service) Stop() {
 	s.deviceDiscovery.Stop()
 	s.profiler.Stop()
 	s.running = false
-	log.Printf("Discovery service stopped")
+	slog.Info("Discovery service stopped")
 }
 
 // applyProfile configures discovery methods based on the selected profile.
@@ -120,24 +120,24 @@ func (s *Service) applyProfile(profile config.DiscoveryProfile) error {
 	case config.ProfileStealth:
 		// Stealth: passive listening only (LLDP, CDP, EDP, DHCP)
 		// No active scanning
-		log.Printf("Profile stealth: enabling passive protocol listeners only")
+		slog.Info("Profile stealth: enabling passive protocol listeners only")
 		return s.deviceDiscovery.Start() // Starts LLDP/CDP/EDP listeners
 
 	case config.ProfileStandard:
 		// Standard: passive + ARP/ICMP on local subnet
-		log.Printf("Profile standard: enabling passive listeners + ARP/ICMP scan")
+		slog.Info("Profile standard: enabling passive listeners + ARP/ICMP scan")
 		if err := s.deviceDiscovery.Start(); err != nil {
 			return err
 		}
 		// Configure for local subnet only
 		if err := s.deviceDiscovery.SetAdditionalSubnets(nil); err != nil {
-			log.Printf("Warning: failed to clear additional subnets: %v", err)
+			slog.Warn("Failed to clear additional subnets", "error", err)
 		}
 		return nil
 
 	case config.ProfileFullScan:
 		// Full scan: all methods including additional subnets and port scanning
-		log.Printf("Profile full_scan: enabling all discovery methods")
+		slog.Info("Profile full_scan: enabling all discovery methods")
 		if err := s.deviceDiscovery.Start(); err != nil {
 			return err
 		}
@@ -152,12 +152,12 @@ func (s *Service) applyProfile(profile config.DiscoveryProfile) error {
 
 	case config.ProfileCustom:
 		// Custom: fine-grained control via CustomOptions
-		log.Printf("Profile custom: applying custom options")
+		slog.Info("Profile custom: applying custom options")
 		return s.applyCustomOptions()
 
 	default:
 		// Default to standard
-		log.Printf("Unknown profile %s, defaulting to standard", profile)
+		slog.Warn("Unknown profile, defaulting to standard", "profile", profile)
 		return s.applyProfile(config.ProfileStandard)
 	}
 }
@@ -182,7 +182,7 @@ func (s *Service) applyCustomOptions() error {
 			}
 		}
 		if err := s.deviceDiscovery.SetAdditionalSubnets(cidrs); err != nil {
-			log.Printf("Warning: failed to set additional subnets: %v", err)
+			slog.Warn("Failed to set additional subnets", "error", err)
 		}
 	}
 
@@ -211,10 +211,10 @@ func (s *Service) rescanLoop() {
 		case <-s.stopCh:
 			return
 		case <-s.rescanTicker.C:
-			log.Printf("Discovery: starting scheduled rescan")
+			slog.Debug("Discovery: starting scheduled rescan")
 			ctx, cancel := context.WithTimeout(context.Background(), s.cfg.NetworkDiscovery.ScanTimeout)
 			if err := s.Scan(ctx); err != nil {
-				log.Printf("Discovery: scheduled rescan failed: %v", err)
+				slog.Warn("Discovery: scheduled rescan failed", "error", err)
 			}
 			cancel()
 		}
@@ -233,7 +233,7 @@ func (s *Service) Scan(ctx context.Context) error {
 	}
 
 	if !s.shouldDoActiveScan(profile) {
-		log.Printf("Discovery: active scanning disabled for profile %s", profile)
+		slog.Debug("Discovery: active scanning disabled for profile", "profile", profile)
 		return nil
 	}
 
@@ -265,7 +265,7 @@ func (s *Service) SetProfile(profile config.DiscoveryProfile) error {
 
 	// Apply new profile
 	s.activeProfile = profile
-	log.Printf("Discovery: switching to profile %s", profile)
+	slog.Info("Discovery: switching to profile", "profile", profile)
 
 	if wasRunning {
 		if err := s.applyProfile(profile); err != nil {

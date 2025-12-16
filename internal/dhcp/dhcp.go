@@ -8,7 +8,8 @@ import (
 	"bufio"
 	"encoding/binary"
 	"encoding/hex"
-	"log"
+	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -208,7 +209,7 @@ func (m *Monitor) processPacket(packet gopacket.Packet) {
 		return
 	}
 
-	log.Printf("DHCP %s captured: XID=0x%08x", phase, xid)
+	slog.Debug("DHCP captured", "phase", phase, "xid", fmt.Sprintf("0x%08x", xid))
 	m.RecordPhase(xid, phase, timestamp)
 }
 

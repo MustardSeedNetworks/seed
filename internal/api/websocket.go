@@ -42,7 +42,7 @@ package api
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -352,7 +352,7 @@ func (h *Hub) Run() {
 			h.mu.Lock()
 			h.clients[client] = true
 			h.mu.Unlock()
-			log.Printf("WebSocket client connected. Total clients: %d", len(h.clients))
+			slog.Debug("WebSocket client connected", "total_clients", len(h.clients))
 
 		case client := <-h.unregister:
 			h.mu.Lock()
@@ -361,7 +361,7 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 			h.mu.Unlock()
-			log.Printf("WebSocket client disconnected. Total clients: %d", len(h.clients))
+			slog.Debug("WebSocket client disconnected", "total_clients", len(h.clients))
 
 		case message := <-h.broadcast:
 			// Collect slow clients under read lock, then remove them under write lock
@@ -410,7 +410,7 @@ func (h *Hub) Shutdown() {
 func (h *Hub) Broadcast(msg Message) {
 	data, err := json.Marshal(msg)
 	if err != nil {
-		log.Printf("Error marshaling message: %v", err)
+		slog.Error("Error marshaling message", "error", err)
 		return
 	}
 	h.broadcast <- data
@@ -452,7 +452,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	if token == "" {
 		token = r.URL.Query().Get("token")
 		if token != "" {
-			log.Println("Warning: WebSocket auth via query param is deprecated, use Sec-WebSocket-Protocol")
+			slog.Warn("WebSocket auth via query param is deprecated, use Sec-WebSocket-Protocol")
 		}
 	}
 
@@ -463,7 +463,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := s.authManager.ValidateToken(token); err != nil {
-		log.Printf("WebSocket auth failed: %v", err)
+		slog.Warn("WebSocket auth failed", "error", err)
 		http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)
 		return
 	}
@@ -476,7 +476,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
-		log.Printf("WebSocket upgrade error: %v", err)
+		slog.Error("WebSocket upgrade error", "error", err)
 		return
 	}
 
@@ -533,7 +533,7 @@ func (s *Server) sendInitialState(client *Client) {
 
 	data, err := json.Marshal(msg)
 	if err != nil {
-		log.Printf("Error marshaling initial state: %v", err)
+		slog.Error("Error marshaling initial state", "error", err)
 		return
 	}
 
@@ -541,13 +541,13 @@ func (s *Server) sendInitialState(client *Client) {
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("Skipped initial state send (client gone): %v", r)
+				slog.Debug("Skipped initial state send (client gone)", "recover", r)
 			}
 		}()
 		select {
 		case client.send <- data:
 		default:
-			log.Printf("Failed to send initial state to client")
+			slog.Warn("Failed to send initial state to client")
 		}
 	}()
 }
@@ -566,12 +566,12 @@ func (c *Client) readPump() {
 
 	c.conn.SetReadLimit(maxMessageSize)
 	if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-		log.Printf("failed to set initial read deadline: %v", err)
+		slog.Error("Failed to set initial read deadline", "error", err)
 		return
 	}
 	c.conn.SetPongHandler(func(string) error {
 		if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-			log.Printf("failed to extend read deadline: %v", err)
+			slog.Error("Failed to extend read deadline", "error", err)
 		}
 		return nil
 	})
@@ -580,7 +580,7 @@ func (c *Client) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("WebSocket error: %v", err)
+				slog.Warn("WebSocket error", "error", err)
 			}
 			break
 		}
@@ -588,11 +588,11 @@ func (c *Client) readPump() {
 		// Handle incoming messages (e.g., settings updates, test triggers)
 		var msg Message
 		if err := json.Unmarshal(message, &msg); err != nil {
-			log.Printf("Error parsing message: %v", err)
+			slog.Warn("Error parsing message", "error", err)
 			continue
 		}
 
-		log.Printf("Received message: %s", msg.Type)
+		slog.Debug("Received message", "type", msg.Type)
 
 		// Handle different message types (issue #608 resolved)
 		switch msg.Type {
@@ -603,19 +603,19 @@ func (c *Client) readPump() {
 				select {
 				case c.send <- data:
 				default:
-					log.Printf("Client send buffer full, dropping pong")
+					slog.Warn("Client send buffer full, dropping pong")
 				}
 			}
 
 		case "requestCardUpdate":
 			// Client requesting a specific card update
 			if cardID, ok := msg.Payload.(string); ok {
-				log.Printf("Card update requested: %s", cardID)
+				slog.Debug("Card update requested", "card_id", cardID)
 				// The server will send the next scheduled update for this card
 			}
 
 		default:
-			log.Printf("Unknown message type: %s", msg.Type)
+			slog.Warn("Unknown message type", "type", msg.Type)
 		}
 	}
 }
@@ -632,12 +632,12 @@ func (c *Client) writePump() {
 		select {
 		case message, ok := <-c.send:
 			if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
-				log.Printf("failed to set write deadline: %v", err)
+				slog.Error("Failed to set write deadline", "error", err)
 				return
 			}
 			if !ok {
 				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
-					log.Printf("failed to send close message: %v", err)
+					slog.Error("Failed to send close message", "error", err)
 				}
 				return
 			}
@@ -667,7 +667,7 @@ func (c *Client) writePump() {
 
 		case <-ticker.C:
 			if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
-				log.Printf("failed to set ping write deadline: %v", err)
+				slog.Error("Failed to set ping write deadline", "error", err)
 				return
 			}
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {

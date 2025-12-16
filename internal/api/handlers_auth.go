@@ -3,7 +3,7 @@ package api
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -50,7 +50,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		// Log error without exposing credentials
-		log.Printf("login decode error from %s: %v", clientIP, err)
+		slog.Warn("Login decode error", "client_ip", clientIP, "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -85,14 +85,14 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	// Generate access and refresh tokens (fixes #478)
 	accessToken, err := s.authManager.GenerateAccessToken(req.Username)
 	if err != nil {
-		log.Printf("failed to generate access token: %v", err)
+		slog.Error("Failed to generate access token", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	refreshToken, err := s.authManager.GenerateRefreshToken(req.Username)
 	if err != nil {
-		log.Printf("failed to generate refresh token: %v", err)
+		slog.Error("Failed to generate refresh token", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -221,7 +221,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 
 	var req SetupCompleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("setup decode error: %v", err)
+		slog.Warn("Setup decode error", "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -253,14 +253,14 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to disk
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Failed to save config after setup: %v", err)
+		slog.Error("Failed to save config after setup", "error", err)
 		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
 			"error": "Failed to save configuration",
 		})
 		return
 	}
 
-	log.Println("Initial setup completed successfully")
+	slog.Info("Initial setup completed successfully")
 	sendJSONResponse(w, http.StatusOK, map[string]string{
 		"status": "success",
 	})

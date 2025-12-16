@@ -6,7 +6,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -176,7 +176,7 @@ func (m *Manager) ValidateToken(tokenString string) (*Claims, error) {
 	m.mu.RUnlock()
 
 	if claims.TokenVersion < currentVersion {
-		log.Printf("Token revoked: version %d < current %d", claims.TokenVersion, currentVersion)
+		slog.Info("Token revoked", "version", claims.TokenVersion, "current", currentVersion)
 		return nil, ErrInvalidToken
 	}
 
@@ -489,7 +489,7 @@ func (m *Manager) UpdatePasswordHash(hash string) {
 	defer m.mu.Unlock()
 	m.passwordHash = hash
 	m.tokenVersion++ // Invalidate all existing tokens
-	log.Printf("Password hash updated, all existing tokens invalidated (version %d)", m.tokenVersion)
+	slog.Info("Password hash updated, all existing tokens invalidated", "version", m.tokenVersion)
 }
 
 // IsDefaultPasswordHash checks if the given hash matches the default "seed" password.

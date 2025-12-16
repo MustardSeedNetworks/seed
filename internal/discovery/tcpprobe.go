@@ -4,7 +4,7 @@ package discovery
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"strings"
 	"sync"
@@ -246,7 +246,7 @@ func (p *TCPProber) ScanPorts(ctx context.Context, ipStr string, ports []int, wo
 			filtered++
 		}
 	}
-	log.Printf("Port scan of %s complete: %d open, %d closed, %d filtered", ipStr, open, closed, filtered)
+	slog.Info("Port scan complete", "ip", ipStr, "open", open, "closed", closed, "filtered", filtered)
 
 	return results
 }

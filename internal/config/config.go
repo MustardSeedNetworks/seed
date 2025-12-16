@@ -4,7 +4,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -48,6 +48,7 @@ type Config struct {
 	SNMP             SNMPConfig             `yaml:"snmp"`
 	FABOptions       FABOptionsConfig       `yaml:"fab_options"`
 	DisplayOptions   DisplayOptionsConfig   `yaml:"display_options"`
+	Logging          LoggingConfig          `yaml:"logging"`
 }
 
 // Lock acquires a write lock on the config.
@@ -79,9 +80,7 @@ type ServerConfig struct {
 	HTTPRedirectPort int    `yaml:"http_redirect_port,omitempty"` // Port for HTTP→HTTPS redirect (0 = disabled, typically 80)
 	CertFile         string `yaml:"cert_file"`
 	KeyFile          string `yaml:"key_file"`
-	LogAccessToken   string `yaml:"log_access_token,omitempty"`   // Optional token required to read /api/logs
-	LogAccessHeader  string `yaml:"log_access_header,omitempty"`  // Header name to supply the token (default: X-Log-Token)
-	RequireLogAccess bool   `yaml:"require_log_access,omitempty"` // Force token check even if empty token (future-proof)
+	// Security fix #301: Removed LogAccessToken/LogAccessHeader - JWT authentication is sufficient
 
 	// ACME/Let's Encrypt automatic certificate management
 	ACME ACMEConfig `yaml:"acme,omitempty"`
@@ -458,13 +457,24 @@ type SNMPv3Credential struct {
 	SecurityLevel string `yaml:"security_level"` // "noAuthNoPriv", "authNoPriv", "authPriv"
 }
 
+// LoggingConfig contains structured logging settings.
+type LoggingConfig struct {
+	Level      string `yaml:"level"`       // DEBUG, INFO, WARN, ERROR (default: INFO)
+	Format     string `yaml:"format"`      // text or json (default: text)
+	AddSource  bool   `yaml:"add_source"`  // Include file:line in logs
+	File       string `yaml:"file"`        // Log file path (empty = stdout only)
+	MaxSize    int    `yaml:"max_size"`    // Max MB per log file before rotation
+	MaxBackups int    `yaml:"max_backups"` // Number of old files to keep
+	MaxAge     int    `yaml:"max_age"`     // Days to keep old files
+	Compress   bool   `yaml:"compress"`    // Compress rotated files
+}
+
 // DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port:            8443,
-			HTTPS:           true,
-			LogAccessHeader: "X-Log-Token",
+			Port:  8443,
+			HTTPS: true,
 		},
 		Interface: InterfaceConfig{
 			Default:          "",              // Auto-detect by default (#572)
@@ -612,6 +622,16 @@ func DefaultConfig() *Config {
 		DisplayOptions: DisplayOptionsConfig{
 			ShowPublicIP: true,
 		},
+		Logging: LoggingConfig{
+			Level:      "info",
+			Format:     "text",
+			AddSource:  false,
+			File:       "",
+			MaxSize:    100,
+			MaxBackups: 5,
+			MaxAge:     30,
+			Compress:   true,
+		},
 	}
 }
 
@@ -647,6 +667,7 @@ func (c *Config) Validate() error {
 	errs = append(errs, c.validateConcurrency()...)
 	errs = append(errs, c.validateAuthConfig()...)
 	errs = append(errs, c.validateSNMPConfig()...)
+	errs = append(errs, c.validateLoggingConfig()...)
 
 	if len(errs) > 0 {
 		return fmt.Errorf("configuration validation failed:\n  - %s", strings.Join(errs, "\n  - "))
@@ -767,6 +788,39 @@ func (c *Config) validateSNMPConfig() []string {
 	return errs
 }
 
+// validateLoggingConfig checks logging configuration.
+func (c *Config) validateLoggingConfig() []string {
+	var errs []string
+
+	// Validate log level
+	validLevels := map[string]bool{
+		"debug": true, "info": true, "warn": true, "warning": true, "error": true,
+	}
+	level := strings.ToLower(c.Logging.Level)
+	if level != "" && !validLevels[level] {
+		errs = append(errs, fmt.Sprintf("logging.level must be one of debug, info, warn, error; got %q", c.Logging.Level))
+	}
+
+	// Validate format
+	format := strings.ToLower(c.Logging.Format)
+	if format != "" && format != "text" && format != "json" {
+		errs = append(errs, fmt.Sprintf("logging.format must be 'text' or 'json'; got %q", c.Logging.Format))
+	}
+
+	// Validate rotation settings
+	if c.Logging.MaxSize < 0 {
+		errs = append(errs, fmt.Sprintf("logging.max_size must be >= 0, got %d", c.Logging.MaxSize))
+	}
+	if c.Logging.MaxBackups < 0 {
+		errs = append(errs, fmt.Sprintf("logging.max_backups must be >= 0, got %d", c.Logging.MaxBackups))
+	}
+	if c.Logging.MaxAge < 0 {
+		errs = append(errs, fmt.Sprintf("logging.max_age must be >= 0, got %d", c.Logging.MaxAge))
+	}
+
+	return errs
+}
+
 // Save writes the configuration to a YAML file at the specified path.
 // This method acquires a read lock to prevent data races during marshaling.
 func (c *Config) Save(path string) error {
@@ -873,13 +927,13 @@ func (c *Config) GetActiveInterface() (string, bool) {
 		if hasIPv4Address(c.Interface.Default) {
 			return c.Interface.Default, false
 		}
-		log.Printf("Warning: configured interface %q has no IPv4 address or doesn't exist", c.Interface.Default)
+		slog.Warn("Configured interface has no IPv4 address or doesn't exist", "interface", c.Interface.Default)
 	}
 
 	// Try fallback interfaces
 	for _, iface := range c.Interface.Fallbacks {
 		if hasIPv4Address(iface) {
-			log.Printf("Using fallback interface: %s", iface)
+			slog.Info("Using fallback interface", "interface", iface)
 			return iface, true
 		}
 	}
@@ -887,18 +941,18 @@ func (c *Config) GetActiveInterface() (string, bool) {
 	// Auto-detect: scan all interfaces for one with an IPv4 address
 	detected := detectActiveInterface()
 	if detected != "" {
-		log.Printf("Auto-detected active interface: %s", detected)
+		slog.Info("Auto-detected active interface", "interface", detected)
 		return detected, true
 	}
 
 	// Last resort: return the configured default even if it might not work
 	if c.Interface.Default != "" {
-		log.Printf("Warning: no active interface found, using configured default: %s", c.Interface.Default)
+		slog.Warn("No active interface found, using configured default", "interface", c.Interface.Default)
 		return c.Interface.Default, true
 	}
 
 	// No hardcoded fallback - return empty to signal no interface found (#572)
-	log.Printf("Error: no active network interface found")
+	slog.Error("No active network interface found")
 	return "", false
 }
 

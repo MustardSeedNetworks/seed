@@ -9,7 +9,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"regexp"
@@ -163,7 +163,7 @@ func (p *DeviceProfiler) Start() {
 		go p.worker()
 	}
 
-	log.Printf("Device profiler started with %d workers", p.config.MaxConcurrent)
+	slog.Info("Device profiler started", "workers", p.config.MaxConcurrent)
 }
 
 // Stop stops the profiler.
@@ -178,7 +178,7 @@ func (p *DeviceProfiler) Stop() {
 	p.mu.Unlock()
 
 	p.wg.Wait()
-	log.Printf("Device profiler stopped")
+	slog.Info("Device profiler stopped")
 }
 
 // worker processes profile requests from the queue.
@@ -303,8 +303,7 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 	p.profiles[ip] = profile
 	p.mu.Unlock()
 
-	log.Printf("Profiled device %s: %d open ports, type=%s, icons=%v",
-		ip, len(profile.OpenPorts), profile.DeviceType, profile.DeviceIcons)
+	slog.Info("Profiled device", "ip", ip, "open_ports", len(profile.OpenPorts), "type", profile.DeviceType, "icons", profile.DeviceIcons)
 }
 
 // checkPort checks if a TCP port is open.

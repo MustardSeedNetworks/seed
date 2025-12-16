@@ -6,7 +6,7 @@ package discovery
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -128,23 +128,23 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		if err := oui.UpdateIfNeeded(ctx, ouiPath, ouiMaxAge); err != nil {
-			log.Printf("warning: failed to update OUI database: %v", err)
+			slog.Warn("Failed to update OUI database", "error", err)
 			// Try loading from standard locations as fallback
 			if err := oui.TryLoadIEEEFile(); err != nil {
-				log.Printf("warning: failed to load IEEE OUI file: %v", err)
+				slog.Warn("Failed to load IEEE OUI file", "error", err)
 			}
 		} else {
-			log.Printf("OUI database loaded: %d entries", oui.Count())
+			slog.Info("OUI database loaded", "entries", oui.Count())
 		}
 	} else if ouiPath != "" {
 		// Path provided but no auto-update: just load from file
 		if err := oui.LoadFromIEEEFormat(ouiPath); err != nil {
-			log.Printf("warning: failed to load OUI from %s: %v", ouiPath, err)
+			slog.Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
 			if err := oui.TryLoadIEEEFile(); err != nil {
-				log.Printf("warning: failed to load IEEE OUI file: %v", err)
+				slog.Warn("Failed to load IEEE OUI file", "error", err)
 			}
 		} else {
-			log.Printf("OUI database loaded from %s: %d entries", ouiPath, oui.Count())
+			slog.Info("OUI database loaded from file", "path", ouiPath, "entries", oui.Count())
 		}
 	} else {
 		// No path provided: try standard locations silently
@@ -166,7 +166,7 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 func (d *DeviceDiscovery) Start() error {
 	// Start NDP scanner for IPv6 discovery
 	if err := d.ndpScanner.Start(); err != nil {
-		log.Printf("warning: failed to start NDP scanner: %v", err)
+		slog.Warn("Failed to start NDP scanner", "error", err)
 		// Continue even if NDP fails (may be on macOS or no IPv6)
 	}
 	return d.protoManager.Start()

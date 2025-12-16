@@ -4,7 +4,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/config"
@@ -223,13 +223,13 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 		// Also update discovery manager to use new interface
 		if err := s.discoveryManager.SetInterface(req.Interface); err != nil {
 			// Log but don't fail - discovery may not work without root
-			log.Printf("failed to set discovery interface: %v", err)
+			slog.Warn("Failed to set discovery interface", "error", err)
 		}
 
 		// Update device discovery (ARP/protocol scans)
 		if s.deviceDiscovery != nil {
 			if err := s.deviceDiscovery.SetInterface(req.Interface); err != nil {
-				log.Printf("failed to set device discovery interface: %v", err)
+				slog.Warn("Failed to set device discovery interface", "error", err)
 			}
 		}
 
@@ -285,7 +285,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 
 	linkStatus, err := s.netManager.GetLinkStatus(currentIface)
 	if err != nil {
-		log.Printf("failed to get link status for %s: %v", currentIface, err)
+		slog.Warn("Failed to get link status", "interface", currentIface, "error", err)
 	}
 
 	resp := LinkResponse{
@@ -605,7 +605,7 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Save config
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{
@@ -743,7 +743,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
 		// Log but don't fail - the config was applied
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	// Refresh interface data
@@ -785,7 +785,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	// Refresh interface data
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		log.Printf("Warning: Failed to refresh interfaces after MTU change: %v", err)
+		slog.Warn("Failed to refresh interfaces after MTU change", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]interface{}{

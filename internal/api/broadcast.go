@@ -30,7 +30,7 @@ package api
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"time"
 )
 
@@ -91,7 +91,7 @@ func (s *Server) startBroadcastLoop() {
 			}
 		}
 	}()
-	log.Printf("WebSocket broadcast loop started (interval: %v)", broadcastInterval)
+	slog.Info("WebSocket broadcast loop started", "interval", broadcastInterval)
 }
 
 // broadcastAllCards collects and broadcasts all dashboard card data to connected clients.
@@ -172,7 +172,7 @@ func (s *Server) collectLinkData() map[string]interface{} {
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		log.Printf("failed to refresh interfaces: %v", err)
+		slog.Warn("Failed to refresh interfaces", "error", err)
 		return nil
 	}
 	currentIface := s.netManager.GetCurrentInterface()
@@ -184,7 +184,7 @@ func (s *Server) collectLinkData() map[string]interface{} {
 
 	linkStatus, err := s.netManager.GetLinkStatus(currentIface)
 	if err != nil {
-		log.Printf("failed to get link status for %s: %v", currentIface, err)
+		slog.Warn("Failed to get link status", "interface", currentIface, "error", err)
 		return nil
 	}
 

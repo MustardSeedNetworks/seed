@@ -9,7 +9,7 @@ package discovery
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -57,7 +57,7 @@ func (ns *NDPScanner) Start() error {
 	// Start background scanner
 	go ns.scanLoop()
 
-	log.Printf("IPv6 NDP scanner started on interface %s", ns.interfaceName)
+	slog.Info("IPv6 NDP scanner started", "interface", ns.interfaceName)
 	return nil
 }
 
@@ -73,7 +73,7 @@ func (ns *NDPScanner) Stop() error {
 	close(ns.stopChan)
 	ns.running = false
 
-	log.Printf("IPv6 NDP scanner stopped")
+	slog.Info("IPv6 NDP scanner stopped")
 	return nil
 }
 
@@ -103,7 +103,7 @@ func (ns *NDPScanner) GetNeighbors() map[string]*NDPNeighbor {
 func (ns *NDPScanner) scanLoop() {
 	// Initial scan
 	if err := ns.scanNeighborTable(); err != nil {
-		log.Printf("IPv6 neighbor scan error: %v", err)
+		slog.Error("IPv6 neighbor scan error", "error", err)
 	}
 
 	ticker := time.NewTicker(30 * time.Second)
@@ -115,7 +115,7 @@ func (ns *NDPScanner) scanLoop() {
 			return
 		case <-ticker.C:
 			if err := ns.scanNeighborTable(); err != nil {
-				log.Printf("IPv6 neighbor scan error: %v", err)
+				slog.Error("IPv6 neighbor scan error", "error", err)
 			}
 		}
 	}

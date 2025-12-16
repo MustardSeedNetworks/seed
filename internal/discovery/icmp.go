@@ -7,7 +7,7 @@ package discovery
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"sync"
@@ -92,7 +92,7 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	// Enable TTL in control messages for OS fingerprinting
 	if err := conn.IPv4PacketConn().SetControlMessage(ipv4.FlagTTL, true); err != nil {
 		// Non-fatal - TTL extraction may not work but ping will still function
-		log.Printf("warning: failed to enable TTL control message: %v", err)
+		slog.Warn("failed to enable TTL control message", "error", err)
 	}
 
 	// Start the receiver goroutine
@@ -134,7 +134,7 @@ func (p *ICMPPinger) receiver() {
 
 		// Set a short read deadline so we can check stopCh periodically
 		if err := p.conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond)); err != nil {
-			log.Printf("failed to set ICMP read deadline: %v", err)
+			slog.Error("failed to set ICMP read deadline", "error", err)
 			continue
 		}
 
@@ -318,7 +318,7 @@ func (p *ICMPPinger) PingSweep(ctx context.Context, ips []net.IP, workers int) [
 			reachable++
 		}
 	}
-	log.Printf("Ping sweep complete: %d/%d hosts reachable", reachable, len(ips))
+	slog.Info("Ping sweep complete", "reachable", reachable, "total", len(ips))
 
 	return results
 }
