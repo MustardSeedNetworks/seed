@@ -43,6 +43,7 @@ import {
 import {
   AutoSaveIndicator,
   AppearanceSettings,
+  ConfigBackupsSection,
   DiscoverySettings,
   DNSSettings,
   HealthChecksSettings,
@@ -1317,6 +1318,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
           {/* Appearance Section */}
           <AppearanceSettings theme={theme} setTheme={setTheme} isDark={isDark} />
+
+          {/* Config Backups Section (implements #494) */}
+          <ConfigBackupsSection />
 
           {/* Logs (debug) */}
           <section className={`${spacing.padding.top.section} border-t border-surface-border`}>
