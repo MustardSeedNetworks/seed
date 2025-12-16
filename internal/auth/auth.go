@@ -139,7 +139,7 @@ func (m *Manager) generateTokenWithType(username, tokenType string, duration tim
 			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    "LuminetIQ",
+			Issuer:    "The Seed",
 			Subject:   username,
 		},
 	}

@@ -329,7 +329,7 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 	}
 
 	// Set User-Agent to avoid being blocked
-	req.Header.Set("User-Agent", "LuminetIQ/1.0 (Network Discovery Tool)")
+	req.Header.Set("User-Agent", "The Seed/1.0 (Network Discovery Tool)")
 
 	// Execute request
 	resp, err := client.Do(req)

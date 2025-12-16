@@ -2,7 +2,7 @@
 //
 // This package wraps the iperf3 command-line tool to provide TCP and UDP bandwidth
 // testing between two endpoints. It supports both client and server modes, allowing
-// LuminetIQ to act as either end of an iperf3 test.
+// The Seed to act as either end of an iperf3 test.
 //
 // iperf3 modes:
 //   - Client mode: Connects to a remote iperf3 server and performs throughput tests
