@@ -1,22 +1,21 @@
 # LuminetIQ Hardware Compatibility Guide
 
-> **Version:** 0.13.0
-> **Last Updated:** December 2025
-> **Status:** Living Document
+> **Version:** 0.13.0 **Last Updated:** December 2025 **Status:** Living Document
 
 ## Overview
 
-LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support. This guide helps you select compatible network adapters for optimal functionality.
+LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support. This guide helps
+you select compatible network adapters for optimal functionality.
 
 ## Quick Reference
 
-| Feature | Hardware Dependency | Recommended |
-|---------|-------------------|-------------|
-| **Basic Diagnostics** | Any NIC | Any Ethernet adapter |
-| **Wi-Fi Site Surveys** | nl80211-compatible chipset | Intel AX200/AX210 |
-| **Cable Diagnostics (TDR)** | Driver with TDR support | Intel I350/I210, Broadcom BCM5719 |
-| **LLDP/CDP Capture** | Raw packet capture (pcap) | Any with libpcap support |
-| **SNMP Discovery** | Network connectivity | Any NIC |
+| Feature                     | Hardware Dependency        | Recommended                       |
+| --------------------------- | -------------------------- | --------------------------------- |
+| **Basic Diagnostics**       | Any NIC                    | Any Ethernet adapter              |
+| **Wi-Fi Site Surveys**      | nl80211-compatible chipset | Intel AX200/AX210                 |
+| **Cable Diagnostics (TDR)** | Driver with TDR support    | Intel I350/I210, Broadcom BCM5719 |
+| **LLDP/CDP Capture**        | Raw packet capture (pcap)  | Any with libpcap support          |
+| **SNMP Discovery**          | Network connectivity       | Any NIC                           |
 
 ---
 
@@ -25,6 +24,7 @@ LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support.
 ### 🎯 Recommended (Excellent Support)
 
 #### Intel Wi-Fi 6/6E
+
 - **Intel AX200** (Wi-Fi 6)
   - Driver: `iwlwifi`
   - nl80211: ✅ Full support
@@ -48,6 +48,7 @@ LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support.
   - Available: M.2 2230
 
 #### Qualcomm Atheros
+
 - **Qualcomm QCNFA765** (Wi-Fi 6E)
   - Driver: `ath11k`
   - nl80211: ✅ Good support
@@ -67,6 +68,7 @@ LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support.
 ### ⚠️ Limited Support
 
 #### Broadcom
+
 - **BCM43xx series**
   - Driver: `brcmfmac` (open-source) or `wl` (proprietary)
   - nl80211: ⚠️ Partial (driver-dependent)
@@ -75,6 +77,7 @@ LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support.
   - **Recommendation:** Avoid for advanced diagnostics
 
 #### Realtek
+
 - **RTL8812AU/RTL8814AU**
   - Driver: `rtl88xxau` (out-of-tree)
   - nl80211: ⚠️ Depends on driver version
@@ -83,6 +86,7 @@ LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support.
   - **Recommendation:** OK for basic use, not ideal
 
 #### MediaTek
+
 - **MT7921/MT7922** (Wi-Fi 6/6E)
   - Driver: `mt76`
   - nl80211: ✅ Good support (improving)
@@ -93,6 +97,7 @@ LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support.
 ### ❌ Not Recommended
 
 #### Apple Silicon WiFi
+
 - **Built-in M1/M2/M3 Wi-Fi**
   - Driver: Proprietary (macOS only)
   - nl80211: ❌ No Linux support
@@ -101,23 +106,26 @@ LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support.
 
 ### Wi-Fi Capabilities Matrix
 
-| Chipset | Monitor Mode | Injection | Channel Switching | Signal Quality | Price |
-|---------|--------------|-----------|-------------------|----------------|-------|
-| Intel AX200/210 | ✅ Yes | ⚠️ Limited | ✅ Fast | ✅ Excellent | $$$ |
-| Atheros AR9271 | ✅ Native | ✅ Excellent | ✅ Fast | ✅ Good | $ |
-| Qualcomm QCNFA765 | ✅ Yes | ⚠️ Limited | ✅ Good | ✅ Excellent | $$$ |
-| Broadcom BCM43xx | ❌ No* | ❌ No | ⚠️ Slow | ⚠️ Variable | $$ |
-| Realtek RTL88xx | ⚠️ Driver-dep | ⚠️ Driver-dep | ⚠️ OK | ⚠️ OK | $ |
-| MediaTek MT7921 | ⚠️ Limited | ❌ No | ✅ Good | ✅ Good | $$ |
+| Chipset           | Monitor Mode  | Injection     | Channel Switching | Signal Quality | Price |
+| ----------------- | ------------- | ------------- | ----------------- | -------------- | ----- |
+| Intel AX200/210   | ✅ Yes        | ⚠️ Limited    | ✅ Fast           | ✅ Excellent   | $$$   |
+| Atheros AR9271    | ✅ Native     | ✅ Excellent  | ✅ Fast           | ✅ Good        | $     |
+| Qualcomm QCNFA765 | ✅ Yes        | ⚠️ Limited    | ✅ Good           | ✅ Excellent   | $$$   |
+| Broadcom BCM43xx  | ❌ No\*       | ❌ No         | ⚠️ Slow           | ⚠️ Variable    | $$    |
+| Realtek RTL88xx   | ⚠️ Driver-dep | ⚠️ Driver-dep | ⚠️ OK             | ⚠️ OK          | $     |
+| MediaTek MT7921   | ⚠️ Limited    | ❌ No         | ✅ Good           | ✅ Good        | $$    |
 
-*Broadcom: Only with `brcmfmac` driver, not `wl` proprietary driver
+\*Broadcom: Only with `brcmfmac` driver, not `wl` proprietary driver
 
 ---
 
 ## Ethernet Adapters for Cable Diagnostics (TDR)
 
 ### What is TDR?
-Time Domain Reflectometry (TDR) tests cable quality by sending electrical signals and analyzing reflections. It can detect:
+
+Time Domain Reflectometry (TDR) tests cable quality by sending electrical signals and analyzing
+reflections. It can detect:
+
 - Cable length
 - Opens (disconnected cables)
 - Shorts
@@ -127,6 +135,7 @@ Time Domain Reflectometry (TDR) tests cable quality by sending electrical signal
 ### 🎯 Recommended (TDR Support)
 
 #### Intel Server NICs
+
 - **Intel I350 Gigabit** (Quad-port)
   - Driver: `igb`
   - TDR Support: ✅ Yes (via ethtool)
@@ -151,6 +160,7 @@ Time Domain Reflectometry (TDR) tests cable quality by sending electrical signal
   - Price: $$$
 
 #### Broadcom Server NICs
+
 - **BCM5719 Gigabit** (Quad-port)
   - Driver: `tg3`
   - TDR Support: ✅ Yes (via ethtool)
@@ -165,6 +175,7 @@ Time Domain Reflectometry (TDR) tests cable quality by sending electrical signal
   - Price: $$$
 
 #### Marvell
+
 - **Marvell 88E1512** (PHY)
   - Driver: `marvell` PHY driver
   - TDR Support: ✅ Yes (limited)
@@ -175,6 +186,7 @@ Time Domain Reflectometry (TDR) tests cable quality by sending electrical signal
 ### ⚠️ Limited/No TDR Support
 
 #### Consumer NICs
+
 - **Realtek RTL8111/RTL8125**
   - Driver: `r8169`
   - TDR Support: ❌ No
@@ -211,20 +223,21 @@ sudo ethtool --cable-test eth0
 
 ### TDR Capabilities Matrix
 
-| NIC Model | TDR Support | Length Detection | Fault Location | Driver | Price |
-|-----------|-------------|------------------|----------------|--------|-------|
-| Intel I350 | ✅ Full | ✅ Yes | ✅ Yes | igb | $$$$ |
-| Intel I210 | ✅ Full | ✅ Yes | ✅ Yes | igb | $$ |
-| Intel I225-V | ✅ Full | ✅ Yes | ✅ Yes | igc | $$$ |
-| Broadcom BCM5719/20 | ✅ Full | ✅ Yes | ✅ Yes | tg3 | $$$$ |
-| Realtek RTL8111 | ❌ None | ❌ No | ❌ No | r8169 | $ |
-| Marvell 88E1512 | ⚠️ Limited | ⚠️ Basic | ❌ No | marvell | $$ |
+| NIC Model           | TDR Support | Length Detection | Fault Location | Driver  | Price |
+| ------------------- | ----------- | ---------------- | -------------- | ------- | ----- |
+| Intel I350          | ✅ Full     | ✅ Yes           | ✅ Yes         | igb     | $$$$  |
+| Intel I210          | ✅ Full     | ✅ Yes           | ✅ Yes         | igb     | $$    |
+| Intel I225-V        | ✅ Full     | ✅ Yes           | ✅ Yes         | igc     | $$$   |
+| Broadcom BCM5719/20 | ✅ Full     | ✅ Yes           | ✅ Yes         | tg3     | $$$$  |
+| Realtek RTL8111     | ❌ None     | ❌ No            | ❌ No          | r8169   | $     |
+| Marvell 88E1512     | ⚠️ Limited  | ⚠️ Basic         | ❌ No          | marvell | $$    |
 
 ---
 
 ## Platform-Specific Notes
 
 ### Linux (Recommended Platform)
+
 - **Wi-Fi:** Full nl80211 support for most chipsets
 - **Cable:** TDR via ethtool (kernel 5.10+)
 - **Required:**
@@ -234,6 +247,7 @@ sudo ethtool --cable-test eth0
 - **Kernel:** 5.10+ recommended (TDR support improved)
 
 ### macOS (Limited)
+
 - **Wi-Fi:** Uses native APIs, no nl80211
   - Built-in adapters: Basic status only
   - External adapters: Limited driver support
@@ -241,6 +255,7 @@ sudo ethtool --cable-test eth0
 - **Recommendation:** Use external Intel/Atheros USB adapter for Wi-Fi diagnostics
 
 ### Windows (Not Supported)
+
 - LuminetIQ is Linux-only
 - Consider running in WSL2 with USB passthrough (limited functionality)
 
@@ -249,6 +264,7 @@ sudo ethtool --cable-test eth0
 ## Recommended Hardware Bundles
 
 ### 🏆 Professional Kit (Best Overall)
+
 - **NIC:** Intel I350-T4 (Quad Gigabit PCIe)
 - **Wi-Fi:** Intel AX210 (M.2 2230)
 - **Platform:** Ubuntu 22.04 LTS or newer
@@ -256,6 +272,7 @@ sudo ethtool --cable-test eth0
 - **Price:** ~$300-400
 
 ### 💼 Technician Kit (Balanced)
+
 - **NIC:** Intel I210 (Single Gigabit PCIe)
 - **Wi-Fi:** Intel AX200 (M.2 2230)
 - **Platform:** Ubuntu 22.04 LTS
@@ -263,6 +280,7 @@ sudo ethtool --cable-test eth0
 - **Price:** ~$80-120
 
 ### 💰 Budget Kit (Basic)
+
 - **NIC:** Onboard (Realtek - no TDR)
 - **Wi-Fi:** Atheros AR9271 USB dongle
 - **Platform:** Raspberry Pi 4 with Ubuntu
@@ -270,6 +288,7 @@ sudo ethtool --cable-test eth0
 - **Price:** ~$15-30
 
 ### 🔬 Research/Pentesting Kit
+
 - **NIC:** Intel I350-T4
 - **Wi-Fi:** Atheros AR9271 (injection) + Intel AX210 (connectivity)
 - **Platform:** Kali Linux or Ubuntu
@@ -281,6 +300,7 @@ sudo ethtool --cable-test eth0
 ## Future Considerations
 
 ### Emerging Technologies
+
 - **Wi-Fi 7 (802.11be):** Support expected in 2026+
   - Intel BE200 series (when available)
   - Monitor mode support TBD
@@ -306,24 +326,35 @@ Please contribute your test results!
 ## FAQ
 
 ### Q: Will my built-in laptop Wi-Fi work?
-**A:** For basic connectivity status, yes. For advanced diagnostics (monitor mode, site surveys), it depends on the chipset. Check `lspci | grep -i wireless` and compare to the compatibility table above.
+
+**A:** For basic connectivity status, yes. For advanced diagnostics (monitor mode, site surveys), it
+depends on the chipset. Check `lspci | grep -i wireless` and compare to the compatibility table
+above.
 
 ### Q: Why doesn't my Realtek NIC support cable testing?
-**A:** TDR requires specialized PHY hardware and driver support. Consumer Realtek chips prioritize cost over advanced diagnostics. Use Intel server NICs for TDR.
+
+**A:** TDR requires specialized PHY hardware and driver support. Consumer Realtek chips prioritize
+cost over advanced diagnostics. Use Intel server NICs for TDR.
 
 ### Q: Can I use USB adapters?
+
 **A:**
+
 - **Wi-Fi USB:** Yes, Atheros AR9271 dongles work great
 - **Ethernet USB:** Works for basic diagnostics, but no TDR support
 
 ### Q: Does Apple Silicon Mac support LuminetIQ?
+
 **A:** Not natively. The built-in Wi-Fi chip isn't accessible from Linux. Options:
+
 1. Run in VM with external USB Wi-Fi adapter
 2. Use Intel Mac instead
 3. Run on separate Linux hardware
 
 ### Q: What about Bluetooth adapters for diagnostics?
-**A:** Bluetooth diagnostics are planned for v2.0. Any Bluetooth 5.0+ adapter should work when implemented.
+
+**A:** Bluetooth diagnostics are planned for v2.0. Any Bluetooth 5.0+ adapter should work when
+implemented.
 
 ---
 
@@ -351,8 +382,8 @@ Found a chipset that works (or doesn't)? Help the community:
 
 ---
 
-**Document Maintenance:**
-This document should be reviewed quarterly and updated when:
+**Document Maintenance:** This document should be reviewed quarterly and updated when:
+
 - New chipsets are released
 - Driver support changes significantly
 - User testing reveals new compatibility information

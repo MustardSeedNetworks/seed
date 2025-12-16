@@ -1,10 +1,13 @@
 # Rogue DHCP Server Test Environment
 
-This guide explains how to set up a test environment to validate The Seed's Rogue DHCP detection feature.
+This guide explains how to set up a test environment to validate The Seed's Rogue DHCP detection
+feature.
 
 ## Overview
 
-The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and alerts when unauthorized DHCP servers are detected. This test environment allows you to simulate both legitimate and rogue DHCP servers.
+The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and alerts when
+unauthorized DHCP servers are detected. This test environment allows you to simulate both legitimate
+and rogue DHCP servers.
 
 ## Prerequisites
 
@@ -21,13 +24,14 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 **Expected Result**: No alerts
 
 1. Configure The Seed to know about your legitimate DHCP server:
+
    ```yaml
    # seed.yaml
    dhcp:
      rogue_detection:
        enabled: true
        known_servers:
-         - 192.168.1.1  # Your router's IP
+         - 192.168.1.1 # Your router's IP
        alert_on_detection: true
    ```
 
@@ -40,12 +44,14 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 #### Option A: Using dnsmasq (Recommended for Testing)
 
 1. Install dnsmasq on test machine:
+
    ```bash
    sudo apt-get update
    sudo apt-get install dnsmasq
    ```
 
 2. Stop system's NetworkManager DHCP to avoid conflicts:
+
    ```bash
    sudo systemctl stop NetworkManager
    # Or just disable its DHCP:
@@ -53,6 +59,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
    ```
 
 3. Create test dnsmasq config (`/etc/dnsmasq-test.conf`):
+
    ```conf
    # Interface to listen on
    interface=eth0  # Change to your interface
@@ -74,24 +81,28 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
    ```
 
 4. Start rogue DHCP server:
+
    ```bash
    sudo dnsmasq -C /etc/dnsmasq-test.conf -d
    # -d flag keeps it in foreground for easy stopping
    ```
 
 5. Verify it's sending DHCP OFFERs:
+
    ```bash
    # On The Seed server
    sudo tcpdump -i enp0s1 -n port 67 or port 68
    ```
 
 6. Trigger DHCP discovery (on any client machine):
+
    ```bash
    sudo dhclient -r eth0  # Release current lease
    sudo dhclient eth0     # Request new lease
    ```
 
 7. Check The Seed web UI or API for rogue DHCP alert:
+
    ```bash
    curl -k -H "Authorization: Bearer YOUR_TOKEN" \
      https://192.168.64.7:8443/api/dhcp/rogue
@@ -106,12 +117,14 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 #### Option B: Using isc-dhcp-server
 
 1. Install ISC DHCP server:
+
    ```bash
    sudo apt-get update
    sudo apt-get install isc-dhcp-server
    ```
 
 2. Configure `/etc/dhcp/dhcpd.conf`:
+
    ```conf
    # Test DHCP configuration
    default-lease-time 600;
@@ -126,11 +139,13 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
    ```
 
 3. Configure interface in `/etc/default/isc-dhcp-server`:
+
    ```bash
    INTERFACESv4="eth0"  # Change to your interface
    ```
 
 4. Start server:
+
    ```bash
    sudo systemctl start isc-dhcp-server
    sudo systemctl status isc-dhcp-server
@@ -148,11 +163,12 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 **Expected Result**: Alert only for unknown server
 
 1. Configure The Seed to know about ONE server:
+
    ```yaml
    dhcp:
      rogue_detection:
        known_servers:
-         - 192.168.64.1  # Legitimate router
+         - 192.168.64.1 # Legitimate router
    ```
 
 2. Start rogue server on 192.168.64.50 (different IP)
@@ -170,6 +186,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 1. Start with rogue server running and alerts firing
 
 2. Add rogue server to known list via API:
+
    ```bash
    curl -k -X POST \
      -H "Authorization: Bearer YOUR_TOKEN" \
@@ -181,6 +198,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 3. Verify alerts stop
 
 4. Remove from known list:
+
    ```bash
    curl -k -X DELETE \
      -H "Authorization: Bearer YOUR_TOKEN" \
@@ -310,16 +328,19 @@ See `scripts/test-dhcp-rogue.sh` for automated testing.
 ## API Reference
 
 ### Get Rogue DHCP Status
+
 ```bash
 GET /api/dhcp/rogue
 ```
 
 ### Get Known Servers
+
 ```bash
 GET /api/dhcp/rogue/servers
 ```
 
 ### Add Known Server
+
 ```bash
 POST /api/dhcp/rogue/servers
 {
@@ -329,11 +350,13 @@ POST /api/dhcp/rogue/servers
 ```
 
 ### Remove Known Server
+
 ```bash
 DELETE /api/dhcp/rogue/servers?server=192.168.64.1
 ```
 
 ### Update Configuration
+
 ```bash
 PUT /api/dhcp/rogue/config
 {
@@ -345,7 +368,8 @@ PUT /api/dhcp/rogue/config
 
 ## Security Considerations
 
-⚠️ **WARNING**: Running rogue DHCP servers can disrupt network connectivity for all devices on the network. Only perform these tests on:
+⚠️ **WARNING**: Running rogue DHCP servers can disrupt network connectivity for all devices on the
+network. Only perform these tests on:
 
 - Isolated test networks
 - Networks you control

@@ -1,10 +1,12 @@
 # Artifact Verification Guide
 
-LuminetIQ releases include Software Bills of Materials (SBOMs) and cryptographic signatures for all binary artifacts to ensure supply chain security and integrity verification.
+LuminetIQ releases include Software Bills of Materials (SBOMs) and cryptographic signatures for all
+binary artifacts to ensure supply chain security and integrity verification.
 
 ## What's Included
 
-Each release contains the following files for each platform (linux-amd64, linux-arm64, darwin-amd64, darwin-arm64):
+Each release contains the following files for each platform (linux-amd64, linux-arm64, darwin-amd64,
+darwin-arm64):
 
 - `luminetiq-{platform}` - The binary executable
 - `luminetiq-{platform}.sbom.json` - Software Bill of Materials (CycloneDX format)
@@ -35,7 +37,8 @@ curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -
 
 ## Verifying Binary Signatures
 
-All binaries are signed using [Sigstore](https://www.sigstore.dev/) with keyless OIDC signing during the GitHub Actions build process.
+All binaries are signed using [Sigstore](https://www.sigstore.dev/) with keyless OIDC signing during
+the GitHub Actions build process.
 
 ### Step 1: Download Release Assets
 
@@ -50,7 +53,8 @@ gh release download $VERSION \
   -R krisarmstrong/netscope
 ```
 
-Or download manually from the [GitHub Releases](https://github.com/krisarmstrong/netscope/releases) page.
+Or download manually from the [GitHub Releases](https://github.com/krisarmstrong/netscope/releases)
+page.
 
 ### Step 2: Verify the Binary Signature
 
@@ -64,6 +68,7 @@ cosign verify-blob \
 ```
 
 Expected output:
+
 ```
 Verified OK
 ```
@@ -80,6 +85,7 @@ cosign verify-blob \
 ```
 
 Expected output:
+
 ```
 Verified OK
 ```
@@ -99,7 +105,8 @@ LuminetIQ uses **keyless signing** via Sigstore, which means:
 
 When you verify a signature, cosign checks:
 
-1. **Certificate Identity**: Confirms the binary was built by the `krisarmstrong/netscope` repository
+1. **Certificate Identity**: Confirms the binary was built by the `krisarmstrong/netscope`
+   repository
 2. **OIDC Issuer**: Confirms the build happened in GitHub Actions (not on a developer's laptop)
 3. **Signature**: Cryptographically proves the file hasn't been tampered with since signing
 4. **Transparency**: The signature is logged in Rekor, a public transparency log
@@ -161,15 +168,18 @@ To automate verification in your CI/CD pipeline:
 
 ### "certificate identity does not match"
 
-This error means the binary wasn't signed by the official repository. **Do not use the binary** - it may be tampered with.
+This error means the binary wasn't signed by the official repository. **Do not use the binary** - it
+may be tampered with.
 
 ### "signature verification failed"
 
-This means the file has been modified after signing. **Do not use the binary** - download a fresh copy from GitHub Releases.
+This means the file has been modified after signing. **Do not use the binary** - download a fresh
+copy from GitHub Releases.
 
 ### "certificate has expired"
 
-Sigstore certificates are short-lived (hours). However, the signature includes a timestamp from Rekor proving when it was signed. This is normal and doesn't affect verification.
+Sigstore certificates are short-lived (hours). However, the signature includes a timestamp from
+Rekor proving when it was signed. This is normal and doesn't affect verification.
 
 ### COSIGN_EXPERIMENTAL=1
 
@@ -179,11 +189,13 @@ For keyless verification, you may need to set:
 export COSIGN_EXPERIMENTAL=1
 ```
 
-This enables experimental keyless verification mode in older cosign versions. Newer versions (>= 2.0) don't require this.
+This enables experimental keyless verification mode in older cosign versions. Newer versions (>=
+2.0) don't require this.
 
 ## Security Policy
 
-If you discover a security vulnerability in LuminetIQ, please report it privately to the maintainers. See [SECURITY.md](../SECURITY.md) for details.
+If you discover a security vulnerability in LuminetIQ, please report it privately to the
+maintainers. See [SECURITY.md](../SECURITY.md) for details.
 
 ## Additional Resources
 
@@ -195,5 +207,4 @@ If you discover a security vulnerability in LuminetIQ, please report it privatel
 
 ---
 
-**Last Updated**: 2025-12-14
-**Applies to**: LuminetIQ v0.14.0 and later
+**Last Updated**: 2025-12-14 **Applies to**: LuminetIQ v0.14.0 and later

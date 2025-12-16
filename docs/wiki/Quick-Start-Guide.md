@@ -5,6 +5,7 @@ Get from zero to your first network scan in **5 minutes**.
 ## Step 1: Install The Seed
 
 Choose your platform:
+
 - [macOS Installation](Installation-macOS.md)
 - [Linux Installation](Installation-Linux.md)
 
@@ -15,6 +16,7 @@ seed
 ```
 
 The setup wizard will:
+
 1. Create your admin account
 2. Auto-detect network interfaces
 3. Configure defaults
@@ -40,15 +42,18 @@ The setup wizard will:
 ## Step 5: Explore Features
 
 ### WiFi Survey
+
 1. Click **"WiFi"** in sidebar
 2. View detected access points, signal strength, channels
 
 ### Speed Test
+
 1. Click **"Speed Test"**
 2. Click "Run Test"
 3. View download/upload speeds, latency
 
 ### Vulnerability Scan
+
 1. Click **"Vulnerabilities"**
 2. Click "Start Scan"
 3. View security findings and remediation steps
@@ -62,5 +67,6 @@ The setup wizard will:
 ---
 
 **Need help?**
+
 - [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
 - Email: support@mustardseednetworks.com

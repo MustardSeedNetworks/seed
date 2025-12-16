@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document outlines the implementation plan for addressing all open GitHub issues, organized into phases by priority and dependency order.
+This document outlines the implementation plan for addressing all open GitHub issues, organized into
+phases by priority and dependency order.
 
 ---
 
@@ -13,12 +14,14 @@ This document outlines the implementation plan for addressing all open GitHub is
 **Why First**: These are potential runtime bugs that could cause crashes or incorrect behavior.
 
 **Issues to Fix** (6 total):
+
 - SA1019: Deprecated API usage
 - SA4006: Value assigned but never used
 - SA9003: Empty branch statements
 - Potential nil pointer dereferences
 
 **Files to Check**:
+
 ```bash
 golangci-lint run --enable staticcheck 2>&1 | grep -E "^internal/"
 ```
@@ -32,6 +35,7 @@ golangci-lint run --enable staticcheck 2>&1 | grep -E "^internal/"
 **Why**: Hardcoded interfaces break portability across Linux distributions and macOS.
 
 **Search Pattern**:
+
 ```bash
 grep -rn "eth0\|en0\|enp\|wlan0\|wlp" internal/
 ```
@@ -47,11 +51,13 @@ grep -rn "eth0\|en0\|enp\|wlan0\|wlp" internal/
 **Why**: Ensures consistent Node.js version across all environments.
 
 **Implementation**:
+
 ```bash
 echo "22" > web/.nvmrc
 ```
 
 **Update** `web/package.json`:
+
 ```json
 {
   "engines": {
@@ -71,6 +77,7 @@ echo "22" > web/.nvmrc
 **New Package**: `internal/network/detection/`
 
 **Files to Create**:
+
 ```
 internal/network/detection/
 ├── detection.go      # Main detection logic
@@ -81,6 +88,7 @@ internal/network/detection/
 ```
 
 **Core Algorithm**:
+
 ```go
 type InterfaceScore struct {
     Name           string
@@ -120,6 +128,7 @@ func ScoreInterface(iface net.Interface) InterfaceScore {
 ```
 
 **Chipset Database** (from issue #571):
+
 - 1G: Intel I210/I211/I350, Broadcom BCM5720, Realtek RTL8111
 - 2.5G: Intel I225/I226, Realtek RTL8125, Aquantia AQC107
 - 5G: Aquantia AQC107/108, Marvell AQC113, Realtek RTL8126
@@ -134,6 +143,7 @@ func ScoreInterface(iface net.Interface) InterfaceScore {
 ### 2.2 Friendly Interface Names in UI (#574)
 
 **Backend Changes**:
+
 ```go
 type InterfaceInfo struct {
     Name         string `json:"name"`          // "enp3s0"
@@ -143,6 +153,7 @@ type InterfaceInfo struct {
 ```
 
 **Frontend Changes**:
+
 - Display `friendlyName` in dropdowns and cards
 - Show `name` in tooltips or advanced view
 - Update `InterfaceSelector` component
@@ -154,6 +165,7 @@ type InterfaceInfo struct {
 ### 2.3 WiFi Multi-Adapter Support (#573)
 
 **Changes to Survey System**:
+
 ```go
 type SurveyConfig struct {
     Adapters []string `json:"adapters"` // Multiple adapters
@@ -162,6 +174,7 @@ type SurveyConfig struct {
 ```
 
 **UI Changes**:
+
 - Multi-select for WiFi adapters in survey setup
 - Show per-adapter results in survey view
 
@@ -176,11 +189,13 @@ type SurveyConfig struct {
 **Strategy**: Extract helper functions, use early returns, simplify conditionals.
 
 **High Complexity Files** (likely candidates):
+
 - `internal/discovery/scanner.go`
 - `internal/api/handlers.go`
 - `internal/wifi/scanner.go`
 
 **Refactoring Pattern**:
+
 ```go
 // Before: Complex function with many branches
 func processDevice(d Device) error {
@@ -212,6 +227,7 @@ func processDevice(d Device) error {
 ### 3.2 Revive Style Issues (#561) - 50 issues
 
 **Common Fixes**:
+
 - `exported`: Add documentation to exported functions
 - `unused-parameter`: Remove or use `_` prefix
 - `error-return`: Return error as last value
@@ -227,6 +243,7 @@ func processDevice(d Device) error {
 **Strategy**: Extract common patterns into shared functions.
 
 **Common Duplication Patterns**:
+
 - HTTP handler boilerplate
 - Error response formatting
 - Configuration loading
@@ -238,6 +255,7 @@ func processDevice(d Device) error {
 ### 3.4 Exhaustive Switch Statements (#564) - 7 issues
 
 **Fix Pattern**:
+
 ```go
 // Before: Missing cases
 switch status {
@@ -292,6 +310,7 @@ const (
 ### 3.6 Minor Lint Issues (#566) - 10 issues
 
 **Issues**:
+
 - `godot`: Add periods to comments
 - `intrange`: Use integer range in for loops
 - `unparam`: Remove unused parameters
@@ -308,13 +327,14 @@ const (
 
 **Replace Dependencies**:
 
-| Current | Node.js 22+ Native |
-|---------|-------------------|
-| `node-fetch` | `fetch()` |
+| Current                   | Node.js 22+ Native        |
+| ------------------------- | ------------------------- |
+| `node-fetch`              | `fetch()`                 |
 | `ws` (if used for client) | Consider native WebSocket |
-| `dotenv` | `--env-file` flag |
+| `dotenv`                  | `--env-file` flag         |
 
 **Update Scripts** in `package.json`:
+
 ```json
 {
   "scripts": {
@@ -332,14 +352,14 @@ const (
 
 **Comparison Matrix**:
 
-| Feature | Vitest | Node.js Test Runner |
-|---------|--------|---------------------|
-| Speed | Fast (Vite) | Fast (native) |
-| Watch mode | Yes | Yes (--watch) |
-| Coverage | Yes | Yes (--experimental-test-coverage) |
-| Mocking | Built-in | Built-in |
-| React Testing Library | Supported | Manual setup |
-| Snapshot Testing | Yes | Basic |
+| Feature               | Vitest      | Node.js Test Runner                |
+| --------------------- | ----------- | ---------------------------------- |
+| Speed                 | Fast (Vite) | Fast (native)                      |
+| Watch mode            | Yes         | Yes (--watch)                      |
+| Coverage              | Yes         | Yes (--experimental-test-coverage) |
+| Mocking               | Built-in    | Built-in                           |
+| React Testing Library | Supported   | Manual setup                       |
+| Snapshot Testing      | Yes         | Basic                              |
 
 **Recommendation**: Keep Vitest for React component tests, consider native for pure utility tests.
 
@@ -352,6 +372,7 @@ const (
 ### 5.1 Final Verification
 
 **Run Full Lint Suite**:
+
 ```bash
 golangci-lint run ./...
 ```
@@ -359,6 +380,7 @@ golangci-lint run ./...
 **Expected Result**: 0 issues
 
 **Run All Tests**:
+
 ```bash
 make test
 cd web && npm test
@@ -429,13 +451,13 @@ git push origin --tags
 
 ## Metrics & Success Criteria
 
-| Metric | Before | Target |
-|--------|--------|--------|
-| golangci-lint issues | 138+ | 0 |
-| Hardcoded interfaces | Multiple | 0 |
-| Test coverage (Go) | ~60% | 80%+ |
-| Test coverage (React) | ~70% | 85%+ |
-| Node.js version | Any | 22+ enforced |
+| Metric                | Before   | Target       |
+| --------------------- | -------- | ------------ |
+| golangci-lint issues  | 138+     | 0            |
+| Hardcoded interfaces  | Multiple | 0            |
+| Test coverage (Go)    | ~60%     | 80%+         |
+| Test coverage (React) | ~70%     | 85%+         |
+| Node.js version       | Any      | 22+ enforced |
 
 ---
 

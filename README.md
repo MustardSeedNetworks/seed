@@ -5,7 +5,9 @@
 [![CI](https://github.com/krisarmstrong/netscope/actions/workflows/ci.yml/badge.svg)](https://github.com/krisarmstrong/netscope/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 
-LuminetIQ is a professional-grade network diagnostic appliance designed for network technicians and engineers. Plug it into any network jack and instantly see link status, switch information, DHCP details, DNS health, and gateway connectivity through a modern web interface.
+LuminetIQ is a professional-grade network diagnostic appliance designed for network technicians and
+engineers. Plug it into any network jack and instantly see link status, switch information, DHCP
+details, DNS health, and gateway connectivity through a modern web interface.
 
 ## Features
 
@@ -35,13 +37,16 @@ _Coming soon_
 - libpcap-dev
 
 **Hardware Considerations:**
+
 - **Wi-Fi Diagnostics:** Requires nl80211-compatible adapter (Intel AX200/210 recommended)
 - **Cable Diagnostics (TDR):** Requires Intel I350/I210 or Broadcom BCM5719/5720
 - **Basic Diagnostics:** Works with any network adapter
 
 See **[HARDWARE.md](HARDWARE.md)** for detailed compatibility guide and recommendations.
 
-**Note:** LuminetIQ requires raw ICMP socket access for ping functionality. On Linux, this requires either:
+**Note:** LuminetIQ requires raw ICMP socket access for ping functionality. On Linux, this requires
+either:
+
 - Running as root (`sudo ./luminetiq`), or
 - Setting capabilities: `sudo setcap cap_net_raw=+ep ./luminetiq`
 
@@ -79,8 +84,8 @@ Configuration is stored in `luminetiq.yaml`. Default settings:
 
 ```yaml
 server:
-  port: 8443     # Default HTTPS port
-  https: true    # HTTPS enabled by default
+  port: 8443 # Default HTTPS port
+  https: true # HTTPS enabled by default
 
 interface:
   default: eth0

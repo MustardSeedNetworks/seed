@@ -11,9 +11,11 @@
 
 ### Method 1: Download Binary (Recommended)
 
-1. **Download** the latest release for macOS from [Releases](https://github.com/krisarmstrong/netscope/releases/latest)
+1. **Download** the latest release for macOS from
+   [Releases](https://github.com/krisarmstrong/netscope/releases/latest)
 
 2. **Extract** the archive:
+
    ```bash
    tar -xzf seed-darwin-arm64.tar.gz  # Apple Silicon
    # OR
@@ -21,6 +23,7 @@
    ```
 
 3. **Move** to your PATH:
+
    ```bash
    sudo mv seed /usr/local/bin/
    sudo chmod +x /usr/local/bin/seed
@@ -33,11 +36,13 @@
 
 ### Method 2: Build from Source
 
-See the main [README](https://github.com/krisarmstrong/netscope/blob/main/README.md) for build instructions.
+See the main [README](https://github.com/krisarmstrong/netscope/blob/main/README.md) for build
+instructions.
 
 ## First Run
 
 1. **Launch** The Seed:
+
    ```bash
    seed
    ```
@@ -60,6 +65,7 @@ See the main [README](https://github.com/krisarmstrong/netscope/blob/main/README
 The Seed requires elevated privileges for packet capture.
 
 **Run with sudo:**
+
 ```bash
 sudo seed
 ```
@@ -86,10 +92,13 @@ rm -rf ~/.config/seed
 ## Troubleshooting
 
 **Issue:** "seed: command not found"
+
 - **Solution:** Ensure `/usr/local/bin` is in your PATH
 
 **Issue:** "Operation not permitted" when capturing packets
+
 - **Solution:** Run with `sudo seed`
 
 **Issue:** Web UI doesn't load
+
 - **Solution:** Check if port 8080 is in use: `lsof -i :8080`

@@ -1,13 +1,13 @@
 # Phase 4: Hardware Program Expansion and Partnerships
 
-**Status:** Planned (Month 6-12 after Phase 3 completion)
-**Prerequisites:** 10+ community test reports, proven testing model
-**Timeline:** 6 months
-**Budget:** $2,000-3,000 (offset by revenue potential)
+**Status:** Planned (Month 6-12 after Phase 3 completion) **Prerequisites:** 10+ community test
+reports, proven testing model **Timeline:** 6 months **Budget:** $2,000-3,000 (offset by revenue
+potential)
 
 ## Overview
 
-Phase 4 transitions the hardware compatibility program from community-driven documentation to a scalable, sustainable ecosystem with vendor partnerships, automation, and monetization.
+Phase 4 transitions the hardware compatibility program from community-driven documentation to a
+scalable, sustainable ecosystem with vendor partnerships, automation, and monetization.
 
 ## Strategic Objectives
 
@@ -22,23 +22,26 @@ Phase 4 transitions the hardware compatibility program from community-driven doc
 
 ### 1. Vendor Partnership Program
 
-**Goal:** Establish relationships with 2-3 hardware vendors for testing equipment and technical support.
+**Goal:** Establish relationships with 2-3 hardware vendors for testing equipment and technical
+support.
 
 **Target Vendors:**
+
 - **Tier 1:** Intel (WiFi AX200/210, Ethernet I350/I210)
 - **Tier 2:** Qualcomm Atheros (AR9271 USB adapter)
 - **Tier 3:** Broadcom (server NICs with TDR)
 
 **Partnership Benefits Matrix:**
 
-| Benefit | To Vendor | To LuminetIQ |
-|---------|-----------|--------------|
-| Hardware | Marketing exposure, validation | Free testing equipment |
-| Technical | Community feedback, bug reports | Driver insights, firmware access |
-| Documentation | Linux compatibility data | Official specs, reference designs |
-| Marketing | Featured in LuminetIQ docs | Co-marketing opportunities |
+| Benefit       | To Vendor                       | To LuminetIQ                      |
+| ------------- | ------------------------------- | --------------------------------- |
+| Hardware      | Marketing exposure, validation  | Free testing equipment            |
+| Technical     | Community feedback, bug reports | Driver insights, firmware access  |
+| Documentation | Linux compatibility data        | Official specs, reference designs |
+| Marketing     | Featured in LuminetIQ docs      | Co-marketing opportunities        |
 
 **Deliverables:**
+
 - [ ] Vendor partnership proposal template
 - [ ] Outreach to 5+ vendors
 - [ ] Establish 2+ active partnerships
@@ -46,11 +49,13 @@ Phase 4 transitions the hardware compatibility program from community-driven doc
 - [ ] Create "LuminetIQ Certified" badge criteria
 
 **Success Metrics:**
+
 - 2+ vendor partnerships by Month 9
 - 5+ vendor-provided review units
 - 1+ co-marketing campaign (blog post, case study)
 
 **Implementation Steps:**
+
 1. **Month 6:** Draft partnership proposal, identify vendor contacts
 2. **Month 7:** Outreach to Intel, Qualcomm, Broadcom
 3. **Month 8:** Negotiate terms, establish technical contacts
@@ -69,32 +74,32 @@ Phase 4 transitions the hardware compatibility program from community-driven doc
 ```yaml
 # Configuration in luminetiq.yaml
 telemetry:
-  enabled: false              # Opt-in only, default disabled
-  anonymous: true             # No PII, no tracking IDs
+  enabled: false # Opt-in only, default disabled
+  anonymous: true # No PII, no tracking IDs
   endpoint: "telemetry.luminetiq.io/v1/hardware"
-  interval: 86400             # Daily check-in (24h)
+  interval: 86400 # Daily check-in (24h)
 
   # Explicitly defined data collection
   collect:
     hardware:
-      - vendor_id             # PCI vendor ID (e.g., 8086 for Intel)
-      - device_id             # PCI device ID
-      - subsystem_vendor_id   # Subsystem vendor
-      - subsystem_device_id   # Subsystem device
-      - driver_name           # Kernel driver (e.g., iwlwifi)
-      - driver_version        # Driver version string
-      - firmware_version      # NIC/WiFi firmware version
+      - vendor_id # PCI vendor ID (e.g., 8086 for Intel)
+      - device_id # PCI device ID
+      - subsystem_vendor_id # Subsystem vendor
+      - subsystem_device_id # Subsystem device
+      - driver_name # Kernel driver (e.g., iwlwifi)
+      - driver_version # Driver version string
+      - firmware_version # NIC/WiFi firmware version
 
     capabilities:
-      - monitor_mode          # Boolean: WiFi monitor mode support
-      - tdr_support           # Boolean: Ethernet TDR support
-      - channel_switch_time   # Average ms for WiFi channel switch
-      - max_speed             # Link speed capability (Mbps)
+      - monitor_mode # Boolean: WiFi monitor mode support
+      - tdr_support # Boolean: Ethernet TDR support
+      - channel_switch_time # Average ms for WiFi channel switch
+      - max_speed # Link speed capability (Mbps)
 
     environment:
-      - kernel_version        # Linux kernel version
-      - distribution          # OS distribution (Ubuntu, Arch, etc.)
-      - architecture          # x86_64, arm64
+      - kernel_version # Linux kernel version
+      - distribution # OS distribution (Ubuntu, Arch, etc.)
+      - architecture # x86_64, arm64
 
   # Explicitly excluded (never collected)
   exclude:
@@ -137,7 +142,7 @@ telemetry:
   "version": "1.0",
   "timestamp": "2025-12-14T12:00:00Z",
   "client_version": "0.14.0",
-  "session_id": "550e8400-random-uuid",  // Random per-session, not persistent
+  "session_id": "550e8400-random-uuid", // Random per-session, not persistent
 
   "hardware": [
     {
@@ -218,12 +223,14 @@ telemetry:
 ```
 
 **Cost Estimate:**
+
 - Serverless function: $0-5/month (low traffic)
 - Database: $10-20/month (aggregated data only)
 - Domain/SSL: $15/year
 - **Total: ~$15-30/month**
 
 **Deliverables:**
+
 - [ ] Privacy policy and consent UI
 - [ ] Open-source telemetry client code
 - [ ] Serverless backend implementation
@@ -232,6 +239,7 @@ telemetry:
 - [ ] Annual privacy audit checklist
 
 **Success Metrics:**
+
 - 100+ users opt-in within 3 months
 - 500+ unique hardware configurations documented
 - 0 privacy incidents
@@ -248,6 +256,7 @@ telemetry:
 #### Kit 1: "Network Technician Starter" ($150-200)
 
 **Contents:**
+
 - Intel I210-T1 Gigabit NIC (PCIe x1) - $25-35
 - Intel AX200 WiFi M.2 adapter - $15-20
 - 2x WiFi antennas (U.FL) - $5-10
@@ -261,6 +270,7 @@ telemetry:
 #### Kit 2: "Professional WiFi Survey" ($250-350)
 
 **Contents:**
+
 - Intel AX210 WiFi 6E adapter - $25-35
 - High-gain dual-band antennas - $30-40
 - USB 3.0 M.2 adapter enclosure - $20-30
@@ -275,6 +285,7 @@ telemetry:
 #### Kit 3: "Enterprise Cable Diagnostics" ($350-450)
 
 **Contents:**
+
 - Intel I350-T4 Quad NIC (4-port TDR) - $80-120
 - Cable tester accessories - $30-50
 - Tone generator + probe - $25-40
@@ -300,28 +311,31 @@ Save time and money with pre-selected, tested hardware bundles.
 Perfect for field diagnostics and troubleshooting.
 
 **Includes:**
+
 - ✅ Intel I210 NIC (TDR cable testing)
 - ✅ Intel AX200 WiFi adapter
 - ✅ Antennas and cables
 - ✅ Quick-start guide
 
-**Bundle Savings:** $25 vs individual purchase
-**Ships:** Amazon Prime eligible
+**Bundle Savings:** $25 vs individual purchase **Ships:** Amazon Prime eligible
 
 [View Bundle →](https://amzn.to/example) | [Build Your Own →](Intel-Ethernet)
 
 ---
 
-*Disclosure: LuminetIQ participates in affiliate programs. Purchases through these links support the project at no extra cost to you. We only recommend hardware we've tested and documented.*
+_Disclosure: LuminetIQ participates in affiliate programs. Purchases through these links support the
+project at no extra cost to you. We only recommend hardware we've tested and documented._
 ```
 
 **Legal Requirements:**
+
 - FTC disclosure on all affiliate links
 - Clear "Build Your Own" alternative always provided
 - No exclusive vendor arrangements
 - Annual review of pricing accuracy
 
 **Deliverables:**
+
 - [ ] 3+ curated hardware kits defined
 - [ ] Amazon affiliate account setup
 - [ ] Alternative vendor links (Newegg, direct)
@@ -330,12 +344,14 @@ Perfect for field diagnostics and troubleshooting.
 - [ ] Revenue tracking dashboard
 
 **Success Metrics:**
+
 - 50+ kits sold in first 6 months
 - $1,000-2,000 revenue (Year 1)
 - 4.5+ star average customer ratings
 - 80%+ find bundles helpful (survey)
 
 **Revenue Allocation:**
+
 - 50% → Server/infrastructure costs
 - 30% → Hardware for community testing
 - 20% → Contributor rewards/giveaways
@@ -448,6 +464,7 @@ Perfect for field diagnostics and troubleshooting.
 - Reward top contributors with hardware giveaways
 
 **Deliverables:**
+
 - [ ] YouTube channel setup
 - [ ] Video production equipment ($300-500: mic, lighting)
 - [ ] 12+ tutorial videos published
@@ -455,6 +472,7 @@ Perfect for field diagnostics and troubleshooting.
 - [ ] Community contribution guidelines
 
 **Success Metrics:**
+
 - 10,000+ total views (Year 1)
 - 100+ subscribers
 - 50+ hours watch time
@@ -555,7 +573,7 @@ name: Hardware Documentation Maintenance
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Weekly on Sunday
+    - cron: "0 0 * * 0" # Weekly on Sunday
   workflow_dispatch:
 
 jobs:
@@ -569,7 +587,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: pip install requests beautifulsoup4 PyGithub
@@ -582,6 +600,7 @@ jobs:
 ```
 
 **Deliverables:**
+
 - [ ] Staleness detection script
 - [ ] Weekly GitHub Actions workflow
 - [ ] Issue templates for updates
@@ -642,6 +661,7 @@ jobs:
 ```
 
 **Deliverables:**
+
 - [ ] Issue parsing script
 - [ ] Wiki generation script
 - [ ] Automated PR workflow
@@ -652,26 +672,31 @@ jobs:
 ## Success Metrics Summary
 
 **Partnerships:**
+
 - 2+ active vendor relationships
 - 5+ review units received
 - 1+ co-marketing initiative
 
 **Telemetry (if approved):**
+
 - 100+ opt-in users
 - 500+ hardware configs documented
 - 0 privacy incidents
 
 **Hardware Kits:**
+
 - 50+ kits sold
 - $1,000-2,000 revenue
 - 4.5+ star ratings
 
 **Video Content:**
+
 - 12+ videos published
 - 10,000+ views
 - 20% support reduction
 
 **Automation:**
+
 - Weekly staleness checks
 - Auto-generated wiki entries
 - 95%+ documentation accuracy
@@ -679,16 +704,19 @@ jobs:
 ## Budget & Resources
 
 **One-Time Costs:**
+
 - Video equipment: $300-500
 - Legal review (disclosures): $500-1,000
 - Initial hardware purchases: $300-500
 
 **Recurring Costs:**
+
 - Telemetry infrastructure: $15-30/month
 - Domain/hosting: $10-20/month
 - Amazon affiliate fees: $0 (percentage-based)
 
 **Revenue Potential:**
+
 - Hardware kits: $1,000-5,000/year
 - Vendor testing contracts: $1,000-3,000/year
 
@@ -697,36 +725,43 @@ jobs:
 ## Timeline
 
 **Month 6:**
+
 - Draft vendor partnership proposals
 - Design telemetry architecture
 - Define hardware kits
 
 **Month 7:**
+
 - Vendor outreach begins
 - Telemetry privacy review
 - Video production planning
 
 **Month 8:**
+
 - First vendor partnership established
 - Telemetry implementation starts
 - Hardware kit affiliate setup
 
 **Month 9:**
+
 - Receive first review units
 - Telemetry beta testing
 - First videos published
 
 **Month 10:**
+
 - Vendor-partnered test reports published
 - Telemetry public launch (opt-in)
 - Hardware kits available for purchase
 
 **Month 11:**
+
 - Second vendor partnership
 - Video series 50% complete
 - Automated maintenance workflows live
 
 **Month 12:**
+
 - Phase 4 retrospective
 - Revenue analysis
 - Plan Phase 5 based on learnings
@@ -734,18 +769,22 @@ jobs:
 ## Risk Management
 
 **Privacy Concerns:**
+
 - Mitigation: Open-source telemetry, annual audits, easy opt-out
 - Escalation: Disable telemetry if any privacy incident
 
 **Vendor Conflicts:**
+
 - Mitigation: Editorial independence policy, community review
 - Escalation: Terminate partnership, disclose publicly
 
 **Revenue Dependence:**
+
 - Mitigation: Diversified revenue (kits, partnerships, optional donations)
 - Escalation: Reduce scope if revenue targets not met
 
 **Community Pushback:**
+
 - Mitigation: Transparent communication, surveys, feedback loops
 - Escalation: Pivot based on community feedback
 
@@ -763,6 +802,7 @@ Before Phase 4 implementation:
 ---
 
 **Related Documents:**
+
 - [Phase 3 Progress Tracking](#511)
 - [Phase 5 Roadmap](HARDWARE_PHASE5_PLAN.md) (future)
 - [Privacy Policy Template](templates/PRIVACY_POLICY.md) (to be created)

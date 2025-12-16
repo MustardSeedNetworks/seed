@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+web/node_modules/
+
+# Claude instructions (special formatting)
+.claude/
+
+# Build outputs
+bin/
+dist/
+web/dist/
+coverage/
+
+# Generated files
+*.min.js
+*.min.css
+
+# Git
+.git/
+
+# IDE
+.idea/
+.vscode/
+
+# Go
+vendor/
+
+# OS
+.DS_Store
+
+# Storybook
+storybook-static/
+
+# Playwright
+playwright-report/
+test-results/

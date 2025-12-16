@@ -1,12 +1,15 @@
 # Qualcomm Atheros Wi-Fi Adapters
 
-Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommended** for The Seed, especially for packet injection. The AR9271 is a popular choice for wireless diagnostics and penetration testing.
+Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommended** for The Seed,
+especially for packet injection. The AR9271 is a popular choice for wireless diagnostics and
+penetration testing.
 
 [← Back to Home](Home)
 
 ## 🎯 Recommended Models
 
 ### Atheros AR9271 (Wi-Fi 4)
+
 **Best Choice for Packet Injection & Budget-Friendly**
 
 - **Chipset:** Atheros AR9271
@@ -17,6 +20,7 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 - **Price Range:** $12-18 USD
 
 **The Seed Compatibility:**
+
 - Monitor Mode: ✅ Excellent
 - Channel Switching: ✅ Fast (<500ms)
 - Signal Quality: ✅ Accurate
@@ -24,6 +28,7 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 - 2.4GHz Channels: 1-14
 
 **Why Choose AR9271:**
+
 - Proven reliable for monitor mode
 - Excellent packet injection (best for advanced diagnostics)
 - Wide vendor support (many USB adapters use this chipset)
@@ -31,16 +36,17 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 - Budget-friendly
 
 **Popular USB Adapters:**
+
 - TP-Link TL-WN722N v1 (⚠️ v2/v3 use different chipset!)
 - Alfa AWUS036NHA
 - Panda PAU05
 
-**Tested Configurations:**
-*(Community reports will be added here)*
+**Tested Configurations:** _(Community reports will be added here)_
 
 ---
 
 ### Qualcomm QCA6174 (Wi-Fi 5)
+
 **Modern PCIe Option**
 
 - **Chipset:** Qualcomm QCA6174
@@ -51,22 +57,24 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 - **Price Range:** $15-25 USD
 
 **The Seed Compatibility:**
+
 - Monitor Mode: ✅ Good
 - Channel Switching: ✅ Fast
 - Signal Quality: ✅ Accurate
 - Packet Injection: ⚠️ Limited
 
 **Notes:**
+
 - Requires firmware (linux-firmware package)
 - Common in Killer Wi-Fi branded products
 - Good for general diagnostics, limited injection
 
-**Tested Configurations:**
-*(Community reports will be added here)*
+**Tested Configurations:** _(Community reports will be added here)_
 
 ---
 
 ### Atheros AR9280 (Wi-Fi 4)
+
 **Legacy PCIe Option**
 
 - **Chipset:** Atheros AR9280
@@ -76,12 +84,14 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 - **Max Speed:** 300 Mbps
 
 **The Seed Compatibility:**
+
 - Monitor Mode: ✅ Excellent
 - Channel Switching: ✅ Fast
 - Signal Quality: ✅ Good
 - Packet Injection: ✅ Excellent
 
 **Notes:**
+
 - Older generation, harder to find new
 - Excellent for diagnostics and injection
 - Mini PCIe (not M.2)
@@ -95,6 +105,7 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 1. **Plug in USB adapter**
 
 2. **Verify detection:**
+
    ```bash
    lsusb | grep -i atheros
    # Output: Bus 001 Device 003: ID 0cf3:9271 Qualcomm Atheros Communications AR9271 802.11n
@@ -114,6 +125,7 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 1. **Install M.2 or Mini PCIe card**
 
 2. **Verify detection:**
+
    ```bash
    lspci | grep -i qualcomm
    # or
@@ -193,6 +205,7 @@ done
 ## 📊 Performance Characteristics
 
 ### AR9271 (USB)
+
 - **Monitor Mode Stability:** Excellent (24+ hour uptime tested)
 - **Channel Switching:** <500ms (2.4GHz)
 - **Signal Quality:** ±3 dBm accuracy
@@ -200,12 +213,14 @@ done
 - **USB Limitation:** USB 2.0 (max 480 Mbps - not an issue for diagnostics)
 
 ### QCA6174 (PCIe)
+
 - **Monitor Mode Stability:** Good
 - **Channel Switching:** <200ms (2.4/5GHz)
 - **Signal Quality:** ±2 dBm accuracy
 - **Packet Injection:** Limited support
 
 ### AR9280 (PCIe)
+
 - **Monitor Mode Stability:** Excellent
 - **Channel Switching:** <100ms
 - **Signal Quality:** ±2 dBm accuracy
@@ -218,12 +233,14 @@ done
 ### AR9271: Firmware Loading Issues
 
 **Symptoms:**
+
 ```
 ath9k_htc: Firmware htc_9271.fw requested
 ath9k_htc: Failed to find firmware
 ```
 
 **Solution:**
+
 ```bash
 # Install firmware
 sudo apt install linux-firmware
@@ -237,6 +254,7 @@ sudo wget https://github.com/kvalo/ath10k-firmware/raw/master/ath9k/htc_9271-1.4
 ### AR9271: Monitor Mode Conflicts with NetworkManager
 
 **Solution:**
+
 ```bash
 # Blacklist interface from NetworkManager
 sudo nmcli device set wlan0 managed no
@@ -247,6 +265,7 @@ sudo nmcli device set wlan0 managed no
 **Cause:** Some QCA6174 firmware versions don't support monitor mode
 
 **Solution:**
+
 ```bash
 # Check firmware version
 dmesg | grep ath10k | grep firmware
@@ -258,11 +277,13 @@ sudo apt update && sudo apt upgrade linux-firmware
 ### AR9271: TX Power Too High Warning
 
 **Symptoms:**
+
 ```
 ath9k_htc: TX power exceeds regulatory limit
 ```
 
 **Solution:**
+
 ```bash
 # Set correct regulatory domain
 sudo iw reg set US  # or your country code
@@ -275,11 +296,13 @@ sudo iw reg set US  # or your country code
 ### AR9271-based USB Adapters
 
 **Recommended Vendors:**
+
 - **Alfa AWUS036NHA** - $20-25 USD (highly recommended)
 - **TP-Link TL-WN722N v1** - $15-18 USD (⚠️ v2/v3 are NOT AR9271!)
 - **Panda PAU05** - $12-15 USD
 
 **Where to Buy:**
+
 - Amazon (check chipset in reviews!)
 - AliExpress (cheaper, longer shipping)
 - Specialized vendors: Hak5, Rokland, Alfa Network
@@ -289,12 +312,14 @@ sudo iw reg set US  # or your country code
 **⚠️ Critical:** Many USB adapters changed chipsets between versions!
 
 **How to verify:**
+
 1. Check product reviews mentioning chipset
 2. Contact seller to confirm AR9271
 3. Look for "ath9k_htc compatible" in description
 4. Avoid "v2" or "v3" versions of previously-good models
 
 **Known Good Models:**
+
 - TP-Link TL-WN722N **v1** only (v2/v3 use Realtek)
 - Alfa AWUS036NHA (consistent across versions)
 - Panda PAU05 (usually AR9271, verify first)
@@ -346,7 +371,9 @@ sudo ./seed --wifi-interface wlan0
 ## 📝 Community Test Reports
 
 ### Report Format
+
 Include:
+
 - Exact chipset (AR9271, QCA6174, AR9280)
 - USB adapter model or PCIe card model
 - Kernel version
@@ -356,6 +383,7 @@ Include:
 - Injection test results (if tested)
 
 ### Submit Your Report
+
 [Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
@@ -363,19 +391,21 @@ Include:
 ## 🔗 Additional Resources
 
 ### Driver Documentation
+
 - [ath9k Driver Wiki](https://wireless.wiki.kernel.org/en/users/drivers/ath9k)
 - [ath10k Driver Wiki](https://wireless.wiki.kernel.org/en/users/drivers/ath10k)
 
 ### Community Resources
+
 - [Kali Linux AR9271 Guide](https://www.kali.org/docs/networking/wifi-setup/)
 - [Aircrack-ng Compatibility](https://www.aircrack-ng.org/doku.php?id=compatibility_drivers)
 
 ### Firmware
+
 - [ath9k_htc Firmware Repository](https://github.com/qca/open-ath9k-htc-firmware)
 
 ---
 
-**Last Updated:** 2025-12-14
-**Total Community Reports:** 0 *(submit yours!)*
+**Last Updated:** 2025-12-14 **Total Community Reports:** 0 _(submit yours!)_
 
 [← Back to Home](Home) | [← Previous: Intel](Intel-WiFi) | [Next: Broadcom →](Broadcom-WiFi)

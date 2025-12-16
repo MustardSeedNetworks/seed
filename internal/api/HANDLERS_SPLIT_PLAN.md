@@ -1,6 +1,7 @@
 # Handlers File Split Plan
 
 ## Current State
+
 - `handlers.go`: 4674 lines (too large for maintainability)
 - Contains 47+ HTTP handlers plus helper functions and types
 
@@ -38,14 +39,16 @@
 
 5. **handlers_discovery.go** - Device Discovery
    - `handleDiscovery()`
-   - `handleDevices()`, `handleDevicesScan()`, `handleDevicesStatus()`, `handleDevicesSettings()`, `handleDevicesSubnets()`
+   - `handleDevices()`, `handleDevicesScan()`, `handleDevicesStatus()`, `handleDevicesSettings()`,
+     `handleDevicesSubnets()`
    - `handleDiscoveryProfile()`, `handleDiscoveryServiceStatus()`
    - Types: `DiscoveryResponse`, `DiscoveryNeighborInfo`
 
 6. **handlers_tests.go** - Network Testing
    - `handleDNS()`, `handleGateway()`, `handlePublicIP()`
    - `handleSpeedtest()`, `handleSpeedtestStatus()`
-   - `handleIperfClient()`, `handleIperfClientStatus()`, `handleIperfInfo()`, `handleIperfServer()`, `handleIperfServerStatus()`, `handleIperfSuggestions()`
+   - `handleIperfClient()`, `handleIperfClientStatus()`, `handleIperfInfo()`, `handleIperfServer()`,
+     `handleIperfServerStatus()`, `handleIperfSuggestions()`
    - `handleCustomTests()`, `handleTestsSettings()`
    - Types: DNS/speedtest/iperf related types
 
@@ -81,5 +84,6 @@
 - Verify all types are accessible where needed
 
 ## Estimated Time
+
 - 6 hours total for complete split and verification
 - Can be done incrementally over multiple commits

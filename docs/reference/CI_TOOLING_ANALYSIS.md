@@ -1,13 +1,14 @@
 # CI/Build Tooling Gap Analysis
 
-**Last Updated:** December 2025
-**Purpose:** Identify professional-grade CI/build tools missing from the pipeline
+**Last Updated:** December 2025 **Purpose:** Identify professional-grade CI/build tools missing from
+the pipeline
 
 ---
 
 ## ✅ Current Tooling (Excellent Coverage)
 
 ### Go Backend
+
 - ✅ **golangci-lint** - Comprehensive linting (36+ linters enabled)
 - ✅ **staticcheck** - Advanced Go static analysis
 - ✅ **go vet** - Go suspicious construct detection
@@ -20,6 +21,7 @@
 - ✅ **Codecov** - Coverage reporting and tracking
 
 ### Frontend
+
 - ✅ **ESLint** - TypeScript/React linting
 - ✅ **Prettier** - Code formatting
 - ✅ **TypeScript** - Type checking
@@ -28,12 +30,14 @@
 - ✅ **Storybook** - Component documentation and visual testing
 
 ### Security
+
 - ✅ **gitleaks** - Secret detection
 - ✅ **Trivy** - Container/filesystem vulnerability scanning
 - ✅ **npm audit** - Node.js dependency security
 - ✅ **Pre-commit hooks** - Automated checks before commit
 
 ### Build & Deploy
+
 - ✅ **Multi-arch builds** - AMD64 + ARM64
 - ✅ **Deterministic builds** - `-trimpath -buildvcs=false`
 - ✅ **Docker builds** - Multi-stage with testing
@@ -51,6 +55,7 @@
 **Recommendation:** Dependabot (GitHub native, free for private repos)
 
 **Implementation:**
+
 ```yaml
 # .github/dependabot.yml
 version: 2
@@ -89,6 +94,7 @@ updates:
 ```
 
 **Benefits:**
+
 - Automated security updates
 - Keeps dependencies current
 - No cost (built into GitHub)
@@ -107,6 +113,7 @@ updates:
 **Recommendation:** go-licenses + license-checker (npm)
 
 **Implementation:**
+
 ```yaml
 # .github/workflows/ci.yml - add to quality job
 - name: Check Go license compliance
@@ -121,6 +128,7 @@ updates:
 ```
 
 **Makefile target:**
+
 ```makefile
 license-check: ## Check license compliance
 	@echo "Checking Go licenses..."
@@ -130,6 +138,7 @@ license-check: ## Check license compliance
 ```
 
 **Benefits:**
+
 - Avoid GPL/AGPL contamination
 - Required for enterprise/healthcare sales
 - Automated enforcement
@@ -145,6 +154,7 @@ license-check: ## Check license compliance
 **Recommendation:** syft + grype (Anchore)
 
 **Implementation:**
+
 ```yaml
 # .github/workflows/release.yml
 - name: Generate SBOM
@@ -163,6 +173,7 @@ license-check: ## Check license compliance
 ```
 
 **Benefits:**
+
 - Supply chain transparency
 - Required for healthcare/gov compliance
 - Free and open source
@@ -180,6 +191,7 @@ license-check: ## Check license compliance
 **Recommendation:** conventional-changelog (uses commit messages)
 
 **Implementation:**
+
 ```json
 // web/package.json - add scripts
 "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
@@ -187,6 +199,7 @@ license-check: ## Check license compliance
 ```
 
 **GitHub Action:**
+
 ```yaml
 # .github/workflows/release.yml
 - name: Generate changelog
@@ -196,6 +209,7 @@ license-check: ## Check license compliance
 ```
 
 **Benefits:**
+
 - Auto-generated from commit messages
 - Follows semantic versioning
 - Reduces release overhead
@@ -211,6 +225,7 @@ license-check: ## Check license compliance
 **Recommendation:** bundlesize + size-limit
 
 **Implementation:**
+
 ```json
 // web/package.json
 {
@@ -238,6 +253,7 @@ license-check: ## Check license compliance
 ```
 
 **CI integration:**
+
 ```yaml
 # .github/workflows/ci.yml - add to frontend job
 - name: Check bundle size
@@ -246,6 +262,7 @@ license-check: ## Check license compliance
 ```
 
 **Benefits:**
+
 - Prevents performance regression
 - Alerts on bloat before merge
 - ~$0 cost
@@ -261,6 +278,7 @@ license-check: ## Check license compliance
 **Recommendation:** swag (Go Swagger) for auto-generated OpenAPI docs
 
 **Implementation:**
+
 ```go
 // Add Swagger annotations to handlers
 // @Summary Get system status
@@ -276,12 +294,14 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 ```
 
 **Makefile:**
+
 ```makefile
 docs-api: ## Generate API documentation
 	swag init -g cmd/luminetiq/main.go -o docs/api
 ```
 
 **CI check:**
+
 ```yaml
 - name: Verify API docs are up to date
   run: |
@@ -290,6 +310,7 @@ docs-api: ## Generate API documentation
 ```
 
 **Benefits:**
+
 - Always up-to-date API docs
 - Interactive Swagger UI
 - API testing interface
@@ -305,6 +326,7 @@ docs-api: ## Generate API documentation
 **Recommendation:** Lighthouse CI for performance/accessibility audits
 
 **Implementation:**
+
 ```yaml
 # .github/workflows/ci.yml
 - name: Run Lighthouse CI
@@ -318,15 +340,16 @@ docs-api: ## Generate API documentation
 ```
 
 **lighthouserc.json:**
+
 ```json
 {
   "ci": {
     "assert": {
       "assertions": {
-        "categories:performance": ["error", {"minScore": 0.9}],
-        "categories:accessibility": ["error", {"minScore": 0.9}],
-        "categories:best-practices": ["error", {"minScore": 0.9}],
-        "first-contentful-paint": ["error", {"maxNumericValue": 2000}]
+        "categories:performance": ["error", { "minScore": 0.9 }],
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "categories:best-practices": ["error", { "minScore": 0.9 }],
+        "first-contentful-paint": ["error", { "maxNumericValue": 2000 }]
       }
     }
   }
@@ -334,6 +357,7 @@ docs-api: ## Generate API documentation
 ```
 
 **Benefits:**
+
 - Catch performance regressions
 - Accessibility compliance
 - SEO optimization
@@ -349,6 +373,7 @@ docs-api: ## Generate API documentation
 **Recommendation:** SonarCloud (free for open source, affordable for private)
 
 **Implementation:**
+
 ```yaml
 # .github/workflows/ci.yml
 - name: SonarCloud Scan
@@ -359,6 +384,7 @@ docs-api: ## Generate API documentation
 ```
 
 **Benefits:**
+
 - Code smell detection
 - Security hotspot tracking
 - Technical debt measurement
@@ -419,25 +445,30 @@ docs-api: ## Generate API documentation
 ## 📋 Recommended Implementation Plan
 
 ### Phase 1: Immediate (This Week)
+
 1. ✅ Add format/format:check scripts to package.json (DONE)
 2. 🔴 Add Dependabot configuration
 3. 🔴 Add license compliance checking
 
 ### Phase 2: Before First Enterprise Customer (1-2 Months)
+
 1. 🔴 SBOM generation (syft)
 2. 🟡 Changelog automation
 3. 🟡 Bundle size tracking
 
 ### Phase 3: Before v1.0 Release (3-6 Months)
+
 1. 🟡 API documentation generation (Swagger)
 2. 🟡 Lighthouse CI for performance budgets
 
 ### Phase 4: When Team Grows (6-12 Months)
+
 1. 🟡 SonarCloud for code quality metrics
 2. 🟢 Visual regression testing (Chromatic)
 3. 🟢 Release automation (goreleaser)
 
 ### Phase 5: Enterprise/Gov Customers (Year 2)
+
 1. 🟢 Container image signing
 2. 🟢 Mutation testing
 3. 🟢 SLSA provenance (supply chain security)
@@ -446,18 +477,18 @@ docs-api: ## Generate API documentation
 
 ## 💰 Cost Analysis
 
-| Tool | Cost | Priority | ROI |
-|------|------|----------|-----|
-| Dependabot | Free | 🔴 High | ⭐⭐⭐⭐⭐ |
-| License checker | Free | 🔴 High | ⭐⭐⭐⭐⭐ |
-| SBOM (syft) | Free | 🔴 High | ⭐⭐⭐⭐ |
-| Changelog automation | Free | 🟡 Medium | ⭐⭐⭐⭐ |
-| Bundle size | Free | 🟡 Medium | ⭐⭐⭐⭐ |
-| Lighthouse CI | Free | 🟡 Medium | ⭐⭐⭐⭐ |
-| Swagger/OpenAPI | Free | 🟡 Medium | ⭐⭐⭐⭐ |
-| SonarCloud | $10/mo | 🟡 Medium | ⭐⭐⭐ |
-| Chromatic | $149/mo | 🟢 Low | ⭐⭐ |
-| Mutation testing | Free (time) | 🟢 Low | ⭐⭐ |
+| Tool                 | Cost        | Priority  | ROI        |
+| -------------------- | ----------- | --------- | ---------- |
+| Dependabot           | Free        | 🔴 High   | ⭐⭐⭐⭐⭐ |
+| License checker      | Free        | 🔴 High   | ⭐⭐⭐⭐⭐ |
+| SBOM (syft)          | Free        | 🔴 High   | ⭐⭐⭐⭐   |
+| Changelog automation | Free        | 🟡 Medium | ⭐⭐⭐⭐   |
+| Bundle size          | Free        | 🟡 Medium | ⭐⭐⭐⭐   |
+| Lighthouse CI        | Free        | 🟡 Medium | ⭐⭐⭐⭐   |
+| Swagger/OpenAPI      | Free        | 🟡 Medium | ⭐⭐⭐⭐   |
+| SonarCloud           | $10/mo      | 🟡 Medium | ⭐⭐⭐     |
+| Chromatic            | $149/mo     | 🟢 Low    | ⭐⭐       |
+| Mutation testing     | Free (time) | 🟢 Low    | ⭐⭐       |
 
 **Total additional monthly cost:** $10-159 (SonarCloud optional, Chromatic later)
 
@@ -466,16 +497,19 @@ docs-api: ## Generate API documentation
 ## 🎯 Quick Wins (Add Today)
 
 ### 1. Dependabot
+
 - 5 minutes to configure
 - Immediate security benefit
 - Zero cost
 
 ### 2. License compliance
+
 - 10 minutes to add CI job
 - Required for enterprise sales
 - Zero cost
 
 ### 3. Bundle size tracking
+
 - 15 minutes to configure
 - Prevents performance regression
 - Zero cost
@@ -487,27 +521,34 @@ docs-api: ## Generate API documentation
 ## 🚫 Tools NOT Recommended
 
 ### CircleCI/Travis CI
+
 **Why not:** GitHub Actions is superior and native
 
 ### Jenkins
+
 **Why not:** Overkill for this project, maintenance overhead
 
 ### Snyk
+
 **Why not:** Trivy + govulncheck + npm audit already cover this
 
 ### Code Climate (paid tier)
+
 **Why not:** SonarCloud offers better value
 
 ### New Relic/DataDog APM
+
 **Why not:** Premature for current stage (add at scale)
 
 ---
 
 ## Summary
 
-**Current State:** Your CI pipeline is already **A+ quality** with comprehensive linting, testing, and security scanning.
+**Current State:** Your CI pipeline is already **A+ quality** with comprehensive linting, testing,
+and security scanning.
 
 **Top 3 Missing Tools:**
+
 1. 🔴 **Dependabot** - Automated dependency updates (add immediately)
 2. 🔴 **License compliance** - Required for enterprise (add before first customer)
 3. 🔴 **SBOM generation** - Required for healthcare/gov (add before HIPAA)
