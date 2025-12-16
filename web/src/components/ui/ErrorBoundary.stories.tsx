@@ -248,7 +248,7 @@ export const CustomFallback: Story = {
   render: () => (
     <ErrorBoundary
       fallback={
-        <div className="p-6 bg-gradient-to-br from-status-error/20 to-status-error/5 border-2 border-status-error rounded-xl">
+        <div className="p-6 bg-linear-to-br from-status-error/20 to-status-error/5 border-2 border-status-error rounded-xl">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-full bg-status-error/20 flex items-center justify-center shrink-0">
               <svg

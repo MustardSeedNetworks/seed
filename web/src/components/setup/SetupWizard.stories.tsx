@@ -69,7 +69,7 @@ export const WithSuggestedPassword: Story = {
 export const GeneratedPasswordSelected: Story = {
   render: () => {
     return (
-      <div style={{ position: "relative", minHeight: "100vh" }}>
+      <div className="relative min-h-screen">
         <SetupWizard
           onComplete={() => {
             // Handle setup completion
