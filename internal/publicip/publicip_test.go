@@ -17,9 +17,11 @@ func TestNewChecker(t *testing.T) {
 	if c == nil {
 		t.Fatal("NewChecker() returned nil")
 	}
+
 	if c.httpClient == nil {
-		t.Error("httpClient should not be nil")
+		t.Fatal("httpClient should not be nil")
 	}
+
 	if c.httpClient.Timeout != requestTimeout {
 		t.Errorf("httpClient.Timeout = %v, want %v", c.httpClient.Timeout, requestTimeout)
 	}

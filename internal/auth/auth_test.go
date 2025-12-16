@@ -17,10 +17,10 @@ const (
 
 func TestNewManager(t *testing.T) {
 	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
-
 	if m == nil {
 		t.Fatal("NewManager returned nil")
 	}
+
 	if m.username != testUsername {
 		t.Errorf("expected username %s, got %s", testUsername, m.username)
 	}
@@ -31,10 +31,10 @@ func TestNewManager(t *testing.T) {
 
 func TestNewManagerWithEmptySecret(t *testing.T) {
 	m := NewManager("", time.Hour, testUsername, testPasswordHash)
-
 	if m == nil {
 		t.Fatal("NewManager returned nil")
 	}
+
 	if len(m.jwtSecret) == 0 {
 		t.Error("expected generated JWT secret, got empty")
 	}

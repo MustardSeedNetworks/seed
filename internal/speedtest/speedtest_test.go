@@ -28,7 +28,6 @@ func TestNewTester(t *testing.T) {
 
 func TestNewTesterWithConfig(t *testing.T) {
 	tester := NewTesterWithConfig("12345")
-
 	if tester == nil {
 		t.Fatal("expected non-nil tester")
 	}

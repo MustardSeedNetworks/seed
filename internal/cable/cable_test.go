@@ -26,10 +26,10 @@ func TestStatusConstants(t *testing.T) {
 
 func TestNewTester(t *testing.T) {
 	tester := NewTester("eth0")
-
 	if tester == nil {
 		t.Fatal("expected non-nil tester")
 	}
+
 	if tester.interfaceName != "eth0" {
 		t.Errorf("expected interfaceName 'eth0', got %q", tester.interfaceName)
 	}
@@ -65,6 +65,7 @@ func TestTesterTest(t *testing.T) {
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
+
 	if result.Faults == nil {
 		t.Error("expected non-nil Faults slice")
 	}
@@ -157,6 +158,7 @@ func TestTestPlatform(t *testing.T) {
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
+
 	// On non-Linux, should not be supported
 	if result.Faults == nil {
 		t.Error("expected non-nil Faults slice")

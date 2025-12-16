@@ -9,7 +9,6 @@ import (
 
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
-
 	if cfg == nil {
 		t.Fatal("DefaultConfig returned nil")
 	}

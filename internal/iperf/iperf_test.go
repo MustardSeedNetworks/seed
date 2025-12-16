@@ -449,6 +449,7 @@ func TestManagerStoreResult(t *testing.T) {
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
+
 	if result.Bandwidth != 100.0 {
 		t.Errorf("expected Bandwidth 100.0, got %v", result.Bandwidth)
 	}
@@ -691,6 +692,7 @@ func TestManagerSetResult(t *testing.T) {
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
+
 	if result.Bandwidth != 500.0 {
 		t.Errorf("expected Bandwidth 500.0, got %v", result.Bandwidth)
 	}

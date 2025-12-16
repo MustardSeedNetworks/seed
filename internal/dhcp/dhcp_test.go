@@ -25,10 +25,10 @@ func TestPhaseConstants(t *testing.T) {
 
 func TestNewMonitor(t *testing.T) {
 	monitor := NewMonitor("eth0")
-
 	if monitor == nil {
 		t.Fatal("expected non-nil monitor")
 	}
+
 	if monitor.interfaceName != "eth0" {
 		t.Errorf("expected interfaceName 'eth0', got %q", monitor.interfaceName)
 	}

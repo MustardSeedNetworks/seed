@@ -8,10 +8,10 @@ import (
 
 func TestNewManager(t *testing.T) {
 	manager := NewManager("eth0")
-
 	if manager == nil {
 		t.Fatal("expected non-nil manager")
 	}
+
 	if manager.interfaceName != "eth0" {
 		t.Errorf("expected interfaceName 'eth0', got %q", manager.interfaceName)
 	}
@@ -71,9 +71,11 @@ func TestManagerGetInfo(t *testing.T) {
 	if info == nil {
 		t.Fatal("expected non-nil info")
 	}
+
 	if info.TaggedVlans == nil {
 		t.Error("expected non-nil TaggedVlans slice")
 	}
+
 	if info.Configured.Enabled {
 		t.Error("expected Configured.Enabled to be false initially")
 	}
@@ -105,6 +107,7 @@ func TestManagerGetInfoWithLLDP(t *testing.T) {
 	if info == nil {
 		t.Fatal("expected non-nil info")
 	}
+
 	if info.NativeVlan == nil {
 		t.Fatal("expected non-nil NativeVlan")
 	}

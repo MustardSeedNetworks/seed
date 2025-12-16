@@ -23,10 +23,10 @@ func TestDefaultThresholds(t *testing.T) {
 
 func TestNewTester(t *testing.T) {
 	tester := NewTester("8.8.8.8", "google.com", DefaultThresholds())
-
 	if tester == nil {
 		t.Fatal("NewTester returned nil")
 	}
+
 	if tester.server != "8.8.8.8" {
 		t.Errorf("expected server 8.8.8.8, got %s", tester.server)
 	}
@@ -40,10 +40,10 @@ func TestNewTester(t *testing.T) {
 
 func TestNewTesterWithEmptyServer(t *testing.T) {
 	tester := NewTester("", "google.com", DefaultThresholds())
-
 	if tester == nil {
 		t.Fatal("NewTester returned nil")
 	}
+
 	if tester.server != "" {
 		t.Errorf("expected empty server, got %s", tester.server)
 	}
@@ -137,7 +137,7 @@ func TestForwardLookup(t *testing.T) {
 		t.Fatal("ForwardLookup returned nil")
 	}
 
-	// Should succeed for google.com
+	// Should succeed for google.com - access fields only after nil check
 	if result.Status == StatusError && result.Error == "" {
 		t.Error("expected success or error with message")
 	}

@@ -31,7 +31,6 @@ func TestLinkStateString(t *testing.T) {
 
 func TestNewLinkMonitor(t *testing.T) {
 	mon := NewLinkMonitor("eth0")
-
 	if mon == nil {
 		t.Fatal("NewLinkMonitor() returned nil")
 	}

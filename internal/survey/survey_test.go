@@ -21,7 +21,6 @@ func TestNewManager(t *testing.T) {
 	iperfManager := iperf.NewManager()
 
 	mgr := NewManager(tmpDir, wifiScanner, wifiManager, iperfManager)
-
 	if mgr == nil {
 		t.Fatal("NewManager() returned nil")
 	}

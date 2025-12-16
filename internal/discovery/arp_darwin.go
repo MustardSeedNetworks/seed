@@ -4,7 +4,7 @@
 // The implementation varies by platform to use native system calls and command-line tools.
 //
 // Platform support:
-//   - Darwin (macOS): Uses 'arp -an' command and route(4) system calls
+//   - Darwin (macOS): Uses golang.org/x/net/route package for routing table access
 //   - Linux: Reads /proc/net/arp and uses netlink for real-time updates
 //
 // Features:
@@ -18,24 +18,33 @@
 package discovery
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 	"syscall"
 	"time"
-	"unsafe"
+
+	"golang.org/x/net/route"
 )
 
-// RTF_LLDATA flag indicates the route has link-layer address info (ARP entry)
+// RTF_LLDATA flag indicates the route has link-layer address info (ARP entry).
 const rtfLLData = 0x400
 
-// readARPTablePlatform reads the ARP table on macOS using the routing socket.
+// ribTypeFlags is NET_RT_FLAGS (2) which returns routes with specific flags.
+// The golang.org/x/net/route package only exports RIBTypeRoute (1) and RIBTypeInterface (3),
+// so we define our own constant for NET_RT_FLAGS to access ARP entries.
+// This is the proper modern approach using the x/net/route package.
+const ribTypeFlags route.RIBType = 2
+
+// readARPTablePlatform reads the ARP table on macOS using the golang.org/x/net/route package.
+// This uses the modern golang.org/x/net/route.FetchRIB API instead of the deprecated syscall.RouteRIB.
 func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
-	// Use sysctl to get ARP entries via the routing table
-	// NET_RT_FLAGS with 0 returns all routes, we filter for LLDATA below
-	//nolint:staticcheck // SA1019: syscall.RouteRIB works for our use case
-	rib, err := syscall.RouteRIB(syscall.NET_RT_FLAGS, 0)
+	// Use route.FetchRIB with NET_RT_FLAGS (2) to get ARP entries
+	// AF_UNSPEC (0) returns all address families
+	// The arg parameter is 0 for all entries (wildcard)
+	rib, err := route.FetchRIB(syscall.AF_UNSPEC, ribTypeFlags, 0)
 	if err != nil {
-		return nil, fmt.Errorf("RouteRIB: %w", err)
+		return nil, fmt.Errorf("FetchRIB: %w", err)
 	}
 
 	entries, err := parseARPMessages(rib)
@@ -63,7 +72,7 @@ func parseARPMessages(rib []byte) ([]*ARPEntry, error) {
 			break
 		}
 
-		msgLen := int(nativeEndian.Uint16(rib[0:2]))
+		msgLen := int(binary.LittleEndian.Uint16(rib[0:2]))
 		if msgLen == 0 || msgLen > len(rib) {
 			break
 		}
@@ -79,7 +88,7 @@ func parseARPMessages(rib []byte) ([]*ARPEntry, error) {
 	return entries, nil
 }
 
-// rt_msghdr structure size on macOS (64-bit)
+// rt_msghdr structure size on macOS (64-bit).
 const rtMsgHdrSize = 92
 
 // parseARPRouteMessage parses a single route message for ARP info.
@@ -88,15 +97,14 @@ func parseARPRouteMessage(data []byte) *ARPEntry {
 		return nil
 	}
 
-	// Check rtm_type - should be RTM_GET (for sysctl query results)
 	// Check rtm_flags has RTF_LLDATA (link-layer data / ARP entry)
-	flags := int(nativeEndian.Uint32(data[8:12]))
+	flags := int(binary.LittleEndian.Uint32(data[8:12]))
 	if flags&rtfLLData == 0 {
 		return nil
 	}
 
-	addrs := int(nativeEndian.Uint32(data[12:16]))
-	ifIndex := int(nativeEndian.Uint16(data[4:6]))
+	addrs := int(binary.LittleEndian.Uint32(data[12:16]))
+	ifIndex := int(binary.LittleEndian.Uint16(data[4:6]))
 
 	entry := &ARPEntry{
 		State:    "REACHABLE",
@@ -212,40 +220,4 @@ func parseSockaddrDL(data []byte) string {
 	mac := data[macStart : macStart+6]
 	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x",
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5])
-}
-
-// nativeEndian detects the byte order of the system.
-var nativeEndian = getNativeEndian()
-
-func getNativeEndian() interface {
-	Uint16([]byte) uint16
-	Uint32([]byte) uint32
-} {
-	buf := [2]byte{}
-	//nolint:gosec // G103: unsafe is required for endianness detection
-	*(*uint16)(unsafe.Pointer(&buf[0])) = 0x0102
-	if buf[0] == 0x01 {
-		return bigEndian{}
-	}
-	return littleEndian{}
-}
-
-type littleEndian struct{}
-
-func (littleEndian) Uint16(b []byte) uint16 {
-	return uint16(b[0]) | uint16(b[1])<<8
-}
-
-func (littleEndian) Uint32(b []byte) uint32 {
-	return uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24
-}
-
-type bigEndian struct{}
-
-func (bigEndian) Uint16(b []byte) uint16 {
-	return uint16(b[1]) | uint16(b[0])<<8
-}
-
-func (bigEndian) Uint32(b []byte) uint32 {
-	return uint32(b[3]) | uint32(b[2])<<8 | uint32(b[1])<<16 | uint32(b[0])<<24
 }

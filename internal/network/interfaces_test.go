@@ -28,7 +28,6 @@ func TestNewManager(t *testing.T) {
 			if err != nil {
 				t.Fatalf("NewManager() error = %v", err)
 			}
-
 			if mgr == nil {
 				t.Fatal("NewManager() returned nil manager")
 			}

@@ -91,7 +91,7 @@ func TestSafeTransport(t *testing.T) {
 	}
 
 	if transport.DialContext == nil {
-		t.Error("SafeTransport should have custom DialContext")
+		t.Fatal("SafeTransport should have custom DialContext")
 	}
 
 	if !transport.DisableKeepAlives {
@@ -107,7 +107,7 @@ func TestSafeHTTPClient(t *testing.T) {
 	}
 
 	if client.Transport == nil {
-		t.Error("SafeHTTPClient should have Transport set")
+		t.Fatal("SafeHTTPClient should have Transport set")
 	}
 }
 

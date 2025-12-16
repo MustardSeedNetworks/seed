@@ -8,10 +8,10 @@ import (
 
 func TestNewManager(t *testing.T) {
 	manager := NewManager("en0")
-
 	if manager == nil {
 		t.Fatal("expected non-nil manager")
 	}
+
 	if manager.interfaceName != "en0" {
 		t.Errorf("expected interfaceName 'en0', got %q", manager.interfaceName)
 	}
