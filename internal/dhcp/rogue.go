@@ -43,10 +43,11 @@ type RogueDetector struct {
 }
 
 // NewRogueDetector creates a new rogue DHCP server detector.
+// The Interface field in config must be set - no hardcoded defaults are used (#572).
 func NewRogueDetector(config *RogueDetectorConfig) *RogueDetector {
 	if config == nil {
 		config = &RogueDetectorConfig{
-			Interface:        "eth0",
+			Interface:        "",   // Must be set by caller - no hardcoded defaults
 			KnownServers:     []string{},
 			AlertOnDetection: true,
 		}

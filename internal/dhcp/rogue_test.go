@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewRogueDetector(t *testing.T) {
-	// Test with nil config
+	// Test with nil config - interface is empty (must be set by caller #572)
 	rd := NewRogueDetector(nil)
 	if rd == nil {
 		t.Fatal("NewRogueDetector returned nil")
@@ -16,8 +16,8 @@ func TestNewRogueDetector(t *testing.T) {
 	if rd.config == nil {
 		t.Fatal("config should not be nil")
 	}
-	if rd.config.Interface != "eth0" {
-		t.Errorf("expected default interface eth0, got %s", rd.config.Interface)
+	if rd.config.Interface != "" {
+		t.Errorf("expected default interface to be empty (must be set by caller), got %s", rd.config.Interface)
 	}
 
 	// Test with custom config

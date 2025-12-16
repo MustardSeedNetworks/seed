@@ -21,9 +21,9 @@ func TestDefaultConfig(t *testing.T) {
 		t.Error("expected HTTPS to be enabled by default")
 	}
 
-	// Test interface defaults
-	if cfg.Interface.Default != "eth0" {
-		t.Errorf("expected default interface eth0, got %s", cfg.Interface.Default)
+	// Test interface defaults - empty means auto-detect (#572)
+	if cfg.Interface.Default != "" {
+		t.Errorf("expected default interface to be empty (auto-detect), got %s", cfg.Interface.Default)
 	}
 
 	// Test VLAN defaults
@@ -478,13 +478,14 @@ func TestValidateSamePortAndRedirectPort(t *testing.T) {
 }
 
 func TestValidateEmptyInterface(t *testing.T) {
+	// Empty interface is now valid - triggers auto-detection (#572)
 	cfg := DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.Interface.Default = ""
 
 	err := cfg.Validate()
-	if err == nil {
-		t.Error("expected validation error for empty interface")
+	if err != nil {
+		t.Errorf("empty interface should be valid (auto-detection), got error: %v", err)
 	}
 }
 

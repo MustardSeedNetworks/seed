@@ -461,10 +461,10 @@ func DefaultConfig() *Config {
 			LogAccessHeader: "X-Log-Token",
 		},
 		Interface: InterfaceConfig{
-			Default:          "eth0",
-			Fallbacks:        []string{"enp0s3", "wlan0"},
-			StartupRetries:   3,               // Retry 3 times when finding interface at startup (fixes #528)
-			StartupRetryWait: 5 * time.Second, // Wait 5 seconds between retries (fixes #528)
+			Default:          "",                  // Auto-detect by default (#572)
+			Fallbacks:        []string{},          // No hardcoded fallbacks - use auto-detection
+			StartupRetries:   3,                   // Retry 3 times when finding interface at startup (fixes #528)
+			StartupRetryWait: 5 * time.Second,     // Wait 5 seconds between retries (fixes #528)
 		},
 		VLAN: VLANConfig{
 			Enabled: false,
@@ -647,10 +647,7 @@ func (c *Config) Validate() error {
 		validationErrors = append(validationErrors, "server.port and server.http_redirect_port cannot be the same")
 	}
 
-	// Interface configuration
-	if c.Interface.Default == "" {
-		validationErrors = append(validationErrors, "interface.default is required")
-	}
+	// Interface configuration - empty default is valid (triggers auto-detection #572)
 	if c.Interface.StartupRetries < 0 {
 		validationErrors = append(validationErrors, fmt.Sprintf("interface.startup_retries must be >= 0, got %d", c.Interface.StartupRetries))
 	}
@@ -855,7 +852,9 @@ func (c *Config) GetActiveInterface() (string, bool) {
 		return c.Interface.Default, true
 	}
 
-	return "eth0", true // Ultimate fallback
+	// No hardcoded fallback - return empty to signal no interface found (#572)
+	log.Printf("Error: no active network interface found")
+	return "", false
 }
 
 // hasIPv4Address checks if an interface exists and has at least one IPv4 address.
