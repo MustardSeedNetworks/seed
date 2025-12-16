@@ -36,8 +36,31 @@ vi.mock("react-i18next", () => ({
     t: (key: string) => {
       // Return common translations for tests
       const translations: Record<string, string> = {
+        // Common namespace
+        "app.title": "The Seed",
+        "app.tagline": "Network Diagnostics by Mustard Seed Networks",
+        "buttons.login": "Login",
+        "buttons.logout": "Logout",
+        "status.loggingIn": "Logging in...",
+        "labels.username": "Username",
+        "labels.password": "Password",
+        "login.defaultCredentials": "Default: admin / seed",
         "status.error": "Error",
         "status.noDataAvailable": "No data available",
+        "accessibility.openHelp": "Open help",
+        "accessibility.openSettings": "Open settings",
+        "accessibility.switchToLightMode": "Switch to light mode",
+        "accessibility.switchToDarkMode": "Switch to dark mode",
+        "accessibility.selectInterface": "Select network interface",
+        // Cards namespace
+        "system.title": "System Health",
+        "system.cpu": "CPU",
+        "system.memory": "Memory",
+        "system.disk": "Disk",
+        "system.uptime": "Uptime",
+        "system.load1m": "Load (1m)",
+        "system.goroutines": "Goroutines",
+        "system.processMem": "Process Memory",
       };
       return translations[key] || key;
     },

@@ -182,7 +182,11 @@ export function SystemHealthCard() {
   }, [fetchHealth]);
 
   const getStatus = (health: SystemHealth): Status => {
-    const maxPercent = Math.max(health.cpuPercent, health.memoryPercent, health.diskPercent);
+    const maxPercent = Math.max(
+      health.cpuPercent ?? 0,
+      health.memoryPercent ?? 0,
+      health.diskPercent ?? 0
+    );
     return getResourceStatus(maxPercent);
   };
 
@@ -198,40 +202,49 @@ export function SystemHealthCard() {
     >
       {(health) => (
         <div className="stack">
-          <ResourceBar label={t("system.cpu")} percent={health.cpuPercent} used={0} total={0} />
+          <ResourceBar
+            label={t("system.cpu")}
+            percent={health.cpuPercent ?? 0}
+            used={0}
+            total={0}
+          />
           <ResourceBar
             label={t("system.memory")}
-            percent={health.memoryPercent}
-            used={health.memoryUsed}
-            total={health.memoryTotal}
+            percent={health.memoryPercent ?? 0}
+            used={health.memoryUsed ?? 0}
+            total={health.memoryTotal ?? 0}
           />
           <ResourceBar
             label={t("system.disk")}
-            percent={health.diskPercent}
-            used={health.diskUsed}
-            total={health.diskTotal}
+            percent={health.diskPercent ?? 0}
+            used={health.diskUsed ?? 0}
+            total={health.diskTotal ?? 0}
           />
 
           <CardDivider />
 
           <div className="grid grid-cols-2 gap-2">
-            <CardRow label={t("system.uptime")} value={formatUptime(health.uptime)} align="left" />
+            <CardRow
+              label={t("system.uptime")}
+              value={formatUptime(health.uptime ?? 0)}
+              align="left"
+            />
             <CardRow
               label={t("system.load1m")}
-              value={health.loadAvg1.toFixed(2)}
+              value={(health.loadAvg1 ?? 0).toFixed(2)}
               align="left"
-              status={health.loadAvg1 > health.numCpu ? "warning" : undefined}
+              status={(health.loadAvg1 ?? 0) > (health.numCpu ?? 1) ? "warning" : undefined}
             />
-            <CardRow label={t("system.goroutines")} value={health.goroutines} align="left" />
+            <CardRow label={t("system.goroutines")} value={health.goroutines ?? 0} align="left" />
             <CardRow
               label={t("system.processMem")}
-              value={formatBytes(health.processMemory)}
+              value={formatBytes(health.processMemory ?? 0)}
               align="left"
             />
           </div>
 
           <div className="caption text-center pt-1">
-            {health.os}/{health.arch} - {health.numCpu} CPUs
+            {health.os ?? "Unknown"}/{health.arch ?? "Unknown"} - {health.numCpu ?? 0} CPUs
           </div>
         </div>
       )}
