@@ -23,6 +23,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -379,7 +380,7 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 		return fmt.Errorf("failed to parse OUI database: %w", err)
 	}
 
-	fmt.Printf("Downloaded OUI database: %d bytes, %d entries\n", written, db.Count())
+	slog.Info("Downloaded OUI database", "bytes", written, "entries", db.Count())
 	return nil
 }
 

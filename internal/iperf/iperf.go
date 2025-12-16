@@ -67,6 +67,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"os/exec"
@@ -520,7 +521,7 @@ func (m *Manager) StopServer() error {
 		if err := m.serverCmd.Process.Kill(); err != nil {
 			// Log the error, but don't fail, as we are trying to stop the server
 			// and it might already be dead or unreachable.
-			fmt.Printf("Error killing iperf3 server process (PID %d): %v\n", m.serverCmd.Process.Pid, err)
+			slog.Warn("Error killing iperf3 server process", "pid", m.serverCmd.Process.Pid, "error", err)
 		}
 	}
 
