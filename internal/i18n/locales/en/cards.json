@@ -102,7 +102,10 @@
     "vlan": "VLAN",
     "title2": "Title",
     "httpServer": "Server",
-    "unknownSubnet": "Unknown subnet"
+    "unknownSubnet": "Unknown subnet",
+    "clearSearch": "Clear search",
+    "filteredCount": "{{filtered}} of {{total}}",
+    "clickViewVulnerabilities": "Click to view vulnerability details"
   },
   "gateway": {
     "title": "Gateway",
@@ -206,6 +209,7 @@
     "iperfNotInstalled": "iperf3 not installed. Install it to enable LAN speed tests.",
     "testsDisabled": "Performance tests are disabled in Settings",
     "serverNotConfigured": "Server not configured",
+    "speedtestFailed": "Speedtest failed",
     "phaseReady": "Ready",
     "phaseFindingServer": "Finding server...",
     "phaseTestingLatency": "Testing latency...",
@@ -214,7 +218,8 @@
     "phaseComplete": "Complete",
     "phaseConnecting": "Connecting...",
     "phaseTesting": "Testing...",
-    "both": "Both"
+    "both": "Both",
+    "progress": "Speedtest progress"
   },
   "health": {
     "title": "Health Checks",
@@ -225,6 +230,7 @@
     "responseTime": "Response Time",
     "lastCheck": "Last Check",
     "runningTests": "Running tests...",
+    "failedToRun": "Failed to run tests",
     "ping": "Ping",
     "tcpPorts": "TCP Ports",
     "udpPorts": "UDP Ports",
@@ -232,7 +238,18 @@
     "fail": "fail",
     "loss": "loss",
     "packetLoss": "{{percent}}% loss",
-    "jitter": "{{ms}}ms jitter"
+    "jitter": "{{ms}}ms jitter",
+    "timingDns": "DNS",
+    "timingTcp": "TCP",
+    "timingTls": "TLS",
+    "timingWait": "Wait",
+    "timingDownload": "Download",
+    "expired": "EXPIRED",
+    "unknown": "Unknown",
+    "certExpiry1Day": "1 day",
+    "certExpiryDays": "{{days}} days",
+    "certExpiryMonths": "{{months}}mo",
+    "certExpiryYears": "{{years}}y"
   },
   "system": {
     "title": "System Health",
@@ -307,5 +324,24 @@
     "paused": "Paused",
     "completed": "Completed",
     "created": "Created"
+  },
+  "vulnerability": {
+    "title": "Vulnerability Report",
+    "close": "Close",
+    "loading": "Loading vulnerability data...",
+    "noData": "No vulnerability data available for this device",
+    "error": "Error: {{message}}",
+    "vendor": "Vendor",
+    "product": "Product",
+    "version": "Version",
+    "scanTime": "Scan Time",
+    "unknown": "Unknown",
+    "vulnerabilityFound": "{{count}} Vulnerability Found",
+    "vulnerabilitiesFound": "{{count}} Vulnerabilities Found",
+    "rescan": "Rescan",
+    "noVulnerabilities": "No vulnerabilities detected",
+    "cvss": "CVSS: {{score}}",
+    "published": "Published: {{date}}",
+    "viewDetails": "View Details"
   }
 }

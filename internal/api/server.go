@@ -30,6 +30,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/dns"
 	"github.com/krisarmstrong/seed/internal/gateway"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
@@ -480,14 +481,16 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
-	// Apply middleware stack: panic recovery → request ID → security headers → CORS → auth (fixes #519)
+	// Apply middleware stack: panic recovery → request ID → security headers → CORS → i18n → auth (fixes #519)
 	// Panic recovery is outermost to catch all panics
 	// Request ID middleware generates unique IDs for request correlation in logs
+	// i18n middleware extracts Accept-Language and attaches localizer to context
 	handler := recoverMiddleware(
 		logging.RequestIDMiddleware(
 			securityHeadersMiddleware(
 				corsMiddleware(
-					s.authManager.Middleware(s.mux)))))
+					i18n.Middleware()(
+						s.authManager.Middleware(s.mux))))))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,

@@ -1,4 +1,22 @@
 {
+  "modal": {
+    "title": "Centro de ayuda de The Seed",
+    "searchPlaceholder": "Buscar ayuda...",
+    "contents": "Contenido",
+    "closeHelp": "Cerrar ayuda"
+  },
+  "sections": {
+    "about": "Acerca de The Seed",
+    "gettingStarted": "Primeros pasos",
+    "link": "Estado del enlace",
+    "cable": "Prueba de cable",
+    "wifi": "Estado WiFi",
+    "network": "Red y DHCP",
+    "gateway": "Puerta de enlace",
+    "dns": "Pruebas DNS",
+    "performance": "Pruebas de rendimiento",
+    "discovery": "Descubrimiento de red"
+  },
   "instructions": {
     "runTests": "Toque el botón de reproducir para ejecutar todas las pruebas.",
     "discovery": "Use la tarjeta de Descubrimiento de red para escanear dispositivos en su red.",
@@ -40,5 +58,274 @@
     "rdp": "RDP",
     "postgresql": "PostgreSQL",
     "mongodb": "MongoDB"
+  },
+  "content": {
+    "about": {
+      "welcome": "Bienvenido a The Seed",
+      "description": "The Seed es una herramienta integral de diagnóstico y monitoreo de redes de Mustard Seed Networks, diseñada para proporcionar visibilidad profunda de su infraestructura de red.",
+      "features": {
+        "realTimeMonitoring": {
+          "title": "Monitoreo en tiempo real",
+          "description": "Monitoree el estado del enlace, intensidad de señal WiFi, alcanzabilidad del gateway y más con actualizaciones en vivo."
+        },
+        "networkDiscovery": {
+          "title": "Descubrimiento de red",
+          "description": "Descubra todos los dispositivos en su red con escaneo ARP, detección de vecinos LLDP/CDP."
+        },
+        "performanceTesting": {
+          "title": "Pruebas de rendimiento",
+          "description": "Ejecute pruebas de velocidad de internet y pruebas de rendimiento LAN con integración iperf3."
+        },
+        "cableDiagnostics": {
+          "title": "Diagnóstico de cables",
+          "description": "Pruebe cables Ethernet usando Reflectometría de Dominio de Tiempo (TDR) para encontrar fallas y medir longitud."
+        }
+      },
+      "openSource": {
+        "title": "Código abierto y personalizable",
+        "description": "The Seed es software de código abierto. Personalice umbrales, configure pruebas e integre con su infraestructura de monitoreo existente."
+      },
+      "versionInfo": {
+        "title": "Información de versión",
+        "currentVersion": "Versión actual:",
+        "backend": "Backend:",
+        "frontend": "Frontend:"
+      }
+    },
+    "gettingStarted": {
+      "title": "Primeros pasos",
+      "steps": {
+        "dashboard": {
+          "title": "Resumen del panel",
+          "description": "El panel principal muestra todas las tarjetas de diagnóstico. Cada tarjeta muestra información en tiempo real sobre un aspecto específico de su red."
+        },
+        "interface": {
+          "title": "Seleccionar interfaz de red",
+          "description": "Use el menú desplegable de interfaz en el encabezado para seleccionar qué interfaz de red monitorear (ej., eth0, wlan0). Haga clic en \"Configuración\" para opciones específicas de la interfaz."
+        },
+        "thresholds": {
+          "title": "Configurar umbrales",
+          "description": "Abra Configuración → Umbrales para personalizar niveles de advertencia y críticos para latencia DNS, ping del gateway, intensidad de señal WiFi y más."
+        },
+        "runTests": {
+          "title": "Ejecutar pruebas",
+          "description": "Haga clic en el botón \"Ejecutar todas las pruebas\" (⚡) en la esquina inferior derecha para ejecutar pruebas de velocidad, diagnósticos de cable, descubrimiento de red y verificaciones de salud personalizadas."
+        },
+        "exploreCards": {
+          "title": "Explorar tarjetas individuales",
+          "description": "Cada tarjeta tiene un icono de ayuda (?) que explica las métricas mostradas. Haga clic en las tarjetas para ver información detallada y ejecutar pruebas específicas."
+        }
+      },
+      "proTips": {
+        "title": "Consejos profesionales",
+        "tips": [
+          "Use la tarjeta de Descubrimiento de red para encontrar todos los dispositivos en su red",
+          "Configure pruebas de verificación de salud personalizadas en Configuración → Pruebas personalizadas",
+          "Exporte datos de diagnóstico para solución de problemas o documentación",
+          "Habilite escaneo automático para monitoreo continuo de red"
+        ]
+      }
+    },
+    "linkStatus": {
+      "description": "Monitorea la conexión de capa física de su interfaz de red.",
+      "terms": {
+        "carrier": {
+          "term": "Portadora",
+          "description": "Detección de señal de capa física. Muestra 'Conectado' cuando la NIC detecta un socio de enlace (cable conectado a puerto activo)."
+        },
+        "speed": {
+          "term": "Velocidad",
+          "description": "Velocidad de enlace negociada entre su interfaz de red y el dispositivo conectado (ej., 1000 Mbps)."
+        },
+        "duplex": {
+          "term": "Dúplex",
+          "description": "Modo de comunicación - Dúplex completo permite datos bidireccionales simultáneos, Medio dúplex es una dirección a la vez."
+        },
+        "autoNeg": {
+          "term": "Auto-negociación",
+          "description": "Si la velocidad y dúplex fueron auto-negociados con el socio de enlace o configurados manualmente."
+        },
+        "mtu": {
+          "term": "MTU",
+          "description": "Unidad máxima de transmisión - tamaño máximo de paquete (en bytes) que puede enviarse sin fragmentación. Estándar es 1500 bytes."
+        }
+      }
+    },
+    "cableTest": {
+      "description": "Reflectometría de Dominio de Tiempo prueba la calidad del cable y detecta fallas.",
+      "terms": {
+        "tdrTest": {
+          "term": "Prueba TDR",
+          "description": "Envía pulsos eléctricos a través del cable y mide reflexiones para detectar fallas y medir longitud."
+        },
+        "cableStatus": {
+          "term": "Estado del cable",
+          "description": "Muestra si los pares de cable están OK, abiertos (desconectados), en corto (cables tocándose), o tienen desajuste de impedancia."
+        },
+        "faultDistance": {
+          "term": "Distancia a la falla",
+          "description": "Distancia a la falla del cable en metros. Ayuda a localizar problemas físicos del cable."
+        },
+        "pairs": {
+          "term": "Pares",
+          "description": "Los cables Ethernet tienen 4 pares trenzados. Gigabit usa los 4; Fast Ethernet usa pares 1-2 y 3-6."
+        }
+      },
+      "note": "La prueba de cable requiere hardware de red compatible. No todas las NICs soportan TDR."
+    },
+    "wifiStatus": {
+      "description": "Monitoree la calidad y configuración de su conexión inalámbrica.",
+      "terms": {
+        "ssid": {
+          "term": "SSID",
+          "description": "Identificador de conjunto de servicio - el nombre de la red inalámbrica a la que está conectado."
+        },
+        "bssid": {
+          "term": "BSSID",
+          "description": "Identificador de conjunto de servicio básico - dirección MAC del punto de acceso."
+        },
+        "signal": {
+          "term": "Intensidad de señal",
+          "description": "Intensidad de señal en dBm. -30 es excelente, -67 es bueno, -70 es regular, -80 es débil. Mayor (menos negativo) es mejor."
+        },
+        "channel": {
+          "term": "Canal",
+          "description": "Número de canal WiFi (1-14 para 2.4GHz, 36-165 para 5GHz). Canales superpuestos causan interferencia."
+        },
+        "security": {
+          "term": "Seguridad",
+          "description": "Protocolo de encriptación que protege la conexión (WPA2, WPA3, WEP, o Abierto)."
+        },
+        "frequency": {
+          "term": "Frecuencia",
+          "description": "Banda de radio - 2.4GHz tiene mejor alcance, 5GHz tiene mejor velocidad y menos interferencia."
+        }
+      }
+    },
+    "networkDhcp": {
+      "description": "Muestra configuración IP e información de arrendamiento DHCP.",
+      "terms": {
+        "leaseTime": {
+          "term": "Tiempo de arrendamiento",
+          "description": "Duración de la asignación de dirección IP actual antes de que se necesite renovación."
+        },
+        "dhcpServer": {
+          "term": "Servidor DHCP",
+          "description": "Dirección IP del servidor DHCP que emitió el arrendamiento (usualmente su router)."
+        },
+        "gateway": {
+          "term": "Puerta de enlace",
+          "description": "Puerta de enlace predeterminada asignada por DHCP para enrutar tráfico fuera de la subred."
+        },
+        "dnsServers": {
+          "term": "Servidores DNS",
+          "description": "Servidores DNS asignados por DHCP para resolución de nombres."
+        },
+        "subnetMask": {
+          "term": "Máscara de subred",
+          "description": "Máscara de red que define el tamaño de la subred local."
+        }
+      }
+    },
+    "gatewayHelp": {
+      "description": "Prueba alcanzabilidad y latencia a su puerta de enlace predeterminada.",
+      "terms": {
+        "ipv4Gateway": {
+          "term": "Puerta de enlace IPv4",
+          "description": "Router predeterminado para tráfico IPv4 que sale de su red local."
+        },
+        "ipv6Gateway": {
+          "term": "Puerta de enlace IPv6",
+          "description": "Router predeterminado para tráfico IPv6 (puede ser dirección link-local)."
+        },
+        "reachability": {
+          "term": "Alcanzabilidad",
+          "description": "Si la puerta de enlace responde a solicitudes de ping ICMP."
+        },
+        "latency": {
+          "term": "Latencia",
+          "description": "Tiempo de ida y vuelta a la puerta de enlace. Debe ser <1ms para redes locales."
+        },
+        "packetLoss": {
+          "term": "Pérdida de paquetes",
+          "description": "Porcentaje de paquetes de ping que no recibieron respuesta."
+        }
+      }
+    },
+    "dnsTests": {
+      "description": "Prueba el rendimiento y funcionalidad de resolución DNS.",
+      "terms": {
+        "forwardLookup": {
+          "term": "Búsqueda directa",
+          "description": "Resuelve nombre de host a dirección IPv4 (registro A)."
+        },
+        "reverseLookup": {
+          "term": "Búsqueda inversa",
+          "description": "Resuelve dirección IP de vuelta a nombre de host (registro PTR)."
+        },
+        "ipv6Lookup": {
+          "term": "Búsqueda IPv6",
+          "description": "Resuelve nombre de host a dirección IPv6 (registro AAAA)."
+        },
+        "latency": {
+          "term": "Latencia",
+          "description": "Tiempo para completar la consulta DNS. Bueno: <50ms para DNS local."
+        }
+      }
+    },
+    "performanceTests": {
+      "description": "Ejecute pruebas de velocidad para medir el rendimiento de la red.",
+      "terms": {
+        "internetSpeed": {
+          "term": "Prueba de velocidad de internet",
+          "description": "Prueba velocidades de descarga/subida a servidores públicos de speedtest. Mide su conexión a internet."
+        },
+        "lanSpeed": {
+          "term": "Velocidad LAN (iperf3)",
+          "description": "Prueba rendimiento en su red local usando iperf3 a un servidor configurado."
+        },
+        "download": {
+          "term": "Descarga",
+          "description": "Velocidad máxima de descarga alcanzada durante la prueba."
+        },
+        "upload": {
+          "term": "Subida",
+          "description": "Velocidad máxima de subida alcanzada durante la prueba."
+        },
+        "latency": {
+          "term": "Latencia",
+          "description": "Tiempo de ida y vuelta (ping) al servidor de prueba."
+        },
+        "jitter": {
+          "term": "Jitter",
+          "description": "Variación en latencia a lo largo del tiempo. Menor es mejor para aplicaciones en tiempo real como VoIP y juegos."
+        }
+      }
+    },
+    "networkDiscovery": {
+      "description": "Descubra todos los dispositivos en su red e identifique switches conectados.",
+      "terms": {
+        "networkScan": {
+          "term": "Escaneo de red",
+          "description": "Descubre dispositivos activos en su subred de red usando barridos de ping ARP/ICMP."
+        },
+        "macAddress": {
+          "term": "Dirección MAC",
+          "description": "Dirección de hardware de la interfaz de red - identificador único para el dispositivo."
+        },
+        "vendor": {
+          "term": "Fabricante",
+          "description": "Fabricante identificado desde el OUI de la dirección MAC (primeros 3 bytes)."
+        },
+        "hostname": {
+          "term": "Nombre de host",
+          "description": "Nombre de host DNS si la búsqueda inversa tuvo éxito."
+        },
+        "lldpCdp": {
+          "term": "LLDP/CDP",
+          "description": "Protocolo de descubrimiento de capa de enlace (estándar) o Protocolo de descubrimiento de Cisco - proporciona información sobre switches de red conectados directamente."
+        }
+      }
+    }
   }
 }

@@ -1,0 +1,34 @@
+{
+  "status": {
+    "survey": "Encuesta",
+    "samples": "muestras"
+  },
+  "buttons": {
+    "startSurvey": "Iniciar Encuesta",
+    "pause": "Pausar",
+    "complete": "Completar",
+    "resume": "Reanudar",
+    "close": "Cerrar",
+    "hideHeatmap": "Ocultar Mapa de Calor",
+    "rssiHeatmap": "Mapa de Calor RSSI",
+    "throughput": "Rendimiento",
+    "latency": "Latencia"
+  },
+  "floorPlan": {
+    "title": "Plano de Planta",
+    "uploadPrompt": "Suba un plano de planta para comenzar",
+    "chooseFile": "Elegir Archivo",
+    "uploading": "Subiendo...",
+    "supportedFormats": "PNG, JPG, GIF, WEBP o SVG (máx 10MB)",
+    "clickToMeasure": "Haga clic en el plano de planta para tomar una medición en esa ubicación"
+  },
+  "samples": {
+    "title": "Muestras",
+    "noSamples": "Sin muestras aún.",
+    "clickToStart": "Haga clic en el plano para comenzar.",
+    "startToBegin": "Inicie la encuesta para comenzar."
+  },
+  "progress": {
+    "takingMeasurement": "Tomando medición..."
+  }
+}

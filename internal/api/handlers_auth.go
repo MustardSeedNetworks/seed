@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/krisarmstrong/seed/internal/i18n"
 )
 
 // LoginRequest represents a login request.
@@ -24,8 +25,10 @@ type LoginResponse struct {
 
 // handleLogin handles user login (fixes #544 - split from handlers.go).
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, localizer.T("errors.api.methodNotAllowed"), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -37,7 +40,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Retry-After", "900") // 15 minutes
 		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
 		sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-			"error":              "Too many failed login attempts",
+			"error":              localizer.T("errors.auth.tooManyAttempts"),
 			"retry_after":        900,
 			"remaining_attempts": remaining,
 		})
@@ -51,7 +54,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		// Log error without exposing credentials
 		slog.Warn("Login decode error", "client_ip", clientIP, "error", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, localizer.T("errors.api.invalidRequestBody"), http.StatusBadRequest)
 		return
 	}
 
@@ -65,7 +68,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		if blocked {
 			w.Header().Set("Retry-After", "900")
 			sendJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-				"error":              "Too many failed login attempts. Account temporarily locked.",
+				"error":              localizer.T("errors.auth.accountLocked"),
 				"retry_after":        900,
 				"remaining_attempts": 0,
 			})
@@ -73,7 +76,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 
 		sendJSONResponse(w, http.StatusUnauthorized, map[string]interface{}{
-			"error":              "Invalid credentials",
+			"error":              localizer.T("errors.auth.invalidCredentials"),
 			"remaining_attempts": remaining,
 		})
 		return
@@ -86,14 +89,14 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	accessToken, err := s.authManager.GenerateAccessToken(req.Username)
 	if err != nil {
 		slog.Error("Failed to generate access token", "error", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, localizer.T("errors.api.internalError"), http.StatusInternalServerError)
 		return
 	}
 
 	refreshToken, err := s.authManager.GenerateRefreshToken(req.Username)
 	if err != nil {
 		slog.Error("Failed to generate refresh token", "error", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, localizer.T("errors.api.internalError"), http.StatusInternalServerError)
 		return
 	}
 
@@ -117,8 +120,10 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 // handleLogout handles user logout (fixes #544 - split from handlers.go).
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, localizer.T("errors.api.methodNotAllowed"), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -134,8 +139,10 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 
 // handleRefreshToken handles token refresh using refresh token (fixes #478).
 func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, localizer.T("errors.api.methodNotAllowed"), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -143,7 +150,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := auth.GetRefreshTokenFromCookie(r)
 	if err != nil {
 		sendJSONResponse(w, http.StatusUnauthorized, map[string]string{
-			"error": "Refresh token not found",
+			"error": localizer.T("errors.auth.refreshNotFound"),
 		})
 		return
 	}
@@ -152,7 +159,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	newAccessToken, err := s.authManager.RefreshAccessToken(refreshToken)
 	if err != nil {
 		sendJSONResponse(w, http.StatusUnauthorized, map[string]string{
-			"error": "Invalid or expired refresh token",
+			"error": localizer.T("errors.auth.expiredToken"),
 		})
 		return
 	}
@@ -181,8 +188,10 @@ type SetupStatusResponse struct {
 
 // handleSetupStatus checks if initial setup is required (fixes #544 - split from handlers.go).
 func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, localizer.T("errors.api.methodNotAllowed"), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -211,8 +220,10 @@ type SetupCompleteRequest struct {
 
 // handleSetupComplete completes initial setup by setting admin password (fixes #544 - split from handlers.go).
 func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, localizer.T("errors.api.methodNotAllowed"), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -222,14 +233,14 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	var req SetupCompleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		slog.Warn("Setup decode error", "error", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, localizer.T("errors.api.invalidRequestBody"), http.StatusBadRequest)
 		return
 	}
 
 	// Validate password strength
 	if err := auth.ValidatePasswordStrength(req.Password); err != nil {
 		sendJSONResponse(w, http.StatusBadRequest, map[string]string{
-			"error": "Password does not meet strength requirements",
+			"error": localizer.T("errors.password.weak"),
 		})
 		return
 	}
@@ -238,7 +249,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
 		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
-			"error": "Failed to hash password",
+			"error": localizer.T("errors.api.internalError"),
 		})
 		return
 	}
@@ -255,7 +266,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	if err := s.config.Save(s.configPath); err != nil {
 		slog.Error("Failed to save config after setup", "error", err)
 		sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
-			"error": "Failed to save configuration",
+			"error": localizer.T("errors.config.failedToSave"),
 		})
 		return
 	}

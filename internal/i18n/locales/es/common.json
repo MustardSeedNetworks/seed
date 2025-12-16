@@ -47,6 +47,7 @@
     "noIP": "Sin IP",
     "noSignal": "Sin señal",
     "noData": "Sin datos",
+    "noDataAvailable": "No hay datos disponibles",
     "never": "Nunca",
     "justNow": "Ahora mismo",
     "unknown": "Desconocido"
@@ -88,7 +89,8 @@
     "switchToDarkMode": "Cambiar a modo oscuro",
     "selectInterface": "Seleccionar interfaz de red",
     "clearSearch": "Limpiar búsqueda",
-    "wsStatus": "Estado de WebSocket: {{status}}"
+    "wsStatus": "Estado de WebSocket: {{status}}",
+    "newCommunityString": "Nueva cadena de comunidad"
   },
   "sections": {
     "connectivity": "Conectividad",
@@ -102,5 +104,14 @@
   "footer": {
     "runTestsHint": "Toca el botón de reproducción para ejecutar todas las pruebas.",
     "networkDiscoveryHint": "Usa la tarjeta de Descubrimiento de Red para buscar dispositivos en tu red."
+  },
+  "errorBoundary": {
+    "title": "Algo salió mal",
+    "defaultMessage": "Ocurrió un error inesperado",
+    "tryAgain": "Reintentar"
+  },
+  "dataTable": {
+    "clearAll": "Limpiar todo",
+    "showingResults": "Mostrando {{shown}} de {{total}} resultados"
   }
 }

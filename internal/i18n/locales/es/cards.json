@@ -102,7 +102,10 @@
     "vlan": "VLAN",
     "title2": "Título",
     "httpServer": "Servidor",
-    "unknownSubnet": "Subred desconocida"
+    "unknownSubnet": "Subred desconocida",
+    "clearSearch": "Limpiar búsqueda",
+    "filteredCount": "{{filtered}} de {{total}}",
+    "clickViewVulnerabilities": "Haga clic para ver detalles de vulnerabilidades"
   },
   "gateway": {
     "title": "Puerta de enlace",
@@ -206,6 +209,7 @@
     "iperfNotInstalled": "iperf3 no instalado. Instálelo para habilitar pruebas de velocidad LAN.",
     "testsDisabled": "Las pruebas de rendimiento están deshabilitadas en Ajustes",
     "serverNotConfigured": "Servidor no configurado",
+    "speedtestFailed": "Error en Speedtest",
     "phaseReady": "Listo",
     "phaseFindingServer": "Buscando servidor...",
     "phaseTestingLatency": "Probando latencia...",
@@ -214,7 +218,8 @@
     "phaseComplete": "Completo",
     "phaseConnecting": "Conectando...",
     "phaseTesting": "Probando...",
-    "both": "Ambos"
+    "both": "Ambos",
+    "progress": "Progreso de Speedtest"
   },
   "health": {
     "title": "Verificaciones de salud",
@@ -225,6 +230,7 @@
     "responseTime": "Tiempo de respuesta",
     "lastCheck": "Última verificación",
     "runningTests": "Ejecutando pruebas...",
+    "failedToRun": "Error al ejecutar pruebas",
     "ping": "Ping",
     "tcpPorts": "Puertos TCP",
     "udpPorts": "Puertos UDP",
@@ -232,7 +238,18 @@
     "fail": "fallo",
     "loss": "pérdida",
     "packetLoss": "{{percent}}% pérdida",
-    "jitter": "{{ms}}ms fluctuación"
+    "jitter": "{{ms}}ms fluctuación",
+    "timingDns": "DNS",
+    "timingTcp": "TCP",
+    "timingTls": "TLS",
+    "timingWait": "Espera",
+    "timingDownload": "Descarga",
+    "expired": "EXPIRADO",
+    "unknown": "Desconocido",
+    "certExpiry1Day": "1 día",
+    "certExpiryDays": "{{days}} días",
+    "certExpiryMonths": "{{months}}m",
+    "certExpiryYears": "{{years}}a"
   },
   "system": {
     "title": "Salud del sistema",
@@ -307,5 +324,24 @@
     "paused": "Pausado",
     "completed": "Completado",
     "created": "Creado"
+  },
+  "vulnerability": {
+    "title": "Informe de vulnerabilidades",
+    "close": "Cerrar",
+    "loading": "Cargando datos de vulnerabilidades...",
+    "noData": "No hay datos de vulnerabilidades disponibles para este dispositivo",
+    "error": "Error: {{message}}",
+    "vendor": "Fabricante",
+    "product": "Producto",
+    "version": "Versión",
+    "scanTime": "Hora de escaneo",
+    "unknown": "Desconocido",
+    "vulnerabilityFound": "{{count}} Vulnerabilidad encontrada",
+    "vulnerabilitiesFound": "{{count}} Vulnerabilidades encontradas",
+    "rescan": "Re-escanear",
+    "noVulnerabilities": "No se detectaron vulnerabilidades",
+    "cvss": "CVSS: {{score}}",
+    "published": "Publicado: {{date}}",
+    "viewDetails": "Ver detalles"
   }
 }
