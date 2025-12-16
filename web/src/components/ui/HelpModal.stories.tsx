@@ -1,0 +1,573 @@
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
+import { ImprovedHelpModal } from "../help/ImprovedHelpModal";
+import { HelpModal, HelpSection, HelpItem } from "./HelpModal";
+
+/**
+ * HelpModal provides contextual help content in a modal dialog overlay.
+ * Two variants are available:
+ * - HelpModal: Simple reusable modal with custom content
+ * - ImprovedHelpModal: Comprehensive help center with tabbed navigation and search
+ */
+const meta: Meta<typeof ImprovedHelpModal> = {
+  title: "UI/HelpModal",
+  component: ImprovedHelpModal,
+  parameters: {
+    layout: "fullscreen",
+    docs: {
+      description: {
+        component:
+          "Modal dialog for displaying help content with search, navigation, and rich documentation for all application features.",
+      },
+    },
+  },
+  tags: ["autodocs"],
+  argTypes: {
+    isOpen: {
+      control: "boolean",
+      description: "Controls modal visibility",
+    },
+    onClose: {
+      action: "closed",
+      description: "Callback when modal is closed",
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+/**
+ * Default help modal in closed state
+ */
+export const Closed: Story = {
+  args: {
+    isOpen: false,
+    onClose: () => {},
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Modal in closed state - nothing is rendered.",
+      },
+    },
+  },
+};
+
+/**
+ * Help modal open showing the About section
+ */
+export const OpenAbout: Story = {
+  args: {
+    isOpen: true,
+    onClose: () => {},
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Modal open displaying the About section with application overview and feature highlights.",
+      },
+    },
+  },
+};
+
+/**
+ * Interactive demo with open/close toggle
+ */
+export const Interactive: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+      <div className="min-h-screen bg-surface-base p-8">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="px-4 py-2 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90 transition-colors"
+        >
+          Open Help Center
+        </button>
+        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Interactive demo allowing you to open and close the help modal by clicking the button.",
+      },
+    },
+  },
+};
+
+/**
+ * Help modal with search functionality demonstration
+ */
+export const WithSearch: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <div className="min-h-screen bg-surface-base">
+        <div className="p-4 bg-surface-raised border-b border-surface-border">
+          <p className="body-small text-text-muted">
+            Use the search box in the modal sidebar to filter help sections. Try
+            searching for "wifi", "dns", or "gateway".
+          </p>
+        </div>
+        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Demonstrates search functionality - use the search box to filter help sections by keyword.",
+      },
+    },
+  },
+};
+
+/**
+ * Help modal showing all navigation sections
+ */
+export const AllSections: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <div className="min-h-screen bg-surface-base">
+        <div className="p-4 bg-surface-raised border-b border-surface-border">
+          <h2 className="heading-3 text-text-primary mb-2">
+            Help Modal - All Sections
+          </h2>
+          <p className="body-small text-text-muted">
+            Navigate through all available help sections using the sidebar
+          </p>
+        </div>
+        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Full help center with all sections: About, Getting Started, Link Status, Cable Test, WiFi, Network, Gateway, DNS, Performance Tests, and Discovery.",
+      },
+    },
+  },
+};
+
+/**
+ * Mobile viewport demonstration
+ */
+export const MobileView: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <div className="min-h-screen bg-surface-base">
+        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      </div>
+    );
+  },
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile1",
+    },
+    docs: {
+      description: {
+        story:
+          "Help modal on mobile viewport showing responsive layout with sidebar and content stacking.",
+      },
+    },
+  },
+};
+
+/**
+ * Tablet viewport demonstration
+ */
+export const TabletView: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <div className="min-h-screen bg-surface-base">
+        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      </div>
+    );
+  },
+  parameters: {
+    viewport: {
+      defaultViewport: "tablet",
+    },
+    docs: {
+      description: {
+        story: "Help modal on tablet viewport showing medium-sized layout adaptation.",
+      },
+    },
+  },
+};
+
+/**
+ * Dark theme demonstration
+ */
+export const DarkTheme: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <div className="min-h-screen bg-surface-base dark">
+        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      </div>
+    );
+  },
+  parameters: {
+    backgrounds: { default: "dark" },
+    docs: {
+      description: {
+        story: "Help modal styled for dark theme using theme tokens.",
+      },
+    },
+  },
+};
+
+// ============================================================================
+// Simple HelpModal Stories
+// ============================================================================
+
+const SimpleHelpModalMeta: Meta<typeof HelpModal> = {
+  title: "UI/HelpModal/Simple",
+  component: HelpModal,
+  parameters: {
+    layout: "fullscreen",
+    docs: {
+      description: {
+        component:
+          "Simple reusable help modal for custom content - lightweight alternative to the full Help Center.",
+      },
+    },
+  },
+  tags: ["autodocs"],
+};
+
+export const SimpleHelpModalStories = {
+  ...SimpleHelpModalMeta,
+};
+
+/**
+ * Simple help modal with basic content
+ */
+export const SimpleBasic: StoryObj<typeof HelpModal> = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <div className="min-h-screen bg-surface-base">
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="Link Status Help"
+        >
+          <p className="body text-text-secondary mb-4">
+            The Link Status card monitors the physical layer connection of your network
+            interface.
+          </p>
+          <ul className="list-disc list-inside space-y-2 body-small text-text-secondary">
+            <li>Carrier: Shows if cable is physically connected</li>
+            <li>Speed: Negotiated link speed (e.g., 1000 Mbps)</li>
+            <li>Duplex: Full or Half duplex communication</li>
+            <li>MTU: Maximum transmission unit size</li>
+          </ul>
+        </HelpModal>
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Simple help modal with basic text content and bullet points.",
+      },
+    },
+  },
+};
+
+/**
+ * Simple help modal with structured sections
+ */
+export const SimpleWithSections: StoryObj<typeof HelpModal> = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <div className="min-h-screen bg-surface-base">
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="WiFi Survey Help"
+        >
+          <HelpSection title="What is a WiFi Survey?">
+            <p className="body-small text-text-secondary">
+              A WiFi survey maps wireless signal coverage across different locations.
+              Use it to identify dead zones and optimize access point placement.
+            </p>
+          </HelpSection>
+
+          <HelpSection title="Signal Strength Levels">
+            <HelpItem
+              term="-30 dBm"
+              description="Excellent - Maximum signal strength"
+              color="bg-status-success"
+            />
+            <HelpItem
+              term="-67 dBm"
+              description="Good - Reliable connection"
+              color="bg-status-success"
+            />
+            <HelpItem
+              term="-70 dBm"
+              description="Fair - Adequate for basic use"
+              color="bg-status-warning"
+            />
+            <HelpItem
+              term="-80 dBm"
+              description="Weak - Unstable connection"
+              color="bg-status-error"
+            />
+          </HelpSection>
+
+          <HelpSection title="How to Use">
+            <ol className="list-decimal list-inside space-y-2 body-small text-text-secondary">
+              <li>Click "Start Survey" to begin</li>
+              <li>Upload a floor plan image (optional)</li>
+              <li>Walk to different locations and click "Add Sample"</li>
+              <li>View the heatmap to identify coverage gaps</li>
+              <li>Click "Complete" when finished</li>
+            </ol>
+          </HelpSection>
+        </HelpModal>
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Simple help modal using HelpSection and HelpItem components for structured content.",
+      },
+    },
+  },
+};
+
+/**
+ * Simple help modal with custom styled content
+ */
+export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <div className="min-h-screen bg-surface-base">
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="Speed Test Results"
+        >
+          <div className="space-y-4">
+            <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-lg p-4">
+              <h4 className="font-semibold text-brand-primary mb-2">
+                Understanding Your Results
+              </h4>
+              <p className="body-small text-text-secondary">
+                Speed test results show your connection's maximum throughput under ideal
+                conditions. Real-world performance may vary based on network congestion,
+                server load, and simultaneous connections.
+              </p>
+            </div>
+
+            <div className="bg-status-warning/10 border border-status-warning/20 rounded-lg p-4">
+              <h4 className="font-semibold text-status-warning mb-2">
+                Factors Affecting Speed
+              </h4>
+              <ul className="list-disc list-inside body-small text-text-secondary space-y-1">
+                <li>Distance from router or access point</li>
+                <li>Number of connected devices</li>
+                <li>WiFi channel interference</li>
+                <li>ISP throttling or congestion</li>
+                <li>Time of day (peak usage hours)</li>
+              </ul>
+            </div>
+
+            <div className="bg-status-success/10 border border-status-success/20 rounded-lg p-4">
+              <h4 className="font-semibold text-status-success mb-2">Improving Speed</h4>
+              <p className="body-small text-text-secondary">
+                Move closer to the router, switch to 5GHz band, reduce device count, or
+                upgrade your internet plan for better performance.
+              </p>
+            </div>
+          </div>
+        </HelpModal>
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Simple help modal with custom styled callout boxes and formatted content.",
+      },
+    },
+  },
+};
+
+/**
+ * Simple help modal with interactive elements
+ */
+export const SimpleInteractive: StoryObj<typeof HelpModal> = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+      <div className="min-h-screen bg-surface-base p-8">
+        <div className="max-w-2xl mx-auto space-y-4">
+          <h1 className="heading-2 text-text-primary">Network Dashboard</h1>
+          <p className="body text-text-secondary mb-6">
+            Click the help button below to learn more about this feature.
+          </p>
+          <button
+            onClick={() => setIsOpen(true)}
+            className="px-4 py-2 bg-surface-raised border border-surface-border rounded-lg hover:bg-surface-hover transition-colors text-text-primary"
+          >
+            Show Help
+          </button>
+        </div>
+
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="Network Dashboard"
+        >
+          <p className="body text-text-secondary mb-4">
+            The Network Dashboard provides a comprehensive overview of your network's
+            health and performance.
+          </p>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
+                1
+              </span>
+              <div className="flex-1">
+                <h4 className="font-semibold text-text-primary mb-1">Monitor Status</h4>
+                <p className="body-small text-text-secondary">
+                  View real-time status of all network interfaces and connections.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
+                2
+              </span>
+              <div className="flex-1">
+                <h4 className="font-semibold text-text-primary mb-1">Run Tests</h4>
+                <p className="body-small text-text-secondary">
+                  Execute speed tests, cable diagnostics, and network discovery scans.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
+                3
+              </span>
+              <div className="flex-1">
+                <h4 className="font-semibold text-text-primary mb-1">
+                  Analyze Results
+                </h4>
+                <p className="body-small text-text-secondary">
+                  Review detailed metrics and identify potential issues or bottlenecks.
+                </p>
+              </div>
+            </div>
+          </div>
+        </HelpModal>
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Interactive demo with button to trigger help modal, showing numbered step-by-step guidance.",
+      },
+    },
+  },
+};
+
+/**
+ * Simple help modal - closed state
+ */
+export const SimpleClosed: StoryObj<typeof HelpModal> = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+      <div className="min-h-screen bg-surface-base p-8">
+        <p className="body text-text-secondary">Modal is closed - nothing rendered</p>
+        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Test">
+          <p>This will not be visible</p>
+        </HelpModal>
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Help modal in closed state returns null - no DOM elements rendered.",
+      },
+    },
+  },
+};
+
+/**
+ * Backdrop click to close demonstration
+ */
+export const BackdropClose: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+    const [clickCount, setClickCount] = useState(0);
+
+    return (
+      <div className="min-h-screen bg-surface-base">
+        {!isOpen && (
+          <div className="p-8">
+            <p className="body text-text-secondary mb-4">
+              Modal was closed {clickCount} time(s)
+            </p>
+            <button
+              onClick={() => setIsOpen(true)}
+              className="px-4 py-2 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90"
+            >
+              Reopen Modal
+            </button>
+          </div>
+        )}
+        <ImprovedHelpModal
+          isOpen={isOpen}
+          onClose={() => {
+            setIsOpen(false);
+            setClickCount((c) => c + 1);
+          }}
+        />
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Click the backdrop (dark area outside the modal) or the X button to close. Counter tracks how many times closed.",
+      },
+    },
+  },
+};

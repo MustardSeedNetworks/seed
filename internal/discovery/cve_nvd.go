@@ -13,7 +13,6 @@
 //
 // The scanner uses device fingerprinting results (OS, services, versions) to identify
 // applicable CVEs and provides detailed vulnerability reports with remediation guidance.
-
 package discovery
 
 import (
@@ -149,7 +148,7 @@ func (nvd *NVDProvider) SearchByProduct(ctx context.Context, vendor, product, ve
 }
 
 // UpdateDatabase is a no-op for NVD as it's always up-to-date via API.
-func (nvd *NVDProvider) UpdateDatabase(ctx context.Context) error {
+func (nvd *NVDProvider) UpdateDatabase(_ context.Context) error {
 	// NVD API is always current, no local database to update
 	nvd.lastUpdate = time.Now()
 	return nil

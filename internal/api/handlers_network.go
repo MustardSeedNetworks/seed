@@ -92,6 +92,7 @@ type ipAddrInfo struct {
 	source  string
 }
 
+// VLANResponse contains VLAN configuration and detection information for an interface.
 type VLANResponse struct {
 	NativeVlan  *int  `json:"nativeVlan"`
 	TaggedVlans []int `json:"taggedVlans"`
@@ -374,43 +375,11 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Get DHCP lease info (server, gateway, lease time)
-	if leaseInfo, err := dhcp.GetLeaseInfo(currentIface); err == nil && leaseInfo != nil {
-		if resp.IPv4 != nil {
-			if leaseInfo.Gateway != "" {
-				resp.IPv4.Gateway = leaseInfo.Gateway
-			}
-			if leaseInfo.DHCPServer != "" {
-				resp.IPv4.DHCPServer = leaseInfo.DHCPServer
-				resp.Mode = "dhcp"
-			}
-			if leaseInfo.LeaseTime > 0 {
-				resp.IPv4.LeaseTime = leaseInfo.LeaseTime
-			}
-		}
-		// Use DNS from lease if available
-		if len(leaseInfo.DNS) > 0 {
-			resp.DNS = leaseInfo.DNS
-		}
-	}
-
-	// Fallback: Try to get DNS servers from system if not from lease
-	if len(resp.DNS) == 0 {
-		resp.DNS = getSystemDNS()
-	}
+	// Get DHCP lease info and DNS
+	applyDHCPLeaseInfo(&resp, currentIface)
 
 	// Add DHCP timing if available
-	if s.dhcpMonitor != nil {
-		if timing := s.dhcpMonitor.GetLastTiming(); timing != nil {
-			ms := timing.ToMs()
-			resp.Timing = &DHCPTimingInfo{
-				Discover: ms.Discover,
-				Offer:    ms.Offer,
-				Request:  ms.Request,
-				Total:    ms.Total,
-			}
-		}
-	}
+	s.applyDHCPTiming(&resp)
 
 	sendJSONResponse(w, http.StatusOK, resp)
 }
@@ -854,6 +823,54 @@ func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+// applyDHCPLeaseInfo populates the response with DHCP lease information.
+func applyDHCPLeaseInfo(resp *IPConfigResponse, currentIface string) {
+	leaseInfo, err := dhcp.GetLeaseInfo(currentIface)
+	if err != nil || leaseInfo == nil {
+		// Fallback: Try to get DNS servers from system
+		resp.DNS = getSystemDNS()
+		return
+	}
+
+	if resp.IPv4 != nil {
+		if leaseInfo.Gateway != "" {
+			resp.IPv4.Gateway = leaseInfo.Gateway
+		}
+		if leaseInfo.DHCPServer != "" {
+			resp.IPv4.DHCPServer = leaseInfo.DHCPServer
+			resp.Mode = "dhcp"
+		}
+		if leaseInfo.LeaseTime > 0 {
+			resp.IPv4.LeaseTime = leaseInfo.LeaseTime
+		}
+	}
+
+	// Use DNS from lease if available, otherwise fallback to system
+	if len(leaseInfo.DNS) > 0 {
+		resp.DNS = leaseInfo.DNS
+	} else {
+		resp.DNS = getSystemDNS()
+	}
+}
+
+// applyDHCPTiming adds DHCP timing information to the response.
+func (s *Server) applyDHCPTiming(resp *IPConfigResponse) {
+	if s.dhcpMonitor == nil {
+		return
+	}
+	timing := s.dhcpMonitor.GetLastTiming()
+	if timing == nil {
+		return
+	}
+	ms := timing.ToMs()
+	resp.Timing = &DHCPTimingInfo{
+		Discover: ms.Discover,
+		Offer:    ms.Offer,
+		Request:  ms.Request,
+		Total:    ms.Total,
+	}
+}
 
 // parseIPAddress parses an IP address string (with CIDR) into components.
 func parseIPAddress(addr string) ipAddrInfo {

@@ -27,7 +27,7 @@ import (
 )
 
 // scanPlatform performs a WiFi scan on macOS using the airport utility.
-func scanPlatform(iface string) ([]*ScannedNetwork, error) {
+func scanPlatform(_ string) ([]*ScannedNetwork, error) {
 	// Use airport utility for scanning
 	// /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport
 	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"

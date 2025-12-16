@@ -4,6 +4,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -34,6 +35,45 @@ type TCPProbeResponse struct {
 	Results []discovery.TCPProbeResult `json:"results"`
 }
 
+// resolveTargetIP resolves a target string to an IP address.
+func resolveTargetIP(target string) (net.IP, error) {
+	if target == "" {
+		return nil, errors.New("target is required")
+	}
+	ip := net.ParseIP(target)
+	if ip != nil {
+		return ip, nil
+	}
+	// Try to resolve hostname
+	ips, err := net.LookupIP(target)
+	if err != nil || len(ips) == 0 {
+		return nil, errors.New("unable to resolve hostname")
+	}
+	// Use first IPv4 address
+	for _, resolvedIP := range ips {
+		if resolvedIP.To4() != nil {
+			return resolvedIP, nil
+		}
+	}
+	return ips[0], nil
+}
+
+// validateTCPProbePorts builds and validates the port list from a request.
+func validateTCPProbePorts(req *TCPProbeRequest) ([]int, error) {
+	var ports []int
+	if req.Port > 0 {
+		ports = append(ports, req.Port)
+	}
+	ports = append(ports, req.Ports...)
+	if len(ports) == 0 {
+		return nil, errors.New("at least one port is required")
+	}
+	if len(ports) > 100 {
+		return nil, errors.New("maximum 100 ports allowed")
+	}
+	return ports, nil
+}
+
 // handleTCPProbe handles TCP port probe requests.
 func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -47,47 +87,15 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate target
-	if req.Target == "" {
-		http.Error(w, "Target is required", http.StatusBadRequest)
+	ip, err := resolveTargetIP(req.Target)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Resolve hostname if needed
-	ip := net.ParseIP(req.Target)
-	if ip == nil {
-		// Try to resolve hostname
-		ips, err := net.LookupIP(req.Target)
-		if err != nil || len(ips) == 0 {
-			http.Error(w, "Unable to resolve hostname", http.StatusBadRequest)
-			return
-		}
-		// Use first IPv4 address
-		for _, resolvedIP := range ips {
-			if resolvedIP.To4() != nil {
-				ip = resolvedIP
-				break
-			}
-		}
-		if ip == nil {
-			ip = ips[0]
-		}
-	}
-
-	// Build port list
-	var ports []int
-	if req.Port > 0 {
-		ports = append(ports, req.Port)
-	}
-	ports = append(ports, req.Ports...)
-	if len(ports) == 0 {
-		http.Error(w, "At least one port is required", http.StatusBadRequest)
-		return
-	}
-
-	// Limit ports to prevent abuse
-	if len(ports) > 100 {
-		http.Error(w, "Maximum 100 ports allowed", http.StatusBadRequest)
+	ports, err := validateTCPProbePorts(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -141,59 +149,21 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate target
-	if req.Target == "" {
-		http.Error(w, "Target is required", http.StatusBadRequest)
+	if errMsg := validateTracerouteTarget(req.Target); errMsg != "" {
+		http.Error(w, errMsg, http.StatusBadRequest)
 		return
 	}
 
-	// Validate target for security (must be valid IP or resolvable hostname)
-	ip := net.ParseIP(req.Target)
-	if ip == nil {
-		// Not an IP, check if it looks like a valid hostname
-		if err := validation.ValidateServerAddress(req.Target); err != nil {
-			http.Error(w, "Invalid target: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-	}
-
-	// Set defaults
-	protocol := req.Protocol
-	if protocol == "" {
-		protocol = protoICMP
-	}
-	if protocol != protoICMP && protocol != protoUDP && protocol != protoTCP {
-		http.Error(w, "Protocol must be icmp, udp, or tcp", http.StatusBadRequest)
+	protocol, maxHops, timeout, port, errMsg := parseTracerouteParams(&req)
+	if errMsg != "" {
+		http.Error(w, errMsg, http.StatusBadRequest)
 		return
 	}
 
-	maxHops := req.MaxHops
-	if maxHops <= 0 || maxHops > 64 {
-		maxHops = 30
-	}
-
-	timeout := time.Duration(req.Timeout) * time.Millisecond
-	if timeout <= 0 || timeout > 10*time.Second {
-		timeout = 3 * time.Second
-	}
-
-	port := req.Port
-	if port <= 0 {
-		if protocol == protoTCP {
-			port = 80
-		} else {
-			port = 33434
-		}
-	}
-
-	// Create tracer
 	tracer := discovery.NewTracer(timeout, maxHops)
-
-	// Set overall timeout for the operation
 	ctx, cancel := context.WithTimeout(r.Context(), timeout*time.Duration(maxHops)+10*time.Second)
 	defer cancel()
 
-	// Run traceroute based on protocol
 	var result *discovery.TracerouteResult
 	switch protocol {
 	case protoICMP:
@@ -205,6 +175,48 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, http.StatusOK, result)
+}
+
+func validateTracerouteTarget(target string) string {
+	if target == "" {
+		return "Target is required"
+	}
+	if ip := net.ParseIP(target); ip == nil {
+		if err := validation.ValidateServerAddress(target); err != nil {
+			return "Invalid target: " + err.Error()
+		}
+	}
+	return ""
+}
+
+func parseTracerouteParams(req *TracerouteRequest) (protocol string, maxHops int, timeout time.Duration, port int, errMsg string) {
+	protocol = req.Protocol
+	if protocol == "" {
+		protocol = protoICMP
+	}
+	if protocol != protoICMP && protocol != protoUDP && protocol != protoTCP {
+		return "", 0, 0, 0, "Protocol must be icmp, udp, or tcp"
+	}
+
+	maxHops = req.MaxHops
+	if maxHops <= 0 || maxHops > 64 {
+		maxHops = 30
+	}
+
+	timeout = time.Duration(req.Timeout) * time.Millisecond
+	if timeout <= 0 || timeout > 10*time.Second {
+		timeout = 3 * time.Second
+	}
+
+	port = req.Port
+	if port <= 0 {
+		if protocol == protoTCP {
+			port = 80
+		} else {
+			port = 33434
+		}
+	}
+	return protocol, maxHops, timeout, port, ""
 }
 
 // PortScanRequest represents a port scan request.

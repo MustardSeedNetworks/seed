@@ -3,13 +3,11 @@ package discovery
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"log"
 	"net"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -17,6 +15,7 @@ import (
 // PortState represents the state of a TCP port.
 type PortState string
 
+// TCP port state constants indicating probe results.
 const (
 	PortOpen     PortState = "open"     // SYN/ACK received
 	PortClosed   PortState = "closed"   // RST received
@@ -34,20 +33,16 @@ type TCPProbeResult struct {
 	Error error         `json:"error,omitempty"`
 }
 
-// TCP flags.
+// TCP flags used for probe result analysis.
 const (
-	tcpFIN = 0x01
 	tcpSYN = 0x02
 	tcpRST = 0x04
-	tcpPSH = 0x08
 	tcpACK = 0x10
-	tcpURG = 0x20
 )
 
-// TCPProber provides raw socket TCP SYN probing functionality.
+// TCPProber provides TCP connect probing functionality.
 type TCPProber struct {
 	timeout   time.Duration
-	srcPort   uint32 // Atomic counter for source ports
 	localIP   net.IP
 	stopCh    chan struct{}
 	stopped   bool
@@ -69,7 +64,6 @@ func NewTCPProber(timeout time.Duration) (*TCPProber, error) {
 
 	p := &TCPProber{
 		timeout: timeout,
-		srcPort: 40000, // Start from ephemeral port range
 		localIP: localIP,
 		stopCh:  make(chan struct{}),
 	}
@@ -92,20 +86,6 @@ func getLocalIP() (net.IP, error) {
 	return localAddr.IP, nil
 }
 
-// nextSrcPort returns the next source port to use.
-//
-//nolint:unused // Reserved for future raw socket implementation
-func (p *TCPProber) nextSrcPort() uint16 {
-	// Use ports 40000-60000
-	port := atomic.AddUint32(&p.srcPort, 1)
-	if port > 60000 {
-		atomic.StoreUint32(&p.srcPort, 40000)
-		port = 40000
-	}
-	// #nosec G115 -- port is bounded to 40000-60000, safe for uint16
-	return uint16(port)
-}
-
 // Close stops the prober.
 func (p *TCPProber) Close() error {
 	p.stoppedMu.Lock()
@@ -119,6 +99,54 @@ func (p *TCPProber) Close() error {
 }
 
 // ProbeTCP sends a TCP SYN packet to the specified IP:port and analyzes the response.
+// analyzeDialError determines port state from a connection error.
+func analyzeDialError(err error, result *TCPProbeResult) {
+	if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+		result.State = PortFiltered
+		return
+	}
+	opErr, ok := err.(*net.OpError)
+	if !ok {
+		return
+	}
+	if syscallErr, ok := opErr.Err.(*syscall.Errno); ok {
+		//nolint:exhaustive // syscall.Errno has too many cases, default handles the rest
+		switch *syscallErr {
+		case syscall.ECONNREFUSED:
+			result.State = PortClosed
+			result.Flags = tcpRST
+		case syscall.EHOSTUNREACH, syscall.ENETUNREACH:
+			result.State = PortFiltered
+		default:
+			result.State = PortFiltered
+		}
+	} else if opErr.Err != nil && strings.Contains(opErr.Err.Error(), "refused") {
+		result.State = PortClosed
+		result.Flags = tcpRST
+	}
+}
+
+// extractTTL attempts to extract TTL from a TCP connection.
+func extractTTL(conn net.Conn) int {
+	tcpConn, ok := conn.(*net.TCPConn)
+	if !ok {
+		return -1
+	}
+	rawConn, err := tcpConn.SyscallConn()
+	if err != nil {
+		return -1
+	}
+	ttl := -1
+	//nolint:errcheck // Best-effort TTL extraction
+	rawConn.Control(func(fd uintptr) {
+		if v, err := syscall.GetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL); err == nil {
+			ttl = v
+		}
+	})
+	return ttl
+}
+
+// ProbeTCP performs a TCP connect probe to determine if a port is open.
 // This is a connect-based probe (not raw SYN) for portability.
 func (p *TCPProber) ProbeTCP(ctx context.Context, ipStr string, port int) TCPProbeResult {
 	result := TCPProbeResult{
@@ -137,69 +165,27 @@ func (p *TCPProber) ProbeTCP(ctx context.Context, ipStr string, port int) TCPPro
 	// Use context timeout or prober timeout
 	timeout := p.timeout
 	if d, ok := ctx.Deadline(); ok {
-		remaining := time.Until(d)
-		if remaining < timeout {
+		if remaining := time.Until(d); remaining < timeout {
 			timeout = remaining
 		}
 	}
 
 	start := time.Now()
-
-	// Use TCP connect probe (portable, works without raw sockets)
 	addr := fmt.Sprintf("%s:%d", ipStr, port)
-	dialer := net.Dialer{
-		Timeout: timeout,
-	}
+	dialer := net.Dialer{Timeout: timeout}
 
 	conn, err := dialer.DialContext(ctx, "tcp", addr)
 	result.RTT = time.Since(start)
 
 	if err != nil {
-		// Analyze the error to determine port state
-		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			result.State = PortFiltered
-		} else if opErr, ok := err.(*net.OpError); ok {
-			if syscallErr, ok := opErr.Err.(*syscall.Errno); ok {
-				//nolint:exhaustive // syscall.Errno has too many cases, default handles the rest
-				switch *syscallErr {
-				case syscall.ECONNREFUSED:
-					// RST received - port is closed
-					result.State = PortClosed
-					result.Flags = tcpRST
-				case syscall.EHOSTUNREACH, syscall.ENETUNREACH:
-					result.State = PortFiltered
-				default:
-					result.State = PortFiltered
-				}
-			} else if opErr.Err != nil {
-				// Check for "connection refused" in error string
-				errStr := opErr.Err.Error()
-				if strings.Contains(errStr, "refused") {
-					result.State = PortClosed
-					result.Flags = tcpRST
-				}
-			}
-		}
+		analyzeDialError(err, &result)
 		return result
 	}
 
 	// Connection succeeded - port is open
 	result.State = PortOpen
 	result.Flags = tcpSYN | tcpACK
-
-	// Try to get TTL from connection
-	if tcpConn, ok := conn.(*net.TCPConn); ok {
-		if rawConn, err := tcpConn.SyscallConn(); err == nil {
-			//nolint:errcheck // Best-effort TTL extraction
-			rawConn.Control(func(fd uintptr) {
-				ttl, err := syscall.GetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL)
-				if err == nil {
-					result.TTL = ttl
-				}
-			})
-		}
-	}
-
+	result.TTL = extractTTL(conn)
 	conn.Close()
 	return result
 }
@@ -362,24 +348,6 @@ var CommonPorts = []int{
 
 // WebPorts contains common web server ports.
 var WebPorts = []int{80, 443, 8080, 8443, 8000, 8888}
-
-// buildTCPHeader creates a TCP header (for future raw socket implementation).
-//
-//nolint:unused // Reserved for future raw socket implementation
-func buildTCPHeader(srcPort, dstPort uint16, seq uint32, flags uint8) []byte {
-	header := make([]byte, 20)
-
-	binary.BigEndian.PutUint16(header[0:2], srcPort) // Source port
-	binary.BigEndian.PutUint16(header[2:4], dstPort) // Destination port
-	binary.BigEndian.PutUint32(header[4:8], seq)     // Sequence number
-	binary.BigEndian.PutUint32(header[8:12], 0)      // Acknowledgment number
-	header[12] = 5 << 4                              // Data offset (5 * 4 = 20 bytes)
-	header[13] = flags                               // Flags
-	binary.BigEndian.PutUint16(header[14:16], 65535) // Window size
-	// Checksum and urgent pointer left as 0
-
-	return header
-}
 
 // CheckTCPPrivileges checks if raw TCP sockets can be created.
 func CheckTCPPrivileges() error {

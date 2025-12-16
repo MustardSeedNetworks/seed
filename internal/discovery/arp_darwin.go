@@ -47,10 +47,7 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 		return nil, fmt.Errorf("FetchRIB: %w", err)
 	}
 
-	entries, err := parseARPMessages(rib)
-	if err != nil {
-		return nil, err
-	}
+	entries := parseARPMessages(rib)
 
 	// Filter by subnet if configured
 	var filtered []*ARPEntry
@@ -64,7 +61,8 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 }
 
 // parseARPMessages parses the routing information base for ARP entries.
-func parseARPMessages(rib []byte) ([]*ARPEntry, error) {
+// Returns parsed entries; gracefully handles malformed data by skipping invalid entries.
+func parseARPMessages(rib []byte) []*ARPEntry {
 	var entries []*ARPEntry
 
 	for len(rib) > 0 {
@@ -85,11 +83,46 @@ func parseARPMessages(rib []byte) ([]*ARPEntry, error) {
 		rib = rib[msgLen:]
 	}
 
-	return entries, nil
+	return entries
 }
 
 // rt_msghdr structure size on macOS (64-bit).
 const rtMsgHdrSize = 92
+
+// parseARPSockaddrs extracts IP and MAC from route message socket addresses.
+func parseARPSockaddrs(data []byte, addrs int, entry *ARPEntry) {
+	pos := rtMsgHdrSize
+	for i := 0; i < 8 && pos < len(data); i++ {
+		bit := 1 << i
+		if addrs&bit == 0 {
+			continue
+		}
+		if pos >= len(data) {
+			break
+		}
+		saLen := int(data[pos])
+		if saLen == 0 {
+			saLen = 4
+		}
+		saLen = (saLen + 3) &^ 3 // Round to 4-byte alignment
+		if pos+saLen > len(data) {
+			break
+		}
+		saFamily := int(data[pos+1])
+
+		switch bit {
+		case 1: // RTA_DST - IP address
+			if ip := parseSockaddrIP(data[pos:pos+saLen], saFamily); ip != nil {
+				entry.IP = ip.String()
+			}
+		case 2: // RTA_GATEWAY - MAC address (for ARP entries)
+			if mac := parseSockaddrDL(data[pos : pos+saLen]); mac != "" {
+				entry.MAC = mac
+			}
+		}
+		pos += saLen
+	}
+}
 
 // parseARPRouteMessage parses a single route message for ARP info.
 func parseARPRouteMessage(data []byte) *ARPEntry {
@@ -118,47 +151,7 @@ func parseARPRouteMessage(data []byte) *ARPEntry {
 		}
 	}
 
-	// Parse socket addresses after header
-	pos := rtMsgHdrSize
-
-	// RTA_DST (1), RTA_GATEWAY (2), ...
-	for i := 0; i < 8 && pos < len(data); i++ {
-		bit := 1 << i
-		if addrs&bit == 0 {
-			continue
-		}
-
-		if pos >= len(data) {
-			break
-		}
-
-		saLen := int(data[pos])
-		if saLen == 0 {
-			saLen = 4
-		}
-		saLen = (saLen + 3) &^ 3 // Round to 4-byte alignment
-
-		if pos+saLen > len(data) {
-			break
-		}
-
-		saFamily := int(data[pos+1])
-
-		switch bit {
-		case 1: // RTA_DST - IP address
-			ip := parseSockaddrIP(data[pos:pos+saLen], saFamily)
-			if ip != nil {
-				entry.IP = ip.String()
-			}
-		case 2: // RTA_GATEWAY - MAC address (for ARP entries)
-			mac := parseSockaddrDL(data[pos : pos+saLen])
-			if mac != "" {
-				entry.MAC = mac
-			}
-		}
-
-		pos += saLen
-	}
+	parseARPSockaddrs(data, addrs, entry)
 
 	// Need both IP and MAC for a valid ARP entry
 	if entry.IP == "" || entry.MAC == "" {

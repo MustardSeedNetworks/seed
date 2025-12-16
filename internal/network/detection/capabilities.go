@@ -20,16 +20,18 @@ func GetCapabilities(name string) Capabilities {
 // TDRSupport describes TDR capability levels.
 type TDRSupport int
 
+// TDR (Time Domain Reflectometry) capability level constants.
 const (
-	TDRNone        TDRSupport = iota // No TDR support
-	TDRBasic                         // Basic cable test (pass/fail)
-	TDRAdvanced                      // Distance to fault, pair status
-	TDREnterprise                    // Full diagnostics with waveform
+	TDRNone       TDRSupport = iota // No TDR support
+	TDRBasic                        // Basic cable test (pass/fail)
+	TDRAdvanced                     // Distance to fault, pair status
+	TDREnterprise                   // Full diagnostics with waveform
 )
 
 // DOMSupport describes DOM capability levels.
 type DOMSupport int
 
+// DOM (Digital Optical Monitoring) capability level constants.
 const (
 	DOMNone     DOMSupport = iota // No DOM support
 	DOMBasic                      // Temperature, voltage

@@ -279,13 +279,13 @@ func TestLinkMonitorCallbackPanicRecovery(t *testing.T) {
 	mon := NewLinkMonitor("lo")
 
 	// Register a callback that panics
-	mon.OnStateChange(func(event LinkEvent) {
+	mon.OnStateChange(func(_ LinkEvent) {
 		panic("test panic")
 	})
 
 	// Register a normal callback after the panic one
 	normalCalled := false
-	mon.OnStateChange(func(event LinkEvent) {
+	mon.OnStateChange(func(_ LinkEvent) {
 		normalCalled = true
 	})
 

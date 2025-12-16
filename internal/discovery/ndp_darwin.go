@@ -55,6 +55,6 @@ func (ns *NDPScanner) GetNeighbors() map[string]*NDPNeighbor {
 }
 
 // CleanupStale is a no-op on macOS.
-func (ns *NDPScanner) CleanupStale(maxAge time.Duration) {
+func (ns *NDPScanner) CleanupStale(_ time.Duration) {
 	// No-op
 }

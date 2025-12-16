@@ -290,7 +290,7 @@ func SafeHTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{
 		Transport: SafeTransport(),
 		Timeout:   timeout,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 			// Don't follow redirects automatically - let the caller handle them
 			// This prevents redirect-based SSRF attacks
 			return http.ErrUseLastResponse

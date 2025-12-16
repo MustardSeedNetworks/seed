@@ -27,8 +27,8 @@ const (
 	OIDJuniperVersion = "1.3.6.1.4.1.2636.3.1.2.0"         // Juniper JUNOS version
 )
 
-// SNMPSystemInfo contains standard SNMP system information.
-type SNMPSystemInfo struct {
+// SystemInfo contains standard SNMP system information.
+type SystemInfo struct {
 	SysDescr    string
 	SysObjectID string
 	SysName     string
@@ -88,7 +88,7 @@ func QueryMultiple(ctx context.Context, ip string, oids []string, cfg *config.SN
 }
 
 // GetSystemInfo retrieves standard SNMP system information.
-func GetSystemInfo(ctx context.Context, ip string, cfg *config.SNMPConfig) (*SNMPSystemInfo, error) {
+func GetSystemInfo(ctx context.Context, ip string, cfg *config.SNMPConfig) (*SystemInfo, error) {
 	oids := []string{
 		OIDSysDescr,
 		OIDSysObjectID,
@@ -103,7 +103,7 @@ func GetSystemInfo(ctx context.Context, ip string, cfg *config.SNMPConfig) (*SNM
 		return nil, err
 	}
 
-	info := &SNMPSystemInfo{
+	info := &SystemInfo{
 		SysDescr:    results[OIDSysDescr],
 		SysObjectID: results[OIDSysObjectID],
 		SysName:     results[OIDSysName],

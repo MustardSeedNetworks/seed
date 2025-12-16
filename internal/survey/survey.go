@@ -15,23 +15,25 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/wifi"
 )
 
-// SurveyType indicates the type of survey being conducted.
-type SurveyType string
+// Type indicates the type of survey being conducted.
+type Type string
 
+// WiFi survey type constants.
 const (
-	SurveyTypePassive    SurveyType = "passive"    // Passive scan (all visible networks)
-	SurveyTypeActive     SurveyType = "active"     // Active monitoring (current connection)
-	SurveyTypeThroughput SurveyType = "throughput" // Throughput testing with iperf3
+	TypePassive    Type = "passive"    // Passive scan (all visible networks)
+	TypeActive     Type = "active"     // Active monitoring (current connection)
+	TypeThroughput Type = "throughput" // Throughput testing with iperf3
 )
 
-// SurveyStatus indicates the current status of a survey.
-type SurveyStatus string
+// Status indicates the current status of a survey.
+type Status string
 
+// WiFi survey status constants.
 const (
-	StatusCreated    SurveyStatus = "created"
-	StatusInProgress SurveyStatus = "in_progress"
-	StatusPaused     SurveyStatus = "paused"
-	StatusCompleted  SurveyStatus = "completed"
+	StatusCreated    Status = "created"
+	StatusInProgress Status = "in_progress"
+	StatusPaused     Status = "paused"
+	StatusCompleted  Status = "completed"
 )
 
 // FloorPlan contains floor plan image and metadata.
@@ -82,8 +84,8 @@ type Survey struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description,omitempty"`
 	FloorPlan   *FloorPlan     `json:"floorPlan,omitempty"`
-	SurveyType  SurveyType     `json:"surveyType"`
-	Status      SurveyStatus   `json:"status"`
+	SurveyType  Type           `json:"surveyType"`
+	Status      Status         `json:"status"`
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	Samples     []*SamplePoint `json:"samples"`
@@ -116,7 +118,7 @@ func NewManager(storagePath string, wifiScanner *wifi.Scanner, wifiManager *wifi
 }
 
 // CreateSurvey creates a new survey.
-func (m *Manager) CreateSurvey(name, description, iface string, surveyType SurveyType) (*Survey, error) {
+func (m *Manager) CreateSurvey(name, description, iface string, surveyType Type) (*Survey, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

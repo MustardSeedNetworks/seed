@@ -55,7 +55,7 @@ func TestCreateSurvey(t *testing.T) {
 		surveyName  string
 		description string
 		iface       string
-		surveyType  SurveyType
+		surveyType  Type
 		wantErr     bool
 	}{
 		{
@@ -63,7 +63,7 @@ func TestCreateSurvey(t *testing.T) {
 			surveyName:  "Test Passive",
 			description: "Test passive survey",
 			iface:       "wlan0",
-			surveyType:  SurveyTypePassive,
+			surveyType:  TypePassive,
 			wantErr:     false,
 		},
 		{
@@ -71,7 +71,7 @@ func TestCreateSurvey(t *testing.T) {
 			surveyName:  "Test Active",
 			description: "Test active survey",
 			iface:       "wlan0",
-			surveyType:  SurveyTypeActive,
+			surveyType:  TypeActive,
 			wantErr:     false,
 		},
 		{
@@ -79,7 +79,7 @@ func TestCreateSurvey(t *testing.T) {
 			surveyName:  "Test Throughput",
 			description: "Test throughput survey",
 			iface:       "wlan0",
-			surveyType:  SurveyTypeThroughput,
+			surveyType:  TypeThroughput,
 			wantErr:     false,
 		},
 	}
@@ -148,7 +148,7 @@ func TestGetSurvey(t *testing.T) {
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
 	// Create a survey first
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -213,17 +213,17 @@ func TestListSurveys(t *testing.T) {
 	}
 
 	// Create surveys
-	_, err := mgr.CreateSurvey("Survey 1", "Desc 1", "wlan0", SurveyTypePassive)
+	_, err := mgr.CreateSurvey("Survey 1", "Desc 1", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	_, err = mgr.CreateSurvey("Survey 2", "Desc 2", "wlan0", SurveyTypeActive)
+	_, err = mgr.CreateSurvey("Survey 2", "Desc 2", "wlan0", TypeActive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	_, err = mgr.CreateSurvey("Survey 3", "Desc 3", "wlan0", SurveyTypeThroughput)
+	_, err = mgr.CreateSurvey("Survey 3", "Desc 3", "wlan0", TypeThroughput)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -246,7 +246,7 @@ func TestDeleteSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -296,7 +296,7 @@ func TestStartSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -304,7 +304,7 @@ func TestStartSurvey(t *testing.T) {
 	tests := []struct {
 		name        string
 		id          string
-		setupStatus SurveyStatus
+		setupStatus Status
 		wantErr     bool
 	}{
 		{
@@ -354,7 +354,7 @@ func TestPauseSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -415,7 +415,7 @@ func TestCompleteSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -476,7 +476,7 @@ func TestStateTransitions(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -517,7 +517,7 @@ func TestUpdateFloorPlan(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -589,7 +589,7 @@ func TestAddSample(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -684,7 +684,7 @@ func TestPersistence(t *testing.T) {
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
 	// Create a survey
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -743,9 +743,9 @@ func TestConcurrentOperations(t *testing.T) {
 	// Concurrent creates
 	for i := range numGoroutines {
 		wg.Add(1)
-		go func(n int) {
+		go func(_ int) {
 			defer wg.Done()
-			_, err := mgr.CreateSurvey("Survey", "Desc", "wlan0", SurveyTypePassive)
+			_, err := mgr.CreateSurvey("Survey", "Desc", "wlan0", TypePassive)
 			if err != nil {
 				t.Errorf("Concurrent CreateSurvey() failed: %v", err)
 			}
@@ -765,7 +765,7 @@ func TestConcurrentSampleAddition(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -817,7 +817,7 @@ func TestSurveyTimestamps(t *testing.T) {
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
 	beforeCreate := time.Now()
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -854,7 +854,7 @@ func TestSampleCount(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", SurveyTypePassive)
+	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}

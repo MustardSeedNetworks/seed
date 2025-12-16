@@ -195,7 +195,7 @@ func TestContains(t *testing.T) {
 	}
 }
 
-func TestConcurrentManagerAccess(t *testing.T) {
+func TestConcurrentManagerAccess(_ *testing.T) {
 	manager := NewManager("eth0")
 
 	// Test concurrent access doesn't cause race conditions
@@ -225,21 +225,21 @@ func TestDetectVlanSubinterfacesPlatform(t *testing.T) {
 	}
 }
 
-func TestCreateVlanInterface(t *testing.T) {
+func TestCreateVlanInterface(_ *testing.T) {
 	// This requires root privileges, so just verify it doesn't panic
 	err := CreateVlanInterface("eth0", 100)
 	// Error is expected on non-Linux or without root
 	_ = err
 }
 
-func TestCreateVlanInterfacePlatform(t *testing.T) {
+func TestCreateVlanInterfacePlatform(_ *testing.T) {
 	// This requires root privileges on Linux
 	err := createVlanInterfacePlatform("eth0", 100)
 	// Error is expected without root or on macOS (returns nil)
 	_ = err
 }
 
-func TestDeleteVlanInterface(t *testing.T) {
+func TestDeleteVlanInterface(_ *testing.T) {
 	// This requires root privileges
 	err := DeleteVlanInterface("eth0", 100)
 	// Error is expected on non-Linux or without root

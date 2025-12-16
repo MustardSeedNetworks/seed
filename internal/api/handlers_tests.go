@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -184,18 +185,20 @@ type TestsSettingsResponse struct {
 	RunDiscovery   bool                      `json:"runDiscovery"`
 }
 
-// DNSServerResponse represents a DNS server for testing.
+// DNSServerResponse contains a DNS server address and its enabled state.
 type DNSServerResponse struct {
 	Address string `json:"address"`
 	Enabled bool   `json:"enabled"`
 }
 
+// PingTargetResponse contains a ping target configuration with name and host.
 type PingTargetResponse struct {
 	Name    string `json:"name"`
 	Host    string `json:"host"`
 	Enabled bool   `json:"enabled"`
 }
 
+// TCPPortResponse contains a TCP port test configuration with host and port.
 type TCPPortResponse struct {
 	Name    string `json:"name"`
 	Host    string `json:"host"`
@@ -203,6 +206,7 @@ type TCPPortResponse struct {
 	Enabled bool   `json:"enabled"`
 }
 
+// UDPPortResponse contains a UDP port test configuration with host and port.
 type UDPPortResponse struct {
 	Name    string `json:"name"`
 	Host    string `json:"host"`
@@ -210,6 +214,7 @@ type UDPPortResponse struct {
 	Enabled bool   `json:"enabled"`
 }
 
+// HTTPEndpointResponse contains an HTTP endpoint test configuration.
 type HTTPEndpointResponse struct {
 	Name           string `json:"name"`
 	URL            string `json:"url"`
@@ -217,11 +222,13 @@ type HTTPEndpointResponse struct {
 	Enabled        bool   `json:"enabled"`
 }
 
+// SpeedtestSettingsResponse contains speedtest configuration options.
 type SpeedtestSettingsResponse struct {
 	ServerID      string `json:"serverId"`
 	AutoRunOnLink bool   `json:"autoRunOnLink"`
 }
 
+// IperfSettingsResponse contains iPerf3 configuration options.
 type IperfSettingsResponse struct {
 	AutoRunOnLink bool `json:"autoRunOnLink"`
 }
@@ -467,44 +474,36 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := CustomTestsResult{
-		PingResults: make([]CustomTestResult, 0),
-		TCPResults:  make([]CustomTestResult, 0),
-		UDPResults:  make([]CustomTestResult, 0),
-		HTTPResults: make([]CustomTestResult, 0),
-		HasTests:    false,
+		PingResults: s.runPingTests(),
+		TCPResults:  s.runTCPTests(r.Context()),
+		UDPResults:  s.runUDPTests(),
+		HTTPResults: s.runHTTPTests(r.Context()),
 	}
 
-	// Check if there are any tests configured
-	if len(s.config.Tests.PingTargets) > 0 || len(s.config.Tests.TCPPorts) > 0 ||
-		len(s.config.Tests.UDPPorts) > 0 || len(s.config.Tests.HTTPEndpoints) > 0 {
-		result.HasTests = true
-	}
+	result.HasTests = len(s.config.Tests.PingTargets) > 0 || len(s.config.Tests.TCPPorts) > 0 ||
+		len(s.config.Tests.UDPPorts) > 0 || len(s.config.Tests.HTTPEndpoints) > 0
 
-	// Get thresholds
-	pingThreshold := s.config.Thresholds.CustomTests.Ping
-	tcpThreshold := s.config.Thresholds.CustomTests.TCP
-	udpThreshold := s.config.Thresholds.CustomTests.UDP
-	httpThreshold := s.config.Thresholds.CustomTests.HTTP
-	httpTimingThresholds := s.config.Thresholds.CustomTests.HTTPTimings
-	certThreshold := s.config.Thresholds.CustomTests.CertExpiry
+	sendJSONResponse(w, http.StatusOK, result)
+}
 
-	// Run extended ping tests (with packet loss and jitter)
+// runPingTests runs all configured ping tests and returns results.
+func (s *Server) runPingTests() []CustomTestResult {
+	results := make([]CustomTestResult, 0, len(s.config.Tests.PingTargets))
+	threshold := s.config.Thresholds.CustomTests.Ping
+
 	for _, target := range s.config.Tests.PingTargets {
 		if !target.Enabled {
 			continue
 		}
+
 		name := target.Name
 		if name == "" {
 			name = target.Host
 		}
 
-		testResult := CustomTestResult{
-			Name: name,
-			Host: target.Host,
-		}
-
-		// Run extended ping (5 pings for stats)
+		testResult := CustomTestResult{Name: name, Host: target.Host}
 		pingStats, err := runExtendedPing(target.Host, 5)
+
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
@@ -516,37 +515,43 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			testResult.MaxLatency = pingStats.MaxLatency
 			testResult.PacketLoss = pingStats.PacketLoss
 			testResult.Jitter = pingStats.Jitter
-
-			// Determine status based on latency or packet loss
-			switch {
-			case pingStats.PacketLoss > 50:
-				testResult.TestStatus = statusError
-			case pingStats.PacketLoss > 10:
-				testResult.TestStatus = statusWarning
-			default:
-				testResult.TestStatus = getTestStatus(pingStats.AvgLatency, pingThreshold.Warning.Milliseconds(), pingThreshold.Critical.Milliseconds())
-			}
+			testResult.TestStatus = s.evaluatePingStatus(pingStats, threshold)
 		}
-		result.PingResults = append(result.PingResults, testResult)
+		results = append(results, testResult)
 	}
+	return results
+}
 
-	// Run TCP port tests
+// evaluatePingStatus determines ping test status based on packet loss and latency.
+func (s *Server) evaluatePingStatus(stats *PingStats, threshold config.Threshold) string {
+	switch {
+	case stats.PacketLoss > 50:
+		return statusError
+	case stats.PacketLoss > 10:
+		return statusWarning
+	default:
+		return getTestStatus(stats.AvgLatency, threshold.Warning.Milliseconds(), threshold.Critical.Milliseconds())
+	}
+}
+
+// runTCPTests runs all configured TCP port tests and returns results.
+func (s *Server) runTCPTests(ctx context.Context) []CustomTestResult {
+	results := make([]CustomTestResult, 0, len(s.config.Tests.TCPPorts))
+	threshold := s.config.Thresholds.CustomTests.TCP
+
 	for _, target := range s.config.Tests.TCPPorts {
 		if !target.Enabled {
 			continue
 		}
+
 		name := target.Name
 		if name == "" {
 			name = net.JoinHostPort(target.Host, strconv.Itoa(target.Port))
 		}
 
-		testResult := CustomTestResult{
-			Name: name,
-			Host: target.Host,
-			Port: target.Port,
-		}
+		testResult := CustomTestResult{Name: name, Host: target.Host, Port: target.Port}
+		latency, err := runTCPTest(ctx, target.Host, target.Port)
 
-		latency, err := runTCPTest(r.Context(), target.Host, target.Port)
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
@@ -554,28 +559,31 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		} else {
 			testResult.Success = true
 			testResult.Latency = latency
-			testResult.TestStatus = getTestStatus(latency, tcpThreshold.Warning.Milliseconds(), tcpThreshold.Critical.Milliseconds())
+			testResult.TestStatus = getTestStatus(latency, threshold.Warning.Milliseconds(), threshold.Critical.Milliseconds())
 		}
-		result.TCPResults = append(result.TCPResults, testResult)
+		results = append(results, testResult)
 	}
+	return results
+}
 
-	// Run UDP port tests
+// runUDPTests runs all configured UDP port tests and returns results.
+func (s *Server) runUDPTests() []CustomTestResult {
+	results := make([]CustomTestResult, 0, len(s.config.Tests.UDPPorts))
+	threshold := s.config.Thresholds.CustomTests.UDP
+
 	for _, target := range s.config.Tests.UDPPorts {
 		if !target.Enabled {
 			continue
 		}
+
 		name := target.Name
 		if name == "" {
 			name = net.JoinHostPort(target.Host, strconv.Itoa(target.Port))
 		}
 
-		testResult := CustomTestResult{
-			Name: name,
-			Host: target.Host,
-			Port: target.Port,
-		}
-
+		testResult := CustomTestResult{Name: name, Host: target.Host, Port: target.Port}
 		latency, err := runUDPTest(target.Host, target.Port)
+
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
@@ -583,112 +591,127 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		} else {
 			testResult.Success = true
 			testResult.Latency = latency
-			testResult.TestStatus = getTestStatus(latency, udpThreshold.Warning.Milliseconds(), udpThreshold.Critical.Milliseconds())
+			testResult.TestStatus = getTestStatus(latency, threshold.Warning.Milliseconds(), threshold.Critical.Milliseconds())
 		}
-		result.UDPResults = append(result.UDPResults, testResult)
+		results = append(results, testResult)
 	}
+	return results
+}
 
-	// Run HTTP endpoint tests with certificate expiry checking
+// runHTTPTests runs all configured HTTP endpoint tests and returns results.
+func (s *Server) runHTTPTests(ctx context.Context) []CustomTestResult {
+	results := make([]CustomTestResult, 0, len(s.config.Tests.HTTPEndpoints))
+
 	for _, endpoint := range s.config.Tests.HTTPEndpoints {
 		if !endpoint.Enabled {
 			continue
 		}
 
-		// Validate URL to prevent SSRF attacks
 		if err := validation.ValidateURL(endpoint.URL); err != nil {
 			log.Printf("Skipping invalid HTTP endpoint URL %q: %v", endpoint.URL, err)
 			continue
 		}
 
-		// Determine URL and whether to try fallback
-		url := endpoint.URL
-		tryHTTPFallback := false
+		result := s.runSingleHTTPTest(ctx, endpoint)
+		results = append(results, result)
+	}
+	return results
+}
 
-		if url != "" && !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-			// No scheme provided - try HTTPS first, can fallback to HTTP
-			url = "https://" + url
-			tryHTTPFallback = true
-		}
+// runSingleHTTPTest runs a single HTTP endpoint test.
+func (s *Server) runSingleHTTPTest(ctx context.Context, endpoint config.HTTPEndpoint) CustomTestResult {
+	thresholds := s.config.Thresholds.CustomTests
 
-		name := endpoint.Name
-		if name == "" {
-			name = endpoint.URL // Show original URL in name
-		}
-
-		testResult := CustomTestResult{
-			Name: name,
-			URL:  url,
-		}
-
-		statusCode, timings, err := runHTTPTest(r.Context(), url, endpoint.ExpectedStatus)
-
-		// If HTTPS failed and we can try HTTP fallback
-		if err != nil && tryHTTPFallback {
-			httpURL := "http://" + endpoint.URL
-			httpStatus, httpTimings, httpErr := runHTTPTest(r.Context(), httpURL, endpoint.ExpectedStatus)
-			if httpErr == nil || httpStatus > 0 {
-				// HTTP worked (or at least connected) - use those results
-				url = httpURL
-				testResult.URL = httpURL
-				statusCode = httpStatus
-				timings = httpTimings
-				err = httpErr
-			}
-		}
-
-		testResult.Status = statusCode
-		testResult.Latency = timings.Total
-		testResult.DNSLatency = timings.DNS
-		testResult.TCPConnect = timings.Connect
-		testResult.TLSLatency = timings.TLS
-		testResult.TTFBLatency = timings.TTFB
-		if err != nil {
-			testResult.Success = false
-			testResult.Error = err.Error()
-			testResult.TestStatus = statusError
-		} else {
-			testResult.Success = true
-			// Evaluate each phase against its threshold
-			testResult.DNSStatus = getTestStatus(timings.DNS, httpTimingThresholds.DNS.Warning.Milliseconds(), httpTimingThresholds.DNS.Critical.Milliseconds())
-			testResult.TCPStatus = getTestStatus(timings.Connect, httpTimingThresholds.TCP.Warning.Milliseconds(), httpTimingThresholds.TCP.Critical.Milliseconds())
-			testResult.TLSStatus = getTestStatus(timings.TLS, httpTimingThresholds.TLS.Warning.Milliseconds(), httpTimingThresholds.TLS.Critical.Milliseconds())
-			testResult.TTFBStatus = getTestStatus(timings.TTFB, httpTimingThresholds.TTFB.Warning.Milliseconds(), httpTimingThresholds.TTFB.Critical.Milliseconds())
-
-			// Overall test status: error if any phase is error, warning if any warning, else use total time
-			switch {
-			case testResult.DNSStatus == statusError || testResult.TCPStatus == statusError ||
-				testResult.TLSStatus == statusError || testResult.TTFBStatus == statusError:
-				testResult.TestStatus = statusError
-			case testResult.DNSStatus == statusWarning || testResult.TCPStatus == statusWarning ||
-				testResult.TLSStatus == statusWarning || testResult.TTFBStatus == statusWarning:
-				testResult.TestStatus = statusWarning
-			default:
-				testResult.TestStatus = getTestStatus(timings.Total, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
-			}
-		}
-
-		// Check certificate expiry for HTTPS URLs only
-		if strings.HasPrefix(url, "https://") && testResult.Success {
-			certInfo := checkCertExpiry(url, certThreshold.Warning, certThreshold.Critical)
-			testResult.CertDaysLeft = certInfo.DaysLeft
-			testResult.CertStatus = certInfo.Status
-			testResult.CertExpiry = certInfo.ExpiryDate
-			testResult.CertCommonName = certInfo.CommonName
-			testResult.TLSVersion = certInfo.TLSVersion
-			testResult.CertIssuer = certInfo.Issuer
-
-			// Upgrade test status if cert is in bad shape
-			if certInfo.Status == statusError && testResult.TestStatus != statusError {
-				testResult.TestStatus = statusError
-			} else if certInfo.Status == statusWarning && testResult.TestStatus == statusSuccess {
-				testResult.TestStatus = statusWarning
-			}
-		}
-
-		result.HTTPResults = append(result.HTTPResults, testResult)
+	url, tryHTTPFallback := normalizeHTTPURL(endpoint.URL)
+	name := endpoint.Name
+	if name == "" {
+		name = endpoint.URL
 	}
 
-	sendJSONResponse(w, http.StatusOK, result)
+	testResult := CustomTestResult{Name: name, URL: url}
+	statusCode, timings, err := runHTTPTest(ctx, url, endpoint.ExpectedStatus)
+
+	// Try HTTP fallback if HTTPS failed
+	if err != nil && tryHTTPFallback {
+		httpURL := "http://" + endpoint.URL
+		if httpStatus, httpTimings, httpErr := runHTTPTest(ctx, httpURL, endpoint.ExpectedStatus); httpErr == nil || httpStatus > 0 {
+			url = httpURL
+			testResult.URL = httpURL
+			statusCode, timings, err = httpStatus, httpTimings, httpErr
+		}
+	}
+
+	testResult.Status = statusCode
+	testResult.Latency = timings.Total
+	testResult.DNSLatency = timings.DNS
+	testResult.TCPConnect = timings.Connect
+	testResult.TLSLatency = timings.TLS
+	testResult.TTFBLatency = timings.TTFB
+
+	if err != nil {
+		testResult.Success = false
+		testResult.Error = err.Error()
+		testResult.TestStatus = statusError
+	} else {
+		testResult.Success = true
+		s.evaluateHTTPTimings(&testResult, timings, &thresholds)
+	}
+
+	// Check certificate expiry for HTTPS URLs
+	if strings.HasPrefix(url, "https://") && testResult.Success {
+		s.evaluateCertExpiry(&testResult, url, thresholds.CertExpiry)
+	}
+
+	return testResult
+}
+
+// normalizeHTTPURL adds scheme if missing and returns whether HTTP fallback should be tried.
+func normalizeHTTPURL(rawURL string) (string, bool) {
+	if rawURL == "" {
+		return rawURL, false
+	}
+	if strings.HasPrefix(rawURL, "http://") || strings.HasPrefix(rawURL, "https://") {
+		return rawURL, false
+	}
+	return "https://" + rawURL, true
+}
+
+// evaluateHTTPTimings sets timing statuses and overall test status.
+func (s *Server) evaluateHTTPTimings(result *CustomTestResult, timings httpTimings, thresholds *config.CustomThresholds) {
+	httpTimingThresholds := thresholds.HTTPTimings
+
+	result.DNSStatus = getTestStatus(timings.DNS, httpTimingThresholds.DNS.Warning.Milliseconds(), httpTimingThresholds.DNS.Critical.Milliseconds())
+	result.TCPStatus = getTestStatus(timings.Connect, httpTimingThresholds.TCP.Warning.Milliseconds(), httpTimingThresholds.TCP.Critical.Milliseconds())
+	result.TLSStatus = getTestStatus(timings.TLS, httpTimingThresholds.TLS.Warning.Milliseconds(), httpTimingThresholds.TLS.Critical.Milliseconds())
+	result.TTFBStatus = getTestStatus(timings.TTFB, httpTimingThresholds.TTFB.Warning.Milliseconds(), httpTimingThresholds.TTFB.Critical.Milliseconds())
+
+	switch {
+	case result.DNSStatus == statusError || result.TCPStatus == statusError ||
+		result.TLSStatus == statusError || result.TTFBStatus == statusError:
+		result.TestStatus = statusError
+	case result.DNSStatus == statusWarning || result.TCPStatus == statusWarning ||
+		result.TLSStatus == statusWarning || result.TTFBStatus == statusWarning:
+		result.TestStatus = statusWarning
+	default:
+		result.TestStatus = getTestStatus(timings.Total, thresholds.HTTP.Warning.Milliseconds(), thresholds.HTTP.Critical.Milliseconds())
+	}
+}
+
+// evaluateCertExpiry checks certificate expiry and updates test result.
+func (s *Server) evaluateCertExpiry(result *CustomTestResult, url string, threshold config.CertExpiryThreshold) {
+	certInfo := checkCertExpiry(url, threshold.Warning, threshold.Critical)
+	result.CertDaysLeft = certInfo.DaysLeft
+	result.CertStatus = certInfo.Status
+	result.CertExpiry = certInfo.ExpiryDate
+	result.CertCommonName = certInfo.CommonName
+	result.TLSVersion = certInfo.TLSVersion
+	result.CertIssuer = certInfo.Issuer
+
+	if certInfo.Status == statusError && result.TestStatus != statusError {
+		result.TestStatus = statusError
+	} else if certInfo.Status == statusWarning && result.TestStatus == statusSuccess {
+		result.TestStatus = statusWarning
+	}
 }
 
 // runTCPTest runs a TCP port test and returns latency in ms (fixes #534).
@@ -723,7 +746,7 @@ func runHTTPTest(ctx context.Context, url string, expectedStatus int) (status in
 	client := &http.Client{
 		Transport: transport,
 		Timeout:   10 * time.Second,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 			return http.ErrUseLastResponse // Don't follow redirects
 		},
 	}
@@ -941,7 +964,7 @@ func testDNSPort(ctx context.Context, host string) (float64, error) {
 	// Use Go's resolver to test DNS
 	resolver := &net.Resolver{
 		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+		Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
 			d := net.Dialer{Timeout: 5 * time.Second}
 			return d.DialContext(ctx, "udp", host+":53")
 		},
@@ -1209,6 +1232,44 @@ type IperfResultResponse struct {
 	UploadTransfer    float64 `json:"uploadTransfer,omitempty"`
 }
 
+// validateIperfClientRequest validates and normalizes an iperf client request.
+func validateIperfClientRequest(req *IperfClientRequest) error {
+	if req.Server == "" {
+		return errors.New("server address required")
+	}
+
+	req.Protocol = strings.ToLower(req.Protocol)
+	if req.Protocol == "" {
+		req.Protocol = protoTCP
+	}
+	if req.Protocol != protoTCP && req.Protocol != protoUDP {
+		return errors.New("protocol must be tcp or udp")
+	}
+
+	req.Direction = strings.ToLower(req.Direction)
+	if req.Direction == "" {
+		if req.Reverse {
+			req.Direction = "download"
+		} else {
+			req.Direction = "upload"
+		}
+	}
+	if req.Direction != "upload" && req.Direction != "download" && req.Direction != "bidirectional" {
+		return errors.New("direction must be upload, download, or bidirectional")
+	}
+
+	// Validate numeric parameters (fixes #522)
+	if req.Port != 0 {
+		if err := validation.ValidatePort(req.Port); err != nil {
+			return fmt.Errorf("invalid port: %w", err)
+		}
+	}
+	if err := validation.ValidatePositiveInt(req.Duration, "duration"); err != nil {
+		return err
+	}
+	return validation.ValidatePositiveInt(req.Parallel, "parallel streams")
+}
+
 // handleIperfClient runs an iperf3 client test.
 func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -1222,45 +1283,7 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Server == "" {
-		http.Error(w, "Server address required", http.StatusBadRequest)
-		return
-	}
-
-	req.Protocol = strings.ToLower(req.Protocol)
-	if req.Protocol == "" {
-		req.Protocol = protoTCP
-	}
-	if req.Protocol != protoTCP && req.Protocol != protoUDP {
-		http.Error(w, "protocol must be tcp or udp", http.StatusBadRequest)
-		return
-	}
-
-	req.Direction = strings.ToLower(req.Direction)
-	if req.Direction == "" {
-		if req.Reverse {
-			req.Direction = "download"
-		} else {
-			req.Direction = "upload"
-		}
-	}
-	if req.Direction != "upload" && req.Direction != "download" && req.Direction != "bidirectional" {
-		http.Error(w, "direction must be upload, download, or bidirectional", http.StatusBadRequest)
-		return
-	}
-
-	// Validate numeric parameters (fixes #522)
-	if req.Port != 0 {
-		if err := validation.ValidatePort(req.Port); err != nil {
-			http.Error(w, fmt.Sprintf("Invalid port: %v", err), http.StatusBadRequest)
-			return
-		}
-	}
-	if err := validation.ValidatePositiveInt(req.Duration, "duration"); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if err := validation.ValidatePositiveInt(req.Parallel, "parallel streams"); err != nil {
+	if err := validateIperfClientRequest(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

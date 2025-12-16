@@ -16,6 +16,7 @@ import (
 // LinkState represents the current link state.
 type LinkState int
 
+// Link state constants for interface monitoring.
 const (
 	LinkStateUnknown LinkState = iota
 	LinkStateDown

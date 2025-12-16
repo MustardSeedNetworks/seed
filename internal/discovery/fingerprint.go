@@ -136,36 +136,15 @@ func (f *Fingerprinter) ProbeDevice(ctx context.Context, ip string, profile *Dev
 }
 
 // fingerprintOS attempts to identify the operating system.
-func (f *Fingerprinter) fingerprintOS(ctx context.Context, ip string, profile *DeviceProfile) *OSFingerprint {
+func (f *Fingerprinter) fingerprintOS(_ context.Context, _ string, profile *DeviceProfile) *OSFingerprint {
 	fp := &OSFingerprint{
 		Methods: []string{},
 	}
 
-	// Method 1: TTL-based detection
-	// Common initial TTL values:
-	// - Linux/Unix: 64
-	// - Windows: 128
-	// - Cisco/network devices: 255
-	// - Solaris/AIX: 254
-	ttl := f.getTTL(ctx, ip)
-	if ttl > 0 {
-		fp.TTLObserved = ttl
-		fp.Methods = append(fp.Methods, "ttl")
+	// Note: TTL-based detection requires raw sockets which aren't available
+	// through Go's standard net package. We rely on banner and HTTP analysis instead.
 
-		switch {
-		case ttl <= 64:
-			fp.OSFamily = osLinux
-			fp.Confidence = 60
-		case ttl <= 128:
-			fp.OSFamily = osWindows
-			fp.Confidence = 60
-		case ttl >= 254:
-			fp.OSFamily = "network-device"
-			fp.Confidence = 70
-		}
-	}
-
-	// Method 2: Banner analysis
+	// Method 1: Banner analysis
 	if profile != nil {
 		for _, port := range profile.OpenPorts {
 			if port.Banner != "" {
@@ -203,93 +182,46 @@ func (f *Fingerprinter) fingerprintOS(ctx context.Context, ip string, profile *D
 	return fp
 }
 
-// getTTL performs a TCP connect and attempts to get TTL from response.
-func (f *Fingerprinter) getTTL(ctx context.Context, ip string) int {
-	// Try common ports to get a response
-	ports := []int{80, 443, 22, 23}
+// osMatch defines a pattern for OS detection.
+type osMatch struct {
+	patterns   []string // all patterns must match
+	osFamily   string
+	osVersion  string
+	confidence int
+}
 
-	for _, port := range ports {
-		addr := fmt.Sprintf("%s:%d", ip, port)
-		d := net.Dialer{Timeout: f.timeout}
+// sshOSMatchers defines OS patterns for SSH banners.
+var sshOSMatchers = []osMatch{
+	{[]string{"ubuntu"}, osLinux, "ubuntu", 90},
+	{[]string{"debian"}, osLinux, "debian", 90},
+	{[]string{"centos"}, osLinux, "rhel", 90},
+	{[]string{"red hat"}, osLinux, "rhel", 90},
+	{[]string{"freebsd"}, "bsd", "freebsd", 90},
+	{[]string{"cisco"}, osCisco, "", 95},
+	{[]string{"windows"}, osWindows, "", 90},
+	{[]string{"openssh"}, "unix", "", 50},
+}
 
-		conn, err := d.DialContext(ctx, "tcp", addr)
-		if err != nil {
-			continue
-		}
-		// Close immediately since we only need to verify connectivity
-		conn.Close()
-
-		// For TCP connections, we can't directly get the TTL from Go's net package
-		// We'll rely on the TTL from the DiscoveredDevice if available
-		// This is a simplified approach - real implementation would need raw sockets
-		return 0
-	}
-
-	return 0
+// genericOSMatchers defines OS patterns for generic banners.
+var genericOSMatchers = []osMatch{
+	{[]string{"linux"}, osLinux, "", 80},
+	{[]string{"windows"}, osWindows, "", 80},
+	{[]string{"cisco"}, osCisco, "", 95},
+	{[]string{"junos"}, "juniper", "", 95},
+	{[]string{"vsftpd"}, osLinux, "", 75},
+	{[]string{"proftpd"}, osLinux, "", 75},
+	{[]string{"microsoft", "ftp"}, osWindows, "", 85},
 }
 
 // parseOSFromBanner extracts OS info from service banners.
 func (f *Fingerprinter) parseOSFromBanner(banner string) *OSFingerprint {
 	fp := &OSFingerprint{}
 
-	// SSH banners
 	if strings.Contains(banner, "ssh") {
-		//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
-		if strings.Contains(banner, "ubuntu") {
-			fp.OSFamily = osLinux
-			fp.OSVersion = extractProductVersion(banner, "ubuntu")
-			fp.Confidence = 90
-		} else if strings.Contains(banner, "debian") {
-			fp.OSFamily = osLinux
-			fp.OSVersion = "debian"
-			fp.Confidence = 90
-		} else if strings.Contains(banner, "centos") || strings.Contains(banner, "red hat") {
-			fp.OSFamily = osLinux
-			fp.OSVersion = "rhel"
-			fp.Confidence = 90
-		} else if strings.Contains(banner, "freebsd") {
-			fp.OSFamily = "bsd"
-			fp.OSVersion = "freebsd"
-			fp.Confidence = 90
-		} else if strings.Contains(banner, "cisco") {
-			fp.OSFamily = osCisco
-			fp.Confidence = 95
-		} else if strings.Contains(banner, "windows") {
-			fp.OSFamily = osWindows
-			fp.Confidence = 90
-		} else if strings.Contains(banner, "openssh") {
-			fp.OSFamily = "unix"
-			fp.Confidence = 50
-		}
+		f.matchOSPatterns(banner, sshOSMatchers, fp)
 	}
-
-	// Telnet banners
-	//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
-	if strings.Contains(banner, "linux") {
-		fp.OSFamily = osLinux
-		fp.Confidence = 80
-	} else if strings.Contains(banner, "windows") {
-		fp.OSFamily = osWindows
-		fp.Confidence = 80
-	} else if strings.Contains(banner, "cisco") {
-		fp.OSFamily = osCisco
-		fp.Confidence = 95
-	} else if strings.Contains(banner, "junos") {
-		fp.OSFamily = "juniper"
-		fp.Confidence = 95
-	}
-
-	// FTP banners
-	//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
-	if strings.Contains(banner, "vsftpd") {
-		fp.OSFamily = osLinux
-		fp.Confidence = 75
-	} else if strings.Contains(banner, "proftpd") {
-		fp.OSFamily = osLinux
-		fp.Confidence = 75
-	} else if strings.Contains(banner, "microsoft") && strings.Contains(banner, "ftp") {
-		fp.OSFamily = osWindows
-		fp.Confidence = 85
+	if fp.OSFamily == "" {
+		f.matchOSPatterns(banner, genericOSMatchers, fp)
 	}
 
 	if fp.OSFamily == "" {
@@ -298,70 +230,62 @@ func (f *Fingerprinter) parseOSFromBanner(banner string) *OSFingerprint {
 	return fp
 }
 
+// matchOSPatterns checks banner against patterns and sets fingerprint if matched.
+func (*Fingerprinter) matchOSPatterns(banner string, matchers []osMatch, fp *OSFingerprint) {
+	for _, m := range matchers {
+		matched := true
+		for _, p := range m.patterns {
+			if !strings.Contains(banner, p) {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			fp.OSFamily = m.osFamily
+			fp.OSVersion = m.osVersion
+			fp.Confidence = m.confidence
+			return
+		}
+	}
+}
+
+// serverOSMatchers defines OS patterns for HTTP Server headers.
+var serverOSMatchers = []osMatch{
+	{[]string{"ubuntu"}, osLinux, "ubuntu", 85},
+	{[]string{"debian"}, osLinux, "debian", 85},
+	{[]string{"centos"}, osLinux, "rhel", 85},
+	{[]string{"red hat"}, osLinux, "rhel", 85},
+	{[]string{"cisco"}, osCisco, "", 90},
+	{[]string{"routeros"}, "mikrotik", "", 95}, //nolint:misspell // RouterOS is MikroTik's product name
+	{[]string{"fortinet"}, "fortinet", "", 95},
+	{[]string{"fortigate"}, "fortinet", "", 95},
+	{[]string{"pfsense"}, "bsd", "firewall", 90},
+	{[]string{"opnsense"}, "bsd", "firewall", 90},
+	{[]string{"synology"}, osLinux, "dsm", 95},
+	{[]string{"qnap"}, osLinux, "qts", 95},
+}
+
 // parseOSFromServer extracts OS info from HTTP Server header.
 func (f *Fingerprinter) parseOSFromServer(server string) *OSFingerprint {
 	fp := &OSFingerprint{}
 
-	// Windows indicators
+	// Windows indicators (special case for IIS version extraction)
 	if strings.Contains(server, "microsoft") || strings.Contains(server, "iis") {
 		fp.OSFamily = osWindows
-		// Extract IIS version
 		if match := regexp.MustCompile(`iis[/\s]*([\d.]+)`).FindStringSubmatch(server); len(match) > 1 {
 			fp.OSVersion = "IIS " + match[1]
 		}
 		fp.Confidence = 85
+		return fp
 	}
 
-	// Linux indicators
-	//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
-	if strings.Contains(server, "ubuntu") {
-		fp.OSFamily = osLinux
-		fp.OSVersion = "ubuntu"
-		fp.Confidence = 85
-	} else if strings.Contains(server, "debian") {
-		fp.OSFamily = osLinux
-		fp.OSVersion = "debian"
-		fp.Confidence = 85
-	} else if strings.Contains(server, "centos") || strings.Contains(server, "red hat") {
-		fp.OSFamily = osLinux
-		fp.OSVersion = "rhel"
-		fp.Confidence = 85
-	}
+	// Try pattern matching
+	f.matchOSPatterns(server, serverOSMatchers, fp)
 
-	// Specific products that hint at OS
-	if strings.Contains(server, "lighttpd") || strings.Contains(server, "nginx") {
-		if fp.OSFamily == "" {
-			fp.OSFamily = "unix"
-			fp.Confidence = 50
-		}
-	}
-
-	// Network device indicators
-	//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
-	if strings.Contains(server, "cisco") {
-		fp.OSFamily = osCisco
-		fp.Confidence = 90
-	} else if strings.Contains(server, "routeros") { //nolint:misspell // RouterOS is MikroTik's product name
-		fp.OSFamily = "mikrotik"
-		fp.Confidence = 95
-	} else if strings.Contains(server, "fortinet") || strings.Contains(server, "fortigate") {
-		fp.OSFamily = "fortinet"
-		fp.Confidence = 95
-	} else if strings.Contains(server, "pfsense") || strings.Contains(server, "opnsense") {
-		fp.OSFamily = "bsd"
-		fp.OSVersion = "firewall"
-		fp.Confidence = 90
-	}
-
-	// NAS devices
-	if strings.Contains(server, "synology") {
-		fp.OSFamily = osLinux
-		fp.OSVersion = "dsm"
-		fp.Confidence = 95
-	} else if strings.Contains(server, "qnap") {
-		fp.OSFamily = osLinux
-		fp.OSVersion = "qts"
-		fp.Confidence = 95
+	// Fallback for generic web servers
+	if fp.OSFamily == "" && (strings.Contains(server, "lighttpd") || strings.Contains(server, "nginx")) {
+		fp.OSFamily = "unix"
+		fp.Confidence = 50
 	}
 
 	if fp.OSFamily == "" {
@@ -387,85 +311,102 @@ func (f *Fingerprinter) detectServiceVersion(port OpenPort) *ServiceVersion {
 	}
 
 	bannerLower := strings.ToLower(port.Banner)
-
-	// SSH version detection
-	if port.Port == 22 || strings.Contains(bannerLower, "ssh") {
-		sv.Service = "ssh"
-		if match := regexp.MustCompile(`openssh[_\s]*([\d.p]+)`).FindStringSubmatch(bannerLower); len(match) > 1 {
-			sv.Product = "OpenSSH"
-			sv.Version = match[1]
-			sv.Confidence = 95
-		} else if match := regexp.MustCompile(`ssh-([\d.]+)`).FindStringSubmatch(bannerLower); len(match) > 1 {
-			sv.Product = "SSH"
-			sv.Version = match[1]
-			sv.Confidence = 80
-		}
-	}
-
-	// FTP version detection
-	if port.Port == 21 || strings.HasPrefix(bannerLower, "220") {
-		sv.Service = "ftp"
-		//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
-		if strings.Contains(bannerLower, "vsftpd") {
-			sv.Product = "vsftpd"
-			if match := regexp.MustCompile(`vsftpd\s*([\d.]+)`).FindStringSubmatch(bannerLower); len(match) > 1 {
-				sv.Version = match[1]
-			}
-			sv.Confidence = 90
-		} else if strings.Contains(bannerLower, "proftpd") {
-			sv.Product = "ProFTPD"
-			if match := regexp.MustCompile(`proftpd\s*([\d.]+)`).FindStringSubmatch(bannerLower); len(match) > 1 {
-				sv.Version = match[1]
-			}
-			sv.Confidence = 90
-		} else if strings.Contains(bannerLower, "pure-ftpd") {
-			sv.Product = "Pure-FTPd"
-			sv.Confidence = 90
-		} else if strings.Contains(bannerLower, "microsoft") {
-			sv.Product = "Microsoft FTP"
-			sv.Confidence = 85
-		}
-	}
-
-	// SMTP version detection
-	if port.Port == 25 || port.Port == 587 {
-		sv.Service = "smtp"
-		//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
-		if strings.Contains(bannerLower, "postfix") {
-			sv.Product = "Postfix"
-			sv.Confidence = 90
-		} else if strings.Contains(bannerLower, "sendmail") {
-			sv.Product = "Sendmail"
-			sv.Confidence = 90
-		} else if strings.Contains(bannerLower, "exim") {
-			sv.Product = "Exim"
-			if match := regexp.MustCompile(`exim\s*([\d.]+)`).FindStringSubmatch(bannerLower); len(match) > 1 {
-				sv.Version = match[1]
-			}
-			sv.Confidence = 90
-		} else if strings.Contains(bannerLower, "microsoft") {
-			sv.Product = "Microsoft Exchange"
-			sv.Confidence = 85
-		}
-	}
-
-	// Telnet detection
-	if port.Port == 23 {
-		sv.Service = "telnet"
-		if strings.Contains(bannerLower, "cisco") {
-			sv.Product = "Cisco IOS"
-			sv.Confidence = 95
-		} else if strings.Contains(bannerLower, "linux") {
-			sv.Product = "Linux telnetd"
-			sv.Confidence = 80
-		}
-	}
+	f.detectSSHVersion(port.Port, bannerLower, sv)
+	f.detectFTPVersion(port.Port, bannerLower, sv)
+	f.detectSMTPVersion(port.Port, bannerLower, sv)
+	f.detectTelnetVersion(port.Port, bannerLower, sv)
 
 	return sv
 }
 
+// detectSSHVersion detects SSH service version from banner.
+func (*Fingerprinter) detectSSHVersion(port int, banner string, sv *ServiceVersion) {
+	if port != 22 && !strings.Contains(banner, "ssh") {
+		return
+	}
+	sv.Service = "ssh"
+	if match := regexp.MustCompile(`openssh[_\s]*([\d.p]+)`).FindStringSubmatch(banner); len(match) > 1 {
+		sv.Product = "OpenSSH"
+		sv.Version = match[1]
+		sv.Confidence = 95
+	} else if match := regexp.MustCompile(`ssh-([\d.]+)`).FindStringSubmatch(banner); len(match) > 1 {
+		sv.Product = "SSH"
+		sv.Version = match[1]
+		sv.Confidence = 80
+	}
+}
+
+// detectFTPVersion detects FTP service version from banner.
+func (*Fingerprinter) detectFTPVersion(port int, banner string, sv *ServiceVersion) {
+	if port != 21 && !strings.HasPrefix(banner, "220") {
+		return
+	}
+	sv.Service = "ftp"
+	switch {
+	case strings.Contains(banner, "vsftpd"):
+		sv.Product = "vsftpd"
+		if match := regexp.MustCompile(`vsftpd\s*([\d.]+)`).FindStringSubmatch(banner); len(match) > 1 {
+			sv.Version = match[1]
+		}
+		sv.Confidence = 90
+	case strings.Contains(banner, "proftpd"):
+		sv.Product = "ProFTPD"
+		if match := regexp.MustCompile(`proftpd\s*([\d.]+)`).FindStringSubmatch(banner); len(match) > 1 {
+			sv.Version = match[1]
+		}
+		sv.Confidence = 90
+	case strings.Contains(banner, "pure-ftpd"):
+		sv.Product = "Pure-FTPd"
+		sv.Confidence = 90
+	case strings.Contains(banner, "microsoft"):
+		sv.Product = "Microsoft FTP"
+		sv.Confidence = 85
+	}
+}
+
+// detectSMTPVersion detects SMTP service version from banner.
+func (*Fingerprinter) detectSMTPVersion(port int, banner string, sv *ServiceVersion) {
+	if port != 25 && port != 587 {
+		return
+	}
+	sv.Service = "smtp"
+	switch {
+	case strings.Contains(banner, "postfix"):
+		sv.Product = "Postfix"
+		sv.Confidence = 90
+	case strings.Contains(banner, "sendmail"):
+		sv.Product = "Sendmail"
+		sv.Confidence = 90
+	case strings.Contains(banner, "exim"):
+		sv.Product = "Exim"
+		if match := regexp.MustCompile(`exim\s*([\d.]+)`).FindStringSubmatch(banner); len(match) > 1 {
+			sv.Version = match[1]
+		}
+		sv.Confidence = 90
+	case strings.Contains(banner, "microsoft"):
+		sv.Product = "Microsoft Exchange"
+		sv.Confidence = 85
+	}
+}
+
+// detectTelnetVersion detects Telnet service version from banner.
+func (*Fingerprinter) detectTelnetVersion(port int, banner string, sv *ServiceVersion) {
+	if port != 23 {
+		return
+	}
+	sv.Service = "telnet"
+	switch {
+	case strings.Contains(banner, "cisco"):
+		sv.Product = "Cisco IOS"
+		sv.Confidence = 95
+	case strings.Contains(banner, "linux"):
+		sv.Product = "Linux telnetd"
+		sv.Confidence = 80
+	}
+}
+
 // probeTLS probes a port for TLS certificate information.
-func (f *Fingerprinter) probeTLS(ctx context.Context, ip string, port int) *TLSInfo {
+func (f *Fingerprinter) probeTLS(_ context.Context, ip string, port int) *TLSInfo {
 	addr := fmt.Sprintf("%s:%d", ip, port)
 
 	dialer := &net.Dialer{Timeout: f.timeout}
@@ -536,15 +477,6 @@ func tlsVersionString(version uint16) string {
 	default:
 		return fmt.Sprintf("Unknown (0x%04x)", version)
 	}
-}
-
-// extractProductVersion extracts a version string from text for a given product.
-func extractProductVersion(text, product string) string {
-	pattern := regexp.MustCompile(product + `[/_\s]*([\d.]+)`)
-	if match := pattern.FindStringSubmatch(strings.ToLower(text)); len(match) > 1 {
-		return product + " " + match[1]
-	}
-	return product
 }
 
 // containsInt checks if an int slice contains a value.

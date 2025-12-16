@@ -242,89 +242,72 @@ func NewManager() *Manager {
 
 // findIperf3Binary locates the iperf3 binary, checking bundled paths first.
 func findIperf3Binary() (string, error) {
-	// Return cached path if already found
 	if iperfBinaryPath != "" {
 		return iperfBinaryPath, nil
 	}
 
-	// Track all searched paths for better error message
 	searchedPaths := make([]string, 0, 10) //nolint:mnd // Pre-allocate for typical path count
 
-	// Get executable path to find bundled binary
-	execPath, err := os.Executable()
-	if err == nil {
+	// Check bundled paths relative to executable
+	if execPath, err := os.Executable(); err == nil {
 		execDir := filepath.Dir(execPath)
-
-		// Check bundled locations relative to executable
 		bundledPaths := []string{
 			filepath.Join(execDir, "bin", "iperf3"),
 			filepath.Join(execDir, "iperf3"),
 			filepath.Join(execDir, "..", "bin", "iperf3"),
 		}
-
-		for _, path := range bundledPaths {
-			searchedPaths = append(searchedPaths, path)
-			if _, err := os.Stat(path); err == nil {
-				// Verify binary is executable
-				if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
-					iperfBinaryPath = path
-					return path, nil
-				}
-			}
+		if path := findExecutablePath(bundledPaths, &searchedPaths); path != "" {
+			iperfBinaryPath = path
+			return path, nil
 		}
 	}
 
-	// Check relative to working directory (for development)
-	cwd, err := os.Getwd()
-	if err == nil {
-		devPaths := []string{
-			filepath.Join(cwd, "bin", "iperf3"),
-			filepath.Join(cwd, "iperf3"),
-		}
-
-		for _, path := range devPaths {
-			searchedPaths = append(searchedPaths, path)
-			if _, err := os.Stat(path); err == nil {
-				if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
-					iperfBinaryPath = path
-					return path, nil
-				}
-			}
+	// Check development paths relative to working directory
+	if cwd, err := os.Getwd(); err == nil {
+		devPaths := []string{filepath.Join(cwd, "bin", "iperf3"), filepath.Join(cwd, "iperf3")}
+		if path := findExecutablePath(devPaths, &searchedPaths); path != "" {
+			iperfBinaryPath = path
+			return path, nil
 		}
 	}
 
-	// Check common system paths explicitly (systemd services may have minimal PATH)
+	// Check common system paths
 	systemPaths := []string{
-		"/usr/local/bin/iperf3",
-		"/usr/bin/iperf3",
-		"/bin/iperf3",
-		"/usr/local/sbin/iperf3",
-		"/usr/sbin/iperf3",
+		"/usr/local/bin/iperf3", "/usr/bin/iperf3", "/bin/iperf3",
+		"/usr/local/sbin/iperf3", "/usr/sbin/iperf3",
 	}
-	for _, path := range systemPaths {
-		searchedPaths = append(searchedPaths, path)
-		if _, err := os.Stat(path); err == nil {
-			if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
-				iperfBinaryPath = path
-				return path, nil
-			}
-		}
+	if path := findExecutablePath(systemPaths, &searchedPaths); path != "" {
+		iperfBinaryPath = path
+		return path, nil
 	}
 
 	// Fall back to system PATH
-	path, err := exec.LookPath("iperf3")
-	if err != nil {
-		// Build detailed error message
-		errMsg := "iperf3 not found. Searched paths:\n"
-		for _, p := range searchedPaths {
-			errMsg += fmt.Sprintf("  - %s\n", p)
-		}
-		errMsg += "\nTo build a bundled iperf3 binary, run:\n  scripts/build-iperf3.sh"
-		return "", fmt.Errorf("%s", errMsg)
+	if path, err := exec.LookPath("iperf3"); err == nil {
+		iperfBinaryPath = path
+		return path, nil
 	}
 
-	iperfBinaryPath = path
-	return path, nil
+	return "", buildIperfNotFoundError(searchedPaths)
+}
+
+// findExecutablePath checks paths and returns the first executable found.
+func findExecutablePath(paths []string, searched *[]string) string {
+	for _, path := range paths {
+		*searched = append(*searched, path)
+		if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
+			return path
+		}
+	}
+	return ""
+}
+
+func buildIperfNotFoundError(searchedPaths []string) error {
+	errMsg := "iperf3 not found. Searched paths:\n"
+	for _, p := range searchedPaths {
+		errMsg += fmt.Sprintf("  - %s\n", p)
+	}
+	errMsg += "\nTo build a bundled iperf3 binary, run:\n  scripts/build-iperf3.sh"
+	return fmt.Errorf("%s", errMsg)
 }
 
 // CheckInstalled checks if iperf3 is available.
@@ -550,33 +533,84 @@ func (m *Manager) StopServer() error {
 
 // RunClient runs an iperf3 client test.
 func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result, error) {
-	// Validate server address to prevent command injection
 	if err := validateServer(config.Server); err != nil {
 		return nil, err
 	}
 	config.Protocol = strings.ToLower(config.Protocol)
 	config.Direction = strings.ToLower(config.Direction)
 
-	m.mu.Lock()
-	if m.clientStatus.Running {
-		m.mu.Unlock()
-		return nil, fmt.Errorf("test already in progress")
+	if err := m.startClientTest(); err != nil {
+		return nil, err
 	}
-	m.clientStatus = ClientStatus{Running: true, Phase: "connecting", Progress: 10}
-	m.mu.Unlock()
-
-	defer func() {
-		m.mu.Lock()
-		m.clientStatus = ClientStatus{Running: false, Phase: "idle", Progress: 0}
-		m.mu.Unlock()
-	}()
+	defer m.resetClientStatus()
 
 	binaryPath, err := findIperf3Binary()
 	if err != nil {
 		return nil, err
 	}
 
-	// Set defaults
+	setClientDefaults(config)
+	direction := normalizeDirection(config)
+	args := buildClientArgs(config, direction)
+
+	m.updateClientProgress("testing", 30)
+
+	//nolint:gosec // G204: binaryPath is from findIperf3Binary() and args are validated
+	cmd := exec.CommandContext(ctx, binaryPath, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		var iperfOut iperfJSON
+		if jsonErr := json.Unmarshal(output, &iperfOut); jsonErr == nil && iperfOut.Error != "" {
+			return nil, fmt.Errorf("iperf3 error: %s", iperfOut.Error)
+		}
+		return nil, fmt.Errorf("iperf3 failed: %w", err)
+	}
+
+	m.updateClientProgress("parsing", 80)
+
+	var iperfOut iperfJSON
+	if err := json.Unmarshal(output, &iperfOut); err != nil {
+		return nil, fmt.Errorf("failed to parse iperf3 output: %w", err)
+	}
+	if iperfOut.Error != "" {
+		return nil, fmt.Errorf("iperf3 error: %s", iperfOut.Error)
+	}
+
+	result := parseClientResult(&iperfOut, config, direction)
+
+	m.mu.Lock()
+	m.lastResult = result
+	m.clientStatus.Phase = "complete"
+	m.clientStatus.Progress = 100
+	m.mu.Unlock()
+
+	return result, nil
+}
+
+func (m *Manager) startClientTest() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.clientStatus.Running {
+		return fmt.Errorf("test already in progress")
+	}
+	m.clientStatus = ClientStatus{Running: true, Phase: "connecting", Progress: 10}
+	return nil
+}
+
+func (m *Manager) resetClientStatus() {
+	m.mu.Lock()
+	m.clientStatus = ClientStatus{Running: false, Phase: "idle", Progress: 0}
+	m.mu.Unlock()
+}
+
+func (m *Manager) updateClientProgress(phase string, progress float64) {
+	m.mu.Lock()
+	m.clientStatus.Phase = phase
+	m.clientStatus.Progress = progress
+	m.mu.Unlock()
+}
+
+func setClientDefaults(config *ClientConfig) {
 	if config.Port == 0 {
 		config.Port = 5201
 	}
@@ -589,7 +623,9 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 	if config.Protocol == "" {
 		config.Protocol = "tcp"
 	}
+}
 
+func normalizeDirection(config *ClientConfig) string {
 	direction := strings.ToLower(config.Direction)
 	if direction == "" {
 		if config.Reverse {
@@ -602,76 +638,40 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 		direction = directionUpload
 	}
 	config.Direction = direction
+	return direction
+}
 
-	// Build command
+func buildClientArgs(config *ClientConfig, direction string) []string {
 	args := []string{
 		"-c", config.Server,
 		"-p", fmt.Sprintf("%d", config.Port),
 		"-t", fmt.Sprintf("%d", config.Duration),
 		"-P", fmt.Sprintf("%d", config.Parallel),
-		"-J", // JSON output
+		"-J",
 	}
-
 	if config.Protocol == "udp" {
-		args = append(args, "-u", "-b", "0") // Unlimited bandwidth for UDP
+		args = append(args, "-u", "-b", "0")
 	}
-
 	switch direction {
 	case directionDownload:
 		config.Reverse = true
-		args = append(args, "-R") // Reverse mode (server sends, client receives)
+		args = append(args, "-R")
 	case directionBidirectional:
-		// Bidirectional test (client <-> server)
 		args = append(args, "--bidir")
 		config.Reverse = false
 	default:
 		config.Reverse = false
 	}
+	return args
+}
 
-	m.mu.Lock()
-	m.clientStatus.Phase = "testing"
-	m.clientStatus.Progress = 30
-	m.mu.Unlock()
-
-	// Run iperf3
-	//nolint:gosec // G204: binaryPath is from findIperf3Binary() and args are validated
-	cmd := exec.CommandContext(ctx, binaryPath, args...)
-	output, err := cmd.Output()
-	if err != nil {
-		// Try to parse error from output
-		var iperfOut iperfJSON
-		if jsonErr := json.Unmarshal(output, &iperfOut); jsonErr == nil && iperfOut.Error != "" {
-			return nil, fmt.Errorf("iperf3 error: %s", iperfOut.Error)
-		}
-		return nil, fmt.Errorf("iperf3 failed: %w", err)
-	}
-
-	m.mu.Lock()
-	m.clientStatus.Progress = 80
-	m.mu.Unlock()
-
-	// Parse JSON output
-	var iperfOut iperfJSON
-	if err := json.Unmarshal(output, &iperfOut); err != nil {
-		return nil, fmt.Errorf("failed to parse iperf3 output: %w", err)
-	}
-
-	if iperfOut.Error != "" {
-		return nil, fmt.Errorf("iperf3 error: %s", iperfOut.Error)
-	}
-
-	// Build result
+func parseClientResult(iperfOut *iperfJSON, config *ClientConfig, direction string) *Result {
 	result := &Result{
-		Protocol:  config.Protocol,
-		Server:    config.Server,
-		Port:      config.Port,
-		Timestamp: time.Now(),
-		Direction: direction,
+		Protocol: config.Protocol, Server: config.Server, Port: config.Port,
+		Timestamp: time.Now(), Direction: direction,
 	}
-
 	switch direction {
 	case directionDownload:
-		// In reverse mode, we care about what we received
 		result.BitsPerSecond = iperfOut.End.SumReceived.BitsPerSecond
 		result.Bandwidth = iperfOut.End.SumReceived.BitsPerSecond / 1_000_000
 		result.Transfer = iperfOut.End.SumReceived.Bytes / 1_000_000
@@ -683,33 +683,22 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 		result.UploadBitsPerSecond = iperfOut.End.SumSent.BitsPerSecond
 		result.UploadBandwidth = iperfOut.End.SumSent.BitsPerSecond / 1_000_000
 		result.UploadTransfer = iperfOut.End.SumSent.Bytes / 1_000_000
-		// Preserve legacy fields using download direction for compatibility
 		result.BitsPerSecond = result.DownloadBitsPerSecond
 		result.Bandwidth = result.DownloadBandwidth
 		result.Transfer = result.DownloadTransfer
 		result.Duration = iperfOut.End.Sum.Seconds
 		result.Retransmits = iperfOut.End.SumSent.Retransmits
-	default: // upload
-		// In normal mode, we care about what we sent
+	default:
 		result.BitsPerSecond = iperfOut.End.SumSent.BitsPerSecond
 		result.Bandwidth = iperfOut.End.SumSent.BitsPerSecond / 1_000_000
 		result.Transfer = iperfOut.End.SumSent.Bytes / 1_000_000
 		result.Duration = iperfOut.End.SumSent.Seconds
 		result.Retransmits = iperfOut.End.SumSent.Retransmits
 	}
-
-	// UDP-specific fields
 	if config.Protocol == "udp" {
 		result.Jitter = iperfOut.End.Sum.JitterMs
 		result.LostPackets = iperfOut.End.Sum.LostPackets
 		result.LostPercent = iperfOut.End.Sum.LostPercent
 	}
-
-	m.mu.Lock()
-	m.lastResult = result
-	m.clientStatus.Phase = "complete"
-	m.clientStatus.Progress = 100
-	m.mu.Unlock()
-
-	return result, nil
+	return result
 }

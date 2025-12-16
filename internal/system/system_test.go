@@ -217,7 +217,7 @@ func TestGetHealthMultipleCalls(t *testing.T) {
 	}
 }
 
-func TestHealthStructFields(t *testing.T) {
+func TestHealthStructFields(_ *testing.T) {
 	// Test that the Health struct has all expected fields
 	health := &Health{
 		CPUPercent:    50.0,

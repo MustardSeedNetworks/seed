@@ -283,7 +283,7 @@ func TestCalculateScore(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := d.calculateScore(tt.score)
+			got := d.calculateScore(&tt.score)
 
 			if tt.wantSign < 0 && got >= 0 {
 				t.Errorf("calculateScore() = %d, want negative", got)

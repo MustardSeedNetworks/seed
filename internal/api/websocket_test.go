@@ -15,7 +15,7 @@ func TestHubClientCount(t *testing.T) {
 }
 
 // TestHubBroadcast tests the Broadcast method.
-func TestHubBroadcast(t *testing.T) {
+func TestHubBroadcast(_ *testing.T) {
 	hub := NewHub()
 
 	msg := Message{
@@ -28,7 +28,7 @@ func TestHubBroadcast(t *testing.T) {
 }
 
 // TestHubBroadcastCardUpdate tests the BroadcastCardUpdate method.
-func TestHubBroadcastCardUpdate(t *testing.T) {
+func TestHubBroadcastCardUpdate(_ *testing.T) {
 	hub := NewHub()
 
 	// Should not panic with no clients
@@ -36,7 +36,7 @@ func TestHubBroadcastCardUpdate(t *testing.T) {
 }
 
 // TestHubShutdown tests graceful shutdown.
-func TestHubShutdown(t *testing.T) {
+func TestHubShutdown(_ *testing.T) {
 	hub := NewHub()
 
 	// Start the hub

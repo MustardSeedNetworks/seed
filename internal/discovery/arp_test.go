@@ -293,6 +293,27 @@ func TestARPEntry_Fields(t *testing.T) {
 	if entry.Vendor != "Test Vendor" {
 		t.Errorf("Expected Vendor 'Test Vendor', got %q", entry.Vendor)
 	}
+	if entry.Hostname != "test-host" {
+		t.Errorf("Expected Hostname 'test-host', got %q", entry.Hostname)
+	}
+	if entry.Interface != "eth0" {
+		t.Errorf("Expected Interface 'eth0', got %q", entry.Interface)
+	}
+	if entry.State != "REACHABLE" {
+		t.Errorf("Expected State 'REACHABLE', got %q", entry.State)
+	}
+	if entry.TTL != 64 {
+		t.Errorf("Expected TTL 64, got %d", entry.TTL)
+	}
+	if entry.OSGuess != "Linux/Unix" {
+		t.Errorf("Expected OSGuess 'Linux/Unix', got %q", entry.OSGuess)
+	}
+	if entry.LastSeen.IsZero() {
+		t.Error("Expected LastSeen to be set")
+	}
+	if entry.ResponseTime != 5 {
+		t.Errorf("Expected ResponseTime 5, got %d", entry.ResponseTime)
+	}
 	if !entry.IsLocal {
 		t.Error("Expected IsLocal to be true")
 	}

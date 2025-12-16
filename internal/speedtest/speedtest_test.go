@@ -144,6 +144,9 @@ func TestResultFields(t *testing.T) {
 	if result.Distance != 50.0 {
 		t.Errorf("expected Distance 50.0, got %v", result.Distance)
 	}
+	if result.Timestamp != now {
+		t.Errorf("expected Timestamp %v, got %v", now, result.Timestamp)
+	}
 	if result.TestDuration != 30.5 {
 		t.Errorf("expected TestDuration 30.5, got %v", result.TestDuration)
 	}
@@ -188,7 +191,7 @@ func TestStatusPhases(t *testing.T) {
 	}
 }
 
-func TestConcurrentStatusAccess(t *testing.T) {
+func TestConcurrentStatusAccess(_ *testing.T) {
 	tester := NewTester()
 
 	// Test concurrent reads don't cause race conditions
@@ -223,7 +226,7 @@ func TestProgressRange(t *testing.T) {
 	}
 }
 
-func TestTesterMuLocking(t *testing.T) {
+func TestTesterMuLocking(_ *testing.T) {
 	tester := NewTester()
 
 	// Test concurrent writes don't cause race conditions

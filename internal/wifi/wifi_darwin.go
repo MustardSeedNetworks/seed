@@ -42,7 +42,7 @@ func isWirelessPlatform(iface string) bool {
 
 // getInfoPlatform gets Wi-Fi info on macOS.
 // macOS requires exec-based approach using airport utility.
-func getInfoPlatform(iface string) *Info {
+func getInfoPlatform(_ string) *Info {
 	// Use airport command for Wi-Fi info
 	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
 	cmd := exec.Command(airportPath, "-I")

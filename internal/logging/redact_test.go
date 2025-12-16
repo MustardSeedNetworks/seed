@@ -318,30 +318,30 @@ func TestGetClientIP(t *testing.T) {
 
 func TestLogf(t *testing.T) {
 	// Test that Logf doesn't panic with various argument types
-	t.Run("string argument", func(t *testing.T) {
+	t.Run("string argument", func(_ *testing.T) {
 		Logf("test message: %s", "password=secret")
 	})
 
-	t.Run("http.Header argument", func(t *testing.T) {
+	t.Run("http.Header argument", func(_ *testing.T) {
 		h := http.Header{"Authorization": []string{"Bearer token"}}
 		Logf("headers: %v", h)
 	})
 
-	t.Run("map argument", func(t *testing.T) {
+	t.Run("map argument", func(_ *testing.T) {
 		m := map[string]interface{}{"password": "secret", "user": "admin"}
 		Logf("data: %v", m)
 	})
 
-	t.Run("int argument", func(t *testing.T) {
+	t.Run("int argument", func(_ *testing.T) {
 		Logf("count: %d", 42)
 	})
 
-	t.Run("mixed arguments", func(t *testing.T) {
+	t.Run("mixed arguments", func(_ *testing.T) {
 		Logf("user=%s count=%d", "admin", 10)
 	})
 }
 
-func TestLogRequest(t *testing.T) {
+func TestLogRequest(_ *testing.T) {
 	// Just verify it doesn't panic
 	req, _ := http.NewRequest("POST", "/api/login", http.NoBody)
 	req.Header.Set("Authorization", "Bearer secret-token")

@@ -11,33 +11,34 @@ import (
 	"time"
 )
 
-// DiscoveryMethod indicates how a device was discovered.
-type DiscoveryMethod string
+// Method indicates how a device was discovered.
+type Method string
 
+// Device discovery method constants.
 const (
-	MethodARP  DiscoveryMethod = "arp"
-	MethodNDP  DiscoveryMethod = "ndp" // IPv6 Neighbor Discovery
-	MethodLLDP DiscoveryMethod = "lldp"
-	MethodCDP  DiscoveryMethod = "cdp"
-	MethodEDP  DiscoveryMethod = "edp"
-	MethodMDNS DiscoveryMethod = "mdns"
-	MethodPING DiscoveryMethod = "ping"
+	MethodARP  Method = "arp"
+	MethodNDP  Method = "ndp" // IPv6 Neighbor Discovery
+	MethodLLDP Method = "lldp"
+	MethodCDP  Method = "cdp"
+	MethodEDP  Method = "edp"
+	MethodMDNS Method = "mdns"
+	MethodPING Method = "ping"
 )
 
 // DiscoveredDevice represents a network device with aggregated discovery info.
 type DiscoveredDevice struct {
-	IP              string            `json:"ip"`                      // Primary IPv4 address
-	IPv6Address     string            `json:"ipv6,omitempty"`          // Primary IPv6 address
-	IPv6Addresses   []string          `json:"ipv6Addresses,omitempty"` // All IPv6 addresses
-	MAC             string            `json:"mac"`
-	Hostname        string            `json:"hostname,omitempty"`
-	Vendor          string            `json:"vendor,omitempty"`
-	OSGuess         string            `json:"osGuess,omitempty"`
-	TTL             int               `json:"ttl,omitempty"`
-	DiscoveryMethod []DiscoveryMethod `json:"discoveryMethod"`
-	LastSeen        time.Time         `json:"lastSeen"`
-	IsLocal         bool              `json:"isLocal"`            // true if device is on local subnet
-	IsRouter        bool              `json:"isRouter,omitempty"` // true if detected as IPv6 router via NDP
+	IP              string    `json:"ip"`                      // Primary IPv4 address
+	IPv6Address     string    `json:"ipv6,omitempty"`          // Primary IPv6 address
+	IPv6Addresses   []string  `json:"ipv6Addresses,omitempty"` // All IPv6 addresses
+	MAC             string    `json:"mac"`
+	Hostname        string    `json:"hostname,omitempty"`
+	Vendor          string    `json:"vendor,omitempty"`
+	OSGuess         string    `json:"osGuess,omitempty"`
+	TTL             int       `json:"ttl,omitempty"`
+	DiscoveryMethod []Method  `json:"discoveryMethod"`
+	LastSeen        time.Time `json:"lastSeen"`
+	IsLocal         bool      `json:"isLocal"`            // true if device is on local subnet
+	IsRouter        bool      `json:"isRouter,omitempty"` // true if detected as IPv6 router via NDP
 
 	// Duplicate IP detection
 	HasDuplicateIP bool     `json:"hasDuplicateIP,omitempty"` // true if same IP seen with multiple MACs
@@ -230,11 +231,20 @@ func (d *DeviceDiscovery) aggregateResults() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	// Start with ARP entries
+	d.mergeARPResults()
+	d.mergeLLDPResults()
+	d.mergeCDPResults()
+	d.mergeEDPResults()
+	d.mergeNDPResults()
+	d.detectDuplicateIPs()
+	d.ensureVendorInfo()
+}
+
+// mergeARPResults merges ARP scan entries into devices. Must be called with mu held.
+func (d *DeviceDiscovery) mergeARPResults() {
 	for _, arp := range d.arpScanner.GetEntries() {
 		mac := arp.MAC
 		// Use IP as key for PING_ONLY entries (no MAC available)
-		// This prevents all PING_ONLY entries from colliding on empty string key
 		key := mac
 		if key == "" {
 			key = "ip:" + arp.IP
@@ -244,12 +254,11 @@ func (d *DeviceDiscovery) aggregateResults() {
 		if !exists {
 			device = &DiscoveredDevice{
 				MAC:             mac,
-				DiscoveryMethod: []DiscoveryMethod{},
+				DiscoveryMethod: []Method{},
 			}
 			d.devices[key] = device
 		}
 
-		// Update from ARP data
 		device.IP = arp.IP
 		device.Vendor = arp.Vendor
 		device.TTL = arp.TTL
@@ -260,7 +269,6 @@ func (d *DeviceDiscovery) aggregateResults() {
 			device.Hostname = arp.Hostname
 		}
 
-		// Use correct discovery method based on whether we have MAC (ARP) or not (PING)
 		if mac != "" {
 			if !containsMethod(device.DiscoveryMethod, MethodARP) {
 				device.DiscoveryMethod = append(device.DiscoveryMethod, MethodARP)
@@ -271,9 +279,12 @@ func (d *DeviceDiscovery) aggregateResults() {
 			}
 		}
 	}
+}
 
-	//nolint:dupl // LLDP/CDP merge loops have similar structure but different protocol-specific fields
-	// Merge LLDP neighbors
+// mergeLLDPResults merges LLDP neighbor data into devices. Must be called with mu held.
+//
+//nolint:dupl // LLDP/CDP merge loops have similar structure but different protocol-specific fields
+func (d *DeviceDiscovery) mergeLLDPResults() {
 	for _, lldp := range d.protoManager.GetLLDPNeighbors() {
 		mac := normalizeMac(lldp.SourceMAC)
 		device := d.getOrCreateDevice(mac)
@@ -288,12 +299,9 @@ func (d *DeviceDiscovery) aggregateResults() {
 			ManagementAddress: lldp.ManagementAddress,
 		}
 
-		// Use LLDP system name as hostname if not already set
 		if device.Hostname == "" && lldp.SystemName != "" {
 			device.Hostname = lldp.SystemName
 		}
-
-		// Use management address as IP if not already set
 		if device.IP == "" && lldp.ManagementAddress != "" {
 			device.IP = lldp.ManagementAddress
 		}
@@ -303,9 +311,12 @@ func (d *DeviceDiscovery) aggregateResults() {
 			device.DiscoveryMethod = append(device.DiscoveryMethod, MethodLLDP)
 		}
 	}
+}
 
-	//nolint:dupl // LLDP/CDP merge loops have similar structure but different protocol-specific fields
-	// Merge CDP neighbors
+// mergeCDPResults merges CDP neighbor data into devices. Must be called with mu held.
+//
+//nolint:dupl // LLDP/CDP merge loops have similar structure but different protocol-specific fields
+func (d *DeviceDiscovery) mergeCDPResults() {
 	for _, cdp := range d.protoManager.GetCDPNeighbors() {
 		mac := normalizeMac(cdp.SourceMAC)
 		device := d.getOrCreateDevice(mac)
@@ -332,8 +343,10 @@ func (d *DeviceDiscovery) aggregateResults() {
 			device.DiscoveryMethod = append(device.DiscoveryMethod, MethodCDP)
 		}
 	}
+}
 
-	// Merge EDP neighbors
+// mergeEDPResults merges EDP neighbor data into devices. Must be called with mu held.
+func (d *DeviceDiscovery) mergeEDPResults() {
 	for _, edp := range d.protoManager.GetEDPNeighbors() {
 		mac := normalizeMac(edp.SourceMAC)
 		device := d.getOrCreateDevice(mac)
@@ -363,33 +376,27 @@ func (d *DeviceDiscovery) aggregateResults() {
 			device.DiscoveryMethod = append(device.DiscoveryMethod, MethodEDP)
 		}
 	}
+}
 
-	// Merge NDP neighbors (IPv6)
+// mergeNDPResults merges NDP neighbor data (IPv6) into devices. Must be called with mu held.
+func (d *DeviceDiscovery) mergeNDPResults() {
 	for _, ndp := range d.ndpScanner.GetNeighbors() {
 		mac := normalizeMac(ndp.MAC)
-
-		// Try to find existing device by MAC
 		device := d.getOrCreateDevice(mac)
 
-		// Add IPv6 address to the device
 		if ndp.IPv6 != "" {
-			// Set primary IPv6 if not set
 			if device.IPv6Address == "" {
 				device.IPv6Address = ndp.IPv6
 			}
-
-			// Add to IPv6 addresses list if not already present
 			if !containsIPv6(device.IPv6Addresses, ndp.IPv6) {
 				device.IPv6Addresses = append(device.IPv6Addresses, ndp.IPv6)
 			}
 		}
 
-		// Update router status
 		if ndp.IsRouter {
 			device.IsRouter = true
 		}
 
-		// Create or update NDP info
 		if device.NDPInfo == nil {
 			device.NDPInfo = &NDPDeviceInfo{
 				LinkLayerAddress: ndp.MAC,
@@ -399,35 +406,31 @@ func (d *DeviceDiscovery) aggregateResults() {
 			device.NDPInfo.IsRouter = ndp.IsRouter
 		}
 
-		// Update last seen
 		if ndp.LastSeen.After(device.LastSeen) {
 			device.LastSeen = ndp.LastSeen
 		}
 
-		// Add NDP discovery method
 		if !containsMethod(device.DiscoveryMethod, MethodNDP) {
 			device.DiscoveryMethod = append(device.DiscoveryMethod, MethodNDP)
 		}
 	}
+}
 
-	// Detect duplicate IPs (same IP with multiple MACs)
-	ipToMACs := make(map[string][]string) // Map IP to list of MACs
+// detectDuplicateIPs flags devices that share the same IP address. Must be called with mu held.
+func (d *DeviceDiscovery) detectDuplicateIPs() {
+	ipToMACs := make(map[string][]string)
 	for _, device := range d.devices {
 		if device.IP != "" && device.MAC != "" {
 			ipToMACs[device.IP] = append(ipToMACs[device.IP], device.MAC)
 		}
 	}
 
-	// Flag devices with duplicate IPs
 	for ip, macs := range ipToMACs {
 		if len(macs) > 1 {
-			// Multiple MACs seen for this IP - mark all devices with this IP
 			for _, device := range d.devices {
 				if device.IP == ip && device.MAC != "" {
-					// Set duplicate flag
 					device.HasDuplicateIP = true
-					// Store other MACs (exclude this device's own MAC)
-					device.DuplicateMACs = []string{}
+					device.DuplicateMACs = make([]string, 0, len(macs)-1)
 					for _, mac := range macs {
 						if mac != device.MAC {
 							device.DuplicateMACs = append(device.DuplicateMACs, mac)
@@ -437,8 +440,10 @@ func (d *DeviceDiscovery) aggregateResults() {
 			}
 		}
 	}
+}
 
-	// Ensure all devices have vendor info
+// ensureVendorInfo populates vendor information for devices missing it. Must be called with mu held.
+func (d *DeviceDiscovery) ensureVendorInfo() {
 	for _, device := range d.devices {
 		if device.Vendor == "" && device.MAC != "" {
 			device.Vendor = d.oui.LookupWithDefault(device.MAC, "Unknown")
@@ -452,7 +457,7 @@ func (d *DeviceDiscovery) getOrCreateDevice(mac string) *DiscoveredDevice {
 	if !exists {
 		device = &DiscoveredDevice{
 			MAC:             mac,
-			DiscoveryMethod: []DiscoveryMethod{},
+			DiscoveryMethod: []Method{},
 		}
 		d.devices[mac] = device
 	}
@@ -460,7 +465,7 @@ func (d *DeviceDiscovery) getOrCreateDevice(mac string) *DiscoveredDevice {
 }
 
 // containsMethod checks if a method is in the slice.
-func containsMethod(methods []DiscoveryMethod, method DiscoveryMethod) bool {
+func containsMethod(methods []Method, method Method) bool {
 	for _, m := range methods {
 		if m == method {
 			return true
@@ -537,8 +542,8 @@ func (d *DeviceDiscovery) GetSubnetInfo() (subnet, localIP string) {
 	return d.arpScanner.GetSubnetInfo()
 }
 
-// DiscoveryStatus represents the current discovery status.
-type DiscoveryStatus struct {
+// Status represents the current discovery status.
+type Status struct {
 	Scanning    bool      `json:"scanning"`
 	DeviceCount int       `json:"deviceCount"`
 	LastScan    time.Time `json:"lastScan"`
@@ -548,13 +553,13 @@ type DiscoveryStatus struct {
 }
 
 // GetStatus returns the current discovery status.
-func (d *DeviceDiscovery) GetStatus() *DiscoveryStatus {
+func (d *DeviceDiscovery) GetStatus() *Status {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	subnet, localIP := d.arpScanner.GetSubnetInfo()
 
-	return &DiscoveryStatus{
+	return &Status{
 		Scanning:    d.scanning,
 		DeviceCount: len(d.devices),
 		LastScan:    d.lastScan,

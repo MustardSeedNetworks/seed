@@ -6,6 +6,7 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"syscall"
@@ -19,7 +20,6 @@ import (
 const (
 	hopStateReply         = "reply"
 	hopStateTimeout       = "timeout"
-	hopStateUnreachable   = "unreachable"
 	hopStateError         = "error"
 	errTracerouteCanceled = "traceroute canceled"
 )
@@ -68,6 +68,52 @@ func NewTracer(timeout time.Duration, maxHops int) *Tracer {
 	}
 }
 
+// resolveIPv4 resolves a target hostname to its first IPv4 address.
+func resolveIPv4(target string) (net.IP, error) {
+	ips, err := net.LookupIP(target)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve target: %w", err)
+	}
+	if len(ips) == 0 {
+		return nil, fmt.Errorf("failed to resolve target: no addresses found")
+	}
+	for _, ip := range ips {
+		if ip4 := ip.To4(); ip4 != nil {
+			return ip4, nil
+		}
+	}
+	return nil, errors.New(errNoIPv4ForTarget)
+}
+
+// resolveHostname performs a reverse DNS lookup if PTR resolution is enabled.
+func (t *Tracer) resolveHostname(ip string) string {
+	if !t.resolvePtr {
+		return ""
+	}
+	if names, err := net.LookupAddr(ip); err == nil && len(names) > 0 {
+		return names[0]
+	}
+	return ""
+}
+
+// setHopFromPeer sets hop IP and hostname from a peer address.
+func (t *Tracer) setHopFromPeer(hop *TracerouteHop, peer net.Addr) {
+	if peerIP, ok := peer.(*net.IPAddr); ok {
+		hop.IP = peerIP.IP.String()
+		hop.Hostname = t.resolveHostname(hop.IP)
+	}
+}
+
+// isConnectionRefused checks if an error indicates a TCP connection was refused.
+func (*Tracer) isConnectionRefused(err error) bool {
+	if opErr, ok := err.(*net.OpError); ok {
+		if sysErr, ok := opErr.Err.(*syscall.Errno); ok {
+			return *sysErr == syscall.ECONNREFUSED
+		}
+	}
+	return false
+}
+
 // TraceICMP performs an ICMP-based traceroute.
 func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult {
 	result := &TracerouteResult{
@@ -76,22 +122,9 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		Hops:     make([]TracerouteHop, 0, t.maxHops),
 	}
 
-	// Resolve target
-	ips, err := net.LookupIP(target)
-	if err != nil || len(ips) == 0 {
-		result.Error = fmt.Sprintf("failed to resolve target: %v", err)
-		return result
-	}
-
-	var targetIP net.IP
-	for _, ip := range ips {
-		if ip4 := ip.To4(); ip4 != nil {
-			targetIP = ip4
-			break
-		}
-	}
-	if targetIP == nil {
-		result.Error = errNoIPv4ForTarget
+	targetIP, err := resolveIPv4(target)
+	if err != nil {
+		result.Error = err.Error()
 		return result
 	}
 	result.TargetIP = targetIP.String()
@@ -177,14 +210,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 			}
 
 			hop.RTT = rtt
-			if peerIP, ok := peer.(*net.IPAddr); ok {
-				hop.IP = peerIP.IP.String()
-				if t.resolvePtr {
-					if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
-						hop.Hostname = names[0]
-					}
-				}
-			}
+			t.setHopFromPeer(&hop, peer)
 
 			switch rm.Type {
 			case ipv4.ICMPTypeEchoReply:
@@ -221,6 +247,32 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 	return result
 }
 
+// createUDPWithTTL creates a UDP connection with the specified TTL.
+func createUDPWithTTL(targetIP net.IP, port, ttl int) (*net.UDPConn, error) {
+	udpConn, err := net.DialUDP("udp4", nil, &net.UDPAddr{
+		IP:   targetIP,
+		Port: port + ttl - 1,
+	})
+	if err != nil {
+		return nil, err
+	}
+	rawConn, err := udpConn.SyscallConn()
+	if err != nil {
+		udpConn.Close()
+		return nil, err
+	}
+	var setErr error
+	//nolint:errcheck // Control callback handles its own error
+	rawConn.Control(func(fd uintptr) {
+		setErr = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL, ttl)
+	})
+	if setErr != nil {
+		udpConn.Close()
+		return nil, setErr
+	}
+	return udpConn, nil
+}
+
 // TraceUDP performs a UDP-based traceroute.
 func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *TracerouteResult {
 	result := &TracerouteResult{
@@ -234,27 +286,13 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 		port = 33434 // Traditional traceroute start port
 	}
 
-	// Resolve target
-	ips, err := net.LookupIP(target)
-	if err != nil || len(ips) == 0 {
-		result.Error = fmt.Sprintf("failed to resolve target: %v", err)
-		return result
-	}
-
-	var targetIP net.IP
-	for _, ip := range ips {
-		if ip4 := ip.To4(); ip4 != nil {
-			targetIP = ip4
-			break
-		}
-	}
-	if targetIP == nil {
-		result.Error = errNoIPv4ForTarget
+	targetIP, err := resolveIPv4(target)
+	if err != nil {
+		result.Error = err.Error()
 		return result
 	}
 	result.TargetIP = targetIP.String()
 
-	// Create ICMP listener for receiving TTL exceeded messages
 	icmpConn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
 		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
@@ -270,38 +308,10 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 		default:
 		}
 
-		hop := TracerouteHop{
-			TTL:   ttl,
-			State: "timeout",
-		}
+		hop := TracerouteHop{TTL: ttl, State: hopStateTimeout}
 
-		// Create UDP socket with specific TTL
-		udpConn, err := net.DialUDP("udp4", nil, &net.UDPAddr{
-			IP:   targetIP,
-			Port: port + ttl - 1, // Increment port for each hop
-		})
+		udpConn, err := createUDPWithTTL(targetIP, port, ttl)
 		if err != nil {
-			hop.State = hopStateError
-			result.Hops = append(result.Hops, hop)
-			continue
-		}
-
-		// Set TTL on socket
-		rawConn, err := udpConn.SyscallConn()
-		if err != nil {
-			udpConn.Close()
-			hop.State = hopStateError
-			result.Hops = append(result.Hops, hop)
-			continue
-		}
-
-		var setErr error
-		//nolint:errcheck // Control callback handles its own error
-		rawConn.Control(func(fd uintptr) {
-			setErr = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL, ttl)
-		})
-		if setErr != nil {
-			udpConn.Close()
 			hop.State = hopStateError
 			result.Hops = append(result.Hops, hop)
 			continue
@@ -309,64 +319,44 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 
 		for range t.retries {
 			start := time.Now()
-
-			// Send UDP packet
-			_, err = udpConn.Write([]byte("NETSCOPE"))
-			if err != nil {
+			if _, err = udpConn.Write([]byte("NETSCOPE")); err != nil {
 				continue
 			}
-
-			// Wait for ICMP response
 			//nolint:errcheck // Best-effort deadline setting
 			icmpConn.SetReadDeadline(time.Now().Add(t.timeout))
 			reply := make([]byte, 1500)
 			n, peer, err := icmpConn.ReadFrom(reply)
 			rtt := time.Since(start)
-
 			if err != nil {
 				continue
 			}
-
 			rm, err := icmp.ParseMessage(1, reply[:n])
 			if err != nil {
 				continue
 			}
-
 			hop.RTT = rtt
-			if peerIP, ok := peer.(*net.IPAddr); ok {
-				hop.IP = peerIP.IP.String()
-				if t.resolvePtr {
-					if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
-						hop.Hostname = names[0]
-					}
-				}
-			}
+			t.setHopFromPeer(&hop, peer)
 
-			switch rm.Type {
-			case ipv4.ICMPTypeTimeExceeded:
-				hop.State = hopStateReply
-
-			case ipv4.ICMPTypeDestinationUnreachable:
-				// Port unreachable means we reached the destination
+			if rm.Type == ipv4.ICMPTypeDestinationUnreachable {
 				hop.State = hopStateReply
 				result.Hops = append(result.Hops, hop)
 				result.Completed = true
 				udpConn.Close()
 				return result
 			}
-
+			if rm.Type == ipv4.ICMPTypeTimeExceeded {
+				hop.State = hopStateReply
+			}
 			break
 		}
 
 		udpConn.Close()
 		result.Hops = append(result.Hops, hop)
-
 		if hop.IP == targetIP.String() {
 			result.Completed = true
 			return result
 		}
 	}
-
 	return result
 }
 
@@ -383,22 +373,9 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 		port = 80 // Default to HTTP
 	}
 
-	// Resolve target
-	ips, err := net.LookupIP(target)
-	if err != nil || len(ips) == 0 {
-		result.Error = fmt.Sprintf("failed to resolve target: %v", err)
-		return result
-	}
-
-	var targetIP net.IP
-	for _, ip := range ips {
-		if ip4 := ip.To4(); ip4 != nil {
-			targetIP = ip4
-			break
-		}
-	}
-	if targetIP == nil {
-		result.Error = errNoIPv4ForTarget
+	targetIP, err := resolveIPv4(target)
+	if err != nil {
+		result.Error = err.Error()
 		return result
 	}
 	result.TargetIP = targetIP.String()
@@ -430,7 +407,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 			// Use TCP connect with timeout - simpler than raw SYN
 			dialer := net.Dialer{
 				Timeout: t.timeout,
-				Control: func(network, address string, c syscall.RawConn) error {
+				Control: func(_, _ string, c syscall.RawConn) error {
 					var setErr error
 					//nolint:errcheck // Control callback handles its own error
 					c.Control(func(fd uintptr) {
@@ -461,16 +438,11 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 			select {
 			case conn := <-connCh:
 				// TCP connection succeeded - reached destination
-				rtt := time.Since(start)
 				conn.Close()
-				hop.RTT = rtt
+				hop.RTT = time.Since(start)
 				hop.IP = targetIP.String()
+				hop.Hostname = t.resolveHostname(hop.IP)
 				hop.State = hopStateReply
-				if t.resolvePtr {
-					if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
-						hop.Hostname = names[0]
-					}
-				}
 				result.Hops = append(result.Hops, hop)
 				result.Completed = true
 				return result
@@ -478,20 +450,14 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 			case tcpErr := <-errCh:
 				rtt := time.Since(start)
 				// Check if it's a refused connection (RST) - still means we reached target
-				if opErr, ok := tcpErr.(*net.OpError); ok {
-					if sysErr, ok := opErr.Err.(*syscall.Errno); ok && *sysErr == syscall.ECONNREFUSED {
-						hop.RTT = rtt
-						hop.IP = targetIP.String()
-						hop.State = hopStateReply
-						if t.resolvePtr {
-							if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
-								hop.Hostname = names[0]
-							}
-						}
-						result.Hops = append(result.Hops, hop)
-						result.Completed = true
-						return result
-					}
+				if t.isConnectionRefused(tcpErr) {
+					hop.RTT = rtt
+					hop.IP = targetIP.String()
+					hop.Hostname = t.resolveHostname(hop.IP)
+					hop.State = hopStateReply
+					result.Hops = append(result.Hops, hop)
+					result.Completed = true
+					return result
 				}
 
 				// Check for ICMP response
@@ -500,14 +466,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 					rm, err := icmp.ParseMessage(1, icmpReply[:n])
 					if err == nil && rm.Type == ipv4.ICMPTypeTimeExceeded {
 						hop.RTT = rtt
-						if peerIP, ok := peer.(*net.IPAddr); ok {
-							hop.IP = peerIP.IP.String()
-							if t.resolvePtr {
-								if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
-									hop.Hostname = names[0]
-								}
-							}
-						}
+						t.setHopFromPeer(&hop, peer)
 						hop.State = hopStateReply
 						break
 					}

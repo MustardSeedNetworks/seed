@@ -49,7 +49,7 @@ func TestTesterSetInterface(t *testing.T) {
 	}
 }
 
-func TestTesterIsSupported(t *testing.T) {
+func TestTesterIsSupported(_ *testing.T) {
 	tester := NewTester("eth0")
 
 	// This will return false on non-Linux systems or without ethtool
@@ -126,7 +126,7 @@ func TestTestResultNoLength(t *testing.T) {
 	}
 }
 
-func TestConcurrentTesterAccess(t *testing.T) {
+func TestConcurrentTesterAccess(_ *testing.T) {
 	tester := NewTester("eth0")
 
 	done := make(chan bool)
@@ -145,7 +145,7 @@ func TestConcurrentTesterAccess(t *testing.T) {
 	}
 }
 
-func TestIsSupportedPlatform(t *testing.T) {
+func TestIsSupportedPlatform(_ *testing.T) {
 	// Test the platform-specific function
 	result := isSupportedPlatform("eth0")
 	// Just verify it doesn't panic - result depends on system

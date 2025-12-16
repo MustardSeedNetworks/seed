@@ -17,6 +17,7 @@ import (
 // Phase represents a DHCP transaction phase.
 type Phase string
 
+// DHCP transaction phase constants.
 const (
 	PhaseDiscover Phase = "discover"
 	PhaseOffer    Phase = "offer"
@@ -465,8 +466,33 @@ func getLeaseInfoLinux(interfaceName string) (*LeaseInfo, error) {
 	return info, nil
 }
 
+// parseDHClientLeaseLine parses a single line from a dhclient lease file.
+func parseDHClientLeaseLine(line string, info *LeaseInfo) {
+	switch {
+	case strings.HasPrefix(line, "option dhcp-server-identifier"):
+		info.DHCPServer = extractValue(line)
+	case strings.HasPrefix(line, "option routers"):
+		val := extractValue(line)
+		if parts := strings.Split(val, ","); len(parts) > 0 {
+			info.Gateway = strings.TrimSpace(parts[0])
+		}
+	case strings.HasPrefix(line, "option dhcp-lease-time"):
+		if lease, err := strconv.Atoi(extractValue(line)); err == nil {
+			info.LeaseTime = lease
+		}
+	case strings.HasPrefix(line, "option domain-name-servers"):
+		val := extractValue(line)
+		for _, dns := range strings.Split(val, ",") {
+			dns = strings.TrimSpace(dns)
+			if dns != "" {
+				info.DNS = append(info.DNS, dns)
+			}
+		}
+	}
+}
+
 // parseDHClientLeaseFile parses a dhclient lease file.
-func parseDHClientLeaseFile(path, interfaceName string) *LeaseInfo {
+func parseDHClientLeaseFile(path, _ string) *LeaseInfo {
 	//nolint:gosec // G304: path is from known dhclient lease file locations in system directories
 	file, err := os.Open(path)
 	if err != nil {
@@ -485,47 +511,16 @@ func parseDHClientLeaseFile(path, interfaceName string) *LeaseInfo {
 		if strings.HasPrefix(line, "lease {") {
 			inLease = true
 			info = &LeaseInfo{} // Reset for each lease block
+			continue
 		}
-
 		if !inLease {
 			continue
 		}
-
 		if line == "}" {
 			inLease = false
 			continue
 		}
-
-		// option dhcp-server-identifier 192.168.1.1;
-		if strings.HasPrefix(line, "option dhcp-server-identifier") {
-			info.DHCPServer = extractValue(line)
-		}
-
-		// option routers 192.168.1.1;
-		if strings.HasPrefix(line, "option routers") {
-			val := extractValue(line)
-			if parts := strings.Split(val, ","); len(parts) > 0 {
-				info.Gateway = strings.TrimSpace(parts[0])
-			}
-		}
-
-		// option dhcp-lease-time 86400;
-		if strings.HasPrefix(line, "option dhcp-lease-time") {
-			if lease, err := strconv.Atoi(extractValue(line)); err == nil {
-				info.LeaseTime = lease
-			}
-		}
-
-		// option domain-name-servers 8.8.8.8, 8.8.4.4;
-		if strings.HasPrefix(line, "option domain-name-servers") {
-			val := extractValue(line)
-			for _, dns := range strings.Split(val, ",") {
-				dns = strings.TrimSpace(dns)
-				if dns != "" {
-					info.DNS = append(info.DNS, dns)
-				}
-			}
-		}
+		parseDHClientLeaseLine(line, info)
 	}
 
 	if info.DHCPServer != "" || info.Gateway != "" {

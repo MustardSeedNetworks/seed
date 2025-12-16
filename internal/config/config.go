@@ -635,101 +635,140 @@ func Load(path string) (*Config, error) {
 	return cfg, nil
 }
 
-// Save writes configuration to a YAML file.
-// This method acquires a read lock to prevent data races during marshaling.
-// Validate checks if the configuration values are valid (fixes #542).
+// Validate checks if the configuration values are valid.
 // This prevents the server from starting with invalid configuration.
 func (c *Config) Validate() error {
-	var validationErrors []string
+	var errs []string
+	errs = append(errs, c.validateServerConfig()...)
+	errs = append(errs, c.validateInterfaceConfig()...)
+	errs = append(errs, c.validateVLANConfig()...)
+	errs = append(errs, c.validateIPConfig()...)
+	errs = append(errs, c.validateTimeouts()...)
+	errs = append(errs, c.validateConcurrency()...)
+	errs = append(errs, c.validateAuthConfig()...)
+	errs = append(errs, c.validateSNMPConfig()...)
 
-	// Server configuration
-	if c.Server.Port < 1 || c.Server.Port > 65535 {
-		validationErrors = append(validationErrors, fmt.Sprintf("server.port must be between 1-65535, got %d", c.Server.Port))
+	if len(errs) > 0 {
+		return fmt.Errorf("configuration validation failed:\n  - %s", strings.Join(errs, "\n  - "))
 	}
-	if c.Server.HTTPRedirectPort < 0 || c.Server.HTTPRedirectPort > 65535 {
-		validationErrors = append(validationErrors, fmt.Sprintf("server.http_redirect_port must be between 0-65535, got %d", c.Server.HTTPRedirectPort))
-	}
-	if c.Server.HTTPRedirectPort > 0 && c.Server.Port == c.Server.HTTPRedirectPort {
-		validationErrors = append(validationErrors, "server.port and server.http_redirect_port cannot be the same")
-	}
-
-	// Interface configuration - empty default is valid (triggers auto-detection #572)
-	if c.Interface.StartupRetries < 0 {
-		validationErrors = append(validationErrors, fmt.Sprintf("interface.startup_retries must be >= 0, got %d", c.Interface.StartupRetries))
-	}
-	if c.Interface.StartupRetryWait < 0 {
-		validationErrors = append(validationErrors, fmt.Sprintf("interface.startup_retry_wait must be >= 0, got %s", c.Interface.StartupRetryWait))
-	}
-
-	// VLAN configuration
-	if c.VLAN.Enabled && (c.VLAN.ID < 1 || c.VLAN.ID > 4094) {
-		validationErrors = append(validationErrors, fmt.Sprintf("vlan.id must be between 1-4094, got %d", c.VLAN.ID))
-	}
-
-	// IP configuration
-	if c.IP.Mode != ipModeDHCP && c.IP.Mode != ipModeStatic {
-		validationErrors = append(validationErrors, fmt.Sprintf("ip.mode must be 'dhcp' or 'static', got '%s'", c.IP.Mode))
-	}
-	if c.IP.Mode == ipModeStatic {
-		if c.IP.Static.Address == "" {
-			validationErrors = append(validationErrors, "ip.static.address is required when ip.mode is 'static'")
-		}
-		if c.IP.Static.Netmask == "" {
-			validationErrors = append(validationErrors, "ip.static.netmask is required when ip.mode is 'static'")
-		}
-		if c.IP.Static.Gateway == "" {
-			validationErrors = append(validationErrors, "ip.static.gateway is required when ip.mode is 'static'")
-		}
-	}
-
-	// Timeout validations
-	if c.Discovery.Timeout <= 0 {
-		validationErrors = append(validationErrors, "discovery.timeout must be positive")
-	}
-	if c.NetworkDiscovery.PingTimeout <= 0 {
-		validationErrors = append(validationErrors, "network_discovery.ping_timeout must be positive")
-	}
-	if c.NetworkDiscovery.ScanTimeout <= 0 {
-		validationErrors = append(validationErrors, "network_discovery.scan_timeout must be positive")
-	}
-	if c.DNS.Timeout <= 0 {
-		validationErrors = append(validationErrors, "dns.timeout must be positive")
-	}
-
-	// Worker/concurrency limits
-	if c.NetworkDiscovery.ARPScanWorkers < 1 || c.NetworkDiscovery.ARPScanWorkers > 500 {
-		validationErrors = append(validationErrors, fmt.Sprintf("network_discovery.arp_scan_workers must be between 1-500, got %d", c.NetworkDiscovery.ARPScanWorkers))
-	}
-
-	// Auth configuration
-	if c.Auth.SessionTimeout <= 0 {
-		validationErrors = append(validationErrors, "auth.session_timeout must be positive")
-	}
-	if c.Auth.DefaultUsername == "" {
-		validationErrors = append(validationErrors, "auth.default_username is required")
-	}
-	if c.Auth.DefaultPasswordHash == "" {
-		validationErrors = append(validationErrors, "auth.default_password_hash is required")
-	}
-
-	// SNMP configuration
-	if c.SNMP.Port < 1 || c.SNMP.Port > 65535 {
-		validationErrors = append(validationErrors, fmt.Sprintf("snmp.port must be between 1-65535, got %d", c.SNMP.Port))
-	}
-	if c.SNMP.Retries < 0 || c.SNMP.Retries > 10 {
-		validationErrors = append(validationErrors, fmt.Sprintf("snmp.retries must be between 0-10, got %d", c.SNMP.Retries))
-	}
-	if c.SNMP.Timeout <= 0 {
-		validationErrors = append(validationErrors, "snmp.timeout must be positive")
-	}
-
-	if len(validationErrors) > 0 {
-		return fmt.Errorf("configuration validation failed:\n  - %s", strings.Join(validationErrors, "\n  - "))
-	}
-
 	return nil
 }
 
+// validateServerConfig checks server port configuration.
+func (c *Config) validateServerConfig() []string {
+	var errs []string
+	if c.Server.Port < 1 || c.Server.Port > 65535 {
+		errs = append(errs, fmt.Sprintf("server.port must be between 1-65535, got %d", c.Server.Port))
+	}
+	if c.Server.HTTPRedirectPort < 0 || c.Server.HTTPRedirectPort > 65535 {
+		errs = append(errs, fmt.Sprintf("server.http_redirect_port must be between 0-65535, got %d", c.Server.HTTPRedirectPort))
+	}
+	if c.Server.HTTPRedirectPort > 0 && c.Server.Port == c.Server.HTTPRedirectPort {
+		errs = append(errs, "server.port and server.http_redirect_port cannot be the same")
+	}
+	return errs
+}
+
+// validateInterfaceConfig checks interface startup configuration.
+func (c *Config) validateInterfaceConfig() []string {
+	var errs []string
+	if c.Interface.StartupRetries < 0 {
+		errs = append(errs, fmt.Sprintf("interface.startup_retries must be >= 0, got %d", c.Interface.StartupRetries))
+	}
+	if c.Interface.StartupRetryWait < 0 {
+		errs = append(errs, fmt.Sprintf("interface.startup_retry_wait must be >= 0, got %s", c.Interface.StartupRetryWait))
+	}
+	return errs
+}
+
+// validateVLANConfig checks VLAN ID configuration.
+func (c *Config) validateVLANConfig() []string {
+	var errs []string
+	if c.VLAN.Enabled && (c.VLAN.ID < 1 || c.VLAN.ID > 4094) {
+		errs = append(errs, fmt.Sprintf("vlan.id must be between 1-4094, got %d", c.VLAN.ID))
+	}
+	return errs
+}
+
+// validateIPConfig checks IP mode and static IP configuration.
+func (c *Config) validateIPConfig() []string {
+	var errs []string
+	if c.IP.Mode != ipModeDHCP && c.IP.Mode != ipModeStatic {
+		errs = append(errs, fmt.Sprintf("ip.mode must be 'dhcp' or 'static', got '%s'", c.IP.Mode))
+	}
+	if c.IP.Mode == ipModeStatic {
+		if c.IP.Static.Address == "" {
+			errs = append(errs, "ip.static.address is required when ip.mode is 'static'")
+		}
+		if c.IP.Static.Netmask == "" {
+			errs = append(errs, "ip.static.netmask is required when ip.mode is 'static'")
+		}
+		if c.IP.Static.Gateway == "" {
+			errs = append(errs, "ip.static.gateway is required when ip.mode is 'static'")
+		}
+	}
+	return errs
+}
+
+// validateTimeouts checks all timeout configurations are positive.
+func (c *Config) validateTimeouts() []string {
+	var errs []string
+	if c.Discovery.Timeout <= 0 {
+		errs = append(errs, "discovery.timeout must be positive")
+	}
+	if c.NetworkDiscovery.PingTimeout <= 0 {
+		errs = append(errs, "network_discovery.ping_timeout must be positive")
+	}
+	if c.NetworkDiscovery.ScanTimeout <= 0 {
+		errs = append(errs, "network_discovery.scan_timeout must be positive")
+	}
+	if c.DNS.Timeout <= 0 {
+		errs = append(errs, "dns.timeout must be positive")
+	}
+	return errs
+}
+
+// validateConcurrency checks worker/concurrency limits.
+func (c *Config) validateConcurrency() []string {
+	var errs []string
+	if c.NetworkDiscovery.ARPScanWorkers < 1 || c.NetworkDiscovery.ARPScanWorkers > 500 {
+		errs = append(errs, fmt.Sprintf("network_discovery.arp_scan_workers must be between 1-500, got %d", c.NetworkDiscovery.ARPScanWorkers))
+	}
+	return errs
+}
+
+// validateAuthConfig checks authentication configuration.
+func (c *Config) validateAuthConfig() []string {
+	var errs []string
+	if c.Auth.SessionTimeout <= 0 {
+		errs = append(errs, "auth.session_timeout must be positive")
+	}
+	if c.Auth.DefaultUsername == "" {
+		errs = append(errs, "auth.default_username is required")
+	}
+	if c.Auth.DefaultPasswordHash == "" {
+		errs = append(errs, "auth.default_password_hash is required")
+	}
+	return errs
+}
+
+// validateSNMPConfig checks SNMP configuration.
+func (c *Config) validateSNMPConfig() []string {
+	var errs []string
+	if c.SNMP.Port < 1 || c.SNMP.Port > 65535 {
+		errs = append(errs, fmt.Sprintf("snmp.port must be between 1-65535, got %d", c.SNMP.Port))
+	}
+	if c.SNMP.Retries < 0 || c.SNMP.Retries > 10 {
+		errs = append(errs, fmt.Sprintf("snmp.retries must be between 0-10, got %d", c.SNMP.Retries))
+	}
+	if c.SNMP.Timeout <= 0 {
+		errs = append(errs, "snmp.timeout must be positive")
+	}
+	return errs
+}
+
+// Save writes the configuration to a YAML file at the specified path.
+// This method acquires a read lock to prevent data races during marshaling.
 func (c *Config) Save(path string) error {
 	c.mu.RLock()
 	data, err := yaml.Marshal(c)

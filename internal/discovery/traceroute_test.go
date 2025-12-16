@@ -105,6 +105,18 @@ func TestTracerouteResult_Structure(t *testing.T) {
 	if result.Target != "example.com" {
 		t.Errorf("unexpected target: %s", result.Target)
 	}
+	if result.TargetIP != "93.184.216.34" {
+		t.Errorf("unexpected targetIP: %s", result.TargetIP)
+	}
+	if result.Protocol != "icmp" {
+		t.Errorf("unexpected protocol: %s", result.Protocol)
+	}
+	if len(result.Hops) != 0 {
+		t.Errorf("unexpected hops length: %d", len(result.Hops))
+	}
+	if result.Completed {
+		t.Error("expected Completed to be false")
+	}
 }
 
 func TestTracerouteHop_Structure(t *testing.T) {
@@ -118,6 +130,15 @@ func TestTracerouteHop_Structure(t *testing.T) {
 
 	if hop.TTL != 5 {
 		t.Errorf("unexpected TTL: %d", hop.TTL)
+	}
+	if hop.IP != "192.168.1.1" {
+		t.Errorf("unexpected IP: %s", hop.IP)
+	}
+	if hop.Hostname != "router.local" {
+		t.Errorf("unexpected hostname: %s", hop.Hostname)
+	}
+	if hop.RTT != 10*time.Millisecond {
+		t.Errorf("unexpected RTT: %v", hop.RTT)
 	}
 	if hop.State != "reply" {
 		t.Errorf("unexpected state: %s", hop.State)
