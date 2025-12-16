@@ -91,7 +91,8 @@ func (m *Monitor) Start() error {
 		return nil
 	}
 
-	// TODO: Implement actual packet capture using gopacket/pcap
+	// TODO(#607): Implement actual packet capture using gopacket/pcap
+	// See: https://github.com/krisarmstrong/netscope/issues/607
 	// For now, we just mark as running but don't capture
 	// This requires root access and the gopacket library
 	m.running = true

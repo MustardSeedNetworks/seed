@@ -593,7 +593,8 @@ func (c *Client) readPump() {
 		}
 
 		log.Printf("Received message: %s", msg.Type)
-		// TODO: Handle different message types
+		// TODO(#608): Handle different message types
+		// See: https://github.com/krisarmstrong/netscope/issues/608
 	}
 }
 

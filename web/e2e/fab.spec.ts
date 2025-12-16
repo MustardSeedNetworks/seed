@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 /**
  * FAB (Floating Action Button) E2E Tests
@@ -12,27 +12,29 @@ import { test, expect } from '@playwright/test';
  * - FAB behavior is configurable in settings
  */
 
-test.describe('FAB - Run All Tests Flow', () => {
+test.describe("FAB - Run All Tests Flow", () => {
   test.beforeEach(async ({ page }) => {
     // Login first
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
     // Authenticate
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("luminetiq");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test('should display FAB button when authenticated', async ({ page }) => {
+  test("should display FAB button when authenticated", async ({ page }) => {
     // FAB should be visible in bottom-right corner
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
     await expect(fab).toBeVisible();
 
     // Check FAB positioning (fixed bottom-right)
@@ -40,41 +42,41 @@ test.describe('FAB - Run All Tests Flow', () => {
     expect(fabBox).toBeTruthy();
 
     // FAB should have play icon initially
-    const playIcon = fab.locator('svg');
+    const playIcon = fab.locator("svg");
     await expect(playIcon).toBeVisible();
   });
 
-  test('should show loading spinner when FAB is clicked', async ({ page }) => {
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+  test("should show loading spinner when FAB is clicked", async ({ page }) => {
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Click FAB
     await fab.click();
 
     // Should show spinner (animated SVG with opacity classes)
-    const spinner = fab.locator('svg.animate-spin');
+    const spinner = fab.locator("svg.animate-spin");
     await expect(spinner).toBeVisible({ timeout: 2000 });
 
     // FAB should be disabled during test execution
     await expect(fab).toBeDisabled();
   });
 
-  test('should trigger all tests when FAB is clicked', async ({ page }) => {
+  test("should trigger all tests when FAB is clicked", async ({ page }) => {
     // Set up network interceptors to track API calls
     const apiCalls = new Set<string>();
 
-    page.on('request', (request) => {
+    page.on("request", (request) => {
       const url = request.url();
-      if (url.includes('/api/')) {
-        const endpoint = url.split('/api/')[1].split('?')[0];
+      if (url.includes("/api/")) {
+        const endpoint = url.split("/api/")[1].split("?")[0];
         apiCalls.add(endpoint);
       }
     });
 
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Click FAB to trigger all tests
     await fab.click();
@@ -84,54 +86,64 @@ test.describe('FAB - Run All Tests Flow', () => {
 
     // Verify key endpoints were called (based on default FAB options)
     // Link layer
-    expect(apiCalls.has('link') || apiCalls.has('wifi') || apiCalls.has('cable')).toBeTruthy();
+    expect(
+      apiCalls.has("link") || apiCalls.has("wifi") || apiCalls.has("cable"),
+    ).toBeTruthy();
 
     // Network layer - at least one of these should be called
     const networkCalled =
-      apiCalls.has('ipconfig') ||
-      apiCalls.has('gateway') ||
-      apiCalls.has('dns');
+      apiCalls.has("ipconfig") ||
+      apiCalls.has("gateway") ||
+      apiCalls.has("dns");
     expect(networkCalled).toBeTruthy();
   });
 
-  test('should refresh card data after tests complete', async ({ page }) => {
+  test("should refresh card data after tests complete", async ({ page }) => {
     // Get initial link card data
-    const linkCard = page.locator('h3:has-text("Link"), h4:has-text("Link")').first();
+    const linkCard = page
+      .locator('h3:has-text("Link"), h4:has-text("Link")')
+      .first();
     await expect(linkCard).toBeVisible();
 
     // Track if any card updates occur
     let cardUpdated = false;
-    page.on('response', async (response) => {
-      if (response.url().includes('/api/link') && response.ok()) {
+    page.on("response", async (response) => {
+      if (response.url().includes("/api/link") && response.ok()) {
         cardUpdated = true;
       }
     });
 
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Click FAB
     await fab.click();
 
     // Wait for tests to complete (spinner disappears)
-    await expect(fab.locator('svg.animate-spin')).toBeVisible({ timeout: 5000 });
-    await expect(fab.locator('svg.animate-spin')).toBeHidden({ timeout: 65000 }); // 60s timeout + buffer
+    await expect(fab.locator("svg.animate-spin")).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(fab.locator("svg.animate-spin")).toBeHidden({
+      timeout: 65000,
+    }); // 60s timeout + buffer
 
     // Verify card data was updated
     expect(cardUpdated).toBeTruthy();
   });
 
-  test('should complete and stop spinner after tests finish', async ({ page }) => {
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+  test("should complete and stop spinner after tests finish", async ({
+    page,
+  }) => {
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Click FAB
     await fab.click();
 
     // Spinner should appear
-    const spinner = fab.locator('svg.animate-spin');
+    const spinner = fab.locator("svg.animate-spin");
     await expect(spinner).toBeVisible({ timeout: 2000 });
 
     // Wait for completion - spinner should disappear
@@ -142,18 +154,22 @@ test.describe('FAB - Run All Tests Flow', () => {
     await expect(fab).toBeEnabled();
 
     // Play icon should be back (spinner should be gone)
-    const playIcon = fab.locator('svg');
+    const playIcon = fab.locator("svg");
     await expect(playIcon).toBeVisible();
 
     // Verify it's not a spinner anymore
-    const hasSpinClass = await playIcon.evaluate((el) => el.classList.contains('animate-spin'));
+    const hasSpinClass = await playIcon.evaluate((el) =>
+      el.classList.contains("animate-spin"),
+    );
     expect(hasSpinClass).toBe(false);
   });
 
-  test('should not trigger tests if FAB is clicked while already running', async ({ page }) => {
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+  test("should not trigger tests if FAB is clicked while already running", async ({
+    page,
+  }) => {
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Click FAB first time
     await fab.click();
@@ -162,7 +178,7 @@ test.describe('FAB - Run All Tests Flow', () => {
     // Try clicking again while disabled
     const _clickCount = await page.evaluate(() => {
       let count = 0;
-      window.addEventListener('runAllTests', () => count++);
+      window.addEventListener("runAllTests", () => count++);
       return count;
     });
 
@@ -181,19 +197,25 @@ test.describe('FAB - Run All Tests Flow', () => {
     expect(finalCount).toBeLessThanOrEqual(1);
   });
 
-  test('should respect FAB options from settings', async ({ page }) => {
+  test("should respect FAB options from settings", async ({ page }) => {
     // Open settings drawer
     const settingsButton = page
-      .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .getByRole("button", { name: /settings/i })
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'),
+      );
     await settingsButton.click();
 
     // Wait for settings drawer
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByText(/thresholds|appearance|discovery/i),
+    ).toBeVisible({ timeout: 5000 });
 
     // Look for FAB-related settings (if they exist in UI)
     // This will help verify FAB options are configurable
-    const fabSettings = page.locator('text=/FAB|Run All Tests|Test Options/i').first();
+    const fabSettings = page
+      .locator("text=/FAB|Run All Tests|Test Options/i")
+      .first();
     const hasFabSettings = await fabSettings.isVisible().catch(() => false);
 
     if (hasFabSettings) {
@@ -202,23 +224,28 @@ test.describe('FAB - Run All Tests Flow', () => {
     }
 
     // Close settings
-    const closeButton = page.getByRole('button', { name: /close/i }).first();
+    const closeButton = page.getByRole("button", { name: /close/i }).first();
     await closeButton.click();
   });
 
-  test('should trigger network discovery scan when FAB is clicked', async ({ page }) => {
+  test("should trigger network discovery scan when FAB is clicked", async ({
+    page,
+  }) => {
     // Track if network discovery scan endpoint is called
     let scanTriggered = false;
 
-    page.on('request', (request) => {
-      if (request.url().includes('/api/devices/scan') && request.method() === 'POST') {
+    page.on("request", (request) => {
+      if (
+        request.url().includes("/api/devices/scan") &&
+        request.method() === "POST"
+      ) {
         scanTriggered = true;
       }
     });
 
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Click FAB
     await fab.click();
@@ -229,39 +256,43 @@ test.describe('FAB - Run All Tests Flow', () => {
     // Verify scan was triggered (if network discovery is enabled in FAB options)
     // Note: This depends on default FAB options configuration
     // The test verifies the mechanism works, actual behavior depends on settings
-    expect(typeof scanTriggered).toBe('boolean');
+    expect(scanTriggered).toBeDefined();
   });
 
-  test('should handle test failures gracefully', async ({ page }) => {
+  test("should handle test failures gracefully", async ({ page }) => {
     // Intercept an API call and make it fail
-    await page.route('**/api/dns', (route) => {
+    await page.route("**/api/dns", (route) => {
       route.fulfill({
         status: 500,
-        body: JSON.stringify({ error: 'Internal server error' }),
+        body: JSON.stringify({ error: "Internal server error" }),
       });
     });
 
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Click FAB
     await fab.click();
 
     // Spinner should still appear
-    await expect(fab.locator('svg.animate-spin')).toBeVisible({ timeout: 2000 });
+    await expect(fab.locator("svg.animate-spin")).toBeVisible({
+      timeout: 2000,
+    });
 
     // Even with failures, tests should complete and spinner should stop
-    await expect(fab.locator('svg.animate-spin')).toBeHidden({ timeout: 65000 });
+    await expect(fab.locator("svg.animate-spin")).toBeHidden({
+      timeout: 65000,
+    });
 
     // FAB should be enabled again
     await expect(fab).toBeEnabled();
   });
 
-  test('should maintain FAB visibility on page scroll', async ({ page }) => {
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+  test("should maintain FAB visibility on page scroll", async ({ page }) => {
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Verify FAB is visible initially
     await expect(fab).toBeVisible();
@@ -281,10 +312,10 @@ test.describe('FAB - Run All Tests Flow', () => {
     await expect(fab).toBeVisible();
   });
 
-  test('should be keyboard accessible', async ({ page }) => {
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+  test("should be keyboard accessible", async ({ page }) => {
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Tab to FAB (may need multiple tabs depending on page structure)
     // Focus the FAB using keyboard
@@ -295,13 +326,13 @@ test.describe('FAB - Run All Tests Flow', () => {
 
     // Press Enter to activate
     let testTriggered = false;
-    page.on('request', (request) => {
-      if (request.url().includes('/api/')) {
+    page.on("request", (request) => {
+      if (request.url().includes("/api/")) {
         testTriggered = true;
       }
     });
 
-    await page.keyboard.press('Enter');
+    await page.keyboard.press("Enter");
 
     // Wait a bit for API calls
     await page.waitForTimeout(1000);
@@ -310,20 +341,22 @@ test.describe('FAB - Run All Tests Flow', () => {
     expect(testTriggered).toBeTruthy();
   });
 
-  test('should show proper aria labels for accessibility', async ({ page }) => {
-    const fab = page.locator('button[title="Run All Tests"]').or(
-      page.locator('button[aria-label="Run All Tests"]')
-    );
+  test("should show proper aria labels for accessibility", async ({ page }) => {
+    const fab = page
+      .locator('button[title="Run All Tests"]')
+      .or(page.locator('button[aria-label="Run All Tests"]'));
 
     // Verify accessibility attributes
-    const ariaLabel = await fab.getAttribute('aria-label');
-    const title = await fab.getAttribute('title');
+    const ariaLabel = await fab.getAttribute("aria-label");
+    const title = await fab.getAttribute("title");
 
     // At least one should be present
     expect(ariaLabel || title).toBeTruthy();
 
     // Should contain meaningful text
-    const labelText = (ariaLabel || title || '').toLowerCase();
-    expect(labelText.includes('run') || labelText.includes('test')).toBeTruthy();
+    const labelText = (ariaLabel || title || "").toLowerCase();
+    expect(
+      labelText.includes("run") || labelText.includes("test"),
+    ).toBeTruthy();
   });
 });

@@ -395,7 +395,8 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	})
 
 	t.Run("UpdateTestsSettings", func(_ *testing.T) {
-		// TODO: Fix blocking PUT test
+		// TODO(#605): Fix blocking PUT test
+		// See: https://github.com/krisarmstrong/netscope/issues/605
 		// The PUT request is timing out due to config.Save() blocking
 		// Skip PUT test for now - GET is working
 		//
