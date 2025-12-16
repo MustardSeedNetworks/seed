@@ -31,7 +31,7 @@
         build-linux-amd64 build-linux-arm64 build-linux-docker \
         docker docker-build docker-test docker-push \
         clean clean-all test test-all test-backend test-frontend test-coverage test-integration test-e2e test-e2e-ui test-e2e-install \
-        lint lint-backend lint-frontend fmt fmt-frontend fmt-all fmt-md \
+        lint lint-backend lint-frontend fmt fmt-frontend fmt-all fmt-md fix fix-backend fix-frontend fix-md fix-all \
         security security-backend security-frontend security-secrets security-trivy \
         storybook build-storybook test-storybook \
         run dev dev-frontend \
@@ -493,6 +493,39 @@ fmt-md: ## Format markdown files with Prettier
 
 # Format all code
 fmt-all: fmt fmt-frontend fmt-md ## Format all code (Go + frontend + markdown)
+
+# =============================================================================
+# Auto-Fix Linting Issues
+# =============================================================================
+
+# Fix all auto-fixable issues (Go + Frontend)
+fix: fix-backend fix-frontend ## Auto-fix all linting issues
+
+# Fix Go linting issues (golangci-lint --fix)
+fix-backend: ## Auto-fix Go linting issues
+	@echo "🔧 Auto-fixing Go issues..."
+	@if command -v golangci-lint > /dev/null 2>&1; then \
+		golangci-lint run --fix ./...; \
+	elif [ -x "$(HOME)/go/bin/golangci-lint" ]; then \
+		$(HOME)/go/bin/golangci-lint run --fix ./...; \
+	else \
+		echo "SKIP: golangci-lint not found (run 'make tools-go')"; \
+	fi
+	@gofmt -w -s .
+	@echo "✅ Go auto-fix complete"
+
+# Fix frontend linting issues (eslint --fix + prettier)
+fix-frontend: ## Auto-fix frontend linting issues
+	@echo "🔧 Auto-fixing frontend issues..."
+	cd web && npx eslint --fix .
+	cd web && npx prettier --write .
+	@echo "✅ Frontend auto-fix complete"
+
+# Fix markdown formatting
+fix-md: fmt-md ## Auto-fix markdown formatting
+
+# Fix all (alias for fix)
+fix-all: fix fix-md ## Auto-fix everything (Go + Frontend + Markdown)
 
 # =============================================================================
 # Security Scanning
