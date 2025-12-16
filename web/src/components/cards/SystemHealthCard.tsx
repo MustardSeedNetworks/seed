@@ -243,8 +243,7 @@ export function SystemHealthCard() {
             />
           </div>
 
-          {/* pt-1 for subtle spacing */}
-          <div className="caption text-center pt-1">
+          <div className={`caption text-center ${spacing.padding.top.tight}`}>
             {health.os ?? "Unknown"}/{health.arch ?? "Unknown"} - {health.numCpu ?? 0} CPUs
           </div>
         </div>

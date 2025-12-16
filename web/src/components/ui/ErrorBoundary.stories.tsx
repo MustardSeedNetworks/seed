@@ -109,7 +109,7 @@ function WorkingComponent() {
       <div className={`${layout.inline.comfortable}`}>
         <svg
           className={
-            `${icon.size.md} text-status-success shrink-0 mt-0.5` /* mt-0.5 for icon alignment */
+            `${icon.size.md} text-status-success shrink-0 ${spacing.micro.mt}` /* spacing.micro.mt for icon alignment */
           }
           fill="currentColor"
           viewBox="0 0 20 20"
@@ -380,7 +380,7 @@ export const WithRetry: Story = {
           <div className={`${layout.inline.comfortable} items-start`}>
             <svg
               className={
-                `${icon.size.md} text-status-success shrink-0 mt-0.5` /* mt-0.5 for icon alignment */
+                `${icon.size.md} text-status-success shrink-0 ${spacing.micro.mt}` /* spacing.micro.mt for icon alignment */
               }
               fill="currentColor"
               viewBox="0 0 20 20"

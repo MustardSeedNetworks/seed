@@ -6,7 +6,7 @@
  */
 
 import { ReactNode } from "react";
-import { icon as iconTokens } from "../../styles/theme";
+import { icon as iconTokens, spacing } from "../../styles/theme";
 
 export type Status = "success" | "warning" | "error" | "unknown" | "loading";
 
@@ -98,12 +98,12 @@ const sizeConfig = {
   sm: {
     icon: iconTokens.size.sm, // w-4 h-4
     dot: "w-2 h-2",
-    padding: "p-0.5", // Fine-grained padding for small badges
+    padding: spacing.badge.xs, // 2px - extra small badge padding
   },
   md: {
     icon: iconTokens.size.md, // w-5 h-5
     dot: "w-2.5 h-2.5",
-    padding: "p-1", // Fine-grained padding for medium badges
+    padding: spacing.badge.sm, // 4px - small badge padding
   },
 } as const;
 

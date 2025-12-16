@@ -318,30 +318,15 @@ export const KeyboardNavigation: Story = {
             className={`list-disc list-inside body-small text-text-muted ${spacing.margin.top.inline}`}
           >
             <li>
-              Press{" "}
-              <kbd
-                className="px-1 py-0.5 bg-surface-hover rounded text-xs" /* px-1 py-0.5 for compact keyboard key styling */
-              >
-                ESC
-              </kbd>{" "}
-              to close
+              Press <kbd className={`${spacing.kbd} bg-surface-hover rounded text-xs`}>ESC</kbd> to
+              close
             </li>
             <li>
-              Use{" "}
-              <kbd
-                className="px-1 py-0.5 bg-surface-hover rounded text-xs" /* px-1 py-0.5 for compact keyboard key styling */
-              >
-                Tab
-              </kbd>{" "}
-              to navigate between elements
+              Use <kbd className={`${spacing.kbd} bg-surface-hover rounded text-xs`}>Tab</kbd> to
+              navigate between elements
             </li>
             <li>
-              Press{" "}
-              <kbd
-                className="px-1 py-0.5 bg-surface-hover rounded text-xs" /* px-1 py-0.5 for compact keyboard key styling */
-              >
-                Enter
-              </kbd>{" "}
+              Press <kbd className={`${spacing.kbd} bg-surface-hover rounded text-xs`}>Enter</kbd>{" "}
               to select a section
             </li>
           </ul>

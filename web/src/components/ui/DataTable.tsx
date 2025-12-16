@@ -223,7 +223,7 @@ export function DataTable<T>({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={searchPlaceholder}
             className={cn(
-              "w-full pl-9 pr-8 py-1.5 body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary", // py-1.5 for compact search input
+              `w-full pl-9 pr-8 ${spacing.compact.pyMd} body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary`,
               border.card,
               radius.lg
             )}
@@ -244,7 +244,7 @@ export function DataTable<T>({
             type="button"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              "p-1.5 transition-colors", // p-1.5 for compact icon button
+              `${spacing.iconBtn.md} transition-colors`,
               radius.lg,
               border.width.default,
               showFilters || hasActiveFilters
@@ -267,7 +267,7 @@ export function DataTable<T>({
               value={activeFilters[filter.key] || ""}
               onChange={(e) => handleFilterChange(filter.key, e.target.value)}
               className={cn(
-                "px-2 py-1 caption bg-surface-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary", // py-1 for compact select
+                `${spacing.cell.px} ${spacing.compact.py} caption bg-surface-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary`,
                 border.card,
                 radius.default
               )}
@@ -285,7 +285,7 @@ export function DataTable<T>({
             <button
               type="button"
               onClick={clearFilters}
-              className="px-2 py-1 caption text-text-muted hover:text-text-primary" // py-1 for compact button
+              className={`${spacing.cell.px} ${spacing.compact.py} caption text-text-muted hover:text-text-primary`}
             >
               {t("dataTable.clearAll")}
             </button>
@@ -312,7 +312,7 @@ export function DataTable<T>({
                 <th
                   key={column.key}
                   className={cn(
-                    "px-2 py-1.5 text-left section-title", // py-1.5 for table header padding
+                    `${spacing.cell.px} ${spacing.compact.pyMd} text-left section-title`,
                     column.hiddenOnMobile && "hidden sm:table-cell",
                     column.sortable && "cursor-pointer hover:text-text-primary select-none",
                     column.width ? `w-[${column.width}]` : ""
@@ -330,8 +330,7 @@ export function DataTable<T>({
                   </span>
                 </th>
               ))}
-              {actions && <th className="px-2 py-1.5 w-16"></th>}{" "}
-              {/* py-1.5 for table header padding */}
+              {actions && <th className={`${spacing.cell.px} ${spacing.compact.pyMd} w-16`}></th>}
             </tr>
           </thead>
           <tbody>
@@ -362,13 +361,19 @@ export function DataTable<T>({
                     {columns.map((column) => (
                       <td
                         key={`${key}-${column.key}`}
-                        className={cn("px-2 py-2", column.hiddenOnMobile && "hidden sm:table-cell")} // py-2 for table cell padding
+                        className={cn(
+                          `${spacing.cell.px} ${spacing.row.py}`,
+                          column.hiddenOnMobile && "hidden sm:table-cell"
+                        )}
                       >
                         {column.render ? column.render(item) : (column.accessor(item) ?? "-")}
                       </td>
                     ))}
-                    {actions && <td className="px-2 py-2 text-right">{actions(item)}</td>}{" "}
-                    {/* py-2 for table cell padding */}
+                    {actions && (
+                      <td className={`${spacing.cell.px} ${spacing.row.py} text-right`}>
+                        {actions(item)}
+                      </td>
+                    )}
                   </tr>
                 );
               })

@@ -114,7 +114,7 @@ export function CollapsibleSection({
         <div
           className={cn(
             isCompact
-              ? `pl-5 ${spacing.padding.bottom.inline} stack-xs` /* pl-5 for indentation of nested content */
+              ? `${spacing.indent} ${spacing.padding.bottom.inline} stack-xs`
               : `${spacing.pad.sm} border-t border-surface-border bg-surface-raised stack`
           )}
         >

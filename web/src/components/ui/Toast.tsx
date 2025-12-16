@@ -32,7 +32,14 @@
 import { useState, useEffect, useCallback, ReactNode } from "react";
 import { typeStyles, icons } from "./Toast.constants.tsx";
 import { ToastContext, ToastType } from "./toastContext";
-import { cn, layout, radius, icon as iconTokens, toast as toastTokens } from "../../styles/theme";
+import {
+  cn,
+  layout,
+  radius,
+  icon as iconTokens,
+  toast as toastTokens,
+  spacing,
+} from "../../styles/theme";
 
 /**
  * Individual toast notification
@@ -124,7 +131,7 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
       <button
         onClick={onClose}
         className={cn(
-          "p-1 hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border", // p-1 for compact icon button
+          `${spacing.iconBtn.sm} hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border`,
           radius.default
         )}
         aria-label="Dismiss notification"

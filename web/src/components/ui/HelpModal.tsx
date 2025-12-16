@@ -71,7 +71,7 @@ export function HelpModal({ isOpen, onClose, title, children }: HelpModalProps) 
           </h2>
           <button
             onClick={onClose}
-            className={`p-1 text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-base`} // p-1 for compact icon button
+            className={`${spacing.iconBtn.sm} text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-base`}
             aria-label="Close help"
           >
             <svg className={iconTokens.size.md} viewBox="0 0 20 20" fill="currentColor">

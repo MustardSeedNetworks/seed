@@ -359,6 +359,9 @@ body {
   .pt-section {
     @apply pt-4; /* 16px - section divider with more space */
   }
+  .pt-tight {
+    @apply pt-1; /* 4px - minimal top padding for subtle spacing */
+  }
   .pb-inline {
     @apply pb-2; /* 8px - inline bottom padding */
   }
@@ -396,6 +399,75 @@ body {
   /* Compact action button padding */
   .action-btn-pad {
     @apply px-1; /* 4px horizontal - compact action buttons like remove/delete */
+  }
+
+  /* Micro spacing (for fine-grained adjustments) */
+  .gap-micro {
+    @apply gap-0.5; /* 2px - very tight badge/icon spacing */
+  }
+  .mt-micro {
+    @apply mt-0.5; /* 2px - minimal top margin for icon alignment */
+  }
+  .pb-micro {
+    @apply pb-0.5; /* 2px - minimal bottom padding */
+  }
+  .pb-compact {
+    @apply pb-1; /* 4px - compact bottom padding */
+  }
+  .pb-compact-md {
+    @apply pb-1.5; /* 6px - medium compact bottom padding */
+  }
+  .mt-compact-md {
+    @apply mt-1.5; /* 6px - medium compact top margin */
+  }
+  .-mt-tight {
+    @apply -mt-1; /* -4px - negative margin for tight visual alignment */
+  }
+
+  /* Badge/status indicator padding */
+  .p-badge-xs {
+    @apply p-0.5; /* 2px - extra small badge padding */
+  }
+  .p-badge-sm {
+    @apply p-1; /* 4px - small badge padding */
+  }
+  .badge-pad-xs {
+    @apply px-2 py-0.5; /* 8px horizontal, 2px vertical - compact status badge */
+  }
+  .kbd-pad {
+    @apply px-1 py-0.5; /* 4px horizontal, 2px vertical - keyboard key styling */
+  }
+
+  /* Left padding for indentation */
+  .pl-indent {
+    @apply pl-5; /* 20px - nested content indentation */
+  }
+
+  /* Compact vertical padding (for list items, table cells) */
+  .py-compact {
+    @apply py-1; /* 4px - compact list item padding */
+  }
+  .py-compact-md {
+    @apply py-1.5; /* 6px - slightly larger compact padding */
+  }
+  .py-row {
+    @apply py-2; /* 8px - table cell/row padding */
+  }
+  .py-row-lg {
+    @apply py-3; /* 12px - larger row padding */
+  }
+
+  /* Compact horizontal padding (for table cells, inline elements) */
+  .px-cell {
+    @apply px-2; /* 8px - table cell horizontal padding */
+  }
+
+  /* Icon button padding */
+  .p-icon-btn {
+    @apply p-1; /* 4px - compact icon button */
+  }
+  .p-icon-btn-md {
+    @apply p-1.5; /* 6px - medium icon button */
   }
 
   /* Main content padding (responsive) */

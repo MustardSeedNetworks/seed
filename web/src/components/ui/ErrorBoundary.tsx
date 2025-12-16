@@ -123,7 +123,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <div className={`flex items-start ${spacing.gap.default}`}>
                 {/* Error icon SVG */}
                 <svg
-                  className={`${iconTokens.size.md} text-status-error shrink-0 mt-0.5`} /* mt-0.5 for icon alignment */
+                  className={`${iconTokens.size.md} text-status-error shrink-0 ${spacing.micro.mt}`}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   aria-hidden="true"

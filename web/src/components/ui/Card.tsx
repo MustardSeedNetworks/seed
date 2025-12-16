@@ -213,7 +213,7 @@ export function CardRow({
   return (
     <div
       className={cn(
-        "flex justify-between py-1", // Fine-grained vertical padding for row alignment
+        `flex justify-between ${spacing.compact.py}`,
         layout.inline.default,
         wrap ? "items-start" : "items-center"
       )}

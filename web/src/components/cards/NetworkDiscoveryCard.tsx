@@ -336,9 +336,7 @@ function ProfileIcons({ icons, deviceType }: { icons?: string[]; deviceType?: st
   if (!icons || icons.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-0.5 flex-wrap">
-      {" "}
-      {/* gap-0.5 for tight badge spacing */}
+    <div className={`flex items-center ${spacing.micro.gap} flex-wrap`}>
       {icons.slice(0, 5).map((icon) => {
         const IconComponent = SERVICE_ICONS_MAP.get(icon);
         return (

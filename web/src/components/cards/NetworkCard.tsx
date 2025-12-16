@@ -417,8 +417,7 @@ export function NetworkCard({
                     value={formatTime(timing.request)}
                     status={getTimingStatus(timing.request, th.perPhase)}
                   />
-                  {/* pt-1 for subtle divider spacing */}
-                  <div className={cn("pt-1", border.divider)}>
+                  <div className={cn(spacing.padding.top.tight, border.divider)}>
                     <CardRow
                       label={tr("network.total")}
                       value={formatTime(timing.total)}

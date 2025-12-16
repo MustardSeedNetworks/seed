@@ -1319,8 +1319,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           <AppearanceSettings theme={theme} setTheme={setTheme} isDark={isDark} />
 
           {/* Logs (debug) */}
-          {/* pt-4 needed for consistent top padding in drawer sections */}
-          <section className="pt-4 border-t border-surface-border">
+          <section className={`${spacing.padding.top.section} border-t border-surface-border`}>
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="body-small font-medium text-text-muted">{t("logs.title")}</h3>
@@ -1346,8 +1345,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           </section>
 
           {/* Export Section */}
-          {/* pt-4 needed for consistent top padding in drawer sections */}
-          <section className="pt-4 border-t border-surface-border">
+          <section className={`${spacing.padding.top.section} border-t border-surface-border`}>
             <h3
               className={`body-small font-medium text-text-muted ${spacing.margin.bottom.heading}`}
             >
@@ -1379,8 +1377,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           </section>
 
           {/* About Section */}
-          {/* pt-4 needed for consistent top padding in drawer sections */}
-          <section className="pt-4 border-t border-surface-border">
+          <section className={`${spacing.padding.top.section} border-t border-surface-border`}>
             <h3
               className={`body-small font-medium text-text-muted ${spacing.margin.bottom.inline}`}
             >

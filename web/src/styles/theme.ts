@@ -112,6 +112,7 @@ export const spacing = {
     top: {
       heading: "pt-heading", // 12px - section divider top
       section: "pt-section", // 16px - section divider with more space
+      tight: "pt-tight", // 4px - minimal top padding for subtle spacing
     },
     bottom: {
       inline: "pb-inline", // 8px - inline bottom padding
@@ -128,6 +129,53 @@ export const spacing = {
 
   // Compact action button padding (remove, delete buttons)
   actionBtn: "action-btn-pad", // 4px horizontal
+
+  // Micro spacing (for fine-grained adjustments)
+  micro: {
+    gap: "gap-micro", // 2px - very tight badge/icon spacing
+    mt: "mt-micro", // 2px - minimal top margin for icon alignment
+    mtNeg: "-mt-tight", // -4px - negative margin for tight visual alignment
+    pb: "pb-micro", // 2px - minimal bottom padding
+    pbCompact: "pb-compact", // 4px - compact bottom padding
+    pbCompactMd: "pb-compact-md", // 6px - medium compact bottom padding
+    mtCompactMd: "mt-compact-md", // 6px - medium compact top margin
+  },
+
+  // Badge/status indicator padding
+  badge: {
+    xs: "p-badge-xs", // 2px - extra small badge padding
+    sm: "p-badge-sm", // 4px - small badge padding
+    padXs: "badge-pad-xs", // px-2 py-0.5 - compact status badge
+  },
+
+  // Keyboard key styling
+  kbd: "kbd-pad", // px-1 py-0.5 - keyboard key padding
+
+  // Left padding for indentation
+  indent: "pl-indent", // 20px - nested content indentation
+
+  // Compact vertical padding (for list items, table cells)
+  compact: {
+    py: "py-compact", // 4px - compact list item
+    pyMd: "py-compact-md", // 6px - slightly larger compact
+  },
+
+  // Row/cell padding
+  row: {
+    py: "py-row", // 8px - table cell/row padding
+    pyLg: "py-row-lg", // 12px - larger row padding
+  },
+
+  // Cell horizontal padding
+  cell: {
+    px: "px-cell", // 8px - table cell horizontal padding
+  },
+
+  // Icon button padding
+  iconBtn: {
+    sm: "p-icon-btn", // 4px - compact icon button
+    md: "p-icon-btn-md", // 6px - medium icon button
+  },
 
   // Main content layout padding
   mainPadding: {

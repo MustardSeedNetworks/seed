@@ -200,7 +200,11 @@ export const SpeedGauge = memo(function SpeedGauge({
         <div
           className={
             "absolute inset-0 flex flex-col items-center justify-end " +
-            (size === "sm" ? "pb-0.5" : size === "md" ? "pb-1" : "pb-1.5") // Fine-grained vertical spacing for gauge positioning
+            (size === "sm"
+              ? spacing.micro.pb
+              : size === "md"
+                ? spacing.micro.pbCompact
+                : spacing.micro.pbCompactMd) // Semantic tokens for gauge value positioning
           }
         >
           <span
@@ -211,8 +215,10 @@ export const SpeedGauge = memo(function SpeedGauge({
           >
             {isRunning && value === 0 ? "—" : displayValue.value}
           </span>
-          <span className="caption text-text-muted -mt-1">{displayValue.unit}</span>{" "}
-          {/* -mt-1 for visual alignment with gauge */}
+          <span className={`caption text-text-muted ${spacing.micro.mtNeg}`}>
+            {displayValue.unit}
+          </span>{" "}
+          {/* Negative margin for tight visual alignment between value and unit */}
         </div>
       </div>
     </div>

@@ -224,7 +224,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       : null;
 
     return (
-      <div key={`${type}-${result.name}`} className="py-1" /* py-1 for compact list item */>
+      <div key={`${type}-${result.name}`} className={spacing.compact.py}>
         <div className={layout.flex.between}>
           <span className="body-small text-text-muted truncate flex-1" title={displayName}>
             {displayName}
@@ -238,9 +238,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
           </span>
         </div>
         {extendedInfo && (
-          <div className="caption text-text-muted mt-0.5" /* mt-0.5 for minimal spacing */>
-            {extendedInfo}
-          </div>
+          <div className={`caption text-text-muted ${spacing.micro.mt}`}>{extendedInfo}</div>
         )}
       </div>
     );
@@ -309,7 +307,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     const fmt = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`);
 
     return (
-      <div className="mt-1.5" /* mt-1.5 for subtle spacing */>
+      <div className={spacing.micro.mtCompactMd}>
         {/* Stacked bar */}
         <div className={`h-2 ${radius.full} overflow-hidden flex bg-bg-tertiary`}>
           {segments.map((seg, i) => {
@@ -326,8 +324,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
         </div>
         {/* Legend with tooltips */}
         <div
-          className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 caption"
-          /* gap-x-3 gap-y-0.5 for fine-grained legend spacing */
+          className={`flex flex-wrap gap-x-3 ${spacing.margin.top.tight} caption ${spacing.micro.gap}`}
         >
           {segments.map((seg) => (
             <Tooltip
@@ -393,7 +390,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       result.ttfbLatency !== undefined;
 
     return (
-      <div key={`http-${result.name}`} className="py-1.5" /* py-1.5 for compact row */>
+      <div key={`http-${result.name}`} className={spacing.compact.pyMd}>
         <div className={layout.flex.between}>
           <span className="body-small text-text-muted truncate flex-1" title={result.name}>
             {result.name}

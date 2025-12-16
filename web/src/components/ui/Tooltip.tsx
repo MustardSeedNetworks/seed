@@ -62,7 +62,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       {show && (
         <div
           className={cn(
-            "absolute z-50 px-2 py-1.5 shadow-lg max-w-xs", // py-1.5 for optimal tooltip padding
+            `absolute z-50 ${spacing.cell.px} ${spacing.compact.pyMd} shadow-lg max-w-xs`,
             positionClasses,
             radius.default,
             border.card,

@@ -257,7 +257,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
               </div>
             ))}
             {surveys.length > 3 && (
-              <div className="text-center caption text-text-muted pt-1">
+              <div className={`text-center caption text-text-muted ${spacing.padding.top.tight}`}>
                 {t("survey.more", { count: surveys.length - 3 })}
               </div>
             )}
