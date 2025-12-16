@@ -29,6 +29,7 @@
 
 export { AutoSaveIndicator } from "./AutoSaveIndicator";
 export { AppearanceSettings } from "./AppearanceSettings";
+export { ConfigBackupsSection } from "./ConfigBackupsSection";
 export { DiscoverySettings } from "./DiscoverySettings";
 export { DNSSettings } from "./DNSSettings";
 export { HealthChecksSettings } from "./HealthChecksSettings";

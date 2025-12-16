@@ -312,6 +312,13 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/vulnerabilities/settings", s.handleVulnerabilitySettings)
 	s.mux.HandleFunc("/api/survey/floorplan", s.updateSurveyFloorPlan)
 
+	// Config backup/restore routes (implements #494)
+	s.mux.HandleFunc("/api/config/backups", s.handleConfigBackups)
+	s.mux.HandleFunc("/api/config/backup", s.handleConfigBackupCreate)
+	s.mux.HandleFunc("/api/config/backup/delete", s.handleConfigBackupDelete)
+	s.mux.HandleFunc("/api/config/restore", s.handleConfigRestore)
+	s.mux.HandleFunc("/api/config/version", s.handleConfigVersion)
+
 	// Setup routes (no auth required for initial setup)
 	s.mux.HandleFunc("/api/setup/status", s.handleSetupStatus)
 	s.mux.HandleFunc("/api/setup/complete", s.handleSetupComplete)

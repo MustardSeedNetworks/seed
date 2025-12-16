@@ -30,7 +30,8 @@ var (
 // All API handlers must use Lock/Unlock for writes or RLock/RUnlock for reads
 // to prevent concurrent config update race conditions.
 type Config struct {
-	mu               sync.RWMutex           `yaml:"-"` // Protects concurrent access
+	mu               sync.RWMutex           `yaml:"-"`       // Protects concurrent access
+	Version          int                    `yaml:"version"` // Schema version for migrations
 	Server           ServerConfig           `yaml:"server"`
 	Interface        InterfaceConfig        `yaml:"interface"`
 	VLAN             VLANConfig             `yaml:"vlan"`
@@ -472,6 +473,7 @@ type LoggingConfig struct {
 // DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
 	return &Config{
+		Version: ConfigVersion,
 		Server: ServerConfig{
 			Port:  8443,
 			HTTPS: true,
@@ -636,6 +638,7 @@ func DefaultConfig() *Config {
 }
 
 // Load reads configuration from a YAML file.
+// If the config has no version or an older version, it will be updated.
 func Load(path string) (*Config, error) {
 	cfg := DefaultConfig()
 
@@ -652,7 +655,74 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 
+	// Handle unversioned configs (version 0 means unversioned)
+	if cfg.Version == 0 {
+		cfg.Version = ConfigVersion
+		slog.Info("Upgraded unversioned config to current version", "version", ConfigVersion)
+	}
+
 	return cfg, nil
+}
+
+// LoadWithMigration reads configuration from a YAML file and applies any necessary migrations.
+// It creates a backup before applying migrations.
+func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, error) {
+	cfg := DefaultConfig()
+
+	//nolint:gosec // G304: path is user-provided configuration file path, validated by caller
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return cfg, false, nil // Use defaults if file doesn't exist
+		}
+		return nil, false, err
+	}
+
+	// Check current version in file
+	var partial struct {
+		Version int `yaml:"version"`
+	}
+	if err := yaml.Unmarshal(data, &partial); err != nil {
+		return nil, false, fmt.Errorf("failed to parse config version: %w", err)
+	}
+
+	migrated := false
+	if partial.Version < ConfigVersion && migrator != nil {
+		// Create backup before migration
+		backupMgr := NewBackupManager(path, "", 10)
+		if _, backupErr := backupMgr.CreateBackup(); backupErr != nil {
+			slog.Warn("Failed to create backup before migration", "error", backupErr)
+		}
+
+		// Apply migrations
+		migratedData, err := migrator.Migrate(data, partial.Version, ConfigVersion)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to migrate config from v%d to v%d: %w",
+				partial.Version, ConfigVersion, err)
+		}
+		data = migratedData
+		migrated = true
+		slog.Info("Migrated config", "from_version", partial.Version, "to_version", ConfigVersion)
+	}
+
+	if err := yaml.Unmarshal(data, cfg); err != nil {
+		return nil, false, err
+	}
+
+	// Ensure version is set
+	if cfg.Version == 0 {
+		cfg.Version = ConfigVersion
+		migrated = true
+	}
+
+	// Save migrated config
+	if migrated {
+		if err := cfg.Save(path); err != nil {
+			slog.Warn("Failed to save migrated config", "error", err)
+		}
+	}
+
+	return cfg, migrated, nil
 }
 
 // Validate checks if the configuration values are valid.
@@ -831,6 +901,28 @@ func (c *Config) Save(path string) error {
 		return err
 	}
 	return os.WriteFile(path, data, 0o600)
+}
+
+// SaveWithBackup writes the configuration to a YAML file, creating a backup first.
+// This method acquires a read lock to prevent data races during marshaling.
+// Returns the backup info if a backup was created, or nil if the file didn't exist.
+func (c *Config) SaveWithBackup(path, backupDir string, maxBackups int) (*BackupInfo, error) {
+	// Create backup if file exists
+	var backup *BackupInfo
+	if _, err := os.Stat(path); err == nil {
+		backupMgr := NewBackupManager(path, backupDir, maxBackups)
+		backup, err = backupMgr.CreateBackup()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create backup: %w", err)
+		}
+	}
+
+	// Save the config
+	if err := c.Save(path); err != nil {
+		return backup, err
+	}
+
+	return backup, nil
 }
 
 // SetupResult holds information about first-boot credential setup.
