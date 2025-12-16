@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Automated Rogue DHCP Server Test Script
-# Tests LuminetIQ's rogue DHCP detection capability
+# Tests The Seed's rogue DHCP detection capability
 #
 # Usage: sudo ./test-dhcp-rogue.sh [seed_url] [auth_token]
 # Example: sudo ./test-dhcp-rogue.sh https://192.168.64.7:8443 your_jwt_token
@@ -16,7 +16,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-LUMINETIQ_URL="${1:-https://192.168.64.7:8443}"
+SEED_URL="${1:-https://192.168.64.7:8443}"
 AUTH_TOKEN="${2}"
 TEST_INTERFACE="${TEST_INTERFACE:-enp0s1}"
 DHCP_RANGE_START="192.168.64.150"
@@ -51,12 +51,12 @@ echo "================================================"
 echo " Rogue DHCP Detection Test Suite"
 echo "================================================"
 echo
-echo "LuminetIQ URL: $LUMINETIQ_URL"
+echo "The Seed URL: $SEED_URL"
 echo "Test Interface: $TEST_INTERFACE"
 echo "DHCP Range: $DHCP_RANGE_START - $DHCP_RANGE_END"
 echo
 
-# Function to call LuminetIQ API
+# Function to call The Seed API
 api_call() {
   local method="$1"
   local endpoint="$2"
@@ -67,11 +67,11 @@ api_call() {
       -H "Authorization: Bearer $AUTH_TOKEN" \
       -H "Content-Type: application/json" \
       -d "$data" \
-      "$LUMINETIQ_URL$endpoint"
+      "$SEED_URL$endpoint"
   else
     curl -k -s -X "$method" \
       -H "Authorization: Bearer $AUTH_TOKEN" \
-      "$LUMINETIQ_URL$endpoint"
+      "$SEED_URL$endpoint"
   fi
 }
 
@@ -143,15 +143,15 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-# Test 1: Verify LuminetIQ API is accessible
+# Test 1: Verify The Seed API is accessible
 echo "================================================"
-echo "Test 1: Verify LuminetIQ API Connection"
+echo "Test 1: Verify The Seed API Connection"
 echo "================================================"
 
 if api_call GET /api/status > /dev/null 2>&1; then
-  echo -e "${GREEN}✓ LuminetIQ API is accessible${NC}"
+  echo -e "${GREEN}✓ The Seed API is accessible${NC}"
 else
-  echo -e "${RED}✗ Cannot connect to LuminetIQ API${NC}"
+  echo -e "${RED}✗ Cannot connect to The Seed API${NC}"
   exit 1
 fi
 echo
@@ -299,7 +299,7 @@ echo "  - Rogue Server Started: ✓"
 echo "  - Detection: See results above"
 echo
 echo "Next steps:"
-echo "  1. Check LuminetIQ web UI for alerts"
+echo "  1. Check The Seed web UI for alerts"
 echo "  2. Review /api/dhcp/rogue endpoint"
 echo "  3. Monitor DHCP traffic: sudo tcpdump -i $TEST_INTERFACE port 67 or port 68"
 echo

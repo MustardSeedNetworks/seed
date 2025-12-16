@@ -1,5 +1,5 @@
 # =============================================================================
-# Release - LuminetIQ
+# Release - The Seed
 # =============================================================================
 # Manual release workflow for creating versioned releases.
 # Builds multi-arch packages (.tar.gz, .deb, .rpm) with bundled iperf3.
@@ -194,7 +194,7 @@ jobs:
           npm ci
           npm run build
 
-      - name: Build LuminetIQ
+      - name: Build The Seed
         env:
           GOOS: linux
           GOARCH: ${{ matrix.arch }}
@@ -208,7 +208,7 @@ jobs:
           fi
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
-            -o dist/luminetiq-linux-${{ matrix.arch }} ./cmd/luminetiq
+            -o dist/seed-linux-${{ matrix.arch }} ./cmd/seed
 
       - name: Create release packages
         run: |
@@ -216,30 +216,30 @@ jobs:
           PKG_VERSION="${VERSION#v}"
 
           # Create .tar.gz package
-          mkdir -p release/luminetiq-${VERSION}-linux-${{ matrix.arch }}
-          cp dist/luminetiq-linux-${{ matrix.arch }} release/luminetiq-${VERSION}-linux-${{ matrix.arch }}/luminetiq
-          cp bin/iperf3-linux-${{ matrix.arch }} release/luminetiq-${VERSION}-linux-${{ matrix.arch }}/iperf3
-          chmod +x release/luminetiq-${VERSION}-linux-${{ matrix.arch }}/*
-          cp -r configs release/luminetiq-${VERSION}-linux-${{ matrix.arch }}/
-          cp -r web/dist release/luminetiq-${VERSION}-linux-${{ matrix.arch }}/web/
+          mkdir -p release/seed-${VERSION}-linux-${{ matrix.arch }}
+          cp dist/seed-linux-${{ matrix.arch }} release/seed-${VERSION}-linux-${{ matrix.arch }}/seed
+          cp bin/iperf3-linux-${{ matrix.arch }} release/seed-${VERSION}-linux-${{ matrix.arch }}/iperf3
+          chmod +x release/seed-${VERSION}-linux-${{ matrix.arch }}/*
+          cp -r configs release/seed-${VERSION}-linux-${{ matrix.arch }}/
+          cp -r web/dist release/seed-${VERSION}-linux-${{ matrix.arch }}/web/
           cd release
-          tar -czvf luminetiq-${VERSION}-linux-${{ matrix.arch }}.tar.gz luminetiq-${VERSION}-linux-${{ matrix.arch }}
+          tar -czvf seed-${VERSION}-linux-${{ matrix.arch }}.tar.gz seed-${VERSION}-linux-${{ matrix.arch }}
           cd ..
 
           # Create .deb package
           DEB_DIR="packaging/deb"
           mkdir -p $DEB_DIR/DEBIAN
           mkdir -p $DEB_DIR/usr/local/bin
-          mkdir -p $DEB_DIR/etc/luminetiq
+          mkdir -p $DEB_DIR/etc/seed
           mkdir -p $DEB_DIR/etc/systemd/system
-          mkdir -p $DEB_DIR/usr/share/luminetiq
+          mkdir -p $DEB_DIR/usr/share/seed
 
-          cp dist/luminetiq-linux-${{ matrix.arch }} $DEB_DIR/usr/local/bin/luminetiq
+          cp dist/seed-linux-${{ matrix.arch }} $DEB_DIR/usr/local/bin/seed
           cp bin/iperf3-linux-${{ matrix.arch }} $DEB_DIR/usr/local/bin/iperf3
           chmod +x $DEB_DIR/usr/local/bin/*
-          cp -r configs/* $DEB_DIR/etc/luminetiq/
-          cp -r web/dist $DEB_DIR/usr/share/luminetiq/web
-          cp packaging/luminetiq.service $DEB_DIR/etc/systemd/system/
+          cp -r configs/* $DEB_DIR/etc/seed/
+          cp -r web/dist $DEB_DIR/usr/share/seed/web
+          cp packaging/seed.service $DEB_DIR/etc/systemd/system/
 
           sed "s/__VERSION__/${PKG_VERSION}/" packaging/control > $DEB_DIR/DEBIAN/control
           sed -i "s/__ARCHITECTURE__/${{ matrix.arch }}/" $DEB_DIR/DEBIAN/control
@@ -247,7 +247,7 @@ jobs:
           cp packaging/postinst $DEB_DIR/DEBIAN/
           chmod +x $DEB_DIR/DEBIAN/postinst
 
-          dpkg-deb --build $DEB_DIR release/luminetiq_${{ github.ref_name }}_${{ matrix.arch }}.deb
+          dpkg-deb --build $DEB_DIR release/seed_${{ github.ref_name }}_${{ matrix.arch }}.deb
 
           # Create .rpm package
           RPM_ARCH=${{ matrix.arch }}
@@ -257,16 +257,16 @@ jobs:
             RPM_ARCH="aarch64"
           fi
 
-          SPEC_FILE="packaging/luminetiq.spec"
-          sed "s/__VERSION__/${PKG_VERSION}/" $SPEC_FILE > luminetiq.spec
-          sed -i "s/__ARCHITECTURE__/${{ matrix.arch }}/" luminetiq.spec
-          sed -i "s/__RPM_ARCH__/${RPM_ARCH}/" luminetiq.spec
+          SPEC_FILE="packaging/seed.spec"
+          sed "s/__VERSION__/${PKG_VERSION}/" $SPEC_FILE > seed.spec
+          sed -i "s/__ARCHITECTURE__/${{ matrix.arch }}/" seed.spec
+          sed -i "s/__RPM_ARCH__/${RPM_ARCH}/" seed.spec
 
           rpmbuild --target "${RPM_ARCH}" \
             --define "_repo_root $(pwd)" \
             --define "_topdir $(pwd)/rpmbuild" \
             --define "_rpmdir $(pwd)/release" \
-            -bb luminetiq.spec
+            -bb seed.spec
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
@@ -356,51 +356,51 @@ jobs:
 
             **AMD64:**
             ```bash
-            curl -LO https://github.com/krisarmstrong/luminetiq/releases/download/${{ github.ref_name }}/luminetiq_${{ github.ref_name }}_amd64.deb
-            sudo dpkg -i luminetiq_${{ github.ref_name }}_amd64.deb
+            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed_${{ github.ref_name }}_amd64.deb
+            sudo dpkg -i seed_${{ github.ref_name }}_amd64.deb
             ```
 
             **ARM64:**
             ```bash
-            curl -LO https://github.com/krisarmstrong/luminetiq/releases/download/${{ github.ref_name }}/luminetiq_${{ github.ref_name }}_arm64.deb
-            sudo dpkg -i luminetiq_${{ github.ref_name }}_arm64.deb
+            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed_${{ github.ref_name }}_arm64.deb
+            sudo dpkg -i seed_${{ github.ref_name }}_arm64.deb
             ```
 
             ### Fedora/RHEL Package
 
             **x86_64:**
             ```bash
-            curl -LO https://github.com/krisarmstrong/luminetiq/releases/download/${{ github.ref_name }}/luminetiq-${{ github.ref_name }}.x86_64.rpm
-            sudo rpm -i luminetiq-${{ github.ref_name }}.x86_64.rpm
+            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}.x86_64.rpm
+            sudo rpm -i seed-${{ github.ref_name }}.x86_64.rpm
             ```
 
             **aarch64:**
             ```bash
-            curl -LO https://github.com/krisarmstrong/luminetiq/releases/download/${{ github.ref_name }}/luminetiq-${{ github.ref_name }}.aarch64.rpm
-            sudo rpm -i luminetiq-${{ github.ref_name }}.aarch64.rpm
+            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}.aarch64.rpm
+            sudo rpm -i seed-${{ github.ref_name }}.aarch64.rpm
             ```
 
             ### Manual Installation (tar.gz)
 
             **Linux AMD64:**
             ```bash
-            curl -LO https://github.com/krisarmstrong/luminetiq/releases/download/${{ github.ref_name }}/luminetiq-${{ github.ref_name }}-linux-amd64.tar.gz
-            tar -xzf luminetiq-${{ github.ref_name }}-linux-amd64.tar.gz
-            cd luminetiq-${{ github.ref_name }}-linux-amd64
-            sudo mv luminetiq iperf3 /usr/local/bin/
+            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}-linux-amd64.tar.gz
+            tar -xzf seed-${{ github.ref_name }}-linux-amd64.tar.gz
+            cd seed-${{ github.ref_name }}-linux-amd64
+            sudo mv seed iperf3 /usr/local/bin/
             ```
 
             **Linux ARM64:**
             ```bash
-            curl -LO https://github.com/krisarmstrong/luminetiq/releases/download/${{ github.ref_name }}/luminetiq-${{ github.ref_name }}-linux-arm64.tar.gz
-            tar -xzf luminetiq-${{ github.ref_name }}-linux-arm64.tar.gz
-            cd luminetiq-${{ github.ref_name }}-linux-arm64
-            sudo mv luminetiq iperf3 /usr/local/bin/
+            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}-linux-arm64.tar.gz
+            tar -xzf seed-${{ github.ref_name }}-linux-arm64.tar.gz
+            cd seed-${{ github.ref_name }}-linux-arm64
+            sudo mv seed iperf3 /usr/local/bin/
             ```
 
             ## Package Contents
 
-            - `luminetiq` - Main application binary
+            - `seed` - Main application binary
             - `iperf3` - Bundled iperf3 binary
             - `configs/` - Default configuration files
             - `web/` - Frontend assets

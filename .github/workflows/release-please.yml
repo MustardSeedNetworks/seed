@@ -38,16 +38,16 @@ jobs:
         include:
           - goos: linux
             goarch: amd64
-            artifact_name: luminetiq-linux-amd64
+            artifact_name: seed-linux-amd64
           - goos: linux
             goarch: arm64
-            artifact_name: luminetiq-linux-arm64
+            artifact_name: seed-linux-arm64
           - goos: darwin
             goarch: amd64
-            artifact_name: luminetiq-darwin-amd64
+            artifact_name: seed-darwin-amd64
           - goos: darwin
             goarch: arm64
-            artifact_name: luminetiq-darwin-arm64
+            artifact_name: seed-darwin-arm64
     steps:
       - uses: actions/checkout@v4
 
@@ -76,7 +76,7 @@ jobs:
           CGO_ENABLED: 0
         run: |
           go build -trimpath -ldflags="-s -w -X main.version=${{ needs.release-please.outputs.version }}" \
-            -o ${{ matrix.artifact_name }} ./cmd/luminetiq
+            -o ${{ matrix.artifact_name }} ./cmd/seed
 
       - name: Install Syft for SBOM generation
         uses: anchore/sbom-action/download-syft@v0
@@ -156,7 +156,7 @@ jobs:
       - name: Download release artifacts
         run: |
           gh release download ${{ needs.release-please.outputs.tag_name }} \
-            -p 'luminetiq-linux-amd64*' \
+            -p 'seed-linux-amd64*' \
             -R ${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -166,20 +166,20 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign verify-blob \
-            --bundle luminetiq-linux-amd64.cosign.bundle \
+            --bundle seed-linux-amd64.cosign.bundle \
             --certificate-identity-regexp='https://github.com/${{ github.repository }}' \
             --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
-            luminetiq-linux-amd64
+            seed-linux-amd64
 
       - name: Verify SBOM signature
         env:
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign verify-blob \
-            --bundle luminetiq-linux-amd64.sbom.cosign.bundle \
+            --bundle seed-linux-amd64.sbom.cosign.bundle \
             --certificate-identity-regexp='https://github.com/${{ github.repository }}' \
             --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
-            luminetiq-linux-amd64.sbom.json
+            seed-linux-amd64.sbom.json
 
       - name: Verification success
         run: echo "✅ All signatures verified successfully!"

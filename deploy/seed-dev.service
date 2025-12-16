@@ -1,5 +1,5 @@
 [Unit]
-Description=LuminetIQ Network Diagnostics (Development)
+Description=The Seed - Development
 Documentation=https://github.com/krisarmstrong/seed
 After=network-online.target
 Wants=network-online.target

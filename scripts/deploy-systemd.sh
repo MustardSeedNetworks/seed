@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Deploy LuminetIQ as systemd service
+# Deploy The Seed as systemd service
 # Kills any manual runs and installs/starts systemd service
 #
 
@@ -17,7 +17,7 @@ APP_DIR="/home/krisarmstrong/seed"
 SERVICE_NAME="seed"
 
 echo "================================================"
-echo " LuminetIQ Systemd Deployment"
+echo " The Seed Systemd Deployment"
 echo "================================================"
 echo
 

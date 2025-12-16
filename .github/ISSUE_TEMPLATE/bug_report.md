@@ -26,7 +26,7 @@ What actually happened.
 
 ## Environment
 
-- **NetScope Version**: [e.g., v1.0.0]
+- **Seed Version**: [e.g., v1.0.0]
 - **OS**: [e.g., Raspberry Pi OS, Ubuntu 22.04]
 - **Architecture**: [e.g., arm64, amd64]
 - **Browser**: [e.g., Chrome 120, Firefox 121]

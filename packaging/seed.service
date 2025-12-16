@@ -1,5 +1,5 @@
 [Unit]
-Description=LuminetIQ Network Diagnostic Tool
+Description=The Seed - Mustard Seed Networks
 After=network.target
 
 [Service]

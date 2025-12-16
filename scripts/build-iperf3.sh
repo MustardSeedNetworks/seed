@@ -3,7 +3,7 @@
 # build-iperf3.sh
 #
 # This script automates the process of downloading, building, and bundling the
-# latest release of iperf3 from source for use with NetScope. It performs the
+# latest release of iperf3 from source for use with The Seed. It performs the
 # following steps:
 #
 # 1. Detects the operating system and architecture to ensure compatibility.

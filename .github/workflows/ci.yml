@@ -1,5 +1,5 @@
 # =============================================================================
-# CI Pipeline - LuminetIQ
+# CI Pipeline - The Seed
 # =============================================================================
 # A+++++++ quality CI with:
 # - Pinned action versions for reproducibility
@@ -442,7 +442,7 @@ jobs:
         run: |
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w" \
-            -o luminetiq-linux-amd64 ./cmd/luminetiq
+            -o seed-linux-amd64 ./cmd/seed
 
       - name: Build Go binary (arm64)
         env:
@@ -452,17 +452,17 @@ jobs:
         run: |
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w" \
-            -o luminetiq-linux-arm64 ./cmd/luminetiq
+            -o seed-linux-arm64 ./cmd/seed
 
       - name: Verify binaries
         run: |
           echo "=== AMD64 Binary ==="
-          file luminetiq-linux-amd64
-          ls -la luminetiq-linux-amd64
+          file seed-linux-amd64
+          ls -la seed-linux-amd64
           echo ""
           echo "=== ARM64 Binary ==="
-          file luminetiq-linux-arm64
-          ls -la luminetiq-linux-arm64
+          file seed-linux-arm64
+          ls -la seed-linux-arm64
 
   # ===========================================================================
   # E2E Browser Tests (Playwright)
@@ -502,7 +502,7 @@ jobs:
         run: |
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w" \
-            -o luminetiq ./cmd/luminetiq
+            -o seed ./cmd/seed
 
       - name: Install Playwright browsers
         working-directory: web
@@ -510,8 +510,8 @@ jobs:
 
       - name: Start backend server
         run: |
-          sudo setcap cap_net_raw=+ep ./luminetiq || true
-          nohup ./luminetiq > server.log 2>&1 &
+          sudo setcap cap_net_raw=+ep ./seed || true
+          nohup ./seed > server.log 2>&1 &
           sleep 10
           curl -sf -k https://localhost:8443/api/health || (cat server.log && exit 1)
 
@@ -574,12 +574,12 @@ jobs:
         run: |
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w" \
-            -o luminetiq ./cmd/luminetiq
+            -o seed ./cmd/seed
 
       - name: Start backend server
         run: |
-          sudo setcap cap_net_raw=+ep ./luminetiq || true
-          nohup ./luminetiq > server.log 2>&1 &
+          sudo setcap cap_net_raw=+ep ./seed || true
+          nohup ./seed > server.log 2>&1 &
           sleep 10
           curl -sf -k https://localhost:8443/api/health || (cat server.log && exit 1)
 

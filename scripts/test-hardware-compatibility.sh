@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# LuminetIQ Hardware Compatibility Test Script
+# The Seed Hardware Compatibility Test Script
 #
 # Purpose: Automatically test Wi-Fi and Ethernet hardware capabilities
 # Usage: sudo ./scripts/test-hardware-compatibility.sh [interface]
@@ -43,7 +43,7 @@ if ! ip link show "$INTERFACE" &>/dev/null; then
     exit 1
 fi
 
-echo -e "${BLUE}=== LuminetIQ Hardware Compatibility Test ===${NC}"
+echo -e "${BLUE}=== The Seed Hardware Compatibility Test ===${NC}"
 echo -e "Interface: ${GREEN}$INTERFACE${NC}"
 echo -e "Date: $(date)"
 echo -e "Kernel: $(uname -r)"

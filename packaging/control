@@ -1,8 +1,8 @@
-Package: netscope
+Package: seed
 Version: __VERSION__
 Architecture: __ARCHITECTURE__
 Maintainer: Kris Armstrong <kris.armstrong@example.com>
 Depends: libpcap0.8
 Description: Portable Network Diagnostic Tool with Real-Time Web UI
- NetScope is a professional-grade network diagnostic appliance designed for network technicians and engineers.
+ The Seed is a professional-grade network diagnostic appliance designed for network technicians and engineers.
  Plug it into any network jack and instantly see link status, switch information, DHCP details, DNS health, and gateway connectivity through a modern web interface.

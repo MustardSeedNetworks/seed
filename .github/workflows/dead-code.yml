@@ -159,7 +159,7 @@ jobs:
           for file in $(find . -name "*.go" -not -path "./vendor/*" -not -name "*_test.go"); do
             pkg=$(dirname "$file" | sed 's|^\./||')
             # Check if package is imported
-            if ! grep -r "\"github.com/krisarmstrong/luminetiq/$pkg\"" --include="*.go" . > /dev/null 2>&1; then
+            if ! grep -r "\"github.com/krisarmstrong/seed/$pkg\"" --include="*.go" . > /dev/null 2>&1; then
               # Check if it's a main package or has exported symbols
               if grep -q "^package main" "$file"; then
                 continue  # Main packages don't need to be imported

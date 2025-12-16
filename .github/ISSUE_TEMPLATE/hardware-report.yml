@@ -162,10 +162,10 @@ body:
       value: "## Test Results"
 
   - type: dropdown
-    id: luminetiq-compatible
+    id: seed-compatible
     attributes:
-      label: LuminetIQ Compatibility
-      description: Overall compatibility with LuminetIQ diagnostics
+      label: The Seed Compatibility
+      description: Overall compatibility with The Seed diagnostics
       options:
         - "✅ Excellent - All features work perfectly"
         - "⚠️ Good - Most features work, minor issues"
@@ -179,7 +179,7 @@ body:
     id: features-tested
     attributes:
       label: Features Tested
-      description: Which LuminetIQ features did you test with this hardware?
+      description: Which The Seed features did you test with this hardware?
       placeholder: |
         - [x] Link status detection
         - [x] Cable diagnostics (TDR)
@@ -203,7 +203,7 @@ body:
     id: recommendation
     attributes:
       label: Would you recommend this hardware?
-      description: Based on your testing, should others buy this for LuminetIQ?
+      description: Based on your testing, should others buy this for The Seed?
       options:
         - "✅ Highly Recommend - Works great, good value"
         - "⚠️ Recommend with caveats - Works but has limitations"
@@ -229,7 +229,7 @@ body:
       label: Submission Checklist
       description: Please confirm you've completed these steps
       options:
-        - label: I have tested this hardware with LuminetIQ
+        - label: I have tested this hardware with The Seed
           required: true
         - label: I have included kernel and driver versions
           required: true

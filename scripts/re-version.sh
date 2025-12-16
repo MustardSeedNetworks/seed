@@ -7,7 +7,7 @@
 
 set -e  # Exit on error
 
-echo "=== LuminetIQ Re-Versioning Script ==="
+echo "=== The Seed Re-Versioning Script ==="
 echo ""
 echo "This script will:"
 echo "  1. Delete all local tags"

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# LuminetIQ Uninstallation Script
-# Removes LuminetIQ systemd service and files from Linux
+# The Seed Uninstallation Script
+# Removes The Seed systemd service and files from Linux
 #
 set -e
 
@@ -66,16 +66,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-log_info "Uninstalling LuminetIQ..."
+log_info "Uninstalling The Seed..."
 
 # Stop and disable service
 if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
-    log_info "Stopping LuminetIQ service..."
+    log_info "Stopping The Seed service..."
     systemctl stop "$SERVICE_NAME"
 fi
 
 if systemctl is-enabled --quiet "$SERVICE_NAME" 2>/dev/null; then
-    log_info "Disabling LuminetIQ service..."
+    log_info "Disabling The Seed service..."
     systemctl disable "$SERVICE_NAME"
 fi
 
@@ -88,7 +88,7 @@ fi
 
 # Remove binary
 if [[ -f "$INSTALL_DIR/seed" ]]; then
-    log_info "Removing LuminetIQ binary..."
+    log_info "Removing The Seed binary..."
     rm -f "$INSTALL_DIR/seed"
 fi
 
@@ -116,7 +116,7 @@ if [[ "$REMOVE_USER" == true ]]; then
     fi
 fi
 
-log_info "LuminetIQ has been uninstalled."
+log_info "The Seed has been uninstalled."
 
 if [[ "$REMOVE_DATA" == false ]]; then
     echo ""

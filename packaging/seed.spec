@@ -3,13 +3,13 @@ Version:    __VERSION__
 Release:    1%{?dist}
 Summary:    Portable Network Diagnostic Tool with Real-Time Web UI
 License:    BSL 1.1
-URL:        https://github.com/krisarmstrong/netscope
+URL:        https://github.com/krisarmstrong/seed
 BuildArch:  __RPM_ARCH__
 
 Requires:   libpcap, systemd
 
 %description
-LuminetIQ is a professional-grade network diagnostic appliance designed for network technicians and engineers.
+The Seed is a professional-grade network diagnostic appliance designed for network technicians and engineers.
 Plug it into any network jack and instantly see link status, switch information, DHCP details, DNS health, and gateway connectivity through a modern web interface.
 
 %install

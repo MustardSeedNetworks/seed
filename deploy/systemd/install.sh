@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# LuminetIQ Installation Script
-# Installs LuminetIQ as a systemd service on Linux
+# The Seed Installation Script
+# Installs The Seed as a systemd service on Linux
 #
 set -e
 
@@ -48,11 +48,11 @@ if [[ -f "./${BINARY_NAME}" ]]; then
 elif [[ -f "$1" ]]; then
     BINARY_PATH="$1"
 else
-    log_error "LuminetIQ binary not found. Please run this script from the directory containing the binary or provide the path as an argument."
+    log_error "The Seed binary not found. Please run this script from the directory containing the binary or provide the path as an argument."
     exit 1
 fi
 
-log_info "Installing LuminetIQ..."
+log_info "Installing The Seed..."
 
 # Create service user and group if they don't exist
 if ! getent group "$SERVICE_GROUP" > /dev/null 2>&1; then
@@ -73,7 +73,7 @@ mkdir -p "$INSTALL_DIR/logs"
 
 # Stop existing service if running
 if systemctl is-active --quiet seed; then
-    log_info "Stopping existing LuminetIQ service..."
+    log_info "Stopping existing The Seed service..."
     systemctl stop seed
 fi
 
@@ -99,7 +99,7 @@ else
     # Create service file inline if not found
     cat > /etc/systemd/system/seed.service << 'EOF'
 [Unit]
-Description=LuminetIQ Network Diagnostics
+Description=The Seed Network Diagnostics
 Documentation=https://github.com/krisarmstrong/seed
 After=network-online.target
 Wants=network-online.target
@@ -136,11 +136,11 @@ log_info "Reloading systemd daemon..."
 systemctl daemon-reload
 
 # Enable service
-log_info "Enabling LuminetIQ service..."
+log_info "Enabling The Seed service..."
 systemctl enable seed
 
 # Start service
-log_info "Starting LuminetIQ service..."
+log_info "Starting The Seed service..."
 systemctl start seed
 
 # Wait a moment for startup
@@ -148,7 +148,7 @@ sleep 3
 
 # Check status
 if systemctl is-active --quiet seed; then
-    log_info "LuminetIQ installed and running successfully!"
+    log_info "The Seed installed and running successfully!"
     echo ""
     echo "Service Status:"
     systemctl status seed --no-pager
@@ -180,6 +180,6 @@ if systemctl is-active --quiet seed; then
         log_warn "Could not generate credentials. Visit the web UI to complete setup."
     fi
 else
-    log_error "LuminetIQ failed to start. Check logs with: journalctl -u seed"
+    log_error "The Seed failed to start. Check logs with: journalctl -u seed"
     exit 1
 fi
