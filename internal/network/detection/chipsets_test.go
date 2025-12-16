@@ -165,10 +165,11 @@ func TestIdentifyByKeyword(t *testing.T) {
 }
 
 func TestChipsetData(t *testing.T) {
-	chipsets := getChipsetData()
+	db := NewChipsetDatabase()
+	chipsets := db.GetAll()
 
 	if len(chipsets) == 0 {
-		t.Fatal("getChipsetData() returned empty slice")
+		t.Fatal("GetAll() returned empty slice")
 	}
 
 	// Verify required fields are populated
@@ -219,7 +220,8 @@ func TestChipsetData(t *testing.T) {
 }
 
 func TestChipsetTDRFlags(t *testing.T) {
-	chipsets := getChipsetData()
+	db := NewChipsetDatabase()
+	chipsets := db.GetAll()
 
 	// Intel desktop NICs should have TDR
 	tdrExpected := map[string]bool{
@@ -242,7 +244,8 @@ func TestChipsetTDRFlags(t *testing.T) {
 }
 
 func TestChipsetDOMFlags(t *testing.T) {
-	chipsets := getChipsetData()
+	db := NewChipsetDatabase()
+	chipsets := db.GetAll()
 
 	// High-speed NICs with SFP+ should have DOM
 	domExpected := map[string]bool{
@@ -267,7 +270,8 @@ func TestChipsetDOMFlags(t *testing.T) {
 }
 
 func TestQualityRatings(t *testing.T) {
-	chipsets := getChipsetData()
+	db := NewChipsetDatabase()
+	chipsets := db.GetAll()
 
 	// Intel enterprise NICs should have high quality
 	highQuality := []string{"I210", "I350", "E810"}
