@@ -31,7 +31,7 @@
         build-linux-amd64 build-linux-arm64 build-linux-docker \
         docker docker-build docker-test docker-push \
         clean clean-all test test-all test-backend test-frontend test-coverage test-integration test-e2e test-e2e-ui test-e2e-install \
-        lint lint-backend lint-frontend fmt fmt-frontend fmt-all fmt-md fix fix-backend fix-frontend fix-md fix-all \
+        lint lint-backend lint-frontend lint-md fmt fmt-frontend fmt-all fmt-md fmt-check fix fix-backend fix-frontend fix-md fix-all \
         security security-backend security-frontend security-secrets security-trivy \
         storybook build-storybook test-storybook \
         run dev dev-frontend \
@@ -494,6 +494,51 @@ fmt-md: ## Format markdown files with Prettier
 # Format all code
 fmt-all: fmt fmt-frontend fmt-md ## Format all code (Go + frontend + markdown)
 
+# Check formatting without making changes
+fmt-check: ## Check all formatting (Go + frontend + markdown) without fixing
+	@echo "🔍 Checking formatting..."
+	@FAILED=0; \
+	echo "Checking Go formatting..."; \
+	if [ -n "$$(gofmt -l .)" ]; then \
+		echo "❌ Go files need formatting:"; \
+		gofmt -l .; \
+		FAILED=1; \
+	else \
+		echo "✅ Go formatting OK"; \
+	fi; \
+	echo "Checking frontend formatting..."; \
+	if ! (cd web && npx prettier --check . 2>/dev/null); then \
+		echo "❌ Frontend files need formatting"; \
+		FAILED=1; \
+	else \
+		echo "✅ Frontend formatting OK"; \
+	fi; \
+	echo "Checking markdown formatting..."; \
+	if ! npm run format:md:check 2>/dev/null; then \
+		echo "❌ Markdown files need formatting"; \
+		FAILED=1; \
+	else \
+		echo "✅ Markdown formatting OK"; \
+	fi; \
+	if [ $$FAILED -ne 0 ]; then \
+		echo ""; \
+		echo "Run 'make fmt-all' to fix formatting issues"; \
+		exit 1; \
+	fi
+	@echo "✅ All formatting checks passed"
+
+# Lint markdown files with markdownlint
+lint-md: ## Lint markdown files with markdownlint
+	@echo "🔍 Linting markdown files..."
+	@if command -v markdownlint-cli2 > /dev/null 2>&1; then \
+		markdownlint-cli2 "**/*.md" "#node_modules" "#web/node_modules" "#dist"; \
+	elif npx markdownlint-cli2 --help > /dev/null 2>&1; then \
+		npx markdownlint-cli2 "**/*.md" "#node_modules" "#web/node_modules" "#dist"; \
+	else \
+		echo "SKIP: markdownlint-cli2 not installed (npm install -g markdownlint-cli2)"; \
+	fi
+	@echo "✅ Markdown lint complete"
+
 # =============================================================================
 # Auto-Fix Linting Issues
 # =============================================================================
@@ -659,6 +704,10 @@ tools-go: ## Install Go development tools
 	@go install golang.org/x/tools/cmd/deadcode@latest
 	@echo "  gocyclo (complexity checker)..."
 	@go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+	@echo "  gotestsum (test runner with better output)..."
+	@go install gotest.tools/gotestsum@latest
+	@echo "  go-licenses (license compliance checker)..."
+	@go install github.com/google/go-licenses@latest
 	@echo "✅ Go tools installed"
 
 # Install frontend development tools
