@@ -322,6 +322,44 @@ jobs:
           echo "✅ No unsafe logging patterns detected"
 
   # ===========================================================================
+  # Internationalization (i18n) Checks
+  # ===========================================================================
+  i18n:
+    name: i18n Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check translation key coverage
+        run: |
+          echo "Checking translation key coverage..."
+
+          # Compare English and Spanish locale keys
+          for file in locales/en/*.json; do
+            name=$(basename "$file")
+            es_file="locales/es/$name"
+
+            if [ ! -f "$es_file" ]; then
+              echo "❌ Missing Spanish locale file: $name"
+              exit 1
+            fi
+
+            # Extract keys from both files and compare
+            en_keys=$(jq -r 'paths(scalars) | join(".")' "$file" | sort)
+            es_keys=$(jq -r 'paths(scalars) | join(".")' "$es_file" | sort)
+
+            missing=$(comm -23 <(echo "$en_keys") <(echo "$es_keys"))
+            if [ -n "$missing" ]; then
+              echo "❌ Missing keys in es/$name:"
+              echo "$missing"
+              exit 1
+            fi
+          done
+
+          echo "✅ All translation keys present in all locales"
+
+  # ===========================================================================
   # Documentation Checks
   # ===========================================================================
   docs:
