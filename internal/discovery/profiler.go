@@ -21,6 +21,21 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/snmp"
 )
 
+// Device type constants for profiling.
+const (
+	deviceTypePrinter       = "printer"
+	deviceTypeNetworkDevice = "network-device"
+	deviceTypeServer        = "server"
+	deviceTypeRouter        = "router"
+	deviceTypeSwitch        = "switch"
+	deviceTypeFirewall      = "firewall"
+	deviceTypeAP            = "access-point"
+	deviceTypeNAS           = "nas"
+	deviceTypeCamera        = "camera"
+	deviceTypeIoT           = "iot"
+	deviceTypeDesktop       = "desktop"
+)
+
 // DeviceProfile contains auto-discovered profile information about a device.
 type DeviceProfile struct {
 	ProfiledAt   time.Time     `json:"profiledAt"`
@@ -420,19 +435,19 @@ func (p *DeviceProfiler) inferDeviceType(profile *DeviceProfile) {
 			icons["cache"] = true
 		case 9100:
 			icons["printer"] = true
-			deviceType = "printer"
+			deviceType = deviceTypePrinter
 		case 515, 631:
 			icons["printer"] = true
-			deviceType = "printer"
+			deviceType = deviceTypePrinter
 		}
 
 		// Check banner for clues
 		bannerLower := strings.ToLower(op.Banner)
 		if strings.Contains(bannerLower, "ssh") {
 			if strings.Contains(bannerLower, "cisco") {
-				deviceType = "network-device"
+				deviceType = deviceTypeNetworkDevice
 			} else if strings.Contains(bannerLower, "ubuntu") || strings.Contains(bannerLower, "debian") {
-				deviceType = "server"
+				deviceType = deviceTypeServer
 			}
 		}
 	}
@@ -444,25 +459,25 @@ func (p *DeviceProfiler) inferDeviceType(profile *DeviceProfile) {
 
 		//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
 		if strings.Contains(titleLower, "router") || strings.Contains(serverLower, "router") {
-			deviceType = "router"
+			deviceType = deviceTypeRouter
 			icons["router"] = true
 		} else if strings.Contains(titleLower, "switch") {
-			deviceType = "switch"
+			deviceType = deviceTypeSwitch
 			icons["switch"] = true
 		} else if strings.Contains(titleLower, "firewall") || strings.Contains(titleLower, "pfsense") ||
 			strings.Contains(titleLower, "opnsense") || strings.Contains(titleLower, "fortinet") {
-			deviceType = "firewall"
+			deviceType = deviceTypeFirewall
 			icons["firewall"] = true
 		} else if strings.Contains(titleLower, "nas") || strings.Contains(titleLower, "synology") ||
 			strings.Contains(titleLower, "qnap") {
-			deviceType = "nas"
+			deviceType = deviceTypeNAS
 			icons["storage"] = true
 		} else if strings.Contains(titleLower, "printer") || strings.Contains(titleLower, "hp ") ||
 			strings.Contains(titleLower, "canon") || strings.Contains(titleLower, "epson") {
-			deviceType = "printer"
+			deviceType = deviceTypePrinter
 			icons["printer"] = true
 		} else if strings.Contains(serverLower, "apache") || strings.Contains(serverLower, "nginx") {
-			deviceType = "server"
+			deviceType = deviceTypeServer
 			icons["server"] = true
 		}
 	}

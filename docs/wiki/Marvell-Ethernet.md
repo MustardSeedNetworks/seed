@@ -37,7 +37,7 @@
 - Industrial Ethernet devices
 - Embedded systems
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ⚠️ **Unknown** (test required)
 - Link Speed Detection: ✅ Accurate
 - Basic Diagnostics: ✅ Works
@@ -58,7 +58,7 @@ sudo ethtool --cable-test eth0
 - **Speed:** 10/100/1000 Mbps
 - **Found In:** 2005-2010 era motherboards
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ❌ **Not supported**
 - Link Speed Detection: ✅ Accurate
 - Basic Diagnostics: ✅ Works
@@ -85,7 +85,7 @@ sudo ethtool --cable-test eth0
 
 ## ✅ What Marvell NICs CAN Do
 
-### Supported LuminetIQ Features
+### Supported The Seed Features
 
 **✅ Generally Working:**
 - Link status detection
@@ -142,8 +142,8 @@ ethtool eth0
 # LLDP discovery
 sudo tcpdump -i eth0 'ether proto 0x88cc'
 
-# Run LuminetIQ (basic features)
-sudo ./luminetiq --interface eth0
+# Run The Seed (basic features)
+sudo ./seed --interface eth0
 ```
 
 ---
@@ -202,7 +202,7 @@ sudo modprobe mvneta # For embedded chipsets
 *(Community will report confirmed no-TDR models)*
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ⚠️ **Especially needed for Marvell!** - Documentation is sparse, community reports are valuable.
 

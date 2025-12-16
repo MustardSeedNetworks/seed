@@ -34,7 +34,7 @@
 - **Bands:** 2.4GHz, 5GHz
 - **Max Speed:** 2400 Mbps
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ⚠️ Limited (varies by kernel version)
 - Channel Switching: ✅ Good
 - Signal Quality: ⚠️ Variable
@@ -59,7 +59,7 @@
 - **Bands:** 2.4GHz, 5GHz, 6GHz
 - **Max Speed:** 2400 Mbps
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ⚠️ Limited (kernel 6.0+ recommended)
 - Channel Switching: ✅ Good
 - Signal Quality: ⚠️ Variable
@@ -84,7 +84,7 @@
 - **Bands:** 2.4GHz, 5GHz
 - **Max Speed:** 867 Mbps
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ⚠️ Partial
 - Channel Switching: ✅ Good
 - Signal Quality: ✅ Good
@@ -108,7 +108,7 @@
 - **Bands:** 2.4GHz, 5GHz
 - **Max Speed:** 1733 Mbps
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ⚠️ Limited
 - Channel Switching: ✅ Good
 - Signal Quality: ⚠️ Variable
@@ -317,7 +317,7 @@ If your laptop has MediaTek Wi-Fi:
 *(Community will report problems here)*
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
 

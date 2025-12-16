@@ -5,6 +5,7 @@ package network
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -28,8 +29,8 @@ const (
 // InterfaceInfo contains information about a network interface.
 type InterfaceInfo struct {
 	Name          string        `json:"name"`
-	FriendlyName  string        `json:"friendlyName,omitempty"`  // Human-readable name (e.g., "Intel I225-V")
-	Description   string        `json:"description,omitempty"`   // Brief description (e.g., "2.5 Gbps Ethernet")
+	FriendlyName  string        `json:"friendlyName,omitempty"` // Human-readable name (e.g., "Intel I225-V")
+	Description   string        `json:"description,omitempty"`  // Brief description (e.g., "2.5 Gbps Ethernet")
 	Type          InterfaceType `json:"type"`
 	Up            bool          `json:"up"`
 	Running       bool          `json:"running"`
@@ -87,10 +88,14 @@ func (m *Manager) RefreshInterfaces() error {
 	}
 
 	// Get enriched detection data for all interfaces
-	detectedScores, _ := m.detector.DetectAll()
-	scoreMap := make(map[string]detection.InterfaceScore)
-	for _, score := range detectedScores {
-		scoreMap[score.Name] = score
+	detectedScores, err := m.detector.DetectAll()
+	if err != nil {
+		log.Printf("Warning: interface detection failed: %v", err)
+		// Continue with empty detection - graceful degradation
+	}
+	scoreMap := make(map[string]*detection.InterfaceScore)
+	for i := range detectedScores {
+		scoreMap[detectedScores[i].Name] = &detectedScores[i]
 	}
 
 	// Build new map first, then swap under lock
@@ -116,7 +121,7 @@ func (m *Manager) RefreshInterfaces() error {
 		}
 
 		// Enrich with detection data if available
-		if score, ok := scoreMap[iface.Name]; ok {
+		if score := scoreMap[iface.Name]; score != nil {
 			info.FriendlyName = score.FriendlyName
 			info.Description = score.Description
 			info.Speed = score.Speed

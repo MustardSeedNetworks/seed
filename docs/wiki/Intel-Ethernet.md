@@ -1,6 +1,6 @@
 # Intel Ethernet NICs
 
-Intel Ethernet NICs are **highly recommended** for LuminetIQ cable diagnostics. The `igb` and `e1000e` drivers provide excellent TDR (Time Domain Reflectometry) support via `ethtool`.
+Intel Ethernet NICs are **highly recommended** for The Seed cable diagnostics. The `igb` and `e1000e` drivers provide excellent TDR (Time Domain Reflectometry) support via `ethtool`.
 
 [← Back to Home](Home)
 
@@ -16,7 +16,7 @@ Intel Ethernet NICs are **highly recommended** for LuminetIQ cable diagnostics. 
 - **Ports:** 2 or 4 (RJ45)
 - **Price Range:** $40-80 USD (used), $150-250 USD (new)
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ✅ Excellent (full support)
 - Cable Length Detection: ✅ Yes (±5m accuracy)
 - Fault Detection: ✅ Yes (open, short, impedance mismatch)
@@ -58,7 +58,7 @@ Intel Ethernet NICs are **highly recommended** for LuminetIQ cable diagnostics. 
 - **Ports:** 1 (RJ45)
 - **Price Range:** $20-35 USD (used), $50-80 USD (new)
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ✅ Excellent
 - Cable Length Detection: ✅ Yes
 - Fault Detection: ✅ Yes
@@ -90,7 +90,7 @@ Intel Ethernet NICs are **highly recommended** for LuminetIQ cable diagnostics. 
 - **Ports:** 1 (RJ45)
 - **Price Range:** $25-40 USD (add-in card), Built-in (free)
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ✅ Excellent
 - Cable Length Detection: ✅ Yes
 - Fault Detection: ✅ Yes
@@ -122,7 +122,7 @@ Intel Ethernet NICs are **highly recommended** for LuminetIQ cable diagnostics. 
 - **Form Factor:** Built-in (LPC interface)
 - **Speed:** 10/100/1000 Mbps
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ⚠️ Basic (limited functionality)
 - Cable Length Detection: ⚠️ Approximate only
 - Fault Detection: ✅ Yes (OK/fault status)
@@ -429,13 +429,13 @@ while true; do
 done
 ```
 
-### Integration with LuminetIQ
+### Integration with The Seed
 
 ```bash
-# Run LuminetIQ with Intel NIC
-sudo ./luminetiq --interface eth0
+# Run The Seed with Intel NIC
+sudo ./seed --interface eth0
 
-# LuminetIQ will automatically detect TDR support
+# The Seed will automatically detect TDR support
 # and enable cable diagnostics card in UI
 ```
 
@@ -450,7 +450,7 @@ sudo ./luminetiq --interface eth0
 *(Community will share real-world fault detection here)*
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
 

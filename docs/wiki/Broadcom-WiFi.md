@@ -1,6 +1,6 @@
 # Broadcom Wi-Fi Adapters
 
-⚠️ **Limited Support** - Broadcom adapters have varying levels of Linux support. Some models work well, others have significant limitations. **Not recommended** as a first choice for LuminetIQ.
+⚠️ **Limited Support** - Broadcom adapters have varying levels of Linux support. Some models work well, others have significant limitations. **Not recommended** as a first choice for The Seed.
 
 [← Back to Home](Home)
 
@@ -182,7 +182,7 @@ Many MacBooks use Broadcom Wi-Fi with custom Apple firmware:
 
 ### ❌ **NO** - For New Purchases
 
-If buying hardware specifically for LuminetIQ:
+If buying hardware specifically for The Seed:
 - **Choose:** Intel AX200/210 or Atheros AR9271
 - **Avoid:** Broadcom-based adapters
 
@@ -208,7 +208,7 @@ If you already have Broadcom hardware:
 *(Community will add failed attempts here)*
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
 

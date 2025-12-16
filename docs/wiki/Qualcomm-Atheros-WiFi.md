@@ -1,6 +1,6 @@
 # Qualcomm Atheros Wi-Fi Adapters
 
-Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommended** for LuminetIQ, especially for packet injection. The AR9271 is a popular choice for wireless diagnostics and penetration testing.
+Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommended** for The Seed, especially for packet injection. The AR9271 is a popular choice for wireless diagnostics and penetration testing.
 
 [← Back to Home](Home)
 
@@ -16,7 +16,7 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 - **Max Speed:** 150 Mbps
 - **Price Range:** $12-18 USD
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ✅ Excellent
 - Channel Switching: ✅ Fast (<500ms)
 - Signal Quality: ✅ Accurate
@@ -50,7 +50,7 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 - **Max Speed:** 867 Mbps
 - **Price Range:** $15-25 USD
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ✅ Good
 - Channel Switching: ✅ Fast
 - Signal Quality: ✅ Accurate
@@ -75,7 +75,7 @@ Qualcomm Atheros chipsets using the `ath9k` and `ath10k` drivers are **recommend
 - **Bands:** 2.4GHz, 5GHz
 - **Max Speed:** 300 Mbps
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ✅ Excellent
 - Channel Switching: ✅ Fast
 - Signal Quality: ✅ Good
@@ -326,7 +326,7 @@ sudo airodump-ng -c 6 wlan0
 sudo airodump-ng -c 6 -w capture wlan0
 ```
 
-### Use with LuminetIQ
+### Use with The Seed
 
 ```bash
 # Put adapter in monitor mode
@@ -337,8 +337,8 @@ sudo ip link set wlan0 up
 # Set channel for site survey
 sudo iw dev wlan0 set channel 6
 
-# Run LuminetIQ with monitor interface
-sudo ./luminetiq --wifi-interface wlan0
+# Run The Seed with monitor interface
+sudo ./seed --wifi-interface wlan0
 ```
 
 ---
@@ -356,7 +356,7 @@ Include:
 - Injection test results (if tested)
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
 

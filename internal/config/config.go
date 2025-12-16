@@ -15,6 +15,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// IP configuration mode constants.
+const (
+	ipModeDHCP   = "dhcp"
+	ipModeStatic = "static"
+)
+
 var (
 	// ErrInsecureCredentials is returned when default credentials are detected.
 	ErrInsecureCredentials = errors.New("insecure default credentials detected")
@@ -461,17 +467,17 @@ func DefaultConfig() *Config {
 			LogAccessHeader: "X-Log-Token",
 		},
 		Interface: InterfaceConfig{
-			Default:          "",                  // Auto-detect by default (#572)
-			Fallbacks:        []string{},          // No hardcoded fallbacks - use auto-detection
-			StartupRetries:   3,                   // Retry 3 times when finding interface at startup (fixes #528)
-			StartupRetryWait: 5 * time.Second,     // Wait 5 seconds between retries (fixes #528)
+			Default:          "",              // Auto-detect by default (#572)
+			Fallbacks:        []string{},      // No hardcoded fallbacks - use auto-detection
+			StartupRetries:   3,               // Retry 3 times when finding interface at startup (fixes #528)
+			StartupRetryWait: 5 * time.Second, // Wait 5 seconds between retries (fixes #528)
 		},
 		VLAN: VLANConfig{
 			Enabled: false,
 			ID:      0,
 		},
 		IP: IPConfig{
-			Mode: "dhcp",
+			Mode: ipModeDHCP,
 		},
 		Discovery: DiscoveryConfig{
 			Protocol: "auto",
@@ -661,10 +667,10 @@ func (c *Config) Validate() error {
 	}
 
 	// IP configuration
-	if c.IP.Mode != "dhcp" && c.IP.Mode != "static" {
+	if c.IP.Mode != ipModeDHCP && c.IP.Mode != ipModeStatic {
 		validationErrors = append(validationErrors, fmt.Sprintf("ip.mode must be 'dhcp' or 'static', got '%s'", c.IP.Mode))
 	}
-	if c.IP.Mode == "static" {
+	if c.IP.Mode == ipModeStatic {
 		if c.IP.Static.Address == "" {
 			validationErrors = append(validationErrors, "ip.static.address is required when ip.mode is 'static'")
 		}

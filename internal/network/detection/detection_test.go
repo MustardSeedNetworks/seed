@@ -351,7 +351,7 @@ func TestGenerateFriendlyName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := d.generateFriendlyName(tt.score)
+			got := d.generateFriendlyName(&tt.score)
 			if got != tt.want {
 				t.Errorf("generateFriendlyName() = %q, want %q", got, tt.want)
 			}
@@ -385,7 +385,7 @@ func TestGenerateDescription(t *testing.T) {
 			want: "WiFi6 WiFi",
 		},
 		{
-			name: "no info",
+			name:  "no info",
 			score: InterfaceScore{},
 			want:  "Network Interface",
 		},
@@ -393,7 +393,7 @@ func TestGenerateDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := d.generateDescription(tt.score)
+			got := d.generateDescription(&tt.score)
 			if got != tt.want {
 				t.Errorf("generateDescription() = %q, want %q", got, tt.want)
 			}

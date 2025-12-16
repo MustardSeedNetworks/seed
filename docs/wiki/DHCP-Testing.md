@@ -1,6 +1,6 @@
 # Rogue DHCP Server Test Environment
 
-This guide explains how to set up a test environment to validate LuminetIQ's Rogue DHCP detection feature.
+This guide explains how to set up a test environment to validate The Seed's Rogue DHCP detection feature.
 
 ## Overview
 
@@ -9,7 +9,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 ## Prerequisites
 
 - Two systems on the same network:
-  - **System A**: Running LuminetIQ (Ubuntu server at 192.168.64.7)
+  - **System A**: Running The Seed (Ubuntu server at 192.168.64.7)
   - **System B**: Test machine to run rogue DHCP server
 - Root/sudo access on both systems
 - `dnsmasq` or `isc-dhcp-server` package
@@ -20,9 +20,9 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 
 **Expected Result**: No alerts
 
-1. Configure LuminetIQ to know about your legitimate DHCP server:
+1. Configure The Seed to know about your legitimate DHCP server:
    ```yaml
-   # luminetiq.yaml
+   # seed.yaml
    dhcp:
      rogue_detection:
        enabled: true
@@ -31,7 +31,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
        alert_on_detection: true
    ```
 
-2. Restart LuminetIQ and verify no alerts appear
+2. Restart The Seed and verify no alerts appear
 
 ### Scenario 2: Rogue DHCP Server Detection
 
@@ -81,7 +81,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 
 5. Verify it's sending DHCP OFFERs:
    ```bash
-   # On LuminetIQ server
+   # On The Seed server
    sudo tcpdump -i enp0s1 -n port 67 or port 68
    ```
 
@@ -91,7 +91,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
    sudo dhclient eth0     # Request new lease
    ```
 
-7. Check LuminetIQ web UI or API for rogue DHCP alert:
+7. Check The Seed web UI or API for rogue DHCP alert:
    ```bash
    curl -k -H "Authorization: Bearer YOUR_TOKEN" \
      https://192.168.64.7:8443/api/dhcp/rogue
@@ -147,7 +147,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 
 **Expected Result**: Alert only for unknown server
 
-1. Configure LuminetIQ to know about ONE server:
+1. Configure The Seed to know about ONE server:
    ```yaml
    dhcp:
      rogue_detection:
@@ -197,7 +197,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 ├─────────────────────────────────────────────┤
 │                                             │
 │  ┌──────────────┐      ┌─────────────────┐ │
-│  │  Router      │      │  LuminetIQ      │ │
+│  │  Router      │      │  The Seed      │ │
 │  │  192.168.64.1│      │  192.168.64.7   │ │
 │  │  (Legit DHCP)│      │  (Monitoring)   │ │
 │  └──────────────┘      └─────────────────┘ │
@@ -222,7 +222,7 @@ The Rogue DHCP detection feature monitors DHCP OFFER packets on the network and 
 To see DHCP traffic and verify detection:
 
 ```bash
-# On LuminetIQ server
+# On The Seed server
 sudo tcpdump -i enp0s1 -vvv -n \
   '(port 67 or port 68)' \
   -w dhcp_capture.pcap
@@ -240,7 +240,7 @@ sudo tcpdump -r dhcp_capture.pcap -n -vvv | grep -i "DHCP-Message Option 53"
 2. **DHCP OFFER** (Server → Client) **← Detected here**
    - Source: DHCP_SERVER_IP:67
    - Contains: Server Identifier Option (option 54)
-   - LuminetIQ extracts this IP and checks against known list
+   - The Seed extracts this IP and checks against known list
 
 3. **DHCP REQUEST** (Client → Broadcast)
    - Client accepts one offer
@@ -253,8 +253,8 @@ sudo tcpdump -r dhcp_capture.pcap -n -vvv | grep -i "DHCP-Message Option 53"
 ### No Packets Detected
 
 ```bash
-# Verify LuminetIQ has raw socket capability
-getcap /home/krisarmstrong/luminetiq/luminetiq
+# Verify The Seed has raw socket capability
+getcap /home/krisarmstrong/seed/seed
 # Should show: cap_net_raw+ep
 
 # Check rogue detector is running
@@ -296,7 +296,7 @@ sudo killall dnsmasq
 # Restore NetworkManager
 sudo systemctl start NetworkManager
 
-# Clear rogue DHCP alerts in LuminetIQ
+# Clear rogue DHCP alerts in The Seed
 # (via web UI or API)
 
 # Remove test configs

@@ -15,14 +15,12 @@ import (
 // getInterfaceSpeed returns the interface speed in bits per second.
 func getInterfaceSpeed(name string) int64 {
 	// Try networksetup first
-	//nolint:gosec // G204: name is validated interface name
 	out, err := exec.Command("networksetup", "-getmedia", name).Output()
 	if err == nil {
 		return parseMediaSpeed(string(out))
 	}
 
 	// Fallback to ifconfig
-	//nolint:gosec // G204: name is validated interface name
 	out, err = exec.Command("ifconfig", name).Output()
 	if err == nil {
 		return parseIfconfigSpeed(string(out))
@@ -52,6 +50,7 @@ func parseMediaSpeed(output string) int64 {
 	}
 
 	for _, p := range patterns {
+		//nolint:errcheck // Pattern is hardcoded constant, regex is always valid
 		if matched, _ := regexp.MatchString(p.pattern, output); matched {
 			return p.speed
 		}
