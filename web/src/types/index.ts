@@ -1,5 +1,5 @@
 /**
- * NetScope Type Definitions
+ * The Seed Type Definitions
  */
 
 export type Status = "success" | "warning" | "error" | "unknown";

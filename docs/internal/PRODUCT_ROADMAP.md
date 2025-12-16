@@ -1,4 +1,4 @@
-# LuminetIQ Product Roadmap (2026-2027)
+# The Seed Product Roadmap (2026-2027)
 
 **Document Version:** 1.0  
 **Last Updated:** 2025-12-15  
@@ -36,7 +36,7 @@ insights and predictive planning.
 
 **Theme:** Establish AI infrastructure and deliver quick wins
 
-**Milestone:** [GitHub Milestone #11](https://github.com/krisarmstrong/netscope/milestone/11)
+**Milestone:** [GitHub Milestone #11](https://github.com/krisarmstrong/seed/milestone/11)
 
 ### Features
 
@@ -98,7 +98,7 @@ insights and predictive planning.
 
 **Theme:** Add intelligent analysis and automated recommendations
 
-**Milestone:** [GitHub Milestone #12](https://github.com/krisarmstrong/netscope/milestone/12)
+**Milestone:** [GitHub Milestone #12](https://github.com/krisarmstrong/seed/milestone/12)
 
 ### Features
 
@@ -157,7 +157,7 @@ insights and predictive planning.
 
 **Theme:** Predictive WiFi planning and optimization
 
-**Milestone:** [GitHub Milestone #13](https://github.com/krisarmstrong/netscope/milestone/13)
+**Milestone:** [GitHub Milestone #13](https://github.com/krisarmstrong/seed/milestone/13)
 
 ### Features
 
@@ -216,7 +216,7 @@ insights and predictive planning.
 
 **Theme:** Predictive maintenance and enterprise features
 
-**Milestone:** [GitHub Milestone #14](https://github.com/krisarmstrong/netscope/milestone/14)
+**Milestone:** [GitHub Milestone #14](https://github.com/krisarmstrong/seed/milestone/14)
 
 ### Features
 

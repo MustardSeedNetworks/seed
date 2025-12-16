@@ -1,7 +1,7 @@
 # GitHub Wiki Content Guide for The Seed
 
 **Purpose:** This document contains the complete content structure and pages for the GitHub Wiki at
-https://github.com/krisarmstrong/netscope/wiki
+https://github.com/krisarmstrong/seed/wiki
 
 **Status:** Wiki is enabled but empty - content below ready to copy/paste
 
@@ -49,7 +49,7 @@ Home
 
 ## Page 1: Home
 
-**URL:** https://github.com/krisarmstrong/netscope/wiki/Home
+**URL:** https://github.com/krisarmstrong/seed/wiki/Home
 
 **Content:**
 
@@ -77,12 +77,12 @@ issues
 - 📖 Storybook component documentation
 - 🧪 Multi-browser testing (Chrome, Firefox, WebKit, Edge)
 
-[View Full Changelog →](https://github.com/krisarmstrong/netscope/releases)
+[View Full Changelog →](https://github.com/krisarmstrong/seed/releases)
 
 ## Getting Help
 
 - 💬 **Community:** [Discord](https://discord.gg/mustardseed) (TBD)
-- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/krisarmstrong/netscope/issues)
+- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/krisarmstrong/seed/issues)
 - 📧 **Support:** support@mustardseednetworks.com
 - 📖 **Documentation:** [Official Docs](https://docs.mustardseednetworks.com) (TBD)
 
@@ -92,7 +92,7 @@ The Seed is open source! Contributions are welcome.
 
 - [Contributing Guide](Contributing)
 - [Development Environment](Development-Environment)
-- [Code of Conduct](https://github.com/krisarmstrong/netscope/blob/main/CODE_OF_CONDUCT.md)
+- [Code of Conduct](https://github.com/krisarmstrong/seed/blob/main/CODE_OF_CONDUCT.md)
 
 ---
 
@@ -105,7 +105,7 @@ _From a tiny seed, a mighty network grows._
 
 ## Page 2: Installation (macOS)
 
-**URL:** https://github.com/krisarmstrong/netscope/wiki/Installation-macOS
+**URL:** https://github.com/krisarmstrong/seed/wiki/Installation-macOS
 
 **Content:**
 
@@ -134,8 +134,8 @@ brew install mustardseednetworks/tap/seed
 ### Method 2: Download Binary
 
 1. **Download** the latest release for macOS:
-   - [Download for Apple Silicon (M1/M2/M3)](https://github.com/krisarmstrong/netscope/releases/latest)
-   - [Download for Intel](https://github.com/krisarmstrong/netscope/releases/latest)
+   - [Download for Apple Silicon (M1/M2/M3)](https://github.com/krisarmstrong/seed/releases/latest)
+   - [Download for Intel](https://github.com/krisarmstrong/seed/releases/latest)
 
 2. **Extract** the archive:
 
@@ -239,7 +239,7 @@ rm -rf ~/.config/seed
 
 ## Page 3: Installation (Linux)
 
-**URL:** https://github.com/krisarmstrong/netscope/wiki/Installation-Linux
+**URL:** https://github.com/krisarmstrong/seed/wiki/Installation-Linux
 
 **Content:**
 
@@ -285,9 +285,9 @@ sudo dnf install libpcap
 2. **Download** the latest release:
 
    ```bash
-   wget https://github.com/krisarmstrong/netscope/releases/latest/download/seed-linux-amd64.tar.gz
+   wget https://github.com/krisarmstrong/seed/releases/latest/download/seed-linux-amd64.tar.gz
    # OR for ARM64
-   wget https://github.com/krisarmstrong/netscope/releases/latest/download/seed-linux-arm64.tar.gz
+   wget https://github.com/krisarmstrong/seed/releases/latest/download/seed-linux-arm64.tar.gz
    ```
 
 3. **Extract** the archive:
@@ -422,7 +422,7 @@ sudo rm -rf ~/.config/seed
 
 - [First-Time Setup](First-Time-Setup)
 - [Quick Start Guide](Quick-Start-Guide)
-- [Running as a Service (systemd)](https://github.com/krisarmstrong/netscope/tree/main/deploy/systemd)
+- [Running as a Service (systemd)](https://github.com/krisarmstrong/seed/tree/main/deploy/systemd)
 
 ## Troubleshooting
 
@@ -446,7 +446,7 @@ sudo rm -rf ~/.config/seed
 
 ## Page 4: Quick Start Guide
 
-**URL:** https://github.com/krisarmstrong/netscope/wiki/Quick-Start-Guide
+**URL:** https://github.com/krisarmstrong/seed/wiki/Quick-Start-Guide
 
 **Content:**
 
@@ -551,7 +551,7 @@ Choose your platform:
 
 **Upgrade:**
 
-- [Pricing & Features](https://github.com/krisarmstrong/netscope/blob/main/docs/LICENSING_STRATEGY.md)
+- [Pricing & Features](https://github.com/krisarmstrong/seed/blob/main/docs/LICENSING_STRATEGY.md)
 - Free tier: 50 devices, no AI
 - Starter ($299/year): 200 devices, AI classification
 - Professional ($799/year): Unlimited devices, full AI
@@ -563,7 +563,7 @@ Choose your platform:
 **Stuck? Need help?**
 
 - Check [Common Issues](Troubleshooting#common-issues)
-- Ask in [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
+- Ask in [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
 - Email support@mustardseednetworks.com
 
 ````
@@ -572,7 +572,7 @@ Choose your platform:
 
 ## Page 5: Network Discovery
 
-**URL:** https://github.com/krisarmstrong/netscope/wiki/Network-Discovery
+**URL:** https://github.com/krisarmstrong/seed/wiki/Network-Discovery
 
 **Content:**
 
@@ -798,7 +798,7 @@ Save common configurations as profiles:
 
 ## Page 6: FAQ
 
-**URL:** https://github.com/krisarmstrong/netscope/wiki/FAQ
+**URL:** https://github.com/krisarmstrong/seed/wiki/FAQ
 
 **Content:**
 
@@ -830,13 +830,13 @@ It tells you **what's wrong** with your network and **how to fix it** - not just
 - Premium: $1,999/year (predictive WiFi planning)
 - Enterprise: $4,999/year (multi-site fleet management)
 
-[View Pricing Details →](https://github.com/krisarmstrong/netscope/blob/main/docs/LICENSING_STRATEGY.md)
+[View Pricing Details →](https://github.com/krisarmstrong/seed/blob/main/docs/LICENSING_STRATEGY.md)
 
 ### Is The Seed open source?
 
 Yes! The Seed is open source under the AGPL-3.0 license.
 
-- Source code: https://github.com/krisarmstrong/netscope
+- Source code: https://github.com/krisarmstrong/seed
 - Contributions welcome: [Contributing Guide](Contributing)
 
 ---
@@ -1142,7 +1142,7 @@ sudo systemctl start seed
 **Free tier:**
 
 - Community forum (Discord, TBD)
-- GitHub Discussions: https://github.com/krisarmstrong/netscope/discussions
+- GitHub Discussions: https://github.com/krisarmstrong/seed/discussions
 - Documentation: This wiki
 
 **Paid tiers:**
@@ -1152,14 +1152,14 @@ sudo systemctl start seed
 - Phone support (Premium+)
 - Dedicated TAM (Enterprise)
 
-[View Support Tiers →](https://github.com/krisarmstrong/netscope/blob/main/docs/SUPPORT_STRATEGY.md)
+[View Support Tiers →](https://github.com/krisarmstrong/seed/blob/main/docs/SUPPORT_STRATEGY.md)
 
 ### How do I report a bug?
 
-1. **Check existing issues:** https://github.com/krisarmstrong/netscope/issues
+1. **Check existing issues:** https://github.com/krisarmstrong/seed/issues
 2. **Create new issue** (if not already reported):
    - Use
-     [Bug Report template](https://github.com/krisarmstrong/netscope/issues/new?template=bug_report.md)
+     [Bug Report template](https://github.com/krisarmstrong/seed/issues/new?template=bug_report.md)
    - Include: The Seed version, OS, steps to reproduce, logs
 3. **Expected response time:**
    - Free tier: Best-effort (community)
@@ -1167,8 +1167,7 @@ sudo systemctl start seed
 
 ### How do I request a feature?
 
-1. **Check existing requests:**
-   https://github.com/krisarmstrong/netscope/discussions/categories/ideas
+1. **Check existing requests:** https://github.com/krisarmstrong/seed/discussions/categories/ideas
 2. **Create new discussion** (if not already requested)
 3. **Upvote** existing requests (helps us prioritize)
 
@@ -1210,7 +1209,7 @@ sudo systemctl start seed
 - Fix critical vulnerabilities within 7 days
 - Acknowledge your contribution (if you want credit)
 
-[Security Policy →](https://github.com/krisarmstrong/netscope/blob/main/SECURITY.md)
+[Security Policy →](https://github.com/krisarmstrong/seed/blob/main/SECURITY.md)
 
 ---
 
@@ -1257,13 +1256,13 @@ branding
 
 **When to choose Nessus:** Need comprehensive vulnerability database (security-first)
 
-[Full Competitive Analysis →](https://github.com/krisarmstrong/netscope/blob/main/docs/COMPETITIVE_ANALYSIS.md)
+[Full Competitive Analysis →](https://github.com/krisarmstrong/seed/blob/main/docs/COMPETITIVE_ANALYSIS.md)
 
 ---
 
 **Still have questions?**
 
-- Ask in [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
+- Ask in [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
 - Email support@mustardseednetworks.com
 - Join our Discord (TBD)
 
@@ -1279,7 +1278,7 @@ The wiki is enabled. Now you need to add content.
 
 ### Step 2: Create Pages via GitHub Web Interface
 
-1. **Go to:** https://github.com/krisarmstrong/netscope/wiki
+1. **Go to:** https://github.com/krisarmstrong/seed/wiki
 
 2. **Click "Create the first page"** (or "New Page" if one exists)
 

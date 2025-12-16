@@ -1,6 +1,6 @@
-# Contributing to NetScope
+# Contributing to The Seed
 
-Thank you for your interest in contributing to NetScope! This document provides guidelines and
+Thank you for your interest in contributing to The Seed! This document provides guidelines and
 instructions for contributing.
 
 ## Code of Conduct
@@ -20,8 +20,8 @@ Be respectful, inclusive, and professional in all interactions.
 
 ```bash
 # Clone the repository
-git clone https://github.com/krisarmstrong/netscope.git
-cd netscope
+git clone https://github.com/krisarmstrong/seed.git
+cd seed
 
 # Install Go dependencies
 go mod download
@@ -43,16 +43,16 @@ For production or test deployments on Linux with systemd:
 ```bash
 # Build the binary
 cd web && npm run build && cd ..
-go build -o luminetiq ./cmd/luminetiq
+go build -o seed ./cmd/seed
 
 # Install as systemd service (requires root)
 sudo ./deploy/systemd/install.sh
 
 # Service management
-sudo systemctl status luminetiq
-sudo systemctl stop luminetiq
-sudo systemctl restart luminetiq
-journalctl -u luminetiq -f      # View logs
+sudo systemctl status seed
+sudo systemctl stop seed
+sudo systemctl restart seed
+journalctl -u seed -f      # View logs
 ```
 
 **First-Boot Credential Retrieval:**
@@ -62,13 +62,13 @@ manually generate credentials (e.g., for headless deployments):
 
 ```bash
 # Generate credentials and display on stdout
-luminetiq credentials
+seed credentials
 
 # Generate credentials and save to secure file
-luminetiq credentials -file /path/to/credentials.txt
+seed credentials -file /path/to/credentials.txt
 
 # Output as JSON (for scripting)
-luminetiq credentials -json
+seed credentials -json
 ```
 
 The credentials file is created with mode 0600 (owner read/write only). **Delete this file
@@ -467,7 +467,7 @@ it("handles expired token", () => {
 
 Include:
 
-- NetScope version
+- The Seed version
 - OS and architecture
 - Steps to reproduce
 - Expected vs actual behavior
@@ -483,7 +483,7 @@ Include:
 
 ## Hardware Testing Contributions
 
-NetScope's advanced features (WiFi scanning, cable diagnostics, etc.) depend on hardware support. We
+The Seed's advanced features (WiFi scanning, cable diagnostics, etc.) depend on hardware support. We
 welcome hardware compatibility reports from the community!
 
 ### Reporting Hardware Compatibility

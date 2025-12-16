@@ -20,7 +20,7 @@ different purposes.
 ## Current Structure
 
 ```
-netscope/ (private repo)
+seed/ (private repo)
 ├── docs/
 │   ├── wiki/                           # Hardware compatibility wiki
 │   │   ├── Home.md
@@ -59,7 +59,7 @@ netscope/ (private repo)
 - Customers
 - Community contributors
 
-**Location:** https://github.com/krisarmstrong/netscope/wiki
+**Location:** https://github.com/krisarmstrong/seed/wiki
 
 **Content:**
 
@@ -136,7 +136,7 @@ The GitHub Wiki is currently **empty** and needs to be initialized.
 
 **Step 1: Initialize Wiki (Manual)**
 
-1. Go to https://github.com/krisarmstrong/netscope/wiki
+1. Go to https://github.com/krisarmstrong/seed/wiki
 2. Click **"Create the first page"**
 3. Title: `Home`
 4. Content: `Initializing wiki...`
@@ -163,7 +163,7 @@ This will:
 
 **Step 3: Verify**
 
-Visit https://github.com/krisarmstrong/netscope/wiki and confirm all pages are live.
+Visit https://github.com/krisarmstrong/seed/wiki and confirm all pages are live.
 
 ---
 

@@ -1,4 +1,4 @@
-# LuminetIQ WiFi Survey Competitive Analysis
+# The Seed WiFi Survey Competitive Analysis
 
 **Document Version:** 1.0 **Last Updated:** 2025-12-15 **Status:** CRITICAL - Must Be Realistic to
 Compete
@@ -67,14 +67,14 @@ years of development and millions in R&D. We CANNOT match feature-for-feature in
 - ❌ **Legacy UI**: Feels dated compared to modern tools
 - ❌ **Requires specialized hardware**: Ekahau Sidekick ($2,500) recommended for best results
 
-**Our Position vs Ekahau:** | Feature | Ekahau | LuminetIQ | Winner |
+**Our Position vs Ekahau:** | Feature | Ekahau | The Seed | Winner |
 |---------|--------|-----------|--------| | Active survey | ✅ Full | ⚠️ Basic | Ekahau | | Passive
 survey | ✅ Full | ⚠️ Basic | Ekahau | | Spectrum analysis | ✅ Yes | ❌ No | Ekahau | |
-**Predictive survey** | ⚠️ Add-on | ✅ **Core feature** | **LuminetIQ** | | WiFi 6/6E support | ✅
-Yes | ⏳ Planned | Ekahau | | Security integration | ❌ No | ✅ **Full** | **LuminetIQ** | |
-Compliance reporting | ❌ No | ✅ **HIPAA, CIS, NIST** | **LuminetIQ** | | Price | $2,000-5,000 |
-$1,999/year | **LuminetIQ** | | Platform | Windows only | **Linux, macOS, Docker** | **LuminetIQ** |
-| Enterprise features | ✅ Mature | ⏳ In development | Ekahau |
+**Predictive survey** | ⚠️ Add-on | ✅ **Core feature** | **The Seed** | | WiFi 6/6E support | ✅
+Yes | ⏳ Planned | Ekahau | | Security integration | ❌ No | ✅ **Full** | **The Seed** | |
+Compliance reporting | ❌ No | ✅ **HIPAA, CIS, NIST** | **The Seed** | | Price | $2,000-5,000 |
+$1,999/year | **The Seed** | | Platform | Windows only | **Linux, macOS, Docker** | **The Seed** | |
+Enterprise features | ✅ Mature | ⏳ In development | Ekahau |
 
 **Strategy vs Ekahau:**
 
@@ -86,7 +86,7 @@ $1,999/year | **LuminetIQ** | | Platform | Windows only | **Linux, macOS, Docker
 
 **Messaging:**
 
-> "Ekahau is the gold standard for post-deployment surveys. LuminetIQ is the gold standard for
+> "Ekahau is the gold standard for post-deployment surveys. The Seed is the gold standard for
 > **pre-deployment planning**. Plan your network before you build it, then validate with Ekahau if
 > needed."
 
@@ -114,13 +114,13 @@ $1,999/year | **LuminetIQ** | | Platform | Windows only | **Linux, macOS, Docker
 - ❌ **Windows-only**: No cross-platform support
 - ❌ **Dated UI**: Enterprise-software feel (not modern)
 
-**Our Position vs AirMagnet:** | Feature | AirMagnet PRO | LuminetIQ | Winner |
+**Our Position vs AirMagnet:** | Feature | AirMagnet PRO | The Seed | Winner |
 |---------|---------------|-----------|--------| | Enterprise surveys | ✅ Full | ⏳ Planned |
 AirMagnet | | Compliance templates | ✅ PCI, HIPAA | ✅ **HIPAA, CIS, NIST** | Tie | |
 Multi-technology | ✅ WiFi/BT/Zigbee | ⚠️ WiFi only | AirMagnet | | **Predictive planning** | ⚠️
-Limited | ✅ **Core feature** | **LuminetIQ** | | **Security integration** | ❌ No | ✅ **Full** |
-**LuminetIQ** | | Price | $5,000-7,000 | $1,999/year | **LuminetIQ** | | SMB-friendly | ❌ No | ✅
-**Yes** | **LuminetIQ** |
+Limited | ✅ **Core feature** | **The Seed** | | **Security integration** | ❌ No | ✅ **Full** |
+**The Seed** | | Price | $5,000-7,000 | $1,999/year | **The Seed** | | SMB-friendly | ❌ No | ✅
+**Yes** | **The Seed** |
 
 **Strategy vs AirMagnet:**
 
@@ -153,13 +153,13 @@ Limited | ✅ **Core feature** | **LuminetIQ** | | **Security integration** | �
 - ❌ **No security features**: WiFi-only
 - ❌ **Limited vendor support**: Focuses on major vendors only
 
-**Our Position vs Hamina:** | Feature | Hamina | LuminetIQ | Winner |
+**Our Position vs Hamina:** | Feature | Hamina | The Seed | Winner |
 |---------|--------|-----------|--------| | **Predictive planning** | ✅ **Excellent** | ✅
-**Excellent** | **Tie** | | Active/passive surveys | ❌ No | ⚠️ Basic | **LuminetIQ** | | RF path
+**Excellent** | **Tie** | | Active/passive surveys | ❌ No | ⚠️ Basic | **The Seed** | | RF path
 loss modeling | ✅ Advanced | ⚠️ Basic (FSPL + walls) | Hamina | | Cloud-based | ✅ Yes | ⚠️
-Optional | Hamina | | **Security integration** | ❌ No | ✅ **Full** | **LuminetIQ** | |
-**Compliance** | ❌ No | ✅ **HIPAA, CIS, NIST** | **LuminetIQ** | | Price | $2,000-3,000/year |
-$1,999/year | **LuminetIQ** | | **Self-hosted option** | ❌ No | ✅ **Yes** | **LuminetIQ** |
+Optional | Hamina | | **Security integration** | ❌ No | ✅ **Full** | **The Seed** | |
+**Compliance** | ❌ No | ✅ **HIPAA, CIS, NIST** | **The Seed** | | Price | $2,000-3,000/year |
+$1,999/year | **The Seed** | | **Self-hosted option** | ❌ No | ✅ **Yes** | **The Seed** |
 
 **⚠️ CRITICAL: Hamina is our closest competitor** on predictive planning.
 
@@ -173,7 +173,7 @@ $1,999/year | **LuminetIQ** | | **Self-hosted option** | ❌ No | ✅ **Yes** | 
 
 **Messaging:**
 
-> "Hamina does beautiful WiFi planning. LuminetIQ does WiFi planning + network security +
+> "Hamina does beautiful WiFi planning. The Seed does WiFi planning + network security +
 > compliance - all in one platform. Plus, self-host for data privacy (required for healthcare,
 > government)."
 
@@ -198,13 +198,13 @@ $1,999/year | **LuminetIQ** | | **Self-hosted option** | ❌ No | ✅ **Yes** | 
 - ❌ **Vendor lock-in**: Tied to NetAlly ecosystem
 - ❌ **Windows/cloud only**: No Linux support
 
-**Our Position vs NetAlly:** | Feature | NetAlly AirMapper | LuminetIQ | Winner |
+**Our Position vs NetAlly:** | Feature | NetAlly AirMapper | The Seed | Winner |
 |---------|-------------------|-----------|--------| | Hardware integration | ✅ NetAlly devices |
-❌ Software-only | NetAlly | | Standalone software | ❌ No | ✅ **Yes** | **LuminetIQ** | |
-**Predictive planning** | ⚠️ Basic | ✅ **Advanced** | **LuminetIQ** | | **Security integration** |
-⚠️ Limited | ✅ **Full** | **LuminetIQ** | | Price (software only) | N/A (hardware bundle) |
-$1,999/year | **LuminetIQ** | | Cross-platform | ❌ Windows/cloud | ✅ **Linux, macOS** |
-**LuminetIQ** |
+❌ Software-only | NetAlly | | Standalone software | ❌ No | ✅ **Yes** | **The Seed** | |
+**Predictive planning** | ⚠️ Basic | ✅ **Advanced** | **The Seed** | | **Security integration** |
+⚠️ Limited | ✅ **Full** | **The Seed** | | Price (software only) | N/A (hardware bundle) |
+$1,999/year | **The Seed** | | Cross-platform | ❌ Windows/cloud | ✅ **Linux, macOS** | **The
+Seed** |
 
 **Strategy vs NetAlly:**
 
@@ -218,7 +218,7 @@ $1,999/year | **LuminetIQ** | | Cross-platform | ❌ Windows/cloud | ✅ **Linux
 
 ### Core WiFi Survey Features
 
-| Feature                       | Ekahau    | AirMagnet  | Hamina      | NetAlly   | **LuminetIQ**    | Status                              |
+| Feature                       | Ekahau    | AirMagnet  | Hamina      | NetAlly   | **The Seed**     | Status                              |
 | ----------------------------- | --------- | ---------- | ----------- | --------- | ---------------- | ----------------------------------- |
 | **Active surveys**            | ✅ Full   | ✅ Full    | ❌ No       | ✅ Full   | ⚠️ **Basic**     | 🚧 Need to build                    |
 | **Passive surveys**           | ✅ Full   | ✅ Full    | ❌ No       | ✅ Full   | ⚠️ **Basic**     | 🚧 Need to build                    |
@@ -233,7 +233,7 @@ $1,999/year | **LuminetIQ** | | Cross-platform | ❌ Windows/cloud | ✅ **Linux
 
 ### Advanced Features
 
-| Feature                     | Ekahau     | AirMagnet  | Hamina      | NetAlly  | **LuminetIQ**   | Status                   |
+| Feature                     | Ekahau     | AirMagnet  | Hamina      | NetAlly  | **The Seed**    | Status                   |
 | --------------------------- | ---------- | ---------- | ----------- | -------- | --------------- | ------------------------ |
 | **What-if scenarios**       | ⚠️ Limited | ⚠️ Limited | ✅ **Full** | ❌ No    | ✅ **Full**     | 🚧 In development        |
 | **Client density modeling** | ✅ Yes     | ✅ Yes     | ✅ Yes      | ⚠️ Basic | ✅ **Planned**  | 🚧 Roadmap               |
@@ -245,7 +245,7 @@ $1,999/year | **LuminetIQ** | | Cross-platform | ❌ Windows/cloud | ✅ **Linux
 
 ### Differentiated Features (Our Strengths)
 
-| Feature                    | Ekahau | AirMagnet   | Hamina   | NetAlly   | **LuminetIQ**     | Status                |
+| Feature                    | Ekahau | AirMagnet   | Hamina   | NetAlly   | **The Seed**      | Status                |
 | -------------------------- | ------ | ----------- | -------- | --------- | ----------------- | --------------------- |
 | **Security integration**   | ❌ No  | ❌ No       | ❌ No    | ⚠️ Basic  | ✅ **Full**       | ✅ **UNIQUE**         |
 | **Vulnerability scanning** | ❌ No  | ❌ No       | ❌ No    | ❌ No     | ✅ **Full**       | ✅ **UNIQUE**         |
@@ -422,24 +422,24 @@ troubleshooting ❌ **Large venues** - stadiums, convention centers (need more s
 
 ### vs Ekahau:
 
-> "Ekahau is the gold standard for validating existing WiFi networks. LuminetIQ is the gold standard
+> "Ekahau is the gold standard for validating existing WiFi networks. The Seed is the gold standard
 > for **designing networks before you build them**. Predict coverage, optimize AP placement, and
 > integrate security - all for 60% less than Ekahau AI Pro."
 
 ### vs Hamina:
 
-> "Hamina does beautiful WiFi planning. LuminetIQ does WiFi planning + network security + compliance
+> "Hamina does beautiful WiFi planning. The Seed does WiFi planning + network security + compliance
 > automation - all in one platform. Plus, self-host for data privacy (required for healthcare,
 > government)."
 
 ### vs AirMagnet:
 
-> "AirMagnet is enterprise-grade for Fortune 500. LuminetIQ is enterprise-grade for everyone else.
+> "AirMagnet is enterprise-grade for Fortune 500. The Seed is enterprise-grade for everyone else.
 > Get 80% of the features for 70% less cost, with modern UI and cross-platform support."
 
 ### vs NetAlly:
 
-> "NetAlly bundles software with expensive hardware. LuminetIQ is pure software - run on any laptop,
+> "NetAlly bundles software with expensive hardware. The Seed is pure software - run on any laptop,
 > no $4,000 hardware required. Plus, advanced predictive planning that NetAlly can't match."
 
 ### General Positioning:
@@ -461,7 +461,7 @@ troubleshooting ❌ **Large venues** - stadiums, convention centers (need more s
 | **AirMagnet** | Survey PRO          | $5,000-7,000                   | Enterprise, compliance           |
 | **Hamina**    | Network Planner     | $2,000-3,000/year              | Modern cloud planning            |
 | **NetAlly**   | AirMapper           | $2,000-4,000 (hardware bundle) | Hardware-dependent               |
-| **LuminetIQ** | Premium             | **$1,999/year**                | **WiFi + Security + Compliance** |
+| **The Seed**  | Premium             | **$1,999/year**                | **WiFi + Security + Compliance** |
 
 ### Our Pricing Justification
 
@@ -546,7 +546,7 @@ troubleshooting ❌ **Large venues** - stadiums, convention centers (need more s
 
 - Don't compete there
 - Focus on predictive planning (greenfield)
-- Position as complementary: "Use LuminetIQ to plan, Ekahau to validate"
+- Position as complementary: "Use The Seed to plan, Ekahau to validate"
 - Target customers who can't afford Ekahau
 
 ### **Risk: Hamina is very good at predictive planning**

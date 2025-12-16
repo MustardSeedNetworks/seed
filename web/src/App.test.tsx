@@ -236,7 +236,7 @@ describe("App", () => {
       const loginButton = screen.getByRole("button", { name: /login/i });
 
       fireEvent.change(usernameInput, { target: { value: "admin" } });
-      fireEvent.change(passwordInput, { target: { value: "netscope" } });
+      fireEvent.change(passwordInput, { target: { value: "seed" } });
       fireEvent.click(loginButton);
 
       await waitFor(() => {

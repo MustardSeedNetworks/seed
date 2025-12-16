@@ -133,7 +133,7 @@ test.describe("Theme Toggle and Help Modal", () => {
 
       // Check localStorage for theme preference
       const storedTheme = await page.evaluate(() => {
-        return localStorage.getItem("theme") || localStorage.getItem("netscope-theme");
+        return localStorage.getItem("theme") || localStorage.getItem("seed-theme");
       });
 
       // Should have a theme preference stored

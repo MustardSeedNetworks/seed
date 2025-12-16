@@ -1,4 +1,4 @@
-# LuminetIQ Healthcare Market Strategy
+# The Seed Healthcare Market Strategy
 
 **Document Version:** 1.0 **Last Updated:** 2025-12-15 **Primary Target Market:** Healthcare
 (Hospitals, Clinics, Long-term Care)
@@ -9,7 +9,7 @@
 
 **Why Healthcare First?**
 
-Healthcare is the optimal initial target market for LuminetIQ because of perfect product-market fit:
+Healthcare is the optimal initial target market for The Seed because of perfect product-market fit:
 
 1. **Compliance-driven purchases**: HIPAA mandates drive security tool adoption
 2. **Heavy WiFi dependence**: Mobile devices, medical IoT, patient WiFi
@@ -34,7 +34,7 @@ Healthcare is the optimal initial target market for LuminetIQ because of perfect
 
 ---
 
-## Healthcare Pain Points (Addressed by LuminetIQ)
+## Healthcare Pain Points (Addressed by The Seed)
 
 ### 1. Medical Device Vulnerability Management
 
@@ -46,7 +46,7 @@ Healthcare is the optimal initial target market for LuminetIQ because of perfect
 - Hospital IT can't patch without breaking device certification
 - Auditors demand vulnerability management despite patching constraints
 
-**LuminetIQ Solution:**
+**The Seed Solution:**
 
 - **Device classification**: Automatically identify medical devices (infusion pumps, monitors,
   imaging equipment)
@@ -63,7 +63,7 @@ Traditional vulnerability scanner:
 ❌ "192.168.1.50 has CVE-2019-1234 (CVSS 9.8) - CRITICAL"
    → Not helpful - can't patch medical device
 
-LuminetIQ:
+The Seed:
 ✅ "192.168.1.50 (GE Infusion Pump, firmware v2.1.4) has CVE-2019-1234"
    → Risk Score: 42/100 (Medium, not Critical)
    → Why: Isolated on medical device VLAN, no internet access
@@ -82,7 +82,7 @@ LuminetIQ:
 - Shadow IT creates segmentation violations (rogue APs, unauthorized switches)
 - Hard to prove segmentation to auditors
 
-**LuminetIQ Solution:**
+**The Seed Solution:**
 
 - **Automated VLAN detection**: Discovers all VLANs, tags PHI networks
 - **Segmentation verification**: Confirms no cross-VLAN traffic between PHI and guest
@@ -94,7 +94,7 @@ LuminetIQ:
 
 ```bash
 # Generate HIPAA segmentation report for Joint Commission audit
-luminetiq compliance --hipaa-segmentation --vlans 10,20,30 --format pdf
+seed compliance --hipaa-segmentation --vlans 10,20,30 --format pdf
 
 Output:
 ✓ VLAN 10 (PHI - Electronic Health Records) - ISOLATED
@@ -116,7 +116,7 @@ Output:
 - WiFi dead zones in critical areas (ER, ICU) are unacceptable
 - Site surveys expensive ($3K-5K per floor)
 
-**LuminetIQ Solution:**
+**The Seed Solution:**
 
 - **Predictive WiFi survey**: Plan hospital WiFi BEFORE deployment
   - Upload floor plan with lead-lined walls (radiology), metal equipment
@@ -137,7 +137,7 @@ Traditional approach: Manual site survey
 - Time: 2 days per floor
 - Risk: May need re-survey if wrong AP placement
 
-LuminetIQ Predictive Survey:
+The Seed Predictive Survey:
 - Cost: $1,999/year (unlimited surveys)
 - Time: 2 hours per floor
 - Risk: Get it right first time with simulation
@@ -157,7 +157,7 @@ LuminetIQ Predictive Survey:
 - Attackers plant rogue APs for data exfiltration
 - Hard to distinguish authorized vs unauthorized devices
 
-**LuminetIQ Solution:**
+**The Seed Solution:**
 
 - **AI device classification**: Auto-identify device type (personal vs medical)
 - **New device alerting**: Alert within 60 seconds of unauthorized device connection
@@ -189,7 +189,7 @@ Alert: New Device Detected
 - Need early warning before encryption starts
 - Traditional AV doesn't catch new variants
 
-**LuminetIQ Solution:**
+**The Seed Solution:**
 
 - **Anomaly detection**: Detect unusual network behavior (SMB scanning, mass connections)
 - **Port scan detection**: Identify reconnaissance activity before attack
@@ -230,7 +230,7 @@ CRITICAL ALERT: Potential Ransomware Activity
 
 **Value Proposition:**
 
-> "LuminetIQ gives you audit-ready compliance evidence for HIPAA and Joint Commission network
+> "The Seed gives you audit-ready compliance evidence for HIPAA and Joint Commission network
 > security requirements. Automated device inventory, vulnerability risk scoring, and network
 > segmentation verification - all exportable for auditors. Reduce audit findings by 60% while
 > cutting security tool costs 70%."
@@ -257,10 +257,10 @@ CRITICAL ALERT: Potential Ransomware Activity
 
 **Value Proposition:**
 
-> "Finally, a tool that understands medical devices. LuminetIQ automatically discovers and
-> classifies your medical devices, assesses vulnerability risk with compensating controls in mind,
-> and provides audit evidence without disrupting patient care. Maintain device safety while meeting
-> cybersecurity requirements."
+> "Finally, a tool that understands medical devices. The Seed automatically discovers and classifies
+> your medical devices, assesses vulnerability risk with compensating controls in mind, and provides
+> audit evidence without disrupting patient care. Maintain device safety while meeting cybersecurity
+> requirements."
 
 **Tier:** Professional ($799/year)
 
@@ -284,7 +284,7 @@ CRITICAL ALERT: Potential Ransomware Activity
 
 **Value Proposition:**
 
-> "Stop spending weeks compiling HIPAA compliance evidence. LuminetIQ automatically maps to HIPAA
+> "Stop spending weeks compiling HIPAA compliance evidence. The Seed automatically maps to HIPAA
 > Security Rule requirements, generates audit-ready reports, and provides continuous compliance
 > monitoring. One click exports device inventory, risk assessments, segmentation verification, and
 > encryption compliance for §164.308 and §164.312 requirements."
@@ -311,7 +311,7 @@ CRITICAL ALERT: Potential Ransomware Activity
 
 **Value Proposition:**
 
-> "Manage all your healthcare clients from one platform. LuminetIQ Enterprise provides fleet-wide
+> "Manage all your healthcare clients from one platform. The Seed Enterprise provides fleet-wide
 > visibility, comparative analytics, and white-label compliance reports. Prove value with automated
 > HIPAA evidence, predictive maintenance alerts, and professional WiFi planning. Turn compliance
 > from cost center to profit center."
@@ -416,7 +416,7 @@ CRITICAL ALERT: Potential Ransomware Activity
 **3. Content Marketing**
 
 - **Healthcare IT blogs**: HIPAA-focused compliance content
-- **Case studies**: "How [Hospital Name] achieved HIPAA compliance with LuminetIQ"
+- **Case studies**: "How [Hospital Name] achieved HIPAA compliance with The Seed"
 - **White papers**: "Medical Device Vulnerability Management Guide"
 - **Webinars**: "HIPAA Network Security for Joint Commission Audits"
 
@@ -434,7 +434,7 @@ CRITICAL ALERT: Potential Ransomware Activity
 
 - Them: Vulnerability scanner, complex, expensive ($3K-10K)
 - Us: Vulnerability + network diagnostics + compliance evidence ($799-1,999)
-- Win: "LuminetIQ gives you vulnerability scanning PLUS network segmentation verification, WiFi
+- Win: "The Seed gives you vulnerability scanning PLUS network segmentation verification, WiFi
   planning, and HIPAA-ready reports - all for less than Nessus alone"
 
 **vs Rapid7:**
@@ -447,14 +447,14 @@ CRITICAL ALERT: Potential Ransomware Activity
 
 - Them: WiFi survey tool only, $2K-5K, no security features
 - Us: WiFi planning + security + compliance ($1,999)
-- Win: "Why buy separate tools? LuminetIQ does WiFi planning AND security compliance for less than
+- Win: "Why buy separate tools? The Seed does WiFi planning AND security compliance for less than
   Ekahau alone"
 
 **vs Manual compliance:**
 
 - Them: Spreadsheets, manual network audits, expensive consultants
 - Us: Automated compliance evidence, continuous monitoring
-- Win: "Stop paying consultants $10K for manual network audits. LuminetIQ generates HIPAA compliance
+- Win: "Stop paying consultants $10K for manual network audits. The Seed generates HIPAA compliance
   evidence automatically, 24/7."
 
 ---
@@ -508,7 +508,7 @@ VLAN segmentation compliance."
 
 ### 4. Medical Device Vulnerability Risk Scoring
 
-"Not all CVEs are equal. LuminetIQ considers device location (isolated vs internet-facing),
+"Not all CVEs are equal. The Seed considers device location (isolated vs internet-facing),
 compensating controls, and exploitability to provide realistic risk scores."
 
 ### 5. Guest WiFi Compliance
@@ -529,7 +529,7 @@ starts. Get 15-30 minute early warning."
 
 - Title: "Network Security & HIPAA Compliance Made Easy"
 - Problem: HIPAA compliance is manual and expensive
-- Solution: LuminetIQ automates compliance evidence
+- Solution: The Seed automates compliance evidence
 - Key benefits: Reduce audit findings 60%, save 20 hours/month
 - Proof: Customer testimonial, HIPAA §164.308/164.312 mapping
 - CTA: "Schedule your free HIPAA compliance assessment"
@@ -538,26 +538,26 @@ starts. Get 15-30 minute early warning."
 
 - Title: "The Complete HIPAA Network Security Checklist"
 - Sections: Device inventory, segmentation, encryption, monitoring, audit
-- For each: HIPAA requirement, how to verify, LuminetIQ solution
-- CTA: "Get automated compliance with LuminetIQ"
+- For each: HIPAA requirement, how to verify, The Seed solution
+- CTA: "Get automated compliance with The Seed"
 
 ### 3. Medical Device Security White Paper
 
 - Title: "The Medical Device Vulnerability Crisis: A Practical Guide"
 - Content: Stats, regulations, compensating controls, case studies
-- LuminetIQ solution: How we address medical device challenges
+- The Seed solution: How we address medical device challenges
 - CTA: "See your medical devices in 5 minutes - start free trial"
 
 ### 4. ROI Calculator (Interactive Web Tool)
 
 - Input: Hospital size, current security tools, consultant hours
-- Output: Cost savings with LuminetIQ
+- Output: Cost savings with The Seed
 - Example: "You'll save $47,000 in Year 1 by replacing 3 tools and reducing consultant fees"
 
 ### 5. Demo Video (3 minutes)
 
 - Scene 1: HIPAA compliance headaches (spreadsheets, manual audits)
-- Scene 2: LuminetIQ demo - device discovery, VLAN detection, compliance report
+- Scene 2: The Seed demo - device discovery, VLAN detection, compliance report
 - Scene 3: Predictive WiFi survey demo (plan hospital floor)
 - Scene 4: One-click HIPAA export for auditor
 - CTA: "Start your 30-day free trial"
@@ -577,7 +577,7 @@ starts. Get 15-30 minute early warning."
 
 **Solution:**
 
-- Deployed LuminetIQ across 500-device network
+- Deployed The Seed across 500-device network
 - Automated device discovery and classification
 - Implemented VLAN segmentation monitoring
 - Enabled vulnerability risk scoring with compensating controls
@@ -592,7 +592,7 @@ starts. Get 15-30 minute early warning."
 
 **Testimonial:**
 
-> "LuminetIQ transformed our HIPAA compliance from a quarterly nightmare into continuous monitoring.
+> "The Seed transformed our HIPAA compliance from a quarterly nightmare into continuous monitoring.
 > We went from dreading Joint Commission audits to welcoming them with confidence."
 >
 > — [IT Director Name], [Hospital Name]
@@ -603,7 +603,7 @@ starts. Get 15-30 minute early warning."
 
 ### Objection: "We already have a vulnerability scanner (Tenable/Rapid7)"
 
-**Response:** "That's great - LuminetIQ complements your existing scanner by adding:
+**Response:** "That's great - The Seed complements your existing scanner by adding:
 
 1. **Contextual risk scoring** - not all CVEs matter equally in healthcare
 2. **Medical device classification** - automatically identify medical IoT
@@ -611,14 +611,14 @@ starts. Get 15-30 minute early warning."
 4. **WiFi planning** - predictive surveys save thousands per deployment
 5. **HIPAA compliance reports** - one-click audit evidence
 
-Many customers use Tenable for vulnerability scanning AND LuminetIQ for healthcare-specific features
+Many customers use Tenable for vulnerability scanning AND The Seed for healthcare-specific features
 like medical device management and HIPAA reporting. The combination costs less than Rapid7 alone."
 
 ---
 
 ### Objection: "Our MSP handles our network security"
 
-**Response:** "Perfect! Many MSPs use LuminetIQ Enterprise to manage their healthcare clients more
+**Response:** "Perfect! Many MSPs use The Seed Enterprise to manage their healthcare clients more
 efficiently.
 
 For you: Get better visibility into what your MSP is doing, automated compliance evidence for
@@ -637,9 +637,9 @@ us to reach out to your MSP about partnering?"
 - WiFi site surveys? ($5K per floor)
 - Consultant hours for network documentation? ($150-300/hour)
 
-LuminetIQ typically pays for itself by eliminating just ONE of these expenses.
+The Seed typically pays for itself by eliminating just ONE of these expenses.
 
-Plus, at $799/year for Professional tier, LuminetIQ costs less than 5 hours of consultant time.
+Plus, at $799/year for Professional tier, The Seed costs less than 5 hours of consultant time.
 You'll save that in the first week."
 
 **Offer:** "Let's do a 30-day trial. I'll help you quantify the ROI specifically for your
@@ -649,7 +649,7 @@ organization."
 
 ### Objection: "We need FedRAMP / HITRUST certification"
 
-**Response:** "Great question. LuminetIQ maps to HIPAA Security Rule, NIST 800-53, and CIS Controls,
+**Response:** "Great question. The Seed maps to HIPAA Security Rule, NIST 800-53, and CIS Controls,
 which are the foundations of HITRUST CSF.
 
 For self-hosted deployments: You have full control and data never leaves your network.
@@ -663,19 +663,19 @@ Would a self-hosted, on-prem deployment meet your requirements today?"
 
 ### Objection: "How is this different from network monitoring tools we already have?"
 
-**Response:** "Traditional network monitoring focuses on uptime and performance. LuminetIQ adds
+**Response:** "Traditional network monitoring focuses on uptime and performance. The Seed adds
 **security and compliance**:
 
-Traditional: 'Your gateway latency is 50ms' LuminetIQ: 'Your gateway latency spiked to 145ms -
-likely upstream ISP issue based on traceroute analysis. Here's the remediation.'
+Traditional: 'Your gateway latency is 50ms' The Seed: 'Your gateway latency spiked to 145ms - likely
+upstream ISP issue based on traceroute analysis. Here's the remediation.'
 
-Traditional: 'You have 247 devices' LuminetIQ: 'You have 247 devices, including 43 medical devices,
+Traditional: 'You have 247 devices' The Seed: 'You have 247 devices, including 43 medical devices,
 12 with critical vulnerabilities, and 3 unauthorized devices on your PHI network.'
 
-Traditional: 'VLAN 10 is active' LuminetIQ: 'VLAN 10 (PHI Network) is isolated from VLAN 30 (Guest
+Traditional: 'VLAN 10 is active' The Seed: 'VLAN 10 (PHI Network) is isolated from VLAN 30 (Guest
 WiFi) - compliant with HIPAA §164.312(a)(1). Here's your audit report.'
 
-LuminetIQ turns monitoring data into **compliance evidence** and **actionable security insights**."
+The Seed turns monitoring data into **compliance evidence** and **actionable security insights**."
 
 ---
 
@@ -748,7 +748,7 @@ LuminetIQ turns monitoring data into **compliance evidence** and **actionable se
 **3. HIPAA Compliance Software:**
 
 - Integration with Compliancy Group, HIPAA One, Accountable
-- LuminetIQ provides network evidence layer
+- The Seed provides network evidence layer
 
 **4. WiFi Vendors:**
 
@@ -783,5 +783,5 @@ LuminetIQ turns monitoring data into **compliance evidence** and **actionable se
 
 ---
 
-**Healthcare is a massive opportunity. LuminetIQ solves real problems with genuine capabilities, not
+**Healthcare is a massive opportunity. The Seed solves real problems with genuine capabilities, not
 marketing hype. Focus, execute, dominate this vertical.** 🏥

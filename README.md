@@ -1,11 +1,11 @@
-# LuminetIQ
+# The Seed
 
 > Portable Network Diagnostic Tool with Real-Time Web UI
 
-[![CI](https://github.com/krisarmstrong/netscope/actions/workflows/ci.yml/badge.svg)](https://github.com/krisarmstrong/netscope/actions/workflows/ci.yml)
+[![CI](https://github.com/krisarmstrong/seed/actions/workflows/ci.yml/badge.svg)](https://github.com/krisarmstrong/seed/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 
-LuminetIQ is a professional-grade network diagnostic appliance designed for network technicians and
+The Seed is a professional-grade network diagnostic appliance designed for network technicians and
 engineers. Plug it into any network jack and instantly see link status, switch information, DHCP
 details, DNS health, and gateway connectivity through a modern web interface.
 
@@ -44,18 +44,18 @@ _Coming soon_
 
 See **[HARDWARE.md](HARDWARE.md)** for detailed compatibility guide and recommendations.
 
-**Note:** LuminetIQ requires raw ICMP socket access for ping functionality. On Linux, this requires
+**Note:** The Seed requires raw ICMP socket access for ping functionality. On Linux, this requires
 either:
 
-- Running as root (`sudo ./luminetiq`), or
-- Setting capabilities: `sudo setcap cap_net_raw=+ep ./luminetiq`
+- Running as root (`sudo ./seed`), or
+- Setting capabilities: `sudo setcap cap_net_raw=+ep ./seed`
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/krisarmstrong/netscope.git
-cd netscope
+git clone https://github.com/krisarmstrong/seed.git
+cd seed
 
 # Build backend
 make build
@@ -64,7 +64,7 @@ make build
 cd web && npm ci && npm run build && cd ..
 
 # Run
-sudo ./luminetiq
+sudo ./seed
 ```
 
 ### Access
@@ -74,13 +74,13 @@ Open `https://<device-ip>:8443` in your browser.
 Default credentials:
 
 - Username: `admin`
-- Password: `luminetiq`
+- Password: `seed`
 
 **Change these on first login!**
 
 ## Configuration
 
-Configuration is stored in `luminetiq.yaml`. Default settings:
+Configuration is stored in `seed.yaml`. Default settings:
 
 ```yaml
 server:
@@ -106,12 +106,12 @@ thresholds:
 
 ```bash
 # Run backend in development mode (requires privileges for ICMP)
-sudo go run cmd/netscope/main.go
+sudo go run cmd/seed/main.go
 
 # Or build and set capabilities (preferred for repeated runs)
-go build -o luminetiq ./cmd/netscope
-sudo setcap cap_net_raw=+ep ./luminetiq
-./luminetiq
+go build -o seed ./cmd/seed
+sudo setcap cap_net_raw=+ep ./seed
+./seed
 
 # Run frontend in development mode
 cd web && npm run dev

@@ -21,7 +21,7 @@ test.describe("Network Interface Selection", () => {
 
     // Authenticate
     await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("luminetiq");
+    await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
@@ -43,13 +43,11 @@ test.describe("Network Interface Selection", () => {
     expect(options).toBeGreaterThan(0);
   });
 
-  test("should populate dropdown with available interfaces", async ({
-    page,
-  }) => {
+  test("should populate dropdown with available interfaces", async ({ page }) => {
     // Wait for interfaces API call
     const interfacesResponse = page.waitForResponse(
       (response) => response.url().includes("/api/interfaces") && response.ok(),
-      { timeout: 10000 },
+      { timeout: 10000 }
     );
 
     await page.reload();
@@ -87,9 +85,7 @@ test.describe("Network Interface Selection", () => {
     expect(optionValue).toBe(selectedValue);
   });
 
-  test("should trigger API call when interface is changed", async ({
-    page,
-  }) => {
+  test("should trigger API call when interface is changed", async ({ page }) => {
     const interfaceSelect = page
       .locator("select#interface-select")
       .or(page.locator('select[aria-label*="interface" i]'));
@@ -121,9 +117,8 @@ test.describe("Network Interface Selection", () => {
 
     // Set up API call monitoring
     const interfaceChangeRequest = page.waitForRequest(
-      (request) =>
-        request.url().includes("/api/interface") && request.method() === "PUT",
-      { timeout: 5000 },
+      (request) => request.url().includes("/api/interface") && request.method() === "PUT",
+      { timeout: 5000 }
     );
 
     // Select new interface
@@ -188,9 +183,7 @@ test.describe("Network Interface Selection", () => {
     // Verify key endpoints were called to refresh data
     // At minimum, link data should be refreshed
     expect(
-      apiCalls.has("link") ||
-        apiCalls.has("ipconfig") ||
-        apiCalls.has("gateway"),
+      apiCalls.has("link") || apiCalls.has("ipconfig") || apiCalls.has("gateway")
     ).toBeTruthy();
   });
 
@@ -199,9 +192,7 @@ test.describe("Network Interface Selection", () => {
       .locator("select#interface-select")
       .or(page.locator('select[aria-label*="interface" i]'));
 
-    const linkCard = page
-      .locator('h3:has-text("Link"), h4:has-text("Link")')
-      .first();
+    const linkCard = page.locator('h3:has-text("Link"), h4:has-text("Link")').first();
     await expect(linkCard).toBeVisible();
 
     const options = await interfaceSelect.locator("option").all();
@@ -228,7 +219,7 @@ test.describe("Network Interface Selection", () => {
     // Wait for link API response after change
     const linkResponse = page.waitForResponse(
       (response) => response.url().includes("/api/link") && response.ok(),
-      { timeout: 10000 },
+      { timeout: 10000 }
     );
 
     // Change interface
@@ -241,9 +232,7 @@ test.describe("Network Interface Selection", () => {
     await expect(linkCard).toBeVisible();
   });
 
-  test("should show WiFi card when WiFi interface is selected", async ({
-    page,
-  }) => {
+  test("should show WiFi card when WiFi interface is selected", async ({ page }) => {
     const interfaceSelect = page
       .locator("select#interface-select")
       .or(page.locator('select[aria-label*="interface" i]'));
@@ -280,9 +269,7 @@ test.describe("Network Interface Selection", () => {
     await page.waitForTimeout(2000);
 
     // WiFi card should be visible if connected to WiFi
-    const wifiCard = page
-      .locator('h3:has-text("Wi-Fi"), h4:has-text("Wi-Fi")')
-      .first();
+    const wifiCard = page.locator('h3:has-text("Wi-Fi"), h4:has-text("Wi-Fi")').first();
     const isWifiCardVisible = await wifiCard.isVisible().catch(() => false);
 
     // Either WiFi card is visible (connected) or not (not connected to WiFi)
@@ -290,9 +277,7 @@ test.describe("Network Interface Selection", () => {
     expect(isWifiCardVisible).toBeDefined();
   });
 
-  test("should hide WiFi card when Ethernet interface is selected", async ({
-    page,
-  }) => {
+  test("should hide WiFi card when Ethernet interface is selected", async ({ page }) => {
     const interfaceSelect = page
       .locator("select#interface-select")
       .or(page.locator('select[aria-label*="interface" i]'));
@@ -310,8 +295,7 @@ test.describe("Network Interface Selection", () => {
         !text.toLowerCase().includes("wifi") &&
         !text.toLowerCase().includes("wi-fi") &&
         !value.toLowerCase().includes("wlan") &&
-        (text.toLowerCase().includes("eth") ||
-          text.toLowerCase().includes("ethernet"))
+        (text.toLowerCase().includes("eth") || text.toLowerCase().includes("ethernet"))
       ) {
         ethernetInterface = value;
         break;
@@ -330,9 +314,7 @@ test.describe("Network Interface Selection", () => {
     await page.waitForTimeout(2000);
 
     // WiFi card should typically not be visible for Ethernet
-    const wifiCard = page
-      .locator('h3:has-text("Wi-Fi"), h4:has-text("Wi-Fi")')
-      .first();
+    const wifiCard = page.locator('h3:has-text("Wi-Fi"), h4:has-text("Wi-Fi")').first();
     const isWifiVisible = await wifiCard.isVisible().catch(() => false);
 
     // For Ethernet, WiFi card is typically hidden
@@ -340,9 +322,7 @@ test.describe("Network Interface Selection", () => {
     expect(isWifiVisible).toBeDefined();
   });
 
-  test("should persist interface selection after page reload", async ({
-    page,
-  }) => {
+  test("should persist interface selection after page reload", async ({ page }) => {
     const interfaceSelect = page
       .locator("select#interface-select")
       .or(page.locator('select[aria-label*="interface" i]'));
@@ -394,9 +374,7 @@ test.describe("Network Interface Selection", () => {
     expect(selectedAfterReload).toBeTruthy();
   });
 
-  test("should update DHCP/Network card with new interface IP", async ({
-    page,
-  }) => {
+  test("should update DHCP/Network card with new interface IP", async ({ page }) => {
     const interfaceSelect = page
       .locator("select#interface-select")
       .or(page.locator('select[aria-label*="interface" i]'));
@@ -425,7 +403,7 @@ test.describe("Network Interface Selection", () => {
     // Wait for ipconfig API response
     const ipconfigResponse = page.waitForResponse(
       (response) => response.url().includes("/api/ipconfig") && response.ok(),
-      { timeout: 10000 },
+      { timeout: 10000 }
     );
 
     // Change interface
@@ -435,9 +413,7 @@ test.describe("Network Interface Selection", () => {
     await ipconfigResponse;
 
     // Network/DHCP card should be visible
-    const networkCard = page
-      .locator('h3:has-text("Network"), h4:has-text("Network")')
-      .first();
+    const networkCard = page.locator('h3:has-text("Network"), h4:has-text("Network")').first();
     await expect(networkCard).toBeVisible();
   });
 
@@ -469,15 +445,11 @@ test.describe("Network Interface Selection", () => {
     await page.waitForTimeout(2000);
 
     // Link card should still be visible, possibly showing "No Link" status
-    const linkCard = page
-      .locator('h3:has-text("Link"), h4:has-text("Link")')
-      .first();
+    const linkCard = page.locator('h3:has-text("Link"), h4:has-text("Link")').first();
     await expect(linkCard).toBeVisible();
   });
 
-  test("should display interface friendly names if available", async ({
-    page,
-  }) => {
+  test("should display interface friendly names if available", async ({ page }) => {
     const interfaceSelect = page
       .locator("select#interface-select")
       .or(page.locator('select[aria-label*="interface" i]'));
@@ -494,9 +466,7 @@ test.describe("Network Interface Selection", () => {
     expect((firstOptionText || "").length).toBeGreaterThan(0);
   });
 
-  test("should show interface speed in dropdown if available", async ({
-    page,
-  }) => {
+  test("should show interface speed in dropdown if available", async ({ page }) => {
     const interfaceSelect = page
       .locator("select#interface-select")
       .or(page.locator('select[aria-label*="interface" i]'));

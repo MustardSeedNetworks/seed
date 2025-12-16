@@ -68,5 +68,5 @@ The setup wizard will:
 
 **Need help?**
 
-- [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
+- [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
 - Email: support@mustardseednetworks.com

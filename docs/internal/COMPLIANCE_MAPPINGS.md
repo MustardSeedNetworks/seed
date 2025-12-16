@@ -1,4 +1,4 @@
-# LuminetIQ Compliance Framework Mappings
+# The Seed Compliance Framework Mappings
 
 **Document Version:** 1.0 **Last Updated:** 2025-12-15 **Status:** Validated Mappings
 
@@ -6,11 +6,11 @@
 
 ## Overview
 
-This document provides **validated, non-marketing mappings** between LuminetIQ features and major
+This document provides **validated, non-marketing mappings** between The Seed features and major
 compliance frameworks. Each mapping includes:
 
 - **Control requirement** (what the framework mandates)
-- **LuminetIQ capability** (how the product addresses it)
+- **The Seed capability** (how the product addresses it)
 - **Evidence/Audit value** (what auditors can verify)
 - **Implementation notes** (how to configure for compliance)
 
@@ -35,9 +35,9 @@ compliance frameworks. Each mapping includes:
 > infrastructure physically, virtually, remotely, and those within cloud environments, to accurately
 > know the totality of assets that need to be monitored and protected within the enterprise."
 
-#### LuminetIQ Capabilities:
+#### The Seed Capabilities:
 
-| Sub-Control                                                        | LuminetIQ Feature                                                                                                    | Evidence/Audit Value                                                                                      |
+| Sub-Control                                                        | The Seed Feature                                                                                                     | Evidence/Audit Value                                                                                      |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | **1.1** Establish and maintain detailed enterprise asset inventory | • Device discovery (ARP, NDP, ICMP, mDNS)<br>• AI device classification<br>• Device inventory with MAC, IP, hostname | • Automated inventory export (CSV/JSON)<br>• Timestamp of discovery<br>• Classification confidence scores |
 | **1.2** Address unauthorized assets                                | • Rogue device detection<br>• New device alerting<br>• Whitelist/quarantine actions                                  | • Rogue device alerts log<br>• Quarantine action audit trail<br>• Time-to-detection metrics               |
@@ -55,10 +55,10 @@ compliance frameworks. Each mapping includes:
 
 ```bash
 # Generate CIS Control 1 compliance report
-luminetiq export --format json --filter "devices,discovery,dhcp" > cis-control-1-$(date +%Y%m%d).json
+seed export --format json --filter "devices,discovery,dhcp" > cis-control-1-$(date +%Y%m%d).json
 
 # Export device inventory for auditor
-luminetiq devices list --format csv --include "ip,mac,hostname,first_seen,device_type,classification_confidence"
+seed devices list --format csv --include "ip,mac,hostname,first_seen,device_type,classification_confidence"
 ```
 
 ---
@@ -71,9 +71,9 @@ luminetiq devices list --format csv --include "ip,mac,hostname,first_seen,device
 > on the network so that only authorized software is installed and can execute, and that
 > unauthorized and unmanaged software is found and prevented from installation or execution."
 
-#### LuminetIQ Capabilities:
+#### The Seed Capabilities:
 
-| Sub-Control                                       | LuminetIQ Feature                                                                                            | Evidence/Audit Value                                                                      |
+| Sub-Control                                       | The Seed Feature                                                                                             | Evidence/Audit Value                                                                      |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
 | **2.1** Establish and maintain software inventory | • OS detection via fingerprinting<br>• Service/port discovery<br>• Version detection (HTTP headers, banners) | • Software inventory reports<br>• OS distribution statistics<br>• Service version matrix  |
 | **2.3** Address unauthorized software             | • Unexpected service detection<br>• Port scan detection<br>• Behavior anomaly detection                      | • Unauthorized service alerts<br>• Anomaly detection logs<br>• Port scan incident reports |
@@ -94,9 +94,9 @@ luminetiq devices list --format csv --include "ip,mac,hostname,first_seen,device
 > "Develop processes and technical controls to identify, classify, securely handle, retain, and
 > dispose of data."
 
-#### LuminetIQ Capabilities:
+#### The Seed Capabilities:
 
-| Sub-Control                                 | LuminetIQ Feature                                                                                  | Evidence/Audit Value                                                                        |
+| Sub-Control                                 | The Seed Feature                                                                                   | Evidence/Audit Value                                                                        |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | **3.3** Configure data access control lists | • VLAN detection and verification<br>• Network segmentation mapping<br>• Subnet isolation analysis | • VLAN topology maps<br>• Segmentation compliance reports<br>• Traffic flow analysis        |
 | **3.10** Encrypt sensitive data in transit  | • TLS certificate inspection<br>• Encryption protocol detection<br>• Unencrypted protocol alerts   | • TLS compliance reports<br>• Weak cipher detection logs<br>• Unencrypted service inventory |
@@ -107,7 +107,7 @@ luminetiq devices list --format csv --include "ip,mac,hostname,first_seen,device
 - Enable TLS inspection and weak cipher alerts
 - Document network segmentation in compliance reports
 
-**Healthcare-Specific:** For HIPAA §164.312(e)(1) Transmission Security, use LuminetIQ to:
+**Healthcare-Specific:** For HIPAA §164.312(e)(1) Transmission Security, use The Seed to:
 
 - Verify PHI networks are on isolated VLANs
 - Detect unencrypted medical device traffic
@@ -123,9 +123,9 @@ luminetiq devices list --format csv --include "ip,mac,hostname,first_seen,device
 > portable and mobile; network devices; non-computing/IoT devices; and servers) and software
 > (operating systems and applications)."
 
-#### LuminetIQ Capabilities:
+#### The Seed Capabilities:
 
-| Sub-Control                                                 | LuminetIQ Feature                                                                             | Evidence/Audit Value                                                                           |
+| Sub-Control                                                 | The Seed Feature                                                                              | Evidence/Audit Value                                                                           |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **4.1** Establish and maintain secure configuration process | • Baseline learning<br>• Configuration drift detection (fleet)<br>• Expected state monitoring | • Baseline configuration exports<br>• Drift detection reports<br>• Remediation recommendations |
 | **4.7** Manage default accounts                             | • Default credential detection (SNMP)<br>• Common service fingerprinting                      | • Default credential alerts<br>• Insecure service inventory                                    |
@@ -146,9 +146,9 @@ luminetiq devices list --format csv --include "ip,mac,hostname,first_seen,device
 > the enterprise's infrastructure, to remediate, and minimize the window of opportunity for
 > attackers."
 
-#### LuminetIQ Capabilities:
+#### The Seed Capabilities:
 
-| Sub-Control                                                     | LuminetIQ Feature                                                                                                   | Evidence/Audit Value                                                                               |
+| Sub-Control                                                     | The Seed Feature                                                                                                    | Evidence/Audit Value                                                                               |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | **7.1** Establish and maintain vulnerability management process | • Automated CVE scanning<br>• NVD integration<br>• Continuous vulnerability monitoring                              | • Vulnerability scan reports<br>• CVE detection timeline<br>• Scan frequency logs                  |
 | **7.2** Establish and maintain remediation process              | • **Contextual risk scoring** (CVSS + EPSS + exposure)<br>• Prioritized remediation plans<br>• Remediation tracking | • Risk-scored vulnerability lists<br>• Remediation priority reports<br>• Patch compliance tracking |
@@ -163,7 +163,7 @@ luminetiq devices list --format csv --include "ip,mac,hostname,first_seen,device
 - Export risk-scored reports for vulnerability management meetings
 - Set up alerts for critical vulnerabilities (CVSS ≥9.0)
 
-**Key Differentiator:** LuminetIQ doesn't just list CVEs - it provides **contextual risk scoring**:
+**Key Differentiator:** The Seed doesn't just list CVEs - it provides **contextual risk scoring**:
 
 ```
 CVE-2024-1234 on 192.168.1.10 (IP Camera, DMZ):
@@ -183,9 +183,9 @@ CVE-2024-1234 on 192.168.1.10 (IP Camera, DMZ):
 > "Establish, implement, and actively manage (track, report, correct) network devices, in order to
 > prevent attackers from exploiting vulnerable network services and access points."
 
-#### LuminetIQ Capabilities:
+#### The Seed Capabilities:
 
-| Sub-Control                                                          | LuminetIQ Feature                                                                                     | Evidence/Audit Value                                                                        |
+| Sub-Control                                                          | The Seed Feature                                                                                      | Evidence/Audit Value                                                                        |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | **12.1** Ensure network infrastructure is up-to-date                 | • Network device discovery<br>• Firmware version detection<br>• Outdated infrastructure alerts        | • Network device inventory<br>• Firmware compliance reports                                 |
 | **12.2** Establish and maintain secure configuration                 | • Switch/router discovery (LLDP, CDP)<br>• Network topology mapping<br>• Configuration baseline       | • Network topology diagrams<br>• Switch port mappings<br>• Uplink detection logs            |
@@ -215,9 +215,9 @@ CVE-2024-1234 on 192.168.1.10 (IP Camera, DMZ):
 > "Operate processes and tooling to establish and maintain comprehensive network monitoring and
 > defense against security threats across the enterprise's network infrastructure and user base."
 
-#### LuminetIQ Capabilities:
+#### The Seed Capabilities:
 
-| Sub-Control                                 | LuminetIQ Feature                                                                                 | Evidence/Audit Value                                                                              |
+| Sub-Control                                 | The Seed Feature                                                                                  | Evidence/Audit Value                                                                              |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | **13.1** Centralize security event alerting | • Real-time anomaly detection<br>• WebSocket alerting<br>• Webhook integration (future)           | • Security event logs<br>• Alert timeline<br>• MTTR metrics                                       |
 | **13.2** Deploy host-based IDS              | • Behavior-based anomaly detection<br>• Baseline deviation alerts<br>• Per-device anomaly scoring | • Anomaly detection reports<br>• Behavioral baseline exports                                      |
@@ -253,7 +253,7 @@ Anomaly Detection:
 
 ### IDENTIFY (ID)
 
-| Category    | Subcategory                                   | LuminetIQ Capability                               | Evidence                        |
+| Category    | Subcategory                                   | The Seed Capability                                | Evidence                        |
 | ----------- | --------------------------------------------- | -------------------------------------------------- | ------------------------------- |
 | **ID.AM-1** | Physical devices are inventoried              | Device discovery, classification, inventory        | Device inventory exports        |
 | **ID.AM-2** | Software platforms are inventoried            | OS detection, service discovery, version tracking  | Software inventory reports      |
@@ -266,7 +266,7 @@ Anomaly Detection:
 
 ### PROTECT (PR)
 
-| Category    | Subcategory                                                | LuminetIQ Capability                             | Evidence                       |
+| Category    | Subcategory                                                | The Seed Capability                              | Evidence                       |
 | ----------- | ---------------------------------------------------------- | ------------------------------------------------ | ------------------------------ |
 | **PR.AC-5** | Network integrity is protected (e.g., network segregation) | VLAN detection, segmentation verification        | VLAN topology reports          |
 | **PR.DS-2** | Data-in-transit is protected                               | TLS inspection, encryption protocol detection    | TLS compliance reports         |
@@ -277,7 +277,7 @@ Anomaly Detection:
 
 ### DETECT (DE)
 
-| Category    | Subcategory                                   | LuminetIQ Capability                             | Evidence                          |
+| Category    | Subcategory                                   | The Seed Capability                              | Evidence                          |
 | ----------- | --------------------------------------------- | ------------------------------------------------ | --------------------------------- |
 | **DE.AE-1** | Baseline of network operations is established | Baseline learning (latency, DHCP, DNS, etc.)     | Baseline metrics reports          |
 | **DE.AE-2** | Detected events are analyzed                  | Root cause analysis, anomaly detection           | Analysis reports, recommendations |
@@ -291,7 +291,7 @@ Anomaly Detection:
 
 ### RESPOND (RS)
 
-| Category    | Subcategory                                    | LuminetIQ Capability                                      | Evidence                  |
+| Category    | Subcategory                                    | The Seed Capability                                       | Evidence                  |
 | ----------- | ---------------------------------------------- | --------------------------------------------------------- | ------------------------- |
 | **RS.AN-1** | Notifications are investigated                 | Root cause analysis, guided troubleshooting               | Investigation reports     |
 | **RS.AN-2** | Impact of the incident is understood           | Anomaly severity scoring, affected device identification  | Impact assessment reports |
@@ -301,7 +301,7 @@ Anomaly Detection:
 
 ### RECOVER (RC)
 
-| Category    | Subcategory               | LuminetIQ Capability                       | Evidence                                       |
+| Category    | Subcategory               | The Seed Capability                        | Evidence                                       |
 | ----------- | ------------------------- | ------------------------------------------ | ---------------------------------------------- |
 | **RC.RP-1** | Recovery plan is executed | Predictive maintenance, failure prediction | Predictive alerts, maintenance recommendations |
 
@@ -311,7 +311,7 @@ Anomaly Detection:
 
 ### Access Control (AC)
 
-| Control   | Requirement                  | LuminetIQ Capability                                 | Evidence                                     |
+| Control   | Requirement                  | The Seed Capability                                  | Evidence                                     |
 | --------- | ---------------------------- | ---------------------------------------------------- | -------------------------------------------- |
 | **AC-4**  | Information Flow Enforcement | VLAN detection, network segmentation verification    | VLAN topology reports, traffic flow analysis |
 | **AC-20** | Use of External Systems      | Rogue device detection, unauthorized device alerting | Rogue device incident logs                   |
@@ -320,7 +320,7 @@ Anomaly Detection:
 
 ### Configuration Management (CM)
 
-| Control  | Requirement                  | LuminetIQ Capability                                          | Evidence                         |
+| Control  | Requirement                  | The Seed Capability                                           | Evidence                         |
 | -------- | ---------------------------- | ------------------------------------------------------------- | -------------------------------- |
 | **CM-2** | Baseline Configuration       | Baseline learning, configuration state tracking               | Baseline configuration exports   |
 | **CM-3** | Configuration Change Control | Configuration drift detection (fleet management)              | Drift detection reports          |
@@ -331,7 +331,7 @@ Anomaly Detection:
 
 ### Risk Assessment (RA)
 
-| Control  | Requirement                           | LuminetIQ Capability                     | Evidence                                               |
+| Control  | Requirement                           | The Seed Capability                      | Evidence                                               |
 | -------- | ------------------------------------- | ---------------------------------------- | ------------------------------------------------------ |
 | **RA-3** | Risk Assessment                       | Contextual vulnerability risk scoring    | Risk-scored vulnerability reports                      |
 | **RA-5** | Vulnerability Monitoring and Scanning | Continuous CVE scanning, NVD integration | Vulnerability scan reports, continuous monitoring logs |
@@ -340,7 +340,7 @@ Anomaly Detection:
 
 ### System and Information Integrity (SI)
 
-| Control  | Requirement                    | LuminetIQ Capability                                              | Evidence                                          |
+| Control  | Requirement                    | The Seed Capability                                               | Evidence                                          |
 | -------- | ------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------- |
 | **SI-3** | Malicious Code Protection      | Rogue device detection, behavior anomaly detection                | Malicious behavior detection logs                 |
 | **SI-4** | System Monitoring              | **Comprehensive network monitoring**, anomaly detection, alerting | Monitoring logs, anomaly reports, alert timelines |
@@ -352,7 +352,7 @@ Anomaly Detection:
 
 ### Administrative Safeguards (§164.308)
 
-| Requirement               | Sub-Requirement                                  | LuminetIQ Capability                                                                         | Evidence                                                                             |
+| Requirement               | Sub-Requirement                                  | The Seed Capability                                                                          | Evidence                                                                             |
 | ------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | **§164.308(a)(1)(ii)(A)** | Risk Analysis (Required)                         | • Vulnerability scanning<br>• Contextual risk scoring<br>• Network health assessment         | • Vulnerability risk reports<br>• Network health scores<br>• Risk assessment exports |
 | **§164.308(a)(1)(ii)(B)** | Risk Management (Required)                       | • Prioritized remediation plans<br>• Vulnerability tracking<br>• Remediation recommendations | • Remediation priority lists<br>• Patch management reports                           |
@@ -364,7 +364,7 @@ Anomaly Detection:
 
 ### Physical Safeguards (§164.310)
 
-| Requirement     | Sub-Requirement                 | LuminetIQ Capability                                                                                     | Evidence                                                          |
+| Requirement     | Sub-Requirement                 | The Seed Capability                                                                                      | Evidence                                                          |
 | --------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | **§164.310(b)** | Workstation Use (Required)      | • Device classification<br>• Workstation inventory<br>• Unauthorized device detection                    | • Device inventory by type<br>• Workstation access logs           |
 | **§164.310(c)** | Workstation Security (Required) | • Device security posture<br>• Vulnerability assessment per device<br>• Insecure configuration detection | • Device security reports<br>• Vulnerability per-device breakdown |
@@ -373,7 +373,7 @@ Anomaly Detection:
 
 ### Technical Safeguards (§164.312)
 
-| Requirement        | Sub-Requirement                            | LuminetIQ Capability                                                                                                 | Evidence                                                                                 |
+| Requirement        | Sub-Requirement                            | The Seed Capability                                                                                                  | Evidence                                                                                 |
 | ------------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | **§164.312(a)(1)** | Access Control (Required)                  | • **VLAN detection and verification**<br>• Network segmentation mapping<br>• PHI network isolation verification      | • VLAN topology maps<br>• Segmentation compliance<br>• Isolation verification reports    |
 | **§164.312(b)**    | Audit Controls (Required)                  | • Comprehensive logging<br>• Audit trail exports<br>• Activity monitoring                                            | • Complete audit logs (JSON/CSV)<br>• Event timeline exports                             |
@@ -390,7 +390,7 @@ Anomaly Detection:
 
 ```bash
 # Verify PHI networks are isolated
-luminetiq vlan --verify-isolation --critical-vlan 10 --report hipaa-segmentation.pdf
+seed vlan --verify-isolation --critical-vlan 10 --report hipaa-segmentation.pdf
 
 # Expected Output:
 ✓ VLAN 10 (PHI Network) isolated from guest network
@@ -402,7 +402,7 @@ luminetiq vlan --verify-isolation --critical-vlan 10 --report hipaa-segmentation
 
 ```bash
 # Detect unencrypted PHI transmission
-luminetiq scan --protocol-audit --alert-unencrypted --vlan 10
+seed scan --protocol-audit --alert-unencrypted --vlan 10
 
 # Alert if:
 - HTTP (not HTTPS) detected on PHI network
@@ -414,7 +414,7 @@ luminetiq scan --protocol-audit --alert-unencrypted --vlan 10
 
 ```bash
 # Generate HIPAA risk assessment
-luminetiq vulnerabilities --risk-report --format pdf --hipaa-compliance
+seed vulnerabilities --risk-report --format pdf --hipaa-compliance
 
 # Report includes:
 - All devices on PHI networks
@@ -427,7 +427,7 @@ luminetiq vulnerabilities --risk-report --format pdf --hipaa-compliance
 
 ```bash
 # Export complete device inventory for HIPAA audit
-luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,services,first_seen,last_seen"
+seed devices export --format csv --include "ip,mac,hostname,device_type,os,services,first_seen,last_seen"
 
 # Auditors need to see:
 - Complete asset inventory
@@ -441,7 +441,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 
 ### Asset Management (AM)
 
-| Practice     | Requirement                                           | LuminetIQ Capability                         | Evidence                              |
+| Practice     | Requirement                                           | The Seed Capability                          | Evidence                              |
 | ------------ | ----------------------------------------------------- | -------------------------------------------- | ------------------------------------- |
 | **AM.1.055** | Identify system components                            | Device discovery, inventory, classification  | Device inventory exports              |
 | **AM.2.058** | Maintain inventory of authorized/unauthorized devices | Rogue device detection, whitelist management | Authorized device lists, rogue alerts |
@@ -450,7 +450,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 
 ### Configuration Management (CM)
 
-| Practice     | Requirement                                    | LuminetIQ Capability                      | Evidence                       |
+| Practice     | Requirement                                    | The Seed Capability                       | Evidence                       |
 | ------------ | ---------------------------------------------- | ----------------------------------------- | ------------------------------ |
 | **CM.2.061** | Establish and maintain baseline configurations | Baseline learning, configuration tracking | Baseline configuration exports |
 | **CM.2.062** | Track, review, approve configuration changes   | Configuration drift detection             | Drift detection reports        |
@@ -459,7 +459,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 
 ### System and Communications Protection (SC)
 
-| Practice     | Requirement                                                         | LuminetIQ Capability                             | Evidence                               |
+| Practice     | Requirement                                                         | The Seed Capability                              | Evidence                               |
 | ------------ | ------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------- |
 | **SC.1.175** | Monitor, control, and protect communications at external boundaries | Network monitoring, VLAN detection, segmentation | Network monitoring logs, topology maps |
 | **SC.2.179** | Use encrypted sessions for managing network devices                 | TLS inspection, encrypted protocol detection     | TLS compliance reports                 |
@@ -468,7 +468,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 
 ### System and Information Integrity (SI)
 
-| Practice     | Requirement                                | LuminetIQ Capability                                | Evidence                                    |
+| Practice     | Requirement                                | The Seed Capability                                 | Evidence                                    |
 | ------------ | ------------------------------------------ | --------------------------------------------------- | ------------------------------------------- |
 | **SI.1.210** | Identify, report, and correct system flaws | Vulnerability scanning, remediation recommendations | Vulnerability reports, remediation tracking |
 | **SI.2.216** | Monitor system for anomalous behavior      | Anomaly detection, baseline deviation alerts        | Anomaly detection reports                   |
@@ -485,7 +485,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 - CIPA (Children's Internet Protection Act): Network filtering, monitoring
 - FERPA (Student privacy): Network segmentation, access control
 
-**LuminetIQ Capabilities:**
+**The Seed Capabilities:**
 
 - **Student WiFi isolation**: Verify student networks are segmented from staff/administrative
 - **Guest network verification**: Ensure guest WiFi has no access to student data networks
@@ -522,7 +522,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 - HIPAA (Campus health centers)
 - Research compliance (ITAR, EAR for research universities)
 
-**LuminetIQ Use Cases:**
+**The Seed Use Cases:**
 
 - Multi-tenant network management (dorms, academic, research, healthcare)
 - Research network isolation (ITAR-controlled data)
@@ -539,7 +539,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 - State-specific frameworks (e.g., NY SHIELD Act, CalOPPA)
 - CIS Controls (often required by cyber insurance)
 
-**LuminetIQ Capabilities:**
+**The Seed Capabilities:**
 
 - Multi-site government facility management (city hall, libraries, fire/police)
 - Public WiFi compliance (guest network isolation)
@@ -556,7 +556,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 - FedRAMP (Cloud service providers)
 - FISMA (Federal information systems)
 
-**LuminetIQ Capabilities:**
+**The Seed Capabilities:**
 
 - NIST 800-53 control mapping (see section above)
 - Continuous monitoring (FISMA requirement)
@@ -564,7 +564,7 @@ luminetiq devices export --format csv --include "ip,mac,hostname,device_type,os,
 - Audit logging and reporting
 
 **Note:** Federal deployment would require FedRAMP authorization for cloud features. For
-self-hosted/on-prem deployments, LuminetIQ meets many NIST 800-53 controls directly.
+self-hosted/on-prem deployments, The Seed meets many NIST 800-53 controls directly.
 
 ---
 
@@ -572,20 +572,20 @@ self-hosted/on-prem deployments, LuminetIQ meets many NIST 800-53 controls direc
 
 ### Automated Compliance Reports
 
-LuminetIQ can generate compliance-ready reports for auditors:
+The Seed can generate compliance-ready reports for auditors:
 
 ```bash
 # CIS Controls v8 Report
-luminetiq compliance --framework cis-v8 --controls 1,2,3,7,12,13 --format pdf --output cis-compliance-report.pdf
+seed compliance --framework cis-v8 --controls 1,2,3,7,12,13 --format pdf --output cis-compliance-report.pdf
 
 # NIST CSF Report
-luminetiq compliance --framework nist-csf --functions identify,protect,detect --format pdf
+seed compliance --framework nist-csf --functions identify,protect,detect --format pdf
 
 # HIPAA Security Rule Report
-luminetiq compliance --framework hipaa --sections 164.308,164.312 --format pdf
+seed compliance --framework hipaa --sections 164.308,164.312 --format pdf
 
 # Custom Date Range (for quarterly audits)
-luminetiq compliance --framework cis-v8 --start-date 2024-01-01 --end-date 2024-03-31 --format pdf
+seed compliance --framework cis-v8 --start-date 2024-01-01 --end-date 2024-03-31 --format pdf
 ```
 
 ### Audit Evidence Exports
@@ -593,35 +593,35 @@ luminetiq compliance --framework cis-v8 --start-date 2024-01-01 --end-date 2024-
 **Device Inventory (CIS 1, NIST ID.AM-1):**
 
 ```bash
-luminetiq devices export --format csv --include-all --timestamp
+seed devices export --format csv --include-all --timestamp
 # Generates: device-inventory-20250115.csv
 ```
 
 **Vulnerability Assessment (CIS 7, NIST ID.RA-1):**
 
 ```bash
-luminetiq vulnerabilities export --risk-scored --format json
+seed vulnerabilities export --risk-scored --format json
 # Generates: vulnerabilities-risk-scored-20250115.json
 ```
 
 **Network Topology (CIS 12, NIST ID.AM-3):**
 
 ```bash
-luminetiq topology export --include-vlans --format png
+seed topology export --include-vlans --format png
 # Generates: network-topology-20250115.png
 ```
 
 **Rogue Device Detection Log (CIS 13, NIST DE.CM-7):**
 
 ```bash
-luminetiq logs export --category rogue-devices --last-30-days --format csv
+seed logs export --category rogue-devices --last-30-days --format csv
 # Generates: rogue-device-log-20250115.csv
 ```
 
 **Anomaly Detection Timeline (NIST DE.AE-2):**
 
 ```bash
-luminetiq anomalies export --last-quarter --format json
+seed anomalies export --last-quarter --format json
 # Generates: anomalies-Q1-2024.json
 ```
 
@@ -668,15 +668,15 @@ luminetiq anomalies export --last-quarter --format json
 
 ---
 
-## Summary: Why LuminetIQ Genuinely Maps to Compliance
+## Summary: Why The Seed Genuinely Maps to Compliance
 
 ### This is NOT Marketing Hype
 
-LuminetIQ provides **real, auditable capabilities** that directly address compliance requirements:
+The Seed provides **real, auditable capabilities** that directly address compliance requirements:
 
 **What We DON'T Claim:**
 
-- ❌ "LuminetIQ makes you compliant" - Compliance requires process + tools
+- ❌ "The Seed makes you compliant" - Compliance requires process + tools
 - ❌ "Automatic compliance" - Still requires configuration and policy
 - ❌ "Replaces all security tools" - Complements existing security stack
 
@@ -691,7 +691,7 @@ LuminetIQ provides **real, auditable capabilities** that directly address compli
 
 ### Audit-Ready Evidence
 
-Every LuminetIQ feature that maps to a control provides:
+Every The Seed feature that maps to a control provides:
 
 1. **Logs**: Timestamped, exportable evidence
 2. **Reports**: Compliance-formatted PDF/CSV exports
@@ -708,7 +708,7 @@ Every LuminetIQ feature that maps to a control provides:
 - Configuration management tool
 - Log aggregation tool
 
-**LuminetIQ approach:** Single platform addresses multiple controls
+**The Seed approach:** Single platform addresses multiple controls
 
 - Device discovery + classification → CIS 1, CIS 2, NIST ID.AM
 - Vulnerability scanning + risk scoring → CIS 7, NIST ID.RA
@@ -728,6 +728,6 @@ Every LuminetIQ feature that maps to a control provides:
 
 **Questions?**
 
-- Compliance inquiries: compliance@luminetiq.com (future)
+- Compliance inquiries: compliance@seed.com (future)
 - Technical implementation: See AI_INTEGRATION_PLAN.md
 - Healthcare-specific questions: See HEALTHCARE_MARKET_STRATEGY.md (to be created)

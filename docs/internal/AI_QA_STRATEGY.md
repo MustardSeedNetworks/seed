@@ -762,6 +762,7 @@ ROOT CAUSE:
 - BUT frontend expects error to be non-nil if devices is empty
 
 2. FRONTEND (DeviceList.tsx line 45):
+
    ```typescript
    const { data, error } = useSWR('/api/devices');
    if (error) return <ErrorMessage />;

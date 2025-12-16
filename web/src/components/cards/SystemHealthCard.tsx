@@ -10,7 +10,7 @@
  * - Disk usage: percentage, used/total bytes with formatting
  * - System info: hostname, OS, architecture, CPU count, goroutines
  * - Uptime: displays in human-readable format (days + hours, hours + minutes, or minutes)
- * - Process info: memory usage of the NetScope process itself
+ * - Process info: memory usage of the The Seed process itself
  * - Threshold-based status: warning/critical levels from settings context
  * - Real-time updates: fetches metrics periodically from API
  *
@@ -106,18 +106,12 @@ function ResourceBar({
     <div className="stack-xs">
       <div className="flex justify-between caption">
         <span>{label}</span>
-        <span className="text-text-primary font-medium">
-          {percent.toFixed(0)}%
-        </span>
+        <span className="text-text-primary font-medium">{percent.toFixed(0)}%</span>
       </div>
       <div className={`h-2 bg-surface-border ${radius.md} overflow-hidden`}>
         {(() => {
           const pct = Math.min(percent, 100);
-          return (
-            <div
-              className={`h-full ${barColor} transition-all duration-300 w-[${pct}%]`}
-            />
-          );
+          return <div className={`h-full ${barColor} transition-all duration-300 w-[${pct}%]`} />;
         })()}
       </div>
       <div className="caption">
@@ -127,6 +121,9 @@ function ResourceBar({
   );
 }
 
+/**
+ *
+ */
 export function SystemHealthCard() {
   const [data, setData] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,11 +154,7 @@ export function SystemHealthCard() {
   }, [fetchHealth]);
 
   const getStatus = (health: SystemHealth): Status => {
-    const maxPercent = Math.max(
-      health.cpuPercent,
-      health.memoryPercent,
-      health.diskPercent,
-    );
+    const maxPercent = Math.max(health.cpuPercent, health.memoryPercent, health.diskPercent);
     return getResourceStatus(maxPercent);
   };
 
@@ -177,12 +170,7 @@ export function SystemHealthCard() {
     >
       {(health) => (
         <div className="stack">
-          <ResourceBar
-            label="CPU"
-            percent={health.cpuPercent}
-            used={0}
-            total={0}
-          />
+          <ResourceBar label="CPU" percent={health.cpuPercent} used={0} total={0} />
           <ResourceBar
             label="Memory"
             percent={health.memoryPercent}
@@ -199,27 +187,15 @@ export function SystemHealthCard() {
           <CardDivider />
 
           <div className="grid grid-cols-2 gap-2">
-            <CardRow
-              label="Uptime"
-              value={formatUptime(health.uptime)}
-              align="left"
-            />
+            <CardRow label="Uptime" value={formatUptime(health.uptime)} align="left" />
             <CardRow
               label="Load (1m)"
               value={health.loadAvg1.toFixed(2)}
               align="left"
               status={health.loadAvg1 > health.numCpu ? "warning" : undefined}
             />
-            <CardRow
-              label="Goroutines"
-              value={health.goroutines}
-              align="left"
-            />
-            <CardRow
-              label="Process Mem"
-              value={formatBytes(health.processMemory)}
-              align="left"
-            />
+            <CardRow label="Goroutines" value={health.goroutines} align="left" />
+            <CardRow label="Process Mem" value={formatBytes(health.processMemory)} align="left" />
           </div>
 
           <div className="caption text-center pt-1">

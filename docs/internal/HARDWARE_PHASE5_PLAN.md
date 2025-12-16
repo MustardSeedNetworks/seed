@@ -128,7 +128,7 @@ diagnostic hardware and expertise
 
 **Goal:** Monetize expertise, create professional development opportunities.
 
-#### 2a. LuminetIQ Certified Technician Program
+#### 2a. The Seed Certified Technician Program
 
 **Certification Levels:**
 
@@ -138,7 +138,7 @@ diagnostic hardware and expertise
 - Duration: 8 hours (self-paced online)
 - Cost: $199
 - Curriculum:
-  - LuminetIQ interface and features
+  - The Seed interface and features
   - Link status interpretation
   - Basic cable diagnostics
   - DHCP troubleshooting
@@ -161,7 +161,7 @@ diagnostic hardware and expertise
 - Certification: Digital badge + certificate, 2-year validity
 - Includes: Hardware kit (Intel I210 + AX200, $150 value)
 
-**Level 3: LuminetIQ Consultant (Enterprise)**
+**Level 3: The Seed Consultant (Enterprise)**
 
 - Target: Network consultants, MSPs, VARs
 - Duration: 24 hours (online + on-site workshop)
@@ -234,7 +234,7 @@ diagnostic hardware and expertise
 
 **Managed Services:**
 
-- **Offering:** LuminetIQ appliances deployed at client sites with remote monitoring
+- **Offering:** The Seed appliances deployed at client sites with remote monitoring
 - **MRR:** $500-2,000/site depending on SLA
 - **Target:** MSPs managing 10+ client networks
 
@@ -443,7 +443,7 @@ POST /api/v2/integrations/slack/notify
 - [ ] API versioning strategy (v2)
 - [ ] OpenAPI/Swagger documentation
 - [ ] Rate limiting and quotas
-- [ ] Developer portal (portal.luminetiq.io)
+- [ ] Developer portal (portal.seed.io)
 - [ ] SDK libraries (Python, JavaScript, Go)
 
 ---
@@ -455,7 +455,7 @@ POST /api/v2/integrations/slack/notify
 **Network Management:**
 
 - **SolarWinds** - Export diagnostics to NPM
-- **PRTG** - Custom sensors for LuminetIQ metrics
+- **PRTG** - Custom sensors for The Seed metrics
 - **Zabbix** - Template for monitoring
 
 **Ticketing & ITSM:**
@@ -638,7 +638,7 @@ if prediction == "degraded":
 
 **Goal:** Transition to community-governed foundation for long-term sustainability.
 
-#### 6a. LuminetIQ Foundation (Non-Profit)
+#### 6a. The Seed Foundation (Non-Profit)
 
 **Structure:**
 
@@ -728,7 +728,7 @@ if prediction == "degraded":
 
 **Goal:** Offer turnkey solutions for customers who want "plug and play."
 
-#### 7a. LuminetIQ Professional Appliance
+#### 7a. The Seed Professional Appliance
 
 **Hardware:**
 
@@ -743,7 +743,7 @@ if prediction == "degraded":
 
 **Software:**
 
-- LuminetIQ pre-installed and configured
+- The Seed pre-installed and configured
 - Auto-discovery on boot
 - Web UI + local LCD display
 - Auto-update mechanism
@@ -759,7 +759,7 @@ if prediction == "degraded":
 
 **Sales Channels:**
 
-- Direct from luminetiq.io
+- Direct from seed.io
 - Amazon (fulfilled by Amazon)
 - VAR partnerships (CDW, Ingram Micro)
 
@@ -778,9 +778,9 @@ if prediction == "degraded":
 
 ---
 
-#### 7b. LuminetIQ Cloud Service (SaaS)
+#### 7b. The Seed Cloud Service (SaaS)
 
-**Offering:** Hosted LuminetIQ with remote access to diagnostics.
+**Offering:** Hosted The Seed with remote access to diagnostics.
 
 **Use Cases:**
 
@@ -797,13 +797,13 @@ if prediction == "degraded":
 │                 │
 │ - Intel NIC     │
 │ - WiFi adapter  │
-│ - LuminetIQ     │
+│ - The Seed     │
 │   agent         │
 └────────┬────────┘
          │ HTTPS (outbound)
          ▼
 ┌─────────────────────────────┐
-│ LuminetIQ Cloud             │
+│ The Seed Cloud             │
 │ (Multi-tenant SaaS)         │
 ├─────────────────────────────┤
 │ - Centralized dashboard     │
@@ -1019,7 +1019,7 @@ Year 2
 
 **Year 3-5 Goals:**
 
-- **Industry Standard** - LuminetIQ recognized as alternative to Fluke/NetAlly
+- **Industry Standard** - The Seed recognized as alternative to Fluke/NetAlly
 - **10,000+ Users** - Global community across 50+ countries
 - **$2M+ Revenue** - Self-sustaining with 10+ person team
 - **Open Standards** - Contribute to IEEE, IETF diagnostic standards
@@ -1028,7 +1028,7 @@ Year 2
 
 **Ultimate Vision:**
 
-> _"Every network technician has LuminetIQ in their toolkit - the open-source Swiss Army knife for
+> _"Every network technician has The Seed in their toolkit - the open-source Swiss Army knife for
 > network diagnostics."_
 
 ---

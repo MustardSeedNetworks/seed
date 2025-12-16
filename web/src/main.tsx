@@ -1,12 +1,12 @@
 /**
  * Application Entry Point
- * 
- * Initializes the LuminetIQ/NetScope React application with:
+ *
+ * Initializes the The Seed/The Seed React application with:
  * - React StrictMode for development warnings
  * - Global error boundary for crash protection
  * - Settings context provider for configuration management
  * - Root App component
- * 
+ *
  * The application is mounted to the DOM element with id="root"
  * defined in index.html.
  */
@@ -26,5 +26,5 @@ createRoot(document.getElementById("root")!).render(
         <App />
       </SettingsProvider>
     </ErrorBoundary>
-  </StrictMode>,
+  </StrictMode>
 );

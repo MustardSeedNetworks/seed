@@ -25,7 +25,7 @@ test.describe("Settings", () => {
 
     // Authenticate
     await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("luminetiq");
+    await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
@@ -181,7 +181,7 @@ test.describe("Settings CRUD Operations", () => {
 
     // Authenticate
     await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("luminetiq");
+    await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load

@@ -21,8 +21,8 @@ monitoring, vulnerability scanning, and compliance reporting in one affordable t
 ❓ **Help**
 
 - [FAQ](FAQ.md) - Common questions answered
-- [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
-- [GitHub Issues](https://github.com/krisarmstrong/netscope/issues)
+- [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
+- [GitHub Issues](https://github.com/krisarmstrong/seed/issues)
 
 ---
 

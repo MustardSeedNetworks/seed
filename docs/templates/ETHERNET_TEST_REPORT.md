@@ -1,7 +1,7 @@
 # Ethernet NIC Test Report Template
 
 Use this template to document Ethernet NIC testing results. Submit via the
-[Hardware Report](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Hardware Report](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 issue template.
 
 ## Hardware Information
@@ -114,9 +114,9 @@ sudo ethtool --cable-test eth0
 # e.g., driver parameters, firmware updates, etc.
 ```
 
-## LuminetIQ Feature Compatibility
+## The Seed Feature Compatibility
 
-Test with actual LuminetIQ features:
+Test with actual The Seed features:
 
 ### Cable Diagnostics Card
 

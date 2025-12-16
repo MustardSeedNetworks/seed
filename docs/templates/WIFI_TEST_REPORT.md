@@ -1,7 +1,7 @@
 # WiFi Adapter Test Report Template
 
 Use this template to document WiFi adapter testing results. Submit via the
-[Hardware Report](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Hardware Report](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 issue template.
 
 ## Hardware Information
@@ -81,9 +81,9 @@ Mark each feature as: ✅ Working | ⚠️ Partial | ❌ Not Working | ⏭️ No
 # e.g., firmware loading, module parameters, etc.
 ```
 
-## LuminetIQ Feature Compatibility
+## The Seed Feature Compatibility
 
-Test with actual LuminetIQ features:
+Test with actual The Seed features:
 
 ### WiFi Site Survey
 

@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SystemHealthCard } from './SystemHealthCard';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { SystemHealthCard } from "./SystemHealthCard";
 
 /**
  * SystemHealthCard monitors system resources and displays health metrics.
@@ -10,7 +10,7 @@ import { SystemHealthCard } from './SystemHealthCard';
  * - Disk usage with used/total display
  * - Load averages (1, 5, 15 minute)
  * - System uptime in human-readable format
- * - Process memory usage for NetScope itself
+ * - Process memory usage for The Seed itself
  * - Goroutine count for Go runtime monitoring
  * - System info: hostname, OS, architecture, CPU count
  * - Color-coded status bars: green (< 75%), yellow (75-90%), red (> 90%)
@@ -18,14 +18,14 @@ import { SystemHealthCard } from './SystemHealthCard';
  * This story demonstrates various system health states.
  */
 const meta = {
-  title: 'Cards/SystemHealthCard',
+  title: "Cards/SystemHealthCard",
   component: SystemHealthCard,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 25.5,
@@ -41,18 +41,18 @@ const meta = {
           loadAvg15: 0.9,
           goroutines: 42,
           processMemory: 52428800,
-          hostname: 'netscope-server',
-          os: 'linux',
-          arch: 'amd64',
+          hostname: "seed-server",
+          os: "linux",
+          arch: "amd64",
           numCpu: 4,
         },
       },
     ],
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div style={{ width: '400px' }}>
+      <div style={{ width: "400px" }}>
         <Story />
       </div>
     ),
@@ -76,8 +76,8 @@ export const ModerateLoad: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 78.3,
@@ -93,9 +93,9 @@ export const ModerateLoad: Story = {
           loadAvg15: 2.5,
           goroutines: 156,
           processMemory: 104857600,
-          hostname: 'netscope-server',
-          os: 'linux',
-          arch: 'amd64',
+          hostname: "seed-server",
+          os: "linux",
+          arch: "amd64",
           numCpu: 4,
         },
       },
@@ -111,8 +111,8 @@ export const HighLoad: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 94.7,
@@ -128,9 +128,9 @@ export const HighLoad: Story = {
           loadAvg15: 5.9,
           goroutines: 423,
           processMemory: 209715200,
-          hostname: 'netscope-server',
-          os: 'linux',
-          arch: 'amd64',
+          hostname: "seed-server",
+          os: "linux",
+          arch: "amd64",
           numCpu: 4,
         },
       },
@@ -146,8 +146,8 @@ export const DiskSpaceCritical: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 15.2,
@@ -163,9 +163,9 @@ export const DiskSpaceCritical: Story = {
           loadAvg15: 0.5,
           goroutines: 38,
           processMemory: 41943040,
-          hostname: 'netscope-server',
-          os: 'linux',
-          arch: 'amd64',
+          hostname: "seed-server",
+          os: "linux",
+          arch: "amd64",
           numCpu: 4,
         },
       },
@@ -181,8 +181,8 @@ export const MacOS: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 32.1,
@@ -198,9 +198,9 @@ export const MacOS: Story = {
           loadAvg15: 1.5,
           goroutines: 67,
           processMemory: 83886080,
-          hostname: 'macbook-pro',
-          os: 'darwin',
-          arch: 'arm64',
+          hostname: "macbook-pro",
+          os: "darwin",
+          arch: "arm64",
           numCpu: 8,
         },
       },
@@ -216,8 +216,8 @@ export const Windows: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 28.5,
@@ -233,9 +233,9 @@ export const Windows: Story = {
           loadAvg15: 0,
           goroutines: 52,
           processMemory: 62914560,
-          hostname: 'WIN-SERVER-01',
-          os: 'windows',
-          arch: 'amd64',
+          hostname: "WIN-SERVER-01",
+          os: "windows",
+          arch: "amd64",
           numCpu: 6,
         },
       },
@@ -251,8 +251,8 @@ export const RecentlyBooted: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 18.3,
@@ -268,9 +268,9 @@ export const RecentlyBooted: Story = {
           loadAvg15: 0.1,
           goroutines: 34,
           processMemory: 31457280,
-          hostname: 'netscope-server',
-          os: 'linux',
-          arch: 'amd64',
+          hostname: "seed-server",
+          os: "linux",
+          arch: "amd64",
           numCpu: 4,
         },
       },
@@ -286,8 +286,8 @@ export const LongUptime: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 22.1,
@@ -303,9 +303,9 @@ export const LongUptime: Story = {
           loadAvg15: 0.8,
           goroutines: 58,
           processMemory: 73400320,
-          hostname: 'netscope-server',
-          os: 'linux',
-          arch: 'amd64',
+          hostname: "seed-server",
+          os: "linux",
+          arch: "amd64",
           numCpu: 4,
         },
       },
@@ -321,8 +321,8 @@ export const HighGoroutines: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         status: 200,
         response: {
           cpuPercent: 45.8,
@@ -338,9 +338,9 @@ export const HighGoroutines: Story = {
           loadAvg15: 1.9,
           goroutines: 892,
           processMemory: 157286400,
-          hostname: 'netscope-server',
-          os: 'linux',
-          arch: 'amd64',
+          hostname: "seed-server",
+          os: "linux",
+          arch: "amd64",
           numCpu: 4,
         },
       },
@@ -356,8 +356,8 @@ export const Loading: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/system/health',
-        method: 'GET',
+        url: "/api/system/health",
+        method: "GET",
         delay: 999999,
         status: 200,
         response: {},

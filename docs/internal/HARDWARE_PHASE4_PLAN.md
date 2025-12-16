@@ -33,12 +33,12 @@ support.
 
 **Partnership Benefits Matrix:**
 
-| Benefit       | To Vendor                       | To LuminetIQ                      |
+| Benefit       | To Vendor                       | To The Seed                       |
 | ------------- | ------------------------------- | --------------------------------- |
 | Hardware      | Marketing exposure, validation  | Free testing equipment            |
 | Technical     | Community feedback, bug reports | Driver insights, firmware access  |
 | Documentation | Linux compatibility data        | Official specs, reference designs |
-| Marketing     | Featured in LuminetIQ docs      | Co-marketing opportunities        |
+| Marketing     | Featured in The Seed docs       | Co-marketing opportunities        |
 
 **Deliverables:**
 
@@ -46,7 +46,7 @@ support.
 - [ ] Outreach to 5+ vendors
 - [ ] Establish 2+ active partnerships
 - [ ] Receive 3+ review units for testing
-- [ ] Create "LuminetIQ Certified" badge criteria
+- [ ] Create "The Seed Certified" badge criteria
 
 **Success Metrics:**
 
@@ -72,11 +72,11 @@ support.
 **Privacy-First Architecture:**
 
 ```yaml
-# Configuration in luminetiq.yaml
+# Configuration in seed.yaml
 telemetry:
   enabled: false # Opt-in only, default disabled
   anonymous: true # No PII, no tracking IDs
-  endpoint: "telemetry.luminetiq.io/v1/hardware"
+  endpoint: "telemetry.seed.io/v1/hardware"
   interval: 86400 # Daily check-in (24h)
 
   # Explicitly defined data collection
@@ -117,7 +117,7 @@ telemetry:
 │ Help Improve Hardware Compatibility                    │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
-│ LuminetIQ can anonymously share your hardware          │
+│ The Seed can anonymously share your hardware          │
 │ information to help the community understand which     │
 │ adapters work best.                                     │
 │                                                         │
@@ -131,7 +131,7 @@ telemetry:
 │                                                         │
 │ [Enable Telemetry]  [No Thanks]                        │
 │                                                         │
-│ Privacy Policy: luminetiq.io/privacy                   │
+│ Privacy Policy: seed.io/privacy                   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -185,7 +185,7 @@ telemetry:
 
 ```
 ┌──────────────┐
-│ LuminetIQ    │
+│ The Seed    │
 │ Client       │
 └──────┬───────┘
        │ HTTPS POST (daily)
@@ -214,7 +214,7 @@ telemetry:
        ▼
 ┌──────────────────────────────────────┐
 │ Public API (Read-Only)               │
-│ api.luminetiq.io/v1/hardware/stats   │
+│ api.seed.io/v1/hardware/stats   │
 ├──────────────────────────────────────┤
 │ GET /popular - Top 10 by count       │
 │ GET /wifi?chipset=ax200 - Stats      │
@@ -275,7 +275,7 @@ telemetry:
 - High-gain dual-band antennas - $30-40
 - USB 3.0 M.2 adapter enclosure - $20-30
 - Raspberry Pi 4 (4GB) with case - $75-100
-- 32GB microSD with LuminetIQ pre-installed - $15-20
+- 32GB microSD with The Seed pre-installed - $15-20
 - Carrying case - $20-30
 
 **Use Case:** WiFi consultants, site surveys, enterprise deployments
@@ -323,7 +323,7 @@ Perfect for field diagnostics and troubleshooting.
 
 ---
 
-_Disclosure: LuminetIQ participates in affiliate programs. Purchases through these links support the
+_Disclosure: The Seed participates in affiliate programs. Purchases through these links support the
 project at no extra cost to you. We only recommend hardware we've tested and documented._
 ```
 
@@ -389,7 +389,7 @@ project at no extra cost to you. We only recommend hardware we've tested and doc
    - Driver installation
    - Performance comparison vs internal
 
-#### Series 2: LuminetIQ Features (5 videos, 45-55 min total)
+#### Series 2: The Seed Features (5 videos, 45-55 min total)
 
 5. **"Complete WiFi Site Survey Walkthrough"** (12 min)
    - Setting up monitor mode
@@ -452,7 +452,7 @@ project at no extra cost to you. We only recommend hardware we've tested and doc
 
 **Publishing:**
 
-- **Primary:** YouTube (LuminetIQ official channel)
+- **Primary:** YouTube (The Seed official channel)
 - **Secondary:** Embedded in wiki pages
 - **Distribution:** Reddit (r/networking, r/homelab), HackerNews
 - **SEO:** Titles like "How to Install Intel AX200 WiFi Adapter Linux"

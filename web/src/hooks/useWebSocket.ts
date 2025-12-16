@@ -1,21 +1,21 @@
 /**
  * WebSocket Connection Hook
- * 
- * Manages WebSocket connections to the LuminetIQ backend for real-time updates.
- * 
+ *
+ * Manages WebSocket connections to the The Seed backend for real-time updates.
+ *
  * Features:
  * - Automatic connection management with authentication
  * - Automatic reconnection with exponential backoff
  * - Type-safe message handling
  * - Connection status tracking
  * - Secure token transmission via Sec-WebSocket-Protocol header
- * 
+ *
  * The hook automatically handles:
  * - Initial connection establishment
  * - Authentication via JWT token
  * - Connection loss recovery
  * - Message parsing and routing
- * 
+ *
  * Usage:
  * ```typescript
  * const { status, send, reconnect } = useWebSocket({
@@ -31,21 +31,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /** WebSocket connection status states */
 export type ConnectionStatus =
-  | "connecting"  // Attempting to establish connection
-  | "connected"   // Successfully connected
+  | "connecting" // Attempting to establish connection
+  | "connected" // Successfully connected
   | "disconnected" // Not connected (intentional or after failure)
-  | "error";      // Connection error occurred
+  | "error"; // Connection error occurred
 
 /** Base message structure for WebSocket communication */
 export interface Message {
-  type: string;     // Message type identifier
+  type: string; // Message type identifier
   payload: unknown; // Message data (type varies by message type)
 }
 
 /** Card update message for real-time UI updates */
 export interface CardUpdate {
-  cardId: string;  // ID of the card to update
-  data: unknown;   // Updated card data
+  cardId: string; // ID of the card to update
+  data: unknown; // Updated card data
 }
 
 /** Configuration options for useWebSocket hook */
@@ -76,7 +76,7 @@ interface UseWebSocketReturn {
 
 /**
  * Custom hook for managing WebSocket connections with automatic reconnection.
- * 
+ *
  * @param options - WebSocket configuration options
  * @returns Object containing connection status, send function, and reconnect function
  */
@@ -91,14 +91,12 @@ export function useWebSocket({
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef(0);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const connectRef = useRef<(() => void) | null>(null); // New ref for stable connect function
 
   /**
    * Establishes WebSocket connection with automatic reconnection logic.
-   * 
+   *
    * - Checks if already connected before attempting new connection
    * - Requires valid authentication token
    * - Automatically determines wss:// vs ws:// based on page protocol
@@ -123,9 +121,7 @@ export function useWebSocket({
     try {
       // Determine secure vs insecure WebSocket protocol based on page protocol
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const baseUrl = url.startsWith("ws")
-        ? url
-        : `${protocol}//${window.location.host}${url}`;
+      const baseUrl = url.startsWith("ws") ? url : `${protocol}//${window.location.host}${url}`;
 
       // Use Sec-WebSocket-Protocol header for secure token transmission
       // This prevents tokens from appearing in server logs, browser history, etc.
@@ -146,9 +142,7 @@ export function useWebSocket({
         if (reconnectAttempts.current < maxReconnectAttempts) {
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttempts.current++;
-            console.warn(
-              `WebSocket reconnecting... attempt ${reconnectAttempts.current}`,
-            );
+            console.warn(`WebSocket reconnecting... attempt ${reconnectAttempts.current}`);
             connectRef.current?.(); // Call via ref to avoid stale closure
           }, reconnectInterval);
         }
@@ -180,12 +174,7 @@ export function useWebSocket({
               onMessage(message);
             }
           } catch (error) {
-            console.error(
-              "Failed to parse WebSocket message:",
-              error,
-              "payload=",
-              payload,
-            );
+            console.error("Failed to parse WebSocket message:", error, "payload=", payload);
           }
         }
       };
@@ -193,14 +182,7 @@ export function useWebSocket({
       setStatus("error");
       console.error("Failed to create WebSocket:", error);
     }
-  }, [
-    url,
-    token,
-    onMessage,
-    onCardUpdate,
-    reconnectInterval,
-    maxReconnectAttempts,
-  ]);
+  }, [url, token, onMessage, onCardUpdate, reconnectInterval, maxReconnectAttempts]);
 
   // Keep connectRef updated with latest connect function to avoid stale closures
   useEffect(() => {

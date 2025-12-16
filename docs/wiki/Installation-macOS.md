@@ -12,7 +12,7 @@
 ### Method 1: Download Binary (Recommended)
 
 1. **Download** the latest release for macOS from
-   [Releases](https://github.com/krisarmstrong/netscope/releases/latest)
+   [Releases](https://github.com/krisarmstrong/seed/releases/latest)
 
 2. **Extract** the archive:
 
@@ -36,7 +36,7 @@
 
 ### Method 2: Build from Source
 
-See the main [README](https://github.com/krisarmstrong/netscope/blob/main/README.md) for build
+See the main [README](https://github.com/krisarmstrong/seed/blob/main/README.md) for build
 instructions.
 
 ## First Run

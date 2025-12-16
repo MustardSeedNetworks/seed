@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
-import { ImprovedHelpModal } from './ImprovedHelpModal';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
+import { ImprovedHelpModal } from "./ImprovedHelpModal";
 
 /**
  * ImprovedHelpModal is a comprehensive help center with tabbed navigation,
@@ -17,26 +17,26 @@ import { ImprovedHelpModal } from './ImprovedHelpModal';
  * This is the main help modal shown when users click the Help button in the header.
  */
 const meta: Meta<typeof ImprovedHelpModal> = {
-  title: 'Help/ImprovedHelpModal',
+  title: "Help/ImprovedHelpModal",
   component: ImprovedHelpModal,
   parameters: {
-    layout: 'fullscreen',
+    layout: "fullscreen",
     docs: {
       description: {
         component:
-          'Full-featured help center modal with tabbed navigation, search, and comprehensive documentation for all LuminetIQ features.',
+          "Full-featured help center modal with tabbed navigation, search, and comprehensive documentation for all The Seed features.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     isOpen: {
-      control: 'boolean',
-      description: 'Controls modal visibility',
+      control: "boolean",
+      description: "Controls modal visibility",
     },
     onClose: {
-      action: 'closed',
-      description: 'Callback when modal is closed',
+      action: "closed",
+      description: "Callback when modal is closed",
     },
   },
 };
@@ -93,7 +93,7 @@ export const Interactive: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Interactive demo - click the button to open the help modal.',
+        story: "Interactive demo - click the button to open the help modal.",
       },
     },
   },
@@ -127,7 +127,7 @@ export const SearchDemo: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Demonstrates the search functionality - type in the search box to filter sections.',
+        story: "Demonstrates the search functionality - type in the search box to filter sections.",
       },
     },
   },
@@ -167,7 +167,7 @@ export const AllSections: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Shows all available help sections in the navigation sidebar.',
+        story: "Shows all available help sections in the navigation sidebar.",
       },
     },
   },
@@ -188,11 +188,11 @@ export const MobileView: Story = {
   },
   parameters: {
     viewport: {
-      defaultViewport: 'mobile1',
+      defaultViewport: "mobile1",
     },
     docs: {
       description: {
-        story: 'Help modal on mobile viewport - sidebar and content may stack vertically.',
+        story: "Help modal on mobile viewport - sidebar and content may stack vertically.",
       },
     },
   },
@@ -213,11 +213,11 @@ export const TabletView: Story = {
   },
   parameters: {
     viewport: {
-      defaultViewport: 'tablet',
+      defaultViewport: "tablet",
     },
     docs: {
       description: {
-        story: 'Help modal on tablet viewport.',
+        story: "Help modal on tablet viewport.",
       },
     },
   },
@@ -237,10 +237,10 @@ export const DarkTheme: Story = {
     );
   },
   parameters: {
-    backgrounds: { default: 'dark' },
+    backgrounds: { default: "dark" },
     docs: {
       description: {
-        story: 'Help modal with dark theme styling.',
+        story: "Help modal with dark theme styling.",
       },
     },
   },
@@ -281,7 +281,7 @@ export const BackdropClose: Story = {
     docs: {
       description: {
         story:
-          'Click the dark backdrop area or the X button to close the modal. Counter tracks close events.',
+          "Click the dark backdrop area or the X button to close the modal. Counter tracks close events.",
       },
     },
   },
@@ -298,13 +298,19 @@ export const KeyboardNavigation: Story = {
       <div className="min-h-screen bg-surface-base">
         <div className="p-4 bg-surface-raised border-b border-surface-border">
           <h2 className="heading-3 text-text-primary mb-2">Keyboard Navigation</h2>
-          <p className="body-small text-text-muted">
-            The help modal supports keyboard navigation:
-          </p>
+          <p className="body-small text-text-muted">The help modal supports keyboard navigation:</p>
           <ul className="list-disc list-inside body-small text-text-muted mt-2">
-            <li>Press <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">ESC</kbd> to close</li>
-            <li>Use <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Tab</kbd> to navigate between elements</li>
-            <li>Press <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Enter</kbd> to select a section</li>
+            <li>
+              Press <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">ESC</kbd> to close
+            </li>
+            <li>
+              Use <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Tab</kbd> to
+              navigate between elements
+            </li>
+            <li>
+              Press <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Enter</kbd> to
+              select a section
+            </li>
           </ul>
         </div>
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
@@ -314,7 +320,7 @@ export const KeyboardNavigation: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Demonstrates keyboard accessibility features.',
+        story: "Demonstrates keyboard accessibility features.",
       },
     },
   },

@@ -1,4 +1,4 @@
-# LuminetIQ Licensing & Monetization Strategy
+# The Seed Licensing & Monetization Strategy
 
 **Document Version:** 1.0 **Last Updated:** 2025-12-15 **Status:** Planning
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document defines LuminetIQ's software licensing model, enforcement mechanisms, and monetization
+This document defines The Seed's software licensing model, enforcement mechanisms, and monetization
 strategy.
 
 ## Executive Summary
@@ -40,7 +40,7 @@ Enterprise upsell **Philosophy:** Fair use, protect revenue, enable trials, prev
 - No compliance reporting
 - No vulnerability scanning
 - Community support only (GitHub issues)
-- LuminetIQ branding in reports
+- The Seed branding in reports
 - No API access
 
 **License Type:** Perpetual, no expiration **Activation:** Email signup, no credit card **Use
@@ -179,7 +179,7 @@ Example: PROF-A7K9M-12345-R8Q2-9F3D
 
 **Storage:**
 
-- Client-side: `~/.luminetiq/license.key`
+- Client-side: `~/.seed/license.key`
 - Server-side: License database (customer_id, license_key, tier, expiry, max_devices)
 
 **Validation:**
@@ -229,7 +229,7 @@ Example: PROF-A7K9M-12345-R8Q2-9F3D
 **Validation Endpoint:**
 
 ```
-POST https://license.luminetiq.com/api/v1/validate
+POST https://license.seed.com/api/v1/validate
 {
   "license_key": "PROF-...",
   "device_fingerprint": "sha256(MAC+hostname+uuid)",
@@ -368,14 +368,14 @@ func (l *License) CanUse(feature string) bool {
 
 - Manage 5+ healthcare clients (Silver)
 - Manage 20+ healthcare clients (Gold)
-- Complete LuminetIQ certification training
+- Complete The Seed certification training
 - Quarterly revenue targets
 
 **Revenue Share:**
 
-- Partner sells LuminetIQ to their clients
+- Partner sells The Seed to their clients
 - Partner keeps 20-30% margin
-- LuminetIQ bills partner, partner bills client (or pass-through)
+- The Seed bills partner, partner bills client (or pass-through)
 
 ---
 
@@ -469,7 +469,7 @@ func (l *License) CanUse(feature string) bool {
 
 **Enterprise Contracts:**
 
-- LuminetIQ reserves right to audit license usage annually
+- The Seed reserves right to audit license usage annually
 - Advance notice: 30 days
 - Customer provides device count, site count, user count
 - If over-usage found: Pay true-up + 10% penalty OR terminate
@@ -513,7 +513,7 @@ func (l *License) CanUse(feature string) bool {
 
 **Appeal Process:**
 
-- Email: license@luminetiq.com
+- Email: license@seed.com
 - Legitimate cases resolved within 48 hours (e.g., company acquisition, system migration)
 
 ---
@@ -549,7 +549,7 @@ func (l *License) CanUse(feature string) bool {
 - Download invoices (for expense reports)
 - Request quote for Enterprise upgrade
 
-**Portal URL:** https://portal.luminetiq.com (or https://account.luminetiq.com)
+**Portal URL:** https://portal.seed.com (or https://account.seed.com)
 
 ---
 
@@ -645,9 +645,9 @@ CREATE INDEX idx_license_hash ON licenses(license_key_hash);
 
 **Storage Location:**
 
-- Linux: `~/.config/luminetiq/license.key`
-- macOS: `~/Library/Application Support/LuminetIQ/license.key`
-- Windows: `%APPDATA%\LuminetIQ\license.key`
+- Linux: `~/.config/seed/license.key`
+- macOS: `~/Library/Application Support/The Seed/license.key`
+- Windows: `%APPDATA%\The Seed\license.key`
 
 **Permissions:**
 
@@ -743,7 +743,7 @@ CREATE INDEX idx_license_hash ON licenses(license_key_hash);
 ### **Privacy & Compliance:**
 
 - **GDPR:** Right to export data, right to deletion, minimal data collection
-- **HIPAA:** LuminetIQ is not a Business Associate (network tool, not PHI processor)
+- **HIPAA:** The Seed is not a Business Associate (network tool, not PHI processor)
 - **SOC 2:** Roadmap for 2027 (after product-market fit)
 
 ---

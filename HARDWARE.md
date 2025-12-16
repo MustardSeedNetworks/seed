@@ -1,11 +1,11 @@
-# LuminetIQ Hardware Compatibility Guide
+# The Seed Hardware Compatibility Guide
 
 > **Version:** 0.13.0 **Last Updated:** December 2025 **Status:** Living Document
 
 ## Overview
 
-LuminetIQ's advanced diagnostic capabilities depend heavily on hardware support. This guide helps
-you select compatible network adapters for optimal functionality.
+The Seed's advanced diagnostic capabilities depend heavily on hardware support. This guide helps you
+select compatible network adapters for optimal functionality.
 
 ## Quick Reference
 
@@ -256,7 +256,7 @@ sudo ethtool --cable-test eth0
 
 ### Windows (Not Supported)
 
-- LuminetIQ is Linux-only
+- The Seed is Linux-only
 - Consider running in WSL2 with USB passthrough (limited functionality)
 
 ---
@@ -317,7 +317,7 @@ sudo ethtool --cable-test eth0
 ### Tested Configurations
 
 We maintain a list of tested hardware at:
-**https://github.com/krisarmstrong/luminetiq/wiki/Tested-Hardware**
+**https://github.com/krisarmstrong/seed/wiki/Tested-Hardware**
 
 Please contribute your test results!
 
@@ -343,7 +343,7 @@ cost over advanced diagnostics. Use Intel server NICs for TDR.
 - **Wi-Fi USB:** Yes, Atheros AR9271 dongles work great
 - **Ethernet USB:** Works for basic diagnostics, but no TDR support
 
-### Q: Does Apple Silicon Mac support LuminetIQ?
+### Q: Does Apple Silicon Mac support The Seed?
 
 **A:** Not natively. The built-in Wi-Fi chip isn't accessible from Linux. Options:
 
@@ -362,9 +362,9 @@ implemented.
 
 Found a chipset that works (or doesn't)? Help the community:
 
-1. Test your hardware with LuminetIQ
+1. Test your hardware with The Seed
 2. Note capabilities (monitor mode, TDR, etc.)
-3. Submit to: https://github.com/krisarmstrong/luminetiq/wiki/Tested-Hardware
+3. Submit to: https://github.com/krisarmstrong/seed/wiki/Tested-Hardware
 4. Include:
    - Chipset model (`lspci` or `lsusb` output)
    - Driver version

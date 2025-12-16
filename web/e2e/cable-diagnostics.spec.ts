@@ -20,7 +20,7 @@ test.describe("Cable Diagnostics", () => {
 
     // Authenticate
     await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("luminetiq");
+    await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
@@ -119,9 +119,7 @@ test.describe("Cable Diagnostics", () => {
 
     const hasOpenFault = await openFault.isVisible().catch(() => false);
     const hasShortFault = await shortFault.isVisible().catch(() => false);
-    const hasImpedanceFault = await impedanceFault
-      .isVisible()
-      .catch(() => false);
+    const hasImpedanceFault = await impedanceFault.isVisible().catch(() => false);
 
     // At most one fault type should be shown (or none if cable OK)
     expect(hasOpenFault).toBeDefined();
@@ -151,18 +149,14 @@ test.describe("Cable Diagnostics", () => {
     }
   });
 
-  test("should display hardware compatibility info in settings", async ({
-    page,
-  }) => {
+  test("should display hardware compatibility info in settings", async ({ page }) => {
     // Open settings
     const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
     // Look for hardware compatibility section
-    const hardwareInfo = page.getByText(
-      /hardware|supported|nic|intel|broadcom/i,
-    );
+    const hardwareInfo = page.getByText(/hardware|supported|nic|intel|broadcom/i);
     const hasHardwareInfo = await hardwareInfo.isVisible().catch(() => false);
 
     expect(hasHardwareInfo).toBeDefined();
@@ -180,16 +174,14 @@ test.describe("Cable Card States", () => {
     await page.reload();
 
     await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("luminetiq");
+    await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
     await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("should show loading state while fetching cable data", async ({
-    page,
-  }) => {
+  test("should show loading state while fetching cable data", async ({ page }) => {
     // Force refresh and look for loading indicator
     await page.reload();
 
@@ -248,7 +240,7 @@ test.describe("Cable Card Accessibility", () => {
     await page.reload();
 
     await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("luminetiq");
+    await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
     await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
       timeout: 10000,
@@ -265,12 +257,8 @@ test.describe("Cable Card Accessibility", () => {
 
     if (hasCard) {
       // Check for aria labels on status elements
-      const statusElement = cableCard
-        .locator('[aria-label], [role="status"]')
-        .first();
-      const hasAccessibleStatus = await statusElement
-        .isVisible()
-        .catch(() => false);
+      const statusElement = cableCard.locator('[aria-label], [role="status"]').first();
+      const hasAccessibleStatus = await statusElement.isVisible().catch(() => false);
 
       expect(hasAccessibleStatus).toBeDefined();
     }

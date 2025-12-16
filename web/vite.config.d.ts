@@ -1,7 +1,7 @@
 /**
  * Vite Build Configuration
  *
- * Purpose: Configures the Vite development server and build process for the LuminetIQ web frontend.
+ * Purpose: Configures the Vite development server and build process for the The Seed web frontend.
  * Handles bundling, module resolution, and development server settings.
  *
  * Configuration:
