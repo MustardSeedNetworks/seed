@@ -1,8 +1,8 @@
 /**
  * Main Application Component
- * 
+ *
  * The root component for the LuminetIQ/NetScope network monitoring application.
- * 
+ *
  * Responsibilities:
  * - Authentication management and session handling
  * - WebSocket connection for real-time data updates
@@ -11,18 +11,18 @@
  * - User settings and theme management
  * - Setup wizard for first-time configuration
  * - Floating Action Button (FAB) for quick actions
- * 
+ *
  * Architecture:
  * - Uses WebSocket for real-time updates from backend
  * - Card-based UI with independent data components
  * - Persistent settings stored in localStorage via SettingsContext
  * - JWT authentication with automatic session expiration
- * 
+ *
  * State Management:
  * - Local state for cards, interface selection, and UI
  * - Context-based settings (SettingsContext)
  * - Custom hooks for auth, WebSocket, and theme
- * 
+ *
  * The component supports both initial setup flow and normal operation,
  * automatically detecting if the system needs configuration.
  */
@@ -70,20 +70,20 @@ import { radius } from "./styles/theme";
  * Each card can be null if not yet loaded or unavailable.
  */
 interface CardState {
-  link: LinkData | null;       // Network interface link status
-  cable: CableData | null;     // Ethernet cable diagnostics
-  vlan: VLANData | null;       // VLAN configuration and status
-  switch: SwitchData | null;   // Network switch information (LLDP/CDP)
-  wifi: WiFiData | null;       // WiFi connection and signal info
-  dhcp: DHCPData | null;       // DHCP configuration
-  dns: DNSData | null;         // DNS server and resolution info
+  link: LinkData | null; // Network interface link status
+  cable: CableData | null; // Ethernet cable diagnostics
+  vlan: VLANData | null; // VLAN configuration and status
+  switch: SwitchData | null; // Network switch information (LLDP/CDP)
+  wifi: WiFiData | null; // WiFi connection and signal info
+  dhcp: DHCPData | null; // DHCP configuration
+  dns: DNSData | null; // DNS server and resolution info
   gateway: GatewayData | null; // Gateway reachability
   publicip: PublicIPData | null; // Public IP and location info
 }
 
 /**
  * Main App Component
- * 
+ *
  * Orchestrates the entire application, managing authentication,
  * real-time data updates, and the dashboard interface.
  */
@@ -124,7 +124,19 @@ function App() {
   const [currentInterface, setCurrentInterface] = useState("eth0");
   const [isWifi, setIsWifi] = useState(false);
   const [interfaces, setInterfaces] = useState<
-    Array<{ name: string; type: string; up: boolean }>
+    Array<{
+      name: string;
+      friendlyName?: string;
+      description?: string;
+      type: string;
+      up: boolean;
+      speedDisplay?: string;
+      chipsetVendor?: string;
+      chipsetModel?: string;
+      hasTDR?: boolean;
+      hasDOM?: boolean;
+      score?: number;
+    }>
   >([]);
   const [networkDiscovery, setNetworkDiscovery] =
     useState<NetworkDiscoveryData | null>(null);
@@ -941,9 +953,16 @@ function App() {
                     (iface) =>
                       iface.type === "ethernet" || iface.type === "wifi",
                   )
+                  .sort((a, b) => (b.score || 0) - (a.score || 0)) // Sort by score
                   .map((iface) => (
-                    <option key={iface.name} value={iface.name}>
-                      {iface.name} {!iface.up && "(down)"}
+                    <option
+                      key={iface.name}
+                      value={iface.name}
+                      title={`${iface.name}${iface.description ? ` - ${iface.description}` : ""}`}
+                    >
+                      {iface.friendlyName || iface.name}
+                      {iface.speedDisplay && ` (${iface.speedDisplay})`}
+                      {!iface.up && " - down"}
                     </option>
                   ))
               ) : (

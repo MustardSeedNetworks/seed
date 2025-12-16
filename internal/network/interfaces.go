@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/krisarmstrong/luminetiq/internal/network/detection"
 )
 
 // InterfaceType represents the type of network interface.
@@ -25,13 +27,22 @@ const (
 
 // InterfaceInfo contains information about a network interface.
 type InterfaceInfo struct {
-	Name         string        `json:"name"`
-	Type         InterfaceType `json:"type"`
-	Up           bool          `json:"up"`
-	Running      bool          `json:"running"`
-	HardwareAddr string        `json:"hardwareAddr"`
-	MTU          int           `json:"mtu"`
-	Addresses    []string      `json:"addresses"`
+	Name          string        `json:"name"`
+	FriendlyName  string        `json:"friendlyName,omitempty"`  // Human-readable name (e.g., "Intel I225-V")
+	Description   string        `json:"description,omitempty"`   // Brief description (e.g., "2.5 Gbps Ethernet")
+	Type          InterfaceType `json:"type"`
+	Up            bool          `json:"up"`
+	Running       bool          `json:"running"`
+	HardwareAddr  string        `json:"hardwareAddr"`
+	MTU           int           `json:"mtu"`
+	Addresses     []string      `json:"addresses"`
+	Speed         int64         `json:"speed,omitempty"`         // Speed in bits per second
+	SpeedDisplay  string        `json:"speedDisplay,omitempty"`  // Human-readable speed (e.g., "2.5 Gbps")
+	ChipsetVendor string        `json:"chipsetVendor,omitempty"` // NIC vendor (e.g., "Intel")
+	ChipsetModel  string        `json:"chipsetModel,omitempty"`  // NIC model (e.g., "I225-V")
+	HasTDR        bool          `json:"hasTDR,omitempty"`        // Supports cable diagnostics
+	HasDOM        bool          `json:"hasDOM,omitempty"`        // Supports fiber optics monitoring
+	Score         int           `json:"score,omitempty"`         // Detection score for auto-selection
 }
 
 // LinkStatus contains link layer status information.
@@ -50,6 +61,7 @@ type Manager struct {
 	mu               sync.RWMutex
 	currentInterface string
 	interfaces       map[string]*InterfaceInfo
+	detector         *detection.Detector
 }
 
 // NewManager creates a new network manager.
@@ -57,6 +69,7 @@ func NewManager(defaultInterface string) (*Manager, error) {
 	m := &Manager{
 		currentInterface: defaultInterface,
 		interfaces:       make(map[string]*InterfaceInfo),
+		detector:         detection.NewDetector(),
 	}
 	if err := m.RefreshInterfaces(); err != nil {
 		return nil, fmt.Errorf("failed to refresh interfaces during manager initialization: %w", err)
@@ -65,10 +78,19 @@ func NewManager(defaultInterface string) (*Manager, error) {
 }
 
 // RefreshInterfaces updates the list of available interfaces.
+// Enriches interface information with detection data including friendly names,
+// chipset info, TDR/DOM capabilities, and scoring for auto-selection.
 func (m *Manager) RefreshInterfaces() error {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return fmt.Errorf("failed to get interfaces: %w", err)
+	}
+
+	// Get enriched detection data for all interfaces
+	detectedScores, _ := m.detector.DetectAll()
+	scoreMap := make(map[string]detection.InterfaceScore)
+	for _, score := range detectedScores {
+		scoreMap[score.Name] = score
 	}
 
 	// Build new map first, then swap under lock
@@ -91,6 +113,19 @@ func (m *Manager) RefreshInterfaces() error {
 			for _, addr := range addrs {
 				info.Addresses = append(info.Addresses, addr.String())
 			}
+		}
+
+		// Enrich with detection data if available
+		if score, ok := scoreMap[iface.Name]; ok {
+			info.FriendlyName = score.FriendlyName
+			info.Description = score.Description
+			info.Speed = score.Speed
+			info.SpeedDisplay = score.SpeedDisplay
+			info.ChipsetVendor = score.ChipsetVendor
+			info.ChipsetModel = score.ChipsetModel
+			info.HasTDR = score.HasTDR
+			info.HasDOM = score.HasDOM
+			info.Score = score.Score
 		}
 
 		newInterfaces[iface.Name] = info

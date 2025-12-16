@@ -1,26 +1,26 @@
 /**
  * Test Setup and Utilities
- * 
+ *
  * Purpose: Shared test configuration and mock utilities for Vitest.
  * Provides mock implementations of browser APIs (localStorage, fetch, WebSocket, etc.)
  * and common test helpers used across the test suite.
- * 
+ *
  * Key Utilities:
  * - createMockLocalStorage(): Mock localStorage with spy functions
  * - Mock implementations: localStorage, fetch, WebSocket, matchMedia
  * - Test setup: beforeEach/afterEach hooks for test isolation
  * - Environment mocks: Simulates browser APIs for testing
- * 
+ *
  * Usage:
  * ```typescript
  * import { createMockLocalStorage } from '../test/setup';
- * 
+ *
  * beforeEach(() => {
  *   const localStorage = createMockLocalStorage();
  *   Object.defineProperty(window, 'localStorage', { value: localStorage });
  * });
  * ```
- * 
+ *
  * Dependencies: vitest, @testing-library/jest-dom
  * Applied In: All test files via vitest configuration
  */
@@ -227,6 +227,28 @@ export function createMockInterface(
   name: string,
   type: "ethernet" | "wifi" | "loopback" = "ethernet",
   up = true,
+  options?: {
+    friendlyName?: string;
+    description?: string;
+    speedDisplay?: string;
+    chipsetVendor?: string;
+    chipsetModel?: string;
+    hasTDR?: boolean;
+    hasDOM?: boolean;
+    score?: number;
+  },
 ) {
-  return { name, type, up };
+  return {
+    name,
+    type,
+    up,
+    friendlyName: options?.friendlyName,
+    description: options?.description,
+    speedDisplay: options?.speedDisplay,
+    chipsetVendor: options?.chipsetVendor,
+    chipsetModel: options?.chipsetModel,
+    hasTDR: options?.hasTDR ?? false,
+    hasDOM: options?.hasDOM ?? false,
+    score: options?.score ?? 0,
+  };
 }
