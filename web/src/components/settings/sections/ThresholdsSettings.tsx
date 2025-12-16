@@ -5,7 +5,13 @@ import { Tooltip } from "../../ui/Tooltip";
 import { THRESHOLD_HELP } from "../../help/HelpContent";
 import { SettingsThresholds, SaveStatus } from "../../../types/settings";
 import { Info, SlidersHorizontal } from "../../ui/Icons";
-import { layout, icon as iconTokens, radius, input as inputTokens } from "../../../styles/theme";
+import {
+  layout,
+  icon as iconTokens,
+  radius,
+  input as inputTokens,
+  spacing,
+} from "../../../styles/theme";
 
 interface ThresholdsSettingsProps {
   thresholds: SettingsThresholds;
@@ -14,7 +20,7 @@ interface ThresholdsSettingsProps {
 }
 
 /**
- *
+ * Settings section for configuring alert thresholds across metrics.
  */
 export function ThresholdsSettings({
   thresholds,
@@ -23,18 +29,55 @@ export function ThresholdsSettings({
 }: ThresholdsSettingsProps) {
   const { t } = useTranslation("settings");
 
+  // Type-safe threshold category getter
+  function getThresholdCategory(
+    prev: SettingsThresholds,
+    category: keyof Omit<SettingsThresholds, "httpTimings">
+  ) {
+    switch (category) {
+      case "dns":
+        return prev.dns;
+      case "gateway":
+        return prev.gateway;
+      case "wifi":
+        return prev.wifi;
+      case "customPing":
+        return prev.customPing;
+      case "customTcp":
+        return prev.customTcp;
+      case "customHttp":
+        return prev.customHttp;
+    }
+  }
+
+  // Type-safe HTTP timing phase getter
+  function getHttpTimingPhase(
+    httpTimings: SettingsThresholds["httpTimings"],
+    phase: keyof SettingsThresholds["httpTimings"]
+  ) {
+    switch (phase) {
+      case "dns":
+        return httpTimings.dns;
+      case "tcp":
+        return httpTimings.tcp;
+      case "tls":
+        return httpTimings.tls;
+      case "ttfb":
+        return httpTimings.ttfb;
+    }
+  }
+
   const updateThreshold = (
     category: keyof Omit<SettingsThresholds, "httpTimings">,
     level: "good" | "warning",
     value: number
   ) => {
-    setThresholds((prev) => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [level]: value,
-      },
-    }));
+    setThresholds((prev) => {
+      const current = getThresholdCategory(prev, category);
+      const updated =
+        level === "good" ? { ...current, good: value } : { ...current, warning: value };
+      return { ...prev, [category]: updated };
+    });
   };
 
   const updateHttpTimingThreshold = (
@@ -42,16 +85,15 @@ export function ThresholdsSettings({
     level: "good" | "warning",
     value: number
   ) => {
-    setThresholds((prev) => ({
-      ...prev,
-      httpTimings: {
-        ...prev.httpTimings,
-        [phase]: {
-          ...prev.httpTimings[phase],
-          [level]: value,
-        },
-      },
-    }));
+    setThresholds((prev) => {
+      const current = getHttpTimingPhase(prev.httpTimings, phase);
+      const updated =
+        level === "good" ? { ...current, good: value } : { ...current, warning: value };
+      return {
+        ...prev,
+        httpTimings: { ...prev.httpTimings, [phase]: updated },
+      };
+    });
   };
 
   return (
@@ -66,8 +108,10 @@ export function ThresholdsSettings({
     >
       <div className="stack-sm">
         {/* DNS Thresholds */}
-        <div className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}>
-          <div className={`${layout.inline.tight} mb-2`}>
+        <div
+          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.dnsLookup")}
             </span>
@@ -104,8 +148,10 @@ export function ThresholdsSettings({
         </div>
 
         {/* Gateway Thresholds */}
-        <div className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}>
-          <div className={`${layout.inline.tight} mb-2`}>
+        <div
+          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.gatewayPing")}
             </span>
@@ -142,8 +188,10 @@ export function ThresholdsSettings({
         </div>
 
         {/* Wi-Fi Signal Thresholds */}
-        <div className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}>
-          <div className={`${layout.inline.tight} mb-2`}>
+        <div
+          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.wifiSignal")}
             </span>
@@ -180,8 +228,10 @@ export function ThresholdsSettings({
         </div>
 
         {/* Health Check Ping Thresholds */}
-        <div className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}>
-          <div className={`${layout.inline.tight} mb-2`}>
+        <div
+          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.healthPing")}
             </span>
@@ -218,8 +268,10 @@ export function ThresholdsSettings({
         </div>
 
         {/* Health Check TCP Thresholds */}
-        <div className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}>
-          <div className={`${layout.inline.tight} mb-2`}>
+        <div
+          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+        >
+          <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.healthTcp")}
             </span>
@@ -256,7 +308,9 @@ export function ThresholdsSettings({
         </div>
 
         {/* HTTP Thresholds (Total + Timing Phases) */}
-        <div className={`p-3 bg-surface-base ${radius.md} border border-surface-border`}>
+        <div
+          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+        >
           <span className="body-small font-medium text-text-primary block mb-2">
             {t("thresholds.httpThresholds")}
           </span>
@@ -268,7 +322,9 @@ export function ThresholdsSettings({
                 {t("thresholds.totalResponseTime")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP Total"]} position="top">
-                <Info className="w-3 h-3 text-text-muted hover:text-text-secondary cursor-help" />
+                <Info
+                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                />
               </Tooltip>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -299,18 +355,22 @@ export function ThresholdsSettings({
             </div>
           </div>
 
-          <p className="caption text-text-muted mb-3 border-t border-surface-border pt-2">
+          <p
+            className={`caption text-text-muted ${spacing.margin.bottom.heading} border-t border-surface-border ${spacing.pad.sm}`}
+          >
             {t("thresholds.perPhaseThresholds")}
           </p>
 
           {/* DNS */}
-          <div className="mb-3">
-            <div className={`${layout.inline.tight} mb-1`}>
+          <div className={spacing.margin.bottom.heading}>
+            <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.dnsLookupPhase")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP DNS"]} position="top">
-                <Info className="w-3 h-3 text-text-muted hover:text-text-secondary cursor-help" />
+                <Info
+                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                />
               </Tooltip>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -344,13 +404,15 @@ export function ThresholdsSettings({
           </div>
 
           {/* TCP */}
-          <div className="mb-3">
-            <div className={`${layout.inline.tight} mb-1`}>
+          <div className={spacing.margin.bottom.heading}>
+            <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.tcpConnect")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP TCP"]} position="top">
-                <Info className="w-3 h-3 text-text-muted hover:text-text-secondary cursor-help" />
+                <Info
+                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                />
               </Tooltip>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -384,13 +446,15 @@ export function ThresholdsSettings({
           </div>
 
           {/* TLS */}
-          <div className="mb-3">
-            <div className={`${layout.inline.tight} mb-1`}>
+          <div className={spacing.margin.bottom.heading}>
+            <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.tlsHandshake")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP TLS"]} position="top">
-                <Info className="w-3 h-3 text-text-muted hover:text-text-secondary cursor-help" />
+                <Info
+                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                />
               </Tooltip>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -425,10 +489,12 @@ export function ThresholdsSettings({
 
           {/* TTFB */}
           <div>
-            <div className={`${layout.inline.tight} mb-1`}>
+            <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
               <span className="caption font-medium text-text-primary">{t("thresholds.ttfb")}</span>
               <Tooltip content={THRESHOLD_HELP["HTTP TTFB"]} position="top">
-                <Info className="w-3 h-3 text-text-muted hover:text-text-secondary cursor-help" />
+                <Info
+                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                />
               </Tooltip>
             </div>
             <div className="grid grid-cols-2 gap-2">

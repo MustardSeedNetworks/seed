@@ -56,7 +56,7 @@ interface PerformanceSettingsProps {
 }
 
 /**
- *
+ * Settings section for speed test and iPerf performance testing configuration.
  */
 export function PerformanceSettings({
   testsSettings,

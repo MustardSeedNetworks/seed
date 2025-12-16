@@ -28,7 +28,8 @@
  */
 
 import { Component, ReactNode } from "react";
-import { radius } from "../styles/theme";
+import { Translation } from "react-i18next";
+import { radius, button, spacing } from "../styles/theme";
 
 /**
  * Props for ErrorBoundary component
@@ -101,23 +102,32 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="min-h-screen bg-surface-base flex items-center justify-center p-4">
-          <div className="w-full max-w-md text-center">
-            <div className="text-4xl mb-4">
-              <span className="text-status-error">!</span>
-            </div>
-            <h1 className="heading-2 mb-2">Something went wrong</h1>
-            <p className="body-small mb-4">
-              {this.state.error?.message || "An unexpected error occurred"}
-            </p>
-            <button
-              onClick={this.handleRetry}
-              className={`px-4 py-2 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary`}
+        <Translation ns="common">
+          {(t) => (
+            <div
+              className={`min-h-screen bg-surface-base flex items-center justify-center ${spacing.pad.default}`}
             >
-              Try Again
-            </button>
-          </div>
-        </div>
+              <div className="w-full max-w-md text-center">
+                <div className={`text-4xl ${spacing.margin.bottom.content}`}>
+                  <span className="text-status-error">!</span>
+                </div>
+                <h1 className={`heading-2 ${spacing.margin.bottom.inline}`}>
+                  {t("errorBoundary.title")}
+                </h1>
+                <p className={`body-small ${spacing.margin.bottom.content}`}>
+                  {this.state.error?.message || t("errorBoundary.defaultMessage")}
+                </p>
+                <button
+                  type="button"
+                  onClick={this.handleRetry}
+                  className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary`}
+                >
+                  {t("errorBoundary.tryAgain")}
+                </button>
+              </div>
+            </div>
+          )}
+        </Translation>
       );
     }
 

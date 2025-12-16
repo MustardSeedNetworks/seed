@@ -217,6 +217,7 @@ export function useAuth(): UseAuthReturn {
 }
 
 /**
+ * Returns auth headers for API requests (deprecated - returns empty object).
  * @deprecated No longer needed with cookie-based authentication.
  * API requests automatically include cookies with credentials: 'include'.
  * This function is kept for backward compatibility but returns empty object.

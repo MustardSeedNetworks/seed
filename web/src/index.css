@@ -251,6 +251,9 @@ body {
   .pad-lg {
     @apply p-6; /* 24px - modal/drawer padding */
   }
+  .pad-xl {
+    @apply p-8; /* 32px - large sections */
+  }
 
   /* Inline spacing (horizontal gaps for buttons, badges, etc.) */
   .inline-gap-xs {
@@ -287,6 +290,46 @@ body {
   /* Focus states */
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base;
+  }
+
+  /* ========================================================================
+     MARGIN UTILITIES
+     ========================================================================
+     Semantic margin utilities for consistent spacing.
+     Use these instead of arbitrary mb-*, mt-* values.
+     ======================================================================== */
+
+  /* Bottom margins (for content following sections/headings) */
+  .mb-section {
+    @apply mb-6; /* 24px - between major sections */
+  }
+  .mb-section-lg {
+    @apply mb-8; /* 32px - large section gaps */
+  }
+  .mb-heading {
+    @apply mb-3; /* 12px - after headings */
+  }
+  .mb-content {
+    @apply mb-4; /* 16px - after content blocks */
+  }
+
+  /* Top margins (for content spacing) */
+  .mt-section {
+    @apply mt-8; /* 32px - before major sections */
+  }
+  .mt-content {
+    @apply mt-4; /* 16px - content separation */
+  }
+  .mt-inline {
+    @apply mt-2; /* 8px - inline content */
+  }
+
+  /* Main content padding (responsive) */
+  .main-padding-y {
+    @apply py-4 sm:py-6; /* Responsive vertical padding */
+  }
+  .content-padding-x {
+    @apply px-4 sm:px-6 lg:px-8; /* Responsive horizontal padding */
   }
 }
 

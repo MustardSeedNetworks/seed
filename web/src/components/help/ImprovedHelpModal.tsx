@@ -25,7 +25,7 @@
 
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn, icon as iconTokens, layout, radius } from "../../styles/theme";
+import { cn, icon as iconTokens, layout, radius, modal, spacing } from "../../styles/theme";
 import {
   Activity,
   Wifi,
@@ -135,10 +135,10 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
   const currentSection = sections.find((s) => s.id === activeSection);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${spacing.pad.default}`}>
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className={`absolute inset-0 ${modal.overlay} backdrop-blur-sm`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -151,7 +151,9 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
         aria-labelledby="help-modal-title"
       >
         {/* Header */}
-        <div className={`${layout.flex.between} p-4 border-b border-surface-border shrink-0`}>
+        <div
+          className={`${layout.flex.between} ${spacing.pad.default} border-b border-surface-border shrink-0`}
+        >
           <h2 id="help-modal-title" className="heading-3">
             {t("modal.title")}
           </h2>
@@ -175,7 +177,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
           {/* Sidebar / TOC */}
           <aside className="w-64 border-r border-surface-border bg-surface-base overflow-y-auto shrink-0">
             {/* Search */}
-            <div className="p-3 border-b border-surface-border">
+            <div className={`${spacing.pad.sm} border-b border-surface-border`}>
               <div className="relative">
                 <Search
                   className={`absolute left-3 top-1/2 -translate-y-1/2 ${iconTokens.size.sm} text-text-muted`}
@@ -191,7 +193,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
             </div>
 
             {/* Table of Contents */}
-            <nav className="p-2">
+            <nav className="p-2 stack-xs">
               <p className="caption px-3 py-2 uppercase tracking-wider">{t("modal.contents")}</p>
               {filteredSections.map((section) => (
                 <button
@@ -212,7 +214,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
           </aside>
 
           {/* Main content */}
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className={`flex-1 overflow-y-auto ${spacing.pad.lg}`}>
             {currentSection && <div>{currentSection.content}</div>}
           </main>
         </div>
@@ -226,51 +228,58 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
 // ============================================================================
 
 function AboutSection() {
+  const { t } = useTranslation("help");
   return (
     <div className="section-gap max-w-3xl">
       <div>
-        <h3 className="heading-2 mb-3">Welcome to The Seed</h3>
-        <p className="body leading-relaxed mb-4">
-          The Seed is a comprehensive network diagnostics and monitoring tool by Mustard Seed
-          Networks, designed to provide deep visibility into your network infrastructure.
+        <h3 className={`heading-2 ${spacing.margin.bottom.heading}`}>
+          {t("content.about.welcome")}
+        </h3>
+        <p className={`body leading-relaxed ${spacing.margin.bottom.content}`}>
+          {t("content.about.description")}
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className={`grid md:grid-cols-2 ${spacing.gap.comfortable}`}>
         <FeatureCard
-          title="Real-time Monitoring"
-          description="Monitor link status, WiFi signal strength, gateway reachability, and more with live updates."
+          title={t("content.about.features.realTimeMonitoring.title")}
+          description={t("content.about.features.realTimeMonitoring.description")}
         />
         <FeatureCard
-          title="Network Discovery"
-          description="Discover all devices on your network with ARP scanning, LLDP/CDP neighbor detection."
+          title={t("content.about.features.networkDiscovery.title")}
+          description={t("content.about.features.networkDiscovery.description")}
         />
         <FeatureCard
-          title="Performance Testing"
-          description="Run internet speed tests and LAN throughput tests with iperf3 integration."
+          title={t("content.about.features.performanceTesting.title")}
+          description={t("content.about.features.performanceTesting.description")}
         />
         <FeatureCard
-          title="Cable Diagnostics"
-          description="Test Ethernet cables using Time Domain Reflectometry (TDR) to find faults and measure length."
+          title={t("content.about.features.cableDiagnostics.title")}
+          description={t("content.about.features.cableDiagnostics.description")}
         />
       </div>
 
-      <div className={`border-l-4 border-brand-primary bg-brand-primary/5 p-4 ${radius.default}`}>
-        <h4 className="font-semibold text-text-primary mb-2">Open Source & Customizable</h4>
+      <div
+        className={`border-l-4 border-brand-primary bg-brand-primary/5 ${spacing.pad.default} ${radius.default}`}
+      >
+        <h4 className="font-semibold text-text-primary mb-2">
+          {t("content.about.openSource.title")}
+        </h4>
         <p className="body-small text-text-secondary">
-          The Seed is open source software. Customize thresholds, configure tests, and integrate
-          with your existing monitoring infrastructure.
+          {t("content.about.openSource.description")}
         </p>
       </div>
 
       <div>
-        <h4 className="font-semibold text-text-primary mb-3">Version Info</h4>
+        <h4 className="font-semibold text-text-primary mb-3">
+          {t("content.about.versionInfo.title")}
+        </h4>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 body-small">
-          <dt className="text-text-muted">Current Version:</dt>
+          <dt className="text-text-muted">{t("content.about.versionInfo.currentVersion")}</dt>
           <dd className="font-mono text-text-primary">v0.13.0</dd>
-          <dt className="text-text-muted">Backend:</dt>
+          <dt className="text-text-muted">{t("content.about.versionInfo.backend")}</dt>
           <dd className="text-text-primary">Go 1.25+</dd>
-          <dt className="text-text-muted">Frontend:</dt>
+          <dt className="text-text-muted">{t("content.about.versionInfo.frontend")}</dt>
           <dd className="text-text-primary">React 18 + TypeScript</dd>
         </dl>
       </div>
@@ -279,48 +288,53 @@ function AboutSection() {
 }
 
 function GettingStartedSection() {
+  const { t } = useTranslation("help");
+  const tips = t("content.gettingStarted.proTips.tips", { returnObjects: true }) as string[];
   return (
     <div className="section-gap max-w-3xl">
-      <h3 className="heading-2 mb-3">Getting Started</h3>
+      <h3 className={`heading-2 ${spacing.margin.bottom.heading}`}>
+        {t("content.gettingStarted.title")}
+      </h3>
 
       <div className="stack-lg">
         <StepCard
           number={1}
-          title="Dashboard Overview"
-          description="The main dashboard shows all diagnostic cards. Each card displays real-time information about a specific aspect of your network."
+          title={t("content.gettingStarted.steps.dashboard.title")}
+          description={t("content.gettingStarted.steps.dashboard.description")}
         />
         <StepCard
           number={2}
-          title="Select Network Interface"
-          description='Use the interface dropdown in the header to select which network interface to monitor (e.g., eth0, wlan0). Click "Settings" to configure interface-specific options.'
+          title={t("content.gettingStarted.steps.interface.title")}
+          description={t("content.gettingStarted.steps.interface.description")}
         />
         <StepCard
           number={3}
-          title="Configure Thresholds"
-          description="Open Settings → Thresholds to customize warning and critical levels for DNS latency, gateway ping, WiFi signal strength, and more."
+          title={t("content.gettingStarted.steps.thresholds.title")}
+          description={t("content.gettingStarted.steps.thresholds.description")}
         />
         <StepCard
           number={4}
-          title="Run Tests"
-          description='Click the "Run All Tests" button (⚡) in the bottom right to execute speed tests, cable diagnostics, network discovery, and custom health checks.'
+          title={t("content.gettingStarted.steps.runTests.title")}
+          description={t("content.gettingStarted.steps.runTests.description")}
         />
         <StepCard
           number={5}
-          title="Explore Individual Cards"
-          description="Each card has a help icon (?) that explains the metrics shown. Click on cards to view detailed information and run specific tests."
+          title={t("content.gettingStarted.steps.exploreCards.title")}
+          description={t("content.gettingStarted.steps.exploreCards.description")}
         />
       </div>
 
-      <div className={`bg-surface-hover border border-surface-border ${radius.default} p-4 mt-6`}>
+      <div
+        className={`bg-surface-hover border border-surface-border ${radius.default} ${spacing.pad.default} ${spacing.margin.top.section}`}
+      >
         <h4 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
           <span className="text-status-info">💡</span>
-          Pro Tips
+          {t("content.gettingStarted.proTips.title")}
         </h4>
         <ul className="body-small stack-sm ml-6 list-disc">
-          <li>Use the Network Discovery card to find all devices on your network</li>
-          <li>Set up custom health check tests in Settings → Custom Tests</li>
-          <li>Export diagnostics data for troubleshooting or documentation</li>
-          <li>Enable auto-scan for continuous network monitoring</li>
+          {tips.map((tip, index) => (
+            <li key={index}>{tip}</li>
+          ))}
         </ul>
       </div>
     </div>
@@ -328,37 +342,33 @@ function GettingStartedSection() {
 }
 
 function LinkStatusSection() {
+  const { t } = useTranslation("help");
   return (
-    <HelpContentSection title="Link Status">
-      <p className="body-small text-text-secondary mb-4">
-        Monitors the physical layer connection of your network interface.
+    <HelpContentSection title={t("sections.link")}>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+        {t("content.linkStatus.description")}
       </p>
       <HelpTermList
         items={[
           {
-            term: "Carrier",
-            description:
-              "Physical layer signal detection. Shows 'Connected' when NIC detects a link partner (cable connected to active port).",
+            term: t("content.linkStatus.terms.carrier.term"),
+            description: t("content.linkStatus.terms.carrier.description"),
           },
           {
-            term: "Speed",
-            description:
-              "Negotiated link speed between your network interface and the connected device (e.g., 1000 Mbps).",
+            term: t("content.linkStatus.terms.speed.term"),
+            description: t("content.linkStatus.terms.speed.description"),
           },
           {
-            term: "Duplex",
-            description:
-              "Communication mode - Full duplex allows simultaneous bidirectional data, Half duplex is one direction at a time.",
+            term: t("content.linkStatus.terms.duplex.term"),
+            description: t("content.linkStatus.terms.duplex.description"),
           },
           {
-            term: "Auto-Negotiation",
-            description:
-              "Whether speed and duplex were auto-negotiated with the link partner or manually configured.",
+            term: t("content.linkStatus.terms.autoNeg.term"),
+            description: t("content.linkStatus.terms.autoNeg.description"),
           },
           {
-            term: "MTU",
-            description:
-              "Maximum Transmission Unit - largest packet size (in bytes) that can be sent without fragmentation. Standard is 1500 bytes.",
+            term: t("content.linkStatus.terms.mtu.term"),
+            description: t("content.linkStatus.terms.mtu.description"),
           },
         ]}
       />
@@ -367,40 +377,37 @@ function LinkStatusSection() {
 }
 
 function CableTestSection() {
+  const { t } = useTranslation("help");
   return (
-    <HelpContentSection title="Cable Test (TDR)">
-      <p className="body-small text-text-secondary mb-4">
-        Time Domain Reflectometry tests cable quality and detects faults.
+    <HelpContentSection title={t("sections.cable")}>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+        {t("content.cableTest.description")}
       </p>
       <HelpTermList
         items={[
           {
-            term: "TDR Test",
-            description:
-              "Sends electrical pulses through the cable and measures reflections to detect faults and measure length.",
+            term: t("content.cableTest.terms.tdrTest.term"),
+            description: t("content.cableTest.terms.tdrTest.description"),
           },
           {
-            term: "Cable Status",
-            description:
-              "Shows if cable pairs are OK, open (disconnected), short (wires touching), or have impedance mismatch.",
+            term: t("content.cableTest.terms.cableStatus.term"),
+            description: t("content.cableTest.terms.cableStatus.description"),
           },
           {
-            term: "Fault Distance",
-            description: "Distance to cable fault in meters. Helps locate physical cable problems.",
+            term: t("content.cableTest.terms.faultDistance.term"),
+            description: t("content.cableTest.terms.faultDistance.description"),
           },
           {
-            term: "Pairs",
-            description:
-              "Ethernet cables have 4 twisted pairs. Gigabit uses all 4; Fast Ethernet uses pairs 1-2 and 3-6.",
+            term: t("content.cableTest.terms.pairs.term"),
+            description: t("content.cableTest.terms.pairs.description"),
           },
         ]}
       />
       <div
-        className={`mt-4 bg-status-warning/10 border border-status-warning/20 ${radius.default} p-3`}
+        className={`${spacing.margin.top.content} bg-status-warning/10 border border-status-warning/20 ${radius.default} ${spacing.pad.sm}`}
       >
         <p className="caption text-status-warning">
-          <strong>Note:</strong> Cable testing requires compatible network hardware. Not all NICs
-          support TDR.
+          <strong>{t("common:labels.note", "Note")}:</strong> {t("content.cableTest.note")}
         </p>
       </div>
     </HelpContentSection>
@@ -408,10 +415,11 @@ function CableTestSection() {
 }
 
 function WiFiStatusSection() {
+  const { t } = useTranslation("help");
   return (
-    <HelpContentSection title="WiFi Status">
-      <p className="body-small text-text-secondary mb-4">
-        Monitor wireless connection quality and settings.
+    <HelpContentSection title={t("sections.wifi")}>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+        {t("content.wifiStatus.description")}
       </p>
       <HelpTermList
         items={[
@@ -451,10 +459,11 @@ function WiFiStatusSection() {
 }
 
 function NetworkSection() {
+  const { t } = useTranslation("help");
   return (
-    <HelpContentSection title="Network & DHCP">
-      <p className="body-small text-text-secondary mb-4">
-        Shows IP configuration and DHCP lease information.
+    <HelpContentSection title={t("sections.network")}>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+        {t("content.networkDhcp.description")}
       </p>
       <HelpTermList
         items={[
@@ -486,10 +495,11 @@ function NetworkSection() {
 }
 
 function GatewaySection() {
+  const { t } = useTranslation("help");
   return (
-    <HelpContentSection title="Gateway">
-      <p className="body-small text-text-secondary mb-4">
-        Tests reachability and latency to your default gateway.
+    <HelpContentSection title={t("sections.gateway")}>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+        {t("content.gatewayHelp.description")}
       </p>
       <HelpTermList
         items={[
@@ -520,10 +530,11 @@ function GatewaySection() {
 }
 
 function DNSSection() {
+  const { t } = useTranslation("help");
   return (
-    <HelpContentSection title="DNS Tests">
-      <p className="body-small text-text-secondary mb-4">
-        Tests DNS resolution performance and functionality.
+    <HelpContentSection title={t("sections.dns")}>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+        {t("content.dnsTests.description")}
       </p>
       <HelpTermList
         items={[
@@ -550,10 +561,11 @@ function DNSSection() {
 }
 
 function PerformanceSection() {
+  const { t } = useTranslation("help");
   return (
-    <HelpContentSection title="Performance Tests">
-      <p className="body-small text-text-secondary mb-4">
-        Run speed tests to measure network throughput.
+    <HelpContentSection title={t("sections.performance")}>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+        {t("content.performanceTests.description")}
       </p>
       <HelpTermList
         items={[
@@ -591,10 +603,11 @@ function PerformanceSection() {
 }
 
 function DiscoverySection() {
+  const { t } = useTranslation("help");
   return (
-    <HelpContentSection title="Network Discovery">
-      <p className="body-small text-text-secondary mb-4">
-        Discover all devices on your network and identify connected switches.
+    <HelpContentSection title={t("sections.discovery")}>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+        {t("content.networkDiscovery.description")}
       </p>
       <HelpTermList
         items={[
@@ -633,7 +646,9 @@ function DiscoverySection() {
 
 function FeatureCard({ title, description }: { title: string; description: string }) {
   return (
-    <div className={`bg-surface-hover border border-surface-border ${radius.lg} p-4`}>
+    <div
+      className={`bg-surface-hover border border-surface-border ${radius.lg} ${spacing.pad.default}`}
+    >
       <h4 className="font-semibold text-text-primary mb-2">{title}</h4>
       <p className="body-small text-text-secondary">{description}</p>
     </div>
@@ -650,7 +665,7 @@ function StepCard({
   description: string;
 }) {
   return (
-    <div className="flex gap-4">
+    <div className={`flex ${spacing.gap.comfortable}`}>
       <div
         className={`shrink-0 w-8 h-8 ${radius.full} bg-brand-primary text-text-inverse ${layout.flex.center} font-semibold`}
       >
@@ -667,7 +682,7 @@ function StepCard({
 function HelpContentSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="max-w-3xl">
-      <h3 className="heading-2 mb-4">{title}</h3>
+      <h3 className={`heading-2 ${spacing.margin.bottom.content}`}>{title}</h3>
       {children}
     </div>
   );

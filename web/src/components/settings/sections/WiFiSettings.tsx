@@ -42,7 +42,7 @@ interface WiFiSettingsProps {
 }
 
 /**
- *
+ * Settings section for WiFi scanning configuration and adapter selection.
  */
 export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
   const { t } = useTranslation("settings");

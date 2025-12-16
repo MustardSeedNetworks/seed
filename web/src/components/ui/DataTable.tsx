@@ -37,21 +37,9 @@
  */
 
 import { useState, useMemo, useCallback, ReactNode } from "react";
-import {
-  ChevronUp,
-  ChevronDown,
-  ArrowUpDown,
-  Search,
-  X,
-  Filter,
-} from "lucide-react";
-import {
-  cn,
-  layout,
-  radius,
-  border,
-  icon as iconTokens,
-} from "../../styles/theme";
+import { useTranslation } from "react-i18next";
+import { ChevronUp, ChevronDown, ArrowUpDown, Search, X, Filter } from "lucide-react";
+import { cn, layout, radius, border, icon as iconTokens } from "../../styles/theme";
 
 export type SortDirection = "asc" | "desc" | null;
 
@@ -84,13 +72,7 @@ export interface DataTableProps<T> {
   }[];
 }
 
-function SortIcon({
-  direction,
-  active,
-}: {
-  direction: SortDirection;
-  active: boolean;
-}) {
+function SortIcon({ direction, active }: { direction: SortDirection; active: boolean }) {
   if (!active || !direction) {
     return <ArrowUpDown className={cn(iconTokens.size.xs, "opacity-40")} />;
   }
@@ -101,6 +83,9 @@ function SortIcon({
   );
 }
 
+/**
+ * Generic table component with search, sorting, and expandable row support.
+ */
 export function DataTable<T>({
   data,
   columns,
@@ -115,14 +100,13 @@ export function DataTable<T>({
   actions,
   filterOptions,
 }: DataTableProps<T>) {
+  const { t } = useTranslation("common");
   // Note: expandedContent is available for future row expansion feature
   void _expandedContent;
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>(
-    {},
-  );
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
   const [showFilters, setShowFilters] = useState(false);
 
   const handleSort = useCallback(
@@ -140,7 +124,7 @@ export function DataTable<T>({
         setSortDirection("asc");
       }
     },
-    [sortKey, sortDirection],
+    [sortKey, sortDirection]
   );
 
   const handleFilterChange = useCallback((key: string, value: string) => {
@@ -183,10 +167,7 @@ export function DataTable<T>({
         if (column) {
           result = result.filter((item) => {
             const value = column.accessor(item);
-            return value
-              ?.toString()
-              .toLowerCase()
-              .includes(filterValue.toLowerCase());
+            return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
           });
         }
       }
@@ -221,18 +202,9 @@ export function DataTable<T>({
     }
 
     return result;
-  }, [
-    data,
-    searchQuery,
-    searchKeys,
-    activeFilters,
-    sortKey,
-    sortDirection,
-    columns,
-  ]);
+  }, [data, searchQuery, searchKeys, activeFilters, sortKey, sortDirection, columns]);
 
-  const hasActiveFilters =
-    searchQuery !== "" || Object.keys(activeFilters).length > 0;
+  const hasActiveFilters = searchQuery !== "" || Object.keys(activeFilters).length > 0;
 
   return (
     <div className="stack-sm">
@@ -242,7 +214,7 @@ export function DataTable<T>({
           <Search
             className={cn(
               iconTokens.size.sm,
-              "absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none",
+              "absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
             )}
           />
           <input
@@ -253,7 +225,7 @@ export function DataTable<T>({
             className={cn(
               "w-full pl-9 pr-8 py-1.5 body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary",
               border.card,
-              radius.lg,
+              radius.lg
             )}
           />
           {searchQuery && (
@@ -277,7 +249,7 @@ export function DataTable<T>({
               border.width.default,
               showFilters || hasActiveFilters
                 ? "bg-brand-primary/20 border-brand-primary text-brand-primary"
-                : "border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted",
+                : "border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted"
             )}
             title="Toggle filters"
           >
@@ -297,7 +269,7 @@ export function DataTable<T>({
               className={cn(
                 "px-2 py-1 caption bg-surface-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary",
                 border.card,
-                radius.default,
+                radius.default
               )}
               aria-label={filter.label}
             >
@@ -315,7 +287,7 @@ export function DataTable<T>({
               onClick={clearFilters}
               className="px-2 py-1 caption text-text-muted hover:text-text-primary"
             >
-              Clear all
+              {t("dataTable.clearAll")}
             </button>
           )}
         </div>
@@ -324,7 +296,10 @@ export function DataTable<T>({
       {/* Results count */}
       {hasActiveFilters && (
         <p className="caption">
-          Showing {filteredAndSortedData.length} of {data.length} results
+          {t("dataTable.showingResults", {
+            shown: filteredAndSortedData.length,
+            total: data.length,
+          })}
         </p>
       )}
 
@@ -339,21 +314,16 @@ export function DataTable<T>({
                   className={cn(
                     "px-2 py-1.5 text-left section-title",
                     column.hiddenOnMobile && "hidden sm:table-cell",
-                    column.sortable &&
-                      "cursor-pointer hover:text-text-primary select-none",
+                    column.sortable && "cursor-pointer hover:text-text-primary select-none",
                     column.width ? `w-[${column.width}]` : ""
                   )}
-                  onClick={
-                    column.sortable ? () => handleSort(column.key) : undefined
-                  }
+                  onClick={column.sortable ? () => handleSort(column.key) : undefined}
                 >
                   <span className={layout.inline.tight}>
                     {column.header}
                     {column.sortable && (
                       <SortIcon
-                        direction={
-                          sortKey === column.key ? sortDirection : null
-                        }
+                        direction={sortKey === column.key ? sortDirection : null}
                         active={sortKey === column.key}
                       />
                     )}
@@ -384,26 +354,19 @@ export function DataTable<T>({
                     className={cn(
                       "border-b border-surface-border/50",
                       onRowClick && "cursor-pointer hover:bg-surface-hover",
-                      expanded && "bg-surface-hover/50",
+                      expanded && "bg-surface-hover/50"
                     )}
                     onClick={onRowClick ? () => onRowClick(item) : undefined}
                   >
                     {columns.map((column) => (
                       <td
                         key={`${key}-${column.key}`}
-                        className={cn(
-                          "px-2 py-2",
-                          column.hiddenOnMobile && "hidden sm:table-cell",
-                        )}
+                        className={cn("px-2 py-2", column.hiddenOnMobile && "hidden sm:table-cell")}
                       >
-                        {column.render
-                          ? column.render(item)
-                          : (column.accessor(item) ?? "-")}
+                        {column.render ? column.render(item) : (column.accessor(item) ?? "-")}
                       </td>
                     ))}
-                    {actions && (
-                      <td className="px-2 py-2 text-right">{actions(item)}</td>
-                    )}
+                    {actions && <td className="px-2 py-2 text-right">{actions(item)}</td>}
                   </tr>
                 );
               })

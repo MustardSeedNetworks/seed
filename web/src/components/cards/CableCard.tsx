@@ -23,6 +23,7 @@
  * State: Receives data from parent component via props
  */
 
+import { useTranslation } from "react-i18next";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
 import { Cable } from "../ui/Icons";
@@ -40,54 +41,73 @@ interface CableCardProps {
   loading?: boolean;
 }
 
-const statusLabels: Record<string, { label: string; status: Status }> = {
-  ok: { label: "OK", status: "success" },
-  open: { label: "Open", status: "error" },
-  short: { label: "Short", status: "error" },
-  impedance_mismatch: { label: "Impedance Mismatch", status: "warning" },
-  unknown: { label: "Unknown", status: "unknown" },
+// Status mapping - labels are resolved dynamically using i18n
+const statusMap: Record<string, Status> = {
+  ok: "success",
+  open: "error",
+  short: "error",
+  impedance_mismatch: "warning",
+  unknown: "unknown",
 };
 
 function getCardStatus(data: CableData | null): Status {
   if (!data || !data.supported) return "unknown";
-  return statusLabels[data.status]?.status || "unknown";
+  return statusMap[data.status] || "unknown";
 }
 
+/**
+ * Displays TDR cable diagnostic results with fault distance indication.
+ */
 export function CableCard({ data, loading }: CableCardProps) {
+  const { t } = useTranslation("cards");
+
+  const getStatusLabel = (status: string): string => {
+    switch (status) {
+      case "ok":
+        return t("cable.statusOk");
+      case "open":
+        return t("cable.statusOpen");
+      case "short":
+        return t("cable.statusShort");
+      case "impedance_mismatch":
+        return t("cable.statusImpedanceMismatch");
+      default:
+        return t("cable.statusUnknown");
+    }
+  };
+
   return (
     <SimpleBaseCard
-      title="Cable Test"
+      title={t("cable.title")}
       icon={<Cable className={iconTokens.size.md} />}
       status={loading ? "loading" : getCardStatus(data)}
       loading={loading}
-      loadingContent={<CardValue value="Testing..." size="lg" />}
+      loadingContent={<CardValue value={t("cable.testing")} size="lg" />}
     >
       {!data ? (
-        <CardValue value="No data" size="md" />
+        <CardValue value={t("cable.noData")} size="md" />
       ) : !data.supported ? (
         <>
-          <CardValue value="Not Supported" size="md" />
-          <p className="caption mt-2">
-            This NIC does not support TDR cable testing.
-          </p>
+          <CardValue value={t("cable.notSupported")} size="md" />
+          <p className="caption mt-2">{t("cable.tdrNotSupported")}</p>
         </>
       ) : (
         <>
           <CardValue
-            value={statusLabels[data.status]?.label || "Unknown"}
+            value={getStatusLabel(data.status)}
             size="lg"
-            status={statusLabels[data.status]?.status || "unknown"}
+            status={statusMap[data.status] || "unknown"}
           />
           {data.length !== null && (
             <>
               <CardDivider />
-              <CardRow label="Length" value={`${data.length}m`} />
+              <CardRow label={t("cable.length")} value={`${data.length}m`} />
             </>
           )}
           {data.faults.length > 0 && (
             <>
               <CardDivider />
-              <p className="caption mb-1">Faults</p>
+              <p className="caption mb-1">{t("cable.faults")}</p>
               <ul className="body-small text-status-error">
                 {data.faults.map((fault, index) => (
                   <li key={index}>• {fault}</li>

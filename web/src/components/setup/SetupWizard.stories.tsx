@@ -1,6 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SetupWizard } from './SetupWizard';
-import { useState } from 'react';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { SetupWizard } from "./SetupWizard";
+import { useState } from "react";
+
+// No-op function for story event handlers
+const noop = () => {};
 
 /**
  * SetupWizard guides users through initial system setup.
@@ -17,12 +20,12 @@ import { useState } from 'react';
  * This story demonstrates the complete setup flow and various states.
  */
 const meta: Meta<typeof SetupWizard> = {
-  title: 'Setup/SetupWizard',
+  title: "Setup/SetupWizard",
   component: SetupWizard,
   parameters: {
-    layout: 'fullscreen',
+    layout: "fullscreen",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;
@@ -55,7 +58,7 @@ export const WithSuggestedPassword: Story = {
     onLogin: async (_username: string, _password: string) => {
       return true;
     },
-    suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
+    suggestedPassword: "Xk9mP#2vL@q7Tn4w",
   },
 };
 
@@ -66,7 +69,7 @@ export const WithSuggestedPassword: Story = {
 export const GeneratedPasswordSelected: Story = {
   render: () => {
     return (
-      <div style={{ position: 'relative', minHeight: '100vh' }}>
+      <div style={{ position: "relative", minHeight: "100vh" }}>
         <SetupWizard
           onComplete={() => {
             // Handle setup completion
@@ -122,7 +125,8 @@ export const ValidationErrorMismatch: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Enter different values in password and confirm password fields to see the mismatch error.',
+        story:
+          "Enter different values in password and confirm password fields to see the mismatch error.",
       },
     },
   },
@@ -159,9 +163,9 @@ export const SubmittingSetup: Story = {
  */
 export const NetworkError: Story = {
   args: {
-    onComplete: () => console.log('Setup complete'),
+    onComplete: noop,
     onLogin: async () => {
-      throw new Error('Network error. Please try again.');
+      throw new Error("Network error. Please try again.");
     },
   },
 };
@@ -172,7 +176,7 @@ export const NetworkError: Story = {
  */
 export const SetupCompleteLoginFailed: Story = {
   args: {
-    onComplete: () => console.log('Setup complete'),
+    onComplete: noop,
     onLogin: async () => {
       return false;
     },
@@ -201,7 +205,7 @@ export const PasswordVisible: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Click the eye icon to toggle password visibility.',
+        story: "Click the eye icon to toggle password visibility.",
       },
     },
   },
@@ -217,11 +221,11 @@ export const MobileViewport: Story = {
       // Handle setup completion
     },
     onLogin: async () => true,
-    suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
+    suggestedPassword: "Xk9mP#2vL@q7Tn4w",
   },
   parameters: {
     viewport: {
-      defaultViewport: 'mobile1',
+      defaultViewport: "mobile1",
     },
   },
 };
@@ -236,11 +240,11 @@ export const TabletViewport: Story = {
       // Handle setup completion
     },
     onLogin: async () => true,
-    suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
+    suggestedPassword: "Xk9mP#2vL@q7Tn4w",
   },
   parameters: {
     viewport: {
-      defaultViewport: 'tablet',
+      defaultViewport: "tablet",
     },
   },
 };
@@ -258,8 +262,18 @@ export const InteractiveSetupFlow: Story = {
         <div className="min-h-screen bg-surface-base flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-status-success/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-status-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-8 h-8 text-status-success"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
             <h2 className="heading-2 mb-2">Setup Complete!</h2>
@@ -274,7 +288,7 @@ export const InteractiveSetupFlow: Story = {
         onComplete={() => setSetupComplete(true)}
         onLogin={async (_username, _password) => {
           // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           return true;
         }}
         suggestedPassword="Xk9mP#2vL@q7Tn4w"
@@ -284,7 +298,7 @@ export const InteractiveSetupFlow: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Fill out the form and submit to see the complete setup flow with success state.',
+        story: "Fill out the form and submit to see the complete setup flow with success state.",
       },
     },
   },

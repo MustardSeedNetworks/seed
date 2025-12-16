@@ -1,6 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { HealthCheckCard } from './HealthCheckCard';
-import { SettingsProvider } from '../../contexts/SettingsContext';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { HealthCheckCard } from "./HealthCheckCard";
 
 /**
  * HealthCheckCard performs comprehensive health checks for remote services.
@@ -15,22 +14,21 @@ import { SettingsProvider } from '../../contexts/SettingsContext';
  * - Visual timing bars for HTTP requests
  * - Status badges for quick health overview
  *
- * This story demonstrates various health check scenarios.
+ * Note: SettingsProvider and I18nextProvider are provided by global decorators
+ * in .storybook/preview.tsx.
  */
 const meta = {
-  title: 'Cards/HealthCheckCard',
+  title: "Cards/HealthCheckCard",
   component: HealthCheckCard,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <SettingsProvider>
-        <div style={{ width: '420px' }}>
-          <Story />
-        </div>
-      </SettingsProvider>
+      <div style={{ width: "420px" }}>
+        <Story />
+      </div>
     ),
   ],
 } satisfies Meta<typeof HealthCheckCard>;

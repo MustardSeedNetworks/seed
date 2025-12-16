@@ -1,9 +1,9 @@
 /**
  * FAB.test.tsx - Floating Action Button Tests
- * 
+ *
  * Purpose: Test suite for the FAB (Floating Action Button) component testing
  * button rendering, event dispatching, loading state, and timeout handling.
- * 
+ *
  * Key Test Areas:
  * - Rendering: FAB button displays with correct aria-label
  * - Event dispatch: clicking button dispatches runAllTests event
@@ -12,14 +12,14 @@
  * - Test completion: listens for testsComplete event
  * - Timeout handling: 60-second timeout clears loading state
  * - Visual feedback: spinner visible during test execution
- * 
+ *
  * Test Framework: Vitest with React Testing Library and fake timers
- * 
+ *
  * Usage:
  * ```bash
  * npm test -- FAB.test.tsx
  * ```
- * 
+ *
  * Dependencies: vitest, @testing-library/react
  */
 
@@ -55,7 +55,7 @@ describe("FAB", () => {
     expect(dispatchEventSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "runAllTests",
-      }),
+      })
     );
 
     dispatchEventSpy.mockRestore();

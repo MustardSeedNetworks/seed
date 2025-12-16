@@ -22,7 +22,7 @@
  * </CollapsibleSection>
  *
  * // Compact variant (inside card)
- * <CollapsibleSection 
+ * <CollapsibleSection
  *   title="Server Results"
  *   count={3}
  *   status="success"
@@ -39,13 +39,7 @@
 import { useState, ReactNode } from "react";
 import { Status } from "./Card";
 import { StatusBadge } from "./StatusBadge";
-import {
-  cn,
-  layout,
-  radius,
-  border,
-  icon as iconTokens,
-} from "../../styles/theme";
+import { cn, layout, radius, border, spacing, icon as iconTokens } from "../../styles/theme";
 
 interface CollapsibleSectionProps {
   title: ReactNode;
@@ -59,6 +53,9 @@ interface CollapsibleSectionProps {
   variant?: "default" | "compact";
 }
 
+/**
+ * Expandable section with animated collapse/expand toggle and optional count badge.
+ */
 export function CollapsibleSection({
   title,
   defaultOpen = false,
@@ -76,7 +73,7 @@ export function CollapsibleSection({
       className={cn(
         !isCompact && border.card,
         !isCompact && radius.lg,
-        !isCompact && "overflow-hidden",
+        !isCompact && "overflow-hidden"
       )}
     >
       <button
@@ -86,7 +83,7 @@ export function CollapsibleSection({
           layout.flex.between,
           isCompact
             ? cn("py-1.5 hover:bg-surface-hover/50", radius.default)
-            : "p-3 bg-surface-base hover:bg-surface-hover",
+            : `${spacing.pad.sm} bg-surface-base hover:bg-surface-hover`
         )}
       >
         <div className={layout.inline.default}>
@@ -94,30 +91,20 @@ export function CollapsibleSection({
             className={cn(
               iconTokens.size.xs,
               "text-text-muted transition-transform duration-200",
-              isOpen && "rotate-90",
+              isOpen && "rotate-90"
             )}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           {status && <StatusBadge status={status} size="sm" />}
           <span
-            className={cn(
-              "font-medium text-text-primary",
-              isCompact ? "caption" : "body-small",
-            )}
+            className={cn("font-medium text-text-primary", isCompact ? "caption" : "body-small")}
           >
             {title}
-            {count !== undefined && (
-              <span className="text-text-muted ml-1">({count})</span>
-            )}
+            {count !== undefined && <span className="text-text-muted ml-1">({count})</span>}
           </span>
         </div>
       </button>
@@ -126,7 +113,7 @@ export function CollapsibleSection({
           className={cn(
             isCompact
               ? "pl-5 pb-2 stack-xs"
-              : "p-3 border-t border-surface-border bg-surface-raised stack",
+              : `${spacing.pad.sm} border-t border-surface-border bg-surface-raised stack`
           )}
         >
           {children}

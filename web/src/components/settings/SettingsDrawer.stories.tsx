@@ -9,31 +9,14 @@
  * - Open: Drawer is visible with all sections
  * - Mobile viewport: Full-screen drawer on small screens
  * - Desktop viewport: Side drawer on larger screens
- * - With mock context: SettingsProvider for realistic state
  *
- * Note: This component requires SettingsContext for full functionality.
- * For individual section testing, see the section-specific stories.
+ * Note: SettingsProvider and I18nextProvider are provided by global decorators
+ * in .storybook/preview.tsx. For individual section testing, see section-specific stories.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState } from "react";
 import { SettingsDrawer } from "./SettingsDrawer";
-import { SettingsProvider } from "../../contexts/SettingsContext";
-
-/** Simple theme wrapper for Storybook - applies dark class to document */
-function ThemeWrapper({ children, dark = true }: { children: ReactNode; dark?: boolean }) {
-  useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    return () => {
-      document.documentElement.classList.remove("dark");
-    };
-  }, [dark]);
-  return <>{children}</>;
-}
 
 const meta: Meta<typeof SettingsDrawer> = {
   title: "Settings/SettingsDrawer",
@@ -60,13 +43,9 @@ const meta: Meta<typeof SettingsDrawer> = {
   },
   decorators: [
     (Story) => (
-      <ThemeWrapper>
-        <SettingsProvider>
-          <div className="h-screen bg-surface-base">
-            <Story />
-          </div>
-        </SettingsProvider>
-      </ThemeWrapper>
+      <div className="h-screen bg-surface-base">
+        <Story />
+      </div>
     ),
   ],
 };
@@ -133,11 +112,7 @@ export const Interactive: Story = {
         >
           Open Settings
         </button>
-        <SettingsDrawer
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          version="1.0.0"
-        />
+        <SettingsDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} version="1.0.0" />
       </div>
     );
   },
@@ -212,15 +187,9 @@ export const WithBackdrop: Story = {
           <p className="body-small text-text-primary">
             Click the dark backdrop to close the drawer.
           </p>
-          <p className="caption text-text-muted mt-1">
-            Backdrop clicks: {clickCount}
-          </p>
+          <p className="caption text-text-muted mt-1">Backdrop clicks: {clickCount}</p>
         </div>
-        <SettingsDrawer
-          isOpen={isOpen}
-          onClose={handleClose}
-          version="1.0.0"
-        />
+        <SettingsDrawer isOpen={isOpen} onClose={handleClose} version="1.0.0" />
       </div>
     );
   },
@@ -228,6 +197,7 @@ export const WithBackdrop: Story = {
 
 /**
  * Dark theme - shows drawer in dark mode
+ * Note: Dark theme is the default via global decorators
  */
 export const DarkTheme: Story = {
   args: {
@@ -235,17 +205,6 @@ export const DarkTheme: Story = {
     onClose: () => {},
     version: "1.0.0",
   },
-  decorators: [
-    (Story) => (
-      <ThemeWrapper dark={true}>
-        <SettingsProvider>
-          <div className="h-screen bg-surface-base" data-theme="dark">
-            <Story />
-          </div>
-        </SettingsProvider>
-      </ThemeWrapper>
-    ),
-  ],
 };
 
 /**
@@ -282,11 +241,7 @@ export const WithContent: Story = {
           </button>
         </div>
 
-        <SettingsDrawer
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          version="1.0.0"
-        />
+        <SettingsDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} version="1.0.0" />
       </div>
     );
   },

@@ -125,11 +125,7 @@ export const SpeedGauge = memo(function SpeedGauge({
 
   return (
     <div className="flex flex-col items-center">
-      {label && (
-        <p className="caption text-text-muted mb-1 uppercase tracking-wider">
-          {label}
-        </p>
-      )}
+      {label && <p className="caption text-text-muted mb-1 uppercase tracking-wider">{label}</p>}
       <div className="relative">
         <svg
           width={sizeConfig.width}
@@ -164,14 +160,10 @@ export const SpeedGauge = memo(function SpeedGauge({
             const tickAngle = startAngle + (tick / 100) * angleRange;
             const innerRadius = radius - sizeConfig.strokeWidth / 2 - 4;
             const outerRadius = radius - sizeConfig.strokeWidth / 2 - 8;
-            const tickStartX =
-              centerX + innerRadius * Math.cos(toRadians(tickAngle));
-            const tickStartY =
-              centerY + innerRadius * Math.sin(toRadians(tickAngle));
-            const tickEndX =
-              centerX + outerRadius * Math.cos(toRadians(tickAngle));
-            const tickEndY =
-              centerY + outerRadius * Math.sin(toRadians(tickAngle));
+            const tickStartX = centerX + innerRadius * Math.cos(toRadians(tickAngle));
+            const tickStartY = centerY + innerRadius * Math.sin(toRadians(tickAngle));
+            const tickEndX = centerX + outerRadius * Math.cos(toRadians(tickAngle));
+            const tickEndY = centerY + outerRadius * Math.sin(toRadians(tickAngle));
             return (
               <line
                 key={tick}
@@ -213,9 +205,7 @@ export const SpeedGauge = memo(function SpeedGauge({
           >
             {isRunning && value === 0 ? "—" : displayValue.value}
           </span>
-          <span className="caption text-text-muted -mt-1">
-            {displayValue.unit}
-          </span>
+          <span className="caption text-text-muted -mt-1">{displayValue.unit}</span>
         </div>
       </div>
     </div>
@@ -275,11 +265,7 @@ export const ProgressRing = memo(function ProgressRing({
           </span>
         </div>
       </div>
-      {label && (
-        <span className="caption text-text-muted mt-1 text-center">
-          {label}
-        </span>
-      )}
+      {label && <span className="caption text-text-muted mt-1 text-center">{label}</span>}
     </div>
   );
 });
@@ -294,26 +280,36 @@ export const PulsingDot = memo(function PulsingDot({
   color = "primary",
   size = "md",
 }: PulsingDotProps) {
-  const colorClasses = {
-    primary: "bg-brand-primary",
-    success: "bg-status-success",
-    warning: "bg-status-warning",
-    error: "bg-status-error",
-  };
+  // Type-safe color class getter
+  function getColorClass(c: PulsingDotProps["color"]) {
+    switch (c) {
+      case "primary":
+        return "bg-brand-primary";
+      case "success":
+        return "bg-status-success";
+      case "warning":
+        return "bg-status-warning";
+      case "error":
+        return "bg-status-error";
+      default:
+        return "bg-brand-primary";
+    }
+  }
 
-  const sizeClasses = {
-    sm: "w-2 h-2",
-    md: "w-3 h-3",
-  };
+  // Type-safe size class getter
+  function getSizeClass(s: PulsingDotProps["size"]) {
+    return s === "sm" ? "w-2 h-2" : "w-3 h-3";
+  }
+
+  const colorClass = getColorClass(color);
+  const sizeClass = getSizeClass(size);
 
   return (
     <span className="relative flex">
       <span
-        className={`animate-ping absolute inline-flex h-full w-full ${radius.full} opacity-75 ${colorClasses[color]}`}
+        className={`animate-ping absolute inline-flex h-full w-full ${radius.full} opacity-75 ${colorClass}`}
       />
-      <span
-        className={`relative inline-flex ${radius.full} ${sizeClasses[size]} ${colorClasses[color]}`}
-      />
+      <span className={`relative inline-flex ${radius.full} ${sizeClass} ${colorClass}`} />
     </span>
   );
 });

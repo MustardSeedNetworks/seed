@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { ScanSearch } from "../../ui/Icons";
-import { icon as iconTokens, layout, radius } from "../../../styles/theme";
+import { icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
 import {
   NetworkDiscoverySettings as NetworkDiscoverySettingsType,
   SubnetConfig,
@@ -33,7 +33,7 @@ interface DiscoverySettingsProps {
 const PROFILE_VALUES: DiscoveryProfile[] = ["stealth", "standard", "full_scan", "custom"];
 
 /**
- *
+ * Settings section for network discovery profiles and subnet management.
  */
 export function DiscoverySettings({
   networkDiscoverySettings,
@@ -194,7 +194,7 @@ export function DiscoverySettings({
         {/* Service Status Banner */}
         {serviceStatus && (
           <div
-            className={`p-3 ${radius.lg} border ${
+            className={`${spacing.pad.sm} ${radius.lg} border ${
               serviceStatus.running
                 ? "bg-status-success/10 border-status-success/30"
                 : "bg-status-error/10 border-status-error/30"
@@ -228,7 +228,9 @@ export function DiscoverySettings({
               </button>
             </div>
             {serviceStatus.running && (
-              <div className="mt-2 grid grid-cols-2 gap-2 caption text-text-muted">
+              <div
+                className={`${spacing.margin.top.inline} grid grid-cols-2 gap-2 caption text-text-muted`}
+              >
                 <div>
                   <span className="font-medium">{t("discovery.serviceStatus.devices")}:</span>{" "}
                   {serviceStatus.deviceCount}
@@ -248,7 +250,7 @@ export function DiscoverySettings({
               </div>
             )}
             {serviceStatus.activeMethods && serviceStatus.activeMethods.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
+              <div className={`${spacing.margin.top.inline} flex flex-wrap gap-1`}>
                 {serviceStatus.activeMethods.map((method) => (
                   <span
                     key={method}
@@ -265,11 +267,11 @@ export function DiscoverySettings({
         {/* Discovery Profile Selector */}
         <div>
           <label className="caption text-text-muted font-medium">{t("discovery.profile")}</label>
-          <div className="mt-2 stack-sm">
+          <div className={`${spacing.margin.top.inline} stack-sm`}>
             {PROFILE_VALUES.map((profile) => (
               <label
                 key={profile}
-                className={`${layout.inline.default} items-start p-3 ${radius.lg} border cursor-pointer transition-colors ${
+                className={`${layout.inline.default} items-start ${spacing.pad.sm} ${radius.lg} border cursor-pointer transition-colors ${
                   currentProfile === profile
                     ? "border-brand-primary bg-brand-primary/5"
                     : "border-surface-border hover:border-brand-primary/50"
@@ -298,11 +300,11 @@ export function DiscoverySettings({
 
         {/* Custom Options (only shown when Custom profile is selected) */}
         {showCustomOptions && (
-          <div className="border-t border-surface-border pt-3">
+          <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
             <span className="caption text-text-muted font-medium">
               {t("discovery.customOptions")}
             </span>
-            <div className="mt-2 stack-sm">
+            <div className={`${spacing.margin.top.inline} stack-sm`}>
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
@@ -417,13 +419,13 @@ export function DiscoverySettings({
         )}
 
         {/* Timing Settings */}
-        <div className="border-t border-surface-border pt-3">
+        <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
           <span className="caption text-text-muted font-medium">
             {t("discovery.timingSettings")}
           </span>
 
           {/* Scan Workers */}
-          <div className="mt-2">
+          <div className={spacing.margin.top.inline}>
             <label className="caption text-text-muted" htmlFor="discovery-workers">
               {t("discovery.concurrentWorkers")}
             </label>
@@ -445,7 +447,7 @@ export function DiscoverySettings({
           </div>
 
           {/* Ping Timeout */}
-          <div className="mt-3">
+          <div className={spacing.margin.top.content}>
             <label className="caption text-text-muted" htmlFor="discovery-ping-timeout">
               {t("discovery.pingTimeout")}
             </label>
@@ -466,7 +468,7 @@ export function DiscoverySettings({
           </div>
 
           {/* Scan Timeout */}
-          <div className="mt-3">
+          <div className={spacing.margin.top.content}>
             <label className="caption text-text-muted" htmlFor="discovery-scan-timeout">
               {t("discovery.scanTimeout")}
             </label>
@@ -487,7 +489,7 @@ export function DiscoverySettings({
           </div>
 
           {/* Rescan Interval */}
-          <div className="mt-3">
+          <div className={spacing.margin.top.content}>
             <label className="caption text-text-muted" htmlFor="discovery-rescan-interval">
               {t("discovery.rescanInterval")}
             </label>
@@ -509,7 +511,7 @@ export function DiscoverySettings({
         </div>
 
         {/* OUI File Path */}
-        <div className="border-t border-surface-border pt-3">
+        <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
           <label className="caption text-text-muted font-medium" htmlFor="discovery-oui-path">
             {t("discovery.ouiFilePath")}
           </label>
@@ -531,17 +533,19 @@ export function DiscoverySettings({
 
         {/* Target Networks (only for full_scan or custom profile) */}
         {showSubnets && (
-          <div className="border-t border-surface-border pt-3">
-            <div className={`${layout.flex.between} mb-2`}>
+          <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
+            <div className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}>
               <span className="caption text-text-muted font-medium">
                 {t("discovery.targetNetworks")} <AutoSaveIndicator status={subnetsStatus} />
               </span>
             </div>
-            <p className="caption text-text-muted mb-2">{t("discovery.targetNetworksDesc")}</p>
+            <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+              {t("discovery.targetNetworksDesc")}
+            </p>
 
             {/* List of configured subnets */}
             {subnets.length > 0 && (
-              <div className="stack-sm mb-3">
+              <div className={`stack-sm ${spacing.margin.bottom.heading}`}>
                 {subnets.map((subnet) => (
                   <div
                     key={subnet.cidr}
@@ -600,7 +604,7 @@ export function DiscoverySettings({
               {subnetError && <p className="caption text-status-error">{subnetError}</p>}
               <button
                 onClick={addSubnet}
-                className={`w-full px-3 py-2 bg-brand-primary hover:bg-brand-accent text-text-inverse ${radius.default} body-small`}
+                className={`w-full ${spacing.pad.sm} bg-brand-primary hover:bg-brand-accent text-text-inverse ${radius.default} body-small`}
               >
                 {t("discovery.addSubnet")}
               </button>

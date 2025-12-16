@@ -24,17 +24,30 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, Status } from "../ui/Card";
 import { useSurvey, type Survey, type SurveyType } from "../../hooks/useSurvey";
 import { SurveyView } from "../survey/SurveyView";
 import { Activity } from "../ui/Icons";
-import { radius, input as inputTokens } from "../../styles/theme";
+import {
+  radius,
+  input as inputTokens,
+  icon as iconTokens,
+  modal,
+  button,
+  spacing,
+  layout,
+} from "../../styles/theme";
 
 interface WiFiSurveyCardProps {
   isWifi: boolean;
 }
 
+/**
+ * Manages WiFi site surveys for signal mapping with floor plan integration.
+ */
 export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
+  const { t } = useTranslation("cards");
   const {
     surveys,
     loading,
@@ -49,9 +62,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
 
-  const activeSurveys = surveys.filter(
-    (s) => s.status === "in_progress" || s.status === "paused",
-  );
+  const activeSurveys = surveys.filter((s) => s.status === "in_progress" || s.status === "paused");
   const completedSurveys = surveys.filter((s) => s.status === "completed");
 
   const getCardStatus = (): Status => {
@@ -60,11 +71,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
     return "unknown";
   };
 
-  const handleCreateSurvey = async (
-    name: string,
-    surveyType: SurveyType,
-    iface: string,
-  ) => {
+  const handleCreateSurvey = async (name: string, surveyType: SurveyType, iface: string) => {
     try {
       const newSurvey = await createSurvey({
         name,
@@ -80,7 +87,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this survey?")) {
+    if (confirm(t("survey.confirmDelete"))) {
       await deleteSurvey(id);
     }
   };
@@ -88,26 +95,37 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
   const getSurveyTypeLabel = (type: SurveyType) => {
     switch (type) {
       case "passive":
-        return "Passive Scan";
+        return t("survey.typePassiveLabel");
       case "active":
-        return "Active";
+        return t("survey.typeActiveLabel");
       case "throughput":
-        return "Throughput";
+        return t("survey.typeThroughputLabel");
       default:
         return type;
     }
   };
 
   const getStatusLabel = (status: string) => {
-    return status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    switch (status) {
+      case "in_progress":
+        return t("survey.inProgress");
+      case "paused":
+        return t("survey.paused");
+      case "completed":
+        return t("survey.completed");
+      case "created":
+        return t("survey.created");
+      default:
+        return status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    }
   };
 
   return (
     <>
       <Card
-        title="WiFi Site Survey"
+        title={t("survey.title")}
         status={getCardStatus()}
-        icon={<Activity className="h-5 w-5" />}
+        icon={<Activity className={iconTokens.size.md} />}
         headerAction={
           <button
             onClick={(e) => {
@@ -116,39 +134,38 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
             }}
             className="caption font-medium text-brand-primary hover:underline"
           >
-            + New
+            {t("survey.new")}
           </button>
         }
       >
         {!isWifi && (
           <div
-            className={`bg-status-warning/10 border border-status-warning/20 text-status-warning px-3 py-2 ${radius.md} body-small mb-3`}
+            className={`bg-status-warning/10 border border-status-warning/20 text-status-warning ${spacing.pad.sm} ${radius.md} body-small ${spacing.margin.bottom.heading}`}
           >
-            WiFi interface required for site surveys. Switch to a WiFi interface
-            to create surveys.
+            {t("survey.wifiRequired")}
           </div>
         )}
 
         {error && (
           <div
-            className={`bg-status-error/10 border border-status-error/20 text-status-error px-3 py-2 ${radius.md} body-small mb-3`}
+            className={`bg-status-error/10 border border-status-error/20 text-status-error ${spacing.pad.sm} ${radius.md} body-small ${spacing.margin.bottom.heading}`}
           >
             {error}
           </div>
         )}
 
         {loading && surveys.length === 0 ? (
-          <div className="text-center py-6 text-text-muted body-small">
-            Loading...
+          <div className={`text-center ${spacing.pad.lg} text-text-muted body-small`}>
+            {t("survey.loading")}
           </div>
         ) : surveys.length === 0 ? (
-          <div className="text-center py-6 text-text-muted">
-            <p className="body-small mb-2">No surveys yet</p>
+          <div className={`text-center ${spacing.pad.lg} text-text-muted`}>
+            <p className="body-small mb-2">{t("survey.noSurveys")}</p>
             <button
               onClick={() => setShowCreateDialog(true)}
               className="body-small text-brand-primary hover:underline"
             >
-              Create your first survey
+              {t("survey.createFirst")}
             </button>
           </div>
         ) : (
@@ -156,33 +173,35 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
             {surveys.slice(0, 3).map((survey) => (
               <div
                 key={survey.id}
-                className={`border ${radius.md} p-2 hover:bg-surface-hover transition-colors cursor-pointer`}
+                className={`border border-surface-border ${radius.md} pad-sm hover:bg-surface-hover transition-colors cursor-pointer`}
                 onClick={() => setSelectedSurvey(survey)}
               >
-                <div className="flex items-start justify-between">
+                <div className={layout.flex.between}>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium body-small truncate">
-                        {survey.name}
-                      </h4>
+                    <div className={layout.inline.default}>
+                      <h4 className="font-medium body-small truncate">{survey.name}</h4>
                       <span className="caption text-text-muted">
                         {getStatusLabel(survey.status)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 caption text-text-muted">
+                    <div
+                      className={`${layout.inline.comfortable} ${spacing.margin.top.inline} caption text-text-muted`}
+                    >
                       <span>{getSurveyTypeLabel(survey.surveyType)}</span>
-                      <span>{survey.samples.length} samples</span>
+                      <span>
+                        {survey.samples.length} {t("survey.samples").toLowerCase()}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex gap-1 ml-2">
+                  <div className={`${layout.inline.tight} ml-2`}>
                     {survey.status === "created" && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           startSurvey(survey.id);
                         }}
-                        className={`px-2 py-1 caption border ${radius.md} hover:bg-surface-hover`}
-                        title="Start"
+                        className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                        title={t("survey.start")}
                       >
                         ▶
                       </button>
@@ -193,8 +212,8 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                           e.stopPropagation();
                           pauseSurvey(survey.id);
                         }}
-                        className={`px-2 py-1 caption border ${radius.md} hover:bg-surface-hover`}
-                        title="Pause"
+                        className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                        title={t("survey.pause")}
                       >
                         ⏸
                       </button>
@@ -206,8 +225,8 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                             e.stopPropagation();
                             startSurvey(survey.id);
                           }}
-                          className={`px-2 py-1 caption border ${radius.md} hover:bg-surface-hover`}
-                          title="Resume"
+                          className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                          title={t("survey.resume")}
                         >
                           ▶
                         </button>
@@ -216,8 +235,8 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                             e.stopPropagation();
                             completeSurvey(survey.id);
                           }}
-                          className={`px-2 py-1 caption border ${radius.md} hover:bg-surface-hover`}
-                          title="Complete"
+                          className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                          title={t("survey.complete")}
                         >
                           ✓
                         </button>
@@ -228,8 +247,8 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                         e.stopPropagation();
                         handleDelete(survey.id);
                       }}
-                      className={`px-2 py-1 caption border ${radius.md} hover:bg-status-error/10 text-status-error`}
-                      title="Delete"
+                      className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-status-error/10 text-status-error`}
+                      title={t("survey.delete")}
                     >
                       ×
                     </button>
@@ -239,7 +258,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
             ))}
             {surveys.length > 3 && (
               <div className="text-center caption text-text-muted pt-1">
-                +{surveys.length - 3} more
+                {t("survey.more", { count: surveys.length - 3 })}
               </div>
             )}
           </div>
@@ -250,6 +269,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
         <CreateSurveyDialog
           onClose={() => setShowCreateDialog(false)}
           onCreate={handleCreateSurvey}
+          t={t}
         />
       )}
 
@@ -270,9 +290,10 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
 interface CreateSurveyDialogProps {
   onClose: () => void;
   onCreate: (name: string, type: SurveyType, iface: string) => void;
+  t: ReturnType<typeof useTranslation<"cards">>["t"];
 }
 
-function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
+function CreateSurveyDialog({ onClose, onCreate, t }: CreateSurveyDialogProps) {
   const [name, setName] = useState("");
   const [surveyType, setSurveyType] = useState<SurveyType>("passive");
 
@@ -284,27 +305,29 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className={modal.overlay}>
       <div
-        className={`bg-surface-raised ${radius.md} p-6 max-w-md w-full mx-4`}
+        className={`bg-surface-raised ${radius.md} ${spacing.pad.lg} max-w-md w-full ${spacing.pad.default}`}
       >
-        <h2 className="heading-2 mb-4">Create New Survey</h2>
+        <h2 className={`heading-2 ${spacing.margin.bottom.content}`}>
+          {t("survey.createNewSurvey")}
+        </h2>
         <form onSubmit={handleSubmit}>
           <div className="stack">
             <div>
-              <label className="label block mb-1">Survey Name</label>
+              <label className="label block mb-1">{t("survey.surveyName")}</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md}`}
-                placeholder="e.g., Office Floor 1"
+                placeholder={t("survey.namePlaceholder")}
                 required
               />
             </div>
             <div>
               <label className="label block mb-1" htmlFor="survey-type">
-                Survey Type
+                {t("survey.surveyType")}
               </label>
               <select
                 id="survey-type"
@@ -312,25 +335,25 @@ function CreateSurveyDialog({ onClose, onCreate }: CreateSurveyDialogProps) {
                 onChange={(e) => setSurveyType(e.target.value as SurveyType)}
                 className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md}`}
               >
-                <option value="passive">Passive Scan (All Networks)</option>
-                <option value="active">Active Monitoring (Connection)</option>
-                <option value="throughput">Throughput Testing (iperf3)</option>
+                <option value="passive">{t("survey.typePassive")}</option>
+                <option value="active">{t("survey.typeActive")}</option>
+                <option value="throughput">{t("survey.typeThroughput")}</option>
               </select>
             </div>
           </div>
-          <div className="flex gap-2 mt-6">
+          <div className={`${layout.inline.default} ${spacing.margin.top.section}`}>
             <button
               type="button"
               onClick={onClose}
-              className={`flex-1 px-4 py-2 border border-surface-border ${radius.md} hover:bg-surface-hover`}
+              className={`flex-1 ${button.size.md} border border-surface-border ${radius.md} hover:bg-surface-hover`}
             >
-              Cancel
+              {t("survey.cancel")}
             </button>
             <button
               type="submit"
-              className={`flex-1 px-4 py-2 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90`}
+              className={`flex-1 ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90`}
             >
-              Create
+              {t("survey.create")}
             </button>
           </div>
         </form>

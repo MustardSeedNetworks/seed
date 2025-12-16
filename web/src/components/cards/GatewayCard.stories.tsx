@@ -1,8 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Card, CardValue, CardRow, CardDivider } from '../ui/Card';
-import { StatusBadge } from '../ui/StatusBadge';
-import { Router } from '../ui/Icons';
-import { Skeleton } from '../ui/Skeleton';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Card, CardValue, CardRow, CardDivider } from "../ui/Card";
+import { Router } from "../ui/Icons";
+import { Skeleton } from "../ui/Skeleton";
 
 /**
  * GatewayCard monitors network gateway (default router) reachability via ICMP ping.
@@ -11,11 +10,11 @@ import { Skeleton } from '../ui/Skeleton';
  * This story demonstrates the card's visual states without context dependencies.
  */
 const meta: Meta = {
-  title: 'Cards/GatewayCard',
+  title: "Cards/GatewayCard",
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
       <div className="w-80">
@@ -37,10 +36,10 @@ export const Reachable: StoryObj = {
     >
       <CardValue value="192.168.1.1" size="lg" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Status" value={<StatusBadge status="success" label="Reachable" />} />
-        <CardRow label="Packet Loss" value="0%" valueStatus="success" />
+        <CardRow label="Status" value="Reachable" status="success" />
+        <CardRow label="Packet Loss" value="0%" status="success" />
         <CardDivider />
-        <CardRow label="Latency (avg)" value="2.3ms" valueStatus="success" />
+        <CardRow label="Latency (avg)" value="2.3ms" status="success" />
         <CardRow label="Latency (min)" value="1.1ms" />
         <CardRow label="Latency (max)" value="4.5ms" />
         <CardRow label="Last Ping" value="1.8ms" />
@@ -59,12 +58,12 @@ export const HighLatency: StoryObj = {
     >
       <CardValue value="192.168.1.1" size="lg" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Status" value={<StatusBadge status="warning" label="Slow" />} />
-        <CardRow label="Packet Loss" value="5%" valueStatus="warning" />
+        <CardRow label="Status" value="Slow" status="warning" />
+        <CardRow label="Packet Loss" value="5%" status="warning" />
         <CardDivider />
-        <CardRow label="Latency (avg)" value="85ms" valueStatus="warning" />
+        <CardRow label="Latency (avg)" value="85ms" status="warning" />
         <CardRow label="Latency (min)" value="45ms" />
-        <CardRow label="Latency (max)" value="250ms" valueStatus="error" />
+        <CardRow label="Latency (max)" value="250ms" status="error" />
         <CardRow label="Last Ping" value="92ms" />
       </div>
     </Card>
@@ -81,12 +80,11 @@ export const Unreachable: StoryObj = {
     >
       <CardValue value="192.168.1.1" size="lg" status="error" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Status" value={<StatusBadge status="error" label="Unreachable" />} />
-        <CardRow label="Packet Loss" value="100%" valueStatus="error" />
+        <CardRow label="Status" value="Unreachable" status="error" />
+        <CardRow label="Packet Loss" value="100%" status="error" />
         <CardDivider />
         <p className="caption text-status-danger">
-          Gateway is not responding to ICMP ping requests.
-          Check network connectivity.
+          Gateway is not responding to ICMP ping requests. Check network connectivity.
         </p>
       </div>
     </Card>
@@ -105,14 +103,14 @@ export const DualStack: StoryObj = {
         <div>
           <p className="caption text-text-muted mb-1">IPv4</p>
           <CardValue value="192.168.1.1" size="md" />
-          <CardRow label="Latency" value="2.3ms" valueStatus="success" />
+          <CardRow label="Latency" value="2.3ms" status="success" />
           <CardRow label="Loss" value="0%" />
         </div>
         <CardDivider />
         <div>
           <p className="caption text-text-muted mb-1">IPv6</p>
           <CardValue value="fe80::1" size="md" />
-          <CardRow label="Latency" value="1.8ms" valueStatus="success" />
+          <CardRow label="Latency" value="1.8ms" status="success" />
           <CardRow label="Loss" value="0%" />
         </div>
       </div>

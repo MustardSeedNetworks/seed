@@ -1,9 +1,9 @@
 /**
  * Error Boundary Component (UI Utility)
- * 
+ *
  * A React Error Boundary class component for catching and handling errors in child component trees.
  * Provides graceful error handling with an optional custom fallback UI or a default error alert.
- * 
+ *
  * @component
  * @example
  * ```tsx
@@ -11,7 +11,7 @@
  *   <YourComponent />
  * </ErrorBoundary>
  * ```
- * 
+ *
  * @remarks
  * - Uses React's class component API (getDerivedStateFromError, componentDidCatch)
  * - Logs errors to console for debugging
@@ -22,7 +22,8 @@
  */
 
 import { Component, ErrorInfo, ReactNode } from "react";
-import { icon as iconTokens, radius } from "../../styles/theme";
+import { Translation } from "react-i18next";
+import { icon as iconTokens, radius, button, layout, spacing } from "../../styles/theme";
 
 /**
  * Props for the ErrorBoundary component
@@ -48,7 +49,7 @@ interface State {
 
 /**
  * Error Boundary Class Component
- * 
+ *
  * Implements React's Error Boundary pattern to gracefully handle errors in the component tree.
  * - Catches JavaScript errors in child components
  * - Logs error information to console for debugging
@@ -65,7 +66,7 @@ export class ErrorBoundary extends Component<Props, State> {
   /**
    * React lifecycle method called when an error is thrown in a child component.
    * Updates component state to indicate error state and stores the error object.
-   * 
+   *
    * @param {Error} error - The error thrown by child component
    * @returns {State} Updated state with error flag and error object
    */
@@ -77,7 +78,7 @@ export class ErrorBoundary extends Component<Props, State> {
   /**
    * React lifecycle method called after an error has been caught.
    * Used for logging and error reporting to services.
-   * 
+   *
    * @param {Error} error - The error that was caught
    * @param {ErrorInfo} errorInfo - Object with componentStack property containing stack trace
    */
@@ -100,7 +101,7 @@ export class ErrorBoundary extends Component<Props, State> {
    * If error is caught and no custom fallback provided, displays default error alert UI.
    * If custom fallback provided, displays that instead.
    * Otherwise renders child components normally.
-   * 
+   *
    * @returns {ReactNode} Error UI, custom fallback, or child components
    */
   render() {
@@ -113,43 +114,48 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Render default error alert UI with icon, message, and retry button
       return (
-        <div
-          role="alert"
-          className={`p-4 bg-status-error/10 border border-status-error/20 ${radius.lg}`}
-        >
-          <div className="flex items-start gap-3">
-            {/* Error icon SVG */}
-            <svg
-              className={`${iconTokens.size.md} text-status-error shrink-0 mt-0.5`}
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              aria-hidden="true"
+        <Translation ns="common">
+          {(t) => (
+            <div
+              role="alert"
+              className={`pad bg-status-error/10 border border-status-error/20 ${radius.lg}`}
             >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            {/* Error content: heading, message, and retry button */}
-            <div className="flex-1">
-              <h3 className="body-small font-medium text-status-error">
-                Something went wrong
-              </h3>
-              <p className="mt-1 body-small text-text-muted">
-                {/* Display caught error message or generic fallback message */}
-                {this.state.error?.message || "An unexpected error occurred"}
-              </p>
-              {/* Retry button to attempt recovery by resetting error state */}
-              <button
-                onClick={this.handleRetry}
-                className={`mt-3 px-3 py-1.5 body-small font-medium text-text-inverse bg-status-error ${radius.default} hover:bg-status-error/90 focus:outline-none focus:ring-2 focus:ring-status-error focus:ring-offset-2`}
-              >
-                Try again
-              </button>
+              <div className={`flex items-start ${spacing.gap.default}`}>
+                {/* Error icon SVG */}
+                <svg
+                  className={`${iconTokens.size.md} text-status-error shrink-0 mt-0.5`}
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {/* Error content: heading, message, and retry button */}
+                <div className={`flex-1 ${layout.stack.tight}`}>
+                  <h3 className="body-small font-medium text-status-error">
+                    {t("errorBoundary.title")}
+                  </h3>
+                  <p className="body-small text-text-muted">
+                    {/* Display caught error message or generic fallback message */}
+                    {this.state.error?.message || t("errorBoundary.defaultMessage")}
+                  </p>
+                  {/* Retry button to attempt recovery by resetting error state */}
+                  <button
+                    type="button"
+                    onClick={this.handleRetry}
+                    className={`${button.size.sm} font-medium text-text-inverse bg-status-error ${radius.default} hover:bg-status-error/90 focus:outline-none focus:ring-2 focus:ring-status-error focus:ring-offset-2`}
+                  >
+                    {t("errorBoundary.tryAgain")}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </Translation>
       );
     }
 

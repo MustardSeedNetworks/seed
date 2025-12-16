@@ -1,21 +1,21 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { BaseCard, SimpleBaseCard } from './BaseCard';
-import { CardValue, CardRow } from '../ui/Card';
-import { Wifi, Server, Globe } from 'lucide-react';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { BaseCard, SimpleBaseCard } from "./BaseCard";
+import { CardValue, CardRow } from "../ui/Card";
+import { Wifi, Server, Globe } from "lucide-react";
 
 interface SampleData {
   value: string;
-  status: 'healthy' | 'warning' | 'error';
+  status: "healthy" | "warning" | "error";
   details: { label: string; value: string }[];
 }
 
 const sampleData: SampleData = {
-  value: '192.168.1.1',
-  status: 'healthy',
+  value: "192.168.1.1",
+  status: "healthy",
   details: [
-    { label: 'Latency', value: '5ms' },
-    { label: 'Uptime', value: '99.9%' },
-    { label: 'Protocol', value: 'IPv4' },
+    { label: "Latency", value: "5ms" },
+    { label: "Uptime", value: "99.9%" },
+    { label: "Protocol", value: "IPv4" },
   ],
 };
 
@@ -27,12 +27,12 @@ const sampleData: SampleData = {
  * - Status derivation from data
  */
 const meta: Meta<typeof BaseCard<SampleData>> = {
-  title: 'Cards/BaseCard',
+  title: "Cards/BaseCard",
   component: BaseCard,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
       <div className="w-80">
@@ -47,11 +47,12 @@ type Story = StoryObj<typeof BaseCard<SampleData>>;
 
 export const Default: Story = {
   args: {
-    title: 'Network Status',
-    subtitle: 'Primary Interface',
+    title: "Network Status",
+    subtitle: "Primary Interface",
     icon: <Globe className="w-4 h-4" />,
     data: sampleData,
-    getStatus: (data) => (data.status === 'healthy' ? 'success' : data.status === 'warning' ? 'warning' : 'error'),
+    getStatus: (data) =>
+      data.status === "healthy" ? "success" : data.status === "warning" ? "warning" : "error",
     children: (data) => (
       <>
         <CardValue value={data.value} size="lg" />
@@ -75,7 +76,7 @@ export const Error: Story = {
   args: {
     ...Default.args,
     data: null,
-    error: 'Failed to fetch network status. Please check your connection.',
+    error: "Failed to fetch network status. Please check your connection.",
   },
 };
 
@@ -83,33 +84,33 @@ export const NoData: Story = {
   args: {
     ...Default.args,
     data: null,
-    emptyMessage: 'No network data available',
+    emptyMessage: "No network data available",
   },
 };
 
 export const WarningStatus: Story = {
   args: {
     ...Default.args,
-    data: { ...sampleData, status: 'warning' as const, value: 'Degraded' },
+    data: { ...sampleData, status: "warning" as const, value: "Degraded" },
   },
 };
 
 export const ErrorStatus: Story = {
   args: {
     ...Default.args,
-    data: { ...sampleData, status: 'error' as const, value: 'Offline' },
+    data: { ...sampleData, status: "error" as const, value: "Offline" },
   },
 };
 
 export const WithClick: Story = {
   args: {
     ...Default.args,
-    onClick: () => alert('Card clicked!'),
+    onClick: () => alert("Card clicked!"),
   },
   parameters: {
     docs: {
       description: {
-        story: 'Cards can be made clickable for drill-down views.',
+        story: "Cards can be made clickable for drill-down views.",
       },
     },
   },
@@ -152,15 +153,15 @@ export const CardGrid: Story = {
         title="Gateway"
         icon={<Server className="w-4 h-4" />}
         data={sampleData}
-        getStatus={() => 'success'}
+        getStatus={() => "success"}
       >
         {(data) => <CardValue value={data.value} />}
       </BaseCard>
       <BaseCard
         title="DNS"
         icon={<Globe className="w-4 h-4" />}
-        data={{ ...sampleData, status: 'warning' as const }}
-        getStatus={(d) => (d.status === 'healthy' ? 'success' : 'warning')}
+        data={{ ...sampleData, status: "warning" } as SampleData}
+        getStatus={(d) => (d.status === "healthy" ? "success" : d.status)}
       >
         {() => <CardValue value="8.8.8.8" />}
       </BaseCard>
@@ -169,16 +170,11 @@ export const CardGrid: Story = {
         icon={<Wifi className="w-4 h-4" />}
         data={null}
         loading={true}
-        getStatus={() => 'success'}
+        getStatus={() => "success"}
       >
         {() => null}
       </BaseCard>
-      <BaseCard
-        title="Link"
-        data={null}
-        error="Connection failed"
-        getStatus={() => 'error'}
-      >
+      <BaseCard title="Link" data={null} error="Connection failed" getStatus={() => "error"}>
         {() => null}
       </BaseCard>
     </div>
@@ -186,7 +182,7 @@ export const CardGrid: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Multiple cards in a grid showing different states.',
+        story: "Multiple cards in a grid showing different states.",
       },
     },
   },
