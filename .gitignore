@@ -1,4 +1,7 @@
 # Binaries
+/seed
+/seed-*
+# Legacy binary names (for transition)
 /netscope
 /netscope-*
 /luminetiq

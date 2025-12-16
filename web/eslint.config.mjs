@@ -4,7 +4,7 @@ import storybook from "eslint-plugin-storybook";
 /**
  * ESLint Configuration
  *
- * Purpose: Configures ESLint rules and plugins for code quality in LuminetIQ frontend.
+ * Purpose: Configures ESLint rules and plugins for code quality in The Seed frontend.
  * Enforces TypeScript, React, and accessibility best practices across the codebase.
  *
  * Configuration:

@@ -99,7 +99,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Set httpOnly cookies (fixes #478)
 	cookieConfig := auth.DefaultCookieConfig()
-	// Allow insecure cookies in development (LUMINETIQ_DEV=1)
+	// Allow insecure cookies in development mode (HTTPS disabled)
 	if !s.config.Server.HTTPS {
 		cookieConfig.Secure = false
 	}

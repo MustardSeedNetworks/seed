@@ -1,4 +1,4 @@
-// Package i18n provides internationalization support for the LuminetIQ backend.
+// Package i18n provides internationalization support for The Seed backend.
 //
 // It uses go-i18n for loading and managing translations from JSON locale files.
 // Translations are embedded in the binary using go:embed for easy deployment.

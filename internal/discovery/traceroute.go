@@ -176,7 +176,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 				Body: &icmp.Echo{
 					ID:   1,
 					Seq:  seq,
-					Data: []byte("NETSCOPE"),
+					Data: []byte("SEED"),
 				},
 			}
 			msgBytes, err := msg.Marshal(nil)
@@ -319,7 +319,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 
 		for range t.retries {
 			start := time.Now()
-			if _, err = udpConn.Write([]byte("NETSCOPE")); err != nil {
+			if _, err = udpConn.Write([]byte("SEED")); err != nil {
 				continue
 			}
 			//nolint:errcheck // Best-effort deadline setting

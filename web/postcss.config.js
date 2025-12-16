@@ -1,7 +1,7 @@
 /**
  * PostCSS Configuration
  *
- * Purpose: Configures PostCSS and Tailwind CSS processing for the LuminetIQ frontend.
+ * Purpose: Configures PostCSS and Tailwind CSS processing for The Seed frontend.
  * Processes CSS files during build to generate utility classes and optimize output.
  *
  * Plugin: @tailwindcss/postcss

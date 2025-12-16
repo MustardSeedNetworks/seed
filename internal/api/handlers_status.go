@@ -104,7 +104,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	s.exportIperfCard(export.Cards)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Content-Disposition", "attachment; filename=netscope-export.json")
+	w.Header().Set("Content-Disposition", "attachment; filename=seed-export.json")
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(export); err != nil {

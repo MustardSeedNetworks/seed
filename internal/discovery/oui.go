@@ -296,7 +296,7 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 		"/usr/share/ieee-data/oui.txt",
 		"/var/lib/ieee-data/oui.txt",
 		"/usr/local/share/oui.txt",
-		filepath.Join(os.Getenv("HOME"), ".config", "netscope", "oui.txt"),
+		filepath.Join(os.Getenv("HOME"), ".config", "seed", "oui.txt"),
 	}
 
 	for _, loc := range locations {
