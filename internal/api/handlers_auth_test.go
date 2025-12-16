@@ -250,7 +250,7 @@ func TestHandleSetupComplete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create test server with config that needs setup
 			cfg := config.DefaultConfig()
-			cfg.Auth.DefaultPasswordHash = "$2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52" // Default "netscope" hash
+			cfg.Auth.DefaultPasswordHash = "$2a$10$xxxxxSeedDefaultHashForTestingxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" // Default "seed" hash for testing
 
 			server := NewTestServerWithConfig(cfg)
 

@@ -153,7 +153,7 @@ export function PerformanceSettings({
           <span className="caption text-text-muted font-medium">
             {t("performance.autoRunOnLink")}
           </span>
-          <div className="mt-2 stack-sm">
+          <div className={`${spacing.margin.top.inline} stack-sm`}>
             <label
               className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
             >
@@ -202,7 +202,7 @@ export function PerformanceSettings({
           >
             {t("performance.internetSpeed")}
           </h4>
-          <div className="stack pl-1">
+          <div className="stack">
             <div>
               <label className="caption text-text-muted font-medium">
                 {t("performance.serverId")}
@@ -220,9 +220,9 @@ export function PerformanceSettings({
                   }))
                 }
                 placeholder={t("performance.autoClosestServer")}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small`}
               />
-              <div className={`${layout.flex.between} mt-1`}>
+              <div className={`${layout.flex.between} ${spacing.margin.top.tight}`}>
                 <p className="caption text-text-muted">{t("performance.autoSelectDesc")}</p>
                 <button
                   type="button"
@@ -248,7 +248,7 @@ export function PerformanceSettings({
           >
             {t("performance.lanSpeed")}
           </h4>
-          <div className="stack pl-1">
+          <div className="stack">
             <p className="caption text-text-muted">{t("performance.lanSpeedDesc")}</p>
 
             {/* Server Address */}
@@ -266,9 +266,9 @@ export function PerformanceSettings({
                   }))
                 }
                 placeholder="192.168.1.100"
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small disabled:opacity-60`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
               />
-              <div className={`${layout.flex.between} mt-2`}>
+              <div className={`${layout.flex.between} ${spacing.margin.top.inline}`}>
                 <button
                   type="button"
                   disabled={iperfSuggestionsStatus === "loading"}
@@ -302,12 +302,14 @@ export function PerformanceSettings({
                 )}
               </div>
               {iperfSuggestionsStatus === "error" && (
-                <p className="caption text-status-warning mt-1">
+                <p className={`caption text-status-warning ${spacing.margin.top.tight}`}>
                   {iperfSuggestionsError || t("performance.noIperfHosts")}
                 </p>
               )}
               {iperfSuggestions.length > 0 && (
-                <div className={`flex flex-wrap ${spacing.gap.compact} mt-2`}>
+                <div
+                  className={`flex flex-wrap ${spacing.gap.compact} ${spacing.margin.top.inline}`}
+                >
                   {iperfSuggestions.map((sugg) => (
                     <button
                       type="button"
@@ -321,7 +323,7 @@ export function PerformanceSettings({
                       }
                     >
                       <span className="font-medium">{sugg.hostname || sugg.host}</span>
-                      <span className="text-text-muted ml-1">
+                      <span className={`text-text-muted ${spacing.margin.left.tight}`}>
                         {sugg.hostname ? `(${sugg.host})` : ""}
                         {sugg.latencyMs !== undefined ? ` · ${Math.round(sugg.latencyMs)}ms` : ""}
                       </span>
@@ -346,7 +348,7 @@ export function PerformanceSettings({
                     port: parseInt(e.target.value) || 5201,
                   }))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small disabled:opacity-60`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
               />
             </div>
 
@@ -455,7 +457,7 @@ export function PerformanceSettings({
                 }
                 min={1}
                 max={60}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small disabled:opacity-60`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
               />
             </div>
 
@@ -493,10 +495,12 @@ export function PerformanceSettings({
                       serverPort: parseInt(e.target.value) || 5201,
                     }))
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small disabled:opacity-60`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
                 />
               </div>
-              <p className="caption text-text-muted mt-1">{t("performance.serverAutoStart")}</p>
+              <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+                {t("performance.serverAutoStart")}
+              </p>
             </div>
           </div>
         </div>

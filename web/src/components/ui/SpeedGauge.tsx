@@ -38,7 +38,7 @@
  */
 
 import { memo, useMemo } from "react";
-import { gauge, radius } from "../../styles/theme";
+import { gauge, radius, spacing } from "../../styles/theme";
 
 interface SpeedGaugeProps {
   value: number; // Current speed in Mbps
@@ -125,7 +125,13 @@ export const SpeedGauge = memo(function SpeedGauge({
 
   return (
     <div className="flex flex-col items-center">
-      {label && <p className="caption text-text-muted mb-1 uppercase tracking-wider">{label}</p>}
+      {label && (
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.tight} uppercase tracking-wider`}
+        >
+          {label}
+        </p>
+      )}
       <div className="relative">
         <svg
           width={sizeConfig.width}
@@ -194,7 +200,7 @@ export const SpeedGauge = memo(function SpeedGauge({
         <div
           className={
             "absolute inset-0 flex flex-col items-center justify-end " +
-            (size === "sm" ? "pb-0.5" : size === "md" ? "pb-1" : "pb-1.5")
+            (size === "sm" ? "pb-0.5" : size === "md" ? "pb-1" : "pb-1.5") // Fine-grained vertical spacing for gauge positioning
           }
         >
           <span
@@ -205,7 +211,8 @@ export const SpeedGauge = memo(function SpeedGauge({
           >
             {isRunning && value === 0 ? "—" : displayValue.value}
           </span>
-          <span className="caption text-text-muted -mt-1">{displayValue.unit}</span>
+          <span className="caption text-text-muted -mt-1">{displayValue.unit}</span>{" "}
+          {/* -mt-1 for visual alignment with gauge */}
         </div>
       </div>
     </div>
@@ -265,7 +272,11 @@ export const ProgressRing = memo(function ProgressRing({
           </span>
         </div>
       </div>
-      {label && <span className="caption text-text-muted mt-1 text-center">{label}</span>}
+      {label && (
+        <span className={`caption text-text-muted ${spacing.margin.top.tight} text-center`}>
+          {label}
+        </span>
+      )}
     </div>
   );
 });

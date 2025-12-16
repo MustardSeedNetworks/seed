@@ -71,7 +71,7 @@ export function HelpModal({ isOpen, onClose, title, children }: HelpModalProps) 
           </h2>
           <button
             onClick={onClose}
-            className={`p-1 text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-base`}
+            className={`p-1 text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-base`} // p-1 for compact icon button
             aria-label="Close help"
           >
             <svg className={iconTokens.size.md} viewBox="0 0 20 20" fill="currentColor">
@@ -103,7 +103,7 @@ export function HelpSection({ title, children }: HelpSectionProps) {
   return (
     <div className={`${spacing.margin.bottom.section} last:mb-0`}>
       <h3
-        className={`heading-4 ${spacing.margin.bottom.heading} pb-1 border-b border-surface-border`}
+        className={`heading-4 ${spacing.margin.bottom.heading} ${spacing.padding.bottom.tight} border-b border-surface-border`}
       >
         {title}
       </h3>
@@ -124,8 +124,9 @@ interface HelpItemProps {
 export function HelpItem({ term, description, color }: HelpItemProps) {
   return (
     <div className={`flex ${spacing.gap.default} body-small`}>
-      <div className="flex items-center gap-2 shrink-0 w-24">
-        {color && <span className={`inline-block w-2.5 h-2.5 ${radius.full} ${color}`} />}
+      <div className={`flex items-center ${spacing.gap.compact} shrink-0 w-24`}>
+        {color && <span className={`inline-block w-2.5 h-2.5 ${radius.full} ${color}`} />}{" "}
+        {/* w-2.5 h-2.5 for status dot */}
         <span className="font-medium text-text-primary">{term}</span>
       </div>
       <span className="text-text-muted">{description}</span>

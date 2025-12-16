@@ -32,7 +32,7 @@ import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Wifi } from "../../ui/Icons";
-import { icon as iconTokens, layout, radius } from "../../../styles/theme";
+import { icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
 import { WiFiSettings as WiFiSettingsType, SaveStatus } from "../../../types/settings";
 
 interface WiFiSettingsProps {
@@ -72,7 +72,7 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
                   interface: e.target.value,
                 }))
               }
-              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             >
               {wifiSettings.availableWifi.map((iface) => (
                 <option key={iface} value={iface}>
@@ -92,10 +92,10 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
                 }))
               }
               placeholder="wlan0 or en0"
-              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
           )}
-          <p className="caption text-text-muted mt-1">
+          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
             {wifiSettings.isWireless ? t("wifi.wirelessMonitoring") : t("wifi.noWireless")}
           </p>
         </div>

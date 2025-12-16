@@ -74,7 +74,7 @@ export function BaseCard<T>({
     return (
       <Card title={title} subtitle={subtitle} icon={icon} status="error" className={className}>
         <CardValue value={t("status.error")} size="md" status="error" />
-        <p className="caption text-status-error mt-1">{error}</p>
+        <p className={`caption text-status-error ${spacing.margin.top.tight}`}>{error}</p>
       </Card>
     );
   }
@@ -179,7 +179,7 @@ export function SimpleBaseCard({
     return (
       <Card title={title} subtitle={subtitle} icon={icon} status="error" className={className}>
         <CardValue value={t("status.error")} size="md" status="error" />
-        <p className="caption text-status-error mt-1">{error}</p>
+        <p className={`caption text-status-error ${spacing.margin.top.tight}`}>{error}</p>
       </Card>
     );
   }

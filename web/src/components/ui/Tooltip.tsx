@@ -29,7 +29,7 @@
  */
 
 import { ReactNode, useState } from "react";
-import { cn, radius, border } from "../../styles/theme";
+import { cn, radius, border, spacing } from "../../styles/theme";
 
 interface TooltipProps {
   content: string;
@@ -45,8 +45,8 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
 
   const positionClasses =
     position === "top"
-      ? "bottom-full left-1/2 -translate-x-1/2 mb-2"
-      : "top-full left-1/2 -translate-x-1/2 mt-2";
+      ? `bottom-full left-1/2 -translate-x-1/2 ${spacing.margin.bottom.inline}`
+      : `top-full left-1/2 -translate-x-1/2 ${spacing.margin.top.inline}`;
 
   return (
     <div className="relative inline-flex items-center">
@@ -62,7 +62,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       {show && (
         <div
           className={cn(
-            "absolute z-50 px-2 py-1.5 shadow-lg max-w-xs",
+            "absolute z-50 px-2 py-1.5 shadow-lg max-w-xs", // py-1.5 for optimal tooltip padding
             positionClasses,
             radius.default,
             border.card,

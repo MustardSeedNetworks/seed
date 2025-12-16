@@ -36,7 +36,7 @@ import { getAuthHeaders } from "../../hooks/useAuth";
 import { HTTP_TIMING_HELP } from "../help/HelpContent";
 import { useSettings } from "../../contexts/useSettings";
 import { HeartPulse } from "../ui/Icons";
-import { timing, icon as iconTokens, layout, radius } from "../../styles/theme";
+import { timing, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
 
 type StatusValue = "success" | "warning" | "error";
 
@@ -224,20 +224,24 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       : null;
 
     return (
-      <div key={`${type}-${result.name}`} className="py-1">
+      <div key={`${type}-${result.name}`} className="py-1" /* py-1 for compact list item */>
         <div className={layout.flex.between}>
           <span className="body-small text-text-muted truncate flex-1" title={displayName}>
             {displayName}
             {details}
           </span>
-          <span className="inline-flex items-center gap-2">
+          <span className={`inline-flex items-center ${spacing.gap.compact}`}>
             <StatusBadge status={statusLabel} size="sm" />
             <span className={`body-small font-medium ${statusColor}`}>
               {result.success ? formatLatency(result.latency) : "fail"}
             </span>
           </span>
         </div>
-        {extendedInfo && <div className="caption text-text-muted mt-0.5">{extendedInfo}</div>}
+        {extendedInfo && (
+          <div className="caption text-text-muted mt-0.5" /* mt-0.5 for minimal spacing */>
+            {extendedInfo}
+          </div>
+        )}
       </div>
     );
   };
@@ -305,7 +309,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     const fmt = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`);
 
     return (
-      <div className="mt-1.5">
+      <div className="mt-1.5" /* mt-1.5 for subtle spacing */>
         {/* Stacked bar */}
         <div className={`h-2 ${radius.full} overflow-hidden flex bg-bg-tertiary`}>
           {segments.map((seg, i) => {
@@ -321,14 +325,19 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
           })}
         </div>
         {/* Legend with tooltips */}
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 caption">
+        <div
+          className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 caption"
+          /* gap-x-3 gap-y-0.5 for fine-grained legend spacing */
+        >
           {segments.map((seg) => (
             <Tooltip
               key={seg.label}
               content={HTTP_TIMING_HELP[seg.label] || seg.label}
               position="bottom"
             >
-              <span className={`inline-flex items-center gap-1 ${getStatusTextColor(seg.status)}`}>
+              <span
+                className={`inline-flex items-center ${spacing.gap.tight} ${getStatusTextColor(seg.status)}`}
+              >
                 <span className={`inline-block w-2 h-2 ${radius.full} ${seg.color}`} />
                 {seg.label} {fmt(seg.value)}
               </span>
@@ -384,7 +393,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       result.ttfbLatency !== undefined;
 
     return (
-      <div key={`http-${result.name}`} className="py-1.5">
+      <div key={`http-${result.name}`} className="py-1.5" /* py-1.5 for compact row */>
         <div className={layout.flex.between}>
           <span className="body-small text-text-muted truncate flex-1" title={result.name}>
             {result.name}
@@ -396,7 +405,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
         </div>
         {hasTimingData && result.success && <TimingBar result={result} />}
         {(hasTLS || hasCertInfo) && (
-          <div className={`caption mt-1 ${layout.inline.default}`}>
+          <div className={`caption ${spacing.margin.top.tight} ${layout.inline.default}`}>
             {hasTLS && <span className="text-text-muted">{result.tlsVersion}</span>}
             {hasTLS && hasCertInfo && <span className="text-text-muted">·</span>}
             {hasCertInfo && (

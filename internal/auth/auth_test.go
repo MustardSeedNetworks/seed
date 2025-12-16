@@ -11,7 +11,7 @@ import (
 
 const (
 	testUsername     = "admin"
-	testPassword     = "netscope"
+	testPassword     = "seed"
 	testPasswordHash = "$2a$10$Dmw4tbpvJ3hoxg4ln8fl6uUCnhUIeXBm7Xy6txdvgwNAjhtYgzmsi"
 )
 
@@ -398,21 +398,14 @@ func TestGenerateInitialCredentials(t *testing.T) {
 }
 
 func TestIsDefaultPasswordHash(t *testing.T) {
-	// The known default hash for "netscope"
-	defaultHash := "$2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52"
-
-	if !IsDefaultPasswordHash(defaultHash) {
-		t.Error("expected known default hash to be detected")
-	}
-
-	// Generate a new hash for "netscope" - should also be detected
-	newHash, err := HashPassword("netscope")
+	// Generate a hash for "seed" - should be detected as default
+	seedHash, err := HashPassword("seed")
 	if err != nil {
 		t.Fatalf("failed to hash password: %v", err)
 	}
 
-	if !IsDefaultPasswordHash(newHash) {
-		t.Error("expected new hash of 'netscope' to be detected as default")
+	if !IsDefaultPasswordHash(seedHash) {
+		t.Error("expected hash of 'seed' to be detected as default")
 	}
 
 	// Generate a hash for a different password - should NOT be detected

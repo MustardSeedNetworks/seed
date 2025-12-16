@@ -100,9 +100,11 @@ export const DNSSettings = memo(function DNSSettings({
               }))
             }
             placeholder="google.com"
-            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small`}
+            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small`}
           />
-          <p className="caption text-text-muted mt-1">{t("dns.testHostnameDesc")}</p>
+          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+            {t("dns.testHostnameDesc")}
+          </p>
         </div>
 
         {/* DNS Servers for per-server testing */}
@@ -135,7 +137,8 @@ export const DNSSettings = memo(function DNSSettings({
               />
               <button
                 onClick={() => removeDNSServer(server.id!)}
-                className="text-status-error hover:text-status-error/80 px-1"
+                className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                aria-label={t("common.remove")}
               >
                 {t("common.remove")}
               </button>

@@ -99,17 +99,35 @@ export const spacing = {
       inline: "mt-inline", // 8px - inline content
       tight: "mt-tight", // 4px - very tight, for form fields
     },
+    left: {
+      tight: "ml-tight", // 4px - minimal left margin
+      inline: "ml-inline", // 8px - inline content
+      content: "ml-content", // 16px - content indentation
+      spacious: "ml-spacious", // 24px - large indentation (lists)
+    },
   },
 
   // Padding utilities for dividers/sections
   padding: {
     top: {
       heading: "pt-heading", // 12px - section divider top
+      section: "pt-section", // 16px - section divider with more space
     },
     bottom: {
       inline: "pb-inline", // 8px - inline bottom padding
+      tight: "pb-tight", // 4px - minimal bottom padding
+    },
+    right: {
+      icon: "pr-icon", // 40px - space for right-positioned icon
+      tight: "pr-tight", // 32px - slightly smaller right padding
     },
   },
+
+  // Centered content padding (for loading states, empty states)
+  centered: "py-centered", // 48px vertical
+
+  // Compact action button padding (remove, delete buttons)
+  actionBtn: "action-btn-pad", // 4px horizontal
 
   // Main content layout padding
   mainPadding: {

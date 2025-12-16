@@ -293,7 +293,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className={cn(inputClass("default", "md"), "pr-10")}
+                    className={cn(inputClass("default", "md"), spacing.padding.right.icon)}
                     placeholder={t("password.placeholder")}
                     required
                     minLength={8}

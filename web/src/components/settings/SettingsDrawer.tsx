@@ -1080,6 +1080,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         </div>
 
         <div className={`${spacing.drawerPad} section-gap body-small leading-relaxed`}>
+          {/* Drawer content padding includes pt-4 for top spacing */}
           {/* Network Section */}
           <CollapsibleSection title={t("sections.network")}>
             {/* Network Configuration */}
@@ -1126,7 +1127,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="192.168.1.100"
-                      className={`w-full mt-1 ${spacing.chip.sm} bg-surface-base border ${radius.md} body-small text-text-primary ${
+                      className={`w-full ${spacing.margin.top.tight} ${spacing.chip.sm} bg-surface-base border ${radius.md} body-small text-text-primary ${
                         ipSettings.address && !isValidIP(ipSettings.address)
                           ? "border-status-error"
                           : "border-surface-border"
@@ -1145,7 +1146,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="24 or 255.255.255.0"
-                      className={`w-full mt-1 ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+                      className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
                     />
                   </div>
                   <div>
@@ -1160,7 +1161,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="192.168.1.1"
-                      className={`w-full mt-1 ${spacing.chip.sm} bg-surface-base border ${radius.md} body-small text-text-primary ${
+                      className={`w-full ${spacing.margin.top.tight} ${spacing.chip.sm} bg-surface-base border ${radius.md} body-small text-text-primary ${
                         ipSettings.gateway && !isValidIP(ipSettings.gateway)
                           ? "border-status-error"
                           : "border-surface-border"
@@ -1174,7 +1175,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                       value={dnsInput}
                       onChange={(e) => setDnsInput(e.target.value)}
                       placeholder="8.8.8.8, 8.8.4.4"
-                      className={`w-full mt-1 ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+                      className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
                     />
                   </div>
                 </div>
@@ -1318,6 +1319,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           <AppearanceSettings theme={theme} setTheme={setTheme} isDark={isDark} />
 
           {/* Logs (debug) */}
+          {/* pt-4 needed for consistent top padding in drawer sections */}
           <section className="pt-4 border-t border-surface-border">
             <div className="flex items-start justify-between">
               <div>
@@ -1344,6 +1346,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           </section>
 
           {/* Export Section */}
+          {/* pt-4 needed for consistent top padding in drawer sections */}
           <section className="pt-4 border-t border-surface-border">
             <h3
               className={`body-small font-medium text-text-muted ${spacing.margin.bottom.heading}`}
@@ -1376,6 +1379,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           </section>
 
           {/* About Section */}
+          {/* pt-4 needed for consistent top padding in drawer sections */}
           <section className="pt-4 border-t border-surface-border">
             <h3
               className={`body-small font-medium text-text-muted ${spacing.margin.bottom.inline}`}

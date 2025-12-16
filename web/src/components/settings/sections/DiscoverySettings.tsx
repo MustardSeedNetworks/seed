@@ -147,7 +147,7 @@ export function DiscoverySettings({
       <div className="stack">
         {/* Enable Toggle */}
         <label
-          className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+          className={`${layout.flex.between} ${spacing.pad.xs} bg-surface-base ${radius.default} border border-surface-border`}
         >
           <div>
             <span className="body-small text-text-primary font-medium">
@@ -170,7 +170,7 @@ export function DiscoverySettings({
 
         {/* Auto-Scan on Link Up */}
         <label
-          className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+          className={`${layout.flex.between} ${spacing.pad.xs} bg-surface-base ${radius.default} border border-surface-border`}
         >
           <div>
             <span className="body-small text-text-primary font-medium">
@@ -229,7 +229,7 @@ export function DiscoverySettings({
             </div>
             {serviceStatus.running && (
               <div
-                className={`${spacing.margin.top.inline} grid grid-cols-2 gap-2 caption text-text-muted`}
+                className={`${spacing.margin.top.inline} grid grid-cols-2 ${spacing.gap.compact} caption text-text-muted`}
               >
                 <div>
                   <span className="font-medium">{t("discovery.serviceStatus.devices")}:</span>{" "}
@@ -250,11 +250,11 @@ export function DiscoverySettings({
               </div>
             )}
             {serviceStatus.activeMethods && serviceStatus.activeMethods.length > 0 && (
-              <div className={`${spacing.margin.top.inline} flex flex-wrap gap-1`}>
+              <div className={`${spacing.margin.top.inline} flex flex-wrap ${spacing.gap.tight}`}>
                 {serviceStatus.activeMethods.map((method) => (
                   <span
                     key={method}
-                    className={`px-1.5 py-0.5 bg-surface-base ${radius.default} caption text-text-muted`}
+                    className={`${spacing.chip.sm} bg-surface-base ${radius.default} caption text-text-muted`}
                   >
                     {method}
                   </span>
@@ -283,13 +283,13 @@ export function DiscoverySettings({
                   value={profile}
                   checked={currentProfile === profile}
                   onChange={() => handleProfileChange(profile)}
-                  className="mt-0.5"
+                  className={spacing.margin.top.tight}
                 />
                 <div className="flex-1">
                   <div className="body-small font-medium text-text-primary">
                     {getProfileLabel(profile)}
                   </div>
-                  <div className="caption text-text-muted mt-0.5">
+                  <div className={`caption text-text-muted ${spacing.margin.top.tight}`}>
                     {getProfileDescription(profile)}
                   </div>
                 </div>
@@ -441,9 +441,11 @@ export function DiscoverySettings({
               }
               min={1}
               max={100}
-              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
-            <p className="caption text-text-muted mt-1">{t("discovery.workersDesc")}</p>
+            <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+              {t("discovery.workersDesc")}
+            </p>
           </div>
 
           {/* Ping Timeout */}
@@ -463,7 +465,7 @@ export function DiscoverySettings({
               }
               min={100}
               max={5000}
-              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
           </div>
 
@@ -484,7 +486,7 @@ export function DiscoverySettings({
               }
               min={5000}
               max={120000}
-              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
           </div>
 
@@ -504,9 +506,11 @@ export function DiscoverySettings({
                 }))
               }
               min={0}
-              className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
             />
-            <p className="caption text-text-muted mt-1">{t("discovery.rescanIntervalDesc")}</p>
+            <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+              {t("discovery.rescanIntervalDesc")}
+            </p>
           </div>
         </div>
 
@@ -526,9 +530,11 @@ export function DiscoverySettings({
               }))
             }
             placeholder="oui.txt"
-            className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+            className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
           />
-          <p className="caption text-text-muted mt-1">{t("discovery.ouiFileDesc")}</p>
+          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+            {t("discovery.ouiFileDesc")}
+          </p>
         </div>
 
         {/* Target Networks (only for full_scan or custom profile) */}
@@ -549,7 +555,7 @@ export function DiscoverySettings({
                 {subnets.map((subnet) => (
                   <div
                     key={subnet.cidr}
-                    className={`${layout.flex.between} p-2 bg-surface-base ${radius.default} border border-surface-border`}
+                    className={`${layout.flex.between} ${spacing.pad.xs} bg-surface-base ${radius.default} border border-surface-border`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="body-small text-text-primary truncate">
@@ -557,7 +563,7 @@ export function DiscoverySettings({
                       </div>
                       <div className="caption text-text-muted">{subnet.cidr}</div>
                     </div>
-                    <div className={`${layout.inline.default} ml-2`}>
+                    <div className={`${layout.inline.default} ${spacing.margin.left.inline}`}>
                       <input
                         type="checkbox"
                         checked={subnet.enabled}
@@ -592,14 +598,14 @@ export function DiscoverySettings({
                   setSubnetError(null);
                 }}
                 placeholder={t("discovery.cidrPlaceholder")}
-                className={`w-full px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+                className={`w-full ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
               />
               <input
                 type="text"
                 value={newSubnetName}
                 onChange={(e) => setNewSubnetName(e.target.value)}
                 placeholder={t("discovery.namePlaceholder")}
-                className={`w-full px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+                className={`w-full ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
               />
               {subnetError && <p className="caption text-status-error">{subnetError}</p>}
               <button

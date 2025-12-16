@@ -272,7 +272,9 @@ export const SimpleBasic: StoryObj<typeof HelpModal> = {
           <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
             The Link Status card monitors the physical layer connection of your network interface.
           </p>
-          <ul className="list-disc list-inside space-y-2 body-small text-text-secondary">
+          <ul
+            className={`list-disc list-inside ${spacing.stack.sm} body-small text-text-secondary`}
+          >
             <li>Carrier: Shows if cable is physically connected</li>
             <li>Speed: Negotiated link speed (e.g., 1000 Mbps)</li>
             <li>Duplex: Full or Half duplex communication</li>
@@ -332,7 +334,9 @@ export const SimpleWithSections: StoryObj<typeof HelpModal> = {
           </HelpSection>
 
           <HelpSection title="How to Use">
-            <ol className="list-decimal list-inside space-y-2 body-small text-text-secondary">
+            <ol
+              className={`list-decimal list-inside ${spacing.stack.sm} body-small text-text-secondary`}
+            >
               <li>Click "Start Survey" to begin</li>
               <li>Upload a floor plan image (optional)</li>
               <li>Walk to different locations and click "Add Sample"</li>
@@ -384,7 +388,9 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
               <h4 className={`font-semibold text-status-warning ${spacing.margin.bottom.inline}`}>
                 Factors Affecting Speed
               </h4>
-              <ul className="list-disc list-inside body-small text-text-secondary space-y-1">
+              <ul
+                className={`list-disc list-inside body-small text-text-secondary ${spacing.stack.xs}`}
+              >
                 <li>Distance from router or access point</li>
                 <li>Number of connected devices</li>
                 <li>WiFi channel interference</li>
@@ -445,13 +451,15 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
             The Network Dashboard provides a comprehensive overview of your network's health and
             performance.
           </p>
-          <div className="space-y-3">
+          <div className={spacing.stack.default}>
             <div className={`flex items-start ${spacing.gap.default}`}>
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 1
               </span>
               <div className="flex-1">
-                <h4 className="font-semibold text-text-primary mb-1">Monitor Status</h4>
+                <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}>
+                  Monitor Status
+                </h4>
                 <p className="body-small text-text-secondary">
                   View real-time status of all network interfaces and connections.
                 </p>
@@ -462,7 +470,9 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 2
               </span>
               <div className="flex-1">
-                <h4 className="font-semibold text-text-primary mb-1">Run Tests</h4>
+                <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}>
+                  Run Tests
+                </h4>
                 <p className="body-small text-text-secondary">
                   Execute speed tests, cable diagnostics, and network discovery scans.
                 </p>
@@ -473,7 +483,9 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 3
               </span>
               <div className="flex-1">
-                <h4 className="font-semibold text-text-primary mb-1">Analyze Results</h4>
+                <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}>
+                  Analyze Results
+                </h4>
                 <p className="body-small text-text-secondary">
                   Review detailed metrics and identify potential issues or bottlenecks.
                 </p>

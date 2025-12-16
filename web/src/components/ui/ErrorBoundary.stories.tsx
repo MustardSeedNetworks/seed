@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { spacing, button, radius, section, layout } from "../../styles/theme";
+import { spacing, button, radius, section, layout, icon } from "../../styles/theme";
 
 /**
  * ErrorBoundary catches JavaScript errors in child component trees,
@@ -108,7 +108,9 @@ function WorkingComponent() {
     >
       <div className={`${layout.inline.comfortable}`}>
         <svg
-          className="w-5 h-5 text-status-success shrink-0 mt-0.5"
+          className={
+            `${icon.size.md} text-status-success shrink-0 mt-0.5` /* mt-0.5 for icon alignment */
+          }
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -119,7 +121,9 @@ function WorkingComponent() {
           />
         </svg>
         <div>
-          <h3 className="font-semibold text-status-success mb-1">Component Working Correctly</h3>
+          <h3 className={`font-semibold text-status-success ${spacing.margin.bottom.tight}`}>
+            Component Working Correctly
+          </h3>
           <p className="body-small text-text-secondary">
             This component is functioning normally with no errors. The Error Boundary is monitoring
             it but not displaying any fallback UI.
@@ -375,7 +379,9 @@ export const WithRetry: Story = {
         >
           <div className={`${layout.inline.comfortable} items-start`}>
             <svg
-              className="w-5 h-5 text-status-success shrink-0 mt-0.5"
+              className={
+                `${icon.size.md} text-status-success shrink-0 mt-0.5` /* mt-0.5 for icon alignment */
+              }
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -386,7 +392,9 @@ export const WithRetry: Story = {
               />
             </svg>
             <div>
-              <h3 className="font-semibold text-status-success mb-1">Success After Retries!</h3>
+              <h3 className={`font-semibold text-status-success ${spacing.margin.bottom.tight}`}>
+                Success After Retries!
+              </h3>
               <p className="body-small text-text-secondary">
                 The component successfully rendered after {attemptCount + 1} attempts. Error
                 Boundary retry functionality allowed recovery without page reload.
@@ -520,7 +528,7 @@ export const RealWorldCardExample: Story = {
       }
 
       return (
-        <div className="space-y-2">
+        <div className="stack-sm">
           <div className="flex justify-between">
             <span className="caption text-text-muted">Speed</span>
             <span className="body-small font-medium text-text-primary">1000 Mbps</span>

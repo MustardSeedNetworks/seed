@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DataTable, Column } from "./DataTable";
+import { spacing } from "../../styles/theme";
 
 interface Device {
   ip: string;
@@ -66,6 +67,7 @@ const deviceColumns: Column<Device>[] = [
     render: (d) => (
       <span
         className={`px-2 py-0.5 rounded-full text-xs ${
+          /* px-2 py-0.5 for compact status badge */
           d.status === "online"
             ? "bg-status-success/20 text-status-success"
             : d.status === "offline"
@@ -175,7 +177,7 @@ export const WithActions: Story = {
           e.stopPropagation();
           alert(`Action on ${device.hostname}`);
         }}
-        className="px-2 py-1 text-xs bg-brand-primary/20 text-brand-primary rounded hover:bg-brand-primary/30"
+        className={`${spacing.chip.sm} text-xs bg-brand-primary/20 text-brand-primary rounded hover:bg-brand-primary/30`}
       >
         Details
       </button>

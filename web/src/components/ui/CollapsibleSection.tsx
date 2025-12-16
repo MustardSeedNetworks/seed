@@ -104,7 +104,9 @@ export function CollapsibleSection({
             className={cn("font-medium text-text-primary", isCompact ? "caption" : "body-small")}
           >
             {title}
-            {count !== undefined && <span className="text-text-muted ml-1">({count})</span>}
+            {count !== undefined && (
+              <span className={`text-text-muted ${spacing.margin.left.tight}`}>({count})</span>
+            )}
           </span>
         </div>
       </button>
@@ -112,7 +114,7 @@ export function CollapsibleSection({
         <div
           className={cn(
             isCompact
-              ? `pl-5 ${spacing.padding.bottom.inline} stack-xs`
+              ? `pl-5 ${spacing.padding.bottom.inline} stack-xs` /* pl-5 for indentation of nested content */
               : `${spacing.pad.sm} border-t border-surface-border bg-surface-raised stack`
           )}
         >

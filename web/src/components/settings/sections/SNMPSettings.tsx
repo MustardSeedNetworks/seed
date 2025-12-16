@@ -156,9 +156,11 @@ export const SNMPSettings = memo(function SNMPSettings({
             }
             min="1"
             max="65535"
-            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} mt-1 body-small`}
+            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} ${spacing.margin.top.tight} body-small`}
           />
-          <p className="caption text-text-muted mt-1">{t("snmp.portDesc")}</p>
+          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+            {t("snmp.portDesc")}
+          </p>
         </div>
 
         {/* Timeout */}
@@ -179,9 +181,11 @@ export const SNMPSettings = memo(function SNMPSettings({
             min="1"
             max="30"
             step="1"
-            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} mt-1 body-small`}
+            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} ${spacing.margin.top.tight} body-small`}
           />
-          <p className="caption text-text-muted mt-1">{t("snmp.timeoutDesc")}</p>
+          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+            {t("snmp.timeoutDesc")}
+          </p>
         </div>
 
         {/* Retries */}
@@ -201,9 +205,11 @@ export const SNMPSettings = memo(function SNMPSettings({
             }
             min="0"
             max="10"
-            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} mt-1 body-small`}
+            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} ${spacing.margin.top.tight} body-small`}
           />
-          <p className="caption text-text-muted mt-1">{t("snmp.retriesDesc")}</p>
+          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+            {t("snmp.retriesDesc")}
+          </p>
         </div>
 
         {/* Community Strings (v1/v2c) */}
@@ -253,7 +259,8 @@ export const SNMPSettings = memo(function SNMPSettings({
               />
               <button
                 onClick={() => removeCommunity(community)}
-                className="text-status-error hover:text-status-error/80 px-1"
+                className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                aria-label={t("common.remove")}
               >
                 {t("common.remove")}
               </button>
@@ -298,7 +305,8 @@ export const SNMPSettings = memo(function SNMPSettings({
                       e.stopPropagation();
                       removeV3Credential(cred.id!);
                     }}
-                    className="text-status-error hover:text-status-error/80 px-1"
+                    className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                    aria-label={t("common.remove")}
                   >
                     {t("common.remove")}
                   </button>
@@ -317,7 +325,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                       value={cred.name}
                       onChange={(e) => updateV3Credential(cred.id!, "name", e.target.value)}
                       placeholder={t("snmp.credentialName")}
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 caption`}
+                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
                     />
                   </div>
 
@@ -332,7 +340,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                       value={cred.username}
                       onChange={(e) => updateV3Credential(cred.id!, "username", e.target.value)}
                       placeholder={t("snmp.snmpv3Username")}
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 caption`}
+                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
                     />
                   </div>
 
@@ -347,7 +355,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                       onChange={(e) =>
                         updateV3Credential(cred.id!, "securityLevel", e.target.value)
                       }
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 caption`}
+                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
                     >
                       {SECURITY_LEVEL_VALUES.map((value) => (
                         <option key={value} value={value}>
@@ -366,7 +374,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                       id={`auth-proto-${cred.id}`}
                       value={cred.authProtocol}
                       onChange={(e) => updateV3Credential(cred.id!, "authProtocol", e.target.value)}
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 caption`}
+                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
                     >
                       {AUTH_PROTOCOL_VALUES.map((value) => (
                         <option key={value} value={value}>
@@ -390,7 +398,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                           updateV3Credential(cred.id!, "authPassword", e.target.value)
                         }
                         placeholder={t("snmp.authPasswordPlaceholder")}
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 caption`}
+                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
                       />
                     </div>
                   )}
@@ -404,7 +412,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                       id={`priv-proto-${cred.id}`}
                       value={cred.privProtocol}
                       onChange={(e) => updateV3Credential(cred.id!, "privProtocol", e.target.value)}
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 caption`}
+                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
                     >
                       {PRIV_PROTOCOL_VALUES.map((value) => (
                         <option key={value} value={value}>
@@ -428,7 +436,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                           updateV3Credential(cred.id!, "privPassword", e.target.value)
                         }
                         placeholder={t("snmp.privPasswordPlaceholder")}
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 caption`}
+                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
                       />
                     </div>
                   )}
@@ -444,7 +452,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                       value={cred.contextName}
                       onChange={(e) => updateV3Credential(cred.id!, "contextName", e.target.value)}
                       placeholder={t("snmp.snmpContext")}
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 caption`}
+                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
                     />
                   </div>
                 </div>

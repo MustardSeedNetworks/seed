@@ -170,7 +170,7 @@ export function CardValue({
 
   return (
     <div>
-      {label && <p className="caption mb-1">{label}</p>}
+      {label && <p className={`caption ${spacing.margin.bottom.tight}`}>{label}</p>}
       <p className={cn(getSizeClass(size), textMods, layout.inline.tight)} data-testid="card-value">
         {statusIcon && (
           <span className={cn(layout.flex.center, iconTokens.size.xs, "shrink-0 text-current")}>
@@ -213,7 +213,7 @@ export function CardRow({
   return (
     <div
       className={cn(
-        "flex justify-between py-1",
+        "flex justify-between py-1", // Fine-grained vertical padding for row alignment
         layout.inline.default,
         wrap ? "items-start" : "items-center"
       )}

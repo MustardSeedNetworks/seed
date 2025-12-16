@@ -291,7 +291,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         <div className={`max-w-7xl mx-auto pad ${layout.flex.between}`}>
           <div>
             <h1 className="heading-1">{survey.name}</h1>
-            <p className="body-small mt-1">
+            <p className={`body-small ${spacing.margin.top.tight}`}>
               {survey.surveyType.charAt(0).toUpperCase() + survey.surveyType.slice(1)}{" "}
               {t("status.survey")} • {survey.samples.length} {t("status.samples")} • {survey.status}
             </p>
@@ -444,12 +444,14 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                       disabled={uploadingFloorPlan}
                     />
                   </label>
-                  <p className="caption text-text-muted mt-2">{t("floorPlan.supportedFormats")}</p>
+                  <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+                    {t("floorPlan.supportedFormats")}
+                  </p>
                 </div>
               ) : (
                 <div>
                   {survey.status === "in_progress" && (
-                    <p className="body-small text-text-muted mb-2">
+                    <p className={`body-small text-text-muted ${spacing.margin.bottom.inline}`}>
                       {t("floorPlan.clickToMeasure")}
                     </p>
                   )}
@@ -485,7 +487,9 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                       key={idx}
                       className={`border border-surface-border ${radius.md} pad-sm body-small`}
                     >
-                      <div className="flex items-center justify-between mb-2">
+                      <div
+                        className={`flex items-center justify-between ${spacing.margin.bottom.inline}`}
+                      >
                         <span className="font-semibold">#{idx + 1}</span>
                         <span className="caption">
                           {new Date(sample.timestamp).toLocaleTimeString()}

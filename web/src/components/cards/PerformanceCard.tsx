@@ -539,7 +539,9 @@ export const PerformanceCard = memo(function PerformanceCard({
         >
           {t("performance.lanSpeed")}
           {iperfInfo?.version && (
-            <span className="text-text-muted font-normal ml-2">{iperfInfo.version}</span>
+            <span className={`text-text-muted font-normal ${spacing.margin.left.inline}`}>
+              {iperfInfo.version}
+            </span>
           )}
         </p>
 

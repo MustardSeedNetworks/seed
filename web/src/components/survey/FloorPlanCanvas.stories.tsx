@@ -257,7 +257,7 @@ export const Interactive: Story = {
           {samples.length > 0 && (
             <button
               onClick={() => setSamples([])}
-              className="px-3 py-1 bg-status-error/10 text-status-error rounded text-sm hover:bg-status-error/20"
+              className={`${spacing.chip.sm} bg-status-error/10 text-status-error rounded text-sm hover:bg-status-error/20`}
             >
               Clear Points
             </button>
@@ -397,7 +397,7 @@ export const MetricToggle: Story = {
         <div className={`${spacing.margin.bottom.content} flex ${spacing.gap.compact}`}>
           <button
             onClick={() => setMetric(null)}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`${spacing.chip.sm} rounded text-sm ${
               metric === null
                 ? "bg-brand-primary text-text-inverse"
                 : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
@@ -407,7 +407,7 @@ export const MetricToggle: Story = {
           </button>
           <button
             onClick={() => setMetric("rssi")}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`${spacing.chip.sm} rounded text-sm ${
               metric === "rssi"
                 ? "bg-brand-primary text-text-inverse"
                 : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
@@ -417,7 +417,7 @@ export const MetricToggle: Story = {
           </button>
           <button
             onClick={() => setMetric("throughput")}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`${spacing.chip.sm} rounded text-sm ${
               metric === "throughput"
                 ? "bg-brand-primary text-text-inverse"
                 : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
@@ -427,7 +427,7 @@ export const MetricToggle: Story = {
           </button>
           <button
             onClick={() => setMetric("latency")}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`${spacing.chip.sm} rounded text-sm ${
               metric === "latency"
                 ? "bg-brand-primary text-text-inverse"
                 : "bg-surface-raised border border-surface-border hover:bg-surface-hover"

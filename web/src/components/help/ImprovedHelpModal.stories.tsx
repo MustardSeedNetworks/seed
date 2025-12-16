@@ -156,7 +156,9 @@ export const AllSections: Story = {
           <p className="body-small text-text-muted">
             Navigate through all available sections using the sidebar:
           </p>
-          <div className={`grid grid-cols-2 md:grid-cols-5 ${spacing.gap.compact} mt-3`}>
+          <div
+            className={`grid grid-cols-2 md:grid-cols-5 ${spacing.gap.compact} ${spacing.margin.top.heading}`}
+          >
             <SectionBadge name="About" />
             <SectionBadge name="Getting Started" />
             <SectionBadge name="Link Status" />
@@ -316,15 +318,31 @@ export const KeyboardNavigation: Story = {
             className={`list-disc list-inside body-small text-text-muted ${spacing.margin.top.inline}`}
           >
             <li>
-              Press <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">ESC</kbd> to close
+              Press{" "}
+              <kbd
+                className="px-1 py-0.5 bg-surface-hover rounded text-xs" /* px-1 py-0.5 for compact keyboard key styling */
+              >
+                ESC
+              </kbd>{" "}
+              to close
             </li>
             <li>
-              Use <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Tab</kbd> to
-              navigate between elements
+              Use{" "}
+              <kbd
+                className="px-1 py-0.5 bg-surface-hover rounded text-xs" /* px-1 py-0.5 for compact keyboard key styling */
+              >
+                Tab
+              </kbd>{" "}
+              to navigate between elements
             </li>
             <li>
-              Press <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Enter</kbd> to
-              select a section
+              Press{" "}
+              <kbd
+                className="px-1 py-0.5 bg-surface-hover rounded text-xs" /* px-1 py-0.5 for compact keyboard key styling */
+              >
+                Enter
+              </kbd>{" "}
+              to select a section
             </li>
           </ul>
         </div>
@@ -344,7 +362,9 @@ export const KeyboardNavigation: Story = {
 // Helper component
 function SectionBadge({ name }: { name: string }) {
   return (
-    <span className="px-2 py-1 bg-surface-base border border-surface-border rounded text-xs text-text-secondary">
+    <span
+      className={`${spacing.chip.sm} bg-surface-base border border-surface-border rounded text-xs text-text-secondary`}
+    >
       {name}
     </span>
   );

@@ -91,7 +91,7 @@ import {
   Palette,
 } from "./Icons";
 import { ICON_SIZES } from "./iconConfig";
-import { spacing, button, section, icon as iconTheme } from "../../styles/theme";
+import { spacing, button, section, icon as iconTheme, layout } from "../../styles/theme";
 
 /**
  * Icon Library showcases all available icons re-exported from lucide-react.
@@ -388,25 +388,25 @@ export const ButtonIcons: Story = {
       </h3>
       <div className={`flex flex-wrap ${spacing.gap.default}`}>
         <button
-          className={`flex items-center gap-2 ${button.size.md} bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90`}
+          className={`${layout.inline.default} ${button.size.md} bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90`}
         >
           <Play className={iconTheme.size.sm} />
           Run Test
         </button>
         <button
-          className={`flex items-center gap-2 ${button.size.md} bg-surface-raised border border-surface-border rounded-lg hover:bg-surface-hover`}
+          className={`${layout.inline.default} ${button.size.md} bg-surface-raised border border-surface-border rounded-lg hover:bg-surface-hover`}
         >
           <RefreshCw className={iconTheme.size.sm} />
           Refresh
         </button>
         <button
-          className={`flex items-center gap-2 ${button.size.md} bg-status-success/10 text-status-success border border-status-success/20 rounded-lg hover:bg-status-success/20`}
+          className={`${layout.inline.default} ${button.size.md} bg-status-success/10 text-status-success border border-status-success/20 rounded-lg hover:bg-status-success/20`}
         >
           <Download className={iconTheme.size.sm} />
           Export
         </button>
         <button
-          className={`flex items-center gap-2 ${button.size.md} bg-status-error/10 text-status-error border border-status-error/20 rounded-lg hover:bg-status-error/20`}
+          className={`${layout.inline.default} ${button.size.md} bg-status-error/10 text-status-error border border-status-error/20 rounded-lg hover:bg-status-error/20`}
         >
           <Trash2 className={iconTheme.size.sm} />
           Delete

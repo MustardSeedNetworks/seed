@@ -202,7 +202,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   className={cn(
-                    `w-full flex items-center gap-3 ${spacing.tab} ${radius.default} body-small transition-colors text-left`,
+                    `w-full flex items-center ${spacing.gap.default} ${spacing.tab} ${radius.default} body-small transition-colors text-left`,
                     activeSection === section.id
                       ? "bg-brand-primary/10 text-brand-primary font-medium"
                       : "text-text-secondary hover:bg-surface-hover hover:text-text-primary"
@@ -330,12 +330,12 @@ function GettingStartedSection() {
         className={`bg-surface-hover border border-surface-border ${radius.default} ${spacing.pad.default} ${spacing.margin.top.section}`}
       >
         <h4
-          className={`font-semibold text-text-primary ${spacing.margin.bottom.inline} flex items-center gap-2`}
+          className={`font-semibold text-text-primary ${spacing.margin.bottom.inline} flex items-center ${spacing.gap.compact}`}
         >
           <span className="text-status-info">💡</span>
           {t("content.gettingStarted.proTips.title")}
         </h4>
-        <ul className="body-small stack-sm ml-6 list-disc">
+        <ul className={`body-small stack-sm ${spacing.margin.left.spacious} list-disc`}>
           {tips.map((tip, index) => (
             <li key={index}>{tip}</li>
           ))}
@@ -696,7 +696,7 @@ function HelpTermList({ items }: { items: Array<{ term: string; description: str
   return (
     <dl className="stack-lg">
       {items.map((item, idx) => (
-        <div key={idx} className="border-l-2 border-surface-border pl-4">
+        <div key={idx} className={`border-l-2 border-surface-border ${spacing.pad.default}`}>
           <dt className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>
             {item.term}
           </dt>

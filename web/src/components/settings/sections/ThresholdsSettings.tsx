@@ -131,7 +131,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.dns.good}
                 onChange={(e) => updateThreshold("dns", "good", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
             <div>
@@ -143,7 +143,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.dns.warning}
                 onChange={(e) => updateThreshold("dns", "warning", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
           </div>
@@ -173,7 +173,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.gateway.good}
                 onChange={(e) => updateThreshold("gateway", "good", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
             <div>
@@ -185,7 +185,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.gateway.warning}
                 onChange={(e) => updateThreshold("gateway", "warning", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.wifi.good}
                 onChange={(e) => updateThreshold("wifi", "good", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
             <div>
@@ -227,7 +227,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.wifi.warning}
                 onChange={(e) => updateThreshold("wifi", "warning", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
           </div>
@@ -257,7 +257,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.customPing.good}
                 onChange={(e) => updateThreshold("customPing", "good", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
             <div>
@@ -269,7 +269,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.customPing.warning}
                 onChange={(e) => updateThreshold("customPing", "warning", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
           </div>
@@ -299,7 +299,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.customTcp.good}
                 onChange={(e) => updateThreshold("customTcp", "good", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
             <div>
@@ -311,7 +311,7 @@ export function ThresholdsSettings({
                 type="number"
                 value={thresholds.customTcp.warning}
                 onChange={(e) => updateThreshold("customTcp", "warning", Number(e.target.value))}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
               />
             </div>
           </div>
@@ -349,7 +349,7 @@ export function ThresholdsSettings({
                   type="number"
                   value={thresholds.customHttp.good}
                   onChange={(e) => updateThreshold("customHttp", "good", Number(e.target.value))}
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
               <div>
@@ -361,7 +361,7 @@ export function ThresholdsSettings({
                   type="number"
                   value={thresholds.customHttp.warning}
                   onChange={(e) => updateThreshold("customHttp", "warning", Number(e.target.value))}
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
             </div>
@@ -395,7 +395,7 @@ export function ThresholdsSettings({
                   type="number"
                   value={thresholds.httpTimings.dns.good}
                   onChange={(e) => updateHttpTimingThreshold("dns", "good", Number(e.target.value))}
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
               <div>
@@ -409,7 +409,7 @@ export function ThresholdsSettings({
                   onChange={(e) =>
                     updateHttpTimingThreshold("dns", "warning", Number(e.target.value))
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
             </div>
@@ -437,7 +437,7 @@ export function ThresholdsSettings({
                   type="number"
                   value={thresholds.httpTimings.tcp.good}
                   onChange={(e) => updateHttpTimingThreshold("tcp", "good", Number(e.target.value))}
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
               <div>
@@ -451,7 +451,7 @@ export function ThresholdsSettings({
                   onChange={(e) =>
                     updateHttpTimingThreshold("tcp", "warning", Number(e.target.value))
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
             </div>
@@ -479,7 +479,7 @@ export function ThresholdsSettings({
                   type="number"
                   value={thresholds.httpTimings.tls.good}
                   onChange={(e) => updateHttpTimingThreshold("tls", "good", Number(e.target.value))}
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
               <div>
@@ -493,7 +493,7 @@ export function ThresholdsSettings({
                   onChange={(e) =>
                     updateHttpTimingThreshold("tls", "warning", Number(e.target.value))
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
             </div>
@@ -521,7 +521,7 @@ export function ThresholdsSettings({
                   onChange={(e) =>
                     updateHttpTimingThreshold("ttfb", "good", Number(e.target.value))
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
               <div>
@@ -535,7 +535,7 @@ export function ThresholdsSettings({
                   onChange={(e) =>
                     updateHttpTimingThreshold("ttfb", "warning", Number(e.target.value))
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} mt-1 body-small`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
                 />
               </div>
             </div>

@@ -152,19 +152,19 @@ export const MultipleNetworks: StoryObj = {
     >
       <CardValue value="5 Networks Found" size="md" />
       <div className={`${spacing.margin.top.content} ${spacing.stack.sm}`}>
-        <div className="flex justify-between items-center py-1 border-b border-surface-border/50">
+        <div className="flex justify-between items-center py-1 border-b border-surface-border/50 /* py-1 for compact list item */">
           <span className="body-small">HomeNetwork</span>
           <span className="caption text-status-success">-45 dBm</span>
         </div>
-        <div className="flex justify-between items-center py-1 border-b border-surface-border/50">
+        <div className="flex justify-between items-center py-1 border-b border-surface-border/50 /* py-1 for compact list item */">
           <span className="body-small">Neighbor_5G</span>
           <span className="caption text-status-warning">-65 dBm</span>
         </div>
-        <div className="flex justify-between items-center py-1 border-b border-surface-border/50">
+        <div className="flex justify-between items-center py-1 border-b border-surface-border/50 /* py-1 for compact list item */">
           <span className="body-small">Guest</span>
           <span className="caption text-status-warning">-70 dBm</span>
         </div>
-        <div className="flex justify-between items-center py-1 border-b border-surface-border/50">
+        <div className="flex justify-between items-center py-1 border-b border-surface-border/50 /* py-1 for compact list item */">
           <span className="body-small text-text-muted">Hidden Network</span>
           <span className="caption text-status-danger">-82 dBm</span>
         </div>

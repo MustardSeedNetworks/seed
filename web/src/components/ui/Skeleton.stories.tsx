@@ -115,6 +115,8 @@ export const TableRows: Story = {
       </div>
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className={`${layout.flex.between} py-3 border-t border-surface-border`}>
+          {" "}
+          {/* py-3 for table row spacing */}
           <Skeleton variant="text" className="h-4 w-24" />
           <Skeleton variant="text" className="h-4 w-32" />
           <Skeleton variant="text" className="h-4 w-16" />

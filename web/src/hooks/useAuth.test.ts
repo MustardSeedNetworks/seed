@@ -95,34 +95,24 @@ describe("useAuth", () => {
     expect(result.current.isAuthenticated).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith(
       "/api/status",
-      expect.objectContaining({ credentials: "include" }),
+      expect.objectContaining({ credentials: "include" })
     );
   });
 
   it("clears legacy localStorage keys on mount", async () => {
-    // Set legacy keys
-    mockLocalStorage.setItem("netscope-token", "old-token");
-    mockLocalStorage.setItem("netscope-token-expiry", "123456");
-    mockLocalStorage.setItem("netscope-username", "olduser");
-    mockLocalStorage.setItem("netscope_token", "legacy-token");
+    // Set legacy keys (migrated to httpOnly cookies)
+    mockLocalStorage.setItem("seed-token", "old-token");
+    mockLocalStorage.setItem("seed-token-expiry", "123456");
+    mockLocalStorage.setItem("seed-username", "olduser");
 
     mockFetch.mockResolvedValueOnce({ ok: false });
 
     renderHook(() => useAuth());
 
     await waitFor(() => {
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        "netscope-token",
-      );
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        "netscope-token-expiry",
-      );
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        "netscope-username",
-      );
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        "netscope_token",
-      );
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-token");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-token-expiry");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-username");
     });
   });
 
@@ -155,7 +145,7 @@ describe("useAuth", () => {
         method: "POST",
         credentials: "include",
         body: JSON.stringify({ username: "admin", password: "password" }),
-      }),
+      })
     );
   });
 
@@ -273,7 +263,7 @@ describe("useAuth", () => {
         expect.objectContaining({
           method: "POST",
           credentials: "include",
-        }),
+        })
       );
     });
   });

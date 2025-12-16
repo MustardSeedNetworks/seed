@@ -25,7 +25,7 @@ import { useTranslation } from "react-i18next";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
 import { Network } from "../ui/Icons";
-import { cn, layout, radius, icon as iconTokens, border } from "../../styles/theme";
+import { cn, layout, radius, icon as iconTokens, border, spacing } from "../../styles/theme";
 
 /**
  * DHCP timing information for each phase of address assignment
@@ -315,7 +315,9 @@ export function NetworkCard({
           {hasIPv4 && ipv4 && (
             <>
               <CardDivider />
-              <p className="caption font-medium mb-1">{tr("network.ipv4")}</p>
+              <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>
+                {tr("network.ipv4")}
+              </p>
               <CardRow
                 label={tr("network.address")}
                 value={`${ipv4.address}/${ipv4.subnet}`}
@@ -338,7 +340,9 @@ export function NetworkCard({
           {hasIPv6 && (
             <>
               <CardDivider />
-              <p className="caption font-medium mb-1">{tr("network.ipv6")}</p>
+              <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>
+                {tr("network.ipv6")}
+              </p>
               <div className="stack-sm">
                 {groupedIPv6.map((group, groupIdx) => (
                   <div key={groupIdx} className="stack-xs">
@@ -366,13 +370,14 @@ export function NetworkCard({
           {timing && (
             <>
               <CardDivider />
-              <div className={cn(layout.flex.between, "mb-1")}>
+              <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
                 <p className="caption font-medium">{tr("network.dhcpTiming")}</p>
                 {showTiming ? (
                   <button
                     type="button"
                     className={cn(
-                      "caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary px-1",
+                      "caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary",
+                      spacing.actionBtn,
                       radius.default
                     )}
                     onClick={() => setShowTiming(false)}
@@ -384,7 +389,8 @@ export function NetworkCard({
                   <button
                     type="button"
                     className={cn(
-                      "caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary px-1",
+                      "caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary",
+                      spacing.actionBtn,
                       radius.default
                     )}
                     onClick={() => setShowTiming(true)}
@@ -411,6 +417,7 @@ export function NetworkCard({
                     value={formatTime(timing.request)}
                     status={getTimingStatus(timing.request, th.perPhase)}
                   />
+                  {/* pt-1 for subtle divider spacing */}
                   <div className={cn("pt-1", border.divider)}>
                     <CardRow
                       label={tr("network.total")}
@@ -434,7 +441,9 @@ export function NetworkCard({
           {showPublicIP && publicip && (publicip.ipv4 || publicip.ipv6) && (
             <>
               <CardDivider />
-              <p className="caption font-medium mb-1">{tr("network.publicIp")}</p>
+              <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>
+                {tr("network.publicIp")}
+              </p>
               {publicip.ipv4 && <CardRow label={tr("network.ipv4")} value={publicip.ipv4} />}
               {publicip.ipv6 && (
                 <CardRow
@@ -445,7 +454,11 @@ export function NetworkCard({
                   align="right"
                 />
               )}
-              {publicip.error && <p className="caption text-status-error mt-1">{publicip.error}</p>}
+              {publicip.error && (
+                <p className={`caption text-status-error ${spacing.margin.top.tight}`}>
+                  {publicip.error}
+                </p>
+              )}
             </>
           )}
         </>

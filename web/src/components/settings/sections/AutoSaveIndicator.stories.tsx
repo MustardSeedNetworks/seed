@@ -120,7 +120,7 @@ export const InContext: Story = {
     <div className={`w-[400px] ${spacing.pad.default} bg-surface-raised`}>
       <div className="stack">
         <label
-          className={`flex items-center justify-between p-3 bg-surface-base border border-surface-border ${radius.lg}`}
+          className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
         >
           <div className={`flex items-center ${spacing.gap.compact}`}>
             <span className="body-small text-text-primary font-medium">Enable Feature</span>
@@ -129,7 +129,7 @@ export const InContext: Story = {
           <input type="checkbox" checked readOnly className="w-4 h-4" />
         </label>
         <label
-          className={`flex items-center justify-between p-3 bg-surface-base border border-surface-border ${radius.lg}`}
+          className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
         >
           <div className={`flex items-center ${spacing.gap.compact}`}>
             <span className="body-small text-text-primary font-medium">Auto-refresh</span>
@@ -138,7 +138,7 @@ export const InContext: Story = {
           <input type="checkbox" checked readOnly className="w-4 h-4" />
         </label>
         <label
-          className={`flex items-center justify-between p-3 bg-surface-base border border-surface-border ${radius.lg}`}
+          className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
         >
           <div className={`flex items-center ${spacing.gap.compact}`}>
             <span className="body-small text-text-primary font-medium">Failed Setting</span>

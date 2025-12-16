@@ -227,7 +227,7 @@ function DeviceSearchBar({
               key={field}
               type="button"
               onClick={() => onSortChange(field)}
-              className={`${spacing.chip.sm} caption ${radius.md} transition-colors flex items-center gap-1 ${
+              className={`${spacing.chip.sm} caption ${radius.md} transition-colors flex items-center ${spacing.gap.tight} ${
                 sortField === field
                   ? "bg-brand-primary/20 text-brand-primary"
                   : "bg-surface-hover text-text-muted hover:text-text-primary"
@@ -337,6 +337,8 @@ function ProfileIcons({ icons, deviceType }: { icons?: string[]; deviceType?: st
 
   return (
     <div className="flex items-center gap-0.5 flex-wrap">
+      {" "}
+      {/* gap-0.5 for tight badge spacing */}
       {icons.slice(0, 5).map((icon) => {
         const IconComponent = SERVICE_ICONS_MAP.get(icon);
         return (
@@ -507,7 +509,9 @@ function DiscoverySummary({
 
       {/* Category stats row */}
       {stats.length > 0 && (
-        <div className={`flex items-center gap-3 flex-wrap ${spacing.padding.top.heading}`}>
+        <div
+          className={`flex items-center ${spacing.gap.default} flex-wrap ${spacing.padding.top.heading}`}
+        >
           {stats.map(({ icon: Icon, label, count, color }) => (
             <div
               key={label}
@@ -625,7 +629,7 @@ function DeviceRow({
                     e.stopPropagation();
                     onVulnerabilityClick?.(device.ip);
                   }}
-                  className={`inline-flex items-center gap-1 caption ${spacing.chip.sm} ${radius.md} cursor-pointer hover:opacity-80 transition-opacity ${
+                  className={`inline-flex items-center ${spacing.gap.tight} caption ${spacing.chip.sm} ${radius.md} cursor-pointer hover:opacity-80 transition-opacity ${
                     device.vulnerabilities.highestSeverity === "CRITICAL"
                       ? `${severityTheme.critical.bg} ${severityTheme.critical.text}`
                       : device.vulnerabilities.highestSeverity === "HIGH"
@@ -641,7 +645,9 @@ function DeviceRow({
                 </button>
               )}
             </div>
-            <div className={`flex items-center gap-1.5 ${spacing.margin.top.inline} flex-wrap`}>
+            <div
+              className={`flex items-center ${spacing.inline.sm} ${spacing.margin.top.inline} flex-wrap`}
+            >
               {device.discoveryMethod.map((method) => (
                 <MethodBadge key={method} method={method} />
               ))}
@@ -734,7 +740,9 @@ function DeviceRow({
                 <p className={`font-medium text-text-primary ${spacing.margin.bottom.inline}`}>
                   {t("discovery.autoProfile")}
                   {device.profile.deviceType && device.profile.deviceType !== "unknown" && (
-                    <span className="ml-2 caption font-normal text-text-muted">
+                    <span
+                      className={`${spacing.margin.left.inline} caption font-normal text-text-muted`}
+                    >
                       ({device.profile.deviceType})
                     </span>
                   )}
@@ -1148,7 +1156,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             type="button"
             onClick={onScan}
             disabled={status.scanning}
-            className={`${spacing.chip.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5`}
+            className={`${spacing.chip.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${spacing.inline.sm}`}
           >
             {status.scanning ? (
               <>

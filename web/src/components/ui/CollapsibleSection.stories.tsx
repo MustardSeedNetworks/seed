@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { Settings } from "lucide-react";
+import { spacing } from "../../styles/theme";
 
 const meta: Meta<typeof CollapsibleSection> = {
   title: "UI/CollapsibleSection",
@@ -9,8 +10,7 @@ const meta: Meta<typeof CollapsibleSection> = {
     layout: "centered",
     docs: {
       description: {
-        component:
-          "Collapsible/accordion section for organizing content within cards and modals.",
+        component: "Collapsible/accordion section for organizing content within cards and modals.",
       },
     },
   },
@@ -61,11 +61,11 @@ export const Default: Story = {
         <p className="body-small text-text-muted">
           Configure advanced settings for network discovery.
         </p>
-        <label className="flex items-center gap-2">
+        <label className={`flex items-center ${spacing.gap.compact}`}>
           <input type="checkbox" className="w-4 h-4" />
           <span className="body-small">Enable deep scanning</span>
         </label>
-        <label className="flex items-center gap-2">
+        <label className={`flex items-center ${spacing.gap.compact}`}>
           <input type="checkbox" className="w-4 h-4" />
           <span className="body-small">Include SNMP queries</span>
         </label>
@@ -81,9 +81,7 @@ export const DefaultOpen: Story = {
     defaultOpen: true,
     children: (
       <div className="stack-sm">
-        <p className="body-small text-text-muted">
-          These settings are shown by default.
-        </p>
+        <p className="body-small text-text-muted">These settings are shown by default.</p>
       </div>
     ),
   },
@@ -167,7 +165,7 @@ export const WithWarningStatus: Story = {
 export const CustomTitle: Story = {
   args: {
     title: (
-      <div className="flex items-center gap-2">
+      <div className={`flex items-center ${spacing.gap.compact}`}>
         <Settings className="w-4 h-4" />
         <span>Configuration</span>
       </div>
@@ -175,9 +173,7 @@ export const CustomTitle: Story = {
     defaultOpen: true,
     children: (
       <div className="stack-sm">
-        <p className="body-small text-text-muted">
-          Custom title with icon support.
-        </p>
+        <p className="body-small text-text-muted">Custom title with icon support.</p>
       </div>
     ),
   },

@@ -8,25 +8,6 @@
 **What**: Professional network diagnostic appliance - portable hardware device plugged into network
 jacks for real-time diagnostics via web UI.
 
-⚠️ **INCOMPLETE RENAME**: The codebase is currently mid-rename from "NetScope/LuminetIQ" to "The
-Seed". You'll encounter legacy references throughout:
-
-- Comments, docs, and UI text still reference "NetScope", "LuminetIQ"
-- Some file paths and configs use old names
-- Package/test data may use old identifiers
-
-**When writing NEW code, always use**:
-
-- **Product name**: "The Seed" (UI/user-facing)
-- **Binary/CLI**: `seed`
-- **Import paths**: `github.com/krisarmstrong/seed`
-- **Config paths**: `configs/seed.yaml`, `~/.config/seed/`
-- **Storage keys**: `seed-token`, `seed-theme` (not `netscope-*`)
-- **File payloads**: `[]byte("seed")` (not `[]byte("netscope")`)
-
-**When updating EXISTING code with old names**: Replace references consistently. See RENAME_PLAN.md
-in the repo root for comprehensive list of what needs updating.
-
 ## Architecture & Tech Stack
 
 **Backend**: Go 1.25.5+ monolith with modular internal packages  

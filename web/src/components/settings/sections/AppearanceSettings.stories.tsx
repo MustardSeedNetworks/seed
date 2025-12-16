@@ -14,6 +14,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { AppearanceSettings } from "./AppearanceSettings";
+import { spacing } from "../../../styles/theme";
 
 const meta: Meta<typeof AppearanceSettings> = {
   title: "Settings/AppearanceSettings",
@@ -113,13 +114,7 @@ export const Interactive: Story = {
       // For "system", we'd normally detect OS preference
     };
 
-    return (
-      <AppearanceSettings
-        theme={theme}
-        setTheme={handleSetTheme}
-        isDark={isDark}
-      />
-    );
+    return <AppearanceSettings theme={theme} setTheme={handleSetTheme} isDark={isDark} />;
   },
 };
 
@@ -130,24 +125,16 @@ export const Comparison: Story = {
   render: () => (
     <div className="stack-lg">
       <div>
-        <p className="caption text-text-muted mb-2">Light Theme</p>
-        <AppearanceSettings
-          theme="light"
-          setTheme={() => {}}
-          isDark={false}
-        />
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Light Theme</p>
+        <AppearanceSettings theme="light" setTheme={() => {}} isDark={false} />
       </div>
       <div>
-        <p className="caption text-text-muted mb-2">Dark Theme</p>
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Dark Theme</p>
         <AppearanceSettings theme="dark" setTheme={() => {}} isDark={true} />
       </div>
       <div>
-        <p className="caption text-text-muted mb-2">System Theme</p>
-        <AppearanceSettings
-          theme="system"
-          setTheme={() => {}}
-          isDark={false}
-        />
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>System Theme</p>
+        <AppearanceSettings theme="system" setTheme={() => {}} isDark={false} />
       </div>
     </div>
   ),

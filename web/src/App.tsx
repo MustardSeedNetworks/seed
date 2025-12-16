@@ -954,7 +954,7 @@ function App() {
 
             {/* Touch-friendly buttons with larger tap targets */}
             <button
-              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
+              className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
               onClick={toggleTheme}
               aria-label={
                 isDark ? t("accessibility.switchToLightMode") : t("accessibility.switchToDarkMode")
@@ -985,7 +985,7 @@ function App() {
               )}
             </button>
             <button
-              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
+              className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
               onClick={() => setHelpOpen(true)}
               aria-label={t("accessibility.openHelp")}
             >
@@ -1005,7 +1005,7 @@ function App() {
               </svg>
             </button>
             <button
-              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
+              className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
               onClick={() => setSettingsOpen(true)}
               aria-label={t("accessibility.openSettings")}
             >
@@ -1031,7 +1031,7 @@ function App() {
               </svg>
             </button>
             <button
-              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation`}
+              className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation`}
               onClick={logout}
               aria-label={t("buttons.logout")}
             >
@@ -1039,7 +1039,7 @@ function App() {
             </button>
             {/* Mobile logout icon */}
             <button
-              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation`}
+              className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation`}
               onClick={logout}
               aria-label={t("buttons.logout")}
             >
@@ -1403,7 +1403,11 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
   const label = getStatusLabel(status);
 
   return (
-    <div className={`${layout.inline.default} ml-4`} role="status" aria-live="polite">
+    <div
+      className={`${layout.inline.default} ${spacing.margin.left.content}`}
+      role="status"
+      aria-live="polite"
+    >
       <span className={`${layout.inline.tight} ${spacing.inline.sm} caption ${config.color}`}>
         <span
           className={`${layout.flex.center} ${radius.full} ${config.color} ${

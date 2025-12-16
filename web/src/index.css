@@ -356,8 +356,46 @@ body {
   .pt-heading {
     @apply pt-3; /* 12px - section divider top padding */
   }
+  .pt-section {
+    @apply pt-4; /* 16px - section divider with more space */
+  }
   .pb-inline {
     @apply pb-2; /* 8px - inline bottom padding */
+  }
+  .pb-tight {
+    @apply pb-1; /* 4px - minimal bottom padding */
+  }
+
+  /* Centered content padding (for loading states, empty states) */
+  .py-centered {
+    @apply py-12; /* 48px - centered loading/empty state */
+  }
+
+  /* Left margins (for indentation, icon alignment) */
+  .ml-tight {
+    @apply ml-1; /* 4px - minimal left margin */
+  }
+  .ml-inline {
+    @apply ml-2; /* 8px - inline content left margin */
+  }
+  .ml-content {
+    @apply ml-4; /* 16px - content indentation */
+  }
+  .ml-spacious {
+    @apply ml-6; /* 24px - large indentation (lists) */
+  }
+
+  /* Right padding (for inputs with icons) */
+  .pr-icon {
+    @apply pr-10; /* 40px - space for right-positioned icon */
+  }
+  .pr-tight {
+    @apply pr-8; /* 32px - slightly smaller right padding */
+  }
+
+  /* Compact action button padding */
+  .action-btn-pad {
+    @apply px-1; /* 4px horizontal - compact action buttons like remove/delete */
   }
 
   /* Main content padding (responsive) */

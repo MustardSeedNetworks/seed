@@ -65,7 +65,7 @@ export function AppearanceSettings({ theme, setTheme, isDark }: AppearanceSettin
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value as "light" | "dark" | "system")}
-            className={`bg-surface-raised border border-surface-border ${radius.default} px-2 py-1 body-small text-text-primary`}
+            className={`bg-surface-raised border border-surface-border ${radius.default} ${spacing.chip.sm} body-small text-text-primary`}
           >
             <option value="light">{t("appearance.themeLight")}</option>
             <option value="dark">{t("appearance.themeDark")}</option>
@@ -80,7 +80,7 @@ export function AppearanceSettings({ theme, setTheme, isDark }: AppearanceSettin
           <select
             value={currentLanguage}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className={`bg-surface-raised border border-surface-border ${radius.default} px-2 py-1 body-small text-text-primary`}
+            className={`bg-surface-raised border border-surface-border ${radius.default} ${spacing.chip.sm} body-small text-text-primary`}
           >
             {languages.map((lang) => (
               <option key={lang.code} value={lang.code}>

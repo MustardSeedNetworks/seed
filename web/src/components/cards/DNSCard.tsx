@@ -30,7 +30,7 @@ import { Card, CardValue, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Globe } from "../ui/Icons";
-import { icon as iconTokens, layout } from "../../styles/theme";
+import { icon as iconTokens, layout, spacing } from "../../styles/theme";
 
 interface LookupResult {
   result: string;
@@ -84,7 +84,7 @@ function LookupRow({ label, lookup }: { label: string; lookup: LookupResult | nu
         : "text-status-error";
 
   return (
-    <div className="mb-2">
+    <div className={spacing.margin.bottom.inline}>
       <div className={layout.flex.between}>
         <span className="caption">{label}</span>
         <span className={layout.inline.default}>
@@ -139,8 +139,8 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
       status={overallStatus}
     >
       {/* DNS Servers */}
-      <div className="mb-2">
-        <p className="caption mb-1">{t("dns.dnsServers")}</p>
+      <div className={spacing.margin.bottom.inline}>
+        <p className={`caption ${spacing.margin.bottom.tight}`}>{t("dns.dnsServers")}</p>
         <div className="stack-xs">
           {servers.map((server, idx) => (
             <p key={idx} className="body-small font-mono break-all" title={server}>
@@ -155,8 +155,8 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
 
       {/* IPv4 Lookups */}
       {(data.forward || data.reverse) && (
-        <div className="mb-2">
-          <p className="caption font-medium mb-1">IPv4</p>
+        <div className={spacing.margin.bottom.inline}>
+          <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>IPv4</p>
           <LookupRow label={t("dns.forwardA")} lookup={data.forward} />
           <LookupRow label={t("dns.reversePTR")} lookup={data.reverse} />
         </div>
@@ -167,7 +167,7 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
         <>
           <CardDivider />
           <div>
-            <p className="caption font-medium mb-1">IPv6</p>
+            <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>IPv6</p>
             <LookupRow label={t("dns.forwardAAAA")} lookup={data.forwardIpv6} />
             <LookupRow label={t("dns.reversePTR")} lookup={data.reverseIpv6} />
           </div>
@@ -191,8 +191,8 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
             }
           >
             {data.perServerResults.map((server) => (
-              <div key={server.server} className="py-1">
-                <div className={`${layout.flex.between} mb-1`}>
+              <div key={server.server} className={spacing.chip.sm}>
+                <div className={`${layout.flex.between} ${spacing.margin.bottom.tight}`}>
                   <span className="caption font-mono">{server.server}</span>
                   <span
                     className={`caption font-medium ${

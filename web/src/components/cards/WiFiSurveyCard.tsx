@@ -160,7 +160,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
           </div>
         ) : surveys.length === 0 ? (
           <div className={`text-center ${spacing.pad.lg} text-text-muted`}>
-            <p className="body-small mb-2">{t("survey.noSurveys")}</p>
+            <p className={`body-small ${spacing.margin.bottom.inline}`}>{t("survey.noSurveys")}</p>
             <button
               onClick={() => setShowCreateDialog(true)}
               className="body-small text-brand-primary hover:underline"
@@ -193,7 +193,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                       </span>
                     </div>
                   </div>
-                  <div className={`${layout.inline.tight} ml-2`}>
+                  <div className={`${layout.inline.tight} ${spacing.margin.left.inline}`}>
                     {survey.status === "created" && (
                       <button
                         onClick={(e) => {
@@ -315,7 +315,9 @@ function CreateSurveyDialog({ onClose, onCreate, t }: CreateSurveyDialogProps) {
         <form onSubmit={handleSubmit}>
           <div className="stack">
             <div>
-              <label className="label block mb-1">{t("survey.surveyName")}</label>
+              <label className={`label block ${spacing.margin.bottom.tight}`}>
+                {t("survey.surveyName")}
+              </label>
               <input
                 type="text"
                 value={name}
@@ -326,7 +328,7 @@ function CreateSurveyDialog({ onClose, onCreate, t }: CreateSurveyDialogProps) {
               />
             </div>
             <div>
-              <label className="label block mb-1" htmlFor="survey-type">
+              <label className={`label block ${spacing.margin.bottom.tight}`} htmlFor="survey-type">
                 {t("survey.surveyType")}
               </label>
               <select

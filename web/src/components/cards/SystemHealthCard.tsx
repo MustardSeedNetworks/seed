@@ -29,7 +29,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Server } from "lucide-react";
-import { radius, icon as iconTokens } from "../../styles/theme";
+import { radius, icon as iconTokens, spacing } from "../../styles/theme";
 import { BaseCard } from "./BaseCard";
 import { CardRow, CardDivider } from "../ui/Card";
 import { Status } from "../ui/StatusBadge";
@@ -223,7 +223,7 @@ export function SystemHealthCard() {
 
           <CardDivider />
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
             <CardRow
               label={t("system.uptime")}
               value={formatUptime(health.uptime ?? 0)}
@@ -243,6 +243,7 @@ export function SystemHealthCard() {
             />
           </div>
 
+          {/* pt-1 for subtle spacing */}
           <div className="caption text-center pt-1">
             {health.os ?? "Unknown"}/{health.arch ?? "Unknown"} - {health.numCpu ?? 0} CPUs
           </div>

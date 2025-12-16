@@ -252,7 +252,7 @@ export const SignalStrengthLegend: Story = {
       <h2 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
         Signal Strength Heatmap Legend
       </h2>
-      <div className="space-y-3">
+      <div className="stack-sm">
         <SignalLevel
           color="bg-status-success"
           range="-30 to -50 dBm"
@@ -304,7 +304,7 @@ export const ThroughputLegend: Story = {
       <h2 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
         Throughput Heatmap Legend
       </h2>
-      <div className="space-y-3">
+      <div className="stack-sm">
         <SignalLevel
           color="bg-status-success"
           range="80-100%+ of expected"
@@ -432,7 +432,7 @@ function SignalLevel({
 }) {
   return (
     <div
-      className={`flex items-center gap-3 ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
+      className={`flex items-center ${spacing.gap.default} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
     >
       <div className={`w-8 h-8 rounded ${color}`} />
       <div className="flex-1">
@@ -466,12 +466,16 @@ function ModeCard({
       className={`bg-surface-raised border border-surface-border rounded-lg ${spacing.pad.default}`}
     >
       <div className={`text-3xl ${spacing.margin.bottom.inline}`}>{icon}</div>
-      <h3 className="heading-4 text-text-primary mb-1">{title}</h3>
+      <h3 className={`heading-4 text-text-primary ${spacing.margin.bottom.tight}`}>{title}</h3>
       <p className={`body-small text-text-muted ${spacing.margin.bottom.content}`}>{description}</p>
 
-      <div className="space-y-3">
+      <div className="stack-sm">
         <div>
-          <h4 className="caption font-semibold text-status-success mb-1">Pros</h4>
+          <h4
+            className={`caption font-semibold text-status-success ${spacing.margin.bottom.tight}`}
+          >
+            Pros
+          </h4>
           <ul className="list-disc list-inside caption text-text-secondary">
             {pros.map((p, i) => (
               <li key={i}>{p}</li>
@@ -479,14 +483,18 @@ function ModeCard({
           </ul>
         </div>
         <div>
-          <h4 className="caption font-semibold text-status-warning mb-1">Cons</h4>
+          <h4
+            className={`caption font-semibold text-status-warning ${spacing.margin.bottom.tight}`}
+          >
+            Cons
+          </h4>
           <ul className="list-disc list-inside caption text-text-secondary">
             {cons.map((c, i) => (
               <li key={i}>{c}</li>
             ))}
           </ul>
         </div>
-        <div className="pt-2 border-t border-surface-border">
+        <div className={`${spacing.padding.bottom.inline} border-t border-surface-border`}>
           <span className="caption text-text-muted">Best for: </span>
           <span className="caption text-text-primary font-medium">{bestFor}</span>
         </div>

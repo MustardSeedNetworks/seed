@@ -30,7 +30,7 @@ import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { useSettings } from "../../contexts/useSettings";
 import { Router } from "../ui/Icons";
-import { icon as iconTokens, layout } from "../../styles/theme";
+import { icon as iconTokens, layout, spacing } from "../../styles/theme";
 
 export interface GatewayData {
   gateway: string;
@@ -99,7 +99,7 @@ export const GatewayCard = memo(function GatewayCard({ data, loading }: GatewayC
         status="unknown"
       >
         <CardValue value={tr("gateway.noGateway")} size="md" />
-        <p className="caption mt-1">{tr("gateway.unableToDetect")}</p>
+        <p className={`caption ${spacing.margin.top.tight}`}>{tr("gateway.unableToDetect")}</p>
       </Card>
     );
   }
@@ -133,7 +133,7 @@ export const GatewayCard = memo(function GatewayCard({ data, loading }: GatewayC
       <CardDivider />
 
       {/* Latency stats */}
-      <div className="grid grid-cols-3 gap-2 mb-2">
+      <div className={`grid grid-cols-3 ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}>
         <div className="text-center">
           <p className="caption">{tr("gateway.min")}</p>
           <p
@@ -201,12 +201,16 @@ export const GatewayCard = memo(function GatewayCard({ data, loading }: GatewayC
       {data.ipv6 && data.ipv6.gateway && (
         <>
           <CardDivider />
-          <p className="caption mb-1 font-medium">{tr("gateway.ipv6Gateway")}</p>
+          <p className={`caption ${spacing.margin.bottom.tight} font-medium`}>
+            {tr("gateway.ipv6Gateway")}
+          </p>
           <CardValue value={data.ipv6.gateway} size="md" />
-          <p className="caption mb-2">
+          <p className={`caption ${spacing.margin.bottom.inline}`}>
             {data.ipv6.reachable ? tr("gateway.reachable") : tr("gateway.unreachable")}
           </p>
-          <div className="grid grid-cols-3 gap-2 mb-2">
+          <div
+            className={`grid grid-cols-3 ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+          >
             <div className="text-center">
               <p className="caption">{tr("gateway.min")}</p>
               <p

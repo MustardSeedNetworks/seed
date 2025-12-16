@@ -66,21 +66,8 @@ interface UseAuthReturn {
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-// Legacy localStorage keys - will be cleared on mount for migration
-const LEGACY_KEYS = [
-  "netscope-token",
-  "netscope-token-expiry",
-  "netscope-username",
-  "netscope_token",
-  "netscope_token_expiry",
-  "netscope_username",
-  "luminetiq-token",
-  "luminetiq-token-expiry",
-  "luminetiq-username",
-  "seed-token",
-  "seed-token-expiry",
-  "seed-username",
-];
+// localStorage keys to clear on mount (migrated to httpOnly cookies)
+const LEGACY_KEYS = ["seed-token", "seed-token-expiry", "seed-username"];
 
 /**
  * Clears old localStorage keys from cookie migration.
