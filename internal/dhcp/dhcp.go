@@ -1,9 +1,14 @@
 // Package dhcp provides DHCP transaction timing and monitoring.
+//
+// The Monitor uses gopacket/pcap for real-time DHCP packet capture to measure
+// transaction timing (DISCOVER→OFFER→REQUEST→ACK). Requires root/CAP_NET_RAW.
 package dhcp
 
 import (
 	"bufio"
+	"encoding/binary"
 	"encoding/hex"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -12,6 +17,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 )
 
 // Phase represents a DHCP transaction phase.
@@ -71,6 +80,8 @@ type Monitor struct {
 	interfaceName string
 	lastTiming    *Timing
 	transactions  map[uint32]*Transaction
+	stopChan      chan struct{}
+	handle        *pcap.Handle
 }
 
 // NewMonitor creates a new DHCP monitor.
@@ -91,20 +102,173 @@ func (m *Monitor) Start() error {
 		return nil
 	}
 
-	// TODO(#607): Implement actual packet capture using gopacket/pcap
-	// See: https://github.com/krisarmstrong/netscope/issues/607
-	// For now, we just mark as running but don't capture
-	// This requires root access and the gopacket library
+	// Open pcap handle on the interface
+	// Snapshot length of 1600 bytes is enough for DHCP packets
+	// Timeout of 100ms for packet batching
+	handle, err := pcap.OpenLive(m.interfaceName, 1600, true, 100*time.Millisecond)
+	if err != nil {
+		return err
+	}
+
+	// Set BPF filter for DHCP traffic (UDP ports 67 and 68)
+	if err := handle.SetBPFFilter("udp and (port 67 or port 68)"); err != nil {
+		handle.Close()
+		return err
+	}
+
+	m.handle = handle
+	m.stopChan = make(chan struct{})
 	m.running = true
+
+	// Start capture goroutine
+	go m.capturePackets()
 
 	return nil
 }
 
-// Stop stops monitoring.
+// capturePackets runs the packet capture loop.
+func (m *Monitor) capturePackets() {
+	packetSource := gopacket.NewPacketSource(m.handle, m.handle.LinkType())
+	packets := packetSource.Packets()
+
+	for {
+		select {
+		case <-m.stopChan:
+			return
+		case packet, ok := <-packets:
+			if !ok {
+				return
+			}
+			m.processPacket(packet)
+		}
+	}
+}
+
+// processPacket extracts DHCP information from a captured packet.
+func (m *Monitor) processPacket(packet gopacket.Packet) {
+	// Get UDP layer
+	udpLayer := packet.Layer(layers.LayerTypeUDP)
+	if udpLayer == nil {
+		return
+	}
+	udp, _ := udpLayer.(*layers.UDP)
+
+	// DHCP uses ports 67 (server) and 68 (client)
+	if udp.DstPort != 67 && udp.DstPort != 68 && udp.SrcPort != 67 && udp.SrcPort != 68 {
+		return
+	}
+
+	// Get application payload (DHCP data)
+	appLayer := packet.ApplicationLayer()
+	if appLayer == nil {
+		return
+	}
+	payload := appLayer.Payload()
+	if len(payload) < 240 {
+		// DHCP packets must be at least 240 bytes (minimum header + magic cookie)
+		return
+	}
+
+	// Parse DHCP packet
+	// Transaction ID is at offset 4-7 (4 bytes, big endian)
+	xid := binary.BigEndian.Uint32(payload[4:8])
+
+	// Magic cookie check at offset 236-239 (should be 0x63825363)
+	if len(payload) >= 240 {
+		magicCookie := binary.BigEndian.Uint32(payload[236:240])
+		if magicCookie != 0x63825363 {
+			return
+		}
+	}
+
+	// Find DHCP message type in options (starting at offset 240)
+	msgType := findDHCPMessageType(payload[240:])
+	if msgType == 0 {
+		return
+	}
+
+	timestamp := time.Now()
+	if packet.Metadata() != nil && !packet.Metadata().Timestamp.IsZero() {
+		timestamp = packet.Metadata().Timestamp
+	}
+
+	// Convert DHCP message type to our phase
+	var phase Phase
+	switch msgType {
+	case 1: // DHCP Discover
+		phase = PhaseDiscover
+	case 2: // DHCP Offer
+		phase = PhaseOffer
+	case 3: // DHCP Request
+		phase = PhaseRequest
+	case 5: // DHCP ACK
+		phase = PhaseAck
+	default:
+		// Ignore other message types (DECLINE, NAK, RELEASE, INFORM)
+		return
+	}
+
+	log.Printf("DHCP %s captured: XID=0x%08x", phase, xid)
+	m.RecordPhase(xid, phase, timestamp)
+}
+
+// findDHCPMessageType searches DHCP options for message type (option 53).
+func findDHCPMessageType(options []byte) byte {
+	for i := 0; i < len(options)-1; {
+		optionType := options[i]
+
+		// End option
+		if optionType == 255 {
+			break
+		}
+
+		// Pad option
+		if optionType == 0 {
+			i++
+			continue
+		}
+
+		// Check length
+		if i+1 >= len(options) {
+			break
+		}
+		optionLen := int(options[i+1])
+		if i+2+optionLen > len(options) {
+			break
+		}
+
+		// Option 53 is DHCP Message Type
+		if optionType == 53 && optionLen >= 1 {
+			return options[i+2]
+		}
+
+		i += 2 + optionLen
+	}
+	return 0
+}
+
+// Stop stops monitoring and releases resources.
 func (m *Monitor) Stop() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if !m.running {
+		return
+	}
+
 	m.running = false
+
+	// Signal capture goroutine to stop
+	if m.stopChan != nil {
+		close(m.stopChan)
+		m.stopChan = nil
+	}
+
+	// Close pcap handle
+	if m.handle != nil {
+		m.handle.Close()
+		m.handle = nil
+	}
 }
 
 // IsRunning returns whether the monitor is active.

@@ -3,6 +3,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -394,31 +395,27 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("UpdateTestsSettings", func(_ *testing.T) {
-		// TODO(#605): Fix blocking PUT test
-		// See: https://github.com/krisarmstrong/netscope/issues/605
-		// The PUT request is timing out due to config.Save() blocking
-		// Skip PUT test for now - GET is working
-		//
-		// settings := TestsSettingsResponse{
-		// 	DNSHostname: "example.com",
-		// 	DNSServers:  []DNSServerResponse{{Address: "8.8.8.8", Enabled: true}},
-		// 	PingTargets: []PingTargetResponse{{Name: "Google", Host: "8.8.8.8", Enabled: true}},
-		// }
-		//
-		// body, _ := json.Marshal(settings)
-		// req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/tests/settings", bytes.NewReader(body))
-		// req.Header.Set("Content-Type", "application/json")
-		//
-		// client := &http.Client{Timeout: 15 * time.Second}
-		// resp, err := client.Do(req)
-		// if err != nil {
-		// 	t.Fatalf("PUT /api/tests/settings failed: %v", err)
-		// }
-		// defer resp.Body.Close()
-		//
-		// if resp.StatusCode != http.StatusOK {
-		// 	t.Errorf("Expected status 200, got %d", resp.StatusCode)
-		// }
+	t.Run("UpdateTestsSettings", func(t *testing.T) {
+		// Issue #605 fixed: config.Save() deadlock resolved by unlocking before Save()
+		settings := TestsSettingsResponse{
+			DNSHostname: "example.com",
+			DNSServers:  []DNSServerResponse{{Address: "8.8.8.8", Enabled: true}},
+			PingTargets: []PingTargetResponse{{Name: "Google", Host: "8.8.8.8", Enabled: true}},
+		}
+
+		body, _ := json.Marshal(settings)
+		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/tests/settings", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{Timeout: 15 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("PUT /api/tests/settings failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
 	})
 }
