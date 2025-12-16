@@ -1,4 +1,4 @@
-# AI-Powered QA Testing Strategy for LuminetIQ
+# The Seed (Mustard Seed Networks) - # AI-Powered QA Testing Strategy for The Seed
 
 **Document Version:** 1.0
 **Last Updated:** 2025-12-15
@@ -237,7 +237,7 @@ jobs:
 
 **Prompt (ChatGPT GPT-4):**
 ```
-Generate Playwright E2E tests for LuminetIQ:
+Generate Playwright E2E tests for The Seed:
 
 User Story:
 "As an IT admin, I want to run a network discovery scan and see all devices
@@ -270,7 +270,7 @@ test.describe('Network Discovery', () => {
     // 1. Navigate to Dashboard
     const dashboard = new DashboardPage(page);
     await dashboard.goto();
-    await expect(page).toHaveTitle(/LuminetIQ/);
+    await expect(page).toHaveTitle(/The Seed/);
 
     // 2. Click "Start Discovery Scan"
     const discovery = await dashboard.startDiscoveryScan();
@@ -366,7 +366,7 @@ RECOMMENDATION:
 
 **Prompt (Claude Sonnet):**
 ```
-Generate k6 load test script for LuminetIQ API:
+Generate k6 load test script for The Seed API:
 
 Endpoints to test:
 - GET /api/devices (list all devices)
@@ -417,7 +417,7 @@ export const options = {
 
 export default function () {
   // Realistic user scenario
-  const BASE_URL = 'https://luminetiq.local';
+  const BASE_URL = 'https://seed.local';
 
   // 1. Login
   const loginRes = http.post(`${BASE_URL}/api/auth/login`, {
@@ -627,7 +627,7 @@ for i, payload in enumerate(malicious_inputs):
 
 **Prompt (Claude Opus):**
 ```
-Perform threat modeling for LuminetIQ authentication system:
+Perform threat modeling for The Seed authentication system:
 
 Code:
 [paste auth.go, jwt.go, password.go]
@@ -653,7 +653,7 @@ Output:
 
 **AI Response:**
 ```
-THREAT MODEL: LuminetIQ Authentication
+THREAT MODEL: The Seed Authentication
 
 TOP 10 THREATS:
 
@@ -1043,7 +1043,7 @@ AI (Claude Opus):
 - Save $91K/year vs hiring QA engineer
 
 **Bottom Line:**
-AI-powered QA is **not just cheaper—it's better**. AI never gets tired, never misses edge cases, and scales infinitely. For a small team like LuminetIQ, it's the only way to achieve enterprise-grade quality without enterprise-grade budget.
+AI-powered QA is **not just cheaper—it's better**. AI never gets tired, never misses edge cases, and scales infinitely. For a small team like The Seed, it's the only way to achieve enterprise-grade quality without enterprise-grade budget.
 
 ---
 
