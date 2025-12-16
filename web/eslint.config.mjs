@@ -46,9 +46,10 @@ import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
+import jsdoc from "eslint-plugin-jsdoc";
 import tseslint from "typescript-eslint";
 
-export default tseslint.config({ ignores: ["dist", "node_modules", "coverage"] }, {
+export default tseslint.config({ ignores: ["dist", "node_modules", "coverage", "storybook-static", "playwright-report"] }, {
   files: ["**/*.{ts,tsx}"],
   extends: [js.configs.recommended, ...tseslint.configs.recommended],
   languageOptions: {
@@ -64,6 +65,7 @@ export default tseslint.config({ ignores: ["dist", "node_modules", "coverage"] }
   plugins: {
     "react-hooks": reactHooks,
     "react-refresh": reactRefresh,
+    jsdoc: jsdoc,
   },
   rules: {
     ...reactHooks.configs.recommended.rules,
@@ -76,7 +78,74 @@ export default tseslint.config({ ignores: ["dist", "node_modules", "coverage"] }
       { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
     ],
     "@typescript-eslint/no-explicit-any": "warn",
+    // Naming conventions for TypeScript
+    "@typescript-eslint/naming-convention": [
+      "warn",
+      // Variables: camelCase or UPPER_CASE (for constants), PascalCase for React components
+      {
+        selector: "variable",
+        format: ["camelCase", "UPPER_CASE", "PascalCase"],
+        leadingUnderscore: "allow",
+        // Allow __dirname, __filename (Node.js special variables)
+        filter: { regex: "^__", match: false },
+      },
+      // Functions: camelCase (React components can be PascalCase)
+      {
+        selector: "function",
+        format: ["camelCase", "PascalCase"],
+      },
+      // Parameters: camelCase (allow PascalCase for React component params like Story)
+      {
+        selector: "parameter",
+        format: ["camelCase", "PascalCase"],
+        leadingUnderscore: "allow",
+      },
+      // Types, interfaces, classes: PascalCase
+      {
+        selector: "typeLike",
+        format: ["PascalCase"],
+      },
+      // Enum members: PascalCase or UPPER_CASE
+      {
+        selector: "enumMember",
+        format: ["PascalCase", "UPPER_CASE"],
+      },
+      // Object properties: flexible for API compatibility
+      {
+        selector: "property",
+        format: null, // Allow any format for properties (HTTP headers, API responses, etc.)
+        leadingUnderscore: "allow",
+      },
+      // Type properties: flexible for API types
+      {
+        selector: "typeProperty",
+        format: null, // Allow any format (WebSocket __ws, API snake_case, etc.)
+        leadingUnderscore: "allow",
+      },
+    ],
     "no-console": ["warn", { allow: ["warn", "error"] }],
+    // JSDoc documentation rules (warn only - encourage documentation)
+    "jsdoc/require-description": ["warn", { contexts: ["FunctionDeclaration", "ClassDeclaration"] }],
+    "jsdoc/require-jsdoc": [
+      "warn",
+      {
+        publicOnly: true,
+        require: {
+          FunctionDeclaration: true,
+          ClassDeclaration: true,
+          MethodDefinition: false,
+          ArrowFunctionExpression: false,
+        },
+        contexts: [
+          // Require JSDoc on exported function declarations
+          "ExportNamedDeclaration > FunctionDeclaration",
+          // Require JSDoc on exported arrow functions assigned to variables
+          "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator > ArrowFunctionExpression",
+        ],
+      },
+    ],
+    "jsdoc/check-alignment": "warn",
+    "jsdoc/check-indentation": "warn",
     // Enforce design system colors - prevent hardcoded grayscale/black/white in className
     // Note: Colored variants (blue, green, red, etc.) are allowed when used semantically
     // (e.g., discovery method badges, category icons) but should use dark: variants

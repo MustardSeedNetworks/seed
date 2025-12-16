@@ -33,6 +33,10 @@ linters:
     - maintidx       # Check maintainability index
     - exhaustive     # Check exhaustiveness of enum switch statements
     - intrange       # Find places where for loops could use integer range
+    # Naming & style linters
+    - stylecheck     # Stricter Go naming conventions (ST1003, etc.)
+    - predeclared    # Find code shadowing predeclared identifiers
+    - testifylint    # Check testify usage patterns
 
   settings:
     errcheck:
@@ -58,6 +62,23 @@ linters:
       min-occurrences: 3
     maintidx:
       under: 20
+    stylecheck:
+      # ST1003: Poorly chosen identifiers (MixedCaps not mixedCaps)
+      # ST1016: Methods on same type should have same receiver names
+      # ST1020: Comment on exported function should be of the form "FunctionName ..."
+      # ST1021: Comment on exported type should be of the form "TypeName ..."
+      # ST1022: Comment on exported variable should be of the form "VariableName ..."
+      checks:
+        - all
+        - -ST1000  # Package comments (covered by revive)
+      # Require dot import prefix for certain packages
+      dot-import-whitelist: []
+      # HTTP status code naming (http.StatusOK vs 200)
+      http-status-code-whitelist: []
+    predeclared:
+      # Check for shadowing predeclared identifiers like 'error', 'string', 'len'
+      ignore: ""
+      q: false
     revive:
       rules:
         - name: blank-imports
@@ -114,4 +135,4 @@ formatters:
       simplify: true
     goimports:
       local-prefixes:
-        - github.com/krisarmstrong/luminetiq
+        - github.com/krisarmstrong/seed

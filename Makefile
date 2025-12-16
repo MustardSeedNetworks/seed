@@ -36,7 +36,7 @@
         storybook build-storybook test-storybook \
         run dev dev-frontend \
         deploy smoke-test smoke-test-local \
-        deps deps-update tools logs logs-100 help \
+        deps deps-update tools tools-go tools-frontend logs logs-100 help \
         verify release-check iso-info pre-commit pre-commit-install license-check license-report
 
 # =============================================================================
@@ -599,26 +599,46 @@ deps-update: ## Update dependencies
 	go mod tidy
 	cd web && npm update
 
-# Install all Go development tools (linters, security scanners, etc.)
-tools: ## Install all Go development tools
-	@echo "Installing Go development tools..."
-	@echo "  golangci-lint..."
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	@echo "  staticcheck..."
-	@go install honnef.co/go/tools/cmd/staticcheck@latest
-	@echo "  gosec..."
-	@go install github.com/securego/gosec/v2/cmd/gosec@latest
-	@echo "  govulncheck..."
-	@go install golang.org/x/vuln/cmd/govulncheck@latest
-	@echo "  goimports..."
-	@go install golang.org/x/tools/cmd/goimports@latest
-	@echo "  gofumpt..."
-	@go install mvdan.cc/gofumpt@latest
-	@echo "  deadcode..."
-	@go install golang.org/x/tools/cmd/deadcode@latest
+# Install all development tools (Go + Frontend)
+tools: tools-go tools-frontend ## Install all development tools (Go + Node)
 	@echo ""
-	@echo "All Go tools installed to $(shell go env GOPATH)/bin"
+	@echo "✅ All development tools installed!"
+	@echo ""
+	@echo "Go tools: $(shell go env GOPATH)/bin"
 	@echo "Ensure $(shell go env GOPATH)/bin is in your PATH"
+
+# Install Go development tools (linters, security scanners, formatters)
+tools-go: ## Install Go development tools
+	@echo "=== Installing Go Development Tools ==="
+	@echo "  golangci-lint (comprehensive linter)..."
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@echo "  staticcheck (advanced analysis)..."
+	@go install honnef.co/go/tools/cmd/staticcheck@latest
+	@echo "  gosec (security scanner)..."
+	@go install github.com/securego/gosec/v2/cmd/gosec@latest
+	@echo "  govulncheck (vulnerability checker)..."
+	@go install golang.org/x/vuln/cmd/govulncheck@latest
+	@echo "  goimports (import formatter)..."
+	@go install golang.org/x/tools/cmd/goimports@latest
+	@echo "  gofumpt (strict formatter)..."
+	@go install mvdan.cc/gofumpt@latest
+	@echo "  deadcode (unused code finder)..."
+	@go install golang.org/x/tools/cmd/deadcode@latest
+	@echo "  gocyclo (complexity checker)..."
+	@go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+	@echo "✅ Go tools installed"
+
+# Install frontend development tools
+tools-frontend: ## Install frontend development tools
+	@echo ""
+	@echo "=== Installing Frontend Development Tools ==="
+	@echo "Installing root npm dependencies (prettier, husky)..."
+	@npm ci
+	@echo "Installing web dependencies..."
+	@cd web && npm ci
+	@echo "Installing Playwright browsers..."
+	@cd web && npx playwright install --with-deps chromium 2>/dev/null || echo "Playwright install skipped (run 'make test-e2e-install' manually)"
+	@echo "✅ Frontend tools installed"
 
 # =============================================================================
 # Remote Logs
