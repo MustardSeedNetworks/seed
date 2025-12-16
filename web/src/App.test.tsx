@@ -1,9 +1,9 @@
 /**
  * App.test.tsx - Application Component Tests
- * 
+ *
  * Purpose: Comprehensive test suite for the main App component covering card updates,
  * WebSocket message handling, authentication flow, and error scenarios.
- * 
+ *
  * Key Test Areas:
  * - Card state updates: CARD_UPDATED messages reflecting in UI
  * - WebSocket connectivity: connection status display and message handling
@@ -11,15 +11,15 @@
  * - Settings: settings panel integration and persistence
  * - Error handling: graceful error display and recovery
  * - Component lifecycle: proper initialization and cleanup
- * 
+ *
  * Test Framework: Vitest with React Testing Library
  * Mocks: localStorage, fetch API, WebSocket events
- * 
+ *
  * Usage:
  * ```bash
  * npm test -- App.test.tsx
  * ```
- * 
+ *
  * Dependencies: vitest, @testing-library/react, @testing-library/user-event
  */
 
@@ -148,6 +148,13 @@ describe("App", () => {
             }),
         });
       }
+      if (url.includes("/api/status")) {
+        // Default to unauthenticated unless overridden in specific tests
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+        });
+      }
       // Default response for other endpoints
       return Promise.resolve({
         ok: true,
@@ -193,6 +200,12 @@ describe("App", () => {
             ok: true,
             json: () =>
               Promise.resolve({ needsSetup: false, username: "admin" }),
+          });
+        }
+        if (url.includes("/api/status")) {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
           });
         }
         if (url.includes("/api/auth/login")) {
@@ -248,6 +261,12 @@ describe("App", () => {
               Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
+        if (url.includes("/api/status")) {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+          });
+        }
         if (url.includes("/api/auth/login")) {
           return Promise.resolve({
             ok: false,
@@ -294,6 +313,12 @@ describe("App", () => {
               Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
+        if (url.includes("/api/status")) {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+          });
+        }
         if (url.includes("/api/auth/login")) {
           return new Promise((resolve) => {
             resolveLogin = resolve;
@@ -337,11 +362,33 @@ describe("App", () => {
 
   describe("authenticated state", () => {
     beforeEach(() => {
-      // Set up authenticated state
-      const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-      mockLocalStorage.setItem("netscope-token", "test-token");
-      mockLocalStorage.setItem("netscope-token-expiry", String(futureExpiry));
-      mockLocalStorage.setItem("netscope-username", "admin");
+      // Set up authenticated state by mocking /api/status to return authenticated
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/api/setup/status")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
+          });
+        }
+        if (url.includes("/api/status")) {
+          // Return authenticated status
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+          });
+        }
+        if (url.includes("/api/settings")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ thresholds: {} }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        });
+      });
     });
 
     it("renders main dashboard when authenticated", async () => {
@@ -441,6 +488,12 @@ describe("LoginForm input validation", () => {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
+        });
+      }
+      if (url.includes("/api/status")) {
+        return Promise.resolve({
+          ok: false,
+          status: 401,
         });
       }
       if (url.includes("/api/settings")) {

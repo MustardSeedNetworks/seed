@@ -111,10 +111,18 @@ describe("useAuth", () => {
     renderHook(() => useAuth());
 
     await waitFor(() => {
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token");
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-token-expiry");
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope-username");
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("netscope_token");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+        "netscope-token",
+      );
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+        "netscope-token-expiry",
+      );
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+        "netscope-username",
+      );
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+        "netscope_token",
+      );
     });
   });
 
@@ -188,7 +196,7 @@ describe("useAuth", () => {
     });
 
     expect(loginResult!).toBe(false);
-    expect(result.current.error).toBe("Login failed");
+    expect(result.current.error).toBe("Network error");
   });
 
   it("login sets isLoading during request", async () => {
