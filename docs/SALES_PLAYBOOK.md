@@ -1,4 +1,4 @@
-# LuminetIQ Sales Playbook
+# The Seed (Mustard Seed Networks) - # The Seed Sales Playbook
 
 **Document Version:** 1.0
 **Last Updated:** 2025-12-15
@@ -25,9 +25,9 @@
 
 ## Product Overview
 
-### What is LuminetIQ?
+### What is The Seed?
 
-**LuminetIQ is an AI-powered network diagnostic platform that helps IT teams:**
+**The Seed is an AI-powered network diagnostic platform that helps IT teams:**
 - Discover and classify network devices automatically
 - Diagnose network issues with root cause analysis
 - Plan WiFi deployments BEFORE buying hardware (predictive survey)
@@ -36,11 +36,11 @@
 
 ### One-Sentence Pitch
 
-> "LuminetIQ is like having a senior network engineer with AI superpowers on your team 24/7, catching problems before users complain and saving thousands on WiFi deployments."
+> "The Seed is like having a senior network engineer with AI superpowers on your team 24/7, catching problems before users complain and saving thousands on WiFi deployments."
 
 ### Elevator Pitch (30 seconds)
 
-> "Most IT teams waste hours troubleshooting network issues and thousands on WiFi site surveys. LuminetIQ uses AI to tell you EXACTLY what's wrong—'DHCP is slow because your server takes 800ms to respond'—and lets you plan WiFi coverage BEFORE you buy access points. We help healthcare and SMB IT teams save 10+ hours per week on troubleshooting and $2,000-5,000 per WiFi deployment. Our customers say it's like having a senior network engineer who never sleeps."
+> "Most IT teams waste hours troubleshooting network issues and thousands on WiFi site surveys. The Seed uses AI to tell you EXACTLY what's wrong—'DHCP is slow because your server takes 800ms to respond'—and lets you plan WiFi coverage BEFORE you buy access points. We help healthcare and SMB IT teams save 10+ hours per week on troubleshooting and $2,000-5,000 per WiFi deployment. Our customers say it's like having a senior network engineer who never sleeps."
 
 ---
 
@@ -235,7 +235,7 @@
 
 **1. Introduction (5 minutes)**
 - Quick recap of discovery call: "You mentioned you spend 15 hours per week troubleshooting and just had a WiFi outage last week, right?"
-- Agenda overview: "I'll show you exactly how LuminetIQ solves those problems in about 30 minutes"
+- Agenda overview: "I'll show you exactly how The Seed solves those problems in about 30 minutes"
 
 **2. The "Wow Moment" (10 minutes)**
 
@@ -243,7 +243,7 @@
 
 **If their pain is troubleshooting:**
 - Show AI Root Cause Analysis: "Here's a real issue—DHCP is slow. Most tools stop there. Watch this..."
-- Click into insight: "LuminetIQ tells you EXACTLY why: the DHCP server took 850ms to respond, which is 3x your baseline. That's where you start."
+- Click into insight: "The Seed tells you EXACTLY why: the DHCP server took 850ms to respond, which is 3x your baseline. That's where you start."
 - **Wow moment:** "Instead of spending 2 hours checking switches, cables, and configs, you know in 10 seconds it's the DHCP server."
 
 **If their pain is WiFi:**
@@ -327,11 +327,11 @@ Address common objections BEFORE they ask:
 
 **"That's too expensive"**
 - **Probe:** "Too expensive compared to what? What are you spending now on site surveys, consultant hours, or network downtime?"
-- **Reframe:** "Let's look at ROI. If you do 2 WiFi surveys per year at $3,000 each, that's $6,000. LuminetIQ is $1,999 and you can do unlimited surveys. You save $4,000 in year one alone."
+- **Reframe:** "Let's look at ROI. If you do 2 WiFi surveys per year at $3,000 each, that's $6,000. The Seed is $1,999 and you can do unlimited surveys. You save $4,000 in year one alone."
 
 **"We don't have budget right now"**
 - **Probe:** "When does your next budget cycle start?"
-- **Reframe:** "What's the cost of NOT fixing this? If your team wastes 10 hours per week at $50/hour, that's $26,000 per year. LuminetIQ costs $799. Even a 10% time savings pays for itself."
+- **Reframe:** "What's the cost of NOT fixing this? If your team wastes 10 hours per week at $50/hour, that's $26,000 per year. The Seed costs $799. Even a 10% time savings pays for itself."
 
 **"Can we get a discount?"**
 - **Deflect:** "Our pricing is already 60% below competitors like Ekahau. That said, we do offer discounts for annual pre-payment [already included], multi-year commitments [10-15% off], and non-profit/education [25% off]. Which applies to you?"
@@ -349,7 +349,7 @@ Address common objections BEFORE they ask:
 
 **Response:**
 - "Great tools for monitoring! What we hear from customers is those tools tell you WHAT is broken, but not WHY or HOW to fix it. Do you find yourself spending hours correlating data to find root causes?"
-- **Differentiation:** "LuminetIQ's AI tells you exactly why DHCP is slow (server response time) or why WiFi is weak (interference on channel 6). It's the difference between a symptom and a diagnosis."
+- **Differentiation:** "The Seed's AI tells you exactly why DHCP is slow (server response time) or why WiFi is weak (interference on channel 6). It's the difference between a symptom and a diagnosis."
 
 **2. "We can't justify the cost"**
 
@@ -358,7 +358,7 @@ Address common objections BEFORE they ask:
   - WiFi site survey: $3,000-5,000 per deployment
   - Network consultant: $150-250/hour
   - IT team troubleshooting: 10-20 hours/week @ $50/hour = $26K-52K/year
-- "If LuminetIQ saves just 2 hours per week or eliminates one site survey, it pays for itself. Does that math work for you?"
+- "If The Seed saves just 2 hours per week or eliminates one site survey, it pays for itself. Does that math work for you?"
 
 **3. "We're not ready to buy right now"**
 
@@ -371,7 +371,7 @@ Address common objections BEFORE they ask:
 
 **Response:**
 - "Smart approach—you should compare. Which other tools are you looking at?"
-- **If they say Ekahau:** "Ekahau is the gold standard for WiFi surveys, no question. The difference is Ekahau requires on-site surveys with expensive hardware ($5K+). LuminetIQ lets you PLAN coverage before you ever buy an AP. It's predictive vs reactive."
+- **If they say Ekahau:** "Ekahau is the gold standard for WiFi surveys, no question. The difference is Ekahau requires on-site surveys with expensive hardware ($5K+). The Seed lets you PLAN coverage before you ever buy an AP. It's predictive vs reactive."
 - **Battle card:** [See Competitive Battle Cards section]
 
 **5. "Our IT team can build this in-house"**
@@ -383,7 +383,7 @@ Address common objections BEFORE they ask:
 **6. "We don't need AI, we have experienced engineers"**
 
 **Response:**
-- "Your engineers are your biggest asset! LuminetIQ doesn't replace them—it makes them 10x more productive. Instead of spending 2 hours troubleshooting, they get answers in 10 seconds and can focus on projects that drive the business forward."
+- "Your engineers are your biggest asset! The Seed doesn't replace them—it makes them 10x more productive. Instead of spending 2 hours troubleshooting, they get answers in 10 seconds and can focus on projects that drive the business forward."
 - "Think of it like spell-check for writers. Good writers don't need spell-check, but it makes them faster and catches mistakes."
 
 **7. "What if it doesn't work for our environment?"**
@@ -418,14 +418,14 @@ Address common objections BEFORE they ask:
 - Reactive (survey AFTER APs deployed to verify)
 - No AI insights, no compliance features
 
-**LuminetIQ Advantages:**
+**The Seed Advantages:**
 - **Predictive survey** - Plan BEFORE buying APs (Ekahau can't do this)
 - 60-75% cheaper ($1,999 vs $5,000-20,000)
 - Software-only, no hardware required
 - AI root cause analysis + compliance reporting (Ekahau doesn't have)
 
 **Positioning:**
-> "Ekahau is the Cadillac of WiFi surveys—if you have $5K per deployment and need spectrum analysis, go with them. But if you want to PLAN coverage before you buy APs and save thousands, LuminetIQ's predictive survey is the only option."
+> "Ekahau is the Cadillac of WiFi surveys—if you have $5K per deployment and need spectrum analysis, go with them. But if you want to PLAN coverage before you buy APs and save thousands, The Seed's predictive survey is the only option."
 
 **Sales Trap to Avoid:**
 - ❌ Don't compete head-to-head on traditional survey accuracy (they'll win)
@@ -449,14 +449,14 @@ Address common objections BEFORE they ask:
 - Reactive surveys only (no predictive planning)
 - Requires Windows (not cross-platform)
 
-**LuminetIQ Advantages:**
+**The Seed Advantages:**
 - Predictive WiFi planning (AirMagnet doesn't have)
 - Modern web UI, easier to learn
 - 75-85% cheaper
 - Cross-platform (runs on any OS)
 
 **Positioning:**
-> "AirMagnet is built for Fortune 500 enterprise. If you have complex requirements and enterprise budget, it's a solid choice. But if you want predictive planning and a tool your whole team can use without a PhD, LuminetIQ is built for you."
+> "AirMagnet is built for Fortune 500 enterprise. If you have complex requirements and enterprise budget, it's a solid choice. But if you want predictive planning and a tool your whole team can use without a PhD, The Seed is built for you."
 
 ---
 
@@ -476,14 +476,14 @@ Address common objections BEFORE they ask:
 - No AI root cause analysis
 - Limited integrations
 
-**LuminetIQ Advantages:**
+**The Seed Advantages:**
 - **All-in-one platform:** WiFi + network diagnostics + security + compliance
 - AI-powered root cause analysis (Hamina doesn't have)
 - Anomaly detection, vulnerability scanning (Hamina doesn't have)
 - HIPAA/CIS compliance reporting (Hamina doesn't have)
 
 **Positioning:**
-> "Hamina is great if you ONLY need WiFi planning. But if you want WiFi planning AND network troubleshooting AND compliance reporting in one platform, LuminetIQ is the only option."
+> "Hamina is great if you ONLY need WiFi planning. But if you want WiFi planning AND network troubleshooting AND compliance reporting in one platform, The Seed is the only option."
 
 **This is Our Toughest Competitor:**
 - Hamina's RF modeling is strong—we MUST match their ±10 dB accuracy or we lose
@@ -508,14 +508,14 @@ Address common objections BEFORE they ask:
 - Limited AI/analytics
 - iPad-only (not cross-platform)
 
-**LuminetIQ Advantages:**
+**The Seed Advantages:**
 - Predictive WiFi planning (NetAlly can't do this)
 - Software-only, no hardware required
 - Cross-platform (any device)
 - AI diagnostics + compliance (NetAlly doesn't have)
 
 **Positioning:**
-> "NetAlly is perfect for field techs doing hands-on surveys with hardware. But if you want to PLAN WiFi coverage from your desk without buying $2,500 hardware, LuminetIQ's predictive survey is the way to go."
+> "NetAlly is perfect for field techs doing hands-on surveys with hardware. But if you want to PLAN WiFi coverage from your desk without buying $2,500 hardware, The Seed's predictive survey is the way to go."
 
 ---
 
@@ -532,17 +532,17 @@ Address common objections BEFORE they ask:
 **Free Tools Weaknesses:**
 - Require deep networking expertise
 - No AI insights, manual analysis required
-- Fragmented (need 5-10 tools to do what LuminetIQ does in one)
+- Fragmented (need 5-10 tools to do what The Seed does in one)
 - No support, no SLA
 
-**LuminetIQ Advantages:**
+**The Seed Advantages:**
 - **AI does the analysis for you** (free tools just collect data)
 - All-in-one platform (vs. 10 separate tools)
 - Professional support + SLA
 - Compliance-ready reports (free tools can't generate)
 
 **Positioning:**
-> "Free tools are great if you have a senior network engineer with 40 hours per week to analyze data. But if you want AI to tell you exactly what's wrong in 10 seconds, LuminetIQ pays for itself in time savings alone."
+> "Free tools are great if you have a senior network engineer with 40 hours per week to analyze data. But if you want AI to tell you exactly what's wrong in 10 seconds, The Seed pays for itself in time savings alone."
 
 **Sales Trap to Avoid:**
 - ❌ Don't compete on price (free always wins)
@@ -557,9 +557,9 @@ Address common objections BEFORE they ask:
 **Assumptions:**
 - Average IT hourly rate: $50/hour
 - Current troubleshooting time: 10-20 hours/week
-- LuminetIQ reduces troubleshooting by 30-50%
+- The Seed reduces troubleshooting by 30-50%
 
-| Current State | With LuminetIQ | Annual Savings |
+| Current State | With The Seed | Annual Savings |
 |---------------|----------------|----------------|
 | 10 hours/week @ $50/hour | 30% reduction = 3 hours saved/week | **$7,800/year** |
 | 15 hours/week @ $50/hour | 40% reduction = 6 hours saved/week | **$15,600/year** |
@@ -576,9 +576,9 @@ Address common objections BEFORE they ask:
 
 **Assumptions:**
 - Traditional site survey cost: $3,000-5,000 per deployment
-- LuminetIQ predictive survey: Included in Premium tier ($1,999/year)
+- The Seed predictive survey: Included in Premium tier ($1,999/year)
 
-| Deployments/Year | Traditional Cost | LuminetIQ Cost | Savings |
+| Deployments/Year | Traditional Cost | The Seed Cost | Savings |
 |------------------|------------------|----------------|---------|
 | 1 survey/year | $3,000 | $1,999 | **$1,001** |
 | 2 surveys/year | $6,000 | $1,999 | **$4,001** |
@@ -595,9 +595,9 @@ Address common objections BEFORE they ask:
 
 **Assumptions:**
 - Average cost of network downtime: $5,600/hour (Gartner)
-- LuminetIQ prevents 50% of failures with 24h early warning
+- The Seed prevents 50% of failures with 24h early warning
 
-| Current Downtime | Cost | With LuminetIQ (50% reduction) | Savings |
+| Current Downtime | Cost | With The Seed (50% reduction) | Savings |
 |------------------|------|-------------------------------|---------|
 | 1 hour/month | $67,200/year | $33,600/year | **$33,600** |
 | 4 hours/year | $22,400/year | $11,200/year | **$11,200** |
@@ -614,9 +614,9 @@ Address common objections BEFORE they ask:
 **Assumptions:**
 - External consultant for HIPAA audit: $5,000-15,000
 - Internal staff time for audit prep: 40-80 hours @ $50/hour = $2,000-4,000
-- LuminetIQ automates 50-70% of evidence collection
+- The Seed automates 50-70% of evidence collection
 
-| Current Audit Cost | With LuminetIQ (50% reduction) | Savings |
+| Current Audit Cost | With The Seed (50% reduction) | Savings |
 |--------------------|-------------------------------|---------|
 | $7,000/year (consultant + staff) | $3,500/year | **$3,500** |
 | $15,000/year | $7,500/year | **$7,500** |
@@ -638,7 +638,7 @@ Address common objections BEFORE they ask:
 | Downtime prevention (4 hours/year) | $11,200 |
 | HIPAA audit prep | $3,500 |
 | **Total Annual Benefit** | **$34,301** |
-| **LuminetIQ Cost (Premium)** | $1,999 |
+| **The Seed Cost (Premium)** | $1,999 |
 | **Net Savings** | **$32,302** |
 | **ROI** | **17x** |
 
@@ -753,7 +753,7 @@ Address common objections BEFORE they ask:
 
 ---
 
-### Recommended Commission Plan for LuminetIQ
+### Recommended Commission Plan for The Seed
 
 **Year 1: Low Base + High Commission (2 reps)**
 
@@ -908,9 +908,9 @@ I noticed [Company] has [trigger: recent WiFi upgrade / HIPAA compliance require
 
 Quick question: How much time does your IT team spend troubleshooting network issues each week?
 
-Most IT directors we work with say 10-20 hours. LuminetIQ's AI tells you exactly what's wrong in seconds—like "DHCP is slow because the server took 850ms to respond"—so your team can fix it in minutes instead of hours.
+Most IT directors we work with say 10-20 hours. The Seed's AI tells you exactly what's wrong in seconds—like "DHCP is slow because the server took 850ms to respond"—so your team can fix it in minutes instead of hours.
 
-Would it make sense to see a 10-minute demo? I can show you how a hospital IT director saved 15 hours per week using LuminetIQ.
+Would it make sense to see a 10-minute demo? I can show you how a hospital IT director saved 15 hours per week using The Seed.
 
 [Your Name]
 ```
@@ -918,7 +918,7 @@ Would it make sense to see a 10-minute demo? I can show you how a hospital IT di
 **Follow-Up After Demo**
 
 ```
-Subject: Next Steps: LuminetIQ 30-Day Trial
+Subject: Next Steps: The Seed 30-Day Trial
 
 Hi [First Name],
 
@@ -938,7 +938,7 @@ Sound good? Click here to pick a time for the success check-in: [Calendly link]
 **Trial Conversion (Day 25 of 30)**
 
 ```
-Subject: 5 days left in your LuminetIQ trial
+Subject: 5 days left in your The Seed trial
 
 Hi [First Name],
 
@@ -948,7 +948,7 @@ You're 5 days away from the end of your 30-day trial. Quick check:
 - Have you seen the AI root cause analysis in action?
 - Any questions I can answer?
 
-Based on what you've seen, does LuminetIQ solve your [pain point from discovery call]?
+Based on what you've seen, does The Seed solve your [pain point from discovery call]?
 
 If yes, I'll send over a proposal this week so we can get you up and running without interruption.
 
@@ -1045,4 +1045,4 @@ If yes, I'll send over a proposal this week so we can get you up and running wit
 **Document Owner:** Sales Team
 **Next Review:** Quarterly (or after 25 customers closed)
 
-**Questions or Feedback?** Contact [sales-enablement@luminetiq.com]
+**Questions or Feedback?** Contact [sales-enablement@seed.com]
