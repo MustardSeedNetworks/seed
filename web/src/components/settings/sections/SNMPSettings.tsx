@@ -83,7 +83,7 @@ export const SNMPSettings = memo(function SNMPSettings({
   const addV3Credential = useCallback(() => {
     const newCred: SNMPv3Credential = {
       id: generateId(),
-      name: "New Credential",
+      name: t("snmp.newCredential"),
       username: "",
       authProtocol: "",
       authPassword: "",
@@ -97,7 +97,7 @@ export const SNMPSettings = memo(function SNMPSettings({
       v3Credentials: [...prev.v3Credentials, newCred],
     }));
     setExpandedCredential(newCred.id!);
-  }, [setSnmpSettings]);
+  }, [setSnmpSettings, t]);
 
   const removeV3Credential = useCallback(
     (id: string) => {

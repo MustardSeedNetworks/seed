@@ -22,6 +22,7 @@
  * Props: status ("idle", "saving", "saved", or "error")
  */
 
+import { useTranslation } from "react-i18next";
 import { SaveStatus } from "../../../types/settings";
 
 interface AutoSaveIndicatorProps {
@@ -32,8 +33,9 @@ interface AutoSaveIndicatorProps {
  * AutoSaveIndicator Component
  * Renders a small status indicator for form field save operations
  */
-
 export function AutoSaveIndicator({ status }: AutoSaveIndicatorProps) {
+  const { t } = useTranslation("settings");
+
   if (status === "idle") return null;
   return (
     <span
@@ -46,10 +48,10 @@ export function AutoSaveIndicator({ status }: AutoSaveIndicatorProps) {
       }`}
     >
       {status === "saving"
-        ? "Saving..."
+        ? t("autoSave.saving")
         : status === "saved"
-          ? "Saved"
-          : "Error"}
+          ? t("autoSave.saved")
+          : t("autoSave.error")}
     </span>
   );
 }

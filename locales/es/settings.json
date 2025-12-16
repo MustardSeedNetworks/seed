@@ -211,6 +211,7 @@
     "v3Credentials": "Credenciales SNMPv3",
     "v3CredentialsDesc": "Credenciales de usuario SNMPv3 con autenticación y privacidad",
     "credentialName": "Nombre de credencial",
+    "newCredential": "Nueva credencial",
     "username": "Usuario",
     "snmpv3Username": "Usuario SNMPv3",
     "securityLevel": "Nivel de seguridad",
