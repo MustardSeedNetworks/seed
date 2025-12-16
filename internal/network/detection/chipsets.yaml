@@ -1,0 +1,390 @@
+# Network Interface Chipset Database
+#
+# This file contains curated metadata for network interface chipsets used for
+# automatic detection and friendly naming. Edit this file to add new chipsets
+# or update quality ratings.
+#
+# Fields:
+#   vendor:     Manufacturer name (Intel, Broadcom, Realtek, etc.)
+#   model:      Chipset model number
+#   speed:      Max speed category (1G, 2.5G, 5G, 10G, 25G, 40G, 100G, WiFi5, WiFi6, etc.)
+#   quality:    Quality rating 1-100 (driver stability, features, community support)
+#   has_tdr:    Supports Time Domain Reflectometry for cable testing
+#   has_dom:    Supports Digital Optical Monitoring (SFP+/QSFP)
+#   oui_prefix: MAC address OUI prefixes (first 3 octets, colon-separated)
+#   pci_vendor: PCI Vendor ID (hex, without 0x prefix)
+#   pci_device: PCI Device IDs (hex, without 0x prefix)
+#   keywords:   Keywords found in driver/device names for identification
+
+chipsets:
+  # ============================================================================
+  # Intel 1G Ethernet - Enterprise grade, excellent TDR support
+  # ============================================================================
+  - vendor: Intel
+    model: I210
+    speed: 1G
+    quality: 95
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["00:1b:21", "a0:36:9f", "68:05:ca"]
+    pci_vendor: "8086"
+    pci_device: ["1533", "1536", "1537", "1538"]
+    keywords: ["i210", "igb"]
+
+  - vendor: Intel
+    model: I211
+    speed: 1G
+    quality: 90
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["00:1b:21", "a0:36:9f"]
+    pci_vendor: "8086"
+    pci_device: ["1539"]
+    keywords: ["i211"]
+
+  - vendor: Intel
+    model: I350
+    speed: 1G
+    quality: 95
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["00:1b:21", "a0:36:9f"]
+    pci_vendor: "8086"
+    pci_device: ["1521", "1522", "1523", "1524"]
+    keywords: ["i350"]
+
+  # ============================================================================
+  # Intel 2.5G Ethernet - Modern desktop/NUC grade
+  # ============================================================================
+  - vendor: Intel
+    model: I225-V
+    speed: 2.5G
+    quality: 85
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["00:1b:21", "a0:36:9f", "04:42:1a"]
+    pci_vendor: "8086"
+    pci_device: ["15f2", "15f3"]
+    keywords: ["i225", "igc"]
+
+  - vendor: Intel
+    model: I226-V
+    speed: 2.5G
+    quality: 88
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["00:1b:21", "a0:36:9f"]
+    pci_vendor: "8086"
+    pci_device: ["125b", "125c"]
+    keywords: ["i226"]
+
+  # ============================================================================
+  # Intel 10G Ethernet - Server/Workstation grade
+  # ============================================================================
+  - vendor: Intel
+    model: X540
+    speed: 10G
+    quality: 92
+    has_tdr: true
+    has_dom: true
+    oui_prefix: ["00:1b:21", "90:e2:ba"]
+    pci_vendor: "8086"
+    pci_device: ["1528", "1529"]
+    keywords: ["x540", "ixgbe"]
+
+  - vendor: Intel
+    model: X550
+    speed: 10G
+    quality: 93
+    has_tdr: true
+    has_dom: true
+    oui_prefix: ["00:1b:21", "90:e2:ba", "a0:36:9f"]
+    pci_vendor: "8086"
+    pci_device: ["1563", "15ab", "15ad"]
+    keywords: ["x550"]
+
+  - vendor: Intel
+    model: X710
+    speed: 10G
+    quality: 95
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:1b:21", "3c:fd:fe", "68:05:ca"]
+    pci_vendor: "8086"
+    pci_device: ["1572", "1574", "1580", "1581"]
+    keywords: ["x710", "i40e"]
+
+  # ============================================================================
+  # Intel 25G/40G/100G - Data Center grade
+  # ============================================================================
+  - vendor: Intel
+    model: XXV710
+    speed: 25G
+    quality: 94
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:1b:21", "3c:fd:fe"]
+    pci_vendor: "8086"
+    pci_device: ["158a", "158b"]
+    keywords: ["xxv710"]
+
+  - vendor: Intel
+    model: XL710
+    speed: 40G
+    quality: 94
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:1b:21", "3c:fd:fe"]
+    pci_vendor: "8086"
+    pci_device: ["1583", "1584", "1585"]
+    keywords: ["xl710"]
+
+  - vendor: Intel
+    model: E810
+    speed: 100G
+    quality: 96
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:1b:21", "b4:96:91"]
+    pci_vendor: "8086"
+    pci_device: ["1591", "1592", "1593"]
+    keywords: ["e810", "ice"]
+
+  # ============================================================================
+  # Broadcom 1G Ethernet - Server grade
+  # ============================================================================
+  - vendor: Broadcom
+    model: BCM5720
+    speed: 1G
+    quality: 85
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["14:fe:b5", "d4:ae:52"]
+    pci_vendor: "14e4"
+    pci_device: ["165f"]
+    keywords: ["bcm5720", "tg3"]
+
+  - vendor: Broadcom
+    model: BCM5719
+    speed: 1G
+    quality: 85
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["14:fe:b5"]
+    pci_vendor: "14e4"
+    pci_device: ["1657"]
+    keywords: ["bcm5719"]
+
+  # ============================================================================
+  # Broadcom 10G/25G - Server grade
+  # ============================================================================
+  - vendor: Broadcom
+    model: BCM57810
+    speed: 10G
+    quality: 82
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:10:18"]
+    pci_vendor: "14e4"
+    pci_device: ["168e"]
+    keywords: ["bcm57810", "bnx2x"]
+
+  # ============================================================================
+  # Realtek 1G - Consumer grade
+  # ============================================================================
+  - vendor: Realtek
+    model: RTL8111
+    speed: 1G
+    quality: 60
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:e0:4c", "52:54:00", "00:14:2a"]
+    pci_vendor: "10ec"
+    pci_device: ["8168", "8167"]
+    keywords: ["rtl8111", "r8169", "r8168"]
+
+  - vendor: Realtek
+    model: RTL8169
+    speed: 1G
+    quality: 55
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:e0:4c"]
+    pci_vendor: "10ec"
+    pci_device: ["8169"]
+    keywords: ["rtl8169"]
+
+  # ============================================================================
+  # Realtek 2.5G - Consumer/Prosumer grade
+  # ============================================================================
+  - vendor: Realtek
+    model: RTL8125
+    speed: 2.5G
+    quality: 65
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:e0:4c"]
+    pci_vendor: "10ec"
+    pci_device: ["8125", "3000"]
+    keywords: ["rtl8125", "r8125"]
+
+  # ============================================================================
+  # Realtek 5G - Newer consumer
+  # ============================================================================
+  - vendor: Realtek
+    model: RTL8126
+    speed: 5G
+    quality: 68
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:e0:4c"]
+    pci_vendor: "10ec"
+    pci_device: ["8126"]
+    keywords: ["rtl8126"]
+
+  # ============================================================================
+  # Aquantia/Marvell Multi-Gig
+  # ============================================================================
+  - vendor: Aquantia
+    model: AQC107
+    speed: 10G
+    quality: 78
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["00:d0:c5", "3c:7c:3f"]
+    pci_vendor: "1d6a"
+    pci_device: ["07b1", "d107"]
+    keywords: ["aqc107", "atlantic"]
+
+  - vendor: Aquantia
+    model: AQC113
+    speed: 10G
+    quality: 80
+    has_tdr: true
+    has_dom: false
+    oui_prefix: ["00:d0:c5"]
+    pci_vendor: "1d6a"
+    pci_device: ["94c0", "00c0"]
+    keywords: ["aqc113"]
+
+  # ============================================================================
+  # Mellanox/NVIDIA ConnectX - Data center grade
+  # ============================================================================
+  - vendor: Mellanox
+    model: ConnectX-3
+    speed: 40G
+    quality: 90
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:02:c9", "e4:1d:2d"]
+    pci_vendor: "15b3"
+    pci_device: ["1003", "1007"]
+    keywords: ["connectx-3", "mlx4"]
+
+  - vendor: Mellanox
+    model: ConnectX-4
+    speed: 100G
+    quality: 93
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:02:c9", "e4:1d:2d", "b8:ce:f6"]
+    pci_vendor: "15b3"
+    pci_device: ["1013", "1015", "1017"]
+    keywords: ["connectx-4", "mlx5"]
+
+  - vendor: Mellanox
+    model: ConnectX-5
+    speed: 100G
+    quality: 95
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:02:c9", "e4:1d:2d", "b8:ce:f6"]
+    pci_vendor: "15b3"
+    pci_device: ["1017", "1019"]
+    keywords: ["connectx-5"]
+
+  - vendor: Mellanox
+    model: ConnectX-6
+    speed: 100G
+    quality: 97
+    has_tdr: false
+    has_dom: true
+    oui_prefix: ["00:02:c9", "b8:ce:f6"]
+    pci_vendor: "15b3"
+    pci_device: ["101b", "101d"]
+    keywords: ["connectx-6"]
+
+  # ============================================================================
+  # Intel WiFi - Modern WiFi 6/6E/7
+  # ============================================================================
+  - vendor: Intel
+    model: AX200
+    speed: WiFi6
+    quality: 88
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:1b:21", "7c:b2:7d"]
+    pci_vendor: "8086"
+    pci_device: ["2723"]
+    keywords: ["ax200", "iwlwifi"]
+
+  - vendor: Intel
+    model: AX210
+    speed: WiFi6E
+    quality: 90
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:1b:21", "7c:b2:7d"]
+    pci_vendor: "8086"
+    pci_device: ["2725"]
+    keywords: ["ax210"]
+
+  - vendor: Intel
+    model: AX211
+    speed: WiFi6E
+    quality: 90
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:1b:21"]
+    pci_vendor: "8086"
+    pci_device: ["51f0", "51f1"]
+    keywords: ["ax211"]
+
+  - vendor: Intel
+    model: BE200
+    speed: WiFi7
+    quality: 92
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:1b:21"]
+    pci_vendor: "8086"
+    pci_device: ["272e"]
+    keywords: ["be200"]
+
+  # ============================================================================
+  # Qualcomm/Atheros WiFi
+  # ============================================================================
+  - vendor: Qualcomm
+    model: Atheros QCA6174
+    speed: WiFi5
+    quality: 75
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["00:03:7f", "98:de:d0"]
+    pci_vendor: "168c"
+    pci_device: ["003e"]
+    keywords: ["qca6174", "ath10k"]
+
+  # ============================================================================
+  # MediaTek WiFi
+  # ============================================================================
+  - vendor: MediaTek
+    model: MT7921
+    speed: WiFi6
+    quality: 72
+    has_tdr: false
+    has_dom: false
+    oui_prefix: ["a8:93:4a"]
+    pci_vendor: "14c3"
+    pci_device: ["7961"]
+    keywords: ["mt7921"]
