@@ -214,15 +214,38 @@ docker-push: docker-build ## Push Docker image to registry
 	docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):latest
 
 # =============================================================================
-# Deployment
+# Deployment (closes #468)
 # =============================================================================
+#
+# Deployment uses systemd for service management (recommended) or falls back
+# to manual process management. Configure via environment variables:
+#
+#   DEPLOY_HOST     - Target server IP (default: 192.168.64.7)
+#   DEPLOY_USER     - SSH user (default: krisarmstrong)
+#   DEPLOY_PATH     - Remote installation path (default: /home/$USER/seed)
+#   DEPLOY_PORT     - HTTPS port for smoke tests (default: 8443)
+#   DEPLOY_SYSTEMD  - Use systemd (default: 1, set to 0 for manual mode)
+#   REBUILD         - Force rebuild (default: 0)
+#
+# Prerequisites:
+#   - SSH key authentication configured
+#   - sudo access on remote host (for setcap and systemd)
+#   - systemd service installed (run: sudo ./deploy/systemd/install.sh)
+#
+# =============================================================================
+
+DEPLOY_SYSTEMD?=1
 
 # Full deployment pipeline:
 # 1. Build Linux binary (native or Docker)
 # 2. Rsync binary, iperf3, and configs to remote
-# 3. Set capabilities and restart service
+# 3. Restart service via systemd (or manual fallback)
 # 4. Run smoke tests to verify deployment
 deploy: ## Deploy to Ubuntu server (builds via Docker if needed)
+	@# Verify SSH connectivity first
+	@echo "Verifying SSH connectivity to $(DEPLOY_HOST)..."
+	@ssh -o BatchMode=yes -o ConnectTimeout=5 $(DEPLOY_USER)@$(DEPLOY_HOST) "echo 'SSH OK'" || \
+		(echo "ERROR: Cannot connect to $(DEPLOY_HOST). Check SSH configuration." && exit 1)
 	@# Build Linux binary - try direct first, fallback to Docker
 	@if [ ! -f $(BINARY_NAME)-linux-amd64 ] || [ "$(REBUILD)" = "1" ]; then \
 		if command -v x86_64-linux-gnu-gcc > /dev/null 2>&1; then \
@@ -232,6 +255,7 @@ deploy: ## Deploy to Ubuntu server (builds via Docker if needed)
 			$(MAKE) build-linux-docker; \
 		fi; \
 	fi
+	@echo ""
 	@echo "Deploying to $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)..."
 	@# Check for iperf3-linux-amd64
 	@if [ ! -f bin/iperf3-linux-amd64 ]; then \
@@ -250,18 +274,42 @@ deploy: ## Deploy to Ubuntu server (builds via Docker if needed)
 	@if [ -d configs ]; then \
 		rsync -avz --progress configs/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/configs/; \
 	fi
-	@# Set capabilities and restart
-	@# cap_net_raw is required for ICMP ping and packet capture (LLDP/CDP)
+	@# Set permissions and capabilities
 	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
 		cd $(DEPLOY_PATH) && \
 		chmod +x $(BINARY_NAME) && \
 		if [ -f bin/iperf3 ]; then chmod +x bin/iperf3; fi && \
-		pkill -9 $(BINARY_NAME) 2>/dev/null || true && \
-		sleep 1 && \
-		sudo setcap cap_net_raw=+ep ./$(BINARY_NAME) && \
-		nohup ./$(BINARY_NAME) > $(BINARY_NAME).log 2>&1 & \
-		sleep 3 && \
-		ps aux | grep '[s]eed' || echo 'Warning: Server may not have started'"
+		sudo setcap cap_net_raw=+ep ./$(BINARY_NAME)"
+	@# Restart service
+	@if [ "$(DEPLOY_SYSTEMD)" = "1" ]; then \
+		echo "Restarting via systemd..."; \
+		ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
+			if systemctl is-active --quiet $(BINARY_NAME) 2>/dev/null; then \
+				sudo systemctl restart $(BINARY_NAME) && \
+				sleep 2 && \
+				sudo systemctl is-active --quiet $(BINARY_NAME) && \
+				echo 'Service restarted successfully'; \
+			else \
+				echo 'systemd service not installed. Installing...'; \
+				cd $(DEPLOY_PATH) && \
+				if [ -f deploy/systemd/install.sh ]; then \
+					sudo ./deploy/systemd/install.sh && \
+					sudo systemctl start $(BINARY_NAME); \
+				else \
+					echo 'ERROR: Service not installed. Run: sudo ./deploy/systemd/install.sh'; \
+					exit 1; \
+				fi; \
+			fi"; \
+	else \
+		echo "Restarting manually (DEPLOY_SYSTEMD=0)..."; \
+		ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
+			cd $(DEPLOY_PATH) && \
+			pkill $(BINARY_NAME) 2>/dev/null || true && \
+			sleep 2 && \
+			nohup ./$(BINARY_NAME) > $(BINARY_NAME).log 2>&1 & \
+			sleep 3 && \
+			pgrep -x $(BINARY_NAME) > /dev/null && echo 'Server started' || echo 'WARNING: Server may not have started'"; \
+	fi
 	@echo ""
 	@echo "Deployment complete. Running smoke tests..."
 	@$(MAKE) smoke-test
