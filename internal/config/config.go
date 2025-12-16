@@ -89,7 +89,7 @@ type ServerConfig struct {
 // ACMEConfig contains ACME/Let's Encrypt certificate settings.
 type ACMEConfig struct {
 	Enabled  bool   `yaml:"enabled"`             // Enable automatic certificate management
-	Domain   string `yaml:"domain"`              // Domain name for the certificate (e.g., "netscope.example.com")
+	Domain   string `yaml:"domain"`              // Domain name for the certificate (e.g., "seed.example.com")
 	Email    string `yaml:"email"`               // Contact email for Let's Encrypt notifications
 	CacheDir string `yaml:"cache_dir,omitempty"` // Directory to cache certificates (default: "certs/acme")
 	Staging  bool   `yaml:"staging,omitempty"`   // Use Let's Encrypt staging server (for testing)
@@ -396,7 +396,7 @@ type SecurityConfig struct {
 	// AllowedOrigins specifies explicit origins allowed for CORS and WebSocket.
 	// If empty, defaults to RFC 1918 private network ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
 	// Use "*" to allow all origins (not recommended for production).
-	// Examples: ["http://192.168.1.100:8080", "https://netscope.local"]
+	// Examples: ["http://192.168.1.100:8080", "https://seed.local"]
 	AllowedOrigins []string `yaml:"allowed_origins"`
 
 	// VulnerabilityScanning configures CVE vulnerability scanning for discovered devices.
@@ -849,7 +849,7 @@ type SetupResult struct {
 // The function will:
 // 1. Create config directory if it doesn't exist.
 // 2. Load existing config or create default.
-// 3. Check if using insecure default credentials (admin/netscope).
+// 3. Check if using insecure default credentials (admin/seed).
 // 4. Generate and persist secure credentials if needed.
 // 5. Ensure JWT secret is persisted.
 func EnsureConfig(path string, checkDefaultPassword func(hash string) bool) (*Config, *SetupResult, error) {

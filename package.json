@@ -1,8 +1,8 @@
 {
-  "name": "netscope",
+  "name": "seed",
   "version": "0.0.0",
   "private": true,
-  "description": "Portable Network Diagnostic Tool",
+  "description": "The Seed - AI-Powered Network Diagnostic Tool",
   "scripts": {
     "prepare": "husky",
     "format:md": "prettier --write \"**/*.md\" --ignore-path .gitignore",

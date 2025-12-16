@@ -1,5 +1,5 @@
 # =============================================================================
-# Gitleaks Configuration - LuminetIQ
+# Gitleaks Configuration - The Seed
 # =============================================================================
 #
 # Secret detection configuration for preventing credential leaks.
@@ -11,7 +11,7 @@
 #
 # =============================================================================
 
-title = "LuminetIQ Gitleaks Configuration"
+title = "The Seed Gitleaks Configuration"
 
 [extend]
 # Use the default gitleaks rules as a base

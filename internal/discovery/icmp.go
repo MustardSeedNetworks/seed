@@ -232,7 +232,7 @@ func (p *ICMPPinger) Ping(ctx context.Context, ipStr string) PingResult {
 		Body: &icmp.Echo{
 			ID:   p.id,
 			Seq:  seq,
-			Data: []byte("netscope"),
+			Data: []byte("seed"),
 		},
 	}
 
