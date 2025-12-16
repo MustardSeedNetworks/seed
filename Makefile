@@ -37,7 +37,8 @@
         run dev dev-frontend \
         deploy smoke-test smoke-test-local \
         deps deps-update tools tools-go tools-frontend logs logs-100 help \
-        verify release-check iso-info pre-commit pre-commit-install license-check license-report
+        verify release-check iso-info pre-commit pre-commit-install license-check license-report \
+        i18n-sync i18n-check i18n-list
 
 # =============================================================================
 # Configuration Variables
@@ -798,6 +799,45 @@ pre-commit-install: ## Install pre-commit hooks
 		echo "pre-commit not installed. Install with: pip install pre-commit"; \
 		exit 1; \
 	fi
+
+# =============================================================================
+# Internationalization (i18n)
+# =============================================================================
+
+# Sync locale files from root to internal/i18n for Go embedding
+i18n-sync: ## Sync locale files for Go embedding
+	@echo "Syncing locale files..."
+	@mkdir -p internal/i18n/locales/en internal/i18n/locales/es
+	@cp locales/en/*.json internal/i18n/locales/en/
+	@cp locales/es/*.json internal/i18n/locales/es/
+	@echo "✅ Locale files synced to internal/i18n/locales/"
+
+# Check for missing translation keys between locales
+i18n-check: ## Check for missing translation keys
+	@echo "Checking translation key coverage..."
+	@bash -c 'for file in locales/en/*.json; do \
+		name=$$(basename $$file); \
+		if [ ! -f "locales/es/$$name" ]; then \
+			echo "❌ Missing Spanish file: $$name"; \
+			exit 1; \
+		fi; \
+		en_keys=$$(jq -r "paths(scalars) | join(\".\")" $$file | sort); \
+		es_keys=$$(jq -r "paths(scalars) | join(\".\")" locales/es/$$name | sort); \
+		missing=$$(comm -23 <(echo "$$en_keys") <(echo "$$es_keys")); \
+		if [ -n "$$missing" ]; then \
+			echo "❌ Missing keys in es/$$name:"; \
+			echo "$$missing" | head -10; \
+			exit 1; \
+		fi; \
+	done'
+	@echo "✅ All translation keys present in all locales"
+
+# List all translation keys
+i18n-list: ## List all translation keys in English locale
+	@for file in locales/en/*.json; do \
+		echo "=== $$(basename $$file) ==="; \
+		jq -r 'paths(scalars) | join(".")' $$file; \
+	done
 
 # =============================================================================
 # ISO Creation (Manual Process)

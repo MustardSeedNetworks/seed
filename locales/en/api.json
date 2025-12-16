@@ -1,0 +1,60 @@
+{
+  "status": {
+    "ok": "ok",
+    "success": "success",
+    "updated": "updated",
+    "deleted": "deleted",
+    "started": "started",
+    "stopped": "stopped",
+    "paused": "paused",
+    "completed": "completed",
+    "created": "created"
+  },
+  "discovery": {
+    "scanStarted": "Scan started",
+    "scanInProgress": "Scan already in progress",
+    "settingsUpdated": "Network discovery settings updated",
+    "subnetAdded": "Subnet added",
+    "subnetUpdated": "Subnet updated",
+    "subnetDeleted": "Subnet deleted",
+    "profileUpdated": "Profile updated to {{profile}}"
+  },
+  "tests": {
+    "settingsUpdated": "Tests settings updated"
+  },
+  "speedtest": {
+    "started": "Speedtest started. Poll /api/speedtest/status for results."
+  },
+  "iperf": {
+    "clientStarted": "iperf3 test started. Poll /api/iperf/client/status for results.",
+    "serverStarted": "iperf3 server started",
+    "serverStopped": "iperf3 server stopped"
+  },
+  "settings": {
+    "snmpUpdated": "SNMP settings updated",
+    "wifiUpdated": "WiFi settings updated",
+    "ipConfigUpdated": "IP configuration updated",
+    "mtuUpdated": "MTU updated"
+  },
+  "vlan": {
+    "created": "VLAN interface created",
+    "deleted": "VLAN interface deleted"
+  },
+  "dhcp": {
+    "serversCleared": "Detected servers list cleared"
+  },
+  "survey": {
+    "sampleAdded": "sample added",
+    "floorPlanUpdated": "floor plan updated"
+  },
+  "auth": {
+    "loggedOut": "logged out"
+  },
+  "vulnerabilities": {
+    "scanStarted": "Vulnerability scan started",
+    "noData": "No vulnerability data for device"
+  },
+  "messages": {
+    "validationFailed": "Validation failed"
+  }
+}

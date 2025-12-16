@@ -1,0 +1,102 @@
+{
+  "title": "Settings",
+  "sections": {
+    "appearance": "Appearance",
+    "network": "Network",
+    "discovery": "Discovery",
+    "performance": "Performance",
+    "health": "Health Checks",
+    "dns": "DNS",
+    "wifi": "WiFi",
+    "snmp": "SNMP",
+    "thresholds": "Thresholds"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "language": "Language",
+    "languageEn": "English",
+    "languageEs": "Español"
+  },
+  "network": {
+    "title": "Network",
+    "defaultInterface": "Default Interface",
+    "ipMode": "IP Mode",
+    "dhcp": "DHCP",
+    "static": "Static",
+    "ipAddress": "IP Address",
+    "subnetMask": "Subnet Mask",
+    "gateway": "Gateway",
+    "dnsServers": "DNS Servers",
+    "mtu": "MTU"
+  },
+  "discovery": {
+    "title": "Discovery",
+    "profile": "Profile",
+    "profileStealth": "Stealth",
+    "profileStandard": "Standard",
+    "profileFullScan": "Full Scan",
+    "profileCustom": "Custom",
+    "scanInterval": "Scan Interval",
+    "timeout": "Timeout",
+    "subnets": "Subnets",
+    "addSubnet": "Add Subnet",
+    "cidr": "CIDR",
+    "description": "Description"
+  },
+  "performance": {
+    "title": "Performance",
+    "testServer": "Test Server",
+    "testDuration": "Test Duration",
+    "parallelConnections": "Parallel Connections"
+  },
+  "health": {
+    "title": "Health Checks",
+    "endpoints": "Endpoints",
+    "addEndpoint": "Add Endpoint",
+    "name": "Name",
+    "url": "URL",
+    "method": "Method",
+    "interval": "Interval",
+    "timeout": "Timeout",
+    "expectedStatus": "Expected Status"
+  },
+  "dns": {
+    "title": "DNS",
+    "testDomains": "Test Domains",
+    "addDomain": "Add Domain",
+    "customServers": "Custom Servers"
+  },
+  "wifi": {
+    "title": "WiFi",
+    "scanInterval": "Scan Interval",
+    "showHidden": "Show Hidden Networks",
+    "signalThreshold": "Signal Threshold"
+  },
+  "snmp": {
+    "title": "SNMP",
+    "community": "Community",
+    "version": "Version",
+    "port": "Port",
+    "timeout": "Timeout",
+    "retries": "Retries"
+  },
+  "thresholds": {
+    "title": "Thresholds",
+    "warning": "Warning",
+    "critical": "Critical",
+    "latency": "Latency",
+    "packetLoss": "Packet Loss",
+    "cpuUsage": "CPU Usage",
+    "memoryUsage": "Memory Usage",
+    "diskUsage": "Disk Usage"
+  },
+  "autoSave": {
+    "saving": "Saving...",
+    "saved": "Saved",
+    "error": "Error saving"
+  }
+}

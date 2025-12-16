@@ -1,0 +1,144 @@
+{
+  "link": {
+    "title": "Estado del enlace",
+    "carrier": "Portadora",
+    "speed": "Velocidad",
+    "duplex": "Dúplex",
+    "mtu": "MTU",
+    "autoNeg": "Auto-Neg",
+    "flaps24h": "Caídas (24h)",
+    "advertisedSpeeds": "Velocidades anunciadas"
+  },
+  "network": {
+    "title": "Red",
+    "dhcp": "DHCP",
+    "static": "Estática",
+    "ipv4": "IPv4",
+    "ipv6": "IPv6",
+    "dhcpServer": "Servidor DHCP",
+    "lease": "Arrendamiento",
+    "dhcpTiming": "Tiempos DHCP",
+    "discoverOffer": "Discover → Offer",
+    "offerRequest": "Offer → Request",
+    "requestAck": "Request → Ack",
+    "total": "Total",
+    "notRecorded": "Tiempos DHCP aún no registrados"
+  },
+  "discovery": {
+    "title": "Descubrimiento de red",
+    "scanning": "Escaneando...",
+    "devices": "dispositivos",
+    "deviceFound": "{{count}} dispositivo encontrado",
+    "devicesFound": "{{count}} dispositivos encontrados",
+    "noDevices": "No se encontraron dispositivos. Haga clic en Escanear para descubrir dispositivos en la red.",
+    "localNetwork": "Red local",
+    "extendedNetworks": "Redes extendidas",
+    "routers": "Enrutadores",
+    "servers": "Servidores",
+    "workstations": "Estaciones de trabajo",
+    "printers": "Impresoras",
+    "mobile": "Móviles",
+    "networkDevices": "Red",
+    "other": "Otros",
+    "autoProfile": "Auto-perfilado",
+    "lldpInfo": "Info LLDP",
+    "cdpInfo": "Info CDP",
+    "edpInfo": "Info EDP",
+    "portScanResults": "Resultados del escaneo de puertos",
+    "openPorts": "Puertos abiertos",
+    "noOpenPorts": "No se encontraron puertos abiertos",
+    "searchPlaceholder": "Buscar dispositivos por IP, nombre, fabricante, MAC..."
+  },
+  "gateway": {
+    "title": "Puerta de enlace",
+    "defaultGateway": "Puerta de enlace predeterminada",
+    "latency": "Latencia",
+    "hops": "Saltos"
+  },
+  "publicIp": {
+    "title": "IP pública",
+    "address": "Dirección",
+    "location": "Ubicación",
+    "isp": "ISP",
+    "asn": "ASN"
+  },
+  "dns": {
+    "title": "DNS",
+    "servers": "Servidores",
+    "responseTime": "Tiempo de respuesta",
+    "resolving": "Resolviendo..."
+  },
+  "wifi": {
+    "title": "WiFi",
+    "ssid": "SSID",
+    "bssid": "BSSID",
+    "channel": "Canal",
+    "frequency": "Frecuencia",
+    "signal": "Señal",
+    "noise": "Ruido",
+    "snr": "SNR",
+    "security": "Seguridad",
+    "txRate": "Tasa TX",
+    "rxRate": "Tasa RX",
+    "band": "Banda"
+  },
+  "cable": {
+    "title": "Prueba de cable",
+    "status": "Estado",
+    "length": "Longitud",
+    "pairs": "Pares",
+    "faults": "Fallas"
+  },
+  "performance": {
+    "title": "Rendimiento",
+    "download": "Descarga",
+    "upload": "Subida",
+    "latency": "Latencia",
+    "jitter": "Fluctuación",
+    "packetLoss": "Pérdida de paquetes",
+    "runTest": "Ejecutar prueba",
+    "testInProgress": "Prueba en progreso..."
+  },
+  "health": {
+    "title": "Verificaciones de salud",
+    "passed": "Pasó",
+    "failed": "Falló",
+    "warning": "Advertencia",
+    "endpoint": "Endpoint",
+    "responseTime": "Tiempo de respuesta",
+    "lastCheck": "Última verificación"
+  },
+  "system": {
+    "title": "Salud del sistema",
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "disk": "Disco",
+    "uptime": "Tiempo activo",
+    "temperature": "Temperatura"
+  },
+  "switch": {
+    "title": "Descubrimiento de switch",
+    "ports": "Puertos",
+    "vlans": "VLANs",
+    "model": "Modelo",
+    "firmware": "Firmware"
+  },
+  "vlan": {
+    "title": "VLAN",
+    "id": "ID de VLAN",
+    "name": "Nombre",
+    "traffic": "Tráfico",
+    "createVlan": "Crear VLAN",
+    "deleteVlan": "Eliminar VLAN",
+    "vlanIdHint": "ID de VLAN (1-4094)"
+  },
+  "survey": {
+    "title": "Encuesta WiFi",
+    "newSurvey": "Nueva encuesta",
+    "surveyName": "Nombre de encuesta",
+    "floorPlan": "Plano de piso",
+    "samples": "Muestras",
+    "coverage": "Cobertura",
+    "heatmap": "Mapa de calor"
+  }
+}
