@@ -17,10 +17,10 @@ import (
 
 // Traceroute hop state and status constants.
 const (
-	hopStateReply       = "reply"
-	hopStateTimeout     = "timeout"
-	hopStateUnreachable = "unreachable"
-	hopStateError       = "error"
+	hopStateReply         = "reply"
+	hopStateTimeout       = "timeout"
+	hopStateUnreachable   = "unreachable"
+	hopStateError         = "error"
 	errTracerouteCanceled = "traceroute canceled"
 )
 

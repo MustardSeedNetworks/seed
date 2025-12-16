@@ -96,6 +96,11 @@ const (
 	// Version 3.17+ provides stable JSON output format for programmatic parsing.
 	// Earlier versions have JSON parsing issues and missing fields.
 	minSupportedVersion = "3.17"
+
+	// Direction constants for iPerf tests.
+	directionDownload      = "download"
+	directionUpload        = "upload"
+	directionBidirectional = "bidirectional"
 )
 
 // validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens).
@@ -588,13 +593,13 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 	direction := strings.ToLower(config.Direction)
 	if direction == "" {
 		if config.Reverse {
-			direction = "download"
+			direction = directionDownload
 		} else {
-			direction = "upload"
+			direction = directionUpload
 		}
 	}
-	if direction != "download" && direction != "bidirectional" {
-		direction = "upload"
+	if direction != directionDownload && direction != directionBidirectional {
+		direction = directionUpload
 	}
 	config.Direction = direction
 
@@ -612,10 +617,10 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 	}
 
 	switch direction {
-	case "download":
+	case directionDownload:
 		config.Reverse = true
 		args = append(args, "-R") // Reverse mode (server sends, client receives)
-	case "bidirectional":
+	case directionBidirectional:
 		// Bidirectional test (client <-> server)
 		args = append(args, "--bidir")
 		config.Reverse = false
@@ -665,13 +670,13 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 	}
 
 	switch direction {
-	case "download":
+	case directionDownload:
 		// In reverse mode, we care about what we received
 		result.BitsPerSecond = iperfOut.End.SumReceived.BitsPerSecond
 		result.Bandwidth = iperfOut.End.SumReceived.BitsPerSecond / 1_000_000
 		result.Transfer = iperfOut.End.SumReceived.Bytes / 1_000_000
 		result.Duration = iperfOut.End.SumReceived.Seconds
-	case "bidirectional":
+	case directionBidirectional:
 		result.DownloadBitsPerSecond = iperfOut.End.SumReceived.BitsPerSecond
 		result.DownloadBandwidth = iperfOut.End.SumReceived.BitsPerSecond / 1_000_000
 		result.DownloadTransfer = iperfOut.End.SumReceived.Bytes / 1_000_000

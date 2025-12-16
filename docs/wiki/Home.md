@@ -1,6 +1,6 @@
-# LuminetIQ Hardware Compatibility Wiki
+# The Seed Hardware Compatibility Wiki
 
-Welcome to the LuminetIQ Hardware Compatibility Wiki! This community-driven resource documents tested hardware for network diagnostics.
+Welcome to the The Seed Hardware Compatibility Wiki! This community-driven resource documents tested hardware for network diagnostics.
 
 ## 📋 Quick Navigation
 
@@ -23,7 +23,7 @@ Welcome to the LuminetIQ Hardware Compatibility Wiki! This community-driven reso
 
 ## 🎯 Purpose
 
-This Wiki collects **real-world test results** from the LuminetIQ community. Unlike vendor specifications, these reports show actual compatibility with LuminetIQ's diagnostic features.
+This Wiki collects **real-world test results** from the The Seed community. Unlike vendor specifications, these reports show actual compatibility with The Seed's diagnostic features.
 
 ### What Makes Hardware "Compatible"?
 
@@ -50,7 +50,7 @@ This Wiki collects **real-world test results** from the LuminetIQ community. Unl
    ```
 
 2. **Submit Results** via GitHub:
-   - [Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+   - [Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
    - Fill out the automated form with your test results
 
 3. **Maintainers will review** and add your results to the Wiki
@@ -138,7 +138,7 @@ This Wiki collects **real-world test results** from the LuminetIQ community. Unl
 Download and run the compatibility test script:
 ```bash
 # Download
-curl -O https://raw.githubusercontent.com/krisarmstrong/luminetiq/main/scripts/test-hardware-compatibility.sh
+curl -O https://raw.githubusercontent.com/krisarmstrong/seed/main/scripts/test-hardware-compatibility.sh
 chmod +x test-hardware-compatibility.sh
 
 # Run test
@@ -171,10 +171,10 @@ sudo ethtool --cable-test eth0
 
 ## 📚 Additional Resources
 
-- [HARDWARE.md](https://github.com/krisarmstrong/luminetiq/blob/main/HARDWARE.md) - Official hardware guide
-- [HARDWARE_DOCUMENTATION_PLAN.md](https://github.com/krisarmstrong/luminetiq/blob/main/docs/HARDWARE_DOCUMENTATION_PLAN.md) - Maintenance procedures
-- [Submit Hardware Report](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml) - Report your test results
-- [GitHub Issues](https://github.com/krisarmstrong/luminetiq/issues?q=label%3Ahardware-report) - Browse community reports
+- [HARDWARE.md](https://github.com/krisarmstrong/seed/blob/main/HARDWARE.md) - Official hardware guide
+- [HARDWARE_DOCUMENTATION_PLAN.md](https://github.com/krisarmstrong/seed/blob/main/docs/HARDWARE_DOCUMENTATION_PLAN.md) - Maintenance procedures
+- [Submit Hardware Report](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml) - Report your test results
+- [GitHub Issues](https://github.com/krisarmstrong/seed/issues?q=label%3Ahardware-report) - Browse community reports
 
 ## ⚠️ Important Notes
 
@@ -199,5 +199,5 @@ Thank you to everyone who has tested hardware and submitted reports!
 ---
 
 **Last Updated:** 2025-12-14
-**Maintained By:** LuminetIQ Community
-**Report Issues:** [GitHub Issues](https://github.com/krisarmstrong/luminetiq/issues)
+**Maintained By:** The Seed Community
+**Report Issues:** [GitHub Issues](https://github.com/krisarmstrong/seed/issues)

@@ -16,7 +16,7 @@ Broadcom server-grade NICs provide **excellent TDR support** comparable to Intel
 - **Ports:** 4 (RJ45)
 - **Price Range:** $40-80 USD (used), $150-250 USD (new)
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ✅ Excellent
 - Cable Length Detection: ✅ Yes
 - Fault Detection: ✅ Yes
@@ -49,7 +49,7 @@ Broadcom server-grade NICs provide **excellent TDR support** comparable to Intel
 - **Ports:** 2 (RJ45)
 - **Price Range:** $30-60 USD (used), $100-180 USD (new)
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ✅ Excellent
 - Cable Length Detection: ✅ Yes
 - Fault Detection: ✅ Yes
@@ -196,7 +196,7 @@ echo "tg3" | sudo tee -a /etc/modules
 *(Community reports will be added here)*
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
 

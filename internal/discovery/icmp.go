@@ -25,6 +25,12 @@ const (
 	// Default values.
 	defaultTimeout = 1 * time.Second
 	maxPacketSize  = 1500
+
+	// TTL-based OS detection results.
+	ttlOSUnknown       = "Unknown"
+	ttlOSLinuxMacOS    = "Linux/macOS"
+	ttlOSWindows       = "Windows"
+	ttlOSNetworkDevice = "Network Device"
 )
 
 // PingResult contains the result of a single ICMP ping.
@@ -345,15 +351,15 @@ func CheckICMPPrivileges() error {
 func TTLToOS(ttl int) string {
 	switch {
 	case ttl <= 0:
-		return "Unknown"
+		return ttlOSUnknown
 	case ttl <= 64:
-		return "Linux/macOS"
+		return ttlOSLinuxMacOS
 	case ttl <= 128:
-		return "Windows"
+		return ttlOSWindows
 	case ttl <= 255:
-		return "Network Device"
+		return ttlOSNetworkDevice
 	default:
-		return "Unknown"
+		return ttlOSUnknown
 	}
 }
 

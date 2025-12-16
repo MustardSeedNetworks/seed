@@ -120,7 +120,9 @@ build-iperf3-all: build-iperf3 build-iperf3-linux ## Build iperf3 for all platfo
 # Production build with embedded frontend assets
 # CGO is required for libpcap (packet capture) and ethtool bindings
 build-backend: ## Build Go backend with embedded frontend
-	CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/luminetiq
+	@echo "🔨 Building backend..."
+	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/luminetiq
+	@echo "✅ Backend build complete: $(BINARY_NAME)"
 
 # Development build that reads frontend from disk instead of embedding
 # Allows frontend hot-reload without rebuilding Go binary
@@ -144,7 +146,9 @@ frontend-deps: ## Install frontend dependencies (cached)
 # Build React/TypeScript frontend
 # Output goes to web/dist/ which is embedded in the Go binary
 build-frontend: frontend-deps ## Build React frontend
-	cd web && npm run build
+	@echo "🔨 Building frontend..."
+	@cd web && npm run build
+	@echo "✅ Frontend build complete"
 
 # -----------------------------------------------------------------------------
 # Cross-Compilation for Linux
@@ -327,14 +331,19 @@ dev-frontend: ## Run frontend in development mode
 
 # Run complete test suite
 test: test-backend test-frontend ## Run all tests
+	@echo "✅ All tests complete"
 
 # Go tests with race detection and coverage
 test-backend: ## Run Go tests
-	go test -race -coverprofile=coverage.out ./...
+	@echo "🧪 Running backend tests..."
+	@go test -race -coverprofile=coverage.out ./...
+	@echo "✅ Backend tests complete"
 
 # Frontend unit tests via Vitest
 test-frontend: ## Run frontend tests
-	cd web && npm test
+	@echo "🧪 Running frontend tests..."
+	@cd web && npm test
+	@echo "✅ Frontend tests complete"
 
 # Frontend E2E tests via Playwright (closes #482, #309)
 # Requires backend to be running on port 8443
@@ -388,14 +397,19 @@ test-integration: build-linux-docker ## Full integration test on Ubuntu server v
 
 # Run all linters
 lint: lint-backend lint-frontend ## Run all linters
+	@echo "✅ All linters complete"
 
 # golangci-lint with project configuration (.golangci.yml)
 lint-backend: ## Run Go linter
-	golangci-lint run
+	@echo "🔍 Running backend linter..."
+	@golangci-lint run
+	@echo "✅ Backend lint complete"
 
 # ESLint with TypeScript rules
 lint-frontend: ## Run frontend linter
-	cd web && npm run lint
+	@echo "🔍 Running frontend linter..."
+	@cd web && npm run lint
+	@echo "✅ Frontend lint complete"
 
 # Format Go code
 fmt: ## Format Go code with gofmt

@@ -1,6 +1,6 @@
 # Realtek Ethernet NICs
 
-❌ **No TDR Support** - Realtek consumer NICs do **NOT support cable diagnostics** via ethtool. **Not recommended for LuminetIQ cable testing**.
+❌ **No TDR Support** - Realtek consumer NICs do **NOT support cable diagnostics** via ethtool. **Not recommended for The Seed cable testing**.
 
 [← Back to Home](Home)
 
@@ -24,7 +24,7 @@ sudo ethtool --cable-test eth0
 2. **Driver limitation** - Even if hardware supported it, Linux driver doesn't expose it
 3. **Windows only** - Some Realtek diagnostic tools exist for Windows, but not Linux-compatible
 
-**Bottom Line:** If you need cable diagnostics with LuminetIQ, **you must use Intel or Broadcom server NICs**.
+**Bottom Line:** If you need cable diagnostics with The Seed, **you must use Intel or Broadcom server NICs**.
 
 ---
 
@@ -39,7 +39,7 @@ sudo ethtool --cable-test eth0
 - **Found In:** 90% of consumer motherboards, laptops
 - **Price:** Usually built-in (free)
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ❌ **Not supported**
 - Link Speed Detection: ✅ Accurate
 - LLDP/CDP Capture: ✅ Works
@@ -60,7 +60,7 @@ sudo ethtool --cable-test eth0
 - **Speed:** 10/100/1000/2500 Mbps
 - **Found In:** Modern motherboards (2019+)
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ❌ **Not supported**
 - 2.5GbE Support: ✅ Yes
 - Link Speed Detection: ✅ Accurate
@@ -81,7 +81,7 @@ sudo ethtool --cable-test eth0
 - **Form Factor:** USB 3.0 to Gigabit RJ45
 - **Speed:** 10/100/1000 Mbps
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - TDR Cable Testing: ❌ **Not supported**
 - USB Adapter: ✅ Works
 - Basic Diagnostics: ✅ Works
@@ -97,7 +97,7 @@ sudo ethtool --cable-test eth0
 
 While Realtek doesn't support TDR cable testing, they work perfectly for:
 
-### Supported LuminetIQ Features
+### Supported The Seed Features
 
 **✅ Working Features:**
 - Link status detection (carrier, up/down)
@@ -126,7 +126,7 @@ While Realtek doesn't support TDR cable testing, they work perfectly for:
 
 ---
 
-## 🔧 Using Realtek with LuminetIQ
+## 🔧 Using Realtek with The Seed
 
 ### Verify Realtek Chipset
 
@@ -162,8 +162,8 @@ ethtool eth0
 # LLDP discovery - WORKS
 sudo tcpdump -i eth0 -e -n 'ether proto 0x88cc'
 
-# Run LuminetIQ - WORKS (minus cable card)
-sudo ./luminetiq --interface eth0
+# Run The Seed - WORKS (minus cable card)
+sudo ./seed --interface eth0
 # All cards work except Cable Diagnostics
 ```
 
@@ -178,14 +178,14 @@ sudo ./luminetiq --interface eth0
 - Motherboard has built-in Realtek (free)
 - Budget constrained
 
-**Realtek works perfectly fine** for 90% of LuminetIQ features.
+**Realtek works perfectly fine** for 90% of The Seed features.
 
 ### ✅ **Add Intel Card** - If You Need TDR
 
 **Best Approach:**
 1. Keep using Realtek for general diagnostics
 2. Add Intel I210 PCIe card ($20-35) for cable testing
-3. Switch interfaces in LuminetIQ when you need cable diagnostics
+3. Switch interfaces in The Seed when you need cable diagnostics
 
 **Installation:**
 ```bash
@@ -193,10 +193,10 @@ sudo ./luminetiq --interface eth0
 # System now has two NICs: Realtek (eth0) + Intel (eth1)
 
 # Use Realtek for general work
-sudo ./luminetiq --interface eth0
+sudo ./seed --interface eth0
 
 # Switch to Intel for cable testing
-sudo ./luminetiq --interface eth1
+sudo ./seed --interface eth1
 # Cable Diagnostics card now available
 ```
 
@@ -254,7 +254,7 @@ echo "r8169" | sudo tee -a /etc/modules
 *(Community will share Realtek-specific tips)*
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
 

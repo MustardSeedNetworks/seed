@@ -46,19 +46,19 @@ func TestIdentifyByMAC(t *testing.T) {
 			wantVendor: "Mellanox",
 		},
 		{
-			name:       "Unknown OUI",
-			mac:        "ff:ff:ff:aa:bb:cc",
-			wantNil:    true,
+			name:    "Unknown OUI",
+			mac:     "ff:ff:ff:aa:bb:cc",
+			wantNil: true,
 		},
 		{
-			name:       "Invalid MAC",
-			mac:        "invalid",
-			wantNil:    true,
+			name:    "Invalid MAC",
+			mac:     "invalid",
+			wantNil: true,
 		},
 		{
-			name:       "Short MAC",
-			mac:        "00:1b",
-			wantNil:    true,
+			name:    "Short MAC",
+			mac:     "00:1b",
+			wantNil: true,
 		},
 		{
 			name:       "MAC with dashes",
@@ -127,9 +127,9 @@ func TestIdentifyByKeyword(t *testing.T) {
 			wantModel:  "X710",
 		},
 		{
-			name:       "unknown driver",
-			keyword:    "unknown_driver",
-			wantNil:    true,
+			name:    "unknown driver",
+			keyword: "unknown_driver",
+			wantNil: true,
 		},
 		{
 			name:       "case insensitive",

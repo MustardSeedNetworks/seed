@@ -504,8 +504,8 @@ func (s *Server) handleVLANInterface(w http.ResponseWriter, r *http.Request) {
 }
 
 // parseVLANRequest parses and validates a VLAN interface request.
-// Returns the validated interface name, VLAN ID, and any error.
-func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (string, int, bool) {
+// Returns the validated interface name, VLAN ID, and success boolean.
+func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (iface string, vlanID int, ok bool) {
 	var req VLANInterfaceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -519,7 +519,7 @@ func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (strin
 	}
 
 	// Use current interface if not specified
-	iface := req.Interface
+	iface = req.Interface
 	if iface == "" {
 		iface = s.netManager.GetCurrentInterface()
 	}
@@ -530,7 +530,9 @@ func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (strin
 		return "", 0, false
 	}
 
-	return iface, req.VlanID, true
+	vlanID = req.VlanID
+	ok = true
+	return
 }
 
 // createVLANInterface creates an 802.1Q VLAN subinterface.

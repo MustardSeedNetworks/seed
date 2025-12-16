@@ -4,10 +4,10 @@ package constants
 
 // Status strings for API responses and internal state.
 const (
-	StatusSuccess = "success"
-	StatusError   = "error"
-	StatusWarning = "warning"
-	StatusUnknown = "unknown"
+	StatusSuccess    = "success"
+	StatusError      = "error"
+	StatusWarning    = "warning"
+	StatusUnknown    = "unknown"
 	StatusUnknownCap = "Unknown" // Capitalized variant
 )
 

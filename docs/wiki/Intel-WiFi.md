@@ -1,6 +1,6 @@
 # Intel Wi-Fi Adapters
 
-Intel Wi-Fi adapters using the `iwlwifi` driver are **highly recommended** for LuminetIQ. They offer excellent nl80211 support, stable monitor mode, and accurate signal quality reporting.
+Intel Wi-Fi adapters using the `iwlwifi` driver are **highly recommended** for The Seed. They offer excellent nl80211 support, stable monitor mode, and accurate signal quality reporting.
 
 [← Back to Home](Home)
 
@@ -16,7 +16,7 @@ Intel Wi-Fi adapters using the `iwlwifi` driver are **highly recommended** for L
 - **Max Speed:** 2400 Mbps
 - **Price Range:** $15-25 USD
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ✅ Excellent
 - Channel Switching: ✅ Fast (<1s)
 - Signal Quality: ✅ Accurate (-30 to -90 dBm range)
@@ -40,7 +40,7 @@ Intel Wi-Fi adapters using the `iwlwifi` driver are **highly recommended** for L
 - **Price Range:** $20-35 USD
 - **Bluetooth:** 5.2
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ✅ Excellent (all bands including 6GHz)
 - Channel Switching: ✅ Fast (<1s on all bands)
 - Signal Quality: ✅ Accurate
@@ -76,7 +76,7 @@ Intel Wi-Fi adapters using the `iwlwifi` driver are **highly recommended** for L
 - **Price Range:** $25-40 USD (BE200), OEM only (BE202)
 - **Bluetooth:** 5.4
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ✅ Excellent (requires kernel 6.5+ for best support)
 - Channel Switching: ✅ Fast (<1s, all bands)
 - Signal Quality: ✅ Accurate
@@ -118,7 +118,7 @@ Intel Wi-Fi adapters using the `iwlwifi` driver are **highly recommended** for L
 - **Max Speed:** 1730 Mbps
 - **Price Range:** $10-15 USD (used/surplus)
 
-**LuminetIQ Compatibility:**
+**The Seed Compatibility:**
 - Monitor Mode: ✅ Good
 - Channel Switching: ✅ Fast
 - Signal Quality: ✅ Accurate
@@ -368,7 +368,7 @@ When submitting a test report, include:
 - Test results (monitor mode, channel switching, signal quality)
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
 

@@ -208,6 +208,7 @@ type LeaseInfo struct {
 }
 
 // GetLeaseInfo retrieves DHCP lease information for an interface.
+// Returns (nil, nil) for unsupported platforms - this is not an error.
 func GetLeaseInfo(interfaceName string) (*LeaseInfo, error) {
 	switch runtime.GOOS {
 	case "darwin":
@@ -215,6 +216,7 @@ func GetLeaseInfo(interfaceName string) (*LeaseInfo, error) {
 	case "linux":
 		return getLeaseInfoLinux(interfaceName)
 	default:
+		//nolint:nilnil // Unsupported platform returns no info, not an error
 		return nil, nil
 	}
 }

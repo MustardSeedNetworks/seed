@@ -4,28 +4,38 @@
 package detection
 
 import (
+	"log"
 	"net"
 	"sort"
 	"strings"
 )
 
+// Interface type constants.
+const (
+	ifTypeEthernet = "ethernet"
+	ifTypeWifi     = "wifi"
+	ifTypeFiber    = "fiber"
+	ifTypeVirtual  = "virtual"
+	ifTypeOther    = "other"
+)
+
 // InterfaceScore represents a scored network interface with metadata.
 type InterfaceScore struct {
-	Name           string `json:"name"`           // System interface name (e.g., "enp3s0")
-	FriendlyName   string `json:"friendlyName"`   // Human-readable name (e.g., "Intel I225-V 2.5GbE")
-	Description    string `json:"description"`    // Brief description (e.g., "2.5 Gigabit Ethernet")
-	Score          int    `json:"score"`          // Computed score for ranking
-	LinkStatus     bool   `json:"linkStatus"`     // Physical link detected
-	Speed          int64  `json:"speed"`          // Speed in bits per second
-	SpeedDisplay   string `json:"speedDisplay"`   // Human-readable speed (e.g., "2.5 Gbps")
-	ChipsetVendor  string `json:"chipsetVendor"`  // NIC vendor (e.g., "Intel")
-	ChipsetModel   string `json:"chipsetModel"`   // NIC model (e.g., "I225-V")
-	ChipsetQuality int    `json:"chipsetQuality"` // Quality score 1-100
-	HasTDR         bool   `json:"hasTDR"`         // Time Domain Reflectometry support
-	HasDOM         bool   `json:"hasDOM"`         // Digital Optical Monitoring (SFP+)
-	Type           string `json:"type"`           // "ethernet", "wifi", "fiber", "virtual"
-	HasIP          bool   `json:"hasIP"`          // Has routable IP address
-	Addresses      []string `json:"addresses"`    // IP addresses assigned
+	Name           string   `json:"name"`           // System interface name (e.g., "enp3s0")
+	FriendlyName   string   `json:"friendlyName"`   // Human-readable name (e.g., "Intel I225-V 2.5GbE")
+	Description    string   `json:"description"`    // Brief description (e.g., "2.5 Gigabit Ethernet")
+	Score          int      `json:"score"`          // Computed score for ranking
+	LinkStatus     bool     `json:"linkStatus"`     // Physical link detected
+	Speed          int64    `json:"speed"`          // Speed in bits per second
+	SpeedDisplay   string   `json:"speedDisplay"`   // Human-readable speed (e.g., "2.5 Gbps")
+	ChipsetVendor  string   `json:"chipsetVendor"`  // NIC vendor (e.g., "Intel")
+	ChipsetModel   string   `json:"chipsetModel"`   // NIC model (e.g., "I225-V")
+	ChipsetQuality int      `json:"chipsetQuality"` // Quality score 1-100
+	HasTDR         bool     `json:"hasTDR"`         // Time Domain Reflectometry support
+	HasDOM         bool     `json:"hasDOM"`         // Digital Optical Monitoring (SFP+)
+	Type           string   `json:"type"`           // "ethernet", "wifi", "fiber", "virtual"
+	HasIP          bool     `json:"hasIP"`          // Has routable IP address
+	Addresses      []string `json:"addresses"`      // IP addresses assigned
 }
 
 // Detector provides interface detection and scoring functionality.
@@ -68,6 +78,7 @@ func (d *Detector) DetectAll() ([]InterfaceScore, error) {
 }
 
 // DetectBest returns the highest-scoring interface.
+// Returns (nil, nil) when no interfaces are found - this is not an error condition.
 func (d *Detector) DetectBest() (*InterfaceScore, error) {
 	scores, err := d.DetectAll()
 	if err != nil {
@@ -75,6 +86,7 @@ func (d *Detector) DetectBest() (*InterfaceScore, error) {
 	}
 
 	if len(scores) == 0 {
+		//nolint:nilnil // No interface found is a valid state, not an error
 		return nil, nil
 	}
 
@@ -90,7 +102,10 @@ func (d *Detector) ScoreInterface(iface net.Interface) InterfaceScore {
 
 	// Determine link status and addresses
 	score.LinkStatus = iface.Flags&net.FlagRunning != 0
-	addrs, _ := iface.Addrs()
+	addrs, err := iface.Addrs()
+	if err != nil {
+		log.Printf("Warning: failed to get addresses for %s: %v", iface.Name, err)
+	}
 	for _, addr := range addrs {
 		score.Addresses = append(score.Addresses, addr.String())
 	}
@@ -111,8 +126,8 @@ func (d *Detector) ScoreInterface(iface net.Interface) InterfaceScore {
 	}
 
 	// Generate friendly name and description
-	score.FriendlyName = d.generateFriendlyName(score)
-	score.Description = d.generateDescription(score)
+	score.FriendlyName = d.generateFriendlyName(&score)
+	score.Description = d.generateDescription(&score)
 
 	// Calculate final score
 	score.Score = d.calculateScore(score)
@@ -125,7 +140,7 @@ func (d *Detector) calculateScore(s InterfaceScore) int {
 	score := 0
 
 	// Virtual interfaces get heavily penalized
-	if s.Type == "virtual" {
+	if s.Type == ifTypeVirtual {
 		return -1000
 	}
 
@@ -174,11 +189,11 @@ func (d *Detector) calculateScore(s InterfaceScore) int {
 
 	// Type preferences
 	switch s.Type {
-	case "ethernet":
+	case ifTypeEthernet:
 		score += 100
-	case "wifi":
+	case ifTypeWifi:
 		score += 50
-	case "fiber":
+	case ifTypeFiber:
 		score += 150
 	}
 
@@ -186,21 +201,21 @@ func (d *Detector) calculateScore(s InterfaceScore) int {
 }
 
 // generateFriendlyName creates a human-readable interface name.
-func (d *Detector) generateFriendlyName(s InterfaceScore) string {
+func (d *Detector) generateFriendlyName(s *InterfaceScore) string {
 	if s.ChipsetVendor != "" && s.ChipsetModel != "" {
 		return s.ChipsetVendor + " " + s.ChipsetModel
 	}
 
 	// Fallback to generic name based on type and speed
 	switch s.Type {
-	case "ethernet":
+	case ifTypeEthernet:
 		if s.SpeedDisplay != "" {
 			return s.SpeedDisplay + " Ethernet"
 		}
 		return "Ethernet Adapter"
-	case "wifi":
+	case ifTypeWifi:
 		return "WiFi Adapter"
-	case "fiber":
+	case ifTypeFiber:
 		return "Fiber Adapter"
 	default:
 		return s.Name
@@ -208,7 +223,7 @@ func (d *Detector) generateFriendlyName(s InterfaceScore) string {
 }
 
 // generateDescription creates a brief description of the interface.
-func (d *Detector) generateDescription(s InterfaceScore) string {
+func (d *Detector) generateDescription(s *InterfaceScore) string {
 	parts := []string{}
 
 	if s.SpeedDisplay != "" {
@@ -216,11 +231,11 @@ func (d *Detector) generateDescription(s InterfaceScore) string {
 	}
 
 	switch s.Type {
-	case "ethernet":
+	case ifTypeEthernet:
 		parts = append(parts, "Ethernet")
-	case "wifi":
+	case ifTypeWifi:
 		parts = append(parts, "WiFi")
-	case "fiber":
+	case ifTypeFiber:
 		parts = append(parts, "Fiber")
 	}
 
@@ -241,7 +256,7 @@ func detectType(name string) string {
 	virtualPrefixes := []string{"docker", "br-", "veth", "virbr", "tun", "tap", "vnet", "vmnet", "vboxnet", "utun"}
 	for _, prefix := range virtualPrefixes {
 		if strings.HasPrefix(name, prefix) {
-			return "virtual"
+			return ifTypeVirtual
 		}
 	}
 
@@ -249,24 +264,24 @@ func detectType(name string) string {
 	wifiPrefixes := []string{"wlan", "wlp", "wifi", "ath", "ra", "wl"}
 	for _, prefix := range wifiPrefixes {
 		if strings.HasPrefix(name, prefix) {
-			return "wifi"
+			return ifTypeWifi
 		}
 	}
 
 	// Fiber patterns (often have sfp or xfp in name, or high-speed prefixes)
 	if strings.Contains(name, "sfp") || strings.Contains(name, "xfp") {
-		return "fiber"
+		return ifTypeFiber
 	}
 
 	// Default to ethernet for physical interfaces
 	ethPrefixes := []string{"eth", "enp", "ens", "eno", "em", "en"}
 	for _, prefix := range ethPrefixes {
 		if strings.HasPrefix(name, prefix) {
-			return "ethernet"
+			return ifTypeEthernet
 		}
 	}
 
-	return "other"
+	return ifTypeOther
 }
 
 // hasRoutableAddress checks if any address is routable.

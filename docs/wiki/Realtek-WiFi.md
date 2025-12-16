@@ -161,7 +161,7 @@ sudo make dkms_install
 
 ## 🛒 Should You Buy Realtek Hardware?
 
-### ❌ **Absolutely NO** - For LuminetIQ
+### ❌ **Absolutely NO** - For The Seed
 
 **Instead, buy:**
 - **Wi-Fi 6:** Intel AX200 ($15-25)
@@ -176,7 +176,7 @@ sudo make dkms_install
 If you already have Realtek hardware:
 1. Test for managed mode (normal Wi-Fi) - usually works
 2. Don't expect monitor mode or diagnostics
-3. Buy external USB adapter for LuminetIQ diagnostics
+3. Buy external USB adapter for The Seed diagnostics
 
 ---
 
@@ -189,7 +189,7 @@ If you already have Realtek hardware:
 *(Community reports will be added here)*
 
 ### Submit Your Report
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/luminetiq/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
 
 ---
 

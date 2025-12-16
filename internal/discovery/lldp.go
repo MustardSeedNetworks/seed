@@ -52,8 +52,9 @@ func NewLLDPCapture(interfaceName string) *LLDPCapture {
 	}
 }
 
-//nolint:dupl // CDP/LLDP/EDP capture Start() methods share structure but have protocol-specific filters
 // Start begins capturing LLDP frames.
+//
+//nolint:dupl // CDP/LLDP/EDP capture Start() methods share structure but have protocol-specific filters
 func (c *LLDPCapture) Start() error {
 	c.mu.Lock()
 	if c.started {

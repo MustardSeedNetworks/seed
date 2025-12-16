@@ -47,7 +47,7 @@ type RogueDetector struct {
 func NewRogueDetector(config *RogueDetectorConfig) *RogueDetector {
 	if config == nil {
 		config = &RogueDetectorConfig{
-			Interface:        "",   // Must be set by caller - no hardcoded defaults
+			Interface:        "", // Must be set by caller - no hardcoded defaults
 			KnownServers:     []string{},
 			AlertOnDetection: true,
 		}
