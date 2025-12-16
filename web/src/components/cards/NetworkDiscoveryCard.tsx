@@ -489,7 +489,7 @@ function DiscoverySummary({
             </>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-text-muted">
+        <div className={`flex items-center ${spacing.inline.sm} text-text-muted`}>
           <Clock className={iconTokens.size.sm} />
           <span className="caption">{formatLastSeen(status.lastScan, t)}</span>
         </div>
