@@ -29,6 +29,28 @@ import "@testing-library/jest-dom";
 import { vi, beforeEach, afterEach } from "vitest";
 
 // ============================================================
+// Mock react-i18next
+// ============================================================
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      // Return common translations for tests
+      const translations: Record<string, string> = {
+        "status.error": "Error",
+        "status.noDataAvailable": "No data available",
+      };
+      return translations[key] || key;
+    },
+    i18n: {
+      language: "en",
+      changeLanguage: vi.fn(),
+    },
+  }),
+  Trans: ({ children }: { children: React.ReactNode }) => children,
+  initReactI18next: { type: "3rdParty", init: vi.fn() },
+}));
+
+// ============================================================
 // Mock localStorage
 // ============================================================
 export interface MockLocalStorage {
@@ -236,7 +258,7 @@ export function createMockInterface(
     hasTDR?: boolean;
     hasDOM?: boolean;
     score?: number;
-  },
+  }
 ) {
   return {
     name,

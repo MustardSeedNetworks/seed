@@ -153,9 +153,16 @@ describe("App", () => {
         return Promise.resolve({
           ok: false,
           status: 401,
+          json: () => Promise.resolve({ error: "Unauthorized" }),
         });
       }
-      // Default response for other endpoints
+      if (url.includes("/api/interfaces")) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([{ name: "eth0", type: "ethernet", up: true }]),
+        });
+      }
+      // Default response for other endpoints (including version)
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({}),
@@ -362,10 +369,11 @@ describe("App", () => {
           });
         }
         if (url.includes("/api/status")) {
-          // Return authenticated status
+          // Return authenticated status with version
           return Promise.resolve({
             ok: true,
             status: 200,
+            json: () => Promise.resolve({ version: "test", authenticated: true }),
           });
         }
         if (url.includes("/api/settings")) {
