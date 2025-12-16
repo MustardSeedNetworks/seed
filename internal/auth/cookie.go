@@ -8,16 +8,16 @@ import (
 )
 
 const (
-	// CookieNameAccess is the name of the access token cookie
+	// CookieNameAccess is the name of the access token cookie.
 	CookieNameAccess = "luminetiq_access"
 
-	// CookieNameRefresh is the name of the refresh token cookie
+	// CookieNameRefresh is the name of the refresh token cookie.
 	CookieNameRefresh = "luminetiq_refresh"
 
-	// AccessTokenDuration is how long access tokens are valid (short-lived)
+	// AccessTokenDuration is how long access tokens are valid (short-lived).
 	AccessTokenDuration = 15 * time.Minute
 
-	// RefreshTokenDuration is how long refresh tokens are valid
+	// RefreshTokenDuration is how long refresh tokens are valid.
 	RefreshTokenDuration = 7 * 24 * time.Hour // 7 days
 )
 
@@ -119,9 +119,9 @@ func GetRefreshTokenFromCookie(r *http.Request) (string, error) {
 }
 
 // GetTokenFromRequest tries to extract token from request in order of preference:
-// 1. Cookie (most secure)
-// 2. Authorization header (Bearer token - fallback for API clients)
-// 3. Query parameter (least secure - WebSocket only, deprecated)
+// 1. Cookie (most secure).
+// 2. Authorization header (Bearer token - fallback for API clients).
+// 3. Query parameter (least secure - WebSocket only, deprecated).
 func GetTokenFromRequest(r *http.Request) (token, source string) {
 	// Try cookie first (most secure)
 	if token, err := GetAccessTokenFromCookie(r); err == nil && token != "" {

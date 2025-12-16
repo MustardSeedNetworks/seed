@@ -66,7 +66,7 @@ func TestRateLimiterBlocksAfterMaxAttempts(t *testing.T) {
 	ip := "10.0.0.1"
 
 	// Record failures up to the limit
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		blocked := rl.RecordAttempt(ip, false)
 		if i < 2 && blocked {
 			t.Errorf("should not be blocked after %d attempts", i+1)
@@ -123,7 +123,7 @@ func TestRateLimiterDifferentIPsAreIndependent(t *testing.T) {
 	ip2 := "192.168.1.2"
 
 	// Block IP1
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		rl.RecordAttempt(ip1, false)
 	}
 

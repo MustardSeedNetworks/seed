@@ -69,7 +69,7 @@ type DiscoveryNeighborInfo struct {
 // Authentication: Required
 // Rate limiting: None (read-only operation)
 //
-// Response: 200 OK with DiscoveryResponse containing neighbors array
+// Response: 200 OK with DiscoveryResponse containing neighbors array.
 func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

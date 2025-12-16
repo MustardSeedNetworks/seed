@@ -73,14 +73,14 @@ type Result struct {
 	TestDuration float64   `json:"testDuration"` // seconds
 }
 
-// Status represents the current test status
+// Status represents the current test status.
 type Status struct {
 	Running  bool    `json:"running"`
 	Phase    string  `json:"phase"`    // "idle", "finding_server", "testing_latency", "testing_download", "testing_upload", "complete"
 	Progress float64 `json:"progress"` // 0-100
 }
 
-// Tester handles speedtest operations
+// Tester handles speedtest operations.
 type Tester struct {
 	mu         sync.RWMutex
 	status     Status
@@ -88,14 +88,14 @@ type Tester struct {
 	serverID   string // Optional: specific server ID to use
 }
 
-// NewTester creates a new speedtest tester
+// NewTester creates a new speedtest tester.
 func NewTester() *Tester {
 	return &Tester{
 		status: Status{Phase: "idle"},
 	}
 }
 
-// NewTesterWithConfig creates a new speedtest tester with a specific server ID
+// NewTesterWithConfig creates a new speedtest tester with a specific server ID.
 func NewTesterWithConfig(serverID string) *Tester {
 	return &Tester{
 		status:   Status{Phase: "idle"},
@@ -103,21 +103,21 @@ func NewTesterWithConfig(serverID string) *Tester {
 	}
 }
 
-// GetStatus returns the current test status
+// GetStatus returns the current test status.
 func (t *Tester) GetStatus() Status {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.status
 }
 
-// GetLastResult returns the last test result
+// GetLastResult returns the last test result.
 func (t *Tester) GetLastResult() *Result {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.lastResult
 }
 
-// SetServerID sets a specific server ID to use for tests
+// SetServerID sets a specific server ID to use for tests.
 func (t *Tester) SetServerID(id string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -137,7 +137,7 @@ func (t *Tester) setRunning(running bool) {
 	t.status.Running = running
 }
 
-// RunTest performs a complete speedtest
+// RunTest performs a complete speedtest.
 func (t *Tester) RunTest(ctx context.Context) (*Result, error) {
 	// Check if already running
 	t.mu.RLock()

@@ -25,7 +25,7 @@ import (
 
 var version = "dev"
 
-// Credential file constants for first-boot retrieval (fixes #489)
+// Credential file constants for first-boot retrieval (fixes #489).
 const (
 	credentialsFileName = ".luminetiq-credentials" //nolint:gosec // G101: Not a credential, just a filename
 	credentialsFileMode = 0o600                    // Owner read/write only

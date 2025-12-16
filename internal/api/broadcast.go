@@ -110,7 +110,7 @@ func (s *Server) startBroadcastLoop() {
 // Card update order is not significant - all updates are sent concurrently by the hub.
 // The order here reflects typical user priority/importance rather than technical dependency.
 //
-// Called by: startBroadcastLoop every 5 seconds when clients are connected
+// Called by: startBroadcastLoop every 5 seconds when clients are connected.
 func (s *Server) broadcastAllCards() {
 	// Link card
 	if linkData := s.collectLinkData(); linkData != nil {

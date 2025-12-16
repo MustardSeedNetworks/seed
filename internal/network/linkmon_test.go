@@ -256,9 +256,9 @@ func TestLinkMonitorConcurrentAccess(t *testing.T) {
 
 	// Concurrent reads
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
-			for j := 0; j < 50; j++ {
+			for range 50 {
 				_ = mon.GetState()
 				_ = mon.IsUp()
 				_ = mon.GetHistory()
@@ -270,7 +270,7 @@ func TestLinkMonitorConcurrentAccess(t *testing.T) {
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }

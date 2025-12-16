@@ -38,7 +38,7 @@ type OUIDatabase struct {
 	vendors map[string]string // MAC prefix (AA:BB:CC) -> Vendor name
 }
 
-// Common OUI prefixes - embedded for quick lookups without external file
+// Common OUI prefixes - embedded for quick lookups without external file.
 var commonOUI = map[string]string{
 	// Apple
 	"00:03:93": "Apple", "00:05:02": "Apple", "00:0A:27": "Apple", "00:0A:95": "Apple",
@@ -220,7 +220,7 @@ func NewOUIDatabase() *OUIDatabase {
 }
 
 // LoadFromFile loads additional OUI entries from a file.
-// File format: AA:BB:CC<tab>Vendor Name
+// File format: AA:BB:CC<tab>Vendor Name.
 func (db *OUIDatabase) LoadFromFile(path string) error {
 	//nolint:gosec // G304: Path is user-provided configuration for OUI database
 	file, err := os.Open(path)
@@ -306,11 +306,11 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 	return fmt.Errorf("no IEEE OUI file found")
 }
 
-// IEEE OUI database URLs
+// IEEE OUI database URLs.
 const (
-	// IEEEOUIURL is the official IEEE OUI database URL
+	// IEEEOUIURL is the official IEEE OUI database URL.
 	IEEEOUIURL = "https://standards-oui.ieee.org/oui/oui.txt"
-	// IEEEOUICSVUrl is the CSV format URL
+	// IEEEOUI_CSV_URL is the CSV format URL.
 	IEEEOUI_CSV_URL = "https://standards-oui.ieee.org/oui/oui.csv"
 )
 
@@ -383,8 +383,8 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 	return nil
 }
 
-// LoadFromIEEEFormat loads OUI entries from the IEEE oui.txt format.
-// Format: "AA-BB-CC   (hex)\t\tVendor Name"
+// LoadFromIEEEFormat loads OUI entries from the IEEE oui.txt format
+// Format: "AA-BB-CC   (hex)\t\tVendor Name".
 func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
 	//nolint:gosec // G304: Path is user-provided configuration for OUI database
 	file, err := os.Open(path)

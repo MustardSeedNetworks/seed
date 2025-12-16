@@ -145,7 +145,7 @@ func (p *DeviceProfiler) Start() {
 	p.mu.Unlock()
 
 	// Start worker goroutines
-	for i := 0; i < p.config.MaxConcurrent; i++ {
+	for range p.config.MaxConcurrent {
 		p.wg.Add(1)
 		go p.worker()
 	}

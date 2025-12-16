@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// TestHubClientCount tests the ClientCount method
+// TestHubClientCount tests the ClientCount method.
 func TestHubClientCount(t *testing.T) {
 	hub := NewHub()
 
@@ -14,7 +14,7 @@ func TestHubClientCount(t *testing.T) {
 	}
 }
 
-// TestHubBroadcast tests the Broadcast method
+// TestHubBroadcast tests the Broadcast method.
 func TestHubBroadcast(t *testing.T) {
 	hub := NewHub()
 
@@ -27,7 +27,7 @@ func TestHubBroadcast(t *testing.T) {
 	hub.Broadcast(msg)
 }
 
-// TestHubBroadcastCardUpdate tests the BroadcastCardUpdate method
+// TestHubBroadcastCardUpdate tests the BroadcastCardUpdate method.
 func TestHubBroadcastCardUpdate(t *testing.T) {
 	hub := NewHub()
 
@@ -35,7 +35,7 @@ func TestHubBroadcastCardUpdate(t *testing.T) {
 	hub.BroadcastCardUpdate("testCard", map[string]string{"status": "ok"})
 }
 
-// TestHubShutdown tests graceful shutdown
+// TestHubShutdown tests graceful shutdown.
 func TestHubShutdown(t *testing.T) {
 	hub := NewHub()
 
@@ -52,7 +52,7 @@ func TestHubShutdown(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 }
 
-// TestNewHub tests hub creation
+// TestNewHub tests hub creation.
 func TestNewHub(t *testing.T) {
 	hub := NewHub()
 

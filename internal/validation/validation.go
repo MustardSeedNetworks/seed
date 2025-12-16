@@ -13,12 +13,12 @@ import (
 	"time"
 )
 
-// validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens)
+// validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens).
 var validHostnameRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
 
-// validInterfaceRegex matches valid network interface names
-// Linux: eth0, enp0s3, wlan0, docker0, br-xxx, vethXXX, lo
-// macOS: en0, en1, lo0, bridge0, utun0
+// validInterfaceRegex matches valid network interface names.
+// Linux: eth0, enp0s3, wlan0, docker0, br-xxx, vethXXX, lo.
+// macOS: en0, en1, lo0, bridge0, utun0.
 var validInterfaceRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]{0,14}\d?$`)
 
 // IsValidIP checks if the string is a valid IPv4 or IPv6 address.
@@ -210,7 +210,7 @@ func ValidatePositiveInt(val int, fieldName string) error {
 }
 
 // ValidateMTU checks if the MTU value is valid (fixes #522).
-// Standard Ethernet: 1500, Jumbo frames: up to 9000
+// Standard Ethernet: 1500, Jumbo frames: up to 9000.
 func ValidateMTU(mtu int) error {
 	if mtu < 68 || mtu > 9000 {
 		return fmt.Errorf("MTU must be between 68 and 9000, got %d", mtu)

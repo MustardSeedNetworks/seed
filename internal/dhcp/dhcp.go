@@ -221,7 +221,7 @@ func GetLeaseInfo(interfaceName string) (*LeaseInfo, error) {
 
 // getLeaseInfoDarwin reads DHCP info on macOS from lease files.
 // macOS stores DHCP leases in /var/db/dhcpclient/leases/ as plist-like files.
-// The filename format is: ifname-1,<hardware_address>
+// The filename format is: ifname-1,<hardware_address>.
 func getLeaseInfoDarwin(interfaceName string) (*LeaseInfo, error) {
 	// Get hardware address for the interface to find the lease file
 	iface, err := net.InterfaceByName(interfaceName)

@@ -761,7 +761,7 @@ func TestRandomChar(t *testing.T) {
 
 	// Generate many characters and ensure they're all in the charset
 	seen := make(map[byte]bool)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		c, err := randomChar(chars)
 		if err != nil {
 			t.Fatalf("randomChar failed: %v", err)
@@ -789,7 +789,7 @@ func TestRandomInt(t *testing.T) {
 	}
 
 	// Test with small n
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		result, err := randomInt(10)
 		if err != nil {
 			t.Fatalf("randomInt(10) error: %v", err)
@@ -800,7 +800,7 @@ func TestRandomInt(t *testing.T) {
 	}
 
 	// Test with larger n (>256 to hit the multi-byte path)
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		result, err := randomInt(1000)
 		if err != nil {
 			t.Fatalf("randomInt(1000) error: %v", err)

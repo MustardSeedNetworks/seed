@@ -14,12 +14,12 @@ import (
 )
 
 const (
-	// encryptedPrefix identifies encrypted values in config
+	// encryptedPrefix identifies encrypted values in config.
 	encryptedPrefix = "enc:"
 )
 
 var (
-	// ErrInvalidCiphertext is returned when decryption fails due to invalid input
+	// ErrInvalidCiphertext is returned when decryption fails due to invalid input.
 	ErrInvalidCiphertext = errors.New("invalid ciphertext")
 )
 
@@ -31,8 +31,8 @@ func deriveKey(masterSecret string) []byte {
 }
 
 // EncryptCredential encrypts a credential string using AES-256-GCM (fixes #518).
-// The encrypted value is prefixed with "enc:" to identify it as encrypted.
-// Format: enc:base64(nonce||ciphertext||tag)
+// The encrypted value is prefixed with "enc:" to identify it as encrypted
+// Format: enc:base64(nonce||ciphertext||tag).
 func EncryptCredential(plaintext, masterSecret string) (string, error) {
 	if plaintext == "" {
 		return "", nil

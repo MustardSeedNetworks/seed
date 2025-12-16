@@ -13,10 +13,10 @@ import (
 	"unsafe"
 )
 
-// SIOCGIFVLAN ioctl to get VLAN info
+// SIOCGIFVLAN ioctl to get VLAN info.
 const siocgifvlan = 0xc020697f
 
-// vlanreq is the structure for VLAN ioctl on macOS
+// vlanreq is the structure for VLAN ioctl on macOS.
 type vlanreq struct {
 	name       [16]byte // IFNAMSIZ
 	parentName [16]byte

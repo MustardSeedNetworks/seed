@@ -469,9 +469,9 @@ func TestConcurrentDNSOperations(t *testing.T) {
 	defer cancel()
 
 	done := make(chan bool)
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		go func() {
-			for j := 0; j < 3; j++ {
+			for range 3 {
 				tester.SetTestHostname("example.com")
 				_ = tester.ForwardLookup(ctx, "")
 			}
@@ -479,7 +479,7 @@ func TestConcurrentDNSOperations(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		<-done
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// TestHandleStatus tests the status endpoint
+// TestHandleStatus tests the status endpoint.
 func TestHandleStatus(t *testing.T) {
 	server := NewTestServer()
 
@@ -30,7 +30,7 @@ func TestHandleStatus(t *testing.T) {
 	}
 }
 
-// TestHandleStatusMethodNotAllowed tests non-GET methods for status endpoint
+// TestHandleStatusMethodNotAllowed tests non-GET methods for status endpoint.
 func TestHandleStatusMethodNotAllowed(t *testing.T) {
 	server := NewTestServer()
 
@@ -50,7 +50,7 @@ func TestHandleStatusMethodNotAllowed(t *testing.T) {
 	}
 }
 
-// TestHandleExportMethodNotAllowed tests non-GET methods for export endpoint
+// TestHandleExportMethodNotAllowed tests non-GET methods for export endpoint.
 func TestHandleExportMethodNotAllowed(t *testing.T) {
 	server := NewTestServer()
 

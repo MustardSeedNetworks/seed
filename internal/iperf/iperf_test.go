@@ -413,9 +413,9 @@ func TestConcurrentManagerAccess(t *testing.T) {
 	manager := NewManager()
 
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
-			for j := 0; j < 50; j++ {
+			for range 50 {
 				_ = manager.GetServerStatus()
 				_ = manager.GetClientStatus()
 				_ = manager.GetLastResult()
@@ -424,7 +424,7 @@ func TestConcurrentManagerAccess(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }
@@ -611,9 +611,9 @@ func TestManagerConcurrentStatusAccess(t *testing.T) {
 	manager := NewManager()
 
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
-			for j := 0; j < 50; j++ {
+			for range 50 {
 				_ = manager.GetServerStatus()
 				_ = manager.GetClientStatus()
 				_ = manager.GetLastResult()
@@ -622,7 +622,7 @@ func TestManagerConcurrentStatusAccess(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }
@@ -701,7 +701,7 @@ func TestManagerSetResult(t *testing.T) {
 	}
 }
 
-// TestIperf3BinaryRequired validates that iperf3 binary can be found (build-time check)
+// TestIperf3BinaryRequired validates that iperf3 binary can be found (build-time check).
 func TestIperf3BinaryRequired(t *testing.T) {
 	// Check if we're in CI or test environment where iperf3 may not be available
 	if os.Getenv("SKIP_IPERF_TEST") == "1" {
@@ -726,7 +726,7 @@ func TestIperf3BinaryRequired(t *testing.T) {
 	}
 }
 
-// TestIperf3VersionRequired validates the iperf3 version meets requirements (build-time check)
+// TestIperf3VersionRequired validates the iperf3 version meets requirements (build-time check).
 func TestIperf3VersionRequired(t *testing.T) {
 	if os.Getenv("SKIP_IPERF_TEST") == "1" {
 		t.Skip("Skipping iperf3 version test (SKIP_IPERF_TEST=1)")
@@ -746,7 +746,7 @@ func TestIperf3VersionRequired(t *testing.T) {
 	}
 }
 
-// TestVersionComparison tests the version comparison logic
+// TestVersionComparison tests the version comparison logic.
 func TestVersionComparison(t *testing.T) {
 	tests := []struct {
 		v1       string

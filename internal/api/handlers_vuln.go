@@ -25,8 +25,8 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/discovery"
 )
 
-// handleVulnerabilityScan triggers vulnerability scan for all or specific devices.
-// POST /api/vulnerabilities/scan?ip=x.x.x.x (optional IP filter)
+// handleVulnerabilityScan triggers vulnerability scan for all or specific devices
+// POST /api/vulnerabilities/scan?ip=x.x.x.x (optional IP filter).
 func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -80,8 +80,8 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// handleVulnerabilityStatus returns scanner status and statistics.
-// GET /api/vulnerabilities/status
+// handleVulnerabilityStatus returns scanner status and statistics
+// GET /api/vulnerabilities/status.
 func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -105,8 +105,8 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-// handleVulnerabilityResults returns all vulnerability scan results.
-// GET /api/vulnerabilities/results?severity=high (optional filter)
+// handleVulnerabilityResults returns all vulnerability scan results
+// GET /api/vulnerabilities/results?severity=high (optional filter).
 func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -142,8 +142,8 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 	})
 }
 
-// handleDeviceVulnerabilities returns vulnerabilities for a specific device.
-// GET /api/vulnerabilities/device?ip=x.x.x.x
+// handleDeviceVulnerabilities returns vulnerabilities for a specific device
+// GET /api/vulnerabilities/device?ip=x.x.x.x.
 func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -174,8 +174,8 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 	sendJSONResponse(w, http.StatusOK, result)
 }
 
-// handleVulnerabilitySettings returns or updates vulnerability scanner settings.
-// GET/PUT /api/vulnerabilities/settings
+// handleVulnerabilitySettings returns or updates vulnerability scanner settings
+// GET/PUT /api/vulnerabilities/settings.
 func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:

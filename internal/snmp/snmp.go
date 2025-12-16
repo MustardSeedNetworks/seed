@@ -10,7 +10,7 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/config"
 )
 
-// Standard System MIB OIDs
+// Standard System MIB OIDs.
 const (
 	OIDSysDescr    = "1.3.6.1.2.1.1.1.0" // System description
 	OIDSysObjectID = "1.3.6.1.2.1.1.2.0" // System object ID
@@ -20,7 +20,7 @@ const (
 	OIDSysLocation = "1.3.6.1.2.1.1.6.0" // System location
 )
 
-// Vendor-specific version OIDs
+// Vendor-specific version OIDs.
 const (
 	OIDCiscoVersion   = "1.3.6.1.4.1.9.9.25.1.1.1.2"       // Cisco IOS version
 	OIDHPVersion      = "1.3.6.1.4.1.11.2.14.11.5.1.1.2.0" // HP/Aruba version

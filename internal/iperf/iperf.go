@@ -98,7 +98,7 @@ const (
 	minSupportedVersion = "3.17"
 )
 
-// validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens)
+// validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens).
 var validHostnameRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
 
 // validateServer validates the server address to prevent command injection.
@@ -124,10 +124,10 @@ func validateServer(server string) error {
 	return nil
 }
 
-// iperfBinaryPath caches the resolved iperf3 binary path
+// iperfBinaryPath caches the resolved iperf3 binary path.
 var iperfBinaryPath string
 
-// ClientConfig holds iperf3 client test configuration
+// ClientConfig holds iperf3 client test configuration.
 type ClientConfig struct {
 	Server    string `json:"server"`
 	Port      int    `json:"port"`
@@ -138,7 +138,7 @@ type ClientConfig struct {
 	Parallel  int    `json:"parallel"`            // number of streams
 }
 
-// Result contains the iperf3 test results
+// Result contains the iperf3 test results.
 type Result struct {
 	BitsPerSecond         float64   `json:"bitsPerSecond"`
 	Bandwidth             float64   `json:"bandwidth"`   // Mbps
@@ -161,7 +161,7 @@ type Result struct {
 	DownloadTransfer      float64   `json:"downloadTransfer,omitempty"`  // MB
 }
 
-// ServerStatus represents the iperf3 server status
+// ServerStatus represents the iperf3 server status.
 type ServerStatus struct {
 	Running bool   `json:"running"`
 	Port    int    `json:"port"`
@@ -169,14 +169,14 @@ type ServerStatus struct {
 	Error   string `json:"error,omitempty"`
 }
 
-// ClientStatus represents the client test status
+// ClientStatus represents the client test status.
 type ClientStatus struct {
 	Running  bool    `json:"running"`
 	Phase    string  `json:"phase"` // "idle", "connecting", "testing", "complete"
 	Progress float64 `json:"progress"`
 }
 
-// iperfJSON is the structure of iperf3 -J output
+// iperfJSON is the structure of iperf3 -J output.
 type iperfJSON struct {
 	Start struct {
 		Connected []struct {
@@ -218,7 +218,7 @@ type iperfJSON struct {
 	Error string `json:"error"`
 }
 
-// Manager handles iperf3 client and server operations
+// Manager handles iperf3 client and server operations.
 type Manager struct {
 	mu           sync.RWMutex
 	serverStatus ServerStatus
@@ -228,14 +228,14 @@ type Manager struct {
 	serverCancel context.CancelFunc
 }
 
-// NewManager creates a new iperf3 manager
+// NewManager creates a new iperf3 manager.
 func NewManager() *Manager {
 	return &Manager{
 		clientStatus: ClientStatus{Phase: "idle"},
 	}
 }
 
-// findIperf3Binary locates the iperf3 binary, checking bundled paths first
+// findIperf3Binary locates the iperf3 binary, checking bundled paths first.
 func findIperf3Binary() (string, error) {
 	// Return cached path if already found
 	if iperfBinaryPath != "" {
@@ -322,13 +322,13 @@ func findIperf3Binary() (string, error) {
 	return path, nil
 }
 
-// CheckInstalled checks if iperf3 is available
+// CheckInstalled checks if iperf3 is available.
 func CheckInstalled() error {
 	_, err := findIperf3Binary()
 	return err
 }
 
-// GetVersion returns the installed iperf3 version
+// GetVersion returns the installed iperf3 version.
 func GetVersion() (string, error) {
 	binaryPath, err := findIperf3Binary()
 	if err != nil {
@@ -364,7 +364,7 @@ func GetVersion() (string, error) {
 	return "unknown", nil
 }
 
-// ValidateVersion checks if the installed iperf3 version meets minimum requirements
+// ValidateVersion checks if the installed iperf3 version meets minimum requirements.
 func ValidateVersion() error {
 	version, err := GetVersion()
 	if err != nil {
@@ -383,7 +383,7 @@ func ValidateVersion() error {
 }
 
 // compareVersions compares two version strings in format "x.y" or "x.y.z"
-// Returns: -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
+// Returns: -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2.
 func compareVersions(v1, v2 string) int {
 	parts1 := strings.Split(v1, ".")
 	parts2 := strings.Split(v2, ".")
@@ -410,7 +410,7 @@ func compareVersions(v1, v2 string) int {
 	return 0
 }
 
-// waitForPortReady checks if a TCP port is ready to accept connections
+// waitForPortReady checks if a TCP port is ready to accept connections.
 func waitForPortReady(port int, timeout time.Duration) error {
 	// Validate port number
 	if err := validation.ValidatePort(port); err != nil {
@@ -432,28 +432,28 @@ func waitForPortReady(port int, timeout time.Duration) error {
 	return fmt.Errorf("port %d not ready after %v", port, timeout)
 }
 
-// GetServerStatus returns the current server status
+// GetServerStatus returns the current server status.
 func (m *Manager) GetServerStatus() ServerStatus {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.serverStatus
 }
 
-// GetClientStatus returns the current client status
+// GetClientStatus returns the current client status.
 func (m *Manager) GetClientStatus() ClientStatus {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.clientStatus
 }
 
-// GetLastResult returns the last test result
+// GetLastResult returns the last test result.
 func (m *Manager) GetLastResult() *Result {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.lastResult
 }
 
-// StartServer starts the iperf3 server
+// StartServer starts the iperf3 server.
 func (m *Manager) StartServer(port int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -515,7 +515,7 @@ func (m *Manager) StartServer(port int) error {
 	return nil
 }
 
-// StopServer stops the iperf3 server
+// StopServer stops the iperf3 server.
 func (m *Manager) StopServer() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -543,7 +543,7 @@ func (m *Manager) StopServer() error {
 	return nil
 }
 
-// RunClient runs an iperf3 client test
+// RunClient runs an iperf3 client test.
 func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result, error) {
 	// Validate server address to prevent command injection
 	if err := validateServer(config.Server); err != nil {

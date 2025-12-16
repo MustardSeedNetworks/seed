@@ -751,9 +751,9 @@ func TestConcurrentAccess(t *testing.T) {
 
 	// Test concurrent reads
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
-			for j := 0; j < 100; j++ {
+			for range 100 {
 				_ = mgr.GetInterfaces()
 				_, _ = mgr.GetInterface(validInterface)
 				_ = mgr.GetCurrentInterface()
@@ -764,7 +764,7 @@ func TestConcurrentAccess(t *testing.T) {
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }

@@ -15,6 +15,15 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
+// Traceroute hop state and status constants.
+const (
+	hopStateReply       = "reply"
+	hopStateTimeout     = "timeout"
+	hopStateUnreachable = "unreachable"
+	hopStateError       = "error"
+	errTracerouteCanceled = "traceroute canceled"
+)
+
 // TracerouteHop represents a single hop in a traceroute.
 type TracerouteHop struct {
 	TTL      int           `json:"ttl"`
@@ -82,7 +91,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		}
 	}
 	if targetIP == nil {
-		result.Error = "no IPv4 address found for target"
+		result.Error = errNoIPv4ForTarget
 		return result
 	}
 	result.TargetIP = targetIP.String()
@@ -104,7 +113,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 	for ttl := 1; ttl <= t.maxHops; ttl++ {
 		select {
 		case <-ctx.Done():
-			result.Error = "traceroute canceled"
+			result.Error = errTracerouteCanceled
 			return result
 		default:
 		}
@@ -116,13 +125,14 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 
 		// Set TTL using ipv4 package
 		if err := pconn.SetTTL(ttl); err != nil {
-			hop.State = "error"
+			hop.State = hopStateError
 			result.Hops = append(result.Hops, hop)
 			continue
 		}
 
 		// Try multiple times for this TTL
-		for retry := 0; retry < t.retries; retry++ {
+		for retry := range t.retries {
+			_ = retry // Not used but required for intrange
 			seq++
 			start := time.Now()
 
@@ -179,14 +189,14 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 			switch rm.Type {
 			case ipv4.ICMPTypeEchoReply:
 				// Reached the destination
-				hop.State = "reply"
+				hop.State = hopStateReply
 				result.Hops = append(result.Hops, hop)
 				result.Completed = true
 				return result
 
 			case ipv4.ICMPTypeTimeExceeded:
 				// TTL exceeded - intermediate hop
-				hop.State = "reply"
+				hop.State = hopStateReply
 
 			case ipv4.ICMPTypeDestinationUnreachable:
 				hop.State = "unreachable"
@@ -239,7 +249,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 		}
 	}
 	if targetIP == nil {
-		result.Error = "no IPv4 address found for target"
+		result.Error = errNoIPv4ForTarget
 		return result
 	}
 	result.TargetIP = targetIP.String()
@@ -255,7 +265,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 	for ttl := 1; ttl <= t.maxHops; ttl++ {
 		select {
 		case <-ctx.Done():
-			result.Error = "traceroute canceled"
+			result.Error = errTracerouteCanceled
 			return result
 		default:
 		}
@@ -271,7 +281,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 			Port: port + ttl - 1, // Increment port for each hop
 		})
 		if err != nil {
-			hop.State = "error"
+			hop.State = hopStateError
 			result.Hops = append(result.Hops, hop)
 			continue
 		}
@@ -280,7 +290,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 		rawConn, err := udpConn.SyscallConn()
 		if err != nil {
 			udpConn.Close()
-			hop.State = "error"
+			hop.State = hopStateError
 			result.Hops = append(result.Hops, hop)
 			continue
 		}
@@ -292,12 +302,12 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 		})
 		if setErr != nil {
 			udpConn.Close()
-			hop.State = "error"
+			hop.State = hopStateError
 			result.Hops = append(result.Hops, hop)
 			continue
 		}
 
-		for retry := 0; retry < t.retries; retry++ {
+		for range t.retries {
 			start := time.Now()
 
 			// Send UDP packet
@@ -334,11 +344,11 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 
 			switch rm.Type {
 			case ipv4.ICMPTypeTimeExceeded:
-				hop.State = "reply"
+				hop.State = hopStateReply
 
 			case ipv4.ICMPTypeDestinationUnreachable:
 				// Port unreachable means we reached the destination
-				hop.State = "reply"
+				hop.State = hopStateReply
 				result.Hops = append(result.Hops, hop)
 				result.Completed = true
 				udpConn.Close()
@@ -388,7 +398,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 		}
 	}
 	if targetIP == nil {
-		result.Error = "no IPv4 address found for target"
+		result.Error = errNoIPv4ForTarget
 		return result
 	}
 	result.TargetIP = targetIP.String()
@@ -404,7 +414,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 	for ttl := 1; ttl <= t.maxHops; ttl++ {
 		select {
 		case <-ctx.Done():
-			result.Error = "traceroute canceled"
+			result.Error = errTracerouteCanceled
 			return result
 		default:
 		}
@@ -414,7 +424,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 			State: "timeout",
 		}
 
-		for retry := 0; retry < t.retries; retry++ {
+		for range t.retries {
 			start := time.Now()
 
 			// Use TCP connect with timeout - simpler than raw SYN
@@ -455,7 +465,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 				conn.Close()
 				hop.RTT = rtt
 				hop.IP = targetIP.String()
-				hop.State = "reply"
+				hop.State = hopStateReply
 				if t.resolvePtr {
 					if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
 						hop.Hostname = names[0]
@@ -472,7 +482,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 					if sysErr, ok := opErr.Err.(*syscall.Errno); ok && *sysErr == syscall.ECONNREFUSED {
 						hop.RTT = rtt
 						hop.IP = targetIP.String()
-						hop.State = "reply"
+						hop.State = hopStateReply
 						if t.resolvePtr {
 							if names, err := net.LookupAddr(hop.IP); err == nil && len(names) > 0 {
 								hop.Hostname = names[0]
@@ -498,7 +508,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 								}
 							}
 						}
-						hop.State = "reply"
+						hop.State = hopStateReply
 						break
 					}
 				}

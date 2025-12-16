@@ -34,7 +34,7 @@ type TCPProbeResult struct {
 	Error error         `json:"error,omitempty"`
 }
 
-// TCP flags
+// TCP flags.
 const (
 	tcpFIN = 0x01
 	tcpSYN = 0x02
@@ -224,7 +224,7 @@ func (p *TCPProber) ScanPorts(ctx context.Context, ipStr string, ports []int, wo
 	var wg sync.WaitGroup
 	wg.Add(workers)
 
-	for w := 0; w < workers; w++ {
+	for range workers {
 		go func() {
 			defer wg.Done()
 			for idx := range work {
@@ -308,7 +308,7 @@ func (p *TCPProber) ScanPortsOnHosts(ctx context.Context, ips []string, ports []
 	var wg sync.WaitGroup
 	wg.Add(workers)
 
-	for w := 0; w < workers; w++ {
+	for range workers {
 		go func() {
 			defer wg.Done()
 			for t := range work {

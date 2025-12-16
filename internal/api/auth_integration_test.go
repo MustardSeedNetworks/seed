@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-// TestEndpointAuthentication verifies that all API endpoints properly enforce JWT authentication.
-// This is a comprehensive test suite for Issue #452: API Endpoints Skip JWT Auth Checks
+// TestEndpointAuthentication verifies that all API endpoints properly enforce JWT authentication
+// This is a comprehensive test suite for Issue #452: API Endpoints Skip JWT Auth Checks.
 func TestEndpointAuthentication(t *testing.T) {
 	// Create a test server without auth token
 	server := createTestServer(t)
@@ -135,7 +135,7 @@ func TestEndpointAuthentication(t *testing.T) {
 	}
 }
 
-// TestEndpointAuthWithValidToken verifies that endpoints work correctly with valid auth tokens
+// TestEndpointAuthWithValidToken verifies that endpoints work correctly with valid auth tokens.
 func TestEndpointAuthWithValidToken(t *testing.T) {
 	server := createTestServer(t)
 	defer server.cleanup()
@@ -172,7 +172,7 @@ func TestEndpointAuthWithValidToken(t *testing.T) {
 	}
 }
 
-// TestEndpointAuthWithInvalidToken verifies that invalid tokens are rejected
+// TestEndpointAuthWithInvalidToken verifies that invalid tokens are rejected.
 func TestEndpointAuthWithInvalidToken(t *testing.T) {
 	server := createTestServer(t)
 	defer server.cleanup()
@@ -204,7 +204,7 @@ func TestEndpointAuthWithInvalidToken(t *testing.T) {
 	}
 }
 
-// TestEndpointAuthWithExpiredToken verifies that expired tokens are rejected
+// TestEndpointAuthWithExpiredToken verifies that expired tokens are rejected.
 func TestEndpointAuthWithExpiredToken(t *testing.T) {
 	server := createTestServer(t)
 	defer server.cleanup()
@@ -215,7 +215,7 @@ func TestEndpointAuthWithExpiredToken(t *testing.T) {
 	t.Skip("Expired token test requires GenerateTokenWithDuration method - implement in auth package")
 }
 
-// TestWebSocketAuth verifies WebSocket authentication via query parameter
+// TestWebSocketAuth verifies WebSocket authentication via query parameter.
 func TestWebSocketAuth(t *testing.T) {
 	server := createTestServer(t)
 	defer server.cleanup()
@@ -285,7 +285,7 @@ func TestWebSocketAuth(t *testing.T) {
 	})
 }
 
-// TestStaticFilesNoAuth verifies that static files don't require authentication
+// TestStaticFilesNoAuth verifies that static files don't require authentication.
 func TestStaticFilesNoAuth(t *testing.T) {
 	server := createTestServer(t)
 	defer server.cleanup()
@@ -312,7 +312,7 @@ func TestStaticFilesNoAuth(t *testing.T) {
 	}
 }
 
-// Helper to create a test server
+// Helper to create a test server.
 type testServer struct {
 	server  *Server
 	handler http.Handler
