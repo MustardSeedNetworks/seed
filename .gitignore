@@ -101,3 +101,4 @@ data/
 
 # Agent artifacts
 .gemini/
+.ignore
