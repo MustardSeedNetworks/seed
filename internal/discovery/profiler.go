@@ -352,7 +352,7 @@ func (p *DeviceProfiler) probeHTTP(ctx context.Context, ip string, port int, isH
 	if err != nil {
 		return nil
 	}
-	req.Header.Set("User-Agent", "LuminetIQ/1.0")
+	req.Header.Set("User-Agent", "The Seed/1.0")
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {

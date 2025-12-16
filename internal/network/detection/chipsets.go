@@ -111,12 +111,12 @@ func NewChipsetDatabaseFromFile(path string) (*ChipsetDatabase, error) {
 }
 
 // loadChipsetsFromFile attempts to load chipsets from external YAML file.
-// Looks in common locations: ./chipsets.yaml, /etc/luminetiq/chipsets.yaml.
+// Looks in common locations: ./chipsets.yaml, /etc/seed/chipsets.yaml.
 func loadChipsetsFromFile() ([]ChipsetInfo, error) {
 	paths := []string{
 		"chipsets.yaml",
-		"/etc/luminetiq/chipsets.yaml",
-		"/usr/local/share/luminetiq/chipsets.yaml",
+		"/etc/seed/chipsets.yaml",
+		"/usr/local/share/seed/chipsets.yaml",
 	}
 
 	for _, path := range paths {

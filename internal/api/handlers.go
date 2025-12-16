@@ -1,4 +1,4 @@
-// Package api provides HTTP handlers and API endpoints for the LuminetIQ network monitoring application.
+// Package api provides HTTP handlers and API endpoints for the The Seed network monitoring application.
 //
 // This file serves as the main orchestrator for HTTP request handling. The actual handler implementations
 // have been split into specialized files for better organization and maintainability (fixes #544):

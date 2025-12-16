@@ -715,15 +715,15 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"LuminetIQ"},
-			CommonName:   "LuminetIQ Self-Signed",
+			Organization: []string{"The Seed"},
+			CommonName:   "The Seed Self-Signed",
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(1, 0, 0), // Valid for 1 year
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		DNSNames:              []string{"localhost", "luminetiq.local"},
+		DNSNames:              []string{"localhost", "seed.local"},
 	}
 
 	// Create certificate
