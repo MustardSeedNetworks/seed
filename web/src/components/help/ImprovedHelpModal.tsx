@@ -1,9 +1,9 @@
 /**
  * ImprovedHelpModal Component (~681 lines)
- * 
+ *
  * Purpose: Comprehensive application help modal providing user guidance across multiple topics.
  * Features tabbed navigation, search functionality, and rich content for all major features.
- * 
+ *
  * Key Features:
  * - Multi-section help: About, Network Discovery, WiFi, Cable/Link, Performance, etc.
  * - Search functionality: Filter help content by keyword
@@ -13,12 +13,12 @@
  * - Responsive design: Adapts to different screen sizes
  * - Keyboard support: ESC key closes modal
  * - Scrollable sections: Long help content in scrollable containers
- * 
+ *
  * Usage:
  * ```typescript
  * <ImprovedHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
  * ```
- * 
+ *
  * Dependencies: Icons, theme utilities, useState for tab/search state management
  * State: activeSection (current tab), searchQuery (help search text)
  */
@@ -64,7 +64,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
   const sections: HelpSection[] = [
     {
       id: "about",
-      title: "About LuminetIQ",
+      title: "About The Seed",
       icon: <Info className={iconTokens.size.sm} />,
       content: <AboutSection />,
     },
@@ -127,7 +127,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
   const filteredSections = sections.filter(
     (section) =>
       section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      section.id.toLowerCase().includes(searchQuery.toLowerCase()),
+      section.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const currentSection = sections.find((s) => s.id === activeSection);
@@ -151,7 +151,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
         {/* Header */}
         <div className={`${layout.flex.between} p-4 border-b border-surface-border shrink-0`}>
           <h2 id="help-modal-title" className="heading-3">
-            LuminetIQ Help Center
+            The Seed Help Center
           </h2>
           <button
             onClick={onClose}
@@ -175,7 +175,9 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
             {/* Search */}
             <div className="p-3 border-b border-surface-border">
               <div className="relative">
-                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${iconTokens.size.sm} text-text-muted`} />
+                <Search
+                  className={`absolute left-3 top-1/2 -translate-y-1/2 ${iconTokens.size.sm} text-text-muted`}
+                />
                 <input
                   type="text"
                   placeholder="Search help..."
@@ -188,9 +190,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
 
             {/* Table of Contents */}
             <nav className="p-2">
-              <p className="caption px-3 py-2 uppercase tracking-wider">
-                Contents
-              </p>
+              <p className="caption px-3 py-2 uppercase tracking-wider">Contents</p>
               {filteredSections.map((section) => (
                 <button
                   key={section.id}
@@ -199,7 +199,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
                     `w-full flex items-center gap-3 px-3 py-2.5 ${radius.default} body-small transition-colors text-left`,
                     activeSection === section.id
                       ? "bg-brand-primary/10 text-brand-primary font-medium"
-                      : "text-text-secondary hover:bg-surface-hover hover:text-text-primary",
+                      : "text-text-secondary hover:bg-surface-hover hover:text-text-primary"
                   )}
                 >
                   {section.icon}
@@ -227,10 +227,10 @@ function AboutSection() {
   return (
     <div className="section-gap max-w-3xl">
       <div>
-        <h3 className="heading-2 mb-3">Welcome to LuminetIQ</h3>
+        <h3 className="heading-2 mb-3">Welcome to The Seed</h3>
         <p className="body leading-relaxed mb-4">
-          LuminetIQ is a comprehensive network diagnostics and monitoring tool
-          designed to illuminate every aspect of your network infrastructure.
+          The Seed is a comprehensive network diagnostics and monitoring tool by Mustard Seed
+          Networks, designed to provide deep visibility into your network infrastructure.
         </p>
       </div>
 
@@ -254,12 +254,10 @@ function AboutSection() {
       </div>
 
       <div className={`border-l-4 border-brand-primary bg-brand-primary/5 p-4 ${radius.default}`}>
-        <h4 className="font-semibold text-text-primary mb-2">
-          Open Source & Customizable
-        </h4>
+        <h4 className="font-semibold text-text-primary mb-2">Open Source & Customizable</h4>
         <p className="body-small text-text-secondary">
-          LuminetIQ is open source software. Customize thresholds, configure
-          tests, and integrate with your existing monitoring infrastructure.
+          The Seed is open source software. Customize thresholds, configure tests, and integrate
+          with your existing monitoring infrastructure.
         </p>
       </div>
 
@@ -317,9 +315,7 @@ function GettingStartedSection() {
           Pro Tips
         </h4>
         <ul className="body-small stack-sm ml-6 list-disc">
-          <li>
-            Use the Network Discovery card to find all devices on your network
-          </li>
+          <li>Use the Network Discovery card to find all devices on your network</li>
           <li>Set up custom health check tests in Settings → Custom Tests</li>
           <li>Export diagnostics data for troubleshooting or documentation</li>
           <li>Enable auto-scan for continuous network monitoring</li>
@@ -388,8 +384,7 @@ function CableTestSection() {
           },
           {
             term: "Fault Distance",
-            description:
-              "Distance to cable fault in meters. Helps locate physical cable problems.",
+            description: "Distance to cable fault in meters. Helps locate physical cable problems.",
           },
           {
             term: "Pairs",
@@ -398,10 +393,12 @@ function CableTestSection() {
           },
         ]}
       />
-      <div className={`mt-4 bg-status-warning/10 border border-status-warning/20 ${radius.default} p-3`}>
+      <div
+        className={`mt-4 bg-status-warning/10 border border-status-warning/20 ${radius.default} p-3`}
+      >
         <p className="caption text-status-warning">
-          <strong>Note:</strong> Cable testing requires compatible network
-          hardware. Not all NICs support TDR.
+          <strong>Note:</strong> Cable testing requires compatible network hardware. Not all NICs
+          support TDR.
         </p>
       </div>
     </HelpContentSection>
@@ -423,8 +420,7 @@ function WiFiStatusSection() {
           },
           {
             term: "BSSID",
-            description:
-              "Basic Service Set Identifier - MAC address of the access point.",
+            description: "Basic Service Set Identifier - MAC address of the access point.",
           },
           {
             term: "Signal Strength",
@@ -462,8 +458,7 @@ function NetworkSection() {
         items={[
           {
             term: "Lease Time",
-            description:
-              "Duration of current IP address assignment before renewal is needed.",
+            description: "Duration of current IP address assignment before renewal is needed.",
           },
           {
             term: "DHCP Server",
@@ -472,8 +467,7 @@ function NetworkSection() {
           },
           {
             term: "Gateway",
-            description:
-              "Default gateway assigned by DHCP for routing traffic off-subnet.",
+            description: "Default gateway assigned by DHCP for routing traffic off-subnet.",
           },
           {
             term: "DNS Servers",
@@ -499,13 +493,11 @@ function GatewaySection() {
         items={[
           {
             term: "IPv4 Gateway",
-            description:
-              "Default router for IPv4 traffic leaving your local network.",
+            description: "Default router for IPv4 traffic leaving your local network.",
           },
           {
             term: "IPv6 Gateway",
-            description:
-              "Default router for IPv6 traffic (may be link-local address).",
+            description: "Default router for IPv6 traffic (may be link-local address).",
           },
           {
             term: "Reachability",
@@ -513,13 +505,11 @@ function GatewaySection() {
           },
           {
             term: "Latency",
-            description:
-              "Round-trip time to gateway. Should be <1ms for local networks.",
+            description: "Round-trip time to gateway. Should be <1ms for local networks.",
           },
           {
             term: "Packet Loss",
-            description:
-              "Percentage of ping packets that didn't receive a response.",
+            description: "Percentage of ping packets that didn't receive a response.",
           },
         ]}
       />
@@ -549,8 +539,7 @@ function DNSSection() {
           },
           {
             term: "Latency",
-            description:
-              "Time taken for the DNS query to complete. Good: <50ms for local DNS.",
+            description: "Time taken for the DNS query to complete. Good: <50ms for local DNS.",
           },
         ]}
       />
@@ -619,8 +608,7 @@ function DiscoverySection() {
           },
           {
             term: "Vendor",
-            description:
-              "Manufacturer identified from the MAC address OUI (first 3 bytes).",
+            description: "Manufacturer identified from the MAC address OUI (first 3 bytes).",
           },
           {
             term: "Hostname",
@@ -641,13 +629,7 @@ function DiscoverySection() {
 // HELPER COMPONENTS
 // ============================================================================
 
-function FeatureCard({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
+function FeatureCard({ title, description }: { title: string; description: string }) {
   return (
     <div className={`bg-surface-hover border border-surface-border ${radius.lg} p-4`}>
       <h4 className="font-semibold text-text-primary mb-2">{title}</h4>
@@ -667,7 +649,9 @@ function StepCard({
 }) {
   return (
     <div className="flex gap-4">
-      <div className={`shrink-0 w-8 h-8 ${radius.full} bg-brand-primary text-text-inverse ${layout.flex.center} font-semibold`}>
+      <div
+        className={`shrink-0 w-8 h-8 ${radius.full} bg-brand-primary text-text-inverse ${layout.flex.center} font-semibold`}
+      >
         {number}
       </div>
       <div className="flex-1">
@@ -678,13 +662,7 @@ function StepCard({
   );
 }
 
-function HelpContentSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+function HelpContentSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="max-w-3xl">
       <h3 className="heading-2 mb-4">{title}</h3>
@@ -693,11 +671,7 @@ function HelpContentSection({
   );
 }
 
-function HelpTermList({
-  items,
-}: {
-  items: Array<{ term: string; description: string }>;
-}) {
+function HelpTermList({ items }: { items: Array<{ term: string; description: string }> }) {
   return (
     <dl className="stack-lg">
       {items.map((item, idx) => (

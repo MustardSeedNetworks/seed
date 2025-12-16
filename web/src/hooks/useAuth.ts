@@ -45,8 +45,8 @@ interface AuthState {
 
 /** Login API response structure */
 interface LoginResponse {
-  token: string;    // JWT authentication token
-  expires: number;  // Token expiration timestamp (Unix seconds)
+  token: string; // JWT authentication token
+  expires: number; // Token expiration timestamp (Unix seconds)
 }
 
 /** Return value from useAuth hook */
@@ -74,6 +74,12 @@ const LEGACY_KEYS = [
   "netscope_token",
   "netscope_token_expiry",
   "netscope_username",
+  "luminetiq-token",
+  "luminetiq-token-expiry",
+  "luminetiq-username",
+  "seed-token",
+  "seed-token-expiry",
+  "seed-username",
 ];
 
 /**
@@ -145,45 +151,42 @@ export function useAuth(): UseAuthReturn {
       });
   }, []);
 
-  const login = useCallback(
-    async (username: string, password: string): Promise<boolean> => {
-      setIsLoading(true);
-      setError(null);
+  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const response = await fetch(`${API_BASE}/api/auth/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // Receive httpOnly cookies
-          body: JSON.stringify({ username, password }),
-        });
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Receive httpOnly cookies
+        body: JSON.stringify({ username, password }),
+      });
 
-        if (!response.ok) {
-          throw new Error("Invalid credentials");
-        }
-
-        const data: LoginResponse = await response.json();
-
-        // Backend sets httpOnly cookies automatically
-        // Store access token in memory ONLY for WebSocket connections
-        setState({
-          isAuthenticated: true,
-          token: data.token, // Access token for WebSocket (short-lived, 15min)
-          username,
-        });
-
-        return true;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Login failed");
-        return false;
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error("Invalid credentials");
       }
-    },
-    [],
-  );
+
+      const data: LoginResponse = await response.json();
+
+      // Backend sets httpOnly cookies automatically
+      // Store access token in memory ONLY for WebSocket connections
+      setState({
+        isAuthenticated: true,
+        token: data.token, // Access token for WebSocket (short-lived, 15min)
+        username,
+      });
+
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const logout = useCallback(() => {
     // Clear in-memory state immediately

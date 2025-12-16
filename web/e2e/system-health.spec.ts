@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 /**
  * System Health E2E Tests
@@ -12,27 +12,27 @@ import { test, expect } from '@playwright/test';
  * - Threshold warnings
  */
 
-test.describe('System Health', () => {
+test.describe("System Health", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display System Health card', async ({ page }) => {
+  test("should display System Health card", async ({ page }) => {
     const systemCard = page
-      .getByRole('heading', { name: /system|health/i })
+      .getByRole("heading", { name: /system|health/i })
       .or(page.locator('[data-testid="system-health-card"]'));
 
     await expect(systemCard).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show CPU usage percentage', async ({ page }) => {
+  test("should show CPU usage percentage", async ({ page }) => {
     const cpuText = page.getByText(/cpu/i);
     const hasText = await cpuText.isVisible().catch(() => false);
 
@@ -44,7 +44,7 @@ test.describe('System Health', () => {
     }
   });
 
-  test('should show Memory usage', async ({ page }) => {
+  test("should show Memory usage", async ({ page }) => {
     const memoryText = page.getByText(/memory|ram/i);
     const hasText = await memoryText.isVisible().catch(() => false);
 
@@ -56,7 +56,7 @@ test.describe('System Health', () => {
     }
   });
 
-  test('should show Disk usage', async ({ page }) => {
+  test("should show Disk usage", async ({ page }) => {
     const diskText = page.getByText(/disk|storage/i);
     const hasText = await diskText.isVisible().catch(() => false);
 
@@ -68,7 +68,7 @@ test.describe('System Health', () => {
     }
   });
 
-  test('should show system uptime', async ({ page }) => {
+  test("should show system uptime", async ({ page }) => {
     const uptimeText = page.getByText(/uptime|running/i);
     const hasUptime = await uptimeText.isVisible().catch(() => false);
 
@@ -80,7 +80,7 @@ test.describe('System Health', () => {
     }
   });
 
-  test('should show status indicators (ok/warning/error)', async ({ page }) => {
+  test("should show status indicators (ok/warning/error)", async ({ page }) => {
     // Look for status indicators
     const statusOk = page.locator('[class*="success"], [class*="green"]');
     const statusWarning = page.locator('[class*="warning"], [class*="yellow"]');
@@ -94,7 +94,7 @@ test.describe('System Health', () => {
     expect(hasOk + hasWarning + hasError).toBeGreaterThanOrEqual(0);
   });
 
-  test('should update metrics in real-time', async ({ page }) => {
+  test("should update metrics in real-time", async ({ page }) => {
     // Wait for initial load
     await page.waitForTimeout(2000);
 
@@ -112,7 +112,7 @@ test.describe('System Health', () => {
     }
   });
 
-  test('should have expandable details', async ({ page }) => {
+  test("should have expandable details", async ({ page }) => {
     // Look for expand button or collapsible section
     const expandButton = page
       .locator('button:has(svg[class*="chevron"])')
@@ -133,21 +133,21 @@ test.describe('System Health', () => {
   });
 });
 
-test.describe('System Health Thresholds', () => {
+test.describe("System Health Thresholds", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('should have configurable thresholds in settings', async ({ page }) => {
+  test("should have configurable thresholds in settings", async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -156,11 +156,11 @@ test.describe('System Health Thresholds', () => {
     await expect(thresholdSection).toBeVisible();
 
     // Close settings
-    const closeButton = page.getByRole('button', { name: /close/i }).first();
+    const closeButton = page.getByRole("button", { name: /close/i }).first();
     await closeButton.click();
   });
 
-  test('should show warning when threshold exceeded', async ({ page }) => {
+  test("should show warning when threshold exceeded", async ({ page }) => {
     // This test verifies warning display - actual warning depends on system state
     const warningIndicator = page
       .locator('[class*="warning"]')

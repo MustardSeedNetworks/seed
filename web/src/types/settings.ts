@@ -350,8 +350,8 @@ export const DEFAULT_SNMP_SETTINGS: SNMPSettings = {
 // ============================================================================
 
 export const STORAGE_KEYS = {
-  FAB_OPTIONS: "netscope-fab-options",
-  DISPLAY_OPTIONS: "netscope-display-options",
-  IPERF_SETTINGS: "netscope-iperf-settings",
-  THEME: "netscope-theme",
+  FAB_OPTIONS: "seed-fab-options",
+  DISPLAY_OPTIONS: "seed-display-options",
+  IPERF_SETTINGS: "seed-iperf-settings",
+  THEME: "seed-theme",
 } as const;

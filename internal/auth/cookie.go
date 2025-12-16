@@ -9,10 +9,10 @@ import (
 
 const (
 	// CookieNameAccess is the name of the access token cookie.
-	CookieNameAccess = "luminetiq_access"
+	CookieNameAccess = "seed_access"
 
 	// CookieNameRefresh is the name of the refresh token cookie.
-	CookieNameRefresh = "luminetiq_refresh"
+	CookieNameRefresh = "seed_refresh"
 
 	// AccessTokenDuration is how long access tokens are valid (short-lived).
 	AccessTokenDuration = 15 * time.Minute

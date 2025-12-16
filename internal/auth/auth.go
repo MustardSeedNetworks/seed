@@ -492,12 +492,12 @@ func (m *Manager) UpdatePasswordHash(hash string) {
 	log.Printf("Password hash updated, all existing tokens invalidated (version %d)", m.tokenVersion)
 }
 
-// IsDefaultPasswordHash checks if the given hash matches the default "netscope" password.
+// IsDefaultPasswordHash checks if the given hash matches the default "seed" password.
 // This is used to detect if credentials have been changed from the insecure default.
 func IsDefaultPasswordHash(hash string) bool {
-	// The default hash for "netscope" - if this matches, credentials are insecure
+	// Legacy default hashes - if any match, credentials are insecure
 	defaultHashes := []string{
-		"$2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52",
+		"$2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52", // "netscope" legacy
 	}
 
 	for _, defaultHash := range defaultHashes {
@@ -506,8 +506,13 @@ func IsDefaultPasswordHash(hash string) bool {
 		}
 	}
 
-	// Also check by actually comparing against "netscope"
+	// Check legacy "netscope" password
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte("netscope")); err == nil {
+		return true
+	}
+
+	// Check current "seed" default password
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte("seed")); err == nil {
 		return true
 	}
 

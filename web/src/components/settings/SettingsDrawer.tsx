@@ -152,15 +152,11 @@ const VLANControl = memo(function VLANControl() {
         </button>
       </div>
       {message && (
-        <p
-          className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}
-        >
+        <p className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}>
           {message.text}
         </p>
       )}
-      <p className="caption">
-        Creates/removes 802.1Q VLAN subinterface. Requires root.
-      </p>
+      <p className="caption">Creates/removes 802.1Q VLAN subinterface. Requires root.</p>
     </div>
   );
 });
@@ -224,15 +220,11 @@ const MTUControl = memo(function MTUControl() {
         </button>
       </div>
       {message && (
-        <p
-          className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}
-        >
+        <p className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}>
           {message.text}
         </p>
       )}
-      <p className="caption">
-        Standard: 1500, Jumbo frames: up to 9000. Requires root.
-      </p>
+      <p className="caption">Standard: 1500, Jumbo frames: up to 9000. Requires root.</p>
     </div>
   );
 });
@@ -262,20 +254,18 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Create setter wrappers that use context update methods
   const setDisplayOptions = useCallback(
     (updater: React.SetStateAction<typeof displayOptions>) => {
-      const newValue =
-        typeof updater === "function" ? updater(displayOptions) : updater;
+      const newValue = typeof updater === "function" ? updater(displayOptions) : updater;
       updateDisplayOptions(newValue);
     },
-    [displayOptions, updateDisplayOptions],
+    [displayOptions, updateDisplayOptions]
   );
 
   const setIperfSettings = useCallback(
     (updater: React.SetStateAction<typeof iperfSettings>) => {
-      const newValue =
-        typeof updater === "function" ? updater(iperfSettings) : updater;
+      const newValue = typeof updater === "function" ? updater(iperfSettings) : updater;
       updateIperfSettings(newValue);
     },
-    [iperfSettings, updateIperfSettings],
+    [iperfSettings, updateIperfSettings]
   );
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -348,15 +338,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     isWireless: false,
   });
   const [dnsInput, setDnsInput] = useState("");
-  const [iperfSuggestions, setIperfSuggestions] = useState<IperfSuggestion[]>(
-    [],
-  );
+  const [iperfSuggestions, setIperfSuggestions] = useState<IperfSuggestion[]>([]);
   const [iperfSuggestionsStatus, setIperfSuggestionsStatus] = useState<
     "idle" | "loading" | "error"
   >("idle");
-  const [iperfSuggestionsError, setIperfSuggestionsError] = useState<
-    string | null
-  >(null);
+  const [iperfSuggestionsError, setIperfSuggestionsError] = useState<string | null>(null);
   // Network Discovery settings
   const [networkDiscoverySettings, setNetworkDiscoverySettings] =
     useState<NetworkDiscoverySettings>({
@@ -409,8 +395,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const displayStatus = settingsStatus.display;
   const iperfStatus = settingsStatus.iperf;
 
-  const [networkDiscoveryStatus, setNetworkDiscoveryStatus] =
-    useState<SaveStatus>("idle");
+  const [networkDiscoveryStatus, setNetworkDiscoveryStatus] = useState<SaveStatus>("idle");
 
   // Refs to track initial load (skip auto-save on first load)
   const initialLoadRef = useRef(true);
@@ -424,9 +409,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const testsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wifiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const snmpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Legacy state (keep for IP settings which still needs manual apply)
@@ -525,9 +508,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       }
     } catch (err) {
       setIperfSuggestionsStatus("error");
-      setIperfSuggestionsError(
-        err instanceof Error ? err.message : "Failed to find iperf hosts",
-      );
+      setIperfSuggestionsError(err instanceof Error ? err.message : "Failed to find iperf hosts");
     }
   }, []);
 
@@ -645,9 +626,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       setLogPreview(data.lines || []);
     } catch (err) {
       setLogPreview([]);
-      setLogError(
-        err instanceof Error ? err.message : "Failed to load log file",
-      );
+      setLogError(err instanceof Error ? err.message : "Failed to load log file");
     } finally {
       setLogLoading(false);
     }
@@ -703,9 +682,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         setSubnetsStatus("error");
       }
     } catch (err) {
-      setSubnetError(
-        err instanceof Error ? err.message : "Network error adding subnet",
-      );
+      setSubnetError(err instanceof Error ? err.message : "Network error adding subnet");
       setSubnetsStatus("error");
     }
   };
@@ -993,14 +970,12 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Auto-save Network Discovery settings with debounce
   useEffect(() => {
     if (networkDiscoveryInitRef.current) return;
-    if (networkDiscoveryTimerRef.current)
-      clearTimeout(networkDiscoveryTimerRef.current);
+    if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
     networkDiscoveryTimerRef.current = setTimeout(() => {
       saveNetworkDiscoverySettings();
     }, 800);
     return () => {
-      if (networkDiscoveryTimerRef.current)
-        clearTimeout(networkDiscoveryTimerRef.current);
+      if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
     };
   }, [networkDiscoverySettings, saveNetworkDiscoverySettings]);
 
@@ -1053,11 +1028,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
 
       {/* Drawer - full width on mobile, 384px on larger screens */}
       <div
@@ -1073,9 +1044,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             <h2 id="settings-drawer-title" className="heading-3">
               Settings
             </h2>
-            <p className="body-small">
-              Adjust thresholds, network, and display
-            </p>
+            <p className="body-small">Adjust thresholds, network, and display</p>
           </div>
           <button
             ref={closeButtonRef}
@@ -1109,9 +1078,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {/* Mode Toggle */}
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() =>
-                    setIPSettings((prev) => ({ ...prev, mode: "dhcp" }))
-                  }
+                  onClick={() => setIPSettings((prev) => ({ ...prev, mode: "dhcp" }))}
                   className={`py-2.5 px-3 ${radius.md} body-small font-medium transition-colors ${
                     ipSettings.mode === "dhcp"
                       ? "bg-brand-primary text-text-inverse"
@@ -1121,9 +1088,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                   DHCP
                 </button>
                 <button
-                  onClick={() =>
-                    setIPSettings((prev) => ({ ...prev, mode: "static" }))
-                  }
+                  onClick={() => setIPSettings((prev) => ({ ...prev, mode: "static" }))}
                   className={`py-2.5 px-3 ${radius.md} body-small font-medium transition-colors ${
                     ipSettings.mode === "static"
                       ? "bg-brand-primary text-text-inverse"
@@ -1191,9 +1156,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label className="caption font-medium">
-                      DNS Servers (comma-separated)
-                    </label>
+                    <label className="caption font-medium">DNS Servers (comma-separated)</label>
                     <input
                       type="text"
                       value={dnsInput}
@@ -1208,10 +1171,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {/* Apply Button */}
               <button
                 onClick={saveIPSettings}
-                disabled={
-                  savingIP ||
-                  (ipSettings.mode === "static" && !ipSettings.address)
-                }
+                disabled={savingIP || (ipSettings.mode === "static" && !ipSettings.address)}
                 className={`w-full py-2 px-4 bg-brand-primary text-text-inverse ${radius.md} font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors`}
               >
                 {savingIP ? "Applying..." : "Apply IP Settings"}
@@ -1229,9 +1189,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 </p>
               )}
 
-              <p className="caption">
-                Note: Requires root/admin privileges to apply
-              </p>
+              <p className="caption">Note: Requires root/admin privileges to apply</p>
             </div>
 
             {/* Display Options */}
@@ -1243,12 +1201,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 className={`flex items-center justify-between p-2.5 bg-surface-base ${radius.md} border border-surface-border`}
               >
                 <div>
-                  <span className="body-small text-text-primary font-medium">
-                    Show Public IP
-                  </span>
-                  <p className="caption text-text-muted">
-                    Display in Network card
-                  </p>
+                  <span className="body-small text-text-primary font-medium">Show Public IP</span>
+                  <p className="caption text-text-muted">Display in Network card</p>
                 </div>
                 <input
                   type="checkbox"
@@ -1337,19 +1291,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           />
 
           {/* Appearance Section */}
-          <AppearanceSettings
-            theme={theme}
-            setTheme={setTheme}
-            isDark={isDark}
-          />
+          <AppearanceSettings theme={theme} setTheme={setTheme} isDark={isDark} />
 
           {/* Logs (debug) */}
           <section className="pt-4 border-t border-surface-border">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="body-small font-medium text-text-muted">
-                  Logs (debug)
-                </h3>
+                <h3 className="body-small font-medium text-text-muted">Logs (debug)</h3>
                 <p className="caption text-text-muted">
                   Rotating file; use only for troubleshooting.
                 </p>
@@ -1361,9 +1309,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 {logLoading ? "Loading…" : "View"}
               </button>
             </div>
-            {logError && (
-              <p className="caption text-status-error mt-2">{logError}</p>
-            )}
+            {logError && <p className="caption text-status-error mt-2">{logError}</p>}
             {!logError && logPreview.length > 0 && (
               <pre
                 className={`mt-2 max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border ${radius.md} px-3 py-2 text-text-primary whitespace-pre-wrap`}
@@ -1375,12 +1321,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
           {/* Export Section */}
           <section className="pt-4 border-t border-surface-border">
-            <h3 className="body-small font-medium text-text-muted mb-3">
-              Export
-            </h3>
+            <h3 className="body-small font-medium text-text-muted mb-3">Export</h3>
             <a
               href={`${API_BASE}/api/export`}
-              download="netscope-export.json"
+              download="seed-export.json"
               className={`w-full py-2 px-4 bg-surface-base border border-surface-border text-text-primary ${radius.md} font-medium hover:bg-surface-hover transition-colors flex items-center justify-center gap-2 touch-manipulation`}
             >
               <svg
@@ -1405,9 +1349,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
           {/* About Section */}
           <section className="pt-4 border-t border-surface-border">
-            <h3 className="body-small font-medium text-text-muted mb-2">
-              About
-            </h3>
+            <h3 className="body-small font-medium text-text-muted mb-2">About</h3>
             <p className="caption text-text-muted">
               NetScope {version}
               <br />

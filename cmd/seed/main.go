@@ -1,4 +1,4 @@
-// Package main is the entry point for LuminetIQ.
+// Package main is the entry point for The Seed by Mustard Seed Networks.
 package main
 
 import (
@@ -28,7 +28,7 @@ var version = "dev"
 // credentialsFileMode is the file permission for credential files (owner read/write only).
 const credentialsFileMode = 0o600
 
-// main starts the LuminetIQ network discovery and monitoring application.
+// main starts The Seed network discovery and monitoring application.
 func main() {
 	// Handle subcommands before flag parsing
 	if len(os.Args) > 1 {
@@ -44,12 +44,12 @@ func main() {
 
 	// Parse command line flags
 	showVersion := flag.Bool("version", false, "Show version")
-	configPath := flag.String("config", "configs/luminetiq.yaml", "Path to configuration file")
+	configPath := flag.String("config", "configs/seed.yaml", "Path to configuration file")
 	devMode := flag.Bool("dev", false, "Run in development mode")
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Printf("LuminetIQ %s\n", version)
+		fmt.Printf("The Seed %s\n", version)
 		os.Exit(0)
 	}
 
@@ -67,8 +67,8 @@ func checkICMPCapabilities() bool {
 	if err := discovery.CheckICMPPrivilegesWithMessage(); err != nil {
 		log.Printf("Warning: ICMP features disabled - %v", err)
 		fmt.Fprintln(os.Stderr, "Warning: Running without ICMP privileges - ping features will be unavailable")
-		fmt.Fprintln(os.Stderr, "For full functionality, run with: sudo ./luminetiq")
-		fmt.Fprintln(os.Stderr, "Or grant capability: sudo setcap cap_net_raw=+ep ./luminetiq")
+		fmt.Fprintln(os.Stderr, "For full functionality, run with: sudo ./seed")
+		fmt.Fprintln(os.Stderr, "Or grant capability: sudo setcap cap_net_raw=+ep ./seed")
 		return false
 	}
 	return true
@@ -76,7 +76,7 @@ func checkICMPCapabilities() bool {
 
 // setupLogging configures logging with secure permissions and rotation.
 func setupLogging() string {
-	logPath := filepath.Join("logs", "luminetiq.log")
+	logPath := filepath.Join("logs", "seed.log")
 	if err := os.MkdirAll(filepath.Dir(logPath), 0o750); err != nil {
 		log.Fatalf("Failed to create log directory: %v", err)
 	}
@@ -100,7 +100,7 @@ func setupLogging() string {
 	}
 	log.SetOutput(rotator)
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.LUTC)
-	log.Printf("LuminetIQ %s starting, logging to %s", version, logPath)
+	log.Printf("The Seed %s starting, logging to %s", version, logPath)
 
 	return logPath
 }
@@ -292,7 +292,7 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config) {
 		}
 	}
 
-	log.Println("LuminetIQ stopped")
+	log.Println("The Seed stopped")
 }
 
 // printSetupBanner displays a message directing users to the web UI for setup.
@@ -303,10 +303,11 @@ func printSetupBanner(port int, https bool) {
 	}
 	banner := `
 ╔══════════════════════════════════════════════════════════════════╗
-║                    LUMINETIQ INITIAL SETUP                       ║
+║                   THE SEED - INITIAL SETUP                       ║
+║               Mustard Seed Networks                              ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  Welcome to LuminetIQ! Initial setup is required.                ║
+║  Welcome to The Seed! Initial setup is required.                 ║
 ║                                                                  ║
 ║  Please open your web browser and navigate to:                   ║
 ║                                                                  ║
@@ -326,28 +327,28 @@ func printSetupBanner(port int, https bool) {
 
 // printUsage displays the CLI usage information.
 func printUsage() {
-	fmt.Printf(`LuminetIQ %s - Network Diagnostics and Monitoring
+	fmt.Printf(`The Seed %s - Network Diagnostics by Mustard Seed Networks
 
 Usage:
-  luminetiq [flags]              Start the server
-  luminetiq credentials          Generate and display initial admin credentials
-  luminetiq help                 Show this help message
+  seed [flags]              Start the server
+  seed credentials          Generate and display initial admin credentials
+  seed help                 Show this help message
 
 Flags:
   -version    Show version and exit
-  -config     Path to configuration file (default: configs/luminetiq.yaml)
+  -config     Path to configuration file (default: configs/seed.yaml)
   -dev        Run in development mode (HTTP instead of HTTPS)
 
 First-Boot Credential Retrieval (fixes #489):
-  Run 'luminetiq credentials' to generate secure initial credentials.
+  Run 'seed credentials' to generate secure initial credentials.
   This writes credentials to a secure file and displays them once.
   Use this instead of parsing logs for systemd deployments.
 
 Examples:
-  luminetiq                      Start with default config
-  luminetiq -dev                 Start in development mode
-  luminetiq -config /etc/luminetiq/config.yaml  Start with custom config
-  luminetiq credentials          Generate initial admin credentials
+  seed                      Start with default config
+  seed -dev                 Start in development mode
+  seed -config /etc/seed/config.yaml  Start with custom config
+  seed credentials          Generate initial admin credentials
 `, version)
 }
 
@@ -356,7 +357,7 @@ Examples:
 func handleCredentialsCommand() {
 	// Parse credentials subcommand flags
 	credFlags := flag.NewFlagSet("credentials", flag.ExitOnError)
-	configPath := credFlags.String("config", "configs/luminetiq.yaml", "Path to configuration file")
+	configPath := credFlags.String("config", "configs/seed.yaml", "Path to configuration file")
 	outputJSON := credFlags.Bool("json", false, "Output credentials as JSON")
 	fileOutput := credFlags.String("file", "", "Write credentials to file (default: working directory)")
 	if err := credFlags.Parse(os.Args[2:]); err != nil {
@@ -425,7 +426,8 @@ func handleCredentialsCommand() {
 		fmt.Println(string(jsonData))
 	} else {
 		fmt.Println("╔══════════════════════════════════════════════════════════════════╗")
-		fmt.Println("║                LUMINETIQ INITIAL CREDENTIALS                     ║")
+		fmt.Println("║              THE SEED - INITIAL CREDENTIALS                      ║")
+		fmt.Println("║              Mustard Seed Networks                               ║")
 		fmt.Println("╠══════════════════════════════════════════════════════════════════╣")
 		fmt.Printf("║  Username: %-53s ║\n", credOutput.Username)
 		fmt.Printf("║  Password: %-53s ║\n", credOutput.Password)
@@ -438,7 +440,7 @@ func handleCredentialsCommand() {
 
 // writeCredentialsFile writes credentials to a secure file with restrictive permissions.
 func writeCredentialsFile(path, username, password string) error {
-	content := fmt.Sprintf("# LuminetIQ Initial Credentials\n# Generated: %s\n# DELETE THIS FILE after retrieving credentials\n\nUsername: %s\nPassword: %s\n",
+	content := fmt.Sprintf("# The Seed Initial Credentials (Mustard Seed Networks)\n# Generated: %s\n# DELETE THIS FILE after retrieving credentials\n\nUsername: %s\nPassword: %s\n",
 		time.Now().Format(time.RFC3339), username, password)
 
 	// Write with restrictive permissions (owner read/write only)

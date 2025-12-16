@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 /**
  * iPerf E2E Tests
@@ -11,35 +11,35 @@ import { test, expect } from '@playwright/test';
  * - Settings persistence
  */
 
-test.describe('iPerf Integration', () => {
+test.describe("iPerf Integration", () => {
   test.beforeEach(async ({ page }) => {
     // Login first
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
     // Authenticate
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display Performance card on dashboard', async ({ page }) => {
+  test("should display Performance card on dashboard", async ({ page }) => {
     // Look for Performance card which contains iPerf functionality
     const perfCard = page
-      .getByRole('heading', { name: /performance|speed/i })
+      .getByRole("heading", { name: /performance|speed/i })
       .or(page.locator('[data-testid="performance-card"]'));
 
     await expect(perfCard).toBeVisible({ timeout: 5000 });
   });
 
-  test('should have iPerf settings in settings drawer', async ({ page }) => {
+  test("should have iPerf settings in settings drawer", async ({ page }) => {
     // Open settings
     const settingsButton = page
-      .getByRole('button', { name: /settings/i })
+      .getByRole("button", { name: /settings/i })
       .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
     await settingsButton.click();
 
@@ -51,9 +51,9 @@ test.describe('iPerf Integration', () => {
     await expect(iperfSection).toBeVisible();
   });
 
-  test('should allow configuring iPerf server address', async ({ page }) => {
+  test("should allow configuring iPerf server address", async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -70,7 +70,7 @@ test.describe('iPerf Integration', () => {
       const originalValue = await serverInput.inputValue();
 
       // Enter test server address
-      const testServer = '192.168.1.100:5201';
+      const testServer = "192.168.1.100:5201";
       await serverInput.fill(testServer);
       await page.waitForTimeout(1000);
 
@@ -79,14 +79,14 @@ test.describe('iPerf Integration', () => {
       expect(newValue).toBe(testServer);
 
       // Restore original value
-      await serverInput.fill(originalValue || '');
+      await serverInput.fill(originalValue || "");
       await page.waitForTimeout(500);
     }
   });
 
-  test('should validate iPerf server address format', async ({ page }) => {
+  test("should validate iPerf server address format", async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -100,7 +100,7 @@ test.describe('iPerf Integration', () => {
 
     if (hasInput) {
       // Try invalid address
-      await serverInput.fill('invalid-address');
+      await serverInput.fill("invalid-address");
       await page.waitForTimeout(500);
 
       // Check for validation error or correction
@@ -112,9 +112,9 @@ test.describe('iPerf Integration', () => {
     }
   });
 
-  test('should toggle iPerf test option in FAB settings', async ({ page }) => {
+  test("should toggle iPerf test option in FAB settings", async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -143,9 +143,9 @@ test.describe('iPerf Integration', () => {
     }
   });
 
-  test('should show iPerf test duration setting', async ({ page }) => {
+  test("should show iPerf test duration setting", async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -158,7 +158,7 @@ test.describe('iPerf Integration', () => {
     expect(inputCount).toBeGreaterThanOrEqual(0);
   });
 
-  test('should display iPerf results in Performance card', async ({ page }) => {
+  test("should display iPerf results in Performance card", async ({ page }) => {
     // Find Performance card
     const perfCard = page
       .locator('[data-testid="performance-card"]')
@@ -176,10 +176,10 @@ test.describe('iPerf Integration', () => {
     }
   });
 
-  test('should handle iPerf server connection error gracefully', async ({ page }) => {
+  test("should handle iPerf server connection error gracefully", async ({ page }) => {
     // This test verifies error handling when iPerf server is unavailable
     // Open settings and set an unreachable server
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -195,16 +195,19 @@ test.describe('iPerf Integration', () => {
       const originalValue = await serverInput.inputValue();
 
       // Set unreachable server
-      await serverInput.fill('10.255.255.1:5201');
+      await serverInput.fill("10.255.255.1:5201");
       await page.waitForTimeout(500);
 
       // Close settings
-      const closeButton = page.getByRole('button', { name: /close/i }).first();
+      const closeButton = page.getByRole("button", { name: /close/i }).first();
       await closeButton.click();
       await page.waitForTimeout(500);
 
       // Try to run test via FAB
-      const fab = page.locator('[data-testid="fab"]').or(page.locator('button:has(svg[class*="play"])')).first();
+      const fab = page
+        .locator('[data-testid="fab"]')
+        .or(page.locator('button:has(svg[class*="play"])'))
+        .first();
       const hasFab = await fab.isVisible().catch(() => false);
 
       if (hasFab) {
@@ -222,14 +225,14 @@ test.describe('iPerf Integration', () => {
       // Restore original server
       await settingsButton.click();
       await page.waitForTimeout(500);
-      await serverInput.fill(originalValue || '');
+      await serverInput.fill(originalValue || "");
       await page.waitForTimeout(500);
     }
   });
 
-  test('should persist iPerf settings after page reload', async ({ page }) => {
+  test("should persist iPerf settings after page reload", async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -243,17 +246,17 @@ test.describe('iPerf Integration', () => {
 
     if (hasInput) {
       // Set a test server
-      const testServer = '192.168.99.99:5201';
+      const testServer = "192.168.99.99:5201";
       await serverInput.fill(testServer);
       await page.waitForTimeout(1000);
 
       // Close settings
-      const closeButton = page.getByRole('button', { name: /close/i }).first();
+      const closeButton = page.getByRole("button", { name: /close/i }).first();
       await closeButton.click();
 
       // Reload page
       await page.reload();
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
 
       // Reopen settings
       await settingsButton.click();
@@ -268,13 +271,13 @@ test.describe('iPerf Integration', () => {
       const persistedValue = await persistedInput.inputValue();
 
       // Settings should persist (may be in localStorage or backend)
-      expect(typeof persistedValue).toBe('string');
+      expect(typeof persistedValue).toBe("string");
     }
   });
 
-  test('should show iPerf server suggestions if available', async ({ page }) => {
+  test("should show iPerf server suggestions if available", async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -290,24 +293,23 @@ test.describe('iPerf Integration', () => {
   });
 });
 
-test.describe('iPerf Test Execution', () => {
+test.describe("iPerf Test Execution", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('should show test progress during iPerf execution', async ({ page }) => {
+  test("should show test progress during iPerf execution", async ({ page }) => {
     // Find Performance card and look for test button
     const testButton = page
       .locator('button:has-text("LAN")')
-      .or(page.locator('button:has-text("iPerf")')
-      .or(page.locator('button:has-text("Test")')))
+      .or(page.locator('button:has-text("iPerf")').or(page.locator('button:has-text("Test")')))
       .first();
 
     const hasButton = await testButton.isVisible().catch(() => false);
@@ -329,7 +331,7 @@ test.describe('iPerf Test Execution', () => {
     }
   });
 
-  test('should display download and upload speeds', async ({ page }) => {
+  test("should display download and upload speeds", async ({ page }) => {
     // Look for speed metrics in Performance card
     const downloadText = page.getByText(/download|↓/i);
     const uploadText = page.getByText(/upload|↑/i);
@@ -343,7 +345,7 @@ test.describe('iPerf Test Execution', () => {
     expect(hasUpload).toBeDefined();
   });
 
-  test('should display latency and jitter metrics', async ({ page }) => {
+  test("should display latency and jitter metrics", async ({ page }) => {
     // Look for latency/jitter in Performance card
     const latencyText = page.getByText(/latency|ping|ms/i);
     const jitterText = page.getByText(/jitter/i);

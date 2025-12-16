@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 /**
  * Network Discovery E2E Tests
@@ -11,23 +11,23 @@ import { test, expect } from '@playwright/test';
  * - Filtering and sorting
  */
 
-test.describe('Network Discovery', () => {
+test.describe("Network Discovery", () => {
   test.beforeEach(async ({ page }) => {
     // Login first
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
     // Authenticate
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display Network Discovery card', async ({ page }) => {
+  test("should display Network Discovery card", async ({ page }) => {
     const discoveryCard = page
       .locator('h3:has-text("Discovery"), h4:has-text("Discovery")')
       .or(page.locator('[data-testid="network-discovery-card"]'))
@@ -35,10 +35,10 @@ test.describe('Network Discovery', () => {
     await expect(discoveryCard).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show discovered devices count', async ({ page }) => {
+  test("should show discovered devices count", async ({ page }) => {
     // Look for device count indicator
     const deviceCount = page
-      .locator('text=/\\d+\\s*(devices?|hosts?)/i')
+      .locator("text=/\\d+\\s*(devices?|hosts?)/i")
       .or(page.locator('[data-testid="device-count"]'))
       .first();
 
@@ -46,19 +46,19 @@ test.describe('Network Discovery', () => {
     await expect(deviceCount).toBeVisible({ timeout: 10000 });
   });
 
-  test('should have scan button available', async ({ page }) => {
+  test("should have scan button available", async ({ page }) => {
     const scanButton = page
-      .getByRole('button', { name: /scan|discover|refresh/i })
+      .getByRole("button", { name: /scan|discover|refresh/i })
       .or(page.locator('button:has(svg[class*="refresh"], svg[class*="scan"])'))
       .first();
 
     await expect(scanButton).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show discovery settings in drawer', async ({ page }) => {
+  test("should show discovery settings in drawer", async ({ page }) => {
     // Open settings drawer
     const settingsButton = page
-      .getByRole('button', { name: /settings/i })
+      .getByRole("button", { name: /settings/i })
       .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
     await settingsButton.click();
 
@@ -66,7 +66,7 @@ test.describe('Network Discovery', () => {
     await expect(page.getByText(/discovery/i)).toBeVisible({ timeout: 5000 });
   });
 
-  test('should display device list when devices exist', async ({ page }) => {
+  test("should display device list when devices exist", async ({ page }) => {
     // Wait for any device list to appear (table or list)
     const deviceList = page
       .locator('table, [role="table"], [data-testid="device-list"]')
@@ -78,7 +78,10 @@ test.describe('Network Discovery', () => {
 
     // Check if there's either a device list or a "no devices" message
     const hasDevices = await deviceList.isVisible().catch(() => false);
-    const hasNoDevicesMsg = await page.getByText(/no devices|no hosts|empty/i).isVisible().catch(() => false);
+    const hasNoDevicesMsg = await page
+      .getByText(/no devices|no hosts|empty/i)
+      .isVisible()
+      .catch(() => false);
 
     expect(hasDevices || hasNoDevicesMsg).toBeTruthy();
   });

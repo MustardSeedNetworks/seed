@@ -173,23 +173,19 @@ describe("App", () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText("LuminetIQ")).toBeInTheDocument();
+        expect(screen.getByText("The Seed")).toBeInTheDocument();
       });
-      expect(screen.getByText("Illuminate Your Network")).toBeInTheDocument();
+      expect(screen.getByText("Network Diagnostics by Mustard Seed Networks")).toBeInTheDocument();
       expect(screen.getByPlaceholderText("admin")).toBeInTheDocument();
       expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /login/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
     });
 
     it("shows default credentials hint", async () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Default: admin \/ luminetiq/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Default: admin \/ seed/i)).toBeInTheDocument();
       });
     });
 
@@ -198,8 +194,7 @@ describe("App", () => {
         if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
-            json: () =>
-              Promise.resolve({ needsSetup: false, username: "admin" }),
+            json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
         if (url.includes("/api/status")) {
@@ -247,7 +242,7 @@ describe("App", () => {
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
           expect.stringContaining("/api/auth/login"),
-          expect.any(Object),
+          expect.any(Object)
         );
       });
     });
@@ -257,8 +252,7 @@ describe("App", () => {
         if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
-            json: () =>
-              Promise.resolve({ needsSetup: false, username: "admin" }),
+            json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
         if (url.includes("/api/status")) {
@@ -309,8 +303,7 @@ describe("App", () => {
         if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
-            json: () =>
-              Promise.resolve({ needsSetup: false, username: "admin" }),
+            json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
         if (url.includes("/api/status")) {
@@ -348,9 +341,7 @@ describe("App", () => {
       fireEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByRole("button", { name: /logging in/i }),
-        ).toBeDisabled();
+        expect(screen.getByRole("button", { name: /logging in/i })).toBeDisabled();
       });
 
       // Cleanup - resolve the pending promise
@@ -367,8 +358,7 @@ describe("App", () => {
         if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
-            json: () =>
-              Promise.resolve({ needsSetup: false, username: "admin" }),
+            json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
         if (url.includes("/api/status")) {
@@ -395,7 +385,7 @@ describe("App", () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText("LuminetIQ")).toBeInTheDocument();
+        expect(screen.getByText("The Seed")).toBeInTheDocument();
       });
 
       // Should show logout button(s) - desktop and mobile versions may both render

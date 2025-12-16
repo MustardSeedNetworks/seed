@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 /**
  * Gateway E2E Tests
@@ -12,27 +12,27 @@ import { test, expect } from '@playwright/test';
  * - Historical ping data
  */
 
-test.describe('Gateway', () => {
+test.describe("Gateway", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display Gateway card', async ({ page }) => {
+  test("should display Gateway card", async ({ page }) => {
     const gatewayCard = page
-      .getByRole('heading', { name: /gateway/i })
+      .getByRole("heading", { name: /gateway/i })
       .or(page.locator('[data-testid="gateway-card"]'));
 
     await expect(gatewayCard).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show gateway IP address', async ({ page }) => {
+  test("should show gateway IP address", async ({ page }) => {
     // Look for IP address format
     const ipAddress = page.getByText(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/);
 
@@ -40,7 +40,7 @@ test.describe('Gateway', () => {
     expect(hasIP).toBeTruthy();
   });
 
-  test('should show ping latency in milliseconds', async ({ page }) => {
+  test("should show ping latency in milliseconds", async ({ page }) => {
     await page.waitForTimeout(2000);
     const latencyText = page.getByText(/\d+(\.\d+)?\s*ms/i);
 
@@ -48,7 +48,7 @@ test.describe('Gateway', () => {
     await expect(latencyText.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show reachability status', async ({ page }) => {
+  test("should show reachability status", async ({ page }) => {
     await page.waitForTimeout(2000);
     const reachableText = page.getByText(/reachable|unreachable|connected/i);
 
@@ -56,7 +56,7 @@ test.describe('Gateway', () => {
     await expect(reachableText.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show packet loss percentage', async ({ page }) => {
+  test("should show packet loss percentage", async ({ page }) => {
     await page.waitForTimeout(2000);
     const lossText = page.getByText(/loss|packet/i);
 
@@ -69,7 +69,7 @@ test.describe('Gateway', () => {
     }
   });
 
-  test('should show min/avg/max latency stats', async ({ page }) => {
+  test("should show min/avg/max latency stats", async ({ page }) => {
     await page.waitForTimeout(2000);
     const avgText = page.getByText(/avg|average/i);
 
@@ -77,18 +77,24 @@ test.describe('Gateway', () => {
     await expect(avgText.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show IPv6 gateway if available', async ({ page }) => {
+  test("should show IPv6 gateway if available", async ({ page }) => {
     await page.waitForTimeout(2000);
     const ipv6Text = page.getByText(/ipv6/i);
     const ipv4Text = page.getByText(/ipv4|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/i);
 
     // Either IPv4 or IPv6 (or both) should be visible
-    const hasIPv6 = await ipv6Text.first().isVisible().catch(() => false);
-    const hasIPv4 = await ipv4Text.first().isVisible().catch(() => false);
+    const hasIPv6 = await ipv6Text
+      .first()
+      .isVisible()
+      .catch(() => false);
+    const hasIPv4 = await ipv4Text
+      .first()
+      .isVisible()
+      .catch(() => false);
     expect(hasIPv6 || hasIPv4).toBeTruthy();
   });
 
-  test('should update gateway status in real-time', async ({ page }) => {
+  test("should update gateway status in real-time", async ({ page }) => {
     // Get initial latency
     const latencyElement = page.locator(':text-matches("\\\\d+(\\\\.\\\\d+)?\\\\s*ms")').first();
     const hasElement = await latencyElement.isVisible().catch(() => false);
@@ -103,7 +109,7 @@ test.describe('Gateway', () => {
     }
   });
 
-  test('should show success indicator when gateway reachable', async ({ page }) => {
+  test("should show success indicator when gateway reachable", async ({ page }) => {
     await page.waitForTimeout(2000);
     const successIndicator = page
       .locator('[class*="success"]')
@@ -113,12 +119,18 @@ test.describe('Gateway', () => {
     const errorIndicator = page.getByText(/unreachable|error|failed/i);
 
     // Either success OR error state should be shown
-    const hasSuccess = await successIndicator.first().isVisible().catch(() => false);
-    const hasError = await errorIndicator.first().isVisible().catch(() => false);
+    const hasSuccess = await successIndicator
+      .first()
+      .isVisible()
+      .catch(() => false);
+    const hasError = await errorIndicator
+      .first()
+      .isVisible()
+      .catch(() => false);
     expect(hasSuccess || hasError).toBeTruthy();
   });
 
-  test('should show error indicator when gateway unreachable', async ({ page }) => {
+  test("should show error indicator when gateway unreachable", async ({ page }) => {
     await page.waitForTimeout(2000);
     // This test verifies error handling is present in the UI
     const statusIndicator = page
@@ -130,21 +142,21 @@ test.describe('Gateway', () => {
   });
 });
 
-test.describe('Gateway Help', () => {
+test.describe("Gateway Help", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('should show gateway help in help modal', async ({ page }) => {
+  test("should show gateway help in help modal", async ({ page }) => {
     // Open help
-    const helpButton = page.getByRole('button', { name: /help/i });
+    const helpButton = page.getByRole("button", { name: /help/i });
     await helpButton.click();
     await page.waitForTimeout(500);
 
@@ -153,7 +165,7 @@ test.describe('Gateway Help', () => {
     await expect(gatewayHelp.first()).toBeVisible();
 
     // Close help
-    const closeButton = page.getByRole('button', { name: /close/i }).first();
+    const closeButton = page.getByRole("button", { name: /close/i }).first();
     await closeButton.click();
   });
 });

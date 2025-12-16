@@ -1,7 +1,7 @@
 /**
  * Main Application Component
  *
- * The root component for the LuminetIQ/NetScope network monitoring application.
+ * The root component for The Seed network monitoring application by Mustard Seed Networks.
  *
  * Responsibilities:
  * - Authentication management and session handling
@@ -96,9 +96,7 @@ function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
-  const [suggestedPassword, setSuggestedPassword] = useState<
-    string | undefined
-  >(undefined);
+  const [suggestedPassword, setSuggestedPassword] = useState<string | undefined>(undefined);
 
   // Check if setup is needed on mount
   useEffect(() => {
@@ -138,8 +136,7 @@ function App() {
       score?: number;
     }>
   >([]);
-  const [networkDiscovery, setNetworkDiscovery] =
-    useState<NetworkDiscoveryData | null>(null);
+  const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
   const [appVersion, setAppVersion] = useState("dev");
 
   const handleMessage = useCallback((message: Message) => {
@@ -161,9 +158,7 @@ function App() {
       if (payload.cards) {
         setCards((prev) => ({
           ...prev,
-          ...Object.fromEntries(
-            Object.entries(payload.cards!).filter(([, v]) => v !== null),
-          ),
+          ...Object.fromEntries(Object.entries(payload.cards!).filter(([, v]) => v !== null)),
         }));
       }
     }
@@ -557,7 +552,7 @@ function App() {
               ...prev,
               status: { ...prev.status, scanning: true },
             }
-          : null,
+          : null
       );
 
       const response = await fetch(`${API_BASE}/api/devices/scan`, {
@@ -591,7 +586,7 @@ function App() {
               ...prev,
               status: { ...prev.status, scanning: false },
             }
-          : null,
+          : null
       );
     }
   }, [fetchNetworkDiscovery]);
@@ -636,7 +631,7 @@ function App() {
       fetchVLANData,
       fetchWiFiData,
       fetchCableData,
-    ],
+    ]
   );
 
   // Listen for FAB "run all tests" event with options
@@ -693,10 +688,8 @@ function App() {
 
       // Determine how many card-managed tests we need to wait for
       const cardTestsToWait: string[] = [];
-      if (runOpts.runPerformance && runOpts.runSpeedtest)
-        cardTestsToWait.push("speedtest");
-      if (runOpts.runPerformance && runOpts.runIperf)
-        cardTestsToWait.push("iperf");
+      if (runOpts.runPerformance && runOpts.runSpeedtest) cardTestsToWait.push("speedtest");
+      if (runOpts.runPerformance && runOpts.runIperf) cardTestsToWait.push("iperf");
       if (runOpts.runHealthChecks) cardTestsToWait.push("healthchecks");
 
       // If no card-managed tests, signal completion immediately
@@ -713,31 +706,20 @@ function App() {
           completed.add(testName);
           // Check if all expected tests are done
           if (completed.size === cardTestsToWait.length) {
-            window.removeEventListener(
-              "cardTestComplete",
-              handleCardComplete as EventListener,
-            );
+            window.removeEventListener("cardTestComplete", handleCardComplete as EventListener);
             window.dispatchEvent(new CustomEvent("testsComplete"));
           }
         }
       };
 
       // Listen for card test completions
-      window.addEventListener(
-        "cardTestComplete",
-        handleCardComplete as EventListener,
-      );
+      window.addEventListener("cardTestComplete", handleCardComplete as EventListener);
 
       // Failsafe timeout (90s) in case a card doesn't report completion
       setTimeout(() => {
-        window.removeEventListener(
-          "cardTestComplete",
-          handleCardComplete as EventListener,
-        );
+        window.removeEventListener("cardTestComplete", handleCardComplete as EventListener);
         if (completed.size < cardTestsToWait.length) {
-          console.warn(
-            "FAB timeout: Not all card tests completed, signaling done anyway",
-          );
+          console.warn("FAB timeout: Not all card tests completed, signaling done anyway");
           window.dispatchEvent(new CustomEvent("testsComplete"));
         }
       }, 90000);
@@ -873,9 +855,7 @@ function App() {
   }, [isAuthenticated, triggerDeviceScan, fabOptions.runNetworkDiscovery]);
 
   // Login form
-  const authError = sessionExpired
-    ? "Session expired. Please log in again."
-    : error;
+  const authError = sessionExpired ? "Session expired. Please log in again." : error;
 
   const handleLogin = useCallback(
     async (username: string, password: string) => {
@@ -885,7 +865,7 @@ function App() {
       }
       return success;
     },
-    [login],
+    [login]
   );
 
   // Show setup wizard if needed (before auth check)
@@ -909,13 +889,7 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <LoginForm
-        onLogin={handleLogin}
-        isLoading={isLoading}
-        error={authError}
-      />
-    );
+    return <LoginForm onLogin={handleLogin} isLoading={isLoading} error={authError} />;
   }
 
   return (
@@ -925,10 +899,8 @@ function App() {
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between gap-2">
           {/* Logo and title - hide title on very small screens */}
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xl font-bold text-brand-primary shrink-0">
-              ◉
-            </span>
-            <h1 className="heading-4 hidden xs:block sm:block">LuminetIQ</h1>
+            <span className="text-xl font-bold text-brand-primary shrink-0">◉</span>
+            <h1 className="heading-4 hidden xs:block sm:block">The Seed</h1>
             <div className="hidden sm:block">
               <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
             </div>
@@ -949,10 +921,7 @@ function App() {
             >
               {interfaces.length > 0 ? (
                 interfaces
-                  .filter(
-                    (iface) =>
-                      iface.type === "ethernet" || iface.type === "wifi",
-                  )
+                  .filter((iface) => iface.type === "ethernet" || iface.type === "wifi")
                   .sort((a, b) => (b.score || 0) - (a.score || 0)) // Sort by score
                   .map((iface) => (
                     <option
@@ -974,26 +943,14 @@ function App() {
             <button
               className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={toggleTheme}
-              aria-label={
-                isDark ? "Switch to light mode" : "Switch to dark mode"
-              }
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             >
               {isDark ? (
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  aria-hidden="true"
-                >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                 </svg>
               ) : (
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  aria-hidden="true"
-                >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path
                     fillRule="evenodd"
                     d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
@@ -1095,17 +1052,11 @@ function App() {
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <LinkCard data={cards.link} loading={loading} />
-              {cards.cable?.supported && (
-                <CableCard data={cards.cable} loading={loading} />
-              )}
+              {cards.cable?.supported && <CableCard data={cards.cable} loading={loading} />}
               {isWifi && cards.wifi?.ssid && (
                 <WiFiCard data={cards.wifi} loading={loading} visible={true} />
               )}
-              <SwitchCard
-                data={cards.switch}
-                vlanData={cards.vlan}
-                loading={loading}
-              />
+              <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />
             </div>
           </section>
 
@@ -1163,17 +1114,14 @@ function App() {
 
           {/* Footer notice */}
           <footer className="mt-8 rounded-md border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
-            <h2 className="heading-4 text-text-muted">
-              LuminetIQ {appVersion}
-            </h2>
+            <h2 className="heading-4 text-text-muted">The Seed {appVersion}</h2>
             <p className="mt-2 body-small text-text-muted">
               Tap the play button to run all tests.
               <span className="hidden sm:inline">
                 <br />
               </span>
               <span className="sm:hidden"> </span>
-              Use the Network Discovery card to scan for devices on your
-              network.
+              Use the Network Discovery card to scan for devices on your network.
             </p>
           </footer>
         </div>
@@ -1216,22 +1164,8 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto text-brand-primary">
             <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-              <circle
-                cx="24"
-                cy="24"
-                r="20"
-                stroke="currentColor"
-                strokeWidth="2"
-                opacity="0.3"
-              />
-              <circle
-                cx="24"
-                cy="24"
-                r="14"
-                stroke="currentColor"
-                strokeWidth="2"
-                opacity="0.5"
-              />
+              <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" opacity="0.3" />
+              <circle cx="24" cy="24" r="14" stroke="currentColor" strokeWidth="2" opacity="0.5" />
               <circle cx="24" cy="24" r="4" fill="currentColor" />
               <line
                 x1="24"
@@ -1315,8 +1249,8 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 className="heading-1 mt-3">LuminetIQ</h1>
-          <p className="body-small mt-1">Illuminate Your Network</p>
+          <h1 className="heading-1 mt-3">The Seed</h1>
+          <p className="body-small mt-1">Network Diagnostics by Mustard Seed Networks</p>
         </div>
 
         <form
@@ -1371,9 +1305,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             {isLoading ? "Logging in..." : "Login"}
           </button>
 
-          <p className="mt-4 caption text-text-muted text-center">
-            Default: admin / luminetiq
-          </p>
+          <p className="mt-4 caption text-text-muted text-center">Default: admin / seed</p>
         </form>
       </div>
     </div>
@@ -1408,19 +1340,11 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
   const config = statusConfig[status];
 
   return (
-    <div
-      className="flex items-center gap-2 ml-4"
-      role="status"
-      aria-live="polite"
-    >
-      <span
-        className={`inline-flex items-center gap-1.5 caption ${config.color}`}
-      >
+    <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
+      <span className={`inline-flex items-center gap-1.5 caption ${config.color}`}>
         <span
           className={`inline-flex items-center justify-center ${radius.full} ${config.color} ${
-            config.icon === "spinner"
-              ? "bg-status-info/10 p-1"
-              : "bg-current/10 p-1"
+            config.icon === "spinner" ? "bg-status-info/10 p-1" : "bg-current/10 p-1"
           }`}
           aria-label={`WebSocket status: ${config.label}`}
         >
@@ -1446,12 +1370,7 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
               />
             </svg>
           ) : (
-            <svg
-              className="w-3 h-3"
-              viewBox="0 0 8 8"
-              fill="currentColor"
-              aria-hidden="true"
-            >
+            <svg className="w-3 h-3" viewBox="0 0 8 8" fill="currentColor" aria-hidden="true">
               <circle cx="4" cy="4" r="4" />
             </svg>
           )}

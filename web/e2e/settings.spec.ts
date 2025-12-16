@@ -36,15 +36,11 @@ test.describe("Settings", () => {
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(
-        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'),
-      );
+      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
     await settingsButton.click();
 
     // Wait for drawer to open
-    await expect(
-      page.getByText(/thresholds|appearance|discovery/i),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
   });
 
   test("should display Appearance settings section", async ({ page }) => {
@@ -102,7 +98,7 @@ test.describe("Settings", () => {
   test("should have input fields for threshold values", async ({ page }) => {
     // Look for threshold input fields
     const thresholdInputs = page.locator(
-      'input[type="number"], input[type="range"], input[name*="threshold"]',
+      'input[type="number"], input[type="range"], input[name*="threshold"]'
     );
 
     const inputCount = await thresholdInputs.count();
@@ -137,9 +133,7 @@ test.describe("Settings", () => {
     });
   });
 
-  test("should persist settings after drawer close and reopen", async ({
-    page,
-  }) => {
+  test("should persist settings after drawer close and reopen", async ({ page }) => {
     // Find a theme toggle or setting to change
     const themeToggle = page
       .getByRole("button", { name: /dark|light/i })
@@ -161,9 +155,7 @@ test.describe("Settings", () => {
       await page.waitForTimeout(500);
 
       // Reopen drawer
-      const settingsButton = page
-        .getByRole("button", { name: /settings/i })
-        .first();
+      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
       await settingsButton.click();
       await page.waitForTimeout(500);
 
@@ -200,15 +192,11 @@ test.describe("Settings CRUD Operations", () => {
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(
-        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'),
-      );
+      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
     await settingsButton.click();
 
     // Wait for drawer to open
-    await expect(
-      page.getByText(/thresholds|appearance|discovery/i),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
   });
 
   test("should update threshold values and persist", async ({ page }) => {
@@ -236,7 +224,7 @@ test.describe("Settings CRUD Operations", () => {
 
     // Settings should be persisted to localStorage
     const localStorage = await page.evaluate(() => {
-      return window.localStorage.getItem("luminetiq-settings");
+      return window.localStorage.getItem("seed-settings");
     });
     expect(localStorage).toBeTruthy();
 
@@ -299,7 +287,7 @@ test.describe("Settings CRUD Operations", () => {
 
     // Settings should persist in localStorage
     const settings = await page.evaluate(() => {
-      const stored = window.localStorage.getItem("luminetiq-settings");
+      const stored = window.localStorage.getItem("seed-settings");
       return stored ? JSON.parse(stored) : null;
     });
     expect(settings).toBeTruthy();
@@ -309,9 +297,7 @@ test.describe("Settings CRUD Operations", () => {
     await page.waitForTimeout(500);
   });
 
-  test("should change performance settings and verify persistence", async ({
-    page,
-  }) => {
+  test("should change performance settings and verify persistence", async ({ page }) => {
     // Look for performance-related toggles (speedtest, iperf)
     const perfToggles = page.locator('input[type="checkbox"]');
     const toggleCount = await perfToggles.count();
@@ -326,9 +312,7 @@ test.describe("Settings CRUD Operations", () => {
       .locator('label:has-text("Speedtest"), label:has-text("Speed Test")')
       .locator('input[type="checkbox"]')
       .first();
-    const hasSpeedtestToggle = await speedtestToggle
-      .isVisible()
-      .catch(() => false);
+    const hasSpeedtestToggle = await speedtestToggle.isVisible().catch(() => false);
 
     if (hasSpeedtestToggle) {
       const wasChecked = await speedtestToggle.isChecked();
@@ -347,9 +331,7 @@ test.describe("Settings CRUD Operations", () => {
     }
   });
 
-  test("should validate and reject invalid threshold values", async ({
-    page,
-  }) => {
+  test("should validate and reject invalid threshold values", async ({ page }) => {
     const numberInputs = page.locator('input[type="number"]');
     const inputCount = await numberInputs.count();
 
@@ -380,13 +362,9 @@ test.describe("Settings CRUD Operations", () => {
     await page.waitForTimeout(500);
   });
 
-  test("should show auto-save indicator when settings change", async ({
-    page,
-  }) => {
+  test("should show auto-save indicator when settings change", async ({ page }) => {
     // Look for auto-save indicator
-    const autoSaveIndicator = page.locator(
-      'text=/saving|saved/i, [data-testid="auto-save"]',
-    );
+    const autoSaveIndicator = page.locator('text=/saving|saved/i, [data-testid="auto-save"]');
 
     // Make a change to trigger auto-save
     const checkboxes = page.locator('input[type="checkbox"]');
@@ -401,9 +379,7 @@ test.describe("Settings CRUD Operations", () => {
       await page.waitForTimeout(500);
 
       // Check if indicator was visible (it may be transient)
-      const indicatorVisible = await autoSaveIndicator
-        .isVisible()
-        .catch(() => false);
+      const indicatorVisible = await autoSaveIndicator.isVisible().catch(() => false);
 
       // Indicator may not always be visible depending on implementation
       expect(indicatorVisible).toBeDefined();
@@ -417,7 +393,7 @@ test.describe("Settings CRUD Operations", () => {
   test("should persist settings after page reload", async ({ page }) => {
     // Get current localStorage settings
     const beforeSettings = await page.evaluate(() => {
-      return window.localStorage.getItem("luminetiq-settings");
+      return window.localStorage.getItem("seed-settings");
     });
 
     // Make a change
@@ -433,7 +409,7 @@ test.describe("Settings CRUD Operations", () => {
 
       // Get settings after change
       const afterSettings = await page.evaluate(() => {
-        return window.localStorage.getItem("luminetiq-settings");
+        return window.localStorage.getItem("seed-settings");
       });
 
       // Settings should have changed
@@ -450,15 +426,13 @@ test.describe("Settings CRUD Operations", () => {
       // Open settings again
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(
-          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'),
-        );
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
       await settingsButton.click();
       await page.waitForTimeout(1000);
 
       // Get settings after reload
       const reloadedSettings = await page.evaluate(() => {
-        return window.localStorage.getItem("luminetiq-settings");
+        return window.localStorage.getItem("seed-settings");
       });
 
       // Settings should persist
@@ -475,9 +449,7 @@ test.describe("Settings CRUD Operations", () => {
     }
   });
 
-  test("should handle concurrent setting changes correctly", async ({
-    page,
-  }) => {
+  test("should handle concurrent setting changes correctly", async ({ page }) => {
     // Find multiple inputs
     const checkboxes = page.locator('input[type="checkbox"]');
     const checkboxCount = await checkboxes.count();
@@ -494,7 +466,7 @@ test.describe("Settings CRUD Operations", () => {
 
     // Both changes should be saved
     const settings = await page.evaluate(() => {
-      const stored = window.localStorage.getItem("luminetiq-settings");
+      const stored = window.localStorage.getItem("seed-settings");
       return stored ? JSON.parse(stored) : null;
     });
 
@@ -509,7 +481,7 @@ test.describe("Settings CRUD Operations", () => {
   test("should reset to defaults when available", async ({ page }) => {
     // Look for a reset or restore defaults button
     const resetButton = page.locator(
-      'button:has-text("Reset"), button:has-text("Default"), button:has-text("Restore")',
+      'button:has-text("Reset"), button:has-text("Default"), button:has-text("Restore")'
     );
 
     const hasResetButton = await resetButton.isVisible().catch(() => false);
@@ -528,7 +500,7 @@ test.describe("Settings CRUD Operations", () => {
 
       // Settings should be reset (verify via localStorage or UI state)
       const settings = await page.evaluate(() => {
-        return window.localStorage.getItem("luminetiq-settings");
+        return window.localStorage.getItem("seed-settings");
       });
 
       expect(settings).toBeTruthy();
@@ -555,7 +527,7 @@ test.describe("Settings CRUD Operations", () => {
 
         // Verify persisted
         const settings = await page.evaluate(() => {
-          const stored = window.localStorage.getItem("luminetiq-settings");
+          const stored = window.localStorage.getItem("seed-settings");
           return stored ? JSON.parse(stored) : null;
         });
 
@@ -603,9 +575,7 @@ test.describe("Settings CRUD Operations", () => {
     await page.waitForTimeout(500);
   });
 
-  test("should maintain settings state when drawer is closed", async ({
-    page,
-  }) => {
+  test("should maintain settings state when drawer is closed", async ({ page }) => {
     // Make a change
     const checkboxes = page.locator('input[type="checkbox"]');
     const hasCheckbox = (await checkboxes.count()) > 0;
@@ -632,9 +602,7 @@ test.describe("Settings CRUD Operations", () => {
     // Reopen drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(
-        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'),
-      );
+      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
     await settingsButton.click();
     await page.waitForTimeout(1000);
 

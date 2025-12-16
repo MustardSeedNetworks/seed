@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 /**
  * SNMP Settings E2E Tests
@@ -12,24 +12,24 @@ import { test, expect } from '@playwright/test';
  * - Validation and error handling
  */
 
-test.describe('SNMP Settings', () => {
+test.describe("SNMP Settings", () => {
   test.beforeEach(async ({ page }) => {
     // Login first
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
     // Authenticate
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
 
     // Open settings drawer
     const settingsButton = page
-      .getByRole('button', { name: /settings/i })
+      .getByRole("button", { name: /settings/i })
       .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
     await settingsButton.click();
 
@@ -37,30 +37,30 @@ test.describe('SNMP Settings', () => {
     await expect(page.getByText(/settings/i)).toBeVisible({ timeout: 5000 });
   });
 
-  test('should display SNMP settings section', async ({ page }) => {
+  test("should display SNMP settings section", async ({ page }) => {
     // Look for SNMP section in settings
     const snmpSection = page.getByText(/snmp/i).first();
     await expect(snmpSection).toBeVisible();
   });
 
-  test('should have SNMP version selector', async ({ page }) => {
+  test("should have SNMP version selector", async ({ page }) => {
     // Look for version selector
     const versionSelector = page
       .locator('select[name*="snmp" i]')
       .or(page.locator('select:near(:text("SNMP"))'))
-      .or(page.getByRole('combobox', { name: /version/i }))
+      .or(page.getByRole("combobox", { name: /version/i }))
       .first();
 
     const hasSelector = await versionSelector.isVisible().catch(() => false);
 
     if (hasSelector) {
       // Check for version options
-      const options = await versionSelector.locator('option').allTextContents();
+      const options = await versionSelector.locator("option").allTextContents();
       expect(options.length).toBeGreaterThan(0);
     }
   });
 
-  test('should allow configuring community string for SNMPv2c', async ({ page }) => {
+  test("should allow configuring community string for SNMPv2c", async ({ page }) => {
     // Look for community string input
     const communityInput = page
       .locator('input[name*="community" i]')
@@ -74,20 +74,20 @@ test.describe('SNMP Settings', () => {
       const originalValue = await communityInput.inputValue();
 
       // Enter test community string
-      await communityInput.fill('test-community');
+      await communityInput.fill("test-community");
       await page.waitForTimeout(500);
 
       // Verify value was set
       const newValue = await communityInput.inputValue();
-      expect(newValue).toBe('test-community');
+      expect(newValue).toBe("test-community");
 
       // Restore original
-      await communityInput.fill(originalValue || 'public');
+      await communityInput.fill(originalValue || "public");
       await page.waitForTimeout(500);
     }
   });
 
-  test('should show SNMPv3 credentials when v3 selected', async ({ page }) => {
+  test("should show SNMPv3 credentials when v3 selected", async ({ page }) => {
     // Find version selector
     const versionSelector = page
       .locator('select[name*="snmp" i]')
@@ -102,7 +102,9 @@ test.describe('SNMP Settings', () => {
       await page.waitForTimeout(500);
 
       // Look for v3-specific fields
-      const usernameField = page.locator('input[name*="username" i], input[placeholder*="username" i]');
+      const usernameField = page.locator(
+        'input[name*="username" i], input[placeholder*="username" i]'
+      );
       const authField = page.locator('input[name*="auth" i], select[name*="auth" i]');
       const privField = page.locator('input[name*="priv" i], select[name*="priv" i]');
 
@@ -115,7 +117,7 @@ test.describe('SNMP Settings', () => {
     }
   });
 
-  test('should allow configuring SNMP target address', async ({ page }) => {
+  test("should allow configuring SNMP target address", async ({ page }) => {
     // Look for target/host input
     const targetInput = page
       .locator('input[name*="target" i]')
@@ -127,15 +129,15 @@ test.describe('SNMP Settings', () => {
 
     if (hasInput) {
       // Enter test target
-      await targetInput.fill('192.168.1.1');
+      await targetInput.fill("192.168.1.1");
       await page.waitForTimeout(500);
 
       const value = await targetInput.inputValue();
-      expect(value).toBe('192.168.1.1');
+      expect(value).toBe("192.168.1.1");
     }
   });
 
-  test('should validate SNMP port number', async ({ page }) => {
+  test("should validate SNMP port number", async ({ page }) => {
     // Look for port input
     const portInput = page
       .locator('input[name*="port" i]')
@@ -148,7 +150,7 @@ test.describe('SNMP Settings', () => {
       const originalValue = await portInput.inputValue();
 
       // Try invalid port
-      await portInput.fill('999999');
+      await portInput.fill("999999");
       await page.waitForTimeout(500);
 
       // Should either show error or clamp to valid range
@@ -159,12 +161,12 @@ test.describe('SNMP Settings', () => {
       expect(portNum).toBeLessThanOrEqual(65535);
 
       // Restore original
-      await portInput.fill(originalValue || '161');
+      await portInput.fill(originalValue || "161");
       await page.waitForTimeout(500);
     }
   });
 
-  test('should persist SNMP settings', async ({ page }) => {
+  test("should persist SNMP settings", async ({ page }) => {
     // Find community input
     const communityInput = page
       .locator('input[name*="community" i]')
@@ -175,17 +177,17 @@ test.describe('SNMP Settings', () => {
 
     if (hasInput) {
       // Set unique value
-      const testValue = 'persist-test-' + Date.now();
+      const testValue = "persist-test-" + Date.now();
       await communityInput.fill(testValue);
       await page.waitForTimeout(1000);
 
       // Close settings
-      const closeButton = page.getByRole('button', { name: /close/i }).first();
+      const closeButton = page.getByRole("button", { name: /close/i }).first();
       await closeButton.click();
       await page.waitForTimeout(500);
 
       // Reopen settings
-      const settingsButton = page.getByRole('button', { name: /settings/i });
+      const settingsButton = page.getByRole("button", { name: /settings/i });
       await settingsButton.click();
       await page.waitForTimeout(500);
 
@@ -202,7 +204,7 @@ test.describe('SNMP Settings', () => {
     }
   });
 
-  test('should show SNMP toggle to enable/disable', async ({ page }) => {
+  test("should show SNMP toggle to enable/disable", async ({ page }) => {
     // Look for enable/disable toggle
     const enableToggle = page
       .locator('input[type="checkbox"]:near(:text("SNMP"))')
@@ -224,11 +226,9 @@ test.describe('SNMP Settings', () => {
     }
   });
 
-  test('should hide/show SNMP fields based on enable toggle', async ({ page }) => {
+  test("should hide/show SNMP fields based on enable toggle", async ({ page }) => {
     // Find enable toggle
-    const enableToggle = page
-      .locator('input[type="checkbox"]:near(:text("SNMP"))')
-      .first();
+    const enableToggle = page.locator('input[type="checkbox"]:near(:text("SNMP"))').first();
 
     const hasToggle = await enableToggle.isVisible().catch(() => false);
 
@@ -244,28 +244,28 @@ test.describe('SNMP Settings', () => {
       const fieldCount = await configFields.count();
 
       // Fields visibility may depend on toggle state
-      expect(typeof fieldCount).toBe('number');
+      expect(typeof fieldCount).toBe("number");
     }
   });
 });
 
-test.describe('SNMP Authentication', () => {
+test.describe("SNMP Authentication", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
 
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
   });
 
-  test('should have authentication protocol selector for SNMPv3', async ({ page }) => {
+  test("should have authentication protocol selector for SNMPv3", async ({ page }) => {
     // Select v3 first
     const versionSelector = page.locator('select:near(:text("SNMP"))').first();
     const hasSelector = await versionSelector.isVisible().catch(() => false);
@@ -279,14 +279,14 @@ test.describe('SNMP Authentication', () => {
         // Look for auth protocol selector
         const authProtocol = page
           .locator('select[name*="auth" i]')
-          .or(page.getByRole('combobox', { name: /auth/i }))
+          .or(page.getByRole("combobox", { name: /auth/i }))
           .first();
 
         const hasAuthProtocol = await authProtocol.isVisible().catch(() => false);
 
         // Should have auth protocol options (MD5, SHA, etc.)
         if (hasAuthProtocol) {
-          const options = await authProtocol.locator('option').allTextContents();
+          const options = await authProtocol.locator("option").allTextContents();
           expect(options.length).toBeGreaterThan(0);
         }
       } catch {
@@ -296,7 +296,7 @@ test.describe('SNMP Authentication', () => {
     }
   });
 
-  test('should have privacy protocol selector for SNMPv3', async ({ page }) => {
+  test("should have privacy protocol selector for SNMPv3", async ({ page }) => {
     // Select v3 first
     const versionSelector = page.locator('select:near(:text("SNMP"))').first();
     const hasSelector = await versionSelector.isVisible().catch(() => false);
@@ -309,14 +309,14 @@ test.describe('SNMP Authentication', () => {
         // Look for privacy protocol selector
         const privProtocol = page
           .locator('select[name*="priv" i]')
-          .or(page.getByRole('combobox', { name: /priv/i }))
+          .or(page.getByRole("combobox", { name: /priv/i }))
           .first();
 
         const hasPrivProtocol = await privProtocol.isVisible().catch(() => false);
 
         // Should have privacy protocol options (DES, AES, etc.)
         if (hasPrivProtocol) {
-          const options = await privProtocol.locator('option').allTextContents();
+          const options = await privProtocol.locator("option").allTextContents();
           expect(options.length).toBeGreaterThan(0);
         }
       } catch {
@@ -326,7 +326,7 @@ test.describe('SNMP Authentication', () => {
     }
   });
 
-  test('should mask password/passphrase fields', async ({ page }) => {
+  test("should mask password/passphrase fields", async ({ page }) => {
     // Look for password inputs
     const passwordInputs = page.locator('input[type="password"]');
 
@@ -335,29 +335,29 @@ test.describe('SNMP Authentication', () => {
     // Password fields should be masked
     for (let i = 0; i < count; i++) {
       const input = passwordInputs.nth(i);
-      const type = await input.getAttribute('type');
-      expect(type).toBe('password');
+      const type = await input.getAttribute("type");
+      expect(type).toBe("password");
     }
   });
 });
 
-test.describe('SNMP Test Connection', () => {
+test.describe("SNMP Test Connection", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('luminetiq');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await page.getByLabel(/username/i).fill("admin");
+    await page.getByLabel(/password/i).fill("seed");
+    await page.getByRole("button", { name: /sign in|login/i }).click();
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
 
-    const settingsButton = page.getByRole('button', { name: /settings/i });
+    const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
   });
 
-  test('should have test connection button', async ({ page }) => {
+  test("should have test connection button", async ({ page }) => {
     // Look for test connection button in SNMP section
     const testButton = page
       .locator('button:has-text("Test")')
@@ -369,7 +369,7 @@ test.describe('SNMP Test Connection', () => {
     expect(hasButton).toBeDefined();
   });
 
-  test('should show connection status after test', async ({ page }) => {
+  test("should show connection status after test", async ({ page }) => {
     // Find and click test button
     const testButton = page
       .locator('button:has-text("Test")')
@@ -383,16 +383,14 @@ test.describe('SNMP Test Connection', () => {
       await page.waitForTimeout(3000);
 
       // Look for status message
-      const statusMessage = page
-        .getByText(/success|failed|error|connected|timeout/i)
-        .first();
+      const statusMessage = page.getByText(/success|failed|error|connected|timeout/i).first();
 
       const hasStatus = await statusMessage.isVisible().catch(() => false);
       expect(hasStatus).toBeDefined();
     }
   });
 
-  test('should handle connection timeout gracefully', async ({ page }) => {
+  test("should handle connection timeout gracefully", async ({ page }) => {
     // Set unreachable target
     const targetInput = page
       .locator('input[name*="target" i]')
@@ -402,7 +400,7 @@ test.describe('SNMP Test Connection', () => {
     const hasInput = await targetInput.isVisible().catch(() => false);
 
     if (hasInput) {
-      await targetInput.fill('10.255.255.1');
+      await targetInput.fill("10.255.255.1");
       await page.waitForTimeout(500);
 
       // Try to test connection

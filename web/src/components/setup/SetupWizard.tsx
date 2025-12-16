@@ -1,7 +1,7 @@
 /**
  * Initial Setup Wizard Component
  *
- * Guides users through the first-time setup process for the LuminetIQ application.
+ * Guides users through the first-time setup process for The Seed application.
  *
  * Features:
  * - Password setup with validation (minimum 8 characters)
@@ -25,13 +25,7 @@
 
 import { useState, useEffect } from "react";
 import { radius } from "../../styles/theme";
-import {
-  buttonClass,
-  inputClass,
-  cardClass,
-  cn,
-  icon as iconTokens,
-} from "../../styles/theme";
+import { buttonClass, inputClass, cardClass, cn, icon as iconTokens } from "../../styles/theme";
 
 // API base URL for setup endpoints
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -63,15 +57,9 @@ interface SetupStatusResponse {
  * Modal-like component that requires user to set admin password before
  * accessing the main application.
  */
-export function SetupWizard({
-  onComplete,
-  onLogin,
-  suggestedPassword,
-}: SetupWizardProps) {
+export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWizardProps) {
   // Default to custom password entry - more secure UX
-  const [passwordMode, setPasswordMode] = useState<"generated" | "custom">(
-    "custom",
-  );
+  const [passwordMode, setPasswordMode] = useState<"generated" | "custom">("custom");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -158,22 +146,8 @@ export function SetupWizard({
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto text-brand-primary">
             <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-              <circle
-                cx="24"
-                cy="24"
-                r="20"
-                stroke="currentColor"
-                strokeWidth="2"
-                opacity="0.3"
-              />
-              <circle
-                cx="24"
-                cy="24"
-                r="14"
-                stroke="currentColor"
-                strokeWidth="2"
-                opacity="0.5"
-              />
+              <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" opacity="0.3" />
+              <circle cx="24" cy="24" r="14" stroke="currentColor" strokeWidth="2" opacity="0.5" />
               <circle cx="24" cy="24" r="4" fill="currentColor" />
               <line
                 x1="24"
@@ -217,10 +191,8 @@ export function SetupWizard({
               <circle cx="40" cy="24" r="3" fill="currentColor" />
             </svg>
           </div>
-          <h1 className="heading-2 mt-3">Welcome to LuminetIQ</h1>
-          <p className="body-small mt-1">
-            Set up your admin password to get started
-          </p>
+          <h1 className="heading-2 mt-3">Welcome to The Seed</h1>
+          <p className="body-small mt-1">Set up your admin password to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className={cardClass("default", "lg")}>
@@ -252,9 +224,7 @@ export function SetupWizard({
                 <span className="body-small font-medium text-text-primary">
                   Create my own password
                 </span>
-                <p className="caption text-text-muted mt-0.5">
-                  Choose a password you'll remember
-                </p>
+                <p className="caption text-text-muted mt-0.5">Choose a password you'll remember</p>
               </div>
             </label>
 
@@ -286,9 +256,7 @@ export function SetupWizard({
                         </code>
                         <button
                           type="button"
-                          onClick={() =>
-                            navigator.clipboard.writeText(suggestedPassword)
-                          }
+                          onClick={() => navigator.clipboard.writeText(suggestedPassword)}
                           className={`px-2 py-1 caption text-text-muted hover:text-text-primary border border-surface-border ${radius.md} hover:bg-surface-base transition-colors shrink-0`}
                         >
                           Copy
@@ -366,9 +334,7 @@ export function SetupWizard({
                     )}
                   </button>
                 </div>
-                <p className="caption text-text-muted mt-1">
-                  Minimum 8 characters
-                </p>
+                <p className="caption text-text-muted mt-1">Minimum 8 characters</p>
               </div>
 
               <div className="mb-6">
@@ -414,6 +380,9 @@ export function SetupWizard({
   );
 }
 
+/**
+ *
+ */
 export async function checkSetupStatus(): Promise<SetupStatusResponse> {
   try {
     const response = await fetch(`${API_BASE}/api/setup/status`);

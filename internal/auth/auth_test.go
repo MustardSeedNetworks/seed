@@ -1036,10 +1036,10 @@ func TestTokenDurationConstants(t *testing.T) {
 }
 
 func TestCookieNameConstants(t *testing.T) {
-	if CookieNameAccess != "luminetiq_access" {
-		t.Errorf("CookieNameAccess should be 'luminetiq_access', got %q", CookieNameAccess)
+	if CookieNameAccess != "seed_access" {
+		t.Errorf("CookieNameAccess should be 'seed_access', got %q", CookieNameAccess)
 	}
-	if CookieNameRefresh != "luminetiq_refresh" {
-		t.Errorf("CookieNameRefresh should be 'luminetiq_refresh', got %q", CookieNameRefresh)
+	if CookieNameRefresh != "seed_refresh" {
+		t.Errorf("CookieNameRefresh should be 'seed_refresh', got %q", CookieNameRefresh)
 	}
 }
