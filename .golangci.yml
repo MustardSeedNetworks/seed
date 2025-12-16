@@ -63,8 +63,7 @@ linters:
       under: 20
     predeclared:
       # Check for shadowing predeclared identifiers like 'error', 'string', 'len'
-      ignore: ""
-      q: false
+      ignore: []
     revive:
       rules:
         - name: blank-imports

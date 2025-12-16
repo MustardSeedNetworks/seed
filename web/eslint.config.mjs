@@ -47,6 +47,7 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import jsdoc from "eslint-plugin-jsdoc";
+import security from "eslint-plugin-security";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config({ ignores: ["dist", "node_modules", "coverage", "storybook-static", "playwright-report"] }, {
@@ -66,6 +67,7 @@ export default tseslint.config({ ignores: ["dist", "node_modules", "coverage", "
     "react-hooks": reactHooks,
     "react-refresh": reactRefresh,
     jsdoc: jsdoc,
+    security: security,
   },
   rules: {
     ...reactHooks.configs.recommended.rules,
@@ -146,6 +148,15 @@ export default tseslint.config({ ignores: ["dist", "node_modules", "coverage", "
     ],
     "jsdoc/check-alignment": "warn",
     "jsdoc/check-indentation": "warn",
+    // Security rules - prevent common vulnerabilities
+    "security/detect-object-injection": "warn",       // Dynamic property access
+    "security/detect-non-literal-regexp": "warn",     // Dynamic regex construction
+    "security/detect-unsafe-regex": "warn",           // ReDoS vulnerable patterns
+    "security/detect-buffer-noassert": "error",       // Buffer without bounds check
+    "security/detect-eval-with-expression": "error",  // eval() with variables
+    "security/detect-no-csrf-before-method-override": "error",
+    "security/detect-possible-timing-attacks": "warn", // Timing side channels
+    "security/detect-child-process": "warn",          // Child process execution
     // Enforce design system colors - prevent hardcoded grayscale/black/white in className
     // Note: Colored variants (blue, green, red, etc.) are allowed when used semantically
     // (e.g., discovery method badges, category icons) but should use dark: variants
