@@ -9,10 +9,20 @@
 
 ## Installation Methods
 
-### Method 1: Download Binary (Recommended)
+### Method 1: Homebrew (Recommended)
 
-1. **Download** the latest release for macOS from
-   [Releases](https://github.com/krisarmstrong/seed/releases/latest)
+**Coming Soon:** The Seed will be available via Homebrew tap.
+
+```bash
+# Not yet available - planned for launch
+brew install mustardseednetworks/tap/seed
+```
+
+### Method 2: Download Binary
+
+1. **Download** the latest release for macOS:
+   - [Download for Apple Silicon (M1/M2/M3)](https://github.com/krisarmstrong/seed/releases/latest)
+   - [Download for Intel](https://github.com/krisarmstrong/seed/releases/latest)
 
 2. **Extract** the archive:
 
@@ -26,18 +36,17 @@
 
    ```bash
    sudo mv seed /usr/local/bin/
-   sudo chmod +x /usr/local/bin/seed
    ```
 
 4. **Verify** installation:
+
    ```bash
    seed --version
    ```
 
-### Method 2: Build from Source
+### Method 3: Build from Source
 
-See the main [README](https://github.com/krisarmstrong/seed/blob/main/README.md) for build
-instructions.
+See [Building from Source](Building-from-Source) guide.
 
 ## First Run
 
@@ -48,23 +57,30 @@ instructions.
    ```
 
 2. **macOS Permission Prompts:**
+   - You'll see "seed wants to access files" - Click **OK**
    - Network packet capture requires admin privileges
-   - You may be prompted for your password
 
 3. **Setup Wizard** will guide you through:
    - Network interface selection
-   - Admin account creation
+   - Admin password (for first-time user creation)
    - Default configuration
 
 4. **Open Web UI:**
-   - Browser should open automatically to http://localhost:8080
-   - If not, manually navigate to http://localhost:8080
+   - Browser should open automatically to `http://localhost:8080`
+   - If not, manually navigate to `http://localhost:8080`
 
 ## Network Permissions
 
 The Seed requires elevated privileges for packet capture.
 
-**Run with sudo:**
+**macOS Ventura 13+ (Recommended):**
+
+```bash
+# Grant network access without full sudo
+sudo chmod +x /usr/local/bin/seed
+```
+
+**Alternative:** Run with sudo:
 
 ```bash
 sudo seed
@@ -85,20 +101,22 @@ rm -rf ~/.config/seed
 
 ## Next Steps
 
-- [Quick Start Guide](Quick-Start-Guide.md)
-- [Network Discovery](Network-Discovery.md)
-- [Hardware Compatibility](Home.md)
+- [First-Time Setup](First-Time-Setup)
+- [Quick Start Guide](Quick-Start-Guide)
+- [Configuration](Configuration)
 
 ## Troubleshooting
 
 **Issue:** "seed: command not found"
 
-- **Solution:** Ensure `/usr/local/bin` is in your PATH
+- **Solution:** Add `/usr/local/bin` to your PATH or move `seed` to `/usr/bin`
 
 **Issue:** "Operation not permitted" when capturing packets
 
-- **Solution:** Run with `sudo seed`
+- **Solution:** Run with `sudo` or grant network access permissions
 
 **Issue:** Web UI doesn't load
 
-- **Solution:** Check if port 8080 is in use: `lsof -i :8080`
+- **Solution:** Check if port 8080 is already in use: `lsof -i :8080`
+
+[More Troubleshooting](Troubleshooting)
