@@ -1,3 +1,6 @@
+<!-- markdownlint-disable MD029 -->
+<!-- MD029 disabled: This file contains wiki page templates with intentional list numbering -->
+
 # GitHub Wiki Content Guide for The Seed
 
 **Purpose:** This document contains the complete content structure and pages for the GitHub Wiki at
@@ -9,7 +12,7 @@ https://github.com/krisarmstrong/seed/wiki
 
 ## Wiki Structure
 
-```
+```text
 Home
 ├── Getting Started
 │   ├── Installation (macOS)
@@ -152,6 +155,7 @@ brew install mustardseednetworks/tap/seed
    ```
 
 4. **Verify** installation:
+
    ```bash
    seed --version
    ```
@@ -256,13 +260,13 @@ rm -rf ~/.config/seed
 
 ## Supported Distributions
 
-| Distribution | Version | Status |
-|--------------|---------|--------|
-| Ubuntu | 22.04 LTS, 24.04 LTS | ✅ Recommended |
-| Debian | 11, 12 | ✅ Supported |
-| RHEL / AlmaLinux | 8, 9 | ✅ Supported |
-| Fedora | 38, 39 | ✅ Supported |
-| Arch Linux | Latest | ⚠️ Community supported |
+| Distribution     | Version              | Status                |
+| ---------------- | -------------------- | --------------------- |
+| Ubuntu           | 22.04 LTS, 24.04 LTS | ✅ Recommended         |
+| Debian           | 11, 12               | ✅ Supported           |
+| RHEL / AlmaLinux | 8, 9                 | ✅ Supported           |
+| Fedora           | 38, 39               | ✅ Supported           |
+| Arch Linux       | Latest               | ⚠️ Community supported |
 
 ## Installation Methods
 
@@ -274,13 +278,13 @@ rm -rf ~/.config/seed
    ```bash
    sudo apt update
    sudo apt install libpcap0.8
-````
+   ```
 
-**RHEL/AlmaLinux/Fedora:**
+   **RHEL/AlmaLinux/Fedora:**
 
-```bash
-sudo dnf install libpcap
-```
+   ```bash
+   sudo dnf install libpcap
+   ```
 
 2. **Download** the latest release:
 
@@ -310,6 +314,7 @@ sudo dnf install libpcap
    ```
 
 6. **Verify** installation:
+
    ```bash
    seed --version
    ```
@@ -378,6 +383,7 @@ See [Building from Source](Building-from-Source) guide.
    ```
 
 7. **View logs:**
+
    ```bash
    sudo journalctl -u seed -f
    ```
@@ -399,7 +405,7 @@ sudo firewall-cmd --permanent --add-port=8080/tcp
 sudo firewall-cmd --reload
 ```
 
-## Uninstallation
+## Uninstallation (Linux)
 
 ```bash
 # Stop service
@@ -418,13 +424,13 @@ sudo rm -rf /etc/seed
 sudo rm -rf ~/.config/seed
 ```
 
-## Next Steps
+## Next Steps (Linux)
 
 - [First-Time Setup](First-Time-Setup)
 - [Quick Start Guide](Quick-Start-Guide)
 - [Running as a Service (systemd)](https://github.com/krisarmstrong/seed/tree/main/deploy/systemd)
 
-## Troubleshooting
+## Troubleshooting (Linux Installation)
 
 **Issue:** "Operation not permitted" when running
 
@@ -450,7 +456,7 @@ sudo rm -rf ~/.config/seed
 
 **Content:**
 
-```markdown
+````markdown
 # Quick Start Guide
 
 Get from zero to your first network scan in **5 minutes**.
@@ -458,6 +464,7 @@ Get from zero to your first network scan in **5 minutes**.
 ## Step 1: Install The Seed (5 minutes)
 
 Choose your platform:
+
 - [macOS Installation](Installation-macOS)
 - [Linux Installation](Installation-Linux)
 - [Docker Installation](Installation-Docker)
@@ -465,8 +472,10 @@ Choose your platform:
 ## Step 2: First-Time Setup (2 minutes)
 
 1. **Launch The Seed:**
+
    ```bash
    seed
+   ```
 ````
 
 2. **Setup Wizard:**
@@ -476,7 +485,7 @@ Choose your platform:
 
 3. **Create Admin Account:**
 
-   ```
+   ```text
    Username: admin
    Password: ******** (choose strong password)
    ```
@@ -535,7 +544,7 @@ Choose your platform:
 3. Click "Generate Report"
 4. Download PDF
 
-## Next Steps
+## Next Steps (Quick Start)
 
 **Learn More:**
 
@@ -707,13 +716,13 @@ If you have managed switches with SNMP configured:
 
 **Single subnet:**
 
-```
+```text
 192.168.1.0/24
 ```
 
 **Multiple subnets:**
 
-```
+```text
 192.168.1.0/24,10.0.0.0/24,172.16.0.0/16
 ```
 
@@ -766,7 +775,7 @@ Save common configurations as profiles:
 - Use ARP-only for local subnet (fastest)
 - Schedule scans during off-hours (less network congestion)
 
-## Troubleshooting
+## Troubleshooting (Network Discovery)
 
 **Issue:** No devices found
 
@@ -980,7 +989,7 @@ comply, not a complete solution.
 
 ---
 
-## Troubleshooting
+## Troubleshooting (FAQ)
 
 ### The Seed isn't finding all my devices. Why?
 
@@ -1027,7 +1036,7 @@ comply, not a complete solution.
 
 4. **Wrong URL?**
    - Local: http://localhost:8080
-   - Remote: http://<server-ip>:8080
+   - Remote: http://`<server-ip>`:8080
 
 ### Speed test fails / shows 0 Mbps. Why?
 
@@ -1044,21 +1053,21 @@ comply, not a complete solution.
 
 ### How do I reset the admin password?
 
-**Option 1: Reset via CLI (if you have shell access)**
+#### Option 1: Reset via CLI (if you have shell access)
 
 ```bash
 seed reset-password admin
 # Enter new password when prompted
 ```
 
-**Option 2: Reset via config file**
+#### Option 2: Reset via config file
 
 1. Stop The Seed: `sudo systemctl stop seed`
 2. Delete user database: `rm ~/.config/seed/users.db`
 3. Start The Seed: `sudo systemctl start seed`
 4. Run setup wizard again (creates new admin user)
 
-**Option 3: Reset all data (nuclear option)**
+#### Option 3: Reset all data (nuclear option)
 
 ```bash
 sudo systemctl stop seed
@@ -1340,7 +1349,7 @@ Create a page named `_Sidebar.md` with navigation links:
 
 ---
 
-## Next Steps
+## Next Steps (Wiki Population)
 
 1. **Create wiki pages** using content above
 2. **Add screenshots** (wiki supports image uploads)
