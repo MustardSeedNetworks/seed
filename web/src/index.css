@@ -331,6 +331,9 @@ body {
   .mb-content {
     @apply mb-4; /* 16px - after content blocks */
   }
+  .mb-tight {
+    @apply mb-1; /* 4px - very tight, for labels */
+  }
 
   /* Top margins (for content spacing) */
   .mt-section {
@@ -344,6 +347,9 @@ body {
   }
   .mt-inline {
     @apply mt-2; /* 8px - inline content */
+  }
+  .mt-tight {
+    @apply mt-1; /* 4px - very tight, for form fields */
   }
 
   /* Top/bottom padding for dividers/sections */

@@ -90,12 +90,14 @@ export const spacing = {
       heading: "mb-heading", // 12px - after headings
       content: "mb-content", // 16px - after content blocks
       inline: "mb-2", // 8px - inline content (small bottom margins)
+      tight: "mb-tight", // 4px - very tight, for labels
     },
     top: {
       section: "mt-section", // 32px - before major sections
       content: "mt-content", // 16px - content separation
       heading: "mt-heading", // 12px - before headings/after inline
       inline: "mt-inline", // 8px - inline content
+      tight: "mt-tight", // 4px - very tight, for form fields
     },
   },
 
