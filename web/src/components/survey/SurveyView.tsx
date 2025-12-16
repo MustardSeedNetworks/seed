@@ -292,7 +292,8 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
           <div>
             <h1 className="heading-1">{survey.name}</h1>
             <p className={`body-small ${spacing.margin.top.tight}`}>
-              {survey.surveyType.charAt(0).toUpperCase() + survey.surveyType.slice(1)}{" "}
+              {(survey.surveyType ?? "wifi").charAt(0).toUpperCase() +
+                (survey.surveyType ?? "wifi").slice(1)}{" "}
               {t("status.survey")} • {survey.samples.length} {t("status.samples")} • {survey.status}
             </p>
           </div>

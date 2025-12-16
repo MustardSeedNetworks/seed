@@ -37,10 +37,13 @@ type CookieConfig struct {
 }
 
 // DefaultCookieConfig returns secure defaults.
+// Note: SameSite=Lax is used instead of Strict to allow cookies when accessing
+// the server via IP address. Strict mode blocks cookies on same-origin requests
+// when the URL doesn't match the initial navigation domain (e.g., IP vs hostname).
 func DefaultCookieConfig() CookieConfig {
 	return CookieConfig{
 		Secure:   true, // HTTPS only
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 		Domain:   "", // Current domain
 		Path:     "/",
 	}

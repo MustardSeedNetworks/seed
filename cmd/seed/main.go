@@ -24,9 +24,6 @@ import (
 
 var version = "dev"
 
-// credentialsFileMode is the file permission for credential files (owner read/write only).
-const credentialsFileMode = 0o600
-
 // main starts The Seed network discovery and monitoring application.
 func main() {
 	// Handle subcommands before flag parsing
@@ -336,7 +333,7 @@ func printUsage() {
 
 Usage:
   seed [flags]              Start the server
-  seed credentials          Generate and display initial admin credentials
+  seed credentials          Check setup status
   seed help                 Show this help message
 
 Flags:
@@ -344,27 +341,26 @@ Flags:
   -config     Path to configuration file (default: configs/seed.yaml)
   -dev        Run in development mode (HTTP instead of HTTPS)
 
-First-Boot Credential Retrieval (fixes #489):
-  Run 'seed credentials' to generate secure initial credentials.
-  This writes credentials to a secure file and displays them once.
-  Use this instead of parsing logs for systemd deployments.
+First-Boot Setup:
+  Password setup is done through the web UI wizard on first launch.
+  The wizard offers the option to auto-generate a secure password.
+  Run 'seed credentials' to check if setup is complete.
 
 Examples:
   seed                      Start with default config
   seed -dev                 Start in development mode
   seed -config /etc/seed/config.yaml  Start with custom config
-  seed credentials          Generate initial admin credentials
+  seed credentials          Check if initial setup is needed
 `, version)
 }
 
-// handleCredentialsCommand generates and outputs initial credentials for first-boot setup.
-// This provides a deterministic, non-log path for credential retrieval (fixes #489).
+// handleCredentialsCommand checks setup status and directs users to the web wizard.
+// Password setup is only available through the web UI wizard (fixes #630).
 func handleCredentialsCommand() {
 	// Parse credentials subcommand flags
 	credFlags := flag.NewFlagSet("credentials", flag.ExitOnError)
 	configPath := credFlags.String("config", "configs/seed.yaml", "Path to configuration file")
-	outputJSON := credFlags.Bool("json", false, "Output credentials as JSON")
-	fileOutput := credFlags.String("file", "", "Write credentials to file (default: working directory)")
+	outputJSON := credFlags.Bool("json", false, "Output status as JSON")
 	if err := credFlags.Parse(os.Args[2:]); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -377,77 +373,63 @@ func handleCredentialsCommand() {
 		os.Exit(1)
 	}
 
-	// Check if credentials already exist and are secure
-	if err == nil && !result.GeneratedCreds {
-		fmt.Fprintln(os.Stderr, "Credentials are already configured. Use the web UI to change the password.")
-		fmt.Fprintln(os.Stderr, "If you've lost access, delete the config file and restart.")
-		os.Exit(0)
+	// Determine setup status
+	needsSetup := errors.Is(err, config.ErrInsecureCredentials) || result.GeneratedCreds
+	protocol := "https"
+	if !cfg.Server.HTTPS {
+		protocol = "http"
 	}
 
-	// Generate new credentials
-	creds, err := auth.GenerateInitialCredentials(cfg.Auth.DefaultUsername)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Failed to generate credentials: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Update config with new credentials
-	cfg.UpdateCredentials(creds.Username, creds.PasswordHash, creds.JWTSecret)
-
-	// Save the config
-	if err := cfg.Save(*configPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Failed to save configuration: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Prepare credential output
-	credOutput := struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Message  string `json:"message,omitempty"`
+	// Prepare status output
+	status := struct {
+		NeedsSetup bool   `json:"needs_setup"`
+		Username   string `json:"username"`
+		URL        string `json:"url"`
+		Message    string `json:"message"`
 	}{
-		Username: creds.Username,
-		Password: creds.Password,
-		Message:  "Save this password securely - it will not be shown again",
+		NeedsSetup: needsSetup,
+		Username:   cfg.Auth.DefaultUsername,
+		URL:        fmt.Sprintf("%s://localhost:%d", protocol, cfg.Server.Port),
 	}
 
-	// Write to file if requested
-	if *fileOutput != "" {
-		credFilePath := *fileOutput
-		if err := writeCredentialsFile(credFilePath, credOutput.Username, credOutput.Password); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: Failed to write credentials file: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Fprintf(os.Stderr, "Credentials written to: %s (mode 0600)\n", credFilePath)
+	if needsSetup {
+		status.Message = "Initial setup required. Visit the web UI to set your admin password."
+	} else {
+		status.Message = "Setup complete. Use the web UI to change your password if needed."
 	}
 
-	// Output credentials
+	// Output status
 	if *outputJSON {
-		jsonData, err := json.MarshalIndent(credOutput, "", "  ")
+		jsonData, err := json.MarshalIndent(status, "", "  ")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: Failed to marshal credentials: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Error: Failed to marshal status: %v\n", err)
 			os.Exit(1)
 		}
 		fmt.Println(string(jsonData))
 	} else {
 		fmt.Println("╔══════════════════════════════════════════════════════════════════╗")
-		fmt.Println("║              THE SEED - INITIAL CREDENTIALS                      ║")
+		fmt.Println("║              THE SEED - SETUP STATUS                             ║")
 		fmt.Println("║              Mustard Seed Networks                               ║")
 		fmt.Println("╠══════════════════════════════════════════════════════════════════╣")
-		fmt.Printf("║  Username: %-53s ║\n", credOutput.Username)
-		fmt.Printf("║  Password: %-53s ║\n", credOutput.Password)
-		fmt.Println("╠══════════════════════════════════════════════════════════════════╣")
-		fmt.Println("║  IMPORTANT: Save this password securely!                         ║")
-		fmt.Println("║  It will not be shown again.                                     ║")
+		if needsSetup {
+			fmt.Println("║  Status: SETUP REQUIRED                                          ║")
+			fmt.Println("║                                                                  ║")
+			fmt.Println("║  Please open your web browser and navigate to:                   ║")
+			fmt.Printf("║    %-62s ║\n", status.URL)
+			fmt.Println("║                                                                  ║")
+			fmt.Println("║  The setup wizard will guide you through:                        ║")
+			fmt.Println("║    - Setting your admin password                                 ║")
+			fmt.Println("║    - Optionally auto-generating a secure password               ║")
+			fmt.Println("║    - Initial configuration                                       ║")
+		} else {
+			fmt.Println("║  Status: SETUP COMPLETE                                          ║")
+			fmt.Println("║                                                                  ║")
+			fmt.Printf("║  Username: %-53s ║\n", status.Username)
+			fmt.Println("║                                                                  ║")
+			fmt.Println("║  To change your password, use the web UI Settings panel.         ║")
+			fmt.Println("║  If you've lost access, delete the config file and restart.     ║")
+		}
 		fmt.Println("╚══════════════════════════════════════════════════════════════════╝")
 	}
 }
 
-// writeCredentialsFile writes credentials to a secure file with restrictive permissions.
-func writeCredentialsFile(path, username, password string) error {
-	content := fmt.Sprintf("# The Seed Initial Credentials (Mustard Seed Networks)\n# Generated: %s\n# DELETE THIS FILE after retrieving credentials\n\nUsername: %s\nPassword: %s\n",
-		time.Now().Format(time.RFC3339), username, password)
-
-	// Write with restrictive permissions (owner read/write only)
-	return os.WriteFile(path, []byte(content), credentialsFileMode)
-}

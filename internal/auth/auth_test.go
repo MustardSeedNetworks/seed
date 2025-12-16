@@ -812,8 +812,8 @@ func TestDefaultCookieConfig(t *testing.T) {
 	if !config.Secure {
 		t.Error("Secure should be true by default")
 	}
-	if config.SameSite != http.SameSiteStrictMode {
-		t.Errorf("SameSite should be Strict, got %v", config.SameSite)
+	if config.SameSite != http.SameSiteLaxMode {
+		t.Errorf("SameSite should be Lax, got %v", config.SameSite)
 	}
 	if config.Domain != "" {
 		t.Errorf("Domain should be empty by default, got %q", config.Domain)
