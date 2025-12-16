@@ -71,5 +71,5 @@ Each discovered device shows:
 
 ## Related
 
-- [SNMP Configuration](https://github.com/krisarmstrong/netscope/blob/main/README.md)
+- [SNMP Configuration](https://github.com/krisarmstrong/seed/blob/main/README.md)
 - [Hardware Compatibility](Home.md)

@@ -1,4 +1,4 @@
-# LuminetIQ Implementation Plan
+# The Seed Implementation Plan
 
 ## Overview
 

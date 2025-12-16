@@ -1,7 +1,7 @@
-# LuminetIQ Style Guide
+# The Seed Style Guide
 
-This document defines the official coding standards and naming conventions for the LuminetIQ
-project. All contributors should follow these guidelines to ensure consistency and maintainability.
+This document defines the official coding standards and naming conventions for the The Seed project.
+All contributors should follow these guidelines to ensure consistency and maintainability.
 
 ## Table of Contents
 
@@ -179,8 +179,8 @@ import (
     "github.com/gorilla/websocket"
     "go.uber.org/zap"
 
-    "github.com/krisarmstrong/luminetiq/internal/config"
-    "github.com/krisarmstrong/luminetiq/internal/discovery"
+    "github.com/krisarmstrong/seed/internal/config"
+    "github.com/krisarmstrong/seed/internal/discovery"
 )
 ```
 

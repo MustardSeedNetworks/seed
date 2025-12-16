@@ -162,12 +162,12 @@ license-check: ## Check license compliance
   with:
     path: ./
     format: spdx-json
-    output-file: luminetiq-sbom.spdx.json
+    output-file: seed-sbom.spdx.json
 
 - name: Scan SBOM for vulnerabilities
   uses: anchore/scan-action@v5
   with:
-    sbom: luminetiq-sbom.spdx.json
+    sbom: seed-sbom.spdx.json
     fail-build: true
     severity-cutoff: high
 ```
@@ -297,7 +297,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 
 ```makefile
 docs-api: ## Generate API documentation
-	swag init -g cmd/luminetiq/main.go -o docs/api
+	swag init -g cmd/seed/main.go -o docs/api
 ```
 
 **CI check:**

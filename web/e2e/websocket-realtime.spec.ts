@@ -111,7 +111,7 @@ test.describe("WebSocket Real-Time Updates", () => {
       expect(initialTitle).toBeTruthy();
 
       // Title should include app name
-      expect(initialTitle).toMatch(/luminetiq|netscope/i);
+      expect(initialTitle).toMatch(/seed|the seed/i);
     });
   });
 

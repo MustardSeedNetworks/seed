@@ -28,9 +28,9 @@ sudo dnf install libpcap
 ### 2. Download Binary
 
 ```bash
-wget https://github.com/krisarmstrong/netscope/releases/latest/download/seed-linux-amd64.tar.gz
+wget https://github.com/krisarmstrong/seed/releases/latest/download/seed-linux-amd64.tar.gz
 # OR for ARM64
-wget https://github.com/krisarmstrong/netscope/releases/latest/download/seed-linux-arm64.tar.gz
+wget https://github.com/krisarmstrong/seed/releases/latest/download/seed-linux-arm64.tar.gz
 ```
 
 ### 3. Install
@@ -55,7 +55,7 @@ seed --version
 
 ## Running as a Service (systemd)
 
-See [deploy/systemd](https://github.com/krisarmstrong/netscope/tree/main/deploy/systemd) for systemd
+See [deploy/systemd](https://github.com/krisarmstrong/seed/tree/main/deploy/systemd) for systemd
 service installation.
 
 ## Firewall Configuration

@@ -1,4 +1,4 @@
-# NetScope - Project Plan
+# The Seed - Project Plan
 
 > Portable Network Diagnostic Tool with Real-Time Web UI
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-NetScope is a professional-grade network diagnostic appliance designed for network technicians and
+The Seed is a professional-grade network diagnostic appliance designed for network technicians and
 engineers. It provides real-time visibility into network connectivity through a modern card-based
 web interface.
 
@@ -74,7 +74,7 @@ web interface.
 ### Project Structure
 
 ```
-netscope/
+seed/
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml              # Test, lint, build
@@ -87,7 +87,7 @@ netscope/
 │   ├── CODEOWNERS
 │   └── dependabot.yml
 ├── cmd/
-│   └── netscope/
+│   └── seed/
 │       └── main.go             # Entry point
 ├── internal/
 │   ├── api/                    # HTTP/WebSocket handlers
@@ -249,7 +249,7 @@ Track each phase of DHCP transaction:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  ◉ NetScope                              [eth0 ▾]  [🌙]  [⚙️]   │
+│  ◉ The Seed                              [eth0 ▾]  [🌙]  [⚙️]   │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │

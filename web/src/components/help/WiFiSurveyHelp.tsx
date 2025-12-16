@@ -1,10 +1,10 @@
 /**
  * WiFiSurveyHelp.tsx
- * 
+ *
  * Purpose: Comprehensive help documentation for WiFi Site Survey feature.
  * Provides user guidance on survey creation, floor plan uploads, heatmap visualization,
  * and interpreting survey results.
- * 
+ *
  * Key Features:
  * - Overview section: WiFi survey purpose and use cases
  * - Requirements section: Prerequisites for running surveys
@@ -13,12 +13,12 @@
  * - Heatmap help: Interpreting color-coded signal strength and performance maps
  * - Troubleshooting: Common issues and resolution steps
  * - Data export: How to export survey results
- * 
+ *
  * Usage:
  * ```typescript
  * <HelpModal sections={[...WIFI_SURVEY_HELP]} />
  * ```
- * 
+ *
  * Dependencies: None (pure data constants)
  * Structure: Array of HelpSection with items containing question/answer pairs
  */
@@ -145,7 +145,7 @@ export const WIFI_SURVEY_HELP: HelpSection[] = [
       {
         question: "Survey creation fails with 'requires iperf3'",
         answer:
-          "This error occurs when creating a Throughput survey without an iperf3 server configured.\n\nTo fix:\n1. Set up an iperf3 server on your network:\n   • On Linux/Mac: `iperf3 -s`\n   • On Windows: Download from iperf.fr and run `iperf3.exe -s`\n\n2. Configure the server in LuminetIQ:\n   • Settings > Performance Testing > iperf3 Server\n   • Enter server IP:port (default port is 5201)\n   • Example: 192.168.1.100:5201\n\nAlternatively, use Passive or Active survey modes which don't require iperf3.",
+          "This error occurs when creating a Throughput survey without an iperf3 server configured.\n\nTo fix:\n1. Set up an iperf3 server on your network:\n   • On Linux/Mac: `iperf3 -s`\n   • On Windows: Download from iperf.fr and run `iperf3.exe -s`\n\n2. Configure the server in The Seed:\n   • Settings > Performance Testing > iperf3 Server\n   • Enter server IP:port (default port is 5201)\n   • Example: 192.168.1.100:5201\n\nAlternatively, use Passive or Active survey modes which don't require iperf3.",
       },
       {
         question: "Measurements are inconsistent or varying",

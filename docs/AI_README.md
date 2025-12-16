@@ -1,4 +1,4 @@
-# LuminetIQ AI Integration - Quick Reference
+# The Seed AI Integration - Quick Reference
 
 **Created:** 2025-12-15 **Status:** Planning Phase **Next Milestone:** AI Foundation (v0.110.0)
 
@@ -49,7 +49,7 @@
 - **Total Issues:** 24
 - **Milestones:** 4
 - **Issue Range:** #575 - #598
-- **View on GitHub:** [Milestones 11-14](https://github.com/krisarmstrong/netscope/milestones)
+- **View on GitHub:** [Milestones 11-14](https://github.com/krisarmstrong/seed/milestones)
 
 ### Milestones
 
@@ -138,8 +138,8 @@ ROI: 3.6x in labor savings alone
 
 ## 🚀 Flagship Feature: Predictive WiFi Survey
 
-**Issue:** [#591](https://github.com/krisarmstrong/netscope/issues/591) **Milestone:** WiFi
-Intelligence (v0.130.0) **Priority:** CRITICAL
+**Issue:** [#591](https://github.com/krisarmstrong/seed/issues/591) **Milestone:** WiFi Intelligence
+(v0.130.0) **Priority:** CRITICAL
 
 ### What It Does
 
@@ -203,7 +203,7 @@ Intelligence (v0.130.0) **Priority:** CRITICAL
 
 ## 🏆 Competitive Advantages
 
-### What Makes LuminetIQ Unique
+### What Makes The Seed Unique
 
 1. **Predictive WiFi Survey** - NO ONE ELSE HAS THIS
 2. **AI-Powered Root Cause Analysis** - "Why is DHCP slow?"
@@ -213,7 +213,7 @@ Intelligence (v0.130.0) **Priority:** CRITICAL
 
 ### Competitive Comparison
 
-| Feature                | LuminetIQ     | Ekahau | NetAlly | Fluke  |
+| Feature                | The Seed      | Ekahau | NetAlly | Fluke  |
 | ---------------------- | ------------- | ------ | ------- | ------ |
 | **Price**              | $299-4,999/yr | $2-5K  | $10-20K | $5-15K |
 | **Predictive Survey**  | ✅ YES        | ❌ No  | ❌ No   | ❌ No  |
@@ -416,8 +416,8 @@ Intelligence (v0.130.0) **Priority:** CRITICAL
 
 **Technical Questions:** See [AI_INTEGRATION_PLAN.md](./AI_INTEGRATION_PLAN.md) **Business
 Questions:** See [AI_ISSUES_SUMMARY.md](./AI_ISSUES_SUMMARY.md) **GitHub Issues:**
-https://github.com/krisarmstrong/netscope/issues?q=is%3Aissue+label%3A%22component%3A+ai%22
-**Milestones:** https://github.com/krisarmstrong/netscope/milestones
+https://github.com/krisarmstrong/seed/issues?q=is%3Aissue+label%3A%22component%3A+ai%22
+**Milestones:** https://github.com/krisarmstrong/seed/milestones
 
 ---
 

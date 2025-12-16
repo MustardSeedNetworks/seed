@@ -43,7 +43,7 @@ test.describe("Authentication", () => {
   test("should login successfully with valid credentials", async ({ page }) => {
     await page.goto("/");
 
-    // Fill in valid credentials (default admin/luminetiq)
+    // Fill in valid credentials (default admin/seed)
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();

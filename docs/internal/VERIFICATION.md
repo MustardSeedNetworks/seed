@@ -1,6 +1,6 @@
 # Artifact Verification Guide
 
-LuminetIQ releases include Software Bills of Materials (SBOMs) and cryptographic signatures for all
+The Seed releases include Software Bills of Materials (SBOMs) and cryptographic signatures for all
 binary artifacts to ensure supply chain security and integrity verification.
 
 ## What's Included
@@ -8,10 +8,10 @@ binary artifacts to ensure supply chain security and integrity verification.
 Each release contains the following files for each platform (linux-amd64, linux-arm64, darwin-amd64,
 darwin-arm64):
 
-- `luminetiq-{platform}` - The binary executable
-- `luminetiq-{platform}.sbom.json` - Software Bill of Materials (CycloneDX format)
-- `luminetiq-{platform}.cosign.bundle` - Signature bundle for the binary
-- `luminetiq-{platform}.sbom.cosign.bundle` - Signature bundle for the SBOM
+- `seed-{platform}` - The binary executable
+- `seed-{platform}.sbom.json` - Software Bill of Materials (CycloneDX format)
+- `seed-{platform}.cosign.bundle` - Signature bundle for the binary
+- `seed-{platform}.sbom.cosign.bundle` - Signature bundle for the SBOM
 
 ## Prerequisites
 
@@ -49,11 +49,11 @@ PLATFORM=linux-amd64  # Change to your platform
 
 # Download the binary, SBOM, and signature bundles
 gh release download $VERSION \
-  -p "luminetiq-${PLATFORM}*" \
-  -R krisarmstrong/netscope
+  -p "seed-${PLATFORM}*" \
+  -R krisarmstrong/seed
 ```
 
-Or download manually from the [GitHub Releases](https://github.com/krisarmstrong/netscope/releases)
+Or download manually from the [GitHub Releases](https://github.com/krisarmstrong/seed/releases)
 page.
 
 ### Step 2: Verify the Binary Signature
@@ -61,10 +61,10 @@ page.
 ```bash
 # Verify binary with cosign
 cosign verify-blob \
-  --bundle luminetiq-${PLATFORM}.cosign.bundle \
-  --certificate-identity-regexp='https://github.com/krisarmstrong/netscope' \
+  --bundle seed-${PLATFORM}.cosign.bundle \
+  --certificate-identity-regexp='https://github.com/krisarmstrong/seed' \
   --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
-  luminetiq-${PLATFORM}
+  seed-${PLATFORM}
 ```
 
 Expected output:
@@ -78,10 +78,10 @@ Verified OK
 ```bash
 # Verify SBOM signature
 cosign verify-blob \
-  --bundle luminetiq-${PLATFORM}.sbom.cosign.bundle \
-  --certificate-identity-regexp='https://github.com/krisarmstrong/netscope' \
+  --bundle seed-${PLATFORM}.sbom.cosign.bundle \
+  --certificate-identity-regexp='https://github.com/krisarmstrong/seed' \
   --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
-  luminetiq-${PLATFORM}.sbom.json
+  seed-${PLATFORM}.sbom.json
 ```
 
 Expected output:
@@ -94,7 +94,7 @@ Verified OK
 
 ### Keyless Signing
 
-LuminetIQ uses **keyless signing** via Sigstore, which means:
+The Seed uses **keyless signing** via Sigstore, which means:
 
 - No long-lived private keys to manage or leak
 - Signatures are tied to the GitHub Actions OIDC identity
@@ -105,8 +105,7 @@ LuminetIQ uses **keyless signing** via Sigstore, which means:
 
 When you verify a signature, cosign checks:
 
-1. **Certificate Identity**: Confirms the binary was built by the `krisarmstrong/netscope`
-   repository
+1. **Certificate Identity**: Confirms the binary was built by the `krisarmstrong/seed` repository
 2. **OIDC Issuer**: Confirms the build happened in GitHub Actions (not on a developer's laptop)
 3. **Signature**: Cryptographically proves the file hasn't been tampered with since signing
 4. **Transparency**: The signature is logged in Rekor, a public transparency log
@@ -119,10 +118,10 @@ The SBOM (Software Bill of Materials) lists all dependencies included in the bin
 
 ```bash
 # Pretty-print the SBOM
-cat luminetiq-${PLATFORM}.sbom.json | jq '.'
+cat seed-${PLATFORM}.sbom.json | jq '.'
 
 # List all components
-cat luminetiq-${PLATFORM}.sbom.json | jq '.components[] | {name, version}'
+cat seed-${PLATFORM}.sbom.json | jq '.components[] | {name, version}'
 ```
 
 ### Using Syft
@@ -131,10 +130,10 @@ If you have `syft` installed:
 
 ```bash
 # Analyze the SBOM for vulnerabilities (requires Grype)
-grype sbom:./luminetiq-${PLATFORM}.sbom.json
+grype sbom:./seed-${PLATFORM}.sbom.json
 
 # Convert SBOM to other formats
-syft convert luminetiq-${PLATFORM}.sbom.json -o spdx-json
+syft convert seed-${PLATFORM}.sbom.json -o spdx-json
 ```
 
 ## Verification in CI/CD
@@ -142,26 +141,26 @@ syft convert luminetiq-${PLATFORM}.sbom.json -o spdx-json
 To automate verification in your CI/CD pipeline:
 
 ```yaml
-- name: Download and verify LuminetIQ
+- name: Download and verify The Seed
   run: |
     VERSION=v0.14.0
     PLATFORM=linux-amd64
 
     # Download artifacts
     gh release download $VERSION \
-      -p "luminetiq-${PLATFORM}*" \
-      -R krisarmstrong/netscope
+      -p "seed-${PLATFORM}*" \
+      -R krisarmstrong/seed
 
     # Verify signature
     cosign verify-blob \
-      --bundle luminetiq-${PLATFORM}.cosign.bundle \
-      --certificate-identity-regexp='https://github.com/krisarmstrong/netscope' \
+      --bundle seed-${PLATFORM}.cosign.bundle \
+      --certificate-identity-regexp='https://github.com/krisarmstrong/seed' \
       --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
-      luminetiq-${PLATFORM}
+      seed-${PLATFORM}
 
     # Make executable
-    chmod +x luminetiq-${PLATFORM}
-    mv luminetiq-${PLATFORM} /usr/local/bin/luminetiq
+    chmod +x seed-${PLATFORM}
+    mv seed-${PLATFORM} /usr/local/bin/seed
 ```
 
 ## Troubleshooting
@@ -194,8 +193,8 @@ This enables experimental keyless verification mode in older cosign versions. Ne
 
 ## Security Policy
 
-If you discover a security vulnerability in LuminetIQ, please report it privately to the
-maintainers. See [SECURITY.md](../SECURITY.md) for details.
+If you discover a security vulnerability in The Seed, please report it privately to the maintainers.
+See [SECURITY.md](../SECURITY.md) for details.
 
 ## Additional Resources
 
@@ -207,4 +206,4 @@ maintainers. See [SECURITY.md](../SECURITY.md) for details.
 
 ---
 
-**Last Updated**: 2025-12-14 **Applies to**: LuminetIQ v0.14.0 and later
+**Last Updated**: 2025-12-14 **Applies to**: The Seed v0.14.0 and later

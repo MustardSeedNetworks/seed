@@ -40,7 +40,7 @@ responsibly.
 
 ## Security Best Practices
 
-When deploying NetScope:
+When deploying The Seed:
 
 ### Network Security
 
@@ -62,13 +62,13 @@ When deploying NetScope:
 
 ### Updates
 
-- Keep NetScope updated to the latest version
+- Keep The Seed updated to the latest version
 - Subscribe to release notifications
 - Review changelogs for security fixes
 
 ## Security Features
 
-NetScope includes:
+The Seed includes:
 
 - HTTPS by default
 - Password authentication
@@ -97,5 +97,5 @@ The following are out of scope:
 
 ## Acknowledgments
 
-We appreciate security researchers who help keep NetScope secure. Contributors will be acknowledged
+We appreciate security researchers who help keep The Seed secure. Contributors will be acknowledged
 in release notes unless they prefer to remain anonymous.

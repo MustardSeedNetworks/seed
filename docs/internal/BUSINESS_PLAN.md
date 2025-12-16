@@ -1,6 +1,6 @@
 # The Seed (Mustard Seed Networks) - # The Seed Formal Business Plan (2026-2028)
 
-**Company Name:** The Seed (formerly NetScope) **Document Version:** 1.0 **Last Updated:**
+**Company Name:** The Seed (formerly The Seed) **Document Version:** 1.0 **Last Updated:**
 2025-12-15 **Planning Horizon:** 3 years (2026-2028)
 
 ---
@@ -93,7 +93,7 @@ team, from small clinics to large enterprises.
 
 **2025:**
 
-- NetScope initial development (network diagnostic tool)
+- The Seed initial development (network diagnostic tool)
 - Prototype built (Go backend, React frontend)
 - Core features: device discovery, WiFi scanning, DHCP testing
 

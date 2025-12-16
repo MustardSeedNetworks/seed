@@ -38,7 +38,7 @@ test.describe("Smoke Tests", () => {
     await page.goto("/");
 
     // Title should contain app name
-    await expect(page).toHaveTitle(/seed|netscope|network/i);
+    await expect(page).toHaveTitle(/seed|The Seed|network/i);
   });
 
   test("should have proper viewport and be responsive", async ({ page }) => {

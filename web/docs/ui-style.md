@@ -1,4 +1,4 @@
-# NetScope UI Style Guide
+# The Seed UI Style Guide
 
 This guide documents the shared design tokens, components, and patterns so new UI matches the
 current system.

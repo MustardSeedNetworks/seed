@@ -124,18 +124,18 @@ Yes! Designed for healthcare:
 
 ### How do I get help?
 
-- [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
-- [GitHub Issues](https://github.com/krisarmstrong/netscope/issues)
+- [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
+- [GitHub Issues](https://github.com/krisarmstrong/seed/issues)
 - Email: support@mustardseednetworks.com
 
 ### How do I report a bug?
 
-1. Check [existing issues](https://github.com/krisarmstrong/netscope/issues)
-2. [Create new issue](https://github.com/krisarmstrong/netscope/issues/new)
+1. Check [existing issues](https://github.com/krisarmstrong/seed/issues)
+2. [Create new issue](https://github.com/krisarmstrong/seed/issues/new)
 3. Include: The Seed version, OS, steps to reproduce, logs
 
 ---
 
 **Still have questions?**
 
-Ask in [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
+Ask in [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)

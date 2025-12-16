@@ -1,6 +1,6 @@
-# LuminetIQ Design System & Theming Guide
+# The Seed Design System & Theming Guide
 
-This document describes the design system and theming architecture used in the LuminetIQ frontend.
+This document describes the design system and theming architecture used in the The Seed frontend.
 
 ## Architecture Overview
 
@@ -49,7 +49,7 @@ The theming system consists of three layers:
 
 ## Typography Scale
 
-LuminetIQ uses a semantic typography system with responsive sizing. Use these CSS utility classes
+The Seed uses a semantic typography system with responsive sizing. Use these CSS utility classes
 instead of raw Tailwind size classes.
 
 ### Heading Classes
@@ -77,7 +77,7 @@ instead of raw Tailwind size classes.
 
 ```tsx
 // Headings - use semantic HTML with utility classes
-<h1 className="heading-1">Welcome to LuminetIQ</h1>
+<h1 className="heading-1">Welcome to The Seed</h1>
 <h2 className="heading-2">Network Overview</h2>
 <h2 className="section-title">Connectivity</h2>  // Category label
 <h3 className="heading-3">DNS Status</h3>         // Card title

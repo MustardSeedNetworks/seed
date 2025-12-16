@@ -1351,7 +1351,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           <section className="pt-4 border-t border-surface-border">
             <h3 className="body-small font-medium text-text-muted mb-2">About</h3>
             <p className="caption text-text-muted">
-              NetScope {version}
+              The Seed {version}
               <br />
               Network Diagnostic Tool
             </p>

@@ -311,7 +311,7 @@ Automated wiki population script (executable, ready to run when GitHub Wiki enab
 ## 📂 Documentation File Structure
 
 ```
-netscope/
+seed/
 ├── docs/
 │   ├── wiki/                           # User-facing (ready to publish)
 │   │   ├── Home.md                     # Landing page (updated)

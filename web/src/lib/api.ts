@@ -1,7 +1,7 @@
 /**
  * API Client Library
  *
- * Provides a centralized HTTP client for communicating with the LuminetIQ backend API.
+ * Provides a centralized HTTP client for communicating with the The Seed backend API.
  *
  * Features:
  * - Cookie-based authentication (httpOnly cookies)
@@ -45,9 +45,7 @@ let isRefreshing = false;
  *
  * @param callback - Function to call when session expires
  */
-export function setSessionExpiredCallback(
-  callback: SessionExpiredCallback,
-): void {
+export function setSessionExpiredCallback(callback: SessionExpiredCallback): void {
   onSessionExpired = callback;
 }
 
@@ -91,7 +89,7 @@ async function refreshAccessToken(): Promise<boolean> {
 async function handleResponse<T>(
   response: Response,
   isAuthEndpoint: boolean,
-  retryRequest?: () => Promise<Response>,
+  retryRequest?: () => Promise<Response>
 ): Promise<T> {
   // Check for unauthorized access (token expired)
   if (response.status === 401 && !isAuthEndpoint) {
