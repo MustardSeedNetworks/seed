@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardValue, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
 import { layout, spacing } from "../../styles/theme";
@@ -52,20 +53,17 @@ export function BaseCard<T>({
   getStatus,
   children,
   loadingContent,
-  emptyMessage = "No data available",
+  emptyMessage,
   className,
   onClick,
 }: BaseCardProps<T>) {
+  const { t } = useTranslation("common");
+  const resolvedEmptyMessage = emptyMessage ?? t("status.noDataAvailable");
+
   // Loading state
   if (loading) {
     return (
-      <Card
-        title={title}
-        subtitle={subtitle}
-        icon={icon}
-        status="loading"
-        className={className}
-      >
+      <Card title={title} subtitle={subtitle} icon={icon} status="loading" className={className}>
         {loadingContent || <DefaultLoadingSkeleton />}
       </Card>
     );
@@ -74,14 +72,8 @@ export function BaseCard<T>({
   // Error state
   if (error) {
     return (
-      <Card
-        title={title}
-        subtitle={subtitle}
-        icon={icon}
-        status="error"
-        className={className}
-      >
-        <CardValue value="Error" size="md" status="error" />
+      <Card title={title} subtitle={subtitle} icon={icon} status="error" className={className}>
+        <CardValue value={t("status.error")} size="md" status="error" />
         <p className="caption text-status-error mt-1">{error}</p>
       </Card>
     );
@@ -90,14 +82,8 @@ export function BaseCard<T>({
   // No data state
   if (!data) {
     return (
-      <Card
-        title={title}
-        subtitle={subtitle}
-        icon={icon}
-        status="unknown"
-        className={className}
-      >
-        <CardValue value={emptyMessage} size="md" />
+      <Card title={title} subtitle={subtitle} icon={icon} status="unknown" className={className}>
+        <CardValue value={resolvedEmptyMessage} size="md" />
       </Card>
     );
   }
@@ -162,6 +148,9 @@ interface SimpleBaseCardProps {
   onClick?: () => void;
 }
 
+/**
+ *
+ */
 export function SimpleBaseCard({
   title,
   subtitle,
@@ -177,13 +166,7 @@ export function SimpleBaseCard({
   // Loading state
   if (loading) {
     return (
-      <Card
-        title={title}
-        subtitle={subtitle}
-        icon={icon}
-        status="loading"
-        className={className}
-      >
+      <Card title={title} subtitle={subtitle} icon={icon} status="loading" className={className}>
         {loadingContent || <DefaultLoadingSkeleton />}
       </Card>
     );
@@ -192,14 +175,8 @@ export function SimpleBaseCard({
   // Error state
   if (error) {
     return (
-      <Card
-        title={title}
-        subtitle={subtitle}
-        icon={icon}
-        status="error"
-        className={className}
-      >
-        <CardValue value="Error" size="md" status="error" />
+      <Card title={title} subtitle={subtitle} icon={icon} status="error" className={className}>
+        <CardValue value={t("status.error")} size="md" status="error" />
         <p className="caption text-status-error mt-1">{error}</p>
       </Card>
     );

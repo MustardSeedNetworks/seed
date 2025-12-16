@@ -47,6 +47,7 @@
     "noIP": "Sin IP",
     "noSignal": "Sin señal",
     "noData": "Sin datos",
+    "noDataAvailable": "No hay datos disponibles",
     "never": "Nunca",
     "justNow": "Ahora mismo",
     "unknown": "Desconocido"

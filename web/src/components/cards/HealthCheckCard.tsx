@@ -27,6 +27,7 @@
  */
 
 import { useState, useEffect, useCallback, memo } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
@@ -84,9 +85,8 @@ interface HealthCheckCardProps {
   loading?: boolean;
 }
 
-export const HealthCheckCard = memo(function HealthCheckCard({
-  loading,
-}: HealthCheckCardProps) {
+export const HealthCheckCard = memo(function HealthCheckCard({ loading }: HealthCheckCardProps) {
+  const { t } = useTranslation("cards");
   const { fabOptions } = useSettings();
   const [data, setData] = useState<HealthCheckData | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -103,14 +103,14 @@ export const HealthCheckCard = memo(function HealthCheckCard({
         const result = await res.json();
         setData(result);
       } else {
-        setError("Failed to run tests");
+        setError(t("health.failedToRun"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to run tests");
+      setError(err instanceof Error ? err.message : t("health.failedToRun"));
     } finally {
       setIsRunning(false);
     }
-  }, []);
+  }, [t]);
 
   // Initial fetch to check if tests are configured
   useEffect(() => {
@@ -125,10 +125,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     };
     window.addEventListener("healthChecksUpdated", handleHealthChecksUpdated);
     return () => {
-      window.removeEventListener(
-        "healthChecksUpdated",
-        handleHealthChecksUpdated,
-      );
+      window.removeEventListener("healthChecksUpdated", handleHealthChecksUpdated);
     };
   }, [fetchTests]);
 
@@ -146,7 +143,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
         window.dispatchEvent(
           new CustomEvent("cardTestComplete", {
             detail: { test: "healthchecks" },
-          }),
+          })
         );
       }
     };
@@ -177,20 +174,13 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     // Priority: error > warning > success
     // Any failure (!success) or error status = card is error
     if (
-      allResults.some(
-        (r) =>
-          !r.success || r.testStatus === "error" || r.certStatus === "error",
-      )
+      allResults.some((r) => !r.success || r.testStatus === "error" || r.certStatus === "error")
     ) {
       return "error";
     }
 
     // Any warning status = card is warning
-    if (
-      allResults.some(
-        (r) => r.testStatus === "warning" || r.certStatus === "warning",
-      )
-    ) {
+    if (allResults.some((r) => r.testStatus === "warning" || r.certStatus === "warning")) {
       return "warning";
     }
 
@@ -205,10 +195,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     return `${Math.round(ms)}ms`;
   };
 
-  const renderTestResult = (
-    result: TestResult,
-    type: "ping" | "tcp" | "udp" | "http",
-  ) => {
+  const renderTestResult = (result: TestResult, type: "ping" | "tcp" | "udp" | "http") => {
     // Use testStatus for threshold-based coloring, fall back to success/error
     const statusLabel = result.success
       ? result.testStatus === "warning"
@@ -239,10 +226,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     return (
       <div key={`${type}-${result.name}`} className="py-1">
         <div className={layout.flex.between}>
-          <span
-            className="body-small text-text-muted truncate flex-1"
-            title={displayName}
-          >
+          <span className="body-small text-text-muted truncate flex-1" title={displayName}>
             {displayName}
             {details}
           </span>
@@ -253,9 +237,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
             </span>
           </span>
         </div>
-        {extendedInfo && (
-          <div className="caption text-text-muted mt-0.5">{extendedInfo}</div>
-        )}
+        {extendedInfo && <div className="caption text-text-muted mt-0.5">{extendedInfo}</div>}
       </div>
     );
   };
@@ -267,8 +249,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     if (!total || !Number.isFinite(total) || total <= 0) return null;
 
     // Safely extract timing values, treating NaN/undefined as 0
-    const safeNum = (v: number | undefined) =>
-      v !== undefined && Number.isFinite(v) ? v : 0;
+    const safeNum = (v: number | undefined) => (v !== undefined && Number.isFinite(v) ? v : 0);
     const dns = safeNum(result.dnsLatency);
     const tcp = safeNum(result.tcpConnect);
     const tls = safeNum(result.tlsLatency);
@@ -288,31 +269,31 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     // Status is indicated only via text color in the legend
     const segments = [
       {
-        label: "DNS",
+        label: t("health.timingDns"),
         value: dns,
         color: timing.dns.bg,
         status: result.dnsStatus,
       },
       {
-        label: "TCP",
+        label: t("health.timingTcp"),
         value: tcp,
         color: timing.tcp.bg,
         status: result.tcpStatus,
       },
       {
-        label: "TLS",
+        label: t("health.timingTls"),
         value: tls,
         color: timing.tls.bg,
         status: result.tlsStatus,
       },
       {
-        label: "Wait",
+        label: t("health.timingWait"),
         value: ttfb,
         color: timing.wait.bg,
         status: result.ttfbStatus,
       },
       {
-        label: "Download",
+        label: t("health.timingDownload"),
         value: download,
         color: timing.download.bg,
         status: undefined,
@@ -321,18 +302,14 @@ export const HealthCheckCard = memo(function HealthCheckCard({
 
     if (segments.length === 0) return null;
 
-    const fmt = (ms: number) =>
-      ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
+    const fmt = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`);
 
     return (
       <div className="mt-1.5">
         {/* Stacked bar */}
         <div className={`h-2 ${radius.full} overflow-hidden flex bg-bg-tertiary`}>
           {segments.map((seg, i) => {
-            const widthPercent = Math.min(
-              100,
-              Math.max(0, (seg.value / total) * 100),
-            );
+            const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
             const widthClass = `w-[${widthPercent}%]`;
             return (
               <div
@@ -351,12 +328,8 @@ export const HealthCheckCard = memo(function HealthCheckCard({
               content={HTTP_TIMING_HELP[seg.label] || seg.label}
               position="bottom"
             >
-              <span
-                className={`inline-flex items-center gap-1 ${getStatusTextColor(seg.status)}`}
-              >
-                <span
-                  className={`inline-block w-2 h-2 ${radius.full} ${seg.color}`}
-                />
+              <span className={`inline-flex items-center gap-1 ${getStatusTextColor(seg.status)}`}>
+                <span className={`inline-block w-2 h-2 ${radius.full} ${seg.color}`} />
                 {seg.label} {fmt(seg.value)}
               </span>
             </Tooltip>
@@ -389,19 +362,18 @@ export const HealthCheckCard = memo(function HealthCheckCard({
       certColor = "text-status-success";
     }
 
-    const hasCertInfo =
-      result.certDaysLeft !== undefined && result.certDaysLeft >= 0;
+    const hasCertInfo = result.certDaysLeft !== undefined && result.certDaysLeft >= 0;
     const hasTLS = result.tlsVersion && result.tlsVersion !== "Unknown";
 
     // Format cert expiry nicely
     const formatCertExpiry = () => {
       if (!hasCertInfo) return "";
       const days = result.certDaysLeft!;
-      if (days <= 0) return "EXPIRED";
-      if (days === 1) return "1 day";
-      if (days < 30) return `${days} days`;
-      if (days < 365) return `${Math.floor(days / 30)}mo`;
-      return `${Math.floor(days / 365)}y`;
+      if (days <= 0) return t("health.expired");
+      if (days === 1) return t("health.certExpiry1Day");
+      if (days < 30) return t("health.certExpiryDays", { days });
+      if (days < 365) return t("health.certExpiryMonths", { months: Math.floor(days / 30) });
+      return t("health.certExpiryYears", { years: Math.floor(days / 365) });
     };
 
     // Check if we have timing breakdown data
@@ -414,10 +386,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({
     return (
       <div key={`http-${result.name}`} className="py-1.5">
         <div className={layout.flex.between}>
-          <span
-            className="body-small text-text-muted truncate flex-1"
-            title={result.name}
-          >
+          <span className="body-small text-text-muted truncate flex-1" title={result.name}>
             {result.name}
             {result.status ? ` (${result.status})` : ""}
           </span>
@@ -428,27 +397,17 @@ export const HealthCheckCard = memo(function HealthCheckCard({
         {hasTimingData && result.success && <TimingBar result={result} />}
         {(hasTLS || hasCertInfo) && (
           <div className={`caption mt-1 ${layout.inline.default}`}>
-            {hasTLS && (
-              <span className="text-text-muted">{result.tlsVersion}</span>
-            )}
-            {hasTLS && hasCertInfo && (
-              <span className="text-text-muted">·</span>
-            )}
+            {hasTLS && <span className="text-text-muted">{result.tlsVersion}</span>}
+            {hasTLS && hasCertInfo && <span className="text-text-muted">·</span>}
             {hasCertInfo && (
-              <span
-                className={certColor}
-                title={`Expires: ${result.certExpiry}`}
-              >
+              <span className={certColor} title={`Expires: ${result.certExpiry}`}>
                 {formatCertExpiry()}
               </span>
             )}
             {result.certIssuer && (
               <>
                 <span className="text-text-muted">·</span>
-                <span
-                  className="text-text-muted truncate"
-                  title={result.certIssuer}
-                >
+                <span className="text-text-muted truncate" title={result.certIssuer}>
                   {result.certIssuer}
                 </span>
               </>
@@ -461,25 +420,23 @@ export const HealthCheckCard = memo(function HealthCheckCard({
 
   return (
     <Card
-      title="Health Checks"
+      title={t("health.title")}
       icon={<HeartPulse className={iconTokens.size.md} />}
       status={getStatus()}
     >
-      {isRunning && <p className="body-small text-text-muted">Running tests...</p>}
+      {isRunning && <p className="body-small text-text-muted">{t("health.runningTests")}</p>}
 
       {!isRunning && data && (
         <>
           {/* Ping Results */}
           {data.pingResults && data.pingResults.length > 0 && (
             <CollapsibleSection
-              title="Ping"
+              title={t("health.ping")}
               count={data.pingResults.length}
               variant="compact"
               defaultOpen={true}
               status={
-                data.pingResults.some(
-                  (r) => !r.success || r.testStatus === "error",
-                )
+                data.pingResults.some((r) => !r.success || r.testStatus === "error")
                   ? "error"
                   : data.pingResults.some((r) => r.testStatus === "warning")
                     ? "warning"
@@ -493,14 +450,12 @@ export const HealthCheckCard = memo(function HealthCheckCard({
           {/* TCP Results */}
           {data.tcpResults && data.tcpResults.length > 0 && (
             <CollapsibleSection
-              title="TCP Ports"
+              title={t("health.tcpPorts")}
               count={data.tcpResults.length}
               variant="compact"
               defaultOpen={true}
               status={
-                data.tcpResults.some(
-                  (r) => !r.success || r.testStatus === "error",
-                )
+                data.tcpResults.some((r) => !r.success || r.testStatus === "error")
                   ? "error"
                   : data.tcpResults.some((r) => r.testStatus === "warning")
                     ? "warning"
@@ -514,14 +469,12 @@ export const HealthCheckCard = memo(function HealthCheckCard({
           {/* UDP Results */}
           {data.udpResults && data.udpResults.length > 0 && (
             <CollapsibleSection
-              title="UDP Ports"
+              title={t("health.udpPorts")}
               count={data.udpResults.length}
               variant="compact"
               defaultOpen={true}
               status={
-                data.udpResults.some(
-                  (r) => !r.success || r.testStatus === "error",
-                )
+                data.udpResults.some((r) => !r.success || r.testStatus === "error")
                   ? "error"
                   : data.udpResults.some((r) => r.testStatus === "warning")
                     ? "warning"
@@ -535,22 +488,17 @@ export const HealthCheckCard = memo(function HealthCheckCard({
           {/* HTTP Results */}
           {data.httpResults && data.httpResults.length > 0 && (
             <CollapsibleSection
-              title="HTTP"
+              title={t("health.http")}
               count={data.httpResults.length}
               variant="compact"
               defaultOpen={true}
               status={
                 data.httpResults.some(
-                  (r) =>
-                    !r.success ||
-                    r.testStatus === "error" ||
-                    r.certStatus === "error",
+                  (r) => !r.success || r.testStatus === "error" || r.certStatus === "error"
                 )
                   ? "error"
                   : data.httpResults.some(
-                        (r) =>
-                          r.testStatus === "warning" ||
-                          r.certStatus === "warning",
+                        (r) => r.testStatus === "warning" || r.certStatus === "warning"
                       )
                     ? "warning"
                     : "success"
