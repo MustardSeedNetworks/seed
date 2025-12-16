@@ -33,10 +33,10 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { getAuthHeaders } from "../../hooks/useAuth";
-import { useSettings } from "../../contexts/SettingsContext";
+import { useSettings } from "../../contexts/useSettings";
 import { Gauge } from "../ui/Icons";
 import { SpeedGauge, ProgressRing, PulsingDot } from "../ui/SpeedGauge";
-import { icon as iconTokens, layout, radius } from "../../styles/theme";
+import { icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
 
 // Speedtest types
 interface SpeedtestData {
@@ -471,7 +471,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         <p className="caption font-medium mb-2">{t("performance.internetSpeed")}</p>
 
         {speedtestRunning && speedtestStatus && (
-          <div className={`${layout.inline.spacious} mb-3 p-3 bg-surface-hover ${radius.lg}`}>
+          <div className={`${layout.inline.spacious} mb-3 pad-sm bg-surface-hover ${radius.lg}`}>
             <ProgressRing progress={speedtestStatus.progress} size={56} strokeWidth={5} />
             <div className="flex-1">
               <div className={layout.inline.default}>
@@ -497,7 +497,7 @@ export const PerformanceCard = memo(function PerformanceCard({
 
         {!speedtestRunning && speedtestResult && (
           <div className="mb-3">
-            <div className="flex justify-center gap-6 py-2">
+            <div className={`${layout.flex.center} ${spacing.gap.spacious} py-2`}>
               <SpeedGauge
                 value={speedtestResult.download}
                 label={t("performance.download")}
@@ -543,7 +543,7 @@ export const PerformanceCard = memo(function PerformanceCard({
           <>
             {/* Config Summary */}
             {iperfSettings.server ? (
-              <div className={`caption mb-3 p-2 bg-surface-hover ${radius.default}`}>
+              <div className={`caption mb-3 pad-sm bg-surface-hover ${radius.default}`}>
                 <div className={layout.flex.between}>
                   <span>{t("performance.server")}:</span>
                   <span className="text-text-primary">
@@ -566,7 +566,9 @@ export const PerformanceCard = memo(function PerformanceCard({
 
             {/* Client Status/Results */}
             {iperfClientRunning && iperfClientStatus && (
-              <div className={`${layout.inline.spacious} mb-3 p-3 bg-surface-hover ${radius.lg}`}>
+              <div
+                className={`${layout.inline.spacious} mb-3 pad-sm bg-surface-hover ${radius.lg}`}
+              >
                 <ProgressRing progress={iperfClientStatus.progress} size={56} strokeWidth={5} />
                 <div className="flex-1">
                   <div className={layout.inline.default}>
@@ -593,7 +595,7 @@ export const PerformanceCard = memo(function PerformanceCard({
             {!iperfClientRunning && iperfResult && (
               <div className="mb-3 stack-sm">
                 {iperfResult.direction === "bidirectional" ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 ${spacing.gap.default}`}>
                     <CardValue
                       label={t("performance.download")}
                       value={formatSpeed(iperfResult.downloadBandwidth ?? iperfResult.bandwidth)}
@@ -621,7 +623,7 @@ export const PerformanceCard = memo(function PerformanceCard({
                 )}
 
                 {iperfResult.direction === "bidirectional" ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 ${spacing.gap.default}`}>
                     {iperfResult.downloadTransfer !== undefined && (
                       <CardRow
                         label={t("performance.downloadTransfer")}
@@ -668,7 +670,7 @@ export const PerformanceCard = memo(function PerformanceCard({
             {/* Server status indicator (if enabled) */}
             {iperfSettings.enableServer && (
               <div
-                className={`caption ${layout.flex.between} p-2 bg-surface-hover ${radius.default}`}
+                className={`caption ${layout.flex.between} pad-sm bg-surface-hover ${radius.default}`}
               >
                 <span>{t("performance.serverMode")}</span>
                 <span

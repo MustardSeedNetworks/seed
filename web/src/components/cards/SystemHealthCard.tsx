@@ -27,6 +27,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Server } from "lucide-react";
 import { radius, icon as iconTokens } from "../../styles/theme";
 import { BaseCard } from "./BaseCard";
@@ -54,12 +55,32 @@ interface SystemHealth {
   numCpu: number;
 }
 
+/**
+ * Type-safe getter for byte size units
+ */
+function getSizeUnit(index: number): string {
+  switch (index) {
+    case 0:
+      return "B";
+    case 1:
+      return "KB";
+    case 2:
+      return "MB";
+    case 3:
+      return "GB";
+    case 4:
+      return "TB";
+    default:
+      return index < 0 ? "B" : "TB";
+  }
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+  const unit = getSizeUnit(i);
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${unit}`;
 }
 
 function formatUptime(seconds: number): string {
@@ -94,13 +115,19 @@ function ResourceBar({
   total: number;
 }) {
   const status = getResourceStatus(percent);
-  const barColor = {
-    success: "bg-status-success",
-    warning: "bg-status-warning",
-    error: "bg-status-error",
-    unknown: "bg-text-muted",
-    loading: "bg-text-muted",
-  }[status];
+  const barColor = (() => {
+    switch (status) {
+      case "success":
+        return "bg-status-success";
+      case "warning":
+        return "bg-status-warning";
+      case "error":
+        return "bg-status-error";
+      case "unknown":
+      case "loading":
+        return "bg-text-muted";
+    }
+  })();
 
   return (
     <div className="stack-xs">
@@ -122,9 +149,10 @@ function ResourceBar({
 }
 
 /**
- *
+ * Displays system resource usage with CPU, memory, and disk metrics.
  */
 export function SystemHealthCard() {
+  const { t } = useTranslation("cards");
   const [data, setData] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -145,7 +173,7 @@ export function SystemHealthCard() {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders]);
+  }, []);
 
   useEffect(() => {
     fetchHealth();
@@ -160,7 +188,7 @@ export function SystemHealthCard() {
 
   return (
     <BaseCard
-      title="System Health"
+      title={t("system.title")}
       subtitle={data?.hostname}
       icon={<Server className={iconTokens.size.md} />}
       data={data}
@@ -170,15 +198,15 @@ export function SystemHealthCard() {
     >
       {(health) => (
         <div className="stack">
-          <ResourceBar label="CPU" percent={health.cpuPercent} used={0} total={0} />
+          <ResourceBar label={t("system.cpu")} percent={health.cpuPercent} used={0} total={0} />
           <ResourceBar
-            label="Memory"
+            label={t("system.memory")}
             percent={health.memoryPercent}
             used={health.memoryUsed}
             total={health.memoryTotal}
           />
           <ResourceBar
-            label="Disk"
+            label={t("system.disk")}
             percent={health.diskPercent}
             used={health.diskUsed}
             total={health.diskTotal}
@@ -187,15 +215,19 @@ export function SystemHealthCard() {
           <CardDivider />
 
           <div className="grid grid-cols-2 gap-2">
-            <CardRow label="Uptime" value={formatUptime(health.uptime)} align="left" />
+            <CardRow label={t("system.uptime")} value={formatUptime(health.uptime)} align="left" />
             <CardRow
-              label="Load (1m)"
+              label={t("system.load1m")}
               value={health.loadAvg1.toFixed(2)}
               align="left"
               status={health.loadAvg1 > health.numCpu ? "warning" : undefined}
             />
-            <CardRow label="Goroutines" value={health.goroutines} align="left" />
-            <CardRow label="Process Mem" value={formatBytes(health.processMemory)} align="left" />
+            <CardRow label={t("system.goroutines")} value={health.goroutines} align="left" />
+            <CardRow
+              label={t("system.processMem")}
+              value={formatBytes(health.processMemory)}
+              align="left"
+            />
           </div>
 
           <div className="caption text-center pt-1">

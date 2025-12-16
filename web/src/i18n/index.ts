@@ -29,6 +29,8 @@ import enCards from "@locales/en/cards.json";
 import enSettings from "@locales/en/settings.json";
 import enErrors from "@locales/en/errors.json";
 import enHelp from "@locales/en/help.json";
+import enSetup from "@locales/en/setup.json";
+import enSurvey from "@locales/en/survey.json";
 
 // Import Spanish locale files
 import esCommon from "@locales/es/common.json";
@@ -36,6 +38,8 @@ import esCards from "@locales/es/cards.json";
 import esSettings from "@locales/es/settings.json";
 import esErrors from "@locales/es/errors.json";
 import esHelp from "@locales/es/help.json";
+import esSetup from "@locales/es/setup.json";
+import esSurvey from "@locales/es/survey.json";
 
 /**
  * Available languages configuration.
@@ -50,7 +54,15 @@ export type LanguageCode = (typeof languages)[number]["code"];
 /**
  * Translation namespaces.
  */
-export const namespaces = ["common", "cards", "settings", "errors", "help"] as const;
+export const namespaces = [
+  "common",
+  "cards",
+  "settings",
+  "errors",
+  "help",
+  "setup",
+  "survey",
+] as const;
 
 export type Namespace = (typeof namespaces)[number];
 
@@ -69,6 +81,8 @@ const resources = {
     settings: enSettings,
     errors: enErrors,
     help: enHelp,
+    setup: enSetup,
+    survey: enSurvey,
   },
   es: {
     common: esCommon,
@@ -76,6 +90,8 @@ const resources = {
     settings: esSettings,
     errors: esErrors,
     help: esHelp,
+    setup: esSetup,
+    survey: esSurvey,
   },
 };
 

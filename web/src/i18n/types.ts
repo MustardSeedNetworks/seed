@@ -22,6 +22,8 @@ import type enCards from "@locales/en/cards.json";
 import type enSettings from "@locales/en/settings.json";
 import type enErrors from "@locales/en/errors.json";
 import type enHelp from "@locales/en/help.json";
+import type enSetup from "@locales/en/setup.json";
+import type enSurvey from "@locales/en/survey.json";
 
 /**
  * Type definitions for each namespace.
@@ -31,6 +33,8 @@ export type CardsTranslations = typeof enCards;
 export type SettingsTranslations = typeof enSettings;
 export type ErrorsTranslations = typeof enErrors;
 export type HelpTranslations = typeof enHelp;
+export type SetupTranslations = typeof enSetup;
+export type SurveyTranslations = typeof enSurvey;
 
 /**
  * All translations combined.
@@ -41,6 +45,8 @@ export interface Translations {
   settings: SettingsTranslations;
   errors: ErrorsTranslations;
   help: HelpTranslations;
+  setup: SetupTranslations;
+  survey: SurveyTranslations;
 }
 
 /**
@@ -67,6 +73,8 @@ export type CardsKeys = NestedKeys<CardsTranslations>;
 export type SettingsKeys = NestedKeys<SettingsTranslations>;
 export type ErrorsKeys = NestedKeys<ErrorsTranslations>;
 export type HelpKeys = NestedKeys<HelpTranslations>;
+export type SetupKeys = NestedKeys<SetupTranslations>;
+export type SurveyKeys = NestedKeys<SurveyTranslations>;
 
 /**
  * Declaration merging for react-i18next.

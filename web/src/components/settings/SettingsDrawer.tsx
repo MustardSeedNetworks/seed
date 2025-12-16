@@ -29,9 +29,9 @@ import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../hooks/useTheme";
 import { getAuthHeaders } from "../../hooks/useAuth";
-import { useSettings } from "../../contexts/SettingsContext";
+import { useSettings } from "../../contexts/useSettings";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
-import { icon as iconTokens, radius } from "../../styles/theme";
+import { icon as iconTokens, radius, modal, layout, button, input } from "../../styles/theme";
 import {
   AutoSaveIndicator,
   AppearanceSettings,
@@ -127,7 +127,7 @@ const VLANControl = memo(function VLANControl() {
 
   return (
     <div className="stack-sm">
-      <div className="flex gap-2">
+      <div className={layout.inline.default}>
         <input
           type="number"
           min="1"
@@ -135,20 +135,20 @@ const VLANControl = memo(function VLANControl() {
           value={vlanId}
           onChange={(e) => setVlanId(e.target.value)}
           placeholder={t("network.vlan.placeholder")}
-          className={`flex-1 px-2 py-1.5 bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+          className={`flex-1 ${input.size.sm} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
           disabled={loading}
         />
         <button
           onClick={handleCreate}
           disabled={loading || !vlanId}
-          className={`px-3 py-1.5 bg-brand-primary text-text-inverse ${radius.md} body-small font-medium hover:bg-brand-accent disabled:opacity-50`}
+          className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} body-small font-medium hover:bg-brand-accent disabled:opacity-50`}
         >
           {t("network.vlan.add")}
         </button>
         <button
           onClick={handleDelete}
           disabled={loading || !vlanId}
-          className={`px-3 py-1.5 bg-status-error text-text-inverse ${radius.md} body-small font-medium hover:opacity-80 disabled:opacity-50`}
+          className={`${button.size.sm} bg-status-error text-text-inverse ${radius.md} body-small font-medium hover:opacity-80 disabled:opacity-50`}
         >
           {t("network.vlan.remove")}
         </button>
@@ -203,7 +203,7 @@ const MTUControl = memo(function MTUControl() {
 
   return (
     <div className="stack-sm">
-      <div className="flex gap-2">
+      <div className={layout.inline.default}>
         <input
           type="number"
           min="68"
@@ -211,13 +211,13 @@ const MTUControl = memo(function MTUControl() {
           value={mtu}
           onChange={(e) => setMtu(e.target.value)}
           placeholder={t("network.mtuControl.placeholder")}
-          className={`flex-1 px-2 py-1.5 bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+          className={`flex-1 ${input.size.sm} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
           disabled={loading}
         />
         <button
           onClick={handleApply}
           disabled={loading}
-          className={`px-4 py-1.5 bg-brand-primary text-text-inverse ${radius.md} body-small font-medium hover:bg-brand-accent disabled:opacity-50`}
+          className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} body-small font-medium hover:bg-brand-accent disabled:opacity-50`}
         >
           {loading ? t("network.applying") : t("network.mtuControl.apply")}
         </button>
@@ -1028,7 +1028,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
+      <div className={`fixed inset-0 ${modal.overlay} z-40`} onClick={onClose} aria-hidden="true" />
 
       {/* Drawer - full width on mobile, 384px on larger screens */}
       <div
@@ -1039,7 +1039,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
+        <div
+          className={`${layout.flex.between} pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10`}
+        >
           <div className="stack-xs">
             <h2 id="settings-drawer-title" className="heading-3">
               {t("title")}
@@ -1049,7 +1051,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            className={`p-2.5 ${radius.md} hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised`}
+            className={`${button.size.md} ${radius.md} hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised`}
             aria-label={t("network.closeSettings")}
           >
             <svg

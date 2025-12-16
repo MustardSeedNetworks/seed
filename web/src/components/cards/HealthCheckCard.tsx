@@ -34,7 +34,7 @@ import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Tooltip } from "../ui/Tooltip";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { HTTP_TIMING_HELP } from "../help/HelpContent";
-import { useSettings } from "../../contexts/SettingsContext";
+import { useSettings } from "../../contexts/useSettings";
 import { HeartPulse } from "../ui/Icons";
 import { timing, icon as iconTokens, layout, radius } from "../../styles/theme";
 

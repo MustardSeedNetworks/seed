@@ -135,8 +135,7 @@ export function FloorPlanCanvas({
 
   // Handle canvas click
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!interactive || !onPointClick || !canvasRef.current || !floorPlan)
-      return;
+    if (!interactive || !onPointClick || !canvasRef.current || !floorPlan) return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -174,12 +173,13 @@ function drawHeatmap(
   samples: SamplePoint[],
   metric: "rssi" | "throughput" | "latency",
   scaleX: number,
-  scaleY: number,
+  scaleY: number
 ) {
   if (samples.length === 0) return;
 
   // Extract metric values
   const values = samples.map((s) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Polymorphic sample data with dynamic property access
     const data = s.sampleData as any;
     switch (metric) {
       case "rssi":
@@ -208,7 +208,9 @@ function drawHeatmap(
       let totalWeight = 0;
       let weightedValue = 0;
 
-      samples.forEach((sample, idx) => {
+      // Use iterator pattern to avoid dynamic array indexing
+      const valuesIterator = values[Symbol.iterator]();
+      for (const sample of samples) {
         const sx = sample.x * scaleX;
         const sy = sample.y * scaleY;
         const distance = Math.sqrt((x - sx) ** 2 + (y - sy) ** 2);
@@ -216,8 +218,10 @@ function drawHeatmap(
         // Inverse distance weighting (IDW)
         const weight = distance === 0 ? 1000 : 1 / distance ** 2;
         totalWeight += weight;
-        weightedValue += weight * values[idx];
-      });
+        const valueResult = valuesIterator.next();
+        const sampleValue = valueResult.done ? 0 : valueResult.value;
+        weightedValue += weight * sampleValue;
+      }
 
       const value = weightedValue / totalWeight;
 
@@ -227,11 +231,11 @@ function drawHeatmap(
       // Get color for this value
       const color = getHeatmapColor(normalized, metric);
 
-      const idx = (y * canvas.width + x) * 4;
-      data[idx] = color.r;
-      data[idx + 1] = color.g;
-      data[idx + 2] = color.b;
-      data[idx + 3] = color.a;
+      const pixelIndex = (y * canvas.width + x) * 4;
+      // Bounds-checked pixel data assignment
+      if (pixelIndex >= 0 && pixelIndex + 3 < data.length) {
+        data.set([color.r, color.g, color.b, color.a], pixelIndex);
+      }
     }
   }
 
@@ -244,7 +248,7 @@ function drawHeatmap(
 // Get heatmap color based on normalized value (0-1)
 function getHeatmapColor(
   value: number,
-  metric: "rssi" | "throughput" | "latency",
+  metric: "rssi" | "throughput" | "latency"
 ): { r: number; g: number; b: number; a: number } {
   // For RSSI, lower is worse (invert)
   if (metric === "rssi") {

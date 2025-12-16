@@ -1,8 +1,8 @@
 /**
  * Toast Notification System
- * 
+ *
  * Provides non-modal notifications for user feedback (success, error, warning, info).
- * 
+ *
  * Features:
  * - Multiple toast types with color coding (success, error, warning, info)
  * - Auto-dismiss with configurable duration (default 5s)
@@ -11,75 +11,37 @@
  * - Smooth animations (fade in/out)
  * - Accessible with ARIA labels
  * - Custom hooks for easy integration
- * 
+ *
  * Usage:
  * ```tsx
  * // Wrap app with provider:
  * <ToastProvider>
  *   <App />
  * </ToastProvider>
- * 
+ *
  * // Use in components:
  * const { addToast } = useToast();
  * addToast('Operation completed', 'success', 3000);
  * addToast('An error occurred', 'error');
  * ```
- * 
+ *
  * Toast notifications appear in the bottom-right corner and automatically
  * dismiss after the specified duration.
  */
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-  createContext,
-  useContext,
-  ReactNode,
-} from "react";
-import { ToastType, typeStyles, icons } from "./Toast.constants.tsx";
-import {
-  cn,
-  layout,
-  radius,
-  icon as iconTokens,
-} from "../../styles/theme";
+import { useState, useEffect, useCallback, ReactNode } from "react";
+import { typeStyles, icons } from "./Toast.constants.tsx";
+import { ToastContext, ToastType } from "./toastContext";
+import { cn, layout, radius, icon as iconTokens, toast as toastTokens } from "../../styles/theme";
 
 /**
  * Individual toast notification
  */
 interface Toast {
-  id: string;          // Unique identifier
-  message: string;     // Notification message text
-  type: ToastType;     // Type (success, error, warning, info)
-  duration?: number;   // Auto-dismiss time in ms (0 = manual dismiss)
-}
-
-/**
- * Context API value for toast management
- */
-interface ToastContextType {
-  /** Add new toast notification */
-  addToast: (message: string, type?: ToastType, duration?: number) => void;
-  /** Remove specific toast by ID */
-  removeToast: (id: string) => void;
-}
-
-/** React Context for toast notifications */
-const ToastContext = createContext<ToastContextType | null>(null);
-
-/**
- * Hook to access toast functions in any component.
- * 
- * @returns Toast context value with addToast and removeToast
- * @throws Error if used outside ToastProvider
- */
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
-  }
-  return context;
+  id: string; // Unique identifier
+  message: string; // Notification message text
+  type: ToastType; // Type (success, error, warning, info)
+  duration?: number; // Auto-dismiss time in ms (0 = manual dismiss)
 }
 
 /**
@@ -96,13 +58,10 @@ interface ToastProviderProps {
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback(
-    (message: string, type: ToastType = "info", duration = 5000) => {
-      const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      setToasts((prev) => [...prev, { id, message, type, duration }]);
-    },
-    [],
-  );
+  const addToast = useCallback((message: string, type: ToastType = "info", duration = 5000) => {
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setToasts((prev) => [...prev, { id, message, type, duration }]);
+  }, []);
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
@@ -126,17 +85,10 @@ function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
     <div
       aria-live="polite"
       aria-label="Notifications"
-      className={cn(
-        "fixed bottom-20 right-4 z-50 max-w-sm",
-        layout.stack.default,
-      )}
+      className={cn("fixed bottom-20 right-4 z-50 max-w-sm", layout.stack.default)}
     >
       {toasts.map((toast) => (
-        <ToastItem
-          key={toast.id}
-          toast={toast}
-          onClose={() => removeToast(toast.id)}
-        />
+        <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
     </div>
   );
@@ -160,9 +112,10 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
       role="alert"
       className={cn(
         layout.inline.comfortable,
-        "px-4 py-3 shadow-lg animate-slide-in",
+        toastTokens.container,
+        toastTokens.animation,
         radius.lg,
-        typeStyles[toast.type],
+        typeStyles[toast.type]
       )}
       aria-label={`Notification: ${toast.type}`}
     >
@@ -172,7 +125,7 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
         onClick={onClose}
         className={cn(
           "p-1 hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border",
-          radius.default,
+          radius.default
         )}
         aria-label="Dismiss notification"
       >

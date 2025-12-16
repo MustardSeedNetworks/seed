@@ -9,7 +9,13 @@ import {
   SaveStatus,
 } from "../../../types/settings";
 import { generateId } from "../../../utils/id";
-import { layout, icon as iconTokens, radius, input as inputTokens } from "../../../styles/theme";
+import {
+  layout,
+  icon as iconTokens,
+  radius,
+  input as inputTokens,
+  spacing,
+} from "../../../styles/theme";
 
 interface SNMPSettingsProps {
   snmpSettings: SNMPSettingsType;
@@ -217,7 +223,7 @@ export const SNMPSettings = memo(function SNMPSettings({
           <p className="caption text-text-muted mb-2">{t("snmp.communityDesc")}</p>
           <div className="flex gap-2 mb-2">
             <label className="sr-only" htmlFor="snmp-community-new">
-              New community string
+              {t("snmp.communityString")}
             </label>
             <input
               id="snmp-community-new"
@@ -292,7 +298,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                 </div>
               </div>
               {expandedCredential === cred.id && (
-                <div className="p-3 bg-surface-hover stack-sm">
+                <div className={`${spacing.pad.sm} bg-surface-hover stack-sm`}>
                   {/* Name */}
                   <div>
                     <label className="caption text-text-muted" htmlFor={`cred-name-${cred.id}`}>

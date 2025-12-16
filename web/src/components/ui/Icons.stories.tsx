@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   // Card header icons
   Activity,
@@ -89,8 +89,8 @@ import {
   // Settings icons
   SlidersHorizontal,
   Palette,
-  ICON_SIZES,
-} from './Icons';
+} from "./Icons";
+import { ICON_SIZES } from "./iconConfig";
 
 /**
  * Icon Library showcases all available icons re-exported from lucide-react.
@@ -104,17 +104,17 @@ import {
  * Always import icons from this module instead of directly from lucide-react.
  */
 const meta: Meta = {
-  title: 'UI/Icons',
+  title: "UI/Icons",
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Centralized icon library re-exporting Lucide React icons with consistent naming and size presets.',
+          "Centralized icon library re-exporting Lucide React icons with consistent naming and size presets.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;
@@ -265,7 +265,8 @@ export const Sizes: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Available size presets: xs (w-3 h-3), sm (w-4 h-4), md (w-5 h-5), lg (w-6 h-6), xl (w-8 h-8).',
+        story:
+          "Available size presets: xs (w-3 h-3), sm (w-4 h-4), md (w-5 h-5), lg (w-6 h-6), xl (w-8 h-8).",
       },
     },
   },
@@ -415,7 +416,9 @@ export const CardHeaders: Story = {
 function IconCategory({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h4 className="heading-4 text-text-primary mb-3 border-b border-surface-border pb-2">{title}</h4>
+      <h4 className="heading-4 text-text-primary mb-3 border-b border-surface-border pb-2">
+        {title}
+      </h4>
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4">{children}</div>
     </div>
   );

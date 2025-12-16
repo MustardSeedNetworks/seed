@@ -1,8 +1,8 @@
 /**
  * Card Component
- * 
+ *
  * Base card container used throughout the application for displaying information.
- * 
+ *
  * Features:
  * - Status badge with color coding (success, warning, error, loading, unknown)
  * - Header with title, optional subtitle, icon, and custom actions
@@ -11,7 +11,7 @@
  * - Responsive padding (mobile and desktop)
  * - Smooth transitions and hover effects
  * - Focus ring for keyboard navigation
- * 
+ *
  * Usage:
  * ```tsx
  * <Card
@@ -29,12 +29,24 @@
  */
 
 import { ReactNode } from "react";
-import { StatusBadge, statusConfig, Status } from "./StatusBadge";
-import { cn, card, layout, icon as iconTokens } from "../../styles/theme";
+import { StatusBadge } from "./StatusBadge";
+import { Status, getStatusConfig } from "./statusConfig";
+import { cn, card, layout, icon as iconTokens, spacing } from "../../styles/theme";
 
-// Re-export Status and statusConfig for backwards compatibility
+// Re-export Status type for convenience (types don't affect react-refresh)
 export type { Status };
-export { statusConfig };
+
+// Type-safe size class getter
+function getSizeClass(size: "sm" | "md" | "lg") {
+  switch (size) {
+    case "sm":
+      return "body-small";
+    case "md":
+      return "body font-medium leading-snug";
+    case "lg":
+      return "body-large font-semibold leading-snug";
+  }
+}
 
 /**
  * Props for the Card component
@@ -93,9 +105,9 @@ export function Card({
       className={cn(
         card.base,
         card.variant.default,
-        "p-3 sm:p-4 transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none",
+        `${spacing.pad.sm} sm:${spacing.pad.default} transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none`,
         isInteractive && "cursor-pointer active:scale-[0.98]",
-        className,
+        className
       )}
       onClick={onClick}
       onKeyDown={handleKeyDown}
@@ -104,9 +116,7 @@ export function Card({
       <div className={layout.flex.between}>
         <div className={layout.inline.default}>
           {icon && (
-            <span className={cn("text-text-muted shrink-0", iconTokens.size.md)}>
-              {icon}
-            </span>
+            <span className={cn("text-text-muted shrink-0", iconTokens.size.md)}>{icon}</span>
           )}
           <div className={layout.flex.col}>
             <h3 className="heading-4 font-display">{title}</h3>
@@ -133,6 +143,9 @@ interface CardValueProps {
   allowWrap?: boolean;
 }
 
+/**
+ * Displays a prominent value with optional label, unit, and status indicator.
+ */
 export function CardValue({
   label,
   value,
@@ -142,38 +155,23 @@ export function CardValue({
   mono = false,
   allowWrap = false,
 }: CardValueProps) {
-  const sizeClasses = {
-    sm: "body-small",
-    md: "body font-medium leading-snug",
-    lg: "body-large font-semibold leading-snug",
-  };
-
+  const statusColorClass = status ? getStatusConfig(status).color : "text-text-primary";
   const textMods = [
-    status ? statusConfig[status].color : "text-text-primary",
+    statusColorClass,
     mono ? "font-mono tabular-nums" : "",
     allowWrap ? "break-all whitespace-pre-wrap" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
-  const statusIcon =
-    status && statusConfig[status] ? statusConfig[status].icon : null;
+  const statusIcon = status ? getStatusConfig(status).icon : null;
 
   return (
     <div>
       {label && <p className="caption mb-1">{label}</p>}
-      <p
-        className={cn(sizeClasses[size], textMods, layout.inline.tight)}
-        data-testid="card-value"
-      >
+      <p className={cn(getSizeClass(size), textMods, layout.inline.tight)} data-testid="card-value">
         {statusIcon && (
-          <span
-            className={cn(
-              layout.flex.center,
-              iconTokens.size.xs,
-              "shrink-0 text-current",
-            )}
-          >
+          <span className={cn(layout.flex.center, iconTokens.size.xs, "shrink-0 text-current")}>
             {statusIcon}
           </span>
         )}
@@ -195,6 +193,9 @@ interface CardRowProps {
   align?: "left" | "right";
 }
 
+/**
+ * Displays a label-value pair in a horizontal row with optional status indicator.
+ */
 export function CardRow({
   label,
   value,
@@ -203,8 +204,8 @@ export function CardRow({
   mono = false,
   align = "right",
 }: CardRowProps) {
-  const statusIcon =
-    status && statusConfig[status] ? statusConfig[status].icon : null;
+  const resolvedStatus = status ? getStatusConfig(status) : null;
+  const statusIcon = resolvedStatus?.icon ?? null;
   const justifyClass = align === "right" ? "justify-end" : "justify-start";
 
   return (
@@ -212,7 +213,7 @@ export function CardRow({
       className={cn(
         "flex justify-between py-1",
         layout.inline.default,
-        wrap ? "items-start" : "items-center",
+        wrap ? "items-start" : "items-center"
       )}
     >
       <span className="body-small shrink-0">{label}</span>
@@ -224,15 +225,13 @@ export function CardRow({
           align === "right" ? "text-right" : "text-left",
           wrap ? "break-all whitespace-pre-wrap" : "truncate",
           mono && "font-mono tabular-nums",
-          status ? statusConfig[status].color : "text-text-primary",
+          resolvedStatus?.color ?? "text-text-primary"
         )}
         title={String(value)}
         data-testid="card-row-value"
       >
         {statusIcon && (
-          <span className={cn(iconTokens.size.xs, "shrink-0 text-current")}>
-            {statusIcon}
-          </span>
+          <span className={cn(iconTokens.size.xs, "shrink-0 text-current")}>{statusIcon}</span>
         )}
         <span>{value}</span>
       </span>
@@ -244,6 +243,9 @@ interface CardDividerProps {
   className?: string;
 }
 
+/**
+ * Horizontal divider line for separating card sections.
+ */
 export function CardDivider({ className = "" }: CardDividerProps) {
   return <hr className={cn("border-surface-border my-3", className)} />;
 }

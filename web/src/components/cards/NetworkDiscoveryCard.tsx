@@ -36,6 +36,9 @@ import {
   category as categoryTheme,
   severity as severityTheme,
   radius,
+  icon as iconTokens,
+  cn,
+  spacing,
 } from "../../styles/theme";
 
 export interface LLDPInfo {
@@ -192,7 +195,9 @@ function DeviceSearchBar({
     <div className="stack-sm">
       {/* Search input */}
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+        <Search
+          className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${iconTokens.size.sm} text-text-muted pointer-events-none`}
+        />
         <input
           type="text"
           value={searchQuery}
@@ -207,7 +212,7 @@ function DeviceSearchBar({
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
             aria-label={t("discovery.clearSearch")}
           >
-            <X className="w-4 h-4" />
+            <X className={iconTokens.size.sm} />
           </button>
         )}
       </div>
@@ -236,9 +241,9 @@ function DeviceSearchBar({
                     : t("discovery.sortSeen")}
               {sortField === field &&
                 (sortDirection === "asc" ? (
-                  <ChevronUp className="w-3 h-3" />
+                  <ChevronUp className={iconTokens.size.xs} />
                 ) : (
-                  <ChevronDown className="w-3 h-3" />
+                  <ChevronDown className={iconTokens.size.xs} />
                 ))}
             </button>
           ))}
@@ -274,20 +279,31 @@ function formatLastSeen(
 
 // Discovery method colors - from theme tokens (dark mode aware)
 // These use colored backgrounds for visual distinction between methods
-const discoveryMethodColors: Record<DiscoveryMethod, string> = {
-  arp: discoveryMethodTheme.arp,
-  ndp: discoveryMethodTheme.ndp,
-  lldp: discoveryMethodTheme.lldp,
-  cdp: discoveryMethodTheme.cdp,
-  edp: discoveryMethodTheme.edp,
-  mdns: discoveryMethodTheme.mdns,
-  ping: discoveryMethodTheme.icmp, // ping uses ICMP
-};
+
+/** Type-safe getter for discovery method colors */
+function getMethodColor(method: DiscoveryMethod): string {
+  switch (method) {
+    case "arp":
+      return discoveryMethodTheme.arp;
+    case "ndp":
+      return discoveryMethodTheme.ndp;
+    case "lldp":
+      return discoveryMethodTheme.lldp;
+    case "cdp":
+      return discoveryMethodTheme.cdp;
+    case "edp":
+      return discoveryMethodTheme.edp;
+    case "mdns":
+      return discoveryMethodTheme.mdns;
+    case "ping":
+      return discoveryMethodTheme.icmp;
+  }
+}
 
 function MethodBadge({ method }: { method: DiscoveryMethod }) {
   return (
     <span
-      className={`px-1.5 py-0.5 ${radius.md} caption font-medium uppercase ${discoveryMethodColors[method]}`}
+      className={`px-1.5 py-0.5 ${radius.md} caption font-medium uppercase ${getMethodColor(method)}`}
     >
       {method}
     </span>
@@ -295,24 +311,25 @@ function MethodBadge({ method }: { method: DiscoveryMethod }) {
 }
 
 // Icon mapping for device profile icons - maps service names to Lucide icons
-const SERVICE_ICONS: Record<string, LucideIcon> = {
-  ssh: Terminal,
-  telnet: Terminal,
-  web: Globe,
-  "web-secure": Lock,
-  ftp: FileText,
-  mail: Mail,
-  dns: Globe,
-  snmp: Server,
-  database: Database,
-  cache: Container,
-  printer: Printer,
-  router: Router,
-  switch: Server,
-  firewall: Shield,
-  storage: HardDrive,
-  server: Server,
-};
+// Using Map for type-safe dynamic key lookups
+const SERVICE_ICONS_MAP = new Map<string, LucideIcon>([
+  ["ssh", Terminal],
+  ["telnet", Terminal],
+  ["web", Globe],
+  ["web-secure", Lock],
+  ["ftp", FileText],
+  ["mail", Mail],
+  ["dns", Globe],
+  ["snmp", Server],
+  ["database", Database],
+  ["cache", Container],
+  ["printer", Printer],
+  ["router", Router],
+  ["switch", Server],
+  ["firewall", Shield],
+  ["storage", HardDrive],
+  ["server", Server],
+]);
 
 function ProfileIcons({ icons, deviceType }: { icons?: string[]; deviceType?: string }) {
   if (!icons || icons.length === 0) return null;
@@ -320,7 +337,7 @@ function ProfileIcons({ icons, deviceType }: { icons?: string[]; deviceType?: st
   return (
     <div className="flex items-center gap-0.5 flex-wrap">
       {icons.slice(0, 5).map((icon) => {
-        const IconComponent = SERVICE_ICONS[icon];
+        const IconComponent = SERVICE_ICONS_MAP.get(icon);
         return (
           <span
             key={icon}
@@ -328,7 +345,7 @@ function ProfileIcons({ icons, deviceType }: { icons?: string[]; deviceType?: st
             title={`${icon}${deviceType ? ` (${deviceType})` : ""}`}
           >
             {IconComponent ? (
-              <IconComponent className="w-3 h-3" />
+              <IconComponent className={iconTokens.size.xs} />
             ) : (
               <span className="text-[10px] font-medium">{icon[0]?.toUpperCase()}</span>
             )}
@@ -455,24 +472,24 @@ function DiscoverySummary({
   ].filter((s) => s.count > 0);
 
   return (
-    <div className={`bg-surface-hover ${radius.md} p-3 stack-sm`}>
+    <div className={`bg-surface-hover ${radius.md} ${spacing.pad.sm} stack-sm`}>
       {/* Status row */}
       <div className="flex items-center justify-between body-small">
         <div className="flex items-center gap-2">
           {status.scanning ? (
             <>
-              <RefreshCw className="w-4 h-4 text-status-info animate-spin" />
+              <RefreshCw className={cn(iconTokens.size.sm, "text-status-info animate-spin")} />
               <span className="text-status-info font-medium">{t("discovery.scanning")}</span>
             </>
           ) : (
             <>
-              <CheckCircle className="w-4 h-4 text-status-success" />
+              <CheckCircle className={cn(iconTokens.size.sm, "text-status-success")} />
               <span className="text-status-success font-medium">{t("discovery.complete")}</span>
             </>
           )}
         </div>
         <div className="flex items-center gap-1.5 text-text-muted">
-          <Clock className="w-3.5 h-3.5" />
+          <Clock className={iconTokens.size.sm} />
           <span className="caption">{formatLastSeen(status.lastScan, t)}</span>
         </div>
       </div>
@@ -492,7 +509,7 @@ function DiscoverySummary({
         <div className="flex items-center gap-3 flex-wrap pt-1">
           {stats.map(({ icon: Icon, label, count, color }) => (
             <div key={label} className="flex items-center gap-1" title={`${count} ${label}`}>
-              <Icon className={`w-3.5 h-3.5 ${color}`} />
+              <Icon className={cn(iconTokens.size.sm, color)} />
               <span className="caption text-text-secondary">{count}</span>
             </div>
           ))}
@@ -502,32 +519,32 @@ function DiscoverySummary({
   );
 }
 
-// Common port to service name mapping
-const PORT_SERVICES: Record<number, string> = {
-  21: "FTP",
-  22: "SSH",
-  23: "Telnet",
-  25: "SMTP",
-  53: "DNS",
-  80: "HTTP",
-  110: "POP3",
-  143: "IMAP",
-  443: "HTTPS",
-  445: "SMB",
-  993: "IMAPS",
-  995: "POP3S",
-  3306: "MySQL",
-  3389: "RDP",
-  5432: "PostgreSQL",
-  5900: "VNC",
-  6379: "Redis",
-  8080: "HTTP-Alt",
-  8443: "HTTPS-Alt",
-  27017: "MongoDB",
-};
+// Common port to service name mapping - using Map for type-safe lookups
+const PORT_SERVICES_MAP = new Map<number, string>([
+  [21, "FTP"],
+  [22, "SSH"],
+  [23, "Telnet"],
+  [25, "SMTP"],
+  [53, "DNS"],
+  [80, "HTTP"],
+  [110, "POP3"],
+  [143, "IMAP"],
+  [443, "HTTPS"],
+  [445, "SMB"],
+  [993, "IMAPS"],
+  [995, "POP3S"],
+  [3306, "MySQL"],
+  [3389, "RDP"],
+  [5432, "PostgreSQL"],
+  [5900, "VNC"],
+  [6379, "Redis"],
+  [8080, "HTTP-Alt"],
+  [8443, "HTTPS-Alt"],
+  [27017, "MongoDB"],
+]);
 
 function getServiceName(port: number): string {
-  return PORT_SERVICES[port] || `Port ${port}`;
+  return PORT_SERVICES_MAP.get(port) || `Port ${port}`;
 }
 
 function DeviceRow({
@@ -565,7 +582,7 @@ function DeviceRow({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full p-2 sm:p-3 text-left hover:bg-surface-hover transition-colors focus:outline-none focus:ring-1 focus:ring-brand-primary"
+        className={`w-full p-2 sm:${spacing.pad.sm} text-left hover:bg-surface-hover transition-colors focus:outline-none focus:ring-1 focus:ring-brand-primary`}
       >
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -614,7 +631,7 @@ function DeviceRow({
                   }`}
                   title={t("discovery.clickViewVulnerabilities")}
                 >
-                  <AlertTriangle className="w-3 h-3" />
+                  <AlertTriangle className={iconTokens.size.xs} />
                   {device.vulnerabilities.count} CVE
                 </button>
               )}
@@ -1036,11 +1053,18 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       if (b.discoveryMethod.length !== a.discoveryMethod.length) {
         return b.discoveryMethod.length - a.discoveryMethod.length;
       }
-      // Then by IP numerically
+      // Then by IP numerically - compare each octet
       const ipA = a.ip.split(".").map(Number);
       const ipB = b.ip.split(".").map(Number);
-      for (let i = 0; i < 4; i++) {
-        if (ipA[i] !== ipB[i]) return (ipA[i] || 0) - (ipB[i] || 0);
+      // Compare octets using zip iterator pattern
+      const ipIterA = ipA[Symbol.iterator]();
+      const ipIterB = ipB[Symbol.iterator]();
+      let resultA = ipIterA.next();
+      let resultB = ipIterB.next();
+      while (!resultA.done && !resultB.done) {
+        if (resultA.value !== resultB.value) return resultA.value - resultB.value;
+        resultA = ipIterA.next();
+        resultB = ipIterB.next();
       }
       return 0;
     });
@@ -1049,7 +1073,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   // Early returns for loading/error states (after all hooks)
   if (loading) {
     return (
-      <Card title={t("discovery.title")} icon={<ScanSearch className="w-5 h-5" />} status="loading">
+      <Card
+        title={t("discovery.title")}
+        icon={<ScanSearch className={iconTokens.size.md} />}
+        status="loading"
+      >
         <CardValue value={t("discovery.scanning")} size="lg" />
       </Card>
     );
@@ -1057,7 +1085,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
   if (!data || !status) {
     return (
-      <Card title={t("discovery.title")} icon={<ScanSearch className="w-5 h-5" />} status="unknown">
+      <Card
+        title={t("discovery.title")}
+        icon={<ScanSearch className={iconTokens.size.md} />}
+        status="unknown"
+      >
         <CardValue value={t("discovery.noData")} size="md" />
         {onScan && (
           <button
@@ -1090,7 +1122,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   return (
     <Card
       title={t("discovery.title")}
-      icon={<ScanSearch className="w-5 h-5" />}
+      icon={<ScanSearch className={iconTokens.size.md} />}
       status={cardStatus}
       headerAction={
         onScan && (
@@ -1102,7 +1134,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           >
             {status.scanning ? (
               <>
-                <RefreshCw className="w-3 h-3 animate-spin" />
+                <RefreshCw className={cn(iconTokens.size.xs, "animate-spin")} />
                 {t("discovery.scan")}
               </>
             ) : (

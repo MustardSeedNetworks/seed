@@ -32,10 +32,11 @@ import { useTranslation } from "react-i18next";
 import { useWebSocket, Message, CardUpdate } from "./hooks/useWebSocket";
 import { useAuth, getAuthHeaders } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
-import { useSettings } from "./contexts/SettingsContext";
+import { useSettings } from "./contexts/useSettings";
 import { SettingsDrawer } from "./components/settings/SettingsDrawer";
 import { ImprovedHelpModal } from "./components/help/ImprovedHelpModal";
-import { SetupWizard, checkSetupStatus } from "./components/setup/SetupWizard";
+import { SetupWizard } from "./components/setup/SetupWizard";
+import { checkSetupStatus } from "./components/setup/setupApi";
 
 // API base URL - configurable via environment variable
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -64,7 +65,15 @@ import { HealthCheckCard } from "./components/cards/HealthCheckCard";
 import { SystemHealthCard } from "./components/cards/SystemHealthCard";
 import { WiFiSurveyCard } from "./components/cards/WiFiSurveyCard";
 import { FAB } from "./components/ui/FAB";
-import { radius } from "./styles/theme";
+import {
+  radius,
+  icon as iconTokens,
+  layout,
+  spacing,
+  button,
+  input,
+  section,
+} from "./styles/theme";
 
 /**
  * Centralized state for all network monitoring cards.
@@ -898,10 +907,12 @@ function App() {
     <div className="min-h-screen bg-surface-base text-text-primary font-body">
       {/* Header */}
       <header className="border-b border-surface-border bg-surface-raised">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between gap-2">
+        <div
+          className={`${section.width.xl} mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 ${layout.flex.between} ${spacing.gap.compact}`}
+        >
           {/* Logo and title - hide title on very small screens */}
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xl font-bold text-brand-primary shrink-0">◉</span>
+          <div className={`${layout.inline.default} min-w-0`}>
+            <span className="heading-3 text-brand-primary shrink-0">◉</span>
             <h1 className="heading-4 hidden xs:block sm:block">{t("app.title")}</h1>
             <div className="hidden sm:block">
               <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
@@ -916,7 +927,7 @@ function App() {
             </label>
             <select
               id="interface-select"
-              className="rounded-md border border-surface-border bg-surface-base px-2 py-1.5 body-small min-w-0 max-w-25 sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              className={`${radius.md} border border-surface-border bg-surface-base px-2 py-1.5 body-small min-w-0 max-w-25 sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary`}
               value={currentInterface}
               onChange={(e) => changeInterface(e.target.value)}
               aria-label={t("accessibility.selectInterface")}
@@ -943,18 +954,28 @@ function App() {
 
             {/* Touch-friendly buttons with larger tap targets */}
             <button
-              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
               onClick={toggleTheme}
               aria-label={
                 isDark ? t("accessibility.switchToLightMode") : t("accessibility.switchToDarkMode")
               }
             >
               {isDark ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg
+                  className={iconTokens.size.md}
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
                   <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg
+                  className={iconTokens.size.md}
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
                   <path
                     fillRule="evenodd"
                     d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
@@ -964,12 +985,12 @@ function App() {
               )}
             </button>
             <button
-              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
               onClick={() => setHelpOpen(true)}
               aria-label={t("accessibility.openHelp")}
             >
               <svg
-                className="w-5 h-5"
+                className={iconTokens.size.md}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -984,12 +1005,12 @@ function App() {
               </svg>
             </button>
             <button
-              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
               onClick={() => setSettingsOpen(true)}
               aria-label={t("accessibility.openSettings")}
             >
               <svg
-                className="w-5 h-5"
+                className={iconTokens.size.md}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1010,7 +1031,7 @@ function App() {
               </svg>
             </button>
             <button
-              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation"
+              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation`}
               onClick={logout}
               aria-label={t("buttons.logout")}
             >
@@ -1018,12 +1039,12 @@ function App() {
             </button>
             {/* Mobile logout icon */}
             <button
-              className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation"
+              className={`${radius.md} p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation`}
               onClick={logout}
               aria-label={t("buttons.logout")}
             >
               <svg
-                className="w-5 h-5"
+                className={iconTokens.size.md}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1041,20 +1062,25 @@ function App() {
         </div>
 
         {/* Mobile connection status - show below header on small screens */}
-        <div className="sm:hidden mt-2 flex items-center justify-center px-3 pb-2">
+        <div className={`sm:hidden mt-2 ${layout.flex.center} px-3 pb-2`}>
           <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
         </div>
       </header>
 
       {/* Main content */}
-      <main className="py-4 sm:py-6">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className={spacing.mainPadding.y}>
+        <div className={`${section.width.xl} mx-auto ${spacing.mainPadding.x}`}>
           {/* Section: Primary Connectivity */}
-          <section aria-labelledby="connectivity-heading" className="mb-6">
-            <h2 id="connectivity-heading" className="section-title mb-3">
+          <section aria-labelledby="connectivity-heading" className={spacing.margin.bottom.section}>
+            <h2
+              id="connectivity-heading"
+              className={`section-title ${spacing.margin.bottom.heading}`}
+            >
               {t("sections.connectivity")}
             </h2>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
+            >
               <LinkCard data={cards.link} loading={loading} />
               {cards.cable?.supported && <CableCard data={cards.cable} loading={loading} />}
               {isWifi && cards.wifi?.ssid && (
@@ -1065,11 +1091,13 @@ function App() {
           </section>
 
           {/* Section: Network Services */}
-          <section aria-labelledby="network-heading" className="mb-6">
-            <h2 id="network-heading" className="section-title mb-3">
+          <section aria-labelledby="network-heading" className={spacing.margin.bottom.section}>
+            <h2 id="network-heading" className={`section-title ${spacing.margin.bottom.heading}`}>
               {t("sections.network")}
             </h2>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
+            >
               <NetworkCard
                 data={cards.dhcp}
                 publicip={cards.publicip}
@@ -1082,11 +1110,16 @@ function App() {
           </section>
 
           {/* Section: Testing & Discovery */}
-          <section aria-labelledby="performance-heading" className="mb-6">
-            <h2 id="performance-heading" className="section-title mb-3">
+          <section aria-labelledby="performance-heading" className={spacing.margin.bottom.section}>
+            <h2
+              id="performance-heading"
+              className={`section-title ${spacing.margin.bottom.heading}`}
+            >
               {t("sections.testingDiscovery")}
             </h2>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
+            >
               <HealthCheckCard loading={loading} />
               {fabOptions.runPerformance && (
                 <PerformanceCard
@@ -1107,21 +1140,25 @@ function App() {
           </section>
 
           {/* Section: System */}
-          <section aria-labelledby="system-heading" className="mb-6">
-            <h2 id="system-heading" className="section-title mb-3">
+          <section aria-labelledby="system-heading" className={spacing.margin.bottom.section}>
+            <h2 id="system-heading" className={`section-title ${spacing.margin.bottom.heading}`}>
               {t("sections.system")}
             </h2>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
+            >
               <SystemHealthCard />
             </div>
           </section>
 
           {/* Footer notice */}
-          <footer className="mt-8 rounded-md border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
+          <footer
+            className={`${spacing.margin.top.section} ${radius.md} border border-surface-border bg-surface-raised pad sm:pad-lg text-center`}
+          >
             <h2 className="heading-4 text-text-muted">
               {t("app.title")} {appVersion}
             </h2>
-            <p className="mt-2 body-small text-text-muted">
+            <p className={`${spacing.margin.top.inline} body-small text-text-muted`}>
               {t("footer.runTestsHint")}
               <span className="hidden sm:inline">
                 <br />
@@ -1166,7 +1203,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-surface-base flex items-center justify-center p-4">
+    <div className={`min-h-screen bg-surface-base ${layout.flex.center} pad`}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto text-brand-primary">
@@ -1262,9 +1299,9 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
 
         <form
           onSubmit={handleSubmit}
-          className="bg-surface-raised rounded-md border border-surface-border p-6"
+          className={`bg-surface-raised ${radius.md} border border-surface-border pad-lg stack-lg`}
         >
-          <div className="mb-4">
+          <div>
             <label htmlFor="login-username" className="label block mb-1">
               {t("labels.username")}
             </label>
@@ -1273,13 +1310,13 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
+              className={`w-full ${input.size.md} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary`}
               placeholder="admin"
               required
             />
           </div>
 
-          <div className="mb-6">
+          <div>
             <label htmlFor="login-password" className="label block mb-1">
               {t("labels.password")}
             </label>
@@ -1288,7 +1325,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
+              className={`w-full ${input.size.md} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary`}
               placeholder="••••••••"
               required
             />
@@ -1298,7 +1335,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             <div
               role="alert"
               aria-live="assertive"
-              className="mb-4 p-3 bg-status-error/10 border border-status-error/20 rounded-md text-status-error body-small"
+              className={`pad-sm bg-status-error/10 border border-status-error/20 ${radius.md} text-status-error body-small`}
             >
               {error}
             </div>
@@ -1307,14 +1344,12 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded-md font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
+            className={`w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
           >
             {isLoading ? t("status.loggingIn") : t("buttons.login")}
           </button>
 
-          <p className="mt-4 caption text-text-muted text-center">
-            {t("login.defaultCredentials")}
-          </p>
+          <p className="caption text-text-muted text-center">{t("login.defaultCredentials")}</p>
         </form>
       </div>
     </div>
@@ -1329,35 +1364,48 @@ interface ConnectionStatusProps {
 function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
   const { t } = useTranslation("common");
 
-  const statusLabels: Record<typeof status, string> = {
-    connecting: t("status.connecting"),
-    connected: t("status.connected"),
-    disconnected: t("status.disconnected"),
-    error: t("status.error"),
-  };
+  // Type-safe getters to avoid object injection
+  function getStatusLabel(s: typeof status): string {
+    switch (s) {
+      case "connecting":
+        return t("status.connecting");
+      case "connected":
+        return t("status.connected");
+      case "disconnected":
+        return t("status.disconnected");
+      case "error":
+        return t("status.error");
+    }
+  }
 
-  const statusConfig = {
-    connecting: { color: "text-status-warning", icon: "spinner" },
-    connected: { color: "text-status-success", icon: "dot" },
-    disconnected: { color: "text-status-error", icon: "dot" },
-    error: { color: "text-status-error", icon: "dot" },
-  };
+  function getStatusConfig(s: typeof status) {
+    switch (s) {
+      case "connecting":
+        return { color: "text-status-warning", icon: "spinner" };
+      case "connected":
+        return { color: "text-status-success", icon: "dot" };
+      case "disconnected":
+        return { color: "text-status-error", icon: "dot" };
+      case "error":
+        return { color: "text-status-error", icon: "dot" };
+    }
+  }
 
-  const config = statusConfig[status];
-  const label = statusLabels[status];
+  const config = getStatusConfig(status);
+  const label = getStatusLabel(status);
 
   return (
-    <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
-      <span className={`inline-flex items-center gap-1.5 caption ${config.color}`}>
+    <div className={`${layout.inline.default} ml-4`} role="status" aria-live="polite">
+      <span className={`${layout.inline.tight} ${spacing.inline.sm} caption ${config.color}`}>
         <span
-          className={`inline-flex items-center justify-center ${radius.full} ${config.color} ${
+          className={`${layout.flex.center} ${radius.full} ${config.color} ${
             config.icon === "spinner" ? "bg-status-info/10 p-1" : "bg-current/10 p-1"
           }`}
           aria-label={t("accessibility.wsStatus", { status: label })}
         >
           {config.icon === "spinner" ? (
             <svg
-              className="w-3 h-3 animate-spin"
+              className={`${iconTokens.size.xs} animate-spin`}
               viewBox="0 0 20 20"
               fill="none"
               aria-hidden="true"
@@ -1377,7 +1425,12 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
               />
             </svg>
           ) : (
-            <svg className="w-3 h-3" viewBox="0 0 8 8" fill="currentColor" aria-hidden="true">
+            <svg
+              className={iconTokens.size.xs}
+              viewBox="0 0 8 8"
+              fill="currentColor"
+              aria-hidden="true"
+            >
               <circle cx="4" cy="4" r="4" />
             </svg>
           )}
@@ -1387,7 +1440,7 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
       {(status === "disconnected" || status === "error") && (
         <button
           onClick={onReconnect}
-          className="caption text-brand-primary hover:underline focus:outline-none focus:ring-2 focus:ring-brand-primary rounded-md"
+          className={`caption text-brand-primary hover:underline focus:outline-none focus:ring-2 focus:ring-brand-primary ${radius.md}`}
         >
           {t("buttons.reconnect")}
         </button>

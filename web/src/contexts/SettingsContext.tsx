@@ -8,15 +8,7 @@
  * persisted to the backend config file for persistence across sessions.
  */
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  ReactNode,
-} from "react";
+import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { getAuthHeaders } from "../hooks/useAuth";
 import {
   FABOptions,
@@ -29,40 +21,7 @@ import {
   DEFAULT_IPERF_SETTINGS,
   DEFAULT_THRESHOLDS,
 } from "../types/settings";
-
-// ============================================================================
-// Context Types
-// ============================================================================
-
-interface SettingsContextValue {
-  // Core settings state
-  fabOptions: FABOptions;
-  displayOptions: DisplayOptions;
-  iperfSettings: IperfSettings;
-  thresholds: SettingsThresholds;
-
-  // Save status indicators
-  status: {
-    fab: SaveStatus;
-    display: SaveStatus;
-    iperf: SaveStatus;
-    thresholds: SaveStatus;
-  };
-
-  // Update methods - trigger auto-save with debounce
-  updateFabOptions: (updates: Partial<FABOptions>) => void;
-  updateDisplayOptions: (updates: Partial<DisplayOptions>) => void;
-  updateIperfSettings: (updates: Partial<IperfSettings>) => void;
-  updateThresholds: (updates: Partial<SettingsThresholds>) => void;
-
-  // Full refresh from API
-  refreshSettings: () => Promise<void>;
-
-  // Flag to check if initial load is complete
-  isLoaded: boolean;
-}
-
-const SettingsContext = createContext<SettingsContextValue | null>(null);
+import { SettingsContext, SettingsContextValue } from "./settingsContextDef";
 
 // ============================================================================
 // Provider Component
@@ -75,17 +34,15 @@ interface SettingsProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Context provider that manages application settings state and API synchronization.
+ */
 export function SettingsProvider({ children }: SettingsProviderProps) {
   // State - initialized with defaults, will be updated from API
   const [fabOptions, setFabOptions] = useState<FABOptions>(DEFAULT_FAB_OPTIONS);
-  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(
-    DEFAULT_DISPLAY_OPTIONS,
-  );
-  const [iperfSettings, setIperfSettings] = useState<IperfSettings>(
-    DEFAULT_IPERF_SETTINGS,
-  );
-  const [thresholds, setThresholds] =
-    useState<SettingsThresholds>(DEFAULT_THRESHOLDS);
+  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(DEFAULT_DISPLAY_OPTIONS);
+  const [iperfSettings, setIperfSettings] = useState<IperfSettings>(DEFAULT_IPERF_SETTINGS);
+  const [thresholds, setThresholds] = useState<SettingsThresholds>(DEFAULT_THRESHOLDS);
 
   // Status indicators
   const [status, setStatus] = useState<SettingsContextValue["status"]>({
@@ -97,9 +54,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
 
   // Tracking refs
   const [isLoadedState, setIsLoadedState] = useState(false);
-  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>(
-    {},
-  );
+  // Using Map for type-safe dynamic key access
+  const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // ============================================================================
   // Load All Settings from API
@@ -160,7 +116,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   useEffect(() => {
     const timers = debounceTimers.current;
     return () => {
-      Object.values(timers).forEach(clearTimeout);
+      timers.forEach((timer) => clearTimeout(timer));
     };
   }, []);
 
@@ -169,18 +125,15 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   // ============================================================================
 
   const debounceSave = useCallback(
-    (
-      key: string,
-      saveFn: () => void | Promise<void>,
-      delay: number = DEBOUNCE_MS,
-    ) => {
-      if (debounceTimers.current[key]) {
-        clearTimeout(debounceTimers.current[key]);
+    (key: string, saveFn: () => void | Promise<void>, delay: number = DEBOUNCE_MS) => {
+      const existingTimer = debounceTimers.current.get(key);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
       }
 
       setStatus((prev) => ({ ...prev, [key]: "saving" as SaveStatus }));
 
-      debounceTimers.current[key] = setTimeout(async () => {
+      const newTimer = setTimeout(async () => {
         try {
           await saveFn();
           setStatus((prev) => ({ ...prev, [key]: "saved" as SaveStatus }));
@@ -191,8 +144,9 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
           setStatus((prev) => ({ ...prev, [key]: "error" as SaveStatus }));
         }
       }, delay);
+      debounceTimers.current.set(key, newTimer);
     },
-    [],
+    []
   );
 
   // ============================================================================
@@ -225,7 +179,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         return next;
       });
     },
-    [debounceSave],
+    [debounceSave]
   );
 
   const updateDisplayOptions = useCallback(
@@ -236,7 +190,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         return next;
       });
     },
-    [debounceSave],
+    [debounceSave]
   );
 
   const updateIperfSettings = useCallback(
@@ -247,7 +201,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         return next;
       });
     },
-    [debounceSave],
+    [debounceSave]
   );
 
   const updateThresholds = useCallback(
@@ -258,7 +212,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         return next;
       });
     },
-    [debounceSave],
+    [debounceSave]
   );
 
   // ============================================================================
@@ -279,26 +233,5 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     isLoaded: isLoadedState,
   };
 
-  return (
-    <SettingsContext.Provider value={value}>
-      {children}
-    </SettingsContext.Provider>
-  );
-}
-
-// ============================================================================
-// Hook
-// ============================================================================
-
-export function useSettings(): SettingsContextValue {
-  const context = useContext(SettingsContext);
-  if (!context) {
-    throw new Error("useSettings must be used within a SettingsProvider");
-  }
-  return context;
-}
-
-// Optional: Hook that doesn't throw if used outside provider (for gradual migration)
-export function useSettingsOptional(): SettingsContextValue | null {
-  return useContext(SettingsContext);
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 }

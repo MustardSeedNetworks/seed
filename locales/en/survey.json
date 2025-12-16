@@ -1,0 +1,34 @@
+{
+  "status": {
+    "survey": "Survey",
+    "samples": "samples"
+  },
+  "buttons": {
+    "startSurvey": "Start Survey",
+    "pause": "Pause",
+    "complete": "Complete",
+    "resume": "Resume",
+    "close": "Close",
+    "hideHeatmap": "Hide Heatmap",
+    "rssiHeatmap": "RSSI Heatmap",
+    "throughput": "Throughput",
+    "latency": "Latency"
+  },
+  "floorPlan": {
+    "title": "Floor Plan",
+    "uploadPrompt": "Upload a floor plan to begin",
+    "chooseFile": "Choose File",
+    "uploading": "Uploading...",
+    "supportedFormats": "PNG, JPG, GIF, WEBP, or SVG (max 10MB)",
+    "clickToMeasure": "Click on the floor plan to take a measurement at that location"
+  },
+  "samples": {
+    "title": "Samples",
+    "noSamples": "No samples yet.",
+    "clickToStart": "Click on the floor plan to start.",
+    "startToBegin": "Start the survey to begin."
+  },
+  "progress": {
+    "takingMeasurement": "Taking measurement..."
+  }
+}

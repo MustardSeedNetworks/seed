@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ToastProvider, useToast } from './Toast';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { ToastProvider } from "./Toast";
+import { useToast } from "./useToast";
 
 /**
  * Toast notifications provide non-modal feedback to users for actions
@@ -8,7 +9,7 @@ import { ToastProvider, useToast } from './Toast';
  * Toasts appear in the bottom-right corner and auto-dismiss after 5 seconds by default.
  */
 const meta: Meta = {
-  title: 'UI/Toast',
+  title: "UI/Toast",
   decorators: [
     (Story) => (
       <ToastProvider>
@@ -17,14 +18,20 @@ const meta: Meta = {
     ),
   ],
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;
 
-function ToastDemo({ type, message }: { type: 'success' | 'error' | 'warning' | 'info'; message: string }) {
+function ToastDemo({
+  type,
+  message,
+}: {
+  type: "success" | "error" | "warning" | "info";
+  message: string;
+}) {
   const { addToast } = useToast();
 
   return (
@@ -60,10 +67,10 @@ function AllToastsDemo() {
     <div className="flex flex-col gap-2">
       <button
         onClick={() => {
-          addToast('Success message', 'success', 3000);
-          setTimeout(() => addToast('Error message', 'error', 3000), 500);
-          setTimeout(() => addToast('Warning message', 'warning', 3000), 1000);
-          setTimeout(() => addToast('Info message', 'info', 3000), 1500);
+          addToast("Success message", "success", 3000);
+          setTimeout(() => addToast("Error message", "error", 3000), 500);
+          setTimeout(() => addToast("Warning message", "warning", 3000), 1000);
+          setTimeout(() => addToast("Info message", "info", 3000), 1500);
         }}
         className="px-4 py-2 bg-status-info hover:bg-status-info/80 rounded-lg text-text-inverse"
       >
@@ -78,7 +85,7 @@ export const AllTypes: StoryObj = {
   parameters: {
     docs: {
       description: {
-        story: 'Click to see all toast types in sequence.',
+        story: "Click to see all toast types in sequence.",
       },
     },
   },
