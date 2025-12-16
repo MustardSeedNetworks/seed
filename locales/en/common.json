@@ -1,4 +1,8 @@
 {
+  "app": {
+    "title": "The Seed",
+    "tagline": "Network Diagnostics by Mustard Seed Networks"
+  },
   "buttons": {
     "save": "Save",
     "cancel": "Cancel",
@@ -29,12 +33,14 @@
     "connecting": "Connecting...",
     "error": "Error",
     "loading": "Loading...",
+    "loggingIn": "Logging in...",
     "scanning": "Scanning...",
     "complete": "Complete",
     "pending": "Pending",
     "running": "Running",
     "stopped": "Stopped",
     "paused": "Paused",
+    "down": "down",
     "noCarrier": "No Carrier",
     "noIP": "No IP",
     "noSignal": "No Signal",
@@ -76,15 +82,23 @@
   "accessibility": {
     "openHelp": "Open help",
     "openSettings": "Open settings",
-    "switchToLight": "Switch to light mode",
-    "switchToDark": "Switch to dark mode",
+    "switchToLightMode": "Switch to light mode",
+    "switchToDarkMode": "Switch to dark mode",
     "selectInterface": "Select network interface",
-    "clearSearch": "Clear search"
+    "clearSearch": "Clear search",
+    "wsStatus": "WebSocket status: {{status}}"
   },
   "sections": {
     "connectivity": "Connectivity",
     "network": "Network",
     "testingDiscovery": "Testing & Discovery",
     "system": "System"
+  },
+  "login": {
+    "defaultCredentials": "Default: admin / seed"
+  },
+  "footer": {
+    "runTestsHint": "Tap the play button to run all tests.",
+    "networkDiscoveryHint": "Use the Network Discovery card to scan for devices on your network."
   }
 }

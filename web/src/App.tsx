@@ -28,6 +28,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useWebSocket, Message, CardUpdate } from "./hooks/useWebSocket";
 import { useAuth, getAuthHeaders } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
@@ -88,6 +89,7 @@ interface CardState {
  * real-time data updates, and the dashboard interface.
  */
 function App() {
+  const { t } = useTranslation("common");
   const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   // Use settings from context instead of local state
@@ -883,7 +885,7 @@ function App() {
   if (needsSetup === null) {
     return (
       <div className="min-h-screen bg-surface-base flex items-center justify-center">
-        <div className="text-text-muted">Loading...</div>
+        <div className="text-text-muted">{t("status.loading")}</div>
       </div>
     );
   }
@@ -900,7 +902,7 @@ function App() {
           {/* Logo and title - hide title on very small screens */}
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl font-bold text-brand-primary shrink-0">◉</span>
-            <h1 className="heading-4 hidden xs:block sm:block">The Seed</h1>
+            <h1 className="heading-4 hidden xs:block sm:block">{t("app.title")}</h1>
             <div className="hidden sm:block">
               <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
             </div>
@@ -910,14 +912,14 @@ function App() {
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Interface selector */}
             <label htmlFor="interface-select" className="sr-only">
-              Select network interface
+              {t("accessibility.selectInterface")}
             </label>
             <select
               id="interface-select"
               className="rounded-md border border-surface-border bg-surface-base px-2 py-1.5 body-small min-w-0 max-w-25 sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary"
               value={currentInterface}
               onChange={(e) => changeInterface(e.target.value)}
-              aria-label="Select network interface"
+              aria-label={t("accessibility.selectInterface")}
             >
               {interfaces.length > 0 ? (
                 interfaces
@@ -931,7 +933,7 @@ function App() {
                     >
                       {iface.friendlyName || iface.name}
                       {iface.speedDisplay && ` (${iface.speedDisplay})`}
-                      {!iface.up && " - down"}
+                      {!iface.up && ` - ${t("status.down")}`}
                     </option>
                   ))
               ) : (
@@ -943,7 +945,9 @@ function App() {
             <button
               className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={toggleTheme}
-              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={
+                isDark ? t("accessibility.switchToLightMode") : t("accessibility.switchToDarkMode")
+              }
             >
               {isDark ? (
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -962,7 +966,7 @@ function App() {
             <button
               className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={() => setHelpOpen(true)}
-              aria-label="Open help"
+              aria-label={t("accessibility.openHelp")}
             >
               <svg
                 className="w-5 h-5"
@@ -982,7 +986,7 @@ function App() {
             <button
               className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
               onClick={() => setSettingsOpen(true)}
-              aria-label="Open settings"
+              aria-label={t("accessibility.openSettings")}
             >
               <svg
                 className="w-5 h-5"
@@ -1008,15 +1012,15 @@ function App() {
             <button
               className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation"
               onClick={logout}
-              aria-label="Logout"
+              aria-label={t("buttons.logout")}
             >
-              Logout
+              {t("buttons.logout")}
             </button>
             {/* Mobile logout icon */}
             <button
               className="rounded-md p-2.5 hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation"
               onClick={logout}
-              aria-label="Logout"
+              aria-label={t("buttons.logout")}
             >
               <svg
                 className="w-5 h-5"
@@ -1048,7 +1052,7 @@ function App() {
           {/* Section: Primary Connectivity */}
           <section aria-labelledby="connectivity-heading" className="mb-6">
             <h2 id="connectivity-heading" className="section-title mb-3">
-              Connectivity
+              {t("sections.connectivity")}
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <LinkCard data={cards.link} loading={loading} />
@@ -1063,7 +1067,7 @@ function App() {
           {/* Section: Network Services */}
           <section aria-labelledby="network-heading" className="mb-6">
             <h2 id="network-heading" className="section-title mb-3">
-              Network
+              {t("sections.network")}
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <NetworkCard
@@ -1080,7 +1084,7 @@ function App() {
           {/* Section: Testing & Discovery */}
           <section aria-labelledby="performance-heading" className="mb-6">
             <h2 id="performance-heading" className="section-title mb-3">
-              Testing & Discovery
+              {t("sections.testingDiscovery")}
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <HealthCheckCard loading={loading} />
@@ -1105,7 +1109,7 @@ function App() {
           {/* Section: System */}
           <section aria-labelledby="system-heading" className="mb-6">
             <h2 id="system-heading" className="section-title mb-3">
-              System
+              {t("sections.system")}
             </h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <SystemHealthCard />
@@ -1114,14 +1118,16 @@ function App() {
 
           {/* Footer notice */}
           <footer className="mt-8 rounded-md border border-surface-border bg-surface-raised p-4 sm:p-6 text-center">
-            <h2 className="heading-4 text-text-muted">The Seed {appVersion}</h2>
+            <h2 className="heading-4 text-text-muted">
+              {t("app.title")} {appVersion}
+            </h2>
             <p className="mt-2 body-small text-text-muted">
-              Tap the play button to run all tests.
+              {t("footer.runTestsHint")}
               <span className="hidden sm:inline">
                 <br />
               </span>
               <span className="sm:hidden"> </span>
-              Use the Network Discovery card to scan for devices on your network.
+              {t("footer.networkDiscoveryHint")}
             </p>
           </footer>
         </div>
@@ -1150,6 +1156,7 @@ interface LoginFormProps {
 }
 
 function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
+  const { t } = useTranslation("common");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -1249,8 +1256,8 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 className="heading-1 mt-3">The Seed</h1>
-          <p className="body-small mt-1">Network Diagnostics by Mustard Seed Networks</p>
+          <h1 className="heading-1 mt-3">{t("app.title")}</h1>
+          <p className="body-small mt-1">{t("app.tagline")}</p>
         </div>
 
         <form
@@ -1259,7 +1266,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
         >
           <div className="mb-4">
             <label htmlFor="login-username" className="label block mb-1">
-              Username
+              {t("labels.username")}
             </label>
             <input
               id="login-username"
@@ -1274,7 +1281,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
 
           <div className="mb-6">
             <label htmlFor="login-password" className="label block mb-1">
-              Password
+              {t("labels.password")}
             </label>
             <input
               id="login-password"
@@ -1302,10 +1309,12 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             disabled={isLoading}
             className="w-full py-2 px-4 bg-brand-primary text-text-inverse rounded-md font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? t("status.loggingIn") : t("buttons.login")}
           </button>
 
-          <p className="mt-4 caption text-text-muted text-center">Default: admin / seed</p>
+          <p className="mt-4 caption text-text-muted text-center">
+            {t("login.defaultCredentials")}
+          </p>
         </form>
       </div>
     </div>
@@ -1318,26 +1327,24 @@ interface ConnectionStatusProps {
 }
 
 function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
+  const { t } = useTranslation("common");
+
+  const statusLabels: Record<typeof status, string> = {
+    connecting: t("status.connecting"),
+    connected: t("status.connected"),
+    disconnected: t("status.disconnected"),
+    error: t("status.error"),
+  };
+
   const statusConfig = {
-    connecting: {
-      color: "text-status-warning",
-      label: "Connecting...",
-      icon: "spinner",
-    },
-    connected: {
-      color: "text-status-success",
-      label: "Connected",
-      icon: "dot",
-    },
-    disconnected: {
-      color: "text-status-error",
-      label: "Disconnected",
-      icon: "dot",
-    },
-    error: { color: "text-status-error", label: "Error", icon: "dot" },
+    connecting: { color: "text-status-warning", icon: "spinner" },
+    connected: { color: "text-status-success", icon: "dot" },
+    disconnected: { color: "text-status-error", icon: "dot" },
+    error: { color: "text-status-error", icon: "dot" },
   };
 
   const config = statusConfig[status];
+  const label = statusLabels[status];
 
   return (
     <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
@@ -1346,7 +1353,7 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
           className={`inline-flex items-center justify-center ${radius.full} ${config.color} ${
             config.icon === "spinner" ? "bg-status-info/10 p-1" : "bg-current/10 p-1"
           }`}
-          aria-label={`WebSocket status: ${config.label}`}
+          aria-label={t("accessibility.wsStatus", { status: label })}
         >
           {config.icon === "spinner" ? (
             <svg
@@ -1375,14 +1382,14 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
             </svg>
           )}
         </span>
-        {config.label}
+        {label}
       </span>
       {(status === "disconnected" || status === "error") && (
         <button
           onClick={onReconnect}
           className="caption text-brand-primary hover:underline focus:outline-none focus:ring-2 focus:ring-brand-primary rounded-md"
         >
-          Reconnect
+          {t("buttons.reconnect")}
         </button>
       )}
     </div>
