@@ -14,6 +14,9 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/gateway"
 )
 
+// passwordPlaceholder is used to mask sensitive values in API responses.
+const passwordPlaceholder = "*****"
+
 // ============================================================================
 // Request/Response Types and Handlers (fixes #544 - split from handlers.go)
 // ============================================================================
@@ -313,14 +316,14 @@ func (s *Server) getSNMPSettings(w http.ResponseWriter, _ *http.Request) {
 	v3Creds := make([]SNMPv3CredentialResponse, len(s.config.SNMP.V3Credentials))
 	for i := range s.config.SNMP.V3Credentials {
 		cred := &s.config.SNMP.V3Credentials[i]
-		// Use "*****" placeholder for passwords (never expose actual values)
+		// Use passwordPlaceholder for passwords (never expose actual values)
 		authPass := ""
 		if cred.AuthPassword != "" {
-			authPass = "*****"
+			authPass = passwordPlaceholder
 		}
 		privPass := ""
 		if cred.PrivPassword != "" {
-			privPass = "*****"
+			privPass = passwordPlaceholder
 		}
 
 		v3Creds[i] = SNMPv3CredentialResponse{
@@ -370,8 +373,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			SecurityLevel: cred.SecurityLevel,
 		}
 
-		// Handle AuthPassword: If "*****" placeholder, keep existing; otherwise encrypt new value
-		if cred.AuthPassword != "" && cred.AuthPassword != "*****" {
+		// Handle AuthPassword: If placeholder, keep existing; otherwise encrypt new value
+		if cred.AuthPassword != "" && cred.AuthPassword != passwordPlaceholder {
 			// New password provided - encrypt it
 			encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
 			if err != nil {
@@ -384,8 +387,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			newCred.AuthPassword = s.config.SNMP.V3Credentials[i].AuthPassword
 		}
 
-		// Handle PrivPassword: If "*****" placeholder, keep existing; otherwise encrypt new value
-		if cred.PrivPassword != "" && cred.PrivPassword != "*****" {
+		// Handle PrivPassword: If placeholder, keep existing; otherwise encrypt new value
+		if cred.PrivPassword != "" && cred.PrivPassword != passwordPlaceholder {
 			// New password provided - encrypt it
 			encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
 			if err != nil {

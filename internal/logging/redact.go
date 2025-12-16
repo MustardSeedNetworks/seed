@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Sensitive field patterns that should always be redacted
+// Sensitive field patterns that should always be redacted.
 var sensitivePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)(password|passwd|pwd)\s*[=:]\s*[^\s&]+`),
 	regexp.MustCompile(`(?i)(token|auth|api[_-]?key|secret)\s*[=:]\s*[^\s&]+`),
@@ -17,7 +17,7 @@ var sensitivePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)(basic\s+)\S+`),
 }
 
-// Sensitive header names (case-insensitive)
+// Sensitive header names (case-insensitive).
 var sensitiveHeaders = map[string]bool{
 	"authorization":       true,
 	"x-api-key":           true,

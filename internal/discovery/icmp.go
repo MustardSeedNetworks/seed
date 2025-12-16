@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	// ICMP protocol numbers
+	// ICMP protocol numbers.
 	protocolICMP = 1
 
-	// Default values
+	// Default values.
 	defaultTimeout = 1 * time.Second
 	maxPacketSize  = 1500
 )
@@ -283,7 +283,7 @@ func (p *ICMPPinger) PingSweep(ctx context.Context, ips []net.IP, workers int) [
 	var wg sync.WaitGroup
 	wg.Add(workers)
 
-	for w := 0; w < workers; w++ {
+	for range workers {
 		go func() {
 			defer wg.Done()
 			for idx := range work {

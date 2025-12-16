@@ -13,6 +13,9 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/validation"
 )
 
+// Protocol constant for network tools (protoTCP and protoUDP defined in handlers_tests.go).
+const protoICMP = "icmp"
+
 // ============================================================================
 // Request/Response Types (fixes #544 - split from handlers.go)
 // ============================================================================
@@ -157,9 +160,9 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 	// Set defaults
 	protocol := req.Protocol
 	if protocol == "" {
-		protocol = "icmp"
+		protocol = protoICMP
 	}
-	if protocol != "icmp" && protocol != "udp" && protocol != "tcp" {
+	if protocol != protoICMP && protocol != protoUDP && protocol != protoTCP {
 		http.Error(w, "Protocol must be icmp, udp, or tcp", http.StatusBadRequest)
 		return
 	}
@@ -176,7 +179,7 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 
 	port := req.Port
 	if port <= 0 {
-		if protocol == "tcp" {
+		if protocol == protoTCP {
 			port = 80
 		} else {
 			port = 33434
@@ -193,11 +196,11 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 	// Run traceroute based on protocol
 	var result *discovery.TracerouteResult
 	switch protocol {
-	case "icmp":
+	case protoICMP:
 		result = tracer.TraceICMP(ctx, req.Target)
-	case "udp":
+	case protoUDP:
 		result = tracer.TraceUDP(ctx, req.Target, port)
-	case "tcp":
+	case protoTCP:
 		result = tracer.TraceTCP(ctx, req.Target, port)
 	}
 
@@ -266,7 +269,7 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, result)
 }
 
-// POST /api/discovery/fingerprint with JSON body: {"ip": "192.168.1.1"}
+// POST /api/discovery/fingerprint with JSON body: {"ip": "192.168.1.1"}.
 func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

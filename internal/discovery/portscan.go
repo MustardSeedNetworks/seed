@@ -14,6 +14,12 @@ import (
 	"time"
 )
 
+// Error messages and common values for port scanning.
+const (
+	errNoIPv4ForTarget = "no IPv4 address found for target"
+	serviceUnknown     = "unknown"
+)
+
 // ServiceInfo contains information about a detected service.
 type ServiceInfo struct {
 	Port     int       `json:"port"`
@@ -82,7 +88,7 @@ func (s *PortScanner) ScanWithBanners(ctx context.Context, target string, ports 
 			}
 		}
 		if result.IP == target {
-			result.Error = "no IPv4 address found for target"
+			result.Error = errNoIPv4ForTarget
 			return result
 		}
 	}
@@ -202,7 +208,7 @@ func identifyServiceByPort(port int) string {
 	if svc, ok := services[port]; ok {
 		return svc
 	}
-	return "unknown"
+	return serviceUnknown
 }
 
 // identifyServiceFromBanner tries to identify the service from its banner.

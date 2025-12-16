@@ -748,11 +748,11 @@ type SetupResult struct {
 // Returns SetupResult with credentials to display if they were generated.
 //
 // The function will:
-// 1. Create config directory if it doesn't exist
-// 2. Load existing config or create default
-// 3. Check if using insecure default credentials (admin/netscope)
-// 4. Generate and persist secure credentials if needed
-// 5. Ensure JWT secret is persisted
+// 1. Create config directory if it doesn't exist.
+// 2. Load existing config or create default.
+// 3. Check if using insecure default credentials (admin/netscope).
+// 4. Generate and persist secure credentials if needed.
+// 5. Ensure JWT secret is persisted.
 func EnsureConfig(path string, checkDefaultPassword func(hash string) bool) (*Config, *SetupResult, error) {
 	result := &SetupResult{}
 

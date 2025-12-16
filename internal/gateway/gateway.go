@@ -225,7 +225,7 @@ func (t *Tester) Test() *PingStats {
 	var totalTime float64
 	var minTime, maxTime float64 = -1, 0
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		result := t.Ping()
 		result.Sequence = i + 1
 		stats.Sent++

@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	// cacheDuration is how long to cache public IP results
+	// cacheDuration is how long to cache public IP results.
 	cacheDuration = 5 * time.Minute
-	// requestTimeout is the timeout for external API requests
+	// requestTimeout is the timeout for external API requests.
 	requestTimeout = 10 * time.Second
 )
 

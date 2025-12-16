@@ -14,7 +14,7 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/network"
 )
 
-// TestAPIEndpoints provides comprehensive integration tests for all major API endpoints
+// TestAPIEndpoints provides comprehensive integration tests for all major API endpoints.
 func TestAPIEndpoints(t *testing.T) {
 	// Create temporary config
 	tmpDir := t.TempDir()

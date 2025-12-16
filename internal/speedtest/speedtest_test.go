@@ -193,9 +193,9 @@ func TestConcurrentStatusAccess(t *testing.T) {
 
 	// Test concurrent reads don't cause race conditions
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
-			for j := 0; j < 100; j++ {
+			for range 100 {
 				_ = tester.GetStatus()
 				_ = tester.GetLastResult()
 			}
@@ -204,7 +204,7 @@ func TestConcurrentStatusAccess(t *testing.T) {
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }
@@ -228,9 +228,9 @@ func TestTesterMuLocking(t *testing.T) {
 
 	// Test concurrent writes don't cause race conditions
 	done := make(chan bool)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		go func(id int) {
-			for j := 0; j < 50; j++ {
+			for j := range 50 {
 				tester.setStatus("phase"+string(rune('0'+id)), float64(j))
 				tester.setRunning(j%2 == 0)
 				tester.SetServerID("server" + string(rune('0'+id)))
@@ -239,7 +239,7 @@ func TestTesterMuLocking(t *testing.T) {
 		}(i)
 	}
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		<-done
 	}
 }
@@ -342,7 +342,7 @@ func TestTesterMultipleGetStatus(t *testing.T) {
 	tester := NewTester()
 
 	// Get status multiple times
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		status := tester.GetStatus()
 		if status.Phase != "idle" {
 			t.Errorf("expected Phase 'idle', got %q", status.Phase)

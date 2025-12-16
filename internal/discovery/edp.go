@@ -17,7 +17,7 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-// EDP TLV Types (Extreme Discovery Protocol)
+// EDP TLV Types (Extreme Discovery Protocol).
 const (
 	EDPTLVNull    uint8 = 0x00
 	EDPTLVDisplay uint8 = 0x01

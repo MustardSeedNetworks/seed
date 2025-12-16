@@ -25,6 +25,13 @@ import (
 	"time"
 )
 
+// OS family constants for fingerprint identification.
+const (
+	osLinux   = "linux"
+	osWindows = "windows"
+	osCisco   = "cisco"
+)
+
 // OSFingerprint contains OS detection results.
 type OSFingerprint struct {
 	OSFamily    string   `json:"osFamily,omitempty"`    // linux, windows, bsd, cisco, etc.
@@ -147,10 +154,10 @@ func (f *Fingerprinter) fingerprintOS(ctx context.Context, ip string, profile *D
 
 		switch {
 		case ttl <= 64:
-			fp.OSFamily = "linux"
+			fp.OSFamily = osLinux
 			fp.Confidence = 60
 		case ttl <= 128:
-			fp.OSFamily = "windows"
+			fp.OSFamily = osWindows
 			fp.Confidence = 60
 		case ttl >= 254:
 			fp.OSFamily = "network-device"
@@ -229,15 +236,15 @@ func (f *Fingerprinter) parseOSFromBanner(banner string) *OSFingerprint {
 	if strings.Contains(banner, "ssh") {
 		//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
 		if strings.Contains(banner, "ubuntu") {
-			fp.OSFamily = "linux"
+			fp.OSFamily = osLinux
 			fp.OSVersion = extractProductVersion(banner, "ubuntu")
 			fp.Confidence = 90
 		} else if strings.Contains(banner, "debian") {
-			fp.OSFamily = "linux"
+			fp.OSFamily = osLinux
 			fp.OSVersion = "debian"
 			fp.Confidence = 90
 		} else if strings.Contains(banner, "centos") || strings.Contains(banner, "red hat") {
-			fp.OSFamily = "linux"
+			fp.OSFamily = osLinux
 			fp.OSVersion = "rhel"
 			fp.Confidence = 90
 		} else if strings.Contains(banner, "freebsd") {
@@ -245,10 +252,10 @@ func (f *Fingerprinter) parseOSFromBanner(banner string) *OSFingerprint {
 			fp.OSVersion = "freebsd"
 			fp.Confidence = 90
 		} else if strings.Contains(banner, "cisco") {
-			fp.OSFamily = "cisco"
+			fp.OSFamily = osCisco
 			fp.Confidence = 95
 		} else if strings.Contains(banner, "windows") {
-			fp.OSFamily = "windows"
+			fp.OSFamily = osWindows
 			fp.Confidence = 90
 		} else if strings.Contains(banner, "openssh") {
 			fp.OSFamily = "unix"
@@ -259,13 +266,13 @@ func (f *Fingerprinter) parseOSFromBanner(banner string) *OSFingerprint {
 	// Telnet banners
 	//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
 	if strings.Contains(banner, "linux") {
-		fp.OSFamily = "linux"
+		fp.OSFamily = osLinux
 		fp.Confidence = 80
 	} else if strings.Contains(banner, "windows") {
-		fp.OSFamily = "windows"
+		fp.OSFamily = osWindows
 		fp.Confidence = 80
 	} else if strings.Contains(banner, "cisco") {
-		fp.OSFamily = "cisco"
+		fp.OSFamily = osCisco
 		fp.Confidence = 95
 	} else if strings.Contains(banner, "junos") {
 		fp.OSFamily = "juniper"
@@ -275,13 +282,13 @@ func (f *Fingerprinter) parseOSFromBanner(banner string) *OSFingerprint {
 	// FTP banners
 	//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
 	if strings.Contains(banner, "vsftpd") {
-		fp.OSFamily = "linux"
+		fp.OSFamily = osLinux
 		fp.Confidence = 75
 	} else if strings.Contains(banner, "proftpd") {
-		fp.OSFamily = "linux"
+		fp.OSFamily = osLinux
 		fp.Confidence = 75
 	} else if strings.Contains(banner, "microsoft") && strings.Contains(banner, "ftp") {
-		fp.OSFamily = "windows"
+		fp.OSFamily = osWindows
 		fp.Confidence = 85
 	}
 
@@ -297,7 +304,7 @@ func (f *Fingerprinter) parseOSFromServer(server string) *OSFingerprint {
 
 	// Windows indicators
 	if strings.Contains(server, "microsoft") || strings.Contains(server, "iis") {
-		fp.OSFamily = "windows"
+		fp.OSFamily = osWindows
 		// Extract IIS version
 		if match := regexp.MustCompile(`iis[/\s]*([\d.]+)`).FindStringSubmatch(server); len(match) > 1 {
 			fp.OSVersion = "IIS " + match[1]
@@ -308,15 +315,15 @@ func (f *Fingerprinter) parseOSFromServer(server string) *OSFingerprint {
 	// Linux indicators
 	//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
 	if strings.Contains(server, "ubuntu") {
-		fp.OSFamily = "linux"
+		fp.OSFamily = osLinux
 		fp.OSVersion = "ubuntu"
 		fp.Confidence = 85
 	} else if strings.Contains(server, "debian") {
-		fp.OSFamily = "linux"
+		fp.OSFamily = osLinux
 		fp.OSVersion = "debian"
 		fp.Confidence = 85
 	} else if strings.Contains(server, "centos") || strings.Contains(server, "red hat") {
-		fp.OSFamily = "linux"
+		fp.OSFamily = osLinux
 		fp.OSVersion = "rhel"
 		fp.Confidence = 85
 	}
@@ -332,7 +339,7 @@ func (f *Fingerprinter) parseOSFromServer(server string) *OSFingerprint {
 	// Network device indicators
 	//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
 	if strings.Contains(server, "cisco") {
-		fp.OSFamily = "cisco"
+		fp.OSFamily = osCisco
 		fp.Confidence = 90
 	} else if strings.Contains(server, "routeros") { //nolint:misspell // RouterOS is MikroTik's product name
 		fp.OSFamily = "mikrotik"
@@ -348,11 +355,11 @@ func (f *Fingerprinter) parseOSFromServer(server string) *OSFingerprint {
 
 	// NAS devices
 	if strings.Contains(server, "synology") {
-		fp.OSFamily = "linux"
+		fp.OSFamily = osLinux
 		fp.OSVersion = "dsm"
 		fp.Confidence = 95
 	} else if strings.Contains(server, "qnap") {
-		fp.OSFamily = "linux"
+		fp.OSFamily = osLinux
 		fp.OSVersion = "qts"
 		fp.Confidence = 95
 	}

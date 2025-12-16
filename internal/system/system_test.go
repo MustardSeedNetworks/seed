@@ -205,7 +205,7 @@ func TestGetHealthUptime(t *testing.T) {
 
 func TestGetHealthMultipleCalls(t *testing.T) {
 	// Test that multiple calls don't panic or error
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		health, err := GetHealth()
 		if err != nil {
 			t.Fatalf("GetHealth() call %d returned error: %v", i+1, err)

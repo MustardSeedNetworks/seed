@@ -22,6 +22,15 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/validation"
 )
 
+// Test status and protocol constants.
+const (
+	statusError   = "error"
+	statusWarning = "warning"
+	statusSuccess = "success"
+	protoTCP      = "tcp"
+	protoUDP      = "udp"
+)
+
 // ============================================================================
 // Request/Response Types and Handlers (fixes #544 - split from handlers.go)
 // ============================================================================
@@ -499,7 +508,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
-			testResult.TestStatus = "error"
+			testResult.TestStatus = statusError
 		} else {
 			testResult.Success = pingStats.PacketLoss < 100
 			testResult.Latency = pingStats.AvgLatency
@@ -511,9 +520,9 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			// Determine status based on latency or packet loss
 			switch {
 			case pingStats.PacketLoss > 50:
-				testResult.TestStatus = "error"
+				testResult.TestStatus = statusError
 			case pingStats.PacketLoss > 10:
-				testResult.TestStatus = "warning"
+				testResult.TestStatus = statusWarning
 			default:
 				testResult.TestStatus = getTestStatus(pingStats.AvgLatency, pingThreshold.Warning.Milliseconds(), pingThreshold.Critical.Milliseconds())
 			}
@@ -541,7 +550,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
-			testResult.TestStatus = "error"
+			testResult.TestStatus = statusError
 		} else {
 			testResult.Success = true
 			testResult.Latency = latency
@@ -570,7 +579,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
-			testResult.TestStatus = "error"
+			testResult.TestStatus = statusError
 		} else {
 			testResult.Success = true
 			testResult.Latency = latency
@@ -636,7 +645,7 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			testResult.Success = false
 			testResult.Error = err.Error()
-			testResult.TestStatus = "error"
+			testResult.TestStatus = statusError
 		} else {
 			testResult.Success = true
 			// Evaluate each phase against its threshold
@@ -647,12 +656,12 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 
 			// Overall test status: error if any phase is error, warning if any warning, else use total time
 			switch {
-			case testResult.DNSStatus == "error" || testResult.TCPStatus == "error" ||
-				testResult.TLSStatus == "error" || testResult.TTFBStatus == "error":
-				testResult.TestStatus = "error"
-			case testResult.DNSStatus == "warning" || testResult.TCPStatus == "warning" ||
-				testResult.TLSStatus == "warning" || testResult.TTFBStatus == "warning":
-				testResult.TestStatus = "warning"
+			case testResult.DNSStatus == statusError || testResult.TCPStatus == statusError ||
+				testResult.TLSStatus == statusError || testResult.TTFBStatus == statusError:
+				testResult.TestStatus = statusError
+			case testResult.DNSStatus == statusWarning || testResult.TCPStatus == statusWarning ||
+				testResult.TLSStatus == statusWarning || testResult.TTFBStatus == statusWarning:
+				testResult.TestStatus = statusWarning
 			default:
 				testResult.TestStatus = getTestStatus(timings.Total, httpThreshold.Warning.Milliseconds(), httpThreshold.Critical.Milliseconds())
 			}
@@ -669,10 +678,10 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 			testResult.CertIssuer = certInfo.Issuer
 
 			// Upgrade test status if cert is in bad shape
-			if certInfo.Status == "error" && testResult.TestStatus != "error" {
-				testResult.TestStatus = "error"
-			} else if certInfo.Status == "warning" && testResult.TestStatus == "success" {
-				testResult.TestStatus = "warning"
+			if certInfo.Status == statusError && testResult.TestStatus != statusError {
+				testResult.TestStatus = statusError
+			} else if certInfo.Status == statusWarning && testResult.TestStatus == statusSuccess {
+				testResult.TestStatus = statusWarning
 			}
 		}
 
@@ -786,12 +795,12 @@ func runHTTPTest(ctx context.Context, url string, expectedStatus int) (status in
 // getTestStatus returns status based on latency and thresholds.
 func getTestStatus(latencyMs float64, warningMs, criticalMs int64) string {
 	if latencyMs < float64(warningMs) {
-		return "success"
+		return statusSuccess
 	}
 	if latencyMs < float64(criticalMs) {
-		return "warning"
+		return statusWarning
 	}
-	return "error"
+	return statusError
 }
 
 // PingStats holds extended ping statistics.
@@ -809,7 +818,7 @@ func runExtendedPing(host string, count int) (*PingStats, error) {
 	sent := 0
 	received := 0
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		sent++
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
@@ -960,7 +969,7 @@ type CertInfo struct {
 
 // checkCertExpiry checks the TLS certificate expiry for a URL.
 func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
-	info := CertInfo{Status: "success"}
+	info := CertInfo{Status: statusSuccess}
 
 	// Extract host from URL
 	host := strings.TrimPrefix(url, "https://")
@@ -975,13 +984,13 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 	// Connect with TLS
 	conn, err := tls.DialWithDialer(
 		&net.Dialer{Timeout: 5 * time.Second},
-		"tcp",
+		protoTCP,
 		host,
 		// #nosec G402 - certificate verification intentionally skipped to inspect expiry
 		&tls.Config{InsecureSkipVerify: true}, // We want to check expiry even for self-signed
 	)
 	if err != nil {
-		info.Status = "error"
+		info.Status = statusError
 		return info
 	}
 	defer conn.Close()
@@ -995,7 +1004,7 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 	// Get certificate chain
 	certs := connState.PeerCertificates
 	if len(certs) == 0 {
-		info.Status = "error"
+		info.Status = statusError
 		return info
 	}
 
@@ -1018,13 +1027,13 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 	// Determine status
 	switch {
 	case daysLeft <= 0:
-		info.Status = "error" // Expired
+		info.Status = statusError // Expired
 	case daysLeft <= criticalDays:
-		info.Status = "error" // Critical
+		info.Status = statusError // Critical
 	case daysLeft <= warningDays:
-		info.Status = "warning" // Warning
+		info.Status = statusWarning // Warning
 	default:
-		info.Status = "success" // OK
+		info.Status = statusSuccess // OK
 	}
 
 	return info
@@ -1140,16 +1149,16 @@ func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, resp)
 }
 
-// iperf3 handlers
+// iperf3 handlers.
 
-// IperfInfoResponse contains iperf3 installation info
+// IperfInfoResponse contains iperf3 installation info.
 type IperfInfoResponse struct {
 	Installed bool   `json:"installed"`
 	Version   string `json:"version,omitempty"`
 	Error     string `json:"error,omitempty"`
 }
 
-// handleIperfInfo returns iperf3 installation status and version
+// handleIperfInfo returns iperf3 installation status and version.
 func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -1169,7 +1178,7 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, resp)
 }
 
-// IperfClientRequest is the request body for running an iperf3 client test
+// IperfClientRequest is the request body for running an iperf3 client test.
 type IperfClientRequest struct {
 	Server    string `json:"server"`
 	Port      int    `json:"port"`
@@ -1180,7 +1189,7 @@ type IperfClientRequest struct {
 	Parallel  int    `json:"parallel"`  // number of streams
 }
 
-// IperfResultResponse is the response for an iperf3 test result
+// IperfResultResponse is the response for an iperf3 test result.
 type IperfResultResponse struct {
 	Bandwidth         float64 `json:"bandwidth"`   // Mbps
 	Transfer          float64 `json:"transfer"`    // MB
@@ -1200,7 +1209,7 @@ type IperfResultResponse struct {
 	UploadTransfer    float64 `json:"uploadTransfer,omitempty"`
 }
 
-// handleIperfClient runs an iperf3 client test
+// handleIperfClient runs an iperf3 client test.
 func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -1220,9 +1229,9 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 
 	req.Protocol = strings.ToLower(req.Protocol)
 	if req.Protocol == "" {
-		req.Protocol = "tcp"
+		req.Protocol = protoTCP
 	}
-	if req.Protocol != "tcp" && req.Protocol != "udp" {
+	if req.Protocol != protoTCP && req.Protocol != protoUDP {
 		http.Error(w, "protocol must be tcp or udp", http.StatusBadRequest)
 		return
 	}
@@ -1280,7 +1289,7 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// IperfClientStatusResponse is the status of an iperf3 client test
+// IperfClientStatusResponse is the status of an iperf3 client test.
 type IperfClientStatusResponse struct {
 	Running  bool                 `json:"running"`
 	Phase    string               `json:"phase"`
@@ -1288,7 +1297,7 @@ type IperfClientStatusResponse struct {
 	Last     *IperfResultResponse `json:"last,omitempty"`
 }
 
-// handleIperfClientStatus returns the status of the iperf3 client test
+// handleIperfClientStatus returns the status of the iperf3 client test.
 func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -1326,13 +1335,13 @@ func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request)
 	sendJSONResponse(w, http.StatusOK, resp)
 }
 
-// IperfServerRequest is the request body for starting/stopping the iperf3 server
+// IperfServerRequest is the request body for starting/stopping the iperf3 server.
 type IperfServerRequest struct {
 	Action string `json:"action"` // "start" or "stop"
 	Port   int    `json:"port"`
 }
 
-// handleIperfServer starts or stops the iperf3 server
+// handleIperfServer starts or stops the iperf3 server.
 func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -1372,7 +1381,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleIperfServerStatus returns the iperf3 server status
+// handleIperfServerStatus returns the iperf3 server status.
 func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

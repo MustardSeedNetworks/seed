@@ -741,7 +741,7 @@ func TestConcurrentOperations(t *testing.T) {
 	numGoroutines := 10
 
 	// Concurrent creates
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
@@ -788,7 +788,7 @@ func TestConcurrentSampleAddition(t *testing.T) {
 	}
 
 	// Concurrent sample additions
-	for i := 0; i < numSamples; i++ {
+	for i := range numSamples {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
@@ -871,7 +871,7 @@ func TestSampleCount(t *testing.T) {
 	}
 
 	// Add multiple samples
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		err = mgr.AddSample(survey.ID, i*10, i*10, sampleData)
 		if err != nil {
 			t.Errorf("AddSample() failed: %v", err)

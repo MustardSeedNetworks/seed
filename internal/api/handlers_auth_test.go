@@ -12,7 +12,7 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/config"
 )
 
-// TestHandleRefreshToken tests the token refresh endpoint
+// TestHandleRefreshToken tests the token refresh endpoint.
 func TestHandleRefreshToken(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -117,7 +117,7 @@ func TestHandleRefreshToken(t *testing.T) {
 	}
 }
 
-// TestHandleRefreshTokenMethodNotAllowed tests non-POST methods
+// TestHandleRefreshTokenMethodNotAllowed tests non-POST methods.
 func TestHandleRefreshTokenMethodNotAllowed(t *testing.T) {
 	server := NewTestServer()
 
@@ -137,7 +137,7 @@ func TestHandleRefreshTokenMethodNotAllowed(t *testing.T) {
 	}
 }
 
-// TestHandleLogout tests the logout endpoint
+// TestHandleLogout tests the logout endpoint.
 func TestHandleLogout(t *testing.T) {
 	server := NewTestServer()
 
@@ -181,7 +181,7 @@ func TestHandleLogout(t *testing.T) {
 	}
 }
 
-// TestHandleLogoutMethodNotAllowed tests non-POST methods for logout
+// TestHandleLogoutMethodNotAllowed tests non-POST methods for logout.
 func TestHandleLogoutMethodNotAllowed(t *testing.T) {
 	server := NewTestServer()
 
@@ -201,7 +201,7 @@ func TestHandleLogoutMethodNotAllowed(t *testing.T) {
 	}
 }
 
-// TestHandleSetupComplete tests the setup completion endpoint
+// TestHandleSetupComplete tests the setup completion endpoint.
 func TestHandleSetupComplete(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -278,7 +278,7 @@ func TestHandleSetupComplete(t *testing.T) {
 	}
 }
 
-// TestHandleSetupStatus tests the setup status endpoint
+// TestHandleSetupStatus tests the setup status endpoint.
 func TestHandleSetupStatus(t *testing.T) {
 	tests := []struct {
 		name           string

@@ -188,9 +188,9 @@ func TestConcurrentManagerAccess(t *testing.T) {
 	manager := NewManager("en0")
 
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		go func(id int) {
-			for j := 0; j < 50; j++ {
+			for range 50 {
 				manager.SetInterface("en" + string(rune('0'+id)))
 				_ = manager.IsWireless()
 			}
@@ -198,7 +198,7 @@ func TestConcurrentManagerAccess(t *testing.T) {
 		}(i)
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }
@@ -387,9 +387,9 @@ func TestConcurrentWifiManagerAccess(t *testing.T) {
 	manager := NewManager("en0")
 
 	done := make(chan bool)
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		go func() {
-			for j := 0; j < 20; j++ {
+			for range 20 {
 				manager.SetInterface("wlan0")
 				_ = manager.IsWireless()
 				_ = manager.GetInfo()
@@ -398,7 +398,7 @@ func TestConcurrentWifiManagerAccess(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		<-done
 	}
 }

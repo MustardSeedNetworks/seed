@@ -40,6 +40,9 @@ import (
 	"github.com/krisarmstrong/luminetiq/web"
 )
 
+// indexHTMLPath is the path to the SPA entry point.
+const indexHTMLPath = "/index.html"
+
 // Server represents the HTTP/HTTPS server.
 type Server struct {
 	config              *config.Config
@@ -416,7 +419,7 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 
 		// Normalize root path to index.html
 		if path == "/" || path == "" {
-			path = "/index.html"
+			path = indexHTMLPath
 		}
 
 		// Try to open the file
@@ -428,7 +431,7 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 				return
 			}
 			// Serve index.html for SPA routing (client-side routes)
-			path = "/index.html"
+			path = indexHTMLPath
 			f, err = fsys.Open(path)
 			if err != nil {
 				http.NotFound(w, r)
@@ -445,11 +448,11 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 		}
 		if stat.IsDir() {
 			// Try to serve index.html from the directory
-			indexPath := strings.TrimSuffix(path, "/") + "/index.html"
+			indexPath := strings.TrimSuffix(path, "/") + indexHTMLPath
 			f2, err := fsys.Open(indexPath)
 			if err != nil {
 				// No index.html in directory - serve root index.html
-				path = "/index.html"
+				path = indexHTMLPath
 				f2, err = fsys.Open(path)
 				if err != nil {
 					http.NotFound(w, r)
