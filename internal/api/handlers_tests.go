@@ -320,8 +320,8 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Lock config for write access
+	// NOTE: We explicitly unlock before Save() to avoid deadlock
 	s.config.Lock()
-	defer s.config.Unlock()
 
 	// Update DNS hostname
 	if req.DNSHostname != "" {
@@ -412,7 +412,11 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	// Update iperf settings
 	s.config.Iperf.AutoRunOnLink = req.Iperf.AutoRunOnLink
 
-	// Save config to file
+	// Explicitly unlock before Save to avoid deadlock
+	// (Save acquires RLock which deadlocks if Lock is held)
+	s.config.Unlock()
+
+	// Save config to file (no longer holding lock)
 	if err := s.config.Save(s.configPath); err != nil {
 		log.Printf("Warning: Failed to save config: %v", err)
 	}

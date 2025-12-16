@@ -656,11 +656,303 @@ If issues arise:
 
 ## Related Issues
 
-- #501 - Implement New Naming Convention
-- #504 - Comprehensive Codebase & Asset Renaming
-- #505 - Update Documentation & Readmes
+### Master Tracker
+
+- **#621** - Master Tracker: Mustard Seed Networks Rebrand
+
+### Phase Issues
+
+| Phase | Issue | Description |
+|-------|-------|-------------|
+| 1 | #609 | Pre-Rename Preparation |
+| 2 | #610 | Go Module Rename (CRITICAL) |
+| 3 | #611 | Directory Renames |
+| 4 | #612 | Build System Updates |
+| 5 | #613 | Frontend Updates |
+| 6 | #614 | Backend Code Updates |
+| 7 | #615 | Service & Deployment Updates |
+| 8 | #616 | CI/CD Updates |
+| 9 | #617 | Documentation Updates |
+| 10 | #618 | Test Updates |
+| 11 | #619 | GitHub Repository Rename |
+| 12 | #620 | Verification & Cleanup |
+
+### Supporting Issues
+
+- #502 - Brand Identity (Logo, Colors, Typography)
+- #503 - Marketing Website & Brand Presence
+- #506 - Onboarding Flows for The Seed
+
+### Closed (Superseded)
+
+- ~~#501~~ - Kernel Networks naming (closed - superseded)
+- ~~#504~~ - Kernel Networks renaming (closed - superseded)
+- ~~#505~~ - Documentation updates (closed - superseded)
 
 ---
 
-*Plan created: December 15, 2025*
-*Target completion: TBD*
+## Gap Analysis Update (December 16, 2025)
+
+**Automated scan results:**
+
+- 302 occurrences of "netscope" across 59 files (plan documented 39)
+- 767 occurrences of "luminetiq" across 133 files (plan documented 99)
+
+### Missing E2E Tests (31 files) - All contain "luminetiq" references
+
+| File | Occurrences |
+|------|-------------|
+| `web/e2e/auth-complete.spec.ts` | 11 |
+| `web/e2e/settings.spec.ts` | 10 |
+| `web/e2e/vulnerability-scanning-complete.spec.ts` | 10 |
+| `web/e2e/responsive.spec.ts` | 7 |
+| `web/e2e/vlan.spec.ts` | 4 |
+| `web/e2e/error-scenarios.spec.ts` | 4 |
+| `web/e2e/websocket-realtime.spec.ts` | 3 |
+| `web/e2e/snmp-settings.spec.ts` | 3 |
+| `web/e2e/link-card.spec.ts` | 3 |
+| `web/e2e/dns-card.spec.ts` | 3 |
+| `web/e2e/cable-diagnostics.spec.ts` | 3 |
+| `web/e2e/gateway.spec.ts` | 2 |
+| `web/e2e/iperf.spec.ts` | 2 |
+| `web/e2e/auth.spec.ts` | 2 |
+| `web/e2e/system-health.spec.ts` | 2 |
+| `web/e2e/theme-and-help.spec.ts` | 1 |
+| `web/e2e/speed-test.spec.ts` | 1 |
+| `web/e2e/speed-test-complete.spec.ts` | 1 |
+| `web/e2e/setup-wizard.spec.ts` | 1 |
+| `web/e2e/smoke.spec.ts` | 1 |
+| `web/e2e/public-ip.spec.ts` | 1 |
+| `web/e2e/network-discovery-complete.spec.ts` | 1 |
+| `web/e2e/network-discovery.spec.ts` | 1 |
+| `web/e2e/wifi-survey.spec.ts` | 1 |
+| `web/e2e/wifi-survey-complete.spec.ts` | 1 |
+| `web/e2e/websocket.spec.ts` | 1 |
+| `web/e2e/vulnerabilities.spec.ts` | 1 |
+| `web/e2e/interface-switching.spec.ts` | 1 |
+| `web/e2e/fab.spec.ts` | 1 |
+| `web/e2e/dashboard.spec.ts` | 1 |
+| `web/e2e/card-lifecycle.spec.ts` | 1 |
+
+### Missing Internal Documentation (10 files)
+
+| File | Contains |
+|------|----------|
+| `docs/internal/COMPLIANCE_MAPPINGS.md` | luminetiq (62 occurrences) |
+| `docs/internal/HEALTHCARE_MARKET_STRATEGY.md` | luminetiq (41 occurrences) |
+| `docs/internal/WIFI_COMPETITIVE_ANALYSIS.md` | luminetiq (35 occurrences) |
+| `docs/internal/VERIFICATION.md` | luminetiq (23), netscope (7) |
+| `docs/internal/HARDWARE_PHASE5_PLAN.md` | luminetiq (16) |
+| `docs/internal/LICENSING_STRATEGY.md` | luminetiq (15) |
+| `docs/internal/HARDWARE_PHASE4_PLAN.md` | luminetiq (13) |
+| `docs/internal/AI_INTEGRATION_PLAN.md` | luminetiq (5) |
+| `docs/internal/AI_ISSUES_SUMMARY.md` | luminetiq (5) |
+| `docs/internal/PRODUCT_ROADMAP.md` | luminetiq (1), netscope (4) |
+| `docs/internal/BUSINESS_PLAN.md` | netscope (2) |
+| `docs/internal/MARKETING_STRATEGY.md` | luminetiq (1) |
+
+### Missing Reference/Template Documentation (5 files)
+
+| File | Contains |
+|------|----------|
+| `docs/reference/CI_TOOLING_ANALYSIS.md` | luminetiq (3) |
+| `docs/reference/SETUP_COMPLETE.md` | netscope (1) |
+| `docs/templates/ETHERNET_TEST_REPORT.md` | luminetiq (3) |
+| `docs/templates/WIFI_TEST_REPORT.md` | luminetiq (3) |
+| `docs/DOCUMENTATION_STRUCTURE.md` | netscope (4) |
+| `docs/WIKI_CONTENT.md` | netscope (28) |
+
+### Missing Wiki Documentation (7 files)
+
+| File | Contains |
+|------|----------|
+| `docs/wiki/FAQ.md` | netscope (5) |
+| `docs/wiki/Installation-Linux.md` | netscope (3) |
+| `docs/wiki/Home.md` | netscope (2) |
+| `docs/wiki/Installation-macOS.md` | netscope (2) |
+| `docs/wiki/Network-Discovery.md` | netscope (1) |
+| `docs/wiki/Quick-Start-Guide.md` | netscope (1) |
+
+### Missing Config Files (8 files)
+
+| File | Contains |
+|------|----------|
+| `.gitleaks.toml` | luminetiq (2) |
+| `.pre-commit-config.yaml` | luminetiq (1) |
+| `web/vitest.config.ts` | luminetiq (1) |
+| `web/vite.config.ts` | luminetiq (1) |
+| `web/vite.config.js` | luminetiq (1) |
+| `web/vite.config.d.ts` | luminetiq (1) |
+| `web/postcss.config.js` | luminetiq (1) |
+| `docs/AI_README.md` | luminetiq (3), netscope (4) |
+
+### Missing Storybook Stories (2 files)
+
+| File | Contains |
+|------|----------|
+| `web/src/components/cards/SystemHealthCard.stories.tsx` | netscope (8) |
+| `web/src/components/help/ImprovedHelpModal.stories.tsx` | luminetiq (1) |
+
+### Missing Scripts (4 files)
+
+| File | Contains |
+|------|----------|
+| `scripts/test-dhcp-rogue.sh` | luminetiq (13) |
+| `scripts/setup-wiki.sh` | netscope (28) |
+| `scripts/test-hardware-compatibility.sh` | luminetiq (3) |
+| `scripts/re-version.sh` | luminetiq (1) |
+
+### Missing Planning Documents (2 files)
+
+| File | Contains |
+|------|----------|
+| `IMPLEMENTATION_PLAN.md` | luminetiq (1) |
+| `HARDWARE.md` | luminetiq (7) |
+
+### Generated/Build Artifacts (Ignore but note)
+
+| File | Contains | Action |
+|------|----------|--------|
+| `web/playwright-report/results.json` | netscope (44) | Ignore - regenerated |
+| `web/package-lock.json` | luminetiq (2), netscope (2) | Auto-updated by npm |
+| `package-lock.json` | netscope (2) | Auto-updated by npm |
+
+### Updated Totals
+
+| Category | Original Count | Actual Count | Delta |
+|----------|----------------|--------------|-------|
+| Files with "netscope" | 39 | 59 | +20 |
+| Files with "luminetiq" | 99 | 133 | +34 |
+| **Total unique files** | ~100 | ~145 | +45 |
+
+---
+
+---
+
+## Execution Plan
+
+### Recommended Approach: Phased PRs
+
+Execute the rename in 5 focused PRs to make review manageable:
+
+| PR | Phases | Files | Description |
+|----|--------|-------|-------------|
+| **PR 1** | 2-4 | ~55 | Go module + directories + build system |
+| **PR 2** | 5-6 | ~22 | Frontend + backend code |
+| **PR 3** | 7-8 | ~12 | Services + CI/CD |
+| **PR 4** | 9-10 | ~68 | Documentation + tests |
+| **PR 5** | 11-12 | - | Repository rename + verification |
+
+### Pre-Requisites (Before PR 1)
+
+1. Complete Phase 1 external asset preparation (#609)
+2. Tag current release: `git tag pre-rename-backup && git push --tags`
+3. Ensure all CI checks pass on main branch
+
+### Execution Commands
+
+#### PR 1: Go Module + Build System
+
+```bash
+# Update go.mod
+sed -i '' 's|github.com/krisarmstrong/luminetiq|github.com/krisarmstrong/seed|g' go.mod
+
+# Update all Go imports
+find . -name '*.go' -exec sed -i '' 's|github.com/krisarmstrong/luminetiq|github.com/krisarmstrong/seed|g' {} +
+
+# Update .golangci.yml
+sed -i '' 's|github.com/krisarmstrong/luminetiq|github.com/krisarmstrong/seed|g' .golangci.yml
+
+# Rename directories
+git mv cmd/luminetiq cmd/seed
+git mv configs/netscope.yaml configs/seed.yaml
+
+# Update Makefile
+sed -i '' 's|BINARY_NAME=luminetiq|BINARY_NAME=seed|g' Makefile
+sed -i '' 's|./cmd/luminetiq|./cmd/seed|g' Makefile
+
+# Verify
+go mod tidy && go build ./... && go test ./...
+```
+
+#### PR 2: Frontend + Backend
+
+```bash
+# Update storage keys
+find web/src -name '*.ts' -o -name '*.tsx' | xargs sed -i '' 's/netscope-/seed-/g'
+
+# Update HTML
+sed -i '' 's/luminetiq/seed/g' web/index.html
+sed -i '' 's/LuminetIQ/The Seed/g' web/index.html
+
+# Update backend payloads
+sed -i '' 's/netscope/seed/g' internal/discovery/icmp.go
+sed -i '' 's/NETSCOPE/SEED/g' internal/discovery/traceroute.go
+
+# Rename web assets
+git mv web/public/luminetiq.svg web/public/seed.svg
+```
+
+#### PR 3: Services + CI/CD
+
+```bash
+# Rename service files
+git mv deploy/systemd/luminetiq.service deploy/systemd/seed.service
+git mv deploy/luminetiq-dev.service deploy/seed-dev.service
+git mv packaging/luminetiq.spec packaging/seed.spec
+git mv packaging/luminetiq.service packaging/seed.service
+
+# Update service content
+find deploy scripts packaging -type f -exec sed -i '' 's/luminetiq/seed/g' {} +
+
+# Update workflows
+find .github -name '*.yml' -exec sed -i '' 's/luminetiq/seed/g' {} +
+```
+
+#### PR 4: Documentation + Tests
+
+```bash
+# Update docs
+find docs -name '*.md' -exec sed -i '' 's/netscope/seed/g' {} +
+find docs -name '*.md' -exec sed -i '' 's/luminetiq/seed/g' {} +
+find docs -name '*.md' -exec sed -i '' 's/NetScope/The Seed/g' {} +
+find docs -name '*.md' -exec sed -i '' 's/LuminetIQ/Mustard Seed Networks/g' {} +
+
+# Update E2E tests
+find web/e2e -name '*.spec.ts' -exec sed -i '' 's/luminetiq/seed/g' {} +
+
+# Update root docs
+sed -i '' 's/netscope/seed/g' README.md CONTRIBUTING.md SECURITY.md
+```
+
+#### PR 5: Repository Rename
+
+```bash
+# After all code PRs merged:
+gh repo rename seed --repo krisarmstrong/netscope
+git remote set-url origin git@github.com:krisarmstrong/seed.git
+
+# Final verification
+grep -ri 'netscope' --include='*.go' --include='*.ts' --include='*.md' .
+grep -ri 'luminetiq' --include='*.go' --include='*.ts' --include='*.md' .
+# Both should return NO results
+```
+
+### Time Estimate
+
+| Activity | Time |
+|----------|------|
+| Phase 1 prep | 1-2 days (external) |
+| PR 1 (Go/build) | 2-3 hours |
+| PR 2 (frontend/backend) | 2-3 hours |
+| PR 3 (services/CI) | 1-2 hours |
+| PR 4 (docs/tests) | 3-4 hours |
+| PR 5 (repo rename) | 1 hour |
+| **Total code work** | **~12-15 hours** |
+
+---
+
+_Plan created: December 15, 2025_
+_Gap analysis update: December 16, 2025_
+_Execution plan added: December 16, 2025_
+_Target completion: TBD_

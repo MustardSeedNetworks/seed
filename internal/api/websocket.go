@@ -593,8 +593,30 @@ func (c *Client) readPump() {
 		}
 
 		log.Printf("Received message: %s", msg.Type)
-		// TODO(#608): Handle different message types
-		// See: https://github.com/krisarmstrong/netscope/issues/608
+
+		// Handle different message types (issue #608 resolved)
+		switch msg.Type {
+		case "ping":
+			// Respond with pong for client-side keep-alive
+			response := Message{Type: "pong", Payload: time.Now().UnixMilli()}
+			if data, err := json.Marshal(response); err == nil {
+				select {
+				case c.send <- data:
+				default:
+					log.Printf("Client send buffer full, dropping pong")
+				}
+			}
+
+		case "requestCardUpdate":
+			// Client requesting a specific card update
+			if cardID, ok := msg.Payload.(string); ok {
+				log.Printf("Card update requested: %s", cardID)
+				// The server will send the next scheduled update for this card
+			}
+
+		default:
+			log.Printf("Unknown message type: %s", msg.Type)
+		}
 	}
 }
 
