@@ -26,6 +26,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, memo } from "react";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "../../hooks/useTheme";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { useSettings } from "../../contexts/SettingsContext";
@@ -58,6 +59,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 // VLANControl component for creating/deleting VLAN subinterfaces
 const VLANControl = memo(function VLANControl() {
+  const { t } = useTranslation("settings");
   const [vlanId, setVlanId] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
@@ -68,7 +70,7 @@ const VLANControl = memo(function VLANControl() {
   const handleCreate = async () => {
     const id = parseInt(vlanId, 10);
     if (isNaN(id) || id < 1 || id > 4094) {
-      setMessage({ text: "VLAN ID must be 1-4094", isError: true });
+      setMessage({ text: t("network.vlan.invalidId"), isError: true });
       return;
     }
     setLoading(true);
@@ -80,14 +82,14 @@ const VLANControl = memo(function VLANControl() {
         body: JSON.stringify({ vlanId: id }),
       });
       if (response.ok) {
-        setMessage({ text: `VLAN ${id} created`, isError: false });
+        setMessage({ text: t("network.vlan.created", { id }), isError: false });
         setVlanId("");
       } else {
         const text = await response.text();
-        setMessage({ text: text || "Failed to create VLAN", isError: true });
+        setMessage({ text: text || t("network.vlan.createFailed"), isError: true });
       }
     } catch {
-      setMessage({ text: "Network error", isError: true });
+      setMessage({ text: t("network.vlan.networkError"), isError: true });
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(null), 3000);
@@ -97,7 +99,7 @@ const VLANControl = memo(function VLANControl() {
   const handleDelete = async () => {
     const id = parseInt(vlanId, 10);
     if (isNaN(id) || id < 1 || id > 4094) {
-      setMessage({ text: "VLAN ID must be 1-4094", isError: true });
+      setMessage({ text: t("network.vlan.invalidId"), isError: true });
       return;
     }
     setLoading(true);
@@ -109,14 +111,14 @@ const VLANControl = memo(function VLANControl() {
         body: JSON.stringify({ vlanId: id }),
       });
       if (response.ok) {
-        setMessage({ text: `VLAN ${id} deleted`, isError: false });
+        setMessage({ text: t("network.vlan.deleted", { id }), isError: false });
         setVlanId("");
       } else {
         const text = await response.text();
-        setMessage({ text: text || "Failed to delete VLAN", isError: true });
+        setMessage({ text: text || t("network.vlan.deleteFailed"), isError: true });
       }
     } catch {
-      setMessage({ text: "Network error", isError: true });
+      setMessage({ text: t("network.vlan.networkError"), isError: true });
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(null), 3000);
@@ -132,7 +134,7 @@ const VLANControl = memo(function VLANControl() {
           max="4094"
           value={vlanId}
           onChange={(e) => setVlanId(e.target.value)}
-          placeholder="VLAN ID (1-4094)"
+          placeholder={t("network.vlan.placeholder")}
           className={`flex-1 px-2 py-1.5 bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
           disabled={loading}
         />
@@ -141,14 +143,14 @@ const VLANControl = memo(function VLANControl() {
           disabled={loading || !vlanId}
           className={`px-3 py-1.5 bg-brand-primary text-text-inverse ${radius.md} body-small font-medium hover:bg-brand-accent disabled:opacity-50`}
         >
-          Add
+          {t("network.vlan.add")}
         </button>
         <button
           onClick={handleDelete}
           disabled={loading || !vlanId}
           className={`px-3 py-1.5 bg-status-error text-text-inverse ${radius.md} body-small font-medium hover:opacity-80 disabled:opacity-50`}
         >
-          Remove
+          {t("network.vlan.remove")}
         </button>
       </div>
       {message && (
@@ -156,13 +158,14 @@ const VLANControl = memo(function VLANControl() {
           {message.text}
         </p>
       )}
-      <p className="caption">Creates/removes 802.1Q VLAN subinterface. Requires root.</p>
+      <p className="caption">{t("network.vlan.description")}</p>
     </div>
   );
 });
 
 // MTUControl component for setting interface MTU
 const MTUControl = memo(function MTUControl() {
+  const { t } = useTranslation("settings");
   const [mtu, setMtu] = useState("1500");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
@@ -173,7 +176,7 @@ const MTUControl = memo(function MTUControl() {
   const handleApply = async () => {
     const mtuVal = parseInt(mtu, 10);
     if (isNaN(mtuVal) || mtuVal < 68 || mtuVal > 9000) {
-      setMessage({ text: "MTU must be 68-9000", isError: true });
+      setMessage({ text: t("network.mtuControl.invalidRange"), isError: true });
       return;
     }
     setLoading(true);
@@ -185,13 +188,13 @@ const MTUControl = memo(function MTUControl() {
         body: JSON.stringify({ mtu: mtuVal }),
       });
       if (response.ok) {
-        setMessage({ text: `MTU set to ${mtuVal}`, isError: false });
+        setMessage({ text: t("network.mtuControl.setSuccess", { value: mtuVal }), isError: false });
       } else {
         const text = await response.text();
-        setMessage({ text: text || "Failed to set MTU", isError: true });
+        setMessage({ text: text || t("network.mtuControl.setFailed"), isError: true });
       }
     } catch {
-      setMessage({ text: "Network error", isError: true });
+      setMessage({ text: t("network.mtuControl.networkError"), isError: true });
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(null), 3000);
@@ -207,7 +210,7 @@ const MTUControl = memo(function MTUControl() {
           max="9000"
           value={mtu}
           onChange={(e) => setMtu(e.target.value)}
-          placeholder="1500"
+          placeholder={t("network.mtuControl.placeholder")}
           className={`flex-1 px-2 py-1.5 bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
           disabled={loading}
         />
@@ -216,7 +219,7 @@ const MTUControl = memo(function MTUControl() {
           disabled={loading}
           className={`px-4 py-1.5 bg-brand-primary text-text-inverse ${radius.md} body-small font-medium hover:bg-brand-accent disabled:opacity-50`}
         >
-          {loading ? "Applying..." : "Apply"}
+          {loading ? t("network.applying") : t("network.mtuControl.apply")}
         </button>
       </div>
       {message && (
@@ -224,7 +227,7 @@ const MTUControl = memo(function MTUControl() {
           {message.text}
         </p>
       )}
-      <p className="caption">Standard: 1500, Jumbo frames: up to 9000. Requires root.</p>
+      <p className="caption">{t("network.mtuControl.description")}</p>
     </div>
   );
 });
@@ -240,6 +243,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   onClose,
   version = "dev",
 }: SettingsDrawerProps) {
+  const { t } = useTranslation("settings");
   const { theme, setTheme, isDark } = useTheme();
 
   // Get settings from context - single source of truth
@@ -607,17 +611,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   }, []);
 
   // Fetch a small tail of the application log (debug)
+  // Security fix #301: Removed VITE_LOG_ACCESS_TOKEN - JWT authentication is sufficient
   const fetchLogPreview = useCallback(async () => {
     setLogLoading(true);
     setLogError(null);
-    const logToken = import.meta.env.VITE_LOG_ACCESS_TOKEN;
-    const logHeader = import.meta.env.VITE_LOG_ACCESS_HEADER || "X-Log-Token";
     try {
       const response = await fetch(`${API_BASE}/api/logs?lines=200`, {
-        headers: {
-          ...getAuthHeaders(),
-          ...(logToken ? { [logHeader]: logToken } : {}),
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) {
         throw new Error("Unable to load logs");
@@ -642,7 +642,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Add a new subnet
   const addSubnet = async () => {
     if (!newSubnetCidr.trim()) {
-      setSubnetError("CIDR is required");
+      setSubnetError(t("network.cidrRequired"));
       return;
     }
 
@@ -1042,15 +1042,15 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 border-b border-surface-border sticky top-0 bg-surface-raised z-10">
           <div className="stack-xs">
             <h2 id="settings-drawer-title" className="heading-3">
-              Settings
+              {t("title")}
             </h2>
-            <p className="body-small">Adjust thresholds, network, and display</p>
+            <p className="body-small">{t("subtitle")}</p>
           </div>
           <button
             ref={closeButtonRef}
             onClick={onClose}
             className={`p-2.5 ${radius.md} hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised`}
-            aria-label="Close settings"
+            aria-label={t("network.closeSettings")}
           >
             <svg
               className={iconTokens.size.lg}
@@ -1071,10 +1071,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
         <div className="px-4 sm:px-5 pb-10 pt-4 section-gap body-small leading-relaxed">
           {/* Network Section */}
-          <CollapsibleSection title="Network">
+          <CollapsibleSection title={t("sections.network")}>
             {/* Network Configuration */}
             <div className="stack">
-              <p className="section-title">Network Configuration</p>
+              <p className="section-title">{t("network.title")}</p>
               {/* Mode Toggle */}
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -1085,7 +1085,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                       : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
                   }`}
                 >
-                  DHCP
+                  {t("network.dhcp")}
                 </button>
                 <button
                   onClick={() => setIPSettings((prev) => ({ ...prev, mode: "static" }))}
@@ -1095,7 +1095,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                       : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
                   }`}
                 >
-                  Static
+                  {t("network.static")}
                 </button>
               </div>
 
@@ -1103,7 +1103,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {ipSettings.mode === "static" && (
                 <div className="stack pt-3 border-t border-surface-border">
                   <div>
-                    <label className="caption font-medium">IP Address *</label>
+                    <label className="caption font-medium">{t("network.ipAddress")} *</label>
                     <input
                       type="text"
                       value={ipSettings.address}
@@ -1122,7 +1122,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label className="caption font-medium">Subnet Mask *</label>
+                    <label className="caption font-medium">{t("network.subnetMask")} *</label>
                     <input
                       type="text"
                       value={ipSettings.netmask}
@@ -1137,7 +1137,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label className="caption font-medium">Gateway</label>
+                    <label className="caption font-medium">{t("network.gateway")}</label>
                     <input
                       type="text"
                       value={ipSettings.gateway}
@@ -1156,7 +1156,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label className="caption font-medium">DNS Servers (comma-separated)</label>
+                    <label className="caption font-medium">{t("network.dnsServers")}</label>
                     <input
                       type="text"
                       value={dnsInput}
@@ -1174,7 +1174,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 disabled={savingIP || (ipSettings.mode === "static" && !ipSettings.address)}
                 className={`w-full py-2 px-4 bg-brand-primary text-text-inverse ${radius.md} font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors`}
               >
-                {savingIP ? "Applying..." : "Apply IP Settings"}
+                {savingIP ? t("network.applying") : t("network.applyIPSettings")}
               </button>
 
               {ipMessage && (
@@ -1189,20 +1189,22 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 </p>
               )}
 
-              <p className="caption">Note: Requires root/admin privileges to apply</p>
+              <p className="caption">{t("network.requiresRoot")}</p>
             </div>
 
             {/* Display Options */}
             <div className="border-t border-surface-border pt-3 mt-3">
               <p className="caption font-medium mb-2">
-                Display Options <AutoSaveIndicator status={displayStatus} />
+                {t("network.displayOptions")} <AutoSaveIndicator status={displayStatus} />
               </p>
               <label
                 className={`flex items-center justify-between p-2.5 bg-surface-base ${radius.md} border border-surface-border`}
               >
                 <div>
-                  <span className="body-small text-text-primary font-medium">Show Public IP</span>
-                  <p className="caption text-text-muted">Display in Network card</p>
+                  <span className="body-small text-text-primary font-medium">
+                    {t("network.showPublicIP")}
+                  </span>
+                  <p className="caption text-text-muted">{t("network.displayInNetworkCard")}</p>
                 </div>
                 <input
                   type="checkbox"
@@ -1220,13 +1222,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
             {/* VLAN Configuration */}
             <div className="border-t border-surface-border pt-3 mt-3">
-              <p className="section-title mb-2">VLAN Tag (802.1Q)</p>
+              <p className="section-title mb-2">{t("network.vlanTag")}</p>
               <VLANControl />
             </div>
 
             {/* MTU Configuration */}
             <div className="border-t border-surface-border pt-3 mt-3">
-              <p className="section-title mb-2">MTU Setting</p>
+              <p className="section-title mb-2">{t("network.mtuSetting")}</p>
               <MTUControl />
             </div>
           </CollapsibleSection>
@@ -1297,16 +1299,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           <section className="pt-4 border-t border-surface-border">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="body-small font-medium text-text-muted">Logs (debug)</h3>
-                <p className="caption text-text-muted">
-                  Rotating file; use only for troubleshooting.
-                </p>
+                <h3 className="body-small font-medium text-text-muted">{t("logs.title")}</h3>
+                <p className="caption text-text-muted">{t("logs.description")}</p>
               </div>
               <button
                 onClick={fetchLogPreview}
                 className={`caption px-3 py-1 border border-surface-border ${radius.md} text-text-muted hover:text-text-primary hover:border-text-muted transition-colors`}
               >
-                {logLoading ? "Loading…" : "View"}
+                {logLoading ? t("logs.loading") : t("logs.view")}
               </button>
             </div>
             {logError && <p className="caption text-status-error mt-2">{logError}</p>}
@@ -1321,7 +1321,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
           {/* Export Section */}
           <section className="pt-4 border-t border-surface-border">
-            <h3 className="body-small font-medium text-text-muted mb-3">Export</h3>
+            <h3 className="body-small font-medium text-text-muted mb-3">{t("export.title")}</h3>
             <a
               href={`${API_BASE}/api/export`}
               download="seed-export.json"
@@ -1340,20 +1340,18 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 />
               </svg>
-              Download JSON Export
+              {t("export.download")}
             </a>
-            <p className="caption text-text-muted mt-2">
-              Export all diagnostic data as JSON for documentation or analysis.
-            </p>
+            <p className="caption text-text-muted mt-2">{t("export.description")}</p>
           </section>
 
           {/* About Section */}
           <section className="pt-4 border-t border-surface-border">
-            <h3 className="body-small font-medium text-text-muted mb-2">About</h3>
+            <h3 className="body-small font-medium text-text-muted mb-2">{t("about.title")}</h3>
             <p className="caption text-text-muted">
-              The Seed {version}
+              {t("about.appName")} {version}
               <br />
-              Network Diagnostic Tool
+              {t("about.description")}
             </p>
           </section>
         </div>

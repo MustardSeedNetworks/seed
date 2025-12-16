@@ -50,7 +50,30 @@
     "mtuSetting": "MTU Setting",
     "applyIPSettings": "Apply IP Settings",
     "applying": "Applying...",
-    "requiresRoot": "Note: Requires root/admin privileges to apply"
+    "requiresRoot": "Note: Requires root/admin privileges to apply",
+    "vlan": {
+      "placeholder": "VLAN ID (1-4094)",
+      "add": "Add",
+      "remove": "Remove",
+      "invalidId": "VLAN ID must be 1-4094",
+      "created": "VLAN {{id}} created",
+      "deleted": "VLAN {{id}} deleted",
+      "createFailed": "Failed to create VLAN",
+      "deleteFailed": "Failed to delete VLAN",
+      "networkError": "Network error",
+      "description": "Creates/removes 802.1Q VLAN subinterface. Requires root."
+    },
+    "mtuControl": {
+      "placeholder": "1500",
+      "apply": "Apply",
+      "invalidRange": "MTU must be 68-9000",
+      "setSuccess": "MTU set to {{value}}",
+      "setFailed": "Failed to set MTU",
+      "networkError": "Network error",
+      "description": "Standard: 1500, Jumbo frames: up to 9000. Requires root."
+    },
+    "closeSettings": "Close settings",
+    "cidrRequired": "CIDR is required"
   },
   "discovery": {
     "title": "Network Discovery",
