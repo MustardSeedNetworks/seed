@@ -559,12 +559,16 @@ export function DiscoverySettings({
                         checked={subnet.enabled}
                         onChange={(e) => toggleSubnet(subnet.cidr, e.target.checked)}
                         className={iconTokens.size.sm}
-                        title={subnet.enabled ? "Disable subnet" : "Enable subnet"}
+                        title={
+                          subnet.enabled
+                            ? t("discovery.disableSubnet")
+                            : t("discovery.enableSubnet")
+                        }
                       />
                       <button
                         onClick={() => deleteSubnet(subnet.cidr)}
                         className="text-status-error hover:text-status-error/70 body-small"
-                        title="Remove subnet"
+                        title={t("discovery.removeSubnet")}
                       >
                         X
                       </button>

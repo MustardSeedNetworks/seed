@@ -111,6 +111,9 @@
     "cidrPlaceholder": "CIDR (e.g., 10.0.0.0/24)",
     "namePlaceholder": "Name (optional, e.g., Server VLAN)",
     "addSubnet": "+ Add Subnet",
+    "enableSubnet": "Enable subnet",
+    "disableSubnet": "Disable subnet",
+    "removeSubnet": "Remove subnet",
     "serviceStatus": {
       "scanning": "Scanning...",
       "running": "Running",
@@ -159,6 +162,7 @@
     "enableDescription": "Test ping, TCP, UDP, and HTTP targets",
     "pingTargets": "Ping Targets",
     "pingDefault": "Default: 3 pings per target",
+    "numberOfPings": "Number of pings",
     "tcpPortTests": "TCP Port Tests",
     "udpPortTests": "UDP Port Tests",
     "udpDescription": "Test UDP services (DNS:53, NTP:123, etc.)",

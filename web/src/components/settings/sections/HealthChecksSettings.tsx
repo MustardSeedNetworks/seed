@@ -264,7 +264,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 }
                 min={1}
                 max={10}
-                title="Number of pings"
+                title={t("health.numberOfPings")}
                 className={cn(input.base, input.state.default, input.size.md, "w-14 text-center")}
               />
               <button

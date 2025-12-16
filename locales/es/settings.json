@@ -111,6 +111,9 @@
     "cidrPlaceholder": "CIDR (ej., 10.0.0.0/24)",
     "namePlaceholder": "Nombre (opcional, ej., VLAN de servidor)",
     "addSubnet": "+ Agregar subred",
+    "enableSubnet": "Habilitar subred",
+    "disableSubnet": "Deshabilitar subred",
+    "removeSubnet": "Eliminar subred",
     "serviceStatus": {
       "scanning": "Escaneando...",
       "running": "Ejecutando",
@@ -159,6 +162,7 @@
     "enableDescription": "Probar objetivos ping, TCP, UDP y HTTP",
     "pingTargets": "Objetivos Ping",
     "pingDefault": "Por defecto: 3 pings por objetivo",
+    "numberOfPings": "Número de pings",
     "tcpPortTests": "Pruebas de puertos TCP",
     "udpPortTests": "Pruebas de puertos UDP",
     "udpDescription": "Probar servicios UDP (DNS:53, NTP:123, etc.)",
