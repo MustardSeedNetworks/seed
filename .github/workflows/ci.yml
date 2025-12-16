@@ -220,6 +220,21 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
 
+      - name: Check Go license compliance
+        run: |
+          go install github.com/google/go-licenses@latest
+          go-licenses check ./... \
+            --disallowed_types=forbidden,restricted \
+            --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MPL-2.0,CC0-1.0 \
+            || echo "Warning: Some licenses may need review"
+
+      - name: Check npm license compliance
+        working-directory: web
+        run: |
+          npx license-checker --production \
+            --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense" \
+            --summary
+
   # ===========================================================================
   # Code Quality Checks
   # ===========================================================================
@@ -317,9 +332,11 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "25.2.1"
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
