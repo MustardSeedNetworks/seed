@@ -11,7 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"os"
@@ -145,9 +145,9 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		}
 		if len(enabledCIDRs) > 0 {
 			if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
-				log.Printf("Warning: Failed to set additional subnets: %v", err)
+				slog.Warn("Failed to set additional subnets", "error", err)
 			} else {
-				log.Printf("Configured %d additional subnets for scanning", len(enabledCIDRs))
+				slog.Info("Configured additional subnets for scanning", "count", len(enabledCIDRs))
 			}
 		}
 	}
@@ -156,7 +156,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 	surveyStoragePath := "data/surveys"
 	s.surveyManager = survey.NewManager(surveyStoragePath, s.wifiScanner, s.wifiManager, s.iperfManager)
 	if err := s.surveyManager.LoadSurveys(); err != nil {
-		log.Printf("Warning: Failed to load surveys: %v", err)
+		slog.Warn("Failed to load surveys", "error", err)
 	}
 
 	// Initialize WebSocket hub (fixes #512)
@@ -177,20 +177,20 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 
 		vulnScanner, err := discovery.NewVulnerabilityScanner(scannerCfg)
 		if err != nil {
-			log.Printf("Warning: Failed to initialize vulnerability scanner: %v", err)
+			slog.Warn("Failed to initialize vulnerability scanner", "error", err)
 		} else {
 			s.vulnScanner = vulnScanner
-			log.Printf("Vulnerability scanner initialized (CVE DB: %s, threshold: %s)",
-				scannerCfg.CVEDatabase, scannerCfg.SeverityThreshold)
+			slog.Info("Vulnerability scanner initialized",
+				"cve_database", scannerCfg.CVEDatabase, "threshold", scannerCfg.SeverityThreshold)
 		}
 	}
 
 	// Configure security: allowed origins for CORS/WebSocket
 	SetAllowedOrigins(cfg.Security.AllowedOrigins)
 	if len(cfg.Security.AllowedOrigins) > 0 {
-		log.Printf("Configured %d explicit allowed origins for CORS/WebSocket", len(cfg.Security.AllowedOrigins))
+		slog.Info("Configured explicit allowed origins for CORS/WebSocket", "count", len(cfg.Security.AllowedOrigins))
 	} else {
-		log.Println("Using default RFC 1918 private network origins for CORS/WebSocket")
+		slog.Info("Using default RFC 1918 private network origins for CORS/WebSocket")
 	}
 
 	// Setup routes (wsHub already initialized and running above)
@@ -201,15 +201,15 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 
 // onLinkStateChange handles link up/down events.
 func (s *Server) onLinkStateChange(event network.LinkEvent) {
-	log.Printf("Link state change: %s -> %s", event.Interface, event.State)
+	slog.Info("Link state change", "interface", event.Interface, "state", event.State)
 
 	switch event.State {
 	case network.LinkStateUp:
 		// Link came up - restart discovery to catch LLDP/CDP frames
-		log.Println("Link up - restarting discovery capture")
+		slog.Info("Link up - restarting discovery capture")
 		s.discoveryManager.Stop()
 		if err := s.discoveryManager.Start(); err != nil {
-			log.Printf("Warning: Failed to restart discovery: %v", err)
+			slog.Warn("Failed to restart discovery", "error", err)
 		}
 
 		// Notify WebSocket clients
@@ -223,7 +223,7 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 		})
 	case network.LinkStateDown:
 		// Link went down - notify clients
-		log.Println("Link down - notifying clients")
+		slog.Info("Link down - notifying clients")
 		s.wsHub.Broadcast(Message{
 			Type: "linkState",
 			Payload: map[string]interface{}{
@@ -234,7 +234,7 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 		})
 	case network.LinkStateUnknown:
 		// Unknown state - log but don't take action
-		log.Printf("Link state unknown for %s", event.Interface)
+		slog.Warn("Link state unknown", "interface", event.Interface)
 	}
 }
 
@@ -321,10 +321,10 @@ func (s *Server) setupRoutes() {
 	// Static files (frontend) - use embedded FS in production, filesystem in dev
 	frontendFS, err := web.GetFS()
 	if err != nil {
-		log.Printf("Warning: Failed to get embedded frontend FS: %v, falling back to disk", err)
+		slog.Warn("Failed to get embedded frontend FS, falling back to disk", "error", err)
 		s.mux.Handle("/", http.FileServer(http.Dir("web/dist")))
 	} else {
-		log.Printf("Serving frontend from embedded filesystem (embedded=%v)", web.IsEmbedded())
+		slog.Info("Serving frontend from embedded filesystem", "embedded", web.IsEmbedded())
 		s.mux.Handle("/", spaHandler(http.FS(frontendFS)))
 	}
 }
@@ -399,8 +399,11 @@ func recoverMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Printf("PANIC in handler %s %s: %v\n%s",
-					r.Method, r.URL.Path, err, debug.Stack())
+				slog.Error("PANIC in handler",
+					"method", r.Method,
+					"path", r.URL.Path,
+					"error", err,
+					"stack", string(debug.Stack()))
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
 		}()
@@ -500,33 +503,35 @@ func (s *Server) Start() error {
 
 	// Start link state monitor
 	if err := s.linkMonitor.Start(); err != nil {
-		log.Printf("Warning: Link monitor failed to start: %v", err)
+		slog.Warn("Link monitor failed to start", "error", err)
 	} else {
-		log.Printf("Link monitor started for %s (state: %s)",
-			s.config.Interface.Default, s.linkMonitor.GetState())
+		slog.Info("Link monitor started",
+			"interface", s.config.Interface.Default,
+			"state", s.linkMonitor.GetState())
 	}
 
 	// Start unified discovery service (applies profile-based configuration)
 	if err := s.discoveryService.Start(); err != nil {
-		log.Printf("Warning: Discovery service failed to start (may require root): %v", err)
+		slog.Warn("Discovery service failed to start (may require root)", "error", err)
 	} else {
 		status := s.discoveryService.GetStatus()
-		log.Printf("Discovery service started with profile '%s' (methods: %v)",
-			status.Profile, status.ActiveMethods)
+		slog.Info("Discovery service started",
+			"profile", status.Profile,
+			"methods", status.ActiveMethods)
 	}
 
 	// Legacy: Start protocol capture for backward compatibility
 	if err := s.discoveryManager.Start(); err != nil {
-		log.Printf("Warning: Discovery capture failed to start (may require root): %v", err)
+		slog.Warn("Discovery capture failed to start (may require root)", "error", err)
 	} else {
-		log.Println("Discovery capture started")
+		slog.Info("Discovery capture started")
 	}
 
 	// Start VLAN traffic monitor (requires root/CAP_NET_RAW)
 	if err := s.vlanTrafficMonitor.Start(); err != nil {
-		log.Printf("Warning: VLAN traffic monitor failed to start (may require root): %v", err)
+		slog.Warn("VLAN traffic monitor failed to start (may require root)", "error", err)
 	} else {
-		log.Println("VLAN traffic monitor started")
+		slog.Info("VLAN traffic monitor started")
 	}
 
 	if s.config.Server.HTTPS {
@@ -541,7 +546,7 @@ func (s *Server) Start() error {
 
 // startHTTP starts the server in HTTP mode.
 func (s *Server) startHTTP() error {
-	log.Printf("Starting HTTP server on %s", s.httpServer.Addr)
+	slog.Info("Starting HTTP server", "addr", s.httpServer.Addr)
 	return s.httpServer.ListenAndServe()
 }
 
@@ -569,7 +574,7 @@ func (s *Server) startHTTPRedirect(port int) {
 	})
 
 	addr := fmt.Sprintf(":%d", port)
-	log.Printf("Starting HTTP→HTTPS redirect server on %s", addr)
+	slog.Info("Starting HTTP→HTTPS redirect server", "addr", addr)
 
 	// Store redirect server for proper shutdown (fixes #515)
 	s.redirectServer = &http.Server{
@@ -587,7 +592,7 @@ func (s *Server) startHTTPRedirect(port int) {
 	// Run server and report errors
 	err := s.redirectServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		log.Printf("HTTP redirect server error: %v", err)
+		slog.Error("HTTP redirect server error", "error", err)
 		s.redirectServerErr <- err
 	}
 }
@@ -627,7 +632,7 @@ func (s *Server) startHTTPS() error {
 	}
 	s.httpServer.TLSConfig = tlsConfig
 
-	log.Printf("Starting HTTPS server on %s with TLS 1.3", s.httpServer.Addr)
+	slog.Info("Starting HTTPS server", "addr", s.httpServer.Addr, "tls_version", "1.3")
 	return s.httpServer.ListenAndServeTLS(certFile, keyFile)
 }
 
@@ -655,7 +660,7 @@ func (s *Server) startHTTPSWithACME() error {
 		manager.Client = &acme.Client{
 			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
 		}
-		log.Println("ACME: Using Let's Encrypt STAGING server (certificates will not be trusted)")
+		slog.Warn("ACME: Using Let's Encrypt STAGING server (certificates will not be trusted)")
 	}
 
 	// Configure TLS with ACME
@@ -664,14 +669,15 @@ func (s *Server) startHTTPSWithACME() error {
 
 	s.httpServer.TLSConfig = tlsConfig
 
-	log.Printf("Starting HTTPS server with ACME on %s (domain: %s)",
-		s.httpServer.Addr, s.config.Server.ACME.Domain)
+	slog.Info("Starting HTTPS server with ACME",
+		"addr", s.httpServer.Addr,
+		"domain", s.config.Server.ACME.Domain)
 
 	// Start HTTP-01 challenge handler on port 80
 	// This is required for Let's Encrypt domain validation
 	go func() {
 		h := manager.HTTPHandler(nil)
-		log.Printf("Starting HTTP-01 challenge handler on :80")
+		slog.Info("Starting HTTP-01 challenge handler", "addr", ":80")
 		// HTTP-01 handler only serves ACME challenges, timeouts not critical
 		challengeServer := &http.Server{
 			Addr:              ":80",
@@ -679,7 +685,7 @@ func (s *Server) startHTTPSWithACME() error {
 			ReadHeaderTimeout: 10 * time.Second,
 		}
 		if err := challengeServer.ListenAndServe(); err != nil {
-			log.Printf("HTTP-01 handler error: %v", err)
+			slog.Error("HTTP-01 handler error", "error", err)
 		}
 	}()
 
@@ -754,44 +760,44 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 		return "", "", err
 	}
 
-	log.Printf("Generated self-signed certificate: %s", certFile)
+	slog.Info("Generated self-signed certificate", "cert_file", certFile)
 	return certFile, keyFile, nil
 }
 
 // Shutdown gracefully shuts down the server (fixes #515, #524).
 func (s *Server) Shutdown(ctx context.Context) error {
-	log.Println("Shutting down server...")
+	slog.Info("Shutting down server...")
 
 	// Shutdown HTTP redirect server if running (fixes #515)
 	if s.redirectServer != nil {
-		log.Println("Shutting down HTTP redirect server...")
+		slog.Info("Shutting down HTTP redirect server...")
 		if err := s.redirectServer.Shutdown(ctx); err != nil {
-			log.Printf("Error shutting down redirect server: %v", err)
+			slog.Error("Error shutting down redirect server", "error", err)
 		}
 	}
 
 	// Stop all services (fixes #524 - services will complete gracefully)
-	log.Println("Stopping WebSocket hub...")
+	slog.Info("Stopping WebSocket hub...")
 	s.wsHub.Shutdown()
 
-	log.Println("Stopping link monitor...")
+	slog.Info("Stopping link monitor...")
 	s.linkMonitor.Stop()
 
-	log.Println("Stopping discovery service...")
+	slog.Info("Stopping discovery service...")
 	s.discoveryService.Stop()
 
-	log.Println("Stopping discovery manager...")
+	slog.Info("Stopping discovery manager...")
 	s.discoveryManager.Stop()
 
-	log.Println("Stopping VLAN traffic monitor...")
+	slog.Info("Stopping VLAN traffic monitor...")
 	s.vlanTrafficMonitor.Stop()
 
-	log.Println("Stopping rate limiters...")
+	slog.Info("Stopping rate limiters...")
 	s.loginRateLimiter.Stop()
 	s.endpointRateLimiter.Stop()
 
 	// Shutdown main HTTP server
-	log.Println("Shutting down main HTTP server...")
+	slog.Info("Shutting down main HTTP server...")
 	return s.httpServer.Shutdown(ctx)
 }
 

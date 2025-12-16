@@ -17,7 +17,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -63,7 +63,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 		// Scan each device
 		for _, device := range devices {
 			if _, err := s.vulnScanner.ScanDevice(ctx, device); err != nil {
-				log.Printf("Vulnerability scan failed for %s: %v", device.IP, err)
+				slog.Warn("Vulnerability scan failed", "device_ip", device.IP, "error", err)
 			}
 		}
 

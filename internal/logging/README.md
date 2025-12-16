@@ -1,7 +1,44 @@
-# Logging Package - Secure Logging with Automatic Redaction
+# Logging Package - Structured Logging with Automatic Redaction
 
-This package provides secure logging utilities that automatically redact sensitive data like
-passwords, tokens, and API keys.
+This package provides structured logging utilities built on Go's `log/slog` with automatic redaction
+of sensitive data like passwords, tokens, and API keys.
+
+## Migration Status
+
+The logging infrastructure is complete. Migration of individual files is ongoing.
+
+### Completed
+
+- [x] Core logging package (logger.go, handler.go, middleware.go)
+- [x] Config support (LoggingConfig in config.go)
+- [x] RequestIDMiddleware integrated into server
+- [x] Security fix #301 (removed insecure LOG_ACCESS_TOKEN)
+- [x] cmd/seed/main.go migrated to slog
+
+### Pending Migration
+
+Files with `log.Printf` calls that need migration to `slog`:
+
+- internal/api/server.go (~40 calls)
+- internal/api/handlers\_\*.go
+- internal/discovery/\*.go
+- internal/wifi/\*.go
+- Other internal packages
+
+### Migration Pattern
+
+```go
+// Before
+log.Printf("Starting server on port %d", port)
+log.Printf("Error: %v", err)
+
+// After - Import "log/slog" and use:
+slog.Info("Starting server", "port", port)
+slog.Error("Operation failed", "error", err)
+
+// With request context (in handlers):
+logging.InfoContext(ctx, "Request processed", "method", r.Method, "path", r.URL.Path)
+```
 
 ## Why Use This Package?
 

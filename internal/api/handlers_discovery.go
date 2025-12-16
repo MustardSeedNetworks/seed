@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
@@ -154,12 +154,12 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 
 		if err := s.deviceDiscovery.Scan(ctx); err != nil {
-			log.Printf("Device scan error: %v", err)
+			slog.Error("Device scan error", "error", err)
 		}
 
 		// Auto-scan for vulnerabilities if enabled
 		if s.vulnScanner != nil && s.config.Security.VulnerabilityScanning.Enabled && s.config.Security.VulnerabilityScanning.AutoScan {
-			log.Printf("Auto-scan: triggering vulnerability scan for %d discovered devices", s.deviceDiscovery.Count())
+			slog.Info("Auto-scan: triggering vulnerability scan", "device_count", s.deviceDiscovery.Count())
 			devices := s.deviceDiscovery.GetDevices()
 
 			vulnCtx, vulnCancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -167,7 +167,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 
 			for _, device := range devices {
 				if _, err := s.vulnScanner.ScanDevice(vulnCtx, device); err != nil {
-					log.Printf("Auto vulnerability scan failed for %s: %v", device.IP, err)
+					slog.Warn("Auto vulnerability scan failed", "device_ip", device.IP, "error", err)
 				}
 			}
 
@@ -177,7 +177,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 				"results": results,
 				"count":   len(results),
 			})
-			log.Printf("Auto-scan: completed vulnerability scan, found %d devices with vulnerabilities", len(results))
+			slog.Info("Auto-scan: completed vulnerability scan", "vulnerable_devices", len(results))
 		}
 
 		// Notify WebSocket clients when scan completes
@@ -275,7 +275,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{
@@ -369,13 +369,13 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
-			log.Printf("Warning: Failed to update scanner subnets: %v", err)
+			slog.Warn("Failed to update scanner subnets", "error", err)
 		}
 	}
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{
@@ -416,13 +416,13 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
-			log.Printf("Warning: Failed to update scanner subnets: %v", err)
+			slog.Warn("Failed to update scanner subnets", "error", err)
 		}
 	}
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{
@@ -465,13 +465,13 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
-			log.Printf("Warning: Failed to update scanner subnets: %v", err)
+			slog.Warn("Failed to update scanner subnets", "error", err)
 		}
 	}
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{
@@ -548,14 +548,14 @@ func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 
 	// Apply the profile change to the running service
 	if err := s.discoveryService.SetProfile(profile); err != nil {
-		log.Printf("Failed to set discovery profile: %v", err)
+		slog.Error("Failed to set discovery profile", "error", err)
 		http.Error(w, "Failed to apply profile", http.StatusInternalServerError)
 		return
 	}
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{

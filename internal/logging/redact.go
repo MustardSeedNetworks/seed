@@ -3,7 +3,7 @@ package logging
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
@@ -75,6 +75,7 @@ func RedactMap(data map[string]interface{}) map[string]interface{} {
 }
 
 // Logf is a safe logging function that redacts sensitive data.
+// Note: Prefer using slog directly with the RedactingHandler for new code.
 func Logf(format string, args ...interface{}) {
 	// Convert args to strings and redact
 	redactedArgs := make([]interface{}, len(args))
@@ -90,7 +91,7 @@ func Logf(format string, args ...interface{}) {
 			redactedArgs[i] = arg
 		}
 	}
-	log.Printf(format, redactedArgs...)
+	slog.Info(fmt.Sprintf(format, redactedArgs...))
 }
 
 // SafeError creates a safe error message with redacted content.
@@ -103,13 +104,13 @@ func SafeError(err error, context string) error {
 }
 
 // LogRequest logs an HTTP request with sensitive data redacted.
+// Note: Prefer using LoggingMiddleware for request logging in new code.
 func LogRequest(r *http.Request, message string) {
-	log.Printf("%s: method=%s path=%s from=%s headers=%v",
-		message,
-		r.Method,
-		r.URL.Path,
-		GetClientIP(r),
-		RedactHeaders(r.Header),
+	slog.Info(message,
+		"method", r.Method,
+		"path", r.URL.Path,
+		"client_ip", GetClientIP(r),
+		"headers", RedactHeaders(r.Header),
 	)
 }
 

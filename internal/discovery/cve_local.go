@@ -22,10 +22,10 @@ import (
 
 // LocalProvider implements CVEProvider using a local JSON database.
 type LocalProvider struct {
-	mu             sync.RWMutex
+	mu              sync.RWMutex
 	vulnerabilities map[string][]Vulnerability // CPE -> vulnerabilities
-	lastUpdate     time.Time
-	dbPath         string
+	lastUpdate      time.Time
+	dbPath          string
 }
 
 // localCVEEntry represents a CVE entry in the local database.

@@ -5,7 +5,7 @@ package network
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -91,7 +91,7 @@ func (m *Manager) RefreshInterfaces() error {
 	// Get enriched detection data for all interfaces
 	detectedScores, err := m.detector.DetectAll()
 	if err != nil {
-		log.Printf("Warning: interface detection failed: %v", err)
+		slog.Warn("interface detection failed", "error", err)
 		// Continue with empty detection - graceful degradation
 	}
 	scoreMap := make(map[string]*detection.InterfaceScore)

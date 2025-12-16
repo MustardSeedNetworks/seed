@@ -1,4 +1,4 @@
-// Package main is the entry point for The Seed by Mustard Seed Networks.
+// Package main is the entry point for LuminetIQ.
 package main
 
 import (
@@ -27,7 +27,7 @@ var version = "dev"
 // credentialsFileMode is the file permission for credential files (owner read/write only).
 const credentialsFileMode = 0o600
 
-// main starts The Seed network discovery and monitoring application.
+// main starts the LuminetIQ network discovery and monitoring application.
 func main() {
 	// Handle subcommands before flag parsing
 	if len(os.Args) > 1 {
@@ -43,18 +43,18 @@ func main() {
 
 	// Parse command line flags
 	showVersion := flag.Bool("version", false, "Show version")
-	configPath := flag.String("config", "configs/seed.yaml", "Path to configuration file")
+	configPath := flag.String("config", "configs/luminetiq.yaml", "Path to configuration file")
 	devMode := flag.Bool("dev", false, "Run in development mode")
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Printf("The Seed %s\n", version)
+		fmt.Printf("LuminetIQ %s\n", version)
 		os.Exit(0)
 	}
 
 	icmpAvailable := checkICMPCapabilities()
+	logPath := setupLogging()
 	cfg := loadAndConfigureConfig(*configPath, *devMode)
-	logPath := setupLogging(cfg)
 	netMgr := setupNetworkInterface(cfg, *configPath)
 
 	server := api.NewServer(cfg, *configPath, logPath, netMgr, icmpAvailable)
@@ -62,86 +62,83 @@ func main() {
 }
 
 // checkICMPCapabilities checks for ICMP privileges and returns availability status.
-// Note: Called before logging is initialized, so uses fmt.Fprintf.
 func checkICMPCapabilities() bool {
 	if err := discovery.CheckICMPPrivilegesWithMessage(); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: ICMP features disabled - %v\n", err)
+		slog.Warn("ICMP features disabled", "error", err)
 		fmt.Fprintln(os.Stderr, "Warning: Running without ICMP privileges - ping features will be unavailable")
-		fmt.Fprintln(os.Stderr, "For full functionality, run with: sudo ./seed")
-		fmt.Fprintln(os.Stderr, "Or grant capability: sudo setcap cap_net_raw=+ep ./seed")
+		fmt.Fprintln(os.Stderr, "For full functionality, run with: sudo ./luminetiq")
+		fmt.Fprintln(os.Stderr, "Or grant capability: sudo setcap cap_net_raw=+ep ./luminetiq")
 		return false
 	}
 	return true
 }
 
-// setupLogging configures structured logging with secure permissions and rotation.
-func setupLogging(cfg *config.Config) string {
-	logPath := filepath.Join("logs", "seed.log")
+// setupLogging configures logging with secure permissions and rotation.
+func setupLogging() string {
+	logPath := filepath.Join("logs", "luminetiq.log")
 	if err := os.MkdirAll(filepath.Dir(logPath), 0o750); err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal: Failed to create log directory: %v\n", err)
+		slog.Error("Failed to create log directory", "error", err)
 		os.Exit(1)
 	}
 
 	if _, err := os.Stat(logPath); os.IsNotExist(err) {
 		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // G304: logPath is constructed from constants
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Fatal: Failed to create log file with secure permissions: %v\n", err)
+			slog.Error("Failed to create log file with secure permissions", "error", err)
 			os.Exit(1)
 		}
 		f.Close()
 	} else if err := os.Chmod(logPath, 0o600); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to set secure permissions on existing log file: %v\n", err)
+		slog.Warn("Failed to set secure permissions on existing log file", "error", err)
 	}
 
-	// Use logging config from config file if available, otherwise defaults
+	// Initialize structured logging with file rotation and redaction
 	logCfg := &logging.LoggingConfig{
-		Level:      cfg.Logging.Level,
-		Format:     cfg.Logging.Format,
-		AddSource:  cfg.Logging.AddSource,
+		Level:      "info",
+		Format:     "text",
+		AddSource:  true,
 		File:       logPath,
-		MaxSize:    cfg.Logging.MaxSize,
-		MaxBackups: cfg.Logging.MaxBackups,
-		MaxAge:     cfg.Logging.MaxAge,
-		Compress:   cfg.Logging.Compress,
+		MaxSize:    20,
+		MaxBackups: 7,
+		MaxAge:     30,
+		Compress:   true,
 	}
-
 	if err := logging.InitLogger(logCfg); err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal: Failed to initialize logger: %v\n", err)
+		slog.Error("Failed to initialize logger", "error", err)
 		os.Exit(1)
 	}
 
-	slog.Info("The Seed starting", "version", version, "log_path", logPath)
+	slog.Info("LuminetIQ starting", "version", version, "log_path", logPath)
 
 	return logPath
 }
 
 // loadAndConfigureConfig loads configuration and applies necessary modifications.
-// Note: Called before logging is initialized, so uses fmt.Fprintf for errors.
 func loadAndConfigureConfig(configPath string, devMode bool) *config.Config {
 	cfg, _, err := config.EnsureConfig(configPath, auth.IsDefaultPasswordHash)
 	if err != nil && !errors.Is(err, config.ErrInsecureCredentials) {
-		fmt.Fprintf(os.Stderr, "Fatal: Failed to load configuration: %v\n", err)
+		slog.Error("Failed to load configuration", "error", err)
 		os.Exit(1)
 	}
 
 	ensureJWTSecret(cfg, configPath)
 
 	if errors.Is(err, config.ErrInsecureCredentials) {
-		fmt.Fprintln(os.Stderr, "Initial setup required - visit the web UI to set your admin password")
+		slog.Info("Initial setup required - visit the web UI to set your admin password")
 		printSetupBanner(cfg.Server.Port, cfg.Server.HTTPS)
 	}
 
 	migrateSNMPCredentials(cfg, configPath)
-	// Security fix #301: Removed applyEnvironmentOverrides (LOG_ACCESS_TOKEN) - JWT auth is sufficient
+	applyEnvironmentOverrides(cfg)
 
 	if devMode {
-		fmt.Fprintln(os.Stderr, "Running in development mode")
+		slog.Info("Running in development mode")
 		cfg.Server.HTTPS = false
-		fmt.Fprintln(os.Stderr, "Protocol: HTTP (development mode)")
+		slog.Info("Protocol: HTTP (development mode)")
 	}
 
 	if err := cfg.Validate(); err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal: Invalid configuration: %v\n", err)
+		slog.Error("Invalid configuration", "error", err)
 		os.Exit(1)
 	}
 
@@ -149,21 +146,19 @@ func loadAndConfigureConfig(configPath string, devMode bool) *config.Config {
 }
 
 // ensureJWTSecret generates and persists a JWT secret if not present.
-// Note: Called before logging is initialized, so uses fmt.Fprintf.
 func ensureJWTSecret(cfg *config.Config, configPath string) {
 	if cfg.Auth.JWTSecret != "" {
 		return
 	}
 	cfg.UpdateJWTSecret(auth.GenerateJWTSecret())
 	if err := cfg.Save(configPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to persist JWT secret: %v\n", err)
+		slog.Warn("Failed to persist JWT secret", "error", err)
 	} else {
-		fmt.Fprintln(os.Stderr, "JWT secret generated and persisted to config file")
+		slog.Info("JWT secret generated and persisted to config file")
 	}
 }
 
 // migrateSNMPCredentials encrypts plaintext SNMP credentials.
-// Note: Called before logging is initialized, so uses fmt.Fprintf.
 func migrateSNMPCredentials(cfg *config.Config, configPath string) {
 	if cfg.Auth.JWTSecret == "" || len(cfg.SNMP.V3Credentials) == 0 {
 		return
@@ -183,13 +178,24 @@ func migrateSNMPCredentials(cfg *config.Config, configPath string) {
 		return
 	}
 
-	fmt.Fprintln(os.Stderr, "Migrating SNMP credentials to encrypted format...")
+	slog.Info("Migrating SNMP credentials to encrypted format")
 	if err := cfg.EncryptSNMPCredentials(); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to encrypt SNMP credentials: %v\n", err)
+		slog.Warn("Failed to encrypt SNMP credentials", "error", err)
 	} else if err := cfg.Save(configPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to persist encrypted SNMP credentials: %v\n", err)
+		slog.Warn("Failed to persist encrypted SNMP credentials", "error", err)
 	} else {
-		fmt.Fprintln(os.Stderr, "SNMP credentials encrypted and saved securely")
+		slog.Info("SNMP credentials encrypted and saved securely")
+	}
+}
+
+// applyEnvironmentOverrides applies environment variable overrides to configuration.
+// Note: LOG_ACCESS_TOKEN support removed per security fix #301 - JWT auth is sufficient.
+func applyEnvironmentOverrides(_ *config.Config) {
+	if token := os.Getenv("LOG_ACCESS_TOKEN"); token != "" {
+		slog.Info("Environment variable override: LOG_ACCESS_TOKEN is set (deprecated, use JWT auth)")
+	}
+	if hdr := os.Getenv("LOG_ACCESS_HEADER"); hdr != "" {
+		slog.Info("Environment variable override (deprecated)", "LOG_ACCESS_HEADER", hdr)
 	}
 }
 
@@ -245,7 +251,7 @@ func logAvailableInterfaces(netMgr *network.Manager) {
 		grouped[key] = append(grouped[key], iface.Name)
 	}
 	for group, names := range grouped {
-		slog.Info("Available interfaces", "type", group.Type, "status", group.Status, "names", names)
+		slog.Info("Available interfaces", "type", group.Type, "status", group.Status, "interfaces", names)
 	}
 }
 
@@ -253,7 +259,7 @@ func logAvailableInterfaces(netMgr *network.Manager) {
 func applyActiveInterface(cfg *config.Config, netMgr *network.Manager, activeInterface, configPath string) {
 	if activeInterface != cfg.Interface.Default {
 		slog.Info("Using detected active interface instead of configured default",
-			"active", activeInterface, "configured", cfg.Interface.Default)
+			"active_interface", activeInterface, "configured_default", cfg.Interface.Default)
 		cfg.Interface.Default = activeInterface
 		if err := cfg.Save(configPath); err != nil {
 			slog.Warn("Failed to save updated interface to config", "error", err)
@@ -288,7 +294,7 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config) {
 
 		go func() {
 			<-sigChan
-			slog.Info("Force quitting...")
+			slog.Info("Force quitting")
 			os.Exit(1)
 		}()
 
@@ -299,7 +305,7 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config) {
 		}
 	}
 
-	slog.Info("The Seed stopped")
+	slog.Info("LuminetIQ stopped")
 }
 
 // printSetupBanner displays a message directing users to the web UI for setup.
@@ -310,11 +316,10 @@ func printSetupBanner(port int, https bool) {
 	}
 	banner := `
 ╔══════════════════════════════════════════════════════════════════╗
-║                   THE SEED - INITIAL SETUP                       ║
-║               Mustard Seed Networks                              ║
+║                    LUMINETIQ INITIAL SETUP                       ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  Welcome to The Seed! Initial setup is required.                 ║
+║  Welcome to LuminetIQ! Initial setup is required.                ║
 ║                                                                  ║
 ║  Please open your web browser and navigate to:                   ║
 ║                                                                  ║
@@ -327,33 +332,35 @@ func printSetupBanner(port int, https bool) {
 `
 	// Use fmt.Fprintf to stderr so it's visible even when stdout is redirected
 	fmt.Fprintf(os.Stderr, banner, protocol, port)
-	// Note: Called before logging is initialized, so banner is stderr-only
+
+	// Also log it
+	slog.Info("Setup required - visit web UI to complete setup", "url", fmt.Sprintf("%s://localhost:%d", protocol, port))
 }
 
 // printUsage displays the CLI usage information.
 func printUsage() {
-	fmt.Printf(`The Seed %s - Network Diagnostics by Mustard Seed Networks
+	fmt.Printf(`LuminetIQ %s - Network Diagnostics and Monitoring
 
 Usage:
-  seed [flags]              Start the server
-  seed credentials          Generate and display initial admin credentials
-  seed help                 Show this help message
+  luminetiq [flags]              Start the server
+  luminetiq credentials          Generate and display initial admin credentials
+  luminetiq help                 Show this help message
 
 Flags:
   -version    Show version and exit
-  -config     Path to configuration file (default: configs/seed.yaml)
+  -config     Path to configuration file (default: configs/luminetiq.yaml)
   -dev        Run in development mode (HTTP instead of HTTPS)
 
 First-Boot Credential Retrieval (fixes #489):
-  Run 'seed credentials' to generate secure initial credentials.
+  Run 'luminetiq credentials' to generate secure initial credentials.
   This writes credentials to a secure file and displays them once.
   Use this instead of parsing logs for systemd deployments.
 
 Examples:
-  seed                      Start with default config
-  seed -dev                 Start in development mode
-  seed -config /etc/seed/config.yaml  Start with custom config
-  seed credentials          Generate initial admin credentials
+  luminetiq                      Start with default config
+  luminetiq -dev                 Start in development mode
+  luminetiq -config /etc/luminetiq/config.yaml  Start with custom config
+  luminetiq credentials          Generate initial admin credentials
 `, version)
 }
 
@@ -362,7 +369,7 @@ Examples:
 func handleCredentialsCommand() {
 	// Parse credentials subcommand flags
 	credFlags := flag.NewFlagSet("credentials", flag.ExitOnError)
-	configPath := credFlags.String("config", "configs/seed.yaml", "Path to configuration file")
+	configPath := credFlags.String("config", "configs/luminetiq.yaml", "Path to configuration file")
 	outputJSON := credFlags.Bool("json", false, "Output credentials as JSON")
 	fileOutput := credFlags.String("file", "", "Write credentials to file (default: working directory)")
 	if err := credFlags.Parse(os.Args[2:]); err != nil {
@@ -431,8 +438,7 @@ func handleCredentialsCommand() {
 		fmt.Println(string(jsonData))
 	} else {
 		fmt.Println("╔══════════════════════════════════════════════════════════════════╗")
-		fmt.Println("║              THE SEED - INITIAL CREDENTIALS                      ║")
-		fmt.Println("║              Mustard Seed Networks                               ║")
+		fmt.Println("║                LUMINETIQ INITIAL CREDENTIALS                     ║")
 		fmt.Println("╠══════════════════════════════════════════════════════════════════╣")
 		fmt.Printf("║  Username: %-53s ║\n", credOutput.Username)
 		fmt.Printf("║  Password: %-53s ║\n", credOutput.Password)
@@ -445,7 +451,7 @@ func handleCredentialsCommand() {
 
 // writeCredentialsFile writes credentials to a secure file with restrictive permissions.
 func writeCredentialsFile(path, username, password string) error {
-	content := fmt.Sprintf("# The Seed Initial Credentials (Mustard Seed Networks)\n# Generated: %s\n# DELETE THIS FILE after retrieving credentials\n\nUsername: %s\nPassword: %s\n",
+	content := fmt.Sprintf("# LuminetIQ Initial Credentials\n# Generated: %s\n# DELETE THIS FILE after retrieving credentials\n\nUsername: %s\nPassword: %s\n",
 		time.Now().Format(time.RFC3339), username, password)
 
 	// Write with restrictive permissions (owner read/write only)

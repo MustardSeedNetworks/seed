@@ -4,7 +4,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -186,7 +186,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 
 		// Save config
 		if err := s.config.Save(s.configPath); err != nil {
-			log.Printf("Failed to save config: %v", err)
+			slog.Warn("Failed to save config", "error", err)
 		}
 
 		// Return updated config
@@ -413,7 +413,7 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Save config (passwords are now encrypted)
 	if err := s.config.Save(s.configPath); err != nil {
-		log.Printf("Warning: Failed to save config: %v", err)
+		slog.Warn("Failed to save config", "error", err)
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{

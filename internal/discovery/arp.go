@@ -49,7 +49,7 @@ package discovery
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"strings"
 	"sync"
@@ -230,7 +230,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		default:
 			// Continue scanning additional subnets even if some fail
 			if err := s.pingSweep(ctx, additionalSubnet); err != nil {
-				log.Printf("ping sweep failed for subnet %s: %v", additionalSubnet, err)
+				slog.Error("ping sweep failed for subnet", "subnet", additionalSubnet, "error", err)
 			}
 		}
 	}
@@ -306,7 +306,7 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 	if s.pinger == nil {
 		pinger, err := NewICMPPinger(time.Second)
 		if err != nil {
-			log.Printf("Warning: Failed to create ICMP pinger: %v", err)
+			slog.Warn("Failed to create ICMP pinger", "error", err)
 			return err
 		}
 		s.pinger = pinger
