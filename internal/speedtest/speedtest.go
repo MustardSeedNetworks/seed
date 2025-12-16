@@ -138,7 +138,7 @@ func (t *Tester) setRunning(running bool) {
 }
 
 // RunTest performs a complete speedtest.
-func (t *Tester) RunTest(ctx context.Context) (*Result, error) {
+func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	// Check if already running
 	t.mu.RLock()
 	if t.status.Running {

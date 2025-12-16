@@ -310,8 +310,8 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 const (
 	// IEEEOUIURL is the official IEEE OUI database URL.
 	IEEEOUIURL = "https://standards-oui.ieee.org/oui/oui.txt"
-	// IEEEOUI_CSV_URL is the CSV format URL.
-	IEEEOUI_CSV_URL = "https://standards-oui.ieee.org/oui/oui.csv"
+	// IEEEOUICsvURL is the CSV format URL.
+	IEEEOUICsvURL = "https://standards-oui.ieee.org/oui/oui.csv"
 )
 
 // DownloadOUIDatabase downloads the IEEE OUI database from the official source.

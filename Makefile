@@ -30,13 +30,14 @@
         build-iperf3 build-iperf3-linux build-iperf3-linux-amd64 build-iperf3-linux-arm64 build-iperf3-all \
         build-linux-amd64 build-linux-arm64 build-linux-docker \
         docker docker-build docker-test docker-push \
-        clean clean-all test test-backend test-frontend test-coverage test-integration test-e2e \
+        clean clean-all test test-all test-backend test-frontend test-coverage test-integration test-e2e test-e2e-ui test-e2e-install \
         lint lint-backend lint-frontend fmt fmt-frontend fmt-all \
-        security security-backend security-frontend security-secrets \
+        security security-backend security-frontend security-secrets security-trivy \
+        storybook build-storybook test-storybook \
         run dev dev-frontend \
         deploy smoke-test smoke-test-local \
         deps deps-update logs logs-100 help \
-        verify release-check iso-info pre-commit
+        verify release-check iso-info pre-commit pre-commit-install license-check license-report
 
 # =============================================================================
 # Configuration Variables
@@ -329,29 +330,74 @@ dev-frontend: ## Run frontend in development mode
 # Testing
 # =============================================================================
 
-# Run complete test suite
-test: test-backend test-frontend ## Run all tests
-	@echo "✅ All tests complete"
+# Run complete test suite (unit tests only)
+test: test-backend test-frontend ## Run unit tests (backend + frontend)
+	@echo ""
+	@echo "=============================================="
+	@echo "  ✅ UNIT TESTS COMPLETE"
+	@echo "=============================================="
+
+# Run ALL tests including E2E and Storybook
+test-all: test test-e2e test-storybook ## Run ALL tests (unit + E2E + Storybook)
+	@echo ""
+	@echo "=============================================="
+	@echo "  ✅ ALL TESTS COMPLETE"
+	@echo "=============================================="
+	@echo "  • Backend unit tests"
+	@echo "  • Frontend unit tests"
+	@echo "  • Playwright E2E tests"
+	@echo "  • Storybook build verification"
+	@echo "=============================================="
 
 # Go tests with race detection and coverage
-test-backend: ## Run Go tests
+# Uses gotestsum for better progress output if available
+test-backend: ## Run Go tests with progress
+	@echo ""
 	@echo "🧪 Running backend tests..."
-	@go test -race -coverprofile=coverage.out ./...
+	@PKG_COUNT=$$(go list ./... | wc -l | tr -d ' '); \
+	echo "   📦 Testing $$PKG_COUNT packages..."; \
+	echo ""
+	@if command -v gotestsum > /dev/null 2>&1; then \
+		gotestsum --format pkgname-and-test-fails -- -race -coverprofile=coverage.out ./...; \
+	else \
+		go test -race -coverprofile=coverage.out -v ./... 2>&1 | \
+		awk '/^=== RUN/ {tests++} /^--- PASS/ {passed++} /^--- FAIL/ {failed++} END {print "   ✓ " passed " passed, " (failed ? failed " failed" : "0 failed")}' || \
+		go test -race -coverprofile=coverage.out ./...; \
+	fi
+	@if [ -f coverage.out ]; then \
+		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
+		echo ""; \
+		echo "   📊 Coverage: $$COV"; \
+	fi
+	@echo ""
 	@echo "✅ Backend tests complete"
 
 # Frontend unit tests via Vitest
-test-frontend: ## Run frontend tests
+test-frontend: ## Run frontend tests with progress
+	@echo ""
 	@echo "🧪 Running frontend tests..."
+	@STORY_COUNT=$$(find web/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
+	echo "   📦 Running $$STORY_COUNT test files..."
+	@echo ""
 	@cd web && npm test
+	@echo ""
 	@echo "✅ Frontend tests complete"
 
 # Frontend E2E tests via Playwright (closes #482, #309)
 # Requires backend to be running on port 8443
 test-e2e: ## Run frontend E2E tests (requires backend running)
-	cd web && npm run test:e2e
+	@echo ""
+	@echo "🎭 Running E2E tests (Playwright)..."
+	@E2E_COUNT=$$(find web/e2e -name "*.spec.ts" 2>/dev/null | wc -l | tr -d ' '); \
+	echo "   📦 Running $$E2E_COUNT spec files..."
+	@echo ""
+	@cd web && npm run test:e2e
+	@echo ""
+	@echo "✅ E2E tests complete"
 
 # Run E2E tests with UI mode for debugging
 test-e2e-ui: ## Run E2E tests with Playwright UI
+	@echo "🎭 Starting Playwright UI mode..."
 	cd web && npm run test:e2e:ui
 
 # Install Playwright browsers (required before first E2E run)
@@ -363,6 +409,25 @@ test-coverage: ## Generate coverage report
 	go test -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
+
+# -----------------------------------------------------------------------------
+# Storybook - Component Documentation & Visual Testing
+# -----------------------------------------------------------------------------
+
+# Run Storybook development server
+storybook: ## Run Storybook development server (port 6006)
+	@echo "📚 Starting Storybook..."
+	cd web && npm run storybook
+
+# Build static Storybook for deployment
+build-storybook: ## Build static Storybook
+	@echo "📚 Building Storybook..."
+	@cd web && npm run build-storybook
+	@echo "✅ Storybook built to web/storybook-static/"
+
+# Test Storybook stories compile (useful in CI)
+test-storybook: build-storybook ## Verify Storybook builds successfully
+	@echo "✅ Storybook compilation test passed"
 
 # Full integration test: deploy, install as systemd service, run tests
 test-integration: build-linux-docker ## Full integration test on Ubuntu server via systemd
@@ -550,7 +615,7 @@ help: ## Show this help
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build                    Build production binary"

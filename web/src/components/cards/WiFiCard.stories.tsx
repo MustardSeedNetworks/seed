@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Card, CardValue, CardRow, CardDivider } from '../ui/Card';
 import { StatusBadge } from '../ui/StatusBadge';
 import { Wifi, WifiOff, Signal } from 'lucide-react';

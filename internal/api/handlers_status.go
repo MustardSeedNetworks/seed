@@ -2,6 +2,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -75,7 +76,6 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get interface info
 	var mac string
 	if ifaceInfo, err := s.netManager.GetInterface(currentIface); err == nil {
 		mac = ifaceInfo.HardwareAddr
@@ -92,171 +92,161 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		Cards: make(map[string]interface{}),
 	}
 
-	// Collect Link data
-	if linkStatus, err := s.netManager.GetLinkStatus(currentIface); err == nil {
-		export.Cards["link"] = map[string]interface{}{
-			"linkUp":  linkStatus.LinkUp,
-			"speed":   linkStatus.Speed,
-			"duplex":  linkStatus.Duplex,
-			"autoNeg": linkStatus.AutoNeg,
-		}
-	}
+	s.exportLinkCard(currentIface, export.Cards)
+	s.exportIPConfigCard(currentIface, export.Cards)
+	s.exportDiscoveryCard(export.Cards)
+	s.exportDNSCard(r.Context(), export.Cards)
+	s.exportGatewayCard(export.Cards)
+	s.exportVLANCard(export.Cards)
+	s.exportWiFiCard(currentIface, export.Cards)
+	s.exportCableCard(export.Cards)
+	s.exportSpeedtestCard(export.Cards)
+	s.exportIperfCard(export.Cards)
 
-	// Collect IP config data
-	if ifaceInfo, err := s.netManager.GetInterface(currentIface); err == nil {
-		ipData := map[string]interface{}{
-			"addresses": ifaceInfo.Addresses,
-		}
-		if leaseInfo, err := dhcp.GetLeaseInfo(currentIface); err == nil && leaseInfo != nil {
-			ipData["dhcpServer"] = leaseInfo.DHCPServer
-			ipData["gateway"] = leaseInfo.Gateway
-			ipData["leaseTime"] = leaseInfo.LeaseTime
-			ipData["dns"] = leaseInfo.DNS
-		}
-		export.Cards["ipConfig"] = ipData
-	}
-
-	// Collect Discovery data
-	if s.discoveryManager != nil {
-		neighbors := s.discoveryManager.GetNeighbors()
-		neighborList := make([]map[string]interface{}, 0, len(neighbors))
-		for _, n := range neighbors {
-			neighborList = append(neighborList, map[string]interface{}{
-				"protocol":          n.Protocol,
-				"systemName":        n.SystemName,
-				"portId":            n.PortID,
-				"portDescription":   n.PortDescription,
-				"managementAddress": n.ManagementAddress,
-			})
-		}
-		export.Cards["switch"] = map[string]interface{}{
-			"running":   s.discoveryManager.IsRunning(),
-			"neighbors": neighborList,
-		}
-	}
-
-	// Collect DNS data
-	if s.dnsTester != nil {
-		ctx := r.Context()
-		result := s.dnsTester.Test(ctx)
-		dnsData := map[string]interface{}{
-			"server":       result.Server,
-			"testHostname": result.TestHostname,
-		}
-		if result.Forward != nil {
-			dnsData["forward"] = map[string]interface{}{
-				"result": result.Forward.Resolved,
-				"time":   result.Forward.Time.Milliseconds(),
-				"status": result.Forward.Status,
-				"error":  result.Forward.Error,
-			}
-		}
-		if result.Reverse != nil {
-			dnsData["reverse"] = map[string]interface{}{
-				"result": result.Reverse.Resolved,
-				"time":   result.Reverse.Time.Milliseconds(),
-				"status": result.Reverse.Status,
-				"error":  result.Reverse.Error,
-			}
-		}
-		export.Cards["dns"] = dnsData
-	}
-
-	// Collect Gateway data
-	if s.gatewayTester != nil {
-		stats := s.gatewayTester.GetStats()
-		export.Cards["gateway"] = map[string]interface{}{
-			"gateway":     stats.Gateway,
-			"reachable":   stats.Reachable,
-			"sent":        stats.Sent,
-			"received":    stats.Received,
-			"lossPercent": stats.LossPercent,
-			"avgTime":     stats.AvgTime,
-			"status":      stats.Status,
-		}
-	}
-
-	// Collect VLAN data
-	if s.vlanManager != nil {
-		vlanInfo := s.vlanManager.GetInfo()
-		export.Cards["vlan"] = map[string]interface{}{
-			"nativeVlan":  vlanInfo.NativeVlan,
-			"taggedVlans": vlanInfo.TaggedVlans,
-			"voiceVlan":   vlanInfo.VoiceVlan,
-			"configured":  vlanInfo.Configured,
-		}
-	}
-
-	// Collect WiFi data if wireless
-	if s.netManager.IsWireless(currentIface) && s.wifiManager != nil {
-		wifiInfo := s.wifiManager.GetInfo()
-		if wifiInfo.SSID != "" {
-			export.Cards["wifi"] = map[string]interface{}{
-				"ssid":      wifiInfo.SSID,
-				"bssid":     wifiInfo.BSSID,
-				"signal":    wifiInfo.Signal,
-				"channel":   wifiInfo.Channel,
-				"frequency": wifiInfo.Frequency,
-				"security":  wifiInfo.Security,
-			}
-		}
-	}
-
-	// Collect Cable test data
-	if s.cableTester != nil {
-		cableResult := s.cableTester.Test()
-		export.Cards["cable"] = map[string]interface{}{
-			"supported": cableResult.Supported,
-			"length":    cableResult.Length,
-			"status":    cableResult.Status,
-			"faults":    cableResult.Faults,
-		}
-	}
-
-	// Collect Speedtest data
-	if s.speedtestTester != nil {
-		if result := s.speedtestTester.GetLastResult(); result != nil {
-			export.Cards["speedtest"] = map[string]interface{}{
-				"download":     result.Download,
-				"upload":       result.Upload,
-				"latency":      result.Latency,
-				"server":       result.Server,
-				"location":     result.Location,
-				"host":         result.Host,
-				"distance":     result.Distance,
-				"timestamp":    result.Timestamp,
-				"testDuration": result.TestDuration,
-			}
-		}
-	}
-
-	// Collect iperf3 data
-	if s.iperfManager != nil {
-		if result := s.iperfManager.GetLastResult(); result != nil {
-			export.Cards["iperf"] = map[string]interface{}{
-				"bandwidth":   result.Bandwidth,
-				"transfer":    result.Transfer,
-				"retransmits": result.Retransmits,
-				"jitter":      result.Jitter,
-				"lostPackets": result.LostPackets,
-				"lostPercent": result.LostPercent,
-				"protocol":    result.Protocol,
-				"direction":   result.Direction,
-				"duration":    result.Duration,
-				"server":      result.Server,
-				"port":        result.Port,
-				"timestamp":   result.Timestamp,
-			}
-		}
-	}
-
-	// Pretty print JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Content-Disposition", "attachment; filename=netscope-export.json")
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(export); err != nil {
 		log.Printf("Error encoding export response: %v", err)
+	}
+}
+
+func (s *Server) exportLinkCard(iface string, cards map[string]interface{}) {
+	if linkStatus, err := s.netManager.GetLinkStatus(iface); err == nil {
+		cards["link"] = map[string]interface{}{
+			"linkUp": linkStatus.LinkUp, "speed": linkStatus.Speed,
+			"duplex": linkStatus.Duplex, "autoNeg": linkStatus.AutoNeg,
+		}
+	}
+}
+
+func (s *Server) exportIPConfigCard(iface string, cards map[string]interface{}) {
+	ifaceInfo, err := s.netManager.GetInterface(iface)
+	if err != nil {
+		return
+	}
+	ipData := map[string]interface{}{"addresses": ifaceInfo.Addresses}
+	if leaseInfo, err := dhcp.GetLeaseInfo(iface); err == nil && leaseInfo != nil {
+		ipData["dhcpServer"] = leaseInfo.DHCPServer
+		ipData["gateway"] = leaseInfo.Gateway
+		ipData["leaseTime"] = leaseInfo.LeaseTime
+		ipData["dns"] = leaseInfo.DNS
+	}
+	cards["ipConfig"] = ipData
+}
+
+func (s *Server) exportDiscoveryCard(cards map[string]interface{}) {
+	if s.discoveryManager == nil {
+		return
+	}
+	neighbors := s.discoveryManager.GetNeighbors()
+	neighborList := make([]map[string]interface{}, 0, len(neighbors))
+	for _, n := range neighbors {
+		neighborList = append(neighborList, map[string]interface{}{
+			"protocol": n.Protocol, "systemName": n.SystemName, "portId": n.PortID,
+			"portDescription": n.PortDescription, "managementAddress": n.ManagementAddress,
+		})
+	}
+	cards["switch"] = map[string]interface{}{"running": s.discoveryManager.IsRunning(), "neighbors": neighborList}
+}
+
+func (s *Server) exportDNSCard(ctx context.Context, cards map[string]interface{}) {
+	if s.dnsTester == nil {
+		return
+	}
+	result := s.dnsTester.Test(ctx)
+	dnsData := map[string]interface{}{"server": result.Server, "testHostname": result.TestHostname}
+	if result.Forward != nil {
+		dnsData["forward"] = map[string]interface{}{
+			"result": result.Forward.Resolved, "time": result.Forward.Time.Milliseconds(),
+			"status": result.Forward.Status, "error": result.Forward.Error,
+		}
+	}
+	if result.Reverse != nil {
+		dnsData["reverse"] = map[string]interface{}{
+			"result": result.Reverse.Resolved, "time": result.Reverse.Time.Milliseconds(),
+			"status": result.Reverse.Status, "error": result.Reverse.Error,
+		}
+	}
+	cards["dns"] = dnsData
+}
+
+func (s *Server) exportGatewayCard(cards map[string]interface{}) {
+	if s.gatewayTester == nil {
+		return
+	}
+	stats := s.gatewayTester.GetStats()
+	cards["gateway"] = map[string]interface{}{
+		"gateway": stats.Gateway, "reachable": stats.Reachable, "sent": stats.Sent,
+		"received": stats.Received, "lossPercent": stats.LossPercent,
+		"avgTime": stats.AvgTime, "status": stats.Status,
+	}
+}
+
+func (s *Server) exportVLANCard(cards map[string]interface{}) {
+	if s.vlanManager == nil {
+		return
+	}
+	vlanInfo := s.vlanManager.GetInfo()
+	cards["vlan"] = map[string]interface{}{
+		"nativeVlan": vlanInfo.NativeVlan, "taggedVlans": vlanInfo.TaggedVlans,
+		"voiceVlan": vlanInfo.VoiceVlan, "configured": vlanInfo.Configured,
+	}
+}
+
+func (s *Server) exportWiFiCard(iface string, cards map[string]interface{}) {
+	if !s.netManager.IsWireless(iface) || s.wifiManager == nil {
+		return
+	}
+	wifiInfo := s.wifiManager.GetInfo()
+	if wifiInfo.SSID != "" {
+		cards["wifi"] = map[string]interface{}{
+			"ssid": wifiInfo.SSID, "bssid": wifiInfo.BSSID, "signal": wifiInfo.Signal,
+			"channel": wifiInfo.Channel, "frequency": wifiInfo.Frequency, "security": wifiInfo.Security,
+		}
+	}
+}
+
+func (s *Server) exportCableCard(cards map[string]interface{}) {
+	if s.cableTester == nil {
+		return
+	}
+	cableResult := s.cableTester.Test()
+	cards["cable"] = map[string]interface{}{
+		"supported": cableResult.Supported, "length": cableResult.Length,
+		"status": cableResult.Status, "faults": cableResult.Faults,
+	}
+}
+
+func (s *Server) exportSpeedtestCard(cards map[string]interface{}) {
+	if s.speedtestTester == nil {
+		return
+	}
+	result := s.speedtestTester.GetLastResult()
+	if result == nil {
+		return
+	}
+	cards["speedtest"] = map[string]interface{}{
+		"download": result.Download, "upload": result.Upload, "latency": result.Latency,
+		"server": result.Server, "location": result.Location, "host": result.Host,
+		"distance": result.Distance, "timestamp": result.Timestamp, "testDuration": result.TestDuration,
+	}
+}
+
+func (s *Server) exportIperfCard(cards map[string]interface{}) {
+	if s.iperfManager == nil {
+		return
+	}
+	result := s.iperfManager.GetLastResult()
+	if result == nil {
+		return
+	}
+	cards["iperf"] = map[string]interface{}{
+		"bandwidth": result.Bandwidth, "transfer": result.Transfer, "retransmits": result.Retransmits,
+		"jitter": result.Jitter, "lostPackets": result.LostPackets, "lostPercent": result.LostPercent,
+		"protocol": result.Protocol, "direction": result.Direction, "duration": result.Duration,
+		"server": result.Server, "port": result.Port, "timestamp": result.Timestamp,
 	}
 }
 

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CardValue, CardRow, CardDivider, Card } from '../ui/Card';
 import { Cable } from '../ui/Icons';
 import { Skeleton } from '../ui/Skeleton';
@@ -48,7 +48,7 @@ const linkDataNoIP = {
   mtu: 1500,
 };
 
-const linkDataDown = {
+const _linkDataDown = {
   linkUp: false,
   carrier: false,
   hasIP: false,

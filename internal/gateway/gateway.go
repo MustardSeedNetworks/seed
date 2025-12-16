@@ -15,6 +15,7 @@ import (
 // Status represents the status of a gateway ping operation.
 type Status string
 
+// Gateway ping status constants.
 const (
 	StatusSuccess Status = "success"
 	StatusWarning Status = "warning"

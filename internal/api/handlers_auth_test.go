@@ -12,19 +12,71 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/config"
 )
 
+// refreshTokenTestCase defines a test case for token refresh.
+type refreshTokenTestCase struct {
+	name           string
+	setupCookie    bool
+	cookieValue    string
+	expectedStatus int
+	expectToken    bool
+}
+
+// prepareRefreshToken generates or returns the appropriate refresh token.
+func prepareRefreshToken(t *testing.T, server *Server, tc refreshTokenTestCase) string {
+	t.Helper()
+	if tc.setupCookie && tc.cookieValue == "" {
+		token, err := server.authManager.GenerateRefreshToken("admin")
+		if err != nil {
+			t.Fatalf("Failed to generate refresh token: %v", err)
+		}
+		return token
+	}
+	return tc.cookieValue
+}
+
+// verifyTokenResponse checks the response contains valid token data.
+func verifyTokenResponse(t *testing.T, w *httptest.ResponseRecorder) {
+	t.Helper()
+	var resp LoginResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	if resp.Token == "" {
+		t.Error("Expected token in response, got empty string")
+	}
+	if resp.Expires == 0 {
+		t.Error("Expected expires in response, got 0")
+	}
+
+	verifyAccessCookie(t, w)
+}
+
+// verifyAccessCookie checks that a valid access cookie was set.
+func verifyAccessCookie(t *testing.T, w *httptest.ResponseRecorder) {
+	t.Helper()
+	cookies := w.Result().Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name == auth.CookieNameAccess {
+			if cookie.Value == "" {
+				t.Error("Access token cookie has empty value")
+			}
+			if !cookie.HttpOnly {
+				t.Error("Access token cookie should be HttpOnly")
+			}
+			return
+		}
+	}
+	t.Error("Expected access token cookie in response")
+}
+
 // TestHandleRefreshToken tests the token refresh endpoint.
 func TestHandleRefreshToken(t *testing.T) {
-	tests := []struct {
-		name           string
-		setupCookie    bool
-		cookieValue    string
-		expectedStatus int
-		expectToken    bool
-	}{
+	tests := []refreshTokenTestCase{
 		{
 			name:           "successful refresh with valid token",
 			setupCookie:    true,
-			cookieValue:    "", // Will be set to valid refresh token
+			cookieValue:    "",
 			expectedStatus: http.StatusOK,
 			expectToken:    true,
 		},
@@ -46,23 +98,9 @@ func TestHandleRefreshToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := NewTestServer()
+			refreshToken := prepareRefreshToken(t, server, tt)
 
-			// Generate a valid refresh token for tests that need it
-			var refreshToken string
-			if tt.setupCookie && tt.cookieValue == "" {
-				var err error
-				refreshToken, err = server.authManager.GenerateRefreshToken("admin")
-				if err != nil {
-					t.Fatalf("Failed to generate refresh token: %v", err)
-				}
-			} else {
-				refreshToken = tt.cookieValue
-			}
-
-			// Create request
 			req := httptest.NewRequest(http.MethodPost, "/api/auth/refresh", http.NoBody)
-
-			// Add refresh token cookie if needed
 			if tt.setupCookie {
 				req.AddCookie(&http.Cookie{
 					Name:  auth.CookieNameRefresh,
@@ -70,48 +108,15 @@ func TestHandleRefreshToken(t *testing.T) {
 				})
 			}
 
-			// Execute request
 			w := httptest.NewRecorder()
 			server.handleRefreshToken(w, req)
 
-			// Check status code
 			if w.Code != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
 			}
 
-			// Check for new access token in response
 			if tt.expectToken {
-				var resp LoginResponse
-				if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-					t.Fatalf("Failed to decode response: %v", err)
-				}
-
-				if resp.Token == "" {
-					t.Error("Expected token in response, got empty string")
-				}
-
-				if resp.Expires == 0 {
-					t.Error("Expected expires in response, got 0")
-				}
-
-				// Verify new access token cookie was set
-				cookies := w.Result().Cookies()
-				var foundAccessCookie bool
-				for _, cookie := range cookies {
-					if cookie.Name == auth.CookieNameAccess {
-						foundAccessCookie = true
-						if cookie.Value == "" {
-							t.Error("Access token cookie has empty value")
-						}
-						if !cookie.HttpOnly {
-							t.Error("Access token cookie should be HttpOnly")
-						}
-						break
-					}
-				}
-				if !foundAccessCookie {
-					t.Error("Expected access token cookie in response")
-				}
+				verifyTokenResponse(t, w)
 			}
 		})
 	}

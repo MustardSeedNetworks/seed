@@ -84,7 +84,7 @@ func parseIfconfigSpeed(output string) int64 {
 }
 
 // identifyByPlatform attempts platform-specific chipset identification on macOS.
-func (db *ChipsetDatabase) identifyByPlatform(name string) *ChipsetInfo {
+func (db *ChipsetDatabase) identifyByPlatform(_ string) *ChipsetInfo {
 	// Use system_profiler to get hardware info
 	out, err := exec.Command("system_profiler", "SPNetworkDataType", "-json").Output()
 	if err != nil {

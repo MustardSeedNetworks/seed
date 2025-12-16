@@ -335,7 +335,7 @@ func (p *ICMPPinger) PingSweepReachable(ctx context.Context, ips []net.IP, worke
 	return reachable
 }
 
-// CheckPrivileges checks if the current process has privileges to use raw ICMP sockets.
+// CheckICMPPrivileges checks if the current process has privileges to use raw ICMP sockets.
 // Returns nil if privileged, error otherwise.
 func CheckICMPPrivileges() error {
 	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")

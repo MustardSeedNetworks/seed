@@ -18,6 +18,7 @@ import (
 // InterfaceType represents the type of network interface.
 type InterfaceType string
 
+// Network interface type constants.
 const (
 	InterfaceTypeEthernet InterfaceType = "ethernet"
 	InterfaceTypeWiFi     InterfaceType = "wifi"
@@ -187,6 +188,11 @@ func (m *Manager) SetCurrentInterface(name string) error {
 	return nil
 }
 
+// interfaceCandidates holds categorized interface names for selection.
+type interfaceCandidates struct {
+	ethernetWithIP, wifiWithIP, ethernetUp, wifiUp []string
+}
+
 // FindFirstAvailable finds the first available interface from a list.
 // If no preferred interface is found, it auto-detects the best physical interface:
 // Priority: Ethernet with IP > WiFi with IP > Ethernet up > WiFi up
@@ -195,65 +201,62 @@ func (m *Manager) FindFirstAvailable(preferred []string) string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	// First, try preferred interfaces in order
 	for _, name := range preferred {
 		if info, ok := m.interfaces[name]; ok && info.Up {
 			return name
 		}
 	}
 
-	// Auto-detect: collect candidate interfaces (exclude loopback and virtual)
-	var ethernetWithIP, wifiWithIP, ethernetUp, wifiUp []string
+	candidates := m.collectCandidates()
+	return candidates.selectBest()
+}
 
+// collectCandidates categorizes interfaces by type and connectivity.
+func (m *Manager) collectCandidates() *interfaceCandidates {
+	c := &interfaceCandidates{}
 	for name, info := range m.interfaces {
-		// Skip loopback and virtual interfaces
-		if info.Type == InterfaceTypeLoopback || info.Type == InterfaceTypeVirtual {
+		if info.Type == InterfaceTypeLoopback || info.Type == InterfaceTypeVirtual || !info.Up {
 			continue
 		}
-		if !info.Up {
-			continue
-		}
-
 		hasIP := hasRoutableAddress(info.Addresses)
-
 		switch info.Type {
 		case InterfaceTypeEthernet:
 			if hasIP {
-				ethernetWithIP = append(ethernetWithIP, name)
+				c.ethernetWithIP = append(c.ethernetWithIP, name)
 			} else {
-				ethernetUp = append(ethernetUp, name)
+				c.ethernetUp = append(c.ethernetUp, name)
 			}
 		case InterfaceTypeWiFi:
 			if hasIP {
-				wifiWithIP = append(wifiWithIP, name)
+				c.wifiWithIP = append(c.wifiWithIP, name)
 			} else {
-				wifiUp = append(wifiUp, name)
+				c.wifiUp = append(c.wifiUp, name)
+			}
+		case InterfaceTypeOther:
+			if hasIP {
+				c.ethernetWithIP = append(c.ethernetWithIP, name)
 			}
 		case InterfaceTypeLoopback, InterfaceTypeVirtual:
-			// Already filtered out above, but handle for exhaustive switch
-			continue
-		case InterfaceTypeOther:
-			// For "other" type interfaces, treat like ethernet if they have IP
-			if hasIP {
-				ethernetWithIP = append(ethernetWithIP, name)
-			}
+			// Already filtered
 		}
 	}
+	return c
+}
 
-	// Return best match in priority order
-	if len(ethernetWithIP) > 0 {
-		return ethernetWithIP[0]
+// selectBest returns the best interface in priority order.
+func (c *interfaceCandidates) selectBest() string {
+	if len(c.ethernetWithIP) > 0 {
+		return c.ethernetWithIP[0]
 	}
-	if len(wifiWithIP) > 0 {
-		return wifiWithIP[0]
+	if len(c.wifiWithIP) > 0 {
+		return c.wifiWithIP[0]
 	}
-	if len(ethernetUp) > 0 {
-		return ethernetUp[0]
+	if len(c.ethernetUp) > 0 {
+		return c.ethernetUp[0]
 	}
-	if len(wifiUp) > 0 {
-		return wifiUp[0]
+	if len(c.wifiUp) > 0 {
+		return c.wifiUp[0]
 	}
-
 	return ""
 }
 
@@ -343,7 +346,7 @@ func hasRoutableAddress(addresses []string) bool {
 }
 
 // getLinkInfoFromIfconfig parses ifconfig output on macOS.
-func getLinkInfoFromIfconfig(name string) (speed, duplex string) {
+func getLinkInfoFromIfconfig(_ string) (speed, duplex string) {
 	// This is a placeholder - actual implementation would exec ifconfig
 	// and parse "media: autoselect (1000baseT <full-duplex>)"
 	return "", ""

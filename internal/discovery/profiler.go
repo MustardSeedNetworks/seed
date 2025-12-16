@@ -21,7 +21,7 @@ import (
 	"github.com/krisarmstrong/luminetiq/internal/snmp"
 )
 
-// Device type constants for profiling.
+// Device type constants for profiler classification.
 const (
 	deviceTypePrinter       = "printer"
 	deviceTypeNetworkDevice = "network-device"
@@ -29,11 +29,7 @@ const (
 	deviceTypeRouter        = "router"
 	deviceTypeSwitch        = "switch"
 	deviceTypeFirewall      = "firewall"
-	deviceTypeAP            = "access-point"
 	deviceTypeNAS           = "nas"
-	deviceTypeCamera        = "camera"
-	deviceTypeIoT           = "iot"
-	deviceTypeDesktop       = "desktop"
 )
 
 // DeviceProfile contains auto-discovered profile information about a device.
@@ -139,7 +135,7 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 		httpClient: &http.Client{
 			Timeout:   cfg.Timeout,
 			Transport: transport,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 				return http.ErrUseLastResponse // Don't follow redirects
 			},
 		},
@@ -157,11 +153,13 @@ func (p *DeviceProfiler) Start() {
 		return // Already running
 	}
 	p.stopCh = make(chan struct{})
+
+	// Add to WaitGroup before unlocking to prevent race with Stop()
+	p.wg.Add(p.config.MaxConcurrent)
 	p.mu.Unlock()
 
 	// Start worker goroutines
 	for range p.config.MaxConcurrent {
-		p.wg.Add(1)
 		go p.worker()
 	}
 
@@ -187,9 +185,18 @@ func (p *DeviceProfiler) Stop() {
 func (p *DeviceProfiler) worker() {
 	defer p.wg.Done()
 
+	// Capture stopCh locally to avoid race with Stop() setting it to nil
+	p.mu.Lock()
+	stopCh := p.stopCh
+	p.mu.Unlock()
+
+	if stopCh == nil {
+		return
+	}
+
 	for {
 		select {
-		case <-p.stopCh:
+		case <-stopCh:
 			return
 		case ip := <-p.queue:
 			p.profileDevice(ip)
@@ -409,90 +416,124 @@ func (p *DeviceProfiler) inferDeviceType(profile *DeviceProfile) {
 	icons := make(map[string]bool)
 	deviceType := "unknown"
 
-	for _, op := range profile.OpenPorts {
-		switch op.Port {
-		case 22:
-			icons["ssh"] = true
-		case 23:
-			icons["telnet"] = true
-		case 80, 8080:
-			icons["web"] = true
-		case 443, 8443:
-			icons["web-secure"] = true
-		case 21:
-			icons["ftp"] = true
-		case 25, 587:
-			icons["mail"] = true
-		case 53:
-			icons["dns"] = true
-		case 161:
-			icons["snmp"] = true
-		case 3306:
-			icons["database"] = true
-		case 5432:
-			icons["database"] = true
-		case 6379:
-			icons["cache"] = true
-		case 9100:
-			icons["printer"] = true
-			deviceType = deviceTypePrinter
-		case 515, 631:
-			icons["printer"] = true
-			deviceType = deviceTypePrinter
-		}
+	deviceType = p.inferFromPorts(profile.OpenPorts, icons, deviceType)
+	deviceType = p.inferFromHTTPInfo(profile.HTTPInfo, icons, deviceType)
 
-		// Check banner for clues
-		bannerLower := strings.ToLower(op.Banner)
-		if strings.Contains(bannerLower, "ssh") {
-			if strings.Contains(bannerLower, "cisco") {
-				deviceType = deviceTypeNetworkDevice
-			} else if strings.Contains(bannerLower, "ubuntu") || strings.Contains(bannerLower, "debian") {
-				deviceType = deviceTypeServer
-			}
-		}
-	}
-
-	// Check HTTP info for device type hints
-	if profile.HTTPInfo != nil {
-		titleLower := strings.ToLower(profile.HTTPInfo.Title)
-		serverLower := strings.ToLower(profile.HTTPInfo.Server)
-
-		//nolint:gocritic // ifElseChain: string matching, switch on strings.Contains not possible
-		if strings.Contains(titleLower, "router") || strings.Contains(serverLower, "router") {
-			deviceType = deviceTypeRouter
-			icons["router"] = true
-		} else if strings.Contains(titleLower, "switch") {
-			deviceType = deviceTypeSwitch
-			icons["switch"] = true
-		} else if strings.Contains(titleLower, "firewall") || strings.Contains(titleLower, "pfsense") ||
-			strings.Contains(titleLower, "opnsense") || strings.Contains(titleLower, "fortinet") {
-			deviceType = deviceTypeFirewall
-			icons["firewall"] = true
-		} else if strings.Contains(titleLower, "nas") || strings.Contains(titleLower, "synology") ||
-			strings.Contains(titleLower, "qnap") {
-			deviceType = deviceTypeNAS
-			icons["storage"] = true
-		} else if strings.Contains(titleLower, "printer") || strings.Contains(titleLower, "hp ") ||
-			strings.Contains(titleLower, "canon") || strings.Contains(titleLower, "epson") {
-			deviceType = deviceTypePrinter
-			icons["printer"] = true
-		} else if strings.Contains(serverLower, "apache") || strings.Contains(serverLower, "nginx") {
-			deviceType = deviceTypeServer
-			icons["server"] = true
-		}
-	}
-
-	// Convert icon map to slice
 	for icon := range icons {
 		profile.DeviceIcons = append(profile.DeviceIcons, icon)
 	}
 
 	if deviceType == "unknown" && len(profile.OpenPorts) > 0 {
-		// Default to host if we found open ports but can't identify type
 		deviceType = "host"
 	}
 
 	profile.DeviceType = deviceType
+}
+
+// inferFromPorts infers device type and icons from open ports.
+func (p *DeviceProfiler) inferFromPorts(ports []OpenPort, icons map[string]bool, deviceType string) string {
+	for _, op := range ports {
+		deviceType = p.setIconsForPort(op.Port, icons, deviceType)
+		deviceType = p.inferFromBanner(op.Banner, deviceType)
+	}
+	return deviceType
+}
+
+// setIconsForPort sets icons based on port number and returns updated device type.
+func (p *DeviceProfiler) setIconsForPort(port int, icons map[string]bool, deviceType string) string {
+	switch port {
+	case 22:
+		icons["ssh"] = true
+	case 23:
+		icons["telnet"] = true
+	case 80, 8080:
+		icons["web"] = true
+	case 443, 8443:
+		icons["web-secure"] = true
+	case 21:
+		icons["ftp"] = true
+	case 25, 587:
+		icons["mail"] = true
+	case 53:
+		icons["dns"] = true
+	case 161:
+		icons["snmp"] = true
+	case 3306, 5432:
+		icons["database"] = true
+	case 6379:
+		icons["cache"] = true
+	case 9100, 515, 631:
+		icons["printer"] = true
+		deviceType = deviceTypePrinter
+	}
+	return deviceType
+}
+
+// inferFromBanner infers device type from service banner.
+func (p *DeviceProfiler) inferFromBanner(banner, deviceType string) string {
+	bannerLower := strings.ToLower(banner)
+	if !strings.Contains(bannerLower, "ssh") {
+		return deviceType
+	}
+	if strings.Contains(bannerLower, "cisco") {
+		return deviceTypeNetworkDevice
+	}
+	if strings.Contains(bannerLower, "ubuntu") || strings.Contains(bannerLower, "debian") {
+		return deviceTypeServer
+	}
+	return deviceType
+}
+
+// inferFromHTTPInfo infers device type and icons from HTTP response.
+func (p *DeviceProfiler) inferFromHTTPInfo(httpInfo *HTTPInfo, icons map[string]bool, deviceType string) string {
+	if httpInfo == nil {
+		return deviceType
+	}
+
+	titleLower := strings.ToLower(httpInfo.Title)
+	serverLower := strings.ToLower(httpInfo.Server)
+
+	if t, icon := matchHTTPDeviceType(titleLower, serverLower); t != "" {
+		icons[icon] = true
+		return t
+	}
+
+	return deviceType
+}
+
+// httpDeviceMatch defines a pattern match for HTTP-based device detection.
+type httpDeviceMatch struct {
+	titlePatterns  []string
+	serverPatterns []string
+	deviceType     string
+	icon           string
+}
+
+// httpDeviceMatchers defines patterns for HTTP-based device detection.
+var httpDeviceMatchers = []httpDeviceMatch{
+	{[]string{"router"}, []string{"router"}, deviceTypeRouter, "router"},
+	{[]string{"switch"}, nil, deviceTypeSwitch, "switch"},
+	{[]string{"firewall", "pfsense", "opnsense", "fortinet"}, nil, deviceTypeFirewall, "firewall"},
+	{[]string{"nas", "synology", "qnap"}, nil, deviceTypeNAS, "storage"},
+	{[]string{"printer", "hp ", "canon", "epson"}, nil, deviceTypePrinter, "printer"},
+	{nil, []string{"apache", "nginx"}, deviceTypeServer, "server"},
+}
+
+// matchHTTPDeviceType matches HTTP title/server against known device patterns.
+func matchHTTPDeviceType(title, server string) (deviceType, icon string) {
+	for _, m := range httpDeviceMatchers {
+		for _, p := range m.titlePatterns {
+			if strings.Contains(title, p) {
+				return m.deviceType, m.icon
+			}
+		}
+		for _, p := range m.serverPatterns {
+			if strings.Contains(server, p) {
+				return m.deviceType, m.icon
+			}
+		}
+	}
+	return "", ""
 }
 
 // GetProfile returns the profile for an IP address.

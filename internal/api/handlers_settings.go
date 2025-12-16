@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/krisarmstrong/luminetiq/internal/config"
 	"github.com/krisarmstrong/luminetiq/internal/validation"
 )
 
@@ -138,198 +139,13 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	s.config.Lock()
 	defer s.config.Unlock()
 
-	// Apply threshold updates
-	if thresholds, ok := updates["thresholds"].(map[string]interface{}); ok {
-		if dnsThresh, ok := thresholds["dns"].(map[string]interface{}); ok {
-			if good, ok := dnsThresh["good"].(float64); ok {
-				s.config.Thresholds.DNS.Warning = time.Duration(good) * time.Millisecond
-			}
-			if warning, ok := dnsThresh["warning"].(float64); ok {
-				s.config.Thresholds.DNS.Critical = time.Duration(warning) * time.Millisecond
-			}
-		}
-		if gwThresh, ok := thresholds["gateway"].(map[string]interface{}); ok {
-			if good, ok := gwThresh["good"].(float64); ok {
-				s.config.Thresholds.Ping.Warning = time.Duration(good) * time.Millisecond
-			}
-			if warning, ok := gwThresh["warning"].(float64); ok {
-				s.config.Thresholds.Ping.Critical = time.Duration(warning) * time.Millisecond
-			}
-		}
-		if wifi, ok := thresholds["wifi"].(map[string]interface{}); ok {
-			if good, ok := wifi["good"].(float64); ok {
-				s.config.Thresholds.WiFi.Signal.Warning = int(good)
-			}
-			if warning, ok := wifi["warning"].(float64); ok {
-				s.config.Thresholds.WiFi.Signal.Critical = int(warning)
-			}
-		}
-		if customPing, ok := thresholds["customPing"].(map[string]interface{}); ok {
-			if good, ok := customPing["good"].(float64); ok {
-				s.config.Thresholds.CustomTests.Ping.Warning = time.Duration(good) * time.Millisecond
-			}
-			if warning, ok := customPing["warning"].(float64); ok {
-				s.config.Thresholds.CustomTests.Ping.Critical = time.Duration(warning) * time.Millisecond
-			}
-		}
-		if customTcp, ok := thresholds["customTcp"].(map[string]interface{}); ok {
-			if good, ok := customTcp["good"].(float64); ok {
-				s.config.Thresholds.CustomTests.TCP.Warning = time.Duration(good) * time.Millisecond
-			}
-			if warning, ok := customTcp["warning"].(float64); ok {
-				s.config.Thresholds.CustomTests.TCP.Critical = time.Duration(warning) * time.Millisecond
-			}
-		}
-		if customHttp, ok := thresholds["customHttp"].(map[string]interface{}); ok {
-			if good, ok := customHttp["good"].(float64); ok {
-				s.config.Thresholds.CustomTests.HTTP.Warning = time.Duration(good) * time.Millisecond
-			}
-			if warning, ok := customHttp["warning"].(float64); ok {
-				s.config.Thresholds.CustomTests.HTTP.Critical = time.Duration(warning) * time.Millisecond
-			}
-		}
-		if httpTimings, ok := thresholds["httpTimings"].(map[string]interface{}); ok {
-			if dnsT, ok := httpTimings["dns"].(map[string]interface{}); ok {
-				if good, ok := dnsT["good"].(float64); ok {
-					s.config.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(good) * time.Millisecond
-				}
-				if warning, ok := dnsT["warning"].(float64); ok {
-					s.config.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(warning) * time.Millisecond
-				}
-			}
-			if tcpT, ok := httpTimings["tcp"].(map[string]interface{}); ok {
-				if good, ok := tcpT["good"].(float64); ok {
-					s.config.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(good) * time.Millisecond
-				}
-				if warning, ok := tcpT["warning"].(float64); ok {
-					s.config.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(warning) * time.Millisecond
-				}
-			}
-			if tlsT, ok := httpTimings["tls"].(map[string]interface{}); ok {
-				if good, ok := tlsT["good"].(float64); ok {
-					s.config.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(good) * time.Millisecond
-				}
-				if warning, ok := tlsT["warning"].(float64); ok {
-					s.config.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(warning) * time.Millisecond
-				}
-			}
-			if ttfb, ok := httpTimings["ttfb"].(map[string]interface{}); ok {
-				if good, ok := ttfb["good"].(float64); ok {
-					s.config.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(good) * time.Millisecond
-				}
-				if warning, ok := ttfb["warning"].(float64); ok {
-					s.config.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(warning) * time.Millisecond
-				}
-			}
-		}
-	}
-
-	// Apply tests updates
-	if tests, ok := updates["tests"].(map[string]interface{}); ok {
-		if runPerformance, ok := tests["runPerformance"].(bool); ok {
-			s.config.Tests.RunPerformance = runPerformance
-		}
-		if runSpeedtest, ok := tests["runSpeedtest"].(bool); ok {
-			s.config.Tests.RunSpeedtest = runSpeedtest
-		}
-		if runIperf, ok := tests["runIperf"].(bool); ok {
-			s.config.Tests.RunIperf = runIperf
-		}
-		if runDiscovery, ok := tests["runDiscovery"].(bool); ok {
-			s.config.Tests.RunDiscovery = runDiscovery
-		}
-	}
-
-	// Apply speedtest updates
-	if speedtest, ok := updates["speedtest"].(map[string]interface{}); ok {
-		if serverId, ok := speedtest["serverId"].(string); ok {
-			s.config.Speedtest.ServerID = serverId
-		}
-		if autoRunOnLink, ok := speedtest["autoRunOnLink"].(bool); ok {
-			s.config.Speedtest.AutoRunOnLink = autoRunOnLink
-		}
-	}
-
-	// Apply iperf updates
-	if iperf, ok := updates["iperf"].(map[string]interface{}); ok {
-		if autoRunOnLink, ok := iperf["autoRunOnLink"].(bool); ok {
-			s.config.Iperf.AutoRunOnLink = autoRunOnLink
-		}
-		if server, ok := iperf["server"].(string); ok {
-			s.config.Iperf.Server = server
-		}
-		if port, ok := iperf["port"].(float64); ok {
-			p := int(port)
-			if validation.ValidatePort(p) == nil {
-				s.config.Iperf.Port = p
-			}
-		}
-		if protocol, ok := iperf["protocol"].(string); ok {
-			s.config.Iperf.Protocol = protocol
-		}
-		if direction, ok := iperf["direction"].(string); ok {
-			s.config.Iperf.Direction = direction
-		}
-		if duration, ok := iperf["duration"].(float64); ok {
-			s.config.Iperf.Duration = int(duration)
-		}
-		if serverPort, ok := iperf["serverPort"].(float64); ok {
-			p := int(serverPort)
-			if validation.ValidatePort(p) == nil {
-				s.config.Iperf.ServerPort = p
-			}
-		}
-		if enableServer, ok := iperf["enableServer"].(bool); ok {
-			s.config.Iperf.EnableServer = enableServer
-		}
-	}
-
-	// Apply fabOptions updates
-	if fabOptions, ok := updates["fabOptions"].(map[string]interface{}); ok {
-		if runLink, ok := fabOptions["runLink"].(bool); ok {
-			s.config.FABOptions.RunLink = runLink
-		}
-		if runSwitch, ok := fabOptions["runSwitch"].(bool); ok {
-			s.config.FABOptions.RunSwitch = runSwitch
-		}
-		if runVLAN, ok := fabOptions["runVLAN"].(bool); ok {
-			s.config.FABOptions.RunVLAN = runVLAN
-		}
-		if runIPConfig, ok := fabOptions["runIPConfig"].(bool); ok {
-			s.config.FABOptions.RunIPConfig = runIPConfig
-		}
-		if runGateway, ok := fabOptions["runGateway"].(bool); ok {
-			s.config.FABOptions.RunGateway = runGateway
-		}
-		if runDNS, ok := fabOptions["runDNS"].(bool); ok {
-			s.config.FABOptions.RunDNS = runDNS
-		}
-		if runHealthChecks, ok := fabOptions["runHealthChecks"].(bool); ok {
-			s.config.FABOptions.RunHealthChecks = runHealthChecks
-		}
-		if runNetworkDiscovery, ok := fabOptions["runNetworkDiscovery"].(bool); ok {
-			s.config.FABOptions.RunNetworkDiscovery = runNetworkDiscovery
-		}
-		if runSpeedtest, ok := fabOptions["runSpeedtest"].(bool); ok {
-			s.config.FABOptions.RunSpeedtest = runSpeedtest
-		}
-		if runIperf, ok := fabOptions["runIperf"].(bool); ok {
-			s.config.FABOptions.RunIperf = runIperf
-		}
-		if runPerformance, ok := fabOptions["runPerformance"].(bool); ok {
-			s.config.FABOptions.RunPerformance = runPerformance
-		}
-		if autoScanOnLink, ok := fabOptions["autoScanOnLink"].(bool); ok {
-			s.config.FABOptions.AutoScanOnLink = autoScanOnLink
-		}
-	}
-
-	// Apply displayOptions updates
-	if displayOptions, ok := updates["displayOptions"].(map[string]interface{}); ok {
-		if showPublicIP, ok := displayOptions["showPublicIP"].(bool); ok {
-			s.config.DisplayOptions.ShowPublicIP = showPublicIP
-		}
-	}
+	// Apply updates using helper functions
+	applyThresholdUpdates(updates, s.config)
+	applyTestsUpdates(updates, s.config)
+	applySpeedtestUpdates(updates, s.config)
+	applyIperfUpdates(updates, s.config)
+	applyFABOptionsUpdates(updates, s.config)
+	applyDisplayOptionsUpdates(updates, s.config)
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
@@ -338,4 +154,264 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+// applyThresholdUpdates applies threshold configuration updates.
+func applyThresholdUpdates(updates map[string]interface{}, cfg *config.Config) {
+	thresholds, ok := updates["thresholds"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	applyDNSThresholds(thresholds, cfg)
+	applyGatewayThresholds(thresholds, cfg)
+	applyWiFiThresholds(thresholds, cfg)
+	applyCustomTestThresholds(thresholds, cfg)
+	applyHTTPTimingThresholds(thresholds, cfg)
+}
+
+// applyDNSThresholds applies DNS threshold updates.
+func applyDNSThresholds(thresholds map[string]interface{}, cfg *config.Config) {
+	dnsThresh, ok := thresholds["dns"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if good, ok := dnsThresh["good"].(float64); ok {
+		cfg.Thresholds.DNS.Warning = time.Duration(good) * time.Millisecond
+	}
+	if warning, ok := dnsThresh["warning"].(float64); ok {
+		cfg.Thresholds.DNS.Critical = time.Duration(warning) * time.Millisecond
+	}
+}
+
+// applyGatewayThresholds applies gateway ping threshold updates.
+func applyGatewayThresholds(thresholds map[string]interface{}, cfg *config.Config) {
+	gwThresh, ok := thresholds["gateway"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if good, ok := gwThresh["good"].(float64); ok {
+		cfg.Thresholds.Ping.Warning = time.Duration(good) * time.Millisecond
+	}
+	if warning, ok := gwThresh["warning"].(float64); ok {
+		cfg.Thresholds.Ping.Critical = time.Duration(warning) * time.Millisecond
+	}
+}
+
+// applyWiFiThresholds applies WiFi signal threshold updates.
+func applyWiFiThresholds(thresholds map[string]interface{}, cfg *config.Config) {
+	wifi, ok := thresholds["wifi"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if good, ok := wifi["good"].(float64); ok {
+		cfg.Thresholds.WiFi.Signal.Warning = int(good)
+	}
+	if warning, ok := wifi["warning"].(float64); ok {
+		cfg.Thresholds.WiFi.Signal.Critical = int(warning)
+	}
+}
+
+// applyCustomTestThresholds applies custom test threshold updates.
+func applyCustomTestThresholds(thresholds map[string]interface{}, cfg *config.Config) {
+	// Custom ping thresholds
+	if customPing, ok := thresholds["customPing"].(map[string]interface{}); ok {
+		if good, ok := customPing["good"].(float64); ok {
+			cfg.Thresholds.CustomTests.Ping.Warning = time.Duration(good) * time.Millisecond
+		}
+		if warning, ok := customPing["warning"].(float64); ok {
+			cfg.Thresholds.CustomTests.Ping.Critical = time.Duration(warning) * time.Millisecond
+		}
+	}
+
+	// Custom TCP thresholds
+	if customTCP, ok := thresholds["customTcp"].(map[string]interface{}); ok {
+		if good, ok := customTCP["good"].(float64); ok {
+			cfg.Thresholds.CustomTests.TCP.Warning = time.Duration(good) * time.Millisecond
+		}
+		if warning, ok := customTCP["warning"].(float64); ok {
+			cfg.Thresholds.CustomTests.TCP.Critical = time.Duration(warning) * time.Millisecond
+		}
+	}
+
+	// Custom HTTP thresholds
+	if customHTTP, ok := thresholds["customHttp"].(map[string]interface{}); ok {
+		if good, ok := customHTTP["good"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTP.Warning = time.Duration(good) * time.Millisecond
+		}
+		if warning, ok := customHTTP["warning"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTP.Critical = time.Duration(warning) * time.Millisecond
+		}
+	}
+}
+
+// applyHTTPTimingThresholds applies HTTP timing threshold updates.
+func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Config) {
+	httpTimings, ok := thresholds["httpTimings"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	if dnsT, ok := httpTimings["dns"].(map[string]interface{}); ok {
+		if good, ok := dnsT["good"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(good) * time.Millisecond
+		}
+		if warning, ok := dnsT["warning"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(warning) * time.Millisecond
+		}
+	}
+
+	if tcpT, ok := httpTimings["tcp"].(map[string]interface{}); ok {
+		if good, ok := tcpT["good"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(good) * time.Millisecond
+		}
+		if warning, ok := tcpT["warning"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(warning) * time.Millisecond
+		}
+	}
+
+	if tlsT, ok := httpTimings["tls"].(map[string]interface{}); ok {
+		if good, ok := tlsT["good"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(good) * time.Millisecond
+		}
+		if warning, ok := tlsT["warning"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(warning) * time.Millisecond
+		}
+	}
+
+	if ttfb, ok := httpTimings["ttfb"].(map[string]interface{}); ok {
+		if good, ok := ttfb["good"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(good) * time.Millisecond
+		}
+		if warning, ok := ttfb["warning"].(float64); ok {
+			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(warning) * time.Millisecond
+		}
+	}
+}
+
+// applyTestsUpdates applies test toggle updates.
+func applyTestsUpdates(updates map[string]interface{}, cfg *config.Config) {
+	tests, ok := updates["tests"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if runPerformance, ok := tests["runPerformance"].(bool); ok {
+		cfg.Tests.RunPerformance = runPerformance
+	}
+	if runSpeedtest, ok := tests["runSpeedtest"].(bool); ok {
+		cfg.Tests.RunSpeedtest = runSpeedtest
+	}
+	if runIperf, ok := tests["runIperf"].(bool); ok {
+		cfg.Tests.RunIperf = runIperf
+	}
+	if runDiscovery, ok := tests["runDiscovery"].(bool); ok {
+		cfg.Tests.RunDiscovery = runDiscovery
+	}
+}
+
+// applySpeedtestUpdates applies speedtest configuration updates.
+func applySpeedtestUpdates(updates map[string]interface{}, cfg *config.Config) {
+	speedtest, ok := updates["speedtest"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if serverID, ok := speedtest["serverId"].(string); ok {
+		cfg.Speedtest.ServerID = serverID
+	}
+	if autoRunOnLink, ok := speedtest["autoRunOnLink"].(bool); ok {
+		cfg.Speedtest.AutoRunOnLink = autoRunOnLink
+	}
+}
+
+// applyIperfUpdates applies iperf configuration updates.
+func applyIperfUpdates(updates map[string]interface{}, cfg *config.Config) {
+	iperf, ok := updates["iperf"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if autoRunOnLink, ok := iperf["autoRunOnLink"].(bool); ok {
+		cfg.Iperf.AutoRunOnLink = autoRunOnLink
+	}
+	if server, ok := iperf["server"].(string); ok {
+		cfg.Iperf.Server = server
+	}
+	if port, ok := iperf["port"].(float64); ok {
+		p := int(port)
+		if validation.ValidatePort(p) == nil {
+			cfg.Iperf.Port = p
+		}
+	}
+	if protocol, ok := iperf["protocol"].(string); ok {
+		cfg.Iperf.Protocol = protocol
+	}
+	if direction, ok := iperf["direction"].(string); ok {
+		cfg.Iperf.Direction = direction
+	}
+	if duration, ok := iperf["duration"].(float64); ok {
+		cfg.Iperf.Duration = int(duration)
+	}
+	if serverPort, ok := iperf["serverPort"].(float64); ok {
+		p := int(serverPort)
+		if validation.ValidatePort(p) == nil {
+			cfg.Iperf.ServerPort = p
+		}
+	}
+	if enableServer, ok := iperf["enableServer"].(bool); ok {
+		cfg.Iperf.EnableServer = enableServer
+	}
+}
+
+// applyFABOptionsUpdates applies FAB options updates.
+func applyFABOptionsUpdates(updates map[string]interface{}, cfg *config.Config) {
+	fabOptions, ok := updates["fabOptions"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if runLink, ok := fabOptions["runLink"].(bool); ok {
+		cfg.FABOptions.RunLink = runLink
+	}
+	if runSwitch, ok := fabOptions["runSwitch"].(bool); ok {
+		cfg.FABOptions.RunSwitch = runSwitch
+	}
+	if runVLAN, ok := fabOptions["runVLAN"].(bool); ok {
+		cfg.FABOptions.RunVLAN = runVLAN
+	}
+	if runIPConfig, ok := fabOptions["runIPConfig"].(bool); ok {
+		cfg.FABOptions.RunIPConfig = runIPConfig
+	}
+	if runGateway, ok := fabOptions["runGateway"].(bool); ok {
+		cfg.FABOptions.RunGateway = runGateway
+	}
+	if runDNS, ok := fabOptions["runDNS"].(bool); ok {
+		cfg.FABOptions.RunDNS = runDNS
+	}
+	if runHealthChecks, ok := fabOptions["runHealthChecks"].(bool); ok {
+		cfg.FABOptions.RunHealthChecks = runHealthChecks
+	}
+	if runNetworkDiscovery, ok := fabOptions["runNetworkDiscovery"].(bool); ok {
+		cfg.FABOptions.RunNetworkDiscovery = runNetworkDiscovery
+	}
+	if runSpeedtest, ok := fabOptions["runSpeedtest"].(bool); ok {
+		cfg.FABOptions.RunSpeedtest = runSpeedtest
+	}
+	if runIperf, ok := fabOptions["runIperf"].(bool); ok {
+		cfg.FABOptions.RunIperf = runIperf
+	}
+	if runPerformance, ok := fabOptions["runPerformance"].(bool); ok {
+		cfg.FABOptions.RunPerformance = runPerformance
+	}
+	if autoScanOnLink, ok := fabOptions["autoScanOnLink"].(bool); ok {
+		cfg.FABOptions.AutoScanOnLink = autoScanOnLink
+	}
+}
+
+// applyDisplayOptionsUpdates applies display options updates.
+func applyDisplayOptionsUpdates(updates map[string]interface{}, cfg *config.Config) {
+	displayOptions, ok := updates["displayOptions"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if showPublicIP, ok := displayOptions["showPublicIP"].(bool); ok {
+		cfg.DisplayOptions.ShowPublicIP = showPublicIP
+	}
 }

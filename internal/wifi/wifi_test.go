@@ -26,14 +26,14 @@ func TestManagerSetInterface(t *testing.T) {
 	}
 }
 
-func TestManagerIsWireless(t *testing.T) {
+func TestManagerIsWireless(_ *testing.T) {
 	manager := NewManager("en0")
 
 	// Result depends on system, just verify it doesn't panic
 	_ = manager.IsWireless()
 }
 
-func TestManagerGetInfo(t *testing.T) {
+func TestManagerGetInfo(_ *testing.T) {
 	manager := NewManager("en0")
 
 	// Result depends on system, just verify it doesn't panic
@@ -184,7 +184,7 @@ func TestChannelFrequencyRoundTrip(t *testing.T) {
 	}
 }
 
-func TestConcurrentManagerAccess(t *testing.T) {
+func TestConcurrentManagerAccess(_ *testing.T) {
 	manager := NewManager("en0")
 
 	done := make(chan bool)
@@ -203,17 +203,17 @@ func TestConcurrentManagerAccess(t *testing.T) {
 	}
 }
 
-func TestIsWirelessPlatform(t *testing.T) {
+func TestIsWirelessPlatform(_ *testing.T) {
 	// This will vary by system, just verify it doesn't panic
 	_ = isWirelessPlatform("en0")
 }
 
-func TestGetInfoPlatform(t *testing.T) {
+func TestGetInfoPlatform(_ *testing.T) {
 	// This will vary by system, just verify it doesn't panic
 	_ = getInfoPlatform("en0")
 }
 
-func TestGetInfo(t *testing.T) {
+func TestGetInfo(_ *testing.T) {
 	manager := NewManager("en0")
 	info := manager.GetInfo()
 	// Just verify it doesn't panic - result depends on system
@@ -374,7 +374,7 @@ func TestManagerInterface(t *testing.T) {
 	}
 }
 
-func TestIsWirelessResult(t *testing.T) {
+func TestIsWirelessResult(_ *testing.T) {
 	manager := NewManager("lo0")
 
 	// Loopback is not wireless
@@ -383,7 +383,7 @@ func TestIsWirelessResult(t *testing.T) {
 	_ = result
 }
 
-func TestConcurrentWifiManagerAccess(t *testing.T) {
+func TestConcurrentWifiManagerAccess(_ *testing.T) {
 	manager := NewManager("en0")
 
 	done := make(chan bool)

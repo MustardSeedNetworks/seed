@@ -98,7 +98,7 @@ func getVlanInfo(ifname string) (parent string, vlanID int) {
 }
 
 // createVlanInterfacePlatform creates a VLAN interface on macOS.
-func createVlanInterfacePlatform(parentIface string, vlanID int) error {
+func createVlanInterfacePlatform(_ string, _ int) error {
 	// On macOS, we need to create a vlan interface first
 	// This typically requires networksetup or manual configuration
 	// For now, return nil as this is advanced functionality
@@ -106,7 +106,7 @@ func createVlanInterfacePlatform(parentIface string, vlanID int) error {
 }
 
 // deleteVlanInterfacePlatform removes a VLAN interface on macOS.
-func deleteVlanInterfacePlatform(parentIface string, vlanID int) error {
+func deleteVlanInterfacePlatform(_ string, _ int) error {
 	// On macOS, VLAN removal requires networksetup
 	// For now, return nil as this is advanced functionality
 	return nil

@@ -18,6 +18,7 @@ import (
 // Request/Response Types and Handlers (fixes #544 - split from handlers.go)
 // ============================================================================
 
+// DiscoveryResponse contains the status and results of network discovery operations.
 type DiscoveryResponse struct {
 	Running   bool                    `json:"running"`   // True if discovery managers are actively capturing
 	Neighbors []DiscoveryNeighborInfo `json:"neighbors"` // All discovered neighbors (deduplicated by ChassisID + PortID)
@@ -578,6 +579,7 @@ func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Req
 // SetupStatusResponse represents the setup status response.
 // WiFi Survey API Handlers
 
+// CreateSurveyRequest contains parameters for creating a new WiFi survey.
 type CreateSurveyRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -601,7 +603,7 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 		req.Interface = s.netManager.GetCurrentInterface()
 	}
 
-	newSurvey, err := s.surveyManager.CreateSurvey(req.Name, req.Description, req.Interface, survey.SurveyType(req.SurveyType))
+	newSurvey, err := s.surveyManager.CreateSurvey(req.Name, req.Description, req.Interface, survey.Type(req.SurveyType))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create survey: %v", err), http.StatusInternalServerError)
 		return
@@ -610,7 +612,7 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, newSurvey)
 }
 
-func (s *Server) listSurveys(w http.ResponseWriter, r *http.Request) {
+func (s *Server) listSurveys(w http.ResponseWriter, _ *http.Request) {
 	surveys := s.surveyManager.ListSurveys()
 	sendJSONResponse(w, http.StatusOK, surveys)
 }
@@ -691,6 +693,7 @@ func (s *Server) completeSurvey(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "completed"})
 }
 
+// AddSampleRequest contains a WiFi signal sample measurement for a survey location.
 type AddSampleRequest struct {
 	X          int         `json:"x"`
 	Y          int         `json:"y"`
@@ -718,6 +721,7 @@ func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "sample added"})
 }
 
+// UpdateFloorPlanRequest contains floor plan image and dimension parameters.
 type UpdateFloorPlanRequest struct {
 	ImageData string  `json:"imageData"`
 	Width     int     `json:"width"`

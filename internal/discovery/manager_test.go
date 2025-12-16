@@ -45,14 +45,38 @@ func TestNeighbor_Fields(t *testing.T) {
 	if n.PortID != "Gi0/1" {
 		t.Errorf("Expected PortID 'Gi0/1', got %q", n.PortID)
 	}
+	if n.PortDescription != "Uplink to Core" {
+		t.Errorf("Expected PortDescription 'Uplink to Core', got %q", n.PortDescription)
+	}
 	if n.SystemName != "switch01" {
 		t.Errorf("Expected SystemName 'switch01', got %q", n.SystemName)
+	}
+	if n.SystemDescription != "Cisco IOS" {
+		t.Errorf("Expected SystemDescription 'Cisco IOS', got %q", n.SystemDescription)
 	}
 	if len(n.Capabilities) != 2 {
 		t.Errorf("Expected 2 capabilities, got %d", len(n.Capabilities))
 	}
+	if n.ManagementAddress != "192.168.1.1" {
+		t.Errorf("Expected ManagementAddress '192.168.1.1', got %q", n.ManagementAddress)
+	}
+	if n.VLAN != 100 {
+		t.Errorf("Expected VLAN 100, got %d", n.VLAN)
+	}
+	if n.NativeVLAN != 1 {
+		t.Errorf("Expected NativeVLAN 1, got %d", n.NativeVLAN)
+	}
+	if n.VoiceVLAN != 200 {
+		t.Errorf("Expected VoiceVLAN 200, got %d", n.VoiceVLAN)
+	}
 	if n.TTL != 120 {
 		t.Errorf("Expected TTL 120, got %d", n.TTL)
+	}
+	if n.LastSeen.IsZero() {
+		t.Error("Expected LastSeen to be set")
+	}
+	if n.SourceMAC != "AA:BB:CC:DD:EE:FF" {
+		t.Errorf("Expected SourceMAC 'AA:BB:CC:DD:EE:FF', got %q", n.SourceMAC)
 	}
 }
 

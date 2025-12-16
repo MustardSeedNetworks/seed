@@ -381,9 +381,9 @@ func TestContextCancellation(t *testing.T) {
 	}
 }
 
-func TestSNMPSystemInfo(t *testing.T) {
-	// Test SNMPSystemInfo structure
-	info := &SNMPSystemInfo{
+func TestSystemInfo(t *testing.T) {
+	// Test SystemInfo structure
+	info := &SystemInfo{
 		SysDescr:    "Test Device Description",
 		SysObjectID: "1.3.6.1.4.1.9",
 		SysName:     "test-device",

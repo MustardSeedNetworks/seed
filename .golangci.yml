@@ -95,6 +95,9 @@ linters:
           - gosec
           - dupl
           - goconst
+      # 'api' is a meaningful package name for HTTP API handlers
+      - path: internal/api/
+        text: "var-naming: avoid meaningless package names"
 
 output:
   sort-order:

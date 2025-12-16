@@ -69,7 +69,7 @@ test.describe('Speed Test', () => {
     await page.waitForTimeout(2000);
 
     // Check if iPerf section exists
-    const hasIperf = await iperfStatus.isVisible().catch(() => false);
+    const _hasIperf = await iperfStatus.isVisible().catch(() => false);
 
     // iPerf may not be available on all systems, which is OK
     // Just verify the performance section is present

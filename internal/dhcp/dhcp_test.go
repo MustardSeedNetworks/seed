@@ -250,7 +250,7 @@ func TestExtractValue(t *testing.T) {
 	}
 }
 
-func TestGetLeaseInfo(t *testing.T) {
+func TestGetLeaseInfo(_ *testing.T) {
 	// On different platforms and network configurations, this may return nil or populated LeaseInfo.
 	// The test only verifies that GetLeaseInfo does not panic or crash.
 	info, err := GetLeaseInfo("eth0")
@@ -302,7 +302,7 @@ func TestCalculateTimingComplete(t *testing.T) {
 	}
 }
 
-func TestConcurrentMonitorAccess(t *testing.T) {
+func TestConcurrentMonitorAccess(_ *testing.T) {
 	monitor := NewMonitor("eth0")
 
 	done := make(chan bool)
@@ -322,7 +322,7 @@ func TestConcurrentMonitorAccess(t *testing.T) {
 	}
 }
 
-func TestGetLeaseInfoDarwin(t *testing.T) {
+func TestGetLeaseInfoDarwin(_ *testing.T) {
 	// This test is only meaningful on macOS; skip or ignore on other platforms.
 	info, err := getLeaseInfoDarwin("en0")
 	// Just verify it doesn't panic
@@ -330,7 +330,7 @@ func TestGetLeaseInfoDarwin(t *testing.T) {
 	_ = err
 }
 
-func TestGetLeaseInfoLinux(t *testing.T) {
+func TestGetLeaseInfoLinux(_ *testing.T) {
 	// This test is only meaningful on Linux; on other platforms it is effectively skipped.
 	info, err := getLeaseInfoLinux("eth0")
 	// Just verify it doesn't panic

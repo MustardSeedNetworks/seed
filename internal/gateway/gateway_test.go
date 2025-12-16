@@ -254,7 +254,7 @@ func TestTesterStartStopContinuousNotRunning(t *testing.T) {
 	}
 }
 
-func TestDetectGateway(t *testing.T) {
+func TestDetectGateway(_ *testing.T) {
 	// This may or may not find a gateway depending on system config
 	gateway, err := DetectGateway()
 	// Just verify it doesn't panic
@@ -330,7 +330,7 @@ func TestTesterStartStopContinuous(t *testing.T) {
 	tester.SetGateway("127.0.0.1")
 
 	callbackCh := make(chan struct{}, 10)
-	callback := func(stats *PingStats) {
+	callback := func(_ *PingStats) {
 		select {
 		case callbackCh <- struct{}{}:
 		default:
@@ -425,7 +425,7 @@ func TestDetermineStatusEdgeCases(t *testing.T) {
 	}
 }
 
-func TestConcurrentTesterAccess(t *testing.T) {
+func TestConcurrentTesterAccess(_ *testing.T) {
 	tester := NewTester(DefaultThresholds())
 
 	done := make(chan bool)
@@ -762,7 +762,7 @@ func TestStartContinuousAlreadyRunning(t *testing.T) {
 	tester.SetGateway("127.0.0.1")
 
 	called := 0
-	callback := func(stats *PingStats) {
+	callback := func(_ *PingStats) {
 		called++
 	}
 

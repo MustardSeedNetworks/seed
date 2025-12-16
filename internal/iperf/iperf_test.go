@@ -156,11 +156,26 @@ func TestResultFields(t *testing.T) {
 	if result.LostPackets != 2 {
 		t.Errorf("expected LostPackets 2, got %d", result.LostPackets)
 	}
+	if result.LostPercent != 0.5 {
+		t.Errorf("expected LostPercent 0.5, got %v", result.LostPercent)
+	}
 	if result.Protocol != "tcp" {
 		t.Errorf("expected Protocol 'tcp', got %q", result.Protocol)
 	}
 	if result.Direction != "download" {
 		t.Errorf("expected Direction 'download', got %q", result.Direction)
+	}
+	if result.Duration != 10.0 {
+		t.Errorf("expected Duration 10.0, got %v", result.Duration)
+	}
+	if result.Server != "speedtest.example.com" {
+		t.Errorf("expected Server 'speedtest.example.com', got %q", result.Server)
+	}
+	if result.Port != 5201 {
+		t.Errorf("expected Port 5201, got %d", result.Port)
+	}
+	if result.Timestamp != now {
+		t.Errorf("expected Timestamp %v, got %v", now, result.Timestamp)
 	}
 }
 
@@ -259,7 +274,7 @@ func TestManagerServerAlreadyRunning(t *testing.T) {
 	manager.mu.Unlock()
 }
 
-func TestCheckInstalled(t *testing.T) {
+func TestCheckInstalled(_ *testing.T) {
 	// This test may fail if iperf3 is not installed, which is okay
 	err := CheckInstalled()
 	// Just check it doesn't panic - the result depends on system configuration
@@ -292,7 +307,7 @@ func TestIperfJSONFields(t *testing.T) {
 	}
 }
 
-func TestFindIperf3Binary(t *testing.T) {
+func TestFindIperf3Binary(_ *testing.T) {
 	// Reset the cached path to test finding
 	originalPath := iperfBinaryPath
 	iperfBinaryPath = ""
@@ -338,7 +353,10 @@ func TestClientConfigProtocols(t *testing.T) {
 			Reverse:  tt.reverse,
 		}
 
-		// Just verify the config is set correctly
+		// Verify the config is set correctly
+		if config.Server != "localhost" {
+			t.Errorf("expected server 'localhost', got %q", config.Server)
+		}
 		if config.Protocol != tt.protocol {
 			t.Errorf("expected protocol %q, got %q", tt.protocol, config.Protocol)
 		}
@@ -393,6 +411,12 @@ func TestServerStatusError(t *testing.T) {
 	if status.Running {
 		t.Error("expected Running false")
 	}
+	if status.Port != 0 {
+		t.Errorf("expected Port 0, got %d", status.Port)
+	}
+	if status.PID != 0 {
+		t.Errorf("expected PID 0, got %d", status.PID)
+	}
 	if status.Error != "server crashed" {
 		t.Errorf("expected Error 'server crashed', got %q", status.Error)
 	}
@@ -409,7 +433,7 @@ func TestClientStatusPhases(t *testing.T) {
 	}
 }
 
-func TestConcurrentManagerAccess(t *testing.T) {
+func TestConcurrentManagerAccess(_ *testing.T) {
 	manager := NewManager()
 
 	done := make(chan bool)
@@ -529,6 +553,9 @@ func TestResultAllFields(t *testing.T) {
 	if result.Port != 5201 {
 		t.Errorf("expected Port 5201, got %d", result.Port)
 	}
+	if result.Timestamp != now {
+		t.Errorf("expected Timestamp %v, got %v", now, result.Timestamp)
+	}
 }
 
 func TestServerStatusFields(t *testing.T) {
@@ -607,7 +634,7 @@ func TestManagerStatusMethods(t *testing.T) {
 	}
 }
 
-func TestManagerConcurrentStatusAccess(t *testing.T) {
+func TestManagerConcurrentStatusAccess(_ *testing.T) {
 	manager := NewManager()
 
 	done := make(chan bool)
@@ -646,6 +673,9 @@ func TestClientConfigProtocol(t *testing.T) {
 			Reverse:  tt.reverse,
 		}
 
+		if config.Server != "localhost" {
+			t.Errorf("expected server 'localhost', got %q", config.Server)
+		}
 		if config.Protocol != tt.protocol {
 			t.Errorf("expected protocol %q, got %q", tt.protocol, config.Protocol)
 		}
@@ -665,6 +695,12 @@ func TestServerStatusWithError(t *testing.T) {
 
 	if status.Running {
 		t.Error("expected Running false")
+	}
+	if status.Port != 0 {
+		t.Errorf("expected Port 0, got %d", status.Port)
+	}
+	if status.PID != 0 {
+		t.Errorf("expected PID 0, got %d", status.PID)
 	}
 	if status.Error != "server crashed" {
 		t.Errorf("expected Error 'server crashed', got %q", status.Error)

@@ -58,7 +58,7 @@ func (d *Detector) DetectAll() ([]InterfaceScore, error) {
 		return nil, err
 	}
 
-	var scores []InterfaceScore
+	scores := make([]InterfaceScore, 0, len(ifaces))
 	for _, iface := range ifaces {
 		// Skip loopback
 		if iface.Flags&net.FlagLoopback != 0 {
@@ -130,64 +130,62 @@ func (d *Detector) ScoreInterface(iface net.Interface) InterfaceScore {
 	score.Description = d.generateDescription(&score)
 
 	// Calculate final score
-	score.Score = d.calculateScore(score)
+	score.Score = d.calculateScore(&score)
 
 	return score
 }
 
-// calculateScore computes the ranking score for an interface.
-func (d *Detector) calculateScore(s InterfaceScore) int {
-	score := 0
+// speedThreshold defines a speed threshold and its associated score bonus.
+type speedThreshold struct {
+	minSpeed int64
+	bonus    int
+}
 
-	// Virtual interfaces get heavily penalized
+// speedBonuses maps interface speeds to score bonuses (sorted highest first).
+var speedBonuses = []speedThreshold{
+	{100_000_000_000, 500}, // 100G
+	{40_000_000_000, 450},  // 40G
+	{25_000_000_000, 425},  // 25G
+	{10_000_000_000, 400},  // 10G
+	{5_000_000_000, 350},   // 5G
+	{2_500_000_000, 300},   // 2.5G
+	{1_000_000_000, 200},   // 1G
+	{100_000_000, 100},     // 100M
+}
+
+// calculateSpeedBonus returns the score bonus for a given interface speed.
+func calculateSpeedBonus(speed int64) int {
+	for _, t := range speedBonuses {
+		if speed >= t.minSpeed {
+			return t.bonus
+		}
+	}
+	return 0
+}
+
+// calculateScore computes the ranking score for an interface.
+func (d *Detector) calculateScore(s *InterfaceScore) int {
 	if s.Type == ifTypeVirtual {
 		return -1000
 	}
 
-	// Link status is critical (heavily weighted)
+	score := 0
 	if s.LinkStatus {
 		score += 1000
 	}
-
-	// Having an IP is very important
 	if s.HasIP {
 		score += 500
 	}
-
-	// TDR capability is essential for cable diagnostics
 	if s.HasTDR {
 		score += 1000
 	}
-
-	// DOM capability for fiber diagnostics
 	if s.HasDOM {
 		score += 500
 	}
 
-	// Speed bonuses (bits per second)
-	switch {
-	case s.Speed >= 100_000_000_000: // 100G
-		score += 500
-	case s.Speed >= 40_000_000_000: // 40G
-		score += 450
-	case s.Speed >= 25_000_000_000: // 25G
-		score += 425
-	case s.Speed >= 10_000_000_000: // 10G
-		score += 400
-	case s.Speed >= 5_000_000_000: // 5G
-		score += 350
-	case s.Speed >= 2_500_000_000: // 2.5G
-		score += 300
-	case s.Speed >= 1_000_000_000: // 1G
-		score += 200
-	case s.Speed >= 100_000_000: // 100M
-		score += 100
-	}
-
-	// Chipset quality bonus
+	score += calculateSpeedBonus(s.Speed)
 	score += s.ChipsetQuality
 
-	// Type preferences
 	switch s.Type {
 	case ifTypeEthernet:
 		score += 100

@@ -22,8 +22,8 @@ type FieldError struct {
 	Message string `json:"message"`
 }
 
-// ValidationError represents a collection of field validation errors.
-type ValidationError struct {
+// Error represents a collection of field validation errors.
+type Error struct {
 	Error  string       `json:"error"`
 	Code   string       `json:"code"`
 	Fields []FieldError `json:"fields"`
@@ -50,7 +50,7 @@ func WriteJSONErrorWithCode(w http.ResponseWriter, status int, message, code str
 func WriteValidationError(w http.ResponseWriter, fields []FieldError) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusBadRequest)
-	resp := ValidationError{
+	resp := Error{
 		Error:  "Validation failed",
 		Code:   "VALIDATION_ERROR",
 		Fields: fields,

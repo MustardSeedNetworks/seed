@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BaseCard, SimpleBaseCard } from './BaseCard';
 import { CardValue, CardRow } from '../ui/Card';
 import { Wifi, Server, Globe } from 'lucide-react';

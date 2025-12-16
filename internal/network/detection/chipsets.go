@@ -241,9 +241,5 @@ func (db *ChipsetDatabase) IdentifyByInterface(name, mac string) *ChipsetInfo {
 	}
 
 	// Try interface name patterns
-	if info := db.IdentifyByKeyword(name); info != nil {
-		return info
-	}
-
-	return nil
+	return db.IdentifyByKeyword(name)
 }

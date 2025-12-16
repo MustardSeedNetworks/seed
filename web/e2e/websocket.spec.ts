@@ -56,7 +56,7 @@ test.describe('WebSocket Connectivity', () => {
 
   test('should receive real-time data updates', async ({ page }) => {
     // Get initial values
-    const initialContent = await page.locator('body').textContent();
+    const _initialContent = await page.locator('body').textContent();
 
     // Wait for potential updates
     await page.waitForTimeout(5000);

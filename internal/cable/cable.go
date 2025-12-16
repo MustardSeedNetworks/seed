@@ -9,6 +9,7 @@ import (
 // Status represents the cable test status.
 type Status string
 
+// Cable test status constants indicating test results.
 const (
 	StatusOK                Status = "ok"
 	StatusOpen              Status = "open"

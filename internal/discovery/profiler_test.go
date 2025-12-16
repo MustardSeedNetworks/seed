@@ -88,6 +88,9 @@ func TestDeviceProfile_Fields(t *testing.T) {
 	if profile.DeviceType != "server" {
 		t.Errorf("Expected DeviceType 'server', got %q", profile.DeviceType)
 	}
+	if len(profile.DeviceIcons) != 2 {
+		t.Errorf("Expected 2 DeviceIcons, got %d", len(profile.DeviceIcons))
+	}
 }
 
 func TestOpenPort_Fields(t *testing.T) {
@@ -104,6 +107,12 @@ func TestOpenPort_Fields(t *testing.T) {
 	}
 	if port.Protocol != "tcp" {
 		t.Errorf("Expected Protocol 'tcp', got %q", port.Protocol)
+	}
+	if port.Service != "https" {
+		t.Errorf("Expected Service 'https', got %q", port.Service)
+	}
+	if port.Banner != "nginx/1.18.0" {
+		t.Errorf("Expected Banner 'nginx/1.18.0', got %q", port.Banner)
 	}
 	if !port.IsOpen {
 		t.Error("Expected IsOpen=true")
@@ -125,6 +134,12 @@ func TestHTTPInfo_Fields(t *testing.T) {
 	if info.StatusCode != 301 {
 		t.Errorf("Expected StatusCode 301, got %d", info.StatusCode)
 	}
+	if info.Title != "Redirect" {
+		t.Errorf("Expected Title 'Redirect', got %q", info.Title)
+	}
+	if info.Server != "Apache" {
+		t.Errorf("Expected Server 'Apache', got %q", info.Server)
+	}
 	if !info.IsHTTPS {
 		t.Error("Expected IsHTTPS=true")
 	}
@@ -143,6 +158,12 @@ func TestSNMPInfo_Fields(t *testing.T) {
 	}
 	if info.SysName != "router01" {
 		t.Errorf("Expected SysName 'router01', got %q", info.SysName)
+	}
+	if info.SysContact != "noc@company.com" {
+		t.Errorf("Expected SysContact 'noc@company.com', got %q", info.SysContact)
+	}
+	if info.SysLocation != "Data Center 1" {
+		t.Errorf("Expected SysLocation 'Data Center 1', got %q", info.SysLocation)
 	}
 }
 
@@ -252,7 +273,7 @@ func TestDeviceProfiler_ClearProfiles(t *testing.T) {
 	}
 }
 
-func TestDeviceProfiler_StartStop(t *testing.T) {
+func TestDeviceProfiler_StartStop(_ *testing.T) {
 	cfg := DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 

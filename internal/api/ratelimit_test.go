@@ -204,7 +204,7 @@ func TestGetClientIP(t *testing.T) {
 	}
 }
 
-func TestRateLimiterStop(t *testing.T) {
+func TestRateLimiterStop(_ *testing.T) {
 	rl := NewRateLimiter(DefaultRateLimitConfig())
 
 	// Record some attempts
