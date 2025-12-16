@@ -31,7 +31,15 @@ import { useTheme } from "../../hooks/useTheme";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { useSettings } from "../../contexts/useSettings";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
-import { icon as iconTokens, radius, modal, layout, button, input } from "../../styles/theme";
+import {
+  icon as iconTokens,
+  radius,
+  modal,
+  layout,
+  button,
+  input,
+  spacing,
+} from "../../styles/theme";
 import {
   AutoSaveIndicator,
   AppearanceSettings,
@@ -1071,7 +1079,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           </button>
         </div>
 
-        <div className="px-4 sm:px-5 pb-10 pt-4 section-gap body-small leading-relaxed">
+        <div className={`${spacing.drawerPad} section-gap body-small leading-relaxed`}>
           {/* Network Section */}
           <CollapsibleSection title={t("sections.network")}>
             {/* Network Configuration */}
@@ -1174,7 +1182,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               <button
                 onClick={saveIPSettings}
                 disabled={savingIP || (ipSettings.mode === "static" && !ipSettings.address)}
-                className={`w-full py-2 px-4 bg-brand-primary text-text-inverse ${radius.md} font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors`}
+                className={`w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors`}
               >
                 {savingIP ? t("network.applying") : t("network.applyIPSettings")}
               </button>
@@ -1327,7 +1335,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             <a
               href={`${API_BASE}/api/export`}
               download="seed-export.json"
-              className={`w-full py-2 px-4 bg-surface-base border border-surface-border text-text-primary ${radius.md} font-medium hover:bg-surface-hover transition-colors flex items-center justify-center gap-2 touch-manipulation`}
+              className={`w-full ${button.size.md} bg-surface-base border border-surface-border text-text-primary ${radius.md} font-medium hover:bg-surface-hover transition-colors flex items-center justify-center gap-2 touch-manipulation`}
             >
               <svg
                 className={iconTokens.size.sm}

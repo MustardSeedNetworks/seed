@@ -908,7 +908,7 @@ function App() {
       {/* Header */}
       <header className="border-b border-surface-border bg-surface-raised">
         <div
-          className={`${section.width.xl} mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 ${layout.flex.between} ${spacing.gap.compact}`}
+          className={`${section.width.xl} mx-auto ${spacing.mainPadding.x} ${spacing.headerPadding.y} ${layout.flex.between} ${spacing.gap.compact}`}
         >
           {/* Logo and title - hide title on very small screens */}
           <div className={`${layout.inline.default} min-w-0`}>

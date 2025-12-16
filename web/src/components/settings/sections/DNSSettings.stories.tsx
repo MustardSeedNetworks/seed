@@ -17,6 +17,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { DNSSettings } from "./DNSSettings";
 import type { TestsSettings, SaveStatus } from "../../../types/settings";
+import { spacing } from "../../../styles/theme";
 
 const baseSettings: Omit<TestsSettings, "dnsHostname" | "dnsServers"> = {
   pingTargets: [],
@@ -220,9 +221,7 @@ export const Interactive: Story = {
     });
     const [status, setStatus] = useState<SaveStatus>("idle");
 
-    const handleSetTestsSettings = (
-      updater: React.SetStateAction<TestsSettings>,
-    ) => {
+    const handleSetTestsSettings = (updater: React.SetStateAction<TestsSettings>) => {
       setTestsSettings(updater);
       setStatus("saving");
 
@@ -249,9 +248,11 @@ export const Interactive: Story = {
  */
 export const Comparison: Story = {
   render: () => (
-    <div className="stack-lg p-4">
+    <div className={`stack-lg ${spacing.pad.default}`}>
       <div>
-        <p className="caption text-text-muted mb-2">Default (no servers)</p>
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+          Default (no servers)
+        </p>
         <DNSSettings
           testsSettings={{
             ...baseSettings,
@@ -263,7 +264,9 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className="caption text-text-muted mb-2">With DNS servers</p>
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+          With DNS servers
+        </p>
         <DNSSettings
           testsSettings={{
             ...baseSettings,
@@ -278,7 +281,7 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className="caption text-text-muted mb-2">Saving state</p>
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Saving state</p>
         <DNSSettings
           testsSettings={{
             ...baseSettings,

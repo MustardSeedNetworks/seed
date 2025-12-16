@@ -92,6 +92,19 @@ export const spacing = {
     y: "main-padding-y", // py-4 sm:py-6
     x: "content-padding-x", // px-4 sm:px-6 lg:px-8
   },
+
+  // Header padding (responsive)
+  headerPadding: {
+    y: "header-padding-y", // py-2 sm:py-3
+  },
+
+  // Drawer/panel content padding
+  drawerPad: "drawer-content-pad", // px-4 sm:px-5 pb-10 pt-4
+
+  // Table cell padding
+  tableCell: {
+    empty: "table-cell-empty", // px-2 py-4 - empty state cells
+  },
 } as const;
 
 // ============================================================================

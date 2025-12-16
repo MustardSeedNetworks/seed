@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { WIFI_SURVEY_HELP } from './WiFiSurveyHelp';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { WIFI_SURVEY_HELP } from "./WiFiSurveyHelp";
+import { spacing, section } from "../../styles/theme";
 
 /**
  * WiFiSurveyHelp provides comprehensive help documentation for the WiFi Site Survey feature.
@@ -14,17 +15,17 @@ import { WIFI_SURVEY_HELP } from './WiFiSurveyHelp';
  * - Best practices for WiFi surveying
  */
 const meta: Meta = {
-  title: 'Help/WiFiSurveyHelp',
+  title: "Help/WiFiSurveyHelp",
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Structured help content for WiFi Site Survey feature, providing user guidance on survey creation, modes, and interpretation.',
+          "Structured help content for WiFi Site Survey feature, providing user guidance on survey creation, modes, and interpretation.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;
@@ -35,8 +36,10 @@ type Story = StoryObj;
  */
 export const AllSections: Story = {
   render: () => (
-    <div className="max-w-3xl mx-auto p-4 space-y-6">
-      <h1 className="heading-1 text-text-primary mb-6">WiFi Survey Help</h1>
+    <div className={`max-w-3xl mx-auto ${spacing.pad.default} ${section.spacing.comfortable}`}>
+      <h1 className={`heading-1 text-text-primary ${spacing.margin.bottom.section}`}>
+        WiFi Survey Help
+      </h1>
       {WIFI_SURVEY_HELP.map((section, sectionIdx) => (
         <HelpSection key={sectionIdx} title={section.title}>
           {section.items.map((item, itemIdx) => (
@@ -53,11 +56,11 @@ export const AllSections: Story = {
  */
 export const Overview: Story = {
   render: () => {
-    const overviewSection = WIFI_SURVEY_HELP.find((s) => s.title === 'Overview');
+    const overviewSection = WIFI_SURVEY_HELP.find((s) => s.title === "Overview");
     if (!overviewSection) return <div>Section not found</div>;
 
     return (
-      <div className="max-w-3xl mx-auto p-4">
+      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
         <HelpSection title={overviewSection.title}>
           {overviewSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -69,7 +72,7 @@ export const Overview: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Overview section explaining WiFi Survey purpose, use cases, and requirements.',
+        story: "Overview section explaining WiFi Survey purpose, use cases, and requirements.",
       },
     },
   },
@@ -80,11 +83,11 @@ export const Overview: Story = {
  */
 export const SurveyModes: Story = {
   render: () => {
-    const modesSection = WIFI_SURVEY_HELP.find((s) => s.title === 'Survey Modes');
+    const modesSection = WIFI_SURVEY_HELP.find((s) => s.title === "Survey Modes");
     if (!modesSection) return <div>Section not found</div>;
 
     return (
-      <div className="max-w-3xl mx-auto p-4">
+      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
         <HelpSection title={modesSection.title}>
           {modesSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -97,7 +100,7 @@ export const SurveyModes: Story = {
     docs: {
       description: {
         story:
-          'Detailed explanation of survey modes: Passive Scan, Active Monitoring, and Throughput Testing.',
+          "Detailed explanation of survey modes: Passive Scan, Active Monitoring, and Throughput Testing.",
       },
     },
   },
@@ -108,11 +111,11 @@ export const SurveyModes: Story = {
  */
 export const CreatingSurvey: Story = {
   render: () => {
-    const createSection = WIFI_SURVEY_HELP.find((s) => s.title === 'Creating a Survey');
+    const createSection = WIFI_SURVEY_HELP.find((s) => s.title === "Creating a Survey");
     if (!createSection) return <div>Section not found</div>;
 
     return (
-      <div className="max-w-3xl mx-auto p-4">
+      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
         <HelpSection title={createSection.title}>
           {createSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -125,7 +128,7 @@ export const CreatingSurvey: Story = {
     docs: {
       description: {
         story:
-          'Step-by-step guide for creating surveys, uploading floor plans, and getting started.',
+          "Step-by-step guide for creating surveys, uploading floor plans, and getting started.",
       },
     },
   },
@@ -136,11 +139,11 @@ export const CreatingSurvey: Story = {
  */
 export const ConductingSurvey: Story = {
   render: () => {
-    const conductSection = WIFI_SURVEY_HELP.find((s) => s.title === 'Conducting a Survey');
+    const conductSection = WIFI_SURVEY_HELP.find((s) => s.title === "Conducting a Survey");
     if (!conductSection) return <div>Section not found</div>;
 
     return (
-      <div className="max-w-3xl mx-auto p-4">
+      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
         <HelpSection title={conductSection.title}>
           {conductSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -152,7 +155,7 @@ export const ConductingSurvey: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Instructions for taking measurements, sample point density, and pausing surveys.',
+        story: "Instructions for taking measurements, sample point density, and pausing surveys.",
       },
     },
   },
@@ -163,11 +166,11 @@ export const ConductingSurvey: Story = {
  */
 export const ViewingResults: Story = {
   render: () => {
-    const resultsSection = WIFI_SURVEY_HELP.find((s) => s.title === 'Viewing Results');
+    const resultsSection = WIFI_SURVEY_HELP.find((s) => s.title === "Viewing Results");
     if (!resultsSection) return <div>Section not found</div>;
 
     return (
-      <div className="max-w-3xl mx-auto p-4">
+      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
         <HelpSection title={resultsSection.title}>
           {resultsSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -179,7 +182,7 @@ export const ViewingResults: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Guide for viewing survey results, interpreting heatmap colors, and exporting data.',
+        story: "Guide for viewing survey results, interpreting heatmap colors, and exporting data.",
       },
     },
   },
@@ -190,11 +193,11 @@ export const ViewingResults: Story = {
  */
 export const Troubleshooting: Story = {
   render: () => {
-    const troubleSection = WIFI_SURVEY_HELP.find((s) => s.title === 'Troubleshooting');
+    const troubleSection = WIFI_SURVEY_HELP.find((s) => s.title === "Troubleshooting");
     if (!troubleSection) return <div>Section not found</div>;
 
     return (
-      <div className="max-w-3xl mx-auto p-4">
+      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
         <HelpSection title={troubleSection.title}>
           {troubleSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -207,7 +210,7 @@ export const Troubleshooting: Story = {
     docs: {
       description: {
         story:
-          'Solutions for common issues like missing WiFi card, iperf3 errors, and upload failures.',
+          "Solutions for common issues like missing WiFi card, iperf3 errors, and upload failures.",
       },
     },
   },
@@ -218,11 +221,11 @@ export const Troubleshooting: Story = {
  */
 export const BestPractices: Story = {
   render: () => {
-    const bestSection = WIFI_SURVEY_HELP.find((s) => s.title === 'Best Practices');
+    const bestSection = WIFI_SURVEY_HELP.find((s) => s.title === "Best Practices");
     if (!bestSection) return <div>Section not found</div>;
 
     return (
-      <div className="max-w-3xl mx-auto p-4">
+      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
         <HelpSection title={bestSection.title}>
           {bestSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -234,7 +237,7 @@ export const BestPractices: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Recommended workflow and best practices for comprehensive WiFi surveys.',
+        story: "Recommended workflow and best practices for comprehensive WiFi surveys.",
       },
     },
   },
@@ -245,8 +248,10 @@ export const BestPractices: Story = {
  */
 export const SignalStrengthLegend: Story = {
   render: () => (
-    <div className="max-w-xl mx-auto p-4">
-      <h2 className="heading-2 text-text-primary mb-4">Signal Strength Heatmap Legend</h2>
+    <div className={`max-w-xl mx-auto ${spacing.pad.default}`}>
+      <h2 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
+        Signal Strength Heatmap Legend
+      </h2>
       <div className="space-y-3">
         <SignalLevel
           color="bg-status-success"
@@ -284,7 +289,7 @@ export const SignalStrengthLegend: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Visual legend for interpreting signal strength heatmap colors.',
+        story: "Visual legend for interpreting signal strength heatmap colors.",
       },
     },
   },
@@ -295,8 +300,10 @@ export const SignalStrengthLegend: Story = {
  */
 export const ThroughputLegend: Story = {
   render: () => (
-    <div className="max-w-xl mx-auto p-4">
-      <h2 className="heading-2 text-text-primary mb-4">Throughput Heatmap Legend</h2>
+    <div className={`max-w-xl mx-auto ${spacing.pad.default}`}>
+      <h2 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
+        Throughput Heatmap Legend
+      </h2>
       <div className="space-y-3">
         <SignalLevel
           color="bg-status-success"
@@ -334,7 +341,7 @@ export const ThroughputLegend: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Visual legend for interpreting throughput performance heatmap colors.',
+        story: "Visual legend for interpreting throughput performance heatmap colors.",
       },
     },
   },
@@ -345,31 +352,33 @@ export const ThroughputLegend: Story = {
  */
 export const ModesComparison: Story = {
   render: () => (
-    <div className="max-w-4xl mx-auto p-4">
-      <h2 className="heading-2 text-text-primary mb-4">Survey Modes Comparison</h2>
-      <div className="grid md:grid-cols-3 gap-4">
+    <div className={`max-w-4xl mx-auto ${spacing.pad.default}`}>
+      <h2 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
+        Survey Modes Comparison
+      </h2>
+      <div className={`grid md:grid-cols-3 ${spacing.gap.comfortable}`}>
         <ModeCard
           title="Passive Scan"
           icon="📡"
           description="Scans all visible networks"
-          pros={['See all nearby APs', 'Detect interference', 'No connection required']}
-          cons={["Doesn't test actual speed", 'No roaming detection']}
+          pros={["See all nearby APs", "Detect interference", "No connection required"]}
+          cons={["Doesn't test actual speed", "No roaming detection"]}
           bestFor="Initial site assessment"
         />
         <ModeCard
           title="Active Monitoring"
           icon="📶"
           description="Monitors current connection"
-          pros={['Real-time signal tracking', 'Roaming detection', 'Data rate monitoring']}
-          cons={['Single network only', 'Requires connection']}
+          pros={["Real-time signal tracking", "Roaming detection", "Data rate monitoring"]}
+          cons={["Single network only", "Requires connection"]}
           bestFor="Coverage validation"
         />
         <ModeCard
           title="Throughput Testing"
           icon="⚡"
           description="Measures actual speeds"
-          pros={['True performance data', 'Latency & jitter metrics', 'Most comprehensive']}
-          cons={['Requires iperf3 server', 'Slower to collect']}
+          pros={["True performance data", "Latency & jitter metrics", "Most comprehensive"]}
+          cons={["Requires iperf3 server", "Slower to collect"]}
           bestFor="Performance validation"
         />
       </div>
@@ -378,7 +387,7 @@ export const ModesComparison: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Side-by-side comparison of survey modes with pros, cons, and use cases.',
+        story: "Side-by-side comparison of survey modes with pros, cons, and use cases.",
       },
     },
   },
@@ -389,7 +398,9 @@ export const ModesComparison: Story = {
 function HelpSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-surface-raised border border-surface-border rounded-lg overflow-hidden">
-      <h2 className="heading-3 text-text-primary p-4 bg-surface-base border-b border-surface-border">
+      <h2
+        className={`heading-3 text-text-primary ${spacing.pad.default} bg-surface-base border-b border-surface-border`}
+      >
         {title}
       </h2>
       <div className="divide-y divide-surface-border">{children}</div>
@@ -399,8 +410,10 @@ function HelpSection({ title, children }: { title: string; children: React.React
 
 function HelpItem({ question, answer }: { question: string; answer: string }) {
   return (
-    <div className="p-4">
-      <h3 className="body font-semibold text-text-primary mb-2">{question}</h3>
+    <div className={spacing.pad.default}>
+      <h3 className={`body font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>
+        {question}
+      </h3>
       <div className="body-small text-text-secondary whitespace-pre-line">{answer}</div>
     </div>
   );
@@ -418,10 +431,12 @@ function SignalLevel({
   description: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-surface-raised border border-surface-border rounded-lg">
+    <div
+      className={`flex items-center gap-3 ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
+    >
       <div className={`w-8 h-8 rounded ${color}`} />
       <div className="flex-1">
-        <div className="flex items-baseline gap-2">
+        <div className={`flex items-baseline ${spacing.gap.compact}`}>
           <span className="body font-semibold text-text-primary">{label}</span>
           <span className="body-small text-text-muted">({range})</span>
         </div>
@@ -447,10 +462,12 @@ function ModeCard({
   bestFor: string;
 }) {
   return (
-    <div className="bg-surface-raised border border-surface-border rounded-lg p-4">
-      <div className="text-3xl mb-2">{icon}</div>
+    <div
+      className={`bg-surface-raised border border-surface-border rounded-lg ${spacing.pad.default}`}
+    >
+      <div className={`text-3xl ${spacing.margin.bottom.inline}`}>{icon}</div>
       <h3 className="heading-4 text-text-primary mb-1">{title}</h3>
-      <p className="body-small text-text-muted mb-4">{description}</p>
+      <p className={`body-small text-text-muted ${spacing.margin.bottom.content}`}>{description}</p>
 
       <div className="space-y-3">
         <div>

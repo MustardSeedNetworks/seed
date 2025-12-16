@@ -39,6 +39,7 @@ import {
   icon as iconTokens,
   cn,
   spacing,
+  button,
 } from "../../styles/theme";
 
 export interface LLDPInfo {
@@ -1095,7 +1096,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           <button
             type="button"
             onClick={onScan}
-            className={`mt-3 w-full py-2 px-4 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium body-small`}
+            className={`mt-3 w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium body-small`}
           >
             {t("discovery.startScan")}
           </button>
@@ -1230,7 +1231,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       )}
 
       {deviceCount === 0 && !status.scanning && (
-        <p className="body-small text-text-muted text-center py-4">{t("discovery.noDevices")}</p>
+        <p className={`body-small text-text-muted text-center ${spacing.pad.default}`}>
+          {t("discovery.noDevices")}
+        </p>
       )}
 
       {/* Vulnerability Details Modal */}

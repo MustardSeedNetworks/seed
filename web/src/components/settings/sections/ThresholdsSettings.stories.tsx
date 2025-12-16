@@ -15,6 +15,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { ThresholdsSettings } from "./ThresholdsSettings";
 import type { SettingsThresholds, SaveStatus } from "../../../types/settings";
+import { spacing } from "../../../styles/theme";
 
 const defaultThresholds: SettingsThresholds = {
   dns: { good: 50, warning: 100 },
@@ -186,14 +187,11 @@ export const RelaxedThresholds: Story = {
  */
 export const Interactive: Story = {
   render: function InteractiveStory() {
-    const [thresholds, setThresholds] =
-      useState<SettingsThresholds>(defaultThresholds);
+    const [thresholds, setThresholds] = useState<SettingsThresholds>(defaultThresholds);
     const [status, setStatus] = useState<SaveStatus>("idle");
 
     // Simulate auto-save behavior
-    const handleSetThresholds = (
-      updater: React.SetStateAction<SettingsThresholds>,
-    ) => {
+    const handleSetThresholds = (updater: React.SetStateAction<SettingsThresholds>) => {
       setThresholds(updater);
       setStatus("saving");
 
@@ -221,9 +219,11 @@ export const Interactive: Story = {
  */
 export const SaveStates: Story = {
   render: () => (
-    <div className="stack-lg p-4">
+    <div className={`stack-lg ${spacing.pad.default}`}>
       <div>
-        <p className="caption text-text-muted mb-2">Idle (no changes)</p>
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+          Idle (no changes)
+        </p>
         <div className="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
@@ -233,7 +233,7 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p className="caption text-text-muted mb-2">Saving</p>
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Saving</p>
         <div className="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
@@ -243,7 +243,7 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p className="caption text-text-muted mb-2">Saved</p>
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Saved</p>
         <div className="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
@@ -253,7 +253,7 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p className="caption text-text-muted mb-2">Error</p>
+        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Error</p>
         <div className="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}

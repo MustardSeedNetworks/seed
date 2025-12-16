@@ -331,6 +331,21 @@ body {
   .content-padding-x {
     @apply px-4 sm:px-6 lg:px-8; /* Responsive horizontal padding */
   }
+
+  /* Header padding (responsive) */
+  .header-padding-y {
+    @apply py-2 sm:py-3; /* Responsive header vertical padding */
+  }
+
+  /* Drawer/Panel content padding */
+  .drawer-content-pad {
+    @apply px-4 sm:px-5 pb-10 pt-4; /* Drawer content padding with bottom for scroll */
+  }
+
+  /* Table cell padding */
+  .table-cell-empty {
+    @apply px-2 py-4; /* Empty state table cell padding */
+  }
 }
 
 /* Toast animation */

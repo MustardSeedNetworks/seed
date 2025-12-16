@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Card, CardValue, CardRow, CardDivider } from "../ui/Card";
 import { Globe } from "lucide-react";
 import { Skeleton } from "../ui/Skeleton";
+import { spacing } from "../../styles/theme";
 
 /**
  * DNSCard displays DNS resolver status and resolution times.
@@ -35,7 +36,7 @@ export const Healthy: StoryObj = {
       status="success"
     >
       <CardValue value="8.8.8.8" size="lg" />
-      <div className="mt-3 space-y-1">
+      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Status" value="Resolving" status="success" />
         <CardRow label="Resolution Time" value="12ms" status="success" />
         <CardDivider />
@@ -56,13 +57,13 @@ export const SlowResolution: StoryObj = {
       status="warning"
     >
       <CardValue value="192.168.1.1" size="lg" />
-      <div className="mt-3 space-y-1">
+      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Status" value="Slow" status="warning" />
         <CardRow label="Resolution Time" value="850ms" status="warning" />
         <CardDivider />
         <CardRow label="Primary DNS" value="192.168.1.1" />
         <CardRow label="Test Domain" value="google.com" />
-        <p className="caption text-status-warning mt-2">
+        <p className={`caption text-status-warning ${spacing.margin.top.inline}`}>
           DNS resolution is slower than expected. Consider using a faster DNS server.
         </p>
       </div>
@@ -79,7 +80,7 @@ export const Failed: StoryObj = {
       status="error"
     >
       <CardValue value="Failed" size="lg" status="error" />
-      <div className="mt-3 space-y-1">
+      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Status" value="Unreachable" status="error" />
         <CardRow label="Primary DNS" value="8.8.8.8" />
         <CardDivider />
@@ -100,7 +101,7 @@ export const MultipleDNS: StoryObj = {
       status="success"
     >
       <CardValue value="All Healthy" size="lg" status="success" />
-      <div className="mt-3 space-y-1">
+      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="8.8.8.8" value="12ms" status="success" />
         <CardRow label="8.8.4.4" value="15ms" status="success" />
         <CardRow label="1.1.1.1" value="8ms" status="success" />
@@ -118,8 +119,8 @@ export const Loading: StoryObj = {
       icon={<Globe className="w-4 h-4" />}
       status="loading"
     >
-      <Skeleton className="h-8 w-32 mb-3" />
-      <div className="space-y-2 mt-4">
+      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.content}`} />
+      <div className={`${spacing.stack.sm} ${spacing.margin.top.content}`}>
         <div className="flex justify-between">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
@@ -142,7 +143,7 @@ export const NoDNS: StoryObj = {
       status="unknown"
     >
       <CardValue value="Not Configured" size="md" />
-      <p className="caption text-text-muted mt-2">
+      <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
         No DNS servers configured. Network may not resolve domain names.
       </p>
     </Card>

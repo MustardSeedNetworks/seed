@@ -39,7 +39,7 @@
 import { useState, useMemo, useCallback, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronUp, ChevronDown, ArrowUpDown, Search, X, Filter } from "lucide-react";
-import { cn, layout, radius, border, icon as iconTokens } from "../../styles/theme";
+import { cn, layout, radius, border, icon as iconTokens, spacing } from "../../styles/theme";
 
 export type SortDirection = "asc" | "desc" | null;
 
@@ -338,7 +338,7 @@ export function DataTable<T>({
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="px-2 py-4 text-center text-text-muted"
+                  className={`${spacing.tableCell.empty} text-center text-text-muted`}
                 >
                   {emptyMessage}
                 </td>

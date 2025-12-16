@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { ImprovedHelpModal } from "../help/ImprovedHelpModal";
 import { HelpModal, HelpSection, HelpItem } from "./HelpModal";
+import { spacing, button, radius } from "../../styles/theme";
 
 /**
  * HelpModal provides contextual help content in a modal dialog overlay.
@@ -80,10 +81,10 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className="min-h-screen bg-surface-base p-8">
+      <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
         <button
           onClick={() => setIsOpen(true)}
-          className="px-4 py-2 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90 transition-colors"
+          className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.lg} hover:bg-brand-primary/90 transition-colors`}
         >
           Open Help Center
         </button>
@@ -110,10 +111,10 @@ export const WithSearch: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className="p-4 bg-surface-raised border-b border-surface-border">
+        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
           <p className="body-small text-text-muted">
-            Use the search box in the modal sidebar to filter help sections. Try
-            searching for "wifi", "dns", or "gateway".
+            Use the search box in the modal sidebar to filter help sections. Try searching for
+            "wifi", "dns", or "gateway".
           </p>
         </div>
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
@@ -139,8 +140,8 @@ export const AllSections: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className="p-4 bg-surface-raised border-b border-surface-border">
-          <h2 className="heading-3 text-text-primary mb-2">
+        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
+          <h2 className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}>
             Help Modal - All Sections
           </h2>
           <p className="body-small text-text-muted">
@@ -267,14 +268,9 @@ export const SimpleBasic: StoryObj<typeof HelpModal> = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <HelpModal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          title="Link Status Help"
-        >
-          <p className="body text-text-secondary mb-4">
-            The Link Status card monitors the physical layer connection of your network
-            interface.
+        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Link Status Help">
+          <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
+            The Link Status card monitors the physical layer connection of your network interface.
           </p>
           <ul className="list-disc list-inside space-y-2 body-small text-text-secondary">
             <li>Carrier: Shows if cable is physically connected</li>
@@ -304,15 +300,11 @@ export const SimpleWithSections: StoryObj<typeof HelpModal> = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <HelpModal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          title="WiFi Survey Help"
-        >
+        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="WiFi Survey Help">
           <HelpSection title="What is a WiFi Survey?">
             <p className="body-small text-text-secondary">
-              A WiFi survey maps wireless signal coverage across different locations.
-              Use it to identify dead zones and optimize access point placement.
+              A WiFi survey maps wireless signal coverage across different locations. Use it to
+              identify dead zones and optimize access point placement.
             </p>
           </HelpSection>
 
@@ -371,25 +363,25 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <HelpModal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          title="Speed Test Results"
-        >
-          <div className="space-y-4">
-            <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-lg p-4">
-              <h4 className="font-semibold text-brand-primary mb-2">
+        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Speed Test Results">
+          <div className={`${spacing.gap.comfortable} flex flex-col`}>
+            <div
+              className={`bg-brand-primary/10 border border-brand-primary/20 ${radius.lg} ${spacing.pad.default}`}
+            >
+              <h4 className={`font-semibold text-brand-primary ${spacing.margin.bottom.inline}`}>
                 Understanding Your Results
               </h4>
               <p className="body-small text-text-secondary">
-                Speed test results show your connection's maximum throughput under ideal
-                conditions. Real-world performance may vary based on network congestion,
-                server load, and simultaneous connections.
+                Speed test results show your connection's maximum throughput under ideal conditions.
+                Real-world performance may vary based on network congestion, server load, and
+                simultaneous connections.
               </p>
             </div>
 
-            <div className="bg-status-warning/10 border border-status-warning/20 rounded-lg p-4">
-              <h4 className="font-semibold text-status-warning mb-2">
+            <div
+              className={`bg-status-warning/10 border border-status-warning/20 ${radius.lg} ${spacing.pad.default}`}
+            >
+              <h4 className={`font-semibold text-status-warning ${spacing.margin.bottom.inline}`}>
                 Factors Affecting Speed
               </h4>
               <ul className="list-disc list-inside body-small text-text-secondary space-y-1">
@@ -401,11 +393,15 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
               </ul>
             </div>
 
-            <div className="bg-status-success/10 border border-status-success/20 rounded-lg p-4">
-              <h4 className="font-semibold text-status-success mb-2">Improving Speed</h4>
+            <div
+              className={`bg-status-success/10 border border-status-success/20 ${radius.lg} ${spacing.pad.default}`}
+            >
+              <h4 className={`font-semibold text-status-success ${spacing.margin.bottom.inline}`}>
+                Improving Speed
+              </h4>
               <p className="body-small text-text-secondary">
-                Move closer to the router, switch to 5GHz band, reduce device count, or
-                upgrade your internet plan for better performance.
+                Move closer to the router, switch to 5GHz band, reduce device count, or upgrade your
+                internet plan for better performance.
               </p>
             </div>
           </div>
@@ -430,31 +426,27 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className="min-h-screen bg-surface-base p-8">
-        <div className="max-w-2xl mx-auto space-y-4">
+      <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
+        <div className={`max-w-2xl mx-auto ${spacing.gap.comfortable} flex flex-col`}>
           <h1 className="heading-2 text-text-primary">Network Dashboard</h1>
-          <p className="body text-text-secondary mb-6">
+          <p className={`body text-text-secondary ${spacing.margin.bottom.section}`}>
             Click the help button below to learn more about this feature.
           </p>
           <button
             onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-surface-raised border border-surface-border rounded-lg hover:bg-surface-hover transition-colors text-text-primary"
+            className={`${button.size.md} bg-surface-raised border border-surface-border ${radius.lg} hover:bg-surface-hover transition-colors text-text-primary`}
           >
             Show Help
           </button>
         </div>
 
-        <HelpModal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          title="Network Dashboard"
-        >
-          <p className="body text-text-secondary mb-4">
-            The Network Dashboard provides a comprehensive overview of your network's
-            health and performance.
+        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Network Dashboard">
+          <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
+            The Network Dashboard provides a comprehensive overview of your network's health and
+            performance.
           </p>
           <div className="space-y-3">
-            <div className="flex items-start gap-3">
+            <div className={`flex items-start ${spacing.gap.default}`}>
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 1
               </span>
@@ -465,7 +457,7 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
+            <div className={`flex items-start ${spacing.gap.default}`}>
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 2
               </span>
@@ -476,14 +468,12 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
+            <div className={`flex items-start ${spacing.gap.default}`}>
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 3
               </span>
               <div className="flex-1">
-                <h4 className="font-semibold text-text-primary mb-1">
-                  Analyze Results
-                </h4>
+                <h4 className="font-semibold text-text-primary mb-1">Analyze Results</h4>
                 <p className="body-small text-text-secondary">
                   Review detailed metrics and identify potential issues or bottlenecks.
                 </p>
@@ -512,7 +502,7 @@ export const SimpleClosed: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className="min-h-screen bg-surface-base p-8">
+      <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
         <p className="body text-text-secondary">Modal is closed - nothing rendered</p>
         <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Test">
           <p>This will not be visible</p>
@@ -540,13 +530,13 @@ export const BackdropClose: Story = {
     return (
       <div className="min-h-screen bg-surface-base">
         {!isOpen && (
-          <div className="p-8">
-            <p className="body text-text-secondary mb-4">
+          <div className={spacing.pad.xl}>
+            <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
               Modal was closed {clickCount} time(s)
             </p>
             <button
               onClick={() => setIsOpen(true)}
-              className="px-4 py-2 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90"
+              className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.lg} hover:bg-brand-primary/90`}
             >
               Reopen Modal
             </button>

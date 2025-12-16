@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { ImprovedHelpModal } from "./ImprovedHelpModal";
+import { spacing, button, radius } from "../../styles/theme";
 
 /**
  * ImprovedHelpModal is a comprehensive help center with tabbed navigation,
@@ -72,16 +73,18 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className="min-h-screen bg-surface-base p-8">
+      <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
         <div className="max-w-xl mx-auto text-center">
-          <h1 className="heading-2 text-text-primary mb-4">Help Center Demo</h1>
-          <p className="body text-text-secondary mb-6">
+          <h1 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
+            Help Center Demo
+          </h1>
+          <p className={`body text-text-secondary ${spacing.margin.bottom.section}`}>
             Click the button below to open the help center. Use the sidebar to navigate between
             sections, or use the search to filter content.
           </p>
           <button
             onClick={() => setIsOpen(true)}
-            className="px-6 py-3 bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90 transition-colors font-medium"
+            className={`${button.size.lg} bg-brand-primary text-text-inverse ${radius.lg} hover:bg-brand-primary/90 transition-colors font-medium`}
           >
             Open Help Center
           </button>
@@ -108,12 +111,16 @@ export const SearchDemo: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className="p-4 bg-surface-raised border-b border-surface-border">
-          <h2 className="heading-3 text-text-primary mb-2">Search Functionality</h2>
+        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
+          <h2 className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}>
+            Search Functionality
+          </h2>
           <p className="body-small text-text-muted">
             Use the search box in the sidebar to filter help sections. Try searching for:
           </p>
-          <ul className="list-disc list-inside body-small text-text-muted mt-2">
+          <ul
+            className={`list-disc list-inside body-small text-text-muted ${spacing.margin.top.inline}`}
+          >
             <li>"wifi" - Shows WiFi-related sections</li>
             <li>"dns" - Shows DNS test section</li>
             <li>"gateway" - Shows Gateway section</li>
@@ -142,12 +149,14 @@ export const AllSections: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className="p-4 bg-surface-raised border-b border-surface-border">
-          <h2 className="heading-3 text-text-primary mb-2">All Help Sections</h2>
+        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
+          <h2 className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}>
+            All Help Sections
+          </h2>
           <p className="body-small text-text-muted">
             Navigate through all available sections using the sidebar:
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3">
+          <div className={`grid grid-cols-2 md:grid-cols-5 ${spacing.gap.compact} mt-3`}>
             <SectionBadge name="About" />
             <SectionBadge name="Getting Started" />
             <SectionBadge name="Link Status" />
@@ -257,11 +266,13 @@ export const BackdropClose: Story = {
     return (
       <div className="min-h-screen bg-surface-base">
         {!isOpen && (
-          <div className="p-8 text-center">
-            <p className="body text-text-secondary mb-4">Modal closed {closeCount} time(s)</p>
+          <div className={`${spacing.pad.xl} text-center`}>
+            <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
+              Modal closed {closeCount} time(s)
+            </p>
             <button
               onClick={() => setIsOpen(true)}
-              className="px-4 py-2 bg-brand-primary text-text-inverse rounded-lg"
+              className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.lg}`}
             >
               Reopen Modal
             </button>
@@ -296,10 +307,14 @@ export const KeyboardNavigation: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className="p-4 bg-surface-raised border-b border-surface-border">
-          <h2 className="heading-3 text-text-primary mb-2">Keyboard Navigation</h2>
+        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
+          <h2 className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}>
+            Keyboard Navigation
+          </h2>
           <p className="body-small text-text-muted">The help modal supports keyboard navigation:</p>
-          <ul className="list-disc list-inside body-small text-text-muted mt-2">
+          <ul
+            className={`list-disc list-inside body-small text-text-muted ${spacing.margin.top.inline}`}
+          >
             <li>
               Press <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">ESC</kbd> to close
             </li>

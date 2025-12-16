@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Card, CardValue, CardRow, CardDivider } from "../ui/Card";
 import { Router } from "../ui/Icons";
 import { Skeleton } from "../ui/Skeleton";
+import { spacing } from "../../styles/theme";
 
 /**
  * GatewayCard monitors network gateway (default router) reachability via ICMP ping.
@@ -35,7 +36,7 @@ export const Reachable: StoryObj = {
       status="success"
     >
       <CardValue value="192.168.1.1" size="lg" />
-      <div className="mt-3 space-y-1">
+      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Status" value="Reachable" status="success" />
         <CardRow label="Packet Loss" value="0%" status="success" />
         <CardDivider />
@@ -57,7 +58,7 @@ export const HighLatency: StoryObj = {
       status="warning"
     >
       <CardValue value="192.168.1.1" size="lg" />
-      <div className="mt-3 space-y-1">
+      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Status" value="Slow" status="warning" />
         <CardRow label="Packet Loss" value="5%" status="warning" />
         <CardDivider />
@@ -79,7 +80,7 @@ export const Unreachable: StoryObj = {
       status="error"
     >
       <CardValue value="192.168.1.1" size="lg" status="error" />
-      <div className="mt-3 space-y-1">
+      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Status" value="Unreachable" status="error" />
         <CardRow label="Packet Loss" value="100%" status="error" />
         <CardDivider />
@@ -99,16 +100,16 @@ export const DualStack: StoryObj = {
       icon={<Router className="w-4 h-4" />}
       status="success"
     >
-      <div className="space-y-3">
+      <div className={spacing.stack.default}>
         <div>
-          <p className="caption text-text-muted mb-1">IPv4</p>
+          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>IPv4</p>
           <CardValue value="192.168.1.1" size="md" />
           <CardRow label="Latency" value="2.3ms" status="success" />
           <CardRow label="Loss" value="0%" />
         </div>
         <CardDivider />
         <div>
-          <p className="caption text-text-muted mb-1">IPv6</p>
+          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>IPv6</p>
           <CardValue value="fe80::1" size="md" />
           <CardRow label="Latency" value="1.8ms" status="success" />
           <CardRow label="Loss" value="0%" />
@@ -126,8 +127,8 @@ export const Loading: StoryObj = {
       icon={<Router className="w-4 h-4" />}
       status="loading"
     >
-      <Skeleton className="h-8 w-32 mb-3" />
-      <div className="space-y-2 mt-4">
+      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.content}`} />
+      <div className={`${spacing.stack.sm} ${spacing.margin.top.content}`}>
         <div className="flex justify-between">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
@@ -154,7 +155,7 @@ export const NoGateway: StoryObj = {
       status="unknown"
     >
       <CardValue value="Not Configured" size="md" />
-      <p className="caption text-text-muted mt-2">
+      <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
         No default gateway configured on this interface.
       </p>
     </Card>

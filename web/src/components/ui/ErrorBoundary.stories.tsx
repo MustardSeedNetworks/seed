@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { spacing, button, radius, section, layout } from "../../styles/theme";
 
 /**
  * ErrorBoundary catches JavaScript errors in child component trees,
@@ -32,7 +33,7 @@ const meta: Meta<typeof ErrorBoundary> = {
   },
   decorators: [
     (Story) => (
-      <div className="p-8 w-full max-w-2xl">
+      <div className={`${spacing.pad.xl} w-full max-w-2xl`}>
         <Story />
       </div>
     ),
@@ -65,15 +66,17 @@ function ClickToBrokenComponent() {
   }
 
   return (
-    <div className="p-4 bg-surface-raised border border-surface-border rounded-lg">
-      <h3 className="heading-4 mb-3">Interactive Error Demo</h3>
-      <p className="body-small text-text-secondary mb-4">
+    <div
+      className={`${spacing.pad.default} bg-surface-raised border border-surface-border ${radius.lg}`}
+    >
+      <h3 className={`heading-4 ${spacing.margin.bottom.heading}`}>Interactive Error Demo</h3>
+      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
         Click the button below to trigger an error. The Error Boundary will catch it and display the
         fallback UI.
       </p>
       <button
         onClick={() => setShouldThrow(true)}
-        className="px-4 py-2 bg-status-error text-text-inverse rounded-lg hover:bg-status-error/90 transition-colors"
+        className={`${button.size.md} bg-status-error text-text-inverse ${radius.lg} hover:bg-status-error/90 transition-colors`}
       >
         Trigger Error
       </button>
@@ -100,8 +103,10 @@ function ComponentWithStackTrace() {
  */
 function WorkingComponent() {
   return (
-    <div className="p-4 bg-status-success/10 border border-status-success/20 rounded-lg">
-      <div className="flex items-start gap-3">
+    <div
+      className={`${spacing.pad.default} bg-status-success/10 border border-status-success/20 ${radius.lg}`}
+    >
+      <div className={`${layout.inline.comfortable}`}>
         <svg
           className="w-5 h-5 text-status-success shrink-0 mt-0.5"
           fill="currentColor"
@@ -248,9 +253,13 @@ export const CustomFallback: Story = {
   render: () => (
     <ErrorBoundary
       fallback={
-        <div className="p-6 bg-linear-to-br from-status-error/20 to-status-error/5 border-2 border-status-error rounded-xl">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-status-error/20 flex items-center justify-center shrink-0">
+        <div
+          className={`${spacing.pad.lg} bg-linear-to-br from-status-error/20 to-status-error/5 border-2 border-status-error ${radius.xl}`}
+        >
+          <div className={`${layout.inline.spacious} items-start`}>
+            <div
+              className={`w-12 h-12 ${radius.full} bg-status-error/20 ${layout.flex.center} shrink-0`}
+            >
               <svg
                 className="w-6 h-6 text-status-error"
                 fill="none"
@@ -266,16 +275,22 @@ export const CustomFallback: Story = {
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="heading-3 text-status-error mb-2">Custom Error Fallback UI</h3>
-              <p className="body text-text-secondary mb-4">
+              <h3 className={`heading-3 text-status-error ${spacing.margin.bottom.inline}`}>
+                Custom Error Fallback UI
+              </h3>
+              <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
                 This is a custom fallback component passed as a prop to the Error Boundary. You can
                 design any UI you want to display when errors occur.
               </p>
-              <div className="flex gap-3">
-                <button className="px-4 py-2 bg-status-error text-text-inverse rounded-lg hover:bg-status-error/90 transition-colors">
+              <div className={`${layout.inline.comfortable}`}>
+                <button
+                  className={`${button.size.md} bg-status-error text-text-inverse ${radius.lg} hover:bg-status-error/90 transition-colors`}
+                >
                   Report Error
                 </button>
-                <button className="px-4 py-2 bg-surface-raised border border-surface-border text-text-primary rounded-lg hover:bg-surface-hover transition-colors">
+                <button
+                  className={`${button.size.md} bg-surface-raised border border-surface-border text-text-primary ${radius.lg} hover:bg-surface-hover transition-colors`}
+                >
                   Go to Dashboard
                 </button>
               </div>
@@ -302,23 +317,29 @@ export const CustomFallback: Story = {
  */
 export const MultipleErrorBoundaries: Story = {
   render: () => (
-    <div className="space-y-4 w-full">
+    <div className={`${section.spacing.default} w-full`}>
       <div>
-        <h3 className="heading-4 mb-2 text-text-primary">Section 1 - Working</h3>
+        <h3 className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}>
+          Section 1 - Working
+        </h3>
         <ErrorBoundary>
           <WorkingComponent />
         </ErrorBoundary>
       </div>
 
       <div>
-        <h3 className="heading-4 mb-2 text-text-primary">Section 2 - Error</h3>
+        <h3 className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}>
+          Section 2 - Error
+        </h3>
         <ErrorBoundary>
           <BrokenComponent />
         </ErrorBoundary>
       </div>
 
       <div>
-        <h3 className="heading-4 mb-2 text-text-primary">Section 3 - Working</h3>
+        <h3 className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}>
+          Section 3 - Working
+        </h3>
         <ErrorBoundary>
           <WorkingComponent />
         </ErrorBoundary>
@@ -349,8 +370,10 @@ export const WithRetry: Story = {
         );
       }
       return (
-        <div className="p-4 bg-status-success/10 border border-status-success/20 rounded-lg">
-          <div className="flex items-start gap-3">
+        <div
+          className={`${spacing.pad.default} bg-status-success/10 border border-status-success/20 ${radius.lg}`}
+        >
+          <div className={`${layout.inline.comfortable} items-start`}>
             <svg
               className="w-5 h-5 text-status-success shrink-0 mt-0.5"
               fill="currentColor"
@@ -375,20 +398,24 @@ export const WithRetry: Story = {
     }
 
     return (
-      <div className="space-y-4">
-        <div className="p-4 bg-surface-hover border border-surface-border rounded-lg">
+      <div className={`${section.spacing.default}`}>
+        <div
+          className={`${spacing.pad.default} bg-surface-hover border border-surface-border ${radius.lg}`}
+        >
           <p className="body-small text-text-secondary">
             This demo simulates a component that fails twice then succeeds. Click "Try again" when
             you see an error to retry rendering.
           </p>
-          <p className="caption text-text-muted mt-2">Attempts: {attemptCount + 1}/3</p>
+          <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+            Attempts: {attemptCount + 1}/3
+          </p>
         </div>
         <ErrorBoundary key={attemptCount}>
           <UnstableComponent />
         </ErrorBoundary>
         <button
           onClick={() => setAttemptCount((c) => c + 1)}
-          className="px-4 py-2 bg-surface-raised border border-surface-border text-text-primary rounded-lg hover:bg-surface-hover transition-colors"
+          className={`${button.size.md} bg-surface-raised border border-surface-border text-text-primary ${radius.lg} hover:bg-surface-hover transition-colors`}
         >
           Manual Retry (increment counter)
         </button>
@@ -429,26 +456,32 @@ export const TypeErrorDemo: Story = {
  */
 export const NestedErrorBoundaries: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className={`${section.spacing.default}`}>
       <ErrorBoundary
         fallback={
-          <div className="p-4 bg-status-error/10 border border-status-error rounded-lg">
+          <div
+            className={`${spacing.pad.default} bg-status-error/10 border border-status-error ${radius.lg}`}
+          >
             <p className="body-small text-status-error">
               Outer Error Boundary - This should not be visible
             </p>
           </div>
         }
       >
-        <div className="p-4 bg-surface-raised border border-surface-border rounded-lg">
-          <h3 className="heading-4 mb-3">Outer Boundary</h3>
-          <p className="body-small text-text-secondary mb-4">
+        <div
+          className={`${spacing.pad.default} bg-surface-raised border border-surface-border ${radius.lg}`}
+        >
+          <h3 className={`heading-4 ${spacing.margin.bottom.heading}`}>Outer Boundary</h3>
+          <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
             This outer boundary protects the entire section. The inner boundary handles the specific
             error.
           </p>
 
           <ErrorBoundary
             fallback={
-              <div className="p-3 bg-status-warning/10 border border-status-warning rounded-lg">
+              <div
+                className={`${spacing.pad.sm} bg-status-warning/10 border border-status-warning ${radius.lg}`}
+              >
                 <p className="body-small text-status-warning">
                   Inner Error Boundary - Caught error in nested component
                 </p>
@@ -458,7 +491,7 @@ export const NestedErrorBoundaries: Story = {
             <BrokenComponent />
           </ErrorBoundary>
 
-          <p className="body-small text-text-secondary mt-4">
+          <p className={`body-small text-text-secondary ${spacing.margin.top.content}`}>
             Content after inner error boundary still renders because error was caught by inner
             boundary.
           </p>
@@ -505,16 +538,24 @@ export const RealWorldCardExample: Story = {
     }
 
     return (
-      <div className="grid md:grid-cols-2 gap-4 w-full">
-        <div className="p-4 bg-surface-raised border border-surface-border rounded-lg">
-          <h3 className="heading-4 mb-3 text-text-primary">Link Status - Working</h3>
+      <div className={`grid md:grid-cols-2 ${spacing.gap.comfortable} w-full`}>
+        <div
+          className={`${spacing.pad.default} bg-surface-raised border border-surface-border ${radius.lg}`}
+        >
+          <h3 className={`heading-4 ${spacing.margin.bottom.heading} text-text-primary`}>
+            Link Status - Working
+          </h3>
           <ErrorBoundary>
             <CardContent shouldError={false} />
           </ErrorBoundary>
         </div>
 
-        <div className="p-4 bg-surface-raised border border-surface-border rounded-lg">
-          <h3 className="heading-4 mb-3 text-text-primary">Link Status - Error</h3>
+        <div
+          className={`${spacing.pad.default} bg-surface-raised border border-surface-border ${radius.lg}`}
+        >
+          <h3 className={`heading-4 ${spacing.margin.bottom.heading} text-text-primary`}>
+            Link Status - Error
+          </h3>
           <ErrorBoundary>
             <CardContent shouldError={true} />
           </ErrorBoundary>

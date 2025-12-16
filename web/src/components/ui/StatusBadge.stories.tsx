@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { StatusBadge } from "./StatusBadge";
+import { spacing, layout } from "../../styles/theme";
 
 const meta: Meta<typeof StatusBadge> = {
   title: "UI/StatusBadge",
@@ -122,56 +123,56 @@ export const MediumSize: Story = {
 // All statuses gallery
 export const AllStatuses: Story = {
   render: () => (
-    <div className="flex flex-col gap-6">
+    <div className={`${layout.stack.spacious}`}>
       <div>
-        <h3 className="body-small font-semibold mb-2 text-text-muted">
+        <h3 className={`body-small font-semibold ${spacing.margin.bottom.inline} text-text-muted`}>
           Icon Variant (Medium)
         </h3>
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-center gap-1">
+        <div className={`${layout.inline.spacious}`}>
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="success" variant="icon" size="md" />
             <span className="caption text-text-muted">Success</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="warning" variant="icon" size="md" />
             <span className="caption text-text-muted">Warning</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="error" variant="icon" size="md" />
             <span className="caption text-text-muted">Error</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="loading" variant="icon" size="md" />
             <span className="caption text-text-muted">Loading</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="unknown" variant="icon" size="md" />
             <span className="caption text-text-muted">Unknown</span>
           </div>
         </div>
       </div>
       <div>
-        <h3 className="body-small font-semibold mb-2 text-text-muted">
+        <h3 className={`body-small font-semibold ${spacing.margin.bottom.inline} text-text-muted`}>
           Dot Variant
         </h3>
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-center gap-1">
+        <div className={`${layout.inline.spacious}`}>
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="success" variant="dot" size="md" />
             <span className="caption text-text-muted">Success</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="warning" variant="dot" size="md" />
             <span className="caption text-text-muted">Warning</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="error" variant="dot" size="md" />
             <span className="caption text-text-muted">Error</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="loading" variant="dot" size="md" />
             <span className="caption text-text-muted">Loading</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
+          <div className={`${layout.stack.tight} items-center`}>
             <StatusBadge status="unknown" variant="dot" size="md" />
             <span className="caption text-text-muted">Unknown</span>
           </div>

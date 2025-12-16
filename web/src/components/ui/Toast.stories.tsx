@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ToastProvider } from "./Toast";
 import { useToast } from "./useToast";
+import { button, radius, layout } from "../../styles/theme";
 
 /**
  * Toast notifications provide non-modal feedback to users for actions
@@ -37,7 +38,7 @@ function ToastDemo({
   return (
     <button
       onClick={() => addToast(message, type)}
-      className="px-4 py-2 bg-surface-raised hover:bg-surface-hover rounded-lg border border-surface-border text-text-primary"
+      className={`${button.size.md} bg-surface-raised hover:bg-surface-hover ${radius.lg} border border-surface-border text-text-primary`}
     >
       Show {type} toast
     </button>
@@ -64,7 +65,7 @@ function AllToastsDemo() {
   const { addToast } = useToast();
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`${layout.stack.default}`}>
       <button
         onClick={() => {
           addToast("Success message", "success", 3000);
@@ -72,7 +73,7 @@ function AllToastsDemo() {
           setTimeout(() => addToast("Warning message", "warning", 3000), 1000);
           setTimeout(() => addToast("Info message", "info", 3000), 1500);
         }}
-        className="px-4 py-2 bg-status-info hover:bg-status-info/80 rounded-lg text-text-inverse"
+        className={`${button.size.md} bg-status-info hover:bg-status-info/80 ${radius.lg} text-text-inverse`}
       >
         Show all toast types
       </button>

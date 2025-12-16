@@ -1,7 +1,13 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
-import { FloorPlanCanvas } from './FloorPlanCanvas';
-import type { FloorPlan, SamplePoint, PassiveSample, ThroughputSample } from '../../hooks/useSurvey';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
+import { FloorPlanCanvas } from "./FloorPlanCanvas";
+import type {
+  FloorPlan,
+  SamplePoint,
+  PassiveSample,
+  ThroughputSample,
+} from "../../hooks/useSurvey";
+import { spacing } from "../../styles/theme";
 
 /**
  * FloorPlanCanvas renders floor plan images with interactive sample points
@@ -15,27 +21,27 @@ import type { FloorPlan, SamplePoint, PassiveSample, ThroughputSample } from '..
  * - Responsive canvas sizing
  */
 const meta: Meta<typeof FloorPlanCanvas> = {
-  title: 'Survey/FloorPlanCanvas',
+  title: "Survey/FloorPlanCanvas",
   component: FloorPlanCanvas,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Canvas-based floor plan visualization with sample point markers and heatmap overlays for WiFi survey data.',
+          "Canvas-based floor plan visualization with sample point markers and heatmap overlays for WiFi survey data.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     interactive: {
-      control: 'boolean',
-      description: 'Enable click-to-add sample points',
+      control: "boolean",
+      description: "Enable click-to-add sample points",
     },
     heatmapMetric: {
-      control: 'select',
-      options: [null, 'rssi', 'throughput', 'latency'],
-      description: 'Metric to visualize as heatmap overlay',
+      control: "select",
+      options: [null, "rssi", "throughput", "latency"],
+      description: "Metric to visualize as heatmap overlay",
     },
   },
 };
@@ -45,7 +51,7 @@ type Story = StoryObj<typeof meta>;
 
 // Base64 encoded simple floor plan SVG for demos
 const SAMPLE_FLOOR_PLAN_SVG =
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2Y5ZmFmYiIvPjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjcwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIzIi8+PHJlY3QgeD0iNTAiIHk9IjUwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiLz48cmVjdCB4PSI1NTAiIHk9IjUwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiLz48cmVjdCB4PSI1MCIgeT0iNDAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiLz48cmVjdCB4PSI1NTAiIHk9IjQwMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzk5OSIgc3Ryb2tlLXdpZHRoPSIyIi8+PHRleHQgeD0iNDAwIiB5PSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzY2NiIgZm9udC13ZWlnaHQ9ImJvbGQiPk9mZmljZSBGbG9vciBQbGFuPC90ZXh0Pjx0ZXh0IHg9IjE1MCIgeT0iMTMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5Db25mZXJlbmNlPC90ZXh0Pjx0ZXh0IHg9IjY1MCIgeT0iMTMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5PZmZpY2VzPC90ZXh0Pjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjY2NjIj5PcGVuIFdvcmtzcGFjZTwvdGV4dD48dGV4dCB4PSIxNTAiIHk9IjQ4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+S2l0Y2hlbjwvdGV4dD48dGV4dCB4PSI2NTAiIHk9IjQ4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+U3RvcmFnZTwvdGV4dD48L3N2Zz4=';
+  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2Y5ZmFmYiIvPjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjcwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIzIi8+PHJlY3QgeD0iNTAiIHk9IjUwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiLz48cmVjdCB4PSI1NTAiIHk9IjUwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiLz48cmVjdCB4PSI1MCIgeT0iNDAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiLz48cmVjdCB4PSI1NTAiIHk9IjQwMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzk5OSIgc3Ryb2tlLXdpZHRoPSIyIi8+PHRleHQgeD0iNDAwIiB5PSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzY2NiIgZm9udC13ZWlnaHQ9ImJvbGQiPk9mZmljZSBGbG9vciBQbGFuPC90ZXh0Pjx0ZXh0IHg9IjE1MCIgeT0iMTMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5Db25mZXJlbmNlPC90ZXh0Pjx0ZXh0IHg9IjY1MCIgeT0iMTMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5PZmZpY2VzPC90ZXh0Pjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjY2NjIj5PcGVuIFdvcmtzcGFjZTwvdGV4dD48dGV4dCB4PSIxNTAiIHk9IjQ4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+S2l0Y2hlbjwvdGV4dD48dGV4dCB4PSI2NTAiIHk9IjQ4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+U3RvcmFnZTwvdGV4dD48L3N2Zz4=";
 
 const sampleFloorPlan: FloorPlan = {
   imageData: SAMPLE_FLOOR_PLAN_SVG,
@@ -59,51 +65,51 @@ const passiveSamples: SamplePoint[] = [
   {
     x: 150,
     y: 120,
-    timestamp: '2025-12-15T10:00:00Z',
+    timestamp: "2025-12-15T10:00:00Z",
     sampleData: {
       networks: [
-        { ssid: 'OfficeMain', bssid: 'AA:BB:CC:DD:EE:01', rssi: -42, channel: 6, frequency: 2437 },
-        { ssid: 'Guest', bssid: 'AA:BB:CC:DD:EE:02', rssi: -58, channel: 11, frequency: 2462 },
+        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:01", rssi: -42, channel: 6, frequency: 2437 },
+        { ssid: "Guest", bssid: "AA:BB:CC:DD:EE:02", rssi: -58, channel: 11, frequency: 2462 },
       ],
     } as PassiveSample,
   },
   {
     x: 400,
     y: 250,
-    timestamp: '2025-12-15T10:05:00Z',
+    timestamp: "2025-12-15T10:05:00Z",
     sampleData: {
       networks: [
-        { ssid: 'OfficeMain', bssid: 'AA:BB:CC:DD:EE:01', rssi: -38, channel: 6, frequency: 2437 },
+        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:01", rssi: -38, channel: 6, frequency: 2437 },
       ],
     } as PassiveSample,
   },
   {
     x: 650,
     y: 120,
-    timestamp: '2025-12-15T10:10:00Z',
+    timestamp: "2025-12-15T10:10:00Z",
     sampleData: {
       networks: [
-        { ssid: 'OfficeMain', bssid: 'AA:BB:CC:DD:EE:03', rssi: -55, channel: 6, frequency: 2437 },
+        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:03", rssi: -55, channel: 6, frequency: 2437 },
       ],
     } as PassiveSample,
   },
   {
     x: 150,
     y: 450,
-    timestamp: '2025-12-15T10:15:00Z',
+    timestamp: "2025-12-15T10:15:00Z",
     sampleData: {
       networks: [
-        { ssid: 'OfficeMain', bssid: 'AA:BB:CC:DD:EE:01', rssi: -68, channel: 6, frequency: 2437 },
+        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:01", rssi: -68, channel: 6, frequency: 2437 },
       ],
     } as PassiveSample,
   },
   {
     x: 650,
     y: 450,
-    timestamp: '2025-12-15T10:20:00Z',
+    timestamp: "2025-12-15T10:20:00Z",
     sampleData: {
       networks: [
-        { ssid: 'OfficeMain', bssid: 'AA:BB:CC:DD:EE:03', rssi: -72, channel: 6, frequency: 2437 },
+        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:03", rssi: -72, channel: 6, frequency: 2437 },
       ],
     } as PassiveSample,
   },
@@ -114,10 +120,10 @@ const throughputSamples: SamplePoint[] = [
   {
     x: 150,
     y: 120,
-    timestamp: '2025-12-15T10:00:00Z',
+    timestamp: "2025-12-15T10:00:00Z",
     sampleData: {
-      ssid: 'OfficeMain',
-      bssid: 'AA:BB:CC:DD:EE:01',
+      ssid: "OfficeMain",
+      bssid: "AA:BB:CC:DD:EE:01",
       rssi: -42,
       downloadMbps: 485.3,
       uploadMbps: 387.2,
@@ -129,10 +135,10 @@ const throughputSamples: SamplePoint[] = [
   {
     x: 400,
     y: 250,
-    timestamp: '2025-12-15T10:05:00Z',
+    timestamp: "2025-12-15T10:05:00Z",
     sampleData: {
-      ssid: 'OfficeMain',
-      bssid: 'AA:BB:CC:DD:EE:01',
+      ssid: "OfficeMain",
+      bssid: "AA:BB:CC:DD:EE:01",
       rssi: -38,
       downloadMbps: 612.8,
       uploadMbps: 453.6,
@@ -144,10 +150,10 @@ const throughputSamples: SamplePoint[] = [
   {
     x: 650,
     y: 120,
-    timestamp: '2025-12-15T10:10:00Z',
+    timestamp: "2025-12-15T10:10:00Z",
     sampleData: {
-      ssid: 'OfficeMain',
-      bssid: 'AA:BB:CC:DD:EE:03',
+      ssid: "OfficeMain",
+      bssid: "AA:BB:CC:DD:EE:03",
       rssi: -55,
       downloadMbps: 328.5,
       uploadMbps: 245.1,
@@ -159,10 +165,10 @@ const throughputSamples: SamplePoint[] = [
   {
     x: 150,
     y: 450,
-    timestamp: '2025-12-15T10:15:00Z',
+    timestamp: "2025-12-15T10:15:00Z",
     sampleData: {
-      ssid: 'OfficeMain',
-      bssid: 'AA:BB:CC:DD:EE:01',
+      ssid: "OfficeMain",
+      bssid: "AA:BB:CC:DD:EE:01",
       rssi: -68,
       downloadMbps: 145.2,
       uploadMbps: 98.7,
@@ -174,10 +180,10 @@ const throughputSamples: SamplePoint[] = [
   {
     x: 650,
     y: 450,
-    timestamp: '2025-12-15T10:20:00Z',
+    timestamp: "2025-12-15T10:20:00Z",
     sampleData: {
-      ssid: 'OfficeMain',
-      bssid: 'AA:BB:CC:DD:EE:03',
+      ssid: "OfficeMain",
+      bssid: "AA:BB:CC:DD:EE:03",
       rssi: -72,
       downloadMbps: 85.6,
       uploadMbps: 42.3,
@@ -230,8 +236,8 @@ export const Interactive: Story = {
         sampleData: {
           networks: [
             {
-              ssid: 'TestNetwork',
-              bssid: 'AA:BB:CC:DD:EE:FF',
+              ssid: "TestNetwork",
+              bssid: "AA:BB:CC:DD:EE:FF",
               rssi: -40 - Math.random() * 40,
               channel: 6,
               frequency: 2437,
@@ -243,9 +249,9 @@ export const Interactive: Story = {
     };
 
     return (
-      <div className="w-full max-w-4xl p-4 bg-surface-base">
-        <div className="mb-4">
-          <p className="body-small text-text-muted mb-2">
+      <div className={`w-full max-w-4xl ${spacing.pad.default} bg-surface-base`}>
+        <div className={spacing.margin.bottom.content}>
+          <p className={`body-small text-text-muted ${spacing.margin.bottom.inline}`}>
             Click on the floor plan to add sample points. {samples.length} points added.
           </p>
           {samples.length > 0 && (
@@ -270,7 +276,7 @@ export const Interactive: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Interactive canvas where clicking adds sample points at that location.',
+        story: "Interactive canvas where clicking adds sample points at that location.",
       },
     },
   },
@@ -286,13 +292,13 @@ export const RSSIHeatmap: Story = {
     floorPlan: sampleFloorPlan,
     samples: passiveSamples,
     interactive: false,
-    heatmapMetric: 'rssi',
+    heatmapMetric: "rssi",
   },
   parameters: {
     docs: {
       description: {
         story:
-          'RSSI heatmap showing signal strength distribution. Green indicates strong signal (-30 to -50 dBm), yellow is moderate (-50 to -70 dBm), and red indicates weak signal (below -70 dBm).',
+          "RSSI heatmap showing signal strength distribution. Green indicates strong signal (-30 to -50 dBm), yellow is moderate (-50 to -70 dBm), and red indicates weak signal (below -70 dBm).",
       },
     },
   },
@@ -308,13 +314,13 @@ export const ThroughputHeatmap: Story = {
     floorPlan: sampleFloorPlan,
     samples: throughputSamples,
     interactive: false,
-    heatmapMetric: 'throughput',
+    heatmapMetric: "throughput",
   },
   parameters: {
     docs: {
       description: {
         story:
-          'Throughput heatmap showing download speed distribution. Green indicates high speeds, red indicates low speeds or dead zones.',
+          "Throughput heatmap showing download speed distribution. Green indicates high speeds, red indicates low speeds or dead zones.",
       },
     },
   },
@@ -330,13 +336,13 @@ export const LatencyHeatmap: Story = {
     floorPlan: sampleFloorPlan,
     samples: throughputSamples,
     interactive: false,
-    heatmapMetric: 'latency',
+    heatmapMetric: "latency",
   },
   parameters: {
     docs: {
       description: {
         story:
-          'Latency heatmap showing response time distribution. Green indicates low latency (<20ms), red indicates high latency (>50ms).',
+          "Latency heatmap showing response time distribution. Green indicates low latency (<20ms), red indicates high latency (>50ms).",
       },
     },
   },
@@ -356,8 +362,8 @@ export const DenseSampling: Story = {
       sampleData: {
         networks: [
           {
-            ssid: 'OfficeMain',
-            bssid: 'AA:BB:CC:DD:EE:01',
+            ssid: "OfficeMain",
+            bssid: "AA:BB:CC:DD:EE:01",
             rssi: -35 - (Math.abs(2 - (i % 5)) + Math.abs(2 - Math.floor(i / 5))) * 8,
             channel: 6,
             frequency: 2437,
@@ -366,13 +372,13 @@ export const DenseSampling: Story = {
       } as PassiveSample,
     })),
     interactive: false,
-    heatmapMetric: 'rssi',
+    heatmapMetric: "rssi",
   },
   parameters: {
     docs: {
       description: {
         story:
-          'Dense 5x5 grid of samples providing smoother heatmap interpolation. Signal strength decreases from the center outward.',
+          "Dense 5x5 grid of samples providing smoother heatmap interpolation. Signal strength decreases from the center outward.",
       },
     },
   },
@@ -384,47 +390,47 @@ export const DenseSampling: Story = {
  */
 export const MetricToggle: Story = {
   render: () => {
-    const [metric, setMetric] = useState<'rssi' | 'throughput' | 'latency' | null>('rssi');
+    const [metric, setMetric] = useState<"rssi" | "throughput" | "latency" | null>("rssi");
 
     return (
-      <div className="w-full max-w-4xl p-4 bg-surface-base">
-        <div className="mb-4 flex gap-2">
+      <div className={`w-full max-w-4xl ${spacing.pad.default} bg-surface-base`}>
+        <div className={`${spacing.margin.bottom.content} flex ${spacing.gap.compact}`}>
           <button
             onClick={() => setMetric(null)}
             className={`px-3 py-1 rounded text-sm ${
               metric === null
-                ? 'bg-brand-primary text-text-inverse'
-                : 'bg-surface-raised border border-surface-border hover:bg-surface-hover'
+                ? "bg-brand-primary text-text-inverse"
+                : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
             }`}
           >
             No Heatmap
           </button>
           <button
-            onClick={() => setMetric('rssi')}
+            onClick={() => setMetric("rssi")}
             className={`px-3 py-1 rounded text-sm ${
-              metric === 'rssi'
-                ? 'bg-brand-primary text-text-inverse'
-                : 'bg-surface-raised border border-surface-border hover:bg-surface-hover'
+              metric === "rssi"
+                ? "bg-brand-primary text-text-inverse"
+                : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
             }`}
           >
             RSSI
           </button>
           <button
-            onClick={() => setMetric('throughput')}
+            onClick={() => setMetric("throughput")}
             className={`px-3 py-1 rounded text-sm ${
-              metric === 'throughput'
-                ? 'bg-brand-primary text-text-inverse'
-                : 'bg-surface-raised border border-surface-border hover:bg-surface-hover'
+              metric === "throughput"
+                ? "bg-brand-primary text-text-inverse"
+                : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
             }`}
           >
             Throughput
           </button>
           <button
-            onClick={() => setMetric('latency')}
+            onClick={() => setMetric("latency")}
             className={`px-3 py-1 rounded text-sm ${
-              metric === 'latency'
-                ? 'bg-brand-primary text-text-inverse'
-                : 'bg-surface-raised border border-surface-border hover:bg-surface-hover'
+              metric === "latency"
+                ? "bg-brand-primary text-text-inverse"
+                : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
             }`}
           >
             Latency
@@ -442,7 +448,7 @@ export const MetricToggle: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Toggle between different heatmap metrics or disable heatmap overlay entirely.',
+        story: "Toggle between different heatmap metrics or disable heatmap overlay entirely.",
       },
     },
   },
@@ -476,18 +482,24 @@ export const WeakSignalCorner: Story = {
         timestamp: new Date().toISOString(),
         sampleData: {
           networks: [
-            { ssid: 'OfficeMain', bssid: 'AA:BB:CC:DD:EE:01', rssi: -85, channel: 6, frequency: 2437 },
+            {
+              ssid: "OfficeMain",
+              bssid: "AA:BB:CC:DD:EE:01",
+              rssi: -85,
+              channel: 6,
+              frequency: 2437,
+            },
           ],
         } as PassiveSample,
       },
     ],
     interactive: false,
-    heatmapMetric: 'rssi',
+    heatmapMetric: "rssi",
   },
   parameters: {
     docs: {
       description: {
-        story: 'Heatmap showing a dead zone in the bottom-right corner with -85 dBm signal.',
+        story: "Heatmap showing a dead zone in the bottom-right corner with -85 dBm signal.",
       },
     },
   },
