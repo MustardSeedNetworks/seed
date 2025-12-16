@@ -1,6 +1,30 @@
-# The Seed Hardware Compatibility Wiki
+# Welcome to The Seed Wiki
 
-Welcome to the The Seed Hardware Compatibility Wiki! This community-driven resource documents tested hardware for network diagnostics.
+**The Seed** is an AI-powered network diagnostic platform that combines WiFi planning, network monitoring, vulnerability scanning, and compliance reporting in one affordable tool.
+
+## 🚀 Getting Started
+
+📥 **Installation**
+- [Installation on macOS](Installation-macOS.md)
+- [Installation on Linux](Installation-Linux.md)
+- [Quick Start Guide](Quick-Start-Guide.md) - Your first scan in 5 minutes
+
+📚 **Features**
+- [Network Discovery](Network-Discovery.md) - Find all devices on your network
+- WiFi Survey & Planning (coming soon)
+- Vulnerability Scanning (coming soon)
+- Compliance Reporting (coming soon)
+
+❓ **Help**
+- [FAQ](FAQ.md) - Common questions answered
+- [GitHub Discussions](https://github.com/krisarmstrong/netscope/discussions)
+- [GitHub Issues](https://github.com/krisarmstrong/netscope/issues)
+
+---
+
+## 🔌 Hardware Compatibility
+
+This community-driven resource documents tested hardware for network diagnostics.
 
 ## 📋 Quick Navigation
 
