@@ -463,6 +463,57 @@ it("handles expired token", () => {
 
 ## Issue Guidelines
 
+### Issue Templates
+
+We use GitHub Issue Forms for consistent, well-structured issues. When creating an issue, select the
+appropriate template:
+
+| Template | Prefix | Use Case |
+|----------|--------|----------|
+| Bug Report | `[BUG]` | Report bugs and unexpected behavior |
+| Feature Request | `[FEATURE]` | Suggest new features or enhancements |
+| Task | `[CHORE]` | Internal development tasks and maintenance |
+| Hardware Report | `[Hardware]` | Report hardware compatibility results |
+
+### Label Taxonomy
+
+Labels are automatically applied based on issue form inputs and PR file paths.
+
+**Type Labels** (applied by template):
+
+- `type: bug` - Bug reports
+- `type: feature` - New feature requests
+- `type: chore` - Maintenance and refactoring
+
+**Component Labels** (applied by form selection or PR paths):
+
+- `component: api` - API/Backend changes
+- `component: ui` - UI/Frontend changes
+- `component: discovery` - Network discovery
+- `component: wifi` - WiFi/survey features
+- `component: iperf` - Speed testing
+- `component: dhcp` - DHCP detection
+- `component: auth` - Authentication
+- `component: config` - Configuration
+- `component: network` - General networking
+- `component: i18n` - Internationalization
+
+**Area Labels** (applied by PR paths):
+
+- `area: ci` - CI/CD pipeline changes
+- `area: docs` - Documentation
+- `area: tests` - Test changes
+- `area: deps` - Dependency updates
+- `area: build` - Build/packaging
+- `area: security` - Security-related
+
+**Priority Labels** (applied by form selection):
+
+- `priority: critical` - Blocking or severe
+- `priority: high` - Important for next release
+- `priority: medium` - Should be done soon
+- `priority: low` - Nice to have
+
 ### Bug Reports
 
 Include:

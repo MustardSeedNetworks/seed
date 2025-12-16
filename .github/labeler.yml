@@ -1,0 +1,108 @@
+# Auto-labeler configuration for PRs based on file paths
+# Used by actions/labeler
+
+# Component labels
+"component: api":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/api/**"
+          - "cmd/seed/**"
+
+"component: ui":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "web/**"
+
+"component: discovery":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/discovery/**"
+
+"component: wifi":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/wifi/**"
+          - "internal/survey/**"
+
+"component: iperf":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/iperf/**"
+          - "scripts/build-iperf3*.sh"
+
+"component: dhcp":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/dhcp/**"
+
+"component: auth":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/auth/**"
+
+"component: config":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/config/**"
+          - "configs/**"
+
+"component: network":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/network/**"
+          - "internal/gateway/**"
+          - "internal/publicip/**"
+          - "internal/dns/**"
+          - "internal/vlan/**"
+
+"component: i18n":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "locales/**"
+          - "internal/i18n/**"
+          - "web/src/i18n/**"
+
+# Area labels
+"area: ci":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+          - "Makefile"
+
+"area: docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+
+"area: tests":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*_test.go"
+          - "web/**/*.test.ts"
+          - "web/**/*.test.tsx"
+          - "web/e2e/**"
+
+"area: deps":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "go.mod"
+          - "go.sum"
+          - "web/package.json"
+          - "web/package-lock.json"
+
+"area: build":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Dockerfile"
+          - "Makefile"
+          - "scripts/**"
+          - "packaging/**"
+          - "deploy/**"
+
+"area: security":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "internal/auth/**"
+          - "internal/logging/**"
+          - ".gitleaks.toml"

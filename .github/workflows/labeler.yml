@@ -1,0 +1,114 @@
+# =============================================================================
+# Auto-Labeler - The Seed
+# =============================================================================
+# Automatically labels PRs based on file paths and issues based on form inputs.
+# Closes #483
+# =============================================================================
+
+name: Auto-Labeler
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  # ===========================================================================
+  # Label PRs based on file paths
+  # ===========================================================================
+  label-pr:
+    name: Label PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          configuration-path: ".github/labeler.yml"
+
+  # ===========================================================================
+  # Label issues based on form inputs
+  # ===========================================================================
+  label-issue:
+    name: Label Issue
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues'
+
+    steps:
+      - name: Parse issue and apply labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+            const title = issue.title || '';
+            const labelsToAdd = [];
+
+            // Component mapping from form dropdown
+            const componentMap = {
+              'API/Backend': 'component: api',
+              'UI/Frontend': 'component: ui',
+              'Network Discovery': 'component: discovery',
+              'WiFi Survey': 'component: wifi',
+              'Speed Test / iPerf': 'component: iperf',
+              'DHCP Detection': 'component: dhcp',
+              'Authentication': 'component: auth',
+              'Configuration': 'component: config',
+              'Installation/Deployment': 'area: build',
+              'Documentation': 'area: docs',
+              'CI/CD Pipeline': 'area: ci',
+            };
+
+            // Priority mapping
+            const priorityMap = {
+              'Critical': 'priority: critical',
+              'High': 'priority: high',
+              'Medium': 'priority: medium',
+              'Low': 'priority: low',
+              'Nice to have': 'priority: low',
+              'Would improve my workflow': 'priority: medium',
+              'Important for my use case': 'priority: high',
+              'Critical - blocking my use': 'priority: critical',
+            };
+
+            // Severity mapping (for bugs)
+            const severityMap = {
+              'Critical - App crashes or data loss': 'priority: critical',
+              'High - Major feature broken': 'priority: high',
+              'Medium - Feature partially broken': 'priority: medium',
+              'Low - Minor issue or cosmetic': 'priority: low',
+            };
+
+            // Check for component in body
+            for (const [key, label] of Object.entries(componentMap)) {
+              if (body.includes(key)) {
+                labelsToAdd.push(label);
+                break;
+              }
+            }
+
+            // Check for priority/severity in body
+            for (const [key, label] of Object.entries({...priorityMap, ...severityMap})) {
+              if (body.includes(key)) {
+                labelsToAdd.push(label);
+                break;
+              }
+            }
+
+            // Apply labels if any were found
+            if (labelsToAdd.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labelsToAdd
+              });
+              console.log(`Added labels: ${labelsToAdd.join(', ')}`);
+            }

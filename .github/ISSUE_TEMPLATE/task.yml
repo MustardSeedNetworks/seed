@@ -1,0 +1,114 @@
+name: Task
+description: Track a development task or chore
+title: "[CHORE] "
+labels: ["type: chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for internal development tasks, refactoring, technical debt, or maintenance work.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the task to be completed.
+      placeholder: Describe the task...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Task Type
+      description: What kind of task is this?
+      options:
+        - Refactoring
+        - Technical Debt
+        - CI/CD
+        - Testing
+        - Documentation
+        - Dependencies
+        - Performance
+        - Security
+        - Build/Packaging
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of The Seed does this affect?
+      options:
+        - API/Backend
+        - UI/Frontend
+        - Network Discovery
+        - WiFi Survey
+        - Speed Test / iPerf
+        - DHCP Detection
+        - Authentication
+        - Configuration
+        - CI/CD Pipeline
+        - Documentation
+        - Multiple Components
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this task?
+      options:
+        - Low - Can wait
+        - Medium - Should be done soon
+        - High - Important for next release
+        - Critical - Blocking other work
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: What needs to be true for this task to be considered complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical
+    attributes:
+      label: Technical Notes
+      description: Any technical details or implementation notes.
+      placeholder: |
+        Files to modify:
+        - src/...
+
+        Approach:
+        - Step 1...
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related Issues
+      description: Any related issues or PRs?
+      placeholder: |
+        - Fixes #123
+        - Related to #456
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Definition of Done
+      description: Standard checklist for task completion
+      options:
+        - label: Code complete
+        - label: Tests written/updated
+        - label: Documentation updated (if needed)
+        - label: CI passing
