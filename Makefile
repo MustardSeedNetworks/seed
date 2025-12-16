@@ -431,6 +431,33 @@ fmt-all: fmt fmt-frontend ## Format all code (Go + frontend)
 # Run all security scans
 security: security-backend security-frontend security-secrets ## Run all security scans
 
+# License compliance checking
+license-check: ## Check license compliance (Go + npm)
+	@echo "🔍 Checking license compliance..."
+	@echo ""
+	@echo "=== Go Dependencies ==="
+	@if command -v go-licenses > /dev/null 2>&1; then \
+		go-licenses check ./... --disallowed_types=forbidden,restricted --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MPL-2.0,CC0-1.0; \
+	else \
+		echo "SKIP: go-licenses not installed (go install github.com/google/go-licenses@latest)"; \
+	fi
+	@echo ""
+	@echo "=== npm Dependencies ==="
+	cd web && npx license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense" --summary
+	@echo ""
+	@echo "✅ License compliance check complete"
+
+license-report: ## Generate license compliance reports
+	@echo "Generating license reports..."
+	@mkdir -p build/reports
+	@if command -v go-licenses > /dev/null 2>&1; then \
+		go-licenses report ./... > build/reports/go-licenses.csv; \
+		echo "Go licenses: build/reports/go-licenses.csv"; \
+	fi
+	cd web && npx license-checker --production --csv > ../build/reports/npm-licenses.csv
+	@echo "npm licenses: build/reports/npm-licenses.csv"
+	@echo "✅ License reports generated"
+
 # Go security scanning (gosec + govulncheck)
 security-backend: ## Run Go security scans (gosec, govulncheck)
 	@echo "Running Go security scans..."

@@ -20,6 +20,8 @@
     "test:e2e": "playwright test --reporter=list",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "size": "size-limit",
+    "size:why": "size-limit --why",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -56,6 +58,8 @@
     "playwright": "^1.57.0",
     "postcss": "^8.4.49",
     "prettier": "^3.7.4",
+    "size-limit": "^11.1.6",
+    "@size-limit/preset-app": "^11.1.6",
     "storybook": "^10.1.8",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.15.0",
@@ -70,5 +74,19 @@
     "*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
-  }
+  },
+  "size-limit": [
+    {
+      "name": "Main bundle (JS)",
+      "path": "dist/assets/index-*.js",
+      "limit": "300 KB",
+      "gzip": true
+    },
+    {
+      "name": "Styles (CSS)",
+      "path": "dist/assets/index-*.css",
+      "limit": "50 KB",
+      "gzip": true
+    }
+  ]
 }

@@ -148,6 +148,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Check bundle size
+        run: npm run size
+
   # ===========================================================================
   # Security Scanning
   # ===========================================================================
@@ -503,6 +506,69 @@ jobs:
         if: failure()
         with:
           name: server-logs
+          path: server.log
+
+  # ===========================================================================
+  # Lighthouse CI - Performance & Accessibility Audits
+  # ===========================================================================
+  lighthouse:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "25.2.1"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install libpcap-dev
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+
+      - name: Build frontend
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build backend
+        run: |
+          go build -trimpath -buildvcs=false \
+            -ldflags="-s -w" \
+            -o luminetiq ./cmd/luminetiq
+
+      - name: Start backend server
+        run: |
+          sudo setcap cap_net_raw=+ep ./luminetiq || true
+          nohup ./luminetiq > server.log 2>&1 &
+          sleep 10
+          curl -sf -k https://localhost:8443/api/health || (cat server.log && exit 1)
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            https://localhost:8443
+          configPath: ./.lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Upload server logs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: lighthouse-server-logs
           path: server.log
 
   # ===========================================================================
