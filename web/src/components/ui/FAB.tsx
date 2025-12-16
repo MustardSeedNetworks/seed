@@ -1,8 +1,8 @@
 /**
  * Floating Action Button (FAB) Component
- * 
+ *
  * Fixed-position button in the bottom-right corner for triggering quick actions.
- * 
+ *
  * Features:
  * - Fixed positioning (bottom-right corner)
  * - Loading spinner animation while tests are running
@@ -11,18 +11,18 @@
  * - Disabled state during test execution
  * - Keyboard accessible with focus ring
  * - Touch-friendly sizing (56x56 pixels)
- * 
+ *
  * Usage:
  * ```tsx
  * // In app layout:
  * <FAB />
- * 
+ *
  * // Listen for test completion:
  * window.addEventListener('testsComplete', () => {
  *   // Handle completion
  * });
  * ```
- * 
+ *
  * The FAB is rendered at the root App level and provides quick access
  * to running all network diagnostics without opening settings.
  */
@@ -85,17 +85,13 @@ export function FAB({ className = "" }: FABProps) {
         layout.flex.center,
         radius.full,
         isRunning && "opacity-75 cursor-not-allowed",
-        className,
+        className
       )}
       title="Run All Tests"
       aria-label="Run All Tests"
     >
       {isRunning ? (
-        <svg
-          className={cn(iconTokens.size.lg, "animate-spin")}
-          fill="none"
-          viewBox="0 0 24 24"
-        >
+        <svg className={cn(iconTokens.size.lg, "animate-spin")} fill="none" viewBox="0 0 24 24">
           <circle
             className="opacity-25"
             cx="12"
@@ -111,11 +107,7 @@ export function FAB({ className = "" }: FABProps) {
           />
         </svg>
       ) : (
-        <svg
-          className={iconTokens.size.lg}
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
+        <svg className={iconTokens.size.lg} fill="currentColor" viewBox="0 0 24 24">
           <path d="M8 5v14l11-7z" />
         </svg>
       )}

@@ -1,6 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { PerformanceCard } from './PerformanceCard';
-import { SettingsProvider } from '../../contexts/SettingsContext';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { PerformanceCard } from "./PerformanceCard";
 
 /**
  * PerformanceCard displays internet speed testing (speedtest.net) and LAN speed testing (iperf3).
@@ -13,22 +12,21 @@ import { SettingsProvider } from '../../contexts/SettingsContext';
  * - Detailed metrics including jitter and packet loss (iperf3 UDP)
  * - Server mode support for accepting iperf3 connections
  *
- * This story demonstrates various test states and results.
+ * Note: SettingsProvider and I18nextProvider are provided by global decorators
+ * in .storybook/preview.tsx.
  */
 const meta = {
-  title: 'Cards/PerformanceCard',
+  title: "Cards/PerformanceCard",
   component: PerformanceCard,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <SettingsProvider>
-        <div style={{ width: '400px' }}>
-          <Story />
-        </div>
-      </SettingsProvider>
+      <div style={{ width: "400px" }}>
+        <Story />
+      </div>
     ),
   ],
 } satisfies Meta<typeof PerformanceCard>;

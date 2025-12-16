@@ -25,6 +25,7 @@
  */
 
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardValue, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
@@ -71,13 +72,7 @@ function formatTime(ms: number): string {
   return `${Math.round(ms)}ms`;
 }
 
-function LookupRow({
-  label,
-  lookup,
-}: {
-  label: string;
-  lookup: LookupResult | null | undefined;
-}) {
+function LookupRow({ label, lookup }: { label: string; lookup: LookupResult | null | undefined }) {
   if (!lookup) return null;
 
   const statusBadge = lookup.status;
@@ -107,30 +102,27 @@ function LookupRow({
 }
 
 export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
+  const { t } = useTranslation("cards");
+
   if (loading) {
     return (
-      <Card title="DNS" icon={<Globe className={iconTokens.size.md} />} status="loading">
-        <CardValue value="Testing..." size="lg" />
+      <Card title={t("dns.title")} icon={<Globe className={iconTokens.size.md} />} status="loading">
+        <CardValue value={t("dns.testing")} size="lg" />
       </Card>
     );
   }
 
   if (!data) {
     return (
-      <Card title="DNS" icon={<Globe className={iconTokens.size.md} />} status="unknown">
-        <CardValue value="No data" size="md" />
+      <Card title={t("dns.title")} icon={<Globe className={iconTokens.size.md} />} status="unknown">
+        <CardValue value={t("dns.noData")} size="md" />
       </Card>
     );
   }
 
   // Determine overall status based on forward/reverse lookups
   let overallStatus: Status = "success";
-  const lookups = [
-    data.forward,
-    data.forwardIpv6,
-    data.reverse,
-    data.reverseIpv6,
-  ];
+  const lookups = [data.forward, data.forwardIpv6, data.reverse, data.reverseIpv6];
   if (lookups.some((l) => l?.status === "error")) {
     overallStatus = "error";
   } else if (lookups.some((l) => l?.status === "warning")) {
@@ -138,18 +130,17 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
   }
 
   // Show all DNS servers if available
-  const servers =
-    data.servers && data.servers.length > 0 ? data.servers : [data.server];
+  const servers = data.servers && data.servers.length > 0 ? data.servers : [data.server];
 
   return (
     <Card
-      title="DNS"
+      title={t("dns.title")}
       icon={<Globe className={iconTokens.size.md} />}
       status={overallStatus}
     >
       {/* DNS Servers */}
       <div className="mb-2">
-        <p className="caption mb-1">DNS Servers</p>
+        <p className="caption mb-1">{t("dns.dnsServers")}</p>
         <div className="stack-xs">
           {servers.map((server, idx) => (
             <p key={idx} className="body-small font-mono break-all" title={server}>
@@ -159,15 +150,15 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
         </div>
       </div>
 
-      <p className="caption">Testing: {data.testHostname}</p>
+      <p className="caption">{t("dns.testingHost", { hostname: data.testHostname })}</p>
       <CardDivider />
 
       {/* IPv4 Lookups */}
       {(data.forward || data.reverse) && (
         <div className="mb-2">
           <p className="caption font-medium mb-1">IPv4</p>
-          <LookupRow label="Forward (A)" lookup={data.forward} />
-          <LookupRow label="Reverse (PTR)" lookup={data.reverse} />
+          <LookupRow label={t("dns.forwardA")} lookup={data.forward} />
+          <LookupRow label={t("dns.reversePTR")} lookup={data.reverse} />
         </div>
       )}
 
@@ -177,8 +168,8 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
           <CardDivider />
           <div>
             <p className="caption font-medium mb-1">IPv6</p>
-            <LookupRow label="Forward (AAAA)" lookup={data.forwardIpv6} />
-            <LookupRow label="Reverse (PTR)" lookup={data.reverseIpv6} />
+            <LookupRow label={t("dns.forwardAAAA")} lookup={data.forwardIpv6} />
+            <LookupRow label={t("dns.reversePTR")} lookup={data.reverseIpv6} />
           </div>
         </>
       )}
@@ -188,7 +179,7 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
         <>
           <CardDivider />
           <CollapsibleSection
-            title="Server Tests"
+            title={t("dns.serverTests")}
             count={data.perServerResults.length}
             variant="compact"
             status={
@@ -202,9 +193,7 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
             {data.perServerResults.map((server) => (
               <div key={server.server} className="py-1">
                 <div className={`${layout.flex.between} mb-1`}>
-                  <span className="caption font-mono">
-                    {server.server}
-                  </span>
+                  <span className="caption font-mono">{server.server}</span>
                   <span
                     className={`caption font-medium ${
                       server.status === "success"
@@ -242,10 +231,7 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
                   <div className={`${layout.flex.between} caption`}>
                     <span>AAAA</span>
                     <span className={layout.inline.default}>
-                      <StatusBadge
-                        status={server.forwardIpv6.status}
-                        size="sm"
-                      />
+                      <StatusBadge status={server.forwardIpv6.status} size="sm" />
                       <span
                         className={
                           server.forwardIpv6.status === "success"

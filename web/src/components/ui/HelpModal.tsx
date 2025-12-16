@@ -31,7 +31,7 @@
  */
 
 import { ReactNode } from "react";
-import { icon as iconTokens, layout, radius } from "../../styles/theme";
+import { icon as iconTokens, layout, radius, modal, spacing } from "../../styles/theme";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -40,19 +40,17 @@ interface HelpModalProps {
   children: ReactNode;
 }
 
-export function HelpModal({
-  isOpen,
-  onClose,
-  title,
-  children,
-}: HelpModalProps) {
+/**
+ * Modal dialog for displaying help and documentation content.
+ */
+export function HelpModal({ isOpen, onClose, title, children }: HelpModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${spacing.pad.default}`}>
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className={`absolute inset-0 ${modal.overlay} backdrop-blur-sm`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -65,7 +63,9 @@ export function HelpModal({
         aria-labelledby="help-modal-title"
       >
         {/* Header */}
-        <div className={`${layout.flex.between} p-4 border-b border-surface-border bg-surface-raised shrink-0`}>
+        <div
+          className={`${layout.flex.between} ${spacing.pad.default} border-b border-surface-border bg-surface-raised shrink-0`}
+        >
           <h2 id="help-modal-title" className="heading-3">
             {title}
           </h2>
@@ -85,7 +85,7 @@ export function HelpModal({
         </div>
 
         {/* Content */}
-        <div className="p-4 overflow-y-auto flex-1">{children}</div>
+        <div className={`${spacing.pad.default} overflow-y-auto flex-1`}>{children}</div>
       </div>
     </div>
   );
@@ -96,10 +96,15 @@ interface HelpSectionProps {
   children: ReactNode;
 }
 
+/**
+ * Section container with title for organizing help content into logical groups.
+ */
 export function HelpSection({ title, children }: HelpSectionProps) {
   return (
-    <div className="mb-6 last:mb-0">
-      <h3 className="heading-4 mb-3 pb-1 border-b border-surface-border">
+    <div className={`${spacing.margin.bottom.section} last:mb-0`}>
+      <h3
+        className={`heading-4 ${spacing.margin.bottom.heading} pb-1 border-b border-surface-border`}
+      >
         {title}
       </h3>
       <div className="stack-sm">{children}</div>
@@ -113,13 +118,14 @@ interface HelpItemProps {
   color?: string;
 }
 
+/**
+ * Term-description pair with optional color indicator for help documentation.
+ */
 export function HelpItem({ term, description, color }: HelpItemProps) {
   return (
-    <div className="flex gap-3 body-small">
+    <div className={`flex ${spacing.gap.default} body-small`}>
       <div className="flex items-center gap-2 shrink-0 w-24">
-        {color && (
-          <span className={`inline-block w-2.5 h-2.5 ${radius.full} ${color}`} />
-        )}
+        {color && <span className={`inline-block w-2.5 h-2.5 ${radius.full} ${color}`} />}
         <span className="font-medium text-text-primary">{term}</span>
       </div>
       <span className="text-text-muted">{description}</span>

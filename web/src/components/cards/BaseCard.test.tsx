@@ -1,9 +1,9 @@
 /**
  * BaseCard.test.tsx - BaseCard Component Tests
- * 
+ *
  * Purpose: Test suite for BaseCard and SimpleBaseCard components covering
  * loading states, data rendering, status determination, and error scenarios.
- * 
+ *
  * Key Test Areas:
  * - Loading state: skeleton display when loading=true
  * - Custom loading content: override default loading UI
@@ -12,15 +12,15 @@
  * - Error handling: error message display and retry functionality
  * - Keyboard accessibility: Enter/Space key support on card containers
  * - SimpleBaseCard variant: simpler version without loading state
- * 
+ *
  * Test Framework: Vitest with React Testing Library
  * Generic Type: TestData interface for type-safe test data
- * 
+ *
  * Usage:
  * ```bash
  * npm test -- BaseCard.test.tsx
  * ```
- * 
+ *
  * Dependencies: vitest, @testing-library/react
  */
 
@@ -38,8 +38,7 @@ describe("BaseCard", () => {
   const defaultProps = {
     title: "Test Card",
     data: { value: 42, isHealthy: true } as TestData,
-    getStatus: (data: TestData) =>
-      data.isHealthy ? ("success" as const) : ("error" as const),
+    getStatus: (data: TestData) => (data.isHealthy ? ("success" as const) : ("error" as const)),
     children: (data: TestData) => <div data-testid="content">{data.value}</div>,
   };
 
@@ -59,7 +58,7 @@ describe("BaseCard", () => {
           {...defaultProps}
           loading={true}
           loadingContent={<div data-testid="custom-loading">Loading...</div>}
-        />,
+        />
       );
 
       expect(screen.getByTestId("custom-loading")).toBeInTheDocument();
@@ -88,9 +87,7 @@ describe("BaseCard", () => {
     });
 
     it("error state takes precedence over loading", () => {
-      render(
-        <BaseCard {...defaultProps} loading={true} error="Error occurred" />,
-      );
+      render(<BaseCard {...defaultProps} loading={true} error="Error occurred" />);
 
       // Loading is true but error should take precedence (loading checked first)
       // Actually checking the code: loading is checked first
@@ -106,13 +103,7 @@ describe("BaseCard", () => {
     });
 
     it("renders custom empty message when provided", () => {
-      render(
-        <BaseCard
-          {...defaultProps}
-          data={null}
-          emptyMessage="Waiting for data..."
-        />,
-      );
+      render(<BaseCard {...defaultProps} data={null} emptyMessage="Waiting for data..." />);
 
       expect(screen.getByText("Waiting for data...")).toBeInTheDocument();
     });
@@ -144,7 +135,7 @@ describe("BaseCard", () => {
           {...defaultProps}
           data={{ value: 0, isHealthy: false }}
           getStatus={(data) => (data.isHealthy ? "success" : "error")}
-        />,
+        />
       );
 
       expect(screen.getByText("Test Card")).toBeInTheDocument();
@@ -218,7 +209,7 @@ describe("SimpleBaseCard", () => {
           {...defaultProps}
           loading={true}
           loadingContent={<span>Custom loader</span>}
-        />,
+        />
       );
 
       expect(screen.getByText("Custom loader")).toBeInTheDocument();
@@ -303,7 +294,7 @@ describe("state priority", () => {
         error="Should not show"
       >
         {() => <div>Content</div>}
-      </BaseCard>,
+      </BaseCard>
     );
 
     // Loading state should be shown, not error
@@ -314,14 +305,9 @@ describe("state priority", () => {
 
   it("loading takes priority over error in SimpleBaseCard", () => {
     render(
-      <SimpleBaseCard
-        title="Priority Test"
-        status="success"
-        loading={true}
-        error="Should not show"
-      >
+      <SimpleBaseCard title="Priority Test" status="success" loading={true} error="Should not show">
         <div>Content</div>
-      </SimpleBaseCard>,
+      </SimpleBaseCard>
     );
 
     const skeletons = document.querySelectorAll(".animate-pulse");
@@ -339,7 +325,7 @@ describe("state priority", () => {
         emptyMessage="No data"
       >
         {() => <div>Content</div>}
-      </BaseCard>,
+      </BaseCard>
     );
 
     expect(screen.getByText("Error message")).toBeInTheDocument();

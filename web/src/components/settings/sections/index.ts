@@ -1,9 +1,9 @@
 /**
  * Settings Sections Index
- * 
+ *
  * Purpose: Central export file for all settings section components.
  * Provides convenient re-exports for cleaner imports in SettingsDrawer.
- * 
+ *
  * Exported Components:
  * - AutoSaveIndicator: Status indicator for unsaved changes
  * - AppearanceSettings: Theme selection (light/dark/system)
@@ -14,7 +14,7 @@
  * - SNMPSettings: SNMP v2c and v3 credentials
  * - ThresholdsSettings: Performance threshold configuration
  * - WiFiSettings: WiFi interface and scan configuration
- * 
+ *
  * Usage:
  * ```typescript
  * import {
@@ -23,7 +23,7 @@
  *   DNSSettings
  * } from './sections';
  * ```
- * 
+ *
  * Dependencies: Individual component files in this directory
  */
 

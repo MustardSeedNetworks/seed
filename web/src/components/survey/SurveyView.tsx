@@ -30,16 +30,12 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { FloorPlanCanvas } from "./FloorPlanCanvas";
 import { getAuthHeaders } from "../../hooks/useAuth";
-import type {
-  Survey,
-  PassiveSample,
-  ActiveSample,
-  ThroughputSample,
-} from "../../hooks/useSurvey";
+import type { Survey, PassiveSample, ActiveSample, ThroughputSample } from "../../hooks/useSurvey";
 import { X, Upload, Play, Pause, CheckCircle, Loader } from "../ui/Icons";
-import { radius, layout } from "../../styles/theme";
+import { radius, layout, spacing, button, icon as iconTokens } from "../../styles/theme";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -53,11 +49,8 @@ interface SurveyViewProps {
  * SurveyView Component
  * Main survey interface with floor plan, sampling controls, and heatmap visualization
  */
-export function SurveyView({
-  survey: initialSurvey,
-  onClose,
-  onUpdate,
-}: SurveyViewProps) {
+export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyViewProps) {
+  const { t } = useTranslation("survey");
   // Current survey being edited
   const [survey, setSurvey] = useState(initialSurvey);
   // Indicates if a sampling operation is in progress
@@ -65,9 +58,9 @@ export function SurveyView({
   // Indicates if floor plan upload is in progress
   const [uploadingFloorPlan, setUploadingFloorPlan] = useState(false);
   // Selected metric for heatmap visualization (rssi, throughput, latency)
-  const [heatmapMetric, setHeatmapMetric] = useState<
-    "rssi" | "throughput" | "latency" | null
-  >(null);
+  const [heatmapMetric, setHeatmapMetric] = useState<"rssi" | "throughput" | "latency" | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Poll for survey updates when in progress
@@ -114,17 +107,14 @@ export function SurveyView({
             };
 
             // Upload to server
-            const res = await fetch(
-              `${API_BASE}/api/survey/floorplan?id=${survey.id}`,
-              {
-                method: "POST",
-                headers: {
-                  ...getAuthHeaders(),
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(floorPlan),
+            const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${survey.id}`, {
+              method: "POST",
+              headers: {
+                ...getAuthHeaders(),
+                "Content-Type": "application/json",
               },
-            );
+              body: JSON.stringify(floorPlan),
+            });
 
             if (res.ok) {
               // Refresh survey
@@ -139,14 +129,12 @@ export function SurveyView({
         };
         reader.readAsDataURL(file);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to upload floor plan",
-        );
+        setError(err instanceof Error ? err.message : "Failed to upload floor plan");
       } finally {
         setUploadingFloorPlan(false);
       }
     },
-    [survey.id, onUpdate],
+    [survey.id, onUpdate]
   );
 
   // Handle taking a sample at clicked location
@@ -183,11 +171,8 @@ export function SurveyView({
 
             // Check if BSSID changed (roaming)
             const lastSample = survey.samples[survey.samples.length - 1];
-            const lastBssid = lastSample
-              ? (lastSample.sampleData as ActiveSample).bssid
-              : null;
-            const roamingEvent =
-              lastBssid !== null && lastBssid !== wifiData.bssid;
+            const lastBssid = lastSample ? (lastSample.sampleData as ActiveSample).bssid : null;
+            const roamingEvent = lastBssid !== null && lastBssid !== wifiData.bssid;
 
             sampleData = {
               ssid: wifiData.ssid || "",
@@ -252,27 +237,21 @@ export function SurveyView({
         }
 
         // Submit sample to server
-        const res = await fetch(
-          `${API_BASE}/api/survey/sample?id=${survey.id}`,
-          {
-            method: "POST",
-            headers: {
-              ...getAuthHeaders(),
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ x, y, sampleData }),
+        const res = await fetch(`${API_BASE}/api/survey/sample?id=${survey.id}`, {
+          method: "POST",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({ x, y, sampleData }),
+        });
 
         if (!res.ok) throw new Error("Failed to save sample");
 
         // Refresh survey to get updated samples
-        const refreshRes = await fetch(
-          `${API_BASE}/api/survey?id=${survey.id}`,
-          {
-            headers: getAuthHeaders(),
-          },
-        );
+        const refreshRes = await fetch(`${API_BASE}/api/survey?id=${survey.id}`, {
+          headers: getAuthHeaders(),
+        });
         if (refreshRes.ok) {
           const updated = await refreshRes.json();
           setSurvey(updated);
@@ -284,19 +263,16 @@ export function SurveyView({
         setSampling(false);
       }
     },
-    [survey, onUpdate],
+    [survey, onUpdate]
   );
 
   // Handle status changes
   const handleStatusChange = async (action: "start" | "pause" | "complete") => {
     try {
-      const res = await fetch(
-        `${API_BASE}/api/survey/${action}?id=${survey.id}`,
-        {
-          method: "POST",
-          headers: getAuthHeaders(),
-        },
-      );
+      const res = await fetch(`${API_BASE}/api/survey/${action}?id=${survey.id}`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
 
       if (res.ok) {
         const updated = await res.json();
@@ -304,9 +280,7 @@ export function SurveyView({
         onUpdate();
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : `Failed to ${action} survey`,
-      );
+      setError(err instanceof Error ? err.message : `Failed to ${action} survey`);
     }
   };
 
@@ -314,13 +288,12 @@ export function SurveyView({
     <div className="fixed inset-0 bg-surface-base z-50 overflow-auto">
       {/* Header */}
       <div className="sticky top-0 bg-surface-raised border-b border-surface-border z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className={`max-w-7xl mx-auto pad ${layout.flex.between}`}>
           <div>
             <h1 className="heading-1">{survey.name}</h1>
             <p className="body-small mt-1">
-              {survey.surveyType.charAt(0).toUpperCase() +
-                survey.surveyType.slice(1)}{" "}
-              Survey • {survey.samples.length} samples • {survey.status}
+              {survey.surveyType.charAt(0).toUpperCase() + survey.surveyType.slice(1)}{" "}
+              {t("status.survey")} • {survey.samples.length} {t("status.samples")} • {survey.status}
             </p>
           </div>
 
@@ -329,10 +302,10 @@ export function SurveyView({
             {survey.status === "created" && (
               <button
                 onClick={() => handleStatusChange("start")}
-                className={`px-4 py-2 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default}`}
+                className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default}`}
               >
-                <Play className="h-4 w-4" />
-                Start Survey
+                <Play className={iconTokens.size.sm} />
+                {t("buttons.startSurvey")}
               </button>
             )}
 
@@ -340,17 +313,17 @@ export function SurveyView({
               <>
                 <button
                   onClick={() => handleStatusChange("pause")}
-                  className={`px-4 py-2 border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
+                  className={`${button.size.md} border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
                 >
-                  <Pause className="h-4 w-4" />
-                  Pause
+                  <Pause className={iconTokens.size.sm} />
+                  {t("buttons.pause")}
                 </button>
                 <button
                   onClick={() => handleStatusChange("complete")}
-                  className={`px-4 py-2 bg-status-success text-text-inverse ${radius.md} hover:bg-status-success/90 ${layout.inline.default}`}
+                  className={`${button.size.md} bg-status-success text-text-inverse ${radius.md} hover:bg-status-success/90 ${layout.inline.default}`}
                 >
-                  <CheckCircle className="h-4 w-4" />
-                  Complete
+                  <CheckCircle className={iconTokens.size.sm} />
+                  {t("buttons.complete")}
                 </button>
               </>
             )}
@@ -359,37 +332,37 @@ export function SurveyView({
               <>
                 <button
                   onClick={() => handleStatusChange("start")}
-                  className={`px-4 py-2 bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default}`}
+                  className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default}`}
                 >
-                  <Play className="h-4 w-4" />
-                  Resume
+                  <Play className={iconTokens.size.sm} />
+                  {t("buttons.resume")}
                 </button>
                 <button
                   onClick={() => handleStatusChange("complete")}
-                  className={`px-4 py-2 bg-status-success text-text-inverse ${radius.md} hover:bg-status-success/90 ${layout.inline.default}`}
+                  className={`${button.size.md} bg-status-success text-text-inverse ${radius.md} hover:bg-status-success/90 ${layout.inline.default}`}
                 >
-                  <CheckCircle className="h-4 w-4" />
-                  Complete
+                  <CheckCircle className={iconTokens.size.sm} />
+                  {t("buttons.complete")}
                 </button>
               </>
             )}
 
             <button
               onClick={onClose}
-              className={`px-4 py-2 border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
+              className={`${button.size.md} border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
             >
-              <X className="h-4 w-4" />
-              Close
+              <X className={iconTokens.size.sm} />
+              {t("buttons.close")}
             </button>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className={`max-w-7xl mx-auto ${spacing.pad.default} ${spacing.pad.lg}`}>
         {error && (
           <div
-            className={`bg-status-error/10 border border-status-error/20 text-status-error px-4 py-3 ${radius.md} mb-4`}
+            className={`bg-status-error/10 border border-status-error/20 text-status-error ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content}`}
           >
             {error}
           </div>
@@ -397,42 +370,40 @@ export function SurveyView({
 
         {sampling && (
           <div
-            className={`bg-status-info/10 border border-status-info/20 text-status-info px-4 py-3 ${radius.md} mb-4 ${layout.inline.default}`}
+            className={`bg-status-info/10 border border-status-info/20 text-status-info ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content} ${layout.inline.default}`}
           >
-            <Loader className="h-4 w-4 animate-spin" />
-            Taking measurement...
+            <Loader className={`${iconTokens.size.sm} animate-spin`} />
+            {t("progress.takingMeasurement")}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={`grid grid-cols-1 lg:grid-cols-3 ${spacing.gap.spacious}`}>
           {/* Floor plan */}
           <div className="lg:col-span-2">
-            <div
-              className={`bg-surface-raised ${radius.md} border border-surface-border p-4`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="heading-3">Floor Plan</h2>
+            <div className={`bg-surface-raised ${radius.md} border border-surface-border pad`}>
+              <div className={`${layout.flex.between} ${spacing.margin.bottom.content}`}>
+                <h2 className="heading-3">{t("floorPlan.title")}</h2>
                 {heatmapMetric === null && survey.samples.length > 0 && (
-                  <div className="flex gap-2">
+                  <div className={layout.inline.default}>
                     <button
                       onClick={() => setHeatmapMetric("rssi")}
-                      className={`px-3 py-1 body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                      className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
                     >
-                      RSSI Heatmap
+                      {t("buttons.rssiHeatmap")}
                     </button>
                     {survey.surveyType === "throughput" && (
                       <>
                         <button
                           onClick={() => setHeatmapMetric("throughput")}
-                          className={`px-3 py-1 body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                          className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
                         >
-                          Throughput
+                          {t("buttons.throughput")}
                         </button>
                         <button
                           onClick={() => setHeatmapMetric("latency")}
-                          className={`px-3 py-1 body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                          className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover`}
                         >
-                          Latency
+                          {t("buttons.latency")}
                         </button>
                       </>
                     )}
@@ -441,25 +412,27 @@ export function SurveyView({
                 {heatmapMetric !== null && (
                   <button
                     onClick={() => setHeatmapMetric(null)}
-                    className={`px-3 py-1 body-small bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90`}
+                    className={`${button.size.sm} body-small bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90`}
                   >
-                    Hide Heatmap
+                    {t("buttons.hideHeatmap")}
                   </button>
                 )}
               </div>
 
               {!survey.floorPlan ? (
                 <div
-                  className={`border-2 border-dashed border-surface-border ${radius.md} p-12 text-center`}
+                  className={`border-2 border-dashed border-surface-border ${radius.md} pad-lg text-center`}
                 >
-                  <Upload className="h-12 w-12 mx-auto text-text-muted mb-4" />
-                  <p className="text-text-muted mb-4">
-                    Upload a floor plan to begin
+                  <Upload
+                    className={`${iconTokens.size.xl} mx-auto text-text-muted ${spacing.margin.bottom.content}`}
+                  />
+                  <p className={`text-text-muted ${spacing.margin.bottom.content}`}>
+                    {t("floorPlan.uploadPrompt")}
                   </p>
                   <label
-                    className={`inline-block px-4 py-2 bg-brand-primary text-text-inverse ${radius.md} cursor-pointer hover:bg-brand-primary/90`}
+                    className={`inline-block ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} cursor-pointer hover:bg-brand-primary/90`}
                   >
-                    {uploadingFloorPlan ? "Uploading..." : "Choose File"}
+                    {uploadingFloorPlan ? t("floorPlan.uploading") : t("floorPlan.chooseFile")}
                     <input
                       type="file"
                       accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
@@ -471,16 +444,13 @@ export function SurveyView({
                       disabled={uploadingFloorPlan}
                     />
                   </label>
-                  <p className="caption text-text-muted mt-2">
-                    PNG, JPG, GIF, WEBP, or SVG (max 10MB)
-                  </p>
+                  <p className="caption text-text-muted mt-2">{t("floorPlan.supportedFormats")}</p>
                 </div>
               ) : (
                 <div>
                   {survey.status === "in_progress" && (
                     <p className="body-small text-text-muted mb-2">
-                      Click on the floor plan to take a measurement at that
-                      location
+                      {t("floorPlan.clickToMeasure")}
                     </p>
                   )}
                   <FloorPlanCanvas
@@ -497,25 +467,23 @@ export function SurveyView({
 
           {/* Sample list */}
           <div className="lg:col-span-1">
-            <div
-              className={`bg-surface-raised ${radius.md} border border-surface-border p-4`}
-            >
-              <h2 className="heading-3 mb-4">
-                Samples ({survey.samples.length})
+            <div className={`bg-surface-raised ${radius.md} border border-surface-border pad`}>
+              <h2 className={`heading-3 ${spacing.margin.bottom.content}`}>
+                {t("samples.title")} ({survey.samples.length})
               </h2>
               <div className="stack-sm max-h-[70vh] overflow-y-auto">
                 {survey.samples.length === 0 ? (
-                  <p className="body-small text-center py-8">
-                    No samples yet.{" "}
+                  <p className={`body-small text-center ${spacing.pad.lg}`}>
+                    {t("samples.noSamples")}{" "}
                     {survey.status === "in_progress"
-                      ? "Click on the floor plan to start."
-                      : "Start the survey to begin."}
+                      ? t("samples.clickToStart")
+                      : t("samples.startToBegin")}
                   </p>
                 ) : (
                   survey.samples.map((sample, idx) => (
                     <div
                       key={idx}
-                      className={`border border-surface-border ${radius.md} p-3 body-small`}
+                      className={`border border-surface-border ${radius.md} pad-sm body-small`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold">#{idx + 1}</span>
@@ -539,7 +507,10 @@ export function SurveyView({
 }
 
 // Helper to render sample data
-function renderSampleData(data: any, surveyType: string) {
+function renderSampleData(
+  data: PassiveSample | ActiveSample | ThroughputSample,
+  surveyType: string
+) {
   if (surveyType === "passive") {
     const passiveData = data as PassiveSample;
     return (
@@ -578,9 +549,7 @@ function renderSampleData(data: any, surveyType: string) {
         <div>↑ {throughputData.uploadMbps.toFixed(1)} Mbps</div>
         <div>Jitter: {throughputData.jitter.toFixed(1)} ms</div>
         {throughputData.packetLoss > 0 && (
-          <div className="text-status-error">
-            Loss: {throughputData.packetLoss.toFixed(1)}%
-          </div>
+          <div className="text-status-error">Loss: {throughputData.packetLoss.toFixed(1)}%</div>
         )}
       </>
     );

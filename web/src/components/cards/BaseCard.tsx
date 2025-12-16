@@ -112,8 +112,8 @@ export function BaseCard<T>({
 function DefaultLoadingSkeleton() {
   return (
     <>
-      <Skeleton className="h-8 w-32 mb-3" />
-      <div className={`${spacing.stack.sm} mt-4`}>
+      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.heading}`} />
+      <div className={`${spacing.stack.sm} ${spacing.margin.top.content}`}>
         <div className={layout.flex.between}>
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
@@ -149,7 +149,7 @@ interface SimpleBaseCardProps {
 }
 
 /**
- *
+ * Simplified card wrapper for basic display without data loading logic.
  */
 export function SimpleBaseCard({
   title,

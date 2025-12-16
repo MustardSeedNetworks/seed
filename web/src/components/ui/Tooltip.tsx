@@ -37,6 +37,9 @@ interface TooltipProps {
   position?: "top" | "bottom";
 }
 
+/**
+ * Hover-triggered tooltip that displays additional information for an element.
+ */
 export function Tooltip({ content, children, position = "top" }: TooltipProps) {
   const [show, setShow] = useState(false);
 
@@ -63,7 +66,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
             positionClasses,
             radius.default,
             border.card,
-            "bg-surface-raised text-text-primary caption",
+            "bg-surface-raised text-text-primary caption"
           )}
           role="tooltip"
         >

@@ -68,8 +68,8 @@ function ClickToBrokenComponent() {
     <div className="p-4 bg-surface-raised border border-surface-border rounded-lg">
       <h3 className="heading-4 mb-3">Interactive Error Demo</h3>
       <p className="body-small text-text-secondary mb-4">
-        Click the button below to trigger an error. The Error Boundary will catch it
-        and display the fallback UI.
+        Click the button below to trigger an error. The Error Boundary will catch it and display the
+        fallback UI.
       </p>
       <button
         onClick={() => setShouldThrow(true)}
@@ -87,9 +87,7 @@ function ClickToBrokenComponent() {
 function ComponentWithStackTrace() {
   function deepNestedFunction() {
     function evenDeeperFunction() {
-      throw new Error(
-        "Detailed error message with stack trace from deep nested function call"
-      );
+      throw new Error("Detailed error message with stack trace from deep nested function call");
     }
     evenDeeperFunction();
   }
@@ -116,12 +114,10 @@ function WorkingComponent() {
           />
         </svg>
         <div>
-          <h3 className="font-semibold text-status-success mb-1">
-            Component Working Correctly
-          </h3>
+          <h3 className="font-semibold text-status-success mb-1">Component Working Correctly</h3>
           <p className="body-small text-text-secondary">
-            This component is functioning normally with no errors. The Error Boundary
-            is monitoring it but not displaying any fallback UI.
+            This component is functioning normally with no errors. The Error Boundary is monitoring
+            it but not displaying any fallback UI.
           </p>
         </div>
       </div>
@@ -132,7 +128,7 @@ function WorkingComponent() {
 /**
  * Component simulating a network error
  */
-function NetworkErrorComponent() {
+function NetworkErrorComponent(): React.ReactElement {
   throw new Error("Network request failed: Unable to fetch data from API endpoint");
 }
 
@@ -270,12 +266,10 @@ export const CustomFallback: Story = {
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="heading-3 text-status-error mb-2">
-                Custom Error Fallback UI
-              </h3>
+              <h3 className="heading-3 text-status-error mb-2">Custom Error Fallback UI</h3>
               <p className="body text-text-secondary mb-4">
-                This is a custom fallback component passed as a prop to the Error
-                Boundary. You can design any UI you want to display when errors occur.
+                This is a custom fallback component passed as a prop to the Error Boundary. You can
+                design any UI you want to display when errors occur.
               </p>
               <div className="flex gap-3">
                 <button className="px-4 py-2 bg-status-error text-text-inverse rounded-lg hover:bg-status-error/90 transition-colors">
@@ -369,12 +363,10 @@ export const WithRetry: Story = {
               />
             </svg>
             <div>
-              <h3 className="font-semibold text-status-success mb-1">
-                Success After Retries!
-              </h3>
+              <h3 className="font-semibold text-status-success mb-1">Success After Retries!</h3>
               <p className="body-small text-text-secondary">
-                The component successfully rendered after {attemptCount + 1} attempts.
-                Error Boundary retry functionality allowed recovery without page reload.
+                The component successfully rendered after {attemptCount + 1} attempts. Error
+                Boundary retry functionality allowed recovery without page reload.
               </p>
             </div>
           </div>
@@ -386,12 +378,10 @@ export const WithRetry: Story = {
       <div className="space-y-4">
         <div className="p-4 bg-surface-hover border border-surface-border rounded-lg">
           <p className="body-small text-text-secondary">
-            This demo simulates a component that fails twice then succeeds. Click "Try
-            again" when you see an error to retry rendering.
+            This demo simulates a component that fails twice then succeeds. Click "Try again" when
+            you see an error to retry rendering.
           </p>
-          <p className="caption text-text-muted mt-2">
-            Attempts: {attemptCount + 1}/3
-          </p>
+          <p className="caption text-text-muted mt-2">Attempts: {attemptCount + 1}/3</p>
         </div>
         <ErrorBoundary key={attemptCount}>
           <UnstableComponent />
@@ -452,8 +442,8 @@ export const NestedErrorBoundaries: Story = {
         <div className="p-4 bg-surface-raised border border-surface-border rounded-lg">
           <h3 className="heading-4 mb-3">Outer Boundary</h3>
           <p className="body-small text-text-secondary mb-4">
-            This outer boundary protects the entire section. The inner boundary handles
-            the specific error.
+            This outer boundary protects the entire section. The inner boundary handles the specific
+            error.
           </p>
 
           <ErrorBoundary
@@ -469,8 +459,8 @@ export const NestedErrorBoundaries: Story = {
           </ErrorBoundary>
 
           <p className="body-small text-text-secondary mt-4">
-            Content after inner error boundary still renders because error was caught by
-            inner boundary.
+            Content after inner error boundary still renders because error was caught by inner
+            boundary.
           </p>
         </div>
       </ErrorBoundary>
@@ -500,9 +490,7 @@ export const RealWorldCardExample: Story = {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="caption text-text-muted">Speed</span>
-            <span className="body-small font-medium text-text-primary">
-              1000 Mbps
-            </span>
+            <span className="body-small font-medium text-text-primary">1000 Mbps</span>
           </div>
           <div className="flex justify-between">
             <span className="caption text-text-muted">Duplex</span>
@@ -519,9 +507,7 @@ export const RealWorldCardExample: Story = {
     return (
       <div className="grid md:grid-cols-2 gap-4 w-full">
         <div className="p-4 bg-surface-raised border border-surface-border rounded-lg">
-          <h3 className="heading-4 mb-3 text-text-primary">
-            Link Status - Working
-          </h3>
+          <h3 className="heading-4 mb-3 text-text-primary">Link Status - Working</h3>
           <ErrorBoundary>
             <CardContent shouldError={false} />
           </ErrorBoundary>

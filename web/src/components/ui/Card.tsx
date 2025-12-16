@@ -128,7 +128,9 @@ export function Card({
           <StatusBadge status={status} size="md" />
         </div>
       </div>
-      <div className="mt-2 sm:mt-3">{children}</div>
+      <div className={`${spacing.margin.top.inline} sm:${spacing.margin.top.content}`}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -247,5 +249,5 @@ interface CardDividerProps {
  * Horizontal divider line for separating card sections.
  */
 export function CardDivider({ className = "" }: CardDividerProps) {
-  return <hr className={cn("border-surface-border my-3", className)} />;
+  return <hr className={cn("border-surface-border", spacing.margin.top.content, className)} />;
 }

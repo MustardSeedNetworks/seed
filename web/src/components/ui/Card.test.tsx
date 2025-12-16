@@ -1,9 +1,9 @@
 /**
  * Card.test.tsx - Card Component Tests
- * 
+ *
  * Purpose: Test suite for Card, CardValue, CardRow, and CardDivider UI components.
  * Tests rendering, status styling, subtitles, and subtext functionality.
- * 
+ *
  * Key Test Areas:
  * - Rendering: proper display of title, subtitle, and content
  * - Status styling: correct CSS classes for success/warning/error/unknown states
@@ -12,14 +12,14 @@
  * - CardDivider: divider styling and spacing
  * - Subtext: optional secondary text display
  * - Icon rendering: status indicator icon display
- * 
+ *
  * Test Framework: Vitest with React Testing Library
- * 
+ *
  * Usage:
  * ```bash
  * npm test -- Card.test.tsx
  * ```
- * 
+ *
  * Dependencies: vitest, @testing-library/react
  */
 
@@ -32,7 +32,7 @@ describe("Card", () => {
     render(
       <Card title="Test Card" subtitle="Sub" status="success">
         <span>Card content</span>
-      </Card>,
+      </Card>
     );
 
     expect(screen.getByText("Test Card")).toBeInTheDocument();
@@ -44,7 +44,7 @@ describe("Card", () => {
     render(
       <Card title="Success Card" status="success">
         <span>Content</span>
-      </Card>,
+      </Card>
     );
 
     const statusIcon = screen.getByLabelText("Status: success");
@@ -55,7 +55,7 @@ describe("Card", () => {
     render(
       <Card title="Warning Card" status="warning">
         <span>Content</span>
-      </Card>,
+      </Card>
     );
 
     const statusIcon = screen.getByLabelText("Status: warning");
@@ -66,7 +66,7 @@ describe("Card", () => {
     render(
       <Card title="Error Card" status="error">
         <span>Content</span>
-      </Card>,
+      </Card>
     );
 
     const statusIcon = screen.getByLabelText("Status: error");
@@ -77,7 +77,7 @@ describe("Card", () => {
     render(
       <Card title="Unknown Card" status="unknown">
         <span>Content</span>
-      </Card>,
+      </Card>
     );
 
     const statusIcon = screen.getByLabelText("Status: unknown");
@@ -88,7 +88,7 @@ describe("Card", () => {
     render(
       <Card title="Loading Card" status="loading">
         <span>Content</span>
-      </Card>,
+      </Card>
     );
 
     const statusIcon = screen.getByLabelText("Status: loading");
@@ -101,7 +101,7 @@ describe("Card", () => {
     render(
       <Card title="Clickable Card" status="success" onClick={handleClick}>
         <span>Content</span>
-      </Card>,
+      </Card>
     );
 
     const card = screen.getByText("Clickable Card").closest("div");
@@ -113,7 +113,7 @@ describe("Card", () => {
     const { container } = render(
       <Card title="Custom Class Card" status="success" className="custom-class">
         <span>Content</span>
-      </Card>,
+      </Card>
     );
 
     // The outermost div is the Card container
@@ -172,9 +172,7 @@ describe("CardRow", () => {
 
   it("applies status color to value", () => {
     render(<CardRow label="Status" value="Failed" status="error" />);
-    expect(screen.getByTestId("card-row-value")).toHaveClass(
-      "text-status-error",
-    );
+    expect(screen.getByTestId("card-row-value")).toHaveClass("text-status-error");
   });
 
   it("sets title attribute for truncation", () => {

@@ -29,7 +29,7 @@
  * State: None - purely presentational component
  */
 
-import { cn, radius, card, layout } from "../../styles/theme";
+import { cn, radius, card, layout, spacing } from "../../styles/theme";
 
 interface SkeletonProps {
   className?: string;
@@ -38,52 +38,51 @@ interface SkeletonProps {
   height?: string | number;
 }
 
-export function Skeleton({
-  className = "",
-  variant = "text",
-  width,
-  height,
-}: SkeletonProps) {
+/**
+ * Animated placeholder component for loading states with configurable shape.
+ */
+export function Skeleton({ className = "", variant = "text", width, height }: SkeletonProps) {
   const baseClasses = "animate-pulse bg-surface-hover";
 
-  const variantClasses = {
-    text: radius.default,
-    circular: radius.full,
-    rectangular: radius.lg,
-  };
+  // Type-safe variant class getter
+  function getVariantClass(v: typeof variant) {
+    switch (v) {
+      case "text":
+        return radius.default;
+      case "circular":
+        return radius.full;
+      case "rectangular":
+        return radius.lg;
+    }
+  }
 
   const sizeClasses = [
-    width
-      ? typeof width === "number"
-        ? `w-[${width}px]`
-        : `w-[${width}]`
-      : "",
-    height
-      ? typeof height === "number"
-        ? `h-[${height}px]`
-        : `h-[${height}]`
-      : "",
+    width ? (typeof width === "number" ? `w-[${width}px]` : `w-[${width}]`) : "",
+    height ? (typeof height === "number" ? `h-[${height}px]` : `h-[${height}]`) : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div
-      className={cn(baseClasses, variantClasses[variant], sizeClasses, className)}
+      className={cn(baseClasses, getVariantClass(variant), sizeClasses, className)}
       aria-hidden="true"
     />
   );
 }
 
+/**
+ * Pre-configured skeleton matching the Card component layout.
+ */
 export function CardSkeleton() {
   return (
     <div className={cn(card.base, card.variant.default, card.padding.md)}>
-      <div className={cn(layout.flex.between, "mb-3")}>
+      <div className={cn(layout.flex.between, spacing.margin.bottom.heading)}>
         <Skeleton className="h-4 w-24" />
         <Skeleton variant="circular" className="h-3 w-3" />
       </div>
-      <Skeleton className="h-8 w-32 mb-2" />
-      <div className="stack-sm mt-4">
+      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.inline}`} />
+      <div className={`stack-sm ${spacing.margin.top.content}`}>
         <div className={layout.flex.between}>
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
@@ -97,15 +96,14 @@ export function CardSkeleton() {
   );
 }
 
+/**
+ * Multi-line text placeholder for paragraph loading states.
+ */
 export function TextSkeleton({ lines = 3 }: { lines?: number }) {
   return (
     <div className="stack-sm">
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className="h-4"
-          width={i === lines - 1 ? "60%" : "100%"}
-        />
+        <Skeleton key={i} className="h-4" width={i === lines - 1 ? "60%" : "100%"} />
       ))}
     </div>
   );

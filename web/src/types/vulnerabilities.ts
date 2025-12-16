@@ -1,25 +1,25 @@
 /**
  * Vulnerabilities Type Definitions
- * 
+ *
  * Purpose: TypeScript interfaces for vulnerability scanning data structures.
  * Defines types for CVE data, device vulnerability results, and scanner status.
- * 
+ *
  * Key Types:
  * - Vulnerability: Individual CVE with severity, score, description, references
  * - DeviceVulnerabilities: Vulnerabilities for a single device with device metadata
  * - VulnerabilityScannerStatus: Scanner operational status and statistics
  * - VulnerabilityScanRequest: Request payload for triggering vulnerability scans
- * 
+ *
  * Usage:
  * ```typescript
  * import type { DeviceVulnerabilities, Vulnerability } from './vulnerabilities';
- * 
+ *
  * const deviceVulns: DeviceVulnerabilities = {
  *   deviceIp: '192.168.1.100',
  *   vulnerabilities: [...]
  * };
  * ```
- * 
+ *
  * Dependencies: None (pure type definitions)
  * Data Source: Vulnerability scanner API endpoints
  */

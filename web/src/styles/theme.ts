@@ -68,6 +68,29 @@ export const spacing = {
     sm: "pad-sm", // 12px
     default: "pad", // 16px
     lg: "pad-lg", // 24px
+    xl: "pad-xl", // 32px
+  },
+
+  // Semantic margin utilities (CSS classes from index.css)
+  margin: {
+    bottom: {
+      section: "mb-section", // 24px - between major sections
+      sectionLg: "mb-section-lg", // 32px - large section gaps
+      heading: "mb-heading", // 12px - after headings
+      content: "mb-content", // 16px - after content blocks
+      inline: "mb-2", // 8px - inline content (small bottom margins)
+    },
+    top: {
+      section: "mt-section", // 32px - before major sections
+      content: "mt-content", // 16px - content separation
+      inline: "mt-inline", // 8px - inline content
+    },
+  },
+
+  // Main content layout padding
+  mainPadding: {
+    y: "main-padding-y", // py-4 sm:py-6
+    x: "content-padding-x", // px-4 sm:px-6 lg:px-8
   },
 } as const;
 
@@ -218,11 +241,19 @@ export const badge = {
 } as const;
 
 /**
+ * Toast/Notification variants - for non-modal notifications
+ */
+export const toast = {
+  container: "px-4 py-3 shadow-lg",
+  animation: "animate-slide-in",
+} as const;
+
+/**
  * Alert/Banner variants - for inline messages
  * Use these for error/warning/info banners instead of hardcoded colors
  */
 export const alert = {
-  base: "px-4 py-3 rounded border",
+  base: "px-4 py-3 rounded-lg border",
 
   variant: {
     error:
@@ -303,9 +334,9 @@ export const modal = {
   },
 
   padding: {
-    sm: "p-4",
-    md: "p-6",
-    lg: "p-8",
+    sm: "pad", // 16px - uses semantic token
+    md: "pad-lg", // 24px - uses semantic token
+    lg: "pad-xl", // 32px - uses semantic token
   },
 } as const;
 
@@ -572,6 +603,14 @@ export function cn(...classes: (string | boolean | undefined | null)[]): string 
   return classes.filter(Boolean).join(" ");
 }
 
+// Type-safe Maps for dynamic lookups
+const buttonVariantMap = new Map<keyof typeof button.variant, string>(
+  Object.entries(button.variant) as [keyof typeof button.variant, string][]
+);
+const buttonSizeMap = new Map<keyof typeof button.size, string>(
+  Object.entries(button.size) as [keyof typeof button.size, string][]
+);
+
 /**
  * Build a button class string
  */
@@ -580,8 +619,16 @@ export function buttonClass(
   size: keyof typeof button.size = "md",
   className?: string
 ): string {
-  return cn(button.base, button.variant[variant], button.size[size], className);
+  return cn(button.base, buttonVariantMap.get(variant), buttonSizeMap.get(size), className);
 }
+
+// Type-safe Maps for input lookups
+const inputStateMap = new Map<keyof typeof input.state, string>(
+  Object.entries(input.state) as [keyof typeof input.state, string][]
+);
+const inputSizeMap = new Map<keyof typeof input.size, string>(
+  Object.entries(input.size) as [keyof typeof input.size, string][]
+);
 
 /**
  * Build an input class string
@@ -591,8 +638,16 @@ export function inputClass(
   size: keyof typeof input.size = "md",
   className?: string
 ): string {
-  return cn(input.base, input.state[state], input.size[size], className);
+  return cn(input.base, inputStateMap.get(state), inputSizeMap.get(size), className);
 }
+
+// Type-safe Maps for card lookups
+const cardVariantMap = new Map<keyof typeof card.variant, string>(
+  Object.entries(card.variant) as [keyof typeof card.variant, string][]
+);
+const cardPaddingMap = new Map<keyof typeof card.padding, string>(
+  Object.entries(card.padding) as [keyof typeof card.padding, string][]
+);
 
 /**
  * Build a card class string
@@ -602,8 +657,13 @@ export function cardClass(
   padding: keyof typeof card.padding = "md",
   className?: string
 ): string {
-  return cn(card.base, card.variant[variant], card.padding[padding], className);
+  return cn(card.base, cardVariantMap.get(variant), cardPaddingMap.get(padding), className);
 }
+
+// Type-safe Map for badge lookups
+const badgeVariantMap = new Map<keyof typeof badge.variant, string>(
+  Object.entries(badge.variant) as [keyof typeof badge.variant, string][]
+);
 
 /**
  * Build a badge class string
@@ -612,8 +672,16 @@ export function badgeClass(
   variant: keyof typeof badge.variant = "default",
   className?: string
 ): string {
-  return cn(badge.base, badge.variant[variant], className);
+  return cn(badge.base, badgeVariantMap.get(variant), className);
 }
+
+// Type-safe Maps for modal lookups
+const modalSizeMap = new Map<keyof typeof modal.size, string>(
+  Object.entries(modal.size) as [keyof typeof modal.size, string][]
+);
+const modalPaddingMap = new Map<keyof typeof modal.padding, string>(
+  Object.entries(modal.padding) as [keyof typeof modal.padding, string][]
+);
 
 /**
  * Build a modal class string
@@ -623,5 +691,5 @@ export function modalClass(
   padding: keyof typeof modal.padding = "md",
   className?: string
 ): string {
-  return cn(modal.content, modal.size[size], modal.padding[padding], className);
+  return cn(modal.content, modalSizeMap.get(size), modalPaddingMap.get(padding), className);
 }

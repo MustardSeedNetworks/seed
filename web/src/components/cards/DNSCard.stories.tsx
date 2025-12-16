@@ -1,8 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Card, CardValue, CardRow, CardDivider } from '../ui/Card';
-import { StatusBadge } from '../ui/StatusBadge';
-import { Globe } from 'lucide-react';
-import { Skeleton } from '../ui/Skeleton';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Card, CardValue, CardRow, CardDivider } from "../ui/Card";
+import { Globe } from "lucide-react";
+import { Skeleton } from "../ui/Skeleton";
 
 /**
  * DNSCard displays DNS resolver status and resolution times.
@@ -11,11 +10,11 @@ import { Skeleton } from '../ui/Skeleton';
  * This story demonstrates the card's visual states without context dependencies.
  */
 const meta: Meta = {
-  title: 'Cards/DNSCard',
+  title: "Cards/DNSCard",
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
       <div className="w-80">
@@ -37,8 +36,8 @@ export const Healthy: StoryObj = {
     >
       <CardValue value="8.8.8.8" size="lg" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Status" value={<StatusBadge status="success" label="Resolving" />} />
-        <CardRow label="Resolution Time" value="12ms" valueStatus="success" />
+        <CardRow label="Status" value="Resolving" status="success" />
+        <CardRow label="Resolution Time" value="12ms" status="success" />
         <CardDivider />
         <CardRow label="Primary DNS" value="8.8.8.8" />
         <CardRow label="Secondary DNS" value="8.8.4.4" />
@@ -58,8 +57,8 @@ export const SlowResolution: StoryObj = {
     >
       <CardValue value="192.168.1.1" size="lg" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Status" value={<StatusBadge status="warning" label="Slow" />} />
-        <CardRow label="Resolution Time" value="850ms" valueStatus="warning" />
+        <CardRow label="Status" value="Slow" status="warning" />
+        <CardRow label="Resolution Time" value="850ms" status="warning" />
         <CardDivider />
         <CardRow label="Primary DNS" value="192.168.1.1" />
         <CardRow label="Test Domain" value="google.com" />
@@ -81,7 +80,7 @@ export const Failed: StoryObj = {
     >
       <CardValue value="Failed" size="lg" status="error" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Status" value={<StatusBadge status="error" label="Unreachable" />} />
+        <CardRow label="Status" value="Unreachable" status="error" />
         <CardRow label="Primary DNS" value="8.8.8.8" />
         <CardDivider />
         <p className="caption text-status-danger">
@@ -102,10 +101,10 @@ export const MultipleDNS: StoryObj = {
     >
       <CardValue value="All Healthy" size="lg" status="success" />
       <div className="mt-3 space-y-1">
-        <CardRow label="8.8.8.8" value="12ms" valueStatus="success" />
-        <CardRow label="8.8.4.4" value="15ms" valueStatus="success" />
-        <CardRow label="1.1.1.1" value="8ms" valueStatus="success" />
-        <CardRow label="1.0.0.1" value="10ms" valueStatus="success" />
+        <CardRow label="8.8.8.8" value="12ms" status="success" />
+        <CardRow label="8.8.4.4" value="15ms" status="success" />
+        <CardRow label="1.1.1.1" value="8ms" status="success" />
+        <CardRow label="1.0.0.1" value="10ms" status="success" />
       </div>
     </Card>
   ),

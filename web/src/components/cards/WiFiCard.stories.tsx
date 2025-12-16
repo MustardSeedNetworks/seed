@@ -1,8 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Card, CardValue, CardRow, CardDivider } from '../ui/Card';
-import { StatusBadge } from '../ui/StatusBadge';
-import { Wifi, WifiOff, Signal } from 'lucide-react';
-import { Skeleton } from '../ui/Skeleton';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Card, CardValue, CardRow, CardDivider } from "../ui/Card";
+import { Wifi, WifiOff, Signal } from "lucide-react";
+import { Skeleton } from "../ui/Skeleton";
 
 /**
  * WiFiCard displays wireless network connection status and signal quality.
@@ -11,11 +10,11 @@ import { Skeleton } from '../ui/Skeleton';
  * This story demonstrates the card's visual states.
  */
 const meta: Meta = {
-  title: 'Cards/WiFiCard',
+  title: "Cards/WiFiCard",
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
       <div className="w-80">
@@ -37,8 +36,8 @@ export const Connected: StoryObj = {
     >
       <CardValue value="HomeNetwork" size="lg" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Signal" value="-45 dBm" valueStatus="success" />
-        <CardRow label="Quality" value="Excellent" valueStatus="success" />
+        <CardRow label="Signal" value="-45 dBm" status="success" />
+        <CardRow label="Quality" value="Excellent" status="success" />
         <CardDivider />
         <CardRow label="Channel" value="6 (2.4 GHz)" />
         <CardRow label="Security" value="WPA3" />
@@ -59,8 +58,8 @@ export const WeakSignal: StoryObj = {
     >
       <CardValue value="OfficeWiFi" size="lg" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Signal" value="-75 dBm" valueStatus="warning" />
-        <CardRow label="Quality" value="Fair" valueStatus="warning" />
+        <CardRow label="Signal" value="-75 dBm" status="warning" />
+        <CardRow label="Quality" value="Fair" status="warning" />
         <CardDivider />
         <CardRow label="Channel" value="36 (5 GHz)" />
         <CardRow label="Security" value="WPA2" />
@@ -83,8 +82,8 @@ export const VeryWeakSignal: StoryObj = {
     >
       <CardValue value="GuestNetwork" size="lg" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Signal" value="-85 dBm" valueStatus="error" />
-        <CardRow label="Quality" value="Poor" valueStatus="error" />
+        <CardRow label="Signal" value="-85 dBm" status="error" />
+        <CardRow label="Quality" value="Poor" status="error" />
         <CardDivider />
         <CardRow label="Channel" value="11 (2.4 GHz)" />
         <p className="caption text-status-danger mt-2">
@@ -105,7 +104,7 @@ export const Disconnected: StoryObj = {
     >
       <CardValue value="Not Connected" size="lg" status="error" />
       <div className="mt-3 space-y-1">
-        <CardRow label="Status" value={<StatusBadge status="error" label="Disconnected" />} />
+        <CardRow label="Status" value="Disconnected" status="error" />
         <CardDivider />
         <p className="caption text-text-muted">
           No wireless network connection. Check WiFi adapter and available networks.
@@ -182,9 +181,7 @@ export const NoAdapter: StoryObj = {
       status="unknown"
     >
       <CardValue value="Not Available" size="md" />
-      <p className="caption text-text-muted mt-2">
-        No wireless adapter detected on this system.
-      </p>
+      <p className="caption text-text-muted mt-2">No wireless adapter detected on this system.</p>
     </Card>
   ),
 };

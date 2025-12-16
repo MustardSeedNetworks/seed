@@ -23,6 +23,7 @@
  */
 
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { BaseCard } from "./BaseCard";
 import { Globe } from "../ui/Icons";
@@ -65,32 +66,31 @@ function getStatus(data: PublicIPData): Status {
   return "unknown";
 }
 
-export const PublicIPCard = memo(function PublicIPCard({
-  data,
-  loading,
-}: PublicIPCardProps) {
+export const PublicIPCard = memo(function PublicIPCard({ data, loading }: PublicIPCardProps) {
+  const { t } = useTranslation("cards");
+
   return (
     <BaseCard
-      title="Public IP"
+      title={t("publicIp.title")}
       icon={<Globe className={iconTokens.size.md} />}
       data={data}
       loading={loading}
       getStatus={getStatus}
-      loadingContent={<CardValue value="Checking..." size="lg" />}
-      emptyMessage="Unable to detect public IP"
+      loadingContent={<CardValue value={t("publicIp.checking")} size="lg" />}
+      emptyMessage={t("publicIp.unableToDetect")}
     >
       {(ipData) => (
         <>
           {/* IPv4 Address */}
           {ipData.ipv4 ? (
             <>
-              <p className="caption font-medium">IPv4</p>
+              <p className="caption font-medium">{t("publicIp.ipv4")}</p>
               <CardValue value={ipData.ipv4} size="lg" />
             </>
           ) : (
             <>
-              <p className="caption font-medium">IPv4</p>
-              <p className="body-small text-text-muted">Not available</p>
+              <p className="caption font-medium">{t("publicIp.ipv4")}</p>
+              <p className="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
             </>
           )}
 
@@ -99,15 +99,13 @@ export const PublicIPCard = memo(function PublicIPCard({
           {/* IPv6 Address */}
           {ipData.ipv6 ? (
             <>
-              <p className="caption font-medium">IPv6</p>
-              <p className="body-small font-mono break-all text-text-primary">
-                {ipData.ipv6}
-              </p>
+              <p className="caption font-medium">{t("publicIp.ipv6")}</p>
+              <p className="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
             </>
           ) : (
             <>
-              <p className="caption font-medium">IPv6</p>
-              <p className="body-small text-text-muted">Not available</p>
+              <p className="caption font-medium">{t("publicIp.ipv6")}</p>
+              <p className="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
             </>
           )}
 
@@ -116,7 +114,7 @@ export const PublicIPCard = memo(function PublicIPCard({
             <>
               <CardDivider />
               <CardRow
-                label="Last checked"
+                label={t("publicIp.lastChecked")}
                 value={formatLastChecked(ipData.lastChecked)}
               />
             </>

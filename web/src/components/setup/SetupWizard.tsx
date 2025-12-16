@@ -142,7 +142,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
   return (
     <div className={`min-h-screen bg-surface-base ${layout.flex.center} pad`}>
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+        <div className={`text-center ${spacing.margin.bottom.sectionLg}`}>
           <div className="w-16 h-16 mx-auto text-brand-primary">
             <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
               <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" opacity="0.3" />
@@ -195,15 +195,15 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
         </div>
 
         <form onSubmit={handleSubmit} className={cardClass("default", "lg")}>
-          <div className="mb-4">
-            <p className="body-small mb-4">
+          <div className={spacing.margin.bottom.content}>
+            <p className={`body-small ${spacing.margin.bottom.content}`}>
               {t("username.label")} <strong>{t("username.admin")}</strong>{" "}
               {t("username.cannotChange")}
             </p>
           </div>
 
           {/* Password mode selection */}
-          <div className="mb-6 stack-sm">
+          <div className={`${spacing.margin.bottom.section} stack-sm`}>
             <p className="body-small font-medium text-text-primary mb-2">
               {t("password.chooseMethod")}
             </p>
@@ -274,7 +274,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
 
           {passwordMode === "custom" && (
             <>
-              <div className="mb-4">
+              <div className={spacing.margin.bottom.content}>
                 <label
                   htmlFor="setup-password"
                   className="block body-small font-medium text-text-primary mb-1"
@@ -337,7 +337,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
                 <p className="caption text-text-muted mt-1">{t("password.minLength")}</p>
               </div>
 
-              <div className="mb-6">
+              <div className={spacing.margin.bottom.section}>
                 <label
                   htmlFor="setup-confirm-password"
                   className="block body-small font-medium text-text-primary mb-1"
@@ -361,7 +361,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
             <div
               role="alert"
               aria-live="assertive"
-              className={`mb-4 pad-sm bg-status-error/10 border border-status-error/20 ${radius.md} text-status-error body-small`}
+              className={`${spacing.margin.bottom.content} pad-sm bg-status-error/10 border border-status-error/20 ${radius.md} text-status-error body-small`}
             >
               {error}
             </div>

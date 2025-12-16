@@ -1,30 +1,30 @@
 /**
  * Vulnerability Scanner Hook
- * 
+ *
  * Manages vulnerability scanning for network devices using the NVD (National Vulnerability Database).
- * 
+ *
  * Features:
  * - Trigger vulnerability scans for all devices or specific IPs
  * - Fetch scan status and progress
  * - Retrieve vulnerability results with optional severity filtering
  * - Configure scanner settings (API keys, database cache)
- * 
+ *
  * The scanner:
  * - Fingerprints devices from network discovery
  * - Looks up CVEs from NVD database based on device OS/vendor/version
  * - Caches results for performance
  * - Supports filtering by severity (critical, high, medium, low)
- * 
+ *
  * Usage:
  * ```typescript
  * const { triggerScan, fetchResults, isScanning } = useVulnerabilities();
- * 
+ *
  * // Scan all discovered devices
  * await triggerScan();
- * 
+ *
  * // Scan specific device
  * await triggerScan('192.168.1.100');
- * 
+ *
  * // Get results for critical vulnerabilities
  * const criticalVulns = await fetchResults('critical');
  * ```
@@ -49,14 +49,14 @@ interface ScanResponse {
 /** API response for vulnerability results */
 interface ResultsResponse {
   results: DeviceVulnerabilities[]; // Array of device vulnerability reports
-  count: number;                     // Total number of results
+  count: number; // Total number of results
 }
 
 /**
  * Custom hook for managing vulnerability scanning operations.
- * 
+ *
  * Provides functions to trigger scans, check status, and retrieve results.
- * 
+ *
  * @returns Vulnerability scanning state and control functions
  */
 export function useVulnerabilities() {
@@ -93,47 +93,41 @@ export function useVulnerabilities() {
     }
   }, []);
 
-  const fetchStatus =
-    useCallback(async (): Promise<VulnerabilityScannerStatus | null> => {
-      try {
-        const response = await fetch(`${API_BASE}/api/vulnerabilities/status`, {
-          headers: getAuthHeaders(),
-        });
-        if (!response.ok) {
-          return null;
-        }
-        return await response.json();
-      } catch (error) {
-        console.error("Failed to fetch vulnerability status:", error);
+  const fetchStatus = useCallback(async (): Promise<VulnerabilityScannerStatus | null> => {
+    try {
+      const response = await fetch(`${API_BASE}/api/vulnerabilities/status`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
         return null;
       }
-    }, []);
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to fetch vulnerability status:", error);
+      return null;
+    }
+  }, []);
 
-  const fetchResults = useCallback(
-    async (severity?: string): Promise<DeviceVulnerabilities[]> => {
-      try {
-        const url = severity
-          ? `${API_BASE}/api/vulnerabilities/results?severity=${encodeURIComponent(
-              severity,
-            )}`
-          : `${API_BASE}/api/vulnerabilities/results`;
+  const fetchResults = useCallback(async (severity?: string): Promise<DeviceVulnerabilities[]> => {
+    try {
+      const url = severity
+        ? `${API_BASE}/api/vulnerabilities/results?severity=${encodeURIComponent(severity)}`
+        : `${API_BASE}/api/vulnerabilities/results`;
 
-        const response = await fetch(url, {
-          headers: getAuthHeaders(),
-        });
-        if (!response.ok) {
-          return [];
-        }
-
-        const data: ResultsResponse = await response.json();
-        return data.results || [];
-      } catch (error) {
-        console.error("Failed to fetch vulnerability results:", error);
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
         return [];
       }
-    },
-    [],
-  );
+
+      const data: ResultsResponse = await response.json();
+      return data.results || [];
+    } catch (error) {
+      console.error("Failed to fetch vulnerability results:", error);
+      return [];
+    }
+  }, []);
 
   const fetchDeviceVulnerabilities = useCallback(
     async (ip: string): Promise<DeviceVulnerabilities | null> => {
@@ -142,7 +136,7 @@ export function useVulnerabilities() {
           `${API_BASE}/api/vulnerabilities/device?ip=${encodeURIComponent(ip)}`,
           {
             headers: getAuthHeaders(),
-          },
+          }
         );
 
         if (!response.ok) {
@@ -151,49 +145,39 @@ export function useVulnerabilities() {
 
         return await response.json();
       } catch (error) {
-        console.error(
-          `Failed to fetch vulnerabilities for device ${ip}:`,
-          error,
-        );
+        console.error(`Failed to fetch vulnerabilities for device ${ip}:`, error);
         return null;
       }
     },
-    [],
+    []
   );
 
-  const fetchSettings =
-    useCallback(async (): Promise<VulnerabilityScannerConfig | null> => {
-      try {
-        const response = await fetch(
-          `${API_BASE}/api/vulnerabilities/settings`,
-          {
-            headers: getAuthHeaders(),
-          },
-        );
-        if (!response.ok) {
-          return null;
-        }
-        return await response.json();
-      } catch (error) {
-        console.error("Failed to fetch vulnerability settings:", error);
+  const fetchSettings = useCallback(async (): Promise<VulnerabilityScannerConfig | null> => {
+    try {
+      const response = await fetch(`${API_BASE}/api/vulnerabilities/settings`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
         return null;
       }
-    }, []);
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to fetch vulnerability settings:", error);
+      return null;
+    }
+  }, []);
 
   const updateSettings = useCallback(
     async (settings: Partial<VulnerabilityScannerConfig>): Promise<boolean> => {
       try {
-        const response = await fetch(
-          `${API_BASE}/api/vulnerabilities/settings`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              ...getAuthHeaders(),
-            },
-            body: JSON.stringify(settings),
+        const response = await fetch(`${API_BASE}/api/vulnerabilities/settings`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
           },
-        );
+          body: JSON.stringify(settings),
+        });
 
         return response.ok;
       } catch (error) {
@@ -201,7 +185,7 @@ export function useVulnerabilities() {
         return false;
       }
     },
-    [],
+    []
   );
 
   return {
