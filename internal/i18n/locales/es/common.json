@@ -1,4 +1,8 @@
 {
+  "app": {
+    "title": "The Seed",
+    "tagline": "Diagnósticos de Red por Mustard Seed Networks"
+  },
   "buttons": {
     "save": "Guardar",
     "cancel": "Cancelar",
@@ -29,12 +33,14 @@
     "connecting": "Conectando...",
     "error": "Error",
     "loading": "Cargando...",
+    "loggingIn": "Iniciando sesión...",
     "scanning": "Escaneando...",
     "complete": "Completado",
     "pending": "Pendiente",
     "running": "Ejecutando",
     "stopped": "Detenido",
     "paused": "Pausado",
+    "down": "inactivo",
     "noCarrier": "Sin portadora",
     "noIP": "Sin IP",
     "noSignal": "Sin señal",
@@ -76,15 +82,23 @@
   "accessibility": {
     "openHelp": "Abrir ayuda",
     "openSettings": "Abrir configuración",
-    "switchToLight": "Cambiar a modo claro",
-    "switchToDark": "Cambiar a modo oscuro",
+    "switchToLightMode": "Cambiar a modo claro",
+    "switchToDarkMode": "Cambiar a modo oscuro",
     "selectInterface": "Seleccionar interfaz de red",
-    "clearSearch": "Limpiar búsqueda"
+    "clearSearch": "Limpiar búsqueda",
+    "wsStatus": "Estado de WebSocket: {{status}}"
   },
   "sections": {
     "connectivity": "Conectividad",
     "network": "Red",
     "testingDiscovery": "Pruebas y descubrimiento",
     "system": "Sistema"
+  },
+  "login": {
+    "defaultCredentials": "Predeterminado: admin / seed"
+  },
+  "footer": {
+    "runTestsHint": "Toca el botón de reproducción para ejecutar todas las pruebas.",
+    "networkDiscoveryHint": "Usa la tarjeta de Descubrimiento de Red para buscar dispositivos en tu red."
   }
 }
