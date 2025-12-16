@@ -1,0 +1,144 @@
+{
+  "link": {
+    "title": "Link Status",
+    "carrier": "Carrier",
+    "speed": "Speed",
+    "duplex": "Duplex",
+    "mtu": "MTU",
+    "autoNeg": "Auto-Neg",
+    "flaps24h": "Flaps (24h)",
+    "advertisedSpeeds": "Advertised Speeds"
+  },
+  "network": {
+    "title": "Network",
+    "dhcp": "DHCP",
+    "static": "Static",
+    "ipv4": "IPv4",
+    "ipv6": "IPv6",
+    "dhcpServer": "DHCP Server",
+    "lease": "Lease",
+    "dhcpTiming": "DHCP Timing",
+    "discoverOffer": "Discover → Offer",
+    "offerRequest": "Offer → Request",
+    "requestAck": "Request → Ack",
+    "total": "Total",
+    "notRecorded": "DHCP timing not yet recorded"
+  },
+  "discovery": {
+    "title": "Network Discovery",
+    "scanning": "Scanning...",
+    "devices": "devices",
+    "deviceFound": "{{count}} device found",
+    "devicesFound": "{{count}} devices found",
+    "noDevices": "No devices discovered. Click Scan to discover network devices.",
+    "localNetwork": "Local Network",
+    "extendedNetworks": "Extended Networks",
+    "routers": "Routers",
+    "servers": "Servers",
+    "workstations": "Workstations",
+    "printers": "Printers",
+    "mobile": "Mobile",
+    "networkDevices": "Network",
+    "other": "Other",
+    "autoProfile": "Auto-Profile",
+    "lldpInfo": "LLDP Info",
+    "cdpInfo": "CDP Info",
+    "edpInfo": "EDP Info",
+    "portScanResults": "Port Scan Results",
+    "openPorts": "Open Ports",
+    "noOpenPorts": "No open ports found",
+    "searchPlaceholder": "Search devices by IP, hostname, vendor, MAC..."
+  },
+  "gateway": {
+    "title": "Gateway",
+    "defaultGateway": "Default Gateway",
+    "latency": "Latency",
+    "hops": "Hops"
+  },
+  "publicIp": {
+    "title": "Public IP",
+    "address": "Address",
+    "location": "Location",
+    "isp": "ISP",
+    "asn": "ASN"
+  },
+  "dns": {
+    "title": "DNS",
+    "servers": "Servers",
+    "responseTime": "Response Time",
+    "resolving": "Resolving..."
+  },
+  "wifi": {
+    "title": "WiFi",
+    "ssid": "SSID",
+    "bssid": "BSSID",
+    "channel": "Channel",
+    "frequency": "Frequency",
+    "signal": "Signal",
+    "noise": "Noise",
+    "snr": "SNR",
+    "security": "Security",
+    "txRate": "TX Rate",
+    "rxRate": "RX Rate",
+    "band": "Band"
+  },
+  "cable": {
+    "title": "Cable Test",
+    "status": "Status",
+    "length": "Length",
+    "pairs": "Pairs",
+    "faults": "Faults"
+  },
+  "performance": {
+    "title": "Performance",
+    "download": "Download",
+    "upload": "Upload",
+    "latency": "Latency",
+    "jitter": "Jitter",
+    "packetLoss": "Packet Loss",
+    "runTest": "Run Test",
+    "testInProgress": "Test in progress..."
+  },
+  "health": {
+    "title": "Health Checks",
+    "passed": "Passed",
+    "failed": "Failed",
+    "warning": "Warning",
+    "endpoint": "Endpoint",
+    "responseTime": "Response Time",
+    "lastCheck": "Last Check"
+  },
+  "system": {
+    "title": "System Health",
+    "cpu": "CPU",
+    "memory": "Memory",
+    "disk": "Disk",
+    "uptime": "Uptime",
+    "temperature": "Temperature"
+  },
+  "switch": {
+    "title": "Switch Discovery",
+    "ports": "Ports",
+    "vlans": "VLANs",
+    "model": "Model",
+    "firmware": "Firmware"
+  },
+  "vlan": {
+    "title": "VLAN",
+    "id": "VLAN ID",
+    "name": "Name",
+    "traffic": "Traffic",
+    "createVlan": "Create VLAN",
+    "deleteVlan": "Delete VLAN",
+    "vlanIdHint": "VLAN ID (1-4094)"
+  },
+  "survey": {
+    "title": "WiFi Survey",
+    "newSurvey": "New Survey",
+    "surveyName": "Survey Name",
+    "floorPlan": "Floor Plan",
+    "samples": "Samples",
+    "coverage": "Coverage",
+    "heatmap": "Heatmap"
+  }
+}

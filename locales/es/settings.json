@@ -1,0 +1,102 @@
+{
+  "title": "Configuración",
+  "sections": {
+    "appearance": "Apariencia",
+    "network": "Red",
+    "discovery": "Descubrimiento",
+    "performance": "Rendimiento",
+    "health": "Verificaciones de salud",
+    "dns": "DNS",
+    "wifi": "WiFi",
+    "snmp": "SNMP",
+    "thresholds": "Umbrales"
+  },
+  "appearance": {
+    "title": "Apariencia",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeSystem": "Sistema",
+    "language": "Idioma",
+    "languageEn": "English",
+    "languageEs": "Español"
+  },
+  "network": {
+    "title": "Red",
+    "defaultInterface": "Interfaz predeterminada",
+    "ipMode": "Modo IP",
+    "dhcp": "DHCP",
+    "static": "Estática",
+    "ipAddress": "Dirección IP",
+    "subnetMask": "Máscara de subred",
+    "gateway": "Puerta de enlace",
+    "dnsServers": "Servidores DNS",
+    "mtu": "MTU"
+  },
+  "discovery": {
+    "title": "Descubrimiento",
+    "profile": "Perfil",
+    "profileStealth": "Sigiloso",
+    "profileStandard": "Estándar",
+    "profileFullScan": "Escaneo completo",
+    "profileCustom": "Personalizado",
+    "scanInterval": "Intervalo de escaneo",
+    "timeout": "Tiempo de espera",
+    "subnets": "Subredes",
+    "addSubnet": "Agregar subred",
+    "cidr": "CIDR",
+    "description": "Descripción"
+  },
+  "performance": {
+    "title": "Rendimiento",
+    "testServer": "Servidor de prueba",
+    "testDuration": "Duración de prueba",
+    "parallelConnections": "Conexiones paralelas"
+  },
+  "health": {
+    "title": "Verificaciones de salud",
+    "endpoints": "Endpoints",
+    "addEndpoint": "Agregar endpoint",
+    "name": "Nombre",
+    "url": "URL",
+    "method": "Método",
+    "interval": "Intervalo",
+    "timeout": "Tiempo de espera",
+    "expectedStatus": "Estado esperado"
+  },
+  "dns": {
+    "title": "DNS",
+    "testDomains": "Dominios de prueba",
+    "addDomain": "Agregar dominio",
+    "customServers": "Servidores personalizados"
+  },
+  "wifi": {
+    "title": "WiFi",
+    "scanInterval": "Intervalo de escaneo",
+    "showHidden": "Mostrar redes ocultas",
+    "signalThreshold": "Umbral de señal"
+  },
+  "snmp": {
+    "title": "SNMP",
+    "community": "Comunidad",
+    "version": "Versión",
+    "port": "Puerto",
+    "timeout": "Tiempo de espera",
+    "retries": "Reintentos"
+  },
+  "thresholds": {
+    "title": "Umbrales",
+    "warning": "Advertencia",
+    "critical": "Crítico",
+    "latency": "Latencia",
+    "packetLoss": "Pérdida de paquetes",
+    "cpuUsage": "Uso de CPU",
+    "memoryUsage": "Uso de memoria",
+    "diskUsage": "Uso de disco"
+  },
+  "autoSave": {
+    "saving": "Guardando...",
+    "saved": "Guardado",
+    "error": "Error al guardar"
+  }
+}

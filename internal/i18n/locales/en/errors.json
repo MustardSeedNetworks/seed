@@ -1,0 +1,80 @@
+{
+  "auth": {
+    "invalidCredentials": "Invalid credentials",
+    "accountLocked": "Account temporarily locked",
+    "tooManyAttempts": "Too many failed login attempts",
+    "unauthorized": "Unauthorized",
+    "noToken": "Unauthorized: no token provided",
+    "invalidToken": "Unauthorized: invalid token",
+    "expiredToken": "Invalid or expired refresh token",
+    "refreshNotFound": "Refresh token not found",
+    "sessionExpired": "Session expired. Please log in again."
+  },
+  "network": {
+    "connectionFailed": "Connection failed",
+    "networkError": "Network error",
+    "timeout": "Request timed out",
+    "serverUnavailable": "Server unavailable",
+    "disconnected": "Disconnected from server"
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "tooLong": "{{field}} too long (max {{max}} characters)",
+    "tooShort": "{{field}} too short (min {{min}} characters)",
+    "invalidFormat": "Invalid {{field}} format",
+    "invalidRange": "{{field}} must be between {{min}} and {{max}}",
+    "mustBePositive": "{{field}} must be non-negative",
+    "warningLessThanCritical": "Warning threshold must be less than critical threshold"
+  },
+  "api": {
+    "methodNotAllowed": "Method not allowed",
+    "invalidRequestBody": "Invalid request body",
+    "notFound": "Not found",
+    "rateLimitExceeded": "Rate limit exceeded. Please try again later.",
+    "internalError": "Internal server error"
+  },
+  "service": {
+    "notAvailable": "{{service}} not available",
+    "notEnabled": "{{service}} not enabled",
+    "alreadyRunning": "{{service}} already running",
+    "failedToStart": "Failed to start {{service}}",
+    "failedToStop": "Failed to stop {{service}}"
+  },
+  "config": {
+    "failedToSave": "Failed to save configuration",
+    "failedToLoad": "Failed to load configuration",
+    "insecureCredentials": "Insecure default credentials detected"
+  },
+  "vlan": {
+    "failedToCreate": "Failed to create VLAN",
+    "failedToDelete": "Failed to delete VLAN",
+    "invalidId": "VLAN ID must be 1-4094",
+    "alreadyExists": "VLAN already exists"
+  },
+  "mtu": {
+    "invalidRange": "MTU must be 68-9000"
+  },
+  "password": {
+    "tooShort": "Password must be at least 8 characters",
+    "mismatch": "Passwords do not match",
+    "weak": "Password does not meet strength requirements"
+  },
+  "subnet": {
+    "alreadyExists": "Subnet already exists",
+    "notFound": "Subnet not found",
+    "cidrRequired": "CIDR parameter required"
+  },
+  "survey": {
+    "nameRequired": "Survey name is required",
+    "idRequired": "Survey ID required",
+    "notFound": "Survey not found"
+  },
+  "wifi": {
+    "notWireless": "Current interface is not a wireless adapter",
+    "notConnected": "Not connected to a wireless network"
+  },
+  "file": {
+    "failedToRead": "Failed to read file",
+    "pathNotConfigured": "Path not configured"
+  }
+}

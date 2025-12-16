@@ -1,0 +1,44 @@
+{
+  "instructions": {
+    "runTests": "Toque el botón de reproducir para ejecutar todas las pruebas.",
+    "discovery": "Use la tarjeta de Descubrimiento de red para escanear dispositivos en su red.",
+    "vlan": "Crea/elimina subinterfaz VLAN 802.1Q. Requiere root.",
+    "defaultCredentials": "Predeterminado: admin / seed"
+  },
+  "tooltips": {
+    "linkStatus": "Muestra el estado del enlace físico y propiedades de conexión",
+    "networkConfig": "Muestra configuración IP e información DHCP",
+    "discovery": "Escanea su red para encontrar dispositivos conectados",
+    "gateway": "Muestra puerta de enlace predeterminada y estado de conectividad",
+    "publicIp": "Muestra su dirección IP pública y ubicación",
+    "dns": "Prueba resolución DNS y muestra servidores configurados",
+    "wifi": "Muestra detalles de conexión WiFi y fuerza de señal",
+    "cable": "Prueba integridad y longitud del cable Ethernet",
+    "performance": "Mide rendimiento de red y latencia",
+    "healthChecks": "Monitorea disponibilidad de endpoints",
+    "systemHealth": "Muestra uso de recursos del sistema"
+  },
+  "settings": {
+    "theme": "Elija entre tema claro, oscuro o del sistema",
+    "language": "Seleccione su idioma preferido",
+    "interface": "Seleccione la interfaz de red a monitorear",
+    "discovery": "Configure el comportamiento del escaneo de red",
+    "thresholds": "Establezca valores de umbral de advertencia y crítico"
+  },
+  "portServices": {
+    "ftp": "FTP",
+    "ssh": "SSH",
+    "telnet": "Telnet",
+    "smtp": "SMTP",
+    "dns": "DNS",
+    "http": "HTTP",
+    "pop3": "POP3",
+    "imap": "IMAP",
+    "https": "HTTPS",
+    "smb": "SMB",
+    "mysql": "MySQL",
+    "rdp": "RDP",
+    "postgresql": "PostgreSQL",
+    "mongodb": "MongoDB"
+  }
+}

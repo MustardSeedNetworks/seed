@@ -215,10 +215,10 @@ func TestSafeError(t *testing.T) {
 			}
 
 			resultStr := result.Error()
-			if tt.contains != "" && !contains(resultStr, tt.contains) {
+			if tt.contains != "" && !testContains(resultStr, tt.contains) {
 				t.Errorf("SafeError() = %q, should contain %q", resultStr, tt.contains)
 			}
-			if tt.notContains != "" && contains(resultStr, tt.notContains) {
+			if tt.notContains != "" && testContains(resultStr, tt.notContains) {
 				t.Errorf("SafeError() = %q, should NOT contain %q", resultStr, tt.notContains)
 			}
 		})
@@ -235,7 +235,7 @@ func (e *testError) Error() string {
 	return e.msg
 }
 
-func contains(s, substr string) bool {
+func testContains(s, substr string) bool {
 	return substr != "" && len(s) >= len(substr) &&
 		(s == substr || findSubstring(s, substr))
 }

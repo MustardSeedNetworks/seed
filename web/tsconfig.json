@@ -17,10 +17,11 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@locales/*": ["../locales/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../locales"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test/**/*"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

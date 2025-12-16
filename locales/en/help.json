@@ -1,0 +1,44 @@
+{
+  "instructions": {
+    "runTests": "Tap the play button to run all tests.",
+    "discovery": "Use the Network Discovery card to scan for devices on your network.",
+    "vlan": "Creates/removes 802.1Q VLAN subinterface. Requires root.",
+    "defaultCredentials": "Default: admin / seed"
+  },
+  "tooltips": {
+    "linkStatus": "Shows the physical link status and connection properties",
+    "networkConfig": "Displays IP configuration and DHCP information",
+    "discovery": "Scans your network to find connected devices",
+    "gateway": "Shows default gateway and connectivity status",
+    "publicIp": "Displays your public IP address and location",
+    "dns": "Tests DNS resolution and shows configured servers",
+    "wifi": "Shows WiFi connection details and signal strength",
+    "cable": "Tests Ethernet cable integrity and length",
+    "performance": "Measures network throughput and latency",
+    "healthChecks": "Monitors endpoint availability",
+    "systemHealth": "Shows system resource usage"
+  },
+  "settings": {
+    "theme": "Choose between light, dark, or system theme",
+    "language": "Select your preferred language",
+    "interface": "Select the network interface to monitor",
+    "discovery": "Configure network scanning behavior",
+    "thresholds": "Set warning and critical threshold values"
+  },
+  "portServices": {
+    "ftp": "FTP",
+    "ssh": "SSH",
+    "telnet": "Telnet",
+    "smtp": "SMTP",
+    "dns": "DNS",
+    "http": "HTTP",
+    "pop3": "POP3",
+    "imap": "IMAP",
+    "https": "HTTPS",
+    "smb": "SMB",
+    "mysql": "MySQL",
+    "rdp": "RDP",
+    "postgresql": "PostgreSQL",
+    "mongodb": "MongoDB"
+  }
+}

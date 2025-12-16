@@ -31,6 +31,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/dns"
 	"github.com/krisarmstrong/seed/internal/gateway"
 	"github.com/krisarmstrong/seed/internal/iperf"
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/publicip"
 	"github.com/krisarmstrong/seed/internal/speedtest"
@@ -73,9 +74,6 @@ type Server struct {
 	surveyManager       *survey.Manager
 	vulnScanner         *discovery.VulnerabilityScanner
 	publicipChecker     *publicip.Checker
-	logAccessToken      string
-	logAccessHeader     string
-	requireLogToken     bool
 	icmpAvailable       bool         // Whether raw ICMP sockets are available
 	startTime           time.Time    // Application start time for uptime tracking (fixes #540)
 	redirectServer      *http.Server // HTTP→HTTPS redirect server (fixes #515)
@@ -120,9 +118,6 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		speedtestTester:    speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 		iperfManager:       iperf.NewManager(),
 		publicipChecker:    publicip.NewChecker(),
-		logAccessToken:     cfg.Server.LogAccessToken,
-		logAccessHeader:    cfg.Server.LogAccessHeader,
-		requireLogToken:    cfg.Server.RequireLogAccess,
 	}
 
 	// Set up link state change callback
@@ -482,9 +477,14 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
-	// Apply middleware stack: panic recovery → security headers → CORS → auth (fixes #519)
+	// Apply middleware stack: panic recovery → request ID → security headers → CORS → auth (fixes #519)
 	// Panic recovery is outermost to catch all panics
-	handler := recoverMiddleware(securityHeadersMiddleware(corsMiddleware(s.authManager.Middleware(s.mux))))
+	// Request ID middleware generates unique IDs for request correlation in logs
+	handler := recoverMiddleware(
+		logging.RequestIDMiddleware(
+			securityHeadersMiddleware(
+				corsMiddleware(
+					s.authManager.Middleware(s.mux)))))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
