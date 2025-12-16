@@ -1,6 +1,6 @@
-# LuminetIQ Formal Business Plan (2026-2028)
+# The Seed (Mustard Seed Networks) - # The Seed Formal Business Plan (2026-2028)
 
-**Company Name:** LuminetIQ (formerly NetScope)
+**Company Name:** The Seed (formerly NetScope)
 **Document Version:** 1.0
 **Last Updated:** 2025-12-15
 **Planning Horizon:** 3 years (2026-2028)
@@ -10,7 +10,7 @@
 ## Executive Summary
 
 **Company Overview:**
-LuminetIQ is an AI-powered network diagnostic and WiFi planning platform that helps IT teams troubleshoot faster, plan WiFi deployments without expensive site surveys, and meet compliance requirements (HIPAA, CIS, NIST).
+The Seed is an AI-powered network diagnostic and WiFi planning platform that helps IT teams troubleshoot faster, plan WiFi deployments without expensive site surveys, and meet compliance requirements (HIPAA, CIS, NIST).
 
 **Mission:**
 Make professional-grade network diagnostics and WiFi planning accessible to every IT team, from small clinics to large enterprises.
@@ -66,10 +66,10 @@ Annual subscriptions with 5 pricing tiers:
 
 ### 1.1 Company Information
 
-- **Legal Name:** LuminetIQ LLC (to be formed)
+- **Legal Name:** The Seed LLC (to be formed)
 - **Founded:** 2025
 - **Headquarters:** TBD (remote-first)
-- **Website:** luminetiq.com (domain secured)
+- **Website:** seed.com (domain secured)
 - **Corporate Structure:** LLC (initially), consider C-Corp if raising venture capital
 
 ### 1.2 Ownership Structure
@@ -91,7 +91,7 @@ Annual subscriptions with 5 pricing tiers:
 - Core features: device discovery, WiFi scanning, DHCP testing
 
 **2026 (Planned):**
-- Rebrand to LuminetIQ
+- Rebrand to The Seed
 - Add AI features (device classification, root cause analysis, anomaly detection)
 - Launch predictive WiFi survey (flagship feature)
 - First paying customers (Q1 2026)
@@ -163,7 +163,7 @@ Become the #1 network diagnostic platform for healthcare and SMB IT teams by 202
 
 **Primary Market: Healthcare (70% of revenue)**
 
-| Segment | Size (US) | Budget | Pain Points | LuminetIQ Value Prop |
+| Segment | Size (US) | Budget | Pain Points | The Seed Value Prop |
 |---------|-----------|--------|-------------|---------------------|
 | Community Hospitals (100-500 beds) | 2,800 | $200K-$2M IT | HIPAA compliance, medical device security, WiFi dead zones | Automated compliance, predictive WiFi, vulnerability scanning |
 | Clinics (10-50 providers) | 35,000 | $50K-$500K IT | Outsourced IT, limited staff, budget constraints | Affordable ($299-799), easy to use, remote diagnostics |
@@ -171,7 +171,7 @@ Become the #1 network diagnostic platform for healthcare and SMB IT teams by 202
 
 **Secondary Market: SMB (20% of revenue)**
 
-| Segment | Size (US) | Budget | Pain Points | LuminetIQ Value Prop |
+| Segment | Size (US) | Budget | Pain Points | The Seed Value Prop |
 |---------|-----------|--------|-------------|---------------------|
 | Professional Services | 500,000 | $50K-$500K IT | Network reliability, remote work, growth scaling | Troubleshooting time savings, proactive monitoring |
 | Light Manufacturing | 200,000 | $100K-$1M IT | IoT devices, segmentation, uptime critical | Device classification, anomaly detection, downtime prevention |
@@ -179,7 +179,7 @@ Become the #1 network diagnostic platform for healthcare and SMB IT teams by 202
 
 **Tertiary Market: MSPs & Consultants (10% of revenue)**
 
-| Segment | Size (US) | Pain Points | LuminetIQ Value Prop |
+| Segment | Size (US) | Pain Points | The Seed Value Prop |
 |---------|-----------|-------------|---------------------|
 | WiFi Consultants | 5,000 | Site survey costs, competitive pricing | Predictive survey saves $3K-5K per deployment |
 | MSPs (10-100 clients) | 15,000 | Scaling remote support, truck rolls | Multi-site management, remote diagnostics |
@@ -208,22 +208,22 @@ Become the #1 network diagnostic platform for healthcare and SMB IT teams by 202
 **Ekahau (WiFi Survey Leader)**
 - **Strengths:** Market leader (60%+ share), professional-grade, trusted brand
 - **Weaknesses:** Expensive ($5K-20K), requires hardware, reactive surveys only
-- **Differentiation:** LuminetIQ offers predictive survey (plan before buying APs) at 60-75% lower cost
+- **Differentiation:** The Seed offers predictive survey (plan before buying APs) at 60-75% lower cost
 
 **Hamina (Cloud WiFi Planning)**
 - **Strengths:** Modern UI, cloud-based, good RF modeling
 - **Weaknesses:** WiFi-only (no network diagnostics), no AI, no compliance
-- **Differentiation:** LuminetIQ is all-in-one (WiFi + network + security + compliance)
+- **Differentiation:** The Seed is all-in-one (WiFi + network + security + compliance)
 
 **NetAlly AirMapper (Field Survey)**
 - **Strengths:** Hardware-bundled, trusted for on-site work, rugged
 - **Weaknesses:** Expensive hardware ($2.5K+), reactive only, iPad-only
-- **Differentiation:** LuminetIQ is software-only, cross-platform, predictive
+- **Differentiation:** The Seed is software-only, cross-platform, predictive
 
 **AirMagnet Survey PRO (Enterprise)**
 - **Strengths:** Enterprise-grade, comprehensive analysis, NetAlly brand
 - **Weaknesses:** Complex, steep learning curve, expensive ($3K-15K)
-- **Differentiation:** LuminetIQ is easier to use, modern UI, SMB-focused
+- **Differentiation:** The Seed is easier to use, modern UI, SMB-focused
 
 ### 3.2 Indirect Competitors
 
@@ -234,9 +234,9 @@ Become the #1 network diagnostic platform for healthcare and SMB IT teams by 202
 - **Nagios:** Open source, free, requires expertise
 
 **Differentiation:**
-- LuminetIQ adds AI root cause analysis (they only monitor, don't diagnose)
-- LuminetIQ includes WiFi planning (they don't)
-- LuminetIQ has compliance reporting (they require manual work)
+- The Seed adds AI root cause analysis (they only monitor, don't diagnose)
+- The Seed includes WiFi planning (they don't)
+- The Seed has compliance reporting (they require manual work)
 
 ### 3.3 Competitive Advantages
 
@@ -462,19 +462,19 @@ CEO/Founder
 
 **IT Director (Hospital):**
 - **Pain:** "We spend 20 hours/week troubleshooting and can't afford consultants"
-- **Message:** "LuminetIQ's AI tells you exactly what's wrong in seconds, saving 10+ hours/week and $3K+ per WiFi survey"
+- **Message:** "The Seed's AI tells you exactly what's wrong in seconds, saving 10+ hours/week and $3K+ per WiFi survey"
 
 **BioMed Engineer:**
 - **Pain:** "Medical devices are vulnerable and we can't keep up with patches"
-- **Message:** "LuminetIQ scans all devices, prioritizes vulnerabilities by risk, and generates HIPAA audit reports"
+- **Message:** "The Seed scans all devices, prioritizes vulnerabilities by risk, and generates HIPAA audit reports"
 
 **WiFi Consultant:**
 - **Pain:** "Site surveys cost $3K-5K and take weeks to schedule"
-- **Message:** "LuminetIQ's predictive survey lets you plan coverage from your desk—no on-site visit needed"
+- **Message:** "The Seed's predictive survey lets you plan coverage from your desk—no on-site visit needed"
 
 **MSP:**
 - **Pain:** "We can't afford to send techs on-site for every network issue"
-- **Message:** "LuminetIQ's remote diagnostics and multi-site dashboard let you troubleshoot 20+ clients from one screen"
+- **Message:** "The Seed's remote diagnostics and multi-site dashboard let you troubleshoot 20+ clients from one screen"
 
 ### 6.2 Sales Strategy
 
@@ -1052,7 +1052,7 @@ $205K / $900 ASP = 228 customers
 - **Later:** C-Corp (if raising venture capital)
 
 **Intellectual Property:**
-- Trademark: "LuminetIQ" (USPTO application)
+- Trademark: "The Seed" (USPTO application)
 - Patents: RF propagation algorithms, AI root cause methods (provisional → utility)
 - Copyright: Software code (automatic, register with US Copyright Office)
 
@@ -1099,7 +1099,7 @@ $205K / $900 ASP = 228 customers
 ## 13. Conclusion
 
 **Summary:**
-LuminetIQ is positioned to capture a significant share of the $850M serviceable market by solving real pain points for healthcare and SMB IT teams:
+The Seed is positioned to capture a significant share of the $850M serviceable market by solving real pain points for healthcare and SMB IT teams:
 - Troubleshooting time savings (10+ hours/week)
 - WiFi planning cost savings ($3K-5K per deployment)
 - Compliance automation (40-80 hours per audit)
