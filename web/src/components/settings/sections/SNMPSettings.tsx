@@ -207,8 +207,8 @@ export const SNMPSettings = memo(function SNMPSettings({
         </div>
 
         {/* Community Strings (v1/v2c) */}
-        <div className="border-t border-surface-border pt-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
+          <div className={`flex items-center justify-between ${spacing.margin.bottom.inline}`}>
             <span className="caption text-text-muted font-medium">
               {t("snmp.communityStrings")}
             </span>
@@ -220,8 +220,10 @@ export const SNMPSettings = memo(function SNMPSettings({
               {t("common.add")}
             </button>
           </div>
-          <p className="caption text-text-muted mb-2">{t("snmp.communityDesc")}</p>
-          <div className="flex gap-2 mb-2">
+          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+            {t("snmp.communityDesc")}
+          </p>
+          <div className={`flex ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}>
             <label className="sr-only" htmlFor="snmp-community-new">
               {t("snmp.communityString")}
             </label>
@@ -238,7 +240,10 @@ export const SNMPSettings = memo(function SNMPSettings({
             />
           </div>
           {snmpSettings.communities.map((community, index) => (
-            <div key={`${community}-${index}`} className="flex gap-2 mb-2">
+            <div
+              key={`${community}-${index}`}
+              className={`flex ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+            >
               <input
                 aria-label={`Community string ${community}`}
                 type="text"
@@ -257,8 +262,8 @@ export const SNMPSettings = memo(function SNMPSettings({
         </div>
 
         {/* SNMPv3 Credentials */}
-        <div className="border-t border-surface-border pt-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
+          <div className={`flex items-center justify-between ${spacing.margin.bottom.inline}`}>
             <span className="caption text-text-muted font-medium">{t("snmp.v3Credentials")}</span>
             <button
               onClick={addV3Credential}
@@ -267,14 +272,16 @@ export const SNMPSettings = memo(function SNMPSettings({
               {t("common.add")}
             </button>
           </div>
-          <p className="caption text-text-muted mb-2">{t("snmp.v3CredentialsDesc")}</p>
+          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+            {t("snmp.v3CredentialsDesc")}
+          </p>
           {snmpSettings.v3Credentials.map((cred) => (
             <div
               key={cred.id}
-              className={`mb-2 border border-surface-border ${radius.md} overflow-hidden`}
+              className={`${spacing.margin.bottom.inline} border border-surface-border ${radius.md} overflow-hidden`}
             >
               <div
-                className="flex items-center justify-between p-2 bg-surface-base cursor-pointer hover:bg-surface-hover"
+                className={`flex items-center justify-between ${spacing.pad.xs} bg-surface-base cursor-pointer hover:bg-surface-hover`}
                 onClick={() =>
                   setExpandedCredential(expandedCredential === cred.id ? null : cred.id!)
                 }
@@ -282,7 +289,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                 <span className="body-small text-text-primary">
                   {cred.name || t("snmp.unnamedCredential")}
                 </span>
-                <div className="flex items-center gap-2">
+                <div className={`flex items-center ${spacing.gap.compact}`}>
                   <span className="caption text-text-muted">
                     {cred.username || t("snmp.noUsername")}
                   </span>

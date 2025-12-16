@@ -1,6 +1,47 @@
-import React from "react";
+/**
+ * Storybook Preview Configuration
+ *
+ * Global decorators that wrap all stories with required providers:
+ * - I18nextProvider: For translation support (useTranslation)
+ * - SettingsProvider: For settings context (useSettings)
+ * - Theme wrapper: For dark/light mode support
+ *
+ * This ensures all components work correctly in isolation without
+ * needing to manually wrap each story with providers.
+ */
+
+import React, { Suspense, useEffect, type ReactNode } from "react";
 import type { Preview } from "@storybook/react-vite";
+import { I18nextProvider } from "react-i18next";
+import i18n from "../src/i18n";
+import { SettingsProvider } from "../src/contexts/SettingsContext";
 import "../src/index.css";
+
+/**
+ * Theme wrapper that applies dark/light class to document.
+ * Storybook background parameter controls the visual background,
+ * while this applies the Tailwind theme class.
+ */
+function ThemeWrapper({ children, dark = true }: { children: ReactNode; dark?: boolean }) {
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    return () => {
+      document.documentElement.classList.remove("dark");
+    };
+  }, [dark]);
+  return <>{children}</>;
+}
+
+/**
+ * Loading fallback for Suspense during i18n initialization
+ */
+function LoadingFallback() {
+  return <div className="flex items-center justify-center p-4 text-text-muted">Loading...</div>;
+}
 
 const preview: Preview = {
   parameters: {
@@ -20,11 +61,26 @@ const preview: Preview = {
     layout: "centered",
   },
   decorators: [
-    (Story) => (
-      <div className="dark p-4">
-        <Story />
-      </div>
-    ),
+    // Global decorator: wraps all stories with providers
+    (Story, context) => {
+      // Determine theme from background parameter
+      const isDark =
+        context.globals.backgrounds?.value !== "var(--color-surface-base-light, #f8fafc)";
+
+      return (
+        <I18nextProvider i18n={i18n}>
+          <Suspense fallback={<LoadingFallback />}>
+            <SettingsProvider>
+              <ThemeWrapper dark={isDark}>
+                <div className="p-4">
+                  <Story />
+                </div>
+              </ThemeWrapper>
+            </SettingsProvider>
+          </Suspense>
+        </I18nextProvider>
+      );
+    },
   ],
 };
 

@@ -920,14 +920,14 @@ function App() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className={`flex items-center ${spacing.gap.tight} sm:${spacing.gap.compact}`}>
             {/* Interface selector */}
             <label htmlFor="interface-select" className="sr-only">
               {t("accessibility.selectInterface")}
             </label>
             <select
               id="interface-select"
-              className={`${radius.md} border border-surface-border bg-surface-base px-2 py-1.5 body-small min-w-0 max-w-25 sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary`}
+              className={`${radius.md} border border-surface-border bg-surface-base ${input.size.sm} body-small min-w-0 max-w-25 sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary`}
               value={currentInterface}
               onChange={(e) => changeInterface(e.target.value)}
               aria-label={t("accessibility.selectInterface")}
@@ -1062,7 +1062,9 @@ function App() {
         </div>
 
         {/* Mobile connection status - show below header on small screens */}
-        <div className={`sm:hidden mt-2 ${layout.flex.center} px-3 pb-2`}>
+        <div
+          className={`sm:hidden ${spacing.margin.top.inline} ${layout.flex.center} ${spacing.mainPadding.x} ${spacing.padding.bottom.inline}`}
+        >
           <ConnectionStatus status={wsStatus} onReconnect={reconnect} />
         </div>
       </header>
@@ -1293,8 +1295,8 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 className="heading-1 mt-3">{t("app.title")}</h1>
-          <p className="body-small mt-1">{t("app.tagline")}</p>
+          <h1 className={`heading-1 ${spacing.margin.top.heading}`}>{t("app.title")}</h1>
+          <p className={`body-small ${spacing.margin.top.inline}`}>{t("app.tagline")}</p>
         </div>
 
         <form
@@ -1302,7 +1304,10 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           className={`bg-surface-raised ${radius.md} border border-surface-border pad-lg stack-lg`}
         >
           <div>
-            <label htmlFor="login-username" className="label block mb-1">
+            <label
+              htmlFor="login-username"
+              className={`label block ${spacing.margin.bottom.inline}`}
+            >
               {t("labels.username")}
             </label>
             <input
@@ -1317,7 +1322,10 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           </div>
 
           <div>
-            <label htmlFor="login-password" className="label block mb-1">
+            <label
+              htmlFor="login-password"
+              className={`label block ${spacing.margin.bottom.inline}`}
+            >
               {t("labels.password")}
             </label>
             <input
@@ -1399,7 +1407,9 @@ function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
       <span className={`${layout.inline.tight} ${spacing.inline.sm} caption ${config.color}`}>
         <span
           className={`${layout.flex.center} ${radius.full} ${config.color} ${
-            config.icon === "spinner" ? "bg-status-info/10 p-1" : "bg-current/10 p-1"
+            config.icon === "spinner"
+              ? `bg-status-info/10 ${spacing.pad.xs}`
+              : `bg-current/10 ${spacing.pad.xs}`
           }`}
           aria-label={t("accessibility.wsStatus", { status: label })}
         >

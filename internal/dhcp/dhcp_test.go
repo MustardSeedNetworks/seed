@@ -557,7 +557,7 @@ func TestFindDHCPMessageType(t *testing.T) {
 			options: []byte{
 				1, 4, 255, 255, 255, 0, // Subnet mask option
 				53, 1, 1, // DHCP message type = DISCOVER
-				255,      // End
+				255, // End
 			},
 			expected: 1,
 		},

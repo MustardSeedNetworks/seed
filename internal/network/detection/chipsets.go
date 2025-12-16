@@ -8,7 +8,7 @@ package detection
 
 import (
 	_ "embed"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -124,7 +124,7 @@ func loadChipsetsFromFile() ([]ChipsetInfo, error) {
 		if data, err := os.ReadFile(path); err == nil {
 			chipsets, parseErr := parseChipsetYAML(data)
 			if parseErr == nil {
-				log.Printf("Loaded chipset database from %s (%d entries)", path, len(chipsets))
+				slog.Info("Loaded chipset database", "path", path, "entries", len(chipsets))
 				return chipsets, nil
 			}
 		}
@@ -137,7 +137,7 @@ func loadChipsetsFromFile() ([]ChipsetInfo, error) {
 func loadChipsetsFromEmbedded() []ChipsetInfo {
 	chipsets, err := parseChipsetYAML(embeddedChipsetData)
 	if err != nil {
-		log.Printf("Warning: failed to parse embedded chipset data: %v", err)
+		slog.Warn("failed to parse embedded chipset data", "error", err)
 		return nil
 	}
 	return chipsets

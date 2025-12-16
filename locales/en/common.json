@@ -89,7 +89,8 @@
     "switchToDarkMode": "Switch to dark mode",
     "selectInterface": "Select network interface",
     "clearSearch": "Clear search",
-    "wsStatus": "WebSocket status: {{status}}"
+    "wsStatus": "WebSocket status: {{status}}",
+    "newCommunityString": "New community string"
   },
   "sections": {
     "connectivity": "Connectivity",
@@ -103,5 +104,14 @@
   "footer": {
     "runTestsHint": "Tap the play button to run all tests.",
     "networkDiscoveryHint": "Use the Network Discovery card to scan for devices on your network."
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "defaultMessage": "An unexpected error occurred",
+    "tryAgain": "Try again"
+  },
+  "dataTable": {
+    "clearAll": "Clear all",
+    "showingResults": "Showing {{shown}} of {{total}} results"
   }
 }

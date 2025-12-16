@@ -190,8 +190,8 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
               <circle cx="40" cy="24" r="3" fill="currentColor" />
             </svg>
           </div>
-          <h1 className="heading-2 mt-3">{t("welcome.title")}</h1>
-          <p className="body-small mt-1">{t("welcome.subtitle")}</p>
+          <h1 className={`heading-2 ${spacing.margin.top.heading}`}>{t("welcome.title")}</h1>
+          <p className={`body-small ${spacing.margin.top.inline}`}>{t("welcome.subtitle")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className={cardClass("default", "lg")}>
@@ -204,7 +204,9 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
 
           {/* Password mode selection */}
           <div className={`${spacing.margin.bottom.section} stack-sm`}>
-            <p className="body-small font-medium text-text-primary mb-2">
+            <p
+              className={`body-small font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+            >
               {t("password.chooseMethod")}
             </p>
 
@@ -218,13 +220,15 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
                 value="custom"
                 checked={passwordMode === "custom"}
                 onChange={() => handlePasswordModeChange("custom")}
-                className={`mt-0.5 ${iconTokens.size.sm} text-brand-primary focus:ring-brand-primary`}
+                className={`${spacing.margin.top.inline} ${iconTokens.size.sm} text-brand-primary focus:ring-brand-primary`}
               />
               <div>
                 <span className="body-small font-medium text-text-primary">
                   {t("password.custom.title")}
                 </span>
-                <p className="caption text-text-muted mt-0.5">{t("password.custom.description")}</p>
+                <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+                  {t("password.custom.description")}
+                </p>
               </div>
             </label>
 
@@ -239,17 +243,19 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
                   value="generated"
                   checked={passwordMode === "generated"}
                   onChange={() => handlePasswordModeChange("generated")}
-                  className={`mt-0.5 ${iconTokens.size.sm} text-brand-primary focus:ring-brand-primary`}
+                  className={`${spacing.margin.top.inline} ${iconTokens.size.sm} text-brand-primary focus:ring-brand-primary`}
                 />
                 <div className="flex-1">
                   <span className="body-small font-medium text-text-primary">
                     {t("password.generated.title")}
                   </span>
-                  <p className="caption text-text-muted mt-0.5">
+                  <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
                     {t("password.generated.description")}
                   </p>
                   {passwordMode === "generated" && (
-                    <div className={`mt-2 ${spacing.pad.sm} bg-surface-sunken ${radius.default}`}>
+                    <div
+                      className={`${spacing.margin.top.inline} ${spacing.pad.sm} bg-surface-sunken ${radius.default}`}
+                    >
                       <div className={`${layout.inline.default}`}>
                         <code className="flex-1 font-mono body-small text-brand-primary select-all break-all">
                           {suggestedPassword}
@@ -262,7 +268,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
                           {t("buttons.copy")}
                         </button>
                       </div>
-                      <p className="caption text-status-warning mt-2">
+                      <p className={`caption text-status-warning ${spacing.margin.top.inline}`}>
                         {t("password.generated.saveWarning")}
                       </p>
                     </div>
@@ -277,7 +283,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
               <div className={spacing.margin.bottom.content}>
                 <label
                   htmlFor="setup-password"
-                  className="block body-small font-medium text-text-primary mb-1"
+                  className={`block body-small font-medium text-text-primary ${spacing.margin.bottom.inline}`}
                 >
                   {t("password.label")}
                 </label>
@@ -334,13 +340,15 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
                     )}
                   </button>
                 </div>
-                <p className="caption text-text-muted mt-1">{t("password.minLength")}</p>
+                <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+                  {t("password.minLength")}
+                </p>
               </div>
 
               <div className={spacing.margin.bottom.section}>
                 <label
                   htmlFor="setup-confirm-password"
-                  className="block body-small font-medium text-text-primary mb-1"
+                  className={`block body-small font-medium text-text-primary ${spacing.margin.bottom.inline}`}
                 >
                   {t("password.confirm.label")}
                 </label>

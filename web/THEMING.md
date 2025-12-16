@@ -709,12 +709,31 @@ import { layout } from '../styles/theme';
 
 The following patterns are flagged by ESLint:
 
+**Colors:**
+
 - `text-white` → Use `text-text-inverse`
 - `text-black` → Use `text-text-primary`
 - `bg-white` (not opacity) → Use `bg-surface-raised`
 - `bg-black` (not opacity) → Use design tokens
 - `text-gray-*` → Use `text-text-*` tokens
 - `bg-gray-*` → Use `bg-surface-*` tokens
+
+**Icon Sizes:**
+
+- `w-3 h-3` → Use `iconTokens.size.xs`
+- `w-4 h-4` → Use `iconTokens.size.sm`
+- `w-5 h-5` → Use `iconTokens.size.md`
+- `w-6 h-6` → Use `iconTokens.size.lg`
+
+**Border Radius:**
+
+- `rounded-sm` → Use `radius.sm`
+- `rounded-md` → Use `radius.md`
+- `rounded-lg` → Use `radius.lg`
+- `rounded-xl` → Use `radius.xl`
+- `rounded-full` → Use `radius.full`
+
+Note: Story files (`.stories.tsx`) are exempt from these rules for documentation purposes.
 
 ### Migration Checklist
 

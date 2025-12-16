@@ -159,7 +159,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
           </h2>
           <button
             onClick={onClose}
-            className={`p-2 text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-hover`}
+            className={`${spacing.pad.xs} text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-hover`}
             aria-label={t("modal.closeHelp")}
           >
             <svg className={iconTokens.size.md} viewBox="0 0 20 20" fill="currentColor">
@@ -187,20 +187,22 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
                   placeholder={t("modal.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full pl-9 pr-3 py-2 body-small ${radius.default} border border-surface-border bg-surface-raised text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary`}
+                  className={`w-full pl-9 ${spacing.chip.lg} body-small ${radius.default} border border-surface-border bg-surface-raised text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary`}
                 />
               </div>
             </div>
 
             {/* Table of Contents */}
-            <nav className="p-2 stack-xs">
-              <p className="caption px-3 py-2 uppercase tracking-wider">{t("modal.contents")}</p>
+            <nav className={`${spacing.pad.xs} stack-xs`}>
+              <p className={`caption ${spacing.chip.lg} uppercase tracking-wider`}>
+                {t("modal.contents")}
+              </p>
               {filteredSections.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   className={cn(
-                    `w-full flex items-center gap-3 px-3 py-2.5 ${radius.default} body-small transition-colors text-left`,
+                    `w-full flex items-center gap-3 ${spacing.tab} ${radius.default} body-small transition-colors text-left`,
                     activeSection === section.id
                       ? "bg-brand-primary/10 text-brand-primary font-medium"
                       : "text-text-secondary hover:bg-surface-hover hover:text-text-primary"
@@ -262,7 +264,7 @@ function AboutSection() {
       <div
         className={`border-l-4 border-brand-primary bg-brand-primary/5 ${spacing.pad.default} ${radius.default}`}
       >
-        <h4 className="font-semibold text-text-primary mb-2">
+        <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>
           {t("content.about.openSource.title")}
         </h4>
         <p className="body-small text-text-secondary">
@@ -271,7 +273,7 @@ function AboutSection() {
       </div>
 
       <div>
-        <h4 className="font-semibold text-text-primary mb-3">
+        <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.heading}`}>
           {t("content.about.versionInfo.title")}
         </h4>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 body-small">
@@ -327,7 +329,9 @@ function GettingStartedSection() {
       <div
         className={`bg-surface-hover border border-surface-border ${radius.default} ${spacing.pad.default} ${spacing.margin.top.section}`}
       >
-        <h4 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
+        <h4
+          className={`font-semibold text-text-primary ${spacing.margin.bottom.inline} flex items-center gap-2`}
+        >
           <span className="text-status-info">💡</span>
           {t("content.gettingStarted.proTips.title")}
         </h4>
@@ -649,7 +653,7 @@ function FeatureCard({ title, description }: { title: string; description: strin
     <div
       className={`bg-surface-hover border border-surface-border ${radius.lg} ${spacing.pad.default}`}
     >
-      <h4 className="font-semibold text-text-primary mb-2">{title}</h4>
+      <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>{title}</h4>
       <p className="body-small text-text-secondary">{description}</p>
     </div>
   );
@@ -672,7 +676,7 @@ function StepCard({
         {number}
       </div>
       <div className="flex-1">
-        <h4 className="font-semibold mb-1">{title}</h4>
+        <h4 className={`font-semibold ${spacing.margin.bottom.inline}`}>{title}</h4>
         <p className="body-small">{description}</p>
       </div>
     </div>
@@ -693,7 +697,9 @@ function HelpTermList({ items }: { items: Array<{ term: string; description: str
     <dl className="stack-lg">
       {items.map((item, idx) => (
         <div key={idx} className="border-l-2 border-surface-border pl-4">
-          <dt className="font-semibold text-text-primary mb-1">{item.term}</dt>
+          <dt className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>
+            {item.term}
+          </dt>
           <dd className="body-small text-text-secondary">{item.description}</dd>
         </div>
       ))}

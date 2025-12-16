@@ -1086,10 +1086,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             <div className="stack">
               <p className="section-title">{t("network.title")}</p>
               {/* Mode Toggle */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
                 <button
                   onClick={() => setIPSettings((prev) => ({ ...prev, mode: "dhcp" }))}
-                  className={`py-2.5 px-3 ${radius.md} body-small font-medium transition-colors ${
+                  className={`${spacing.tab} ${radius.md} body-small font-medium transition-colors ${
                     ipSettings.mode === "dhcp"
                       ? "bg-brand-primary text-text-inverse"
                       : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
@@ -1099,7 +1099,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 </button>
                 <button
                   onClick={() => setIPSettings((prev) => ({ ...prev, mode: "static" }))}
-                  className={`py-2.5 px-3 ${radius.md} body-small font-medium transition-colors ${
+                  className={`${spacing.tab} ${radius.md} body-small font-medium transition-colors ${
                     ipSettings.mode === "static"
                       ? "bg-brand-primary text-text-inverse"
                       : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
@@ -1111,7 +1111,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
               {/* Static IP Fields */}
               {ipSettings.mode === "static" && (
-                <div className="stack pt-3 border-t border-surface-border">
+                <div
+                  className={`stack ${spacing.padding.top.heading} border-t border-surface-border`}
+                >
                   <div>
                     <label className="caption font-medium">{t("network.ipAddress")} *</label>
                     <input
@@ -1124,7 +1126,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="192.168.1.100"
-                      className={`w-full mt-1 px-2 py-1 bg-surface-base border ${radius.md} body-small text-text-primary ${
+                      className={`w-full mt-1 ${spacing.chip.sm} bg-surface-base border ${radius.md} body-small text-text-primary ${
                         ipSettings.address && !isValidIP(ipSettings.address)
                           ? "border-status-error"
                           : "border-surface-border"
@@ -1143,7 +1145,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="24 or 255.255.255.0"
-                      className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+                      className={`w-full mt-1 ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
                     />
                   </div>
                   <div>
@@ -1158,7 +1160,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="192.168.1.1"
-                      className={`w-full mt-1 px-2 py-1 bg-surface-base border ${radius.md} body-small text-text-primary ${
+                      className={`w-full mt-1 ${spacing.chip.sm} bg-surface-base border ${radius.md} body-small text-text-primary ${
                         ipSettings.gateway && !isValidIP(ipSettings.gateway)
                           ? "border-status-error"
                           : "border-surface-border"
@@ -1172,7 +1174,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                       value={dnsInput}
                       onChange={(e) => setDnsInput(e.target.value)}
                       placeholder="8.8.8.8, 8.8.4.4"
-                      className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+                      className={`w-full mt-1 ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
                     />
                   </div>
                 </div>
@@ -1203,12 +1205,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             </div>
 
             {/* Display Options */}
-            <div className="border-t border-surface-border pt-3 mt-3">
-              <p className="caption font-medium mb-2">
+            <div
+              className={`border-t border-surface-border ${spacing.padding.top.heading} ${spacing.margin.top.heading}`}
+            >
+              <p className={`caption font-medium ${spacing.margin.bottom.inline}`}>
                 {t("network.displayOptions")} <AutoSaveIndicator status={displayStatus} />
               </p>
               <label
-                className={`flex items-center justify-between p-2.5 bg-surface-base ${radius.md} border border-surface-border`}
+                className={`flex items-center justify-between ${spacing.pad.xs} bg-surface-base ${radius.md} border border-surface-border`}
               >
                 <div>
                   <span className="body-small text-text-primary font-medium">
@@ -1231,14 +1235,22 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             </div>
 
             {/* VLAN Configuration */}
-            <div className="border-t border-surface-border pt-3 mt-3">
-              <p className="section-title mb-2">{t("network.vlanTag")}</p>
+            <div
+              className={`border-t border-surface-border ${spacing.padding.top.heading} ${spacing.margin.top.heading}`}
+            >
+              <p className={`section-title ${spacing.margin.bottom.inline}`}>
+                {t("network.vlanTag")}
+              </p>
               <VLANControl />
             </div>
 
             {/* MTU Configuration */}
-            <div className="border-t border-surface-border pt-3 mt-3">
-              <p className="section-title mb-2">{t("network.mtuSetting")}</p>
+            <div
+              className={`border-t border-surface-border ${spacing.padding.top.heading} ${spacing.margin.top.heading}`}
+            >
+              <p className={`section-title ${spacing.margin.bottom.inline}`}>
+                {t("network.mtuSetting")}
+              </p>
               <MTUControl />
             </div>
           </CollapsibleSection>
@@ -1314,15 +1326,17 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               </div>
               <button
                 onClick={fetchLogPreview}
-                className={`caption px-3 py-1 border border-surface-border ${radius.md} text-text-muted hover:text-text-primary hover:border-text-muted transition-colors`}
+                className={`caption ${spacing.chip.sm} border border-surface-border ${radius.md} text-text-muted hover:text-text-primary hover:border-text-muted transition-colors`}
               >
                 {logLoading ? t("logs.loading") : t("logs.view")}
               </button>
             </div>
-            {logError && <p className="caption text-status-error mt-2">{logError}</p>}
+            {logError && (
+              <p className={`caption text-status-error ${spacing.margin.top.inline}`}>{logError}</p>
+            )}
             {!logError && logPreview.length > 0 && (
               <pre
-                className={`mt-2 max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border ${radius.md} px-3 py-2 text-text-primary whitespace-pre-wrap`}
+                className={`${spacing.margin.top.inline} max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border ${radius.md} ${spacing.chip.lg} text-text-primary whitespace-pre-wrap`}
               >
                 {logPreview.join("\n")}
               </pre>
@@ -1331,11 +1345,15 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
           {/* Export Section */}
           <section className="pt-4 border-t border-surface-border">
-            <h3 className="body-small font-medium text-text-muted mb-3">{t("export.title")}</h3>
+            <h3
+              className={`body-small font-medium text-text-muted ${spacing.margin.bottom.heading}`}
+            >
+              {t("export.title")}
+            </h3>
             <a
               href={`${API_BASE}/api/export`}
               download="seed-export.json"
-              className={`w-full ${button.size.md} bg-surface-base border border-surface-border text-text-primary ${radius.md} font-medium hover:bg-surface-hover transition-colors flex items-center justify-center gap-2 touch-manipulation`}
+              className={`w-full ${button.size.md} bg-surface-base border border-surface-border text-text-primary ${radius.md} font-medium hover:bg-surface-hover transition-colors flex items-center justify-center ${spacing.gap.compact} touch-manipulation`}
             >
               <svg
                 className={iconTokens.size.sm}
@@ -1352,12 +1370,18 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               </svg>
               {t("export.download")}
             </a>
-            <p className="caption text-text-muted mt-2">{t("export.description")}</p>
+            <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+              {t("export.description")}
+            </p>
           </section>
 
           {/* About Section */}
           <section className="pt-4 border-t border-surface-border">
-            <h3 className="body-small font-medium text-text-muted mb-2">{t("about.title")}</h3>
+            <h3
+              className={`body-small font-medium text-text-muted ${spacing.margin.bottom.inline}`}
+            >
+              {t("about.title")}
+            </h3>
             <p className="caption text-text-muted">
               {t("about.appName")} {version}
               <br />

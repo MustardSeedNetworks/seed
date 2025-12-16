@@ -1,5 +1,5 @@
 import type { StorybookConfig } from "@storybook/react-vite";
-import { dirname } from "path";
+import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -15,13 +15,15 @@ const config: StorybookConfig = {
   ],
   framework: "@storybook/react-vite",
   viteFinal: async (config) => {
-    // Ensure CSS imports resolve correctly
+    // Ensure CSS imports and path aliases resolve correctly
     return {
       ...config,
       resolve: {
         ...config.resolve,
         alias: {
           ...config.resolve?.alias,
+          "@": resolve(__dirname, "../src"),
+          "@locales": resolve(__dirname, "../../locales"),
         },
       },
     };

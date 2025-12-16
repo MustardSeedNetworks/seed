@@ -242,6 +242,9 @@ body {
   }
 
   /* Card/container padding */
+  .pad-xs {
+    @apply p-2; /* 8px */
+  }
   .pad-sm {
     @apply p-3; /* 12px */
   }
@@ -253,6 +256,22 @@ body {
   }
   .pad-xl {
     @apply p-8; /* 32px - large sections */
+  }
+
+  /* Chip/pill padding (for tags, badges, small buttons) */
+  .chip-pad {
+    @apply px-3 py-1; /* 12px horizontal, 4px vertical */
+  }
+  .chip-pad-md {
+    @apply px-3 py-1.5; /* 12px horizontal, 6px vertical */
+  }
+  .chip-pad-lg {
+    @apply px-3 py-2; /* 12px horizontal, 8px vertical */
+  }
+
+  /* Tab button padding */
+  .tab-pad {
+    @apply py-2.5 px-3; /* Tab-style buttons */
   }
 
   /* Inline spacing (horizontal gaps for buttons, badges, etc.) */
@@ -320,8 +339,19 @@ body {
   .mt-content {
     @apply mt-4; /* 16px - content separation */
   }
+  .mt-heading {
+    @apply mt-3; /* 12px - after inline elements, before headings */
+  }
   .mt-inline {
     @apply mt-2; /* 8px - inline content */
+  }
+
+  /* Top/bottom padding for dividers/sections */
+  .pt-heading {
+    @apply pt-3; /* 12px - section divider top padding */
+  }
+  .pb-inline {
+    @apply pb-2; /* 8px - inline bottom padding */
   }
 
   /* Main content padding (responsive) */

@@ -205,7 +205,8 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         <label
           className={cn(
             layout.flex.between,
-            "p-2.5 bg-surface-base border border-surface-border",
+            spacing.pad.sm,
+            "bg-surface-base border border-surface-border",
             radius.default
           )}
         >
@@ -230,7 +231,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
 
         {/* Ping Targets */}
         <div>
-          <div className={cn(layout.flex.between, "mb-2")}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
             <span className="caption text-text-muted font-medium">{t("health.pingTargets")}</span>
             <button
               onClick={addPingTarget}
@@ -239,9 +240,14 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               {t("common.add")}
             </button>
           </div>
-          <p className="caption text-text-muted mb-2">{t("health.pingDefault")}</p>
+          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+            {t("health.pingDefault")}
+          </p>
           {testsSettings.pingTargets.map((target) => (
-            <div key={target.id || target.host} className="flex gap-2 mb-2">
+            <div
+              key={target.id || target.host}
+              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+            >
               <input
                 type="text"
                 value={target.name}
@@ -278,8 +284,8 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* TCP Ports */}
-        <div className="border-t border-surface-border pt-3">
-          <div className={cn(layout.flex.between, "mb-2")}>
+        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
             <span className="caption text-text-muted font-medium">{t("health.tcpPortTests")}</span>
             <button
               onClick={addTCPPort}
@@ -289,7 +295,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
             </button>
           </div>
           {testsSettings.tcpPorts.map((port) => (
-            <div key={port.id || `${port.host}:${port.port}`} className="flex gap-2 mb-2">
+            <div
+              key={port.id || `${port.host}:${port.port}`}
+              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+            >
               <input
                 type="text"
                 value={port.name}
@@ -322,8 +331,8 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* UDP Ports */}
-        <div className="border-t border-surface-border pt-3">
-          <div className={cn(layout.flex.between, "mb-2")}>
+        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
             <span className="caption text-text-muted font-medium">{t("health.udpPortTests")}</span>
             <button
               onClick={addUDPPort}
@@ -332,9 +341,14 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               {t("common.add")}
             </button>
           </div>
-          <p className="caption text-text-muted mb-2">{t("health.udpDescription")}</p>
+          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+            {t("health.udpDescription")}
+          </p>
           {testsSettings.udpPorts.map((port) => (
-            <div key={port.id || `${port.host}:${port.port}`} className="flex gap-2 mb-2">
+            <div
+              key={port.id || `${port.host}:${port.port}`}
+              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+            >
               <input
                 type="text"
                 value={port.name}
@@ -367,8 +381,8 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* HTTP Endpoints */}
-        <div className="border-t border-surface-border pt-3">
-          <div className={cn(layout.flex.between, "mb-2")}>
+        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
             <span className="caption text-text-muted font-medium">{t("health.httpEndpoints")}</span>
             <button
               onClick={addHTTPEndpoint}
@@ -382,11 +396,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               key={endpoint.id || endpoint.url}
               className={cn(
                 spacing.stack.xs,
-                "mb-3 p-2 bg-surface-base border border-surface-border",
+                spacing.margin.bottom.heading,
+                spacing.pad.xs,
+                "bg-surface-base border border-surface-border",
                 radius.default
               )}
             >
-              <div className="flex gap-2">
+              <div className={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.name}

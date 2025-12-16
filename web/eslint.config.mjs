@@ -188,6 +188,73 @@ export default tseslint.config({ ignores: ["dist", "node_modules", "coverage", "
         selector: "Literal[value=/\\bbg-gray-\\d/]",
         message: "Use design system tokens (bg-surface-base, bg-surface-raised, bg-surface-hover) instead of bg-gray-*. See web/THEMING.md",
       },
+      // Enforce theme tokens for icon sizes instead of hardcoded w-N h-N patterns
+      {
+        selector: "Literal[value=/className.*\\bw-3\\s+h-3\\b/]",
+        message: "Use iconTokens.size.xs from theme.ts instead of 'w-3 h-3'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\bw-4\\s+h-4\\b/]",
+        message: "Use iconTokens.size.sm from theme.ts instead of 'w-4 h-4'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\bw-5\\s+h-5\\b/]",
+        message: "Use iconTokens.size.md from theme.ts instead of 'w-5 h-5'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\bw-6\\s+h-6\\b/]",
+        message: "Use iconTokens.size.lg from theme.ts instead of 'w-6 h-6'. See web/THEMING.md",
+      },
+      // Enforce theme tokens for border radius instead of hardcoded rounded-* patterns
+      {
+        selector: "Literal[value=/className.*\\brounded-sm\\b/]",
+        message: "Use radius.sm from theme.ts instead of 'rounded-sm'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\brounded-md\\b/]",
+        message: "Use radius.md from theme.ts instead of 'rounded-md'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\brounded-lg\\b/]",
+        message: "Use radius.lg from theme.ts instead of 'rounded-lg'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\brounded-xl\\b/]",
+        message: "Use radius.xl from theme.ts instead of 'rounded-xl'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\brounded-full\\b/]",
+        message: "Use radius.full from theme.ts instead of 'rounded-full'. See web/THEMING.md",
+      },
+      // Enforce theme tokens for large padding values (p-4 and above)
+      // Small values (p-1, p-2, p-3) are allowed for granular spacing
+      {
+        selector: "Literal[value=/className.*\\bp-[4-9]\\b/]",
+        message: "Use 'pad' or 'pad-lg' from theme.ts instead of 'p-4+'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\bp-1[0-9]\\b/]",
+        message: "Use 'pad-lg' from theme.ts instead of 'p-10+'. See web/THEMING.md",
+      },
+      // Enforce theme tokens for large gap values (gap-4 and above)
+      // Small gaps (gap-1, gap-2, gap-3) are allowed for tight layouts
+      {
+        selector: "Literal[value=/className.*\\bgap-[4-9]\\b/]",
+        message: "Use spacing.gap.comfortable or spacing.gap.spacious from theme.ts instead of 'gap-4+'. See web/THEMING.md",
+      },
+      // Enforce button size tokens for button padding patterns
+      {
+        selector: "Literal[value=/className.*\\bpx-4\\s+py-2\\b/]",
+        message: "Use button.size.md from theme.ts instead of 'px-4 py-2'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\bpx-3\\s+py-1\\.?5?\\b/]",
+        message: "Use button.size.sm from theme.ts instead of 'px-3 py-1.5'. See web/THEMING.md",
+      },
+      {
+        selector: "Literal[value=/className.*\\bpx-2\\s+py-1\\b/]",
+        message: "Use button.size.xs from theme.ts instead of 'px-2 py-1'. See web/THEMING.md",
+      },
       // i18n: Detect hardcoded English text in common UI patterns
       // This catches common patterns like <span>Settings</span> or <button>Save</button>
       // Note: This is a heuristic - some false positives may occur for technical terms
@@ -197,4 +264,58 @@ export default tseslint.config({ ignores: ["dist", "node_modules", "coverage", "
       },
     ],
   },
-}, storybook.configs["flat/recommended"]);
+},
+// Storybook configuration
+storybook.configs["flat/recommended"],
+// Test file overrides - relax rules for test files
+{
+  files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/test/**/*.ts", "**/e2e/**/*.ts"],
+  rules: {
+    // Disable JSDoc requirements in tests
+    "jsdoc/require-jsdoc": "off",
+    "jsdoc/require-description": "off",
+    "jsdoc/check-indentation": "off",
+    // Disable i18n warnings in tests (test strings don't need translation)
+    "no-restricted-syntax": "off",
+    // Relax security rules in tests (test mocks often use dynamic patterns)
+    "security/detect-object-injection": "off",
+    "security/detect-unsafe-regex": "off",
+    "security/detect-non-literal-regexp": "off",
+    // Allow any in test mocks
+    "@typescript-eslint/no-explicit-any": "off",
+  },
+},
+// Storybook stories overrides
+{
+  files: ["**/*.stories.tsx", "**/*.stories.ts"],
+  rules: {
+    // Disable i18n warnings in stories (story descriptions don't need translation)
+    "no-restricted-syntax": "off",
+    // Stories often use helper components that aren't exported
+    "react-refresh/only-export-components": "off",
+    // Relax JSDoc in stories
+    "jsdoc/require-jsdoc": "off",
+    "jsdoc/require-description": "off",
+    // Safe dynamic access in story demos
+    "security/detect-object-injection": "off",
+  },
+},
+// Storybook preview overrides
+{
+  files: ["**/.storybook/**/*.tsx", "**/.storybook/**/*.ts"],
+  rules: {
+    // Preview file has helper components
+    "react-refresh/only-export-components": "off",
+    "jsdoc/require-jsdoc": "off",
+  },
+},
+// Test setup and utilities
+{
+  files: ["**/test/setup.ts", "**/test/**/*.ts"],
+  rules: {
+    "jsdoc/require-jsdoc": "off",
+    "jsdoc/require-description": "off",
+    "security/detect-object-injection": "off",
+  },
+},
+);

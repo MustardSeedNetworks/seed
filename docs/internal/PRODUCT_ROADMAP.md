@@ -1,8 +1,6 @@
 # The Seed Product Roadmap (2026-2027)
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-12-15  
-**Planning Horizon:** 18 months
+**Document Version:** 1.0 **Last Updated:** 2025-12-15 **Planning Horizon:** 18 months
 
 ---
 
@@ -500,5 +498,4 @@ insights and predictive planning.
 
 ---
 
-**Document Owner:** Product Team  
-**Next Review:** March 2026 (post v0.110.0 launch)
+**Document Owner:** Product Team **Next Review:** March 2026 (post v0.110.0 launch)

@@ -79,7 +79,7 @@ function getStatus(data: LinkData): Status {
 function LinkLoadingSkeleton() {
   return (
     <>
-      <Skeleton className="h-8 w-32 mb-3" />
+      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.heading}`} />
       <div className={`stack-sm ${spacing.margin.top.content}`}>
         <div className={layout.flex.between}>
           <Skeleton className="h-3 w-16" />
@@ -138,13 +138,15 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
                   <CardRow label={t("link.flaps24h")} value={linkData.flapCount24h.toString()} />
                 )}
                 {linkData.advertisedSpeeds && linkData.advertisedSpeeds.length > 0 && (
-                  <div className="mt-2">
-                    <p className="caption mb-1">{t("link.advertisedSpeeds")}</p>
+                  <div className={spacing.margin.top.inline}>
+                    <p className={`caption ${spacing.margin.bottom.inline}`}>
+                      {t("link.advertisedSpeeds")}
+                    </p>
                     <div className={layout.inline.wrap}>
                       {linkData.advertisedSpeeds.map((speed) => (
                         <span
                           key={speed}
-                          className={`caption px-2 py-0.5 bg-surface-hover ${radius.default}`}
+                          className={`caption ${spacing.chip.sm} bg-surface-hover ${radius.default}`}
                         >
                           {speed}
                         </span>

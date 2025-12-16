@@ -58,5 +58,274 @@
     "rdp": "RDP",
     "postgresql": "PostgreSQL",
     "mongodb": "MongoDB"
+  },
+  "content": {
+    "about": {
+      "welcome": "Welcome to The Seed",
+      "description": "The Seed is a comprehensive network diagnostics and monitoring tool by Mustard Seed Networks, designed to provide deep visibility into your network infrastructure.",
+      "features": {
+        "realTimeMonitoring": {
+          "title": "Real-time Monitoring",
+          "description": "Monitor link status, WiFi signal strength, gateway reachability, and more with live updates."
+        },
+        "networkDiscovery": {
+          "title": "Network Discovery",
+          "description": "Discover all devices on your network with ARP scanning, LLDP/CDP neighbor detection."
+        },
+        "performanceTesting": {
+          "title": "Performance Testing",
+          "description": "Run internet speed tests and LAN throughput tests with iperf3 integration."
+        },
+        "cableDiagnostics": {
+          "title": "Cable Diagnostics",
+          "description": "Test Ethernet cables using Time Domain Reflectometry (TDR) to find faults and measure length."
+        }
+      },
+      "openSource": {
+        "title": "Open Source & Customizable",
+        "description": "The Seed is open source software. Customize thresholds, configure tests, and integrate with your existing monitoring infrastructure."
+      },
+      "versionInfo": {
+        "title": "Version Info",
+        "currentVersion": "Current Version:",
+        "backend": "Backend:",
+        "frontend": "Frontend:"
+      }
+    },
+    "gettingStarted": {
+      "title": "Getting Started",
+      "steps": {
+        "dashboard": {
+          "title": "Dashboard Overview",
+          "description": "The main dashboard shows all diagnostic cards. Each card displays real-time information about a specific aspect of your network."
+        },
+        "interface": {
+          "title": "Select Network Interface",
+          "description": "Use the interface dropdown in the header to select which network interface to monitor (e.g., eth0, wlan0). Click \"Settings\" to configure interface-specific options."
+        },
+        "thresholds": {
+          "title": "Configure Thresholds",
+          "description": "Open Settings → Thresholds to customize warning and critical levels for DNS latency, gateway ping, WiFi signal strength, and more."
+        },
+        "runTests": {
+          "title": "Run Tests",
+          "description": "Click the \"Run All Tests\" button (⚡) in the bottom right to execute speed tests, cable diagnostics, network discovery, and custom health checks."
+        },
+        "exploreCards": {
+          "title": "Explore Individual Cards",
+          "description": "Each card has a help icon (?) that explains the metrics shown. Click on cards to view detailed information and run specific tests."
+        }
+      },
+      "proTips": {
+        "title": "Pro Tips",
+        "tips": [
+          "Use the Network Discovery card to find all devices on your network",
+          "Set up custom health check tests in Settings → Custom Tests",
+          "Export diagnostics data for troubleshooting or documentation",
+          "Enable auto-scan for continuous network monitoring"
+        ]
+      }
+    },
+    "linkStatus": {
+      "description": "Monitors the physical layer connection of your network interface.",
+      "terms": {
+        "carrier": {
+          "term": "Carrier",
+          "description": "Physical layer signal detection. Shows 'Connected' when NIC detects a link partner (cable connected to active port)."
+        },
+        "speed": {
+          "term": "Speed",
+          "description": "Negotiated link speed between your network interface and the connected device (e.g., 1000 Mbps)."
+        },
+        "duplex": {
+          "term": "Duplex",
+          "description": "Communication mode - Full duplex allows simultaneous bidirectional data, Half duplex is one direction at a time."
+        },
+        "autoNeg": {
+          "term": "Auto-Negotiation",
+          "description": "Whether speed and duplex were auto-negotiated with the link partner or manually configured."
+        },
+        "mtu": {
+          "term": "MTU",
+          "description": "Maximum Transmission Unit - largest packet size (in bytes) that can be sent without fragmentation. Standard is 1500 bytes."
+        }
+      }
+    },
+    "cableTest": {
+      "description": "Time Domain Reflectometry tests cable quality and detects faults.",
+      "terms": {
+        "tdrTest": {
+          "term": "TDR Test",
+          "description": "Sends electrical pulses through the cable and measures reflections to detect faults and measure length."
+        },
+        "cableStatus": {
+          "term": "Cable Status",
+          "description": "Shows if cable pairs are OK, open (disconnected), short (wires touching), or have impedance mismatch."
+        },
+        "faultDistance": {
+          "term": "Fault Distance",
+          "description": "Distance to cable fault in meters. Helps locate physical cable problems."
+        },
+        "pairs": {
+          "term": "Pairs",
+          "description": "Ethernet cables have 4 twisted pairs. Gigabit uses all 4; Fast Ethernet uses pairs 1-2 and 3-6."
+        }
+      },
+      "note": "Cable testing requires compatible network hardware. Not all NICs support TDR."
+    },
+    "wifiStatus": {
+      "description": "Monitor wireless connection quality and settings.",
+      "terms": {
+        "ssid": {
+          "term": "SSID",
+          "description": "Service Set Identifier - the name of the wireless network you're connected to."
+        },
+        "bssid": {
+          "term": "BSSID",
+          "description": "Basic Service Set Identifier - MAC address of the access point."
+        },
+        "signal": {
+          "term": "Signal Strength",
+          "description": "Signal strength in dBm. -30 is excellent, -67 is good, -70 is fair, -80 is weak. Higher (less negative) is better."
+        },
+        "channel": {
+          "term": "Channel",
+          "description": "WiFi channel number (1-14 for 2.4GHz, 36-165 for 5GHz). Overlapping channels cause interference."
+        },
+        "security": {
+          "term": "Security",
+          "description": "Encryption protocol protecting the connection (WPA2, WPA3, WEP, or Open)."
+        },
+        "frequency": {
+          "term": "Frequency",
+          "description": "Radio band - 2.4GHz has better range, 5GHz has better speed and less interference."
+        }
+      }
+    },
+    "networkDhcp": {
+      "description": "Shows IP configuration and DHCP lease information.",
+      "terms": {
+        "leaseTime": {
+          "term": "Lease Time",
+          "description": "Duration of current IP address assignment before renewal is needed."
+        },
+        "dhcpServer": {
+          "term": "DHCP Server",
+          "description": "IP address of the DHCP server that issued the lease (usually your router)."
+        },
+        "gateway": {
+          "term": "Gateway",
+          "description": "Default gateway assigned by DHCP for routing traffic off-subnet."
+        },
+        "dnsServers": {
+          "term": "DNS Servers",
+          "description": "DNS servers assigned by DHCP for name resolution."
+        },
+        "subnetMask": {
+          "term": "Subnet Mask",
+          "description": "Network mask defining the local subnet size."
+        }
+      }
+    },
+    "gatewayHelp": {
+      "description": "Tests reachability and latency to your default gateway.",
+      "terms": {
+        "ipv4Gateway": {
+          "term": "IPv4 Gateway",
+          "description": "Default router for IPv4 traffic leaving your local network."
+        },
+        "ipv6Gateway": {
+          "term": "IPv6 Gateway",
+          "description": "Default router for IPv6 traffic (may be link-local address)."
+        },
+        "reachability": {
+          "term": "Reachability",
+          "description": "Whether the gateway responds to ICMP ping requests."
+        },
+        "latency": {
+          "term": "Latency",
+          "description": "Round-trip time to gateway. Should be <1ms for local networks."
+        },
+        "packetLoss": {
+          "term": "Packet Loss",
+          "description": "Percentage of ping packets that didn't receive a response."
+        }
+      }
+    },
+    "dnsTests": {
+      "description": "Tests DNS resolution performance and functionality.",
+      "terms": {
+        "forwardLookup": {
+          "term": "Forward Lookup",
+          "description": "Resolves hostname to IPv4 address (A record)."
+        },
+        "reverseLookup": {
+          "term": "Reverse Lookup",
+          "description": "Resolves IP address back to hostname (PTR record)."
+        },
+        "ipv6Lookup": {
+          "term": "IPv6 Lookup",
+          "description": "Resolves hostname to IPv6 address (AAAA record)."
+        },
+        "latency": {
+          "term": "Latency",
+          "description": "Time taken for the DNS query to complete. Good: <50ms for local DNS."
+        }
+      }
+    },
+    "performanceTests": {
+      "description": "Run speed tests to measure network throughput.",
+      "terms": {
+        "internetSpeed": {
+          "term": "Internet Speed Test",
+          "description": "Tests download/upload speeds to public speedtest servers. Measures your connection to the internet."
+        },
+        "lanSpeed": {
+          "term": "LAN Speed (iperf3)",
+          "description": "Tests throughput on your local network using iperf3 to a configured server."
+        },
+        "download": {
+          "term": "Download",
+          "description": "Maximum download speed achieved during the test."
+        },
+        "upload": {
+          "term": "Upload",
+          "description": "Maximum upload speed achieved during the test."
+        },
+        "latency": {
+          "term": "Latency",
+          "description": "Round-trip time (ping) to the test server."
+        },
+        "jitter": {
+          "term": "Jitter",
+          "description": "Variation in latency over time. Lower is better for real-time applications like VoIP and gaming."
+        }
+      }
+    },
+    "networkDiscovery": {
+      "description": "Discover all devices on your network and identify connected switches.",
+      "terms": {
+        "networkScan": {
+          "term": "Network Scan",
+          "description": "Discovers active devices on your network subnet using ARP/ICMP ping sweeps."
+        },
+        "macAddress": {
+          "term": "MAC Address",
+          "description": "Hardware address of the network interface - unique identifier for the device."
+        },
+        "vendor": {
+          "term": "Vendor",
+          "description": "Manufacturer identified from the MAC address OUI (first 3 bytes)."
+        },
+        "hostname": {
+          "term": "Hostname",
+          "description": "DNS hostname if reverse lookup succeeded."
+        },
+        "lldpCdp": {
+          "term": "LLDP/CDP",
+          "description": "Link Layer Discovery Protocol (standard) or Cisco Discovery Protocol - provides information about directly connected network switches."
+        }
+      }
+    }
   }
 }

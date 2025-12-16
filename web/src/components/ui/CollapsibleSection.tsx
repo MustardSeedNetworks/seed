@@ -82,7 +82,7 @@ export function CollapsibleSection({
           "w-full transition-colors",
           layout.flex.between,
           isCompact
-            ? cn("py-1.5 hover:bg-surface-hover/50", radius.default)
+            ? cn(spacing.chip.md, "hover:bg-surface-hover/50", radius.default)
             : `${spacing.pad.sm} bg-surface-base hover:bg-surface-hover`
         )}
       >
@@ -112,7 +112,7 @@ export function CollapsibleSection({
         <div
           className={cn(
             isCompact
-              ? "pl-5 pb-2 stack-xs"
+              ? `pl-5 ${spacing.padding.bottom.inline} stack-xs`
               : `${spacing.pad.sm} border-t border-surface-border bg-surface-raised stack`
           )}
         >

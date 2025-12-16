@@ -40,7 +40,13 @@ import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Gauge } from "../../ui/Icons";
-import { icon as iconTokens, layout, radius } from "../../../styles/theme";
+import {
+  icon as iconTokens,
+  layout,
+  radius,
+  spacing,
+  input as inputTokens,
+} from "../../../styles/theme";
 import { TestsSettings, IperfSettings, IperfSuggestion, SaveStatus } from "../../../types/settings";
 
 interface PerformanceSettingsProps {
@@ -99,7 +105,7 @@ export function PerformanceSettings({
         {/* Enable/Disable Toggles */}
         <div className="stack-sm">
           <label
-            className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+            className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
           >
             <div>
               <span className="body-small text-text-primary font-medium">
@@ -120,7 +126,7 @@ export function PerformanceSettings({
             />
           </label>
           <label
-            className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+            className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
           >
             <div>
               <span className="body-small text-text-primary font-medium">
@@ -143,13 +149,13 @@ export function PerformanceSettings({
         </div>
 
         {/* Auto-Run on Link Up */}
-        <div className="border-t border-surface-border pt-3">
+        <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
           <span className="caption text-text-muted font-medium">
             {t("performance.autoRunOnLink")}
           </span>
           <div className="mt-2 stack-sm">
             <label
-              className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+              className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
             >
               <span className="body-small text-text-primary">{t("performance.speedtest")}</span>
               <input
@@ -168,7 +174,7 @@ export function PerformanceSettings({
               />
             </label>
             <label
-              className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border`}
+              className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
             >
               <span className="body-small text-text-primary">{t("performance.iperf")}</span>
               <input
@@ -190,8 +196,10 @@ export function PerformanceSettings({
         </div>
 
         {/* Internet Speed (Speedtest) Subsection */}
-        <div className="border-t border-surface-border pt-3">
-          <h4 className="body-small font-semibold text-text-primary mb-2 uppercase tracking-wide">
+        <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
+          <h4
+            className={`body-small font-semibold text-text-primary ${spacing.margin.bottom.inline} uppercase tracking-wide`}
+          >
             {t("performance.internetSpeed")}
           </h4>
           <div className="stack pl-1">
@@ -212,7 +220,7 @@ export function PerformanceSettings({
                   }))
                 }
                 placeholder={t("performance.autoClosestServer")}
-                className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small`}
               />
               <div className={`${layout.flex.between} mt-1`}>
                 <p className="caption text-text-muted">{t("performance.autoSelectDesc")}</p>
@@ -235,7 +243,9 @@ export function PerformanceSettings({
 
         {/* LAN Speed (iperf3) Subsection */}
         <div>
-          <h4 className="body-small font-semibold text-text-primary mb-2 uppercase tracking-wide">
+          <h4
+            className={`body-small font-semibold text-text-primary ${spacing.margin.bottom.inline} uppercase tracking-wide`}
+          >
             {t("performance.lanSpeed")}
           </h4>
           <div className="stack pl-1">
@@ -256,7 +266,7 @@ export function PerformanceSettings({
                   }))
                 }
                 placeholder="192.168.1.100"
-                className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small disabled:opacity-60`}
               />
               <div className={`${layout.flex.between} mt-2`}>
                 <button
@@ -297,12 +307,12 @@ export function PerformanceSettings({
                 </p>
               )}
               {iperfSuggestions.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className={`flex flex-wrap ${spacing.gap.compact} mt-2`}>
                   {iperfSuggestions.map((sugg) => (
                     <button
                       type="button"
                       key={`${sugg.host}-${sugg.hostname || ""}`}
-                      className={`px-3 py-1 ${radius.full} border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover`}
+                      className={`${spacing.chip.sm} ${radius.full} border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover`}
                       onClick={() =>
                         setIperfSettings((prev) => ({
                           ...prev,
@@ -336,17 +346,19 @@ export function PerformanceSettings({
                     port: parseInt(e.target.value) || 5201,
                   }))
                 }
-                className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small disabled:opacity-60`}
               />
             </div>
 
             {/* Protocol Toggle */}
             <div>
-              <label className="caption text-text-muted font-medium block mb-1">
+              <label
+                className={`caption text-text-muted font-medium block ${spacing.margin.bottom.inline}`}
+              >
                 {t("performance.protocol")}
               </label>
               <div
-                className="flex flex-wrap gap-2"
+                className={`flex flex-wrap ${spacing.gap.compact}`}
                 role="radiogroup"
                 aria-label="Protocol selection"
               >
@@ -355,7 +367,7 @@ export function PerformanceSettings({
                   return (
                     <label
                       key={proto}
-                      className={`cursor-pointer px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
+                      className={`cursor-pointer ${spacing.chip.md} ${radius.full} border body-small font-medium transition-colors ${
                         checked
                           ? "bg-brand-primary text-text-inverse border-brand-primary"
                           : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
@@ -384,11 +396,13 @@ export function PerformanceSettings({
 
             {/* Direction Toggle */}
             <div>
-              <label className="caption text-text-muted font-medium block mb-1">
+              <label
+                className={`caption text-text-muted font-medium block ${spacing.margin.bottom.inline}`}
+              >
                 {t("performance.direction")}
               </label>
               <div
-                className="flex flex-wrap gap-2"
+                className={`flex flex-wrap ${spacing.gap.compact}`}
                 role="radiogroup"
                 aria-label="Direction selection"
               >
@@ -397,7 +411,7 @@ export function PerformanceSettings({
                   return (
                     <label
                       key={direction}
-                      className={`cursor-pointer px-3 py-1.5 ${radius.full} border body-small font-medium transition-colors ${
+                      className={`cursor-pointer ${spacing.chip.md} ${radius.full} border body-small font-medium transition-colors ${
                         checked
                           ? "bg-brand-primary text-text-inverse border-brand-primary"
                           : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
@@ -441,14 +455,14 @@ export function PerformanceSettings({
                 }
                 min={1}
                 max={60}
-                className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small disabled:opacity-60`}
               />
             </div>
 
             {/* Server Mode */}
-            <div className="border-t border-surface-border pt-3">
+            <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
               <label
-                className={`${layout.flex.between} p-2.5 bg-surface-base ${radius.default} border border-surface-border mb-2`}
+                className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border ${spacing.margin.bottom.inline}`}
               >
                 <span className="body-small text-text-primary">
                   {t("performance.enableServer")}
@@ -479,7 +493,7 @@ export function PerformanceSettings({
                       serverPort: parseInt(e.target.value) || 5201,
                     }))
                   }
-                  className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary disabled:opacity-60`}
+                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small disabled:opacity-60`}
                 />
               </div>
               <p className="caption text-text-muted mt-1">{t("performance.serverAutoStart")}</p>

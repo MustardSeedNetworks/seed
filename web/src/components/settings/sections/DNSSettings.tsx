@@ -34,7 +34,7 @@ import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Globe } from "../../ui/Icons";
 import { TestsSettings, SaveStatus, DNSServer } from "../../../types/settings";
 import { generateId } from "../../../utils/id";
-import { icon as iconTokens, layout, radius } from "../../../styles/theme";
+import { icon as iconTokens, layout, spacing, input as inputTokens } from "../../../styles/theme";
 
 interface DNSSettingsProps {
   testsSettings: TestsSettings;
@@ -100,14 +100,14 @@ export const DNSSettings = memo(function DNSSettings({
               }))
             }
             placeholder="google.com"
-            className={`w-full mt-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full mt-1 body-small`}
           />
           <p className="caption text-text-muted mt-1">{t("dns.testHostnameDesc")}</p>
         </div>
 
         {/* DNS Servers for per-server testing */}
-        <div className="border-t border-surface-border pt-3">
-          <div className={`${layout.flex.between} mb-2`}>
+        <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
+          <div className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}>
             <span className="caption text-text-muted font-medium">
               {t("dns.additionalServers")}
             </span>
@@ -118,15 +118,20 @@ export const DNSSettings = memo(function DNSSettings({
               {t("common.add")}
             </button>
           </div>
-          <p className="caption text-text-muted mb-2">{t("dns.serversDescription")}</p>
+          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+            {t("dns.serversDescription")}
+          </p>
           {testsSettings.dnsServers.map((server) => (
-            <div key={server.id || server.address} className="flex gap-2 mb-2">
+            <div
+              key={server.id || server.address}
+              className={`flex ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+            >
               <input
                 type="text"
                 value={server.address}
                 onChange={(e) => updateDNSServer(server.id!, "address", e.target.value)}
                 placeholder={t("dns.serverIp")}
-                className={`flex-1 px-2.5 py-2 bg-surface-base border border-surface-border ${radius.default} caption text-text-primary`}
+                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} flex-1 caption`}
               />
               <button
                 onClick={() => removeDNSServer(server.id!)}

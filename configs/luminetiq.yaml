@@ -3,7 +3,6 @@ server:
     https: true
     cert_file: ""
     key_file: ""
-    log_access_header: X-Log-Token
 interface:
     default: ""
     fallbacks: []

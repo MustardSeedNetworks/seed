@@ -116,10 +116,12 @@ export function ThresholdsSettings({
               {t("thresholds.dnsLookup")}
             </span>
             <Tooltip content={THRESHOLD_HELP["DNS Lookup"]} position="top">
-              <Info className="w-3.5 h-3.5 text-text-muted hover:text-text-secondary cursor-help" />
+              <Info
+                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+              />
             </Tooltip>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
             <div>
               <label className="caption text-text-muted" htmlFor="dns-good">
                 {t("thresholds.goodLess")}
@@ -156,10 +158,12 @@ export function ThresholdsSettings({
               {t("thresholds.gatewayPing")}
             </span>
             <Tooltip content={THRESHOLD_HELP["Gateway Ping"]} position="top">
-              <Info className="w-3.5 h-3.5 text-text-muted hover:text-text-secondary cursor-help" />
+              <Info
+                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+              />
             </Tooltip>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
             <div>
               <label className="caption text-text-muted" htmlFor="gateway-good">
                 {t("thresholds.goodLess")}
@@ -196,10 +200,12 @@ export function ThresholdsSettings({
               {t("thresholds.wifiSignal")}
             </span>
             <Tooltip content={THRESHOLD_HELP["Wi-Fi Signal"]} position="top">
-              <Info className="w-3.5 h-3.5 text-text-muted hover:text-text-secondary cursor-help" />
+              <Info
+                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+              />
             </Tooltip>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
             <div>
               <label className="caption text-text-muted" htmlFor="wifi-good">
                 {t("thresholds.goodGreater")}
@@ -236,10 +242,12 @@ export function ThresholdsSettings({
               {t("thresholds.healthPing")}
             </span>
             <Tooltip content={THRESHOLD_HELP["Health Check: Ping"]} position="top">
-              <Info className="w-3.5 h-3.5 text-text-muted hover:text-text-secondary cursor-help" />
+              <Info
+                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+              />
             </Tooltip>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
             <div>
               <label className="caption text-text-muted" htmlFor="ping-good">
                 {t("thresholds.goodLess")}
@@ -276,10 +284,12 @@ export function ThresholdsSettings({
               {t("thresholds.healthTcp")}
             </span>
             <Tooltip content={THRESHOLD_HELP["Health Check: TCP"]} position="top">
-              <Info className="w-3.5 h-3.5 text-text-muted hover:text-text-secondary cursor-help" />
+              <Info
+                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+              />
             </Tooltip>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
             <div>
               <label className="caption text-text-muted" htmlFor="tcp-good">
                 {t("thresholds.goodLess")}
@@ -311,13 +321,15 @@ export function ThresholdsSettings({
         <div
           className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
         >
-          <span className="body-small font-medium text-text-primary block mb-2">
+          <span
+            className={`body-small font-medium text-text-primary block ${spacing.margin.bottom.inline}`}
+          >
             {t("thresholds.httpThresholds")}
           </span>
 
           {/* Total */}
-          <div className="mb-3">
-            <div className={`${layout.inline.tight} mb-1`}>
+          <div className={spacing.margin.bottom.heading}>
+            <div className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}>
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.totalResponseTime")}
               </span>
@@ -327,7 +339,7 @@ export function ThresholdsSettings({
                 />
               </Tooltip>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
               <div>
                 <label className="caption text-text-muted" htmlFor="http-total-good">
                   {t("thresholds.goodLess")}
@@ -373,7 +385,7 @@ export function ThresholdsSettings({
                 />
               </Tooltip>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
               <div>
                 <label className="caption text-text-muted" htmlFor="http-dns-good">
                   {t("thresholds.goodLess")}
@@ -415,7 +427,7 @@ export function ThresholdsSettings({
                 />
               </Tooltip>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
               <div>
                 <label className="caption text-text-muted" htmlFor="http-tcp-good">
                   {t("thresholds.goodLess")}
@@ -457,7 +469,7 @@ export function ThresholdsSettings({
                 />
               </Tooltip>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
               <div>
                 <label className="caption text-text-muted" htmlFor="http-tls-good">
                   {t("thresholds.goodLess")}
@@ -497,7 +509,7 @@ export function ThresholdsSettings({
                 />
               </Tooltip>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
               <div>
                 <label className="caption text-text-muted" htmlFor="http-ttfb-good">
                   {t("thresholds.goodLess")}

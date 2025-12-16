@@ -5,10 +5,6 @@ server:
   https: false      # Disabled for local development (production default: true)
   cert_file: ""
   key_file: ""
-  # Optional log access protection (leave empty to disable):
-  # log_access_token: ""
-  # log_access_header: "X-Log-Token"
-  # require_log_access: false
 interface:
   default: eth0
   fallbacks:
@@ -99,3 +95,14 @@ snmp:
   timeout: 5s
   retries: 2
   port: 161
+
+# Structured logging configuration
+logging:
+  level: info           # DEBUG, INFO, WARN, ERROR
+  format: text          # text or json
+  add_source: false     # Include file:line in logs
+  file: ""              # Log file path (empty = stdout only)
+  max_size: 100         # Max MB per log file before rotation
+  max_backups: 5        # Number of old files to keep
+  max_age: 30           # Days to keep old files
+  compress: true        # Compress rotated files

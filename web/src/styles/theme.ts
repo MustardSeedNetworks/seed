@@ -65,11 +65,22 @@ export const spacing = {
   },
 
   pad: {
+    xs: "pad-xs", // 8px
     sm: "pad-sm", // 12px
     default: "pad", // 16px
     lg: "pad-lg", // 24px
     xl: "pad-xl", // 32px
   },
+
+  // Chip/pill padding (for tags, badges, small interactive elements)
+  chip: {
+    sm: "chip-pad", // px-3 py-1
+    md: "chip-pad-md", // px-3 py-1.5
+    lg: "chip-pad-lg", // px-3 py-2
+  },
+
+  // Tab button padding
+  tab: "tab-pad", // py-2.5 px-3
 
   // Semantic margin utilities (CSS classes from index.css)
   margin: {
@@ -83,7 +94,18 @@ export const spacing = {
     top: {
       section: "mt-section", // 32px - before major sections
       content: "mt-content", // 16px - content separation
+      heading: "mt-heading", // 12px - before headings/after inline
       inline: "mt-inline", // 8px - inline content
+    },
+  },
+
+  // Padding utilities for dividers/sections
+  padding: {
+    top: {
+      heading: "pt-heading", // 12px - section divider top
+    },
+    bottom: {
+      inline: "pb-inline", // 8px - inline bottom padding
     },
   },
 
