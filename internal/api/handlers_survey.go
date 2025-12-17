@@ -594,3 +594,478 @@ func (s *Server) getSurveyHeatmap(w http.ResponseWriter, r *http.Request) {
 
 	sendJSONResponse(w, logger, http.StatusOK, result)
 }
+
+// ============================================================================
+// Multi-floor Management Handlers (#654)
+// ============================================================================
+
+// handleSurveyFloors dispatches floor list/add requests based on HTTP method.
+func (s *Server) handleSurveyFloors(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.listFloors(w, r)
+	case http.MethodPost:
+		s.addFloor(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleSurveyFloor dispatches single floor requests based on HTTP method.
+func (s *Server) handleSurveyFloor(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.getFloor(w, r)
+	case http.MethodPut:
+		s.updateFloor(w, r)
+	case http.MethodDelete:
+		s.deleteFloor(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// isValidFloorID validates a floor ID to prevent injection attacks.
+func isValidFloorID(id string) bool {
+	return validation.ValidateSurveyID(id) == nil // Same rules as survey ID
+}
+
+// AddFloorRequest contains parameters for adding a new floor.
+type AddFloorRequest struct {
+	Name  string `json:"name"`
+	Level int    `json:"level"`
+}
+
+// listFloors handles GET /api/survey/floors?id=xxx.
+// Returns all floors for a survey.
+func (s *Server) listFloors(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	surveyID := r.URL.Query().Get("id")
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+
+	floors, err := s.surveyManager.GetFloors(surveyID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, floors)
+}
+
+// addFloor handles POST /api/survey/floors?id=xxx.
+// Adds a new floor to a survey.
+func (s *Server) addFloor(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	surveyID := r.URL.Query().Get("id")
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+
+	// Limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req AddFloorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate floor name
+	if err := validation.ValidateStringLength(req.Name, "name", 1, 50); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate floor level
+	if err := validation.ValidateIntRange(req.Level, "level", -10, 200); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	floor, err := s.surveyManager.AddFloor(surveyID, req.Name, req.Level)
+	if err != nil {
+		logger.Error("Failed to add floor", "survey_id", surveyID, "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, floor)
+}
+
+// getFloor handles GET /api/survey/floor?id=xxx&floorId=yyy.
+// Returns a specific floor.
+func (s *Server) getFloor(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	surveyID := r.URL.Query().Get("id")
+	floorID := r.URL.Query().Get("floorId")
+
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+	if !isValidFloorID(floorID) {
+		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		return
+	}
+
+	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, floor)
+}
+
+// UpdateFloorRequest contains parameters for updating floor metadata.
+type UpdateFloorRequest struct {
+	Name  string `json:"name"`
+	Level int    `json:"level"`
+}
+
+// updateFloor handles PUT /api/survey/floor?id=xxx&floorId=yyy.
+// Updates floor metadata (name, level).
+func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	surveyID := r.URL.Query().Get("id")
+	floorID := r.URL.Query().Get("floorId")
+
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+	if !isValidFloorID(floorID) {
+		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		return
+	}
+
+	// Limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req UpdateFloorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate floor name
+	if err := validation.ValidateStringLength(req.Name, "name", 1, 50); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate floor level
+	if err := validation.ValidateIntRange(req.Level, "level", -10, 200); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.surveyManager.UpdateFloor(surveyID, floorID, req.Name, req.Level); err != nil {
+		logger.Error("Failed to update floor", "survey_id", surveyID, "floor_id", floorID, "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated floor
+	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, floor)
+}
+
+// deleteFloor handles DELETE /api/survey/floor?id=xxx&floorId=yyy.
+// Removes a floor from a survey.
+func (s *Server) deleteFloor(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	surveyID := r.URL.Query().Get("id")
+	floorID := r.URL.Query().Get("floorId")
+
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+	if !isValidFloorID(floorID) {
+		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.surveyManager.DeleteFloor(surveyID, floorID); err != nil {
+		logger.Error("Failed to delete floor", "survey_id", surveyID, "floor_id", floorID, "error", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+// SetActiveFloorRequest contains parameters for setting the active floor.
+type SetActiveFloorRequest struct {
+	FloorID string `json:"floorId"`
+}
+
+// setActiveFloor handles PUT /api/survey/active-floor?id=xxx.
+// Sets the active floor for data collection.
+func (s *Server) setActiveFloor(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	surveyID := r.URL.Query().Get("id")
+
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+
+	// Limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req SetActiveFloorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if !isValidFloorID(req.FloorID) {
+		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.surveyManager.SetActiveFloor(surveyID, req.FloorID); err != nil {
+		logger.Error("Failed to set active floor", "survey_id", surveyID, "floor_id", req.FloorID, "error", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Return the updated survey
+	updatedSurvey, err := s.surveyManager.GetSurvey(surveyID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, updatedSurvey)
+}
+
+// updateFloorFloorPlan handles PUT /api/survey/floor/floorplan?id=xxx&floorId=yyy.
+// Updates the floor plan for a specific floor.
+func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	surveyID := r.URL.Query().Get("id")
+	floorID := r.URL.Query().Get("floorId")
+
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+	if !isValidFloorID(floorID) {
+		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		return
+	}
+
+	// Rate limit file uploads
+	clientIP := GetClientIP(r)
+	if !s.endpointRateLimiter.Allow(clientIP) {
+		http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+		return
+	}
+
+	// Limit request body size for floor plan uploads
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeFloorPlan)
+
+	var req UpdateFloorPlanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate image data URL
+	if err := validation.ValidateImageDataURL(req.ImageData, int(MaxBodySizeFloorPlan)); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate dimensions
+	if err := validation.ValidateIntRange(req.Width, "width", 1, 10000); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := validation.ValidateIntRange(req.Height, "height", 1, 10000); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate scale
+	if err := validation.ValidateFloatRange(req.ScaleM, "scaleM", 0.01, 1000.0); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	floorPlan := &survey.FloorPlan{
+		ImageData: req.ImageData,
+		Width:     req.Width,
+		Height:    req.Height,
+		ScaleM:    req.ScaleM,
+	}
+
+	if err := s.surveyManager.UpdateFloorPlanByFloorID(surveyID, floorID, floorPlan); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	// Return updated floor
+	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, floor)
+}
+
+// AddFloorSampleRequest contains parameters for adding a sample to a specific floor.
+type AddFloorSampleRequest struct {
+	X          int         `json:"x"`
+	Y          int         `json:"y"`
+	SampleData interface{} `json:"sampleData"`
+}
+
+// addFloorSample handles POST /api/survey/floor/sample?id=xxx&floorId=yyy.
+// Adds a sample to a specific floor.
+func (s *Server) addFloorSample(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	surveyID := r.URL.Query().Get("id")
+	floorID := r.URL.Query().Get("floorId")
+
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+	if !isValidFloorID(floorID) {
+		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		return
+	}
+
+	// Limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req AddFloorSampleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Process the sample data (same as addSurveySample)
+	sampleData := req.SampleData
+	if dataMap, ok := req.SampleData.(map[string]interface{}); ok {
+		if _, hasNetworks := dataMap["networks"]; hasNetworks {
+			dataBytes, err := json.Marshal(dataMap)
+			if err == nil {
+				var passiveSample survey.PassiveSample
+				if err := json.Unmarshal(dataBytes, &passiveSample); err == nil {
+					passiveSample.CalculateAggregations()
+					sampleData = passiveSample
+				}
+			}
+		} else if _, hasBSSID := dataMap["bssid"]; hasBSSID {
+			dataBytes, err := json.Marshal(dataMap)
+			if err == nil {
+				var activeSample survey.ActiveSample
+				if err := json.Unmarshal(dataBytes, &activeSample); err == nil {
+					sampleData = activeSample
+				}
+			}
+		}
+	}
+
+	if err := s.surveyManager.AddSampleToFloor(surveyID, floorID, req.X, req.Y, sampleData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "sample added"})
+}
+
+// ============================================================================
+// Report Generation Handlers (#653)
+// ============================================================================
+
+// GenerateReportRequest contains parameters for report generation.
+type GenerateReportRequest struct {
+	IncludeHeatmaps         bool   `json:"includeHeatmaps"`
+	IncludeRawData          bool   `json:"includeRawData"`
+	IncludeRecommendations  bool   `json:"includeRecommendations"`
+	IncludeExecutiveSummary bool   `json:"includeExecutiveSummary"`
+	CompanyName             string `json:"companyName,omitempty"`
+}
+
+// generateSurveyReport handles POST /api/survey/report?id=xxx.
+// Generates a PDF report for the specified survey.
+func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	surveyID := r.URL.Query().Get("id")
+	if !isValidSurveyID(surveyID) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		return
+	}
+
+	// Limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	// Parse options from request body (all optional)
+	var req GenerateReportRequest
+	if r.ContentLength > 0 {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Validate company name length
+	if len(req.CompanyName) > 100 {
+		http.Error(w, "Company name too long (max 100 characters)", http.StatusBadRequest)
+		return
+	}
+
+	// Convert to survey package options
+	options := survey.ReportOptions{
+		IncludeHeatmaps:         req.IncludeHeatmaps,
+		IncludeRawData:          req.IncludeRawData,
+		IncludeRecommendations:  req.IncludeRecommendations,
+		IncludeExecutiveSummary: req.IncludeExecutiveSummary,
+		CompanyName:             req.CompanyName,
+	}
+
+	// Use defaults if nothing specified
+	if !options.IncludeHeatmaps && !options.IncludeRawData &&
+		!options.IncludeRecommendations && !options.IncludeExecutiveSummary {
+		options = survey.DefaultReportOptions()
+	}
+
+	pdfBytes, err := s.surveyManager.GenerateReport(surveyID, options)
+	if err != nil {
+		logger.Error("Failed to generate report",
+			"survey_id", surveyID,
+			"error", err)
+		http.Error(w, fmt.Sprintf("Failed to generate report: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Return PDF
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"survey-report-%s.pdf\"", surveyID[:8]))
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(pdfBytes)))
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(pdfBytes); err != nil {
+		logger.Error("Failed to write PDF response", "error", err)
+	}
+}

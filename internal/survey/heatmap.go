@@ -143,18 +143,28 @@ func GenerateHeatmap(survey *Survey, config HeatmapConfig) (*HeatmapResult, erro
 }
 
 // getHeatmapDimensions returns the dimensions for the heatmap.
+// Uses the active floor's floor plan in multi-floor surveys.
 func getHeatmapDimensions(survey *Survey) (width, height int) {
+	// Check active floor first (multi-floor support)
+	if activeFloor := survey.GetActiveFloor(); activeFloor != nil {
+		if activeFloor.FloorPlan != nil && activeFloor.FloorPlan.Width > 0 && activeFloor.FloorPlan.Height > 0 {
+			return activeFloor.FloorPlan.Width, activeFloor.FloorPlan.Height
+		}
+	}
+
+	// Legacy fallback: check survey-level floor plan
 	if survey.FloorPlan != nil && survey.FloorPlan.Width > 0 && survey.FloorPlan.Height > 0 {
 		return survey.FloorPlan.Width, survey.FloorPlan.Height
 	}
 
 	// Fallback: calculate from sample points
-	if len(survey.Samples) == 0 {
+	allSamples := survey.GetAllSamples()
+	if len(allSamples) == 0 {
 		return 0, 0
 	}
 
 	var maxX, maxY int
-	for _, s := range survey.Samples {
+	for _, s := range allSamples {
 		if s.X > maxX {
 			maxX = s.X
 		}

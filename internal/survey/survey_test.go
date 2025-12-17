@@ -128,8 +128,18 @@ func TestCreateSurvey(t *testing.T) {
 				t.Errorf("Survey Status = %v, want %v", survey.Status, StatusCreated)
 			}
 
-			if survey.Samples == nil {
-				t.Error("Survey Samples is nil")
+			// With multi-floor support, surveys have floors instead of direct Samples
+			if len(survey.Floors) == 0 {
+				t.Error("Survey has no floors")
+			}
+
+			activeFloor := survey.GetActiveFloor()
+			if activeFloor == nil {
+				t.Error("Survey has no active floor")
+			}
+
+			if activeFloor.Samples == nil {
+				t.Error("Active floor Samples is nil")
 			}
 
 			if survey.CreatedAt.IsZero() {
@@ -564,22 +574,28 @@ func TestUpdateFloorPlan(t *testing.T) {
 				return
 			}
 
-			// Verify floor plan updated
+			// Verify floor plan updated (now on the active floor)
 			result, err := mgr.GetSurvey(tt.id)
 			if err != nil {
 				t.Fatalf("GetSurvey() failed: %v", err)
 			}
 
-			if result.FloorPlan == nil {
+			// With multi-floor support, floor plan is on the active floor
+			activeFloor := result.GetActiveFloor()
+			if activeFloor == nil {
+				t.Fatal("No active floor found")
+			}
+
+			if activeFloor.FloorPlan == nil {
 				t.Fatal("FloorPlan is nil after update")
 			}
 
-			if result.FloorPlan.Width != floorPlan.Width {
-				t.Errorf("FloorPlan Width = %v, want %v", result.FloorPlan.Width, floorPlan.Width)
+			if activeFloor.FloorPlan.Width != floorPlan.Width {
+				t.Errorf("FloorPlan Width = %v, want %v", activeFloor.FloorPlan.Width, floorPlan.Width)
 			}
 
-			if result.FloorPlan.Height != floorPlan.Height {
-				t.Errorf("FloorPlan Height = %v, want %v", result.FloorPlan.Height, floorPlan.Height)
+			if activeFloor.FloorPlan.Height != floorPlan.Height {
+				t.Errorf("FloorPlan Height = %v, want %v", activeFloor.FloorPlan.Height, floorPlan.Height)
 			}
 		})
 	}
@@ -652,18 +668,20 @@ func TestAddSample(t *testing.T) {
 				return
 			}
 
-			// Verify sample was added
+			// Verify sample was added (now on the active floor)
 			result, err := mgr.GetSurvey(tt.id)
 			if err != nil {
 				t.Fatalf("GetSurvey() failed: %v", err)
 			}
 
-			if len(result.Samples) == 0 {
+			// With multi-floor support, samples are on the active floor
+			samples := result.GetAllSamples()
+			if len(samples) == 0 {
 				t.Error("No samples found after AddSample()")
 				return
 			}
 
-			lastSample := result.Samples[len(result.Samples)-1]
+			lastSample := samples[len(samples)-1]
 			if lastSample.X != tt.x {
 				t.Errorf("Sample X = %v, want %v", lastSample.X, tt.x)
 			}
@@ -801,14 +819,15 @@ func TestConcurrentSampleAddition(t *testing.T) {
 
 	wg.Wait()
 
-	// Verify all samples added
+	// Verify all samples added (now on the active floor)
 	result, err := mgr.GetSurvey(survey.ID)
 	if err != nil {
 		t.Fatalf("GetSurvey() failed: %v", err)
 	}
 
-	if len(result.Samples) != numSamples {
-		t.Errorf("Expected %d samples, got %d", numSamples, len(result.Samples))
+	samples := result.GetAllSamples()
+	if len(samples) != numSamples {
+		t.Errorf("Expected %d samples, got %d", numSamples, len(samples))
 	}
 }
 
@@ -883,8 +902,10 @@ func TestSampleCount(t *testing.T) {
 		t.Fatalf("GetSurvey() failed: %v", err)
 	}
 
-	if len(result.Samples) != 5 {
-		t.Errorf("Sample count = %d, want 5", len(result.Samples))
+	// With multi-floor support, samples are on the active floor
+	samples := result.GetAllSamples()
+	if len(samples) != 5 {
+		t.Errorf("Sample count = %d, want 5", len(samples))
 	}
 }
 

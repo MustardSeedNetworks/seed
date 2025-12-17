@@ -44,6 +44,17 @@ type FloorPlan struct {
 	ScaleM    float64 `json:"scaleM"`    // Meters per pixel
 }
 
+// Floor represents a single floor in a multi-floor survey.
+type Floor struct {
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`      // "Floor 1", "Basement", etc.
+	Level     int            `json:"level"`     // Numeric level (-1, 0, 1, 2...)
+	FloorPlan *FloorPlan     `json:"floorPlan,omitempty"`
+	Samples   []*SamplePoint `json:"samples"`
+	CreatedAt time.Time      `json:"createdAt"`
+	UpdatedAt time.Time      `json:"updatedAt"`
+}
+
 // PassiveSample contains data from a passive WiFi scan.
 type PassiveSample struct {
 	Networks []*wifi.ScannedNetwork `json:"networks"` // All visible APs
@@ -170,20 +181,61 @@ type SamplePoint struct {
 
 // Survey represents a WiFi site survey.
 type Survey struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description,omitempty"`
-	FloorPlan   *FloorPlan     `json:"floorPlan,omitempty"`
-	SurveyType  Type           `json:"surveyType"`
-	Status      Status         `json:"status"`
-	CreatedAt   time.Time      `json:"createdAt"`
-	UpdatedAt   time.Time      `json:"updatedAt"`
-	Samples     []*SamplePoint `json:"samples"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	SurveyType  Type      `json:"surveyType"`
+	Status      Status    `json:"status"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+
+	// Multi-floor support
+	Floors        []*Floor `json:"floors"`                  // Multiple floors in the building
+	ActiveFloorID string   `json:"activeFloorId,omitempty"` // Currently active floor for data collection
+
+	// Legacy single-floor fields (deprecated, kept for backwards compatibility)
+	// When loading surveys, these are automatically migrated to the Floors array.
+	FloorPlan *FloorPlan     `json:"floorPlan,omitempty"`
+	Samples   []*SamplePoint `json:"samples,omitempty"`
 
 	// Configuration
 	Interface    string `json:"interface"`              // WiFi interface to use
 	IperfServer  string `json:"iperfServer,omitempty"`  // For throughput surveys
 	TestDuration int    `json:"testDuration,omitempty"` // seconds, for throughput tests
+}
+
+// GetActiveFloor returns the currently active floor for data collection.
+func (s *Survey) GetActiveFloor() *Floor {
+	if s.ActiveFloorID == "" && len(s.Floors) > 0 {
+		return s.Floors[0]
+	}
+	for _, floor := range s.Floors {
+		if floor.ID == s.ActiveFloorID {
+			return floor
+		}
+	}
+	return nil
+}
+
+// GetFloorByID returns a floor by its ID.
+func (s *Survey) GetFloorByID(floorID string) *Floor {
+	for _, floor := range s.Floors {
+		if floor.ID == floorID {
+			return floor
+		}
+	}
+	return nil
+}
+
+// GetAllSamples returns all samples across all floors (for backwards compatibility).
+func (s *Survey) GetAllSamples() []*SamplePoint {
+	var samples []*SamplePoint
+	for _, floor := range s.Floors {
+		samples = append(samples, floor.Samples...)
+	}
+	// Include legacy samples if present
+	samples = append(samples, s.Samples...)
+	return samples
 }
 
 // Manager manages WiFi site surveys.
@@ -207,21 +259,34 @@ func NewManager(storagePath string, wifiScanner *wifi.Scanner, wifiManager *wifi
 	}
 }
 
-// CreateSurvey creates a new survey.
+// CreateSurvey creates a new survey with a default floor.
 func (m *Manager) CreateSurvey(name, description, iface string, surveyType Type) (*Survey, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	now := time.Now()
+
+	// Create default first floor
+	defaultFloor := &Floor{
+		ID:        uuid.New().String(),
+		Name:      "Floor 1",
+		Level:     1,
+		Samples:   make([]*SamplePoint, 0),
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
 	survey := &Survey{
-		ID:          uuid.New().String(),
-		Name:        name,
-		Description: description,
-		SurveyType:  surveyType,
-		Status:      StatusCreated,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Interface:   iface,
-		Samples:     make([]*SamplePoint, 0),
+		ID:            uuid.New().String(),
+		Name:          name,
+		Description:   description,
+		SurveyType:    surveyType,
+		Status:        StatusCreated,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+		Interface:     iface,
+		Floors:        []*Floor{defaultFloor},
+		ActiveFloorID: defaultFloor.ID,
 	}
 
 	m.surveys[survey.ID] = survey
@@ -280,7 +345,7 @@ func (m *Manager) DeleteSurvey(id string) error {
 	return nil
 }
 
-// UpdateFloorPlan updates the floor plan for a survey.
+// UpdateFloorPlan updates the floor plan for the active floor (or specified floor).
 func (m *Manager) UpdateFloorPlan(id string, floorPlan *FloorPlan) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -290,7 +355,36 @@ func (m *Manager) UpdateFloorPlan(id string, floorPlan *FloorPlan) error {
 		return fmt.Errorf("survey not found: %s", id)
 	}
 
-	survey.FloorPlan = floorPlan
+	// Find the active floor
+	floor := survey.GetActiveFloor()
+	if floor == nil {
+		return fmt.Errorf("no active floor set for survey: %s", id)
+	}
+
+	floor.FloorPlan = floorPlan
+	floor.UpdatedAt = time.Now()
+	survey.UpdatedAt = time.Now()
+
+	return m.saveSurvey(survey)
+}
+
+// UpdateFloorPlanByFloorID updates the floor plan for a specific floor.
+func (m *Manager) UpdateFloorPlanByFloorID(surveyID, floorID string, floorPlan *FloorPlan) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	survey, exists := m.surveys[surveyID]
+	if !exists {
+		return fmt.Errorf("survey not found: %s", surveyID)
+	}
+
+	floor := survey.GetFloorByID(floorID)
+	if floor == nil {
+		return fmt.Errorf("floor not found: %s", floorID)
+	}
+
+	floor.FloorPlan = floorPlan
+	floor.UpdatedAt = time.Now()
 	survey.UpdatedAt = time.Now()
 
 	return m.saveSurvey(survey)
@@ -384,7 +478,7 @@ func (m *Manager) UpdateSurveySettings(id string, surveyType Type, iperfServer s
 	return m.saveSurvey(survey)
 }
 
-// AddSample adds a measurement sample to a survey.
+// AddSample adds a measurement sample to the active floor of a survey.
 func (m *Manager) AddSample(id string, x, y int, sampleData interface{}) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -398,6 +492,11 @@ func (m *Manager) AddSample(id string, x, y int, sampleData interface{}) error {
 		return fmt.Errorf("survey not in progress")
 	}
 
+	floor := survey.GetActiveFloor()
+	if floor == nil {
+		return fmt.Errorf("no active floor set for survey: %s", id)
+	}
+
 	sample := &SamplePoint{
 		X:          x,
 		Y:          y,
@@ -405,10 +504,183 @@ func (m *Manager) AddSample(id string, x, y int, sampleData interface{}) error {
 		SampleData: sampleData,
 	}
 
-	survey.Samples = append(survey.Samples, sample)
+	floor.Samples = append(floor.Samples, sample)
+	floor.UpdatedAt = time.Now()
 	survey.UpdatedAt = time.Now()
 
 	return m.saveSurvey(survey)
+}
+
+// AddSampleToFloor adds a measurement sample to a specific floor.
+func (m *Manager) AddSampleToFloor(surveyID, floorID string, x, y int, sampleData interface{}) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	survey, exists := m.surveys[surveyID]
+	if !exists {
+		return fmt.Errorf("survey not found: %s", surveyID)
+	}
+
+	if survey.Status != StatusInProgress {
+		return fmt.Errorf("survey not in progress")
+	}
+
+	floor := survey.GetFloorByID(floorID)
+	if floor == nil {
+		return fmt.Errorf("floor not found: %s", floorID)
+	}
+
+	sample := &SamplePoint{
+		X:          x,
+		Y:          y,
+		Timestamp:  time.Now(),
+		SampleData: sampleData,
+	}
+
+	floor.Samples = append(floor.Samples, sample)
+	floor.UpdatedAt = time.Now()
+	survey.UpdatedAt = time.Now()
+
+	return m.saveSurvey(survey)
+}
+
+// AddFloor adds a new floor to a survey.
+func (m *Manager) AddFloor(surveyID, name string, level int) (*Floor, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	survey, exists := m.surveys[surveyID]
+	if !exists {
+		return nil, fmt.Errorf("survey not found: %s", surveyID)
+	}
+
+	now := time.Now()
+	floor := &Floor{
+		ID:        uuid.New().String(),
+		Name:      name,
+		Level:     level,
+		Samples:   make([]*SamplePoint, 0),
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	survey.Floors = append(survey.Floors, floor)
+	survey.UpdatedAt = now
+
+	if err := m.saveSurvey(survey); err != nil {
+		return nil, err
+	}
+
+	return floor, nil
+}
+
+// UpdateFloor updates floor metadata (name, level).
+func (m *Manager) UpdateFloor(surveyID, floorID, name string, level int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	survey, exists := m.surveys[surveyID]
+	if !exists {
+		return fmt.Errorf("survey not found: %s", surveyID)
+	}
+
+	floor := survey.GetFloorByID(floorID)
+	if floor == nil {
+		return fmt.Errorf("floor not found: %s", floorID)
+	}
+
+	floor.Name = name
+	floor.Level = level
+	floor.UpdatedAt = time.Now()
+	survey.UpdatedAt = time.Now()
+
+	return m.saveSurvey(survey)
+}
+
+// DeleteFloor removes a floor from a survey.
+func (m *Manager) DeleteFloor(surveyID, floorID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	survey, exists := m.surveys[surveyID]
+	if !exists {
+		return fmt.Errorf("survey not found: %s", surveyID)
+	}
+
+	// Don't allow deletion of the last floor
+	if len(survey.Floors) <= 1 {
+		return fmt.Errorf("cannot delete the last floor")
+	}
+
+	// Find and remove the floor
+	for i, floor := range survey.Floors {
+		if floor.ID == floorID {
+			survey.Floors = append(survey.Floors[:i], survey.Floors[i+1:]...)
+
+			// If we deleted the active floor, switch to the first remaining floor
+			if survey.ActiveFloorID == floorID {
+				survey.ActiveFloorID = survey.Floors[0].ID
+			}
+
+			survey.UpdatedAt = time.Now()
+			return m.saveSurvey(survey)
+		}
+	}
+
+	return fmt.Errorf("floor not found: %s", floorID)
+}
+
+// SetActiveFloor sets the active floor for data collection.
+func (m *Manager) SetActiveFloor(surveyID, floorID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	survey, exists := m.surveys[surveyID]
+	if !exists {
+		return fmt.Errorf("survey not found: %s", surveyID)
+	}
+
+	// Verify floor exists
+	floor := survey.GetFloorByID(floorID)
+	if floor == nil {
+		return fmt.Errorf("floor not found: %s", floorID)
+	}
+
+	survey.ActiveFloorID = floorID
+	survey.UpdatedAt = time.Now()
+
+	return m.saveSurvey(survey)
+}
+
+// GetFloors returns all floors for a survey.
+func (m *Manager) GetFloors(surveyID string) ([]*Floor, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	survey, exists := m.surveys[surveyID]
+	if !exists {
+		return nil, fmt.Errorf("survey not found: %s", surveyID)
+	}
+
+	return survey.Floors, nil
+}
+
+// GetFloor returns a specific floor.
+func (m *Manager) GetFloor(surveyID, floorID string) (*Floor, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	survey, exists := m.surveys[surveyID]
+	if !exists {
+		return nil, fmt.Errorf("survey not found: %s", surveyID)
+	}
+
+	floor := survey.GetFloorByID(floorID)
+	if floor == nil {
+		return nil, fmt.Errorf("floor not found: %s", floorID)
+	}
+
+	return floor, nil
 }
 
 // saveSurvey persists a survey to disk.
@@ -431,7 +703,7 @@ func (m *Manager) saveSurvey(survey *Survey) error {
 	return nil
 }
 
-// LoadSurveys loads all surveys from disk.
+// LoadSurveys loads all surveys from disk and auto-migrates legacy single-floor surveys.
 func (m *Manager) LoadSurveys() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -459,7 +731,34 @@ func (m *Manager) LoadSurveys() error {
 			continue // Skip invalid JSON
 		}
 
+		// Auto-migrate legacy single-floor surveys to multi-floor format
+		if MigrateToMultiFloor(&survey) {
+			// Save the migrated survey back to disk
+			_ = m.saveSurveyUnlocked(&survey)
+		}
+
 		m.surveys[survey.ID] = &survey
+	}
+
+	return nil
+}
+
+// saveSurveyUnlocked persists a survey to disk without acquiring a lock.
+// This is used internally when the lock is already held.
+func (m *Manager) saveSurveyUnlocked(survey *Survey) error {
+	// Ensure storage directory exists with restrictive permissions
+	if err := os.MkdirAll(m.storagePath, 0o750); err != nil {
+		return fmt.Errorf("failed to create storage directory: %w", err)
+	}
+
+	filename := filepath.Join(m.storagePath, fmt.Sprintf("%s.json", survey.ID))
+	data, err := json.MarshalIndent(survey, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal survey: %w", err)
+	}
+
+	if err := os.WriteFile(filename, data, 0o600); err != nil {
+		return fmt.Errorf("failed to write survey file: %w", err)
 	}
 
 	return nil
