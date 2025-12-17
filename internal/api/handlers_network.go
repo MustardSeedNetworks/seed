@@ -200,7 +200,7 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 	interfaces := s.netManager.GetInterfaces()
 
-	sendJSONResponse(w, http.StatusOK, interfaces)
+	sendJSONResponse(w, nil, http.StatusOK, interfaces)
 }
 
 // handleInterface handles GET/PUT for current interface.
@@ -212,7 +212,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		sendJSONResponse(w, http.StatusOK, map[string]string{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]string{
 			"interface": s.netManager.GetCurrentInterface(),
 		})
 	case http.MethodPut:
@@ -259,7 +259,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			isWireless = s.wifiManager.IsWireless()
 		}
 
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"status":     "ok",
 			"interface":  req.Interface,
 			"isWireless": isWireless,
@@ -332,7 +332,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sendJSONResponse(w, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // handleIPConfig returns IP configuration for the current interface.
@@ -391,7 +391,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 	// Add DHCP timing if available
 	s.applyDHCPTiming(&resp)
 
-	sendJSONResponse(w, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // handleVLAN returns VLAN information for the current interface.
@@ -436,7 +436,7 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 	resp.Configured.Enabled = info.Configured.Enabled
 	resp.Configured.ID = info.Configured.ID
 
-	sendJSONResponse(w, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // handleVLANTraffic returns VLAN traffic statistics from frame capture.
@@ -467,7 +467,7 @@ func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
 		Running: s.vlanTrafficMonitor.IsRunning(),
 	}
 
-	sendJSONResponse(w, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // handleVLANInterface handles POST (create) and DELETE (remove) for VLAN subinterfaces.
@@ -529,7 +529,7 @@ func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"status":    "success",
 		"message":   "VLAN interface created",
 		"interface": iface,
@@ -549,7 +549,7 @@ func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"status":    "success",
 		"message":   "VLAN interface deleted",
 		"interface": iface,
@@ -592,7 +592,7 @@ func (s *Server) getWiFiSettings(w http.ResponseWriter, _ *http.Request) {
 		IsWireless:    s.wifiManager != nil && s.wifiManager.IsWireless(),
 	}
 
-	sendJSONResponse(w, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
@@ -624,7 +624,7 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
 		slog.Warn("Failed to save config", "error", err)
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]string{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "WiFi settings updated",
 	})
@@ -644,7 +644,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 
 	// Check if interface is wireless
 	if !s.wifiManager.IsWireless() {
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"wireless": false,
 			"message":  "Current interface is not a wireless adapter",
 		})
@@ -654,7 +654,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 	info := s.wifiManager.GetInfo()
 	if info == nil {
 		w.Header().Set("Content-Type", "application/json")
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"wireless":  true,
 			"connected": false,
 			"message":   "Not connected to a wireless network",
@@ -671,7 +671,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 		Security:  info.Security,
 	}
 
-	sendJSONResponse(w, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // handleWiFiScan performs a WiFi network scan and returns discovered networks.
@@ -682,7 +682,7 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if s.wifiScanner == nil {
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"available": false,
 			"error":     "WiFi scanner not initialized",
 			"networks":  []interface{}{},
@@ -692,7 +692,7 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 
 	// Check if interface is wireless
 	if s.wifiManager == nil || !s.wifiManager.IsWireless() {
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"available": false,
 			"error":     "No wireless adapter available. Connect a WiFi adapter to scan networks.",
 			"networks":  []interface{}{},
@@ -703,7 +703,7 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 	// Perform scan
 	networks, err := s.wifiScanner.Scan()
 	if err != nil {
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"available": true,
 			"error":     err.Error(),
 			"networks":  []interface{}{},
@@ -711,7 +711,7 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"available": true,
 		"networks":  networks,
 	})
@@ -759,7 +759,7 @@ func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 		message = "Wireless adapter ready for scanning."
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"status":            status,
 		"message":           message,
 		"currentInterface":  currentInterface,
@@ -778,7 +778,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if s.wifiScanner == nil {
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"available": false,
 			"error":     "WiFi scanner not initialized",
 			"data":      nil,
@@ -788,7 +788,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 
 	// Check if interface is wireless
 	if s.wifiManager == nil || !s.wifiManager.IsWireless() {
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"available": false,
 			"error":     "No wireless adapter available. Connect a WiFi adapter to scan networks.",
 			"data":      nil,
@@ -799,7 +799,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 	// Perform scan
 	networks, err := s.wifiScanner.Scan()
 	if err != nil {
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"available": true,
 			"error":     err.Error(),
 			"data":      nil,
@@ -816,7 +816,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 	// Generate channel graph data
 	data := wifi.GetChannelGraphData(networks, connectedBSSID)
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"available": true,
 		"data":      data,
 	})
@@ -847,7 +847,7 @@ func (s *Server) handleIPSettingsGet(w http.ResponseWriter, _ *http.Request) {
 		resp.DNS = s.config.IP.Static.DNS
 	}
 
-	sendJSONResponse(w, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // handleIPSettingsPut updates the IP configuration settings.
@@ -919,7 +919,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]string{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "IP configuration updated",
 	})
@@ -964,7 +964,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 		slog.Warn("Failed to refresh interfaces after MTU change", "error", err)
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"status":    "success",
 		"message":   "MTU updated",
 		"interface": iface,
@@ -993,7 +993,7 @@ func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 		Faults:    result.Faults,
 	}
 
-	sendJSONResponse(w, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // ============================================================================

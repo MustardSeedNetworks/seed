@@ -125,7 +125,7 @@ func (s *Server) getSettings(w http.ResponseWriter, _ *http.Request) {
 		},
 	}
 
-	sendJSONResponse(w, http.StatusOK, settings)
+	sendJSONResponse(w, nil, http.StatusOK, settings)
 }
 
 func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +156,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]string{"status": "updated"})
+	sendJSONResponse(w, nil, http.StatusOK, map[string]string{"status": "updated"})
 }
 
 // applyThresholdUpdates applies threshold configuration updates.

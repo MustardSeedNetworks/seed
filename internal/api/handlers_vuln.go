@@ -36,7 +36,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, http.StatusServiceUnavailable, map[string]string{
+		sendJSONResponse(w, nil, http.StatusServiceUnavailable, map[string]string{
 			"error": "Vulnerability scanner not enabled",
 		})
 		return
@@ -52,7 +52,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 
 	// Check if scan is already in progress
 	if s.vulnScanner.IsRunning() {
-		sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"status":  "scan already in progress",
 			"running": true,
 		})
@@ -92,7 +92,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 		})
 	}()
 
-	sendJSONResponse(w, http.StatusOK, map[string]string{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]string{
 		"status": "scan started",
 	})
 }
@@ -106,7 +106,7 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, http.StatusServiceUnavailable, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusServiceUnavailable, map[string]interface{}{
 			"enabled": false,
 		})
 		return
@@ -114,7 +114,7 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 
 	stats := s.vulnScanner.GetStats()
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"enabled":        true,
 		"scanning":       s.vulnScanner.IsRunning(),
 		"stats":          stats,
@@ -131,7 +131,7 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, http.StatusServiceUnavailable, map[string]string{
+		sendJSONResponse(w, nil, http.StatusServiceUnavailable, map[string]string{
 			"error": "Vulnerability scanner not enabled",
 		})
 		return
@@ -153,7 +153,7 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 		results = filtered
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"results": results,
 		"count":   len(results),
 	})
@@ -168,7 +168,7 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, http.StatusServiceUnavailable, map[string]string{
+		sendJSONResponse(w, nil, http.StatusServiceUnavailable, map[string]string{
 			"error": "Vulnerability scanner not enabled",
 		})
 		return
@@ -188,13 +188,13 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 
 	result := s.vulnScanner.GetDeviceVulnerabilities(ip)
 	if result == nil {
-		sendJSONResponse(w, http.StatusNotFound, map[string]string{
+		sendJSONResponse(w, nil, http.StatusNotFound, map[string]string{
 			"error": "No vulnerability data for device",
 		})
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, result)
+	sendJSONResponse(w, nil, http.StatusOK, result)
 }
 
 // handleVulnerabilitySettings returns or updates vulnerability scanner settings
@@ -202,7 +202,7 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		sendJSONResponse(w, http.StatusOK, s.config.Security.VulnerabilityScanning)
+		sendJSONResponse(w, nil, http.StatusOK, s.config.Security.VulnerabilityScanning)
 
 	case http.MethodPut:
 		var settings discovery.VulnerabilityScannerConfig
@@ -223,13 +223,13 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 		// Save config
 		if err := s.config.Save(s.configPath); err != nil {
-			sendJSONResponse(w, http.StatusInternalServerError, map[string]string{
+			sendJSONResponse(w, nil, http.StatusInternalServerError, map[string]string{
 				"error": "Failed to save config",
 			})
 			return
 		}
 
-		sendJSONResponse(w, http.StatusOK, map[string]string{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]string{
 			"status": "updated",
 		})
 

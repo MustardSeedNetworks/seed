@@ -96,7 +96,7 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 		broadcaster.Write(logEntry)
 	}
 
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"status":   "accepted",
 		"received": len(req.Entries),
 	})
@@ -195,7 +195,7 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	totalCount := len(filtered)
 	filtered = paginateLogs(filtered, params.offset, params.limit)
 
-	sendJSONResponse(w, http.StatusOK, LogQueryResponse{
+	sendJSONResponse(w, nil, http.StatusOK, LogQueryResponse{
 		Logs:       filtered,
 		TotalCount: totalCount,
 		Offset:     params.offset,
@@ -250,7 +250,7 @@ func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sendJSONResponse(w, http.StatusOK, stats)
+	sendJSONResponse(w, nil, http.StatusOK, stats)
 }
 
 // handleLogsRecent returns the most recent log entries.
@@ -275,7 +275,7 @@ func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logs := broadcaster.GetRecentLogs(limit)
-	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 		"logs":  logs,
 		"count": len(logs),
 	})
