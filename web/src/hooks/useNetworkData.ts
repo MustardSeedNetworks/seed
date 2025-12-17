@@ -24,6 +24,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { api } from "../lib/api";
+import { logger, LogComponents } from "../lib/logger";
 
 /** Network interface link status */
 export interface LinkStatus {
@@ -204,7 +205,7 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch network data";
       setError(message);
-      console.error("Failed to refresh network data:", err);
+      logger.error(LogComponents.NETWORK, "Failed to refresh network data", err);
     } finally {
       setIsLoading(false);
     }
@@ -219,7 +220,7 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
       setNetworkData((prev) => ({ ...prev, linkStatus: data }));
       return data;
     } catch (err) {
-      console.error("Failed to refresh link status:", err);
+      logger.error(LogComponents.NETWORK, "Failed to refresh link status", err);
       return null;
     }
   }, []);
@@ -233,7 +234,7 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
       setNetworkData((prev) => ({ ...prev, gateway: data }));
       return data;
     } catch (err) {
-      console.error("Failed to refresh gateway:", err);
+      logger.error(LogComponents.GATEWAY, "Failed to refresh gateway", err);
       return null;
     }
   }, []);
@@ -247,7 +248,7 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
       setNetworkData((prev) => ({ ...prev, publicIP: data }));
       return data;
     } catch (err) {
-      console.error("Failed to refresh public IP:", err);
+      logger.error(LogComponents.PUBLICIP, "Failed to refresh public IP", err);
       return null;
     }
   }, []);

@@ -30,6 +30,7 @@
 import { Component, ReactNode } from "react";
 import { Translation } from "react-i18next";
 import { radius, button, spacing } from "../styles/theme";
+import { logger, LogComponents } from "../lib/logger";
 
 /**
  * Props for ErrorBoundary component
@@ -81,7 +82,9 @@ export class ErrorBoundary extends Component<Props, State> {
    * @param errorInfo - Additional error information (component stack trace)
    */
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    logger.error(LogComponents.APP, "ErrorBoundary caught an error", error, {
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   /**

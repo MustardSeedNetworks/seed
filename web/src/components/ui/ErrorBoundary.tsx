@@ -24,6 +24,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { Translation } from "react-i18next";
 import { icon as iconTokens, radius, button, layout, spacing } from "../../styles/theme";
+import { logger, LogComponents } from "../../lib/logger";
 
 /**
  * Props for the ErrorBoundary component
@@ -84,7 +85,9 @@ export class ErrorBoundary extends Component<Props, State> {
    */
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error and component stack for debugging and monitoring
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    logger.error(LogComponents.UI, "ErrorBoundary caught an error", error, {
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   /**

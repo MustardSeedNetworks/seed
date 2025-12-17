@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "../../hooks/useTheme";
 import { getAuthHeaders } from "../../hooks/useAuth";
 import { useSettings } from "../../contexts/useSettings";
+import { logger, LogComponents } from "../../lib/logger";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import {
   icon as iconTokens,
@@ -445,7 +446,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         }
       }
     } catch (err) {
-      console.error("Failed to fetch thresholds:", err);
+      logger.error(LogComponents.CONFIG, "Failed to fetch thresholds", err);
     }
   }, []);
 
@@ -467,7 +468,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         setDnsInput((data.dns || []).join(", "));
       }
     } catch (err) {
-      console.error("Failed to fetch IP settings:", err);
+      logger.error(LogComponents.CONFIG, "Failed to fetch IP settings", err);
     }
   }, []);
 
@@ -500,7 +501,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         });
       }
     } catch (err) {
-      console.error("Failed to fetch tests settings:", err);
+      logger.error(LogComponents.CONFIG, "Failed to fetch tests settings", err);
     }
   }, []);
 
@@ -540,7 +541,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         });
       }
     } catch (err) {
-      console.error("Failed to fetch WiFi settings:", err);
+      logger.error(LogComponents.WIFI, "Failed to fetch WiFi settings", err);
     }
   }, []);
 
@@ -579,7 +580,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         });
       }
     } catch (err) {
-      console.error("Failed to fetch network discovery settings:", err);
+      logger.error(LogComponents.DISCOVERY, "Failed to fetch network discovery settings", err);
     }
   }, []);
 
@@ -600,7 +601,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         });
       }
     } catch (err) {
-      console.error("Failed to fetch SNMP settings:", err);
+      logger.error(LogComponents.CONFIG, "Failed to fetch SNMP settings", err);
     }
   }, []);
 
@@ -615,7 +616,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         setSubnets(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      console.error("Failed to fetch subnets:", err);
+      logger.error(LogComponents.DISCOVERY, "Failed to fetch subnets", err);
     }
   }, []);
 

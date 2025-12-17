@@ -32,6 +32,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { FloorPlanCanvas, type CalibrationPoint } from "./FloorPlanCanvas";
+import { logger, LogComponents } from "../../lib/logger";
 import { ScaleCalibrationPanel } from "./ScaleCalibrationPanel";
 import { SurveyConfigPanel } from "./SurveyConfigPanel";
 import { AirMapperImport, type ImportOptions } from "./AirMapperImport";
@@ -118,7 +119,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
           setWifiStatus(status);
         }
       } catch (err) {
-        console.error("Failed to check WiFi status:", err);
+        logger.error(LogComponents.WIFI, "Failed to check WiFi status", err);
       }
     };
     checkWifiStatus();
@@ -138,7 +139,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
           setSurvey(updated);
         }
       } catch (err) {
-        console.error("Failed to refresh survey:", err);
+        logger.error(LogComponents.SURVEY, "Failed to refresh survey", err);
       }
     }, 3000);
 
