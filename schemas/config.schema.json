@@ -1,0 +1,1312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/krisarmstrong/seed/schemas/config.schema.json",
+  "title": "Seed Configuration",
+  "description": "Configuration schema for Seed network diagnostic tool",
+  "type": "object",
+  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "tests", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "description": "Configuration schema version for migrations",
+      "minimum": 1,
+      "default": 1
+    },
+    "server": {
+      "$ref": "#/$defs/ServerConfig"
+    },
+    "interface": {
+      "$ref": "#/$defs/InterfaceConfig"
+    },
+    "vlan": {
+      "$ref": "#/$defs/VLANConfig"
+    },
+    "ip": {
+      "$ref": "#/$defs/IPConfig"
+    },
+    "discovery": {
+      "$ref": "#/$defs/DiscoveryConfig"
+    },
+    "network_discovery": {
+      "$ref": "#/$defs/NetworkDiscoveryConfig"
+    },
+    "dns": {
+      "$ref": "#/$defs/DNSConfig"
+    },
+    "tests": {
+      "$ref": "#/$defs/TestsConfig"
+    },
+    "speedtest": {
+      "$ref": "#/$defs/SpeedtestConfig"
+    },
+    "iperf": {
+      "$ref": "#/$defs/IperfConfig"
+    },
+    "thresholds": {
+      "$ref": "#/$defs/ThresholdsConfig"
+    },
+    "auth": {
+      "$ref": "#/$defs/AuthConfig"
+    },
+    "security": {
+      "$ref": "#/$defs/SecurityConfig"
+    },
+    "dhcp": {
+      "$ref": "#/$defs/DHCPConfig"
+    },
+    "snmp": {
+      "$ref": "#/$defs/SNMPConfig"
+    },
+    "fab_options": {
+      "$ref": "#/$defs/FABOptionsConfig"
+    },
+    "display_options": {
+      "$ref": "#/$defs/DisplayOptionsConfig"
+    },
+    "logging": {
+      "$ref": "#/$defs/LoggingConfig"
+    }
+  },
+  "$defs": {
+    "Duration": {
+      "type": "string",
+      "description": "Go duration string (e.g., '5s', '100ms', '1h', '24h')",
+      "pattern": "^(-?\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$",
+      "examples": ["5s", "100ms", "1h", "24h", "500ms", "30s"]
+    },
+    "PortNumber": {
+      "type": "integer",
+      "description": "Valid TCP/UDP port number",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "Threshold": {
+      "type": "object",
+      "description": "Duration-based warning and critical thresholds",
+      "required": ["warning", "critical"],
+      "additionalProperties": false,
+      "properties": {
+        "warning": {
+          "$ref": "#/$defs/Duration",
+          "description": "Warning threshold duration"
+        },
+        "critical": {
+          "$ref": "#/$defs/Duration",
+          "description": "Critical threshold duration"
+        }
+      }
+    },
+    "IntThreshold": {
+      "type": "object",
+      "description": "Integer-based warning and critical thresholds",
+      "required": ["warning", "critical"],
+      "additionalProperties": false,
+      "properties": {
+        "warning": {
+          "type": "integer",
+          "description": "Warning threshold value"
+        },
+        "critical": {
+          "type": "integer",
+          "description": "Critical threshold value"
+        }
+      }
+    },
+    "SignalThreshold": {
+      "type": "object",
+      "description": "Signal strength thresholds in dBm (typically -100 to 0)",
+      "required": ["warning", "critical"],
+      "additionalProperties": false,
+      "properties": {
+        "warning": {
+          "type": "integer",
+          "description": "Warning threshold in dBm (e.g., -70)",
+          "minimum": -100,
+          "maximum": 0
+        },
+        "critical": {
+          "type": "integer",
+          "description": "Critical threshold in dBm (e.g., -80)",
+          "minimum": -100,
+          "maximum": 0
+        }
+      }
+    },
+    "ServerConfig": {
+      "type": "object",
+      "description": "HTTP server settings",
+      "required": ["port", "https", "cert_file", "key_file"],
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "HTTPS server port",
+          "default": 8443
+        },
+        "https": {
+          "type": "boolean",
+          "description": "Enable HTTPS",
+          "default": true
+        },
+        "http_redirect_port": {
+          "type": "integer",
+          "description": "Port for HTTP to HTTPS redirect (0 = disabled, typically 80)",
+          "minimum": 0,
+          "maximum": 65535,
+          "default": 0
+        },
+        "cert_file": {
+          "type": "string",
+          "description": "Path to TLS certificate file",
+          "default": ""
+        },
+        "key_file": {
+          "type": "string",
+          "description": "Path to TLS private key file",
+          "default": ""
+        },
+        "acme": {
+          "$ref": "#/$defs/ACMEConfig"
+        }
+      }
+    },
+    "ACMEConfig": {
+      "type": "object",
+      "description": "ACME/Let's Encrypt automatic certificate management",
+      "required": ["enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable automatic certificate management",
+          "default": false
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domain name for the certificate (e.g., 'seed.example.com')",
+          "format": "hostname"
+        },
+        "email": {
+          "type": "string",
+          "description": "Contact email for Let's Encrypt notifications",
+          "format": "email"
+        },
+        "cache_dir": {
+          "type": "string",
+          "description": "Directory to cache certificates",
+          "default": "certs/acme"
+        },
+        "staging": {
+          "type": "boolean",
+          "description": "Use Let's Encrypt staging server (for testing)",
+          "default": false
+        }
+      }
+    },
+    "InterfaceConfig": {
+      "type": "object",
+      "description": "Network interface settings",
+      "required": ["default", "fallbacks", "startup_retries", "startup_retry_wait"],
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Primary network interface name (empty = auto-detect)",
+          "default": ""
+        },
+        "fallbacks": {
+          "type": "array",
+          "description": "Fallback interface names to try if default fails",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "wifi": {
+          "type": "string",
+          "description": "Separate WiFi interface (optional)",
+          "default": ""
+        },
+        "startup_retries": {
+          "type": "integer",
+          "description": "Number of retries when finding interface at startup",
+          "minimum": 0,
+          "default": 3
+        },
+        "startup_retry_wait": {
+          "$ref": "#/$defs/Duration",
+          "description": "Delay between startup retries",
+          "default": "5s"
+        }
+      }
+    },
+    "VLANConfig": {
+      "type": "object",
+      "description": "VLAN settings",
+      "required": ["enabled", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable VLAN tagging",
+          "default": false
+        },
+        "id": {
+          "type": "integer",
+          "description": "VLAN ID (1-4094 when enabled)",
+          "minimum": 0,
+          "maximum": 4094,
+          "default": 0
+        }
+      }
+    },
+    "IPConfig": {
+      "type": "object",
+      "description": "IP configuration settings",
+      "required": ["mode"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "IP configuration mode",
+          "enum": ["dhcp", "static"],
+          "default": "dhcp"
+        },
+        "static": {
+          "$ref": "#/$defs/StaticIP"
+        }
+      }
+    },
+    "StaticIP": {
+      "type": "object",
+      "description": "Static IP configuration (required when mode is 'static')",
+      "required": ["address", "netmask", "gateway", "dns"],
+      "additionalProperties": false,
+      "properties": {
+        "address": {
+          "type": "string",
+          "description": "Static IP address",
+          "format": "ipv4"
+        },
+        "netmask": {
+          "type": "string",
+          "description": "Network mask",
+          "format": "ipv4"
+        },
+        "gateway": {
+          "type": "string",
+          "description": "Default gateway",
+          "format": "ipv4"
+        },
+        "dns": {
+          "type": "array",
+          "description": "DNS server addresses",
+          "items": {
+            "type": "string",
+            "format": "ipv4"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "DiscoveryConfig": {
+      "type": "object",
+      "description": "Switch discovery settings (LLDP/CDP)",
+      "required": ["protocol", "timeout"],
+      "additionalProperties": false,
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "description": "Discovery protocol to use",
+          "enum": ["auto", "lldp", "cdp", "edp", "fdp"],
+          "default": "auto"
+        },
+        "timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "Discovery timeout",
+          "default": "30s"
+        }
+      }
+    },
+    "NetworkDiscoveryConfig": {
+      "type": "object",
+      "description": "Network device discovery settings",
+      "required": ["profile", "timing", "additional_subnets", "enabled", "arp_scan_workers", "ping_timeout", "scan_timeout", "auto_scan", "scan_interval", "oui_file_path", "oui_max_age", "ipv6_enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "type": "string",
+          "description": "Discovery profile preset",
+          "enum": ["stealth", "standard", "full_scan", "custom"],
+          "default": "standard"
+        },
+        "custom_options": {
+          "$ref": "#/$defs/DiscoveryCustomOptions"
+        },
+        "timing": {
+          "$ref": "#/$defs/DiscoveryTiming"
+        },
+        "additional_subnets": {
+          "type": "array",
+          "description": "Additional subnets to scan in full_scan or custom mode",
+          "items": {
+            "$ref": "#/$defs/SubnetConfig"
+          },
+          "default": []
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable network discovery (legacy)",
+          "default": true
+        },
+        "arp_scan_workers": {
+          "type": "integer",
+          "description": "Number of concurrent ARP scan workers (legacy)",
+          "minimum": 1,
+          "maximum": 500,
+          "default": 50
+        },
+        "ping_timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "Timeout for each ping (legacy)",
+          "default": "500ms"
+        },
+        "scan_timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "Total scan timeout (legacy)",
+          "default": "30s"
+        },
+        "auto_scan": {
+          "type": "boolean",
+          "description": "Auto-scan on startup (legacy)",
+          "default": true
+        },
+        "scan_interval": {
+          "$ref": "#/$defs/Duration",
+          "description": "Interval for auto-scan (0 = disabled, legacy)",
+          "default": "0s"
+        },
+        "oui_file_path": {
+          "type": "string",
+          "description": "Path to IEEE OUI file for MAC address vendor lookup",
+          "default": "oui.txt"
+        },
+        "oui_max_age": {
+          "$ref": "#/$defs/Duration",
+          "description": "Max age before auto-download OUI database (0 = never auto-update)",
+          "default": "720h"
+        },
+        "fingerprinting": {
+          "$ref": "#/$defs/FingerprintingConfig"
+        },
+        "ipv6_enabled": {
+          "type": "boolean",
+          "description": "Enable IPv6 Neighbor Discovery Protocol (NDP) scanning",
+          "default": true
+        }
+      }
+    },
+    "DiscoveryCustomOptions": {
+      "type": "object",
+      "description": "Fine-grained control when profile is 'custom'",
+      "required": ["passive_listen", "arp_scan", "icmp_scan", "port_scan", "traceroute", "snmp_query"],
+      "additionalProperties": false,
+      "properties": {
+        "passive_listen": {
+          "type": "boolean",
+          "description": "Listen for LLDP, CDP, EDP, DHCP",
+          "default": true
+        },
+        "arp_scan": {
+          "type": "boolean",
+          "description": "ARP-based host discovery",
+          "default": true
+        },
+        "icmp_scan": {
+          "type": "boolean",
+          "description": "ICMP ping sweep",
+          "default": true
+        },
+        "port_scan": {
+          "$ref": "#/$defs/PortScanConfig"
+        },
+        "traceroute": {
+          "type": "boolean",
+          "description": "Path discovery",
+          "default": false
+        },
+        "snmp_query": {
+          "type": "boolean",
+          "description": "SNMP device interrogation",
+          "default": false
+        }
+      }
+    },
+    "PortScanConfig": {
+      "type": "object",
+      "description": "Port scanning configuration",
+      "required": ["enabled", "tcp_ports", "udp_ports"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable port scanning",
+          "default": false
+        },
+        "tcp_ports": {
+          "type": "string",
+          "description": "Comma-separated TCP ports or ranges (e.g., '22,80,443,8000-8100')",
+          "default": ""
+        },
+        "udp_ports": {
+          "type": "string",
+          "description": "Comma-separated UDP ports or ranges",
+          "default": ""
+        }
+      }
+    },
+    "DiscoveryTiming": {
+      "type": "object",
+      "description": "Scan frequency and probe intervals",
+      "required": ["probe_interval", "rescan_interval", "workers"],
+      "additionalProperties": false,
+      "properties": {
+        "probe_interval": {
+          "$ref": "#/$defs/Duration",
+          "description": "Time between sending probes",
+          "default": "75ms"
+        },
+        "rescan_interval": {
+          "$ref": "#/$defs/Duration",
+          "description": "Time between full rescans",
+          "default": "10m"
+        },
+        "workers": {
+          "type": "integer",
+          "description": "Concurrent scan workers",
+          "minimum": 1,
+          "default": 50
+        }
+      }
+    },
+    "FingerprintingConfig": {
+      "type": "object",
+      "description": "OS and service detection",
+      "required": ["enabled", "os_detection", "service_probes"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable fingerprinting",
+          "default": false
+        },
+        "os_detection": {
+          "type": "boolean",
+          "description": "TCP stack analysis for OS detection",
+          "default": false
+        },
+        "service_probes": {
+          "type": "boolean",
+          "description": "Banner grabbing and service version detection",
+          "default": false
+        }
+      }
+    },
+    "SubnetConfig": {
+      "type": "object",
+      "description": "Configured subnet for network discovery",
+      "required": ["cidr", "name", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "cidr": {
+          "type": "string",
+          "description": "CIDR notation (e.g., '10.0.0.0/24')",
+          "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Friendly name (e.g., 'Server VLAN')"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to scan this subnet",
+          "default": true
+        }
+      }
+    },
+    "DNSConfig": {
+      "type": "object",
+      "description": "DNS testing settings",
+      "required": ["test_hostname", "timeout"],
+      "additionalProperties": false,
+      "properties": {
+        "test_hostname": {
+          "type": "string",
+          "description": "Hostname to resolve for DNS tests",
+          "format": "hostname",
+          "default": "google.com"
+        },
+        "timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "DNS query timeout",
+          "default": "5s"
+        },
+        "servers": {
+          "type": "array",
+          "description": "Additional DNS servers to test",
+          "items": {
+            "$ref": "#/$defs/DNSServer"
+          },
+          "default": []
+        }
+      }
+    },
+    "DNSServer": {
+      "type": "object",
+      "description": "DNS server configuration",
+      "required": ["address", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "address": {
+          "type": "string",
+          "description": "DNS server IP address",
+          "format": "ipv4"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable testing this server",
+          "default": true
+        }
+      }
+    },
+    "TestsConfig": {
+      "type": "object",
+      "description": "Custom test configurations",
+      "required": ["ping_targets", "tcp_ports", "udp_ports", "http_endpoints", "run_performance", "run_speedtest", "run_iperf", "run_discovery"],
+      "additionalProperties": false,
+      "properties": {
+        "ping_targets": {
+          "type": "array",
+          "description": "Custom ping targets",
+          "items": {
+            "$ref": "#/$defs/PingTarget"
+          },
+          "default": []
+        },
+        "tcp_ports": {
+          "type": "array",
+          "description": "TCP port tests",
+          "items": {
+            "$ref": "#/$defs/TCPPortTest"
+          },
+          "default": []
+        },
+        "udp_ports": {
+          "type": "array",
+          "description": "UDP port tests",
+          "items": {
+            "$ref": "#/$defs/UDPPortTest"
+          },
+          "default": []
+        },
+        "http_endpoints": {
+          "type": "array",
+          "description": "HTTP endpoint tests",
+          "items": {
+            "$ref": "#/$defs/HTTPEndpoint"
+          },
+          "default": []
+        },
+        "run_performance": {
+          "type": "boolean",
+          "description": "Master toggle for speedtest + iperf",
+          "default": true
+        },
+        "run_speedtest": {
+          "type": "boolean",
+          "description": "Toggle internet speed test",
+          "default": true
+        },
+        "run_iperf": {
+          "type": "boolean",
+          "description": "Toggle LAN iperf test",
+          "default": true
+        },
+        "run_discovery": {
+          "type": "boolean",
+          "description": "Toggle network discovery card",
+          "default": true
+        }
+      }
+    },
+    "PingTarget": {
+      "type": "object",
+      "description": "Custom ping target",
+      "required": ["name", "host", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this target"
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address to ping"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this ping target",
+          "default": true
+        }
+      }
+    },
+    "TCPPortTest": {
+      "type": "object",
+      "description": "TCP port test",
+      "required": ["name", "host", "port", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this test"
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address"
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "TCP port number"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        }
+      }
+    },
+    "UDPPortTest": {
+      "type": "object",
+      "description": "UDP port test",
+      "required": ["name", "host", "port", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this test"
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address"
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "UDP port number"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        }
+      }
+    },
+    "HTTPEndpoint": {
+      "type": "object",
+      "description": "HTTP endpoint test",
+      "required": ["name", "url", "expected_status", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this endpoint"
+        },
+        "url": {
+          "type": "string",
+          "description": "HTTP(S) URL to test",
+          "format": "uri"
+        },
+        "expected_status": {
+          "type": "integer",
+          "description": "Expected HTTP status code",
+          "minimum": 100,
+          "maximum": 599,
+          "default": 200
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        }
+      }
+    },
+    "SpeedtestConfig": {
+      "type": "object",
+      "description": "Speedtest settings",
+      "required": ["server_id", "auto_run_on_link"],
+      "additionalProperties": false,
+      "properties": {
+        "server_id": {
+          "type": "string",
+          "description": "Specific speedtest server ID (empty = auto-select closest)",
+          "default": ""
+        },
+        "auto_run_on_link": {
+          "type": "boolean",
+          "description": "Run automatically when link comes up",
+          "default": false
+        }
+      }
+    },
+    "IperfConfig": {
+      "type": "object",
+      "description": "iPerf3 settings",
+      "required": ["auto_run_on_link", "server", "port", "protocol", "direction", "duration", "server_port", "enable_server"],
+      "additionalProperties": false,
+      "properties": {
+        "auto_run_on_link": {
+          "type": "boolean",
+          "description": "Run automatically when link comes up",
+          "default": false
+        },
+        "server": {
+          "type": "string",
+          "description": "iPerf3 server address",
+          "default": ""
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "iPerf3 server port",
+          "default": 5201
+        },
+        "protocol": {
+          "type": "string",
+          "description": "Test protocol",
+          "enum": ["tcp", "udp"],
+          "default": "tcp"
+        },
+        "direction": {
+          "type": "string",
+          "description": "Test direction",
+          "enum": ["upload", "download", "bidirectional"],
+          "default": "download"
+        },
+        "duration": {
+          "type": "integer",
+          "description": "Test duration in seconds",
+          "minimum": 1,
+          "default": 10
+        },
+        "server_port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "Port for local iPerf server mode",
+          "default": 5201
+        },
+        "enable_server": {
+          "type": "boolean",
+          "description": "Enable local iPerf server mode",
+          "default": false
+        }
+      }
+    },
+    "FABOptionsConfig": {
+      "type": "object",
+      "description": "Floating Action Button (FAB) settings",
+      "required": ["run_link", "run_switch", "run_vlan", "run_ip_config", "run_gateway", "run_dns", "run_health_checks", "run_network_discovery", "run_speedtest", "run_iperf", "run_performance", "auto_scan_on_link"],
+      "additionalProperties": false,
+      "properties": {
+        "run_link": {
+          "type": "boolean",
+          "description": "Enable link tests",
+          "default": true
+        },
+        "run_switch": {
+          "type": "boolean",
+          "description": "Enable switch discovery",
+          "default": true
+        },
+        "run_vlan": {
+          "type": "boolean",
+          "description": "Enable VLAN tests",
+          "default": true
+        },
+        "run_ip_config": {
+          "type": "boolean",
+          "description": "Enable IP config tests",
+          "default": true
+        },
+        "run_gateway": {
+          "type": "boolean",
+          "description": "Enable gateway tests",
+          "default": true
+        },
+        "run_dns": {
+          "type": "boolean",
+          "description": "Enable DNS tests",
+          "default": true
+        },
+        "run_health_checks": {
+          "type": "boolean",
+          "description": "Enable health checks",
+          "default": true
+        },
+        "run_network_discovery": {
+          "type": "boolean",
+          "description": "Enable network discovery",
+          "default": false
+        },
+        "run_speedtest": {
+          "type": "boolean",
+          "description": "Enable speedtest",
+          "default": false
+        },
+        "run_iperf": {
+          "type": "boolean",
+          "description": "Enable iPerf tests",
+          "default": false
+        },
+        "run_performance": {
+          "type": "boolean",
+          "description": "Enable performance tests",
+          "default": false
+        },
+        "auto_scan_on_link": {
+          "type": "boolean",
+          "description": "Auto-scan when link comes up",
+          "default": true
+        }
+      }
+    },
+    "DisplayOptionsConfig": {
+      "type": "object",
+      "description": "Display/UI settings",
+      "required": ["show_public_ip"],
+      "additionalProperties": false,
+      "properties": {
+        "show_public_ip": {
+          "type": "boolean",
+          "description": "Show public IP address in UI",
+          "default": true
+        }
+      }
+    },
+    "ThresholdsConfig": {
+      "type": "object",
+      "description": "All threshold settings",
+      "required": ["dhcp", "dns", "ping", "wifi", "link", "custom_tests"],
+      "additionalProperties": false,
+      "properties": {
+        "dhcp": {
+          "$ref": "#/$defs/DHCPThresholds"
+        },
+        "dns": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "ping": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "wifi": {
+          "$ref": "#/$defs/WiFiThresholds"
+        },
+        "link": {
+          "$ref": "#/$defs/LinkThresholds"
+        },
+        "custom_tests": {
+          "$ref": "#/$defs/CustomThresholds"
+        }
+      }
+    },
+    "DHCPThresholds": {
+      "type": "object",
+      "description": "DHCP-specific thresholds",
+      "required": ["total", "per_phase"],
+      "additionalProperties": false,
+      "properties": {
+        "total": {
+          "$ref": "#/$defs/Threshold",
+          "description": "Total DHCP acquisition time thresholds"
+        },
+        "per_phase": {
+          "$ref": "#/$defs/Threshold",
+          "description": "Per-phase DHCP timing thresholds"
+        }
+      }
+    },
+    "WiFiThresholds": {
+      "type": "object",
+      "description": "WiFi signal thresholds",
+      "required": ["signal"],
+      "additionalProperties": false,
+      "properties": {
+        "signal": {
+          "$ref": "#/$defs/SignalThreshold",
+          "description": "Signal strength thresholds in dBm"
+        }
+      }
+    },
+    "LinkThresholds": {
+      "type": "object",
+      "description": "Link stability thresholds",
+      "required": ["flap_count_24h"],
+      "additionalProperties": false,
+      "properties": {
+        "flap_count_24h": {
+          "$ref": "#/$defs/IntThreshold",
+          "description": "Number of link flaps in 24 hours"
+        }
+      }
+    },
+    "CustomThresholds": {
+      "type": "object",
+      "description": "Thresholds for custom tests",
+      "required": ["ping", "tcp", "udp", "http", "http_timings", "cert_expiry"],
+      "additionalProperties": false,
+      "properties": {
+        "ping": {
+          "$ref": "#/$defs/Threshold",
+          "description": "Custom ping target thresholds"
+        },
+        "tcp": {
+          "$ref": "#/$defs/Threshold",
+          "description": "TCP port test thresholds"
+        },
+        "udp": {
+          "$ref": "#/$defs/Threshold",
+          "description": "UDP port test thresholds"
+        },
+        "http": {
+          "$ref": "#/$defs/Threshold",
+          "description": "HTTP endpoint total time thresholds"
+        },
+        "http_timings": {
+          "$ref": "#/$defs/HTTPTimingThresholds",
+          "description": "Per-phase HTTP timing thresholds"
+        },
+        "cert_expiry": {
+          "$ref": "#/$defs/CertExpiryThreshold",
+          "description": "Certificate expiry thresholds in days"
+        }
+      }
+    },
+    "HTTPTimingThresholds": {
+      "type": "object",
+      "description": "Per-phase HTTP request thresholds",
+      "required": ["dns", "tcp", "tls", "ttfb"],
+      "additionalProperties": false,
+      "properties": {
+        "dns": {
+          "$ref": "#/$defs/Threshold",
+          "description": "DNS resolution time thresholds"
+        },
+        "tcp": {
+          "$ref": "#/$defs/Threshold",
+          "description": "TCP connection time thresholds"
+        },
+        "tls": {
+          "$ref": "#/$defs/Threshold",
+          "description": "TLS handshake time thresholds"
+        },
+        "ttfb": {
+          "$ref": "#/$defs/Threshold",
+          "description": "Time to first byte (server response) thresholds"
+        }
+      }
+    },
+    "CertExpiryThreshold": {
+      "type": "object",
+      "description": "Certificate expiry thresholds in days",
+      "required": ["warning", "critical"],
+      "additionalProperties": false,
+      "properties": {
+        "warning": {
+          "type": "integer",
+          "description": "Days until warning (e.g., 30)",
+          "minimum": 0,
+          "default": 30
+        },
+        "critical": {
+          "type": "integer",
+          "description": "Days until critical (e.g., 7)",
+          "minimum": 0,
+          "default": 7
+        }
+      }
+    },
+    "AuthConfig": {
+      "type": "object",
+      "description": "Authentication settings",
+      "required": ["default_username", "default_password_hash", "session_timeout"],
+      "additionalProperties": false,
+      "properties": {
+        "default_username": {
+          "type": "string",
+          "description": "Default username",
+          "minLength": 1,
+          "default": "admin"
+        },
+        "default_password_hash": {
+          "type": "string",
+          "description": "Bcrypt password hash (empty = requires first-boot setup)",
+          "default": ""
+        },
+        "session_timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "Session timeout duration",
+          "default": "24h"
+        },
+        "jwt_secret": {
+          "type": "string",
+          "description": "JWT signing secret (empty = will be generated and persisted)",
+          "default": ""
+        }
+      }
+    },
+    "SecurityConfig": {
+      "type": "object",
+      "description": "Security settings for CORS and WebSocket origins",
+      "required": ["allowed_origins", "vulnerability_scanning"],
+      "additionalProperties": false,
+      "properties": {
+        "allowed_origins": {
+          "type": "array",
+          "description": "Explicit origins allowed for CORS and WebSocket (empty = RFC 1918 private networks, '*' = all origins)",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "vulnerability_scanning": {
+          "$ref": "#/$defs/VulnerabilityScanConfig"
+        }
+      }
+    },
+    "VulnerabilityScanConfig": {
+      "type": "object",
+      "description": "CVE vulnerability scanning for discovered devices",
+      "required": ["enabled", "cve_database", "nvd_api_key", "update_interval", "severity_threshold", "max_concurrent", "auto_scan"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable vulnerability scanning",
+          "default": false
+        },
+        "cve_database": {
+          "type": "string",
+          "description": "CVE database source",
+          "enum": ["nvd", "local"],
+          "default": "nvd"
+        },
+        "nvd_api_key": {
+          "type": "string",
+          "description": "Optional NVD API key for higher rate limits",
+          "default": ""
+        },
+        "update_interval": {
+          "type": "integer",
+          "description": "Seconds between database updates",
+          "minimum": 0,
+          "default": 86400
+        },
+        "severity_threshold": {
+          "type": "string",
+          "description": "Minimum severity to report",
+          "enum": ["low", "medium", "high", "critical"],
+          "default": "medium"
+        },
+        "max_concurrent": {
+          "type": "integer",
+          "description": "Max concurrent vulnerability checks",
+          "minimum": 1,
+          "default": 5
+        },
+        "auto_scan": {
+          "type": "boolean",
+          "description": "Auto-scan after device discovery",
+          "default": false
+        }
+      }
+    },
+    "DHCPConfig": {
+      "type": "object",
+      "description": "DHCP monitoring and security settings",
+      "required": ["rogue_detection"],
+      "additionalProperties": false,
+      "properties": {
+        "rogue_detection": {
+          "$ref": "#/$defs/RogueDetectionConfig"
+        }
+      }
+    },
+    "RogueDetectionConfig": {
+      "type": "object",
+      "description": "Rogue DHCP server detection settings",
+      "required": ["enabled", "known_servers", "alert_on_detection"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable rogue DHCP server detection",
+          "default": false
+        },
+        "known_servers": {
+          "type": "array",
+          "description": "List of known/authorized DHCP server IP addresses",
+          "items": {
+            "type": "string",
+            "format": "ipv4"
+          },
+          "default": []
+        },
+        "alert_on_detection": {
+          "type": "boolean",
+          "description": "Send alert when rogue DHCP server is detected",
+          "default": false
+        }
+      }
+    },
+    "SNMPConfig": {
+      "type": "object",
+      "description": "SNMP settings for device interrogation",
+      "required": ["communities", "timeout", "retries", "port"],
+      "additionalProperties": false,
+      "properties": {
+        "communities": {
+          "type": "array",
+          "description": "SNMP v1/v2c community strings to try (read-only)",
+          "items": {
+            "type": "string"
+          },
+          "default": ["public"]
+        },
+        "v3_credentials": {
+          "type": "array",
+          "description": "SNMP v3 authentication credentials",
+          "items": {
+            "$ref": "#/$defs/SNMPv3Credential"
+          },
+          "default": []
+        },
+        "timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "SNMP query timeout",
+          "default": "5s"
+        },
+        "retries": {
+          "type": "integer",
+          "description": "Number of retries for failed SNMP queries",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 2
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "SNMP port",
+          "default": 161
+        }
+      }
+    },
+    "SNMPv3Credential": {
+      "type": "object",
+      "description": "SNMP v3 authentication credentials",
+      "required": ["name", "username", "auth_protocol", "auth_password", "priv_protocol", "priv_password", "context_name", "security_level"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this credential set"
+        },
+        "username": {
+          "type": "string",
+          "description": "Security name (user)"
+        },
+        "auth_protocol": {
+          "type": "string",
+          "description": "Authentication protocol",
+          "enum": ["", "MD5", "SHA", "SHA256", "SHA512"],
+          "default": ""
+        },
+        "auth_password": {
+          "type": "string",
+          "description": "Authentication password",
+          "default": ""
+        },
+        "priv_protocol": {
+          "type": "string",
+          "description": "Privacy protocol",
+          "enum": ["", "DES", "AES", "AES192", "AES256"],
+          "default": ""
+        },
+        "priv_password": {
+          "type": "string",
+          "description": "Privacy password",
+          "default": ""
+        },
+        "context_name": {
+          "type": "string",
+          "description": "Optional SNMP context",
+          "default": ""
+        },
+        "security_level": {
+          "type": "string",
+          "description": "Security level",
+          "enum": ["noAuthNoPriv", "authNoPriv", "authPriv"],
+          "default": "noAuthNoPriv"
+        }
+      }
+    },
+    "LoggingConfig": {
+      "type": "object",
+      "description": "Structured logging settings",
+      "required": ["level", "format", "add_source", "file", "max_size", "max_backups", "max_age", "compress"],
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "string",
+          "description": "Log level",
+          "enum": ["debug", "info", "warn", "warning", "error"],
+          "default": "info"
+        },
+        "format": {
+          "type": "string",
+          "description": "Log format",
+          "enum": ["text", "json"],
+          "default": "text"
+        },
+        "add_source": {
+          "type": "boolean",
+          "description": "Include file:line in logs",
+          "default": false
+        },
+        "file": {
+          "type": "string",
+          "description": "Log file path (empty = stdout only)",
+          "default": ""
+        },
+        "max_size": {
+          "type": "integer",
+          "description": "Max MB per log file before rotation",
+          "minimum": 0,
+          "default": 100
+        },
+        "max_backups": {
+          "type": "integer",
+          "description": "Number of old files to keep",
+          "minimum": 0,
+          "default": 5
+        },
+        "max_age": {
+          "type": "integer",
+          "description": "Days to keep old files",
+          "minimum": 0,
+          "default": 30
+        },
+        "compress": {
+          "type": "boolean",
+          "description": "Compress rotated files",
+          "default": true
+        }
+      }
+    }
+  }
+}

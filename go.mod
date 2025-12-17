@@ -7,6 +7,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/gorilla/websocket v1.5.3
 	github.com/showwin/speedtest-go v1.7.10
+	github.com/spf13/cobra v1.8.1
 	golang.org/x/crypto v0.46.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -26,6 +27,7 @@ require (
 require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 // indirect
 	github.com/mdlayher/genetlink v1.3.2 // indirect
@@ -35,6 +37,7 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/shoenig/go-m1cpu v0.1.7 // indirect
 	github.com/shoenig/test v1.12.2 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
