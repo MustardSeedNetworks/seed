@@ -29,7 +29,7 @@ tools that can be used by AI assistants like Claude Code.
 Example usage in .claude/mcp.json:
 {
   "mcpServers": {
-    "netscope": {
+    "seed": {
       "command": "./seed",
       "args": ["mcp"],
       "env": {}
