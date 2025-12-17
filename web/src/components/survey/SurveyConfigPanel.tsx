@@ -54,6 +54,57 @@ const BAND_INFO: Record<WiFiBand, { label: string; color: string }> = {
   "6": { label: "6 GHz", color: "bg-purple-500" },
 };
 
+function getBandInfo(band: WiFiBand): { label: string; color: string } {
+  switch (band) {
+    case "2.4":
+      return BAND_INFO["2.4"];
+    case "5":
+      return BAND_INFO["5"];
+    case "6":
+      return BAND_INFO["6"];
+  }
+}
+
+function getChannelsForBand(band: WiFiBand): number[] {
+  switch (band) {
+    case "2.4":
+      return CHANNELS["2.4"];
+    case "5":
+      return CHANNELS["5"];
+    case "6":
+      return CHANNELS["6"];
+  }
+}
+
+function getCustomChannelsForBand(
+  customChannels: Record<WiFiBand, number[]>,
+  band: WiFiBand
+): number[] {
+  switch (band) {
+    case "2.4":
+      return customChannels["2.4"];
+    case "5":
+      return customChannels["5"];
+    case "6":
+      return customChannels["6"];
+  }
+}
+
+function updateCustomChannelsForBand(
+  customChannels: Record<WiFiBand, number[]>,
+  band: WiFiBand,
+  channels: number[]
+): Record<WiFiBand, number[]> {
+  switch (band) {
+    case "2.4":
+      return { ...customChannels, "2.4": channels };
+    case "5":
+      return { ...customChannels, "5": channels };
+    case "6":
+      return { ...customChannels, "6": channels };
+  }
+}
+
 /** Survey goal presets */
 interface SurveyGoal {
   id: string;
@@ -159,17 +210,26 @@ export function SurveyConfigPanel({
 
   // Handle channel selection for a band
   const handleChannelToggle = (band: WiFiBand, channel: number) => {
-    const currentChannels = customChannels[band];
+    const currentChannels = getCustomChannelsForBand(customChannels, band);
     const newChannels = currentChannels.includes(channel)
       ? currentChannels.filter((c) => c !== channel)
       : [...currentChannels, channel].sort((a, b) => a - b);
 
-    const updatedCustomChannels = { ...customChannels, [band]: newChannels };
+    const updatedCustomChannels = updateCustomChannelsForBand(customChannels, band, newChannels);
     setCustomChannels(updatedCustomChannels);
 
     // Update config based on band
-    const channelKey = band === "2.4" ? "channels2_4" : band === "5" ? "channels5" : "channels6";
-    onUpdate({ [channelKey]: newChannels.length > 0 ? newChannels : undefined });
+    switch (band) {
+      case "2.4":
+        onUpdate({ channels2_4: newChannels.length > 0 ? newChannels : undefined });
+        break;
+      case "5":
+        onUpdate({ channels5: newChannels.length > 0 ? newChannels : undefined });
+        break;
+      case "6":
+        onUpdate({ channels6: newChannels.length > 0 ? newChannels : undefined });
+        break;
+    }
   };
 
   // Handle goal selection
@@ -184,16 +244,18 @@ export function SurveyConfigPanel({
 
   // Handle adapter mode change
   const handleAdapterModeChange = (adapterIndex: number, mode: SurveyType) => {
-    const newConfigs = [...adapterConfigs];
-    newConfigs[adapterIndex] = { ...newConfigs[adapterIndex], mode };
+    const newConfigs = adapterConfigs.map((config, index) =>
+      index === adapterIndex ? { ...config, mode } : config
+    );
     setAdapterConfigs(newConfigs);
     onUpdate({ adapters: newConfigs });
   };
 
   // Handle adapter band assignment
   const handleAdapterBandChange = (adapterIndex: number, bands: WiFiBand[]) => {
-    const newConfigs = [...adapterConfigs];
-    newConfigs[adapterIndex] = { ...newConfigs[adapterIndex], bands };
+    const newConfigs = adapterConfigs.map((config, index) =>
+      index === adapterIndex ? { ...config, bands } : config
+    );
     setAdapterConfigs(newConfigs);
     onUpdate({ adapters: newConfigs });
   };
@@ -276,20 +338,23 @@ export function SurveyConfigPanel({
           <span className="body-small font-medium">{t("config.bandsToScan")}</span>
         </div>
         <div className="flex flex-wrap gap-3">
-          {(["2.4", "5", "6"] as WiFiBand[]).map((band) => (
-            <label key={band} className={`${layout.inline.default} cursor-pointer`}>
-              <input
-                type="checkbox"
-                checked={selectedBands.includes(band)}
-                onChange={() => handleBandToggle(band)}
-                className="w-4 h-4 accent-brand-primary"
-              />
-              <span className={`${layout.inline.default}`}>
-                <span className={`w-2 h-2 ${BAND_INFO[band].color} ${radius.full}`} />
-                <span className="body-small">{BAND_INFO[band].label}</span>
-              </span>
-            </label>
-          ))}
+          {(["2.4", "5", "6"] as WiFiBand[]).map((band) => {
+            const bandInfo = getBandInfo(band);
+            return (
+              <label key={band} className={`${layout.inline.default} cursor-pointer`}>
+                <input
+                  type="checkbox"
+                  checked={selectedBands.includes(band)}
+                  onChange={() => handleBandToggle(band)}
+                  className="w-4 h-4 accent-brand-primary"
+                />
+                <span className={`${layout.inline.default}`}>
+                  <span className={`w-2 h-2 ${bandInfo.color} ${radius.full}`} />
+                  <span className="body-small">{bandInfo.label}</span>
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
@@ -340,28 +405,33 @@ export function SurveyConfigPanel({
 
             {/* Per-band channel selection */}
             {channelMode === "custom" &&
-              selectedBands.map((band) => (
-                <div key={band} className={`${spacing.margin.bottom.content}`}>
-                  <label className={`caption text-text-muted block ${spacing.margin.bottom.tight}`}>
-                    {BAND_INFO[band].label} {t("config.channels")}
-                  </label>
-                  <div className="flex flex-wrap gap-1">
-                    {CHANNELS[band].map((channel) => (
-                      <button
-                        key={channel}
-                        onClick={() => handleChannelToggle(band, channel)}
-                        className={`${button.size.xs} ${radius.sm} min-w-[2.5rem] ${
-                          customChannels[band].includes(channel)
-                            ? "bg-brand-primary text-text-inverse"
-                            : "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                        }`}
-                      >
-                        {channel}
-                      </button>
-                    ))}
+              selectedBands.map((band) => {
+                const selectedChannels = getCustomChannelsForBand(customChannels, band);
+                return (
+                  <div key={band} className={`${spacing.margin.bottom.content}`}>
+                    <label
+                      className={`caption text-text-muted block ${spacing.margin.bottom.tight}`}
+                    >
+                      {getBandInfo(band).label} {t("config.channels")}
+                    </label>
+                    <div className="flex flex-wrap gap-1">
+                      {getChannelsForBand(band).map((channel) => (
+                        <button
+                          key={channel}
+                          onClick={() => handleChannelToggle(band, channel)}
+                          className={`${button.size.xs} ${radius.sm} min-w-[2.5rem] ${
+                            selectedChannels.includes(channel)
+                              ? "bg-brand-primary text-text-inverse"
+                              : "bg-surface-base border border-surface-border hover:bg-surface-hover"
+                          }`}
+                        >
+                          {channel}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
         )}
       </div>

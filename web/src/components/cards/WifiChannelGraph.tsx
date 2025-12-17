@@ -142,6 +142,8 @@ function ChannelGraph({
   band: BandType;
   connectedBSSID?: string;
 }) {
+  const { t: tCards } = useTranslation("cards");
+  const { t: tCommon } = useTranslation("common");
   const [hoveredNetwork, setHoveredNetwork] = useState<ChannelNetwork | null>(null);
 
   const channelRange = getChannelRange(band);
@@ -160,7 +162,7 @@ function ChannelGraph({
       markers.push({ channel: ch, x });
     }
     return markers;
-  }, [band, channelRange, graphWidth, padding.left]);
+  }, [channelRange, graphWidth, padding.left]);
 
   // Signal markers (Y-axis)
   const signalMarkers = [-90, -70, -50, -30];
@@ -168,7 +170,9 @@ function ChannelGraph({
   if (networks.length === 0) {
     return (
       <div className={layout.flex.center} style={{ height: `${height}px` }}>
-        <p className="body-small text-text-muted">No networks detected in {band} band</p>
+        <p className="body-small text-text-muted">
+          {tCards("wifi.channelGraph.noNetworksDetected", { band })}
+        </p>
       </div>
     );
   }
@@ -278,11 +282,13 @@ function ChannelGraph({
           style={{ top: "10px", right: "10px" }}
         >
           <p className="body-small font-semibold">{hoveredNetwork.ssid || "(Hidden)"}</p>
-          <p className="caption text-text-muted">Channel {hoveredNetwork.channel}</p>
+          <p className="caption text-text-muted">
+            {tCards("wifi.channelGraph.tooltipChannel", { channel: hoveredNetwork.channel })}
+          </p>
           <p className="caption text-text-muted">{hoveredNetwork.signal} dBm</p>
           <p className="caption text-text-muted">{hoveredNetwork.channelWidth} MHz</p>
           {hoveredNetwork.isConnected && (
-            <p className="caption text-brand-primary font-medium">Connected</p>
+            <p className="caption text-brand-primary font-medium">{tCommon("status.connected")}</p>
           )}
         </div>
       )}
@@ -375,11 +381,13 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
           <div className={`${layout.inline.default} ${spacing.margin.top.inline}`}>
             <div className={layout.inline.tight}>
               <div className="w-4 h-4 bg-brand-primary opacity-70 rounded" />
-              <span className="caption text-text-muted">Connected</span>
+              <span className="caption text-text-muted">{tc("status.connected")}</span>
             </div>
             <div className={layout.inline.tight}>
               <div className="w-4 h-4 bg-status-info opacity-40 rounded" />
-              <span className="caption text-text-muted">Other Networks</span>
+              <span className="caption text-text-muted">
+                {tr("wifi.channelGraph.otherNetworks")}
+              </span>
             </div>
           </div>
         </>

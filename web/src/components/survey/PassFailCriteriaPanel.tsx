@@ -233,12 +233,19 @@ export function PassFailCriteriaPanel({
   // Group criteria by mode
   const groupedCriteria = groupCriteriaByMode(criteria);
 
-  // Section labels
-  const sectionLabels: Record<string, string> = {
-    passive: t("criteria.passiveSection"),
-    active: t("criteria.activeSection"),
-    throughput: t("criteria.throughputSection"),
-    all: t("criteria.allSection"),
+  const getSectionTitle = (mode: string) => {
+    switch (mode) {
+      case "passive":
+        return t("criteria.passiveSection");
+      case "active":
+        return t("criteria.activeSection");
+      case "throughput":
+        return t("criteria.throughputSection");
+      case "all":
+        return t("criteria.allSection");
+      default:
+        return mode;
+    }
   };
 
   return (
@@ -269,7 +276,7 @@ export function PassFailCriteriaPanel({
         {Array.from(groupedCriteria.entries()).map(([mode, modeCriteria]) => (
           <CriteriaSection
             key={mode}
-            title={sectionLabels[mode] || mode}
+            title={getSectionTitle(mode)}
             criteria={modeCriteria}
             expanded={expandedSections.has(mode)}
             onToggle={() => toggleSection(mode)}

@@ -165,7 +165,13 @@
     "security": "Seguridad",
     "txRate": "Tasa TX",
     "rxRate": "Tasa RX",
-    "band": "Banda"
+    "band": "Banda",
+    "channelGraph": {
+      "title": "Gráfico de canales WiFi",
+      "otherNetworks": "Otras redes",
+      "noNetworksDetected": "No se detectaron redes en la banda {{band}}",
+      "tooltipChannel": "Canal {{channel}}"
+    }
   },
   "cable": {
     "title": "Prueba de cable",

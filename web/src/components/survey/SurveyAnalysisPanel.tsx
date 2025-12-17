@@ -85,7 +85,7 @@ export interface AnalysisThresholds {
 }
 
 /** Default thresholds */
-export const DEFAULT_THRESHOLDS: AnalysisThresholds = {
+const DEFAULT_ANALYSIS_THRESHOLDS: AnalysisThresholds = {
   minGoodRssi: -65,
   minAcceptableRssi: -75,
   minGoodSnr: 25,
@@ -101,11 +101,8 @@ interface SurveyAnalysisPanelProps {
   thresholds?: Partial<AnalysisThresholds>;
 }
 
-/**
- * Analyze survey samples for findings
- * Exported for use in report generation
- */
-export function analyzeSurvey(
+/** Analyze survey samples for findings */
+function analyzeSurvey(
   samples: SamplePoint[],
   apLocations: APLocation[],
   thresholds: AnalysisThresholds
@@ -403,7 +400,7 @@ export function SurveyAnalysisPanel({
 
   // Merge custom thresholds with defaults
   const thresholds = useMemo(
-    () => ({ ...DEFAULT_THRESHOLDS, ...customThresholds }),
+    () => ({ ...DEFAULT_ANALYSIS_THRESHOLDS, ...customThresholds }),
     [customThresholds]
   );
 

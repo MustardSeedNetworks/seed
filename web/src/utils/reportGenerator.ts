@@ -104,47 +104,96 @@ export interface ReportOptions {
   companyName?: string;
 }
 
-/** Default heatmaps to include based on survey type */
-const DEFAULT_HEATMAPS: Record<string, HeatmapMetric[]> = {
-  passive: ["rssi", "snr", "noise", "cochannel", "adjacent"],
-  active: ["rssi", "snr", "throughput"],
-  throughput: ["rssi", "throughput", "latency"],
-};
+type HeatmapThreshold = { value: number; comparison: "gte" | "lte" };
+type NonNullHeatmapMetric = Exclude<HeatmapMetric, null>;
 
-/** Heatmap display names */
-const HEATMAP_NAMES: Record<string, string> = {
-  rssi: "Signal Strength (RSSI)",
-  snr: "Signal-to-Noise Ratio (SNR)",
-  noise: "Noise Floor",
-  throughput: "Throughput",
-  latency: "Latency",
-  cochannel: "Co-Channel Interference",
-  adjacent: "Adjacent Channel Interference",
-  channelUtil: "Channel Utilization",
-};
+const DEFAULT_HEATMAPS_PASSIVE: HeatmapMetric[] = ["rssi", "snr", "noise", "cochannel", "adjacent"];
+const DEFAULT_HEATMAPS_ACTIVE: HeatmapMetric[] = ["rssi", "snr", "throughput"];
+const DEFAULT_HEATMAPS_THROUGHPUT: HeatmapMetric[] = ["rssi", "throughput", "latency"];
 
-/** Heatmap units */
-const HEATMAP_UNITS: Record<string, string> = {
-  rssi: "dBm",
-  snr: "dB",
-  noise: "dBm",
-  throughput: "Mbps",
-  latency: "ms",
-  cochannel: "APs",
-  adjacent: "APs",
-  channelUtil: "%",
-};
+function getDefaultHeatmapsForSurveyType(surveyType: Survey["surveyType"]): HeatmapMetric[] {
+  switch (surveyType) {
+    case "passive":
+      return DEFAULT_HEATMAPS_PASSIVE;
+    case "active":
+      return DEFAULT_HEATMAPS_ACTIVE;
+    case "throughput":
+      return DEFAULT_HEATMAPS_THROUGHPUT;
+  }
+}
 
-/** Default thresholds for percentage calculations */
-const DEFAULT_THRESHOLDS: Record<string, { value: number; comparison: "gte" | "lte" }> = {
-  rssi: { value: -65, comparison: "gte" },
-  snr: { value: 25, comparison: "gte" },
-  noise: { value: -90, comparison: "lte" },
-  throughput: { value: 100, comparison: "gte" },
-  latency: { value: 50, comparison: "lte" },
-  cochannel: { value: 4, comparison: "lte" },
-  adjacent: { value: 2, comparison: "lte" },
-};
+function getHeatmapDisplayName(metric: NonNullHeatmapMetric): string {
+  switch (metric) {
+    case "rssi":
+      return "Signal Strength (RSSI)";
+    case "snr":
+      return "Signal-to-Noise Ratio (SNR)";
+    case "noise":
+      return "Noise Floor";
+    case "throughput":
+      return "Throughput";
+    case "latency":
+      return "Latency";
+    case "cochannel":
+      return "Co-Channel Interference";
+    case "adjacent":
+      return "Adjacent Channel Interference";
+    case "channelUtil":
+      return "Channel Utilization";
+    case "apDensity":
+      return "AP Density";
+    case "ssidCount":
+      return "SSID Count";
+  }
+}
+
+function getHeatmapUnit(metric: NonNullHeatmapMetric): string {
+  switch (metric) {
+    case "rssi":
+      return "dBm";
+    case "snr":
+      return "dB";
+    case "noise":
+      return "dBm";
+    case "throughput":
+      return "Mbps";
+    case "latency":
+      return "ms";
+    case "cochannel":
+      return "APs";
+    case "adjacent":
+      return "APs";
+    case "channelUtil":
+      return "%";
+    case "apDensity":
+      return "APs";
+    case "ssidCount":
+      return "";
+  }
+}
+
+function getDefaultThreshold(metric: NonNullHeatmapMetric): HeatmapThreshold | null {
+  switch (metric) {
+    case "rssi":
+      return { value: -65, comparison: "gte" };
+    case "snr":
+      return { value: 25, comparison: "gte" };
+    case "noise":
+      return { value: -90, comparison: "lte" };
+    case "throughput":
+      return { value: 100, comparison: "gte" };
+    case "latency":
+      return { value: 50, comparison: "lte" };
+    case "cochannel":
+      return { value: 4, comparison: "lte" };
+    case "adjacent":
+      return { value: 2, comparison: "lte" };
+    case "channelUtil":
+    case "apDensity":
+    case "ssidCount":
+      return null;
+  }
+}
 
 /**
  * Calculate facility size from floor plan dimensions
@@ -224,14 +273,14 @@ function generateHeatmapData(samples: SamplePoint[], metric: HeatmapMetric): Rep
   }
 
   const stats = calculateMetricStatistics(samples, metric);
-  const threshold = DEFAULT_THRESHOLDS[metric];
+  const threshold = getDefaultThreshold(metric);
   const percentMeeting = threshold
     ? getPercentageMeetingThreshold(samples, metric, threshold.value, threshold.comparison)
     : 0;
 
   return {
     type: metric,
-    displayName: HEATMAP_NAMES[metric] || metric,
+    displayName: getHeatmapDisplayName(metric),
     descriptionKey: `report.heatmapDescriptions.${metric}`,
     statistics: stats
       ? {
@@ -240,7 +289,7 @@ function generateHeatmapData(samples: SamplePoint[], metric: HeatmapMetric): Rep
         }
       : null,
     threshold: threshold?.value,
-    unit: HEATMAP_UNITS[metric] || "",
+    unit: getHeatmapUnit(metric),
   };
 }
 
@@ -369,11 +418,12 @@ export function generateReport(
   options: ReportOptions = {}
 ): SurveyReport {
   const {
-    includeHeatmaps = DEFAULT_HEATMAPS[survey.surveyType] || DEFAULT_HEATMAPS.passive,
     includeAnalysis = true,
     includeAPInventory = true,
     companyName = "Mustard Seed Networks",
   } = options;
+  const includeHeatmaps =
+    options.includeHeatmaps ?? getDefaultHeatmapsForSurveyType(survey.surveyType);
 
   // Build metadata
   const metadata: ReportMetadata = {

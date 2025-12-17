@@ -165,7 +165,13 @@
     "security": "Security",
     "txRate": "TX Rate",
     "rxRate": "RX Rate",
-    "band": "Band"
+    "band": "Band",
+    "channelGraph": {
+      "title": "WiFi Channel Graph",
+      "otherNetworks": "Other Networks",
+      "noNetworksDetected": "No networks detected in {{band}} band",
+      "tooltipChannel": "Channel {{channel}}"
+    }
   },
   "cable": {
     "title": "Cable Test",

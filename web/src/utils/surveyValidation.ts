@@ -55,15 +55,16 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
       case "rssi": {
         // For apIndex, get the nth strongest AP
         const apIndex = criterion.apIndex ?? 0;
-        if (apIndex >= sortedNetworks.length) return null;
-        return sortedNetworks[apIndex].rssi;
+        const network = sortedNetworks.at(apIndex);
+        if (!network) return null;
+        return network.rssi;
       }
 
       case "snr": {
         // Use the strongest AP's SNR, or calculate from RSSI and noise
         const apIndex = criterion.apIndex ?? 0;
-        if (apIndex >= sortedNetworks.length) return null;
-        const network = sortedNetworks[apIndex];
+        const network = sortedNetworks.at(apIndex);
+        if (!network) return null;
         if (network.snr !== undefined) return network.snr;
         if (network.noiseFloor !== undefined) {
           return network.rssi - network.noiseFloor;

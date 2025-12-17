@@ -165,16 +165,20 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
 
   // Cleanup timers and in-flight requests on unmount
   useEffect(() => {
+    const debounceTimersMap = debounceTimers.current;
+    const statusResetTimersMap = statusResetTimers.current;
+    const saveControllersMap = saveControllers.current;
+
     return () => {
       isMountedRef.current = false;
 
-      debounceTimers.current.forEach((timer) => clearTimeout(timer));
-      statusResetTimers.current.forEach((timer) => clearTimeout(timer));
-      saveControllers.current.forEach((controller) => controller.abort());
+      debounceTimersMap.forEach((timer) => clearTimeout(timer));
+      statusResetTimersMap.forEach((timer) => clearTimeout(timer));
+      saveControllersMap.forEach((controller) => controller.abort());
 
-      debounceTimers.current.clear();
-      statusResetTimers.current.clear();
-      saveControllers.current.clear();
+      debounceTimersMap.clear();
+      statusResetTimersMap.clear();
+      saveControllersMap.clear();
     };
   }, []);
 

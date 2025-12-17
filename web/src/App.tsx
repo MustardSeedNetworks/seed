@@ -212,10 +212,38 @@ function App() {
         const updates: Partial<CardState> = {};
         for (const [key, value] of Object.entries(payload.cards)) {
           if (!isCardId(key)) continue;
-          if (value === null) {
-            updates[key] = null;
-          } else if (isPlainObject(value)) {
-            updates[key] = value as unknown as CardState[typeof key];
+
+          const normalized = value === null ? null : isPlainObject(value) ? value : undefined;
+          if (normalized === undefined) continue;
+
+          switch (key) {
+            case "link":
+              updates.link = normalized as CardState["link"];
+              break;
+            case "cable":
+              updates.cable = normalized as CardState["cable"];
+              break;
+            case "vlan":
+              updates.vlan = normalized as CardState["vlan"];
+              break;
+            case "switch":
+              updates.switch = normalized as CardState["switch"];
+              break;
+            case "wifi":
+              updates.wifi = normalized as CardState["wifi"];
+              break;
+            case "dhcp":
+              updates.dhcp = normalized as CardState["dhcp"];
+              break;
+            case "dns":
+              updates.dns = normalized as CardState["dns"];
+              break;
+            case "gateway":
+              updates.gateway = normalized as CardState["gateway"];
+              break;
+            case "publicip":
+              updates.publicip = normalized as CardState["publicip"];
+              break;
           }
         }
 
