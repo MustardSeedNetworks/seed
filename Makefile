@@ -667,21 +667,17 @@ license-report: ## Generate license compliance reports
 	@echo "npm licenses: build/reports/npm-licenses.csv"
 	@echo "✅ License reports generated"
 
-# Go security scanning (gosec + govulncheck)
-# Auto-installs tools if not found
-security-backend: ## Run Go security scans (gosec, govulncheck)
-	@echo "Running Go security scans..."
-	@if ! command -v gosec > /dev/null 2>&1; then \
-		echo "📦 Installing gosec..."; \
-		go install github.com/securego/gosec/v2/cmd/gosec@latest; \
-	fi
-	@gosec -quiet ./...
+# Go vulnerability scanning (govulncheck)
+# Note: gosec runs via golangci-lint in lint-backend, no need to duplicate
+# Auto-installs govulncheck if not found
+security-backend: ## Run Go vulnerability scan (govulncheck)
+	@echo "Running Go vulnerability scan..."
 	@if ! command -v govulncheck > /dev/null 2>&1; then \
 		echo "📦 Installing govulncheck..."; \
 		go install golang.org/x/vuln/cmd/govulncheck@latest; \
 	fi
 	@govulncheck ./...
-	@echo "✅ Go security scans complete"
+	@echo "✅ Go vulnerability scan complete"
 
 # Frontend security scanning (npm audit)
 security-frontend: ## Run frontend security scan (npm audit)
@@ -751,22 +747,16 @@ tools: tools-go tools-frontend ## Install all development tools (Go + Node)
 # Install Go development tools (linters, security scanners, formatters)
 tools-go: ## Install Go development tools
 	@echo "=== Installing Go Development Tools ==="
-	@echo "  golangci-lint (comprehensive linter)..."
+	@echo "  golangci-lint (comprehensive linter - includes gosec, staticcheck, gocyclo)..."
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	@echo "  staticcheck (advanced analysis)..."
-	@go install honnef.co/go/tools/cmd/staticcheck@latest
-	@echo "  gosec (security scanner)..."
-	@go install github.com/securego/gosec/v2/cmd/gosec@latest
-	@echo "  govulncheck (vulnerability checker)..."
+	@echo "  govulncheck (CVE vulnerability checker)..."
 	@go install golang.org/x/vuln/cmd/govulncheck@latest
-	@echo "  goimports (import formatter)..."
+	@echo "  goimports (import formatter - for IDE integration)..."
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@echo "  gofumpt (strict formatter)..."
 	@go install mvdan.cc/gofumpt@latest
 	@echo "  deadcode (unused code finder)..."
 	@go install golang.org/x/tools/cmd/deadcode@latest
-	@echo "  gocyclo (complexity checker)..."
-	@go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 	@echo "  gotestsum (test runner with better output)..."
 	@go install gotest.tools/gotestsum@latest
 	@echo "  go-licenses (license compliance checker)..."
