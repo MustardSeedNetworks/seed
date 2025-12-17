@@ -91,43 +91,57 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
       setError(null);
 
       try {
-        // Read file as base64
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const imageData = e.target?.result as string;
-
-          // Get image dimensions
-          const img = new Image();
-          img.onload = async () => {
-            const floorPlan = {
-              imageData,
-              width: img.width,
-              height: img.height,
-              scaleM: 0.1, // Default: 10cm per pixel (adjust in settings)
-            };
-
-            // Upload to server
-            const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${survey.id}`, {
-              method: "POST",
-              headers: {
-                ...getAuthHeaders(),
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(floorPlan),
-            });
-
-            if (res.ok) {
-              // Refresh survey
-              const updated = await res.json();
-              setSurvey(updated);
-              onUpdate();
+        // Read file as base64 using Promise wrapper
+        const imageData = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result;
+            if (typeof result === "string") {
+              resolve(result);
             } else {
-              throw new Error("Failed to upload floor plan");
+              reject(new Error("Failed to read file as base64"));
             }
           };
-          img.src = imageData;
+          reader.onerror = () => reject(new Error("Failed to read file"));
+          reader.readAsDataURL(file);
+        });
+
+        // Get image dimensions using Promise wrapper
+        const { width, height } = await new Promise<{ width: number; height: number }>(
+          (resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve({ width: img.width, height: img.height });
+            img.onerror = () => reject(new Error("Failed to load image - file may be corrupted"));
+            img.src = imageData;
+          }
+        );
+
+        const floorPlan = {
+          imageData,
+          width,
+          height,
+          scaleM: 0.1, // Default: 10cm per pixel (adjust in settings)
         };
-        reader.readAsDataURL(file);
+
+        // Upload to server
+        const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${survey.id}`, {
+          method: "POST",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(floorPlan),
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || "Failed to upload floor plan");
+        }
+
+        // Refresh survey
+        const updated = await res.json();
+        setSurvey(updated);
+        onUpdate();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to upload floor plan");
       } finally {
@@ -295,7 +309,8 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             <p className={`body-small ${spacing.margin.top.tight}`}>
               {(survey.surveyType ?? "wifi").charAt(0).toUpperCase() +
                 (survey.surveyType ?? "wifi").slice(1)}{" "}
-              {t("status.survey")} • {(survey.samples ?? []).length} {t("status.samples")} • {survey.status ?? "unknown"}
+              {t("status.survey")} • {(survey.samples ?? []).length} {t("status.samples")} •{" "}
+              {survey.status ?? "unknown"}
             </p>
           </div>
 
