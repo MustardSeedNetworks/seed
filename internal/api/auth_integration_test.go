@@ -238,8 +238,9 @@ func TestWebSocketAuth(t *testing.T) {
 		}
 	})
 
-	// Test with token in query (deprecated method)
-	t.Run("WebSocket with token in query", func(t *testing.T) {
+	// Test with token in query (DISABLED for security fix #706)
+	// Query parameter authentication is no longer supported to prevent token leakage via logs/referer
+	t.Run("WebSocket with token in query (disabled #706)", func(t *testing.T) {
 		token, err := server.server.authManager.GenerateToken("testuser")
 		if err != nil {
 			t.Fatalf("Failed to generate token: %v", err)
@@ -254,10 +255,9 @@ func TestWebSocketAuth(t *testing.T) {
 		w := httptest.NewRecorder()
 		server.handler.ServeHTTP(w, req)
 
-		// Should NOT return 401 with valid token
-		// Note: May return other codes (400, 426) due to WebSocket upgrade handling
-		if w.Code == http.StatusUnauthorized {
-			t.Errorf("WebSocket with valid token should not return 401")
+		// Security fix #706: Query param auth is disabled, should return 401
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("WebSocket with query param token should return 401 (query auth disabled for security), got %d", w.Code)
 		}
 	})
 

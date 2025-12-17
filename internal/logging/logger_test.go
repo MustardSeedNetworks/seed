@@ -16,8 +16,8 @@ func TestDefaultLoggingConfig(t *testing.T) {
 	if cfg.Level != "info" {
 		t.Errorf("expected level 'info', got %q", cfg.Level)
 	}
-	if cfg.Format != "text" {
-		t.Errorf("expected format 'text', got %q", cfg.Format)
+	if cfg.Format != "json" {
+		t.Errorf("expected format 'json', got %q", cfg.Format)
 	}
 	if cfg.AddSource {
 		t.Error("expected AddSource to be false")

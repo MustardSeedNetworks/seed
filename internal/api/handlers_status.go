@@ -43,7 +43,7 @@ type ExportDeviceInfo struct {
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 		return
 	}
 
@@ -68,13 +68,13 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 		return
 	}
 
 	currentIface := s.netManager.GetCurrentInterface()
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to refresh interfaces", err.Error()) // fixes #694, #699
 		return
 	}
 
@@ -258,7 +258,7 @@ func (s *Server) exportIperfCard(cards map[string]interface{}) {
 func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 		return
 	}
 
@@ -266,7 +266,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	// X-Username header is set by the middleware after validating the JWT
 
 	if s.logPath == "" {
-		http.Error(w, "Log path not configured", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Log path not configured", "") // fixes #694, #699
 		return
 	}
 
@@ -285,7 +285,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	lines, err := readLastLines(s.logPath, maxBytes, maxLines)
 	if err != nil {
 		logger.Error("Failed to read log file", "error", err)
-		http.Error(w, "Failed to read log file", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to read log file", err.Error()) // fixes #694, #699
 		return
 	}
 
@@ -300,7 +300,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 		return
 	}
 
@@ -316,7 +316,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 		return
 	}
 

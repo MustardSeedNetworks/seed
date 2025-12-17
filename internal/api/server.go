@@ -195,6 +195,20 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 	// Configure security: allowed origins for CORS/WebSocket
 	SetAllowedOrigins(cfg.Security.AllowedOrigins)
 	if len(cfg.Security.AllowedOrigins) > 0 {
+		// Check for wildcard origin in production mode (fixes #715)
+		// Production mode is inferred from HTTPS being enabled
+		for _, origin := range cfg.Security.AllowedOrigins {
+			if origin == "*" {
+				if cfg.Server.HTTPS {
+					slog.Warn("SECURITY WARNING: Wildcard origin (*) allows all origins in production mode with HTTPS enabled",
+						"recommendation", "Configure explicit allowed origins in Security.AllowedOrigins for production deployments")
+				} else {
+					slog.Info("Wildcard origin (*) configured - allows all origins (development mode)",
+						"warning", "Not recommended for production use")
+				}
+				break
+			}
+		}
 		slog.Info("Configured explicit allowed origins for CORS/WebSocket", "count", len(cfg.Security.AllowedOrigins))
 	} else {
 		slog.Info("Using default RFC 1918 private network origins for CORS/WebSocket")
@@ -388,7 +402,18 @@ func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 
-		// Allow requests from same origin (no Origin header) or localhost for development
+		// Reject null Origin header to prevent CORS bypass attacks (fixes #709)
+		// Null origins can occur in sandboxed iframes or redirected requests
+		if origin == "null" {
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusForbidden)
+			} else {
+				http.Error(w, "Forbidden: null origin not allowed", http.StatusForbidden)
+			}
+			return
+		}
+
+		// Allow requests from same origin (no Origin header) or validated origins
 		if origin == "" || isAllowedOrigin(origin) {
 			if origin != "" {
 				w.Header().Set("Access-Control-Allow-Origin", origin)

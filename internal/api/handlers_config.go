@@ -71,6 +71,13 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Security audit log: config backup created (fixes #697)
+	clientIP := GetClientIP(r)
+	logger.Info("Configuration backup created",
+		"client_ip", clientIP,
+		"backup_name", backup.Name,
+		"event", "config.backup.create")
+
 	sendJSONResponse(w, logger, http.StatusCreated, backup)
 }
 
@@ -117,6 +124,13 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 	s.config.CopyFieldsFrom(newCfg)
 	s.config.Unlock()
 
+	// Security audit log: config restored from backup (fixes #697)
+	clientIP := GetClientIP(r)
+	logger.Info("Configuration restored from backup",
+		"client_ip", clientIP,
+		"backup_name", req.BackupName,
+		"event", "config.backup.restore")
+
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "restored", "backup": req.BackupName})
 }
 
@@ -150,6 +164,13 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Failed to delete backup: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Security audit log: config backup deleted (fixes #697)
+	clientIP := GetClientIP(r)
+	logger.Info("Configuration backup deleted",
+		"client_ip", clientIP,
+		"backup_name", backupName,
+		"event", "config.backup.delete")
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "deleted", "backup": backupName})
 }

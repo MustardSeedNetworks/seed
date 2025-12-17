@@ -51,8 +51,9 @@ type LogStatsResponse struct {
 }
 
 // handleClientLogs receives log entries from the frontend and stores them.
-// POST /api/logs/client.
+// POST /api/logs/client (fixes #703).
 func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -96,7 +97,7 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 		broadcaster.Write(logEntry)
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
 		"status":   "accepted",
 		"received": len(req.Entries),
 	})
@@ -169,8 +170,9 @@ func paginateLogs(logs []*logging.LogEntry, offset, limit int) []*logging.LogEnt
 }
 
 // handleLogsQuery returns logs matching the specified filters.
-// GET /api/logs/query?level=ERROR,WARN&layer=backend,api&component=auth&search=failed&limit=100&offset=0.
+// GET /api/logs/query?level=ERROR,WARN&layer=backend,api&component=auth&search=failed&limit=100&offset=0 (fixes #703).
 func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -195,7 +197,7 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	totalCount := len(filtered)
 	filtered = paginateLogs(filtered, params.offset, params.limit)
 
-	sendJSONResponse(w, nil, http.StatusOK, LogQueryResponse{
+	sendJSONResponse(w, logger, http.StatusOK, LogQueryResponse{
 		Logs:       filtered,
 		TotalCount: totalCount,
 		Offset:     params.offset,
@@ -204,8 +206,9 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLogsStats returns aggregated log statistics.
-// GET /api/logs/stats.
+// GET /api/logs/stats (fixes #703).
 func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -250,12 +253,13 @@ func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, stats)
+	sendJSONResponse(w, logger, http.StatusOK, stats)
 }
 
 // handleLogsRecent returns the most recent log entries.
-// GET /api/logs/recent?limit=100.
+// GET /api/logs/recent?limit=100 (fixes #703).
 func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -275,7 +279,7 @@ func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logs := broadcaster.GetRecentLogs(limit)
-	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
 		"logs":  logs,
 		"count": len(logs),
 	})

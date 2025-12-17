@@ -19,6 +19,10 @@ const (
 
 	// RefreshTokenDuration is how long refresh tokens are valid.
 	RefreshTokenDuration = 7 * 24 * time.Hour // 7 days
+
+	// MaxSessionLifetime is the absolute maximum time a session can last (fixes #717).
+	// Even with valid refresh tokens, sessions expire after this duration.
+	MaxSessionLifetime = 24 * time.Hour // 24 hours
 )
 
 // CookieConfig holds cookie security settings.
@@ -37,13 +41,11 @@ type CookieConfig struct {
 }
 
 // DefaultCookieConfig returns secure defaults.
-// Note: SameSite=Lax is used instead of Strict to allow cookies when accessing
-// the server via IP address. Strict mode blocks cookies on same-origin requests
-// when the URL doesn't match the initial navigation domain (e.g., IP vs hostname).
+// SameSite=Strict prevents CSRF attacks by blocking cookies in cross-site contexts (fixes #707).
 func DefaultCookieConfig() CookieConfig {
 	return CookieConfig{
 		Secure:   true, // HTTPS only
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode,
 		Domain:   "", // Current domain
 		Path:     "/",
 	}
@@ -124,7 +126,7 @@ func GetRefreshTokenFromCookie(r *http.Request) (string, error) {
 // GetTokenFromRequest tries to extract token from request in order of preference:
 // 1. Cookie (most secure).
 // 2. Authorization header (Bearer token - fallback for API clients).
-// 3. Query parameter (least secure - WebSocket only, deprecated).
+// Query parameter authentication is disabled for security (fixes #706).
 func GetTokenFromRequest(r *http.Request) (token, source string) {
 	// Try cookie first (most secure)
 	if token, err := GetAccessTokenFromCookie(r); err == nil && token != "" {
@@ -139,10 +141,8 @@ func GetTokenFromRequest(r *http.Request) (token, source string) {
 		}
 	}
 
-	// Try query parameter (WebSocket legacy support - deprecated)
-	if token := r.URL.Query().Get("token"); token != "" {
-		return token, "query"
-	}
+	// Query parameter authentication removed for security (fixes #706)
+	// Use Sec-WebSocket-Protocol header for WebSocket authentication instead
 
 	return "", "none"
 }

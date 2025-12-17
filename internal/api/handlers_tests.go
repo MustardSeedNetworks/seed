@@ -1131,9 +1131,12 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Run the test in the background (takes 30-60 seconds)
+	// Run the test in the background (takes 30-60 seconds) (fixes #698 - timeout protection)
 	go func(logger *slog.Logger) {
-		ctx := context.Background()
+		// Add timeout protection for speedtest operations (fixes #698)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
 		_, err := s.speedtestTester.RunTest(ctx)
 		if err != nil {
 			logger.Error("Speedtest failed", "error", err)
@@ -1316,8 +1319,9 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		Parallel:  req.Parallel,
 	}
 
-	// Run test in background and return immediately
+	// Run test in background and return immediately (fixes #698 - timeout protection)
 	go func(logger *slog.Logger) {
+		// Add timeout protection for iperf operations (fixes #698)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Duration+30)*time.Second)
 		defer cancel()
 		if _, err := s.iperfManager.RunClient(ctx, &iperfConfig); err != nil {

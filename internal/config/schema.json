@@ -4,7 +4,7 @@
   "title": "Seed Configuration",
   "description": "Configuration schema for Seed network diagnostic tool",
   "type": "object",
-  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "tests", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging"],
+  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "tests", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp"],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -66,6 +66,9 @@
     },
     "logging": {
       "$ref": "#/$defs/LoggingConfig"
+    },
+    "mcp": {
+      "$ref": "#/$defs/MCPConfig"
     }
   },
   "$defs": {
@@ -1064,6 +1067,56 @@
           "type": "string",
           "description": "JWT signing secret (empty = will be generated and persisted)",
           "default": ""
+        },
+        "sso": {
+          "$ref": "#/$defs/SSOConfig"
+        }
+      }
+    },
+    "SSOConfig": {
+      "type": "object",
+      "description": "SSO (Single Sign-On) provider settings",
+      "additionalProperties": false,
+      "properties": {
+        "providers": {
+          "type": "array",
+          "description": "List of SSO providers",
+          "items": {
+            "$ref": "#/$defs/SSOProviderConfig"
+          },
+          "default": []
+        }
+      }
+    },
+    "SSOProviderConfig": {
+      "type": "object",
+      "description": "SSO provider configuration",
+      "required": ["enabled", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this SSO provider",
+          "default": false
+        },
+        "name": {
+          "type": "string",
+          "description": "Provider name (e.g., google, microsoft)"
+        },
+        "client_id": {
+          "type": "string",
+          "description": "OAuth client ID",
+          "default": ""
+        },
+        "client_secret": {
+          "type": "string",
+          "description": "OAuth client secret",
+          "default": ""
+        },
+        "redirect_url": {
+          "type": "string",
+          "description": "OAuth redirect URL",
+          "default": ""
         }
       }
     },
@@ -1311,6 +1364,38 @@
           "type": "boolean",
           "description": "Compress rotated files",
           "default": true
+        }
+      }
+    },
+    "MCPConfig": {
+      "type": "object",
+      "description": "MCP (Model Context Protocol) server settings for AI assistant integration",
+      "required": ["enabled", "require_auth", "rate_limit_per_minute"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the MCP server endpoint",
+          "default": false
+        },
+        "require_auth": {
+          "type": "boolean",
+          "description": "Require JWT authentication for MCP connections",
+          "default": true
+        },
+        "rate_limit_per_minute": {
+          "type": "integer",
+          "description": "Requests per minute per client (0 = unlimited)",
+          "minimum": 0,
+          "default": 60
+        },
+        "allowed_tools": {
+          "type": "array",
+          "description": "Specific tools to expose via MCP (empty = all tools)",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       }
     }

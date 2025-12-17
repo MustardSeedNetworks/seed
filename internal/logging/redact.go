@@ -9,15 +9,54 @@ import (
 	"strings"
 )
 
-// Sensitive field patterns that should always be redacted.
+// Sensitive field patterns that should always be redacted (fixes #713).
+// Comprehensive patterns for: passwords, tokens, API keys, secrets, SSNs, credit cards, etc.
 var sensitivePatterns = []*regexp.Regexp{
+	// Passwords and credentials
 	regexp.MustCompile(`(?i)(password|passwd|pwd)\s*[=:]\s*[^\s&]+`),
 	regexp.MustCompile(`(?i)(token|auth|api[_-]?key|secret)\s*[=:]\s*[^\s&]+`),
 	regexp.MustCompile(`(?i)(bearer\s+)\S+`),
 	regexp.MustCompile(`(?i)(basic\s+)\S+`),
+
+	// API keys and tokens - common formats
+	regexp.MustCompile(`(?i)(api[_-]?key|apikey|access[_-]?key)\s*[=:]\s*[a-zA-Z0-9_\-\.]+`),
+	regexp.MustCompile(`(?i)(client[_-]?secret|client_id)\s*[=:]\s*[a-zA-Z0-9_\-.]+`),
+	regexp.MustCompile(`(?i)(oauth[_-]?token|refresh[_-]?token)\s*[=:]\s*[a-zA-Z0-9_\-\.]+`),
+
+	// AWS-style keys
+	regexp.MustCompile(`(?i)(aws[_-]?access[_-]?key[_-]?id|aws[_-]?secret[_-]?access[_-]?key)\s*[=:]\s*[A-Z0-9]+`),
+	regexp.MustCompile(`AKIA[0-9A-Z]{16}`), // AWS Access Key ID pattern
+
+	// GitHub/GitLab tokens
+	regexp.MustCompile(`(?i)(github[_-]?token|gh[ps]_[a-zA-Z0-9_]{36,})`),
+	regexp.MustCompile(`(?i)(gitlab[_-]?token|glpat-[a-zA-Z0-9_\-]{20,})`),
+
+	// Private keys
+	regexp.MustCompile(`-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----[^-]*-----END\s+(RSA\s+)?PRIVATE\s+KEY-----`),
+	regexp.MustCompile(`(?i)(private[_-]?key|privatekey)\s*[=:]\s*[^\s&]+`),
+
+	// Social Security Numbers (US) - XXX-XX-XXXX format
+	// Note: Go regexp doesn't support negative lookahead, so this is a simple pattern
+	regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),
+
+	// Credit card numbers (13-19 digits, with or without spaces/dashes)
+	// Matches Visa, MasterCard, Amex, Discover, etc.
+	regexp.MustCompile(`\b(?:\d{4}[\s\-]?){3}\d{1,7}\b`),
+	regexp.MustCompile(`\b\d{13,19}\b`), // Simple 13-19 digit sequence
+
+	// Email addresses (for privacy)
+	regexp.MustCompile(`\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b`),
+
+	// JWT tokens (base64.base64.base64 format)
+	regexp.MustCompile(`eyJ[a-zA-Z0-9_\-]*\.eyJ[a-zA-Z0-9_\-]*\.[a-zA-Z0-9_\-]*`),
+
+	// Generic secrets and credentials
+	regexp.MustCompile(`(?i)(credential|credentials|auth[_-]?token)\s*[=:]\s*[^\s&]+`),
+	regexp.MustCompile(`(?i)(passphrase|pin|shared[_-]?secret)\s*[=:]\s*[^\s&]+`),
 }
 
-// Sensitive header names (case-insensitive).
+// Sensitive header names (case-insensitive) (fixes #713).
+// Extended to include more common authentication and credential headers.
 var sensitiveHeaders = map[string]bool{
 	"authorization":       true,
 	"x-api-key":           true,
@@ -27,6 +66,14 @@ var sensitiveHeaders = map[string]bool{
 	"x-csrf-token":        true,
 	"x-xsrf-token":        true,
 	"proxy-authorization": true,
+	"x-access-token":      true,
+	"x-refresh-token":     true,
+	"x-session-token":     true,
+	"x-client-secret":     true,
+	"x-client-id":         true,
+	"x-oauth-token":       true,
+	"apikey":              true,
+	"api-key":             true,
 }
 
 // RedactString removes sensitive data from a string.

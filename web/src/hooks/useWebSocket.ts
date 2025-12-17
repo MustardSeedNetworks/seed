@@ -37,6 +37,58 @@ export type ConnectionStatus =
   | "disconnected" // Not connected (intentional or after failure)
   | "error"; // Connection error occurred
 
+/** WebSocket close code categories for better error handling (fixes #676) */
+enum CloseCodeCategory {
+  Normal = "normal", // 1000-1001: Normal closure
+  ProtocolError = "protocol_error", // 1002-1003: Protocol errors
+  InvalidData = "invalid_data", // 1007-1008: Invalid data
+  PolicyViolation = "policy_violation", // 1008-1009: Policy violations
+  TooLarge = "too_large", // 1009: Message too large
+  ClientError = "client_error", // 1011-1014: Client-side errors
+  ServerError = "server_error", // 1011, 1015: Server-side errors
+  Abnormal = "abnormal", // 1006: Abnormal closure (connection lost)
+  Unknown = "unknown", // Any other code
+}
+
+/**
+ * Categorize WebSocket close codes for better error handling and recovery strategies
+ */
+function categorizeCloseCode(code: number): CloseCodeCategory {
+  if (code === 1000 || code === 1001) return CloseCodeCategory.Normal;
+  if (code === 1002 || code === 1003) return CloseCodeCategory.ProtocolError;
+  if (code === 1007 || code === 1008) return CloseCodeCategory.InvalidData;
+  if (code === 1008 || code === 1009) return CloseCodeCategory.PolicyViolation;
+  if (code === 1009) return CloseCodeCategory.TooLarge;
+  if (code >= 1011 && code <= 1014) return CloseCodeCategory.ClientError;
+  if (code === 1011 || code === 1015) return CloseCodeCategory.ServerError;
+  if (code === 1006) return CloseCodeCategory.Abnormal;
+  return CloseCodeCategory.Unknown;
+}
+
+/**
+ * Determine if we should attempt reconnection based on close code category
+ */
+function shouldRetryForCategory(category: CloseCodeCategory): boolean {
+  switch (category) {
+    case CloseCodeCategory.Normal:
+      return false; // Normal closure - no retry needed
+    case CloseCodeCategory.Abnormal:
+    case CloseCodeCategory.ServerError:
+      return true; // Network issues or server problems - retry
+    case CloseCodeCategory.ProtocolError:
+    case CloseCodeCategory.InvalidData:
+    case CloseCodeCategory.PolicyViolation:
+    case CloseCodeCategory.ClientError:
+      return false; // Client-side issues - retrying won't help
+    case CloseCodeCategory.TooLarge:
+      return false; // Message too large - client issue
+    case CloseCodeCategory.Unknown:
+      return true; // Unknown issue - try to reconnect
+    default:
+      return true; // Default to retry for safety
+  }
+}
+
 /** Base message structure for WebSocket communication */
 export interface Message {
   type: string; // Message type identifier
@@ -145,30 +197,50 @@ export function useWebSocket({
         reconnectAttempts.current = 0; // Reset reconnection counter on success
       };
 
-      // Connection closed - attempt reconnection if within retry limit
+      // Connection closed - attempt reconnection with error categorization (fixes #676)
       ws.onclose = (event) => {
         if (connectionId !== connectionIdRef.current) return;
+
+        // Categorize the close code to determine recovery strategy
+        const category = categorizeCloseCode(event.code);
+        const shouldRetry = shouldRetryForCategory(category);
+
         setStatus("disconnected");
         logger.warn(LogComponents.WEBSOCKET, "WebSocket closed", {
           code: event.code,
           reason: event.reason,
+          category,
+          willRetry: shouldRetry && shouldReconnectRef.current,
         });
+
+        // Don't retry if the close code indicates a client-side issue
+        if (!shouldRetry) {
+          logger.error(LogComponents.WEBSOCKET, "WebSocket closed with non-retryable error", {
+            code: event.code,
+            category,
+          });
+          setStatus("error");
+          return;
+        }
 
         if (!shouldReconnectRef.current) return;
 
-        // Attempt reconnect forever; maxReconnectAttempts gates exponential backoff growth.
+        // Attempt reconnect with exponential backoff; maxReconnectAttempts gates backoff growth.
         reconnectAttempts.current++;
         const attempt = reconnectAttempts.current;
         const cappedAttempt = Math.max(1, Math.min(attempt, maxReconnectAttempts));
 
         // Exponential backoff with jitter, capped to keep retries happening after long outages.
-        const maxDelayMs = Math.max(reconnectInterval, 30000);
+        // For server errors, use more aggressive backoff
+        const isServerError = category === CloseCodeCategory.ServerError;
+        const maxDelayMs = isServerError ? 60000 : 30000; // 60s for server errors, 30s otherwise
         const baseDelayMs = reconnectInterval * 2 ** (cappedAttempt - 1);
-        const delayMs = Math.min(baseDelayMs, maxDelayMs) + Math.floor(Math.random() * 250);
+        const delayMs = Math.min(baseDelayMs, maxDelayMs) + Math.floor(Math.random() * 500);
 
         logger.warn(LogComponents.WEBSOCKET, "WebSocket reconnect scheduled", {
           attempt,
           delayMs,
+          category,
         });
 
         clearReconnectTimer();
@@ -179,12 +251,22 @@ export function useWebSocket({
         }, delayMs);
       };
 
-      // Connection error occurred
+      // Connection error occurred - enhanced logging (fixes #676)
       ws.onerror = (error) => {
         if (connectionId !== connectionIdRef.current) return;
         setStatus("error");
         logger.error(LogComponents.WEBSOCKET, "WebSocket error", error, {
           url: baseUrl,
+          readyState: ws.readyState,
+          readyStateText:
+            ws.readyState === WebSocket.CONNECTING
+              ? "CONNECTING"
+              : ws.readyState === WebSocket.OPEN
+                ? "OPEN"
+                : ws.readyState === WebSocket.CLOSING
+                  ? "CLOSING"
+                  : "CLOSED",
+          reconnectAttempts: reconnectAttempts.current,
         });
       };
 
@@ -199,9 +281,39 @@ export function useWebSocket({
           try {
             const message: Message = JSON.parse(payload);
 
-            // Handle card update messages specially
-            if (message.type === "card_update" && onCardUpdate) {
-              onCardUpdate(message.payload as CardUpdate);
+            // fixes #679 - validate message structure before processing
+            if (!message || typeof message !== "object") {
+              logger.warn(LogComponents.WEBSOCKET, "Invalid message structure", { payload });
+              continue;
+            }
+
+            if (typeof message.type !== "string") {
+              logger.warn(LogComponents.WEBSOCKET, "Message missing or invalid type", { message });
+              continue;
+            }
+
+            // Handle card update messages specially with validation
+            if (message.type === "card_update") {
+              // fixes #679 - validate card update payload structure
+              const update = message.payload;
+              if (!update || typeof update !== "object") {
+                logger.warn(LogComponents.WEBSOCKET, "Invalid card_update payload", {
+                  type: typeof update,
+                });
+                continue;
+              }
+
+              const cardUpdate = update as CardUpdate;
+              if (!cardUpdate.cardId || typeof cardUpdate.cardId !== "string") {
+                logger.warn(LogComponents.WEBSOCKET, "card_update missing valid cardId", {
+                  cardId: cardUpdate.cardId,
+                });
+                continue;
+              }
+
+              if (onCardUpdate) {
+                onCardUpdate(cardUpdate);
+              }
             }
 
             // Always invoke general message handler

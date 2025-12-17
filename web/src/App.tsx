@@ -27,7 +27,7 @@
  * automatically detecting if the system needs configuration.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useWebSocket, Message, CardUpdate } from "./hooks/useWebSocket";
 import { useAuth, getAuthHeaders } from "./hooks/useAuth";
@@ -37,7 +37,6 @@ import { SettingsDrawer } from "./components/settings/SettingsDrawer";
 import { ImprovedHelpModal } from "./components/help/ImprovedHelpModal";
 import { SetupWizard } from "./components/setup/SetupWizard";
 import { checkSetupStatus } from "./components/setup/setupApi";
-import { ErrorBoundary as CardErrorBoundary } from "./components/ui/ErrorBoundary";
 import { logger, LogComponents } from "./lib/logger";
 import { setSessionExpiredCallback } from "./lib/api";
 
@@ -113,25 +112,6 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function isCardId(value: unknown): value is CardId {
   return typeof value === "string" && (CARD_IDS as readonly string[]).includes(value);
-}
-
-function parseCardUpdate(
-  update: unknown
-): { cardId: CardId; data: Record<string, unknown> | null } | null {
-  if (!isPlainObject(update)) return null;
-
-  const { cardId, data } = update as { cardId?: unknown; data?: unknown };
-
-  if (!isCardId(cardId)) return null;
-  if (data === undefined) return null;
-
-  if (data === null) {
-    return { cardId, data: null };
-  }
-
-  if (!isPlainObject(data)) return null;
-
-  return { cardId, data };
 }
 
 /**
@@ -812,26 +792,30 @@ function App() {
     ]
   );
 
+  // Memoize run options to prevent unnecessary re-computation (fixes #671)
+  const runOpts = useMemo(
+    () => ({
+      runLink: cardSettings.link.autoRunOnLink,
+      runSwitch: cardSettings.switch.autoRunOnLink,
+      runVLAN: cardSettings.vlan.autoRunOnLink,
+      runIPConfig: cardSettings.network.autoRunOnLink,
+      runGateway: cardSettings.gateway.autoRunOnLink,
+      runDNS: cardSettings.dns.autoRunOnLink,
+      runHealthChecks: cardSettings.healthChecks.autoRunOnLink,
+      runPerformance: cardSettings.performance.autoRunOnLink,
+      runSpeedtest:
+        cardSettings.performance.autoRunOnLink && cardSettings.performance.speedtest.autoRunOnLink,
+      runIperf:
+        cardSettings.performance.autoRunOnLink && cardSettings.performance.iperf.autoRunOnLink,
+      runNetworkDiscovery: cardSettings.networkDiscovery.autoRunOnLink,
+    }),
+    [cardSettings]
+  );
+
   // Listen for FAB "run all tests" event with per-card autoRunOnLink settings
   useEffect(() => {
     const handleRunAllTests = async () => {
       // Use per-card autoRunOnLink settings to determine which tests to run
-      const runOpts = {
-        runLink: cardSettings.link.autoRunOnLink,
-        runSwitch: cardSettings.switch.autoRunOnLink,
-        runVLAN: cardSettings.vlan.autoRunOnLink,
-        runIPConfig: cardSettings.network.autoRunOnLink,
-        runGateway: cardSettings.gateway.autoRunOnLink,
-        runDNS: cardSettings.dns.autoRunOnLink,
-        runHealthChecks: cardSettings.healthChecks.autoRunOnLink,
-        runPerformance: cardSettings.performance.autoRunOnLink,
-        runSpeedtest:
-          cardSettings.performance.autoRunOnLink &&
-          cardSettings.performance.speedtest.autoRunOnLink,
-        runIperf:
-          cardSettings.performance.autoRunOnLink && cardSettings.performance.iperf.autoRunOnLink,
-        runNetworkDiscovery: cardSettings.networkDiscovery.autoRunOnLink,
-      };
 
       // Build array of fetch promises based on card settings
       const fetchPromises: Promise<void>[] = [];
@@ -922,17 +906,7 @@ function App() {
     fetchWiFiData,
     fetchCableData,
     triggerDeviceScan,
-    cardSettings.performance.autoRunOnLink,
-    cardSettings.performance.speedtest.autoRunOnLink,
-    cardSettings.performance.iperf.autoRunOnLink,
-    cardSettings.link.autoRunOnLink,
-    cardSettings.switch.autoRunOnLink,
-    cardSettings.vlan.autoRunOnLink,
-    cardSettings.network.autoRunOnLink,
-    cardSettings.gateway.autoRunOnLink,
-    cardSettings.dns.autoRunOnLink,
-    cardSettings.healthChecks.autoRunOnLink,
-    cardSettings.networkDiscovery.autoRunOnLink,
+    runOpts,
   ]);
 
   // WebSocket connection for real-time updates
@@ -979,7 +953,7 @@ function App() {
     fetchNetworkDiscovery,
   ]);
 
-  // Fallback REST polling when WebSocket is not connected
+  // Fallback REST polling when WebSocket is not connected (fixes #672)
   // When WS is connected, backend pushes updates every 5 seconds via card_update messages
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -992,23 +966,43 @@ function App() {
         fetchInterfaces();
         fetchWiFiData(); // WiFi details not broadcast via WS
         fetchCableData(); // Cable test not broadcast via WS
-      }, 30000); // 30 second interval for non-WS data
+      }, 60000); // 60 second interval for non-WS data (increased from 30s)
 
       return () => clearInterval(slowInterval);
     }
 
-    // Fallback: Poll when WebSocket disconnected
-    const interval = setInterval(() => {
-      fetchLinkData();
-      fetchIPConfig();
-      fetchDiscoveryData();
-      fetchDNSData();
-      fetchGatewayData();
-      fetchVLANData();
-      fetchWiFiData();
-    }, 10000); // 10 second fallback
+    // Fallback: Poll when WebSocket disconnected with exponential backoff
+    let attempts = 0;
+    const maxAttempts = 5;
 
-    return () => clearInterval(interval);
+    const scheduleNextPoll = () => {
+      // Exponential backoff: 15s, 30s, 60s, 120s, 240s (capped)
+      const baseDelay = 15000;
+      const delay = Math.min(baseDelay * Math.pow(2, attempts), 240000);
+
+      return setTimeout(() => {
+        fetchLinkData();
+        fetchIPConfig();
+        fetchDiscoveryData();
+        fetchDNSData();
+        fetchGatewayData();
+        fetchVLANData();
+        fetchWiFiData();
+
+        // Increase attempts up to max, then reset for continuous polling
+        attempts = (attempts + 1) % (maxAttempts + 1);
+      }, delay);
+    };
+
+    const timeoutId = scheduleNextPoll();
+    const interval = setInterval(() => {
+      scheduleNextPoll();
+    }, 240000); // Maximum interval of 4 minutes
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(interval);
+    };
   }, [
     isAuthenticated,
     wsStatus,
@@ -1027,7 +1021,7 @@ function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const shouldAutoScan = cardSettings.networkDiscovery.autoRunOnLink;
+    const shouldAutoScan = runOpts.runNetworkDiscovery;
 
     if (shouldAutoScan) {
       // Small delay to let other data load first
@@ -1036,7 +1030,7 @@ function App() {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, triggerDeviceScan, cardSettings.networkDiscovery.autoRunOnLink]);
+  }, [isAuthenticated, triggerDeviceScan, runOpts.runNetworkDiscovery]);
 
   // Cleanup device scan polling on unmount
   useEffect(() => {

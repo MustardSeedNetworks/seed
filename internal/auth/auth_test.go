@@ -824,8 +824,8 @@ func TestDefaultCookieConfig(t *testing.T) {
 	if !config.Secure {
 		t.Error("Secure should be true by default")
 	}
-	if config.SameSite != http.SameSiteLaxMode {
-		t.Errorf("SameSite should be Lax, got %v", config.SameSite)
+	if config.SameSite != http.SameSiteStrictMode {
+		t.Errorf("SameSite should be Strict (fix #707), got %v", config.SameSite)
 	}
 	if config.Domain != "" {
 		t.Errorf("Domain should be empty by default, got %q", config.Domain)
@@ -969,12 +969,12 @@ func TestGetTokenFromRequest(t *testing.T) {
 			expectedSource: "header",
 		},
 		{
-			name: "from query parameter",
+			name: "from query parameter (disabled for security #706)",
 			setupRequest: func() *http.Request {
 				return httptest.NewRequest("GET", "/?token=query-token", http.NoBody)
 			},
-			expectedToken:  "query-token",
-			expectedSource: "query",
+			expectedToken:  "",
+			expectedSource: "none",
 		},
 		{
 			name: "no token",
@@ -1006,14 +1006,14 @@ func TestGetTokenFromRequest(t *testing.T) {
 			expectedSource: "header",
 		},
 		{
-			name: "invalid Authorization header format",
+			name: "invalid Authorization header format (query disabled #706)",
 			setupRequest: func() *http.Request {
 				req := httptest.NewRequest("GET", "/?token=query-token", http.NoBody)
 				req.Header.Set("Authorization", "Basic base64encoded")
 				return req
 			},
-			expectedToken:  "query-token",
-			expectedSource: "query",
+			expectedToken:  "",
+			expectedSource: "none",
 		},
 	}
 

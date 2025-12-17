@@ -8,10 +8,10 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"unicode"
 
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/survey"
+	"github.com/krisarmstrong/seed/internal/validation"
 )
 
 // ============================================================================
@@ -26,21 +26,14 @@ type CreateSurveyRequest struct {
 	Interface   string `json:"interface"`
 }
 
-// isValidSurveyID validates a survey ID to prevent injection attacks.
+// isValidSurveyID validates a survey ID to prevent injection attacks (fixes #695).
 // Valid survey IDs must be:
 // - Non-empty
 // - At most 64 characters long
 // - Contain only alphanumeric characters, dashes, and underscores.
 func isValidSurveyID(id string) bool {
-	if id == "" || len(id) > 64 {
-		return false
-	}
-	for _, r := range id {
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' {
-			return false
-		}
-	}
-	return true
+	// Use the centralized validation function (fixes #695)
+	return validation.ValidateSurveyID(id) == nil
 }
 
 func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
@@ -54,12 +47,39 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Name == "" {
-		http.Error(w, "Survey name is required", http.StatusBadRequest)
+	// Validate survey name (fixes #695)
+	if err := validation.ValidateStringLength(req.Name, "name", 1, 100); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if req.Interface == "" {
+	// Validate description (fixes #695)
+	if len(req.Description) > 500 {
+		http.Error(w, "description too long (max 500 characters)", http.StatusBadRequest)
+		return
+	}
+
+	// Validate survey type (fixes #695)
+	validTypes := []survey.Type{survey.TypePassive, survey.TypeActive, survey.TypeThroughput}
+	validType := false
+	for _, t := range validTypes {
+		if survey.Type(req.SurveyType) == t {
+			validType = true
+			break
+		}
+	}
+	if !validType {
+		http.Error(w, "invalid survey type (must be passive, active, or throughput)", http.StatusBadRequest)
+		return
+	}
+
+	// Validate interface name if provided (fixes #695)
+	if req.Interface != "" {
+		if err := validation.ValidateInterface(req.Interface); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	} else {
 		if s.netManager != nil {
 			req.Interface = s.netManager.GetCurrentInterface()
 		}
@@ -246,12 +266,41 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Rate limit file uploads (fixes #696)
+	clientIP := GetClientIP(r)
+	if !s.endpointRateLimiter.Allow(clientIP) {
+		http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+		return
+	}
+
 	// Limit request body size for floor plan uploads (fixes #682)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeFloorPlan)
 
 	var req UpdateFloorPlanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate image data URL (fixes #695)
+	if err := validation.ValidateImageDataURL(req.ImageData, int(MaxBodySizeFloorPlan)); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate dimensions (fixes #695)
+	if err := validation.ValidateIntRange(req.Width, "width", 1, 10000); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := validation.ValidateIntRange(req.Height, "height", 1, 10000); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate scale (fixes #695)
+	if err := validation.ValidateFloatRange(req.ScaleM, "scaleM", 0.01, 1000.0); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -307,8 +356,36 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert string to survey.Type
+	// Validate survey type (fixes #695)
+	validTypes := []survey.Type{survey.TypePassive, survey.TypeActive, survey.TypeThroughput}
 	surveyType := survey.Type(req.SurveyType)
+	validType := false
+	for _, t := range validTypes {
+		if surveyType == t {
+			validType = true
+			break
+		}
+	}
+	if !validType {
+		http.Error(w, "invalid survey type (must be passive, active, or throughput)", http.StatusBadRequest)
+		return
+	}
+
+	// Validate iPerf server if provided (fixes #695)
+	if req.IperfServer != "" {
+		if err := validation.ValidateServerAddress(req.IperfServer); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Validate test duration (fixes #695)
+	if req.TestDuration != 0 {
+		if err := validation.ValidateIntRange(req.TestDuration, "testDuration", 1, 300); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
 
 	if err := s.surveyManager.UpdateSurveySettings(id, surveyType, req.IperfServer, req.TestDuration); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -335,7 +412,14 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit file size to 50MB
+	// Rate limit file uploads (fixes #696)
+	clientIP := GetClientIP(r)
+	if !s.endpointRateLimiter.Allow(clientIP) {
+		http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+		return
+	}
+
+	// Limit file size to 50MB (fixes #701 - reviewed and kept at 50MB for large surveys)
 	const maxFileSize = 50 << 20 // 50 MB
 	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
 
@@ -352,6 +436,12 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+
+	// Validate filename (fixes #695)
+	if err := validation.ValidateFilename(handler.Filename, "filename"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Validate file extension
 	if !strings.HasSuffix(strings.ToLower(handler.Filename), ".amp") {

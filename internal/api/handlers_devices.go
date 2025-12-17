@@ -4,7 +4,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -18,16 +17,16 @@ import (
 // Device Discovery Handlers (fixes #544 - split from handlers_discovery.go)
 // ============================================================================
 
-// handleDevices returns discovered devices and status.
+// handleDevices returns discovered devices and status (fixes #702 - uses r.Context()).
 func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 		return
 	}
 
 	if s.deviceDiscovery == nil {
-		http.Error(w, "Device discovery not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Device discovery not available", "") // fixes #694, #699
 		return
 	}
 
@@ -42,16 +41,16 @@ func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-// handleDevicesScan triggers a network device scan.
+// handleDevicesScan triggers a network device scan (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 		return
 	}
 
 	if s.deviceDiscovery == nil {
-		http.Error(w, "Device discovery not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Device discovery not available", "") // fixes #694, #699
 		return
 	}
 
@@ -64,10 +63,11 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Start scan in background
+	// Start scan in background (fixes #698 - timeout protection)
 	go func(reqCtx context.Context) {
 		logger := logging.FromContext(reqCtx)
-		ctx, cancel := context.WithTimeout(reqCtx, 2*time.Minute)
+		// Add timeout protection for device scan operations (fixes #698)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
 		logger.Info("Starting background device scan")
@@ -128,16 +128,16 @@ func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
 	logger.Info("Auto-scan: completed vulnerability scan", "vulnerable_devices", len(results))
 }
 
-// handleDevicesStatus returns the current device discovery status.
+// handleDevicesStatus returns the current device discovery status (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 		return
 	}
 
 	if s.deviceDiscovery == nil {
-		http.Error(w, "Device discovery not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Device discovery not available", "") // fixes #694, #699
 		return
 	}
 
@@ -156,15 +156,16 @@ type NetworkDiscoverySettingsResponse struct {
 	OUIFilePath    string `json:"ouiFilePath"`
 }
 
-// handleDevicesSettings handles GET/PUT for network discovery settings.
+// handleDevicesSettings handles GET/PUT for network discovery settings (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	switch r.Method {
 	case http.MethodGet:
 		s.getDevicesSettings(w, r)
 	case http.MethodPut:
 		s.updateDevicesSettings(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 	}
 }
 
@@ -190,7 +191,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 
 	var req NetworkDiscoverySettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", err.Error()) // fixes #694, #699
 		return
 	}
 
@@ -236,8 +237,9 @@ type SubnetResponse struct {
 	Enabled bool   `json:"enabled"`
 }
 
-// handleDevicesSubnets handles GET/POST/DELETE for additional subnets.
+// handleDevicesSubnets handles GET/POST/DELETE for additional subnets (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	switch r.Method {
 	case http.MethodGet:
 		s.getDevicesSubnets(w, r)
@@ -248,7 +250,7 @@ func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		s.deleteDevicesSubnet(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 	}
 }
 
@@ -273,21 +275,21 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 	var req SubnetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", err.Error()) // fixes #694, #699
 		return
 	}
 
 	// Validate CIDR format
 	_, _, err := net.ParseCIDR(req.CIDR)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid CIDR format: %v", err), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid CIDR format", err.Error()) // fixes #694, #699
 		return
 	}
 
 	// Check for duplicates
 	for _, existing := range s.config.NetworkDiscovery.AdditionalSubnets {
 		if existing.CIDR == req.CIDR {
-			http.Error(w, "Subnet already exists", http.StatusConflict)
+			sendErrorResponseWithDetails(w, logger, http.StatusConflict, ErrCodeConflict, "Subnet already exists", "") // fixes #694, #699
 			return
 		}
 	}
@@ -324,13 +326,13 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 	var req SubnetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", err.Error()) // fixes #694, #699
 		return
 	}
 
 	// Validate CIDR format
 	if _, _, err := net.ParseCIDR(req.CIDR); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid CIDR format: %v", err), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid CIDR format", err.Error()) // fixes #694, #699
 		return
 	}
 
@@ -346,7 +348,7 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !found {
-		http.Error(w, "Subnet not found", http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, "Subnet not found", "") // fixes #694, #699
 		return
 	}
 
@@ -368,7 +370,7 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	cidr := r.URL.Query().Get("cidr")
 	if cidr == "" {
-		http.Error(w, "CIDR parameter required", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "CIDR parameter required", "") // fixes #694, #699
 		return
 	}
 
@@ -384,7 +386,7 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !found {
-		http.Error(w, "Subnet not found", http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, "Subnet not found", "") // fixes #694, #699
 		return
 	}
 
@@ -423,26 +425,26 @@ func (s *Server) syncDeviceDiscoverySubnets(logger *slog.Logger) {
 	}
 }
 
-// handlePublicIP returns the public IPv4 and IPv6 addresses.
+// handlePublicIP returns the public IPv4 and IPv6 addresses (fixes #702 - uses r.Context() for service calls).
 func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if s.publicipChecker == nil {
-		http.Error(w, "Public IP checker not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Public IP checker not available", "") // fixes #694, #699
 		return
 	}
 
 	switch r.Method {
 	case http.MethodGet:
-		// Return cached result or fetch if cache expired
+		// Return cached result or fetch if cache expired (fixes #702 - passes context)
 		result := s.publicipChecker.GetPublicIP(r.Context())
 		sendJSONResponse(w, logger, http.StatusOK, result)
 
 	case http.MethodPost:
-		// Force refresh
+		// Force refresh (fixes #702 - passes context)
 		result := s.publicipChecker.Refresh(r.Context())
 		sendJSONResponse(w, logger, http.StatusOK, result)
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 	}
 }

@@ -18,25 +18,26 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/validation"
 )
 
 // handleVulnerabilityScan triggers vulnerability scan for all or specific devices
 // POST /api/vulnerabilities/scan?ip=x.x.x.x (optional IP filter).
 func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, nil, http.StatusServiceUnavailable, map[string]string{
+		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]string{
 			"error": "Vulnerability scanner not enabled",
 		})
 		return
@@ -52,15 +53,17 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 
 	// Check if scan is already in progress
 	if s.vulnScanner.IsRunning() {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
 			"status":  "scan already in progress",
 			"running": true,
 		})
 		return
 	}
 
-	// Run scan in background
-	go func() {
+	// Run scan in background (fixes #698 - timeout protection)
+	go func(reqCtx context.Context) {
+		logger := logging.FromContext(reqCtx)
+		// Add timeout protection for vulnerability scan operations (fixes #698)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 
@@ -80,7 +83,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 		// Scan each device
 		for _, device := range devices {
 			if _, err := s.vulnScanner.ScanDevice(ctx, device); err != nil {
-				slog.Warn("Vulnerability scan failed", "device_ip", device.IP, "error", err)
+				logger.Warn("Vulnerability scan failed", "device_ip", device.IP, "error", err)
 			}
 		}
 
@@ -90,23 +93,24 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 			"results": results,
 			"count":   len(results),
 		})
-	}()
+	}(r.Context())
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]string{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 		"status": "scan started",
 	})
 }
 
 // handleVulnerabilityStatus returns scanner status and statistics
-// GET /api/vulnerabilities/status.
+// GET /api/vulnerabilities/status (fixes #703).
 func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, nil, http.StatusServiceUnavailable, map[string]interface{}{
+		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]interface{}{
 			"enabled": false,
 		})
 		return
@@ -114,7 +118,7 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 
 	stats := s.vulnScanner.GetStats()
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
 		"enabled":        true,
 		"scanning":       s.vulnScanner.IsRunning(),
 		"stats":          stats,
@@ -123,15 +127,16 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 }
 
 // handleVulnerabilityResults returns all vulnerability scan results
-// GET /api/vulnerabilities/results?severity=high (optional filter).
+// GET /api/vulnerabilities/results?severity=high (optional filter) (fixes #703).
 func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, nil, http.StatusServiceUnavailable, map[string]string{
+		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]string{
 			"error": "Vulnerability scanner not enabled",
 		})
 		return
@@ -153,22 +158,23 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 		results = filtered
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
 		"results": results,
 		"count":   len(results),
 	})
 }
 
 // handleDeviceVulnerabilities returns vulnerabilities for a specific device
-// GET /api/vulnerabilities/device?ip=x.x.x.x.
+// GET /api/vulnerabilities/device?ip=x.x.x.x (fixes #703).
 func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, nil, http.StatusServiceUnavailable, map[string]string{
+		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]string{
 			"error": "Vulnerability scanner not enabled",
 		})
 		return
@@ -188,21 +194,22 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 
 	result := s.vulnScanner.GetDeviceVulnerabilities(ip)
 	if result == nil {
-		sendJSONResponse(w, nil, http.StatusNotFound, map[string]string{
+		sendJSONResponse(w, logger, http.StatusNotFound, map[string]string{
 			"error": "No vulnerability data for device",
 		})
 		return
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, result)
+	sendJSONResponse(w, logger, http.StatusOK, result)
 }
 
 // handleVulnerabilitySettings returns or updates vulnerability scanner settings
-// GET/PUT /api/vulnerabilities/settings.
+// GET/PUT /api/vulnerabilities/settings (fixes #703).
 func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	switch r.Method {
 	case http.MethodGet:
-		sendJSONResponse(w, nil, http.StatusOK, s.config.Security.VulnerabilityScanning)
+		sendJSONResponse(w, logger, http.StatusOK, s.config.Security.VulnerabilityScanning)
 
 	case http.MethodPut:
 		var settings discovery.VulnerabilityScannerConfig
@@ -223,13 +230,13 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 		// Save config
 		if err := s.config.Save(s.configPath); err != nil {
-			sendJSONResponse(w, nil, http.StatusInternalServerError, map[string]string{
+			sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
 				"error": "Failed to save config",
 			})
 			return
 		}
 
-		sendJSONResponse(w, nil, http.StatusOK, map[string]string{
+		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 			"status": "updated",
 		})
 

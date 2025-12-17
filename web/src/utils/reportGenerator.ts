@@ -16,7 +16,7 @@
  * import { generateReport } from './reportGenerator';
  *
  * const report = generateReport(survey, validation, options);
- * console.log(report.summary.overallStatus);
+ * // Access report.summary.overallStatus for overall status
  * ```
  */
 

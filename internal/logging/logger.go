@@ -86,14 +86,19 @@ func InitLogger(cfg *LoggingConfig) error {
 	var writers []io.Writer
 	writers = append(writers, os.Stdout)
 
-	// Add file writer with rotation if configured
+	// Add file writer with rotation if configured (fixes #714)
+	// Log rotation policy:
+	// - Rotates when file reaches MaxSize MB
+	// - Keeps up to MaxBackups old log files
+	// - Deletes files older than MaxAge days
+	// - Compresses rotated files if Compress is true
 	if cfg.File != "" {
 		fileWriter := &lumberjack.Logger{
 			Filename:   cfg.File,
-			MaxSize:    cfg.MaxSize,
-			MaxBackups: cfg.MaxBackups,
-			MaxAge:     cfg.MaxAge,
-			Compress:   cfg.Compress,
+			MaxSize:    cfg.MaxSize,    // MB per log file before rotation
+			MaxBackups: cfg.MaxBackups, // Number of old files to keep
+			MaxAge:     cfg.MaxAge,     // Days to keep old files
+			Compress:   cfg.Compress,   // Compress rotated files
 		}
 		writers = append(writers, fileWriter)
 	}

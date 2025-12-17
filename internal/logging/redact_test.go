@@ -397,7 +397,7 @@ func TestSensitivePatterns(t *testing.T) {
 		{"Bearer eyJhbGciOiJIUzI1NiJ9", true},
 		{"Basic dXNlcjpwYXNz", true},
 		{"username=admin", false},
-		{"email=test@example.com", false},
+		{"email=test@example.com", true}, // Privacy fix #713: emails are redacted
 		{"status=active", false},
 	}
 

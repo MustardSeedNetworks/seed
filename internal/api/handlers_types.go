@@ -36,19 +36,8 @@ const (
 	ErrCodeRateLimit        = "RATE_LIMIT_EXCEEDED"
 )
 
-// sendErrorResponse sends a standardized JSON error response.
-// Use this instead of http.Error for consistent error formatting.
-// TODO: Migrate existing http.Error calls to use this function.
-//
-//nolint:unused // Reserved for future migration of error responses
-func sendErrorResponse(w http.ResponseWriter, status int, code, message string) {
-	sendErrorResponseWithDetails(w, nil, status, code, message, "") // Pass nil logger if no context is available
-}
-
 // sendErrorResponseWithDetails sends a standardized JSON error response with additional details.
-// TODO: Migrate existing http.Error calls to use this function.
-//
-//nolint:unused // Reserved for future migration of error responses
+// Use this for all error responses to ensure consistency across the API (fixes #694).
 func sendErrorResponseWithDetails(w http.ResponseWriter, logger *slog.Logger, status int, code, message, details string) {
 	resp := ErrorResponse{
 		Error:   message,

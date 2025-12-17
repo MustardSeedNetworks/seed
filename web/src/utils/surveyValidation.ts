@@ -18,7 +18,7 @@
  * const results = validateSurvey(survey, criteria);
  *
  * if (results.overallPass) {
- *   console.log('Survey passed all criteria!');
+ *   // Survey passed all criteria
  * }
  * ```
  */

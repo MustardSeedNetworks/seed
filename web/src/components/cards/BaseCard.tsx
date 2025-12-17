@@ -63,7 +63,14 @@ export function BaseCard<T>({
   // Loading state
   if (loading) {
     return (
-      <Card title={title} subtitle={subtitle} icon={icon} status="loading" className={className}>
+      <Card
+        title={title}
+        subtitle={subtitle}
+        icon={icon}
+        status="loading"
+        className={className}
+        enableLiveRegion={true}
+      >
         {loadingContent || <DefaultLoadingSkeleton />}
       </Card>
     );
@@ -72,7 +79,14 @@ export function BaseCard<T>({
   // Error state
   if (error) {
     return (
-      <Card title={title} subtitle={subtitle} icon={icon} status="error" className={className}>
+      <Card
+        title={title}
+        subtitle={subtitle}
+        icon={icon}
+        status="error"
+        className={className}
+        enableLiveRegion={true}
+      >
         <CardValue value={t("status.error")} size="md" status="error" />
         <p className={`caption text-status-error ${spacing.margin.top.tight}`}>{error}</p>
       </Card>
@@ -82,13 +96,20 @@ export function BaseCard<T>({
   // No data state
   if (!data) {
     return (
-      <Card title={title} subtitle={subtitle} icon={icon} status="unknown" className={className}>
+      <Card
+        title={title}
+        subtitle={subtitle}
+        icon={icon}
+        status="unknown"
+        className={className}
+        enableLiveRegion={true}
+      >
         <CardValue value={resolvedEmptyMessage} size="md" />
       </Card>
     );
   }
 
-  // Normal state with data
+  // Normal state with data (fixes #674: enable live region for dynamic updates)
   const status = getStatus(data);
 
   return (
@@ -99,6 +120,7 @@ export function BaseCard<T>({
       status={status}
       className={className}
       onClick={onClick}
+      enableLiveRegion={true}
     >
       {children(data)}
     </Card>
@@ -165,19 +187,33 @@ export function SimpleBaseCard({
 }: SimpleBaseCardProps) {
   const { t } = useTranslation("common");
 
-  // Loading state
+  // Loading state (fixes #674: enable live region for dynamic updates)
   if (loading) {
     return (
-      <Card title={title} subtitle={subtitle} icon={icon} status="loading" className={className}>
+      <Card
+        title={title}
+        subtitle={subtitle}
+        icon={icon}
+        status="loading"
+        className={className}
+        enableLiveRegion={true}
+      >
         {loadingContent || <DefaultLoadingSkeleton />}
       </Card>
     );
   }
 
-  // Error state
+  // Error state (fixes #674: enable live region for dynamic updates)
   if (error) {
     return (
-      <Card title={title} subtitle={subtitle} icon={icon} status="error" className={className}>
+      <Card
+        title={title}
+        subtitle={subtitle}
+        icon={icon}
+        status="error"
+        className={className}
+        enableLiveRegion={true}
+      >
         <CardValue value={t("status.error")} size="md" status="error" />
         <p className={`caption text-status-error ${spacing.margin.top.tight}`}>{error}</p>
       </Card>
@@ -192,6 +228,7 @@ export function SimpleBaseCard({
       status={status}
       className={className}
       onClick={onClick}
+      enableLiveRegion={true}
     >
       {children}
     </Card>

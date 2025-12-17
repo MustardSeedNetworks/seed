@@ -1096,12 +1096,15 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   }, [devices, filteredDevices, searchQuery, sortField]);
 
   // Early returns for loading/error states (after all hooks)
+  // Fixes #674: Enable live regions for dynamic content updates
   if (loading) {
     return (
       <Card
         title={t("discovery.title")}
         icon={<ScanSearch className={iconTokens.size.md} />}
         status="loading"
+        enableLiveRegion={true}
+        ariaLabel="Network discovery scanning in progress"
       >
         <CardValue value={t("discovery.scanning")} size="lg" />
       </Card>
@@ -1114,6 +1117,8 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         title={t("discovery.title")}
         icon={<ScanSearch className={iconTokens.size.md} />}
         status="unknown"
+        enableLiveRegion={true}
+        ariaLabel="Network discovery - no data available"
       >
         <CardValue value={t("discovery.noData")} size="md" />
         {onScan && (
@@ -1121,6 +1126,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             type="button"
             onClick={onScan}
             className={`${spacing.margin.top.heading} w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium body-small`}
+            aria-label="Start network discovery scan"
           >
             {t("discovery.startScan")}
           </button>
@@ -1149,6 +1155,8 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       title={t("discovery.title")}
       icon={<ScanSearch className={iconTokens.size.md} />}
       status={cardStatus}
+      enableLiveRegion={true}
+      ariaLabel={`Network discovery - ${deviceCount} devices found`}
       headerAction={
         onScan && (
           <button
@@ -1156,10 +1164,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             onClick={onScan}
             disabled={status.scanning}
             className={`${spacing.chip.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${spacing.inline.sm}`}
+            aria-label={status.scanning ? "Scanning network" : "Start network scan"}
           >
             {status.scanning ? (
               <>
-                <RefreshCw className={cn(iconTokens.size.xs, "animate-spin")} />
+                <RefreshCw className={cn(iconTokens.size.xs, "animate-spin")} aria-hidden="true" />
                 {t("discovery.scan")}
               </>
             ) : (

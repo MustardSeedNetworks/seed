@@ -35,6 +35,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { logger, LogComponents } from "../lib/logger";
 
 /** Internal authentication state */
 interface AuthState {
@@ -100,6 +101,7 @@ export function useAuth(): UseAuthReturn {
    *
    * Calls backend API to verify session (cookies sent automatically).
    * Clears legacy localStorage keys from migration.
+   * fixes #678 - standardized error handling with logger
    */
   useEffect(() => {
     clearLegacyStorage();
@@ -125,8 +127,12 @@ export function useAuth(): UseAuthReturn {
           });
         }
       })
-      .catch(() => {
+      .catch((err) => {
         // Error checking auth, assume not authenticated
+        // fixes #678 - added logging for auth check errors
+        logger.error(LogComponents.AUTH, "Failed to check authentication status", err, {
+          endpoint: "/api/status",
+        });
         setState({
           isAuthenticated: false,
           token: null,
@@ -166,9 +172,16 @@ export function useAuth(): UseAuthReturn {
         username,
       });
 
+      logger.info(LogComponents.AUTH, "User logged in successfully", { username });
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      const errorMessage = err instanceof Error ? err.message : "Login failed";
+      setError(errorMessage);
+      // fixes #678 - added structured error logging for login failures
+      logger.error(LogComponents.AUTH, "Login failed", err, {
+        endpoint: "/api/auth/login",
+        username,
+      });
       return false;
     } finally {
       setIsLoading(false);
@@ -176,6 +189,8 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const logout = useCallback(() => {
+    const currentUsername = state.username;
+
     // Clear in-memory state immediately
     setState({
       isAuthenticated: false,
@@ -187,10 +202,21 @@ export function useAuth(): UseAuthReturn {
     fetch(`${API_BASE}/api/auth/logout`, {
       method: "POST",
       credentials: "include", // Send cookies to be cleared
-    }).catch(() => {
-      // Ignore errors - local state already cleared
-    });
-  }, []);
+    })
+      .then(() => {
+        logger.info(LogComponents.AUTH, "User logged out successfully", {
+          username: currentUsername,
+        });
+      })
+      .catch((err) => {
+        // fixes #678 - added error logging for logout failures
+        logger.error(LogComponents.AUTH, "Logout API call failed", err, {
+          endpoint: "/api/auth/logout",
+          username: currentUsername,
+        });
+        // Local state already cleared, so continue
+      });
+  }, [state.username]);
 
   return {
     isAuthenticated: state.isAuthenticated,

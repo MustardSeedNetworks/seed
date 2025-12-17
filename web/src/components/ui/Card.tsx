@@ -68,10 +68,15 @@ interface CardProps {
   icon?: ReactNode;
   /** Optional action element in header (right side) */
   headerAction?: ReactNode;
+  /** Enable aria-live region for dynamic content updates (fixes #674) */
+  enableLiveRegion?: boolean;
+  /** ARIA label for the card (fixes #674) */
+  ariaLabel?: string;
 }
 
 /**
  * Card component - displays information in a styled container with status badge.
+ * Fixes #674: Added ARIA labels and live regions for dynamic content updates
  */
 export function Card({
   title,
@@ -82,6 +87,8 @@ export function Card({
   onClick,
   icon,
   headerAction,
+  enableLiveRegion = false,
+  ariaLabel,
 }: CardProps) {
   // Card is interactive if click handler is provided
   const isInteractive = typeof onClick === "function";
@@ -100,6 +107,12 @@ export function Card({
 
   const interactiveProps = isInteractive ? { role: "button" as const, tabIndex: 0 } : {};
 
+  // Fixes #674: Add aria-label and aria-live for accessibility
+  const ariaProps = {
+    "aria-label": ariaLabel || `${title}${subtitle ? ` - ${subtitle}` : ""}`,
+    ...(enableLiveRegion && { "aria-live": "polite" as const, "aria-atomic": "true" as const }),
+  };
+
   return (
     <div
       className={cn(
@@ -112,14 +125,22 @@ export function Card({
       onClick={onClick}
       onKeyDown={handleKeyDown}
       {...interactiveProps}
+      {...ariaProps}
     >
       <div className={layout.flex.between}>
         <div className={layout.inline.default}>
           {icon && (
-            <span className={cn("text-text-muted shrink-0", iconTokens.size.md)}>{icon}</span>
+            <span className={cn("text-text-muted shrink-0", iconTokens.size.md)} aria-hidden="true">
+              {icon}
+            </span>
           )}
           <div className={layout.flex.col}>
-            <h3 className="heading-4 font-display">{title}</h3>
+            <h3
+              className="heading-4 font-display"
+              id={`card-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
+            >
+              {title}
+            </h3>
             {subtitle && <p className="caption leading-tight">{subtitle}</p>}
           </div>
         </div>
@@ -128,7 +149,10 @@ export function Card({
           <StatusBadge status={status} size="md" />
         </div>
       </div>
-      <div className={`${spacing.margin.top.inline} sm:${spacing.margin.top.content}`}>
+      <div
+        className={`${spacing.margin.top.inline} sm:${spacing.margin.top.content}`}
+        aria-describedby={`card-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
+      >
         {children}
       </div>
     </div>

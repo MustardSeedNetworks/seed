@@ -28,7 +28,8 @@ import { SettingsContext, SettingsContextValue } from "./settingsContextDef";
 // Provider Component
 // ============================================================================
 
-const DEBOUNCE_MS = 800;
+// Debounce delay increased to reduce API calls and improve performance (fixes #673)
+const DEBOUNCE_MS = 1000;
 
 interface SettingsProviderProps {
   children: ReactNode;

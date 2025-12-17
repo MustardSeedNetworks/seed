@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/validation"
 )
 
@@ -15,17 +16,19 @@ import (
 // ============================================================================
 
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	switch r.Method {
 	case http.MethodGet:
 		s.getSettings(w, r)
 	case http.MethodPut:
 		s.updateSettings(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
 	}
 }
 
-func (s *Server) getSettings(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	// Lock config for read access
 	s.config.RLock()
 	defer s.config.RUnlock()
@@ -126,16 +129,17 @@ func (s *Server) getSettings(w http.ResponseWriter, _ *http.Request) {
 		},
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, settings)
+	sendJSONResponse(w, logger, http.StatusOK, settings)
 }
 
 func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var updates map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", err.Error()) // fixes #694, #699
 		return
 	}
 
@@ -153,11 +157,11 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
-		http.Error(w, "Failed to save config: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to save config", err.Error()) // fixes #694, #699
 		return
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]string{"status": "updated"})
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
 }
 
 // applyThresholdUpdates applies threshold configuration updates.

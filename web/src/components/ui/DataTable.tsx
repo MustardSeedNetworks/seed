@@ -70,6 +70,10 @@ export interface DataTableProps<T> {
     label: string;
     options: { value: string; label: string }[];
   }[];
+  /** Error message to display when rendering fails (fixes #680) */
+  error?: string;
+  /** Loading state (fixes #680) */
+  loading?: boolean;
 }
 
 function SortIcon({ direction, active }: { direction: SortDirection; active: boolean }) {
@@ -85,6 +89,7 @@ function SortIcon({ direction, active }: { direction: SortDirection; active: boo
 
 /**
  * Generic table component with search, sorting, and expandable row support.
+ * Fixes #680: Added error handling and null checks for safe rendering
  */
 export function DataTable<T>({
   data,
@@ -99,6 +104,8 @@ export function DataTable<T>({
   maxHeight = "max-h-80",
   actions,
   filterOptions,
+  error,
+  loading = false,
 }: DataTableProps<T>) {
   const { t } = useTranslation("common");
   // Note: expandedContent is available for future row expansion feature
@@ -108,6 +115,7 @@ export function DataTable<T>({
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
   const [showFilters, setShowFilters] = useState(false);
+  const [renderError, setRenderError] = useState<Error | null>(null);
 
   const handleSort = useCallback(
     (key: string) => {
@@ -143,71 +151,131 @@ export function DataTable<T>({
   }, []);
 
   const filteredAndSortedData = useMemo(() => {
-    let result = [...data];
+    // Fixes #680: Add null checks and error handling
+    try {
+      if (!Array.isArray(data)) {
+        console.error("DataTable: data prop is not an array", data);
+        return [];
+      }
 
-    // Apply search filter
-    if (searchQuery && searchKeys && searchKeys.length > 0) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((item) => {
-        return searchKeys.some((key) => {
+      let result = [...data];
+
+      // Apply search filter
+      if (searchQuery && searchKeys && searchKeys.length > 0) {
+        const query = searchQuery.toLowerCase();
+        result = result.filter((item) => {
+          if (!item) return false; // Null check
+          return searchKeys.some((key) => {
+            const column = columns.find((c) => c.key === key);
+            if (column) {
+              try {
+                const value = column.accessor(item);
+                return value?.toString().toLowerCase().includes(query);
+              } catch (err) {
+                console.error("DataTable: Error accessing column value", err);
+                return false;
+              }
+            }
+            return false;
+          });
+        });
+      }
+
+      // Apply column filters
+      Object.entries(activeFilters).forEach(([key, filterValue]) => {
+        if (filterValue) {
           const column = columns.find((c) => c.key === key);
           if (column) {
-            const value = column.accessor(item);
-            return value?.toString().toLowerCase().includes(query);
+            result = result.filter((item) => {
+              if (!item) return false; // Null check
+              try {
+                const value = column.accessor(item);
+                return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+              } catch (err) {
+                console.error("DataTable: Error filtering column value", err);
+                return false;
+              }
+            });
           }
-          return false;
-        });
+        }
       });
-    }
 
-    // Apply column filters
-    Object.entries(activeFilters).forEach(([key, filterValue]) => {
-      if (filterValue) {
-        const column = columns.find((c) => c.key === key);
+      // Apply sorting
+      if (sortKey && sortDirection) {
+        const column = columns.find((c) => c.key === sortKey);
         if (column) {
-          result = result.filter((item) => {
-            const value = column.accessor(item);
-            return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+          result.sort((a, b) => {
+            if (!a || !b) return 0; // Null checks
+            try {
+              const aVal = column.accessor(a);
+              const bVal = column.accessor(b);
+
+              // Handle nulls
+              if (aVal == null && bVal == null) return 0;
+              if (aVal == null) return sortDirection === "asc" ? 1 : -1;
+              if (bVal == null) return sortDirection === "asc" ? -1 : 1;
+
+              // Compare values
+              if (typeof aVal === "number" && typeof bVal === "number") {
+                return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+              }
+
+              const strA = String(aVal).toLowerCase();
+              const strB = String(bVal).toLowerCase();
+              const comparison = strA.localeCompare(strB, undefined, {
+                numeric: true,
+              });
+              return sortDirection === "asc" ? comparison : -comparison;
+            } catch (err) {
+              console.error("DataTable: Error sorting data", err);
+              return 0;
+            }
           });
         }
       }
-    });
 
-    // Apply sorting
-    if (sortKey && sortDirection) {
-      const column = columns.find((c) => c.key === sortKey);
-      if (column) {
-        result.sort((a, b) => {
-          const aVal = column.accessor(a);
-          const bVal = column.accessor(b);
-
-          // Handle nulls
-          if (aVal == null && bVal == null) return 0;
-          if (aVal == null) return sortDirection === "asc" ? 1 : -1;
-          if (bVal == null) return sortDirection === "asc" ? -1 : 1;
-
-          // Compare values
-          if (typeof aVal === "number" && typeof bVal === "number") {
-            return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-          }
-
-          const strA = String(aVal).toLowerCase();
-          const strB = String(bVal).toLowerCase();
-          const comparison = strA.localeCompare(strB, undefined, {
-            numeric: true,
-          });
-          return sortDirection === "asc" ? comparison : -comparison;
-        });
-      }
+      return result;
+    } catch (err) {
+      console.error("DataTable: Error in filteredAndSortedData", err);
+      setRenderError(err instanceof Error ? err : new Error(String(err)));
+      return [];
     }
-
-    return result;
   }, [data, searchQuery, searchKeys, activeFilters, sortKey, sortDirection, columns]);
 
   const hasActiveFilters = searchQuery !== "" || Object.keys(activeFilters).length > 0;
 
+  // Fixes #680: Show error state if error prop is provided or render error occurred
+  const displayError = error || renderError?.message;
+
   return (
     <div className="stack-sm">
+      {/* Error state (fixes #680) */}
+      {displayError && (
+        <div
+          className={cn(
+            `${spacing.pad.sm} ${radius.md} bg-status-error/10 border border-status-error/20 text-status-error body-small`,
+            layout.inline.tight
+          )}
+          role="alert"
+        >
+          <span className={iconTokens.size.sm}>⚠</span>
+          <span>{displayError}</span>
+        </div>
+      )}
+
+      {/* Loading state (fixes #680) */}
+      {loading && (
+        <div
+          className={cn(
+            `${spacing.pad.sm} ${radius.md} bg-surface-hover text-text-muted body-small text-center`
+          )}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="inline-block animate-spin mr-2">◐</span>
+          Loading data...
+        </div>
+      )}
       {/* Search and Filter Bar */}
       <div className={layout.inline.default}>
         <div className="relative flex-1">
@@ -345,37 +413,72 @@ export function DataTable<T>({
               </tr>
             ) : (
               filteredAndSortedData.map((item) => {
-                const key = keyExtractor(item);
-                const expanded = isExpanded?.(item) ?? false;
+                // Fixes #680: Add null checks for safe rendering
+                if (!item) {
+                  console.warn("DataTable: Encountered null/undefined item in data");
+                  return null;
+                }
 
-                return (
-                  <tr
-                    key={key}
-                    className={cn(
-                      "border-b border-surface-border/50",
-                      onRowClick && "cursor-pointer hover:bg-surface-hover",
-                      expanded && "bg-surface-hover/50"
-                    )}
-                    onClick={onRowClick ? () => onRowClick(item) : undefined}
-                  >
-                    {columns.map((column) => (
-                      <td
-                        key={`${key}-${column.key}`}
-                        className={cn(
-                          `${spacing.cell.px} ${spacing.row.py}`,
-                          column.hiddenOnMobile && "hidden sm:table-cell"
-                        )}
-                      >
-                        {column.render ? column.render(item) : (column.accessor(item) ?? "-")}
-                      </td>
-                    ))}
-                    {actions && (
-                      <td className={`${spacing.cell.px} ${spacing.row.py} text-right`}>
-                        {actions(item)}
-                      </td>
-                    )}
-                  </tr>
-                );
+                try {
+                  const key = keyExtractor(item);
+                  const expanded = isExpanded?.(item) ?? false;
+
+                  return (
+                    <tr
+                      key={key}
+                      className={cn(
+                        "border-b border-surface-border/50",
+                        onRowClick && "cursor-pointer hover:bg-surface-hover",
+                        expanded && "bg-surface-hover/50"
+                      )}
+                      onClick={onRowClick ? () => onRowClick(item) : undefined}
+                    >
+                      {columns.map((column) => {
+                        try {
+                          return (
+                            <td
+                              key={`${key}-${column.key}`}
+                              className={cn(
+                                `${spacing.cell.px} ${spacing.row.py}`,
+                                column.hiddenOnMobile && "hidden sm:table-cell"
+                              )}
+                            >
+                              {column.render ? column.render(item) : (column.accessor(item) ?? "-")}
+                            </td>
+                          );
+                        } catch (err) {
+                          console.error("DataTable: Error rendering column", column.key, err);
+                          return (
+                            <td
+                              key={`${key}-${column.key}`}
+                              className={cn(
+                                `${spacing.cell.px} ${spacing.row.py}`,
+                                column.hiddenOnMobile && "hidden sm:table-cell"
+                              )}
+                            >
+                              <span className="text-status-error">{t("status.error")}</span>
+                            </td>
+                          );
+                        }
+                      })}
+                      {actions && (
+                        <td className={`${spacing.cell.px} ${spacing.row.py} text-right`}>
+                          {(() => {
+                            try {
+                              return actions(item);
+                            } catch (err) {
+                              console.error("DataTable: Error rendering actions", err);
+                              return null;
+                            }
+                          })()}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                } catch (err) {
+                  console.error("DataTable: Error rendering row", err);
+                  return null;
+                }
               })
             )}
           </tbody>

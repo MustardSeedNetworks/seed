@@ -188,10 +188,9 @@ export function useLogs({
 
       const data = await response.json();
       setStats(data);
-    } catch (err) {
-      // Using console.error here since we're in the logging system itself
-      // and don't want potential infinite loops
-      console.error("Failed to fetch log stats:", err);
+    } catch {
+      // Silently fail to avoid infinite loops in logging system
+      // fixes #681 - removed console.error statement
       setStats(DEFAULT_STATS);
     }
   }, []);

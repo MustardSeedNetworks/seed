@@ -265,6 +265,160 @@ func ValidateNetmask(netmask string) error {
 	return nil
 }
 
+// ValidateStringLength validates that a string is within the specified length bounds.
+// Returns an error if the string is empty (when required) or exceeds maxLen (fixes #695).
+func ValidateStringLength(s, fieldName string, minLen, maxLen int) error {
+	if len(s) < minLen {
+		if minLen == 1 {
+			return fmt.Errorf("%s is required", fieldName)
+		}
+		return fmt.Errorf("%s must be at least %d characters, got %d", fieldName, minLen, len(s))
+	}
+	if len(s) > maxLen {
+		return fmt.Errorf("%s too long (max %d characters), got %d", fieldName, maxLen, len(s))
+	}
+	return nil
+}
+
+// ValidateIntRange validates that an integer is within the specified range (fixes #695).
+func ValidateIntRange(val int, fieldName string, minVal, maxVal int) error {
+	if val < minVal || val > maxVal {
+		return fmt.Errorf("%s must be between %d and %d, got %d", fieldName, minVal, maxVal, val)
+	}
+	return nil
+}
+
+// ValidateFloatRange validates that a float is within the specified range (fixes #695).
+func ValidateFloatRange(val float64, fieldName string, minVal, maxVal float64) error {
+	if val < minVal || val > maxVal {
+		return fmt.Errorf("%s must be between %f and %f, got %f", fieldName, minVal, maxVal, val)
+	}
+	return nil
+}
+
+// ValidatePath validates a file path to prevent directory traversal attacks (fixes #695).
+// It ensures the path doesn't contain dangerous sequences like ".." or absolute paths.
+func ValidatePath(path, fieldName string) error {
+	if path == "" {
+		return fmt.Errorf("%s is required", fieldName)
+	}
+
+	// Block absolute paths (they should be resolved by the backend)
+	if strings.HasPrefix(path, "/") || strings.HasPrefix(path, "\\") {
+		return fmt.Errorf("%s must not be an absolute path", fieldName)
+	}
+
+	// Block parent directory references
+	if strings.Contains(path, "..") {
+		return fmt.Errorf("%s must not contain '..' sequences", fieldName)
+	}
+
+	// Block null bytes (poison null byte attack)
+	if strings.ContainsRune(path, 0) {
+		return fmt.Errorf("%s contains invalid characters", fieldName)
+	}
+
+	return nil
+}
+
+// ValidateFilename validates a filename to ensure it's safe (fixes #695).
+// Rejects filenames with path separators, control characters, or dangerous patterns.
+func ValidateFilename(filename, fieldName string) error {
+	if filename == "" {
+		return fmt.Errorf("%s is required", fieldName)
+	}
+
+	// Check length (filesystem limits, typically 255)
+	if len(filename) > 255 {
+		return fmt.Errorf("%s too long (max 255 characters)", fieldName)
+	}
+
+	// Block path separators
+	if strings.ContainsAny(filename, "/\\") {
+		return fmt.Errorf("%s must not contain path separators", fieldName)
+	}
+
+	// Block control characters and null bytes
+	for _, r := range filename {
+		if r < 32 || r == 127 {
+			return fmt.Errorf("%s contains invalid characters", fieldName)
+		}
+	}
+
+	// Block dangerous filenames
+	if filename == "." || filename == ".." {
+		return fmt.Errorf("%s is not a valid filename", fieldName)
+	}
+
+	return nil
+}
+
+// ValidateSurveyID validates a survey ID (fixes #695).
+// Survey IDs must be alphanumeric with hyphens/underscores only.
+func ValidateSurveyID(id string) error {
+	if id == "" {
+		return fmt.Errorf("survey ID is required")
+	}
+
+	if len(id) > 64 {
+		return fmt.Errorf("survey ID too long (max 64 characters)")
+	}
+
+	// Check for valid characters
+	for _, r := range id {
+		isValid := (r >= 'a' && r <= 'z') ||
+			(r >= 'A' && r <= 'Z') ||
+			(r >= '0' && r <= '9') ||
+			r == '-' || r == '_'
+		if !isValid {
+			return fmt.Errorf("survey ID contains invalid characters (use only letters, numbers, hyphens, underscores)")
+		}
+	}
+
+	return nil
+}
+
+// ValidateImageDataURL validates a data URL for image uploads (fixes #695).
+// Ensures it's a valid data URL with an allowed image MIME type.
+func ValidateImageDataURL(dataURL string, maxSizeBytes int) error {
+	if dataURL == "" {
+		return fmt.Errorf("image data is required")
+	}
+
+	// Check for data URL prefix
+	if !strings.HasPrefix(dataURL, "data:") {
+		return fmt.Errorf("invalid image data format (must be a data URL)")
+	}
+
+	// Extract MIME type
+	parts := strings.SplitN(dataURL, ",", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid image data format")
+	}
+
+	// Validate MIME type
+	mimeSection := parts[0]
+	allowedTypes := []string{"image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"}
+	validType := false
+	for _, allowed := range allowedTypes {
+		if strings.Contains(mimeSection, allowed) {
+			validType = true
+			break
+		}
+	}
+
+	if !validType {
+		return fmt.Errorf("unsupported image type (allowed: PNG, JPEG, GIF, WebP)")
+	}
+
+	// Check size (rough estimate: base64 is ~1.33x larger than binary)
+	if len(dataURL) > maxSizeBytes {
+		return fmt.Errorf("image data too large (max %d bytes)", maxSizeBytes)
+	}
+
+	return nil
+}
+
 // ErrPrivateIPBlocked is returned when a connection attempt to a private IP is blocked.
 var ErrPrivateIPBlocked = errors.New("connection to private/internal IP address blocked")
 

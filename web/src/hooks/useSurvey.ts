@@ -33,6 +33,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../lib/api";
+import { logger, LogComponents } from "../lib/logger";
 
 /** Survey data collection mode */
 export type SurveyType = "passive" | "active" | "throughput";
@@ -483,7 +484,12 @@ export function useSurvey() {
       const data = await api.get<Survey[] | { surveys?: Survey[] }>("/api/survey/list");
       setSurveys(Array.isArray(data) ? data : (data.surveys ?? []));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load surveys");
+      const errorMsg = err instanceof Error ? err.message : "Failed to load surveys";
+      setError(errorMsg);
+      // fixes #678 - added structured error logging
+      logger.error(LogComponents.SURVEY, "Failed to list surveys", err, {
+        endpoint: "/api/survey/list",
+      });
     } finally {
       setLoading(false);
     }
@@ -496,10 +502,20 @@ export function useSurvey() {
       try {
         const survey = await api.post<Survey>("/api/survey/create", request);
         await listSurveys(); // Refresh list
+        logger.info(LogComponents.SURVEY, "Survey created successfully", {
+          surveyId: survey.id,
+          name: request.name,
+          type: request.surveyType,
+        });
         return survey;
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to create survey";
         setError(errorMsg);
+        // fixes #678 - added structured error logging
+        logger.error(LogComponents.SURVEY, "Failed to create survey", err, {
+          endpoint: "/api/survey/create",
+          request,
+        });
         throw new Error(errorMsg);
       } finally {
         setLoading(false);
@@ -517,6 +533,11 @@ export function useSurvey() {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to get survey";
       setError(errorMsg);
+      // fixes #678 - added structured error logging
+      logger.error(LogComponents.SURVEY, "Failed to get survey", err, {
+        endpoint: "/api/survey",
+        surveyId: id,
+      });
       throw new Error(errorMsg);
     } finally {
       setLoading(false);
@@ -531,8 +552,15 @@ export function useSurvey() {
         const params = new URLSearchParams({ id });
         await api.delete(`/api/survey/delete?${params.toString()}`);
         await listSurveys(); // Refresh list
+        logger.info(LogComponents.SURVEY, "Survey deleted successfully", { surveyId: id });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to delete survey");
+        const errorMsg = err instanceof Error ? err.message : "Failed to delete survey";
+        setError(errorMsg);
+        // fixes #678 - added structured error logging
+        logger.error(LogComponents.SURVEY, "Failed to delete survey", err, {
+          endpoint: "/api/survey/delete",
+          surveyId: id,
+        });
       } finally {
         setLoading(false);
       }
@@ -548,8 +576,15 @@ export function useSurvey() {
         const params = new URLSearchParams({ id });
         await api.post(`/api/survey/start?${params.toString()}`);
         await listSurveys(); // Refresh list
+        logger.info(LogComponents.SURVEY, "Survey started", { surveyId: id });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to start survey");
+        const errorMsg = err instanceof Error ? err.message : "Failed to start survey";
+        setError(errorMsg);
+        // fixes #678 - added structured error logging
+        logger.error(LogComponents.SURVEY, "Failed to start survey", err, {
+          endpoint: "/api/survey/start",
+          surveyId: id,
+        });
       } finally {
         setLoading(false);
       }
@@ -565,8 +600,15 @@ export function useSurvey() {
         const params = new URLSearchParams({ id });
         await api.post(`/api/survey/pause?${params.toString()}`);
         await listSurveys(); // Refresh list
+        logger.info(LogComponents.SURVEY, "Survey paused", { surveyId: id });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to pause survey");
+        const errorMsg = err instanceof Error ? err.message : "Failed to pause survey";
+        setError(errorMsg);
+        // fixes #678 - added structured error logging
+        logger.error(LogComponents.SURVEY, "Failed to pause survey", err, {
+          endpoint: "/api/survey/pause",
+          surveyId: id,
+        });
       } finally {
         setLoading(false);
       }
@@ -582,8 +624,15 @@ export function useSurvey() {
         const params = new URLSearchParams({ id });
         await api.post(`/api/survey/complete?${params.toString()}`);
         await listSurveys(); // Refresh list
+        logger.info(LogComponents.SURVEY, "Survey completed", { surveyId: id });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to complete survey");
+        const errorMsg = err instanceof Error ? err.message : "Failed to complete survey";
+        setError(errorMsg);
+        // fixes #678 - added structured error logging
+        logger.error(LogComponents.SURVEY, "Failed to complete survey", err, {
+          endpoint: "/api/survey/complete",
+          surveyId: id,
+        });
       } finally {
         setLoading(false);
       }
@@ -603,8 +652,16 @@ export function useSurvey() {
       try {
         const params = new URLSearchParams({ id });
         await api.post(`/api/survey/sample?${params.toString()}`, { x, y, sampleData });
+        logger.debug(LogComponents.SURVEY, "Sample added to survey", { surveyId: id, x, y });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to add sample");
+        const errorMsg = err instanceof Error ? err.message : "Failed to add sample";
+        setError(errorMsg);
+        // fixes #678 - added structured error logging
+        logger.error(LogComponents.SURVEY, "Failed to add sample", err, {
+          endpoint: "/api/survey/sample",
+          surveyId: id,
+          coordinates: { x, y },
+        });
       } finally {
         setLoading(false);
       }
@@ -618,8 +675,19 @@ export function useSurvey() {
     try {
       const params = new URLSearchParams({ id });
       await api.post(`/api/survey/floorplan?${params.toString()}`, floorPlan);
+      logger.info(LogComponents.SURVEY, "Floor plan updated", {
+        surveyId: id,
+        dimensions: { width: floorPlan.width, height: floorPlan.height },
+        scale: floorPlan.scaleM,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update floor plan");
+      const errorMsg = err instanceof Error ? err.message : "Failed to update floor plan";
+      setError(errorMsg);
+      // fixes #678 - added structured error logging
+      logger.error(LogComponents.SURVEY, "Failed to update floor plan", err, {
+        endpoint: "/api/survey/floorplan",
+        surveyId: id,
+      });
     } finally {
       setLoading(false);
     }

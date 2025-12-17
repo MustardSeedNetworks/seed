@@ -185,8 +185,8 @@ func isAllowedWSOrigin(origin string) bool {
 //   - Class B private: http(s)://172.16.0.0/12 (172.16.x.x through 172.31.x.x)
 //   - Class C private: http(s)://192.168.0.0/16 (192.168.x.x)
 //
-// All ports are accepted for these origins - the check is prefix-based to allow
-// various port numbers commonly used in development (3000, 8080, 8443, etc.).
+// Uses proper URL parsing to prevent subdomain bypass attacks (fixes #710).
+// Rejects malicious origins like "http://192.168.1.1.evil.com".
 //
 // Security rationale: Private networks (RFC 1918) are assumed to be trusted local networks.
 // This provides reasonable security for home/office LANs while not requiring explicit
@@ -199,63 +199,119 @@ func isAllowedWSOrigin(origin string) bool {
 // Returns:
 //   - true if the origin is localhost or a private network address
 //   - false for public IP addresses or non-matching origins
+//
+//nolint:gocyclo,gocritic // Complexity is necessary for proper IP validation security (fixes #710)
 func isRFC1918Origin(origin string) bool {
-	allowedPatterns := []string{
-		"http://localhost",
-		"https://localhost",
-		"http://127.0.0.1",
-		"https://127.0.0.1",
-		"http://[::1]",
-		"https://[::1]",
-		// Private network ranges (RFC 1918)
-		"http://192.168.",
-		"https://192.168.",
-		"http://10.",
-		"https://10.",
-		"http://172.16.",
-		"https://172.16.",
-		"http://172.17.",
-		"https://172.17.",
-		"http://172.18.",
-		"https://172.18.",
-		"http://172.19.",
-		"https://172.19.",
-		"http://172.20.",
-		"https://172.20.",
-		"http://172.21.",
-		"https://172.21.",
-		"http://172.22.",
-		"https://172.22.",
-		"http://172.23.",
-		"https://172.23.",
-		"http://172.24.",
-		"https://172.24.",
-		"http://172.25.",
-		"https://172.25.",
-		"http://172.26.",
-		"https://172.26.",
-		"http://172.27.",
-		"https://172.27.",
-		"http://172.28.",
-		"https://172.28.",
-		"http://172.29.",
-		"https://172.29.",
-		"http://172.30.",
-		"https://172.30.",
-		"http://172.31.",
-		"https://172.31.",
+	// Reject null origin (fixes #709)
+	if origin == "null" {
+		return false
 	}
 
-	for _, pattern := range allowedPatterns {
-		if len(origin) >= len(pattern) && origin[:len(pattern)] == pattern {
-			// Allow localhost with any port, and private IPs
-			remainder := origin[len(pattern):]
-			if remainder == "" || (remainder != "" && (remainder[0] == ':' || (remainder[0] >= '0' && remainder[0] <= '9'))) {
-				return true
+	// Parse the origin URL to extract the hostname (fixes #710)
+	// This prevents subdomain bypass attacks like "http://192.168.1.1.evil.com"
+	var host string
+
+	// Extract hostname from origin using manual parsing to avoid import overhead
+	// Origin format: scheme://host[:port]
+	if strings.HasPrefix(origin, "http://") {
+		host = origin[7:]
+	} else if strings.HasPrefix(origin, "https://") {
+		host = origin[8:]
+	} else {
+		// Invalid scheme - reject
+		return false
+	}
+
+	// Remove port if present (everything after first colon)
+	if colonIdx := strings.Index(host, ":"); colonIdx != -1 {
+		host = host[:colonIdx]
+	}
+
+	// Remove path if present (everything after first slash)
+	if slashIdx := strings.Index(host, "/"); slashIdx != -1 {
+		host = host[:slashIdx]
+	}
+
+	// Check for localhost
+	if host == "localhost" || host == "127.0.0.1" || host == "[::1]" {
+		return true
+	}
+
+	// Check for RFC 1918 private networks using exact IP address validation
+	// This prevents subdomain attacks like "192.168.1.1.evil.com"
+
+	// Class C: 192.168.0.0/16
+	if strings.HasPrefix(host, "192.168.") {
+		// Verify it's actually an IP (no dots after the third octet portion)
+		remainder := host[8:] // After "192.168."
+		// Should be X.Y where X and Y are 0-255
+		parts := strings.Split(remainder, ".")
+		if len(parts) == 2 {
+			// Valid format - ensure no additional domain components
+			return isValidIPOctet(parts[0]) && isValidIPOctet(parts[1])
+		}
+		return false
+	}
+
+	// Class A: 10.0.0.0/8
+	if strings.HasPrefix(host, "10.") {
+		remainder := host[3:] // After "10."
+		parts := strings.Split(remainder, ".")
+		if len(parts) == 3 {
+			return isValidIPOctet(parts[0]) && isValidIPOctet(parts[1]) && isValidIPOctet(parts[2])
+		}
+		return false
+	}
+
+	// Class B: 172.16.0.0/12 (172.16.0.0 - 172.31.255.255)
+	if strings.HasPrefix(host, "172.") {
+		remainder := host[4:] // After "172."
+		parts := strings.Split(remainder, ".")
+		if len(parts) == 3 {
+			// Check second octet is 16-31
+			if !isValidIPOctet(parts[0]) {
+				return false
+			}
+			// Parse second octet to verify range 16-31
+			var secondOctet int
+			for _, c := range parts[0] {
+				if c < '0' || c > '9' {
+					return false
+				}
+				secondOctet = secondOctet*10 + int(c-'0')
+				if secondOctet > 255 {
+					return false
+				}
+			}
+			if secondOctet >= 16 && secondOctet <= 31 {
+				return isValidIPOctet(parts[1]) && isValidIPOctet(parts[2])
 			}
 		}
+		return false
 	}
+
 	return false
+}
+
+// isValidIPOctet checks if a string is a valid IP octet (0-255).
+// Helper function for proper IP validation (fixes #710).
+func isValidIPOctet(s string) bool {
+	if s == "" || len(s) > 3 {
+		return false
+	}
+
+	val := 0
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+		val = val*10 + int(c-'0')
+		if val > 255 {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Message represents a WebSocket message sent from server to client.
@@ -472,13 +528,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Fallback: check query parameter (deprecated but kept for compatibility)
-	if token == "" {
-		token = r.URL.Query().Get("token")
-		if token != "" {
-			slog.Warn("WebSocket auth via query param is deprecated, use Sec-WebSocket-Protocol")
-		}
-	}
+	// Query parameter authentication removed for security (fixes #706)
 
 	// Validate token
 	if token == "" {

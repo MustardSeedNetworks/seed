@@ -14,8 +14,9 @@ import (
 	"unicode"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/krisarmstrong/seed/internal/logging"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 var (
@@ -206,10 +207,24 @@ func (m *Manager) ValidateRefreshToken(tokenString string) (*Claims, error) {
 
 // RefreshAccessToken generates a new access token from a valid refresh token (fixes #478).
 // This allows short-lived access tokens with long-lived refresh tokens.
+// Enforces maximum session lifetime to prevent indefinite sessions (fixes #717).
 func (m *Manager) RefreshAccessToken(refreshToken string) (string, error) {
 	claims, err := m.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		return "", err
+	}
+
+	// Check if session has exceeded maximum lifetime (fixes #717)
+	// The IssuedAt claim represents when the refresh token (and thus the session) was created
+	if claims.IssuedAt != nil {
+		sessionAge := time.Since(claims.IssuedAt.Time)
+		if sessionAge > MaxSessionLifetime {
+			slog.Info("Session exceeded maximum lifetime",
+				"age", sessionAge,
+				"max", MaxSessionLifetime,
+				"username", claims.Username)
+			return "", ErrTokenExpired
+		}
 	}
 
 	// Generate new access token with same username
@@ -217,8 +232,11 @@ func (m *Manager) RefreshAccessToken(refreshToken string) (string, error) {
 }
 
 // HashPassword creates a bcrypt hash of a password.
+// Uses cost factor of 12 for enhanced security (fixes #712).
+// This provides a good balance between security and performance.
 func HashPassword(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	const bcryptCost = 12 // Increased from DefaultCost (10) for better security
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
 		return "", err
 	}
@@ -301,6 +319,12 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 				return
 			}
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// Validate username claim exists and is not empty (fixes #711)
+		if claims.Username == "" {
+			http.Error(w, "Invalid token: missing username claim", http.StatusUnauthorized)
 			return
 		}
 

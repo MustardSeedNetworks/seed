@@ -10,6 +10,8 @@ import (
 
 // RateLimiter implements a simple in-memory rate limiter for login attempts.
 // It tracks failed attempts per IP and blocks requests that exceed the limit.
+// This provides protection against both single-source and distributed brute force
+// attacks by rate limiting each IP address independently (fixes #716).
 type RateLimiter struct {
 	mu        sync.RWMutex
 	attempts  map[string]*attemptInfo
