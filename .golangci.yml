@@ -36,6 +36,9 @@ linters:
     # Naming & style linters
     - predeclared    # Find code shadowing predeclared identifiers
     - testifylint    # Check testify usage patterns
+    # Database safety
+    - sqlclosecheck  # Ensure SQL rows/statements are closed
+    - rowserrcheck   # Check sql.Rows.Err() is called
 
   settings:
     errcheck:

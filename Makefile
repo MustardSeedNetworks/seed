@@ -521,8 +521,13 @@ lint: lint-backend lint-frontend ## Run all linters
 	@echo "✅ All linters complete"
 
 # golangci-lint with project configuration (.golangci.yml)
+# Auto-installs if not found
 lint-backend: ## Run Go linter
 	@echo "🔍 Running backend linter..."
+	@if ! command -v golangci-lint > /dev/null 2>&1; then \
+		echo "📦 Installing golangci-lint..."; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+	fi
 	@golangci-lint run
 	@echo "✅ Backend lint complete"
 
@@ -663,19 +668,20 @@ license-report: ## Generate license compliance reports
 	@echo "✅ License reports generated"
 
 # Go security scanning (gosec + govulncheck)
+# Auto-installs tools if not found
 security-backend: ## Run Go security scans (gosec, govulncheck)
 	@echo "Running Go security scans..."
-	@if command -v gosec > /dev/null 2>&1; then \
-		gosec -quiet ./...; \
-	else \
-		echo "SKIP: gosec not installed (go install github.com/securego/gosec/v2/cmd/gosec@latest)"; \
+	@if ! command -v gosec > /dev/null 2>&1; then \
+		echo "📦 Installing gosec..."; \
+		go install github.com/securego/gosec/v2/cmd/gosec@latest; \
 	fi
-	@if command -v govulncheck > /dev/null 2>&1; then \
-		govulncheck ./...; \
-	else \
-		echo "SKIP: govulncheck not installed (go install golang.org/x/vuln/cmd/govulncheck@latest)"; \
+	@gosec -quiet ./...
+	@if ! command -v govulncheck > /dev/null 2>&1; then \
+		echo "📦 Installing govulncheck..."; \
+		go install golang.org/x/vuln/cmd/govulncheck@latest; \
 	fi
-	@echo "Go security scans complete"
+	@govulncheck ./...
+	@echo "✅ Go security scans complete"
 
 # Frontend security scanning (npm audit)
 security-frontend: ## Run frontend security scan (npm audit)
@@ -684,14 +690,15 @@ security-frontend: ## Run frontend security scan (npm audit)
 	@echo "npm audit complete"
 
 # Secret scanning (gitleaks)
+# Auto-installs if not found
 security-secrets: ## Scan for secrets in codebase (gitleaks)
 	@echo "Running gitleaks..."
-	@if command -v gitleaks > /dev/null 2>&1; then \
-		gitleaks detect --source . --config .gitleaks.toml --verbose; \
-	else \
-		echo "SKIP: gitleaks not installed (brew install gitleaks or go install github.com/gitleaks/gitleaks/v8@latest)"; \
+	@if ! command -v gitleaks > /dev/null 2>&1; then \
+		echo "📦 Installing gitleaks..."; \
+		go install github.com/gitleaks/gitleaks/v8@latest; \
 	fi
-	@echo "Secret scan complete"
+	@gitleaks detect --source . --config .gitleaks.toml --verbose
+	@echo "✅ Secret scan complete"
 
 # Trivy filesystem scan (if available)
 security-trivy: ## Run Trivy vulnerability scan
