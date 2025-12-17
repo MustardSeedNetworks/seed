@@ -51,7 +51,7 @@ See **[HARDWARE.md](HARDWARE.md)** for detailed compatibility guide and recommen
 
 ### Installation
 
-```bash
+````bash
 # Clone the repository
 git clone https://github.com/krisarmstrong/seed.git
 cd seed
@@ -182,4 +182,4 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 ## Security
 
 See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
-```
+````

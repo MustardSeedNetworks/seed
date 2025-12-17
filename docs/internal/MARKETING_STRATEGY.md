@@ -338,7 +338,7 @@ share.
 
 | Campaign               | Keywords                                             | Monthly Budget | CPC | Clicks/Mo | Conversion Rate | Customers/Mo       |
 | ---------------------- | ---------------------------------------------------- | -------------- | --- | --------- | --------------- | ------------------ |
-| **Brand**              | "The Seed", "Luminetiq network"                      | $500           | $2  | 250       | 20%             | 10 trials          |
+| **Brand**              | "The Seed", "Mustard Seed Networks"                  | $500           | $2  | 250       | 20%             | 10 trials          |
 | **WiFi Survey**        | "WiFi site survey", "WiFi planning tool"             | $2,000         | $8  | 250       | 5%              | 3 customers        |
 | **Network Monitoring** | "network monitoring tool", "network diagnostics"     | $2,000         | $6  | 333       | 3%              | 2 customers        |
 | **Healthcare**         | "HIPAA network monitoring", "hospital network tools" | $1,500         | $10 | 150       | 4%              | 2 customers        |

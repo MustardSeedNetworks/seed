@@ -372,7 +372,7 @@ export function generateReport(
     includeHeatmaps = DEFAULT_HEATMAPS[survey.surveyType] || DEFAULT_HEATMAPS.passive,
     includeAnalysis = true,
     includeAPInventory = true,
-    companyName = "NetScope",
+    companyName = "Mustard Seed Networks",
   } = options;
 
   // Build metadata
