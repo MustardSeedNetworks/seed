@@ -25,7 +25,9 @@
     "hide": "Hide",
     "clear": "Clear",
     "reconnect": "Reconnect",
-    "runAllTests": "Run All Tests"
+    "runAllTests": "Run All Tests",
+    "signInWithGoogle": "Sign in with Google",
+    "signInWithMicrosoft": "Sign in with Microsoft"
   },
   "status": {
     "connected": "Connected",

@@ -1399,6 +1399,26 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           </button>
 
           <p className="caption text-text-muted text-center">{t("login.defaultCredentials")}</p>
+
+          {/* SSO Options */}
+          <div className="flex flex-col space-y-3">
+            <button
+              type="button"
+              onClick={() => (window.location.href = `${API_BASE}/api/sso/login?provider=google`)}
+              className={`w-full ${button.size.md} bg-status-info text-text-inverse ${radius.md} font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+            >
+              {t("buttons.signInWithGoogle")}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                (window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`)
+              }
+              className={`w-full ${button.size.md} bg-brand-secondary text-text-inverse ${radius.md} font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+            >
+              {t("buttons.signInWithMicrosoft")}
+            </button>
+          </div>
         </form>
       </div>
     </div>

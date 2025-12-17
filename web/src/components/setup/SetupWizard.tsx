@@ -4,7 +4,7 @@
  * Guides users through the first-time setup process for The Seed application.
  *
  * Features:
- * - Password setup with validation (minimum 8 characters)
+ * - Password setup with validation (minimum 12 characters)
  * - Password confirmation requirement
  * - Generated password suggestion option
  * - Custom password entry mode
@@ -85,7 +85,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
     e.preventDefault();
     setError(null);
 
-    if (password.length < 8) {
+    if (password.length < 12) {
       setError(t("errors.passwordTooShort"));
       return;
     }
@@ -296,7 +296,7 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
                     className={cn(inputClass("default", "md"), spacing.padding.right.icon)}
                     placeholder={t("password.placeholder")}
                     required
-                    minLength={8}
+                    minLength={12}
                   />
                   <button
                     type="button"
@@ -382,6 +382,38 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
           >
             {isSubmitting ? t("buttons.settingUp") : t("buttons.completeSetup")}
           </button>
+
+          {/* Separator */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-surface-border" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="px-2 bg-surface-raised text-sm text-text-muted">
+                {t("common:or")}
+              </span>
+            </div>
+          </div>
+
+          {/* SSO Options */}
+          <div className="flex flex-col stack-sm">
+            <button
+              type="button"
+              onClick={() => (window.location.href = `${API_BASE}/api/sso/login?provider=google`)}
+              className={`w-full ${button.size.md} bg-status-info text-text-inverse ${radius.md} font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+            >
+              {t("common:buttons.signInWithGoogle")}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                (window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`)
+              }
+              className={`w-full ${button.size.md} bg-brand-secondary text-text-inverse ${radius.md} font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+            >
+              {t("common:buttons.signInWithMicrosoft")}
+            </button>
+          </div>
         </form>
       </div>
     </div>
