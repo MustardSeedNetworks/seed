@@ -10,7 +10,7 @@
  * - API integration: fetch calls to /api/config endpoint
  * - useSettings hook: proper context value retrieval
  * - useSettingsOptional hook: graceful handling without provider
- * - State updates: FAB options, display options, iperf settings, thresholds
+ * - State updates: card settings, display options, iperf settings, thresholds
  * - Error handling: API failure and retry logic
  * - Async operations: proper loading/error state transitions
  * - Cleanup: proper unmounting and resource cleanup
@@ -32,7 +32,7 @@ import { ReactNode } from "react";
 import { SettingsProvider } from "./SettingsContext";
 import { useSettings, useSettingsOptional } from "./useSettings";
 import {
-  DEFAULT_FAB_OPTIONS,
+  DEFAULT_CARD_SETTINGS,
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_IPERF_SETTINGS,
   DEFAULT_THRESHOLDS,
@@ -107,10 +107,10 @@ describe("SettingsContext", () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.fabOptions).toEqual(DEFAULT_FAB_OPTIONS);
+      expect(result.current.cardSettings).toEqual(DEFAULT_CARD_SETTINGS);
       expect(result.current.displayOptions).toEqual(DEFAULT_DISPLAY_OPTIONS);
       expect(result.current.iperfSettings).toEqual(DEFAULT_IPERF_SETTINGS);
-      expect(result.current.status.fab).toBe("idle");
+      expect(result.current.status.cards).toBe("idle");
       expect(result.current.status.display).toBe("idle");
       expect(result.current.status.iperf).toBe("idle");
       expect(result.current.status.thresholds).toBe("idle");
@@ -138,23 +138,23 @@ describe("SettingsContext", () => {
         wrapper: createWrapper(),
       });
       expect(result.current).not.toBeNull();
-      expect(result.current?.fabOptions).toEqual(DEFAULT_FAB_OPTIONS);
+      expect(result.current?.cardSettings).toEqual(DEFAULT_CARD_SETTINGS);
     });
   });
 
   describe("API loading", () => {
-    it("loads FAB options from API", async () => {
-      const savedFabOptions = {
-        ...DEFAULT_FAB_OPTIONS,
-        runLink: false,
-        runDNS: false,
+    it("loads card settings from API", async () => {
+      const savedCardSettings = {
+        ...DEFAULT_CARD_SETTINGS,
+        link: { enabled: true, autoRunOnLink: false },
+        dns: { enabled: true, autoRunOnLink: false },
       };
       mockFetch.mockResolvedValue({
         ok: true,
         json: () =>
           Promise.resolve({
             thresholds: DEFAULT_THRESHOLDS,
-            fabOptions: savedFabOptions,
+            cardSettings: savedCardSettings,
           }),
       });
 
@@ -163,8 +163,8 @@ describe("SettingsContext", () => {
       });
 
       await waitFor(() => {
-        expect(result.current.fabOptions.runLink).toBe(false);
-        expect(result.current.fabOptions.runDNS).toBe(false);
+        expect(result.current.cardSettings.link.autoRunOnLink).toBe(false);
+        expect(result.current.cardSettings.dns.autoRunOnLink).toBe(false);
       });
     });
 
@@ -226,7 +226,7 @@ describe("SettingsContext", () => {
       });
 
       // Should fall back to defaults
-      expect(result.current.fabOptions).toEqual(DEFAULT_FAB_OPTIONS);
+      expect(result.current.cardSettings).toEqual(DEFAULT_CARD_SETTINGS);
       consoleSpy.mockRestore();
     });
   });
@@ -286,30 +286,32 @@ describe("SettingsContext", () => {
   });
 
   describe("update methods", () => {
-    it("updateFabOptions updates state immediately", async () => {
+    it("updateCardSettings updates state immediately", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
 
       act(() => {
-        result.current.updateFabOptions({ runLink: false });
+        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
       });
 
-      expect(result.current.fabOptions.runLink).toBe(false);
+      expect(result.current.cardSettings.link.autoRunOnLink).toBe(false);
       // Other options should remain unchanged
-      expect(result.current.fabOptions.runDNS).toBe(DEFAULT_FAB_OPTIONS.runDNS);
+      expect(result.current.cardSettings.dns.autoRunOnLink).toBe(
+        DEFAULT_CARD_SETTINGS.dns.autoRunOnLink
+      );
     });
 
-    it("updateFabOptions sets status to saving", async () => {
+    it("updateCardSettings sets status to saving", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
 
       act(() => {
-        result.current.updateFabOptions({ runLink: false });
+        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
       });
 
-      expect(result.current.status.fab).toBe("saving");
+      expect(result.current.status.cards).toBe("saving");
     });
 
     it("updateDisplayOptions updates state", async () => {
@@ -368,16 +370,16 @@ describe("SettingsContext", () => {
       });
 
       // Set up new response for refresh
-      const newFabOptions = {
-        ...DEFAULT_FAB_OPTIONS,
-        runLink: false,
+      const newCardSettings = {
+        ...DEFAULT_CARD_SETTINGS,
+        link: { enabled: true, autoRunOnLink: false },
       };
       mockFetch.mockResolvedValue({
         ok: true,
         json: () =>
           Promise.resolve({
             thresholds: DEFAULT_THRESHOLDS,
-            fabOptions: newFabOptions,
+            cardSettings: newCardSettings,
           }),
       });
 
@@ -386,7 +388,7 @@ describe("SettingsContext", () => {
         await result.current.refreshSettings();
       });
 
-      expect(result.current.fabOptions.runLink).toBe(false);
+      expect(result.current.cardSettings.link.autoRunOnLink).toBe(false);
     });
 
     it("fetches all settings from API again", async () => {
@@ -440,7 +442,7 @@ describe("SettingsContext with fake timers", () => {
   });
 
   describe("debounced saves", () => {
-    it("saves FAB options to backend API after debounce", async () => {
+    it("saves card settings to backend API after debounce", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
@@ -449,7 +451,7 @@ describe("SettingsContext with fake timers", () => {
       mockFetch.mockClear();
 
       act(() => {
-        result.current.updateFabOptions({ runLink: false });
+        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
       });
 
       // Not saved yet (no PUT calls)
@@ -463,7 +465,7 @@ describe("SettingsContext with fake timers", () => {
 
       const putCalls2 = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
       expect(putCalls2.length).toBe(1);
-      expect(putCalls2[0][1].body).toContain('"runLink":false');
+      expect(putCalls2[0][1].body).toContain('"autoRunOnLink":false');
     });
 
     it("saves display options to backend API after debounce", async () => {
@@ -506,7 +508,7 @@ describe("SettingsContext with fake timers", () => {
       expect(putCalls[0][1].body).toContain('"server":"10.0.0.1"');
     });
 
-    it("debounces multiple rapid FAB updates", async () => {
+    it("debounces multiple rapid card settings updates", async () => {
       const { result } = renderHook(() => useSettings(), {
         wrapper: createWrapper(),
       });
@@ -514,7 +516,7 @@ describe("SettingsContext with fake timers", () => {
       mockFetch.mockClear();
 
       act(() => {
-        result.current.updateFabOptions({ runLink: false });
+        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
       });
 
       await act(async () => {
@@ -522,7 +524,7 @@ describe("SettingsContext with fake timers", () => {
       });
 
       act(() => {
-        result.current.updateFabOptions({ runDNS: false });
+        result.current.updateCardSettings({ dns: { enabled: true, autoRunOnLink: false } });
       });
 
       await act(async () => {
@@ -532,8 +534,10 @@ describe("SettingsContext with fake timers", () => {
       // Only the final state should be saved (once)
       const putCalls = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
       expect(putCalls.length).toBe(1);
-      expect(putCalls[0][1].body).toContain('"runLink":false');
-      expect(putCalls[0][1].body).toContain('"runDNS":false');
+      // Both link and dns should have autoRunOnLink: false
+      const body = putCalls[0][1].body;
+      expect(body).toContain('"link"');
+      expect(body).toContain('"dns"');
     });
 
     it("sets status to saved after debounce completes", async () => {
@@ -542,16 +546,16 @@ describe("SettingsContext with fake timers", () => {
       });
 
       act(() => {
-        result.current.updateFabOptions({ runLink: false });
+        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
       });
 
-      expect(result.current.status.fab).toBe("saving");
+      expect(result.current.status.cards).toBe("saving");
 
       await act(async () => {
         vi.advanceTimersByTime(900);
       });
 
-      expect(result.current.status.fab).toBe("saved");
+      expect(result.current.status.cards).toBe("saved");
     });
 
     it("resets status to idle after delay", async () => {
@@ -560,20 +564,20 @@ describe("SettingsContext with fake timers", () => {
       });
 
       act(() => {
-        result.current.updateFabOptions({ runLink: false });
+        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
       });
 
       await act(async () => {
         vi.advanceTimersByTime(900);
       });
 
-      expect(result.current.status.fab).toBe("saved");
+      expect(result.current.status.cards).toBe("saved");
 
       await act(async () => {
         vi.advanceTimersByTime(2100);
       });
 
-      expect(result.current.status.fab).toBe("idle");
+      expect(result.current.status.cards).toBe("idle");
     });
   });
 
@@ -584,7 +588,7 @@ describe("SettingsContext with fake timers", () => {
       });
 
       act(() => {
-        result.current.updateFabOptions({ runLink: false });
+        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
       });
 
       // Unmount before debounce completes

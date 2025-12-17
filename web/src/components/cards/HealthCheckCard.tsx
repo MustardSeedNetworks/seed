@@ -87,7 +87,7 @@ interface HealthCheckCardProps {
 
 export const HealthCheckCard = memo(function HealthCheckCard({ loading }: HealthCheckCardProps) {
   const { t } = useTranslation("cards");
-  const { fabOptions } = useSettings();
+  const { cardSettings } = useSettings();
   const [data, setData] = useState<HealthCheckData | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,8 +132,8 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
   // Listen for FAB "run all tests" event
   useEffect(() => {
     const handleRunAllTests = async () => {
-      // Check FAB options from context - skip if health checks disabled
-      if (fabOptions.runHealthChecks === false) {
+      // Check per-card autoRunOnLink setting - skip if health checks disabled
+      if (!cardSettings.healthChecks.autoRunOnLink) {
         return;
       }
 
@@ -151,7 +151,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     return () => {
       window.removeEventListener("runAllTests", handleRunAllTests);
     };
-  }, [fetchTests, isRunning, fabOptions.runHealthChecks]);
+  }, [fetchTests, isRunning, cardSettings.healthChecks.autoRunOnLink]);
 
   // Don't render card if no tests are configured
   if (!data?.hasTests && !loading && !isRunning) {

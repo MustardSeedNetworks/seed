@@ -7,7 +7,7 @@
 
 import { createContext } from "react";
 import {
-  FABOptions,
+  CardSettings,
   DisplayOptions,
   IperfSettings,
   SettingsThresholds,
@@ -19,21 +19,21 @@ import {
  */
 export interface SettingsContextValue {
   // Core settings state
-  fabOptions: FABOptions;
+  cardSettings: CardSettings;
   displayOptions: DisplayOptions;
   iperfSettings: IperfSettings;
   thresholds: SettingsThresholds;
 
   // Save status indicators
   status: {
-    fab: SaveStatus;
+    cards: SaveStatus;
     display: SaveStatus;
     iperf: SaveStatus;
     thresholds: SaveStatus;
   };
 
   // Update methods - trigger auto-save with debounce
-  updateFabOptions: (updates: Partial<FABOptions>) => void;
+  updateCardSettings: (updates: Partial<CardSettings>) => void;
   updateDisplayOptions: (updates: Partial<DisplayOptions>) => void;
   updateIperfSettings: (updates: Partial<IperfSettings>) => void;
   updateThresholds: (updates: Partial<SettingsThresholds>) => void;
