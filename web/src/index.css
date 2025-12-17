@@ -49,8 +49,10 @@
 
 :root {
   /* Light Mode - improved contrast, WCAG AA compliant */
-  --color-brand-primary: #1d4ed8;
-  --color-brand-accent: #2563eb;
+  /* --color-brand-primary: #1d4ed8; */
+  /* --color-brand-accent: #2563eb; */
+  --color-brand-primary: #056839;
+  --color-brand-accent: #3CB371;
 
   --color-surface-base: #e5edf5;
   --color-surface-raised: #f9fbfd;
@@ -75,8 +77,10 @@
 
 .dark {
   /* Dark Mode - WCAG AA compliant contrast ratios */
-  --color-brand-primary: #93c5fd;
-  --color-brand-accent: #60a5fa;
+  /* --color-brand-primary: #93c5fd; */
+  /* --color-brand-accent: #60a5fa; */
+  --color-brand-primary: #81C784;
+  --color-brand-accent: #A5D6A7;
 
   --color-surface-base: #0c1626;
   --color-surface-raised: #131f32;
