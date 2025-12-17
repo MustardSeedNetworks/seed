@@ -38,6 +38,7 @@ import { ImprovedHelpModal } from "./components/help/ImprovedHelpModal";
 import { SetupWizard } from "./components/setup/SetupWizard";
 import { checkSetupStatus } from "./components/setup/setupApi";
 import { logger, LogComponents } from "./lib/logger";
+import { setSessionExpiredCallback } from "./lib/api";
 
 // API base URL - configurable via environment variable
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -90,6 +91,27 @@ interface CardState {
   dns: DNSData | null; // DNS server and resolution info
   gateway: GatewayData | null; // Gateway reachability
   publicip: PublicIPData | null; // Public IP and location info
+}
+
+const CARD_IDS = [
+  "link",
+  "cable",
+  "vlan",
+  "switch",
+  "wifi",
+  "dhcp",
+  "dns",
+  "gateway",
+  "publicip",
+] as const;
+type CardId = (typeof CARD_IDS)[number];
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isCardId(value: unknown): value is CardId {
+  return typeof value === "string" && (CARD_IDS as readonly string[]).includes(value);
 }
 
 /**
@@ -154,51 +176,90 @@ function App() {
   // Refs to track device scan polling interval and timeout for cleanup
   const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const networkDiscoveryAbortRef = useRef<AbortController | null>(null);
+  const currentInterfaceRef = useRef(currentInterface);
+
+  useEffect(() => {
+    currentInterfaceRef.current = currentInterface;
+  }, [currentInterface]);
+
+  useEffect(() => {
+    return () => {
+      networkDiscoveryAbortRef.current?.abort();
+    };
+  }, []);
 
   const handleMessage = useCallback((message: Message) => {
     if (message.type === "initial_state") {
       setLoading(false);
-      const payload = message.payload as {
-        interface?: string;
-        isWireless?: boolean;
-        cards?: Partial<CardState>;
-      };
-      if (payload.interface) {
+      if (!isPlainObject(message.payload)) {
+        logger.warn(LogComponents.WEBSOCKET, "Invalid initial_state payload", {
+          payload: message.payload,
+        });
+        return;
+      }
+
+      const payload = message.payload;
+      if (typeof payload.interface === "string" && payload.interface) {
         setCurrentInterface(payload.interface);
       }
-      // Use isWireless from payload if available (works for macOS and Linux)
-      if (payload.isWireless !== undefined) {
+
+      if (typeof payload.isWireless === "boolean") {
         setIsWifi(payload.isWireless);
       }
-      // Use initial card data from WebSocket
-      if (payload.cards) {
-        setCards((prev) => ({
-          ...prev,
-          ...Object.fromEntries(Object.entries(payload.cards!).filter(([, v]) => v !== null)),
-        }));
+
+      if (isPlainObject(payload.cards)) {
+        const updates: Partial<CardState> = {};
+        for (const [key, value] of Object.entries(payload.cards)) {
+          if (!isCardId(key)) continue;
+          if (value === null) {
+            updates[key] = null;
+          } else if (isPlainObject(value)) {
+            updates[key] = value as unknown as CardState[typeof key];
+          }
+        }
+
+        if (Object.keys(updates).length > 0) {
+          setCards((prev) => ({ ...prev, ...updates }));
+        }
       }
     }
   }, []);
 
   // Handle session expiration via API client callback
   useEffect(() => {
-    import("./lib/api").then(({ setSessionExpiredCallback }) => {
-      setSessionExpiredCallback(() => {
-        setSessionExpired(true);
-        logout();
-      });
+    setSessionExpiredCallback(() => {
+      setSessionExpired(true);
+      logout();
     });
     return () => {
-      import("./lib/api").then(({ setSessionExpiredCallback }) => {
-        setSessionExpiredCallback(() => {});
-      });
+      setSessionExpiredCallback(null);
     };
   }, [logout]);
 
   const handleCardUpdate = useCallback((update: CardUpdate) => {
+    if (!update || typeof update !== "object") {
+      return;
+    }
+
+    const { cardId, data } = update as { cardId?: unknown; data?: unknown };
+
+    if (!isCardId(cardId)) {
+      logger.warn(LogComponents.WEBSOCKET, "Ignoring card_update for unknown cardId", { cardId });
+      return;
+    }
+
+    if (data === undefined || (data !== null && !isPlainObject(data))) {
+      logger.warn(LogComponents.WEBSOCKET, "Ignoring card_update with invalid data", {
+        cardId,
+        data,
+      });
+      return;
+    }
+
     setCards((prev) => ({
       ...prev,
-      [update.cardId]: update.data,
+      [cardId]: data as CardState[typeof cardId],
     }));
   }, []);
 
@@ -295,19 +356,38 @@ function App() {
         headers: getAuthHeaders(),
       });
       if (response.ok) {
-        const data = await response.json();
+        const data: unknown = await response.json();
+        const neighbors =
+          isPlainObject(data) && Array.isArray(data.neighbors) ? data.neighbors : [];
+
         // Use the first neighbor as the "nearest switch"
-        if (data.neighbors && data.neighbors.length > 0) {
-          const neighbor = data.neighbors[0];
+        if (neighbors.length > 0 && isPlainObject(neighbors[0])) {
+          const neighbor = neighbors[0];
+          const rawProtocol =
+            typeof neighbor.protocol === "string" ? neighbor.protocol.toLowerCase() : "unknown";
+          const protocol: SwitchData["protocol"] =
+            rawProtocol === "lldp" ||
+            rawProtocol === "cdp" ||
+            rawProtocol === "edp" ||
+            rawProtocol === "fdp"
+              ? rawProtocol
+              : "unknown";
+
+          const systemName = typeof neighbor.systemName === "string" ? neighbor.systemName : "";
+          const chassisId = typeof neighbor.chassisId === "string" ? neighbor.chassisId : "";
+
           setCards((prev) => ({
             ...prev,
             switch: {
-              protocol: neighbor.protocol as SwitchData["protocol"],
-              switchName: neighbor.systemName || neighbor.chassisId || null,
-              portId: neighbor.portId || null,
-              portDescription: neighbor.portDescription || null,
-              managementIp: neighbor.managementAddress || null,
-              systemDescription: neighbor.systemDescription || null,
+              protocol,
+              switchName: systemName || chassisId || null,
+              portId: typeof neighbor.portId === "string" ? neighbor.portId : null,
+              portDescription:
+                typeof neighbor.portDescription === "string" ? neighbor.portDescription : null,
+              managementIp:
+                typeof neighbor.managementAddress === "string" ? neighbor.managementAddress : null,
+              systemDescription:
+                typeof neighbor.systemDescription === "string" ? neighbor.systemDescription : null,
             },
           }));
         } else {
@@ -531,14 +611,27 @@ function App() {
   // Fetch Network Discovery data (devices and status)
   const fetchNetworkDiscovery = useCallback(async () => {
     try {
+      networkDiscoveryAbortRef.current?.abort();
+      const controller = new AbortController();
+      networkDiscoveryAbortRef.current = controller;
+      const requestedInterface = currentInterface;
+
       const [devicesRes, statusRes] = await Promise.all([
-        fetch(`${API_BASE}/api/devices`, { headers: getAuthHeaders() }),
-        fetch(`${API_BASE}/api/devices/status`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE}/api/devices`, { headers: getAuthHeaders(), signal: controller.signal }),
+        fetch(`${API_BASE}/api/devices/status`, {
+          headers: getAuthHeaders(),
+          signal: controller.signal,
+        }),
       ]);
 
       if (devicesRes.ok && statusRes.ok) {
         const devicesData = await devicesRes.json();
         const status = await statusRes.json();
+
+        if (controller.signal.aborted || currentInterfaceRef.current !== requestedInterface) {
+          return;
+        }
+
         // devicesData contains { devices: [...], status: {...} }
         // Extract the devices array from the response
         setNetworkDiscovery({
@@ -549,11 +642,14 @@ function App() {
             lastScan: "",
             subnet: "",
             localIP: "",
-            interface: currentInterface,
+            interface: requestedInterface,
           },
         });
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
       logger.error(LogComponents.DEVICES, "Failed to fetch network discovery data", err);
     }
   }, [currentInterface]);

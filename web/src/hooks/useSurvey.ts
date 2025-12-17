@@ -32,10 +32,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { getAuthHeaders } from "./useAuth";
-
-// API base URL for survey endpoints
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+import { api } from "../lib/api";
 
 /** Survey data collection mode */
 export type SurveyType = "passive" | "active" | "throughput";
@@ -483,15 +480,8 @@ export function useSurvey() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/survey/list`, {
-        headers: getAuthHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSurveys(data.surveys || []);
-      } else {
-        throw new Error("Failed to load surveys");
-      }
+      const data = await api.get<Survey[] | { surveys?: Survey[] }>("/api/survey/list");
+      setSurveys(Array.isArray(data) ? data : (data.surveys ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load surveys");
     } finally {
@@ -504,13 +494,7 @@ export function useSurvey() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/survey/create`, {
-          method: "POST",
-          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify(request),
-        });
-        if (!res.ok) throw new Error("Failed to create survey");
-        const survey = await res.json();
+        const survey = await api.post<Survey>("/api/survey/create", request);
         await listSurveys(); // Refresh list
         return survey;
       } catch (err) {
@@ -528,11 +512,8 @@ export function useSurvey() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/survey?id=${id}`, {
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error("Failed to get survey");
-      return await res.json();
+      const params = new URLSearchParams({ id });
+      return await api.get<Survey>(`/api/survey?${params.toString()}`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to get survey";
       setError(errorMsg);
@@ -547,11 +528,8 @@ export function useSurvey() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/survey/delete?id=${id}`, {
-          method: "DELETE",
-          headers: getAuthHeaders(),
-        });
-        if (!res.ok) throw new Error("Failed to delete survey");
+        const params = new URLSearchParams({ id });
+        await api.delete(`/api/survey/delete?${params.toString()}`);
         await listSurveys(); // Refresh list
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to delete survey");
@@ -567,11 +545,8 @@ export function useSurvey() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/survey/start?id=${id}`, {
-          method: "POST",
-          headers: getAuthHeaders(),
-        });
-        if (!res.ok) throw new Error("Failed to start survey");
+        const params = new URLSearchParams({ id });
+        await api.post(`/api/survey/start?${params.toString()}`);
         await listSurveys(); // Refresh list
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to start survey");
@@ -587,11 +562,8 @@ export function useSurvey() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/survey/pause?id=${id}`, {
-          method: "POST",
-          headers: getAuthHeaders(),
-        });
-        if (!res.ok) throw new Error("Failed to pause survey");
+        const params = new URLSearchParams({ id });
+        await api.post(`/api/survey/pause?${params.toString()}`);
         await listSurveys(); // Refresh list
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to pause survey");
@@ -607,11 +579,8 @@ export function useSurvey() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/survey/complete?id=${id}`, {
-          method: "POST",
-          headers: getAuthHeaders(),
-        });
-        if (!res.ok) throw new Error("Failed to complete survey");
+        const params = new URLSearchParams({ id });
+        await api.post(`/api/survey/complete?${params.toString()}`);
         await listSurveys(); // Refresh list
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to complete survey");
@@ -632,12 +601,8 @@ export function useSurvey() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/survey/sample?id=${id}`, {
-          method: "POST",
-          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify({ x, y, sampleData }),
-        });
-        if (!res.ok) throw new Error("Failed to add sample");
+        const params = new URLSearchParams({ id });
+        await api.post(`/api/survey/sample?${params.toString()}`, { x, y, sampleData });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to add sample");
       } finally {
@@ -651,12 +616,8 @@ export function useSurvey() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${id}`, {
-        method: "POST",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify(floorPlan),
-      });
-      if (!res.ok) throw new Error("Failed to update floor plan");
+      const params = new URLSearchParams({ id });
+      await api.post(`/api/survey/floorplan?${params.toString()}`, floorPlan);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update floor plan");
     } finally {

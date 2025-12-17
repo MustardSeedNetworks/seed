@@ -26,6 +26,10 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { api } from "../lib/api";
 import { logger, LogComponents } from "../lib/logger";
 
+function isFulfilled<T>(result: PromiseSettledResult<T>): result is PromiseFulfilledResult<T> {
+  return result.status === "fulfilled";
+}
+
 /** Network interface link status */
 export interface LinkStatus {
   interface: string;
@@ -161,6 +165,19 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
 
     try {
       // Fetch all data in parallel for efficiency
+      const promises = [
+        api.get<LinkStatus>("/api/link"),
+        api.get<{ interfaces: string[] }>("/api/interfaces"),
+        api.get<{ interface: string }>("/api/interface"),
+        api.get<IPConfig>("/api/ipconfig"),
+        api.get<GatewayInfo>("/api/gateway"),
+        api.get<{ results: DNSResult[] }>("/api/dns"),
+        api.get<{ vlans: VLANInfo[] }>("/api/vlan"),
+        api.get<PublicIPInfo>("/api/publicip"),
+        api.get<SystemHealth>("/api/system/health"),
+        api.get<{ neighbors: DiscoveryNeighbor[] }>("/api/discovery"),
+      ] as const;
+
       const [
         linkRes,
         interfacesRes,
@@ -172,40 +189,27 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
         publicIPRes,
         healthRes,
         discoveryRes,
-      ] = await Promise.allSettled([
-        api.get<LinkStatus>("/api/link"),
-        api.get<{ interfaces: string[] }>("/api/interfaces"),
-        api.get<{ interface: string }>("/api/interface"),
-        api.get<IPConfig>("/api/ipconfig"),
-        api.get<GatewayInfo>("/api/gateway"),
-        api.get<{ results: DNSResult[] }>("/api/dns"),
-        api.get<{ vlans: VLANInfo[] }>("/api/vlan"),
-        api.get<PublicIPInfo>("/api/publicip"),
-        api.get<SystemHealth>("/api/system/health"),
-        api.get<{ neighbors: DiscoveryNeighbor[] }>("/api/discovery"),
-      ]);
+      ] = await Promise.allSettled(promises);
 
       // Extract data with proper type narrowing for PromiseSettledResult
       setNetworkData({
-        linkStatus: linkRes.status === "fulfilled" ? linkRes.value : null,
+        linkStatus: isFulfilled(linkRes) ? linkRes.value : null,
         interfaces:
-          interfacesRes.status === "fulfilled" && interfacesRes.value
+          isFulfilled(interfacesRes) && interfacesRes.value
             ? interfacesRes.value.interfaces || []
             : [],
         currentInterface:
-          currentInterfaceRes.status === "fulfilled" && currentInterfaceRes.value
+          isFulfilled(currentInterfaceRes) && currentInterfaceRes.value
             ? currentInterfaceRes.value.interface || ""
             : "",
-        ipConfig: ipConfigRes.status === "fulfilled" ? ipConfigRes.value : null,
-        gateway: gatewayRes.status === "fulfilled" ? gatewayRes.value : null,
-        dnsResults: dnsRes.status === "fulfilled" && dnsRes.value ? dnsRes.value.results || [] : [],
-        vlanInfo: vlanRes.status === "fulfilled" && vlanRes.value ? vlanRes.value.vlans || [] : [],
-        publicIP: publicIPRes.status === "fulfilled" ? publicIPRes.value : null,
-        systemHealth: healthRes.status === "fulfilled" ? healthRes.value : null,
+        ipConfig: isFulfilled(ipConfigRes) ? ipConfigRes.value : null,
+        gateway: isFulfilled(gatewayRes) ? gatewayRes.value : null,
+        dnsResults: isFulfilled(dnsRes) && dnsRes.value ? dnsRes.value.results || [] : [],
+        vlanInfo: isFulfilled(vlanRes) && vlanRes.value ? vlanRes.value.vlans || [] : [],
+        publicIP: isFulfilled(publicIPRes) ? publicIPRes.value : null,
+        systemHealth: isFulfilled(healthRes) ? healthRes.value : null,
         discoveryNeighbors:
-          discoveryRes.status === "fulfilled" && discoveryRes.value
-            ? discoveryRes.value.neighbors || []
-            : [],
+          isFulfilled(discoveryRes) && discoveryRes.value ? discoveryRes.value.neighbors || [] : [],
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch network data";
