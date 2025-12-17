@@ -326,6 +326,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/survey/floorplan", s.updateSurveyFloorPlan)
 	s.mux.HandleFunc("/api/survey/settings", s.updateSurveySettings)
 	s.mux.HandleFunc("/api/survey/import/airmapper", s.importAirMapper)
+	s.mux.HandleFunc("/api/survey/heatmap", s.getSurveyHeatmap)
 
 	// Config backup/restore routes (implements #494)
 	s.mux.HandleFunc("/api/config/backups", s.handleConfigBackups)

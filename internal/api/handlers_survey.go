@@ -337,3 +337,78 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 
 	sendJSONResponse(w, http.StatusOK, result)
 }
+
+// parseHeatmapConfig parses heatmap configuration from query parameters.
+func parseHeatmapConfig(r *http.Request) survey.HeatmapConfig {
+	config := survey.DefaultHeatmapConfig()
+
+	// Parse heatmap type
+	heatmapType := r.URL.Query().Get("type")
+	if heatmapType == "" {
+		heatmapType = "rssi"
+	}
+	config.Type = survey.ParseHeatmapType(heatmapType)
+
+	// Optional: cell size (1-50)
+	if cellSize := r.URL.Query().Get("cell_size"); cellSize != "" {
+		var size int
+		if _, err := fmt.Sscanf(cellSize, "%d", &size); err == nil && size > 0 && size <= 50 {
+			config.CellSize = size
+		}
+	}
+
+	// Optional: opacity (0-255)
+	if opacity := r.URL.Query().Get("opacity"); opacity != "" {
+		var op int
+		if _, err := fmt.Sscanf(opacity, "%d", &op); err == nil && op >= 0 && op <= 255 {
+			config.Opacity = uint8(op) //#nosec G115 -- bounds checked above
+		}
+	}
+
+	// Optional: show samples
+	if r.URL.Query().Get("show_samples") == "false" {
+		config.ShowSamples = false
+	}
+
+	return config
+}
+
+// getSurveyHeatmap handles GET /api/survey/heatmap?id=xxx&type=rssi.
+// Generates a heatmap visualization from survey sample data.
+func (s *Server) getSurveyHeatmap(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Survey ID required", http.StatusBadRequest)
+		return
+	}
+
+	config := parseHeatmapConfig(r)
+
+	result, err := s.surveyManager.GenerateHeatmap(id, config)
+	if err != nil {
+		slog.Error("Failed to generate heatmap",
+			"survey_id", id,
+			"type", config.Type,
+			"error", err)
+		http.Error(w, fmt.Sprintf("Failed to generate heatmap: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Check if client wants raw PNG or JSON with base64
+	if r.URL.Query().Get("format") == "png" {
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"heatmap-%s-%s.png\"", id[:8], config.Type))
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(result.Image); err != nil {
+			slog.Error("Failed to write heatmap image", "error", err)
+		}
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, result)
+}
