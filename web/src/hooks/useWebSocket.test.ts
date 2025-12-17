@@ -458,7 +458,13 @@ describe("useWebSocket", () => {
       result.current.send(message);
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith("WebSocket not connected, cannot send message");
+    // Logger formats with color codes and prefix, check message is included
+    expect(consoleSpy).toHaveBeenCalled();
+    const calls = consoleSpy.mock.calls;
+    const hasWarning = calls.some((args) =>
+      args.some((arg) => String(arg).includes("WebSocket not connected, cannot send message"))
+    );
+    expect(hasWarning).toBe(true);
 
     consoleSpy.mockRestore();
   });
