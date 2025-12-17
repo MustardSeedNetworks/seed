@@ -344,6 +344,14 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/survey/heatmap", s.getSurveyHeatmap)
 	s.mux.HandleFunc("/api/survey/dead-zones", s.getSurveyDeadZones)
 
+	// Multi-floor survey routes (#654)
+	s.mux.HandleFunc("/api/survey/floors", s.handleSurveyFloors)        // GET=list, POST=add
+	s.mux.HandleFunc("/api/survey/floor", s.handleSurveyFloor)          // GET, PUT, DELETE
+	s.mux.HandleFunc("/api/survey/floor/floorplan", s.updateFloorFloorPlan)
+	s.mux.HandleFunc("/api/survey/floor/sample", s.addFloorSample)
+	s.mux.HandleFunc("/api/survey/active-floor", s.setActiveFloor)
+	s.mux.HandleFunc("/api/survey/report", s.generateSurveyReport) // PDF report generation (#653)
+
 	// Config backup/restore routes (implements #494)
 	s.mux.HandleFunc("/api/config/backups", s.handleConfigBackups)
 	s.mux.HandleFunc("/api/config/backup", s.handleConfigBackupCreate)

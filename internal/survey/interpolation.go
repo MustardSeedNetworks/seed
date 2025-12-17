@@ -184,10 +184,32 @@ func CalculateGridStats(grid [][]float64) GridStats {
 }
 
 // ExtractSamplesFromSurvey extracts interpolation samples from survey data.
+// Supports multi-floor surveys by using GetAllSamples().
 func ExtractSamplesFromSurvey(survey *Survey, valueType string) []SampleValue {
-	samples := make([]SampleValue, 0, len(survey.Samples))
+	allSamples := survey.GetAllSamples()
+	samples := make([]SampleValue, 0, len(allSamples))
 
-	for _, sp := range survey.Samples {
+	for _, sp := range allSamples {
+		value := extractValue(sp.SampleData, valueType)
+		if !math.IsNaN(value) {
+			samples = append(samples, SampleValue{
+				Point: Point2D{X: float64(sp.X), Y: float64(sp.Y)},
+				Value: value,
+			})
+		}
+	}
+
+	return samples
+}
+
+// ExtractSamplesFromFloor extracts interpolation samples from a specific floor.
+func ExtractSamplesFromFloor(floor *Floor, valueType string) []SampleValue {
+	if floor == nil {
+		return nil
+	}
+	samples := make([]SampleValue, 0, len(floor.Samples))
+
+	for _, sp := range floor.Samples {
 		value := extractValue(sp.SampleData, valueType)
 		if !math.IsNaN(value) {
 			samples = append(samples, SampleValue{

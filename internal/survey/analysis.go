@@ -67,7 +67,8 @@ func DetectDeadZones(survey *Survey, threshold int) (*DeadZoneAnalysis, error) {
 		return nil, fmt.Errorf("survey is nil")
 	}
 
-	if len(survey.Samples) == 0 {
+	allSamples := survey.GetAllSamples()
+	if len(allSamples) == 0 {
 		return nil, fmt.Errorf("survey has no samples")
 	}
 
@@ -88,8 +89,17 @@ func DetectDeadZones(survey *Survey, threshold int) (*DeadZoneAnalysis, error) {
 	// Calculate coverage score
 	coverageScore := calculateCoverageScore(samples, weakSamples)
 
+	// Get floor plan from active floor for clustering (with legacy fallback)
+	var floorPlan *FloorPlan
+	if activeFloor := survey.GetActiveFloor(); activeFloor != nil && activeFloor.FloorPlan != nil {
+		floorPlan = activeFloor.FloorPlan
+	} else if survey.FloorPlan != nil {
+		// Legacy fallback for surveys that have FloorPlan set directly
+		floorPlan = survey.FloorPlan
+	}
+
 	// Cluster weak samples into dead zones
-	deadZones := clusterDeadZones(weakSamples, survey.FloorPlan)
+	deadZones := clusterDeadZones(weakSamples, floorPlan)
 
 	// Generate recommendations
 	recommendations := generateRecommendations(deadZones, coverageScore, len(samples))

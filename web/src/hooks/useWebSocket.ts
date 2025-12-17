@@ -105,7 +105,7 @@ export interface CardUpdate {
 interface UseWebSocketOptions {
   /** WebSocket endpoint URL */
   url: string;
-  /** JWT authentication token (deprecated - using cookie auth instead) */
+  /** JWT access token for WebSocket authentication via protocol header */
   token?: string | null;
   /** Callback invoked for general messages */
   onMessage?: (message: Message) => void;
@@ -135,6 +135,7 @@ interface UseWebSocketReturn {
  */
 export function useWebSocket({
   url,
+  token,
   onMessage,
   onCardUpdate,
   reconnectInterval = 3000,
@@ -183,9 +184,10 @@ export function useWebSocket({
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const baseUrl = url.startsWith("ws") ? url : `${protocol}//${window.location.host}${url}`;
 
-      // Create WebSocket connection without token in protocol header
-      // Authentication is handled via httpOnly cookies sent automatically by the browser
-      const ws = new WebSocket(baseUrl);
+      // Create WebSocket connection with token via protocol header
+      // Backend expects: Sec-WebSocket-Protocol: access_token, <token>
+      const protocols = token ? ["access_token", token] : undefined;
+      const ws = new WebSocket(baseUrl, protocols);
       wsRef.current = ws;
       connectionIdRef.current += 1;
       const connectionId = connectionIdRef.current;
@@ -333,7 +335,15 @@ export function useWebSocket({
         url,
       });
     }
-  }, [url, onMessage, onCardUpdate, reconnectInterval, maxReconnectAttempts, clearReconnectTimer]);
+  }, [
+    url,
+    token,
+    onMessage,
+    onCardUpdate,
+    reconnectInterval,
+    maxReconnectAttempts,
+    clearReconnectTimer,
+  ]);
 
   /**
    * Cleanly disconnects the WebSocket and clears any pending reconnection timers.
