@@ -230,7 +230,6 @@ func TestEnsureConfigSecurePassword(t *testing.T) {
 	checkSecure := func(_ string) bool { return false }
 
 	loadedCfg, result, err := EnsureConfig(configPath, checkSecure)
-
 	if err != nil {
 		t.Errorf("expected no error for secure config, got %v", err)
 	}
@@ -260,7 +259,6 @@ func TestEnsureConfigEmptyJWTSecret(t *testing.T) {
 	checkSecure := func(_ string) bool { return false }
 
 	_, result, err := EnsureConfig(configPath, checkSecure)
-
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}

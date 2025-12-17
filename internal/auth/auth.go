@@ -162,7 +162,6 @@ func (m *Manager) ValidateToken(tokenString string) (*Claims, error) {
 		}
 		return m.jwtSecret, nil
 	})
-
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, ErrTokenExpired

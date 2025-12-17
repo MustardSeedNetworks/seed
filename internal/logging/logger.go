@@ -58,8 +58,6 @@ var (
 )
 
 // parseLevel converts a string level to slog.Level.
-//
-//nolint:goconst // log level strings are intentionally inline for clarity
 func parseLevel(level string) slog.Level {
 	switch strings.ToLower(level) {
 	case "debug":

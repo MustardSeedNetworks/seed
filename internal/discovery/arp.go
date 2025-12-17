@@ -494,5 +494,5 @@ func (s *ARPScanner) GetSubnetInfo() (subnet, localIP string) {
 	if s.localIP != nil {
 		localIP = s.localIP.String()
 	}
-	return
+	return subnet, localIP
 }

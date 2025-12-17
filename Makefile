@@ -538,9 +538,13 @@ lint-frontend: ## Run frontend linter
 	@echo "✅ Frontend lint complete"
 
 # Format Go code
-fmt: ## Format Go code with gofmt
-	gofmt -w -s .
-	@echo "Go code formatted"
+fmt: ## Format Go code with gofumpt
+	@if ! command -v gofumpt > /dev/null 2>&1; then \
+		echo "📦 Installing gofumpt..."; \
+		go install mvdan.cc/gofumpt@latest; \
+	fi
+	gofumpt -w .
+	@echo "✅ Go code formatted"
 
 # Format frontend code
 fmt-frontend: ## Format frontend code with Prettier

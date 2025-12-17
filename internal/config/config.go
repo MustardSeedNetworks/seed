@@ -21,10 +21,8 @@ const (
 	ipModeStatic = "static"
 )
 
-var (
-	// ErrInsecureCredentials is returned when default credentials are detected.
-	ErrInsecureCredentials = errors.New("insecure default credentials detected")
-)
+// ErrInsecureCredentials is returned when default credentials are detected.
+var ErrInsecureCredentials = errors.New("insecure default credentials detected")
 
 // Config represents the application configuration.
 // All API handlers must use Lock/Unlock for writes or RLock/RUnlock for reads

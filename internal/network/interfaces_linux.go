@@ -63,7 +63,7 @@ func updateResolvConf(dnsServers []string) error {
 	}
 
 	//nolint:gosec // G306: /etc/resolv.conf needs to be world-readable
-	return os.WriteFile("/etc/resolv.conf", []byte(sb.String()), 0644)
+	return os.WriteFile("/etc/resolv.conf", []byte(sb.String()), 0o644)
 }
 
 // configureStaticIPPlatform applies static IP on Linux using netlink.

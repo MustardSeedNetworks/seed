@@ -66,6 +66,8 @@ type LoginRequest struct {
 }
 
 // ValidateLoginRequest validates a login request and returns field-level errors.
+//
+//nolint:dupl // Non-i18n version uses hardcoded strings; i18n version mirrors this with translation keys
 func ValidateLoginRequest(req *LoginRequest) []FieldError {
 	var errors []FieldError
 
@@ -160,6 +162,8 @@ type PingTargetRequest struct {
 }
 
 // ValidatePingTarget validates a ping target configuration.
+//
+//nolint:dupl // Non-i18n version uses hardcoded strings; i18n version mirrors this with translation keys
 func ValidatePingTarget(pt *PingTargetRequest) []FieldError {
 	var errors []FieldError
 

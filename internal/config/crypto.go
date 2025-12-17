@@ -18,10 +18,8 @@ const (
 	encryptedPrefix = "enc:"
 )
 
-var (
-	// ErrInvalidCiphertext is returned when decryption fails due to invalid input.
-	ErrInvalidCiphertext = errors.New("invalid ciphertext")
-)
+// ErrInvalidCiphertext is returned when decryption fails due to invalid input.
+var ErrInvalidCiphertext = errors.New("invalid ciphertext")
 
 // deriveKey derives a 32-byte AES-256 key from the master secret using SHA-256.
 // This provides a consistent key for encryption/decryption.

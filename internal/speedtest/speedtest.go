@@ -155,7 +155,7 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	// Find servers
 	t.setStatus("finding_server", 10)
 
-	var speedtestClient = speedtest.New()
+	speedtestClient := speedtest.New()
 	serverList, err := speedtestClient.FetchServers()
 	if err != nil {
 		t.setStatus("idle", 0)

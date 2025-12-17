@@ -102,7 +102,8 @@ func (p *LocalProvider) loadDatabase() error {
 	}
 
 	// Index vulnerabilities by CPE
-	for _, cve := range db.CVEs {
+	for i := range db.CVEs {
+		cve := &db.CVEs[i]
 		vuln := Vulnerability{
 			CVEID:       cve.ID,
 			Description: cve.Description,
@@ -251,9 +252,9 @@ func (p *LocalProvider) GetVulnerabilityCount() int {
 	count := 0
 	seen := make(map[string]bool)
 	for _, vulns := range p.vulnerabilities {
-		for _, v := range vulns {
-			if !seen[v.CVEID] {
-				seen[v.CVEID] = true
+		for i := range vulns {
+			if !seen[vulns[i].CVEID] {
+				seen[vulns[i].CVEID] = true
 				count++
 			}
 		}

@@ -13,9 +13,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var (
-	outputJSON bool
-)
+var outputJSON bool
 
 var credentialsCmd = &cobra.Command{
 	Use:   "credentials",

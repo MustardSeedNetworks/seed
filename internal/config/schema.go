@@ -146,9 +146,11 @@ func extractValidationErrors(err *jsonschema.ValidationError) []ValidationError 
 	return errors
 }
 
-// Global validator (lazy initialized)
-var globalValidator *SchemaValidator
-var globalValidatorErr error
+// Global validator (lazy initialized).
+var (
+	globalValidator    *SchemaValidator
+	globalValidatorErr error
+)
 
 // ValidateWithSchema validates a Config against the embedded JSON schema.
 // Returns nil if valid, otherwise returns validation errors.

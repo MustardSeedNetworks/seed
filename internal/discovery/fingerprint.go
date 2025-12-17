@@ -32,6 +32,9 @@ const (
 	osCisco   = "cisco"
 )
 
+// Product name constants.
+const productCiscoIOS = "Cisco IOS"
+
 // OSFingerprint contains OS detection results.
 type OSFingerprint struct {
 	OSFamily    string   `json:"osFamily,omitempty"`    // linux, windows, bsd, cisco, etc.
@@ -397,7 +400,7 @@ func (*Fingerprinter) detectTelnetVersion(port int, banner string, sv *ServiceVe
 	sv.Service = "telnet"
 	switch {
 	case strings.Contains(banner, "cisco"):
-		sv.Product = "Cisco IOS"
+		sv.Product = productCiscoIOS
 		sv.Confidence = 95
 	case strings.Contains(banner, "linux"):
 		sv.Product = "Linux telnetd"

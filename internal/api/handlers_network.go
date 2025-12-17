@@ -14,6 +14,12 @@ import (
 	"github.com/krisarmstrong/seed/internal/vlan"
 )
 
+// IP configuration mode constants.
+const (
+	ipModeDHCP   = "dhcp"
+	ipModeStatic = "static"
+)
+
 // ============================================================================
 // Request/Response Types
 // ============================================================================
@@ -501,7 +507,7 @@ func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (iface
 
 	vlanID = req.VlanID
 	ok = true
-	return
+	return iface, vlanID, ok
 }
 
 // createVLANInterface creates an 802.1Q VLAN subinterface.
@@ -790,7 +796,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate mode
-	if req.Mode != "dhcp" && req.Mode != "static" {
+	if req.Mode != ipModeDHCP && req.Mode != ipModeStatic {
 		http.Error(w, "Mode must be 'dhcp' or 'static'", http.StatusBadRequest)
 		return
 	}
@@ -801,7 +807,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 
 	currentIface := s.netManager.GetCurrentInterface()
 
-	if req.Mode == "static" {
+	if req.Mode == ipModeStatic {
 		// Apply static IP configuration
 		cfg := &network.StaticIPConfig{
 			Address: req.Address,
@@ -816,7 +822,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Update config
-		s.config.IP.Mode = "static"
+		s.config.IP.Mode = ipModeStatic
 		s.config.IP.Static = &config.StaticIP{
 			Address: req.Address,
 			Netmask: req.Netmask,
@@ -831,7 +837,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Update config
-		s.config.IP.Mode = "dhcp"
+		s.config.IP.Mode = ipModeDHCP
 		s.config.IP.Static = nil
 	}
 
@@ -940,7 +946,7 @@ func applyDHCPLeaseInfo(resp *IPConfigResponse, currentIface string) {
 		}
 		if leaseInfo.DHCPServer != "" {
 			resp.IPv4.DHCPServer = leaseInfo.DHCPServer
-			resp.Mode = "dhcp"
+			resp.Mode = ipModeDHCP
 		}
 		if leaseInfo.LeaseTime > 0 {
 			resp.IPv4.LeaseTime = leaseInfo.LeaseTime

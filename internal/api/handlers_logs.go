@@ -99,6 +99,72 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// logQueryParams holds parsed log query parameters.
+type logQueryParams struct {
+	levels     []string
+	layers     []string
+	components []string
+	search     string
+	limit      int
+	offset     int
+}
+
+// parseLogQueryParams extracts and validates query parameters from the request.
+func parseLogQueryParams(r *http.Request) logQueryParams {
+	query := r.URL.Query()
+	params := logQueryParams{
+		levels:     parseCSV(query.Get("level")),
+		layers:     parseCSV(query.Get("layer")),
+		components: parseCSV(query.Get("component")),
+		search:     strings.ToLower(query.Get("search")),
+		limit:      200, // Default limit
+		offset:     0,
+	}
+
+	if l := query.Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 1000 {
+			params.limit = parsed
+		}
+	}
+
+	if o := query.Get("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			params.offset = parsed
+		}
+	}
+
+	return params
+}
+
+// matchesLogFilters checks if a log entry matches the given filter criteria.
+func matchesLogFilters(log *logging.LogEntry, params *logQueryParams) bool {
+	if len(params.levels) > 0 && !containsIgnoreCase(params.levels, log.Level) {
+		return false
+	}
+	if len(params.layers) > 0 && !containsIgnoreCase(params.layers, log.Layer) {
+		return false
+	}
+	if len(params.components) > 0 && !containsIgnoreCase(params.components, log.Component) {
+		return false
+	}
+	if params.search != "" && !strings.Contains(strings.ToLower(log.Message), params.search) {
+		return false
+	}
+	return true
+}
+
+// paginateLogs applies pagination to a slice of logs.
+func paginateLogs(logs []*logging.LogEntry, offset, limit int) []*logging.LogEntry {
+	if offset >= len(logs) {
+		return nil
+	}
+	end := offset + limit
+	if end > len(logs) {
+		end = len(logs)
+	}
+	return logs[offset:end]
+}
+
 // handleLogsQuery returns logs matching the specified filters.
 // GET /api/logs/query?level=ERROR,WARN&layer=backend,api&component=auth&search=failed&limit=100&offset=0.
 func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
@@ -113,77 +179,29 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse query parameters
-	query := r.URL.Query()
-	levels := parseCSV(query.Get("level"))
-	layers := parseCSV(query.Get("layer"))
-	components := parseCSV(query.Get("component"))
-	search := strings.ToLower(query.Get("search"))
-
-	limit := 200 // Default limit
-	if l := query.Get("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 1000 {
-			limit = parsed
-		}
-	}
-
-	offset := 0
-	if o := query.Get("offset"); o != "" {
-		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
-			offset = parsed
-		}
-	}
-
-	// Get all logs and filter
+	params := parseLogQueryParams(r)
 	allLogs := broadcaster.GetAllLogs()
 	filtered := make([]*logging.LogEntry, 0, len(allLogs))
 
 	for _, log := range allLogs {
-		// Filter by level
-		if len(levels) > 0 && !containsIgnoreCase(levels, log.Level) {
-			continue
+		if matchesLogFilters(log, &params) {
+			filtered = append(filtered, log)
 		}
-
-		// Filter by layer
-		if len(layers) > 0 && !containsIgnoreCase(layers, log.Layer) {
-			continue
-		}
-
-		// Filter by component
-		if len(components) > 0 && !containsIgnoreCase(components, log.Component) {
-			continue
-		}
-
-		// Filter by search text
-		if search != "" && !strings.Contains(strings.ToLower(log.Message), search) {
-			continue
-		}
-
-		filtered = append(filtered, log)
 	}
 
-	// Apply pagination
 	totalCount := len(filtered)
-	if offset >= len(filtered) {
-		filtered = nil
-	} else {
-		end := offset + limit
-		if end > len(filtered) {
-			end = len(filtered)
-		}
-		filtered = filtered[offset:end]
-	}
+	filtered = paginateLogs(filtered, params.offset, params.limit)
 
 	sendJSONResponse(w, http.StatusOK, LogQueryResponse{
 		Logs:       filtered,
 		TotalCount: totalCount,
-		Offset:     offset,
-		Limit:      limit,
+		Offset:     params.offset,
+		Limit:      params.limit,
 	})
 }
 
 // handleLogsStats returns aggregated log statistics.
-// GET /api/logs/stats
+// GET /api/logs/stats.
 func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -233,7 +251,7 @@ func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLogsRecent returns the most recent log entries.
-// GET /api/logs/recent?limit=100
+// GET /api/logs/recent?limit=100.
 func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -257,27 +275,6 @@ func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, http.StatusOK, map[string]interface{}{
 		"logs":  logs,
 		"count": len(logs),
-	})
-}
-
-// handleLogsClear clears the log buffer (admin action).
-// DELETE /api/logs
-func (s *Server) handleLogsClear(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	broadcaster := logging.GetBroadcaster()
-	if broadcaster == nil {
-		http.Error(w, "Logging not initialized", http.StatusServiceUnavailable)
-		return
-	}
-
-	// Clear the buffer (we'd need to add this method to the broadcaster)
-	// For now, just return success - the buffer will eventually cycle through
-	sendJSONResponse(w, http.StatusOK, map[string]string{
-		"status": "cleared",
 	})
 }
 

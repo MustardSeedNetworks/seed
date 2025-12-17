@@ -60,7 +60,7 @@ func TestValidateConfig_InvalidServerPort(t *testing.T) {
 			cfg.Server.Port = tt.port
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for port %d, got none", tt.port)
@@ -92,9 +92,9 @@ func TestValidateConfig_InvalidVLANID(t *testing.T) {
 		{"disabled vlan id 0", false, 0, false},
 		{"disabled vlan id 100", false, 100, false},
 		{"disabled vlan id too high", false, 5000, true}, // > 4094 is invalid
-		{"enabled vlan id 0", true, 0, false},              // Schema allows 0, business logic rejects it
-		{"enabled vlan id -1", true, -1, true},             // negative is invalid
-		{"enabled vlan id 4095", true, 4095, true},         // > 4094 is invalid
+		{"enabled vlan id 0", true, 0, false},            // Schema allows 0, business logic rejects it
+		{"enabled vlan id -1", true, -1, true},           // negative is invalid
+		{"enabled vlan id 4095", true, 4095, true},       // > 4094 is invalid
 		{"enabled vlan id 1", true, 1, false},
 		{"enabled vlan id 4094", true, 4094, false},
 		{"enabled vlan id 100", true, 100, false},
@@ -107,7 +107,7 @@ func TestValidateConfig_InvalidVLANID(t *testing.T) {
 			cfg.VLAN.ID = tt.id
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors, got none")
@@ -145,7 +145,7 @@ func TestValidateConfig_InvalidIPMode(t *testing.T) {
 			cfg.IP.Mode = tt.mode
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for mode %q, got none", tt.mode)
@@ -184,7 +184,7 @@ func TestValidateConfig_DiscoveryProfile(t *testing.T) {
 			cfg.NetworkDiscovery.Profile = tt.profile
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for profile %q, got none", tt.profile)
@@ -224,7 +224,7 @@ func TestValidateConfig_DiscoveryProtocol(t *testing.T) {
 			cfg.Discovery.Protocol = tt.protocol
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for protocol %q, got none", tt.protocol)
@@ -261,7 +261,7 @@ func TestValidateConfig_IperfProtocol(t *testing.T) {
 			cfg.Iperf.Protocol = tt.protocol
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for protocol %q, got none", tt.protocol)
@@ -299,7 +299,7 @@ func TestValidateConfig_IperfDirection(t *testing.T) {
 			cfg.Iperf.Direction = tt.direction
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for direction %q, got none", tt.direction)
@@ -340,7 +340,7 @@ func TestValidateConfig_LogLevel(t *testing.T) {
 			cfg.Logging.Level = tt.level
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for level %q, got none", tt.level)
@@ -377,7 +377,7 @@ func TestValidateConfig_LogFormat(t *testing.T) {
 			cfg.Logging.Format = tt.format
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for format %q, got none", tt.format)
@@ -420,7 +420,7 @@ func TestValidateConfig_SignalThreshold(t *testing.T) {
 			cfg.Thresholds.WiFi.Signal.Critical = tt.critical
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors, got none")
@@ -458,7 +458,7 @@ func TestValidateConfig_SNMPPort(t *testing.T) {
 			cfg.SNMP.Port = tt.port
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for port %d, got none", tt.port)
@@ -497,7 +497,7 @@ func TestValidateConfig_SNMPRetries(t *testing.T) {
 			cfg.SNMP.Retries = tt.retries
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for retries %d, got none", tt.retries)
@@ -536,7 +536,7 @@ func TestValidateConfig_VulnerabilitySeverity(t *testing.T) {
 			cfg.Security.VulnerabilityScanning.SeverityThreshold = tt.severity
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for severity %q, got none", tt.severity)
@@ -578,7 +578,7 @@ func TestValidateConfig_DurationFormat(t *testing.T) {
 			cfg.DNS.Timeout = tt.duration
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for duration %v, got none", tt.duration)
@@ -625,7 +625,7 @@ func TestValidateConfig_HTTPExpectedStatus(t *testing.T) {
 			}
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for status %d, got none", tt.status)
@@ -656,7 +656,7 @@ func TestValidateWithSchema_InvalidConfig(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Server.Port = 99999 // Invalid port
 	errors := ValidateWithSchema(cfg)
-	if errors == nil || len(errors) == 0 {
+	if len(errors) == 0 {
 		t.Error("expected validation errors for invalid port, got none")
 	}
 }
@@ -686,7 +686,7 @@ func TestValidateConfig_WorkerLimits(t *testing.T) {
 			cfg.NetworkDiscovery.ARPScanWorkers = tt.workers
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for workers %d, got none", tt.workers)
@@ -724,7 +724,7 @@ func TestValidateConfig_StartupRetries(t *testing.T) {
 			cfg.Interface.StartupRetries = tt.retries
 			errors := validator.ValidateConfig(cfg)
 
-			hasErrors := errors != nil && len(errors) > 0
+			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
 					t.Errorf("expected validation errors for retries %d, got none", tt.retries)

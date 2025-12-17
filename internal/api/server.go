@@ -300,11 +300,11 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
 	s.mux.HandleFunc("/api/logs", s.handleLogs)
 	// Enhanced logging API endpoints (comprehensive logging enhancement)
-	s.mux.HandleFunc("/api/logs/client", s.handleClientLogs)   // Receive frontend logs
-	s.mux.HandleFunc("/api/logs/query", s.handleLogsQuery)     // Query logs with filters
-	s.mux.HandleFunc("/api/logs/stats", s.handleLogsStats)     // Get log statistics
-	s.mux.HandleFunc("/api/logs/recent", s.handleLogsRecent)   // Get recent logs
-	s.mux.HandleFunc("/api/health", s.handleHealth) // Simple liveness check (fixes #540)
+	s.mux.HandleFunc("/api/logs/client", s.handleClientLogs) // Receive frontend logs
+	s.mux.HandleFunc("/api/logs/query", s.handleLogsQuery)   // Query logs with filters
+	s.mux.HandleFunc("/api/logs/stats", s.handleLogsStats)   // Get log statistics
+	s.mux.HandleFunc("/api/logs/recent", s.handleLogsRecent) // Get recent logs
+	s.mux.HandleFunc("/api/health", s.handleHealth)          // Simple liveness check (fixes #540)
 	s.mux.HandleFunc("/api/system/health", s.handleSystemHealth)
 
 	// WiFi Survey routes

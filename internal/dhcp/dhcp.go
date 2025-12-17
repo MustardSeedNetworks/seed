@@ -145,68 +145,79 @@ func (m *Monitor) capturePackets() {
 	}
 }
 
-// processPacket extracts DHCP information from a captured packet.
-func (m *Monitor) processPacket(packet gopacket.Packet) {
-	// Get UDP layer
+// isDHCPPort checks if the port is a DHCP port (67 server, 68 client).
+func isDHCPPort(port layers.UDPPort) bool {
+	return port == 67 || port == 68
+}
+
+// extractDHCPPayload extracts DHCP payload from a packet, returns nil if invalid.
+func extractDHCPPayload(packet gopacket.Packet) []byte {
 	udpLayer := packet.Layer(layers.LayerTypeUDP)
 	if udpLayer == nil {
-		return
+		return nil
 	}
-	udp, _ := udpLayer.(*layers.UDP)
-
-	// DHCP uses ports 67 (server) and 68 (client)
-	if udp.DstPort != 67 && udp.DstPort != 68 && udp.SrcPort != 67 && udp.SrcPort != 68 {
-		return
+	udp, ok := udpLayer.(*layers.UDP)
+	if !ok || (!isDHCPPort(udp.DstPort) && !isDHCPPort(udp.SrcPort)) {
+		return nil
 	}
 
-	// Get application payload (DHCP data)
 	appLayer := packet.ApplicationLayer()
 	if appLayer == nil {
-		return
+		return nil
 	}
 	payload := appLayer.Payload()
+	// DHCP packets must be at least 240 bytes (minimum header + magic cookie)
 	if len(payload) < 240 {
-		// DHCP packets must be at least 240 bytes (minimum header + magic cookie)
+		return nil
+	}
+
+	// Magic cookie check at offset 236-239 (should be 0x63825363)
+	magicCookie := binary.BigEndian.Uint32(payload[236:240])
+	if magicCookie != 0x63825363 {
+		return nil
+	}
+
+	return payload
+}
+
+// msgTypeToPhase converts a DHCP message type to our Phase enum.
+// Returns false if the message type should be ignored.
+func msgTypeToPhase(msgType byte) (Phase, bool) {
+	switch msgType {
+	case 1: // DHCP Discover
+		return PhaseDiscover, true
+	case 2: // DHCP Offer
+		return PhaseOffer, true
+	case 3: // DHCP Request
+		return PhaseRequest, true
+	case 5: // DHCP ACK
+		return PhaseAck, true
+	default:
+		// Ignore other message types (DECLINE, NAK, RELEASE, INFORM)
+		return "", false
+	}
+}
+
+// processPacket extracts DHCP information from a captured packet.
+func (m *Monitor) processPacket(packet gopacket.Packet) {
+	payload := extractDHCPPayload(packet)
+	if payload == nil {
 		return
 	}
 
-	// Parse DHCP packet
 	// Transaction ID is at offset 4-7 (4 bytes, big endian)
 	xid := binary.BigEndian.Uint32(payload[4:8])
 
-	// Magic cookie check at offset 236-239 (should be 0x63825363)
-	if len(payload) >= 240 {
-		magicCookie := binary.BigEndian.Uint32(payload[236:240])
-		if magicCookie != 0x63825363 {
-			return
-		}
-	}
-
 	// Find DHCP message type in options (starting at offset 240)
 	msgType := findDHCPMessageType(payload[240:])
-	if msgType == 0 {
+	phase, ok := msgTypeToPhase(msgType)
+	if !ok {
 		return
 	}
 
 	timestamp := time.Now()
 	if packet.Metadata() != nil && !packet.Metadata().Timestamp.IsZero() {
 		timestamp = packet.Metadata().Timestamp
-	}
-
-	// Convert DHCP message type to our phase
-	var phase Phase
-	switch msgType {
-	case 1: // DHCP Discover
-		phase = PhaseDiscover
-	case 2: // DHCP Offer
-		phase = PhaseOffer
-	case 3: // DHCP Request
-		phase = PhaseRequest
-	case 5: // DHCP ACK
-		phase = PhaseAck
-	default:
-		// Ignore other message types (DECLINE, NAK, RELEASE, INFORM)
-		return
 	}
 
 	slog.Debug("DHCP captured", "phase", phase, "xid", fmt.Sprintf("0x%08x", xid))

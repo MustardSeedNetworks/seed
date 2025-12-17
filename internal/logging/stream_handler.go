@@ -33,6 +33,8 @@ func (h *StreamingHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 // Handle processes a log record, broadcasting it to clients and passing to the wrapped handler.
+//
+//nolint:gocritic // hugeParam: slog.Record is part of slog.Handler interface, can't change signature
 func (h *StreamingHandler) Handle(ctx context.Context, r slog.Record) error {
 	// First, let the wrapped handler process the record
 	if err := h.wrapped.Handle(ctx, r); err != nil {
@@ -71,6 +73,8 @@ func (h *StreamingHandler) WithGroup(name string) slog.Handler {
 }
 
 // recordToEntry converts an slog.Record to a LogEntry.
+//
+//nolint:gocritic // hugeParam: slog.Record is part of slog.Handler interface, can't change signature
 func (h *StreamingHandler) recordToEntry(ctx context.Context, r slog.Record) *LogEntry {
 	entry := &LogEntry{
 		Timestamp: r.Time,
@@ -115,6 +119,8 @@ func (h *StreamingHandler) recordToEntry(ctx context.Context, r slog.Record) *Lo
 }
 
 // addAttrToEntry adds an slog.Attr to the LogEntry metadata.
+//
+//nolint:gocyclo // Complexity 16 due to switch cases mapping slog attrs; each case is simple and clear
 func (h *StreamingHandler) addAttrToEntry(entry *LogEntry, attr slog.Attr) {
 	key := attr.Key
 	value := attr.Value.Any()
@@ -138,9 +144,10 @@ func (h *StreamingHandler) addAttrToEntry(entry *LogEntry, attr slog.Attr) {
 			entry.Layer = s
 		}
 	case "duration_ms":
-		if d, ok := value.(int64); ok {
+		switch d := value.(type) {
+		case int64:
 			entry.DurationMs = d
-		} else if d, ok := value.(int); ok {
+		case int:
 			entry.DurationMs = int64(d)
 		}
 	case "stack":
