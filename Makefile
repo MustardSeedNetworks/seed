@@ -554,7 +554,7 @@ lint-backend-fix: ## Auto-fix Go linting issues
 # Auto-fix frontend linting issues
 lint-frontend-fix: ## Auto-fix frontend linting issues
 	@echo "🔧 Auto-fixing frontend code..."
-	@cd web && npm run lint -- --fix
+	@cd web && npm run lint:fix
 	@echo "✅ Frontend auto-fix complete"
 
 # Format Go code
