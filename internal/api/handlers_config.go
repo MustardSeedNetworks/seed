@@ -3,6 +3,7 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -43,7 +44,8 @@ func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 
 	backups, err := backupMgr.ListBackups()
 	if err != nil {
-		http.Error(w, "Failed to list backups: "+err.Error(), http.StatusInternalServerError)
+		slog.Error("Failed to list backups", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -112,28 +114,10 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update server config (need to be careful with concurrent access)
-	// Note: We copy individual fields to preserve the mutex in s.config
+	// Update server config using CopyFieldsFrom to prevent race conditions (fixes #691)
+	// CopyFieldsFrom uses struct literals for compile-time checking that no fields are missed
 	s.config.Lock()
-	s.config.Version = newCfg.Version
-	s.config.Server = newCfg.Server
-	s.config.Interface = newCfg.Interface
-	s.config.VLAN = newCfg.VLAN
-	s.config.IP = newCfg.IP
-	s.config.Discovery = newCfg.Discovery
-	s.config.NetworkDiscovery = newCfg.NetworkDiscovery
-	s.config.DNS = newCfg.DNS
-	s.config.Tests = newCfg.Tests
-	s.config.Speedtest = newCfg.Speedtest
-	s.config.Iperf = newCfg.Iperf
-	s.config.Thresholds = newCfg.Thresholds
-	s.config.Auth = newCfg.Auth
-	s.config.Security = newCfg.Security
-	s.config.DHCP = newCfg.DHCP
-	s.config.SNMP = newCfg.SNMP
-	s.config.FABOptions = newCfg.FABOptions
-	s.config.DisplayOptions = newCfg.DisplayOptions
-	s.config.Logging = newCfg.Logging
+	s.config.CopyFieldsFrom(newCfg)
 	s.config.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")

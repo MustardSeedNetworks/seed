@@ -86,7 +86,8 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if err := s.rogueDetector.Start(); err != nil {
-				resp.Error = err.Error()
+				slog.Error("Failed to start rogue DHCP detector", "error", err)
+				resp.Error = "internal server error"
 				sendJSONResponse(w, http.StatusInternalServerError, resp)
 				return
 			}

@@ -120,6 +120,9 @@ func (s *Server) getDiscoveryProfile(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req struct {
 		Profile string `json:"profile"`
 	}

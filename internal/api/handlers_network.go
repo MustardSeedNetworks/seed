@@ -216,6 +216,9 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			"interface": s.netManager.GetCurrentInterface(),
 		})
 	case http.MethodPut:
+		// Limit request body size to prevent DoS attacks (fixes #693)
+		r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 		var req SetInterfaceRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -482,6 +485,9 @@ func (s *Server) handleVLANInterface(w http.ResponseWriter, r *http.Request) {
 // parseVLANRequest parses and validates a VLAN interface request.
 // Returns the validated interface name, VLAN ID, and success boolean.
 func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (iface string, vlanID int, ok bool) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req VLANInterfaceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -590,6 +596,9 @@ func (s *Server) getWiFiSettings(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req struct {
 		Interface string `json:"interface"`
 	}
@@ -843,6 +852,9 @@ func (s *Server) handleIPSettingsGet(w http.ResponseWriter, _ *http.Request) {
 
 // handleIPSettingsPut updates the IP configuration settings.
 func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req IPSettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -919,6 +931,9 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req SetMTURequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

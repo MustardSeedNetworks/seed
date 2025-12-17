@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
@@ -81,6 +82,9 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req TCPProbeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -108,7 +112,8 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	// Create prober
 	prober, err := discovery.NewTCPProber(timeout)
 	if err != nil {
-		http.Error(w, "Failed to create prober: "+err.Error(), http.StatusInternalServerError)
+		slog.Error("Failed to create TCP prober", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer prober.Close()
@@ -142,6 +147,9 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req TracerouteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -215,6 +223,8 @@ func parseTracerouteParams(req *TracerouteRequest) (protocol string, maxHops int
 		} else {
 			port = 33434
 		}
+	} else if port > 65535 {
+		return "", 0, 0, 0, "Port must be between 1 and 65535"
 	}
 	return protocol, maxHops, timeout, port, ""
 }
@@ -233,6 +243,9 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req PortScanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -287,6 +300,9 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req struct {
 		IP string `json:"ip"`

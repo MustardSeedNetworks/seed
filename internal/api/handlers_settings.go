@@ -129,6 +129,9 @@ func (s *Server) getSettings(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var updates map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)

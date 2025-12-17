@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"unicode"
 
 	"github.com/krisarmstrong/seed/internal/survey"
 )
@@ -22,6 +23,23 @@ type CreateSurveyRequest struct {
 	Description string `json:"description"`
 	SurveyType  string `json:"surveyType"`
 	Interface   string `json:"interface"`
+}
+
+// isValidSurveyID validates a survey ID to prevent injection attacks.
+// Valid survey IDs must be:
+// - Non-empty
+// - At most 64 characters long
+// - Contain only alphanumeric characters, dashes, and underscores.
+func isValidSurveyID(id string) bool {
+	if id == "" || len(id) > 64 {
+		return false
+	}
+	for _, r := range id {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
@@ -40,12 +58,15 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Interface == "" {
-		req.Interface = s.netManager.GetCurrentInterface()
+		if s.netManager != nil {
+			req.Interface = s.netManager.GetCurrentInterface()
+		}
 	}
 
 	newSurvey, err := s.surveyManager.CreateSurvey(req.Name, req.Description, req.Interface, survey.Type(req.SurveyType))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to create survey: %v", err), http.StatusInternalServerError)
+		slog.Error("Failed to create survey", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -59,8 +80,8 @@ func (s *Server) listSurveys(w http.ResponseWriter, _ *http.Request) {
 
 func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Survey ID required", http.StatusBadRequest)
+	if !isValidSurveyID(id) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
 		return
 	}
 
@@ -75,8 +96,8 @@ func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteSurvey(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Survey ID required", http.StatusBadRequest)
+	if !isValidSurveyID(id) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
 		return
 	}
 
@@ -95,8 +116,8 @@ type surveyStateAction func(id string) error
 // It extracts common logic to avoid code duplication.
 func (s *Server) handleSurveyStateChange(w http.ResponseWriter, r *http.Request, action surveyStateAction) {
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Survey ID required", http.StatusBadRequest)
+	if !isValidSurveyID(id) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
 		return
 	}
 
@@ -135,8 +156,8 @@ type AddSampleRequest struct {
 
 func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Survey ID required", http.StatusBadRequest)
+	if !isValidSurveyID(id) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
 		return
 	}
 
@@ -210,8 +231,8 @@ type UpdateFloorPlanRequest struct {
 
 func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Survey ID required", http.StatusBadRequest)
+	if !isValidSurveyID(id) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
 		return
 	}
 
@@ -261,8 +282,8 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Survey ID required", http.StatusBadRequest)
+	if !isValidSurveyID(id) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
 		return
 	}
 
@@ -359,8 +380,8 @@ func (s *Server) getSurveyDeadZones(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Survey ID required", http.StatusBadRequest)
+	if !isValidSurveyID(id) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
 		return
 	}
 
@@ -439,8 +460,8 @@ func (s *Server) getSurveyHeatmap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Survey ID required", http.StatusBadRequest)
+	if !isValidSurveyID(id) {
+		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
 		return
 	}
 

@@ -313,6 +313,9 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req TestsSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -1281,6 +1284,9 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req IperfClientRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -1374,6 +1380,9 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req IperfServerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

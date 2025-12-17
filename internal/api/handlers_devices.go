@@ -172,6 +172,9 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req NetworkDiscoverySettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -250,6 +253,9 @@ func (s *Server) getDevicesSubnets(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req SubnetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -297,6 +303,9 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
 	var req SubnetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
