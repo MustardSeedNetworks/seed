@@ -166,7 +166,7 @@ export function SystemHealthCard() {
         throw new Error(`HTTP ${response.status}`);
       }
       const result = await response.json();
-      setData(result);
+      setData(result.system);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch");
