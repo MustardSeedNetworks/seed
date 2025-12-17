@@ -87,31 +87,45 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
   // Handle floor plan upload
   const handleFloorPlanUpload = useCallback(
     async (file: File) => {
+      console.log("[FloorPlan] Starting upload for:", file.name, file.type, file.size);
       setUploadingFloorPlan(true);
       setError(null);
 
       try {
         // Read file as base64 using Promise wrapper
+        console.log("[FloorPlan] Reading file as base64...");
         const imageData = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
             const result = e.target?.result;
+            console.log("[FloorPlan] FileReader onload, result type:", typeof result);
             if (typeof result === "string") {
               resolve(result);
             } else {
               reject(new Error("Failed to read file as base64"));
             }
           };
-          reader.onerror = () => reject(new Error("Failed to read file"));
+          reader.onerror = (e) => {
+            console.error("[FloorPlan] FileReader error:", e);
+            reject(new Error("Failed to read file"));
+          };
           reader.readAsDataURL(file);
         });
+        console.log("[FloorPlan] Base64 read complete, length:", imageData.length);
 
         // Get image dimensions using Promise wrapper
+        console.log("[FloorPlan] Loading image to get dimensions...");
         const { width, height } = await new Promise<{ width: number; height: number }>(
           (resolve, reject) => {
             const img = new Image();
-            img.onload = () => resolve({ width: img.width, height: img.height });
-            img.onerror = () => reject(new Error("Failed to load image - file may be corrupted"));
+            img.onload = () => {
+              console.log("[FloorPlan] Image loaded:", img.width, "x", img.height);
+              resolve({ width: img.width, height: img.height });
+            };
+            img.onerror = (e) => {
+              console.error("[FloorPlan] Image load error:", e);
+              reject(new Error("Failed to load image - file may be corrupted"));
+            };
             img.src = imageData;
           }
         );
@@ -124,6 +138,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         };
 
         // Upload to server
+        console.log("[FloorPlan] Uploading to server, survey ID:", survey.id);
         const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${survey.id}`, {
           method: "POST",
           headers: {
@@ -133,18 +148,23 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
           body: JSON.stringify(floorPlan),
         });
 
+        console.log("[FloorPlan] Server response status:", res.status);
         if (!res.ok) {
           const errorText = await res.text();
+          console.error("[FloorPlan] Server error:", errorText);
           throw new Error(errorText || "Failed to upload floor plan");
         }
 
         // Refresh survey
         const updated = await res.json();
+        console.log("[FloorPlan] Upload successful, survey updated");
         setSurvey(updated);
         onUpdate();
       } catch (err) {
+        console.error("[FloorPlan] Upload failed:", err);
         setError(err instanceof Error ? err.message : "Failed to upload floor plan");
       } finally {
+        console.log("[FloorPlan] Upload process complete");
         setUploadingFloorPlan(false);
       }
     },
@@ -452,11 +472,18 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                     {uploadingFloorPlan ? t("floorPlan.uploading") : t("floorPlan.chooseFile")}
                     <input
                       type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
+                      accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleFloorPlanUpload(file);
+                        console.log("[FloorPlan] File selected:", file?.name, file?.type, file?.size);
+                        if (file) {
+                          handleFloorPlanUpload(file);
+                        } else {
+                          console.log("[FloorPlan] No file in selection");
+                        }
+                        // Reset input so same file can be selected again if needed
+                        e.target.value = "";
                       }}
                       disabled={uploadingFloorPlan}
                     />
