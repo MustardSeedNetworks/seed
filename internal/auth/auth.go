@@ -33,6 +33,11 @@ const (
 	MinPasswordLength = 12 // Increased from 8 for better security
 )
 
+// SetupModePlaceholder is a placeholder hash used during initial setup.
+// This allows the server to start and show the wizard before a real password is set.
+// It is not a valid bcrypt hash and will fail any authentication attempt.
+const SetupModePlaceholder = "$setup$pending$"
+
 // Claims represents the JWT claims.
 type Claims struct {
 	Username     string `json:"username"`
@@ -495,6 +500,11 @@ func (m *Manager) UpdatePasswordHash(hash string) {
 // IsDefaultPasswordHash checks if the given hash matches the default "seed" password.
 // This is used to detect if credentials have been changed from the insecure default.
 func IsDefaultPasswordHash(hash string) bool {
+	// Check setup mode placeholder
+	if hash == SetupModePlaceholder {
+		return true
+	}
+
 	// Check default "seed" password
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte("seed")); err == nil {
 		return true

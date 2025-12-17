@@ -126,6 +126,8 @@ func loadAndConfigureConfig(configPath string, devMode bool) *config.Config {
 	if errors.Is(err, config.ErrInsecureCredentials) {
 		fmt.Fprintln(os.Stderr, "Initial setup required - visit the web UI to set your admin password")
 		printSetupBanner(cfg.Server.Port, cfg.Server.HTTPS)
+		// Set placeholder hash to pass validation - wizard will set the real password
+		cfg.Auth.DefaultPasswordHash = auth.SetupModePlaceholder
 	}
 
 	migrateSNMPCredentials(cfg, configPath)
