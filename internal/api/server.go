@@ -381,7 +381,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 				w.Header().Set("Vary", "Origin")
 			}
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			// Cache preflight requests for 24 hours to reduce overhead (fixes #531)
 			w.Header().Set("Access-Control-Max-Age", "86400")
@@ -391,6 +391,54 @@ func corsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Body size limits for different request types.
+const (
+	MaxBodySizeAuth      int64 = 1 * 1024         // 1KB for auth requests
+	MaxBodySizeConfig    int64 = 64 * 1024        // 64KB for config updates
+	MaxBodySizeJSON      int64 = 256 * 1024       // 256KB for general JSON
+	MaxBodySizeFloorPlan int64 = 10 * 1024 * 1024 // 10MB for floor plan uploads
+	MaxBodySizeAirMapper int64 = 50 * 1024 * 1024 // 50MB for AirMapper imports
+	MaxBodySizeDefault   int64 = 1 * 1024 * 1024  // 1MB default
+)
+
+// bodyLimitMiddleware enforces request body size limits to prevent DoS attacks.
+// Different endpoints have different limits based on expected payload size.
+func bodyLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip body limit for GET, HEAD, OPTIONS (no body expected)
+		if r.Method == http.MethodGet ||
+			r.Method == http.MethodHead ||
+			r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Determine limit based on endpoint
+		var limit int64
+		path := r.URL.Path
+
+		switch {
+		case strings.HasPrefix(path, "/api/auth/"):
+			limit = MaxBodySizeAuth
+		case strings.HasPrefix(path, "/api/config/"):
+			limit = MaxBodySizeConfig
+		case path == "/api/survey/floorplan":
+			limit = MaxBodySizeFloorPlan
+		case path == "/api/survey/import/airmapper":
+			limit = MaxBodySizeAirMapper
+		case strings.HasPrefix(path, "/api/"):
+			limit = MaxBodySizeJSON
+		default:
+			limit = MaxBodySizeDefault
+		}
+
+		// Wrap the body with a limit reader
+		r.Body = http.MaxBytesReader(w, r.Body, limit)
 
 		next.ServeHTTP(w, r)
 	})
@@ -492,16 +540,18 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
-	// Apply middleware stack: panic recovery → request ID → security headers → CORS → i18n → auth (fixes #519)
+	// Apply middleware stack: panic recovery → request ID → security headers → body limit → CORS → i18n → auth (fixes #519)
 	// Panic recovery is outermost to catch all panics
 	// Request ID middleware generates unique IDs for request correlation in logs
+	// Body limit middleware enforces request body size limits
 	// i18n middleware extracts Accept-Language and attaches localizer to context
 	handler := recoverMiddleware(
 		logging.RequestIDMiddleware(
 			securityHeadersMiddleware(
-				corsMiddleware(
-					i18n.Middleware()(
-						s.authManager.Middleware(s.mux))))))
+				bodyLimitMiddleware(
+					corsMiddleware(
+						i18n.Middleware()(
+							s.authManager.Middleware(s.mux)))))))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,

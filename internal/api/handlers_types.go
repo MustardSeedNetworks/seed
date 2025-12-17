@@ -10,6 +10,58 @@ import (
 	"os"
 )
 
+// ============================================================================
+// Standardized API Error Responses
+// ============================================================================
+
+// ErrorResponse represents a standardized error response for the API.
+// This ensures consistent error formats across all endpoints.
+type ErrorResponse struct {
+	Error   string `json:"error"`             // Human-readable error message
+	Code    string `json:"code"`              // Machine-readable error code
+	Details string `json:"details,omitempty"` // Additional details (optional)
+}
+
+// Common error codes for consistent API responses.
+const (
+	ErrCodeBadRequest       = "BAD_REQUEST"
+	ErrCodeUnauthorized     = "UNAUTHORIZED"
+	ErrCodeForbidden        = "FORBIDDEN"
+	ErrCodeNotFound         = "NOT_FOUND"
+	ErrCodeConflict         = "CONFLICT"
+	ErrCodeMethodNotAllowed = "METHOD_NOT_ALLOWED"
+	ErrCodeInternal         = "INTERNAL_ERROR"
+	ErrCodeServiceUnavail   = "SERVICE_UNAVAILABLE"
+	ErrCodeValidation       = "VALIDATION_ERROR"
+	ErrCodeRateLimit        = "RATE_LIMIT_EXCEEDED"
+)
+
+// sendErrorResponse sends a standardized JSON error response.
+// Use this instead of http.Error for consistent error formatting.
+// TODO: Migrate existing http.Error calls to use this function.
+//
+//nolint:unused // Reserved for future migration of error responses
+func sendErrorResponse(w http.ResponseWriter, status int, code, message string) {
+	sendErrorResponseWithDetails(w, status, code, message, "")
+}
+
+// sendErrorResponseWithDetails sends a standardized JSON error response with additional details.
+// TODO: Migrate existing http.Error calls to use this function.
+//
+//nolint:unused // Reserved for future migration of error responses
+func sendErrorResponseWithDetails(w http.ResponseWriter, status int, code, message, details string) {
+	resp := ErrorResponse{
+		Error:   message,
+		Code:    code,
+		Details: details,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		slog.Error("Error encoding error response", "error", err)
+	}
+}
+
 // sendJSONResponse is a helper to send JSON responses and handle encoding errors.
 // Used across all handler files (fixes #544 - shared utilities).
 func sendJSONResponse(w http.ResponseWriter, status int, data interface{}) {
