@@ -23,7 +23,7 @@ func TestGetTestDefaults(t *testing.T) {
 			t.Errorf("expected test password, got %q", defaults1.Auth.Password)
 		}
 
-		if defaults1.Auth.PasswordHash != "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.SRpKh4xPIHxwFxdlHK" {
+		if defaults1.Auth.PasswordHash != "$2a$10$bl5aXjxJJUKfo7K1x2MdFuBIU2peRMPiW8L0sPkccLl2JUKLs/xb." {
 			t.Errorf("expected bcrypt hash, got %q", defaults1.Auth.PasswordHash)
 		}
 

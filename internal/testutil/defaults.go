@@ -67,7 +67,7 @@ func GetTestDefaults() *TestDefaults {
 			Auth: AuthDefaults{
 				Username:     "admin",
 				Password:     "TestP@ssw0rd!Secure123",
-				PasswordHash: "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.SRpKh4xPIHxwFxdlHK",
+				PasswordHash: "$2a$10$bl5aXjxJJUKfo7K1x2MdFuBIU2peRMPiW8L0sPkccLl2JUKLs/xb.",
 				JWTSecret:    "test-jwt-secret-for-testing-only-32b",
 				Timeout:      cfg.Auth.SessionTimeout,
 			},

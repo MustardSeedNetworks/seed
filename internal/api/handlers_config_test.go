@@ -10,13 +10,15 @@ import (
 	"testing"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 func TestHandleConfigVersion(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
-	cfg := config.DefaultConfig()
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().Build()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
@@ -56,7 +58,8 @@ func TestHandleConfigBackups(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
-	cfg := config.DefaultConfig()
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().Build()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
@@ -95,7 +98,8 @@ func TestHandleConfigBackupCreate(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
-	cfg := config.DefaultConfig()
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().Build()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
@@ -134,8 +138,10 @@ func TestHandleConfigRestore(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
-	cfg := config.DefaultConfig()
-	cfg.Server.Port = 8080
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().
+		WithPort(8080).
+		Build()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
@@ -180,7 +186,8 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
-	cfg := config.DefaultConfig()
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().Build()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
@@ -214,8 +221,9 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 }
 
 func TestHandleConfigVersion_MethodNotAllowed(t *testing.T) {
+	// Use testutil for consistent test configuration
 	s := &Server{
-		config:     config.DefaultConfig(),
+		config:     testutil.NewConfigBuilder().Build(),
 		configPath: "/tmp/config.yaml",
 	}
 
@@ -229,8 +237,9 @@ func TestHandleConfigVersion_MethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleConfigRestore_MissingBackupName(t *testing.T) {
+	// Use testutil for consistent test configuration
 	s := &Server{
-		config:     config.DefaultConfig(),
+		config:     testutil.NewConfigBuilder().Build(),
 		configPath: "/tmp/config.yaml",
 	}
 

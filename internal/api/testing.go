@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/cable"
@@ -15,6 +14,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/publicip"
 	"github.com/krisarmstrong/seed/internal/speedtest"
+	"github.com/krisarmstrong/seed/internal/testutil"
 	"github.com/krisarmstrong/seed/internal/vlan"
 	"github.com/krisarmstrong/seed/internal/wifi"
 )
@@ -22,28 +22,8 @@ import (
 // NewTestServer creates a minimal server instance for testing.
 // This is used by integration tests to verify auth and routing behavior.
 func NewTestServer() *Server {
-	// Create minimal test config
-	testConfig := &config.Config{
-		Server: config.ServerConfig{
-			Port:  8443,
-			HTTPS: false, // HTTP for testing
-		},
-		Interface: config.InterfaceConfig{
-			Default: "lo", // Use loopback for testing
-		},
-		Auth: config.AuthConfig{
-			JWTSecret:           "test-secret-key-for-testing-only",
-			SessionTimeout:      24 * time.Hour,
-			DefaultUsername:     "testadmin",
-			DefaultPasswordHash: "$2a$10$test.hash.for.testing.only",
-		},
-		DNS: config.DNSConfig{
-			TestHostname: "example.com",
-		},
-		Speedtest: config.SpeedtestConfig{
-			ServerID: "",
-		},
-	}
+	// Use testutil for consistent test configuration
+	testConfig := testutil.NewConfigBuilder().Build()
 
 	return NewTestServerWithConfig(testConfig)
 }

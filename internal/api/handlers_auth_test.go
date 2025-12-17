@@ -10,6 +10,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 // refreshTokenTestCase defines a test case for token refresh.
@@ -248,9 +249,11 @@ func TestHandleSetupComplete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create test server with config that needs setup
-			cfg := config.DefaultConfig()
-			cfg.Auth.DefaultPasswordHash = "$2a$10$xxxxxSeedDefaultHashForTestingxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" // Default "seed" hash for testing
+			// Create test server with config that needs setup (using setup mode placeholder)
+			defaults := testutil.GetTestDefaults()
+			cfg := testutil.NewConfigBuilder().
+				WithAuth(defaults.Auth.Username, auth.SetupModePlaceholder).
+				Build()
 
 			server := NewTestServerWithConfig(cfg)
 
@@ -304,12 +307,16 @@ func TestHandleSetupStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := config.DefaultConfig()
+			defaults := testutil.GetTestDefaults()
+			var cfg *config.Config
 			if tt.useDefaultHash {
-				cfg.Auth.DefaultPasswordHash = "$2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52"
+				// Use setup mode placeholder (indicates first-boot setup needed)
+				cfg = testutil.NewConfigBuilder().
+					WithAuth(defaults.Auth.Username, auth.SetupModePlaceholder).
+					Build()
 			} else {
-				// Use a different hash (for "different-password")
-				cfg.Auth.DefaultPasswordHash = "$2a$10$abcdefghijklmnopqrstuuabcdefghijklmnopqrstuv"
+				// Use testutil default hash (custom password)
+				cfg = testutil.NewConfigBuilder().Build()
 			}
 
 			server := NewTestServerWithConfig(cfg)
