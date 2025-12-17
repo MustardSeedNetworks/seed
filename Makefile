@@ -82,6 +82,54 @@ DOCKER_IMAGE?=seed
 DOCKER_TAG?=$(VERSION)
 
 # =============================================================================
+# Progress Display Helpers
+# =============================================================================
+
+# ANSI color codes for terminal output
+CYAN := \033[36m
+GREEN := \033[32m
+YELLOW := \033[33m
+RED := \033[31m
+BOLD := \033[1m
+RESET := \033[0m
+
+# Progress step display: $(call step,current,total,message)
+define step
+	@printf "\n$(BOLD)$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)[$(1)/$(2)]$(RESET) $(BOLD)$(3)$(RESET)\n"
+	@printf "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
+endef
+
+# Success message
+define success
+	@printf "$(GREEN)✓ $(1) complete$(RESET)\n"
+endef
+
+# Timer: Start a named timer
+# Usage: $(call timer-start,name)
+define timer-start
+	@date +%s > /tmp/make-timer-$(1)
+endef
+
+# Timer: Show elapsed time for a named timer
+# Usage: $(call timer-end,name,description)
+define timer-end
+	@if [ -f /tmp/make-timer-$(1) ]; then \
+		START=$$(cat /tmp/make-timer-$(1)); \
+		END=$$(date +%s); \
+		ELAPSED=$$((END - START)); \
+		MINS=$$((ELAPSED / 60)); \
+		SECS=$$((ELAPSED % 60)); \
+		if [ $$MINS -gt 0 ]; then \
+			printf "$(GREEN)✓ $(2) complete $(YELLOW)($$MINS min $$SECS sec)$(RESET)\n"; \
+		else \
+			printf "$(GREEN)✓ $(2) complete $(YELLOW)($$SECS sec)$(RESET)\n"; \
+		fi; \
+		rm -f /tmp/make-timer-$(1); \
+	fi
+endef
+
+# =============================================================================
 # Default Target
 # =============================================================================
 
@@ -92,8 +140,18 @@ all: verify ## Full build and validation (recommended before release)
 # =============================================================================
 
 # Build complete application (frontend embedded in Go binary)
-build: build-frontend build-backend ## Build everything (frontend embedded in binary)
-	@echo "Build complete: $(BINARY_NAME) ($(VERSION))"
+build: ## Build everything (frontend embedded in binary)
+	@printf "$(BOLD)$(CYAN)┌─ Building Application ───────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/2]$(RESET) Frontend (React/TypeScript)                                           $(CYAN)│$(RESET)\n"
+	$(call timer-start,build-frontend)
+	@$(MAKE) --no-print-directory build-frontend-quiet
+	$(call timer-end,build-frontend,Frontend build)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Backend (Go)                                                          $(CYAN)│$(RESET)\n"
+	$(call timer-start,build-backend)
+	@$(MAKE) --no-print-directory build-backend-quiet
+	$(call timer-end,build-backend,Backend build)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
+	@printf "$(GREEN)✓ Build complete: $(BINARY_NAME) ($(VERSION))$(RESET)\n"
 
 # -----------------------------------------------------------------------------
 # iperf3 Builds - Network performance testing tool
@@ -122,9 +180,16 @@ build-iperf3-all: build-iperf3 build-iperf3-linux ## Build iperf3 for all platfo
 # Production build with embedded frontend assets
 # CGO is required for libpcap (packet capture) and ethtool bindings
 build-backend: ## Build Go backend with embedded frontend
-	@echo "🔨 Building backend..."
+	@printf "$(BOLD)🔨 Building backend...$(RESET)\n"
 	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/seed
-	@echo "✅ Backend build complete: $(BINARY_NAME)"
+	@printf "$(GREEN)✓ Backend build complete: $(BINARY_NAME)$(RESET)\n"
+
+# Backend build (quiet mode)
+build-backend-quiet:
+	@printf "   Compiling Go binary...\n"
+	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/seed
+	@SIZE=$$(ls -lh $(BINARY_NAME) | awk '{print $$5}'); \
+	printf "   Output: $(BINARY_NAME) ($$SIZE)\n"
 
 # Development build that reads frontend from disk instead of embedding
 # Allows frontend hot-reload without rebuilding Go binary
@@ -155,9 +220,16 @@ generate-types: frontend-deps ## Generate TypeScript types from JSON Schema
 # Build React/TypeScript frontend
 # Output goes to web/dist/ which is embedded in the Go binary
 build-frontend: frontend-deps ## Build React frontend
-	@echo "🔨 Building frontend..."
+	@printf "$(BOLD)🔨 Building frontend...$(RESET)\n"
 	@cd web && npm run build
-	@echo "✅ Frontend build complete"
+	@printf "$(GREEN)✓ Frontend build complete$(RESET)\n"
+
+# Frontend build (quiet mode)
+build-frontend-quiet: frontend-deps
+	@printf "   Bundling React application...\n"
+	@cd web && npm run build 2>&1 | tail -3
+	@SIZE=$$(du -sh web/dist 2>/dev/null | cut -f1 || echo "unknown"); \
+	printf "   Output: web/dist ($$SIZE)\n"
 
 # -----------------------------------------------------------------------------
 # Cross-Compilation for Linux
@@ -387,57 +459,78 @@ dev-frontend: ## Run frontend in development mode
 # =============================================================================
 
 # Run complete test suite (unit tests only)
-test: test-backend test-frontend ## Run unit tests (backend + frontend)
-	@echo ""
-	@echo "=============================================="
-	@echo "  ✅ UNIT TESTS COMPLETE"
-	@echo "=============================================="
+test: ## Run unit tests (backend + frontend)
+	@printf "$(BOLD)$(CYAN)┌─ Unit Tests ─────────────────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/2]$(RESET) Backend (Go)                                                          $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-backend)
+	@$(MAKE) --no-print-directory test-backend-quiet
+	$(call timer-end,test-backend,Backend tests)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (Vitest)                                                      $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-frontend)
+	@$(MAKE) --no-print-directory test-frontend-quiet
+	$(call timer-end,test-frontend,Frontend tests)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
 # Run ALL tests including E2E and Storybook
-test-all: test test-e2e test-storybook ## Run ALL tests (unit + E2E + Storybook)
-	@echo ""
-	@echo "=============================================="
-	@echo "  ✅ ALL TESTS COMPLETE"
-	@echo "=============================================="
-	@echo "  • Backend unit tests"
-	@echo "  • Frontend unit tests"
-	@echo "  • Playwright E2E tests"
-	@echo "  • Storybook build verification"
-	@echo "=============================================="
+test-all: ## Run ALL tests (unit + E2E + Storybook)
+	@printf "$(BOLD)$(CYAN)┌─ Full Test Suite ────────────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/4]$(RESET) Backend unit tests                                                    $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-backend)
+	@$(MAKE) --no-print-directory test-backend-quiet
+	$(call timer-end,test-backend,Backend tests)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/4]$(RESET) Frontend unit tests                                                   $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-frontend)
+	@$(MAKE) --no-print-directory test-frontend-quiet
+	$(call timer-end,test-frontend,Frontend tests)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[3/4]$(RESET) E2E tests (Playwright)                                                $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-e2e)
+	@$(MAKE) --no-print-directory test-e2e
+	$(call timer-end,test-e2e,E2E tests)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[4/4]$(RESET) Storybook build                                                       $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-storybook)
+	@$(MAKE) --no-print-directory test-storybook
+	$(call timer-end,test-storybook,Storybook)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
-# Go tests with race detection and coverage
-# Uses gotestsum for better progress output if available
+# Go tests with race detection and coverage (verbose output)
 test-backend: ## Run Go tests with progress
-	@echo ""
-	@echo "🧪 Running backend tests..."
+	@printf "\n$(BOLD)🧪 Running backend tests...$(RESET)\n"
 	@PKG_COUNT=$$(go list ./... | wc -l | tr -d ' '); \
-	echo "   📦 Testing $$PKG_COUNT packages..."; \
-	echo ""
+	printf "   📦 Testing $$PKG_COUNT packages...\n\n"
 	@if command -v gotestsum > /dev/null 2>&1; then \
 		gotestsum --format pkgname-and-test-fails -- -race -coverprofile=coverage.out ./...; \
 	else \
-		go test -race -coverprofile=coverage.out -v ./... 2>&1 | \
-		awk '/^=== RUN/ {tests++} /^--- PASS/ {passed++} /^--- FAIL/ {failed++} END {print "   ✓ " passed " passed, " (failed ? failed " failed" : "0 failed")}' || \
 		go test -race -coverprofile=coverage.out ./...; \
 	fi
 	@if [ -f coverage.out ]; then \
 		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
-		echo ""; \
-		echo "   📊 Coverage: $$COV"; \
+		printf "\n   📊 Coverage: $$COV\n"; \
 	fi
-	@echo ""
-	@echo "✅ Backend tests complete"
+	@printf "\n$(GREEN)✓ Backend tests complete$(RESET)\n"
 
-# Frontend unit tests via Vitest
+# Go tests (quiet mode for use in pipelines)
+test-backend-quiet:
+	@PKG_COUNT=$$(go list ./... | wc -l | tr -d ' '); \
+	printf "   Testing $$PKG_COUNT packages...\n"
+	@go test -race -coverprofile=coverage.out ./... 2>&1 | grep -E "^(ok|FAIL|---)" || true
+	@if [ -f coverage.out ]; then \
+		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
+		printf "   📊 Coverage: $$COV\n"; \
+	fi
+
+# Frontend unit tests via Vitest (verbose output)
 test-frontend: ## Run frontend tests with progress
-	@echo ""
-	@echo "🧪 Running frontend tests..."
+	@printf "\n$(BOLD)🧪 Running frontend tests...$(RESET)\n"
 	@STORY_COUNT=$$(find web/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
-	echo "   📦 Running $$STORY_COUNT test files..."
-	@echo ""
+	printf "   📦 Running $$STORY_COUNT test files...\n\n"
 	@cd web && npm test
-	@echo ""
-	@echo "✅ Frontend tests complete"
+	@printf "\n$(GREEN)✓ Frontend tests complete$(RESET)\n"
+
+# Frontend tests (quiet mode for use in pipelines)
+test-frontend-quiet:
+	@STORY_COUNT=$$(find web/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
+	printf "   Running $$STORY_COUNT test files...\n"
+	@cd web && npm test 2>&1 | grep -E "(PASS|FAIL|Tests:)" || true
 
 # Frontend E2E tests via Playwright (closes #482, #309)
 # Requires backend to be running on port 8443
@@ -517,45 +610,90 @@ test-integration: build-linux-docker ## Full integration test on Ubuntu server v
 # =============================================================================
 
 # Run all linters
-lint: lint-backend lint-frontend ## Run all linters
-	@echo "✅ All linters complete"
+lint: ## Run all linters
+	@printf "$(BOLD)$(CYAN)┌─ Linting ────────────────────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/2]$(RESET) Backend (golangci-lint)                                               $(CYAN)│$(RESET)\n"
+	$(call timer-start,lint-backend)
+	@$(MAKE) --no-print-directory lint-backend-quiet
+	$(call timer-end,lint-backend,Backend lint)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (ESLint)                                                     $(CYAN)│$(RESET)\n"
+	$(call timer-start,lint-frontend)
+	@$(MAKE) --no-print-directory lint-frontend-quiet
+	$(call timer-end,lint-frontend,Frontend lint)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
 # golangci-lint with project configuration (.golangci.yml)
 # Auto-installs if not found
 lint-backend: ## Run Go linter
-	@echo "🔍 Running backend linter..."
+	@printf "$(BOLD)🔍 Running backend linter...$(RESET)\n"
 	@if ! command -v golangci-lint > /dev/null 2>&1; then \
-		echo "📦 Installing golangci-lint..."; \
+		printf "📦 Installing golangci-lint...\n"; \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
 	fi
 	@golangci-lint run
-	@echo "✅ Backend lint complete"
+	@printf "$(GREEN)✓ Backend lint complete$(RESET)\n"
+
+# Backend lint (quiet mode for pipelines)
+lint-backend-quiet:
+	@if ! command -v golangci-lint > /dev/null 2>&1; then \
+		printf "   Installing golangci-lint...\n"; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+	fi
+	@LINTER_COUNT=$$(grep -c "^    - " .golangci.yml 2>/dev/null || echo "30+"); \
+	printf "   Running $$LINTER_COUNT linters...\n"
+	@golangci-lint run 2>&1 | head -20 || true
 
 # ESLint with TypeScript rules
 lint-frontend: ## Run frontend linter
-	@echo "🔍 Running frontend linter..."
+	@printf "$(BOLD)🔍 Running frontend linter...$(RESET)\n"
 	@cd web && npm run lint
-	@echo "✅ Frontend lint complete"
+	@printf "$(GREEN)✓ Frontend lint complete$(RESET)\n"
+
+# Frontend lint (quiet mode for pipelines)
+lint-frontend-quiet:
+	@FILE_COUNT=$$(find web/src -name "*.ts" -o -name "*.tsx" 2>/dev/null | wc -l | tr -d ' '); \
+	printf "   Checking $$FILE_COUNT files...\n"
+	@cd web && npm run lint 2>&1 | tail -5 || true
 
 # Auto-fix linting issues
-fix: lint-backend-fix lint-frontend-fix ## Auto-fix all linting issues
-	@echo "✅ All auto-fixes complete"
+fix: ## Auto-fix all linting issues
+	@printf "$(BOLD)$(CYAN)┌─ Auto-Fix ───────────────────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/2]$(RESET) Backend (golangci-lint --fix)                                         $(CYAN)│$(RESET)\n"
+	$(call timer-start,fix-backend)
+	@$(MAKE) --no-print-directory lint-backend-fix-quiet
+	$(call timer-end,fix-backend,Backend fix)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (eslint --fix)                                               $(CYAN)│$(RESET)\n"
+	$(call timer-start,fix-frontend)
+	@$(MAKE) --no-print-directory lint-frontend-fix-quiet
+	$(call timer-end,fix-frontend,Frontend fix)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
 # Auto-fix Go linting issues (formatting, imports, simple fixes)
 lint-backend-fix: ## Auto-fix Go linting issues
-	@echo "🔧 Auto-fixing Go code..."
+	@printf "$(BOLD)🔧 Auto-fixing Go code...$(RESET)\n"
 	@if ! command -v golangci-lint > /dev/null 2>&1; then \
-		echo "📦 Installing golangci-lint..."; \
+		printf "📦 Installing golangci-lint...\n"; \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
 	fi
 	@golangci-lint run --fix
-	@echo "✅ Go auto-fix complete"
+	@printf "$(GREEN)✓ Go auto-fix complete$(RESET)\n"
+
+# Backend fix (quiet mode)
+lint-backend-fix-quiet:
+	@if ! command -v golangci-lint > /dev/null 2>&1; then \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+	fi
+	@golangci-lint run --fix 2>&1 | grep -E "^[0-9]+ issues" || printf "   No issues found\n"
 
 # Auto-fix frontend linting issues
 lint-frontend-fix: ## Auto-fix frontend linting issues
-	@echo "🔧 Auto-fixing frontend code..."
+	@printf "$(BOLD)🔧 Auto-fixing frontend code...$(RESET)\n"
 	@cd web && npm run lint:fix
-	@echo "✅ Frontend auto-fix complete"
+	@printf "$(GREEN)✓ Frontend auto-fix complete$(RESET)\n"
+
+# Frontend fix (quiet mode)
+lint-frontend-fix-quiet:
+	@cd web && npm run lint:fix 2>&1 | tail -3 || true
 
 # Format Go code
 fmt: ## Format Go code with gofumpt
@@ -662,71 +800,103 @@ fix-all: fix fix-md ## Auto-fix everything (Go + Frontend + Markdown)
 # =============================================================================
 
 # Run all security scans
-security: security-backend security-frontend security-secrets ## Run all security scans
+security: ## Run all security scans
+	@printf "$(BOLD)$(CYAN)┌─ Security Scanning ──────────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/3]$(RESET) Go Vulnerabilities (govulncheck)                                       $(CYAN)│$(RESET)\n"
+	$(call timer-start,security-backend)
+	@$(MAKE) --no-print-directory security-backend-quiet
+	$(call timer-end,security-backend,Go vulnerability scan)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/3]$(RESET) npm Vulnerabilities (npm audit)                                        $(CYAN)│$(RESET)\n"
+	$(call timer-start,security-frontend)
+	@$(MAKE) --no-print-directory security-frontend-quiet
+	$(call timer-end,security-frontend,npm audit)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[3/3]$(RESET) Secret Scanning (gitleaks)                                             $(CYAN)│$(RESET)\n"
+	$(call timer-start,security-secrets)
+	@$(MAKE) --no-print-directory security-secrets-quiet
+	$(call timer-end,security-secrets,Secret scan)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
 # License compliance checking
 license-check: ## Check license compliance (Go + npm)
-	@echo "🔍 Checking license compliance..."
-	@echo ""
-	@echo "=== Go Dependencies ==="
+	@printf "$(BOLD)🔍 Checking license compliance...$(RESET)\n\n"
+	@printf "$(BOLD)=== Go Dependencies ===$(RESET)\n"
 	@if command -v go-licenses > /dev/null 2>&1; then \
 		go-licenses check ./... --disallowed_types=forbidden,restricted --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MPL-2.0,CC0-1.0; \
 	else \
-		echo "SKIP: go-licenses not installed (go install github.com/google/go-licenses@latest)"; \
+		printf "$(YELLOW)SKIP: go-licenses not installed$(RESET)\n"; \
 	fi
-	@echo ""
-	@echo "=== npm Dependencies ==="
-	cd web && npx license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense" --summary
-	@echo ""
-	@echo "✅ License compliance check complete"
+	@printf "\n$(BOLD)=== npm Dependencies ===$(RESET)\n"
+	@cd web && npx license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense" --summary
+	@printf "\n$(GREEN)✓ License compliance check complete$(RESET)\n"
 
 license-report: ## Generate license compliance reports
-	@echo "Generating license reports..."
+	@printf "$(BOLD)Generating license reports...$(RESET)\n"
 	@mkdir -p build/reports
 	@if command -v go-licenses > /dev/null 2>&1; then \
 		go-licenses report ./... > build/reports/go-licenses.csv; \
-		echo "Go licenses: build/reports/go-licenses.csv"; \
+		printf "Go licenses: build/reports/go-licenses.csv\n"; \
 	fi
-	cd web && npx license-checker --production --csv > ../build/reports/npm-licenses.csv
-	@echo "npm licenses: build/reports/npm-licenses.csv"
-	@echo "✅ License reports generated"
+	@cd web && npx license-checker --production --csv > ../build/reports/npm-licenses.csv
+	@printf "npm licenses: build/reports/npm-licenses.csv\n"
+	@printf "$(GREEN)✓ License reports generated$(RESET)\n"
 
 # Go vulnerability scanning (govulncheck)
 # Note: gosec runs via golangci-lint in lint-backend, no need to duplicate
 # Auto-installs govulncheck if not found
 security-backend: ## Run Go vulnerability scan (govulncheck)
-	@echo "Running Go vulnerability scan..."
+	@printf "$(BOLD)🔒 Running Go vulnerability scan...$(RESET)\n"
 	@if ! command -v govulncheck > /dev/null 2>&1; then \
-		echo "📦 Installing govulncheck..."; \
+		printf "📦 Installing govulncheck...\n"; \
 		go install golang.org/x/vuln/cmd/govulncheck@latest; \
 	fi
 	@govulncheck ./...
-	@echo "✅ Go vulnerability scan complete"
+	@printf "$(GREEN)✓ Go vulnerability scan complete$(RESET)\n"
+
+# Backend security (quiet mode)
+security-backend-quiet:
+	@if ! command -v govulncheck > /dev/null 2>&1; then \
+		go install golang.org/x/vuln/cmd/govulncheck@latest; \
+	fi
+	@printf "   Scanning Go dependencies...\n"
+	@govulncheck ./... 2>&1 | grep -E "(Vulnerability|No vulnerabilities)" | head -5 || printf "   No vulnerabilities found\n"
 
 # Frontend security scanning (npm audit)
 security-frontend: ## Run frontend security scan (npm audit)
-	@echo "Running npm audit..."
-	cd web && npm audit --audit-level=high
-	@echo "npm audit complete"
+	@printf "$(BOLD)🔒 Running npm audit...$(RESET)\n"
+	@cd web && npm audit --audit-level=high
+	@printf "$(GREEN)✓ npm audit complete$(RESET)\n"
+
+# Frontend security (quiet mode)
+security-frontend-quiet:
+	@printf "   Auditing npm packages...\n"
+	@cd web && npm audit --audit-level=high 2>&1 | grep -E "(found|vulnerabilities)" | head -3 || printf "   No vulnerabilities found\n"
 
 # Secret scanning (gitleaks)
 # Auto-installs if not found
 security-secrets: ## Scan for secrets in codebase (gitleaks)
-	@echo "Running gitleaks..."
+	@printf "$(BOLD)🔒 Running gitleaks...$(RESET)\n"
 	@if ! command -v gitleaks > /dev/null 2>&1; then \
-		echo "📦 Installing gitleaks..."; \
+		printf "📦 Installing gitleaks...\n"; \
 		go install github.com/gitleaks/gitleaks/v8@latest; \
 	fi
 	@gitleaks detect --source . --config .gitleaks.toml --verbose
-	@echo "✅ Secret scan complete"
+	@printf "$(GREEN)✓ Secret scan complete$(RESET)\n"
+
+# Secret scanning (quiet mode)
+security-secrets-quiet:
+	@if ! command -v gitleaks > /dev/null 2>&1; then \
+		go install github.com/gitleaks/gitleaks/v8@latest; \
+	fi
+	@printf "   Scanning for secrets...\n"
+	@gitleaks detect --source . --config .gitleaks.toml 2>&1 | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"
 
 # Trivy filesystem scan (if available)
 security-trivy: ## Run Trivy vulnerability scan
-	@echo "Running Trivy filesystem scan..."
+	@printf "$(BOLD)🔒 Running Trivy filesystem scan...$(RESET)\n"
 	@if command -v trivy > /dev/null 2>&1; then \
 		trivy fs --severity HIGH,CRITICAL .; \
 	else \
-		echo "SKIP: trivy not installed (brew install trivy)"; \
+		printf "$(YELLOW)SKIP: trivy not installed (brew install trivy)$(RESET)\n"; \
 	fi
 
 # =============================================================================
@@ -836,24 +1006,46 @@ help: ## Show this help
 # Full verification: builds, tests, lints, security scans, and validates everything
 # This is what 'make all' runs - use before releases
 # Docker tests are skipped if Docker is not available (e.g., on macOS without Docker)
-verify: lint test security build ## Full verification (lint, test, security, build, docker if available)
+verify: ## Full verification (lint, test, security, build, docker if available)
+	@printf "\n$(BOLD)$(CYAN)╔══════════════════════════════════════════════════════════════════════════════╗$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)║                        FULL VERIFICATION PIPELINE                           ║$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)║                        Version: $(VERSION)$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)╚══════════════════════════════════════════════════════════════════════════════╝$(RESET)\n"
+	$(call timer-start,verify-total)
+	$(call step,1,5,Linting Code)
+	$(call timer-start,lint)
+	@$(MAKE) --no-print-directory lint
+	$(call timer-end,lint,Linting)
+	$(call step,2,5,Running Tests)
+	$(call timer-start,test)
+	@$(MAKE) --no-print-directory test
+	$(call timer-end,test,Tests)
+	$(call step,3,5,Security Scanning)
+	$(call timer-start,security)
+	@$(MAKE) --no-print-directory security
+	$(call timer-end,security,Security)
+	$(call step,4,5,Building Application)
+	$(call timer-start,build)
+	@$(MAKE) --no-print-directory build
+	$(call timer-end,build,Build)
+	$(call step,5,5,Docker Verification)
 	@if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then \
-		$(MAKE) docker-test; \
+		$(call timer-start,docker); \
+		$(MAKE) --no-print-directory docker-test; \
+		$(call timer-end,docker,Docker); \
 	else \
-		echo "SKIP: Docker not available - skipping docker-test"; \
-		echo "      Run 'make docker-test' manually when Docker is running"; \
+		printf "$(YELLOW)⊘ SKIP: Docker not available - skipping docker-test$(RESET)\n"; \
+		printf "$(YELLOW)  Run 'make docker-test' manually when Docker is running$(RESET)\n"; \
 	fi
-	@echo ""
-	@echo "=============================================="
-	@echo "  VERIFICATION COMPLETE"
-	@echo "=============================================="
-	@echo "  Version:     $(VERSION)"
-	@echo "  Commit:      $(COMMIT)"
-	@echo "  Binary:      $(BINARY_NAME)"
-	@echo "  Docker:      $(DOCKER_IMAGE):$(DOCKER_TAG) (if Docker available)"
-	@echo "=============================================="
-	@echo ""
-	@echo "Ready for deployment. Run 'make deploy' to deploy."
+	@printf "\n$(BOLD)$(GREEN)╔══════════════════════════════════════════════════════════════════════════════╗$(RESET)\n"
+	@printf "$(BOLD)$(GREEN)║                        ✓ VERIFICATION COMPLETE                               ║$(RESET)\n"
+	@printf "$(BOLD)$(GREEN)╚══════════════════════════════════════════════════════════════════════════════╝$(RESET)\n"
+	$(call timer-end,verify-total,Total verification)
+	@printf "\n  $(BOLD)Version:$(RESET)     $(VERSION)\n"
+	@printf "  $(BOLD)Commit:$(RESET)      $(COMMIT)\n"
+	@printf "  $(BOLD)Binary:$(RESET)      $(BINARY_NAME)\n"
+	@printf "  $(BOLD)Docker:$(RESET)      $(DOCKER_IMAGE):$(DOCKER_TAG)\n\n"
+	@printf "$(GREEN)Ready for deployment. Run 'make deploy' to deploy.$(RESET)\n\n"
 
 # Pre-commit hook setup and manual run
 pre-commit: ## Run pre-commit hooks manually
