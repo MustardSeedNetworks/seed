@@ -42,7 +42,12 @@ interface AppearanceSettingsProps {
  */
 export function AppearanceSettings({ theme, setTheme, isDark }: AppearanceSettingsProps) {
   const { t } = useTranslation("settings");
-  const currentLanguage = i18n.language;
+  // Normalize language code (e.g., "en-US" -> "en") and validate against supported languages
+  const detectedLanguage = i18n.language?.split("-")[0] || "en";
+  const supportedCodes = languages.map((l) => l.code);
+  const currentLanguage = supportedCodes.includes(detectedLanguage as typeof supportedCodes[number])
+    ? detectedLanguage
+    : "en";
 
   const handleLanguageChange = (langCode: string) => {
     i18n.changeLanguage(langCode);
