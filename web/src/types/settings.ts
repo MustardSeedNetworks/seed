@@ -36,23 +36,47 @@ export interface SettingsThresholds {
 }
 
 // ============================================================================
-// FAB & Display Options (localStorage)
+// Per-Card Settings
 // ============================================================================
 
-export interface FABOptions {
-  runLink: boolean;
-  runSwitch: boolean;
-  runVLAN: boolean;
-  runIPConfig: boolean;
-  runGateway: boolean;
-  runDNS: boolean;
-  runHealthChecks: boolean;
-  runNetworkDiscovery: boolean;
-  runSpeedtest: boolean;
-  runIperf: boolean;
-  runPerformance: boolean;
-  autoScanOnLink: boolean;
+/**
+ * Settings for individual card behavior.
+ * - enabled: Whether the card is shown and functional
+ * - autoRunOnLink: Whether the card's tests run when FAB is clicked
+ */
+export interface CardOption {
+  enabled: boolean;
+  autoRunOnLink: boolean;
 }
+
+/**
+ * Performance card has nested options for speedtest and iperf subtests.
+ */
+export interface PerformanceCardOption extends CardOption {
+  speedtest: CardOption;
+  iperf: CardOption;
+}
+
+/**
+ * Per-card settings for visibility and auto-run behavior.
+ * Each card can be independently enabled/disabled and configured
+ * to run automatically when the FAB button is clicked.
+ */
+export interface CardSettings {
+  link: CardOption;
+  switch: CardOption;
+  vlan: CardOption;
+  network: CardOption; // IPConfig/DHCP card
+  gateway: CardOption;
+  dns: CardOption;
+  healthChecks: CardOption;
+  networkDiscovery: CardOption;
+  performance: PerformanceCardOption;
+}
+
+// ============================================================================
+// Display Options
+// ============================================================================
 
 export interface DisplayOptions {
   showPublicIP: boolean;
@@ -250,19 +274,21 @@ export interface LogsResponse {
 // Default Values
 // ============================================================================
 
-export const DEFAULT_FAB_OPTIONS: FABOptions = {
-  runLink: true,
-  runSwitch: true,
-  runVLAN: true,
-  runIPConfig: true,
-  runGateway: true,
-  runDNS: true,
-  runHealthChecks: true,
-  runNetworkDiscovery: true,
-  runSpeedtest: true,
-  runIperf: false,
-  runPerformance: true,
-  autoScanOnLink: true,
+export const DEFAULT_CARD_SETTINGS: CardSettings = {
+  link: { enabled: true, autoRunOnLink: true },
+  switch: { enabled: true, autoRunOnLink: true },
+  vlan: { enabled: true, autoRunOnLink: true },
+  network: { enabled: true, autoRunOnLink: true },
+  gateway: { enabled: true, autoRunOnLink: true },
+  dns: { enabled: true, autoRunOnLink: true },
+  healthChecks: { enabled: true, autoRunOnLink: true },
+  networkDiscovery: { enabled: true, autoRunOnLink: true },
+  performance: {
+    enabled: true,
+    autoRunOnLink: true,
+    speedtest: { enabled: true, autoRunOnLink: true },
+    iperf: { enabled: false, autoRunOnLink: false },
+  },
 };
 
 export const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
@@ -350,7 +376,7 @@ export const DEFAULT_SNMP_SETTINGS: SNMPSettings = {
 // ============================================================================
 
 export const STORAGE_KEYS = {
-  FAB_OPTIONS: "seed-fab-options",
+  CARD_SETTINGS: "seed-card-settings",
   DISPLAY_OPTIONS: "seed-display-options",
   IPERF_SETTINGS: "seed-iperf-settings",
   THEME: "seed-theme",

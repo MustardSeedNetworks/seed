@@ -103,7 +103,7 @@ function App() {
   const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   // Use settings from context instead of local state
-  const { fabOptions, displayOptions } = useSettings();
+  const { cardSettings, displayOptions } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -646,25 +646,28 @@ function App() {
     ]
   );
 
-  // Listen for FAB "run all tests" event with options
+  // Listen for FAB "run all tests" event with per-card autoRunOnLink settings
   useEffect(() => {
     const handleRunAllTests = async () => {
-      // Use FAB options to determine which tests to run
+      // Use per-card autoRunOnLink settings to determine which tests to run
       const runOpts = {
-        runLink: fabOptions.runLink,
-        runSwitch: fabOptions.runSwitch,
-        runVLAN: fabOptions.runVLAN,
-        runIPConfig: fabOptions.runIPConfig,
-        runGateway: fabOptions.runGateway,
-        runDNS: fabOptions.runDNS,
-        runHealthChecks: fabOptions.runHealthChecks,
-        runPerformance: fabOptions.runPerformance,
-        runSpeedtest: fabOptions.runPerformance && fabOptions.runSpeedtest,
-        runIperf: fabOptions.runPerformance && fabOptions.runIperf,
-        runNetworkDiscovery: fabOptions.runNetworkDiscovery,
+        runLink: cardSettings.link.autoRunOnLink,
+        runSwitch: cardSettings.switch.autoRunOnLink,
+        runVLAN: cardSettings.vlan.autoRunOnLink,
+        runIPConfig: cardSettings.network.autoRunOnLink,
+        runGateway: cardSettings.gateway.autoRunOnLink,
+        runDNS: cardSettings.dns.autoRunOnLink,
+        runHealthChecks: cardSettings.healthChecks.autoRunOnLink,
+        runPerformance: cardSettings.performance.autoRunOnLink,
+        runSpeedtest:
+          cardSettings.performance.autoRunOnLink &&
+          cardSettings.performance.speedtest.autoRunOnLink,
+        runIperf:
+          cardSettings.performance.autoRunOnLink && cardSettings.performance.iperf.autoRunOnLink,
+        runNetworkDiscovery: cardSettings.networkDiscovery.autoRunOnLink,
       };
 
-      // Build array of fetch promises based on FAB options
+      // Build array of fetch promises based on card settings
       const fetchPromises: Promise<void>[] = [];
 
       if (runOpts.runLink) {
@@ -731,7 +734,10 @@ function App() {
       setTimeout(() => {
         window.removeEventListener("cardTestComplete", handleCardComplete as EventListener);
         if (completed.size < cardTestsToWait.length) {
-          logger.warn(LogComponents.UI, "FAB timeout: Not all card tests completed, signaling done anyway");
+          logger.warn(
+            LogComponents.UI,
+            "FAB timeout: Not all card tests completed, signaling done anyway"
+          );
           window.dispatchEvent(new CustomEvent("testsComplete"));
         }
       }, 90000);
@@ -750,17 +756,17 @@ function App() {
     fetchWiFiData,
     fetchCableData,
     triggerDeviceScan,
-    fabOptions.runPerformance,
-    fabOptions.runLink,
-    fabOptions.runSwitch,
-    fabOptions.runVLAN,
-    fabOptions.runIPConfig,
-    fabOptions.runGateway,
-    fabOptions.runDNS,
-    fabOptions.runHealthChecks,
-    fabOptions.runSpeedtest,
-    fabOptions.runIperf,
-    fabOptions.runNetworkDiscovery,
+    cardSettings.performance.autoRunOnLink,
+    cardSettings.performance.speedtest.autoRunOnLink,
+    cardSettings.performance.iperf.autoRunOnLink,
+    cardSettings.link.autoRunOnLink,
+    cardSettings.switch.autoRunOnLink,
+    cardSettings.vlan.autoRunOnLink,
+    cardSettings.network.autoRunOnLink,
+    cardSettings.gateway.autoRunOnLink,
+    cardSettings.dns.autoRunOnLink,
+    cardSettings.healthChecks.autoRunOnLink,
+    cardSettings.networkDiscovery.autoRunOnLink,
   ]);
 
   // WebSocket connection for real-time updates
@@ -851,11 +857,11 @@ function App() {
     fetchCableData,
   ]);
 
-  // Auto-scan network devices on mount (respects FAB option)
+  // Auto-scan network devices on mount (respects per-card autoRunOnLink setting)
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const shouldAutoScan = fabOptions.runNetworkDiscovery !== false;
+    const shouldAutoScan = cardSettings.networkDiscovery.autoRunOnLink;
 
     if (shouldAutoScan) {
       // Small delay to let other data load first
@@ -864,7 +870,7 @@ function App() {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, triggerDeviceScan, fabOptions.runNetworkDiscovery]);
+  }, [isAuthenticated, triggerDeviceScan, cardSettings.networkDiscovery.autoRunOnLink]);
 
   // Login form
   const authError = sessionExpired ? "Session expired. Please log in again." : error;
@@ -1124,14 +1130,14 @@ function App() {
               className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
             >
               <HealthCheckCard loading={loading} />
-              {fabOptions.runPerformance && (
+              {cardSettings.performance.enabled && (
                 <PerformanceCard
                   loading={loading}
-                  runSpeedtestEnabled={fabOptions.runSpeedtest}
-                  runIperfEnabled={fabOptions.runIperf}
+                  runSpeedtestEnabled={cardSettings.performance.speedtest.enabled}
+                  runIperfEnabled={cardSettings.performance.iperf.enabled}
                 />
               )}
-              {fabOptions.runNetworkDiscovery && (
+              {cardSettings.networkDiscovery.enabled && (
                 <NetworkDiscoveryCard
                   data={networkDiscovery}
                   loading={loading}

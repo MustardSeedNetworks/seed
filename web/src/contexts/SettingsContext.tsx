@@ -4,7 +4,7 @@
  * Provides a React Context for settings that are accessed by multiple components.
  * Settings are loaded from and saved to the backend API config file.
  *
- * All settings (FABOptions, DisplayOptions, IperfSettings, Thresholds) are
+ * All settings (CardSettings, DisplayOptions, IperfSettings, Thresholds) are
  * persisted to the backend config file for persistence across sessions.
  */
 
@@ -12,12 +12,12 @@ import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { getAuthHeaders } from "../hooks/useAuth";
 import { logger, LogComponents } from "../lib/logger";
 import {
-  FABOptions,
+  CardSettings,
   DisplayOptions,
   IperfSettings,
   SettingsThresholds,
   SaveStatus,
-  DEFAULT_FAB_OPTIONS,
+  DEFAULT_CARD_SETTINGS,
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_IPERF_SETTINGS,
   DEFAULT_THRESHOLDS,
@@ -40,14 +40,14 @@ interface SettingsProviderProps {
  */
 export function SettingsProvider({ children }: SettingsProviderProps) {
   // State - initialized with defaults, will be updated from API
-  const [fabOptions, setFabOptions] = useState<FABOptions>(DEFAULT_FAB_OPTIONS);
+  const [cardSettings, setCardSettings] = useState<CardSettings>(DEFAULT_CARD_SETTINGS);
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(DEFAULT_DISPLAY_OPTIONS);
   const [iperfSettings, setIperfSettings] = useState<IperfSettings>(DEFAULT_IPERF_SETTINGS);
   const [thresholds, setThresholds] = useState<SettingsThresholds>(DEFAULT_THRESHOLDS);
 
   // Status indicators
   const [status, setStatus] = useState<SettingsContextValue["status"]>({
-    fab: "idle",
+    cards: "idle",
     display: "idle",
     iperf: "idle",
     thresholds: "idle",
@@ -75,9 +75,37 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
           setThresholds((prev) => ({ ...prev, ...data.thresholds }));
         }
 
-        // Load FAB options
-        if (data.fabOptions) {
-          setFabOptions((prev) => ({ ...prev, ...data.fabOptions }));
+        // Load card settings (migrate from old fabOptions if present)
+        if (data.cardSettings) {
+          setCardSettings((prev) => ({ ...prev, ...data.cardSettings }));
+        } else if (data.fabOptions) {
+          // Migration: convert old fabOptions to new cardSettings format
+          setCardSettings((prev) => ({
+            ...prev,
+            link: { enabled: true, autoRunOnLink: data.fabOptions.runLink ?? true },
+            switch: { enabled: true, autoRunOnLink: data.fabOptions.runSwitch ?? true },
+            vlan: { enabled: true, autoRunOnLink: data.fabOptions.runVLAN ?? true },
+            network: { enabled: true, autoRunOnLink: data.fabOptions.runIPConfig ?? true },
+            gateway: { enabled: true, autoRunOnLink: data.fabOptions.runGateway ?? true },
+            dns: { enabled: true, autoRunOnLink: data.fabOptions.runDNS ?? true },
+            healthChecks: { enabled: true, autoRunOnLink: data.fabOptions.runHealthChecks ?? true },
+            networkDiscovery: {
+              enabled: data.fabOptions.runNetworkDiscovery ?? true,
+              autoRunOnLink: data.fabOptions.autoScanOnLink ?? true,
+            },
+            performance: {
+              enabled: data.fabOptions.runPerformance ?? true,
+              autoRunOnLink: data.fabOptions.runPerformance ?? true,
+              speedtest: {
+                enabled: data.fabOptions.runSpeedtest ?? true,
+                autoRunOnLink: data.fabOptions.runSpeedtest ?? true,
+              },
+              iperf: {
+                enabled: data.fabOptions.runIperf ?? false,
+                autoRunOnLink: data.fabOptions.runIperf ?? false,
+              },
+            },
+          }));
         }
 
         // Load display options
@@ -172,11 +200,11 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   // Update Methods - update state and trigger debounced save to backend
   // ============================================================================
 
-  const updateFabOptions = useCallback(
-    (updates: Partial<FABOptions>) => {
-      setFabOptions((prev) => {
+  const updateCardSettings = useCallback(
+    (updates: Partial<CardSettings>) => {
+      setCardSettings((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("fab", () => saveToBackend({ fabOptions: next }));
+        debounceSave("cards", () => saveToBackend({ cardSettings: next }));
         return next;
       });
     },
@@ -221,12 +249,12 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   // ============================================================================
 
   const value: SettingsContextValue = {
-    fabOptions,
+    cardSettings,
     displayOptions,
     iperfSettings,
     thresholds,
     status,
-    updateFabOptions,
+    updateCardSettings,
     updateDisplayOptions,
     updateIperfSettings,
     updateThresholds,
