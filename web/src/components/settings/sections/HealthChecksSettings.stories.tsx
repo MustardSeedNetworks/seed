@@ -210,9 +210,7 @@ export const AllTestTypes: Story = {
         { id: "1", name: "Web", host: "192.168.1.100", port: 80, enabled: true },
         { id: "2", name: "SSH", host: "192.168.1.100", port: 22, enabled: true },
       ],
-      udpPorts: [
-        { id: "1", name: "DNS", host: "8.8.8.8", port: 53, enabled: true },
-      ],
+      udpPorts: [{ id: "1", name: "DNS", host: "8.8.8.8", port: 53, enabled: true }],
       httpEndpoints: [
         {
           id: "1",
@@ -263,9 +261,7 @@ export const ProductionMonitoring: Story = {
         { id: "2", name: "DB Primary", host: "db1.internal", port: 5432, enabled: true },
         { id: "3", name: "Redis Cache", host: "cache.internal", port: 6379, enabled: true },
       ],
-      udpPorts: [
-        { id: "1", name: "Syslog", host: "syslog.internal", port: 514, enabled: true },
-      ],
+      udpPorts: [{ id: "1", name: "Syslog", host: "syslog.internal", port: 514, enabled: true }],
       httpEndpoints: [
         {
           id: "1",
@@ -302,9 +298,7 @@ export const Saving: Story = {
   args: {
     testsSettings: {
       ...emptySettings,
-      pingTargets: [
-        { id: "1", name: "Gateway", host: "192.168.1.1", enabled: true, count: 3 },
-      ],
+      pingTargets: [{ id: "1", name: "Gateway", host: "192.168.1.1", enabled: true, count: 3 }],
     },
     setTestsSettings: () => {},
     testsStatus: "saving",
@@ -327,15 +321,11 @@ export const Interactive: Story = {
           count: 3,
         },
       ],
-      tcpPorts: [
-        { id: "1", name: "HTTP", host: "192.168.1.100", port: 80, enabled: true },
-      ],
+      tcpPorts: [{ id: "1", name: "HTTP", host: "192.168.1.100", port: 80, enabled: true }],
     });
     const [status, setStatus] = useState<SaveStatus>("idle");
 
-    const handleSetTestsSettings = (
-      updater: React.SetStateAction<TestsSettings>,
-    ) => {
+    const handleSetTestsSettings = (updater: React.SetStateAction<TestsSettings>) => {
       setTestsSettings(updater);
       setStatus("saving");
 

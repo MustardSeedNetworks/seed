@@ -400,19 +400,15 @@ export const Saving: Story = {
  */
 export const Interactive: Story = {
   render: function InteractiveStory() {
-    const [testsSettings, setTestsSettings] =
-      useState<TestsSettings>(baseTestsSettings);
-    const [iperfSettings, setIperfSettings] =
-      useState<IperfSettings>(defaultIperfSettings);
+    const [testsSettings, setTestsSettings] = useState<TestsSettings>(baseTestsSettings);
+    const [iperfSettings, setIperfSettings] = useState<IperfSettings>(defaultIperfSettings);
     const [status, setStatus] = useState<SaveStatus>("idle");
     const [suggestions, setSuggestions] = useState<IperfSuggestion[]>([]);
-    const [suggestionsStatus, setSuggestionsStatus] = useState<
-      "idle" | "loading" | "error"
-    >("idle");
+    const [suggestionsStatus, setSuggestionsStatus] = useState<"idle" | "loading" | "error">(
+      "idle"
+    );
 
-    const handleSetIperfSettings = (
-      updater: React.SetStateAction<IperfSettings>,
-    ) => {
+    const handleSetIperfSettings = (updater: React.SetStateAction<IperfSettings>) => {
       setIperfSettings(updater);
       setStatus("saving");
       setTimeout(() => {

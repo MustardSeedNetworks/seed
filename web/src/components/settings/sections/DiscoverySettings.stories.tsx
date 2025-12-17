@@ -15,11 +15,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { DiscoverySettings } from "./DiscoverySettings";
-import type {
-  NetworkDiscoverySettings,
-  SubnetConfig,
-  SaveStatus,
-} from "../../../types/settings";
+import type { NetworkDiscoverySettings, SubnetConfig, SaveStatus } from "../../../types/settings";
 
 const defaultSettings: NetworkDiscoverySettings = {
   enabled: true,
@@ -372,19 +368,14 @@ export const Saving: Story = {
  */
 export const Interactive: Story = {
   render: function InteractiveStory() {
-    const [settings, setSettings] =
-      useState<NetworkDiscoverySettings>(defaultSettings);
+    const [settings, setSettings] = useState<NetworkDiscoverySettings>(defaultSettings);
     const [status, setStatus] = useState<SaveStatus>("idle");
-    const subnets: SubnetConfig[] = [
-      { cidr: "10.0.0.0/24", name: "Server VLAN", enabled: true },
-    ];
+    const subnets: SubnetConfig[] = [{ cidr: "10.0.0.0/24", name: "Server VLAN", enabled: true }];
     const [newCidr, setNewCidr] = useState("");
     const [newName, setNewName] = useState("");
     const [error, setError] = useState<string | null>(null);
 
-    const handleSetSettings = (
-      updater: React.SetStateAction<NetworkDiscoverySettings>,
-    ) => {
+    const handleSetSettings = (updater: React.SetStateAction<NetworkDiscoverySettings>) => {
       setSettings(updater);
       setStatus("saving");
       setTimeout(() => {

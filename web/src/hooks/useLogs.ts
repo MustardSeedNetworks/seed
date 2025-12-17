@@ -19,13 +19,13 @@
  * ```
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 /** Log severity levels */
-export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 
 /** Log source layers */
-export type LogLayer = 'backend' | 'api' | 'frontend';
+export type LogLayer = "backend" | "api" | "frontend";
 
 /** Log entry structure matching backend LogEntry */
 export interface LogEntry {
@@ -105,7 +105,7 @@ const DEFAULT_FILTERS: LogFilters = {
   levels: [],
   layers: [],
   components: [],
-  search: '',
+  search: "",
 };
 
 const DEFAULT_STATS: LogStats = {
@@ -169,7 +169,7 @@ export function useLogs({
       const data = await response.json();
       setAllLogs(data.logs || []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch logs';
+      const message = err instanceof Error ? err.message : "Failed to fetch logs";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -181,7 +181,7 @@ export function useLogs({
    */
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetch('/api/logs/stats');
+      const response = await fetch("/api/logs/stats");
       if (!response.ok) {
         throw new Error(`Failed to fetch stats: ${response.statusText}`);
       }
@@ -191,7 +191,7 @@ export function useLogs({
     } catch (err) {
       // Using console.error here since we're in the logging system itself
       // and don't want potential infinite loops
-      console.error('Failed to fetch log stats:', err);
+      console.error("Failed to fetch log stats:", err);
       setStats(DEFAULT_STATS);
     }
   }, []);
@@ -235,9 +235,7 @@ export function useLogs({
 
     // Filter by component
     if (filters.components.length > 0) {
-      result = result.filter(
-        (log) => log.component && filters.components.includes(log.component)
-      );
+      result = result.filter((log) => log.component && filters.components.includes(log.component));
     }
 
     // Filter by search text
@@ -252,9 +250,7 @@ export function useLogs({
     }
 
     // Sort by timestamp (newest first)
-    result.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     return result;
   }, [allLogs, filters]);
@@ -294,28 +290,28 @@ export function useLogs({
  */
 export const LOG_LEVEL_COLORS = {
   ERROR: {
-    bg: 'bg-red-50 dark:bg-red-950',
-    text: 'text-red-700 dark:text-red-300',
-    badge: 'bg-status-error text-text-inverse',
-    border: 'border-l-4 border-status-error',
+    bg: "bg-red-50 dark:bg-red-950",
+    text: "text-red-700 dark:text-red-300",
+    badge: "bg-status-error text-text-inverse",
+    border: "border-l-4 border-status-error",
   },
   WARN: {
-    bg: 'bg-yellow-50 dark:bg-yellow-950',
-    text: 'text-yellow-700 dark:text-yellow-300',
-    badge: 'bg-status-warning text-text-inverse',
-    border: 'border-l-4 border-status-warning',
+    bg: "bg-yellow-50 dark:bg-yellow-950",
+    text: "text-yellow-700 dark:text-yellow-300",
+    badge: "bg-status-warning text-text-inverse",
+    border: "border-l-4 border-status-warning",
   },
   INFO: {
-    bg: 'bg-blue-50 dark:bg-blue-950',
-    text: 'text-blue-700 dark:text-blue-300',
-    badge: 'bg-status-info text-text-inverse',
-    border: 'border-l-4 border-status-info',
+    bg: "bg-blue-50 dark:bg-blue-950",
+    text: "text-blue-700 dark:text-blue-300",
+    badge: "bg-status-info text-text-inverse",
+    border: "border-l-4 border-status-info",
   },
   DEBUG: {
-    bg: 'bg-surface-secondary dark:bg-dark-surface-secondary',
-    text: 'text-content-secondary dark:text-dark-content-secondary',
-    badge: 'bg-surface-tertiary text-text-inverse',
-    border: 'border-l-4 border-border',
+    bg: "bg-surface-secondary dark:bg-dark-surface-secondary",
+    text: "text-content-secondary dark:text-dark-content-secondary",
+    badge: "bg-surface-tertiary text-text-inverse",
+    border: "border-l-4 border-border",
   },
 } as const;
 
@@ -324,11 +320,11 @@ export const LOG_LEVEL_COLORS = {
  */
 export function formatLogTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
+  return date.toLocaleTimeString("en-US", {
     hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     fractionalSecondDigits: 3,
   });
 }
@@ -338,13 +334,13 @@ export function formatLogTimestamp(timestamp: string): string {
  */
 export function formatLogDateTime(timestamp: string): string {
   const date = new Date(timestamp);
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   });
 }

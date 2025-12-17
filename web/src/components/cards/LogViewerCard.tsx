@@ -20,8 +20,8 @@
  * ```
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useLogs,
   LogEntry,
@@ -30,8 +30,8 @@ import {
   LogLayer,
   LOG_LEVEL_COLORS,
   formatLogTimestamp,
-} from '../../hooks/useLogs';
-import { spacing } from '../../styles/theme';
+} from "../../hooks/useLogs";
+import { spacing } from "../../styles/theme";
 
 // Filter badge component
 interface FilterBadgeProps {
@@ -45,11 +45,10 @@ interface FilterBadgeProps {
  * FilterBadge renders a clickable badge for filtering logs.
  */
 function FilterBadge({ label, active, onClick, color }: FilterBadgeProps) {
-  const baseClasses =
-    'px-2 py-1 text-xs font-medium rounded-md cursor-pointer transition-all';
-  const activeClasses = color || 'bg-primary-600 text-text-inverse';
+  const baseClasses = "px-2 py-1 text-xs font-medium rounded-md cursor-pointer transition-all";
+  const activeClasses = color || "bg-primary-600 text-text-inverse";
   const inactiveClasses =
-    'bg-surface-secondary dark:bg-dark-surface-secondary text-content-secondary dark:text-dark-content-secondary hover:bg-surface-tertiary dark:hover:bg-dark-surface-tertiary';
+    "bg-surface-secondary dark:bg-dark-surface-secondary text-content-secondary dark:text-dark-content-secondary hover:bg-surface-tertiary dark:hover:bg-dark-surface-tertiary";
 
   return (
     <button
@@ -79,7 +78,7 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onToggle();
         }
@@ -118,10 +117,7 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
         )}
 
         {/* Message */}
-        <span
-          className={`${colors.text} flex-1 truncate text-sm`}
-          title={entry.message}
-        >
+        <span className={`${colors.text} flex-1 truncate text-sm`} title={entry.message}>
           {entry.message}
         </span>
 
@@ -133,9 +129,7 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
         )}
 
         {/* Expand indicator */}
-        <span className="text-xs text-content-tertiary">
-          {expanded ? '▼' : '▶'}
-        </span>
+        <span className="text-xs text-content-tertiary">{expanded ? "▼" : "▶"}</span>
       </div>
 
       {/* Expanded content */}
@@ -196,9 +190,9 @@ function LogFiltersBar({
   onReset,
   availableComponents,
 }: LogFiltersBarProps) {
-  const { t } = useTranslation('common');
-  const levels: LogLevel[] = ['ERROR', 'WARN', 'INFO', 'DEBUG'];
-  const layers: LogLayer[] = ['backend', 'api', 'frontend'];
+  const { t } = useTranslation("common");
+  const levels: LogLevel[] = ["ERROR", "WARN", "INFO", "DEBUG"];
+  const layers: LogLayer[] = ["backend", "api", "frontend"];
 
   const toggleLevel = (level: LogLevel) => {
     const newLevels = filters.levels.includes(level)
@@ -225,7 +219,7 @@ function LogFiltersBar({
     filters.levels.length > 0 ||
     filters.layers.length > 0 ||
     filters.components.length > 0 ||
-    filters.search !== '';
+    filters.search !== "";
 
   return (
     <div className="space-y-2 p-3 bg-surface-secondary dark:bg-dark-surface-secondary rounded-lg">
@@ -233,7 +227,7 @@ function LogFiltersBar({
       <div className="flex items-center gap-2">
         <input
           type="text"
-          placeholder={t('logs.searchPlaceholder', 'Search logs...')}
+          placeholder={t("logs.searchPlaceholder", "Search logs...")}
           value={filters.search}
           onChange={(e) => onFilterChange({ search: e.target.value })}
           className="flex-1 px-3 py-1.5 text-sm rounded-md border border-border dark:border-dark-border bg-surface-primary dark:bg-dark-surface-primary focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -244,7 +238,7 @@ function LogFiltersBar({
             onClick={onReset}
             className="px-3 py-1.5 text-sm text-content-secondary hover:text-content-primary dark:text-dark-content-secondary dark:hover:text-dark-content-primary"
           >
-            {t('logs.clearFilters', 'Clear')}
+            {t("logs.clearFilters", "Clear")}
           </button>
         )}
       </div>
@@ -252,7 +246,7 @@ function LogFiltersBar({
       {/* Level filters */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-content-secondary dark:text-dark-content-secondary font-medium">
-          {t('logs.level', 'Level')}:
+          {t("logs.level", "Level")}:
         </span>
         {levels.map((level) => {
           // eslint-disable-next-line security/detect-object-injection -- level is typed LogLevel
@@ -272,7 +266,7 @@ function LogFiltersBar({
       {/* Layer filters */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-content-secondary dark:text-dark-content-secondary font-medium">
-          {t('logs.layer', 'Layer')}:
+          {t("logs.layer", "Layer")}:
         </span>
         {layers.map((layer) => (
           <FilterBadge
@@ -288,7 +282,7 @@ function LogFiltersBar({
       {availableComponents.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-content-secondary dark:text-dark-content-secondary font-medium">
-            {t('logs.component', 'Component')}:
+            {t("logs.component", "Component")}:
           </span>
           {availableComponents.slice(0, 10).map((component) => (
             <FilterBadge
@@ -323,7 +317,7 @@ interface LogStatsBarProps {
  * LogStatsBar displays log statistics and streaming toggle.
  */
 function LogStatsBar({ stats, isStreaming, onToggleStreaming }: LogStatsBarProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   return (
     <div className="flex items-center justify-between p-2 bg-surface-tertiary dark:bg-dark-surface-tertiary rounded-lg text-sm">
@@ -331,17 +325,23 @@ function LogStatsBar({ stats, isStreaming, onToggleStreaming }: LogStatsBarProps
         {stats && (
           <>
             <span>
-              <strong>{stats.total_count}</strong> {t('logs.totalLogs', 'logs')}
+              <strong>{stats.total_count}</strong> {t("logs.totalLogs", "logs")}
             </span>
             <span className="text-red-600 dark:text-red-400">
-              <strong>{stats.by_level && 'ERROR' in stats.by_level ? stats.by_level.ERROR : 0}</strong> {t('logs.errors', 'errors')}
+              <strong>
+                {stats.by_level && "ERROR" in stats.by_level ? stats.by_level.ERROR : 0}
+              </strong>{" "}
+              {t("logs.errors", "errors")}
             </span>
             <span className="text-yellow-600 dark:text-yellow-400">
-              <strong>{stats.by_level && 'WARN' in stats.by_level ? stats.by_level.WARN : 0}</strong> {t('logs.warnings', 'warnings')}
+              <strong>
+                {stats.by_level && "WARN" in stats.by_level ? stats.by_level.WARN : 0}
+              </strong>{" "}
+              {t("logs.warnings", "warnings")}
             </span>
             {stats.errors_last_hour > 0 && (
               <span className="text-red-600 dark:text-red-400 text-xs">
-                ({stats.errors_last_hour} {t('logs.lastHour', 'last hour')})
+                ({stats.errors_last_hour} {t("logs.lastHour", "last hour")})
               </span>
             )}
           </>
@@ -353,11 +353,11 @@ function LogStatsBar({ stats, isStreaming, onToggleStreaming }: LogStatsBarProps
         onClick={onToggleStreaming}
         className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
           isStreaming
-            ? 'bg-status-success text-text-inverse hover:brightness-90'
-            : 'bg-surface-tertiary text-text-inverse hover:brightness-90'
+            ? "bg-status-success text-text-inverse hover:brightness-90"
+            : "bg-surface-tertiary text-text-inverse hover:brightness-90"
         }`}
       >
-        {isStreaming ? t('logs.streaming', 'Live') : t('logs.paused', 'Paused')}
+        {isStreaming ? t("logs.streaming", "Live") : t("logs.paused", "Paused")}
       </button>
     </div>
   );
@@ -375,11 +375,8 @@ export interface LogViewerCardProps {
  * LogViewerCard displays real-time logs with color-coded severity levels.
  * Supports filtering by level, layer, component, and search text.
  */
-export function LogViewerCard({
-  maxHeight = '500px',
-  className = '',
-}: LogViewerCardProps) {
-  const { t } = useTranslation('common');
+export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewerCardProps) {
+  const { t } = useTranslation("common");
   const {
     logs,
     allLogs,
@@ -444,10 +441,10 @@ export function LogViewerCard({
       {/* Header */}
       <div className="p-4 border-b border-border dark:border-dark-border">
         <h2 className="text-lg font-semibold text-content-primary dark:text-dark-content-primary">
-          {t('logs.title', 'System Logs')}
+          {t("logs.title", "System Logs")}
         </h2>
         <p className="text-sm text-content-secondary dark:text-dark-content-secondary">
-          {t('logs.subtitle', 'Real-time application logs with filtering')}
+          {t("logs.subtitle", "Real-time application logs with filtering")}
         </p>
       </div>
 
@@ -473,16 +470,12 @@ export function LogViewerCard({
       {/* Loading state */}
       {isLoading && (
         <div className="p-4 text-center text-content-secondary dark:text-dark-content-secondary">
-          {t('logs.loading', 'Loading logs...')}
+          {t("logs.loading", "Loading logs...")}
         </div>
       )}
 
       {/* Error state */}
-      {error && (
-        <div className="p-4 text-center text-red-600 dark:text-red-400">
-          {error}
-        </div>
-      )}
+      {error && <div className="p-4 text-center text-red-600 dark:text-red-400">{error}</div>}
 
       {/* Log entries */}
       <div
@@ -494,8 +487,8 @@ export function LogViewerCard({
         {logs.length === 0 && !isLoading && (
           <div className="text-center text-content-secondary dark:text-dark-content-secondary py-8">
             {filters.search || filters.levels.length > 0 || filters.layers.length > 0
-              ? t('logs.noMatchingLogs', 'No logs match the current filters')
-              : t('logs.noLogs', 'No logs yet')}
+              ? t("logs.noMatchingLogs", "No logs match the current filters")
+              : t("logs.noLogs", "No logs yet")}
           </div>
         )}
 
@@ -517,13 +510,12 @@ export function LogViewerCard({
             onClick={() => {
               setAutoScroll(true);
               if (logContainerRef.current) {
-                logContainerRef.current.scrollTop =
-                  logContainerRef.current.scrollHeight;
+                logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
               }
             }}
             className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
           >
-            {t('logs.scrollToBottom', 'Scroll to latest')}
+            {t("logs.scrollToBottom", "Scroll to latest")}
           </button>
         </div>
       )}

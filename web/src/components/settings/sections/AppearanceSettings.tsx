@@ -45,7 +45,9 @@ export function AppearanceSettings({ theme, setTheme, isDark }: AppearanceSettin
   // Normalize language code (e.g., "en-US" -> "en") and validate against supported languages
   const detectedLanguage = i18n.language?.split("-")[0] || "en";
   const supportedCodes = languages.map((l) => l.code);
-  const currentLanguage = supportedCodes.includes(detectedLanguage as typeof supportedCodes[number])
+  const currentLanguage = supportedCodes.includes(
+    detectedLanguage as (typeof supportedCodes)[number]
+  )
     ? detectedLanguage
     : "en";
 

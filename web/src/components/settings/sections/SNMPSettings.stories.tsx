@@ -289,13 +289,10 @@ export const Saving: Story = {
  */
 export const Interactive: Story = {
   render: function InteractiveStory() {
-    const [snmpSettings, setSnmpSettings] =
-      useState<SNMPSettingsType>(defaultSettings);
+    const [snmpSettings, setSnmpSettings] = useState<SNMPSettingsType>(defaultSettings);
     const [status, setStatus] = useState<SaveStatus>("idle");
 
-    const handleSetSnmpSettings = (
-      updater: React.SetStateAction<SNMPSettingsType>,
-    ) => {
+    const handleSetSnmpSettings = (updater: React.SetStateAction<SNMPSettingsType>) => {
       setSnmpSettings(updater);
       setStatus("saving");
 

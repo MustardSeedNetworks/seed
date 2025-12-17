@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { CableCard } from './CableCard';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { CableCard } from "./CableCard";
 
 /**
  * CableCard displays Ethernet cable test results using Time Domain Reflectometry (TDR).
@@ -15,15 +15,15 @@ import { CableCard } from './CableCard';
  * This story demonstrates various cable test results.
  */
 const meta = {
-  title: 'Cards/CableCard',
+  title: "Cards/CableCard",
   component: CableCard,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div style={{ width: '380px' }}>
+      <div style={{ width: "380px" }}>
         <Story />
       </div>
     ),
@@ -42,7 +42,7 @@ export const CableOK: Story = {
     data: {
       supported: true,
       length: 15.2,
-      status: 'ok',
+      status: "ok",
       faults: [],
     },
     loading: false,
@@ -58,7 +58,7 @@ export const ShortCableOK: Story = {
     data: {
       supported: true,
       length: 2.8,
-      status: 'ok',
+      status: "ok",
       faults: [],
     },
     loading: false,
@@ -74,7 +74,7 @@ export const LongCableOK: Story = {
     data: {
       supported: true,
       length: 87.5,
-      status: 'ok',
+      status: "ok",
       faults: [],
     },
     loading: false,
@@ -90,8 +90,8 @@ export const OpenCircuit: Story = {
     data: {
       supported: true,
       length: 12.4,
-      status: 'open',
-      faults: ['Open circuit detected at 12.4m'],
+      status: "open",
+      faults: ["Open circuit detected at 12.4m"],
     },
     loading: false,
   },
@@ -106,8 +106,8 @@ export const ShortCircuit: Story = {
     data: {
       supported: true,
       length: 8.7,
-      status: 'short',
-      faults: ['Short circuit detected at 8.7m'],
+      status: "short",
+      faults: ["Short circuit detected at 8.7m"],
     },
     loading: false,
   },
@@ -122,8 +122,8 @@ export const ImpedanceMismatch: Story = {
     data: {
       supported: true,
       length: 22.1,
-      status: 'impedance_mismatch',
-      faults: ['Impedance mismatch detected', 'Possible cable damage or bend'],
+      status: "impedance_mismatch",
+      faults: ["Impedance mismatch detected", "Possible cable damage or bend"],
     },
     loading: false,
   },
@@ -138,12 +138,8 @@ export const MultipleFaults: Story = {
     data: {
       supported: true,
       length: 45.3,
-      status: 'open',
-      faults: [
-        'Open circuit at 45.3m',
-        'Impedance variations detected',
-        'Possible water damage',
-      ],
+      status: "open",
+      faults: ["Open circuit at 45.3m", "Impedance variations detected", "Possible water damage"],
     },
     loading: false,
   },
@@ -158,8 +154,8 @@ export const UnknownStatus: Story = {
     data: {
       supported: true,
       length: null,
-      status: 'unknown',
-      faults: ['Unable to determine cable status'],
+      status: "unknown",
+      faults: ["Unable to determine cable status"],
     },
     loading: false,
   },
@@ -174,7 +170,7 @@ export const NotSupported: Story = {
     data: {
       supported: false,
       length: null,
-      status: 'unknown',
+      status: "unknown",
       faults: [],
     },
     loading: false,
@@ -212,7 +208,7 @@ export const PatchCable: Story = {
     data: {
       supported: true,
       length: 0.5,
-      status: 'ok',
+      status: "ok",
       faults: [],
     },
     loading: false,
@@ -228,7 +224,7 @@ export const MaxLengthCable: Story = {
     data: {
       supported: true,
       length: 98.2,
-      status: 'ok',
+      status: "ok",
       faults: [],
     },
     loading: false,

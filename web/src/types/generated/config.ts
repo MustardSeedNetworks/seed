@@ -5,19 +5,24 @@
  * To regenerate: make generate-types
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // Re-export the generated Zod schema
-export { configSchema } from './config.zod';
+export { configSchema } from "./config.zod";
 
 // Import the schema for type inference
-import { configSchema } from './config.zod';
+import { configSchema } from "./config.zod";
 
 // Infer TypeScript types from Zod schema
 export type Config = z.infer<typeof configSchema>;
 
 // Validation helper
-export function validateConfig(data: unknown): { success: true; data: Config } | { success: false; errors: z.ZodError } {
+/**
+ *
+ */
+export function validateConfig(
+  data: unknown
+): { success: true; data: Config } | { success: false; errors: z.ZodError } {
   const result = configSchema.safeParse(data);
   if (result.success) {
     return { success: true, data: result.data };

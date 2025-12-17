@@ -12,9 +12,7 @@ export function generateId(): string {
 /**
  * Ensure an item has an ID. If it doesn't, generate one.
  */
-export function ensureId<T extends { id?: string }>(
-  item: T,
-): T & { id: string } {
+export function ensureId<T extends { id?: string }>(item: T): T & { id: string } {
   if (item.id) {
     return item as T & { id: string };
   }
@@ -24,8 +22,6 @@ export function ensureId<T extends { id?: string }>(
 /**
  * Ensure all items in an array have IDs.
  */
-export function ensureIds<T extends { id?: string }>(
-  items: T[],
-): (T & { id: string })[] {
+export function ensureIds<T extends { id?: string }>(items: T[]): (T & { id: string })[] {
   return items.map(ensureId);
 }

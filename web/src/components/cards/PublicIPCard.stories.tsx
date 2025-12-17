@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { PublicIPCard } from './PublicIPCard';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { PublicIPCard } from "./PublicIPCard";
 
 /**
  * PublicIPCard displays public IPv4 and IPv6 addresses as seen from the internet.
@@ -14,15 +14,15 @@ import { PublicIPCard } from './PublicIPCard';
  * This story demonstrates various public IP detection states.
  */
 const meta = {
-  title: 'Cards/PublicIPCard',
+  title: "Cards/PublicIPCard",
   component: PublicIPCard,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div style={{ width: '380px' }}>
+      <div style={{ width: "380px" }}>
         <Story />
       </div>
     ),
@@ -39,7 +39,7 @@ type Story = StoryObj<typeof meta>;
 export const IPv4Only: Story = {
   args: {
     data: {
-      ipv4: '203.0.113.42',
+      ipv4: "203.0.113.42",
       lastChecked: new Date(Date.now() - 120000).toISOString(),
     },
     loading: false,
@@ -53,7 +53,7 @@ export const IPv4Only: Story = {
 export const IPv6Only: Story = {
   args: {
     data: {
-      ipv6: '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+      ipv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
       lastChecked: new Date(Date.now() - 180000).toISOString(),
     },
     loading: false,
@@ -67,8 +67,8 @@ export const IPv6Only: Story = {
 export const DualStack: Story = {
   args: {
     data: {
-      ipv4: '198.51.100.123',
-      ipv6: '2001:db8::1',
+      ipv4: "198.51.100.123",
+      ipv6: "2001:db8::1",
       lastChecked: new Date(Date.now() - 60000).toISOString(),
     },
     loading: false,
@@ -82,8 +82,8 @@ export const DualStack: Story = {
 export const JustChecked: Story = {
   args: {
     data: {
-      ipv4: '192.0.2.1',
-      ipv6: '2001:db8::42',
+      ipv4: "192.0.2.1",
+      ipv6: "2001:db8::42",
       lastChecked: new Date(Date.now() - 30000).toISOString(),
     },
     loading: false,
@@ -97,7 +97,7 @@ export const JustChecked: Story = {
 export const CheckedHoursAgo: Story = {
   args: {
     data: {
-      ipv4: '203.0.113.5',
+      ipv4: "203.0.113.5",
       lastChecked: new Date(Date.now() - 7200000).toISOString(),
     },
     loading: false,
@@ -111,8 +111,8 @@ export const CheckedHoursAgo: Story = {
 export const CheckedDaysAgo: Story = {
   args: {
     data: {
-      ipv4: '198.51.100.50',
-      ipv6: '2001:db8:cafe::1',
+      ipv4: "198.51.100.50",
+      ipv6: "2001:db8:cafe::1",
       lastChecked: new Date(Date.now() - 172800000).toISOString(),
     },
     loading: false,
@@ -127,7 +127,7 @@ export const LookupError: Story = {
   args: {
     data: {
       lastChecked: new Date().toISOString(),
-      error: 'Unable to contact IP lookup service',
+      error: "Unable to contact IP lookup service",
     },
     loading: false,
   },
@@ -141,7 +141,7 @@ export const NetworkUnreachable: Story = {
   args: {
     data: {
       lastChecked: new Date().toISOString(),
-      error: 'No internet connectivity',
+      error: "No internet connectivity",
     },
     loading: false,
   },
@@ -154,9 +154,9 @@ export const NetworkUnreachable: Story = {
 export const PartialSuccess: Story = {
   args: {
     data: {
-      ipv4: '203.0.113.99',
+      ipv4: "203.0.113.99",
       lastChecked: new Date().toISOString(),
-      error: 'IPv6 lookup failed',
+      error: "IPv6 lookup failed",
     },
     loading: false,
   },
@@ -191,8 +191,8 @@ export const NoData: Story = {
 export const CompressedIPv6: Story = {
   args: {
     data: {
-      ipv4: '192.0.2.42',
-      ipv6: '2001:db8::42',
+      ipv4: "192.0.2.42",
+      ipv6: "2001:db8::42",
       lastChecked: new Date(Date.now() - 300000).toISOString(),
     },
     loading: false,
@@ -206,8 +206,8 @@ export const CompressedIPv6: Story = {
 export const LinkLocalIPv6: Story = {
   args: {
     data: {
-      ipv4: '198.51.100.77',
-      ipv6: 'fe80::1',
+      ipv4: "198.51.100.77",
+      ipv6: "fe80::1",
       lastChecked: new Date().toISOString(),
     },
     loading: false,
@@ -221,9 +221,9 @@ export const LinkLocalIPv6: Story = {
 export const BehindCGNAT: Story = {
   args: {
     data: {
-      ipv4: '100.96.0.42',
+      ipv4: "100.96.0.42",
       lastChecked: new Date().toISOString(),
-      error: 'You may be behind carrier-grade NAT',
+      error: "You may be behind carrier-grade NAT",
     },
     loading: false,
   },
