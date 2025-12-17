@@ -241,7 +241,8 @@ describe("SettingsContext", () => {
         expect(mockFetch).toHaveBeenCalledWith(
           "/api/settings",
           expect.objectContaining({
-            headers: { Authorization: "Bearer test-token" },
+            credentials: "include",
+            method: "GET",
           })
         );
       });

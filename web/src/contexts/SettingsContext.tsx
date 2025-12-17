@@ -9,8 +9,8 @@
  */
 
 import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
-import { getAuthHeaders } from "../hooks/useAuth";
 import { logger, LogComponents } from "../lib/logger";
+import { api } from "../lib/api";
 import {
   CardSettings,
   DisplayOptions,
@@ -28,7 +28,6 @@ import { SettingsContext, SettingsContextValue } from "./settingsContextDef";
 // Provider Component
 // ============================================================================
 
-const API_BASE = import.meta.env.VITE_API_BASE || "";
 const DEBOUNCE_MS = 800;
 
 interface SettingsProviderProps {
@@ -54,72 +53,95 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   });
 
   // Tracking refs
+  const isMountedRef = useRef(true);
   const [isLoadedState, setIsLoadedState] = useState(false);
   // Using Map for type-safe dynamic key access
   const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const statusResetTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const saveControllers = useRef<Map<string, AbortController>>(new Map());
 
   // ============================================================================
   // Load All Settings from API
   // ============================================================================
 
-  const loadSettingsFromAPI = useCallback(async () => {
+  const loadSettingsFromAPI = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await fetch(`${API_BASE}/api/settings`, {
-        headers: getAuthHeaders(),
-      });
-      if (response.ok) {
-        const data = await response.json();
+      const data = await api.get<Record<string, unknown>>("/api/settings", { signal });
 
-        // Load thresholds
-        if (data.thresholds) {
-          setThresholds((prev) => ({ ...prev, ...data.thresholds }));
-        }
+      if (!isMountedRef.current || signal?.aborted) return;
 
-        // Load card settings (migrate from old fabOptions if present)
-        if (data.cardSettings) {
-          setCardSettings((prev) => ({ ...prev, ...data.cardSettings }));
-        } else if (data.fabOptions) {
-          // Migration: convert old fabOptions to new cardSettings format
-          setCardSettings((prev) => ({
-            ...prev,
-            link: { enabled: true, autoRunOnLink: data.fabOptions.runLink ?? true },
-            switch: { enabled: true, autoRunOnLink: data.fabOptions.runSwitch ?? true },
-            vlan: { enabled: true, autoRunOnLink: data.fabOptions.runVLAN ?? true },
-            network: { enabled: true, autoRunOnLink: data.fabOptions.runIPConfig ?? true },
-            gateway: { enabled: true, autoRunOnLink: data.fabOptions.runGateway ?? true },
-            dns: { enabled: true, autoRunOnLink: data.fabOptions.runDNS ?? true },
-            healthChecks: { enabled: true, autoRunOnLink: data.fabOptions.runHealthChecks ?? true },
-            networkDiscovery: {
-              enabled: data.fabOptions.runNetworkDiscovery ?? true,
-              autoRunOnLink: data.fabOptions.autoScanOnLink ?? true,
+      // Load thresholds
+      if (data.thresholds && typeof data.thresholds === "object") {
+        setThresholds((prev) => ({ ...prev, ...(data.thresholds as Partial<SettingsThresholds>) }));
+      }
+
+      // Load card settings (migrate from old fabOptions if present)
+      if (data.cardSettings && typeof data.cardSettings === "object") {
+        setCardSettings((prev) => ({ ...prev, ...(data.cardSettings as Partial<CardSettings>) }));
+      } else if (data.fabOptions && typeof data.fabOptions === "object") {
+        const fabOptions = data.fabOptions as Record<string, unknown>;
+        setCardSettings((prev) => ({
+          ...prev,
+          link: {
+            enabled: true,
+            autoRunOnLink: (fabOptions.runLink as boolean | undefined) ?? true,
+          },
+          switch: {
+            enabled: true,
+            autoRunOnLink: (fabOptions.runSwitch as boolean | undefined) ?? true,
+          },
+          vlan: {
+            enabled: true,
+            autoRunOnLink: (fabOptions.runVLAN as boolean | undefined) ?? true,
+          },
+          network: {
+            enabled: true,
+            autoRunOnLink: (fabOptions.runIPConfig as boolean | undefined) ?? true,
+          },
+          gateway: {
+            enabled: true,
+            autoRunOnLink: (fabOptions.runGateway as boolean | undefined) ?? true,
+          },
+          dns: { enabled: true, autoRunOnLink: (fabOptions.runDNS as boolean | undefined) ?? true },
+          healthChecks: {
+            enabled: true,
+            autoRunOnLink: (fabOptions.runHealthChecks as boolean | undefined) ?? true,
+          },
+          networkDiscovery: {
+            enabled: (fabOptions.runNetworkDiscovery as boolean | undefined) ?? true,
+            autoRunOnLink: (fabOptions.autoScanOnLink as boolean | undefined) ?? true,
+          },
+          performance: {
+            enabled: (fabOptions.runPerformance as boolean | undefined) ?? true,
+            autoRunOnLink: (fabOptions.runPerformance as boolean | undefined) ?? true,
+            speedtest: {
+              enabled: (fabOptions.runSpeedtest as boolean | undefined) ?? true,
+              autoRunOnLink: (fabOptions.runSpeedtest as boolean | undefined) ?? true,
             },
-            performance: {
-              enabled: data.fabOptions.runPerformance ?? true,
-              autoRunOnLink: data.fabOptions.runPerformance ?? true,
-              speedtest: {
-                enabled: data.fabOptions.runSpeedtest ?? true,
-                autoRunOnLink: data.fabOptions.runSpeedtest ?? true,
-              },
-              iperf: {
-                enabled: data.fabOptions.runIperf ?? false,
-                autoRunOnLink: data.fabOptions.runIperf ?? false,
-              },
+            iperf: {
+              enabled: (fabOptions.runIperf as boolean | undefined) ?? false,
+              autoRunOnLink: (fabOptions.runIperf as boolean | undefined) ?? false,
             },
-          }));
-        }
+          },
+        }));
+      }
 
-        // Load display options
-        if (data.displayOptions) {
-          setDisplayOptions((prev) => ({ ...prev, ...data.displayOptions }));
-        }
+      // Load display options
+      if (data.displayOptions && typeof data.displayOptions === "object") {
+        setDisplayOptions((prev) => ({
+          ...prev,
+          ...(data.displayOptions as Partial<DisplayOptions>),
+        }));
+      }
 
-        // Load iperf settings
-        if (data.iperf) {
-          setIperfSettings((prev) => ({ ...prev, ...data.iperf }));
-        }
+      // Load iperf settings
+      if (data.iperf && typeof data.iperf === "object") {
+        setIperfSettings((prev) => ({ ...prev, ...(data.iperf as Partial<IperfSettings>) }));
       }
     } catch (err) {
-      logger.error(LogComponents.CONFIG, "Failed to fetch settings", err);
+      if (!signal?.aborted) {
+        logger.error(LogComponents.CONFIG, "Failed to fetch settings", err);
+      }
     }
   }, []);
 
@@ -129,23 +151,30 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
 
   // Initial load - fetch all settings from API
   useEffect(() => {
-    let mounted = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial data fetch pattern
-    loadSettingsFromAPI().finally(() => {
-      if (mounted) {
+    const controller = new AbortController();
+
+    loadSettingsFromAPI(controller.signal).finally(() => {
+      if (isMountedRef.current && !controller.signal.aborted) {
         setIsLoadedState(true);
       }
     });
     return () => {
-      mounted = false;
+      controller.abort();
     };
   }, [loadSettingsFromAPI]);
 
-  // Cleanup timers on unmount
+  // Cleanup timers and in-flight requests on unmount
   useEffect(() => {
-    const timers = debounceTimers.current;
     return () => {
-      timers.forEach((timer) => clearTimeout(timer));
+      isMountedRef.current = false;
+
+      debounceTimers.current.forEach((timer) => clearTimeout(timer));
+      statusResetTimers.current.forEach((timer) => clearTimeout(timer));
+      saveControllers.current.forEach((controller) => controller.abort());
+
+      debounceTimers.current.clear();
+      statusResetTimers.current.clear();
+      saveControllers.current.clear();
     };
   }, []);
 
@@ -154,23 +183,58 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   // ============================================================================
 
   const debounceSave = useCallback(
-    (key: string, saveFn: () => void | Promise<void>, delay: number = DEBOUNCE_MS) => {
+    (
+      key: string,
+      saveFn: (signal: AbortSignal) => void | Promise<void>,
+      delay: number = DEBOUNCE_MS
+    ) => {
       const existingTimer = debounceTimers.current.get(key);
       if (existingTimer) {
         clearTimeout(existingTimer);
       }
 
-      setStatus((prev) => ({ ...prev, [key]: "saving" as SaveStatus }));
+      const existingResetTimer = statusResetTimers.current.get(key);
+      if (existingResetTimer) {
+        clearTimeout(existingResetTimer);
+        statusResetTimers.current.delete(key);
+      }
+
+      if (isMountedRef.current) {
+        setStatus((prev) => ({ ...prev, [key]: "saving" as SaveStatus }));
+      }
 
       const newTimer = setTimeout(async () => {
+        debounceTimers.current.delete(key);
+
+        // Cancel any in-flight request for this key before starting a new one.
+        const existingController = saveControllers.current.get(key);
+        if (existingController) {
+          existingController.abort();
+          saveControllers.current.delete(key);
+        }
+
+        const controller = new AbortController();
+        saveControllers.current.set(key, controller);
+
         try {
-          await saveFn();
+          await saveFn(controller.signal);
+          if (!isMountedRef.current || controller.signal.aborted) return;
+
           setStatus((prev) => ({ ...prev, [key]: "saved" as SaveStatus }));
-          setTimeout(() => {
+
+          const resetTimer = setTimeout(() => {
+            if (!isMountedRef.current) return;
             setStatus((prev) => ({ ...prev, [key]: "idle" as SaveStatus }));
           }, 2000);
+          statusResetTimers.current.set(key, resetTimer);
         } catch {
+          if (!isMountedRef.current || controller.signal.aborted) return;
           setStatus((prev) => ({ ...prev, [key]: "error" as SaveStatus }));
+        } finally {
+          const currentController = saveControllers.current.get(key);
+          if (currentController === controller) {
+            saveControllers.current.delete(key);
+          }
         }
       }, delay);
       debounceTimers.current.set(key, newTimer);
@@ -182,18 +246,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   // Save to Backend API Helper
   // ============================================================================
 
-  const saveToBackend = async (updates: Record<string, unknown>) => {
-    const response = await fetch(`${API_BASE}/api/settings`, {
-      method: "PUT",
-      headers: {
-        ...getAuthHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(updates),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to save settings");
-    }
+  const saveToBackend = async (updates: Record<string, unknown>, signal: AbortSignal) => {
+    await api.put<{ status: string }>("/api/settings", updates, { signal });
   };
 
   // ============================================================================
@@ -204,7 +258,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<CardSettings>) => {
       setCardSettings((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("cards", () => saveToBackend({ cardSettings: next }));
+        debounceSave("cards", (signal) => saveToBackend({ cardSettings: next }, signal));
         return next;
       });
     },
@@ -215,7 +269,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<DisplayOptions>) => {
       setDisplayOptions((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("display", () => saveToBackend({ displayOptions: next }));
+        debounceSave("display", (signal) => saveToBackend({ displayOptions: next }, signal));
         return next;
       });
     },
@@ -226,7 +280,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<IperfSettings>) => {
       setIperfSettings((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("iperf", () => saveToBackend({ iperf: next }));
+        debounceSave("iperf", (signal) => saveToBackend({ iperf: next }, signal));
         return next;
       });
     },
@@ -237,7 +291,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<SettingsThresholds>) => {
       setThresholds((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("thresholds", () => saveToBackend({ thresholds: next }));
+        debounceSave("thresholds", (signal) => saveToBackend({ thresholds: next }, signal));
         return next;
       });
     },

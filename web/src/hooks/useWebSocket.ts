@@ -90,9 +90,18 @@ export function useWebSocket({
 }: UseWebSocketOptions): UseWebSocketReturn {
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const wsRef = useRef<WebSocket | null>(null);
+  const connectRef = useRef<() => void>(() => {});
   const reconnectAttempts = useRef(0);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const connectRef = useRef<(() => void) | null>(null); // New ref for stable connect function
+  const shouldReconnectRef = useRef(true);
+  const connectionIdRef = useRef(0);
+
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
 
   /**
    * Establishes WebSocket connection with automatic reconnection logic.
@@ -105,9 +114,15 @@ export function useWebSocket({
    */
   const connect = useCallback(() => {
     // Avoid duplicate connections
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
+    ) {
       return;
     }
+
+    clearReconnectTimer();
+    shouldReconnectRef.current = true;
 
     setStatus("connecting");
 
@@ -118,42 +133,62 @@ export function useWebSocket({
 
       // Create WebSocket connection without token in protocol header
       // Authentication is handled via httpOnly cookies sent automatically by the browser
-      wsRef.current = new WebSocket(baseUrl);
+      const ws = new WebSocket(baseUrl);
+      wsRef.current = ws;
+      connectionIdRef.current += 1;
+      const connectionId = connectionIdRef.current;
 
       // Connection established successfully
-      wsRef.current.onopen = () => {
+      ws.onopen = () => {
+        if (connectionId !== connectionIdRef.current) return;
         setStatus("connected");
         reconnectAttempts.current = 0; // Reset reconnection counter on success
       };
 
       // Connection closed - attempt reconnection if within retry limit
-      wsRef.current.onclose = (event) => {
+      ws.onclose = (event) => {
+        if (connectionId !== connectionIdRef.current) return;
         setStatus("disconnected");
         logger.warn(LogComponents.WEBSOCKET, "WebSocket closed", {
           code: event.code,
           reason: event.reason,
         });
 
-        // Schedule reconnection attempt if not exceeded max attempts
-        if (reconnectAttempts.current < maxReconnectAttempts) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectAttempts.current++;
-            logger.warn(LogComponents.WEBSOCKET, "WebSocket reconnecting", {
-              attempt: reconnectAttempts.current,
-            });
-            connectRef.current?.(); // Call via ref to avoid stale closure
-          }, reconnectInterval);
-        }
+        if (!shouldReconnectRef.current) return;
+
+        // Attempt reconnect forever; maxReconnectAttempts gates exponential backoff growth.
+        reconnectAttempts.current++;
+        const attempt = reconnectAttempts.current;
+        const cappedAttempt = Math.max(1, Math.min(attempt, maxReconnectAttempts));
+
+        // Exponential backoff with jitter, capped to keep retries happening after long outages.
+        const maxDelayMs = Math.max(reconnectInterval, 30000);
+        const baseDelayMs = reconnectInterval * 2 ** (cappedAttempt - 1);
+        const delayMs = Math.min(baseDelayMs, maxDelayMs) + Math.floor(Math.random() * 250);
+
+        logger.warn(LogComponents.WEBSOCKET, "WebSocket reconnect scheduled", {
+          attempt,
+          delayMs,
+        });
+
+        clearReconnectTimer();
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (!shouldReconnectRef.current) return;
+          if (connectionId !== connectionIdRef.current) return;
+          connectRef.current();
+        }, delayMs);
       };
 
       // Connection error occurred
-      wsRef.current.onerror = (error) => {
+      ws.onerror = (error) => {
+        if (connectionId !== connectionIdRef.current) return;
         setStatus("error");
         logger.error(LogComponents.WEBSOCKET, "WebSocket error", error);
       };
 
       // Message received from server
-      wsRef.current.onmessage = (event) => {
+      ws.onmessage = (event) => {
+        if (connectionId !== connectionIdRef.current) return;
         // Server may coalesce multiple JSON messages in one frame separated by newlines
         const payloads = String(event.data).split(/\n+/).filter(Boolean);
 
@@ -182,21 +217,15 @@ export function useWebSocket({
       setStatus("error");
       logger.error(LogComponents.WEBSOCKET, "Failed to create WebSocket", error);
     }
-  }, [url, onMessage, onCardUpdate, reconnectInterval, maxReconnectAttempts]);
-
-  // Keep connectRef updated with latest connect function to avoid stale closures
-  useEffect(() => {
-    connectRef.current = connect;
-  }, [connect]);
+  }, [url, onMessage, onCardUpdate, reconnectInterval, maxReconnectAttempts, clearReconnectTimer]);
 
   /**
    * Cleanly disconnects the WebSocket and clears any pending reconnection timers.
    */
   const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
+    shouldReconnectRef.current = false;
+    connectionIdRef.current += 1; // Invalidate handlers/timers from any in-flight socket.
+    clearReconnectTimer();
 
     if (wsRef.current) {
       wsRef.current.close();
@@ -204,19 +233,7 @@ export function useWebSocket({
     }
 
     setStatus("disconnected");
-  }, []);
-
-  // Connect on mount (authentication handled via cookies)
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    timer = setTimeout(() => {
-      connect();
-    }, 0);
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [connect]);
+  }, [clearReconnectTimer]);
 
   const send = useCallback((message: Message) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -229,13 +246,19 @@ export function useWebSocket({
   const reconnect = useCallback(() => {
     reconnectAttempts.current = 0;
     disconnect();
-    connectRef.current?.(); // Call via ref
-  }, [disconnect]); // connect is no longer a direct dependency
+    shouldReconnectRef.current = true;
+    connect();
+  }, [connect, disconnect]);
 
   useEffect(() => {
-    connectRef.current?.(); // Call via ref
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Establish WebSocket connection on mount/reconnect
+    connect();
     return () => disconnect();
-  }, [disconnect]); // connect is no longer a direct dependency
+  }, [connect, disconnect]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   return { status, send, reconnect };
 }

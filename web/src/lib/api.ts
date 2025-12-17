@@ -45,7 +45,7 @@ let refreshPromise: Promise<boolean> | null = null;
  *
  * @param callback - Function to call when session expires
  */
-export function setSessionExpiredCallback(callback: SessionExpiredCallback): void {
+export function setSessionExpiredCallback(callback: SessionExpiredCallback | null): void {
   onSessionExpired = callback;
 }
 
@@ -139,11 +139,14 @@ export const api = {
    * @example
    * const status = await api.get<NetworkStatus>('/api/network/status');
    */
-  async get<T>(endpoint: string): Promise<T> {
+  async get<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
     const makeRequest = () =>
       fetch(`${API_BASE}${endpoint}`, {
+        ...init,
+        method: "GET",
         credentials: "include", // Send httpOnly cookies
+        headers: new Headers(init?.headers),
       });
 
     const response = await makeRequest();
@@ -159,17 +162,20 @@ export const api = {
    * @example
    * const result = await api.post<Result>('/api/network/scan', { subnet: '192.168.1.0/24' });
    */
-  async post<T>(endpoint: string, body?: unknown): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
-    const makeRequest = () =>
-      fetch(`${API_BASE}${endpoint}`, {
+    const makeRequest = () => {
+      const headers = new Headers({ "Content-Type": "application/json" });
+      new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
+
+      return fetch(`${API_BASE}${endpoint}`, {
+        ...init,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         credentials: "include", // Send httpOnly cookies
-        body: body ? JSON.stringify(body) : undefined,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
       });
+    };
 
     const response = await makeRequest();
     return handleResponse<T>(response, isAuthEndpoint, makeRequest);
@@ -184,17 +190,20 @@ export const api = {
    * @example
    * await api.put('/api/settings', { theme: 'dark' });
    */
-  async put<T>(endpoint: string, body?: unknown): Promise<T> {
+  async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
-    const makeRequest = () =>
-      fetch(`${API_BASE}${endpoint}`, {
+    const makeRequest = () => {
+      const headers = new Headers({ "Content-Type": "application/json" });
+      new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
+
+      return fetch(`${API_BASE}${endpoint}`, {
+        ...init,
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         credentials: "include", // Send httpOnly cookies
-        body: body ? JSON.stringify(body) : undefined,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
       });
+    };
 
     const response = await makeRequest();
     return handleResponse<T>(response, isAuthEndpoint, makeRequest);
@@ -208,12 +217,14 @@ export const api = {
    * @example
    * await api.delete('/api/devices/12345');
    */
-  async delete<T>(endpoint: string): Promise<T> {
+  async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
     const makeRequest = () =>
       fetch(`${API_BASE}${endpoint}`, {
+        ...init,
         method: "DELETE",
         credentials: "include", // Send httpOnly cookies
+        headers: new Headers(init?.headers),
       });
 
     const response = await makeRequest();
@@ -232,9 +243,7 @@ export const api = {
     return fetch(`${API_BASE}${endpoint}`, {
       ...init,
       credentials: "include", // Send httpOnly cookies
-      headers: {
-        ...init?.headers,
-      },
+      headers: new Headers(init?.headers),
     });
   },
 };
