@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 func TestDeviceDiscovery(t *testing.T) {
@@ -80,7 +81,7 @@ func TestSetInterface(t *testing.T) {
 }
 
 func TestDeviceProfiler(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	profiler := NewDeviceProfiler(DefaultProfilerConfig(), &cfg.SNMP)
 
 	if profiler == nil {
@@ -143,9 +144,10 @@ func TestNeighborInfo(t *testing.T) {
 }
 
 func TestDiscoveryService(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Interface.Default = "lo"
-	cfg.NetworkDiscovery.Profile = "standard"
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		WithDiscoveryProfile("standard").
+		Build()
 
 	service := NewService(cfg, "lo")
 	if service == nil {
@@ -190,7 +192,7 @@ func TestDiscoveryService(t *testing.T) {
 }
 
 func TestSetProfile(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	service := NewService(cfg, "lo")
 
 	tests := []struct {
@@ -217,7 +219,7 @@ func TestSetProfile(t *testing.T) {
 }
 
 func TestScanWithContext(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	cfg.NetworkDiscovery.ScanTimeout = 1 * time.Second
 	service := NewService(cfg, "lo")
 
@@ -239,7 +241,7 @@ func TestScanWithContext(t *testing.T) {
 }
 
 func TestClearDevicesService(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	service := NewService(cfg, "lo")
 
 	// Clear (should work even with no devices)
@@ -262,8 +264,9 @@ func TestDiscoveryProfiles(t *testing.T) {
 
 	for _, profile := range profiles {
 		t.Run(string(profile), func(t *testing.T) {
-			cfg := config.DefaultConfig()
-			cfg.NetworkDiscovery.Profile = profile
+			cfg := testutil.NewConfigBuilder().
+				WithDiscoveryProfile(profile).
+				Build()
 			service := NewService(cfg, "lo")
 
 			if err := service.Start(); err != nil {
@@ -345,7 +348,7 @@ func TestDeviceDiscoveryStartStop(t *testing.T) {
 }
 
 func TestServiceInterface(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	service := NewService(cfg, "lo")
 
 	// Test SetInterface
@@ -356,7 +359,7 @@ func TestServiceInterface(t *testing.T) {
 }
 
 func TestServiceGetDevice(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	service := NewService(cfg, "lo")
 
 	// Test GetDevice for non-existent device
@@ -367,7 +370,7 @@ func TestServiceGetDevice(t *testing.T) {
 }
 
 func TestGetDeviceByIPService(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	service := NewService(cfg, "lo")
 
 	// Test GetDeviceByIP for non-existent device
@@ -378,7 +381,7 @@ func TestGetDeviceByIPService(t *testing.T) {
 }
 
 func TestGetNeighbors(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	service := NewService(cfg, "lo")
 
 	if err := service.Start(); err != nil {
@@ -394,7 +397,7 @@ func TestGetNeighbors(t *testing.T) {
 }
 
 func TestDeviceDiscoveryAccess(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := testutil.NewConfigBuilder().Build()
 	service := NewService(cfg, "lo")
 
 	// Test DeviceDiscovery accessor

@@ -7,22 +7,19 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-)
 
-const (
-	testUsername     = "admin"
-	testPassword     = "seed"
-	testPasswordHash = "$2a$10$Dmw4tbpvJ3hoxg4ln8fl6uUCnhUIeXBm7Xy6txdvgwNAjhtYgzmsi"
+	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 func TestNewManager(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	if m == nil {
 		t.Fatal("NewManager returned nil")
 	}
 
-	if m.username != testUsername {
-		t.Errorf("expected username %s, got %s", testUsername, m.username)
+	if m.username != defaults.Auth.Username {
+		t.Errorf("expected username %s, got %s", defaults.Auth.Username, m.username)
 	}
 	if m.sessionTimeout != time.Hour {
 		t.Errorf("expected timeout 1h, got %v", m.sessionTimeout)
@@ -30,7 +27,8 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestNewManagerWithEmptySecret(t *testing.T) {
-	m := NewManager("", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager("", time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	if m == nil {
 		t.Fatal("NewManager returned nil")
 	}
@@ -41,7 +39,8 @@ func TestNewManagerWithEmptySecret(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	tests := []struct {
 		name     string
@@ -51,31 +50,31 @@ func TestAuthenticate(t *testing.T) {
 	}{
 		{
 			name:     "valid credentials",
-			username: testUsername,
-			password: testPassword,
+			username: defaults.Auth.Username,
+			password: defaults.Auth.Password,
 			wantErr:  nil,
 		},
 		{
 			name:     "wrong username",
 			username: "wronguser",
-			password: testPassword,
+			password: defaults.Auth.Password,
 			wantErr:  ErrInvalidCredentials,
 		},
 		{
 			name:     "wrong password",
-			username: testUsername,
+			username: defaults.Auth.Username,
 			password: "wrongpassword",
 			wantErr:  ErrInvalidCredentials,
 		},
 		{
 			name:     "empty username",
 			username: "",
-			password: testPassword,
+			password: defaults.Auth.Password,
 			wantErr:  ErrInvalidCredentials,
 		},
 		{
 			name:     "empty password",
-			username: testUsername,
+			username: defaults.Auth.Username,
 			password: "",
 			wantErr:  ErrInvalidCredentials,
 		},
@@ -105,10 +104,11 @@ func TestAuthenticate(t *testing.T) {
 }
 
 func TestValidateToken(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	// Generate valid token
-	token, err := m.Authenticate(testUsername, testPassword)
+	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -119,13 +119,14 @@ func TestValidateToken(t *testing.T) {
 		t.Fatalf("failed to validate token: %v", err)
 	}
 
-	if claims.Username != testUsername {
-		t.Errorf("expected username %s, got %s", testUsername, claims.Username)
+	if claims.Username != defaults.Auth.Username {
+		t.Errorf("expected username %s, got %s", defaults.Auth.Username, claims.Username)
 	}
 }
 
 func TestValidateInvalidToken(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	tests := []struct {
 		name    string
@@ -164,10 +165,11 @@ func TestValidateInvalidToken(t *testing.T) {
 }
 
 func TestValidateExpiredToken(t *testing.T) {
+	defaults := testutil.GetTestDefaults()
 	// Create manager with very short timeout
-	m := NewManager("test-secret", time.Millisecond, testUsername, testPasswordHash)
+	m := NewManager(defaults.Auth.JWTSecret, time.Millisecond, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
-	token, err := m.Authenticate(testUsername, testPassword)
+	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -196,10 +198,11 @@ func TestHashPassword(t *testing.T) {
 }
 
 func TestMiddleware(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	// Get a valid token
-	token, err := m.Authenticate(testUsername, testPassword)
+	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -443,10 +446,11 @@ func TestGenerateJWTSecret(t *testing.T) {
 }
 
 func TestUpdatePasswordHash(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	// Generate a token before password change
-	token, err := m.Authenticate(testUsername, testPassword)
+	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -469,9 +473,10 @@ func TestUpdatePasswordHash(t *testing.T) {
 }
 
 func TestGenerateAccessToken(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
-	token, err := m.GenerateAccessToken(testUsername)
+	token, err := m.GenerateAccessToken(defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate access token: %v", err)
 	}
@@ -491,9 +496,10 @@ func TestGenerateAccessToken(t *testing.T) {
 }
 
 func TestGenerateRefreshToken(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
-	token, err := m.GenerateRefreshToken(testUsername)
+	token, err := m.GenerateRefreshToken(defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate refresh token: %v", err)
 	}
@@ -513,10 +519,11 @@ func TestGenerateRefreshToken(t *testing.T) {
 }
 
 func TestValidateRefreshToken(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	// Generate a refresh token
-	refreshToken, err := m.GenerateRefreshToken(testUsername)
+	refreshToken, err := m.GenerateRefreshToken(defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate refresh token: %v", err)
 	}
@@ -526,12 +533,12 @@ func TestValidateRefreshToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to validate refresh token: %v", err)
 	}
-	if claims.Username != testUsername {
-		t.Errorf("expected username %s, got %s", testUsername, claims.Username)
+	if claims.Username != defaults.Auth.Username {
+		t.Errorf("expected username %s, got %s", defaults.Auth.Username, claims.Username)
 	}
 
 	// Try to validate an access token as refresh token - should fail
-	accessToken, err := m.GenerateAccessToken(testUsername)
+	accessToken, err := m.GenerateAccessToken(defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate access token: %v", err)
 	}
@@ -543,10 +550,11 @@ func TestValidateRefreshToken(t *testing.T) {
 }
 
 func TestRefreshAccessToken(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	// Generate a refresh token
-	refreshToken, err := m.GenerateRefreshToken(testUsername)
+	refreshToken, err := m.GenerateRefreshToken(defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate refresh token: %v", err)
 	}
@@ -566,8 +574,8 @@ func TestRefreshAccessToken(t *testing.T) {
 	if claims.TokenType != "access" {
 		t.Errorf("expected token type 'access', got %q", claims.TokenType)
 	}
-	if claims.Username != testUsername {
-		t.Errorf("expected username %s, got %s", testUsername, claims.Username)
+	if claims.Username != defaults.Auth.Username {
+		t.Errorf("expected username %s, got %s", defaults.Auth.Username, claims.Username)
 	}
 
 	// Try with invalid refresh token
@@ -577,7 +585,7 @@ func TestRefreshAccessToken(t *testing.T) {
 	}
 
 	// Try with access token (not refresh token)
-	accessToken, _ := m.GenerateAccessToken(testUsername)
+	accessToken, _ := m.GenerateAccessToken(defaults.Auth.Username)
 	_, err = m.RefreshAccessToken(accessToken)
 	if err != ErrInvalidToken {
 		t.Errorf("expected ErrInvalidToken for access token, got %v", err)
@@ -633,18 +641,19 @@ func TestExtractTokenFromSubprotocol(t *testing.T) {
 }
 
 func TestMiddlewareWithCookie(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	// Get a valid token
-	token, err := m.Authenticate(testUsername, testPassword)
+	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check that username was set in header
-		if r.Header.Get("X-Username") != testUsername {
-			t.Errorf("expected X-Username to be %q, got %q", testUsername, r.Header.Get("X-Username"))
+		if r.Header.Get("X-Username") != defaults.Auth.Username {
+			t.Errorf("expected X-Username to be %q, got %q", defaults.Auth.Username, r.Header.Get("X-Username"))
 		}
 		w.WriteHeader(http.StatusOK)
 	})
@@ -663,7 +672,8 @@ func TestMiddlewareWithCookie(t *testing.T) {
 }
 
 func TestMiddlewareSkipSetupEndpoints(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -692,9 +702,10 @@ func TestMiddlewareSkipSetupEndpoints(t *testing.T) {
 }
 
 func TestMiddlewareExpiredToken(t *testing.T) {
-	m := NewManager("test-secret", time.Millisecond, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Millisecond, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
-	token, err := m.Authenticate(testUsername, testPassword)
+	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -724,9 +735,10 @@ func TestMiddlewareExpiredToken(t *testing.T) {
 }
 
 func TestMiddlewareWebSocketAuth(t *testing.T) {
-	m := NewManager("test-secret", time.Hour, testUsername, testPasswordHash)
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
-	token, err := m.Authenticate(testUsername, testPassword)
+	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}

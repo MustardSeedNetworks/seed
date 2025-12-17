@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/network"
+	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 // testEndpointServer holds shared test server state.
@@ -25,12 +25,10 @@ func newTestEndpointServer(t *testing.T) *testEndpointServer {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "test-config.yaml")
 
-	cfg := config.DefaultConfig()
-	cfg.Server.Port = 8080
-	cfg.Server.HTTPS = false
-	cfg.Auth.DefaultUsername = "admin"
-	cfg.Auth.DefaultPasswordHash = "$2a$10$test"
-	cfg.Interface.Default = "lo"
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().
+		WithPort(8080).
+		Build()
 
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save test config: %v", err)
@@ -222,8 +220,8 @@ func TestWebSocketHub(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "test-config.yaml")
 
-	cfg := config.DefaultConfig()
-	cfg.Interface.Default = "lo"
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().Build()
 
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save test config: %v", err)
@@ -286,8 +284,8 @@ func TestDevicesEndpoints(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "test-config.yaml")
 
-	cfg := config.DefaultConfig()
-	cfg.Interface.Default = "lo"
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().Build()
 	cfg.NetworkDiscovery.Enabled = true
 
 	if err := cfg.Save(configPath); err != nil {
@@ -365,8 +363,8 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "test-config.yaml")
 
-	cfg := config.DefaultConfig()
-	cfg.Interface.Default = "lo"
+	// Use testutil for consistent test configuration
+	cfg := testutil.NewConfigBuilder().Build()
 
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save test config: %v", err)
