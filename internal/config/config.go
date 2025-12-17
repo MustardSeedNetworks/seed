@@ -50,6 +50,7 @@ type Config struct {
 	FABOptions       FABOptionsConfig       `yaml:"fab_options"`
 	DisplayOptions   DisplayOptionsConfig   `yaml:"display_options"`
 	Logging          LoggingConfig          `yaml:"logging"`
+	MCP              MCPConfig              `yaml:"mcp"`
 }
 
 // Lock acquires a write lock on the config.
@@ -470,6 +471,25 @@ type LoggingConfig struct {
 	Compress   bool   `yaml:"compress"`    // Compress rotated files
 }
 
+// MCPConfig contains MCP (Model Context Protocol) server settings.
+// MCP enables AI assistants like Claude to interact with the network diagnostics tools.
+type MCPConfig struct {
+	// Enabled enables the MCP server endpoint.
+	Enabled bool `yaml:"enabled"`
+
+	// RequireAuth requires JWT authentication for MCP connections.
+	// When true, MCP requests must include a valid Bearer token.
+	RequireAuth bool `yaml:"require_auth"`
+
+	// RateLimitPerMinute limits requests per minute per client.
+	// Set to 0 for unlimited (not recommended).
+	RateLimitPerMinute int `yaml:"rate_limit_per_minute"`
+
+	// AllowedTools lists specific tools to expose via MCP.
+	// Empty list means all tools are available.
+	AllowedTools []string `yaml:"allowed_tools,omitempty"`
+}
+
 // DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
 	return &Config{
@@ -633,6 +653,12 @@ func DefaultConfig() *Config {
 			MaxBackups: 5,
 			MaxAge:     30,
 			Compress:   true,
+		},
+		MCP: MCPConfig{
+			Enabled:            false, // Disabled by default, enable explicitly
+			RequireAuth:        true,  // Require authentication by default for security
+			RateLimitPerMinute: 60,    // 60 requests per minute default
+			AllowedTools:       nil,   // All tools available when empty
 		},
 	}
 }

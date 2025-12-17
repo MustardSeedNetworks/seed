@@ -19,8 +19,8 @@ type Broadcaster interface {
 type RingBuffer struct {
 	entries []*LogEntry
 	size    int
-	head    int   // Next write position
-	count   int   // Number of entries currently stored
+	head    int // Next write position
+	count   int // Number of entries currently stored
 	mu      sync.RWMutex
 }
 
@@ -62,7 +62,7 @@ func (rb *RingBuffer) GetAll() []*LogEntry {
 		start = rb.head
 	}
 
-	for i := 0; i < rb.count; i++ {
+	for i := range rb.count {
 		idx := (start + i) % rb.size
 		result[i] = rb.entries[idx]
 	}
@@ -84,18 +84,9 @@ func (rb *RingBuffer) GetRecent(n int) []*LogEntry {
 	}
 
 	result := make([]*LogEntry, n)
-	// Calculate starting position for the last n entries
-	startIdx := rb.head - n
-	if startIdx < 0 {
-		startIdx += rb.size
-	}
-	if rb.count < rb.size {
-		// Buffer not full yet
-		startIdx = rb.count - n
-	}
 
-	for i := 0; i < n; i++ {
-		idx := (startIdx + i) % rb.size
+	for i := range n {
+		var idx int
 		if rb.count == rb.size {
 			idx = (rb.head - n + i + rb.size) % rb.size
 		} else {
@@ -126,9 +117,9 @@ func (rb *RingBuffer) Clear() {
 // LogBroadcaster manages broadcasting log entries to WebSocket clients
 // and maintains a buffer of recent logs for new client connections.
 type LogBroadcaster struct {
-	buffer     *RingBuffer
+	buffer      *RingBuffer
 	broadcaster Broadcaster // Injected dependency to avoid circular imports
-	mu         sync.RWMutex
+	mu          sync.RWMutex
 }
 
 // NewLogBroadcaster creates a new LogBroadcaster with the specified buffer size.
@@ -176,7 +167,7 @@ func (lb *LogBroadcaster) LogCount() int {
 	return lb.buffer.Count()
 }
 
-// global log broadcaster instance
+// Global log broadcaster instance.
 var (
 	globalBroadcaster *LogBroadcaster
 	broadcasterMu     sync.RWMutex

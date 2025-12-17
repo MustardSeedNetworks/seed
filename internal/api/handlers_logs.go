@@ -42,16 +42,16 @@ type LogQueryResponse struct {
 
 // LogStatsResponse represents log statistics.
 type LogStatsResponse struct {
-	TotalCount      int            `json:"total_count"`
-	ByLevel         map[string]int `json:"by_level"`
-	ByLayer         map[string]int `json:"by_layer"`
-	ByComponent     map[string]int `json:"by_component"`
-	ErrorsLastHour  int            `json:"errors_last_hour"`
-	WarningsLastHour int           `json:"warnings_last_hour"`
+	TotalCount       int            `json:"total_count"`
+	ByLevel          map[string]int `json:"by_level"`
+	ByLayer          map[string]int `json:"by_layer"`
+	ByComponent      map[string]int `json:"by_component"`
+	ErrorsLastHour   int            `json:"errors_last_hour"`
+	WarningsLastHour int            `json:"warnings_last_hour"`
 }
 
 // handleClientLogs receives log entries from the frontend and stores them.
-// POST /api/logs/client
+// POST /api/logs/client.
 func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -100,7 +100,7 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLogsQuery returns logs matching the specified filters.
-// GET /api/logs/query?level=ERROR,WARN&layer=backend,api&component=auth&search=failed&limit=100&offset=0
+// GET /api/logs/query?level=ERROR,WARN&layer=backend,api&component=auth&search=failed&limit=100&offset=0.
 func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -136,7 +136,7 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 
 	// Get all logs and filter
 	allLogs := broadcaster.GetAllLogs()
-	var filtered []*logging.LogEntry
+	filtered := make([]*logging.LogEntry, 0, len(allLogs))
 
 	for _, log := range allLogs {
 		// Filter by level
@@ -308,9 +308,8 @@ func parseCSV(s string) []string {
 
 // containsIgnoreCase checks if a slice contains a string (case-insensitive).
 func containsIgnoreCase(slice []string, target string) bool {
-	targetLower := strings.ToLower(target)
 	for _, s := range slice {
-		if strings.ToLower(s) == targetLower {
+		if strings.EqualFold(s, target) {
 			return true
 		}
 	}
