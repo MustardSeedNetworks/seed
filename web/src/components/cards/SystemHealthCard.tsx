@@ -136,10 +136,10 @@ function ResourceBar({
         <span className="text-text-primary font-medium">{percent.toFixed(0)}%</span>
       </div>
       <div className={`h-2 bg-surface-border ${radius.md} overflow-hidden`}>
-        {(() => {
-          const pct = Math.min(percent, 100);
-          return <div className={`h-full ${barColor} transition-all duration-300 w-[${pct}%]`} />;
-        })()}
+        <div
+          className={`h-full ${barColor} transition-all duration-300`}
+          style={{ width: `${Math.min(percent, 100)}%` }}
+        />
       </div>
       <div className="caption">
         {formatBytes(used)} / {formatBytes(total)}
