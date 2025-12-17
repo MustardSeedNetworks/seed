@@ -537,19 +537,39 @@ lint-frontend: ## Run frontend linter
 	@cd web && npm run lint
 	@echo "✅ Frontend lint complete"
 
+# Auto-fix linting issues
+fix: lint-backend-fix lint-frontend-fix ## Auto-fix all linting issues
+	@echo "✅ All auto-fixes complete"
+
+# Auto-fix Go linting issues (formatting, imports, simple fixes)
+lint-backend-fix: ## Auto-fix Go linting issues
+	@echo "🔧 Auto-fixing Go code..."
+	@if ! command -v golangci-lint > /dev/null 2>&1; then \
+		echo "📦 Installing golangci-lint..."; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+	fi
+	@golangci-lint run --fix
+	@echo "✅ Go auto-fix complete"
+
+# Auto-fix frontend linting issues
+lint-frontend-fix: ## Auto-fix frontend linting issues
+	@echo "🔧 Auto-fixing frontend code..."
+	@cd web && npm run lint -- --fix
+	@echo "✅ Frontend auto-fix complete"
+
 # Format Go code
 fmt: ## Format Go code with gofumpt
 	@if ! command -v gofumpt > /dev/null 2>&1; then \
 		echo "📦 Installing gofumpt..."; \
 		go install mvdan.cc/gofumpt@latest; \
 	fi
-	gofumpt -w .
+	@gofumpt -w .
 	@echo "✅ Go code formatted"
 
 # Format frontend code
 fmt-frontend: ## Format frontend code with Prettier
-	cd web && npx prettier --write .
-	@echo "Frontend code formatted"
+	@cd web && npx prettier --write .
+	@echo "✅ Frontend code formatted"
 
 # Format markdown files
 fmt-md: ## Format markdown files with Prettier
