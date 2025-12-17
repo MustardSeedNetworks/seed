@@ -32,6 +32,7 @@
 
 import { useState, useCallback } from "react";
 import { getAuthHeaders } from "./useAuth";
+import { logger, LogComponents } from "../lib/logger";
 import type {
   DeviceVulnerabilities,
   VulnerabilityScannerStatus,
@@ -103,7 +104,7 @@ export function useVulnerabilities() {
       }
       return await response.json();
     } catch (error) {
-      console.error("Failed to fetch vulnerability status:", error);
+      logger.error(LogComponents.VULN, "Failed to fetch vulnerability status", error);
       return null;
     }
   }, []);
@@ -124,7 +125,7 @@ export function useVulnerabilities() {
       const data: ResultsResponse = await response.json();
       return data.results || [];
     } catch (error) {
-      console.error("Failed to fetch vulnerability results:", error);
+      logger.error(LogComponents.VULN, "Failed to fetch vulnerability results", error);
       return [];
     }
   }, []);
@@ -145,7 +146,9 @@ export function useVulnerabilities() {
 
         return await response.json();
       } catch (error) {
-        console.error(`Failed to fetch vulnerabilities for device ${ip}:`, error);
+        logger.error(LogComponents.VULN, "Failed to fetch vulnerabilities for device", error, {
+          ip,
+        });
         return null;
       }
     },
@@ -162,7 +165,7 @@ export function useVulnerabilities() {
       }
       return await response.json();
     } catch (error) {
-      console.error("Failed to fetch vulnerability settings:", error);
+      logger.error(LogComponents.VULN, "Failed to fetch vulnerability settings", error);
       return null;
     }
   }, []);
@@ -181,7 +184,7 @@ export function useVulnerabilities() {
 
         return response.ok;
       } catch (error) {
-        console.error("Failed to update vulnerability settings:", error);
+        logger.error(LogComponents.VULN, "Failed to update vulnerability settings", error);
         return false;
       }
     },

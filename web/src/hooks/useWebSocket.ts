@@ -28,6 +28,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { logger, LogComponents } from "../lib/logger";
 
 /** WebSocket connection status states */
 export type ConnectionStatus =
@@ -136,13 +137,18 @@ export function useWebSocket({
       // Connection closed - attempt reconnection if within retry limit
       wsRef.current.onclose = (event) => {
         setStatus("disconnected");
-        console.warn("WebSocket closed:", event.code, event.reason);
+        logger.warn(LogComponents.WEBSOCKET, "WebSocket closed", {
+          code: event.code,
+          reason: event.reason,
+        });
 
         // Schedule reconnection attempt if not exceeded max attempts
         if (reconnectAttempts.current < maxReconnectAttempts) {
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttempts.current++;
-            console.warn(`WebSocket reconnecting... attempt ${reconnectAttempts.current}`);
+            logger.warn(LogComponents.WEBSOCKET, "WebSocket reconnecting", {
+              attempt: reconnectAttempts.current,
+            });
             connectRef.current?.(); // Call via ref to avoid stale closure
           }, reconnectInterval);
         }
@@ -151,7 +157,7 @@ export function useWebSocket({
       // Connection error occurred
       wsRef.current.onerror = (error) => {
         setStatus("error");
-        console.error("WebSocket error:", error);
+        logger.error(LogComponents.WEBSOCKET, "WebSocket error", error);
       };
 
       // Message received from server
@@ -174,13 +180,15 @@ export function useWebSocket({
               onMessage(message);
             }
           } catch (error) {
-            console.error("Failed to parse WebSocket message:", error, "payload=", payload);
+            logger.error(LogComponents.WEBSOCKET, "Failed to parse WebSocket message", error, {
+              payload,
+            });
           }
         }
       };
     } catch (error) {
       setStatus("error");
-      console.error("Failed to create WebSocket:", error);
+      logger.error(LogComponents.WEBSOCKET, "Failed to create WebSocket", error);
     }
   }, [url, token, onMessage, onCardUpdate, reconnectInterval, maxReconnectAttempts]);
 
@@ -226,7 +234,7 @@ export function useWebSocket({
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {
-      console.warn("WebSocket not connected, cannot send message");
+      logger.warn(LogComponents.WEBSOCKET, "WebSocket not connected, cannot send message");
     }
   }, []);
 

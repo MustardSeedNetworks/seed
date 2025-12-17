@@ -37,6 +37,7 @@ import { useSettings } from "../../contexts/useSettings";
 import { Gauge } from "../ui/Icons";
 import { SpeedGauge, ProgressRing, PulsingDot } from "../ui/SpeedGauge";
 import { icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
+import { logger, LogComponents } from "../../lib/logger";
 
 // Speedtest types
 interface SpeedtestData {
@@ -194,7 +195,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         }
       }
     } catch (err) {
-      console.error("Failed to manage iperf server:", err);
+      logger.error(LogComponents.IPERF, "Failed to manage iperf server", err);
     }
   }, []);
 
@@ -244,7 +245,7 @@ export const PerformanceCard = memo(function PerformanceCard({
           setIperfServerStatus(await iperfServerRes.json());
         }
       } catch (err) {
-        console.error("Failed to fetch performance status:", err);
+        logger.error(LogComponents.SPEEDTEST, "Failed to fetch performance status", err);
       }
     };
     fetchStatus();
@@ -304,7 +305,7 @@ export const PerformanceCard = memo(function PerformanceCard({
           }
         }
       } catch (err) {
-        console.error("Failed to poll speedtest status:", err);
+        logger.error(LogComponents.SPEEDTEST, "Failed to poll speedtest status", err);
       }
     }, 1000);
 
@@ -337,7 +338,7 @@ export const PerformanceCard = memo(function PerformanceCard({
           }
         }
       } catch (err) {
-        console.error("Failed to poll iperf status:", err);
+        logger.error(LogComponents.IPERF, "Failed to poll iperf status", err);
       }
     }, 1000);
 

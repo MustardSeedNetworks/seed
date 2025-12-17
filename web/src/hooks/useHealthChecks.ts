@@ -25,6 +25,7 @@
 
 import { useState, useCallback } from "react";
 import { api } from "../lib/api";
+import { logger, LogComponents } from "../lib/logger";
 
 /** DNS test result */
 export interface DNSTestResult {
@@ -111,7 +112,7 @@ export function useHealthChecks() {
       const data = await api.get<{ results: DNSTestResult[] }>("/api/dns");
       return data.results || [];
     } catch (err) {
-      console.error("DNS tests failed:", err);
+      logger.error(LogComponents.DNS, "DNS tests failed", err);
       return [];
     }
   }, []);
@@ -123,7 +124,7 @@ export function useHealthChecks() {
     try {
       return await api.get<GatewayTestResult>("/api/gateway");
     } catch (err) {
-      console.error("Gateway test failed:", err);
+      logger.error(LogComponents.GATEWAY, "Gateway test failed", err);
       return null;
     }
   }, []);
@@ -137,7 +138,7 @@ export function useHealthChecks() {
       const data = await api.post<{ results: CustomTestResult[] }>("/api/tests/run");
       return data.results || [];
     } catch (err) {
-      console.error("Custom tests failed:", err);
+      logger.error(LogComponents.SYSTEM, "Custom tests failed", err);
       return [];
     } finally {
       setIsRunning(false);
@@ -223,7 +224,7 @@ export function useHealthChecks() {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Health check failed";
         setError(message);
-        console.error("Health check failed:", err);
+        logger.error(LogComponents.SYSTEM, "Health check failed", err);
         return null;
       } finally {
         setIsRunning(false);
@@ -239,7 +240,7 @@ export function useHealthChecks() {
     try {
       return await api.get<TestsSettings>("/api/tests/settings");
     } catch (err) {
-      console.error("Failed to fetch test settings:", err);
+      logger.error(LogComponents.CONFIG, "Failed to fetch test settings", err);
       return null;
     }
   }, []);
@@ -252,7 +253,7 @@ export function useHealthChecks() {
       await api.put("/api/tests/settings", settings);
       return true;
     } catch (err) {
-      console.error("Failed to update test settings:", err);
+      logger.error(LogComponents.CONFIG, "Failed to update test settings", err);
       return false;
     }
   }, []);

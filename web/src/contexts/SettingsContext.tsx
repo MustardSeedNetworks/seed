@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { getAuthHeaders } from "../hooks/useAuth";
+import { logger, LogComponents } from "../lib/logger";
 import {
   FABOptions,
   DisplayOptions,
@@ -90,7 +91,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         }
       }
     } catch (err) {
-      console.error("Failed to fetch settings:", err);
+      logger.error(LogComponents.CONFIG, "Failed to fetch settings", err);
     }
   }, []);
 

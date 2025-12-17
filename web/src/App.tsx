@@ -37,6 +37,7 @@ import { SettingsDrawer } from "./components/settings/SettingsDrawer";
 import { ImprovedHelpModal } from "./components/help/ImprovedHelpModal";
 import { SetupWizard } from "./components/setup/SetupWizard";
 import { checkSetupStatus } from "./components/setup/setupApi";
+import { logger, LogComponents } from "./lib/logger";
 
 // API base URL - configurable via environment variable
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -222,7 +223,7 @@ function App() {
         // isWifi is now set by fetchWiFiData which properly detects wireless interfaces
       }
     } catch (err) {
-      console.error("Failed to fetch link data:", err);
+      logger.error(LogComponents.NETWORK, "Failed to fetch link data", err);
     }
   }, []);
 
@@ -247,7 +248,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error("Failed to fetch IP config:", err);
+      logger.error(LogComponents.NETWORK, "Failed to fetch IP config", err);
     }
   }, []);
 
@@ -262,7 +263,7 @@ function App() {
         setInterfaces(data);
       }
     } catch (err) {
-      console.error("Failed to fetch interfaces:", err);
+      logger.error(LogComponents.NETWORK, "Failed to fetch interfaces", err);
     }
   }, []);
 
@@ -279,7 +280,7 @@ function App() {
         }
       }
     } catch (err) {
-      console.error("Failed to fetch version:", err);
+      logger.error(LogComponents.SYSTEM, "Failed to fetch version", err);
     }
   }, []);
 
@@ -313,7 +314,7 @@ function App() {
         }
       }
     } catch (err) {
-      console.error("Failed to fetch discovery data:", err);
+      logger.error(LogComponents.DISCOVERY, "Failed to fetch discovery data", err);
     }
   }, []);
 
@@ -375,7 +376,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error("Failed to fetch DNS data:", err);
+      logger.error(LogComponents.DNS, "Failed to fetch DNS data", err);
     }
   }, []);
 
@@ -398,7 +399,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error("Failed to fetch VLAN data:", err);
+      logger.error(LogComponents.VLAN, "Failed to fetch VLAN data", err);
     }
   }, []);
 
@@ -441,7 +442,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error("Failed to fetch Gateway data:", err);
+      logger.error(LogComponents.GATEWAY, "Failed to fetch Gateway data", err);
     }
   }, []);
 
@@ -473,7 +474,7 @@ function App() {
         }
       }
     } catch (err) {
-      console.error("Failed to fetch Wi-Fi data:", err);
+      logger.error(LogComponents.WIFI, "Failed to fetch Wi-Fi data", err);
     }
   }, []);
 
@@ -496,7 +497,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error("Failed to fetch Cable data:", err);
+      logger.error(LogComponents.CABLE, "Failed to fetch Cable data", err);
     }
   }, []);
 
@@ -519,7 +520,7 @@ function App() {
         }));
       }
     } catch (err) {
-      console.error("Failed to fetch Public IP data:", err);
+      logger.error(LogComponents.PUBLICIP, "Failed to fetch Public IP data", err);
     }
   }, []);
 
@@ -549,7 +550,7 @@ function App() {
         });
       }
     } catch (err) {
-      console.error("Failed to fetch network discovery data:", err);
+      logger.error(LogComponents.DEVICES, "Failed to fetch network discovery data", err);
     }
   }, [currentInterface]);
 
@@ -590,7 +591,7 @@ function App() {
         setTimeout(() => clearInterval(pollInterval), 60000);
       }
     } catch (err) {
-      console.error("Failed to trigger device scan:", err);
+      logger.error(LogComponents.DEVICES, "Failed to trigger device scan", err);
       setNetworkDiscovery((prev) =>
         prev
           ? {
@@ -630,7 +631,7 @@ function App() {
           fetchCableData();
         }
       } catch (err) {
-        console.error("Failed to change interface:", err);
+        logger.error(LogComponents.NETWORK, "Failed to change interface", err);
       }
     },
     [
@@ -730,7 +731,7 @@ function App() {
       setTimeout(() => {
         window.removeEventListener("cardTestComplete", handleCardComplete as EventListener);
         if (completed.size < cardTestsToWait.length) {
-          console.warn("FAB timeout: Not all card tests completed, signaling done anyway");
+          logger.warn(LogComponents.UI, "FAB timeout: Not all card tests completed, signaling done anyway");
           window.dispatchEvent(new CustomEvent("testsComplete"));
         }
       }, 90000);

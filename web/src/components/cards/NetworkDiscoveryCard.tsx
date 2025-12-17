@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { getAuthHeaders } from "../../hooks/useAuth";
+import { logger, LogComponents } from "../../lib/logger";
 import {
   ScanSearch,
   Terminal,
@@ -973,7 +974,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         });
       }
     } catch (error) {
-      console.error("Deep scan failed:", error);
+      logger.error(LogComponents.DISCOVERY, "Deep scan failed", error);
     } finally {
       setScanningDevices((prev) => {
         const next = new Set(prev);
