@@ -29,6 +29,7 @@ import {
   type AirMapperParseResult,
 } from "../../utils/airmapper";
 import { getAuthHeaders } from "../../hooks/useAuth";
+import { logger, LogComponents } from "../../lib/logger";
 import { Upload, FileArchive, AlertTriangle, Check, X, MapPin, Radio, Users } from "lucide-react";
 import { radius, spacing, layout, button, icon as iconTokens } from "../../styles/theme";
 
@@ -83,7 +84,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
           setParseResult(backendResult);
         } else {
           // Fallback to client-side parsing if backend fails
-          console.warn("Backend parsing failed, falling back to client-side:", backendResult.error);
+          logger.warn(LogComponents.SURVEY, "Backend parsing failed, falling back to client-side", {
+            error: backendResult.error,
+          });
           const buffer = await file.arrayBuffer();
           const result = await parseAirMapperFile(buffer);
           setParseResult(result);

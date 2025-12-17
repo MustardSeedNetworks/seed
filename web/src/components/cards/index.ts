@@ -49,3 +49,4 @@ export {
   type DiscoveryStatus,
 } from "./NetworkDiscoveryCard";
 export { PublicIPCard, type PublicIPData } from "./PublicIPCard";
+export { LogViewerCard, type LogViewerCardProps } from "./LogViewerCard";

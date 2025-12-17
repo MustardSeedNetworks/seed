@@ -49,6 +49,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 const (
@@ -432,6 +434,28 @@ func (h *Hub) ClientCount() int {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return len(h.clients)
+}
+
+// BroadcastLogEntry sends a log entry to all connected clients.
+// This is used by the logging package to stream logs in real-time.
+func (h *Hub) BroadcastLogEntry(entry interface{}) {
+	h.Broadcast(Message{
+		Type:    "log_entry",
+		Payload: entry,
+	})
+}
+
+// logBroadcastAdapter wraps the Hub to implement logging.Broadcaster interface.
+// This adapter allows the logging package to broadcast logs without importing the api package.
+type logBroadcastAdapter struct {
+	hub *Hub
+}
+
+// BroadcastLogEntry implements logging.Broadcaster interface.
+func (a *logBroadcastAdapter) BroadcastLogEntry(entry *logging.LogEntry) {
+	if a.hub != nil {
+		a.hub.BroadcastLogEntry(entry)
+	}
 }
 
 // handleWebSocket handles WebSocket connections.

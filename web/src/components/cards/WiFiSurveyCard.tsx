@@ -29,6 +29,7 @@ import { Card, Status } from "../ui/Card";
 import { useSurvey, type Survey, type SurveyType } from "../../hooks/useSurvey";
 import { SurveyView } from "../survey/SurveyView";
 import { Activity } from "../ui/Icons";
+import { logger, LogComponents } from "../../lib/logger";
 import {
   radius,
   input as inputTokens,
@@ -82,7 +83,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
       // Automatically open the survey view for setup
       setSelectedSurvey(newSurvey);
     } catch (err) {
-      console.error("Failed to create survey:", err);
+      logger.error(LogComponents.SURVEY, "Failed to create survey", err);
     }
   };
 

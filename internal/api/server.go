@@ -55,6 +55,7 @@ type Server struct {
 	loginRateLimiter    *RateLimiter
 	endpointRateLimiter *EndpointRateLimiter // Rate limiter for expensive endpoints (fixes #530)
 	wsHub               *Hub
+	logBroadcaster      *logging.LogBroadcaster // Log broadcaster for real-time log streaming
 	mux                 *http.ServeMux
 	netManager          *network.Manager
 	linkMonitor         *network.LinkMonitor
@@ -164,6 +165,11 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 	s.wsHub = NewHub()
 	// Start hub before setupRoutes to prevent race condition
 	go s.wsHub.Run()
+
+	// Initialize log broadcaster for real-time log streaming
+	s.logBroadcaster = logging.InitBroadcaster(1000) // Buffer last 1000 log entries
+	s.logBroadcaster.SetBroadcaster(&logBroadcastAdapter{hub: s.wsHub})
+	slog.Info("Log broadcaster initialized", "buffer_size", 1000)
 
 	// Initialize vulnerability scanner if enabled
 	if cfg.Security.VulnerabilityScanning.Enabled {
@@ -293,6 +299,11 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/discovery/fingerprint", s.handleAdvancedFingerprint)
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
 	s.mux.HandleFunc("/api/logs", s.handleLogs)
+	// Enhanced logging API endpoints (comprehensive logging enhancement)
+	s.mux.HandleFunc("/api/logs/client", s.handleClientLogs)   // Receive frontend logs
+	s.mux.HandleFunc("/api/logs/query", s.handleLogsQuery)     // Query logs with filters
+	s.mux.HandleFunc("/api/logs/stats", s.handleLogsStats)     // Get log statistics
+	s.mux.HandleFunc("/api/logs/recent", s.handleLogsRecent)   // Get recent logs
 	s.mux.HandleFunc("/api/health", s.handleHealth) // Simple liveness check (fixes #540)
 	s.mux.HandleFunc("/api/system/health", s.handleSystemHealth)
 
@@ -540,18 +551,20 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
-	// Apply middleware stack: panic recovery → request ID → security headers → body limit → CORS → i18n → auth (fixes #519)
+	// Apply middleware stack: panic recovery → request ID → logging → security headers → body limit → CORS → i18n → auth (fixes #519)
 	// Panic recovery is outermost to catch all panics
 	// Request ID middleware generates unique IDs for request correlation in logs
+	// Logging middleware logs all HTTP requests with timing, status, and request IDs
 	// Body limit middleware enforces request body size limits
 	// i18n middleware extracts Accept-Language and attaches localizer to context
 	handler := recoverMiddleware(
 		logging.RequestIDMiddleware(
-			securityHeadersMiddleware(
-				bodyLimitMiddleware(
-					corsMiddleware(
-						i18n.Middleware()(
-							s.authManager.Middleware(s.mux)))))))
+			logging.LoggingMiddleware(
+				securityHeadersMiddleware(
+					bodyLimitMiddleware(
+						corsMiddleware(
+							i18n.Middleware()(
+								s.authManager.Middleware(s.mux))))))))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
