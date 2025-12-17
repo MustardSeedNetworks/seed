@@ -433,7 +433,7 @@ export function generateReport(
     generatedAt: new Date().toISOString(),
     generatedBy: companyName,
     surveyType: survey.surveyType,
-    sampleCount: survey.samples.length,
+    sampleCount: survey.samples?.length ?? 0,
     facilitySize: calculateFacilitySize(survey),
     scaleInfo: getScaleInfo(survey),
   };

@@ -24,7 +24,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X, FileText, Download, Loader, CheckCircle } from "lucide-react";
-import { radius, spacing, button, layout } from "../../styles/theme";
+import { radius, spacing, button } from "../../styles/theme";
 import { getAuthHeaders } from "../../hooks/useAuth";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";

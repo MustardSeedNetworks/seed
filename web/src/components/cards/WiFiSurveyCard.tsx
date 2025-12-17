@@ -190,7 +190,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                     >
                       <span>{getSurveyTypeLabel(survey.surveyType)}</span>
                       <span>
-                        {survey.samples.length} {t("survey.samples").toLowerCase()}
+                        {(survey.samples?.length ?? 0)} {t("survey.samples").toLowerCase()}
                       </span>
                     </div>
                   </div>
