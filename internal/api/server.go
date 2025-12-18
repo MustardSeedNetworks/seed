@@ -34,6 +34,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
+	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/publicip"
 	"github.com/krisarmstrong/seed/internal/speedtest"
 	"github.com/krisarmstrong/seed/internal/survey"
@@ -76,10 +77,11 @@ type Server struct {
 	surveyManager       *survey.Manager
 	vulnScanner         *discovery.VulnerabilityScanner
 	publicipChecker     *publicip.Checker
-	icmpAvailable       bool         // Whether raw ICMP sockets are available
-	startTime           time.Time    // Application start time for uptime tracking (fixes #540)
-	redirectServer      *http.Server // HTTP→HTTPS redirect server (fixes #515)
-	redirectServerErr   chan error   // Error channel for redirect server
+	oauthManager        *oauth.Manager // OAuth SSO provider manager
+	icmpAvailable       bool           // Whether raw ICMP sockets are available
+	startTime           time.Time      // Application start time for uptime tracking (fixes #540)
+	redirectServer      *http.Server   // HTTP→HTTPS redirect server (fixes #515)
+	redirectServerErr   chan error     // Error channel for redirect server
 }
 
 // NewServer creates a new server instance.
@@ -160,6 +162,9 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 	if err := s.surveyManager.LoadSurveys(); err != nil {
 		slog.Warn("Failed to load surveys", "error", err)
 	}
+
+	// Initialize OAuth manager for SSO
+	s.initOAuthManager()
 
 	// Initialize WebSocket hub (fixes #512)
 	s.wsHub = NewHub()
@@ -345,8 +350,8 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/survey/dead-zones", s.getSurveyDeadZones)
 
 	// Multi-floor survey routes (#654)
-	s.mux.HandleFunc("/api/survey/floors", s.handleSurveyFloors)        // GET=list, POST=add
-	s.mux.HandleFunc("/api/survey/floor", s.handleSurveyFloor)          // GET, PUT, DELETE
+	s.mux.HandleFunc("/api/survey/floors", s.handleSurveyFloors) // GET=list, POST=add
+	s.mux.HandleFunc("/api/survey/floor", s.handleSurveyFloor)   // GET, PUT, DELETE
 	s.mux.HandleFunc("/api/survey/floor/floorplan", s.updateFloorFloorPlan)
 	s.mux.HandleFunc("/api/survey/floor/sample", s.addFloorSample)
 	s.mux.HandleFunc("/api/survey/active-floor", s.setActiveFloor)
@@ -362,6 +367,13 @@ func (s *Server) setupRoutes() {
 	// Setup routes (no auth required for initial setup)
 	s.mux.HandleFunc("/api/setup/status", s.handleSetupStatus)
 	s.mux.HandleFunc("/api/setup/complete", s.handleSetupComplete)
+
+	// SSO routes (no auth required - OAuth flow handles authentication)
+	s.mux.HandleFunc("/api/sso/providers", s.handleSSOProviders)
+	s.mux.HandleFunc("/api/sso/login", s.handleSSOLogin)
+	s.mux.HandleFunc("/api/sso/callback", s.handleSSOCallback)
+	s.mux.HandleFunc("/api/sso/settings", s.handleSSOSettings)
+	s.mux.HandleFunc("/api/sso/update", s.handleSSOUpdate)
 
 	// WebSocket
 	s.mux.HandleFunc("/ws", s.handleWebSocket)

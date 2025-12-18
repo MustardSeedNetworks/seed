@@ -1375,10 +1375,24 @@ interface LoginFormProps {
   error: string | null;
 }
 
+// Helper to extract and clear SSO error from URL
+function getAndClearSsoError(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  const errorParam = params.get("sso_error");
+  if (errorParam) {
+    // Clean URL without reload
+    window.history.replaceState({}, "", window.location.pathname);
+    return decodeURIComponent(errorParam.replace(/%20/g, " "));
+  }
+  return null;
+}
+
 function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   const { t } = useTranslation("common");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  // Initialize SSO error from URL params using lazy initialization
+  const [ssoError] = useState<string | null>(getAndClearSsoError);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1520,13 +1534,13 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             />
           </div>
 
-          {error && (
+          {(error || ssoError) && (
             <div
               role="alert"
               aria-live="assertive"
               className={`pad-sm bg-status-error/10 border border-status-error/20 ${radius.md} text-status-error body-small`}
             >
-              {error}
+              {error || ssoError}
             </div>
           )}
 
@@ -1557,6 +1571,13 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               className={`w-full ${button.size.md} bg-brand-secondary text-text-inverse ${radius.md} font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
             >
               {t("buttons.signInWithMicrosoft")}
+            </button>
+            <button
+              type="button"
+              onClick={() => (window.location.href = `${API_BASE}/api/sso/login?provider=github`)}
+              className={`w-full ${button.size.md} bg-surface-sunken text-text-primary ${radius.md} font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50`}
+            >
+              {t("buttons.signInWithGitHub")}
             </button>
           </div>
         </form>

@@ -157,10 +157,11 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Skip CSRF for auth endpoints that don't have a session yet
+		// Skip CSRF for auth endpoints that don't have a session yet, and SSO
 		if r.URL.Path == "/api/auth/login" ||
 			r.URL.Path == "/api/setup/status" ||
-			r.URL.Path == "/api/setup/complete" {
+			r.URL.Path == "/api/setup/complete" ||
+			strings.HasPrefix(r.URL.Path, "/api/sso/") {
 			next.ServeHTTP(w, r)
 			return
 		}

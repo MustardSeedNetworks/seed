@@ -276,11 +276,12 @@ func extractTokenFromSubprotocol(protocols string) string {
 // Middleware returns an HTTP middleware that validates JWT tokens.
 func (m *Manager) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip auth for login, refresh, and setup endpoints (fixes #478)
+		// Skip auth for login, refresh, setup, and SSO endpoints (fixes #478)
 		if r.URL.Path == "/api/auth/login" ||
 			r.URL.Path == "/api/auth/refresh" ||
 			r.URL.Path == "/api/setup/status" ||
-			r.URL.Path == "/api/setup/complete" {
+			r.URL.Path == "/api/setup/complete" ||
+			strings.HasPrefix(r.URL.Path, "/api/sso/") {
 			next.ServeHTTP(w, r)
 			return
 		}

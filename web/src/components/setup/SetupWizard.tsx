@@ -413,6 +413,13 @@ export function SetupWizard({ onComplete, onLogin, suggestedPassword }: SetupWiz
             >
               {t("common:buttons.signInWithMicrosoft")}
             </button>
+            <button
+              type="button"
+              onClick={() => (window.location.href = `${API_BASE}/api/sso/login?provider=github`)}
+              className={`w-full ${button.size.md} bg-surface-sunken text-text-primary ${radius.md} font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50`}
+            >
+              {t("common:buttons.signInWithGitHub")}
+            </button>
           </div>
         </form>
       </div>

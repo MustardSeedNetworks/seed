@@ -464,11 +464,13 @@ type SSOConfig struct {
 
 // SSOProviderConfig contains settings for a single SSO provider.
 type SSOProviderConfig struct {
-	Enabled      bool   `yaml:"enabled"`
-	Name         string `yaml:"name"`
-	ClientID     string `yaml:"client_id"`
-	ClientSecret string `yaml:"client_secret"`
-	RedirectURL  string `yaml:"redirect_url"`
+	Enabled      bool     `yaml:"enabled"`
+	Name         string   `yaml:"name"`
+	ClientID     string   `yaml:"client_id"`
+	ClientSecret string   `yaml:"client_secret"`
+	RedirectURL  string   `yaml:"redirect_url"`
+	Scopes       []string `yaml:"scopes,omitempty"`    // Custom OAuth scopes (uses defaults if empty)
+	TenantID     string   `yaml:"tenant_id,omitempty"` // Microsoft only: "common", "organizations", "consumers", or specific tenant
 }
 
 // SecurityConfig contains security settings for CORS and WebSocket origins.
@@ -690,6 +692,10 @@ func DefaultConfig() *Config {
 					},
 					{
 						Name:    "microsoft",
+						Enabled: false,
+					},
+					{
+						Name:    "github",
 						Enabled: false,
 					},
 				},

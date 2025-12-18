@@ -27,7 +27,8 @@
     "reconnect": "Reconnect",
     "runAllTests": "Run All Tests",
     "signInWithGoogle": "Sign in with Google",
-    "signInWithMicrosoft": "Sign in with Microsoft"
+    "signInWithMicrosoft": "Sign in with Microsoft",
+    "signInWithGitHub": "Sign in with GitHub"
   },
   "status": {
     "connected": "Connected",
