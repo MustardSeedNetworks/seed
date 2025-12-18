@@ -270,12 +270,25 @@ type SetupCompleteRequest struct {
 }
 
 // handleSetupComplete completes initial setup by setting admin password (fixes #544 - split from handlers.go).
+// Security fix #758, #724: Only allow setup completion when setup is actually needed (default password).
 func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694, #699
+		return
+	}
+
+	// Security: Only allow setup when password is still the default (fixes #758, #724)
+	// This prevents unauthenticated password reset after initial setup
+	if !auth.IsDefaultPasswordHash(s.config.Auth.DefaultPasswordHash) {
+		clientIP := GetClientIP(r)
+		logger.Warn("Setup complete attempted after initial setup already done",
+			"client_ip", clientIP,
+			"event", "auth.setup.blocked")
+		sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeForbidden,
+			"Setup has already been completed. Use authenticated password change instead.", "")
 		return
 	}
 
