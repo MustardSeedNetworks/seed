@@ -1316,7 +1316,9 @@ function App() {
             >
               {t("sections.connectivity")}
             </h2>
-            <div className={`flex flex-wrap justify-center`}>
+            <div
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
+            >
               {/* WiFi-only cards */}
               {isWifi && <WiFiCard data={cards.wifi} loading={loading} visible={true} />}
 
@@ -1336,7 +1338,9 @@ function App() {
             <h2 id="network-heading" className={`section-title ${spacing.margin.bottom.heading}`}>
               {t("sections.network")}
             </h2>
-            <div className={`flex flex-wrap justify-center`}>
+            <div
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
+            >
               <NetworkCard
                 data={cards.dhcp}
                 publicip={cards.publicip}
@@ -1356,7 +1360,9 @@ function App() {
             >
               {t("sections.testingDiscovery")}
             </h2>
-            <div className={`flex flex-wrap justify-center`}>
+            <div
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
+            >
               {/* Common cards for both interface types */}
               <HealthCheckCard loading={loading} />
               {cardSettings.performance.enabled && (
@@ -1386,7 +1392,9 @@ function App() {
             <h2 id="system-heading" className={`section-title ${spacing.margin.bottom.heading}`}>
               {t("sections.system")}
             </h2>
-            <div className={`flex flex-wrap justify-center`}>
+            <div
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
+            >
               <SystemHealthCard />
             </div>
           </section>
