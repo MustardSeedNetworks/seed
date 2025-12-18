@@ -92,6 +92,12 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("Survey created",
+		"survey_id", newSurvey.ID,
+		"name", newSurvey.Name,
+		"type", newSurvey.SurveyType,
+		"interface", newSurvey.Interface)
+
 	sendJSONResponse(w, logger, http.StatusOK, newSurvey)
 }
 
@@ -131,6 +137,8 @@ func (s *Server) deleteSurvey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("Survey deleted", "survey_id", id)
+
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
@@ -139,7 +147,7 @@ type surveyStateAction func(id string) error
 
 // handleSurveyStateChange is a helper that handles survey state transitions (start/pause/complete).
 // It extracts common logic to avoid code duplication.
-func (s *Server) handleSurveyStateChange(w http.ResponseWriter, r *http.Request, logger *slog.Logger, action surveyStateAction) {
+func (s *Server) handleSurveyStateChange(w http.ResponseWriter, r *http.Request, logger *slog.Logger, actionName string, action surveyStateAction) {
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
 		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
@@ -157,22 +165,28 @@ func (s *Server) handleSurveyStateChange(w http.ResponseWriter, r *http.Request,
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	logger.Info("Survey state changed",
+		"survey_id", id,
+		"action", actionName,
+		"status", updatedSurvey.Status)
+
 	sendJSONResponse(w, logger, http.StatusOK, updatedSurvey)
 }
 
 func (s *Server) startSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	s.handleSurveyStateChange(w, r, logger, s.surveyManager.StartSurvey)
+	s.handleSurveyStateChange(w, r, logger, "start", s.surveyManager.StartSurvey)
 }
 
 func (s *Server) pauseSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	s.handleSurveyStateChange(w, r, logger, s.surveyManager.PauseSurvey)
+	s.handleSurveyStateChange(w, r, logger, "pause", s.surveyManager.PauseSurvey)
 }
 
 func (s *Server) completeSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	s.handleSurveyStateChange(w, r, logger, s.surveyManager.CompleteSurvey)
+	s.handleSurveyStateChange(w, r, logger, "complete", s.surveyManager.CompleteSurvey)
 }
 
 // AddSampleRequest contains a WiFi signal sample measurement for a survey location.
@@ -246,6 +260,11 @@ func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	logger.Info("Survey sample added",
+		"survey_id", id,
+		"x", req.X,
+		"y", req.Y)
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "sample added"})
 }

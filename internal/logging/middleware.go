@@ -18,6 +18,8 @@ const (
 // RequestIDMiddleware generates a unique request ID for each incoming request
 // and adds it to the request context. If the client sends an X-Request-ID header,
 // that value is used instead (useful for distributed tracing).
+// Client-provided IDs are validated (length/charset); invalid IDs are replaced
+// with a generated one to prevent log spoofing or oversized headers.
 //
 // The request ID is available via RequestIDFromContext(r.Context()) and is
 // automatically included in logs when using FromContext(ctx) to get the logger.
@@ -25,6 +27,11 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check for existing request ID from upstream proxy/client
 		requestID := r.Header.Get(RequestIDHeader)
+
+		// Validate client-provided ID; fall back to generated if invalid
+		if !isValidRequestID(requestID) {
+			requestID = generateRequestID()
+		}
 
 		// Generate a new one if not provided
 		if requestID == "" {
@@ -51,6 +58,27 @@ func generateRequestID() string {
 		return hex.EncodeToString([]byte(time.Now().Format("20060102150405.000000")))[:16]
 	}
 	return hex.EncodeToString(b)
+}
+
+// isValidRequestID ensures a client-supplied request ID is reasonably bounded
+// and uses a safe character set to avoid log/header abuse.
+func isValidRequestID(id string) bool {
+	if id == "" {
+		return false
+	}
+	if len(id) > 64 {
+		return false
+	}
+	for _, c := range id {
+		if (c >= 'a' && c <= 'z') ||
+			(c >= 'A' && c <= 'Z') ||
+			(c >= '0' && c <= '9') ||
+			c == '-' || c == '_' || c == '.' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // LoggingMiddleware logs HTTP requests with timing information.
