@@ -86,9 +86,9 @@ chmod 755 "$INSTALL_DIR/$BINARY_NAME"
 log_info "Setting ownership..."
 chown -R "$SERVICE_USER:$SERVICE_GROUP" "$INSTALL_DIR"
 
-# Set capabilities for raw socket access
-log_info "Setting capabilities for raw socket access..."
-setcap cap_net_raw=+ep "$INSTALL_DIR/$BINARY_NAME"
+# Set capabilities needed for ICMP/ARP scans and MTU/Wi-Fi control
+log_info "Setting capabilities for network operations (raw + admin)..."
+setcap cap_net_raw,cap_net_admin=+ep "$INSTALL_DIR/$BINARY_NAME"
 
 # Install systemd service file
 log_info "Installing systemd service..."

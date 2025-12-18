@@ -655,15 +655,24 @@ func DefaultConfig() *Config {
 			Timeout:      5 * time.Second,
 		},
 		HealthChecks: HealthChecksConfig{
-			// Fixes #730: Add default health check tests so card appears by default
+			// Fixes #730: Add default health check tests so the card and timing graph have data on first boot
 			PingTargets: []PingTarget{
 				{Name: "Google DNS", Host: "8.8.8.8", Enabled: true},
 				{Name: "Cloudflare", Host: "1.1.1.1", Enabled: true},
 			},
-			TCPPorts: []TCPPortTest{},
-			UDPPorts: []UDPPortTest{},
+			TCPPorts: []TCPPortTest{
+				{Name: "HTTPS", Host: "www.google.com", Port: 443, Enabled: true},
+				// Disabled example to keep prior DICOM test visible without causing failures
+				{Name: "DICOM", Host: "example-dicom.local", Port: 104, Enabled: false},
+			},
+			UDPPorts: []UDPPortTest{
+				{Name: "DNS", Host: "8.8.8.8", Port: 53, Enabled: true},
+				{Name: "NTP", Host: "time.google.com", Port: 123, Enabled: true},
+			},
 			HTTPEndpoints: []HTTPEndpoint{
-				{Name: "Google", URL: "https://www.google.com", ExpectedStatus: 200, Enabled: true},
+				{Name: "Google HTTPS", URL: "https://www.google.com", ExpectedStatus: 200, Enabled: true},
+				{Name: "Cloudflare", URL: "https://www.cloudflare.com", ExpectedStatus: 200, Enabled: true},
+				{Name: "Example HTTP", URL: "http://example.com", ExpectedStatus: 200, Enabled: true},
 			},
 			RunPerformance: true,
 			RunSpeedtest:   true,

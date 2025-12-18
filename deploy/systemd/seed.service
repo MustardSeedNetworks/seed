@@ -17,6 +17,8 @@ StandardError=journal
 
 # Security hardening
 # Note: Capabilities are set at install time via install.sh
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=true

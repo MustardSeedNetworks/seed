@@ -54,19 +54,42 @@ health_checks:
     - name: "Google"
       host: www.google.com
       enabled: true
+    - name: "Cloudflare"
+      host: 1.1.1.1
+      enabled: true
   tcp_ports:
     - name: "HTTP"
       host: www.google.com
       port: 80
       enabled: true
+    - name: "HTTPS"
+      host: www.google.com
+      port: 443
+      enabled: true
+    - name: "DICOM"
+      host: example-dicom.local
+      port: 104
+      enabled: false   # disabled by default to avoid false failures
   udp_ports:
     - name: "DNS"
       host: 8.8.8.8
       port: 53
       enabled: true
+    - name: "NTP"
+      host: time.google.com
+      port: 123
+      enabled: true
   http_endpoints:
     - name: "Google HTTPS"
       url: https://www.google.com
+      expected_status: 200
+      enabled: true
+    - name: "Cloudflare"
+      url: https://www.cloudflare.com
+      expected_status: 200
+      enabled: true
+    - name: "Example HTTP"
+      url: http://example.com
       expected_status: 200
       enabled: true
 

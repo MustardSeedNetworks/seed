@@ -246,16 +246,20 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
 
   // Timing bar component for HTTP requests
   const TimingBar = ({ result }: { result: TestResult }) => {
-    const total = result.latency || 0;
-    // Guard against NaN, Infinity, and zero/negative values
-    if (!total || !Number.isFinite(total) || total <= 0) return null;
-
-    // Safely extract timing values, treating NaN/undefined as 0
+    // Prefer total latency; fall back to sum of phases so we can still render on failures
     const safeNum = (v: number | undefined) => (v !== undefined && Number.isFinite(v) ? v : 0);
     const dns = safeNum(result.dnsLatency);
     const tcp = safeNum(result.tcpConnect);
     const tls = safeNum(result.tlsLatency);
     const ttfb = safeNum(result.ttfbLatency);
+    const total =
+      result.latency && Number.isFinite(result.latency) && result.latency > 0
+        ? result.latency
+        : dns + tcp + tls + ttfb;
+
+    // Guard against NaN, Infinity, and zero/negative values
+    if (!total || !Number.isFinite(total) || total <= 0) return null;
+
     // Download time is what's left after subtracting known phases
     const download = Math.max(0, total - dns - tcp - tls - ttfb);
 
@@ -400,7 +404,12 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
             {result.success ? formatLatency(result.latency) : "fail"}
           </span>
         </div>
-        {hasTimingData && result.success && <TimingBar result={result} />}
+        {hasTimingData && <TimingBar result={result} />}
+        {!result.success && result.error && (
+          <div className={`caption text-status-error ${spacing.margin.top.tight}`}>
+            {result.error}
+          </div>
+        )}
         {(hasTLS || hasCertInfo) && (
           <div className={`caption ${spacing.margin.top.tight} ${layout.inline.default}`}>
             {hasTLS && <span className="text-text-muted">{result.tlsVersion}</span>}
