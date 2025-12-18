@@ -326,20 +326,32 @@ export const DEFAULT_IPERF_SETTINGS: IperfSettings = {
   enableServer: false,
 };
 
+// Fixes #730: Add sensible default health check tests so the card appears by default
 export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
   dnsHostname: "google.com",
   dnsServers: [],
-  pingTargets: [],
+  pingTargets: [
+    { id: "default-google-dns", name: "Google DNS", host: "8.8.8.8", enabled: true, count: 3 },
+    { id: "default-cloudflare-dns", name: "Cloudflare", host: "1.1.1.1", enabled: true, count: 3 },
+  ],
   tcpPorts: [],
   udpPorts: [],
-  httpEndpoints: [],
+  httpEndpoints: [
+    {
+      id: "default-google",
+      name: "Google",
+      url: "https://www.google.com",
+      expectedStatus: 200,
+      enabled: true,
+    },
+  ],
   runPerformance: false,
   runSpeedtest: false,
   runIperf: false,
   runDiscovery: false,
   speedtest: {
     serverId: "",
-    autoRunOnLink: false,
+    autoRunOnLink: true, // Fixes #728: Match DEFAULT_CARD_SETTINGS
   },
   iperf: {
     autoRunOnLink: false,

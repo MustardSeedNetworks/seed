@@ -12,7 +12,7 @@
  * - Survey controls: start, pause, complete, delete operations
  * - Floor plan visualization: SurveyView component displays floor plan with sample points
  * - Sample tracking: displays number of signal samples collected
- * - Status: warning (active survey), success (completed), unknown (none)
+ * - Status: warning (active survey), success (ready/completed) - fixes #737
  *
  * Usage:
  * ```typescript
@@ -64,12 +64,11 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
 
   const activeSurveys = surveys.filter((s) => s.status === "in_progress" || s.status === "paused");
-  const completedSurveys = surveys.filter((s) => s.status === "completed");
 
+  // Fixes #737: Use "success" for no surveys (ready state) instead of confusing "?" badge
   const getCardStatus = (): Status => {
-    if (activeSurveys.length > 0) return "warning";
-    if (completedSurveys.length > 0) return "success";
-    return "unknown";
+    if (activeSurveys.length > 0) return "warning"; // Active work needs attention
+    return "success"; // Ready or completed - system is healthy
   };
 
   const handleCreateSurvey = async (name: string, surveyType: SurveyType, iface: string) => {
@@ -190,7 +189,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                     >
                       <span>{getSurveyTypeLabel(survey.surveyType)}</span>
                       <span>
-                        {(survey.samples?.length ?? 0)} {t("survey.samples").toLowerCase()}
+                        {survey.samples?.length ?? 0} {t("survey.samples").toLowerCase()}
                       </span>
                     </div>
                   </div>
