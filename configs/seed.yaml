@@ -70,6 +70,26 @@ health_checks:
       host: example-dicom.local
       port: 104
       enabled: false   # disabled by default to avoid false failures
+    - name: "FTP"
+      host: ftp.debian.org
+      port: 21
+      enabled: false   # optional; enable if your network allows FTP
+    - name: "SMB"
+      host: files.example.com
+      port: 445
+      enabled: false
+    - name: "RTSP"
+      host: rtsp.example.com
+      port: 554
+      enabled: false
+    - name: "PostgreSQL"
+      host: db.example.com
+      port: 5432
+      enabled: false
+    - name: "SFTP"
+      host: sftp.example.com
+      port: 22
+      enabled: false
   udp_ports:
     - name: "DNS"
       host: 8.8.8.8

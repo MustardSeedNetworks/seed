@@ -664,6 +664,16 @@ func DefaultConfig() *Config {
 				{Name: "HTTPS", Host: "www.google.com", Port: 443, Enabled: true},
 				// Disabled example to keep prior DICOM test visible without causing failures
 				{Name: "DICOM", Host: "example-dicom.local", Port: 104, Enabled: false},
+				// FTP smoke test (disabled by default to avoid false positives on firewalled sites)
+				{Name: "FTP", Host: "ftp.debian.org", Port: 21, Enabled: false},
+				// SMB/Windows file sharing reachability
+				{Name: "SMB", Host: "files.example.com", Port: 445, Enabled: false},
+				// RTSP stream control port
+				{Name: "RTSP", Host: "rtsp.example.com", Port: 554, Enabled: false},
+				// Database (PostgreSQL) connectivity/latency
+				{Name: "PostgreSQL", Host: "db.example.com", Port: 5432, Enabled: false},
+				// SFTP/SSH file transfer
+				{Name: "SFTP", Host: "sftp.example.com", Port: 22, Enabled: false},
 			},
 			UDPPorts: []UDPPortTest{
 				{Name: "DNS", Host: "8.8.8.8", Port: 53, Enabled: true},
