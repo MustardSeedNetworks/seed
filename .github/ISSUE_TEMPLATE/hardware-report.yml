@@ -1,7 +1,7 @@
 name: 🔌 Hardware Compatibility Report
 description: Report hardware compatibility test results for Wi-Fi adapters or Ethernet NICs
 title: "[Hardware] "
-labels: ["hardware-report", "documentation"]
+labels: ["type: docs", "status: needs-triage"]
 body:
   - type: markdown
     attributes:

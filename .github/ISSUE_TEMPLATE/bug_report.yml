@@ -1,7 +1,7 @@
 name: Bug Report
 description: Report a bug to help us improve The Seed
 title: "[BUG] "
-labels: ["type: bug"]
+labels: ["type: defect", "status: needs-triage"]
 body:
   - type: markdown
     attributes:
@@ -48,20 +48,20 @@ body:
       required: true
 
   - type: dropdown
-    id: component
+    id: area
     attributes:
-      label: Component
+      label: Area
       description: Which part of The Seed is affected?
       options:
-        - API/Backend
-        - UI/Frontend
-        - Network Discovery
-        - WiFi Survey
-        - Speed Test / iPerf
-        - DHCP Detection
-        - Authentication
-        - Configuration
-        - Installation/Deployment
+        - Auth / Setup
+        - Survey / Floorplan
+        - Discovery / Network
+        - Logging / Observability
+        - UI / UX
+        - Backend / API
+        - Frontend / UI
+        - Infra / CI/CD
+        - AI / ML
         - Documentation
         - Other
     validations:

@@ -1,7 +1,7 @@
 name: Feature Request
 description: Suggest a new feature or enhancement for The Seed
 title: "[FEATURE] "
-labels: ["type: feature"]
+labels: ["type: feature", "status: needs-triage"]
 body:
   - type: markdown
     attributes:
@@ -40,23 +40,23 @@ body:
       required: true
 
   - type: dropdown
-    id: component
+    id: area
     attributes:
-      label: Component
+      label: Area
       description: Which part of The Seed would this affect?
       options:
-        - API/Backend
-        - UI/Frontend
-        - Network Discovery
-        - WiFi Survey
-        - Speed Test / iPerf
-        - DHCP Detection
-        - Authentication
-        - Configuration
-        - Installation/Deployment
+        - Auth / Setup
+        - Survey / Floorplan
+        - Discovery / Network
+        - Logging / Observability
+        - UI / UX
+        - Backend / API
+        - Frontend / UI
+        - Infra / CI/CD
+        - AI / ML
         - Documentation
-        - New Component
-        - Multiple Components
+        - New Area
+        - Multiple Areas
     validations:
       required: true
 
