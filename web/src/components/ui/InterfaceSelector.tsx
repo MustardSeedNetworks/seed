@@ -109,7 +109,13 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
   // Get display name for an interface
   const getDisplayName = (iface: NetworkInterface) => {
-    return iface.friendlyName || iface.name;
+    if (iface.friendlyName && iface.friendlyName.toLowerCase() !== iface.name.toLowerCase()) {
+      return `${iface.friendlyName} (${iface.name})`;
+    }
+    if (iface.description && iface.description.toLowerCase() !== iface.name.toLowerCase()) {
+      return `${iface.description} (${iface.name})`;
+    }
+    return iface.name;
   };
 
   // Get status text for an interface
@@ -119,6 +125,13 @@ export const InterfaceSelector = memo(function InterfaceSelector({
       return `${iface.signalStrength} dBm`;
     }
     return iface.speedDisplay || "";
+  };
+
+  const getDetailText = (iface: NetworkInterface) => {
+    if (iface.description) return iface.description;
+    const vendorModel = [iface.chipsetVendor, iface.chipsetModel].filter(Boolean).join(" ");
+    if (vendorModel) return vendorModel;
+    return "";
   };
 
   // Get icon for interface type
@@ -228,6 +241,9 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                     <div className="body-small font-medium text-text-primary truncate">
                       {getDisplayName(iface)}
                     </div>
+                    {getDetailText(iface) && (
+                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
+                    )}
                   </div>
 
                   {/* Status */}
@@ -277,6 +293,9 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                     <div className="body-small font-medium text-text-primary truncate">
                       {getDisplayName(iface)}
                     </div>
+                    {getDetailText(iface) && (
+                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
+                    )}
                   </div>
 
                   {/* Status */}
