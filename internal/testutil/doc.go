@@ -1,4 +1,4 @@
-// Package testutil provides centralized test utilities for the Seed project.
+// Package testutil provides centralized test utilities for The Seed project.
 //
 // This package offers:
 //   - TestDefaults: Singleton test defaults derived from config.DefaultConfig()

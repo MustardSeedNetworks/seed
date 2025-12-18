@@ -28,4 +28,4 @@ export const configSchema = z
     logging: z.any(),
   })
   .strict()
-  .describe("Configuration schema for Seed network diagnostic tool");
+  .describe("Configuration schema for The Seed network diagnostic tool");
