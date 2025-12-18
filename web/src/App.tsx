@@ -808,6 +808,28 @@ function App() {
     ]
   );
 
+  // Quick helpers for interface groups and fast switching between Ethernet/Wi‑Fi views
+  const hasEthernet = useMemo(
+    () => interfaces.some((iface) => iface.type === "ethernet"),
+    [interfaces]
+  );
+  const hasWifiInterface = useMemo(
+    () => interfaces.some((iface) => iface.type === "wifi"),
+    [interfaces]
+  );
+  const switchToInterfaceType = useCallback(
+    (type: "ethernet" | "wifi") => {
+      const candidates = interfaces.filter((iface) => iface.type === type);
+      if (candidates.length === 0) return;
+      // Prefer a link-up interface, otherwise first in list
+      const target = candidates.find((iface) => iface.up) ?? candidates[0];
+      if (target) {
+        changeInterface(target.name);
+      }
+    },
+    [interfaces, changeInterface]
+  );
+
   // Memoize run options to prevent unnecessary re-computation (fixes #671)
   const runOpts = useMemo(
     () => ({
@@ -1128,6 +1150,36 @@ function App() {
               loading={profilesLoading}
             />
 
+            {/* Quick mode toggle: Ethernet vs Wi-Fi */}
+            {(hasEthernet || hasWifiInterface) && (
+              <div className="flex items-center bg-surface-base border border-surface-border rounded-full">
+                <button
+                  type="button"
+                  onClick={() => switchToInterfaceType("ethernet")}
+                  disabled={!hasEthernet}
+                  className={`px-3 py-1 body-small rounded-full transition ${
+                    !isWifi
+                      ? "bg-brand-primary text-text-inverse"
+                      : "text-text-primary hover:bg-surface-hover"
+                  } ${!hasEthernet ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {t("interface.ethernet", "Ethernet")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchToInterfaceType("wifi")}
+                  disabled={!hasWifiInterface}
+                  className={`px-3 py-1 body-small rounded-full transition ${
+                    isWifi
+                      ? "bg-brand-primary text-text-inverse"
+                      : "text-text-primary hover:bg-surface-hover"
+                  } ${!hasWifiInterface ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {t("interface.wifi", "Wi-Fi")}
+                </button>
+              </div>
+            )}
+
             {/* Interface selector with grouped dropdown */}
             <InterfaceSelector
               interfaces={interfaces}
@@ -1264,9 +1316,7 @@ function App() {
             >
               {t("sections.connectivity")}
             </h2>
-            <div
-              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
-            >
+            <div className={`flex flex-wrap justify-center`}>
               {/* WiFi-only cards */}
               {isWifi && <WiFiCard data={cards.wifi} loading={loading} visible={true} />}
 
@@ -1286,9 +1336,7 @@ function App() {
             <h2 id="network-heading" className={`section-title ${spacing.margin.bottom.heading}`}>
               {t("sections.network")}
             </h2>
-            <div
-              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
-            >
+            <div className={`flex flex-wrap justify-center`}>
               <NetworkCard
                 data={cards.dhcp}
                 publicip={cards.publicip}
@@ -1308,9 +1356,7 @@ function App() {
             >
               {t("sections.testingDiscovery")}
             </h2>
-            <div
-              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
-            >
+            <div className={`flex flex-wrap justify-center`}>
               {/* Common cards for both interface types */}
               <HealthCheckCard loading={loading} />
               {cardSettings.performance.enabled && (
@@ -1340,9 +1386,7 @@ function App() {
             <h2 id="system-heading" className={`section-title ${spacing.margin.bottom.heading}`}>
               {t("sections.system")}
             </h2>
-            <div
-              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
-            >
+            <div className={`flex flex-wrap justify-center`}>
               <SystemHealthCard />
             </div>
           </section>
