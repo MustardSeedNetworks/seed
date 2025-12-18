@@ -50,6 +50,7 @@ export const LogComponents = {
   PUBLICIP: "publicip",
   EXPORT: "export",
   SETUP: "setup",
+  PROFILES: "profiles",
   UI: "ui",
   APP: "app",
 } as const;
