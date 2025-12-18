@@ -1,44 +1,73 @@
 # =============================================================================
-# LuminetIQ Makefile
+# Seed Makefile
 # =============================================================================
 #
-# Build, test, and deploy automation for LuminetIQ network diagnostics tool.
+# Build, test, and deploy automation for Seed network diagnostics tool.
 #
-# Quick Start:
-#   make build          - Build production binary (frontend + backend)
-#   make dev            - Run in development mode (hot reload frontend)
-#   make deploy         - Deploy to remote Ubuntu server
-#   make test           - Run all tests
-#   make help           - Show all available targets
+# QUICK START
+# -----------
+#   make build          Build production binary (frontend + backend)
+#   make test           Run all unit tests (backend + frontend)
+#   make verify         Full CI pipeline (lint, test, security, build)
+#   make dev            Run backend in dev mode (hot reload frontend)
+#   make deploy         Deploy to remote Ubuntu server
+#   make install        Install on current system (macOS/Linux)
+#   make help           Show all available targets
 #
-# Requirements:
-#   - Go 1.25.5+
-#   - Node.js 25.2.1+ (for frontend)
-#   - libpcap-dev (for packet capture)
-#   - Docker (optional, for cross-compilation)
+# COMMON WORKFLOWS
+# ----------------
+#   Development:        make dev & make dev-frontend
+#   Before commit:      make verify
+#   Release:            make release VERSION=v1.0.0
+#   Cross-compile:      make build-all
 #
-# Environment Variables:
-#   DEPLOY_HOST  - Target server IP (default: 192.168.64.7)
-#   DEPLOY_USER  - SSH user (default: krisarmstrong)
-#   DEPLOY_PATH  - Remote installation path (default: /home/$USER/seed)
-#   DEPLOY_PORT  - HTTPS port for smoke tests (default: 8443)
-#   REBUILD      - Set to 1 to force rebuild during deploy
+# REQUIREMENTS
+# ------------
+#   - Go 1.25.5+ (with CGO for libpcap)
+#   - Node.js 25.2.1+ and npm
+#   - libpcap-dev (Linux) or libpcap (macOS via Homebrew)
+#   - Docker (optional, for cross-compilation and container builds)
+#
+# ENVIRONMENT VARIABLES
+# ---------------------
+#   DEPLOY_HOST     Target server IP (default: 192.168.64.7)
+#   DEPLOY_USER     SSH user (default: krisarmstrong)
+#   DEPLOY_PATH     Remote path (default: /home/$USER/seed)
+#   DEPLOY_PORT     HTTPS port for smoke tests (default: 443, fallback: 8443)
+#   REBUILD         Set to 1 to force rebuild during deploy
+#   DOCKER_REGISTRY Container registry for docker-push
+#
+# PORT CONFIGURATION
+# ------------------
+#   The application prefers port 443 (standard HTTPS) if available.
+#   If 443 requires root/elevated permissions, it falls back to 8443.
+#   Set DEPLOY_PORT to override for smoke tests.
 #
 # =============================================================================
 
 .PHONY: all build build-frontend frontend-deps generate-types build-backend build-backend-dev \
+        build-darwin build-all \
         build-iperf3 build-iperf3-linux build-iperf3-linux-amd64 build-iperf3-linux-arm64 build-iperf3-all \
         build-linux-amd64 build-linux-arm64 build-linux-docker \
         docker docker-build docker-test docker-push \
-        clean clean-all test test-all test-backend test-frontend test-coverage test-integration test-e2e test-e2e-ui test-e2e-install \
-        lint lint-backend lint-frontend lint-md fmt fmt-frontend fmt-all fmt-md fmt-check fix fix-backend fix-frontend fix-md fix-all \
+        clean clean-all \
+        test test-all test-backend test-frontend test-coverage test-integration \
+        test-e2e test-e2e-ui test-e2e-install \
+        lint lint-backend lint-frontend lint-md \
+        fmt fmt-frontend fmt-all fmt-md fmt-check \
+        fix fix-backend fix-frontend fix-md fix-all \
         security security-backend security-frontend security-secrets security-trivy \
         storybook build-storybook test-storybook \
         run dev dev-frontend \
+        install uninstall status \
         deploy smoke-test smoke-test-local \
-        deps deps-update tools tools-go tools-frontend logs logs-100 help \
-        verify release-check iso-info pre-commit pre-commit-install license-check license-report \
-        i18n-sync i18n-check i18n-list
+        deps update update-go update-npm outdated \
+        tools tools-go tools-frontend version version-check \
+        logs logs-100 help \
+        verify release release-check pre-commit pre-commit-install \
+        license-check license-report \
+        i18n-sync i18n-check i18n-list \
+        iso-info
 
 # =============================================================================
 # Configuration Variables
@@ -75,7 +104,7 @@ LDFLAGS=-s -w \
 DEPLOY_HOST?=192.168.64.7
 DEPLOY_USER?=krisarmstrong
 DEPLOY_PATH?=/home/$(DEPLOY_USER)/seed
-DEPLOY_PORT?=8443
+DEPLOY_PORT?=443
 
 # Docker image settings
 DOCKER_IMAGE?=seed
@@ -252,10 +281,57 @@ build-linux-arm64: build-frontend ## Build for Linux ARM64 (Raspberry Pi, ARM se
 # Uses official Go image with libpcap installed
 build-linux-docker: build-frontend ## Build for Linux AMD64 using Docker (cross-platform)
 	@echo "Building for Linux AMD64 using Docker..."
-	docker run --rm -v "$(PWD):/build" -w /build golang:1.25.5 bash -c "\
+	docker run --rm -v "$(PWD):/build" -w /build golang:1.21 bash -c "\
 		apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
 		go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-amd64 ./cmd/seed"
 	@echo "Built: $(BINARY_NAME)-linux-amd64"
+
+# -----------------------------------------------------------------------------
+# macOS Builds
+# -----------------------------------------------------------------------------
+
+# Build for macOS (native, current architecture)
+build-darwin: build-frontend ## Build for macOS (native architecture)
+	@echo "Building for macOS ($(shell uname -m))..."
+	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-darwin-$(shell uname -m) ./cmd/seed
+	@echo "Built: $(BINARY_NAME)-darwin-$(shell uname -m)"
+
+# -----------------------------------------------------------------------------
+# Multi-Platform Builds
+# -----------------------------------------------------------------------------
+
+# Build for all supported platforms
+# Note: Cross-compilation requires appropriate toolchains or Docker
+build-all: build-frontend ## Build for all platforms (native + Linux via Docker)
+	@printf "$(BOLD)$(CYAN)┌─ Building All Platforms ────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/3]$(RESET) macOS (native)                                                       $(CYAN)│$(RESET)\n"
+	$(call timer-start,build-darwin)
+	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-darwin-$(shell uname -m) ./cmd/seed
+	$(call timer-end,build-darwin,macOS build)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/3]$(RESET) Linux AMD64 (Docker)                                                 $(CYAN)│$(RESET)\n"
+	$(call timer-start,build-linux-amd64)
+	@if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then \
+		docker run --rm -v "$(PWD):/build" -w /build golang:1.21 bash -c "\
+			apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
+			go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-amd64 ./cmd/seed"; \
+	else \
+		printf "$(YELLOW)   SKIP: Docker not available$(RESET)\n"; \
+	fi
+	$(call timer-end,build-linux-amd64,Linux AMD64 build)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[3/3]$(RESET) Linux ARM64 (Docker)                                                 $(CYAN)│$(RESET)\n"
+	$(call timer-start,build-linux-arm64)
+	@if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then \
+		docker run --rm -v "$(PWD):/build" -w /build --platform linux/arm64 golang:1.21 bash -c "\
+			apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
+			go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-arm64 ./cmd/seed" 2>/dev/null || \
+		printf "$(YELLOW)   SKIP: ARM64 emulation not available$(RESET)\n"; \
+	else \
+		printf "$(YELLOW)   SKIP: Docker not available$(RESET)\n"; \
+	fi
+	$(call timer-end,build-linux-arm64,Linux ARM64 build)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
+	@printf "\n$(GREEN)✓ Multi-platform build complete$(RESET)\n"
+	@ls -lh $(BINARY_NAME)-* 2>/dev/null || true
 
 # =============================================================================
 # Docker Targets
@@ -398,43 +474,58 @@ deploy: ## Deploy to Ubuntu server (builds via Docker if needed)
 # -----------------------------------------------------------------------------
 
 # Verify deployed server is operational
+# Tries port 443 first, falls back to 8443 if not responding
 smoke-test: ## Run smoke tests against deployed server
 	@echo ""
-	@echo "=== Smoke Tests for $(DEPLOY_HOST):$(DEPLOY_PORT) ==="
-	@echo ""
-	@echo "1. Checking server process..."
-	@ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "pgrep -x $(BINARY_NAME) > /dev/null" && \
+	@# Determine which port is responding
+	@PORT=$(DEPLOY_PORT); \
+	if ! curl -sf -k --connect-timeout 2 "https://$(DEPLOY_HOST):$$PORT/api/health" > /dev/null 2>&1; then \
+		if [ "$$PORT" = "443" ]; then \
+			PORT=8443; \
+			echo "Port 443 not responding, trying 8443..."; \
+		fi; \
+	fi; \
+	echo "=== Smoke Tests for $(DEPLOY_HOST):$$PORT ==="; \
+	echo ""; \
+	echo "1. Checking server process..."; \
+	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "pgrep -x $(BINARY_NAME) > /dev/null" && \
 		echo "   PASS: Server process running" || \
-		(echo "   FAIL: Server process not found" && exit 1)
-	@echo ""
-	@echo "2. Checking API /api/status..."
-	@curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/api/status" > /dev/null && \
-		echo "   PASS: API responding" || \
-		(echo "   FAIL: API not responding" && exit 1)
-	@echo ""
-	@echo "3. Checking frontend loads..."
-	@curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/" | grep -q "<!DOCTYPE" && \
+		(echo "   FAIL: Server process not found" && exit 1); \
+	echo ""; \
+	echo "2. Checking API /api/status..."; \
+	curl -sf -k "https://$(DEPLOY_HOST):$$PORT/api/status" > /dev/null && \
+		echo "   PASS: API responding on port $$PORT" || \
+		(echo "   FAIL: API not responding" && exit 1); \
+	echo ""; \
+	echo "3. Checking frontend loads..."; \
+	curl -sf -k "https://$(DEPLOY_HOST):$$PORT/" | grep -q "<!DOCTYPE" && \
 		echo "   PASS: Frontend HTML served" || \
-		(echo "   FAIL: Frontend not loading" && exit 1)
-	@echo ""
-	@echo "4. Checking iperf3 availability..."
-	@curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/api/iperf/info" | grep -q '"installed":true' && \
+		(echo "   FAIL: Frontend not loading" && exit 1); \
+	echo ""; \
+	echo "4. Checking iperf3 availability..."; \
+	curl -sf -k "https://$(DEPLOY_HOST):$$PORT/api/iperf/info" | grep -q '"installed":true' && \
 		echo "   PASS: iperf3 available" || \
-		echo "   WARN: iperf3 not available (optional)"
-	@echo ""
-	@echo "=== All smoke tests passed! ==="
-	@echo "Server running at: https://$(DEPLOY_HOST):$(DEPLOY_PORT)"
+		echo "   WARN: iperf3 not available (optional)"; \
+	echo ""; \
+	echo "=== All smoke tests passed! ==="; \
+	echo "Server running at: https://$(DEPLOY_HOST):$$PORT"
 
 # Local smoke tests for development
-smoke-test-local: ## Run smoke tests against local server (port 8443)
+# Tries port 443 first, falls back to 8443
+smoke-test-local: ## Run smoke tests against local server
 	@echo "Running local smoke tests..."
-	@echo "1. API /api/status..."
-	@curl -sf -k "https://localhost:8443/api/status" > /dev/null && \
-		echo "   PASS" || (echo "   FAIL" && exit 1)
-	@echo "2. Frontend loads..."
-	@curl -sf -k "https://localhost:8443/" | grep -q "<!DOCTYPE" && \
-		echo "   PASS" || (echo "   FAIL" && exit 1)
-	@echo "All local tests passed!"
+	@PORT=443; \
+	if ! curl -sf -k --connect-timeout 2 "https://localhost:$$PORT/api/health" > /dev/null 2>&1; then \
+		PORT=8443; \
+	fi; \
+	echo "Testing on port $$PORT..."; \
+	echo "1. API /api/status..."; \
+	curl -sf -k "https://localhost:$$PORT/api/status" > /dev/null && \
+		echo "   PASS" || (echo "   FAIL" && exit 1); \
+	echo "2. Frontend loads..."; \
+	curl -sf -k "https://localhost:$$PORT/" | grep -q "<!DOCTYPE" && \
+		echo "   PASS" || (echo "   FAIL" && exit 1); \
+	echo "All local tests passed! (port $$PORT)"
 
 # =============================================================================
 # Development
@@ -453,6 +544,108 @@ dev: ## Run backend in development mode (reads frontend from disk)
 # Proxies API requests to backend on :8443
 dev-frontend: ## Run frontend in development mode
 	cd web && npm run dev
+
+# =============================================================================
+# Local Installation
+# =============================================================================
+#
+# Install/uninstall Seed as a system service on the current machine.
+# Automatically detects platform and uses appropriate service manager.
+#
+# =============================================================================
+
+# Install on current system (macOS via launchd, Linux via systemd)
+install: build ## Install as system service on current machine
+	@printf "$(BOLD)Installing Seed on $$(uname -s)...$(RESET)\n"
+	@if [ "$$(uname -s)" = "Darwin" ]; then \
+		if [ ! -f deploy/launchd/install.sh ]; then \
+			echo "ERROR: deploy/launchd/install.sh not found"; \
+			exit 1; \
+		fi; \
+		sudo ./deploy/launchd/install.sh ./$(BINARY_NAME); \
+	elif [ "$$(uname -s)" = "Linux" ]; then \
+		if [ ! -f deploy/systemd/install.sh ]; then \
+			echo "ERROR: deploy/systemd/install.sh not found"; \
+			exit 1; \
+		fi; \
+		sudo ./deploy/systemd/install.sh ./$(BINARY_NAME); \
+	else \
+		echo "ERROR: Unsupported platform: $$(uname -s)"; \
+		exit 1; \
+	fi
+
+# Uninstall from current system
+uninstall: ## Uninstall system service from current machine
+	@printf "$(BOLD)Uninstalling Seed from $$(uname -s)...$(RESET)\n"
+	@if [ "$$(uname -s)" = "Darwin" ]; then \
+		if [ -f deploy/launchd/uninstall.sh ]; then \
+			sudo ./deploy/launchd/uninstall.sh; \
+		else \
+			echo "Removing launchd service manually..."; \
+			sudo launchctl unload /Library/LaunchDaemons/com.seed.plist 2>/dev/null || true; \
+			sudo rm -f /Library/LaunchDaemons/com.seed.plist; \
+		fi; \
+	elif [ "$$(uname -s)" = "Linux" ]; then \
+		if [ -f deploy/systemd/uninstall.sh ]; then \
+			sudo ./deploy/systemd/uninstall.sh; \
+		else \
+			echo "Removing systemd service manually..."; \
+			sudo systemctl stop seed 2>/dev/null || true; \
+			sudo systemctl disable seed 2>/dev/null || true; \
+			sudo rm -f /etc/systemd/system/seed.service; \
+			sudo systemctl daemon-reload; \
+		fi; \
+	else \
+		echo "ERROR: Unsupported platform: $$(uname -s)"; \
+		exit 1; \
+	fi
+	@printf "$(GREEN)✓ Uninstall complete$(RESET)\n"
+
+# Show service status on current system
+status: ## Show service status (local or remote)
+	@printf "$(BOLD)Seed Service Status$(RESET)\n\n"
+	@if [ "$$(uname -s)" = "Darwin" ]; then \
+		if launchctl list 2>/dev/null | grep -q com.seed; then \
+			printf "$(GREEN)●$(RESET) Service: loaded\n"; \
+			if pgrep -f "/usr/local/seed/seed" > /dev/null 2>&1; then \
+				printf "$(GREEN)●$(RESET) Process: running (PID: $$(pgrep -f '/usr/local/seed/seed'))\n"; \
+			else \
+				printf "$(RED)●$(RESET) Process: not running\n"; \
+			fi; \
+		else \
+			printf "$(YELLOW)●$(RESET) Service: not installed\n"; \
+		fi; \
+	elif [ "$$(uname -s)" = "Linux" ]; then \
+		if systemctl is-enabled seed > /dev/null 2>&1; then \
+			systemctl status seed --no-pager || true; \
+		else \
+			printf "$(YELLOW)●$(RESET) Service: not installed\n"; \
+		fi; \
+	fi
+	@printf "\n$(BOLD)Remote Server ($(DEPLOY_HOST))$(RESET)\n"
+	@if ssh -o BatchMode=yes -o ConnectTimeout=3 $(DEPLOY_USER)@$(DEPLOY_HOST) "true" 2>/dev/null; then \
+		ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "systemctl is-active seed 2>/dev/null && echo 'Remote: running' || echo 'Remote: not running'"; \
+	else \
+		printf "$(YELLOW)●$(RESET) Remote: unreachable\n"; \
+	fi
+
+# Show version information
+version: ## Show version info (current build and installed)
+	@printf "$(BOLD)Seed Version Information$(RESET)\n\n"
+	@printf "$(BOLD)Build:$(RESET)\n"
+	@printf "  Version:    $(VERSION)\n"
+	@printf "  Commit:     $(COMMIT)\n"
+	@printf "  Build Time: $(BUILD_TIME)\n"
+	@printf "  Platform:   $$(uname -s)/$$(uname -m)\n"
+	@printf "\n$(BOLD)Installed:$(RESET)\n"
+	@if [ -f /usr/local/seed/seed ]; then \
+		printf "  Local:      $$(/usr/local/seed/seed version 2>/dev/null || echo 'unknown')\n"; \
+	else \
+		printf "  Local:      not installed\n"; \
+	fi
+	@if [ -f ./$(BINARY_NAME) ]; then \
+		printf "  Binary:     $$(./$(BINARY_NAME) version 2>/dev/null || echo 'unknown')\n"; \
+	fi
 
 # =============================================================================
 # Testing
@@ -588,7 +781,7 @@ test-integration: build-linux-docker ## Full integration test on Ubuntu server v
 		sudo chmod +x /usr/local/bin/seed-test && \
 		sudo setcap cap_net_raw=+ep /usr/local/bin/seed-test && \
 		echo '[Unit]' | sudo tee /etc/systemd/system/seed-test.service > /dev/null && \
-		echo 'Description=LuminetIQ Integration Test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'Description=The Seed Integration Test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
 		echo '[Service]' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
 		echo 'Type=simple' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
 		echo 'ExecStart=/usr/local/bin/seed-test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
@@ -655,45 +848,59 @@ lint-frontend-quiet:
 	printf "   Checking $$FILE_COUNT files...\n"
 	@cd web && npm run lint 2>&1 | tail -5 || true
 
-# Auto-fix linting issues
-fix: ## Auto-fix all linting issues
+# -----------------------------------------------------------------------------
+# Auto-Fix - Automatically fix linting and formatting issues
+# -----------------------------------------------------------------------------
+
+# Fix all code issues (Go + Frontend)
+fix: ## Auto-fix all linting issues (Go + Frontend)
 	@printf "$(BOLD)$(CYAN)┌─ Auto-Fix ───────────────────────────────────────────────────────────────────┐$(RESET)\n"
 	@printf "$(CYAN)│$(RESET) $(BOLD)[1/2]$(RESET) Backend (golangci-lint --fix)                                         $(CYAN)│$(RESET)\n"
 	$(call timer-start,fix-backend)
-	@$(MAKE) --no-print-directory lint-backend-fix-quiet
+	@$(MAKE) --no-print-directory fix-backend-quiet
 	$(call timer-end,fix-backend,Backend fix)
-	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (eslint --fix)                                               $(CYAN)│$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (eslint --fix + prettier)                                    $(CYAN)│$(RESET)\n"
 	$(call timer-start,fix-frontend)
-	@$(MAKE) --no-print-directory lint-frontend-fix-quiet
+	@$(MAKE) --no-print-directory fix-frontend-quiet
 	$(call timer-end,fix-frontend,Frontend fix)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
-# Auto-fix Go linting issues (formatting, imports, simple fixes)
-lint-backend-fix: ## Auto-fix Go linting issues
+# Auto-fix Go linting issues
+fix-backend: ## Auto-fix Go linting issues
 	@printf "$(BOLD)🔧 Auto-fixing Go code...$(RESET)\n"
 	@if ! command -v golangci-lint > /dev/null 2>&1; then \
 		printf "📦 Installing golangci-lint...\n"; \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
 	fi
 	@golangci-lint run --fix
+	@gofmt -w -s .
 	@printf "$(GREEN)✓ Go auto-fix complete$(RESET)\n"
 
-# Backend fix (quiet mode)
-lint-backend-fix-quiet:
+# Backend fix (quiet mode for pipelines)
+fix-backend-quiet:
 	@if ! command -v golangci-lint > /dev/null 2>&1; then \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
 	fi
 	@golangci-lint run --fix 2>&1 | grep -E "^[0-9]+ issues" || printf "   No issues found\n"
+	@gofmt -w -s .
 
 # Auto-fix frontend linting issues
-lint-frontend-fix: ## Auto-fix frontend linting issues
+fix-frontend: ## Auto-fix frontend linting issues
 	@printf "$(BOLD)🔧 Auto-fixing frontend code...$(RESET)\n"
 	@cd web && npm run lint:fix
+	@cd web && npx prettier --write .
 	@printf "$(GREEN)✓ Frontend auto-fix complete$(RESET)\n"
 
-# Frontend fix (quiet mode)
-lint-frontend-fix-quiet:
+# Frontend fix (quiet mode for pipelines)
+fix-frontend-quiet:
 	@cd web && npm run lint:fix 2>&1 | tail -3 || true
+	@cd web && npx prettier --write . 2>&1 | tail -1 || true
+
+# Auto-fix markdown formatting
+fix-md: fmt-md ## Auto-fix markdown formatting
+
+# Fix everything (Go + Frontend + Markdown)
+fix-all: fix fix-md ## Auto-fix all code and documentation
 
 # Format Go code
 fmt: ## Format Go code with gofumpt
@@ -761,39 +968,6 @@ lint-md: ## Lint markdown files with markdownlint
 		printf "$(YELLOW)SKIP: markdownlint-cli2 not installed (npm install -g markdownlint-cli2)$(RESET)\n"; \
 	fi
 	@printf "$(GREEN)✓ Markdown lint complete$(RESET)\n"
-
-# =============================================================================
-# Auto-Fix Linting Issues
-# =============================================================================
-
-# Fix all auto-fixable issues (Go + Frontend)
-fix: fix-backend fix-frontend ## Auto-fix all linting issues
-
-# Fix Go linting issues (golangci-lint --fix)
-fix-backend: ## Auto-fix Go linting issues
-	@echo "🔧 Auto-fixing Go issues..."
-	@if command -v golangci-lint > /dev/null 2>&1; then \
-		golangci-lint run --fix ./...; \
-	elif [ -x "$(HOME)/go/bin/golangci-lint" ]; then \
-		$(HOME)/go/bin/golangci-lint run --fix ./...; \
-	else \
-		echo "SKIP: golangci-lint not found (run 'make tools-go')"; \
-	fi
-	@gofmt -w -s .
-	@echo "✅ Go auto-fix complete"
-
-# Fix frontend linting issues (eslint --fix + prettier)
-fix-frontend: ## Auto-fix frontend linting issues
-	@echo "🔧 Auto-fixing frontend issues..."
-	cd web && npx eslint --fix .
-	cd web && npx prettier --write .
-	@echo "✅ Frontend auto-fix complete"
-
-# Fix markdown formatting
-fix-md: fmt-md ## Auto-fix markdown formatting
-
-# Fix all (alias for fix)
-fix-all: fix fix-md ## Auto-fix everything (Go + Frontend + Markdown)
 
 # =============================================================================
 # Security Scanning
@@ -977,9 +1151,6 @@ update-npm: ## Update npm dependencies
 	@cd web && npm update
 	@printf "$(GREEN)✓ npm packages updated$(RESET)\n"
 
-# Legacy alias
-deps-update: update ## (alias for 'update')
-
 # Show version information for all tools and dependencies
 version-check: ## Show versions of all tools and dependencies
 	@printf "$(BOLD)$(CYAN)═══════════════════════════════════════════════════════════════════════════════$(RESET)\n"
@@ -1087,7 +1258,7 @@ logs-100: ## Show last 100 lines of remote server logs
 
 # Auto-generate help from ## comments
 help: ## Show this help
-	@echo "LuminetIQ - Network Diagnostics Tool"
+	@echo "The Seed - Network Diagnostics Tool by Mustard Seed Networks"
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
@@ -1216,7 +1387,7 @@ iso-info: ## Show instructions for creating custom Ubuntu ISO
 	@echo ""
 	@echo "=== Custom Ubuntu ISO Creation ==="
 	@echo ""
-	@echo "Creating a custom Ubuntu ISO with LuminetIQ pre-installed requires:"
+	@echo "Creating a custom Ubuntu ISO with The Seed pre-installed requires:"
 	@echo "  1. Ubuntu host system (or VM)"
 	@echo "  2. cubic or live-build package"
 	@echo "  3. Built Linux binary (seed-linux-amd64)"
@@ -1231,8 +1402,67 @@ iso-info: ## Show instructions for creating custom Ubuntu ISO
 	@echo "  4. Generate ISO"
 
 # =============================================================================
-# Release Checks
+# Release Management
 # =============================================================================
+#
+# Automated release workflow:
+#   1. make release-check       - Validate everything is ready
+#   2. make release VERSION=vX.Y.Z - Tag, build, and create GitHub release
+#
+# =============================================================================
+
+# Create a new release with multi-platform builds
+# Usage: make release VERSION=v1.0.0
+release: ## Create release (VERSION=vX.Y.Z required)
+	@if [ -z "$(VERSION)" ] || ! echo "$(VERSION)" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then \
+		echo "ERROR: VERSION must be set in format vX.Y.Z"; \
+		echo "Usage: make release VERSION=v1.0.0"; \
+		exit 1; \
+	fi
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "ERROR: Working directory not clean. Commit or stash changes first."; \
+		exit 1; \
+	fi
+	@printf "$(BOLD)$(CYAN)╔══════════════════════════════════════════════════════════════════════════════╗$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)║                         RELEASE $(VERSION)                                   ║$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)╚══════════════════════════════════════════════════════════════════════════════╝$(RESET)\n"
+	@echo ""
+	@echo "Step 1/5: Running verification..."
+	@$(MAKE) --no-print-directory verify
+	@echo ""
+	@echo "Step 2/5: Building all platforms..."
+	@$(MAKE) --no-print-directory build-all
+	@echo ""
+	@echo "Step 3/5: Creating git tag..."
+	@git tag -a $(VERSION) -m "Release $(VERSION)"
+	@echo "Tagged: $(VERSION)"
+	@echo ""
+	@echo "Step 4/5: Pushing tag to origin..."
+	@git push origin $(VERSION)
+	@echo ""
+	@echo "Step 5/5: Creating GitHub release..."
+	@if command -v gh > /dev/null 2>&1; then \
+		gh release create $(VERSION) \
+			--title "$(VERSION)" \
+			--generate-notes \
+			$(BINARY_NAME)-darwin-* $(BINARY_NAME)-linux-* 2>/dev/null || \
+			echo "Note: Upload binaries manually if gh release failed"; \
+	else \
+		echo "GitHub CLI not installed. Create release manually at:"; \
+		echo "https://github.com/krisarmstrong/seed/releases/new?tag=$(VERSION)"; \
+	fi
+	@echo ""
+	@printf "$(GREEN)╔══════════════════════════════════════════════════════════════════════════════╗$(RESET)\n"
+	@printf "$(GREEN)║                     ✓ RELEASE $(VERSION) COMPLETE                            ║$(RESET)\n"
+	@printf "$(GREEN)╚══════════════════════════════════════════════════════════════════════════════╝$(RESET)\n"
+	@echo ""
+	@echo "Binaries:"
+	@ls -lh $(BINARY_NAME)-* 2>/dev/null || true
+	@echo ""
+	@echo "Next steps:"
+	@echo "  - Verify release at: https://github.com/krisarmstrong/seed/releases"
+	@echo "  - Update CHANGELOG.md if needed"
+	@echo "  - Announce release"
 
 # Pre-release checklist validation
 release-check: verify ## Full release validation (verify + install script check)
