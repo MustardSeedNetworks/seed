@@ -86,6 +86,24 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
   const { t } = useTranslation("survey");
   // Current survey being edited
   const [survey, setSurvey] = useState(initialSurvey);
+
+  // Get active floor (for multi-floor support)
+  const getActiveFloor = useCallback(() => {
+    if (!survey.floors || survey.floors.length === 0) {
+      return null;
+    }
+    if (survey.activeFloorId) {
+      const floor = survey.floors.find((f) => f.id === survey.activeFloorId);
+      if (floor) return floor;
+    }
+    return survey.floors[0];
+  }, [survey.floors, survey.activeFloorId]);
+
+  // Get the current floor plan (from active floor or legacy field)
+  const currentFloorPlan = getActiveFloor()?.floorPlan ?? survey.floorPlan;
+
+  // Get samples for current floor (from active floor or legacy field)
+  const currentSamples = getActiveFloor()?.samples ?? survey.samples ?? [];
   // Indicates if a sampling operation is in progress
   const [sampling, setSampling] = useState(false);
   // Indicates if floor plan upload is in progress
@@ -262,8 +280,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             const wifiData = await wifiRes.json();
 
             // Check if BSSID changed (roaming)
-            const samples = survey.samples ?? [];
-            const lastSample = samples[samples.length - 1];
+            const lastSample = currentSamples[currentSamples.length - 1];
             const lastBssid = lastSample ? (lastSample.sampleData as ActiveSample).bssid : null;
             const roamingEvent = lastBssid !== null && lastBssid !== wifiData.bssid;
 
@@ -405,7 +422,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...survey.floorPlan,
+          ...currentFloorPlan,
           scaleM,
         }),
       });
@@ -437,11 +454,11 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
 
   // Handle floor plan scale/propagation updates from ScaleCalibrationPanel
   const handleFloorPlanUpdate = async (updates: Partial<FloorPlan>) => {
-    if (!survey.floorPlan) return;
+    if (!currentFloorPlan) return;
 
     try {
       const updatedFloorPlan = {
-        ...survey.floorPlan,
+        ...currentFloorPlan,
         ...updates,
       };
 
@@ -548,7 +565,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         const updated = await res.json();
         setSurvey(updated);
         onUpdate();
-      } else if (options.importCalibration && survey.floorPlan) {
+      } else if (options.importCalibration && currentFloorPlan) {
         // Just import calibration settings
         await handleFloorPlanUpdate({
           scaleM: data.calibration.scaleM,
@@ -625,7 +642,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             <p className={`body-small ${spacing.margin.top.tight}`}>
               {(survey.surveyType ?? "wifi").charAt(0).toUpperCase() +
                 (survey.surveyType ?? "wifi").slice(1)}{" "}
-              {t("status.survey")} • {(survey.samples ?? []).length} {t("status.samples")} •{" "}
+              {t("status.survey")} • {currentSamples.length} {t("status.samples")} •{" "}
               {survey.status ?? "unknown"}
             </p>
           </div>
@@ -766,7 +783,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
               </div>
 
               {/* Heatmap metric selector - categorized */}
-              {heatmapMetric === null && (survey.samples ?? []).length > 0 && (
+              {heatmapMetric === null && currentSamples.length > 0 && (
                 <div className={`${spacing.margin.bottom.content} ${spacing.stack.sm}`}>
                   {/* Signal Category */}
                   <div>
@@ -862,7 +879,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                 </div>
               )}
 
-              {!survey.floorPlan ? (
+              {!currentFloorPlan ? (
                 <div
                   className={`border-2 border-dashed border-surface-border ${radius.md} pad-lg text-center`}
                 >
@@ -1012,10 +1029,10 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                   )}
 
                   {/* Calibrate button and current scale info */}
-                  {!calibrationMode && survey.floorPlan && (
+                  {!calibrationMode && currentFloorPlan && (
                     <div className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}>
                       <div className="body-small text-text-muted">
-                        {t("floorPlan.scale")}: {survey.floorPlan.scaleM.toFixed(3)} m/px
+                        {t("floorPlan.scale")}: {currentFloorPlan.scaleM.toFixed(3)} m/px
                         {survey.status === "in_progress" && ` • ${t("floorPlan.clickToMeasure")}`}
                       </div>
                       <button
@@ -1029,8 +1046,8 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                   )}
 
                   <FloorPlanCanvas
-                    floorPlan={survey.floorPlan}
-                    samples={survey.samples ?? []}
+                    floorPlan={currentFloorPlan!}
+                    samples={currentSamples}
                     onPointClick={handlePointClick}
                     interactive={
                       survey.status === "in_progress" &&
@@ -1045,12 +1062,12 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                   />
 
                   {/* Heatmap Legend - show when heatmap is active */}
-                  {heatmapMetric !== null && (survey.samples ?? []).length > 0 && (
+                  {heatmapMetric !== null && currentSamples.length > 0 && (
                     <div className={spacing.margin.top.content}>
                       <HeatmapLegend
                         metric={heatmapMetric}
-                        minValue={calculateMetricRange(survey.samples ?? [], heatmapMetric).min}
-                        maxValue={calculateMetricRange(survey.samples ?? [], heatmapMetric).max}
+                        minValue={calculateMetricRange(currentSamples, heatmapMetric).min}
+                        maxValue={calculateMetricRange(currentSamples, heatmapMetric).max}
                       />
                     </div>
                   )}
@@ -1160,9 +1177,9 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             )}
 
             {/* Scale Calibration Panel - show when floor plan exists */}
-            {survey.floorPlan && (
+            {currentFloorPlan && (
               <ScaleCalibrationPanel
-                floorPlan={survey.floorPlan}
+                floorPlan={currentFloorPlan}
                 onUpdate={handleFloorPlanUpdate}
                 onStartCalibration={() => setCalibrationMode(true)}
                 isCalibrating={calibrationMode}
@@ -1170,7 +1187,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             )}
 
             {/* Survey Configuration Panel - show when floor plan exists */}
-            {survey.floorPlan && wifiStatus && (
+            {currentFloorPlan && wifiStatus && (
               <SurveyConfigPanel
                 config={survey.config}
                 surveyType={editSurveyType}
@@ -1187,10 +1204,10 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             {/* Sample list */}
             <div className={`bg-surface-raised ${radius.md} border border-surface-border pad`}>
               <h2 className={`heading-3 ${spacing.margin.bottom.content}`}>
-                {t("samples.title")} ({(survey.samples ?? []).length})
+                {t("samples.title")} ({currentSamples.length})
               </h2>
               <div className="stack-sm max-h-[70vh] overflow-y-auto">
-                {(survey.samples ?? []).length === 0 ? (
+                {currentSamples.length === 0 ? (
                   <p className={`body-small text-center ${spacing.pad.lg}`}>
                     {t("samples.noSamples")}{" "}
                     {survey.status === "in_progress"
@@ -1198,7 +1215,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                       : t("samples.startToBegin")}
                   </p>
                 ) : (
-                  (survey.samples ?? []).map((sample, idx) => (
+                  currentSamples.map((sample, idx) => (
                     <div
                       key={idx}
                       className={`border border-surface-border ${radius.md} pad-sm body-small`}
