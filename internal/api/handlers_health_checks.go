@@ -234,31 +234,31 @@ type IperfSettingsResponse struct {
 	AutoRunOnLink bool `json:"autoRunOnLink"`
 }
 
-// handleTestsSettings handles GET/PUT for custom tests settings.
-func (s *Server) handleTestsSettings(w http.ResponseWriter, r *http.Request) {
+// handleHealthChecksSettings handles GET/PUT for health check settings.
+func (s *Server) handleHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		s.getTestsSettings(w, r)
+		s.getHealthChecksSettings(w, r)
 	case http.MethodPut:
-		s.updateTestsSettings(w, r)
+		s.updateHealthChecksSettings(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	resp := TestsSettingsResponse{
 		DNSHostname:    s.config.DNS.TestHostname,
 		DNSServers:     make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
-		PingTargets:    make([]PingTargetResponse, 0, len(s.config.Tests.PingTargets)),
-		TCPPorts:       make([]TCPPortResponse, 0, len(s.config.Tests.TCPPorts)),
-		UDPPorts:       make([]UDPPortResponse, 0, len(s.config.Tests.UDPPorts)),
-		HTTPEndpoints:  make([]HTTPEndpointResponse, 0, len(s.config.Tests.HTTPEndpoints)),
-		RunPerformance: s.config.Tests.RunPerformance,
-		RunSpeedtest:   s.config.Tests.RunSpeedtest,
-		RunIperf:       s.config.Tests.RunIperf,
-		RunDiscovery:   s.config.Tests.RunDiscovery,
+		PingTargets:    make([]PingTargetResponse, 0, len(s.config.HealthChecks.PingTargets)),
+		TCPPorts:       make([]TCPPortResponse, 0, len(s.config.HealthChecks.TCPPorts)),
+		UDPPorts:       make([]UDPPortResponse, 0, len(s.config.HealthChecks.UDPPorts)),
+		HTTPEndpoints:  make([]HTTPEndpointResponse, 0, len(s.config.HealthChecks.HTTPEndpoints)),
+		RunPerformance: s.config.HealthChecks.RunPerformance,
+		RunSpeedtest:   s.config.HealthChecks.RunSpeedtest,
+		RunIperf:       s.config.HealthChecks.RunIperf,
+		RunDiscovery:   s.config.HealthChecks.RunDiscovery,
 		Speedtest: SpeedtestSettingsResponse{
 			ServerID:      s.config.Speedtest.ServerID,
 			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
@@ -276,7 +276,7 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	for _, p := range s.config.Tests.PingTargets {
+	for _, p := range s.config.HealthChecks.PingTargets {
 		resp.PingTargets = append(resp.PingTargets, PingTargetResponse{
 			Name:    p.Name,
 			Host:    p.Host,
@@ -284,7 +284,7 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	for _, t := range s.config.Tests.TCPPorts {
+	for _, t := range s.config.HealthChecks.TCPPorts {
 		resp.TCPPorts = append(resp.TCPPorts, TCPPortResponse{
 			Name:    t.Name,
 			Host:    t.Host,
@@ -293,7 +293,7 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	for _, u := range s.config.Tests.UDPPorts {
+	for _, u := range s.config.HealthChecks.UDPPorts {
 		resp.UDPPorts = append(resp.UDPPorts, UDPPortResponse{
 			Name:    u.Name,
 			Host:    u.Host,
@@ -302,7 +302,7 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	for _, h := range s.config.Tests.HTTPEndpoints {
+	for _, h := range s.config.HealthChecks.HTTPEndpoints {
 		resp.HTTPEndpoints = append(resp.HTTPEndpoints, HTTPEndpointResponse{
 			Name:           h.Name,
 			URL:            h.URL,
@@ -314,7 +314,7 @@ func (s *Server) getTestsSettings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
@@ -359,9 +359,9 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update ping targets
-	s.config.Tests.PingTargets = make([]config.PingTarget, 0, len(req.PingTargets))
+	s.config.HealthChecks.PingTargets = make([]config.PingTarget, 0, len(req.PingTargets))
 	for _, p := range req.PingTargets {
-		s.config.Tests.PingTargets = append(s.config.Tests.PingTargets, config.PingTarget{
+		s.config.HealthChecks.PingTargets = append(s.config.HealthChecks.PingTargets, config.PingTarget{
 			Name:    p.Name,
 			Host:    p.Host,
 			Enabled: p.Enabled,
@@ -369,9 +369,9 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update TCP ports
-	s.config.Tests.TCPPorts = make([]config.TCPPortTest, 0, len(req.TCPPorts))
+	s.config.HealthChecks.TCPPorts = make([]config.TCPPortTest, 0, len(req.TCPPorts))
 	for _, t := range req.TCPPorts {
-		s.config.Tests.TCPPorts = append(s.config.Tests.TCPPorts, config.TCPPortTest{
+		s.config.HealthChecks.TCPPorts = append(s.config.HealthChecks.TCPPorts, config.TCPPortTest{
 			Name:    t.Name,
 			Host:    t.Host,
 			Port:    t.Port,
@@ -380,9 +380,9 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update UDP ports
-	s.config.Tests.UDPPorts = make([]config.UDPPortTest, 0, len(req.UDPPorts))
+	s.config.HealthChecks.UDPPorts = make([]config.UDPPortTest, 0, len(req.UDPPorts))
 	for _, u := range req.UDPPorts {
-		s.config.Tests.UDPPorts = append(s.config.Tests.UDPPorts, config.UDPPortTest{
+		s.config.HealthChecks.UDPPorts = append(s.config.HealthChecks.UDPPorts, config.UDPPortTest{
 			Name:    u.Name,
 			Host:    u.Host,
 			Port:    u.Port,
@@ -392,9 +392,9 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Update HTTP endpoints
 	// Store URL as-is to preserve user intent - scheme-less URLs enable HTTPS->HTTP fallback at test time
-	s.config.Tests.HTTPEndpoints = make([]config.HTTPEndpoint, 0, len(req.HTTPEndpoints))
+	s.config.HealthChecks.HTTPEndpoints = make([]config.HTTPEndpoint, 0, len(req.HTTPEndpoints))
 	for _, h := range req.HTTPEndpoints {
-		s.config.Tests.HTTPEndpoints = append(s.config.Tests.HTTPEndpoints, config.HTTPEndpoint{
+		s.config.HealthChecks.HTTPEndpoints = append(s.config.HealthChecks.HTTPEndpoints, config.HTTPEndpoint{
 			Name:           h.Name,
 			URL:            h.URL,
 			ExpectedStatus: h.ExpectedStatus,
@@ -403,10 +403,10 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update performance toggle
-	s.config.Tests.RunPerformance = req.RunPerformance
-	s.config.Tests.RunSpeedtest = req.RunSpeedtest
-	s.config.Tests.RunIperf = req.RunIperf
-	s.config.Tests.RunDiscovery = req.RunDiscovery
+	s.config.HealthChecks.RunPerformance = req.RunPerformance
+	s.config.HealthChecks.RunSpeedtest = req.RunSpeedtest
+	s.config.HealthChecks.RunIperf = req.RunIperf
+	s.config.HealthChecks.RunDiscovery = req.RunDiscovery
 
 	// Update speedtest settings
 	s.config.Speedtest.ServerID = req.Speedtest.ServerID
@@ -429,7 +429,7 @@ func (s *Server) updateTestsSettings(w http.ResponseWriter, r *http.Request) {
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 		"status":  "success",
-		"message": "Tests settings updated",
+		"message": "Health checks settings updated",
 	})
 }
 
@@ -476,8 +476,8 @@ type CustomTestsResult struct {
 	HasTests    bool               `json:"hasTests"`
 }
 
-// handleCustomTests runs all configured custom tests and returns results.
-func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
+// handleHealthChecks runs all configured health checks and returns results.
+func (s *Server) handleHealthChecks(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -491,18 +491,18 @@ func (s *Server) handleCustomTests(w http.ResponseWriter, r *http.Request) {
 		HTTPResults: s.runHTTPTests(r.Context(), logger),
 	}
 
-	result.HasTests = len(s.config.Tests.PingTargets) > 0 || len(s.config.Tests.TCPPorts) > 0 ||
-		len(s.config.Tests.UDPPorts) > 0 || len(s.config.Tests.HTTPEndpoints) > 0
+	result.HasTests = len(s.config.HealthChecks.PingTargets) > 0 || len(s.config.HealthChecks.TCPPorts) > 0 ||
+		len(s.config.HealthChecks.UDPPorts) > 0 || len(s.config.HealthChecks.HTTPEndpoints) > 0
 
 	sendJSONResponse(w, logger, http.StatusOK, result)
 }
 
 // runPingTests runs all configured ping tests and returns results.
 func (s *Server) runPingTests() []CustomTestResult {
-	results := make([]CustomTestResult, 0, len(s.config.Tests.PingTargets))
+	results := make([]CustomTestResult, 0, len(s.config.HealthChecks.PingTargets))
 	threshold := s.config.Thresholds.CustomTests.Ping
 
-	for _, target := range s.config.Tests.PingTargets {
+	for _, target := range s.config.HealthChecks.PingTargets {
 		if !target.Enabled {
 			continue
 		}
@@ -547,10 +547,10 @@ func (s *Server) evaluatePingStatus(stats *PingStats, threshold config.Threshold
 
 // runTCPTests runs all configured TCP port tests and returns results.
 func (s *Server) runTCPTests(ctx context.Context) []CustomTestResult {
-	results := make([]CustomTestResult, 0, len(s.config.Tests.TCPPorts))
+	results := make([]CustomTestResult, 0, len(s.config.HealthChecks.TCPPorts))
 	threshold := s.config.Thresholds.CustomTests.TCP
 
-	for _, target := range s.config.Tests.TCPPorts {
+	for _, target := range s.config.HealthChecks.TCPPorts {
 		if !target.Enabled {
 			continue
 		}
@@ -579,10 +579,10 @@ func (s *Server) runTCPTests(ctx context.Context) []CustomTestResult {
 
 // runUDPTests runs all configured UDP port tests and returns results.
 func (s *Server) runUDPTests() []CustomTestResult {
-	results := make([]CustomTestResult, 0, len(s.config.Tests.UDPPorts))
+	results := make([]CustomTestResult, 0, len(s.config.HealthChecks.UDPPorts))
 	threshold := s.config.Thresholds.CustomTests.UDP
 
-	for _, target := range s.config.Tests.UDPPorts {
+	for _, target := range s.config.HealthChecks.UDPPorts {
 		if !target.Enabled {
 			continue
 		}
@@ -611,9 +611,9 @@ func (s *Server) runUDPTests() []CustomTestResult {
 
 // runHTTPTests runs all configured HTTP endpoint tests and returns results.
 func (s *Server) runHTTPTests(ctx context.Context, logger *slog.Logger) []CustomTestResult {
-	results := make([]CustomTestResult, 0, len(s.config.Tests.HTTPEndpoints))
+	results := make([]CustomTestResult, 0, len(s.config.HealthChecks.HTTPEndpoints))
 
-	for _, endpoint := range s.config.Tests.HTTPEndpoints {
+	for _, endpoint := range s.config.HealthChecks.HTTPEndpoints {
 		if !endpoint.Enabled {
 			continue
 		}

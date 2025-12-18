@@ -89,11 +89,11 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 				},
 			},
 		},
-		"tests": map[string]interface{}{
-			"runPerformance": s.config.Tests.RunPerformance,
-			"runSpeedtest":   s.config.Tests.RunSpeedtest,
-			"runIperf":       s.config.Tests.RunIperf,
-			"runDiscovery":   s.config.Tests.RunDiscovery,
+		"healthChecks": map[string]interface{}{
+			"runPerformance": s.config.HealthChecks.RunPerformance,
+			"runSpeedtest":   s.config.HealthChecks.RunSpeedtest,
+			"runIperf":       s.config.HealthChecks.RunIperf,
+			"runDiscovery":   s.config.HealthChecks.RunDiscovery,
 		},
 		"speedtest": map[string]interface{}{
 			"serverId":      s.config.Speedtest.ServerID,
@@ -149,7 +149,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Apply updates using helper functions
 	applyThresholdUpdates(updates, s.config)
-	applyTestsUpdates(updates, s.config)
+	applyHealthChecksUpdates(updates, s.config)
 	applySpeedtestUpdates(updates, s.config)
 	applyIperfUpdates(updates, s.config)
 	applyFABOptionsUpdates(updates, s.config)
@@ -297,23 +297,23 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 	}
 }
 
-// applyTestsUpdates applies test toggle updates.
-func applyTestsUpdates(updates map[string]interface{}, cfg *config.Config) {
-	tests, ok := updates["tests"].(map[string]interface{})
+// applyHealthChecksUpdates applies health check toggle updates.
+func applyHealthChecksUpdates(updates map[string]interface{}, cfg *config.Config) {
+	healthChecks, ok := updates["healthChecks"].(map[string]interface{})
 	if !ok {
 		return
 	}
-	if runPerformance, ok := tests["runPerformance"].(bool); ok {
-		cfg.Tests.RunPerformance = runPerformance
+	if runPerformance, ok := healthChecks["runPerformance"].(bool); ok {
+		cfg.HealthChecks.RunPerformance = runPerformance
 	}
-	if runSpeedtest, ok := tests["runSpeedtest"].(bool); ok {
-		cfg.Tests.RunSpeedtest = runSpeedtest
+	if runSpeedtest, ok := healthChecks["runSpeedtest"].(bool); ok {
+		cfg.HealthChecks.RunSpeedtest = runSpeedtest
 	}
-	if runIperf, ok := tests["runIperf"].(bool); ok {
-		cfg.Tests.RunIperf = runIperf
+	if runIperf, ok := healthChecks["runIperf"].(bool); ok {
+		cfg.HealthChecks.RunIperf = runIperf
 	}
-	if runDiscovery, ok := tests["runDiscovery"].(bool); ok {
-		cfg.Tests.RunDiscovery = runDiscovery
+	if runDiscovery, ok := healthChecks["runDiscovery"].(bool); ok {
+		cfg.HealthChecks.RunDiscovery = runDiscovery
 	}
 }
 

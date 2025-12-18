@@ -4,7 +4,7 @@
   "title": "The Seed Configuration",
   "description": "Configuration schema for The Seed network diagnostic tool",
   "type": "object",
-  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "tests", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp"],
+  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "health_checks", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp"],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -34,8 +34,8 @@
     "dns": {
       "$ref": "#/$defs/DNSConfig"
     },
-    "tests": {
-      "$ref": "#/$defs/TestsConfig"
+    "health_checks": {
+      "$ref": "#/$defs/HealthChecksConfig"
     },
     "speedtest": {
       "$ref": "#/$defs/SpeedtestConfig"
@@ -583,9 +583,9 @@
         }
       }
     },
-    "TestsConfig": {
+    "HealthChecksConfig": {
       "type": "object",
-      "description": "Custom test configurations",
+      "description": "Health check configurations",
       "required": ["ping_targets", "tcp_ports", "udp_ports", "http_endpoints", "run_performance", "run_speedtest", "run_iperf", "run_discovery"],
       "additionalProperties": false,
       "properties": {

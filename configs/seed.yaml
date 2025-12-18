@@ -48,8 +48,8 @@ dns:
   test_hostname: google.com
   timeout: 5s
 
-# Custom test targets
-tests:
+# Health checks - corresponds to the "Health Checks" card in the UI
+health_checks:
   ping_targets:
     - name: "Google"
       host: www.google.com

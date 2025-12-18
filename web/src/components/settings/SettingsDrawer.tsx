@@ -475,7 +475,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch current tests settings
   const fetchTestsSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/tests/settings`, {
+      const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
         headers: getAuthHeaders(),
       });
       if (response.ok) {
@@ -896,7 +896,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     setTestsStatus("saving");
     try {
       const payload = { ...testsSettings };
-      const response = await fetch(`${API_BASE}/api/tests/settings`, {
+      const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
         method: "PUT",
         headers: {
           ...getAuthHeaders(),

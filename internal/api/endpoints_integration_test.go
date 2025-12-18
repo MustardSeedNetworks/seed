@@ -376,10 +376,10 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	ts := httptest.NewServer(server.mux)
 	defer ts.Close()
 
-	t.Run("GetTestsSettings", func(t *testing.T) {
-		resp, err := http.Get(ts.URL + "/api/tests/settings")
+	t.Run("GetHealthChecksSettings", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/api/health-checks/settings")
 		if err != nil {
-			t.Fatalf("GET /api/tests/settings failed: %v", err)
+			t.Fatalf("GET /api/health-checks/settings failed: %v", err)
 		}
 		defer resp.Body.Close()
 
@@ -389,11 +389,11 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 
 		var settings TestsSettingsResponse
 		if err := json.NewDecoder(resp.Body).Decode(&settings); err != nil {
-			t.Errorf("Failed to decode tests settings: %v", err)
+			t.Errorf("Failed to decode health checks settings: %v", err)
 		}
 	})
 
-	t.Run("UpdateTestsSettings", func(t *testing.T) {
+	t.Run("UpdateHealthChecksSettings", func(t *testing.T) {
 		// Issue #605 fixed: config.Save() deadlock resolved by unlocking before Save()
 		settings := TestsSettingsResponse{
 			DNSHostname: "example.com",
@@ -402,13 +402,13 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		}
 
 		body, _ := json.Marshal(settings)
-		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/tests/settings", bytes.NewReader(body))
+		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/health-checks/settings", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 
 		client := &http.Client{Timeout: 15 * time.Second}
 		resp, err := client.Do(req)
 		if err != nil {
-			t.Fatalf("PUT /api/tests/settings failed: %v", err)
+			t.Fatalf("PUT /api/health-checks/settings failed: %v", err)
 		}
 		defer resp.Body.Close()
 

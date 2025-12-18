@@ -99,7 +99,7 @@ func redactSecrets(cfg *config.Config) *config.Config {
 		Discovery:        cfg.Discovery,
 		NetworkDiscovery: cfg.NetworkDiscovery,
 		DNS:              cfg.DNS,
-		Tests:            cfg.Tests,
+		HealthChecks:     cfg.HealthChecks,
 		Speedtest:        cfg.Speedtest,
 		Iperf:            cfg.Iperf,
 		Thresholds:       cfg.Thresholds,

@@ -135,10 +135,12 @@ export function useHealthChecks() {
   const runCustomTests = useCallback(async (): Promise<CustomTestResult[]> => {
     try {
       setIsRunning(true);
-      const data = await api.post<{ results: CustomTestResult[] }>("/api/tests/run");
+      const data = await api.post<{ results: CustomTestResult[] }>("/api/health-checks/run");
       return data.results || [];
     } catch (err) {
-      logger.error(LogComponents.SYSTEM, "Custom tests failed", err, { endpoint: "/api/tests/run" });
+      logger.error(LogComponents.SYSTEM, "Custom tests failed", err, {
+        endpoint: "/api/health-checks/run",
+      });
       return [];
     } finally {
       setIsRunning(false);
@@ -240,10 +242,10 @@ export function useHealthChecks() {
    */
   const fetchSettings = useCallback(async (): Promise<TestsSettings | null> => {
     try {
-      return await api.get<TestsSettings>("/api/tests/settings");
+      return await api.get<TestsSettings>("/api/health-checks/settings");
     } catch (err) {
       logger.error(LogComponents.CONFIG, "Failed to fetch test settings", err, {
-        endpoint: "/api/tests/settings",
+        endpoint: "/api/health-checks/settings",
       });
       return null;
     }
@@ -254,11 +256,11 @@ export function useHealthChecks() {
    */
   const updateSettings = useCallback(async (settings: Partial<TestsSettings>): Promise<boolean> => {
     try {
-      await api.put("/api/tests/settings", settings);
+      await api.put("/api/health-checks/settings", settings);
       return true;
     } catch (err) {
       logger.error(LogComponents.CONFIG, "Failed to update test settings", err, {
-        endpoint: "/api/tests/settings",
+        endpoint: "/api/health-checks/settings",
         updates: settings,
       });
       return false;

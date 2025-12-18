@@ -86,10 +86,10 @@ func TestEndpointAuthentication(t *testing.T) {
 		{"Speedtest", "POST", "/api/speedtest", false, "Starting speedtest requires auth"},
 		{"Speedtest Status", "GET", "/api/speedtest/status", false, "Speedtest status requires auth"},
 
-		// Custom tests
-		{"Tests Settings GET", "GET", "/api/tests/settings", false, "Test settings require auth"},
-		{"Tests Settings PUT", "PUT", "/api/tests/settings", false, "Changing test settings requires auth"},
-		{"Run Custom Tests", "POST", "/api/tests/run", false, "Running tests requires auth"},
+		// Health checks
+		{"Health Checks Settings GET", "GET", "/api/health-checks/settings", false, "Health check settings require auth"},
+		{"Health Checks Settings PUT", "PUT", "/api/health-checks/settings", false, "Changing health check settings requires auth"},
+		{"Run Health Checks", "GET", "/api/health-checks/run", false, "Running health checks requires auth"},
 
 		// iperf3
 		{"iperf Info", "GET", "/api/iperf/info", false, "iperf info requires auth"},

@@ -615,7 +615,7 @@ func TestValidateConfig_HTTPExpectedStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := DefaultConfig()
-			cfg.Tests.HTTPEndpoints = []HTTPEndpoint{
+			cfg.HealthChecks.HTTPEndpoints = []HTTPEndpoint{
 				{
 					Name:           "test",
 					URL:            "http://example.com",

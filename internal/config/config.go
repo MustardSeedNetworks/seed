@@ -37,7 +37,7 @@ type Config struct {
 	Discovery        DiscoveryConfig        `yaml:"discovery"`
 	NetworkDiscovery NetworkDiscoveryConfig `yaml:"network_discovery"`
 	DNS              DNSConfig              `yaml:"dns"`
-	Tests            TestsConfig            `yaml:"tests"`
+	HealthChecks     HealthChecksConfig     `yaml:"health_checks"`
 	Speedtest        SpeedtestConfig        `yaml:"speedtest"`
 	Iperf            IperfConfig            `yaml:"iperf"`
 	Thresholds       ThresholdsConfig       `yaml:"thresholds"`
@@ -94,7 +94,7 @@ func (c *Config) cloneFields() *Config {
 		Discovery:        c.Discovery,
 		NetworkDiscovery: c.NetworkDiscovery,
 		DNS:              c.DNS,
-		Tests:            c.Tests,
+		HealthChecks:     c.HealthChecks,
 		Speedtest:        c.Speedtest,
 		Iperf:            c.Iperf,
 		Thresholds:       c.Thresholds,
@@ -123,7 +123,7 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 	c.Discovery = temp.Discovery
 	c.NetworkDiscovery = temp.NetworkDiscovery
 	c.DNS = temp.DNS
-	c.Tests = temp.Tests
+	c.HealthChecks = temp.HealthChecks
 	c.Speedtest = temp.Speedtest
 	c.Iperf = temp.Iperf
 	c.Thresholds = temp.Thresholds
@@ -297,8 +297,9 @@ type DNSServer struct {
 	Enabled bool   `yaml:"enabled"`
 }
 
-// TestsConfig contains custom test configurations.
-type TestsConfig struct {
+// HealthChecksConfig contains custom health check configurations.
+// This section corresponds to the "Health Checks" card in the UI.
+type HealthChecksConfig struct {
 	PingTargets    []PingTarget   `yaml:"ping_targets"`
 	TCPPorts       []TCPPortTest  `yaml:"tcp_ports"`
 	UDPPorts       []UDPPortTest  `yaml:"udp_ports"`
@@ -638,7 +639,7 @@ func DefaultConfig() *Config {
 			TestHostname: "google.com",
 			Timeout:      5 * time.Second,
 		},
-		Tests: TestsConfig{
+		HealthChecks: HealthChecksConfig{
 			PingTargets:    []PingTarget{},
 			TCPPorts:       []TCPPortTest{},
 			UDPPorts:       []UDPPortTest{},

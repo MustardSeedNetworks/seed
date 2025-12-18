@@ -96,7 +96,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     setIsRunning(true);
     setError(null);
     try {
-      const res = await fetch("/api/tests/run", {
+      const res = await fetch("/api/health-checks/run", {
         headers: getAuthHeaders(),
       });
       if (res.ok) {
