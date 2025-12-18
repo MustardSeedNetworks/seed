@@ -147,6 +147,8 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
     { key: "config", label: t("setup.configureSurvey"), done: configReady },
     { key: "start", label: t("setup.readyToStart"), done: survey.status !== "created" },
   ];
+  const missingSetupSteps = setupSteps.filter((s) => !s.done);
+  const readyToStart = missingSetupSteps.length === 0;
   const completedSetupSteps = setupSteps.filter((s) => s.done).length;
 
   // Check WiFi adapter status on mount
@@ -679,8 +681,16 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             {survey.status === "created" && (
               <button
                 onClick={() => handleStatusChange("start")}
-                disabled={!wifiStatus?.canScan}
-                title={!wifiStatus?.canScan ? t("wifi.requiredToStart") : undefined}
+                disabled={!wifiStatus?.canScan || !readyToStart}
+                title={
+                  !wifiStatus?.canScan
+                    ? t("wifi.requiredToStart")
+                    : !readyToStart
+                      ? `${t("setup.readyToStart")}: ${missingSetupSteps
+                          .map((s) => s.label)
+                          .join(", ")}`
+                      : undefined
+                }
                 className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default} disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <Play className={iconTokens.size.sm} />
@@ -711,8 +721,16 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
               <>
                 <button
                   onClick={() => handleStatusChange("start")}
-                  disabled={!wifiStatus?.canScan}
-                  title={!wifiStatus?.canScan ? t("wifi.requiredToStart") : undefined}
+                  disabled={!wifiStatus?.canScan || !readyToStart}
+                  title={
+                    !wifiStatus?.canScan
+                      ? t("wifi.requiredToStart")
+                      : !readyToStart
+                        ? `${t("setup.readyToStart")}: ${missingSetupSteps
+                            .map((s) => s.label)
+                            .join(", ")}`
+                        : undefined
+                  }
                   className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <Play className={iconTokens.size.sm} />
@@ -746,6 +764,14 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             className={`bg-status-error/10 border border-status-error/20 text-status-error ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content}`}
           >
             {error}
+          </div>
+        )}
+
+        {!readyToStart && (
+          <div
+            className={`bg-status-warning/10 border border-status-warning/30 text-status-warning ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content}`}
+          >
+            {t("setup.readyToStart")}: {missingSetupSteps.map((s) => s.label).join(", ")}
           </div>
         )}
 
