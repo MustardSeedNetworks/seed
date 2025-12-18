@@ -67,6 +67,7 @@ import { HealthCheckCard } from "./components/cards/HealthCheckCard";
 import { SystemHealthCard } from "./components/cards/SystemHealthCard";
 import { WiFiSurveyCard } from "./components/cards/WiFiSurveyCard";
 import { FAB } from "./components/ui/FAB";
+import { InterfaceSelector } from "./components/ui/InterfaceSelector";
 import {
   radius,
   icon as iconTokens,
@@ -1102,36 +1103,13 @@ function App() {
 
           {/* Controls */}
           <div className={`flex items-center ${spacing.gap.tight} sm:${spacing.gap.compact}`}>
-            {/* Interface selector */}
-            <label htmlFor="interface-select" className="sr-only">
-              {t("accessibility.selectInterface")}
-            </label>
-            <select
-              id="interface-select"
-              className={`${radius.md} border border-surface-border bg-surface-base ${input.size.sm} body-small min-w-0 max-w-25 sm:max-w-none focus:outline-none focus:ring-2 focus:ring-brand-primary`}
-              value={currentInterface}
-              onChange={(e) => changeInterface(e.target.value)}
-              aria-label={t("accessibility.selectInterface")}
-            >
-              {interfaces.length > 0 ? (
-                interfaces
-                  .filter((iface) => iface.type === "ethernet" || iface.type === "wifi")
-                  .sort((a, b) => (b.score || 0) - (a.score || 0)) // Sort by score
-                  .map((iface) => (
-                    <option
-                      key={iface.name}
-                      value={iface.name}
-                      title={`${iface.name}${iface.description ? ` - ${iface.description}` : ""}`}
-                    >
-                      {iface.friendlyName || iface.name}
-                      {iface.speedDisplay && ` (${iface.speedDisplay})`}
-                      {!iface.up && ` - ${t("status.down")}`}
-                    </option>
-                  ))
-              ) : (
-                <option value={currentInterface}>{currentInterface}</option>
-              )}
-            </select>
+            {/* Interface selector with grouped dropdown */}
+            <InterfaceSelector
+              interfaces={interfaces}
+              currentInterface={currentInterface}
+              isWifi={isWifi}
+              onChange={changeInterface}
+            />
 
             {/* Touch-friendly buttons with larger tap targets */}
             <button
@@ -1253,7 +1231,7 @@ function App() {
       {/* Main content */}
       <main className={spacing.mainPadding.y}>
         <div className={`${section.width.xl} mx-auto ${spacing.mainPadding.x}`}>
-          {/* Section: Primary Connectivity */}
+          {/* Section: Primary Connectivity - cards differ by interface type */}
           <section aria-labelledby="connectivity-heading" className={spacing.margin.bottom.section}>
             <h2
               id="connectivity-heading"
@@ -1264,12 +1242,17 @@ function App() {
             <div
               className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
             >
-              <LinkCard data={cards.link} loading={loading} />
-              {cards.cable?.supported && <CableCard data={cards.cable} loading={loading} />}
-              {isWifi && cards.wifi?.ssid && (
-                <WiFiCard data={cards.wifi} loading={loading} visible={true} />
+              {/* WiFi-only cards */}
+              {isWifi && <WiFiCard data={cards.wifi} loading={loading} visible={true} />}
+
+              {/* Ethernet-only cards */}
+              {!isWifi && (
+                <>
+                  <LinkCard data={cards.link} loading={loading} />
+                  {cards.cable?.supported && <CableCard data={cards.cable} loading={loading} />}
+                  <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />
+                </>
               )}
-              <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />
             </div>
           </section>
 
@@ -1292,7 +1275,7 @@ function App() {
             </div>
           </section>
 
-          {/* Section: Testing & Discovery */}
+          {/* Section: Testing & Discovery - cards differ by interface type */}
           <section aria-labelledby="performance-heading" className={spacing.margin.bottom.section}>
             <h2
               id="performance-heading"
@@ -1303,6 +1286,7 @@ function App() {
             <div
               className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
             >
+              {/* Common cards for both interface types */}
               <HealthCheckCard loading={loading} />
               {cardSettings.performance.enabled && (
                 <PerformanceCard
@@ -1311,14 +1295,18 @@ function App() {
                   runIperfEnabled={cardSettings.performance.iperf.enabled}
                 />
               )}
-              {cardSettings.networkDiscovery.enabled && (
+
+              {/* Ethernet-only: Network Discovery (ARP/LLDP/SNMP) */}
+              {!isWifi && cardSettings.networkDiscovery.enabled && (
                 <NetworkDiscoveryCard
                   data={networkDiscovery}
                   loading={loading}
                   onScan={triggerDeviceScan}
                 />
               )}
-              <WiFiSurveyCard isWifi={isWifi} />
+
+              {/* WiFi-only: WiFi Survey for heatmaps and site surveys */}
+              {isWifi && <WiFiSurveyCard isWifi={isWifi} />}
             </div>
           </section>
 

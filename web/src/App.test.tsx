@@ -428,10 +428,11 @@ describe("App", () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        const select = screen.getByRole("combobox", {
+        // InterfaceSelector uses a button with aria-haspopup="listbox" instead of native select
+        const interfaceButton = screen.getByRole("button", {
           name: /select network interface/i,
         });
-        expect(select).toBeInTheDocument();
+        expect(interfaceButton).toBeInTheDocument();
       });
     });
 
