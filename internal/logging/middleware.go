@@ -1,8 +1,11 @@
 package logging
 
 import (
+	"bufio"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
+	"net"
 	"net/http"
 	"time"
 )
@@ -117,4 +120,13 @@ func (w *responseWriter) Write(b []byte) (int, error) {
 // Unwrap returns the underlying ResponseWriter, supporting http.ResponseController.
 func (w *responseWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
+}
+
+// Hijack implements http.Hijacker for WebSocket support (fixes #ws-hijacker).
+// This allows the logging middleware to be used with WebSocket endpoints.
+func (w *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, fmt.Errorf("underlying ResponseWriter does not implement http.Hijacker")
 }
