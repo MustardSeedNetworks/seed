@@ -49,6 +49,19 @@ type Config struct {
 	DisplayOptions   DisplayOptionsConfig   `yaml:"display_options"`
 	Logging          LoggingConfig          `yaml:"logging"`
 	MCP              MCPConfig              `yaml:"mcp"`
+	Database         DatabaseConfig         `yaml:"database"`
+}
+
+// DatabaseConfig contains SQLite database configuration.
+type DatabaseConfig struct {
+	// Path to the SQLite database file. Default: data/seed.db
+	Path string `yaml:"path"`
+	// RetentionDays sets how many days of historical data to keep (0 = forever)
+	RetentionDays int `yaml:"retention_days"`
+	// EnableWAL enables Write-Ahead Logging for better concurrency. Default: true
+	EnableWAL bool `yaml:"enable_wal"`
+	// MaxConnections sets the maximum number of database connections. Default: 10
+	MaxConnections int `yaml:"max_connections"`
 }
 
 // Lock acquires a write lock on the config.
@@ -106,6 +119,7 @@ func (c *Config) cloneFields() *Config {
 		DisplayOptions:   c.DisplayOptions,
 		Logging:          c.Logging,
 		MCP:              c.MCP,
+		Database:         c.Database,
 	}
 }
 
@@ -135,6 +149,7 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 	c.DisplayOptions = temp.DisplayOptions
 	c.Logging = temp.Logging
 	c.MCP = temp.MCP
+	c.Database = temp.Database
 }
 
 // ServerConfig contains HTTP server settings.
@@ -757,6 +772,12 @@ func DefaultConfig() *Config {
 			RequireAuth:        true,  // Require authentication by default for security
 			RateLimitPerMinute: 60,    // 60 requests per minute default
 			AllowedTools:       nil,   // All tools available when empty
+		},
+		Database: DatabaseConfig{
+			Path:           "data/seed.db",
+			RetentionDays:  90,   // 3 months of historical data
+			EnableWAL:      true, // Better concurrency
+			MaxConnections: 10,
 		},
 	}
 }

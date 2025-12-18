@@ -4,7 +4,7 @@
   "title": "The Seed Configuration",
   "description": "Configuration schema for The Seed network diagnostic tool",
   "type": "object",
-  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "health_checks", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp"],
+  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "health_checks", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp", "database"],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -69,6 +69,9 @@
     },
     "mcp": {
       "$ref": "#/$defs/MCPConfig"
+    },
+    "database": {
+      "$ref": "#/$defs/DatabaseConfig"
     }
   },
   "$defs": {
@@ -1396,6 +1399,37 @@
             "type": "string"
           },
           "default": []
+        }
+      }
+    },
+    "DatabaseConfig": {
+      "type": "object",
+      "description": "SQLite database settings for historical data storage",
+      "required": ["path", "retention_days", "enable_wal", "max_connections"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the SQLite database file",
+          "default": "data/seed.db"
+        },
+        "retention_days": {
+          "type": "integer",
+          "description": "Days of historical data to retain (0 = forever)",
+          "minimum": 0,
+          "default": 90
+        },
+        "enable_wal": {
+          "type": "boolean",
+          "description": "Enable Write-Ahead Logging for better concurrency",
+          "default": true
+        },
+        "max_connections": {
+          "type": "integer",
+          "description": "Maximum number of database connections",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 10
         }
       }
     }

@@ -26,6 +26,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/cable"
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/dns"
@@ -78,6 +79,7 @@ type Server struct {
 	vulnScanner         *discovery.VulnerabilityScanner
 	publicipChecker     *publicip.Checker
 	oauthManager        *oauth.Manager // OAuth SSO provider manager
+	db                  *database.DB   // SQLite database for persistence (#755)
 	icmpAvailable       bool           // Whether raw ICMP sockets are available
 	startTime           time.Time      // Application start time for uptime tracking (fixes #540)
 	redirectServer      *http.Server   // HTTP→HTTPS redirect server (fixes #515)
@@ -165,6 +167,24 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 
 	// Initialize OAuth manager for SSO
 	s.initOAuthManager()
+
+	// Initialize SQLite database (#755)
+	dbPath := cfg.Database.Path
+	if dbPath == "" {
+		dbPath = "data/seed.db"
+	}
+	db, err := database.Open(dbPath)
+	if err != nil {
+		slog.Error("Failed to open database", "path", dbPath, "error", err)
+	} else {
+		s.db = db
+		slog.Info("Database initialized", "path", dbPath)
+
+		// Start data retention cleanup in background
+		if cfg.Database.RetentionDays > 0 {
+			go s.startDataRetention(cfg.Database.RetentionDays)
+		}
+	}
 
 	// Initialize WebSocket hub (fixes #512)
 	s.wsHub = NewHub()
@@ -921,6 +941,14 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.loginRateLimiter.Stop()
 	s.endpointRateLimiter.Stop()
 
+	// Close database connection (#755)
+	if s.db != nil {
+		slog.Info("Closing database connection...")
+		if err := s.db.Close(); err != nil {
+			slog.Error("Error closing database", "error", err)
+		}
+	}
+
 	// Shutdown main HTTP server
 	slog.Info("Shutting down main HTTP server...")
 	return s.httpServer.Shutdown(ctx)
@@ -929,4 +957,52 @@ func (s *Server) Shutdown(ctx context.Context) error {
 // Hub returns the WebSocket hub.
 func (s *Server) Hub() *Hub {
 	return s.wsHub
+}
+
+// DB returns the database connection (#755).
+func (s *Server) DB() *database.DB {
+	return s.db
+}
+
+// startDataRetention runs periodic data cleanup based on retention policy (#755).
+func (s *Server) startDataRetention(retentionDays int) {
+	// Run cleanup every hour
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+
+	policy := database.RetentionPolicy{
+		MetricsDays:        retentionDays,
+		AlertsDays:         retentionDays * 2, // Keep alerts longer
+		SpeedTestDays:      retentionDays,
+		DNSResultDays:      retentionDays,
+		GatewayResultDays:  retentionDays,
+		AuditLogDays:       retentionDays * 3, // Keep audit logs longest
+		InactiveDeviceDays: retentionDays * 4, // Keep inactive device records longer
+	}
+
+	for range ticker.C {
+		if s.db == nil {
+			return
+		}
+		result, err := s.db.RunCleanup(context.Background(), policy)
+		if err != nil {
+			slog.Error("Data retention cleanup failed", "error", err)
+			continue
+		}
+		totalDeleted := result.MetricsDeleted + result.AlertsDeleted +
+			result.SpeedTestsDeleted + result.DNSResultsDeleted +
+			result.GatewayResultsDeleted + result.AuditLogsDeleted +
+			result.DevicesDeleted
+		if totalDeleted > 0 {
+			slog.Info("Data retention cleanup completed",
+				"metrics_deleted", result.MetricsDeleted,
+				"alerts_deleted", result.AlertsDeleted,
+				"devices_deleted", result.DevicesDeleted,
+				"speedtests_deleted", result.SpeedTestsDeleted,
+				"dns_deleted", result.DNSResultsDeleted,
+				"gateway_deleted", result.GatewayResultsDeleted,
+				"audit_deleted", result.AuditLogsDeleted,
+				"duration", result.Duration)
+		}
+	}
 }

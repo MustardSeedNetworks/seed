@@ -4,7 +4,7 @@
   "title": "The Seed Configuration",
   "description": "Configuration schema for The Seed network diagnostic tool",
   "type": "object",
-  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "health_checks", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging"],
+  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "health_checks", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp", "database"],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -66,6 +66,12 @@
     },
     "logging": {
       "$ref": "#/$defs/LoggingConfig"
+    },
+    "mcp": {
+      "$ref": "#/$defs/MCPConfig"
+    },
+    "database": {
+      "$ref": "#/$defs/DatabaseConfig"
     }
   },
   "$defs": {
@@ -887,6 +893,12 @@
           "type": "boolean",
           "description": "Show public IP address in UI",
           "default": true
+        },
+        "unit_system": {
+          "type": "string",
+          "description": "Measurement system for distances (sae = feet, metric = meters)",
+          "enum": ["sae", "metric"],
+          "default": "sae"
         }
       }
     },
@@ -1057,6 +1069,56 @@
         "jwt_secret": {
           "type": "string",
           "description": "JWT signing secret (empty = will be generated and persisted)",
+          "default": ""
+        },
+        "sso": {
+          "$ref": "#/$defs/SSOConfig"
+        }
+      }
+    },
+    "SSOConfig": {
+      "type": "object",
+      "description": "SSO (Single Sign-On) provider settings",
+      "additionalProperties": false,
+      "properties": {
+        "providers": {
+          "type": "array",
+          "description": "List of SSO providers",
+          "items": {
+            "$ref": "#/$defs/SSOProviderConfig"
+          },
+          "default": []
+        }
+      }
+    },
+    "SSOProviderConfig": {
+      "type": "object",
+      "description": "SSO provider configuration",
+      "required": ["enabled", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this SSO provider",
+          "default": false
+        },
+        "name": {
+          "type": "string",
+          "description": "Provider name (e.g., google, microsoft)"
+        },
+        "client_id": {
+          "type": "string",
+          "description": "OAuth client ID",
+          "default": ""
+        },
+        "client_secret": {
+          "type": "string",
+          "description": "OAuth client secret",
+          "default": ""
+        },
+        "redirect_url": {
+          "type": "string",
+          "description": "OAuth redirect URL",
           "default": ""
         }
       }
@@ -1305,6 +1367,69 @@
           "type": "boolean",
           "description": "Compress rotated files",
           "default": true
+        }
+      }
+    },
+    "MCPConfig": {
+      "type": "object",
+      "description": "MCP (Model Context Protocol) server settings for AI assistant integration",
+      "required": ["enabled", "require_auth", "rate_limit_per_minute"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the MCP server endpoint",
+          "default": false
+        },
+        "require_auth": {
+          "type": "boolean",
+          "description": "Require JWT authentication for MCP connections",
+          "default": true
+        },
+        "rate_limit_per_minute": {
+          "type": "integer",
+          "description": "Requests per minute per client (0 = unlimited)",
+          "minimum": 0,
+          "default": 60
+        },
+        "allowed_tools": {
+          "type": "array",
+          "description": "Specific tools to expose via MCP (empty = all tools)",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    },
+    "DatabaseConfig": {
+      "type": "object",
+      "description": "SQLite database settings for historical data storage",
+      "required": ["path", "retention_days", "enable_wal", "max_connections"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the SQLite database file",
+          "default": "data/seed.db"
+        },
+        "retention_days": {
+          "type": "integer",
+          "description": "Days of historical data to retain (0 = forever)",
+          "minimum": 0,
+          "default": 90
+        },
+        "enable_wal": {
+          "type": "boolean",
+          "description": "Enable Write-Ahead Logging for better concurrency",
+          "default": true
+        },
+        "max_connections": {
+          "type": "integer",
+          "description": "Maximum number of database connections",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 10
         }
       }
     }
