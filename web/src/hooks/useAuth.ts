@@ -59,6 +59,8 @@ interface UseAuthReturn {
   login: (username: string, password: string) => Promise<boolean>;
   /** Logout and clear authentication state */
   logout: () => void;
+  /** Refresh the access token (for WebSocket reconnection). Returns new token or null. */
+  refreshToken: () => Promise<string | null>;
   /** True while login request is in progress */
   isLoading: boolean;
   /** Error message from failed login attempt */
@@ -218,12 +220,48 @@ export function useAuth(): UseAuthReturn {
       });
   }, [state.username]);
 
+  /**
+   * Refresh the access token using the refresh token cookie.
+   * Returns the new access token if successful, null otherwise.
+   * This is used by WebSocket to get a fresh token for reconnection.
+   */
+  const refreshToken = useCallback(async (): Promise<string | null> => {
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+        method: "POST",
+        credentials: "include", // Send refresh token cookie
+      });
+
+      if (!response.ok) {
+        logger.warn(LogComponents.AUTH, "Token refresh failed", {
+          status: response.status,
+        });
+        return null;
+      }
+
+      const data: LoginResponse = await response.json();
+
+      // Update state with new token
+      setState((prev) => ({
+        ...prev,
+        token: data.token,
+      }));
+
+      logger.info(LogComponents.AUTH, "Token refreshed successfully");
+      return data.token;
+    } catch (err) {
+      logger.error(LogComponents.AUTH, "Token refresh error", err);
+      return null;
+    }
+  }, []);
+
   return {
     isAuthenticated: state.isAuthenticated,
     token: state.token,
     username: state.username,
     login,
     logout,
+    refreshToken,
     isLoading,
     error,
   };

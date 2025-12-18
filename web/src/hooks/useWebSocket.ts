@@ -107,6 +107,10 @@ interface UseWebSocketOptions {
   url: string;
   /** JWT access token for WebSocket authentication via protocol header */
   token?: string | null;
+  /** Whether the user is authenticated (controls reconnection behavior) */
+  isAuthenticated?: boolean;
+  /** Callback to refresh the access token (returns new token or null) */
+  onRefreshToken?: () => Promise<string | null>;
   /** Callback invoked for general messages */
   onMessage?: (message: Message) => void;
   /** Callback invoked specifically for card update messages */
@@ -136,6 +140,8 @@ interface UseWebSocketReturn {
 export function useWebSocket({
   url,
   token,
+  isAuthenticated = true,
+  onRefreshToken,
   onMessage,
   onCardUpdate,
   reconnectInterval = 3000,
@@ -148,6 +154,12 @@ export function useWebSocket({
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shouldReconnectRef = useRef(true);
   const connectionIdRef = useRef(0);
+  const currentTokenRef = useRef<string | null>(token ?? null);
+
+  // Keep currentTokenRef in sync with token prop
+  useEffect(() => {
+    currentTokenRef.current = token ?? null;
+  }, [token]);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -164,8 +176,16 @@ export function useWebSocket({
    * - Uses cookie-based authentication (httpOnly cookies sent automatically)
    * - Sets up event handlers for open, close, error, and message events
    * - Implements automatic reconnection with configurable attempts and interval
+   * - Attempts to refresh token if null before connecting
    */
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
+    // Don't connect if not authenticated
+    if (!isAuthenticated) {
+      logger.info(LogComponents.WEBSOCKET, "Skipping WebSocket connection - not authenticated");
+      setStatus("disconnected");
+      return;
+    }
+
     // Avoid duplicate connections
     if (
       wsRef.current?.readyState === WebSocket.OPEN ||
@@ -177,6 +197,22 @@ export function useWebSocket({
     clearReconnectTimer();
     shouldReconnectRef.current = true;
 
+    // Try to refresh token if we don't have one
+    let connectionToken = currentTokenRef.current;
+    if (!connectionToken && onRefreshToken) {
+      logger.info(LogComponents.WEBSOCKET, "No token available, attempting refresh");
+      connectionToken = await onRefreshToken();
+      if (connectionToken) {
+        currentTokenRef.current = connectionToken;
+      }
+    }
+
+    if (!connectionToken) {
+      logger.warn(LogComponents.WEBSOCKET, "No token available for WebSocket connection");
+      setStatus("disconnected");
+      return;
+    }
+
     setStatus("connecting");
 
     try {
@@ -186,7 +222,7 @@ export function useWebSocket({
 
       // Create WebSocket connection with token via protocol header
       // Backend expects: Sec-WebSocket-Protocol: access_token, <token>
-      const protocols = token ? ["access_token", token] : undefined;
+      const protocols = ["access_token", connectionToken];
       const ws = new WebSocket(baseUrl, protocols);
       wsRef.current = ws;
       connectionIdRef.current += 1;
@@ -337,7 +373,8 @@ export function useWebSocket({
     }
   }, [
     url,
-    token,
+    isAuthenticated,
+    onRefreshToken,
     onMessage,
     onCardUpdate,
     reconnectInterval,
