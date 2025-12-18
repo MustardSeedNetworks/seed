@@ -101,6 +101,33 @@
     "testingDiscovery": "Pruebas y descubrimiento",
     "system": "Sistema"
   },
+  "logs": {
+    "title": "Registros del sistema",
+    "subtitle": "Registros de la aplicación en tiempo real con filtrado",
+    "searchPlaceholder": "Buscar registros...",
+    "clearFilters": "Limpiar filtros",
+    "level": "Nivel",
+    "layer": "Capa",
+    "component": "Componente",
+    "totalLogs": "registros",
+    "errors": "errores",
+    "warnings": "advertencias",
+    "lastHour": "última hora",
+    "streaming": "En vivo",
+    "paused": "Pausado",
+    "collapse": "Contraer",
+    "expand": "Expandir",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "clear": "Borrar",
+    "exportJson": "Exportar JSON",
+    "exportCsv": "Exportar CSV",
+    "collapsed": "Visor de registros contraído",
+    "loading": "Cargando registros...",
+    "noMatchingLogs": "No hay registros que coincidan con los filtros",
+    "noLogs": "Aún no hay registros",
+    "scrollToBottom": "Ir al último"
+  },
   "login": {
     "defaultCredentials": "Predeterminado: admin / seed"
   },

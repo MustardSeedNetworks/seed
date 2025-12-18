@@ -101,6 +101,33 @@
     "testingDiscovery": "Testing & Discovery",
     "system": "System"
   },
+  "logs": {
+    "title": "System Logs",
+    "subtitle": "Real-time application logs with filtering",
+    "searchPlaceholder": "Search logs...",
+    "clearFilters": "Clear filters",
+    "level": "Level",
+    "layer": "Layer",
+    "component": "Component",
+    "totalLogs": "logs",
+    "errors": "errors",
+    "warnings": "warnings",
+    "lastHour": "last hour",
+    "streaming": "Live",
+    "paused": "Paused",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "pause": "Pause",
+    "resume": "Resume",
+    "clear": "Clear",
+    "exportJson": "Export JSON",
+    "exportCsv": "Export CSV",
+    "collapsed": "Log viewer collapsed",
+    "loading": "Loading logs...",
+    "noMatchingLogs": "No logs match the current filters",
+    "noLogs": "No logs yet",
+    "scrollToBottom": "Scroll to latest"
+  },
   "login": {
     "defaultCredentials": "Default: admin / seed"
   },
