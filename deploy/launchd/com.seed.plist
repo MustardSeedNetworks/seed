@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.seed</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/seed/seed</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/usr/local/seed</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/usr/local/seed/logs/seed.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/usr/local/seed/logs/seed.error.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/usr/local/seed</string>
+    </dict>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <key>ProcessType</key>
+    <string>Standard</string>
+</dict>
+</plist>
