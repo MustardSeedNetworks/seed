@@ -49,18 +49,19 @@ jobs:
             goarch: arm64
             artifact_name: seed-darwin-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
+          cache: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '25'
-          cache: 'npm'
+          node-version: "25.2.1"
+          cache: npm
           cache-dependency-path: web/package-lock.json
 
       - name: Install frontend dependencies

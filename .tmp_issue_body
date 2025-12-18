@@ -1,0 +1,15 @@
+## Summary
+Survey map lacks obvious zoom controls; relies on keyboard/mouse/touch. Low-res images aren’t handled (no upscaling guidance), and supported image formats aren’t communicated.
+
+## Impact
+- Hard to navigate maps without visible zoom in/out controls.
+- Low-res imports stay blurry with no guidance on recommended resolution; unclear whether upscaling is applied or advisable.
+- Users don’t know which image types are supported or preferred.
+
+## Expected
+- Add visible zoom controls (buttons/slider) for map navigation alongside existing input methods.
+- Provide guidance on resolution; consider optional upscaling for non-scale-critical images (and warn against it for drawn-to-scale plans).
+- Document supported image formats and pros/cons in the UI (PNG/JPG/SVG/etc.).
+
+## Location
+- Survey map view/import UX
