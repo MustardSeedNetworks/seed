@@ -122,7 +122,7 @@ function isCardId(value: unknown): value is CardId {
  */
 function App() {
   const { t } = useTranslation("common");
-  const { isAuthenticated, token, login, logout, isLoading, error } = useAuth();
+  const { isAuthenticated, token, login, logout, refreshToken, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   // Use settings from context instead of local state
   const { cardSettings, displayOptions } = useSettings();
@@ -913,6 +913,8 @@ function App() {
   const { status: wsStatus, reconnect } = useWebSocket({
     url: "/ws",
     token,
+    isAuthenticated,
+    onRefreshToken: refreshToken,
     onMessage: handleMessage,
     onCardUpdate: handleCardUpdate,
   });
