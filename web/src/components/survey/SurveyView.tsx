@@ -39,7 +39,7 @@ import { AirMapperImport, type ImportOptions } from "./AirMapperImport";
 import { HeatmapLegend } from "./HeatmapLegend";
 import type { AirMapperData } from "../../utils/airmapper";
 import { getAuthHeaders } from "../../hooks/useAuth";
-import { useSettings } from "../../contexts/SettingsContext";
+import { useSettings } from "../../contexts/useSettings";
 import type {
   Survey,
   PassiveSample,

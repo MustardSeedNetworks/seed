@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Profile } from "../../types/profile";
-import { ProfileSelector } from "../profiles/ProfileSelector";
+import { ProfileSelector } from "../ui/ProfileSelector";
 import { InterfaceSelector, NetworkInterface } from "../ui/InterfaceSelector";
 import { radius, spacing, layout, icon as iconTokens, section } from "../../styles/theme";
 
