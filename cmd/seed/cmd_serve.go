@@ -24,8 +24,8 @@ import (
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "Start the Seed server",
-	Long: `Start the Seed network diagnostics server.
+	Short: "Start The Seed server",
+	Long: `Start The Seed network diagnostics server.
 
 The server provides a web-based UI for network diagnostics, monitoring,
 and analysis. By default, it runs with HTTPS enabled on port 8443.

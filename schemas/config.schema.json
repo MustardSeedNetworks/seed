@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/krisarmstrong/seed/schemas/config.schema.json",
-  "title": "Seed Configuration",
-  "description": "Configuration schema for Seed network diagnostic tool",
+  "title": "The Seed Configuration",
+  "description": "Configuration schema for The Seed network diagnostic tool",
   "type": "object",
   "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "tests", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging"],
   "additionalProperties": false,

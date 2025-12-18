@@ -1,10 +1,10 @@
 # Configuration Schemas
 
-This directory contains JSON Schema definitions for Seed configuration files.
+This directory contains JSON Schema definitions for The Seed configuration files.
 
 ## config.schema.json
 
-JSON Schema (Draft 2020-12) for the Seed configuration file (`config.yaml`).
+JSON Schema (Draft 2020-12) for The Seed configuration file (`config.yaml`).
 
 ### Usage
 
