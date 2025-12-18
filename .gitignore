@@ -70,6 +70,7 @@ configs/*.local.json
 tmp/
 temp/
 *.tmp
+.tmp_*
 
 # Certificates (generated)
 certs/
