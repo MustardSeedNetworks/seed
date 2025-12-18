@@ -1,7 +1,7 @@
 name: Task
 description: Track a development task or chore
 title: "[CHORE] "
-labels: ["type: chore"]
+labels: ["type: chore", "status: needs-triage"]
 body:
   - type: markdown
     attributes:
@@ -37,22 +37,23 @@ body:
       required: true
 
   - type: dropdown
-    id: component
+    id: area
     attributes:
-      label: Component
+      label: Area
       description: Which part of The Seed does this affect?
       options:
-        - API/Backend
-        - UI/Frontend
-        - Network Discovery
-        - WiFi Survey
-        - Speed Test / iPerf
-        - DHCP Detection
-        - Authentication
-        - Configuration
-        - CI/CD Pipeline
+        - Auth / Setup
+        - Survey / Floorplan
+        - Discovery / Network
+        - Logging / Observability
+        - UI / UX
+        - Backend / API
+        - Frontend / UI
+        - Infra / CI/CD
+        - AI / ML
         - Documentation
-        - Multiple Components
+        - Multiple Areas
+        - Other
     validations:
       required: true
 
