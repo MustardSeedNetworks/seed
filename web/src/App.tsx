@@ -68,6 +68,9 @@ import { SystemHealthCard } from "./components/cards/SystemHealthCard";
 import { WiFiSurveyCard } from "./components/cards/WiFiSurveyCard";
 import { FAB } from "./components/ui/FAB";
 import { InterfaceSelector } from "./components/ui/InterfaceSelector";
+import { ProfileSelector } from "./components/ui/ProfileSelector";
+import { ProfileManagement } from "./components/profiles/ProfileManagement";
+import { useProfileContext } from "./contexts/ProfileContext";
 import {
   radius,
   icon as iconTokens,
@@ -127,6 +130,14 @@ function App() {
   const { isDark, toggleTheme } = useTheme();
   // Use settings from context instead of local state
   const { cardSettings, displayOptions } = useSettings();
+  // Profile management (#754)
+  const {
+    profiles,
+    activeProfile,
+    isLoading: profilesLoading,
+    switchProfile,
+  } = useProfileContext();
+  const [profilesOpen, setProfilesOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -1103,6 +1114,15 @@ function App() {
 
           {/* Controls */}
           <div className={`flex items-center ${spacing.gap.tight} sm:${spacing.gap.compact}`}>
+            {/* Profile selector (#754) */}
+            <ProfileSelector
+              profiles={profiles}
+              activeProfile={activeProfile}
+              onSwitch={switchProfile}
+              onManageClick={() => setProfilesOpen(true)}
+              loading={profilesLoading}
+            />
+
             {/* Interface selector with grouped dropdown */}
             <InterfaceSelector
               interfaces={interfaces}
@@ -1350,6 +1370,9 @@ function App() {
 
       {/* Help Modal - improved with TOC, About, and search */}
       <ImprovedHelpModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
+
+      {/* Profile Management Modal (#754) */}
+      {profilesOpen && <ProfileManagement onClose={() => setProfilesOpen(false)} />}
 
       {/* FAB - Run All Tests */}
       <FAB />

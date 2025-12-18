@@ -16,6 +16,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { ProfileProvider } from "./contexts/ProfileContext";
 import "./index.css";
 
 // Mount the React application to the root DOM element
@@ -23,7 +24,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
       <SettingsProvider>
-        <App />
+        <ProfileProvider>
+          <App />
+        </ProfileProvider>
       </SettingsProvider>
     </ErrorBoundary>
   </StrictMode>

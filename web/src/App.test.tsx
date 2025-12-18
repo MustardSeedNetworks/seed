@@ -27,6 +27,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import App from "./App";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { ProfileProvider } from "./contexts/ProfileContext";
 import { ReactNode } from "react";
 
 // Mock localStorage
@@ -105,10 +106,14 @@ class MockWebSocket {
   }
 }
 
-// Wrapper with SettingsProvider
+// Wrapper with SettingsProvider and ProfileProvider
 function createWrapper() {
   return function Wrapper({ children }: { children: ReactNode }) {
-    return <SettingsProvider>{children}</SettingsProvider>;
+    return (
+      <ProfileProvider>
+        <SettingsProvider>{children}</SettingsProvider>
+      </ProfileProvider>
+    );
   };
 }
 
