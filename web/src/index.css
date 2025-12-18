@@ -20,12 +20,15 @@
   /* Brand colors */
   --color-brand-primary: var(--color-brand-primary);
   --color-brand-accent: var(--color-brand-accent);
+  --color-brand-secondary: var(--color-brand-secondary);
+  --color-brand-secondary-dark: var(--color-brand-secondary-dark);
 
   /* Surface colors */
   --color-surface-base: var(--color-surface-base);
   --color-surface-raised: var(--color-surface-raised);
   --color-surface-border: var(--color-surface-border);
   --color-surface-hover: var(--color-surface-hover);
+  --color-surface-sunken: var(--color-surface-sunken);
 
   /* Text colors */
   --color-text-primary: var(--color-text-primary);
@@ -53,11 +56,14 @@
   /* --color-brand-accent: #2563eb; */
   --color-brand-primary: #056839;
   --color-brand-accent: #3CB371;
+  --color-brand-secondary: #0078D4;      /* Microsoft blue */
+  --color-brand-secondary-dark: #005a9e; /* Microsoft blue darker */
 
   --color-surface-base: #e5edf5;
   --color-surface-raised: #f9fbfd;
   --color-surface-border: #8fa3ba;
   --color-surface-hover: #d4deea;
+  --color-surface-sunken: #cdd8e5;
 
   --color-text-primary: #0b1220;
   --color-text-secondary: #1b2737;
@@ -81,11 +87,14 @@
   /* --color-brand-accent: #60a5fa; */
   --color-brand-primary: #81C784;
   --color-brand-accent: #A5D6A7;
+  --color-brand-secondary: #2b88d8;      /* Microsoft blue light */
+  --color-brand-secondary-dark: #106ebe; /* Microsoft blue */
 
   --color-surface-base: #0c1626;
   --color-surface-raised: #131f32;
   --color-surface-border: #2a3a52;
   --color-surface-hover: #1c2a40;
+  --color-surface-sunken: #060d18;
 
   --color-text-primary: #f8fbff;
   --color-text-secondary: #dbe5f3;

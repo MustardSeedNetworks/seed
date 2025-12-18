@@ -122,21 +122,21 @@ describe("useWebSocket", () => {
   }
 
   it("starts with disconnected status", () => {
-    const { result } = renderHook(() => useWebSocket({ url: "/ws" }));
+    const { result } = renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
 
     // Initially it will be connecting since useEffect runs
     expect(["connecting", "disconnected"]).toContain(result.current.status);
   });
 
   it("connects to WebSocket on mount", async () => {
-    renderHook(() => useWebSocket({ url: "/ws" }));
+    renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
     await flushEffects();
 
     expect(MockWebSocket.instances.length).toBe(1);
   });
 
   it("transitions to connected status on open", async () => {
-    const { result } = renderHook(() => useWebSocket({ url: "/ws" }));
+    const { result } = renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -148,7 +148,7 @@ describe("useWebSocket", () => {
   });
 
   it("transitions to error status on WebSocket error", async () => {
-    const { result } = renderHook(() => useWebSocket({ url: "/ws" }));
+    const { result } = renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -159,8 +159,8 @@ describe("useWebSocket", () => {
     expect(result.current.status).toBe("error");
   });
 
-  it("transitions to disconnected status on close", async () => {
-    const { result } = renderHook(() => useWebSocket({ url: "/ws" }));
+  it("transitions to disconnected status on abnormal close", async () => {
+    const { result } = renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -168,16 +168,34 @@ describe("useWebSocket", () => {
       ws.simulateOpen();
     });
 
+    // Abnormal close (code 1006) transitions to "disconnected" before retry
     act(() => {
-      ws.simulateClose();
+      ws.simulateClose(1006, "Connection lost");
     });
 
     expect(result.current.status).toBe("disconnected");
   });
 
+  it("transitions to error status on normal close (non-retryable)", async () => {
+    const { result } = renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
+    await flushEffects();
+
+    const ws = MockWebSocket.instances[0];
+    act(() => {
+      ws.simulateOpen();
+    });
+
+    // Normal close (code 1000) is non-retryable, transitions to "error"
+    act(() => {
+      ws.simulateClose(1000, "Normal closure");
+    });
+
+    expect(result.current.status).toBe("error");
+  });
+
   it("calls onMessage callback when receiving message", async () => {
     const onMessage = vi.fn();
-    renderHook(() => useWebSocket({ url: "/ws", onMessage }));
+    renderHook(() => useWebSocket({ url: "/ws", token: "test-token", onMessage }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -195,7 +213,7 @@ describe("useWebSocket", () => {
 
   it("calls onCardUpdate for card_update messages", async () => {
     const onCardUpdate = vi.fn();
-    renderHook(() => useWebSocket({ url: "/ws", onCardUpdate }));
+    renderHook(() => useWebSocket({ url: "/ws", token: "test-token", onCardUpdate }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -215,7 +233,7 @@ describe("useWebSocket", () => {
   });
 
   it("send function sends message when connected", async () => {
-    const { result } = renderHook(() => useWebSocket({ url: "/ws" }));
+    const { result } = renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -233,7 +251,7 @@ describe("useWebSocket", () => {
   });
 
   it("reconnect function reconnects the WebSocket", async () => {
-    const { result } = renderHook(() => useWebSocket({ url: "/ws" }));
+    const { result } = renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
     await flushEffects();
 
     const initialWs = MockWebSocket.instances[0];
@@ -252,7 +270,7 @@ describe("useWebSocket", () => {
   });
 
   it("cleans up WebSocket on unmount", async () => {
-    const { unmount } = renderHook(() => useWebSocket({ url: "/ws" }));
+    const { unmount } = renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -275,12 +293,13 @@ describe("useWebSocket", () => {
       writable: true,
     });
 
-    renderHook(() => useWebSocket({ url: "/ws/updates" }));
+    renderHook(() => useWebSocket({ url: "/ws/updates", token: "test-token" }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
     expect(ws.url).toBe("ws://localhost:8080/ws/updates");
-    expect(ws.protocols).toBeUndefined();
+    // Protocols should be set because we have a token
+    expect(ws.protocols).toEqual(["access_token", "test-token"]);
   });
 
   it("uses wss for https pages", async () => {
@@ -292,21 +311,23 @@ describe("useWebSocket", () => {
       writable: true,
     });
 
-    renderHook(() => useWebSocket({ url: "/ws" }));
+    renderHook(() => useWebSocket({ url: "/ws", token: "test-token" }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
     expect(ws.url).toBe("wss://example.com/ws");
-    expect(ws.protocols).toBeUndefined();
+    // Protocols should be set because we have a token
+    expect(ws.protocols).toEqual(["access_token", "test-token"]);
   });
 
   it("uses provided URL directly if it starts with ws", async () => {
-    renderHook(() => useWebSocket({ url: "ws://custom-server.com/socket" }));
+    renderHook(() => useWebSocket({ url: "ws://custom-server.com/socket", token: "test-token" }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
     expect(ws.url).toBe("ws://custom-server.com/socket");
-    expect(ws.protocols).toBeUndefined();
+    // Protocols should be set because we have a token
+    expect(ws.protocols).toEqual(["access_token", "test-token"]);
   });
 
   it("attempts reconnection after close", async () => {
@@ -314,6 +335,7 @@ describe("useWebSocket", () => {
     renderHook(() =>
       useWebSocket({
         url: "/ws",
+        token: "test-token",
         reconnectInterval: 1000,
         maxReconnectAttempts: 3,
       })
@@ -323,8 +345,9 @@ describe("useWebSocket", () => {
     const ws = MockWebSocket.instances[0];
     expect(MockWebSocket.instances.length).toBe(1);
 
+    // Use code 1006 (abnormal closure) to trigger reconnection
     act(() => {
-      ws.simulateClose();
+      ws.simulateClose(1006, "Connection lost");
     });
 
     // Fast forward to trigger reconnect
@@ -342,15 +365,16 @@ describe("useWebSocket", () => {
     renderHook(() =>
       useWebSocket({
         url: "/ws",
+        token: "test-token",
         reconnectInterval: 100,
         maxReconnectAttempts: 2,
       })
     );
     await flushEffects();
 
-    // First connection closes -> reconnect after 100ms
+    // First connection closes (use code 1006 for abnormal closure to trigger retry)
     act(() => {
-      MockWebSocket.instances.at(-1)!.simulateClose();
+      MockWebSocket.instances.at(-1)!.simulateClose(1006, "Connection lost");
     });
     act(() => {
       vi.advanceTimersByTime(100);
@@ -358,7 +382,7 @@ describe("useWebSocket", () => {
 
     // Second close -> reconnect after 200ms
     act(() => {
-      MockWebSocket.instances.at(-1)!.simulateClose();
+      MockWebSocket.instances.at(-1)!.simulateClose(1006, "Connection lost");
     });
     act(() => {
       vi.advanceTimersByTime(200);
@@ -366,7 +390,7 @@ describe("useWebSocket", () => {
 
     // Third close (exceeds maxReconnectAttempts) -> should still reconnect after capped delay (200ms)
     act(() => {
-      MockWebSocket.instances.at(-1)!.simulateClose();
+      MockWebSocket.instances.at(-1)!.simulateClose(1006, "Connection lost");
     });
     act(() => {
       vi.advanceTimersByTime(200);
@@ -378,7 +402,7 @@ describe("useWebSocket", () => {
 
   it("handles multiple messages in one frame", async () => {
     const onMessage = vi.fn();
-    renderHook(() => useWebSocket({ url: "/ws", onMessage }));
+    renderHook(() => useWebSocket({ url: "/ws", token: "test-token", onMessage }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -409,7 +433,7 @@ describe("useWebSocket", () => {
     const onMessage = vi.fn();
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    renderHook(() => useWebSocket({ url: "/ws", onMessage }));
+    renderHook(() => useWebSocket({ url: "/ws", token: "test-token", onMessage }));
     await flushEffects();
 
     const ws = MockWebSocket.instances[0];
@@ -433,6 +457,7 @@ describe("useWebSocket", () => {
   it("send warns when not connected", async () => {
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
+    // Without token, WebSocket is never created, so send() should warn
     const { result } = renderHook(() => useWebSocket({ url: "/ws" }));
     await flushEffects();
 
@@ -458,6 +483,7 @@ describe("useWebSocket", () => {
     const { result } = renderHook(() =>
       useWebSocket({
         url: "/ws",
+        token: "test-token",
         reconnectInterval: 100,
         maxReconnectAttempts: 2,
       })
@@ -469,16 +495,16 @@ describe("useWebSocket", () => {
       ws.simulateOpen();
     });
 
-    // Close and exhaust reconnect attempts
+    // Close and exhaust reconnect attempts (use code 1006 for abnormal closure)
     act(() => {
-      ws.simulateClose();
+      ws.simulateClose(1006, "Connection lost");
     });
     act(() => {
       vi.advanceTimersByTime(100);
     });
     const ws2 = MockWebSocket.instances[MockWebSocket.instances.length - 1];
     act(() => {
-      ws2.simulateClose();
+      ws2.simulateClose(1006, "Connection lost");
     });
     act(() => {
       vi.advanceTimersByTime(100);
@@ -501,6 +527,7 @@ describe("useWebSocket", () => {
     renderHook(() =>
       useWebSocket({
         url: "/ws",
+        token: "test-token",
         reconnectInterval: 100,
         maxReconnectAttempts: 3,
       })
@@ -513,9 +540,9 @@ describe("useWebSocket", () => {
       ws.simulateOpen();
     });
 
-    // Close to trigger reconnect
+    // Close to trigger reconnect (use code 1006 for abnormal closure)
     act(() => {
-      ws.simulateClose();
+      ws.simulateClose(1006, "Connection lost");
     });
     act(() => {
       vi.advanceTimersByTime(100);
@@ -529,7 +556,7 @@ describe("useWebSocket", () => {
 
     // Close again - should still be able to reconnect (counter was reset)
     act(() => {
-      ws.simulateClose();
+      ws.simulateClose(1006, "Connection lost");
     });
     act(() => {
       vi.advanceTimersByTime(100);

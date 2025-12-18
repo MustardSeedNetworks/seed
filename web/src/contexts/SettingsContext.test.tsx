@@ -459,9 +459,9 @@ describe("SettingsContext with fake timers", () => {
       const putCalls1 = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
       expect(putCalls1.length).toBe(0);
 
-      // After debounce
+      // After debounce (DEBOUNCE_MS = 1000ms, so advance 1100ms to be safe)
       await act(async () => {
-        vi.advanceTimersByTime(900);
+        vi.advanceTimersByTime(1100);
       });
 
       const putCalls2 = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
@@ -481,7 +481,7 @@ describe("SettingsContext with fake timers", () => {
       });
 
       await act(async () => {
-        vi.advanceTimersByTime(900);
+        vi.advanceTimersByTime(1100);
       });
 
       const putCalls = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
@@ -501,7 +501,7 @@ describe("SettingsContext with fake timers", () => {
       });
 
       await act(async () => {
-        vi.advanceTimersByTime(900);
+        vi.advanceTimersByTime(1100);
       });
 
       const putCalls = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
@@ -529,7 +529,7 @@ describe("SettingsContext with fake timers", () => {
       });
 
       await act(async () => {
-        vi.advanceTimersByTime(900);
+        vi.advanceTimersByTime(1100);
       });
 
       // Only the final state should be saved (once)
@@ -553,7 +553,7 @@ describe("SettingsContext with fake timers", () => {
       expect(result.current.status.cards).toBe("saving");
 
       await act(async () => {
-        vi.advanceTimersByTime(900);
+        vi.advanceTimersByTime(1100);
       });
 
       expect(result.current.status.cards).toBe("saved");
@@ -569,7 +569,7 @@ describe("SettingsContext with fake timers", () => {
       });
 
       await act(async () => {
-        vi.advanceTimersByTime(900);
+        vi.advanceTimersByTime(1100);
       });
 
       expect(result.current.status.cards).toBe("saved");
