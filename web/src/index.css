@@ -51,30 +51,28 @@
 /* The Seed Theme - Mustard Seed Networks */
 
 :root {
-  /* Light Mode - improved contrast, WCAG AA compliant */
-  /* --color-brand-primary: #1d4ed8; */
-  /* --color-brand-accent: #2563eb; */
-  --color-brand-primary: #056839;
-  --color-brand-accent: #3CB371;
-  --color-brand-secondary: #0078D4;      /* Microsoft blue */
-  --color-brand-secondary-dark: #005a9e; /* Microsoft blue darker */
+  /* Light Mode - Themed from BRAND_GUIDELINES.md */
+  --color-brand-primary: #2D7A3E; /* Seed Green */
+  --color-brand-accent: #4CAF50; /* Lighter Seed Green */
+  --color-brand-secondary: #5C4033; /* Soil Brown */
+  --color-brand-secondary-dark: #4E342E; /* Darker Soil Brown */
 
-  --color-surface-base: #e5edf5;
-  --color-surface-raised: #f9fbfd;
-  --color-surface-border: #8fa3ba;
-  --color-surface-hover: #d4deea;
-  --color-surface-sunken: #cdd8e5;
+  --color-surface-base: #F8F8F8; /* Snow */
+  --color-surface-raised: #FFFFFF; /* Pure White */
+  --color-surface-border: #E5E5E5; /* Cloud */
+  --color-surface-hover: #E5E5E5; /* Cloud */
+  --color-surface-sunken: #E5E5E5; /* Cloud */
 
-  --color-text-primary: #0b1220;
-  --color-text-secondary: #1b2737;
-  --color-text-muted: #334155;
-  --color-text-accent: #1d4ed8;
-  --color-text-inverse: #f8fafc;
+  --color-text-primary: #1A1A1A; /* Midnight */
+  --color-text-secondary: #333333; /* Charcoal */
+  --color-text-muted: #666666; /* Slate */
+  --color-text-accent: #2D7A3E; /* Seed Green */
+  --color-text-inverse: #FFFFFF; /* Pure White */
 
-  --color-status-success: #047857;
-  --color-status-warning: #92400e;
-  --color-status-error: #b91c1c;
-  --color-status-info: #1d4ed8;
+  --color-status-success: #28A745;
+  --color-status-warning: #FFC107;
+  --color-status-error: #DC3545;
+  --color-status-info: #17A2B8;
 
   /* Gauge/progress colors (for SVG) */
   --gauge-amber: #d97706;
@@ -82,30 +80,28 @@
 }
 
 .dark {
-  /* Dark Mode - WCAG AA compliant contrast ratios */
-  /* --color-brand-primary: #93c5fd; */
-  /* --color-brand-accent: #60a5fa; */
-  --color-brand-primary: #81C784;
-  --color-brand-accent: #A5D6A7;
-  --color-brand-secondary: #2b88d8;      /* Microsoft blue light */
-  --color-brand-secondary-dark: #106ebe; /* Microsoft blue */
+  /* Dark Mode - Themed from BRAND_GUIDELINES.md */
+  --color-brand-primary: #81C784; /* Lighter Seed Green */
+  --color-brand-accent: #A5D6A7; /* Even Lighter Seed Green */
+  --color-brand-secondary: #A1887F; /* Lighter Soil Brown */
+  --color-brand-secondary-dark: #8D6E63; /* Slightly Lighter Soil Brown */
 
-  --color-surface-base: #0c1626;
-  --color-surface-raised: #131f32;
-  --color-surface-border: #2a3a52;
-  --color-surface-hover: #1c2a40;
-  --color-surface-sunken: #060d18;
+  --color-surface-base: #1A1A1A; /* Midnight */
+  --color-surface-raised: #333333; /* Charcoal */
+  --color-surface-border: #666666; /* Slate */
+  --color-surface-hover: #666666; /* Slate */
+  --color-surface-sunken: #000000;
 
-  --color-text-primary: #f8fbff;
-  --color-text-secondary: #dbe5f3;
-  --color-text-muted: #b8c5d9;
-  --color-text-accent: #93c5fd;
-  --color-text-inverse: #0f172a;
+  --color-text-primary: #F8F8F8; /* Snow */
+  --color-text-secondary: #E5E5E5; /* Cloud */
+  --color-text-muted: #999999; /* Silver */
+  --color-text-accent: #81C784; /* Lighter Seed Green */
+  --color-text-inverse: #1A1A1A; /* Midnight */
 
-  --color-status-success: #86efac;
-  --color-status-warning: #fcd34d;
-  --color-status-error: #fca5a5;
-  --color-status-info: #93c5fd;
+  --color-status-success: #28A745;
+  --color-status-warning: #FFC107;
+  --color-status-error: #DC3545;
+  --color-status-info: #17A2B8;
 
   /* Gauge/progress colors (for SVG) */
   --gauge-amber: #fbbf24;
