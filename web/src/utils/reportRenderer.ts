@@ -66,7 +66,7 @@ const REPORT_STYLES = `
 
   .report-header {
     text-align: center;
-    border-bottom: 2px solid #2563eb;
+    border-bottom: 2px solid #056839; /* brand-primary green */
     padding-bottom: 20px;
     margin-bottom: 30px;
   }
@@ -108,7 +108,7 @@ const REPORT_STYLES = `
     display: inline-block;
     width: 24px;
     height: 24px;
-    background: #2563eb;
+    background: #056839; /* brand-primary green */
     color: white;
     border-radius: 50%;
     text-align: center;

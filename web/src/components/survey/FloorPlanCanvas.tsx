@@ -234,7 +234,7 @@ export function FloorPlanCanvas({
         ctx.arc(x, y, 8, 0, 2 * Math.PI);
         ctx.fillStyle = heatmapMetric
           ? "rgba(255, 255, 255, 0.8)" // white for visibility on heatmap
-          : "rgba(37, 99, 235, 0.8)"; // brand-primary (#2563eb at 80% opacity)
+          : "rgba(5, 104, 57, 0.8)"; // brand-primary green (#056839 at 80% opacity)
         ctx.fill();
         ctx.strokeStyle = "rgba(255, 255, 255, 1)"; // white border for visibility
         ctx.lineWidth = 2;
