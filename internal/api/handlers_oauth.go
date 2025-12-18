@@ -348,11 +348,23 @@ type SSOProviderInfo struct {
 }
 
 // handleSSOSettings returns SSO configuration status for the settings UI.
+// Security fix #757: Require authentication to view SSO settings.
 func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	if r.Method != http.MethodGet {
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
+		return
+	}
+
+	// Security: Require authentication (fixes #757)
+	token, _ := auth.GetTokenFromRequest(r)
+	if token == "" {
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required", "")
+		return
+	}
+	if _, err := s.authManager.ValidateToken(token); err != nil {
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Invalid or expired token", "")
 		return
 	}
 
@@ -370,6 +382,7 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleSSOUpdate updates SSO provider configuration.
+// Security fix #757, #760: Require authentication and add body limit + config locking.
 func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
@@ -377,6 +390,28 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
 		return
 	}
+
+	// Security: Require authentication (fixes #757)
+	token, _ := auth.GetTokenFromRequest(r)
+	if token == "" {
+		clientIP := GetClientIP(r)
+		logger.Warn("Unauthenticated SSO update attempt",
+			"client_ip", clientIP,
+			"event", "auth.sso.blocked")
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required", "")
+		return
+	}
+	if _, err := s.authManager.ValidateToken(token); err != nil {
+		clientIP := GetClientIP(r)
+		logger.Warn("Invalid token SSO update attempt",
+			"client_ip", clientIP,
+			"event", "auth.sso.blocked")
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Invalid or expired token", "")
+		return
+	}
+
+	// Limit request body size (fixes #760)
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 
 	var req struct {
 		Provider     string   `json:"provider"`
@@ -392,6 +427,10 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
 		return
 	}
+
+	// Lock config during update (fixes #760)
+	s.config.Lock()
+	defer s.config.Unlock()
 
 	// Find and update the provider config
 	found := false
