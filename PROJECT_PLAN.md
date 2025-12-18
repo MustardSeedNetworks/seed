@@ -369,25 +369,11 @@ Issues will be created for each feature with labels:
 
 ### Labels
 
-- `type: feature` - New feature
-- `type: bug` - Bug fix
-- `type: chore` - Maintenance
-- `type: docs` - Documentation
-- `priority: critical` - Must have for release
-- `priority: high` - Should have
-- `priority: medium` - Nice to have
-- `priority: low` - Future consideration
-- `component: backend` - Go backend
-- `component: frontend` - React frontend
-- `component: infra` - CI/CD, tooling
-- `card: link` - Link card specific
-- `card: switch` - Switch discovery card
-- `card: dhcp` - DHCP card
-- `card: dns` - DNS card
-- `card: gateway` - Gateway card
-- `card: vlan` - VLAN card
-- `card: wifi` - Wi-Fi card
-- `card: cable` - Cable test card
+- Type: `type: feature`, `type: defect`, `type: chore`, `type: docs`, `type: security`, `type: epic`
+- Priority: `priority: critical`, `priority: high`, `priority: medium`, `priority: low`
+- Status: `status: needs-triage`, `status: investigating`, `status: blocked`, `status: regression`
+- Area: `area: auth/setup`, `area: survey/floorplan`, `area: discovery/network`, `area: logging`, `area: UI/UX`, `area: backend`, `area: frontend`, `area: infra`, `area: i18n`
+- Meta: `help wanted`, `good first issue`, `question`, `duplicate`, `wontfix`, `invalid`
 
 ### Milestones
 

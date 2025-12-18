@@ -479,30 +479,28 @@ Labels are automatically applied based on issue form inputs and PR file paths.
 
 **Type Labels** (applied by template):
 
-- `type: bug` - Bug reports
+- `type: defect` - Product defects/regressions
 - `type: feature` - New feature requests
 - `type: chore` - Maintenance and refactoring
+- `type: docs` - Documentation
+- `type: security` - Security vulnerabilities/hardening
+- `type: epic` - Epic/umbrella tracking
 
-**Component Labels** (applied by form selection or PR paths):
+**Priority Labels** (one per issue):
 
-- `component: api` - API/Backend changes
-- `component: ui` - UI/Frontend changes
-- `component: discovery` - Network discovery
-- `component: wifi` - WiFi/survey features
-- `component: iperf` - Speed testing
-- `component: dhcp` - DHCP detection
-- `component: auth` - Authentication
-- `component: config` - Configuration
-- `component: network` - General networking
-- `component: i18n` - Internationalization
+- `priority: critical`, `priority: high`, `priority: medium`, `priority: low`
 
-**Area Labels** (applied by PR paths):
+**Area Labels** (applied by form selection or PR paths; use one or two):
 
-- `area: ci` - CI/CD pipeline changes
-- `area: docs` - Documentation
-- `area: tests` - Test changes
-- `area: deps` - Dependency updates
-- `area: build` - Build/packaging
+- `area: auth/setup`, `area: survey/floorplan`, `area: discovery/network`, `area: logging`, `area: UI/UX`, `area: backend`, `area: frontend`, `area: infra`, `area: i18n`
+
+**Status Labels**:
+
+- `status: needs-triage`, `status: investigating`, `status: blocked`, `status: regression`
+
+**Meta Labels**:
+
+- `help wanted`, `good first issue`, `question`, `duplicate`, `invalid`, `wontfix`
 - `area: security` - Security-related
 
 **Priority Labels** (applied by form selection):

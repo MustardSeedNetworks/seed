@@ -1304,7 +1304,7 @@ The Seed Team
 
 2. **Create GitHub Issue**
    - Template: Bug report with all context
-   - Label: `type: bug`, `priority: high/medium/low`, `component: wifi/discovery/etc.`
+   - Label: `type: defect`, `priority: high/medium/low`, `area: discovery/network` (plus relevant area)
    - Assign to engineering
 
 3. **Fix & Release**
