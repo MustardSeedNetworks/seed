@@ -1195,15 +1195,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         />
       )}
 
-      {/* Network Info - Collapsible */}
-      <CollapsibleSection title={t("discovery.networkInfo")} variant="compact" defaultOpen={false}>
-        <div className="stack-xs caption">
-          {status.localIP && <CardRow label={t("discovery.localIp")} value={status.localIP} />}
-          {status.interface && (
-            <CardRow label={t("discovery.interface")} value={status.interface} />
-          )}
-        </div>
-      </CollapsibleSection>
+      {/* Fixes #739: Removed redundant "Network Info" section - subnet is already in summary */}
 
       {/* Local Devices - Collapsible */}
       {localDevices.length > 0 && (
