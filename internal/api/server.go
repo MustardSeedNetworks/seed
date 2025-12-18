@@ -384,6 +384,13 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/config/restore", s.handleConfigRestore)
 	s.mux.HandleFunc("/api/config/version", s.handleConfigVersion)
 
+	// Profile management routes (#754)
+	s.mux.HandleFunc("/api/profiles", s.handleProfiles)
+	s.mux.HandleFunc("/api/profiles/active", s.handleActiveProfile)
+	s.mux.HandleFunc("/api/profiles/import", s.handleImportProfiles)
+	s.mux.HandleFunc("/api/profiles/export", s.handleExportProfiles)
+	s.mux.HandleFunc("/api/profiles/", s.handleProfiles) // Handles /api/profiles/{id} and /api/profiles/{id}/duplicate
+
 	// Setup routes (no auth required for initial setup)
 	s.mux.HandleFunc("/api/setup/status", s.handleSetupStatus)
 	s.mux.HandleFunc("/api/setup/complete", s.handleSetupComplete)
@@ -489,14 +496,6 @@ const (
 // Different endpoints have different limits based on expected payload size.
 func bodyLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip body limit for GET, HEAD, OPTIONS (no body expected)
-		if r.Method == http.MethodGet ||
-			r.Method == http.MethodHead ||
-			r.Method == http.MethodOptions {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		// Determine limit based on endpoint
 		var limit int64
 		path := r.URL.Path

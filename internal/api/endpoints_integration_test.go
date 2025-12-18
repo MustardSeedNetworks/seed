@@ -5,6 +5,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -40,7 +41,15 @@ func newTestEndpointServer(t *testing.T) *testEndpointServer {
 	}
 
 	server := NewServer(cfg, configPath, "", netMgr, false)
-	return &testEndpointServer{ts: httptest.NewServer(server.mux)}
+	// Force IPv4 listener to avoid environments where IPv6 binds are disallowed
+	ln, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("Failed to create IPv4 listener: %v", err)
+	}
+	ts := httptest.NewUnstartedServer(server.mux)
+	ts.Listener = ln
+	ts.Start()
+	return &testEndpointServer{ts: ts}
 }
 
 func (s *testEndpointServer) close() {

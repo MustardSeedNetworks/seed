@@ -31,7 +31,7 @@ import {
   LOG_LEVEL_COLORS,
   formatLogTimestamp,
 } from "../../hooks/useLogs";
-import { spacing } from "../../styles/theme";
+import { spacing, button as buttonTokens } from "../../styles/theme";
 
 // Filter badge component
 interface FilterBadgeProps {
@@ -136,13 +136,13 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
       {expanded && (
         <div className="mt-2 space-y-2">
           {/* Full message */}
-          <div className="text-sm text-content-primary dark:text-dark-content-primary break-all">
+          <div className="text-sm text-content-primary dark:text-dark-content-primary break-words whitespace-pre-wrap">
             {entry.message}
           </div>
 
           {/* Metadata */}
           {entry.metadata && Object.keys(entry.metadata).length > 0 && (
-            <pre className="text-xs bg-black/10 dark:bg-white/10 p-2 rounded overflow-x-auto font-mono">
+            <pre className="text-xs bg-black/10 dark:bg-white/10 p-2 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
               {JSON.stringify(entry.metadata, null, 2)}
             </pre>
           )}
@@ -389,10 +389,12 @@ export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewer
     isLoading,
     error,
     addLog,
+    clearLogs,
   } = useLogs({ maxLogs: 1000 });
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [autoScroll, setAutoScroll] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const logContainerRef = useRef<HTMLDivElement>(null);
 
   // Get unique components from logs
@@ -434,90 +436,184 @@ export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewer
     // For now, it's exposed via the hook return value
   }, [addLog]);
 
+  const exportJSON = useCallback(() => {
+    const blob = new Blob([JSON.stringify(logs, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "logs.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [logs]);
+
+  const exportCSV = useCallback(() => {
+    const escape = (val: unknown) => {
+      if (val === null || val === undefined) return "";
+      const str = String(val);
+      if (/[",\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const rows = logs.map((entry) => {
+      const metadata = entry.metadata ? JSON.stringify(entry.metadata) : "";
+      return [
+        escape(entry.timestamp),
+        escape(entry.level),
+        escape(entry.layer),
+        escape(entry.component ?? ""),
+        escape(entry.message),
+        escape(entry.request_id ?? ""),
+        escape(entry.session_id ?? ""),
+        escape(entry.duration_ms ?? ""),
+        escape(metadata),
+      ].join(",");
+    });
+
+    const header =
+      "timestamp,level,layer,component,message,request_id,session_id,duration_ms,metadata";
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "logs.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [logs]);
+
   return (
     <div
       className={`bg-surface-primary dark:bg-dark-surface-primary rounded-lg border border-border dark:border-dark-border overflow-hidden ${className}`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-border dark:border-dark-border">
-        <h2 className="text-lg font-semibold text-content-primary dark:text-dark-content-primary">
-          {t("logs.title", "System Logs")}
-        </h2>
-        <p className="text-sm text-content-secondary dark:text-dark-content-secondary">
-          {t("logs.subtitle", "Real-time application logs with filtering")}
-        </p>
-      </div>
-
-      {/* Stats bar */}
-      <div className={`px-4 pt-3 ${spacing.stack.sm}`}>
-        <LogStatsBar
-          stats={stats}
-          isStreaming={isStreaming}
-          onToggleStreaming={() => setIsStreaming(!isStreaming)}
-        />
-      </div>
-
-      {/* Filters */}
-      <div className={`px-4 ${spacing.stack.sm}`}>
-        <LogFiltersBar
-          filters={filters}
-          onFilterChange={setFilters}
-          onReset={resetFilters}
-          availableComponents={availableComponents}
-        />
-      </div>
-
-      {/* Loading state */}
-      {isLoading && (
-        <div className="p-4 text-center text-content-secondary dark:text-dark-content-secondary">
-          {t("logs.loading", "Loading logs...")}
+      <div className="p-4 border-b border-border dark:border-dark-border flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-lg font-semibold text-content-primary dark:text-dark-content-primary">
+            {t("logs.title", "System Logs")}
+          </h2>
+          <p className="text-sm text-content-secondary dark:text-dark-content-secondary">
+            {t("logs.subtitle", "Real-time application logs with filtering")}
+          </p>
         </div>
-      )}
-
-      {/* Error state */}
-      {error && <div className="p-4 text-center text-red-600 dark:text-red-400">{error}</div>}
-
-      {/* Log entries */}
-      <div
-        ref={logContainerRef}
-        className="p-4 overflow-y-auto font-mono text-sm"
-        style={{ maxHeight }}
-        onScroll={handleScroll}
-      >
-        {logs.length === 0 && !isLoading && (
-          <div className="text-center text-content-secondary dark:text-dark-content-secondary py-8">
-            {filters.search || filters.levels.length > 0 || filters.layers.length > 0
-              ? t("logs.noMatchingLogs", "No logs match the current filters")
-              : t("logs.noLogs", "No logs yet")}
-          </div>
-        )}
-
-        {logs.map((entry) => (
-          <LogEntryRow
-            key={`${entry.timestamp}-${entry.message.substring(0, 20)}`}
-            entry={entry}
-            expanded={expandedIds.has(entry.timestamp)}
-            onToggle={() => toggleExpand(entry.timestamp)}
-          />
-        ))}
-      </div>
-
-      {/* Auto-scroll indicator */}
-      {!autoScroll && logs.length > 0 && (
-        <div className="p-2 text-center border-t border-border dark:border-dark-border">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => {
-              setAutoScroll(true);
-              if (logContainerRef.current) {
-                logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-              }
-            }}
-            className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            onClick={() => setCollapsed((prev) => !prev)}
           >
-            {t("logs.scrollToBottom", "Scroll to latest")}
+            {collapsed ? t("logs.expand", "Expand") : t("logs.collapse", "Collapse")}
+          </button>
+          <button
+            type="button"
+            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            onClick={() => setIsStreaming(!isStreaming)}
+          >
+            {isStreaming ? t("logs.pause", "Pause") : t("logs.resume", "Resume")}
+          </button>
+          <button
+            type="button"
+            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            onClick={clearLogs}
+          >
+            {t("logs.clear", "Clear")}
+          </button>
+          <button
+            type="button"
+            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            onClick={exportJSON}
+          >
+            {t("logs.exportJson", "Export JSON")}
+          </button>
+          <button
+            type="button"
+            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            onClick={exportCSV}
+          >
+            {t("logs.exportCsv", "Export CSV")}
           </button>
         </div>
+      </div>
+
+      {collapsed ? (
+        <div className="p-4 text-content-secondary dark:text-dark-content-secondary">
+          {t("logs.collapsed", "Log viewer collapsed")}
+        </div>
+      ) : (
+        <>
+          {/* Stats bar */}
+          <div className={`px-4 pt-3 ${spacing.stack.sm}`}>
+            <LogStatsBar
+              stats={stats}
+              isStreaming={isStreaming}
+              onToggleStreaming={() => setIsStreaming(!isStreaming)}
+            />
+          </div>
+
+          {/* Filters */}
+          <div className={`px-4 ${spacing.stack.sm}`}>
+            <LogFiltersBar
+              filters={filters}
+              onFilterChange={setFilters}
+              onReset={resetFilters}
+              availableComponents={availableComponents}
+            />
+          </div>
+
+          {/* Loading state */}
+          {isLoading && (
+            <div className="p-4 text-center text-content-secondary dark:text-dark-content-secondary">
+              {t("logs.loading", "Loading logs...")}
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && <div className="p-4 text-center text-red-600 dark:text-red-400">{error}</div>}
+
+          {/* Log entries */}
+          <div
+            ref={logContainerRef}
+            className="p-4 overflow-y-auto font-mono text-sm bg-surface-secondary/40 dark:bg-dark-surface-secondary/40 rounded-lg mx-4"
+            style={{ maxHeight, minHeight: "320px" }}
+            onScroll={handleScroll}
+          >
+            {logs.length === 0 && !isLoading && (
+              <div className="text-center text-content-secondary dark:text-dark-content-secondary py-8">
+                {filters.search || filters.levels.length > 0 || filters.layers.length > 0
+                  ? t("logs.noMatchingLogs", "No logs match the current filters")
+                  : t("logs.noLogs", "No logs yet")}
+              </div>
+            )}
+
+            {logs.map((entry) => (
+              <LogEntryRow
+                key={`${entry.timestamp}-${entry.message.substring(0, 20)}`}
+                entry={entry}
+                expanded={expandedIds.has(entry.timestamp)}
+                onToggle={() => toggleExpand(entry.timestamp)}
+              />
+            ))}
+          </div>
+
+          {/* Auto-scroll indicator */}
+          {!autoScroll && logs.length > 0 && (
+            <div className="p-2 text-center border-t border-border dark:border-dark-border">
+              <button
+                type="button"
+                onClick={() => {
+                  setAutoScroll(true);
+                  if (logContainerRef.current) {
+                    logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+                  }
+                }}
+                className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                {t("logs.scrollToBottom", "Scroll to latest")}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

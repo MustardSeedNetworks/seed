@@ -63,6 +63,30 @@ func TestRequestIDMiddleware(t *testing.T) {
 		}
 	})
 
+	t.Run("replaces invalid or oversized client IDs", func(t *testing.T) {
+		// 70 chars plus invalid symbol should be rejected
+		badID := strings.Repeat("a", 70) + "@"
+		var contextID string
+
+		handler := RequestIDMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			contextID = RequestIDFromContext(r.Context())
+			w.WriteHeader(http.StatusOK)
+		}))
+
+		req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
+		req.Header.Set(RequestIDHeader, badID)
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if contextID == badID {
+			t.Errorf("Expected invalid request ID to be replaced, still got %q", contextID)
+		}
+		if rr.Header().Get(RequestIDHeader) == badID {
+			t.Errorf("Response header should not echo invalid ID, got %q", rr.Header().Get(RequestIDHeader))
+		}
+	})
+
 	t.Run("sets response header", func(t *testing.T) {
 		handler := RequestIDMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
