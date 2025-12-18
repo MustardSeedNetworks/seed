@@ -1,50 +1,81 @@
-# Sample configuration file for development.
-# Production defaults: port 8443, https true (see code defaults in internal/config/config.go)
+# =============================================================================
+# The Seed - Default Configuration
+# =============================================================================
+# This is the default configuration shipped with The Seed.
+# On first run, the setup wizard will prompt for admin credentials.
+#
+# Configuration precedence:
+# 1. Environment variables (SEED_*)
+# 2. Config file (this file)
+# 3. Built-in defaults (see internal/config/config.go)
+#
+# For production, copy this file and customize for your environment.
+# =============================================================================
+
+# Server configuration
 server:
-  port: 8080        # Development port (production default: 8443)
-  https: false      # Disabled for local development (production default: true)
-  cert_file: ""
-  key_file: ""
+  port: 8443              # HTTPS port (use 443 in production with proper permissions)
+  https: true             # Always use HTTPS in production
+  cert_file: ""           # Path to TLS certificate (auto-generated if empty)
+  key_file: ""            # Path to TLS private key (auto-generated if empty)
+
+# Network interface configuration
 interface:
-  default: eth0
+  default: ""             # Auto-detect if empty
   fallbacks:
+    - eth0
     - enp0s1
     - enp0s3
+    - en0
     - wlan0
+
+# VLAN configuration
 vlan:
   enabled: false
   id: 0
+
+# IP configuration
 ip:
-  mode: dhcp
+  mode: dhcp              # dhcp or static
+
+# Network discovery
 discovery:
-  protocol: auto
+  protocol: auto          # auto, arp, icmp
   timeout: 30s
+
+# DNS testing
 dns:
   test_hostname: google.com
   timeout: 5s
+
+# Custom test targets
 tests:
   ping_targets:
-    - name: ""
+    - name: "Google"
       host: www.google.com
       enabled: true
   tcp_ports:
-    - name: ""
+    - name: "HTTP"
       host: www.google.com
       port: 80
       enabled: true
   udp_ports:
-    - name: ""
-      host: ""
+    - name: "DNS"
+      host: 8.8.8.8
       port: 53
       enabled: true
   http_endpoints:
-    - name: ""
+    - name: "Google HTTPS"
       url: https://www.google.com
       expected_status: 200
       enabled: true
+
+# Speed test configuration
 speedtest:
-  server_id: ""
+  server_id: ""           # Auto-select if empty
   auto_run_on_link: false
+
+# Alert thresholds
 thresholds:
   dhcp:
     total:
@@ -83,11 +114,17 @@ thresholds:
     cert_expiry:
       warning: 30
       critical: 7
+
+# Authentication
+# IMPORTANT: Empty password_hash triggers the setup wizard on first run.
+# Never commit a config file with credentials to version control.
 auth:
   default_username: admin
-  default_password_hash: $2y$10$1w5ktZnNS0UxbOvHKH2.hu01jsPh2RjkszVsP.7jR5cOZYa4oAI52
-  session_timeout: 24h0m0s
-  jwt_secret: ""  # Auto-generated on first run if empty
+  default_password_hash: ""   # Empty = setup wizard on first run
+  session_timeout: 24h
+  jwt_secret: ""              # Auto-generated on first run if empty
+
+# SNMP configuration
 snmp:
   communities:
     - public
@@ -96,13 +133,13 @@ snmp:
   retries: 2
   port: 161
 
-# Structured logging configuration
+# Logging configuration
 logging:
-  level: info           # DEBUG, INFO, WARN, ERROR
-  format: text          # text or json
-  add_source: false     # Include file:line in logs
-  file: ""              # Log file path (empty = stdout only)
-  max_size: 100         # Max MB per log file before rotation
-  max_backups: 5        # Number of old files to keep
-  max_age: 30           # Days to keep old files
-  compress: true        # Compress rotated files
+  level: info             # debug, info, warn, error
+  format: text            # text or json
+  add_source: false       # Include file:line in logs
+  file: ""                # Log file path (empty = stdout only)
+  max_size: 100           # Max MB per log file before rotation
+  max_backups: 5          # Number of old files to keep
+  max_age: 30             # Days to keep old files
+  compress: true          # Compress rotated files
