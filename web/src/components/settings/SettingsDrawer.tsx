@@ -64,8 +64,83 @@ import type {
   SubnetConfig,
   SNMPSettings as SNMPSettingsType,
 } from "../../types/settings";
+import { generateId } from "../../utils/id";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
+
+// Utility: ensure every item in an array has a stable id for React keying/updating.
+const withIds = <T extends { id?: string }>(items: T[] = []): Array<T & { id: string }> =>
+  items.map((item) => ({ ...item, id: item.id ?? generateId() }));
+
+// Normalize tests/DNS settings payload before sending to the API.
+const normalizeTestsSettingsForSave = (settings: TestsSettings) => {
+  const dnsHostname = settings.dnsHostname?.trim() || "google.com";
+
+  const dnsServers = (settings.dnsServers || [])
+    .map((server) => ({
+      address: server.address.trim(),
+      enabled: server.enabled !== false,
+    }))
+    .filter((server) => server.address.length > 0);
+
+  const pingTargets = (settings.pingTargets || [])
+    .map((target) => ({
+      name: target.name?.trim() || target.host.trim(),
+      host: target.host.trim(),
+      enabled: target.enabled !== false,
+    }))
+    .filter((target) => target.host.length > 0);
+
+  const tcpPorts = (settings.tcpPorts || [])
+    .map((port) => ({
+      name: port.name?.trim() || port.host.trim(),
+      host: port.host.trim(),
+      port: typeof port.port === "number" ? port.port : parseInt(String(port.port), 10) || 0,
+      enabled: port.enabled !== false,
+    }))
+    .filter((port) => port.host.length > 0 && port.port > 0);
+
+  const udpPorts = (settings.udpPorts || [])
+    .map((port) => ({
+      name: port.name?.trim() || port.host.trim(),
+      host: port.host.trim(),
+      port: typeof port.port === "number" ? port.port : parseInt(String(port.port), 10) || 0,
+      enabled: port.enabled !== false,
+    }))
+    .filter((port) => port.host.length > 0 && port.port > 0);
+
+  const httpEndpoints = (settings.httpEndpoints || [])
+    .map((endpoint) => ({
+      name: endpoint.name?.trim() || endpoint.url.trim(),
+      url: endpoint.url.trim(),
+      expectedStatus:
+        typeof endpoint.expectedStatus === "number" && endpoint.expectedStatus > 0
+          ? endpoint.expectedStatus
+          : 200,
+      enabled: endpoint.enabled !== false,
+    }))
+    .filter((endpoint) => endpoint.url.length > 0);
+
+  return {
+    dnsHostname,
+    dnsServers,
+    pingTargets,
+    tcpPorts,
+    udpPorts,
+    httpEndpoints,
+    runPerformance: settings.runPerformance !== false,
+    runSpeedtest: settings.runSpeedtest !== false,
+    runIperf: settings.runIperf !== false,
+    runDiscovery: settings.runDiscovery !== false,
+    speedtest: {
+      serverId: settings.speedtest?.serverId?.trim() || "",
+      autoRunOnLink: !!settings.speedtest?.autoRunOnLink,
+    },
+    iperf: {
+      autoRunOnLink: !!settings.iperf?.autoRunOnLink,
+    },
+  };
+};
 
 // VLANControl component for creating/deleting VLAN subinterfaces
 const VLANControl = memo(function VLANControl() {
@@ -482,11 +557,29 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         const data = await response.json();
         setTestsSettings({
           dnsHostname: data.dnsHostname || "google.com",
-          dnsServers: data.dnsServers || [],
-          pingTargets: data.pingTargets || [],
-          tcpPorts: data.tcpPorts || [],
-          udpPorts: data.udpPorts || [],
-          httpEndpoints: data.httpEndpoints || [],
+          dnsServers: withIds(data.dnsServers || []).map((server) => ({
+            ...server,
+            enabled: server.enabled !== false,
+          })),
+          pingTargets: withIds(data.pingTargets || []).map((target) => ({
+            ...target,
+            enabled: target.enabled !== false,
+          })),
+          tcpPorts: withIds(data.tcpPorts || []).map((port) => ({
+            ...port,
+            port: port.port || 80,
+            enabled: port.enabled !== false,
+          })),
+          udpPorts: withIds(data.udpPorts || []).map((port) => ({
+            ...port,
+            port: port.port || 53,
+            enabled: port.enabled !== false,
+          })),
+          httpEndpoints: withIds(data.httpEndpoints || []).map((endpoint) => ({
+            ...endpoint,
+            expectedStatus: endpoint.expectedStatus || 200,
+            enabled: endpoint.enabled !== false,
+          })),
           runPerformance: data.runPerformance ?? true,
           runSpeedtest: data.runSpeedtest ?? true,
           runIperf: data.runIperf ?? true,
@@ -895,7 +988,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const saveTestsSettings = useCallback(async () => {
     setTestsStatus("saving");
     try {
-      const payload = { ...testsSettings };
+      const payload = normalizeTestsSettingsForSave(testsSettings);
       const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
         method: "PUT",
         headers: {

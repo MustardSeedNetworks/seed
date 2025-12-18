@@ -161,7 +161,18 @@ func (s *ARPScanner) getSubnet() (*net.IPNet, net.IP, error) {
 		}
 		// Only use IPv4
 		if ipNet.IP.To4() != nil && !ipNet.IP.IsLoopback() {
-			return ipNet, ipNet.IP, nil
+			// Fixes #738: Report the network (subnet) instead of the host IP.
+			// ipNet.IP contains the interface's host address; mask it to the
+			// network address so status.subnet renders as 192.168.1.0/24 instead
+			// of 192.168.1.123/24.
+			maskedIP := ipNet.IP.Mask(ipNet.Mask)
+			networkIP := make(net.IP, len(maskedIP))
+			copy(networkIP, maskedIP)
+
+			return &net.IPNet{
+				IP:   networkIP,
+				Mask: ipNet.Mask,
+			}, ipNet.IP, nil
 		}
 	}
 

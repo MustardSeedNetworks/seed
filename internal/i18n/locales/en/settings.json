@@ -120,7 +120,7 @@
       "stopped": "Stopped",
       "refresh": "Refresh",
       "devices": "Devices",
-      "interface": "Interface",
+      "interface": "Discovery interface",
       "subnet": "Subnet",
       "localIP": "Local IP"
     }

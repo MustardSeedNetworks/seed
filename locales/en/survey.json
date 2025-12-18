@@ -47,7 +47,17 @@
     "pixelDistance": "Pixel dist",
     "distance": "Distance",
     "meters": "meters",
-    "enterMeters": "Enter meters"
+    "feet": "feet",
+    "enterMeters": "Enter meters",
+    "enterFeet": "Enter feet"
+  },
+  "setup": {
+    "checklist": "Survey setup",
+    "uploadFloorPlan": "Upload a floor plan image",
+    "calibrateScale": "Calibrate the scale to match real distances",
+    "wifiInterface": "Select a WiFi interface that can scan",
+    "configureSurvey": "Configure bands, channels, and adapters",
+    "readyToStart": "Start the survey to begin collecting samples"
   },
   "settings": {
     "title": "Survey Settings",

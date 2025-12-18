@@ -39,6 +39,7 @@ import { AirMapperImport, type ImportOptions } from "./AirMapperImport";
 import { HeatmapLegend } from "./HeatmapLegend";
 import type { AirMapperData } from "../../utils/airmapper";
 import { getAuthHeaders } from "../../hooks/useAuth";
+import { useSettings } from "../../contexts/SettingsContext";
 import type {
   Survey,
   PassiveSample,
@@ -84,6 +85,9 @@ interface WiFiStatus {
  */
 export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyViewProps) {
   const { t } = useTranslation("survey");
+  const { displayOptions } = useSettings();
+  // Fixes #733: Use user's unit preference for calibration
+  const useSAE = displayOptions.unitSystem === "sae";
   // Current survey being edited
   const [survey, setSurvey] = useState(initialSurvey);
 
@@ -124,6 +128,26 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
   const [savingSettings, setSavingSettings] = useState(false);
   // AirMapper import state
   const [showImport, setShowImport] = useState(false);
+  // Setup progress helpers
+  const hasFloorPlan = !!currentFloorPlan;
+  const hasCalibration =
+    hasFloorPlan &&
+    currentFloorPlan?.scaleM > 0 &&
+    currentFloorPlan?.scaleSource &&
+    currentFloorPlan?.scaleSource !== "default";
+  const interfaceReady = wifiStatus?.canScan === true;
+  const configReady =
+    hasFloorPlan &&
+    ((survey.config?.bands && survey.config.bands.length > 0) ||
+      (survey.config?.adapters && survey.config.adapters.length > 0));
+  const setupSteps = [
+    { key: "floorPlan", label: t("setup.uploadFloorPlan"), done: hasFloorPlan },
+    { key: "calibration", label: t("setup.calibrateScale"), done: hasCalibration },
+    { key: "wifi", label: t("setup.wifiInterface"), done: interfaceReady },
+    { key: "config", label: t("setup.configureSurvey"), done: configReady },
+    { key: "start", label: t("setup.readyToStart"), done: survey.status !== "created" },
+  ];
+  const completedSetupSteps = setupSteps.filter((s) => s.done).length;
 
   // Check WiFi adapter status on mount
   useEffect(() => {
@@ -394,11 +418,14 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
       return;
     }
 
-    const distance = parseFloat(calibrationDistance);
-    if (isNaN(distance) || distance <= 0) {
+    const rawDistance = parseFloat(calibrationDistance);
+    if (isNaN(rawDistance) || rawDistance <= 0) {
       setError("Please enter a valid positive distance");
       return;
     }
+
+    // Fixes #733: Convert feet to meters if using SAE units
+    const distance = useSAE ? rawDistance * 0.3048 : rawDistance;
 
     // Calculate pixel distance
     const p1 = calibrationPoints[0];
@@ -996,11 +1023,13 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
                             min="0"
                             value={calibrationDistance}
                             onChange={(e) => setCalibrationDistance(e.target.value)}
-                            placeholder={t("calibration.enterMeters")}
+                            placeholder={
+                              useSAE ? t("calibration.enterFeet") : t("calibration.enterMeters")
+                            }
                             className={`flex-1 ${button.size.sm} border border-surface-border ${radius.md} bg-surface-base text-text-primary`}
                           />
                           <span className="body-small text-text-muted">
-                            {t("calibration.meters")}
+                            {useSAE ? t("calibration.feet") : t("calibration.meters")}
                           </span>
                         </div>
                         <div className={`${layout.inline.default} ${spacing.margin.top.inline}`}>
@@ -1078,6 +1107,38 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
 
           {/* Settings panel (shown when survey is in created status) and Sample list */}
           <div className={`lg:col-span-1 ${spacing.stack.default}`}>
+            {/* Setup checklist to guide users before starting a survey */}
+            {survey.status === "created" && (
+              <div className={`bg-surface-raised ${radius.md} border border-surface-border pad`}>
+                <div className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}>
+                  <h2 className="heading-3">{t("setup.checklist")}</h2>
+                  <span className="caption text-text-muted">
+                    {completedSetupSteps}/{setupSteps.length}
+                  </span>
+                </div>
+                <div className="stack-sm">
+                  {setupSteps.map((step) => (
+                    <div
+                      key={step.key}
+                      className={`flex items-center justify-between ${spacing.pad.xs} ${radius.sm} ${
+                        step.done ? "bg-surface-hover" : "bg-transparent"
+                      }`}
+                    >
+                      <div className={layout.inline.default}>
+                        {step.done ? (
+                          <CheckCircle className={`${iconTokens.size.sm} text-status-success`} />
+                        ) : (
+                          <Clock className={`${iconTokens.size.sm} text-text-muted`} />
+                        )}
+                        <span className="body-small">{step.label}</span>
+                      </div>
+                      {step.done && <span className="caption text-status-success">✓</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Survey Settings Panel - only show when survey hasn't started */}
             {survey.status === "created" && (
               <div className={`bg-surface-raised ${radius.md} border border-surface-border pad`}>
