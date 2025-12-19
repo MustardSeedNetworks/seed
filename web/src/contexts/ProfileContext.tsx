@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 /**
  * ProfileContext - MSP Profile Management
  *
@@ -418,6 +417,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
  * Hook to access the profile context.
  * Must be used within a ProfileProvider.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useProfileContext(): ProfileContextValue {
   const context = useContext(ProfileContext);
   if (context === undefined) {
