@@ -73,15 +73,15 @@ health_checks:
     - name: "FTP"
       host: ftp.debian.org
       port: 21
-      enabled: false   # optional; enable if your network allows FTP
+      enabled: true
     - name: "SMB"
       host: files.example.com
       port: 445
       enabled: false
     - name: "RTSP"
-      host: rtsp.example.com
+      host: wowzaec2demo.streamlock.net
       port: 554
-      enabled: false
+      enabled: true
     - name: "PostgreSQL"
       host: db.example.com
       port: 5432

@@ -662,14 +662,14 @@ func DefaultConfig() *Config {
 			},
 			TCPPorts: []TCPPortTest{
 				{Name: "HTTPS", Host: "www.google.com", Port: 443, Enabled: true},
-				// Disabled example to keep prior DICOM test visible without causing failures
-				{Name: "DICOM", Host: "example-dicom.local", Port: 104, Enabled: false},
-				// FTP smoke test (disabled by default to avoid false positives on firewalled sites)
-				{Name: "FTP", Host: "ftp.debian.org", Port: 21, Enabled: false},
-				// SMB/Windows file sharing reachability
+				// Public C-ECHO test server (dicomserver.co.uk)
+				{Name: "DICOM", Host: "dicomserver.co.uk", Port: 104, Enabled: true},
+				// FTP smoke test (public, no auth required)
+				{Name: "FTP", Host: "ftp.debian.org", Port: 21, Enabled: true},
+				// SMB/Windows file sharing reachability (requires site-specific host)
 				{Name: "SMB", Host: "files.example.com", Port: 445, Enabled: false},
-				// RTSP stream control port
-				{Name: "RTSP", Host: "rtsp.example.com", Port: 554, Enabled: false},
+				// RTSP demo stream (Wowza public stream)
+				{Name: "RTSP", Host: "wowzaec2demo.streamlock.net", Port: 554, Enabled: true},
 				// Database (PostgreSQL) connectivity/latency
 				{Name: "PostgreSQL", Host: "db.example.com", Port: 5432, Enabled: false},
 				// SFTP/SSH file transfer
