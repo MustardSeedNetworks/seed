@@ -1328,8 +1328,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     }
                     className={`${input.size.sm} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
                   >
-                    <option value="sae">SAE (feet)</option>
-                    <option value="metric">Metric (meters)</option>
+                    <option value="sae">{t("display.unitSae", "SAE (feet)")}</option>
+                    <option value="metric">{t("display.unitMetric", "Metric (meters)")}</option>
                   </select>
                 </div>
 

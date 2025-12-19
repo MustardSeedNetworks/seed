@@ -24,7 +24,7 @@ interface ProfileManagementProps {
 }
 
 /**
- *
+ * Full-screen management UI for MSP profiles (create, edit, delete, duplicate, import/export).
  */
 export function ProfileManagement({ onClose }: ProfileManagementProps) {
   const { t } = useTranslation();

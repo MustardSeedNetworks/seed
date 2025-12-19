@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * ProfileContext - MSP Profile Management
  *
@@ -425,4 +426,4 @@ export function useProfileContext(): ProfileContextValue {
   return context;
 }
 
-export { ProfileContext };
+// Note: ProfileContext is intentionally not exported to keep fast-refresh happy.

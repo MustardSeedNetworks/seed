@@ -29,7 +29,7 @@
  * State: survey data, sampling status, heatmap metric selection, upload progress
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { FloorPlanCanvas, type CalibrationPoint } from "./FloorPlanCanvas";
 import { logger, LogComponents } from "../../lib/logger";
@@ -107,7 +107,10 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
   const currentFloorPlan = getActiveFloor()?.floorPlan ?? survey.floorPlan;
 
   // Get samples for current floor (from active floor or legacy field)
-  const currentSamples = getActiveFloor()?.samples ?? survey.samples ?? [];
+  const currentSamples = useMemo(
+    () => getActiveFloor()?.samples ?? survey.samples ?? [],
+    [getActiveFloor, survey.samples]
+  );
   // Indicates if a sampling operation is in progress
   const [sampling, setSampling] = useState(false);
   // Indicates if floor plan upload is in progress
@@ -399,7 +402,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         setSampling(false);
       }
     },
-    [survey, onUpdate, wifiStatus]
+    [survey, onUpdate, wifiStatus, currentSamples]
   );
 
   // Handle calibration click - collect two points

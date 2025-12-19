@@ -15,7 +15,7 @@ interface ProfileEditorProps {
 }
 
 /**
- *
+ * Modal dialog for creating or editing a client profile.
  */
 export function ProfileEditor({ profile, onSave, onCancel, isLoading }: ProfileEditorProps) {
   const { t } = useTranslation();

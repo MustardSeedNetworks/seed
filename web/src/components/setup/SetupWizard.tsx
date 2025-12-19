@@ -58,7 +58,7 @@ interface SSOProvider {
 }
 
 /**
- *
+ * First-run setup flow that forces the user to create credentials before using the app.
  */
 export function SetupWizard({
   onComplete,
