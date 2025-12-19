@@ -44,6 +44,9 @@ interface ReportDialogProps {
   onClose: () => void;
 }
 
+/**
+ * Modal for configuring and generating survey PDF reports.
+ */
 export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDialogProps) {
   const { t } = useTranslation("survey");
   const [options, setOptions] = useState<ReportOptions>({
@@ -239,7 +242,9 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
                   style={{ width: "18px", height: "18px" }}
                 />
                 <div>
-                  <div style={{ fontWeight: 500 }}>{t("report.heatmaps", "Heatmap References")}</div>
+                  <div style={{ fontWeight: 500 }}>
+                    {t("report.heatmaps", "Heatmap References")}
+                  </div>
                   <div style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
                     {t("report.heatmapsDesc", "Note about heatmap visualization availability")}
                   </div>
@@ -261,7 +266,9 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
                   style={{ width: "18px", height: "18px" }}
                 />
                 <div>
-                  <div style={{ fontWeight: 500 }}>{t("report.recommendations", "Recommendations")}</div>
+                  <div style={{ fontWeight: 500 }}>
+                    {t("report.recommendations", "Recommendations")}
+                  </div>
                   <div style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
                     {t(
                       "report.recommendationsDesc",
@@ -327,7 +334,10 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
               }}
             >
               <CheckCircle size={16} />
-              {t("report.downloadStarted", "Report generated! Download should start automatically.")}
+              {t(
+                "report.downloadStarted",
+                "Report generated! Download should start automatically."
+              )}
             </div>
           )}
         </div>
@@ -342,7 +352,10 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
             borderTop: "1px solid var(--color-border)",
           }}
         >
-          <button onClick={onClose} style={{ ...button.secondary, padding: `${spacing.sm} ${spacing.md}` }}>
+          <button
+            onClick={onClose}
+            style={{ ...button.secondary, padding: `${spacing.sm} ${spacing.md}` }}
+          >
             {t("common.cancel", "Cancel")}
           </button>
           <button

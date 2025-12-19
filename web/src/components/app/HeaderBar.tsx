@@ -29,6 +29,10 @@ interface HeaderBarProps {
   logout: () => void;
 }
 
+/**
+ * Primary application header with profile selector, interface switcher, theme toggle, and chrome controls.
+ * Renders the top bar used across the app shell.
+ */
 export const HeaderBar = memo(function HeaderBar({
   wsStatus,
   onReconnect,
@@ -247,7 +251,7 @@ interface ConnectionStatusProps {
 }
 
 /**
- *
+ * Displays WebSocket connection status and a reconnect button for small screens.
  */
 export function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
   const { t } = useTranslation("common");

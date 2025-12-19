@@ -18,7 +18,7 @@ export type Config = z.infer<typeof configSchema>;
 
 // Validation helper
 /**
- *
+ * Validate an unknown object against the generated config schema.
  */
 export function validateConfig(
   data: unknown

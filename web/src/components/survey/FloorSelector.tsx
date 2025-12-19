@@ -39,6 +39,9 @@ interface FloorSelectorProps {
   disabled?: boolean;
 }
 
+/**
+ * Vertical floor navigation with add/edit/delete controls.
+ */
 export function FloorSelector({
   floors,
   activeFloorId,
@@ -48,6 +51,9 @@ export function FloorSelector({
   onRenameFloor,
   disabled = false,
 }: FloorSelectorProps) {
+  /**
+   * Renders the vertical floor navigation and inline CRUD controls.
+   */
   const { t } = useTranslation("survey");
   const [isAdding, setIsAdding] = useState(false);
   const [editingFloorId, setEditingFloorId] = useState<string | null>(null);
@@ -207,9 +213,7 @@ export function FloorSelector({
             autoFocus
           />
           <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
-            <span style={{ fontSize: "0.875rem" }}>
-              {t("floorSelector.level", "Level")}:
-            </span>
+            <span style={{ fontSize: "0.875rem" }}>{t("floorSelector.level", "Level")}:</span>
             <input
               type="number"
               value={newFloorLevel}
@@ -297,9 +301,7 @@ export function FloorSelector({
                   autoFocus
                 />
                 <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
-                  <span style={{ fontSize: "0.875rem" }}>
-                    {t("floorSelector.level", "Level")}:
-                  </span>
+                  <span style={{ fontSize: "0.875rem" }}>{t("floorSelector.level", "Level")}:</span>
                   <input
                     type="number"
                     value={editLevel}
@@ -359,9 +361,7 @@ export function FloorSelector({
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: spacing.sm,
-                background: isActive
-                  ? "var(--color-primary-light)"
-                  : "var(--color-background)",
+                background: isActive ? "var(--color-primary-light)" : "var(--color-background)",
                 borderRadius: radius.md,
                 border: isActive
                   ? "1px solid var(--color-primary)"
