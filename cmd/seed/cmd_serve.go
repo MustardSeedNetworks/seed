@@ -20,6 +20,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/paths"
+	"github.com/krisarmstrong/seed/internal/version"
 )
 
 var serveCmd = &cobra.Command{
@@ -100,7 +101,7 @@ func setupLogging(cfg *config.Config) string {
 		os.Exit(1)
 	}
 
-	slog.Info("The Seed starting", "version", version, "log_path", logPath)
+	slog.Info("The Seed starting", "version", version.Version, "log_path", logPath)
 
 	return logPath
 }

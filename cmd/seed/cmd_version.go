@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/krisarmstrong/seed/internal/version"
 )
 
 var versionCmd = &cobra.Command{
@@ -11,7 +13,7 @@ var versionCmd = &cobra.Command{
 	Short: "Print version information",
 	Long:  `Print The Seed version information.`,
 	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Printf("The Seed %s\n", version)
+		fmt.Printf("The Seed %s\n", version.Version)
 	},
 }
 

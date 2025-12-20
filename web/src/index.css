@@ -115,7 +115,14 @@ body {
     -apple-system,
     "Segoe UI",
     sans-serif;
-  background-color: var(--color-surface-base);
+  /* Gradient background inspired by brand colors */
+  background: linear-gradient(135deg,
+    var(--color-surface-base) 0%,
+    color-mix(in srgb, var(--color-brand-primary) 8%, var(--color-surface-base)) 50%,
+    color-mix(in srgb, var(--color-brand-accent) 5%, var(--color-surface-base)) 100%
+  );
+  background-attachment: fixed;
+  min-height: 100vh;
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

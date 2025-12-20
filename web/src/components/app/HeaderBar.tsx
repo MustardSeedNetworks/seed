@@ -3,7 +3,13 @@ import { useTranslation } from "react-i18next";
 import { Profile } from "../../types/profile";
 import { ProfileSelector } from "../ui/ProfileSelector";
 import { InterfaceSelector, NetworkInterface } from "../ui/InterfaceSelector";
-import { radius, spacing, layout, icon as iconTokens, section } from "../../styles/theme";
+import {
+  radius,
+  spacing,
+  layout,
+  icon as iconTokens,
+  section,
+} from "../../styles/theme";
 
 type WSStatus = "connecting" | "connected" | "disconnected" | "error";
 
@@ -65,7 +71,9 @@ export const HeaderBar = memo(function HeaderBar({
         <div className={`${layout.inline.default} min-w-0`}>
           <span className="heading-3 text-brand-primary shrink-0">◉</span>
           <div className="min-w-0">
-            <h1 className="heading-4 hidden xs:block sm:block truncate">{t("app.title")}</h1>
+            <h1 className="heading-4 hidden xs:block sm:block truncate">
+              {t("app.title")}
+            </h1>
             <div className="hidden sm:block">
               <ConnectionStatus status={wsStatus} onReconnect={onReconnect} />
             </div>
@@ -73,7 +81,9 @@ export const HeaderBar = memo(function HeaderBar({
         </div>
 
         {/* Controls */}
-        <div className={`flex items-center ${spacing.gap.tight} sm:${spacing.gap.compact}`}>
+        <div
+          className={`flex items-center ${spacing.gap.tight} sm:${spacing.gap.compact}`}
+        >
           {/* Profile selector */}
           <ProfileSelector
             profiles={profiles}
@@ -83,35 +93,73 @@ export const HeaderBar = memo(function HeaderBar({
             loading={profilesLoading}
           />
 
-          {/* Quick mode toggle: Ethernet vs Wi-Fi */}
-          {(hasEthernet || hasWifiInterface) && (
-            <div className="flex items-center bg-surface-base border border-surface-border rounded-full">
-              <button
-                type="button"
-                onClick={() => switchToInterfaceType("ethernet")}
-                disabled={!hasEthernet}
-                className={`px-3 py-1 body-small rounded-full transition ${
-                  !isWifi
-                    ? "bg-brand-primary text-text-inverse"
-                    : "text-text-primary hover:bg-surface-hover"
-                } ${!hasEthernet ? "opacity-50 cursor-not-allowed" : ""}`}
+          {/* Quick mode toggle: Ethernet vs Wi-Fi with icons */}
+          <div
+            className={`${layout.inline.default} bg-surface-base border border-surface-border ${radius.full}`}
+          >
+            <button
+              type="button"
+              onClick={() => switchToInterfaceType("ethernet")}
+              disabled={!hasEthernet}
+              aria-label={t("interface.ethernet", "Ethernet")}
+              title={t("interface.ethernet", "Ethernet")}
+              className={`${spacing.pad.xs} ${radius.full} transition ${
+                !isWifi
+                  ? "bg-brand-primary text-text-inverse"
+                  : "text-text-primary hover:bg-surface-hover"
+              } ${!hasEthernet ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {/* Cable/Ethernet icon */}
+              <svg
+                className={iconTokens.size.md}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
               >
-                {t("interface.ethernet", "Ethernet")}
-              </button>
-              <button
-                type="button"
-                onClick={() => switchToInterfaceType("wifi")}
-                disabled={!hasWifiInterface}
-                className={`px-3 py-1 body-small rounded-full transition ${
-                  isWifi
-                    ? "bg-brand-primary text-text-inverse"
-                    : "text-text-primary hover:bg-surface-hover"
-                } ${!hasWifiInterface ? "opacity-50 cursor-not-allowed" : ""}`}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => switchToInterfaceType("wifi")}
+              aria-label={t("interface.wifi", "Wi-Fi")}
+              title={
+                hasWifiInterface
+                  ? t("interface.wifi", "Wi-Fi")
+                  : t(
+                      "interface.wifiNotDetected",
+                      "Wi-Fi (no adapter detected)"
+                    )
+              }
+              className={`${spacing.pad.xs} ${radius.full} transition ${
+                isWifi
+                  ? "bg-brand-primary text-text-inverse"
+                  : "text-text-primary hover:bg-surface-hover"
+              }`}
+            >
+              {/* Wi-Fi icon */}
+              <svg
+                className={iconTokens.size.md}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
               >
-                {t("interface.wifi", "Wi-Fi")}
-              </button>
-            </div>
-          )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
+                />
+              </svg>
+            </button>
+          </div>
 
           {/* Interface selector with grouped dropdown */}
           <InterfaceSelector
@@ -126,7 +174,9 @@ export const HeaderBar = memo(function HeaderBar({
             className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
             onClick={toggleTheme}
             aria-label={
-              isDark ? t("accessibility.switchToLightMode") : t("accessibility.switchToDarkMode")
+              isDark
+                ? t("accessibility.switchToLightMode")
+                : t("accessibility.switchToDarkMode")
             }
           >
             {isDark ? (
@@ -253,7 +303,10 @@ interface ConnectionStatusProps {
 /**
  * Displays WebSocket connection status and a reconnect button for small screens.
  */
-export function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
+export function ConnectionStatus({
+  status,
+  onReconnect,
+}: ConnectionStatusProps) {
   const { t } = useTranslation("common");
 
   /**
@@ -294,10 +347,14 @@ export function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps)
       role="status"
       aria-live="polite"
     >
-      <span className={`${layout.inline.tight} ${spacing.inline.sm} caption ${config.color}`}>
+      <span
+        className={`${layout.inline.tight} ${spacing.inline.sm} caption ${config.color}`}
+      >
         <span
           className={`${layout.flex.center} ${radius.full} ${config.color} ${
-            config.icon === "spinner" ? `bg-status-info/10 ${spacing.pad.xs}` : ""
+            config.icon === "spinner"
+              ? `bg-status-info/10 ${spacing.pad.xs}`
+              : ""
           }`}
         >
           {config.icon === "spinner" ? (

@@ -17,14 +17,21 @@ interface ProfileEditorProps {
 /**
  * Modal dialog for creating or editing a client profile.
  */
-export function ProfileEditor({ profile, onSave, onCancel, isLoading }: ProfileEditorProps) {
+export function ProfileEditor({
+  profile,
+  onSave,
+  onCancel,
+  isLoading,
+}: ProfileEditorProps) {
   const { t } = useTranslation();
   const isEditing = profile !== null;
 
   const [name, setName] = useState(profile?.name || "");
   const [description, setDescription] = useState(profile?.description || "");
   const [isDefault, setIsDefault] = useState(profile?.is_default || false);
-  const [notes, setNotes] = useState((profile?.config as { notes?: string })?.notes || "");
+  const [notes, setNotes] = useState(
+    (profile?.config as { notes?: string })?.notes || ""
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -48,13 +55,15 @@ export function ProfileEditor({ profile, onSave, onCancel, isLoading }: ProfileE
         {/* Header */}
         <div className={`${spacing.pad.md} border-b border-surface-border`}>
           <h2 className="heading-md text-text-primary">
-            {isEditing ? t("profile.edit", "Edit Profile") : t("profile.create", "Create Profile")}
+            {isEditing
+              ? t("profile.edit", "Edit Profile")
+              : t("profile.create", "Create Profile")}
           </h2>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div className={`${spacing.pad.md} space-y-4 max-h-96 overflow-y-auto`}>
+          <div className={`${spacing.pad.md} space-y-4`}>
             {/* Name */}
             <div>
               <label className="block body-small font-medium text-text-primary mb-1">
@@ -80,7 +89,10 @@ export function ProfileEditor({ profile, onSave, onCancel, isLoading }: ProfileE
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary`}
-                placeholder={t("profile.descriptionPlaceholder", "Brief description")}
+                placeholder={t(
+                  "profile.descriptionPlaceholder",
+                  "Brief description"
+                )}
               />
             </div>
 
@@ -94,7 +106,10 @@ export function ProfileEditor({ profile, onSave, onCancel, isLoading }: ProfileE
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none`}
-                placeholder={t("profile.notesPlaceholder", "Contact info, VPN requirements, etc.")}
+                placeholder={t(
+                  "profile.notesPlaceholder",
+                  "Contact info, VPN requirements, etc."
+                )}
               />
             </div>
 
