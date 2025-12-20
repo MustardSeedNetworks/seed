@@ -17,12 +17,12 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/validation"
 )
@@ -31,15 +31,15 @@ import (
 // POST /api/vulnerabilities/scan?ip=x.x.x.x (optional IP filter).
 func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]string{
-			"error": "Vulnerability scanner not enabled",
-		})
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.vuln.scannerNotEnabled"), "") // fixes #694
 		return
 	}
 
@@ -47,7 +47,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 
 	// Validate IP if provided
 	if targetIP != "" && !validation.IsValidIP(targetIP) {
-		http.Error(w, fmt.Sprintf("Invalid IP address: %s", targetIP), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vuln.invalidIp"), targetIP) // fixes #694
 		return
 	}
 
@@ -104,8 +104,10 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 // GET /api/vulnerabilities/status (fixes #703).
 func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -130,8 +132,10 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 // GET /api/vulnerabilities/results?severity=high (optional filter) (fixes #703).
 func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -168,27 +172,27 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 // GET /api/vulnerabilities/device?ip=x.x.x.x (fixes #703).
 func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]string{
-			"error": "Vulnerability scanner not enabled",
-		})
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.vuln.scannerNotEnabled"), "") // fixes #694
 		return
 	}
 
 	ip := r.URL.Query().Get("ip")
 	if ip == "" {
-		http.Error(w, "Missing 'ip' parameter", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vuln.missingIpParam"), "") // fixes #694
 		return
 	}
 
 	// Validate IP address
 	if !validation.IsValidIP(ip) {
-		http.Error(w, fmt.Sprintf("Invalid IP address: %s", ip), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vuln.invalidIp"), ip) // fixes #694
 		return
 	}
 
@@ -207,6 +211,8 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 // GET/PUT /api/vulnerabilities/settings (fixes #703).
 func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		sendJSONResponse(w, logger, http.StatusOK, s.config.Security.VulnerabilityScanning)
@@ -214,7 +220,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 	case http.MethodPut:
 		var settings discovery.VulnerabilityScannerConfig
 		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.vuln.invalidJson"), err.Error()) // fixes #694
 			return
 		}
 
@@ -230,9 +236,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 		// Save config
 		if err := s.config.Save(s.configPath); err != nil {
-			sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
-				"error": "Failed to save config",
-			})
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), err.Error()) // fixes #694
 			return
 		}
 
@@ -241,6 +245,6 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 		})
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }

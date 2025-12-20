@@ -50,6 +50,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -515,40 +517,49 @@ func (a *logBroadcastAdapter) BroadcastLogEntry(entry *logging.LogEntry) {
 }
 
 // handleWebSocket handles WebSocket connections.
+// Security fix #660: Uses httpOnly cookie authentication instead of protocol headers
+// to prevent token exposure in logs, browser dev tools, and proxy servers.
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	// Extract token from Sec-WebSocket-Protocol header (modern, secure method)
-	// Frontend sends: new WebSocket(url, ["access_token", token])
-	// This comes through as: Sec-WebSocket-Protocol: access_token, <token>
-	var token string
-	protocols := r.Header.Get("Sec-WebSocket-Protocol")
-	if protocols != "" {
-		parts := strings.Split(protocols, ",")
-		if len(parts) == 2 && strings.TrimSpace(parts[0]) == "access_token" {
-			token = strings.TrimSpace(parts[1])
+	// Extract token from httpOnly cookie (fixes #660 - secure method)
+	// Cookies are automatically sent by the browser and are httpOnly (not accessible to JS)
+	token, source := auth.GetTokenFromRequest(r)
+
+	// Fallback: Check Sec-WebSocket-Protocol for backwards compatibility during transition
+	// TODO: Remove this fallback after clients are updated (deprecated)
+	if token == "" {
+		protocols := r.Header.Get("Sec-WebSocket-Protocol")
+		if protocols != "" {
+			parts := strings.Split(protocols, ",")
+			if len(parts) == 2 && strings.TrimSpace(parts[0]) == "access_token" {
+				token = strings.TrimSpace(parts[1])
+				source = "protocol_header_deprecated"
+				slog.Warn("WebSocket using deprecated protocol header auth - migrate to cookie auth",
+					"client_ip", GetClientIP(r))
+			}
 		}
 	}
 
-	// Query parameter authentication removed for security (fixes #706)
-
 	// Validate token
 	if token == "" {
-		http.Error(w, "Unauthorized: no token provided", http.StatusUnauthorized)
+		logger := logging.FromContext(r.Context())
+		localizer := i18n.FromRequest(r)
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, localizer.T("errors.auth.noToken"), "") // fixes #694
 		return
 	}
 
-	if _, err := s.authManager.ValidateToken(token); err != nil {
-		slog.Warn("WebSocket auth failed", "error", err)
-		http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)
+	claims, err := s.authManager.ValidateToken(token)
+	if err != nil {
+		slog.Warn("WebSocket auth failed", "error", err, "source", source)
+		logger := logging.FromContext(r.Context())
+		localizer := i18n.FromRequest(r)
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, localizer.T("errors.auth.invalidToken"), err.Error()) // fixes #694
 		return
 	}
 
-	// Set response header to accept the subprotocol
-	responseHeader := http.Header{}
-	if protocols != "" && strings.Contains(protocols, "access_token") {
-		responseHeader.Set("Sec-WebSocket-Protocol", "access_token")
-	}
+	slog.Debug("WebSocket authenticated", "username", claims.Username, "source", source)
 
-	conn, err := upgrader.Upgrade(w, r, responseHeader)
+	// No response header needed for cookie auth
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Error("WebSocket upgrade error", "error", err)
 		return

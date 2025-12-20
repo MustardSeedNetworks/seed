@@ -32,11 +32,17 @@ import { Card, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Tooltip } from "../ui/Tooltip";
-import { getAuthHeaders } from "../../hooks/useAuth";
+// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { HTTP_TIMING_HELP } from "../help/HelpContent";
 import { useSettings } from "../../contexts/useSettings";
 import { HeartPulse } from "../ui/Icons";
-import { timing, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
+import {
+  timing,
+  icon as iconTokens,
+  layout,
+  radius,
+  spacing,
+} from "../../styles/theme";
 
 type StatusValue = "success" | "warning" | "error";
 
@@ -85,7 +91,9 @@ interface HealthCheckCardProps {
   loading?: boolean;
 }
 
-export const HealthCheckCard = memo(function HealthCheckCard({ loading }: HealthCheckCardProps) {
+export const HealthCheckCard = memo(function HealthCheckCard({
+  loading,
+}: HealthCheckCardProps) {
   const { t } = useTranslation("cards");
   const { cardSettings } = useSettings();
   const [data, setData] = useState<HealthCheckData | null>(null);
@@ -97,7 +105,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     setError(null);
     try {
       const res = await fetch("/api/health-checks/run", {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (res.ok) {
         const result = await res.json();
@@ -125,7 +133,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     };
     window.addEventListener("healthChecksUpdated", handleHealthChecksUpdated);
     return () => {
-      window.removeEventListener("healthChecksUpdated", handleHealthChecksUpdated);
+      window.removeEventListener(
+        "healthChecksUpdated",
+        handleHealthChecksUpdated
+      );
     };
   }, [fetchTests]);
 
@@ -174,13 +185,20 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     // Priority: error > warning > success
     // Any failure (!success) or error status = card is error
     if (
-      allResults.some((r) => !r.success || r.testStatus === "error" || r.certStatus === "error")
+      allResults.some(
+        (r) =>
+          !r.success || r.testStatus === "error" || r.certStatus === "error"
+      )
     ) {
       return "error";
     }
 
     // Any warning status = card is warning
-    if (allResults.some((r) => r.testStatus === "warning" || r.certStatus === "warning")) {
+    if (
+      allResults.some(
+        (r) => r.testStatus === "warning" || r.certStatus === "warning"
+      )
+    ) {
       return "warning";
     }
 
@@ -195,7 +213,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     return `${Math.round(ms)}ms`;
   };
 
-  const renderTestResult = (result: TestResult, type: "ping" | "tcp" | "udp" | "http") => {
+  const renderTestResult = (
+    result: TestResult,
+    type: "ping" | "tcp" | "udp" | "http"
+  ) => {
     // Use testStatus for threshold-based coloring, fall back to success/error
     const statusLabel = result.success
       ? result.testStatus === "warning"
@@ -226,7 +247,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     return (
       <div key={`${type}-${result.name}`} className={spacing.compact.py}>
         <div className={layout.flex.between}>
-          <span className="body-small text-text-muted truncate flex-1" title={displayName}>
+          <span
+            className="body-small text-text-muted truncate flex-1"
+            title={displayName}
+          >
             {displayName}
             {details}
           </span>
@@ -238,7 +262,9 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
           </span>
         </div>
         {extendedInfo && (
-          <div className={`caption text-text-muted ${spacing.micro.mt}`}>{extendedInfo}</div>
+          <div className={`caption text-text-muted ${spacing.micro.mt}`}>
+            {extendedInfo}
+          </div>
         )}
       </div>
     );
@@ -247,7 +273,8 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
   // Timing bar component for HTTP requests
   const TimingBar = ({ result }: { result: TestResult }) => {
     // Prefer total latency; fall back to sum of phases so we can still render on failures
-    const safeNum = (v: number | undefined) => (v !== undefined && Number.isFinite(v) ? v : 0);
+    const safeNum = (v: number | undefined) =>
+      v !== undefined && Number.isFinite(v) ? v : 0;
     const dns = safeNum(result.dnsLatency);
     const tcp = safeNum(result.tcpConnect);
     const tls = safeNum(result.tlsLatency);
@@ -308,14 +335,20 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
 
     if (segments.length === 0) return null;
 
-    const fmt = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`);
+    const fmt = (ms: number) =>
+      ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
 
     return (
       <div className={spacing.micro.mtCompactMd}>
         {/* Stacked bar */}
-        <div className={`h-2 ${radius.full} overflow-hidden flex bg-bg-tertiary`}>
+        <div
+          className={`h-2 ${radius.full} overflow-hidden flex bg-bg-tertiary`}
+        >
           {segments.map((seg, i) => {
-            const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
+            const widthPercent = Math.min(
+              100,
+              Math.max(0, (seg.value / total) * 100)
+            );
             const widthClass = `w-[${widthPercent}%]`;
             return (
               <div
@@ -339,7 +372,9 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               <span
                 className={`inline-flex items-center ${spacing.gap.tight} ${getStatusTextColor(seg.status)}`}
               >
-                <span className={`inline-block w-2 h-2 ${radius.full} ${seg.color}`} />
+                <span
+                  className={`inline-block w-2 h-2 ${radius.full} ${seg.color}`}
+                />
                 {seg.label} {fmt(seg.value)}
               </span>
             </Tooltip>
@@ -372,7 +407,8 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       certColor = "text-status-success";
     }
 
-    const hasCertInfo = result.certDaysLeft !== undefined && result.certDaysLeft >= 0;
+    const hasCertInfo =
+      result.certDaysLeft !== undefined && result.certDaysLeft >= 0;
     const hasTLS = result.tlsVersion && result.tlsVersion !== "Unknown";
 
     // Format cert expiry nicely
@@ -382,7 +418,8 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       if (days <= 0) return t("health.expired");
       if (days === 1) return t("health.certExpiry1Day");
       if (days < 30) return t("health.certExpiryDays", { days });
-      if (days < 365) return t("health.certExpiryMonths", { months: Math.floor(days / 30) });
+      if (days < 365)
+        return t("health.certExpiryMonths", { months: Math.floor(days / 30) });
       return t("health.certExpiryYears", { years: Math.floor(days / 365) });
     };
 
@@ -396,7 +433,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     return (
       <div key={`http-${result.name}`} className={spacing.compact.pyMd}>
         <div className={layout.flex.between}>
-          <span className="body-small text-text-muted truncate flex-1" title={result.name}>
+          <span
+            className="body-small text-text-muted truncate flex-1"
+            title={result.name}
+          >
             {result.name}
             {result.status ? ` (${result.status})` : ""}
           </span>
@@ -406,23 +446,37 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
         </div>
         {hasTimingData && <TimingBar result={result} />}
         {!result.success && result.error && (
-          <div className={`caption text-status-error ${spacing.margin.top.tight}`}>
+          <div
+            className={`caption text-status-error ${spacing.margin.top.tight}`}
+          >
             {result.error}
           </div>
         )}
         {(hasTLS || hasCertInfo) && (
-          <div className={`caption ${spacing.margin.top.tight} ${layout.inline.default}`}>
-            {hasTLS && <span className="text-text-muted">{result.tlsVersion}</span>}
-            {hasTLS && hasCertInfo && <span className="text-text-muted">·</span>}
+          <div
+            className={`caption ${spacing.margin.top.tight} ${layout.inline.default}`}
+          >
+            {hasTLS && (
+              <span className="text-text-muted">{result.tlsVersion}</span>
+            )}
+            {hasTLS && hasCertInfo && (
+              <span className="text-text-muted">·</span>
+            )}
             {hasCertInfo && (
-              <span className={certColor} title={`Expires: ${result.certExpiry}`}>
+              <span
+                className={certColor}
+                title={`Expires: ${result.certExpiry}`}
+              >
                 {formatCertExpiry()}
               </span>
             )}
             {result.certIssuer && (
               <>
                 <span className="text-text-muted">·</span>
-                <span className="text-text-muted truncate" title={result.certIssuer}>
+                <span
+                  className="text-text-muted truncate"
+                  title={result.certIssuer}
+                >
                   {result.certIssuer}
                 </span>
               </>
@@ -439,7 +493,9 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       icon={<HeartPulse className={iconTokens.size.md} />}
       status={getStatus()}
     >
-      {isRunning && <p className="body-small text-text-muted">{t("health.runningTests")}</p>}
+      {isRunning && (
+        <p className="body-small text-text-muted">{t("health.runningTests")}</p>
+      )}
 
       {!isRunning && data && (
         <>
@@ -451,7 +507,9 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               variant="compact"
               defaultOpen={true}
               status={
-                data.pingResults.some((r) => !r.success || r.testStatus === "error")
+                data.pingResults.some(
+                  (r) => !r.success || r.testStatus === "error"
+                )
                   ? "error"
                   : data.pingResults.some((r) => r.testStatus === "warning")
                     ? "warning"
@@ -470,7 +528,9 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               variant="compact"
               defaultOpen={true}
               status={
-                data.tcpResults.some((r) => !r.success || r.testStatus === "error")
+                data.tcpResults.some(
+                  (r) => !r.success || r.testStatus === "error"
+                )
                   ? "error"
                   : data.tcpResults.some((r) => r.testStatus === "warning")
                     ? "warning"
@@ -489,7 +549,9 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               variant="compact"
               defaultOpen={true}
               status={
-                data.udpResults.some((r) => !r.success || r.testStatus === "error")
+                data.udpResults.some(
+                  (r) => !r.success || r.testStatus === "error"
+                )
                   ? "error"
                   : data.udpResults.some((r) => r.testStatus === "warning")
                     ? "warning"
@@ -509,11 +571,16 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               defaultOpen={true}
               status={
                 data.httpResults.some(
-                  (r) => !r.success || r.testStatus === "error" || r.certStatus === "error"
+                  (r) =>
+                    !r.success ||
+                    r.testStatus === "error" ||
+                    r.certStatus === "error"
                 )
                   ? "error"
                   : data.httpResults.some(
-                        (r) => r.testStatus === "warning" || r.certStatus === "warning"
+                        (r) =>
+                          r.testStatus === "warning" ||
+                          r.certStatus === "warning"
                       )
                     ? "warning"
                     : "success"

@@ -33,7 +33,7 @@ import { radius, icon as iconTokens, spacing } from "../../styles/theme";
 import { BaseCard } from "./BaseCard";
 import { CardRow, CardDivider } from "../ui/Card";
 import { Status } from "../ui/StatusBadge";
-import { getAuthHeaders } from "../../hooks/useAuth";
+// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 
 interface SystemHealth {
   cpuPercent?: number;
@@ -133,7 +133,9 @@ function ResourceBar({
     <div className="stack-xs">
       <div className="flex justify-between caption">
         <span>{label}</span>
-        <span className="text-text-primary font-medium">{percent.toFixed(0)}%</span>
+        <span className="text-text-primary font-medium">
+          {percent.toFixed(0)}%
+        </span>
       </div>
       <div className={`h-2 bg-surface-border ${radius.md} overflow-hidden`}>
         <div
@@ -160,7 +162,7 @@ export function SystemHealthCard() {
   const fetchHealth = useCallback(async () => {
     try {
       const response = await fetch("/api/system/health", {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -233,9 +235,17 @@ export function SystemHealthCard() {
               label={t("system.load1m")}
               value={(health.loadAvg1 ?? 0).toFixed(2)}
               align="left"
-              status={(health.loadAvg1 ?? 0) > (health.numCpu ?? 1) ? "warning" : undefined}
+              status={
+                (health.loadAvg1 ?? 0) > (health.numCpu ?? 1)
+                  ? "warning"
+                  : undefined
+              }
             />
-            <CardRow label={t("system.goroutines")} value={health.goroutines ?? 0} align="left" />
+            <CardRow
+              label={t("system.goroutines")}
+              value={health.goroutines ?? 0}
+              align="left"
+            />
             <CardRow
               label={t("system.processMem")}
               value={formatBytes(health.processMemory ?? 0)}
@@ -244,7 +254,8 @@ export function SystemHealthCard() {
           </div>
 
           <div className={`caption text-center ${spacing.padding.top.tight}`}>
-            {health.os ?? "Unknown"}/{health.arch ?? "Unknown"} - {health.numCpu ?? 0} CPUs
+            {health.os ?? "Unknown"}/{health.arch ?? "Unknown"} -{" "}
+            {health.numCpu ?? 0} CPUs
           </div>
         </div>
       )}

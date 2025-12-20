@@ -257,9 +257,13 @@ func TestHandleSetupComplete(t *testing.T) {
 
 			server := NewTestServerWithConfig(cfg)
 
+			// Generate a valid setup token for testing
+			setupToken, _ := server.setupTokenManager.GenerateToken()
+
 			// Create request
 			reqBody := SetupCompleteRequest{
-				Password: tt.password,
+				Password:   tt.password,
+				SetupToken: setupToken,
 			}
 			body, _ := json.Marshal(reqBody)
 			req := httptest.NewRequest(http.MethodPost, "/api/setup/complete", bytes.NewReader(body))

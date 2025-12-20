@@ -14,6 +14,7 @@ export interface SetupStatusResponse {
   needsSetup: boolean; // True if initial setup is required
   username?: string; // Default admin username
   suggestedPassword?: string; // Pre-generated password (secure random)
+  setupToken?: string; // Security fix #724, #758: One-time token for setup completion
 }
 
 /**

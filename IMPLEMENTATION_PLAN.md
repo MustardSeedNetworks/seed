@@ -1,426 +1,541 @@
-# The Seed Implementation Plan
+# Seed Project Implementation Plan
 
-## Overview
+This document outlines the implementation status and remaining work for the Seed project.
 
-This document outlines the implementation plan for addressing all open GitHub issues, organized into phases by priority
-and dependency order.
-
----
-
-## Phase 1: Critical Bug Fixes & High-Priority Items (Week 1-2)
-
-### 1.1 Staticcheck Issues - Potential Bugs (#565) ⚠️ HIGH PRIORITY
-
-**Why First**: These are potential runtime bugs that could cause crashes or incorrect behavior.
-
-**Issues to Fix** (6 total):
-
-- SA1019: Deprecated API usage
-- SA4006: Value assigned but never used
-- SA9003: Empty branch statements
-- Potential nil pointer dereferences
-
-**Files to Check**:
-
-````bash
-golangci-lint run --enable staticcheck 2>&1 | grep -E "^internal/"
-```yaml
-
-**Estimated Effort**: 2-4 hours
+**Last Updated**: December 2024
 
 ---
 
-### 1.2 Remove Hardcoded Interface Names (#572) ⚠️ HIGH PRIORITY
+## Completed Fixes (Security Session)
 
-**Why**: Hardcoded interfaces break portability across Linux distributions and macOS.
+### P0 Security - Critical (All Complete)
 
-**Search Pattern**:
+#### ✅ #660 - WebSocket Cookie-Based Authentication
 
-```bash
-grep -rn "eth0\|en0\|enp\|wlan0\|wlp" internal/
-```yaml
+**Status**: IMPLEMENTED
 
-**Replace With**: Dynamic interface detection via `internal/network/interfaces.go`
+**Changes Made**:
 
-**Estimated Effort**: 4-6 hours
+- `/internal/api/websocket.go`: Changed `handleWebSocket` to use httpOnly cookie authentication via
+  `auth.GetTokenFromRequest(r)` instead of `Sec-WebSocket-Protocol` header
+- `/web/src/hooks/useWebSocket.ts`: Deprecated `token` and `onRefreshToken` parameters, removed protocol header
+  authentication
 
----
+**Security Impact**: Tokens no longer exposed in WebSocket protocol headers which could be logged by proxies/load
+balancers.
 
-### 1.3 Add .nvmrc File (#569) ⚠️ HIGH PRIORITY
+#### ✅ #724/#758 - Setup Endpoint Hardening
 
-**Why**: Ensures consistent Node.js version across all environments.
+**Status**: IMPLEMENTED
 
-**Implementation**:
+**Changes Made**:
 
-```bash
-echo "22" > web/.nvmrc
-```text
+- `/internal/api/setup_token.go`: NEW FILE - Implements `SetupTokenManager` with one-time token generation and
+  validation
+- `/internal/api/server.go`: Added `setupTokenManager` field to Server struct
+- `/internal/api/handlers_auth.go`: Updated `handleSetupStatus` to generate tokens, `handleSetupComplete` to validate
+  them
+- `/web/src/components/setup/SetupWizard.tsx`: Added `setupToken` prop
+- `/web/src/components/setup/setupApi.ts`: Added `setupToken` to response interface
+- `/web/src/App.tsx`: Added setupToken state management
 
-**Update** `web/package.json`:
+**Security Impact**: Setup endpoint now requires a one-time token, preventing CSRF attacks and replay attacks on the
+setup process.
 
-```json
-{
-  "engines": {
-    "node": ">=22.0.0"
-  }
-}
-```yaml
+### P1 Reliability (Partial)
 
-**Estimated Effort**: 30 minutes
+#### ✅ #714 - Logging IP Header Security
 
----
+**Status**: IMPLEMENTED
 
-## Phase 2: Interface Auto-Detection System (Week 2-3)
+**Changes Made**:
 
-### 2.1 Intelligent Interface Auto-Detection (#571)
+- `/internal/logging/redact.go`: Added IP-related headers (`x-forwarded-for`, `x-real-ip`, `cf-connecting-ip`,
+  `true-client-ip`, `x-client-ip`, `x-cluster-client-ip`, `forwarded`) to `sensitiveHeaders` map
+- Updated `GetClientIP` documentation with security warnings about spoofable headers
 
-**New Package**: `internal/network/detection/`
+**Security Impact**: Client IP addresses are now redacted from logs, protecting user privacy.
 
-**Files to Create**:
+#### ⚠️ #572 - Remove Hardcoded Interface Names
 
-```text
-internal/network/detection/
-├── detection.go      # Main detection logic
-├── scoring.go        # Interface scoring algorithm
-├── chipsets.go       # Chipset database and identification
-├── capabilities.go   # TDR/DOM capability detection
-└── detection_test.go # Comprehensive tests
-```go
+**Status**: PARTIALLY IMPLEMENTED
 
-**Core Algorithm**:
+**Changes Made**:
 
-```go
-type InterfaceScore struct {
-    Name           string
-    FriendlyName   string
-    Score          int
-    LinkStatus     bool
-    Speed          int64    // bits per second
-    ChipsetQuality int      // 1-100
-    HasTDR         bool
-    HasDOM         bool
-    Type           string   // "ethernet", "wifi", "fiber"
-}
+- `/web/src/App.tsx`: Changed default interface from `"eth0"` to `""` (empty string)
+- `/web/src/components/cards/WiFiSurveyCard.tsx`: Added `currentInterface` prop instead of hardcoding `"wlan0"`
 
-func ScoreInterface(iface net.Interface) InterfaceScore {
-    score := 0
+**Remaining Work**: See #571 below for full interface auto-detection integration.
 
-    // Link status (heavily weighted)
-    if isLinked(iface) {
-        score += 1000
-    }
+### P3 UX
 
-    // TDR capability for cable testing
-    if hasTDRCapability(iface) {
-        score += 1000
-    }
+#### ✅ #769 - SSO Button Visibility
 
-    // Speed bonus
-    speed := getSpeed(iface)
-    score += speedScore(speed) // 100G=500, 10G=400, 5G=350, 2.5G=300, 1G=200
+**Status**: IMPLEMENTED
 
-    // Chipset quality
-    chipset := identifyChipset(iface)
-    score += chipsetScore(chipset) // Intel=100, Broadcom=80, Realtek=50
+**Changes Made**:
 
-    return InterfaceScore{Score: score, ...}
-}
-```python
-
-**Chipset Database** (from issue #571):
-
-- 1G: Intel I210/I211/I350, Broadcom BCM5720, Realtek RTL8111
-- 2.5G: Intel I225/I226, Realtek RTL8125, Aquantia AQC107
-- 5G: Aquantia AQC107/108, Marvell AQC113, Realtek RTL8126
-- 10G: Intel X540/X550/X710, Mellanox ConnectX-3/4/5
-- 25G/40G/100G: Intel XXV710/XL710/E810, Mellanox ConnectX-5/6
-- WiFi: Intel AX200/210/211/BE200, Qualcomm, MediaTek
-
-**Estimated Effort**: 16-24 hours
+- `/web/src/App.tsx`: `LoginForm` component now fetches SSO providers from `/api/sso/providers` and conditionally
+  renders SSO buttons based on `hasEnabledSSO`
 
 ---
 
-### 2.2 Friendly Interface Names in UI (#574)
+## Remaining Issues by Priority
 
-**Backend Changes**:
+### P1 Reliability - High Priority
 
-```go
-type InterfaceInfo struct {
-    Name         string `json:"name"`          // "enp3s0"
-    FriendlyName string `json:"friendlyName"`  // "Intel I225-V 2.5GbE"
-    Description  string `json:"description"`   // "2.5 Gigabit Ethernet"
-}
-```go
+#### 🔴 #669 - Remove getAuthHeaders() Usage
 
-**Frontend Changes**:
+**Priority**: P1 - High **Effort**: Medium (90+ occurrences) **Dependencies**: None
 
-- Display `friendlyName` in dropdowns and cards
-- Show `name` in tooltips or advanced view
-- Update `InterfaceSelector` component
+**Current State**: `getAuthHeaders()` returns an empty object `{}` but is still called 90+ times throughout the
+codebase. Most API calls should use `credentials: 'include'` instead.
 
-**Estimated Effort**: 4-6 hours
+**Implementation Plan**:
 
----
+1. **Audit all usages**:
 
-### 2.3 WiFi Multi-Adapter Support (#573)
+   ```bash
+   grep -r "getAuthHeaders" web/src --include="*.ts" --include="*.tsx"
+   ```
 
-**Changes to Survey System**:
+2. **Categorize by pattern**:
+   - Fetch calls with `headers: getAuthHeaders()`
+   - Axios calls with `headers: getAuthHeaders()`
+   - Custom hook usages
 
-```go
-type SurveyConfig struct {
-    Adapters []string `json:"adapters"` // Multiple adapters
-    Primary  string   `json:"primary"`  // Primary adapter
-}
-```go
+3. **Replace patterns**:
 
-**UI Changes**:
+   ```typescript
+   // Before
+   fetch(url, { headers: getAuthHeaders() });
 
-- Multi-select for WiFi adapters in survey setup
-- Show per-adapter results in survey view
+   // After
+   fetch(url, { credentials: "include" });
+   ```
 
-**Estimated Effort**: 8-12 hours
+4. **Files to update** (known from investigation):
+   - `web/src/lib/api.ts` - Core API utilities
+   - `web/src/hooks/useProfiles.ts`
+   - `web/src/hooks/useSurvey.ts`
+   - `web/src/hooks/useFirewall.ts`
+   - `web/src/hooks/useUsers.ts`
+   - `web/src/hooks/useLogs.ts`
+   - `web/src/components/settings/*.tsx`
+   - All other data fetching hooks
 
----
+5. **Deprecate and remove**:
+   - Mark `getAuthHeaders()` as deprecated
+   - After all usages removed, delete the function
 
-## Phase 3: Code Quality - Linting Issues (Week 3-4)
+**Testing**:
 
-### 3.1 Cyclomatic Complexity (#560) - 29 issues
-
-**Strategy**: Extract helper functions, use early returns, simplify conditionals.
-
-**High Complexity Files** (likely candidates):
-
-- `internal/discovery/scanner.go`
-- `internal/api/handlers.go`
-- `internal/wifi/scanner.go`
-
-**Refactoring Pattern**:
-
-```go
-// Before: Complex function with many branches
-func processDevice(d Device) error {
-    if d.Type == "router" {
-        // 50 lines of router logic
-    } else if d.Type == "switch" {
-        // 50 lines of switch logic
-    }
-    // ...more branches
-}
-
-// After: Extracted handlers
-func processDevice(d Device) error {
-    handlers := map[string]func(Device) error{
-        "router": processRouter,
-        "switch": processSwitch,
-    }
-    if handler, ok := handlers[d.Type]; ok {
-        return handler(d)
-    }
-    return ErrUnknownDeviceType
-}
-```yaml
-
-**Estimated Effort**: 8-12 hours
+- Test all API endpoints still work with cookie auth
+- Verify CORS preflight requests succeed
+- Test token refresh flow still works
 
 ---
 
-### 3.2 Revive Style Issues (#561) - 50 issues
+#### 🔴 #571 - Interface Auto-Detection Integration
 
-**Common Fixes**:
+**Priority**: P1 - High **Effort**: Medium **Dependencies**: Backend interface detection endpoint
 
-- `exported`: Add documentation to exported functions
-- `unused-parameter`: Remove or use `_` prefix
-- `error-return`: Return error as last value
-- `context-as-argument`: Context should be first parameter
-- `var-naming`: Use camelCase, not snake_case
+**Current State**: Backend has interface detection in `/internal/network/interfaces.go` but frontend doesn't use it
+properly.
 
-**Estimated Effort**: 4-6 hours
+**Implementation Plan**:
 
----
+1. **Backend**: Verify `/api/system/interfaces` endpoint returns:
 
-### 3.3 Code Duplication (#563) - 13 issues
+   ```json
+   {
+     "interfaces": [
+       { "name": "eth0", "displayName": "Ethernet", "type": "ethernet", "state": "up" },
+       { "name": "wlan0", "displayName": "WiFi", "type": "wifi", "state": "up" }
+     ],
+     "defaultInterface": "eth0"
+   }
+   ```
 
-**Strategy**: Extract common patterns into shared functions.
+2. **Frontend**: Create `useInterfaces` hook:
 
-**Common Duplication Patterns**:
+   ```typescript
+   // web/src/hooks/useInterfaces.ts
+   export function useInterfaces() {
+     const [interfaces, setInterfaces] = useState<Interface[]>([]);
+     const [defaultInterface, setDefaultInterface] = useState<string>("");
+     // Fetch from /api/system/interfaces on mount
+   }
+   ```
 
-- HTTP handler boilerplate
-- Error response formatting
-- Configuration loading
+3. **Update App.tsx**:
+   - Replace hardcoded interface with auto-detected default
+   - Pass detected interface to child components
 
-**Estimated Effort**: 6-8 hours
+4. **Update components**:
+   - `InterfaceCard.tsx` - Use detected interfaces
+   - `WiFiSurveyCard.tsx` - Already has prop, just pass correct value
+   - `ConnectionsCard.tsx` - Use detected interface
+   - Settings pages - Use interface dropdown
 
----
+**Testing**:
 
-### 3.4 Exhaustive Switch Statements (#564) - 7 issues
-
-**Fix Pattern**:
-
-```go
-// Before: Missing cases
-switch status {
-case StatusOK:
-    return "ok"
-case StatusError:
-    return "error"
-}
-
-// After: All cases handled
-switch status {
-case StatusOK:
-    return "ok"
-case StatusError:
-    return "error"
-case StatusWarning:
-    return "warning"
-case StatusUnknown:
-    return "unknown"
-}
-```go
-
-**Estimated Effort**: 2-3 hours
+- Test on system with multiple interfaces
+- Verify correct interface selected by default
+- Test interface switching UI
 
 ---
 
-### 3.5 Repeated Strings to Constants (#562) - 23 issues
+#### 🔴 #608 - WebSocket Client-to-Server Messages
 
-**Create constants file**: `internal/constants/strings.go`
+**Priority**: P1 - Medium **Effort**: Medium **Dependencies**: #660 (completed)
 
-```go
-package constants
+**Current State**: WebSocket is one-way (server pushes to client). Need to implement client-to-server message handling.
 
-const (
-    // HTTP Headers
-    HeaderContentType   = "Content-Type"
-    HeaderAuthorization = "Authorization"
+**Implementation Plan**:
 
-    // Content Types
-    ContentTypeJSON = "application/json"
+1. **Define message protocol**:
 
-    // Status Messages
-    MsgSuccess = "success"
-    MsgError   = "error"
-)
-```yaml
+   ```typescript
+   interface WSMessage {
+     type: string;
+     payload: unknown;
+   }
+   ```
 
-**Estimated Effort**: 2-3 hours
+2. **Backend handler** (`/internal/api/websocket.go`):
 
----
+   ```go
+   func (s *Server) handleWSMessage(conn *websocket.Conn, msg []byte) {
+     var message WSMessage
+     if err := json.Unmarshal(msg, &message); err != nil {
+       return
+     }
+     switch message.Type {
+     case "subscribe":
+       // Handle subscription to specific topics
+     case "ping":
+       // Handle heartbeat
+     }
+   }
+   ```
 
-### 3.6 Minor Lint Issues (#566) - 10 issues
+3. **Frontend hook** (`useWebSocket.ts`):
 
-**Issues**:
+   ```typescript
+   const send = useCallback(
+     (type: string, payload: unknown) => {
+       if (ws?.readyState === WebSocket.OPEN) {
+         ws.send(JSON.stringify({ type, payload }));
+       }
+     },
+     [ws]
+   );
+   ```
 
-- `godot`: Add periods to comments
-- `intrange`: Use integer range in for loops
-- `unparam`: Remove unused parameters
-- `nilnil`: Don't return (nil, nil)
-- `nolintlint`: Fix malformed nolint directives
+4. **Message types to implement**:
+   - `subscribe` - Subscribe to specific data topics
+   - `unsubscribe` - Unsubscribe from topics
+   - `ping` - Client heartbeat
+   - `action` - Trigger server-side actions (with proper auth)
 
-**Estimated Effort**: 1-2 hours
+**Testing**:
 
----
-
-## Phase 4: Node.js 22+ Enhancements (Week 4)
-
-### 4.1 Native Node.js Features (#568)
-
-**Replace Dependencies**:
-
-| Current                   | Node.js 22+ Native        |
-| ------------------------- | ------------------------- |
-| `node-fetch`              | `fetch()`                 |
-| `ws` (if used for client) | Consider native WebSocket |
-| `dotenv`                  | `--env-file` flag         |
-
-**Update Scripts** in `package.json`:
-
-```json
-{
-  "scripts": {
-    "dev": "node --env-file=.env vite",
-    "test:native": "node --test"
-  }
-}
-```yaml
-
-**Estimated Effort**: 4-6 hours
+- Test message serialization/deserialization
+- Test subscription management
+- Test error handling for malformed messages
 
 ---
 
-### 4.2 Evaluate Native Test Runner (#570)
+### P2 Feature Completeness
 
-**Comparison Matrix**:
+#### 🟡 #754 - MSP Profile System Runtime Config
 
-| Feature               | Vitest      | Node.js Test Runner                |
-| --------------------- | ----------- | ---------------------------------- |
-| Speed                 | Fast (Vite) | Fast (native)                      |
-| Watch mode            | Yes         | Yes (--watch)                      |
-| Coverage              | Yes         | Yes (--experimental-test-coverage) |
-| Mocking               | Built-in    | Built-in                           |
-| React Testing Library | Supported   | Manual setup                       |
-| Snapshot Testing      | Yes         | Basic                              |
+**Priority**: P2 - Medium **Effort**: Large **Dependencies**: Profile management API
 
-**Recommendation**: Keep Vitest for React component tests, consider native for pure utility tests.
+**Current State**: Profile system exists but runtime configuration (applying firewall rules, DNS settings, etc.) not
+implemented.
 
-**Estimated Effort**: 2-4 hours (evaluation only)
+**Implementation Plan**:
 
----
+1. **Profile application service** (`/internal/profiles/apply.go`):
 
-## Phase 5: Epic Completion & Verification (Week 5)
+   ```go
+   type ProfileApplicator struct {
+     firewall *firewall.Manager
+     dns      *dns.Manager
+     network  *network.Manager
+   }
 
-### 5.1 Final Verification
+   func (p *ProfileApplicator) Apply(profile *Profile) error {
+     // Apply firewall rules
+     // Apply DNS settings
+     // Apply network settings
+     // Apply service configurations
+   }
+   ```
 
-**Run Full Lint Suite**:
+2. **API endpoint** (`/api/profiles/:id/apply`):
+   - POST to apply profile
+   - GET to check application status
+   - DELETE to revert to defaults
 
-```bash
-golangci-lint run ./...
-```bash
+3. **Frontend**:
+   - Add "Apply" button to profile cards
+   - Show application status
+   - Show revert option
 
-**Expected Result**: 0 issues
+4. **Rollback mechanism**:
+   - Store current config before applying
+   - Implement rollback on failure
+   - Timeout auto-rollback for critical changes
 
-**Run All Tests**:
+**Testing**:
 
-```bash
-make test
-cd web && npm test
-```typescript
-
-### 5.2 Close Epic Issue (#567)
-
-Once all child issues are resolved, close the epic with summary.
-
----
-
-## Implementation Order Summary
-
-```typescript
-Priority Order (by issue number):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. #565 - staticcheck (BUGS)        ← Start here
-2. #572 - hardcoded interfaces (BUG)
-3. #569 - .nvmrc (HIGH)
-4. #571 - interface auto-detection
-5. #574 - friendly names UI
-6. #573 - WiFi multi-adapter
-7. #560 - gocyclo (29 issues)
-8. #563 - dupl (13 issues)
-9. #564 - exhaustive (7 issues)
-10. #561 - revive (50 issues)
-11. #562 - goconst (23 issues)
-12. #566 - minor lint (10 issues)
-13. #568 - Node.js features
-14. #570 - test runner eval
-15. #567 - close EPIC
-```bash
+- Test each configuration type separately
+- Test rollback on failure
+- Test persistence across restarts
 
 ---
 
-## Git Workflow for Each Issue
+#### 🟡 #694 - Standardized Error Response Format
+
+**Priority**: P2 - Medium **Effort**: Medium **Dependencies**: None
+
+**Current State**: Many handlers use `http.Error()` with inconsistent formats. Need standardized JSON responses.
+
+**Implementation Plan**:
+
+1. **Define error structure** (`/internal/api/errors.go`):
+
+   ```go
+   type APIError struct {
+     Code    string `json:"code"`
+     Message string `json:"message"`
+     Details any    `json:"details,omitempty"`
+   }
+
+   func WriteError(w http.ResponseWriter, status int, code, message string) {
+     w.Header().Set("Content-Type", "application/json")
+     w.WriteHeader(status)
+     json.NewEncoder(w).Encode(APIError{Code: code, Message: message})
+   }
+   ```
+
+2. **Common error codes**:
+
+   ```go
+   const (
+     ErrCodeBadRequest     = "BAD_REQUEST"
+     ErrCodeUnauthorized   = "UNAUTHORIZED"
+     ErrCodeForbidden      = "FORBIDDEN"
+     ErrCodeNotFound       = "NOT_FOUND"
+     ErrCodeConflict       = "CONFLICT"
+     ErrCodeInternal       = "INTERNAL_ERROR"
+     ErrCodeValidation     = "VALIDATION_ERROR"
+   )
+   ```
+
+3. **Migrate handlers**:
+   - Search for `http.Error(` usages
+   - Replace with `WriteError()` calls
+   - Add appropriate error codes
+
+4. **Frontend error handling**:
+
+   ```typescript
+   interface APIError {
+     code: string;
+     message: string;
+     details?: unknown;
+   }
+
+   function handleAPIError(error: APIError) {
+     // Display user-friendly error based on code
+   }
+   ```
+
+**Testing**:
+
+- Test all error paths return JSON
+- Test error codes are consistent
+- Test frontend error display
+
+---
+
+### P3 UX - Lower Priority
+
+#### 🟢 #574 - Display Friendly Interface Names
+
+**Priority**: P3 - Low **Effort**: Small **Dependencies**: #571
+
+**Implementation Plan**:
+
+1. **Backend mapping** (`/internal/network/interfaces.go`):
+
+   ```go
+   func GetDisplayName(iface string) string {
+     // Map technical names to friendly names
+     // eth0 -> "Ethernet"
+     // wlan0 -> "WiFi"
+     // etc.
+   }
+   ```
+
+2. **Frontend display**:
+   - Use `displayName` from interface API
+   - Show technical name in tooltip/secondary text
+
+---
+
+#### 🟢 #681 - Console Statement Cleanup
+
+**Priority**: P3 - Low **Effort**: Small **Dependencies**: None
+
+**Current State**: 4 files still have console statements.
+
+**Implementation Plan**:
+
+1. **Find remaining console statements**:
+
+   ```bash
+   grep -r "console\." web/src --include="*.ts" --include="*.tsx"
+   ```
+
+2. **Replace with logger**:
+
+   ```typescript
+   // Before
+   console.log("Debug:", data);
+
+   // After
+   logger.debug(LogComponents.API, "Debug message", data);
+   ```
+
+3. **Add ESLint rule enforcement**:
+   ```json
+   {
+     "rules": {
+       "no-console": "error"
+     }
+   }
+   ```
+
+---
+
+#### 🟢 #625/#624/#629 - i18n Extraction
+
+**Priority**: P3 - Low **Effort**: Medium **Dependencies**: None
+
+**Current State**: Some hardcoded strings remain in components.
+
+**Implementation Plan**:
+
+1. **Audit for hardcoded strings**:
+   - Focus on user-facing text
+   - Ignore technical strings (CSS classes, etc.)
+
+2. **Add to translation files**:
+   - `web/public/locales/en/cards.json`
+   - `web/public/locales/en/common.json`
+   - Other namespace files as needed
+
+3. **Update components**:
+
+   ```typescript
+   // Before
+   <span>Loading...</span>
+
+   // After
+   <span>{t("common.loading")}</span>
+   ```
+
+---
+
+## Implementation Order
+
+Based on dependencies and priority:
+
+### Phase 1: API Cleanup (Immediate)
+
+1. ✅ #660 - WebSocket auth (DONE)
+2. ✅ #724/#758 - Setup tokens (DONE)
+3. ✅ #714 - Log redaction (DONE)
+4. 🔴 #669 - Remove getAuthHeaders (NEXT)
+5. 🔴 #694 - Standardize error responses
+
+### Phase 2: Interface Management
+
+1. 🔴 #571 - Interface auto-detection
+2. ✅ #572 - Remove hardcoded names (partially done)
+3. 🟢 #574 - Friendly interface names
+
+### Phase 3: WebSocket Enhancement
+
+1. 🔴 #608 - Client-to-server messages
+
+### Phase 4: Profile System
+
+1. 🟡 #754 - Runtime config application
+
+### Phase 5: Polish
+
+1. 🟢 #681 - Console cleanup
+2. 🟢 #625/#624/#629 - i18n extraction
+3. ✅ #769 - SSO visibility (DONE)
+
+---
+
+## Legacy Issues (From Previous Plan)
+
+The following issues from the original plan may still need attention:
+
+### Code Quality
+
+- #565 - Staticcheck issues (potential bugs)
+- #560 - Cyclomatic complexity (29 issues)
+- #561 - Revive style issues (50 issues)
+- #562 - Repeated strings to constants (23 issues)
+- #563 - Code duplication (13 issues)
+- #564 - Exhaustive switch statements (7 issues)
+- #566 - Minor lint issues (10 issues)
+
+### Node.js Updates
+
+- #568 - Native Node.js 22+ features
+- #569 - Add .nvmrc file
+- #570 - Evaluate native test runner
+- #573 - WiFi multi-adapter support
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+
+- Test new `SetupTokenManager` token generation/validation
+- Test error response formatting
+- Test interface detection logic
+
+### Integration Tests
+
+- Test WebSocket authentication flow
+- Test setup wizard with tokens
+- Test profile application
+
+### E2E Tests
+
+- Full authentication flow
+- WebSocket real-time updates
+- Profile creation and application
+
+---
+
+## Git Workflow
 
 ```bash
 # 1. Create branch
-git checkout -b fix/issue-565-staticcheck
+git checkout -b fix/issue-669-remove-getauthheaders
 
 # 2. Make changes
 # ... code changes ...
@@ -429,51 +544,27 @@ git checkout -b fix/issue-565-staticcheck
 make lint && make test
 
 # 4. Commit with issue reference
-git commit -m "fix(lint): resolve staticcheck issues
+git commit -m "fix(auth): remove deprecated getAuthHeaders usage
 
-- Fix SA1019 deprecated API usage
-- Fix SA4006 unused value assignments
-- Fix SA9003 empty branches
+- Replace with credentials: 'include' for cookie auth
+- Update all API fetch calls
+- Remove unused function
 
-Closes #565"
+Closes #669"
 
 # 5. Push and create PR
-git push -u origin fix/issue-565-staticcheck
-gh pr create --title "fix(lint): resolve staticcheck issues" \
-  --body "Closes #565" --base main
-
-# 6. After merge, tag if milestone reached
-git tag -a v0.103.0 -m "v0.103.0: Code quality improvements"
-git push origin --tags
-```yaml
-
----
-
-## Metrics & Success Criteria
-
-| Metric                | Before   | Target       |
-| --------------------- | -------- | ------------ |
-| golangci-lint issues  | 138+     | 0            |
-| Hardcoded interfaces  | Multiple | 0            |
-| Test coverage (Go)    | ~60%     | 80%+         |
-| Test coverage (React) | ~70%     | 85%+         |
-| Node.js version       | Any      | 22+ enforced |
-
----
-
-## Risk Mitigation
-
-1. **Breaking Changes**: Run full test suite after each refactor
-2. **Regression**: E2E tests catch UI regressions
-3. **Interface Detection**: Extensive testing on multiple platforms (macOS, Ubuntu)
-4. **Chipset Detection**: Fallback to generic detection if specific chipset unknown
+git push -u origin fix/issue-669-remove-getauthheaders
+gh pr create --title "fix(auth): remove deprecated getAuthHeaders" \
+  --body "Closes #669" --base main
+```
 
 ---
 
 ## Notes
 
+- All P0 security issues have been addressed
+- The most impactful P1 change remaining is #669 (getAuthHeaders removal)
+- Interface-related issues (#571, #572, #574) should be done together
+- Lower priority items (P3) can be addressed in future sprints
 - All work follows `CLAUDE.md` guidelines
 - Commits use conventional commit format
-- Issues closed via commit messages (`Closes #XXX`)
-- Each phase ends with a version tag
-````

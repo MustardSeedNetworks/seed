@@ -289,7 +289,7 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 }
 
 // addFloorHeatmapNote adds a note about heatmap availability.
-func (g *ReportGenerator) addFloorHeatmapNote(floor *Floor) {
+func (g *ReportGenerator) addFloorHeatmapNote(_ *Floor) {
 	g.pdf.Ln(10)
 	g.pdf.SetFont("Arial", "I", 10)
 	g.pdf.SetTextColor(80, 80, 80)
@@ -304,7 +304,7 @@ func (g *ReportGenerator) addRecommendations() {
 	allSamples := g.survey.GetAllSamples()
 	stats := calculateSurveyStats(allSamples)
 
-	recommendations := generateSurveyRecommendations(stats)
+	recommendations := generateSurveyRecommendations(&stats)
 
 	if len(recommendations) == 0 {
 		g.pdf.SetFont("Arial", "I", 10)
@@ -327,7 +327,7 @@ func (g *ReportGenerator) addRecommendations() {
 			g.pdf.SetTextColor(220, 53, 69)
 		case PriorityMedium:
 			g.pdf.SetTextColor(255, 128, 0)
-		default:
+		case PriorityLow:
 			g.pdf.SetTextColor(40, 167, 69)
 		}
 		g.pdf.CellFormat(20, 6, priority, "1", 0, "C", false, 0, "")
@@ -399,7 +399,7 @@ func (g *ReportGenerator) addRawDataAppendix() {
 		maxSamples = len(allSamples)
 	}
 
-	for i := 0; i < maxSamples; i++ {
+	for i := range maxSamples {
 		sample := allSamples[i]
 
 		// Get first network from passive sample for display
@@ -493,6 +493,8 @@ func (g *ReportGenerator) addDistributionBar(label string, percent float64, col 
 }
 
 // SurveyStats holds calculated statistics for a survey.
+//
+//nolint:revive // Renaming to Stats would be a breaking API change
 type SurveyStats struct {
 	TotalSamples     int
 	AvgRSSI          int
@@ -619,6 +621,7 @@ func getChannelUsage(samples []*SamplePoint) []ChannelInfo {
 // RecommendationPriority indicates the urgency of a recommendation.
 type RecommendationPriority int
 
+// Recommendation priority levels.
 const (
 	PriorityLow RecommendationPriority = iota
 	PriorityMedium
@@ -631,21 +634,22 @@ type Recommendation struct {
 	Priority RecommendationPriority
 }
 
-func generateSurveyRecommendations(stats SurveyStats) []Recommendation {
+func generateSurveyRecommendations(stats *SurveyStats) []Recommendation {
 	var recommendations []Recommendation
 
 	// Coverage-based recommendations
-	if stats.CoverageScore < 50 {
+	switch {
+	case stats.CoverageScore < 50:
 		recommendations = append(recommendations, Recommendation{
 			Text:     "Critical coverage issues detected. Consider a complete WiFi infrastructure redesign with additional access points.",
 			Priority: PriorityHigh,
 		})
-	} else if stats.CoverageScore < 70 {
+	case stats.CoverageScore < 70:
 		recommendations = append(recommendations, Recommendation{
 			Text:     "Poor overall coverage. Add 2-3 additional access points in strategic locations to improve connectivity.",
 			Priority: PriorityHigh,
 		})
-	} else if stats.CoverageScore < 85 {
+	case stats.CoverageScore < 85:
 		recommendations = append(recommendations, Recommendation{
 			Text:     "Moderate coverage detected. Consider adding 1-2 access points to strengthen weak areas.",
 			Priority: PriorityMedium,
@@ -693,22 +697,24 @@ func getPriorityLabel(p RecommendationPriority) string {
 		return "HIGH"
 	case PriorityMedium:
 		return "MED"
-	default:
+	case PriorityLow:
 		return "LOW"
 	}
+	return "LOW" // Default fallback for unknown priority
 }
 
 func getStatusColor(status Status) []int {
 	switch status {
 	case StatusCompleted:
-		return []int{40, 167, 69}
+		return []int{40, 167, 69} // Green
 	case StatusInProgress:
-		return []int{0, 123, 255}
+		return []int{0, 123, 255} // Blue
 	case StatusPaused:
-		return []int{255, 193, 7}
-	default:
-		return []int{108, 117, 125}
+		return []int{255, 193, 7} // Yellow
+	case StatusCreated:
+		return []int{108, 117, 125} // Gray
 	}
+	return []int{108, 117, 125} // Default fallback
 }
 
 func getCoverageGrade(score float64) string {

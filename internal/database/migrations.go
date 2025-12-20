@@ -363,7 +363,7 @@ func (db *DB) MigrationStatus(ctx context.Context) ([]MigrationInfo, error) {
 	}
 
 	// Build status list
-	var result []MigrationInfo
+	result := make([]MigrationInfo, 0, len(migrations))
 	for _, m := range migrations {
 		info := MigrationInfo{
 			Version:     m.Version,

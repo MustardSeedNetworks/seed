@@ -15,7 +15,13 @@
     "networkError": "Network error",
     "timeout": "Request timed out",
     "serverUnavailable": "Server unavailable",
-    "disconnected": "Disconnected from server"
+    "disconnected": "Disconnected from server",
+    "interfaceNotFound": "Interface not found",
+    "refreshFailed": "Failed to refresh interfaces",
+    "invalidInterface": "Invalid interface",
+    "staticConfigFailed": "Failed to configure static IP",
+    "dhcpConfigFailed": "Failed to configure DHCP",
+    "invalidMode": "Mode must be 'dhcp' or 'static'"
   },
   "validation": {
     "failed": "Validation failed",
@@ -44,7 +50,14 @@
   "config": {
     "failedToSave": "Failed to save configuration",
     "failedToLoad": "Failed to load configuration",
-    "insecureCredentials": "Insecure default credentials detected"
+    "insecureCredentials": "Insecure default credentials detected",
+    "backupNameRequired": "Backup name is required",
+    "invalidBackupName": "Invalid backup name",
+    "failedToCreateBackup": "Failed to create backup",
+    "failedToRestoreBackup": "Failed to restore backup",
+    "failedToDeleteBackup": "Failed to delete backup",
+    "failedToReloadAfterRestore": "Backup restored but failed to reload configuration",
+    "nameParamRequired": "Name parameter is required"
   },
   "vlan": {
     "failedToCreate": "Failed to create VLAN",
@@ -77,5 +90,101 @@
   "file": {
     "failedToRead": "Failed to read file",
     "pathNotConfigured": "Path not configured"
+  },
+  "tools": {
+    "targetRequired": "Target is required",
+    "ipRequired": "IP address is required",
+    "invalidTarget": "Invalid target",
+    "portRequired": "At least one port is required",
+    "maxPortsExceeded": "Maximum 100 ports allowed",
+    "invalidProtocol": "Protocol must be icmp, udp, or tcp",
+    "invalidPort": "Port must be between 1 and 65535",
+    "failedToResolve": "Unable to resolve hostname",
+    "failedToCreateProber": "Failed to create prober",
+    "failedToCreateScanner": "Failed to create scanner"
+  },
+  "security": {
+    "invalidAction": "Invalid action. Use 'start' or 'stop'",
+    "gatewayTesterUnavailable": "Gateway tester not available",
+    "failedToEncryptAuth": "Failed to encrypt auth password",
+    "failedToEncryptPriv": "Failed to encrypt priv password",
+    "nullOriginForbidden": "Forbidden: null origin not allowed",
+    "panicRecovered": "Internal server error"
+  },
+  "logs": {
+    "notInitialized": "Logging not initialized"
+  },
+  "vuln": {
+    "scannerNotEnabled": "Vulnerability scanner not enabled",
+    "invalidIp": "Invalid IP address",
+    "missingIpParam": "Missing 'ip' parameter",
+    "invalidJson": "Invalid JSON"
+  },
+  "discovery": {
+    "managerUnavailable": "Discovery manager not available",
+    "invalidProfile": "Invalid profile: must be stealth, standard, full_scan, or custom",
+    "failedToApplyProfile": "Failed to apply profile"
+  },
+  "profile": {
+    "dbNotAvailable": "Database not available",
+    "listFailed": "Failed to list profiles",
+    "nameRequired": "Profile name is required",
+    "nameExists": "Profile with this name already exists",
+    "createFailed": "Failed to create profile",
+    "notFound": "Profile not found",
+    "getFailed": "Failed to get profile",
+    "updateFailed": "Failed to update profile",
+    "deleteFailed": "Failed to delete profile",
+    "cannotDeleteDefault": "Cannot delete the default profile",
+    "cannotDeleteActive": "Cannot delete the currently active profile",
+    "getActiveFailed": "Failed to get active profile setting",
+    "noActiveOrDefault": "No active or default profile found",
+    "getDefaultFailed": "Failed to get default profile",
+    "activeNotFound": "Active profile not found and no default profile exists",
+    "idRequired": "profile_id is required",
+    "setActiveFailed": "Failed to set active profile",
+    "duplicateFailed": "Failed to create duplicate",
+    "invalidJson": "Invalid JSON format"
+  },
+  "health": {
+    "dnsNotAvailable": "DNS tester not available",
+    "speedtestNotAvailable": "Speedtest not available",
+    "speedtestInProgress": "Speedtest already in progress",
+    "speedtestPostRequired": "Method not allowed - use POST to start a speedtest",
+    "iperfNotAvailable": "iPerf not available",
+    "deviceDiscoveryNotAvailable": "Device discovery not available",
+    "iperfInvalidAction": "Invalid action (use 'start' or 'stop')",
+    "iperfServerStartFailed": "Failed to start iperf server",
+    "iperfServerStopFailed": "Failed to stop iperf server",
+    "iperfValidationFailed": "Validation failed"
+  },
+  "survey": {
+    "invalidId": "Invalid survey ID",
+    "invalidType": "Invalid survey type (must be passive, active, or throughput)",
+    "descriptionTooLong": "Description too long (max 500 characters)",
+    "validationFailed": "Validation failed",
+    "startFailed": "Failed to start survey",
+    "stopFailed": "Failed to stop survey",
+    "updateFailed": "Failed to update survey",
+    "deleteFailed": "Failed to delete survey",
+    "rateLimitExceeded": "Rate limit exceeded. Please try again later.",
+    "fileTooLarge": "File too large or invalid form data",
+    "noFileProvided": "No file provided",
+    "invalidFileType": "Invalid file type. Please upload an .amp file",
+    "readFileFailed": "Failed to read file",
+    "parseFileFailed": "Failed to parse file",
+    "processFileFailed": "Failed to process file",
+    "invalidThreshold": "Threshold must be between -100 and -30 dBm",
+    "invalidThresholdValue": "Invalid threshold value",
+    "deadZonesFailed": "Failed to detect dead zones",
+    "heatmapFailed": "Failed to generate heatmap",
+    "batchDeleteFailed": "Failed to delete surveys",
+    "downloadFailed": "Failed to download survey data",
+    "exportFailed": "Failed to export surveys",
+    "analysisFailed": "Failed to analyze survey",
+    "interferenceCheckFailed": "Failed to check interference",
+    "getSurveysFailed": "Failed to get surveys",
+    "getSurveyFailed": "Failed to get survey",
+    "zonesFailed": "Failed to get zones"
   }
 }

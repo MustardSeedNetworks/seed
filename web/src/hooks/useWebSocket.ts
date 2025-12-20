@@ -105,11 +105,18 @@ export interface CardUpdate {
 interface UseWebSocketOptions {
   /** WebSocket endpoint URL */
   url: string;
-  /** JWT access token for WebSocket authentication via protocol header */
+  /**
+   * JWT access token (deprecated - now uses httpOnly cookies)
+   * @deprecated Since fix #660, WebSocket uses httpOnly cookie authentication.
+   * This parameter is kept for backwards compatibility but is no longer used.
+   */
   token?: string | null;
   /** Whether the user is authenticated (controls reconnection behavior) */
   isAuthenticated?: boolean;
-  /** Callback to refresh the access token (returns new token or null) */
+  /**
+   * Callback to refresh the access token (deprecated - cookies refresh automatically)
+   * @deprecated Since fix #660, token refresh is handled via httpOnly cookies.
+   */
   onRefreshToken?: () => Promise<string | null>;
   /** Callback invoked for general messages */
   onMessage?: (message: Message) => void;
@@ -139,9 +146,13 @@ interface UseWebSocketReturn {
  */
 export function useWebSocket({
   url,
-  token,
+  // token parameter is deprecated (fix #660) - kept for backwards compatibility
+
+  token: _token,
   isAuthenticated = true,
-  onRefreshToken,
+  // onRefreshToken is deprecated (fix #660) - cookies handle refresh automatically
+
+  onRefreshToken: _onRefreshToken,
   onMessage,
   onCardUpdate,
   reconnectInterval = 3000,
@@ -151,15 +162,11 @@ export function useWebSocket({
   const wsRef = useRef<WebSocket | null>(null);
   const connectRef = useRef<() => void>(() => {});
   const reconnectAttempts = useRef(0);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const shouldReconnectRef = useRef(true);
   const connectionIdRef = useRef(0);
-  const currentTokenRef = useRef<string | null>(token ?? null);
-
-  // Keep currentTokenRef in sync with token prop
-  useEffect(() => {
-    currentTokenRef.current = token ?? null;
-  }, [token]);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -171,17 +178,23 @@ export function useWebSocket({
   /**
    * Establishes WebSocket connection with automatic reconnection logic.
    *
+   * Security fix #660: Uses httpOnly cookie authentication instead of protocol headers.
+   * Cookies are automatically sent by the browser, preventing token exposure in
+   * logs, browser dev tools, and proxy servers.
+   *
    * - Checks if already connected before attempting new connection
    * - Automatically determines wss:// vs ws:// based on page protocol
    * - Uses cookie-based authentication (httpOnly cookies sent automatically)
    * - Sets up event handlers for open, close, error, and message events
    * - Implements automatic reconnection with configurable attempts and interval
-   * - Attempts to refresh token if null before connecting
    */
   const connect = useCallback(async () => {
     // Don't connect if not authenticated
     if (!isAuthenticated) {
-      logger.info(LogComponents.WEBSOCKET, "Skipping WebSocket connection - not authenticated");
+      logger.info(
+        LogComponents.WEBSOCKET,
+        "Skipping WebSocket connection - not authenticated"
+      );
       setStatus("disconnected");
       return;
     }
@@ -196,34 +209,19 @@ export function useWebSocket({
 
     clearReconnectTimer();
     shouldReconnectRef.current = true;
-
-    // Try to refresh token if we don't have one
-    let connectionToken = currentTokenRef.current;
-    if (!connectionToken && onRefreshToken) {
-      logger.info(LogComponents.WEBSOCKET, "No token available, attempting refresh");
-      connectionToken = await onRefreshToken();
-      if (connectionToken) {
-        currentTokenRef.current = connectionToken;
-      }
-    }
-
-    if (!connectionToken) {
-      logger.warn(LogComponents.WEBSOCKET, "No token available for WebSocket connection");
-      setStatus("disconnected");
-      return;
-    }
-
     setStatus("connecting");
 
     try {
       // Determine secure vs insecure WebSocket protocol based on page protocol
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const baseUrl = url.startsWith("ws") ? url : `${protocol}//${window.location.host}${url}`;
+      const baseUrl = url.startsWith("ws")
+        ? url
+        : `${protocol}//${window.location.host}${url}`;
 
-      // Create WebSocket connection with token via protocol header
-      // Backend expects: Sec-WebSocket-Protocol: access_token, <token>
-      const protocols = ["access_token", connectionToken];
-      const ws = new WebSocket(baseUrl, protocols);
+      // Security fix #660: WebSocket now uses httpOnly cookie authentication
+      // The browser automatically sends cookies with the WebSocket handshake request.
+      // No need to pass token via protocol header (which exposed it in logs/dev tools).
+      const ws = new WebSocket(baseUrl);
       wsRef.current = ws;
       connectionIdRef.current += 1;
       const connectionId = connectionIdRef.current;
@@ -253,10 +251,14 @@ export function useWebSocket({
 
         // Don't retry if the close code indicates a client-side issue
         if (!shouldRetry) {
-          logger.error(LogComponents.WEBSOCKET, "WebSocket closed with non-retryable error", {
-            code: event.code,
-            category,
-          });
+          logger.error(
+            LogComponents.WEBSOCKET,
+            "WebSocket closed with non-retryable error",
+            {
+              code: event.code,
+              category,
+            }
+          );
           setStatus("error");
           return;
         }
@@ -266,14 +268,18 @@ export function useWebSocket({
         // Attempt reconnect with exponential backoff; maxReconnectAttempts gates backoff growth.
         reconnectAttempts.current++;
         const attempt = reconnectAttempts.current;
-        const cappedAttempt = Math.max(1, Math.min(attempt, maxReconnectAttempts));
+        const cappedAttempt = Math.max(
+          1,
+          Math.min(attempt, maxReconnectAttempts)
+        );
 
         // Exponential backoff with jitter, capped to keep retries happening after long outages.
         // For server errors, use more aggressive backoff
         const isServerError = category === CloseCodeCategory.ServerError;
         const maxDelayMs = isServerError ? 60000 : 30000; // 60s for server errors, 30s otherwise
         const baseDelayMs = reconnectInterval * 2 ** (cappedAttempt - 1);
-        const delayMs = Math.min(baseDelayMs, maxDelayMs) + Math.floor(Math.random() * 500);
+        const delayMs =
+          Math.min(baseDelayMs, maxDelayMs) + Math.floor(Math.random() * 500);
 
         logger.warn(LogComponents.WEBSOCKET, "WebSocket reconnect scheduled", {
           attempt,
@@ -321,12 +327,20 @@ export function useWebSocket({
 
             // fixes #679 - validate message structure before processing
             if (!message || typeof message !== "object") {
-              logger.warn(LogComponents.WEBSOCKET, "Invalid message structure", { payload });
+              logger.warn(
+                LogComponents.WEBSOCKET,
+                "Invalid message structure",
+                { payload }
+              );
               continue;
             }
 
             if (typeof message.type !== "string") {
-              logger.warn(LogComponents.WEBSOCKET, "Message missing or invalid type", { message });
+              logger.warn(
+                LogComponents.WEBSOCKET,
+                "Message missing or invalid type",
+                { message }
+              );
               continue;
             }
 
@@ -335,17 +349,25 @@ export function useWebSocket({
               // fixes #679 - validate card update payload structure
               const update = message.payload;
               if (!update || typeof update !== "object") {
-                logger.warn(LogComponents.WEBSOCKET, "Invalid card_update payload", {
-                  type: typeof update,
-                });
+                logger.warn(
+                  LogComponents.WEBSOCKET,
+                  "Invalid card_update payload",
+                  {
+                    type: typeof update,
+                  }
+                );
                 continue;
               }
 
               const cardUpdate = update as CardUpdate;
               if (!cardUpdate.cardId || typeof cardUpdate.cardId !== "string") {
-                logger.warn(LogComponents.WEBSOCKET, "card_update missing valid cardId", {
-                  cardId: cardUpdate.cardId,
-                });
+                logger.warn(
+                  LogComponents.WEBSOCKET,
+                  "card_update missing valid cardId",
+                  {
+                    cardId: cardUpdate.cardId,
+                  }
+                );
                 continue;
               }
 
@@ -359,22 +381,32 @@ export function useWebSocket({
               onMessage(message);
             }
           } catch (error) {
-            logger.error(LogComponents.WEBSOCKET, "Failed to parse WebSocket message", error, {
-              payload,
-            });
+            logger.error(
+              LogComponents.WEBSOCKET,
+              "Failed to parse WebSocket message",
+              error,
+              {
+                payload,
+              }
+            );
           }
         }
       };
     } catch (error) {
       setStatus("error");
-      logger.error(LogComponents.WEBSOCKET, "Failed to create WebSocket", error, {
-        url,
-      });
+      logger.error(
+        LogComponents.WEBSOCKET,
+        "Failed to create WebSocket",
+        error,
+        {
+          url,
+        }
+      );
     }
   }, [
     url,
     isAuthenticated,
-    onRefreshToken,
+    // Note: onRefreshToken is deprecated (fix #660) - cookies handle refresh automatically
     onMessage,
     onCardUpdate,
     reconnectInterval,
@@ -402,7 +434,10 @@ export function useWebSocket({
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {
-      logger.warn(LogComponents.WEBSOCKET, "WebSocket not connected, cannot send message");
+      logger.warn(
+        LogComponents.WEBSOCKET,
+        "WebSocket not connected, cannot send message"
+      );
     }
   }, []);
 

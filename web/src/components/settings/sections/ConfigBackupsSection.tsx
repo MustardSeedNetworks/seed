@@ -24,8 +24,14 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
-import { getAuthHeaders } from "../../../hooks/useAuth";
-import { icon as iconTokens, layout, radius, spacing, button } from "../../../styles/theme";
+// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
+import {
+  icon as iconTokens,
+  layout,
+  radius,
+  spacing,
+  button,
+} from "../../../styles/theme";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -60,8 +66,8 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     setError(null);
     try {
       const [backupsRes, versionRes] = await Promise.all([
-        fetch(`${API_BASE}/api/config/backups`, { headers: getAuthHeaders() }),
-        fetch(`${API_BASE}/api/config/version`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE}/api/config/backups`, { credentials: "include" }),
+        fetch(`${API_BASE}/api/config/version`, { credentials: "include" }),
       ]);
 
       if (backupsRes.ok) {
@@ -91,7 +97,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     try {
       const response = await fetch(`${API_BASE}/api/config/backup`, {
         method: "POST",
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         await fetchBackups();
@@ -111,7 +117,8 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     try {
       const response = await fetch(`${API_BASE}/api/config/restore`, {
         method: "POST",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ backup_name: backupName }),
       });
       if (response.ok) {
@@ -137,7 +144,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
         `${API_BASE}/api/config/backup/delete?name=${encodeURIComponent(backupName)}`,
         {
           method: "DELETE",
-          headers: getAuthHeaders(),
+          credentials: "include",
         }
       );
       if (response.ok) {
@@ -170,7 +177,12 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     <CollapsibleSection
       title={
         <div className={layout.inline.default}>
-          <svg className={iconTokens.size.sm} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className={iconTokens.size.sm}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -188,7 +200,9 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
           <div
             className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
           >
-            <span className="body-small text-text-muted">{t("configBackups.version")}</span>
+            <span className="body-small text-text-muted">
+              {t("configBackups.version")}
+            </span>
             <span className="body-small text-text-primary">
               v{version.current}
               {version.needs_migration && (
@@ -233,9 +247,13 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
 
         {/* Backups List */}
         {loading ? (
-          <p className="caption text-text-muted">{t("configBackups.loading")}</p>
+          <p className="caption text-text-muted">
+            {t("configBackups.loading")}
+          </p>
         ) : backups.length === 0 ? (
-          <p className="caption text-text-muted">{t("configBackups.noBackups")}</p>
+          <p className="caption text-text-muted">
+            {t("configBackups.noBackups")}
+          </p>
         ) : (
           <div className="stack-xs">
             <p className="caption text-text-muted">
@@ -291,7 +309,9 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                           className={`${spacing.chip.sm} ${radius.md} border border-status-error caption text-status-error hover:bg-status-error hover:text-white disabled:opacity-50`}
                           title={t("configBackups.deleteTooltip")}
                         >
-                          {actionLoading === backup.name ? "..." : t("configBackups.delete")}
+                          {actionLoading === backup.name
+                            ? "..."
+                            : t("configBackups.delete")}
                         </button>
                       </>
                     )}

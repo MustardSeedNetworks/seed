@@ -3,9 +3,13 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 )
+
+// Error variables for common database errors.
+var errDatabaseClosed = errors.New("database is closed")
 
 // RetentionPolicy defines how long to keep different types of data.
 type RetentionPolicy struct {
@@ -142,7 +146,7 @@ func (db *DB) Vacuum(ctx context.Context) error {
 	defer db.mu.Unlock()
 
 	if db.closed {
-		return fmt.Errorf("database is closed")
+		return errDatabaseClosed
 	}
 
 	_, err := db.conn.ExecContext(ctx, "VACUUM")
@@ -159,7 +163,7 @@ func (db *DB) Analyze(ctx context.Context) error {
 	defer db.mu.Unlock()
 
 	if db.closed {
-		return fmt.Errorf("database is closed")
+		return errDatabaseClosed
 	}
 
 	_, err := db.conn.ExecContext(ctx, "ANALYZE")
@@ -247,6 +251,8 @@ func (db *DB) RecordAuditLog(ctx context.Context, entry *AuditLogEntry) error {
 }
 
 // GetAuditLogs retrieves audit log entries.
+//
+//nolint:goconst,gocritic // SQL fragments are more readable inline; opts passed by value for API stability
 func (db *DB) GetAuditLogs(ctx context.Context, opts AuditLogOptions) ([]*AuditLogEntry, error) {
 	query := `
 		SELECT id, action, user, resource_type, resource_id, old_value_json,

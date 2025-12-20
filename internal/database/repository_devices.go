@@ -81,6 +81,8 @@ func (r *DeviceRepository) GetByMAC(ctx context.Context, mac string) (*Device, e
 }
 
 // List retrieves all devices matching the criteria.
+//
+//nolint:gocritic // opts passed by value for API stability
 func (r *DeviceRepository) List(ctx context.Context, opts DeviceListOptions) ([]*Device, error) {
 	query := `
 		SELECT id, ip_address, mac_address, hostname, vendor, device_type, os_family,

@@ -247,7 +247,7 @@ func isUniqueConstraintError(err error) bool {
 
 // contains checks if s contains substr.
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsRune(s, substr))
+	return len(s) >= len(substr) && (s == substr || s != "" && containsRune(s, substr))
 }
 
 // containsRune is a helper for contains.

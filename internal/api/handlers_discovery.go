@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -68,13 +69,15 @@ type DiscoveryNeighborInfo struct {
 // Response: 200 OK with DiscoveryResponse containing neighbors array.
 func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.discoveryManager == nil {
-		http.Error(w, "Discovery manager not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.discovery.managerUnavailable"), "") // fixes #694
 		return
 	}
 
@@ -103,13 +106,16 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 
 // handleDiscoveryProfile handles GET/PUT for the discovery profile.
 func (s *Server) handleDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		s.getDiscoveryProfile(w, r)
 	case http.MethodPut:
 		s.setDiscoveryProfile(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
@@ -123,6 +129,8 @@ func (s *Server) getDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
@@ -130,7 +138,7 @@ func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 		Profile string `json:"profile"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -142,7 +150,7 @@ func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 	case config.ProfileStealth, config.ProfileStandard, config.ProfileFullScan, config.ProfileCustom:
 		// Valid profile
 	default:
-		http.Error(w, "Invalid profile: must be stealth, standard, full_scan, or custom", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.discovery.invalidProfile"), "") // fixes #694
 		return
 	}
 
@@ -152,7 +160,7 @@ func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 	// Apply the profile change to the running service
 	if err := s.discoveryService.SetProfile(profile); err != nil {
 		logger.Error("Failed to set discovery profile", "error", err)
-		http.Error(w, "Failed to apply profile", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.discovery.failedToApplyProfile"), err.Error()) // fixes #694
 		return
 	}
 
@@ -170,8 +178,10 @@ func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 // handleDiscoveryServiceStatus returns the current status of the discovery service.
 func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 

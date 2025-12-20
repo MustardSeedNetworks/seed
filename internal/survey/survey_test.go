@@ -46,6 +46,7 @@ func TestNewManager(t *testing.T) {
 	}
 }
 
+//nolint:gocyclo // Test functions require comprehensive scenario coverage
 func TestCreateSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
@@ -135,7 +136,7 @@ func TestCreateSurvey(t *testing.T) {
 
 			activeFloor := survey.GetActiveFloor()
 			if activeFloor == nil {
-				t.Error("Survey has no active floor")
+				t.Fatal("Survey has no active floor")
 			}
 
 			if activeFloor.Samples == nil {

@@ -30,7 +30,8 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useWebSocket, Message, CardUpdate } from "./hooks/useWebSocket";
-import { useAuth, getAuthHeaders } from "./hooks/useAuth";
+// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
+import { useAuth } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import { useSettings } from "./contexts/useSettings";
 import { SettingsDrawer } from "./components/settings/SettingsDrawer";
@@ -70,7 +71,14 @@ import { FAB } from "./components/ui/FAB";
 import { ProfileManagement } from "./components/profiles/ProfileManagement";
 import { useProfileContext } from "./contexts/ProfileContext";
 import { HeaderBar } from "./components/app/HeaderBar";
-import { radius, layout, spacing, button, input, section } from "./styles/theme";
+import {
+  radius,
+  layout,
+  spacing,
+  button,
+  input,
+  section,
+} from "./styles/theme";
 
 /**
  * Centralized state for all network monitoring cards.
@@ -106,7 +114,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function isCardId(value: unknown): value is CardId {
-  return typeof value === "string" && (CARD_IDS as readonly string[]).includes(value);
+  return (
+    typeof value === "string" && (CARD_IDS as readonly string[]).includes(value)
+  );
 }
 
 /**
@@ -117,7 +127,15 @@ function isCardId(value: unknown): value is CardId {
  */
 function App() {
   const { t } = useTranslation("common");
-  const { isAuthenticated, token, login, logout, refreshToken, isLoading, error } = useAuth();
+  const {
+    isAuthenticated,
+    token,
+    login,
+    logout,
+    refreshToken,
+    isLoading,
+    error,
+  } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   // Use settings from context instead of local state
   const { cardSettings, displayOptions } = useSettings();
@@ -133,8 +151,14 @@ function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
-  const [suggestedPassword, setSuggestedPassword] = useState<string | undefined>(undefined);
-  const [setupUsername, setSetupUsername] = useState<string | undefined>(undefined);
+  const [suggestedPassword, setSuggestedPassword] = useState<
+    string | undefined
+  >(undefined);
+  const [setupUsername, setSetupUsername] = useState<string | undefined>(
+    undefined
+  );
+  // Security fix #724, #758: Store setup token for secure setup completion
+  const [setupToken, setSetupToken] = useState<string | undefined>(undefined);
 
   // Check if setup is needed on mount
   useEffect(() => {
@@ -145,6 +169,10 @@ function App() {
       }
       if (status.username) {
         setSetupUsername(status.username); // Fixes #768 - use username from config
+      }
+      // Security fix #724, #758: Capture setup token for setup completion
+      if (status.setupToken) {
+        setSetupToken(status.setupToken);
       }
     });
   }, []);
@@ -160,7 +188,8 @@ function App() {
     publicip: null,
   });
   const [loading, setLoading] = useState(true);
-  const [currentInterface, setCurrentInterface] = useState("eth0");
+  // Fix #572: Don't hardcode interface name - fetch from backend
+  const [currentInterface, setCurrentInterface] = useState("");
   const [isWifi, setIsWifi] = useState(false);
   const [interfaces, setInterfaces] = useState<
     Array<{
@@ -177,11 +206,14 @@ function App() {
       score?: number;
     }>
   >([]);
-  const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
+  const [networkDiscovery, setNetworkDiscovery] =
+    useState<NetworkDiscoveryData | null>(null);
   const [appVersion, setAppVersion] = useState("dev");
 
   // Refs to track device scan polling interval and timeout for cleanup
-  const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const networkDiscoveryAbortRef = useRef<AbortController | null>(null);
   const currentInterfaceRef = useRef(currentInterface);
@@ -220,7 +252,8 @@ function App() {
         for (const [key, value] of Object.entries(payload.cards)) {
           if (!isCardId(key)) continue;
 
-          const normalized = value === null ? null : isPlainObject(value) ? value : undefined;
+          const normalized =
+            value === null ? null : isPlainObject(value) ? value : undefined;
           if (normalized === undefined) continue;
 
           switch (key) {
@@ -280,15 +313,23 @@ function App() {
     const { cardId, data } = update as { cardId?: unknown; data?: unknown };
 
     if (!isCardId(cardId)) {
-      logger.warn(LogComponents.WEBSOCKET, "Ignoring card_update for unknown cardId", { cardId });
+      logger.warn(
+        LogComponents.WEBSOCKET,
+        "Ignoring card_update for unknown cardId",
+        { cardId }
+      );
       return;
     }
 
     if (data === undefined || (data !== null && !isPlainObject(data))) {
-      logger.warn(LogComponents.WEBSOCKET, "Ignoring card_update with invalid data", {
-        cardId,
-        data,
-      });
+      logger.warn(
+        LogComponents.WEBSOCKET,
+        "Ignoring card_update with invalid data",
+        {
+          cardId,
+          data,
+        }
+      );
       return;
     }
 
@@ -302,7 +343,7 @@ function App() {
   const fetchLinkData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/link`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -331,7 +372,7 @@ function App() {
   const fetchIPConfig = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/ipconfig`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -356,7 +397,7 @@ function App() {
   const fetchInterfaces = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/interfaces`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -371,7 +412,7 @@ function App() {
   const fetchVersion = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/status`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -388,18 +429,22 @@ function App() {
   const fetchDiscoveryData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/discovery`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data: unknown = await response.json();
         const neighbors =
-          isPlainObject(data) && Array.isArray(data.neighbors) ? data.neighbors : [];
+          isPlainObject(data) && Array.isArray(data.neighbors)
+            ? data.neighbors
+            : [];
 
         // Use the first neighbor as the "nearest switch"
         if (neighbors.length > 0 && isPlainObject(neighbors[0])) {
           const neighbor = neighbors[0];
           const rawProtocol =
-            typeof neighbor.protocol === "string" ? neighbor.protocol.toLowerCase() : "unknown";
+            typeof neighbor.protocol === "string"
+              ? neighbor.protocol.toLowerCase()
+              : "unknown";
           const protocol: SwitchData["protocol"] =
             rawProtocol === "lldp" ||
             rawProtocol === "cdp" ||
@@ -408,21 +453,30 @@ function App() {
               ? rawProtocol
               : "unknown";
 
-          const systemName = typeof neighbor.systemName === "string" ? neighbor.systemName : "";
-          const chassisId = typeof neighbor.chassisId === "string" ? neighbor.chassisId : "";
+          const systemName =
+            typeof neighbor.systemName === "string" ? neighbor.systemName : "";
+          const chassisId =
+            typeof neighbor.chassisId === "string" ? neighbor.chassisId : "";
 
           setCards((prev) => ({
             ...prev,
             switch: {
               protocol,
               switchName: systemName || chassisId || null,
-              portId: typeof neighbor.portId === "string" ? neighbor.portId : null,
+              portId:
+                typeof neighbor.portId === "string" ? neighbor.portId : null,
               portDescription:
-                typeof neighbor.portDescription === "string" ? neighbor.portDescription : null,
+                typeof neighbor.portDescription === "string"
+                  ? neighbor.portDescription
+                  : null,
               managementIp:
-                typeof neighbor.managementAddress === "string" ? neighbor.managementAddress : null,
+                typeof neighbor.managementAddress === "string"
+                  ? neighbor.managementAddress
+                  : null,
               systemDescription:
-                typeof neighbor.systemDescription === "string" ? neighbor.systemDescription : null,
+                typeof neighbor.systemDescription === "string"
+                  ? neighbor.systemDescription
+                  : null,
             },
           }));
         } else {
@@ -433,7 +487,11 @@ function App() {
         }
       }
     } catch (err) {
-      logger.error(LogComponents.DISCOVERY, "Failed to fetch discovery data", err);
+      logger.error(
+        LogComponents.DISCOVERY,
+        "Failed to fetch discovery data",
+        err
+      );
     }
   }, []);
 
@@ -441,7 +499,7 @@ function App() {
   const fetchDNSData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/dns`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -503,7 +561,7 @@ function App() {
   const fetchVLANData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/vlan`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -526,7 +584,7 @@ function App() {
   const fetchGatewayData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/gateway`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -569,7 +627,7 @@ function App() {
   const fetchWiFiData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/wifi`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -601,7 +659,7 @@ function App() {
   const fetchCableData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/cable`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -624,7 +682,7 @@ function App() {
   const fetchPublicIP = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/publicip`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -639,7 +697,11 @@ function App() {
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.PUBLICIP, "Failed to fetch Public IP data", err);
+      logger.error(
+        LogComponents.PUBLICIP,
+        "Failed to fetch Public IP data",
+        err
+      );
     }
   }, []);
 
@@ -652,9 +714,12 @@ function App() {
       const requestedInterface = currentInterface;
 
       const [devicesRes, statusRes] = await Promise.all([
-        fetch(`${API_BASE}/api/devices`, { headers: getAuthHeaders(), signal: controller.signal }),
+        fetch(`${API_BASE}/api/devices`, {
+          credentials: "include",
+          signal: controller.signal,
+        }),
         fetch(`${API_BASE}/api/devices/status`, {
-          headers: getAuthHeaders(),
+          credentials: "include",
           signal: controller.signal,
         }),
       ]);
@@ -663,7 +728,10 @@ function App() {
         const devicesData = await devicesRes.json();
         const status = await statusRes.json();
 
-        if (controller.signal.aborted || currentInterfaceRef.current !== requestedInterface) {
+        if (
+          controller.signal.aborted ||
+          currentInterfaceRef.current !== requestedInterface
+        ) {
           return;
         }
 
@@ -685,7 +753,11 @@ function App() {
       if (err instanceof DOMException && err.name === "AbortError") {
         return;
       }
-      logger.error(LogComponents.DEVICES, "Failed to fetch network discovery data", err);
+      logger.error(
+        LogComponents.DEVICES,
+        "Failed to fetch network discovery data",
+        err
+      );
     }
   }, [currentInterface]);
 
@@ -714,14 +786,14 @@ function App() {
 
       const response = await fetch(`${API_BASE}/api/devices/scan`, {
         method: "POST",
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
 
       if (response.ok) {
         // Poll for completion
         scanPollIntervalRef.current = setInterval(async () => {
           const statusRes = await fetch(`${API_BASE}/api/devices/status`, {
-            headers: getAuthHeaders(),
+            credentials: "include",
           });
           if (statusRes.ok) {
             const status = await statusRes.json();
@@ -763,9 +835,9 @@ function App() {
         const response = await fetch(`${API_BASE}/api/interface`, {
           method: "PUT",
           headers: {
-            ...getAuthHeaders(),
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({ interface: interfaceName }),
         });
         if (response.ok) {
@@ -833,9 +905,11 @@ function App() {
       runHealthChecks: cardSettings.healthChecks.autoRunOnLink,
       runPerformance: cardSettings.performance.autoRunOnLink,
       runSpeedtest:
-        cardSettings.performance.autoRunOnLink && cardSettings.performance.speedtest.autoRunOnLink,
+        cardSettings.performance.autoRunOnLink &&
+        cardSettings.performance.speedtest.autoRunOnLink,
       runIperf:
-        cardSettings.performance.autoRunOnLink && cardSettings.performance.iperf.autoRunOnLink,
+        cardSettings.performance.autoRunOnLink &&
+        cardSettings.performance.iperf.autoRunOnLink,
       runNetworkDiscovery: cardSettings.networkDiscovery.autoRunOnLink,
     }),
     [cardSettings]
@@ -882,8 +956,10 @@ function App() {
 
       // Determine how many card-managed tests we need to wait for
       const cardTestsToWait: string[] = [];
-      if (runOpts.runPerformance && runOpts.runSpeedtest) cardTestsToWait.push("speedtest");
-      if (runOpts.runPerformance && runOpts.runIperf) cardTestsToWait.push("iperf");
+      if (runOpts.runPerformance && runOpts.runSpeedtest)
+        cardTestsToWait.push("speedtest");
+      if (runOpts.runPerformance && runOpts.runIperf)
+        cardTestsToWait.push("iperf");
       if (runOpts.runHealthChecks) cardTestsToWait.push("healthchecks");
 
       // If no card-managed tests, signal completion immediately
@@ -900,18 +976,27 @@ function App() {
           completed.add(testName);
           // Check if all expected tests are done
           if (completed.size === cardTestsToWait.length) {
-            window.removeEventListener("cardTestComplete", handleCardComplete as EventListener);
+            window.removeEventListener(
+              "cardTestComplete",
+              handleCardComplete as EventListener
+            );
             window.dispatchEvent(new CustomEvent("testsComplete"));
           }
         }
       };
 
       // Listen for card test completions
-      window.addEventListener("cardTestComplete", handleCardComplete as EventListener);
+      window.addEventListener(
+        "cardTestComplete",
+        handleCardComplete as EventListener
+      );
 
       // Failsafe timeout (90s) in case a card doesn't report completion
       setTimeout(() => {
-        window.removeEventListener("cardTestComplete", handleCardComplete as EventListener);
+        window.removeEventListener(
+          "cardTestComplete",
+          handleCardComplete as EventListener
+        );
         if (completed.size < cardTestsToWait.length) {
           logger.warn(
             LogComponents.UI,
@@ -1076,7 +1161,9 @@ function App() {
   }, []);
 
   // Login form
-  const authError = sessionExpired ? "Session expired. Please log in again." : error;
+  const authError = sessionExpired
+    ? "Session expired. Please log in again."
+    : error;
 
   const handleLogin = useCallback(
     async (username: string, password: string) => {
@@ -1097,6 +1184,7 @@ function App() {
         onLogin={login}
         suggestedPassword={suggestedPassword}
         username={setupUsername}
+        setupToken={setupToken} // Security fix #724, #758
       />
     );
   }
@@ -1111,7 +1199,13 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    return <LoginForm onLogin={handleLogin} isLoading={isLoading} error={authError} />;
+    return (
+      <LoginForm
+        onLogin={handleLogin}
+        isLoading={isLoading}
+        error={authError}
+      />
+    );
   }
 
   return (
@@ -1142,7 +1236,10 @@ function App() {
       <main className={spacing.mainPadding.y}>
         <div className={`${section.width.xl} mx-auto ${spacing.mainPadding.x}`}>
           {/* Section: Primary Connectivity - cards differ by interface type */}
-          <section aria-labelledby="connectivity-heading" className={spacing.margin.bottom.section}>
+          <section
+            aria-labelledby="connectivity-heading"
+            className={spacing.margin.bottom.section}
+          >
             <h2
               id="connectivity-heading"
               className={`section-title ${spacing.margin.bottom.heading}`}
@@ -1153,22 +1250,36 @@ function App() {
               className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
             >
               {/* WiFi-only cards */}
-              {isWifi && <WiFiCard data={cards.wifi} loading={loading} visible={true} />}
+              {isWifi && (
+                <WiFiCard data={cards.wifi} loading={loading} visible={true} />
+              )}
 
               {/* Ethernet-only cards */}
               {!isWifi && (
                 <>
                   <LinkCard data={cards.link} loading={loading} />
-                  {cards.cable?.supported && <CableCard data={cards.cable} loading={loading} />}
-                  <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />
+                  {cards.cable?.supported && (
+                    <CableCard data={cards.cable} loading={loading} />
+                  )}
+                  <SwitchCard
+                    data={cards.switch}
+                    vlanData={cards.vlan}
+                    loading={loading}
+                  />
                 </>
               )}
             </div>
           </section>
 
           {/* Section: Network Services */}
-          <section aria-labelledby="network-heading" className={spacing.margin.bottom.section}>
-            <h2 id="network-heading" className={`section-title ${spacing.margin.bottom.heading}`}>
+          <section
+            aria-labelledby="network-heading"
+            className={spacing.margin.bottom.section}
+          >
+            <h2
+              id="network-heading"
+              className={`section-title ${spacing.margin.bottom.heading}`}
+            >
               {t("sections.network")}
             </h2>
             <div
@@ -1186,7 +1297,10 @@ function App() {
           </section>
 
           {/* Section: Testing & Discovery - cards differ by interface type */}
-          <section aria-labelledby="performance-heading" className={spacing.margin.bottom.section}>
+          <section
+            aria-labelledby="performance-heading"
+            className={spacing.margin.bottom.section}
+          >
             <h2
               id="performance-heading"
               className={`section-title ${spacing.margin.bottom.heading}`}
@@ -1201,7 +1315,9 @@ function App() {
               {cardSettings.performance.enabled && (
                 <PerformanceCard
                   loading={loading}
-                  runSpeedtestEnabled={cardSettings.performance.speedtest.enabled}
+                  runSpeedtestEnabled={
+                    cardSettings.performance.speedtest.enabled
+                  }
                   runIperfEnabled={cardSettings.performance.iperf.enabled}
                 />
               )}
@@ -1216,13 +1332,25 @@ function App() {
               )}
 
               {/* WiFi-only: WiFi Survey for heatmaps and site surveys */}
-              {isWifi && <WiFiSurveyCard isWifi={isWifi} />}
+              {/* Fix #572: Pass current interface to avoid hardcoded "wlan0" */}
+              {isWifi && (
+                <WiFiSurveyCard
+                  isWifi={isWifi}
+                  currentInterface={currentInterface}
+                />
+              )}
             </div>
           </section>
 
           {/* Section: System */}
-          <section aria-labelledby="system-heading" className={spacing.margin.bottom.section}>
-            <h2 id="system-heading" className={`section-title ${spacing.margin.bottom.heading}`}>
+          <section
+            aria-labelledby="system-heading"
+            className={spacing.margin.bottom.section}
+          >
+            <h2
+              id="system-heading"
+              className={`section-title ${spacing.margin.bottom.heading}`}
+            >
               {t("sections.system")}
             </h2>
             <div
@@ -1239,7 +1367,9 @@ function App() {
             <h2 className="heading-4 text-text-muted">
               {t("app.title")} {appVersion}
             </h2>
-            <p className={`${spacing.margin.top.inline} body-small text-text-muted`}>
+            <p
+              className={`${spacing.margin.top.inline} body-small text-text-muted`}
+            >
               {t("footer.runTestsHint")}
               <span className="hidden sm:inline">
                 <br />
@@ -1262,7 +1392,9 @@ function App() {
       <ImprovedHelpModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
 
       {/* Profile Management Modal (#754) */}
-      {profilesOpen && <ProfileManagement onClose={() => setProfilesOpen(false)} />}
+      {profilesOpen && (
+        <ProfileManagement onClose={() => setProfilesOpen(false)} />
+      )}
 
       {/* FAB - Run All Tests */}
       <FAB />
@@ -1288,12 +1420,37 @@ function getAndClearSsoError(): string | null {
   return null;
 }
 
+// SSO provider info from backend (fixes #769)
+interface SSOProvider {
+  name: string;
+  enabled: boolean;
+}
+
 function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   const { t } = useTranslation("common");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   // Initialize SSO error from URL params using lazy initialization
   const [ssoError] = useState<string | null>(getAndClearSsoError);
+  // Fetch SSO providers to conditionally show buttons (fixes #769)
+  const [ssoProviders, setSsoProviders] = useState<SSOProvider[]>([]);
+
+  // Fetch enabled SSO providers on mount (fixes #769)
+  useEffect(() => {
+    fetch(`${API_BASE}/api/sso/providers`)
+      .then((res) => (res.ok ? res.json() : { providers: [] }))
+      .then((data) => setSsoProviders(data.providers || []))
+      .catch(() => setSsoProviders([]));
+  }, []);
+
+  // Helper to check if a provider is enabled
+  const isProviderEnabled = (name: string) =>
+    ssoProviders.some(
+      (p) => p.name.toLowerCase() === name.toLowerCase() && p.enabled
+    );
+
+  // Check if any SSO provider is enabled
+  const hasEnabledSSO = ssoProviders.some((p) => p.enabled);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1306,8 +1463,22 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
         <div className={`text-center ${spacing.margin.bottom.sectionLg}`}>
           <div className="w-16 h-16 mx-auto text-brand-primary">
             <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-              <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" opacity="0.3" />
-              <circle cx="24" cy="24" r="14" stroke="currentColor" strokeWidth="2" opacity="0.5" />
+              <circle
+                cx="24"
+                cy="24"
+                r="20"
+                stroke="currentColor"
+                strokeWidth="2"
+                opacity="0.3"
+              />
+              <circle
+                cx="24"
+                cy="24"
+                r="14"
+                stroke="currentColor"
+                strokeWidth="2"
+                opacity="0.5"
+              />
               <circle cx="24" cy="24" r="4" fill="currentColor" />
               <line
                 x1="24"
@@ -1391,8 +1562,12 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 className={`heading-1 ${spacing.margin.top.heading}`}>{t("app.title")}</h1>
-          <p className={`body-small ${spacing.margin.top.inline}`}>{t("app.tagline")}</p>
+          <h1 className={`heading-1 ${spacing.margin.top.heading}`}>
+            {t("app.title")}
+          </h1>
+          <p className={`body-small ${spacing.margin.top.inline}`}>
+            {t("app.tagline")}
+          </p>
         </div>
 
         <form
@@ -1453,34 +1628,48 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             {isLoading ? t("status.loggingIn") : t("buttons.login")}
           </button>
 
-          <p className="caption text-text-muted text-center">{t("login.defaultCredentials")}</p>
+          <p className="caption text-text-muted text-center">
+            {t("login.defaultCredentials")}
+          </p>
 
-          {/* SSO Options */}
-          <div className="flex flex-col space-y-3">
-            <button
-              type="button"
-              onClick={() => (window.location.href = `${API_BASE}/api/sso/login?provider=google`)}
-              className={`w-full ${button.size.md} bg-status-info text-text-inverse ${radius.md} font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
-            >
-              {t("buttons.signInWithGoogle")}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                (window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`)
-              }
-              className={`w-full ${button.size.md} bg-brand-secondary text-text-inverse ${radius.md} font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
-            >
-              {t("buttons.signInWithMicrosoft")}
-            </button>
-            <button
-              type="button"
-              onClick={() => (window.location.href = `${API_BASE}/api/sso/login?provider=github`)}
-              className={`w-full ${button.size.md} bg-surface-sunken text-text-primary ${radius.md} font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50`}
-            >
-              {t("buttons.signInWithGitHub")}
-            </button>
-          </div>
+          {/* SSO Options - only show if any provider is enabled (fixes #769) */}
+          {hasEnabledSSO && (
+            <div className="flex flex-col space-y-3">
+              {isProviderEnabled("google") && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    (window.location.href = `${API_BASE}/api/sso/login?provider=google`)
+                  }
+                  className={`w-full ${button.size.md} bg-status-info text-text-inverse ${radius.md} font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+                >
+                  {t("buttons.signInWithGoogle")}
+                </button>
+              )}
+              {isProviderEnabled("microsoft") && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    (window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`)
+                  }
+                  className={`w-full ${button.size.md} bg-brand-secondary text-text-inverse ${radius.md} font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+                >
+                  {t("buttons.signInWithMicrosoft")}
+                </button>
+              )}
+              {isProviderEnabled("github") && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    (window.location.href = `${API_BASE}/api/sso/login?provider=github`)
+                  }
+                  className={`w-full ${button.size.md} bg-surface-sunken text-text-primary ${radius.md} font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50`}
+                >
+                  {t("buttons.signInWithGitHub")}
+                </button>
+              )}
+            </div>
+          )}
         </form>
       </div>
     </div>

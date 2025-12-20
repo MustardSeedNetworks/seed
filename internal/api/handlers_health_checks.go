@@ -18,6 +18,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/dns"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/validation"
@@ -70,13 +71,15 @@ type DNSResponse struct {
 // handleDNS performs DNS testing and returns results.
 func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.dnsTester == nil {
-		http.Error(w, "DNS tester not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.health.dnsNotAvailable"), "") // fixes #694
 		return
 	}
 
@@ -236,13 +239,16 @@ type IperfSettingsResponse struct {
 
 // handleHealthChecksSettings handles GET/PUT for health check settings.
 func (s *Server) handleHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		s.getHealthChecksSettings(w, r)
 	case http.MethodPut:
 		s.updateHealthChecksSettings(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
@@ -316,12 +322,14 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 
 func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req TestsSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -479,8 +487,10 @@ type CustomTestsResult struct {
 // handleHealthChecks runs all configured health checks and returns results.
 func (s *Server) handleHealthChecks(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -1114,20 +1124,22 @@ type SpeedtestStatusResponse struct {
 // Use /api/speedtest/status to poll for results.
 func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed - use POST to start a speedtest", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.health.speedtestPostRequired"), "") // fixes #694
 		return
 	}
 
 	if s.speedtestTester == nil {
-		http.Error(w, "Speedtest not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.health.speedtestNotAvailable"), "") // fixes #694
 		return
 	}
 
 	// Check if already running
 	status := s.speedtestTester.GetStatus()
 	if status.Running {
-		http.Error(w, "Speedtest already in progress", http.StatusConflict)
+		sendErrorResponseWithDetails(w, logger, http.StatusConflict, ErrCodeConflict, localizer.T("errors.health.speedtestInProgress"), "") // fixes #694
 		return
 	}
 
@@ -1153,13 +1165,15 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 // handleSpeedtestStatus returns the current speedtest status.
 func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.speedtestTester == nil {
-		http.Error(w, "Speedtest not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.health.speedtestNotAvailable"), "") // fixes #694
 		return
 	}
 
@@ -1200,8 +1214,10 @@ type IperfInfoResponse struct {
 // handleIperfInfo returns iperf3 installation status and version.
 func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -1290,8 +1306,10 @@ func validateIperfClientRequest(req *IperfClientRequest) error {
 // handleIperfClient runs an iperf3 client test.
 func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -1300,12 +1318,12 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 
 	var req IperfClientRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	if err := validateIperfClientRequest(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.health.iperfValidationFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -1345,8 +1363,10 @@ type IperfClientStatusResponse struct {
 // handleIperfClientStatus returns the status of the iperf3 client test.
 func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -1390,8 +1410,10 @@ type IperfServerRequest struct {
 // handleIperfServer starts or stops the iperf3 server.
 func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -1400,7 +1422,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 
 	var req IperfServerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -1411,7 +1433,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			port = 5201
 		}
 		if err := s.iperfManager.StartServer(port); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.health.iperfServerStartFailed"), err.Error()) // fixes #694
 			return
 		}
 		sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
@@ -1420,22 +1442,24 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 		})
 	case "stop":
 		if err := s.iperfManager.StopServer(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.health.iperfServerStopFailed"), err.Error()) // fixes #694
 			return
 		}
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 			"message": "iperf3 server stopped",
 		})
 	default:
-		http.Error(w, "Invalid action (use 'start' or 'stop')", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.health.iperfInvalidAction"), "") // fixes #694
 	}
 }
 
 // handleIperfServerStatus returns the iperf3 server status.
 func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -1454,13 +1478,15 @@ type IperfSuggestion struct {
 // handleIperfSuggestions returns discovered devices that respond on the iperf port.
 func (s *Server) handleIperfSuggestions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.deviceDiscovery == nil {
-		http.Error(w, "Device discovery not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.health.deviceDiscoveryNotAvailable"), "") // fixes #694
 		return
 	}
 

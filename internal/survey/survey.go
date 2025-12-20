@@ -4,6 +4,7 @@ package survey
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -47,8 +48,8 @@ type FloorPlan struct {
 // Floor represents a single floor in a multi-floor survey.
 type Floor struct {
 	ID        string         `json:"id"`
-	Name      string         `json:"name"`      // "Floor 1", "Basement", etc.
-	Level     int            `json:"level"`     // Numeric level (-1, 0, 1, 2...)
+	Name      string         `json:"name"`  // "Floor 1", "Basement", etc.
+	Level     int            `json:"level"` // Numeric level (-1, 0, 1, 2...)
 	FloorPlan *FloorPlan     `json:"floorPlan,omitempty"`
 	Samples   []*SamplePoint `json:"samples"`
 	CreatedAt time.Time      `json:"createdAt"`
@@ -684,6 +685,8 @@ func (m *Manager) GetFloor(surveyID, floorID string) (*Floor, error) {
 }
 
 // saveSurvey persists a survey to disk.
+//
+//nolint:dupl // Intentionally similar to saveSurveyUnlocked - different lock semantics
 func (m *Manager) saveSurvey(survey *Survey) error {
 	// Ensure storage directory exists with restrictive permissions
 	if err := os.MkdirAll(m.storagePath, 0o750); err != nil {
@@ -734,7 +737,9 @@ func (m *Manager) LoadSurveys() error {
 		// Auto-migrate legacy single-floor surveys to multi-floor format
 		if MigrateToMultiFloor(&survey) {
 			// Save the migrated survey back to disk
-			_ = m.saveSurveyUnlocked(&survey)
+			if err := m.saveSurveyUnlocked(&survey); err != nil {
+				slog.Warn("Failed to save migrated survey", "survey_id", survey.ID, "error", err)
+			}
 		}
 
 		m.surveys[survey.ID] = &survey
@@ -745,6 +750,8 @@ func (m *Manager) LoadSurveys() error {
 
 // saveSurveyUnlocked persists a survey to disk without acquiring a lock.
 // This is used internally when the lock is already held.
+//
+//nolint:dupl // Intentionally similar to saveSurvey - different lock semantics
 func (m *Manager) saveSurveyUnlocked(survey *Survey) error {
 	// Ensure storage directory exists with restrictive permissions
 	if err := os.MkdirAll(m.storagePath, 0o750); err != nil {

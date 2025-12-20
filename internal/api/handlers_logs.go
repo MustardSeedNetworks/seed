@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -54,8 +55,10 @@ type LogStatsResponse struct {
 // POST /api/logs/client (fixes #703).
 func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -64,13 +67,13 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 
 	var req ClientLogRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
-		http.Error(w, "Logging not initialized", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
 		return
 	}
 
@@ -173,14 +176,16 @@ func paginateLogs(logs []*logging.LogEntry, offset, limit int) []*logging.LogEnt
 // GET /api/logs/query?level=ERROR,WARN&layer=backend,api&component=auth&search=failed&limit=100&offset=0 (fixes #703).
 func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
-		http.Error(w, "Logging not initialized", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
 		return
 	}
 
@@ -209,14 +214,16 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 // GET /api/logs/stats (fixes #703).
 func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
-		http.Error(w, "Logging not initialized", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
 		return
 	}
 
@@ -260,14 +267,16 @@ func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 // GET /api/logs/recent?limit=100 (fixes #703).
 func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
-		http.Error(w, "Logging not initialized", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
 		return
 	}
 

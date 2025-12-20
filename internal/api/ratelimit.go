@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/i18n"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // RateLimiter implements a simple in-memory rate limiter for login attempts.
@@ -362,7 +365,9 @@ func (erl *EndpointRateLimiter) RateLimitMiddleware(next http.Handler) http.Hand
 		ip := GetClientIP(r)
 
 		if !erl.Allow(ip) {
-			http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+			logger := logging.FromContext(r.Context())
+			localizer := i18n.FromRequest(r)
+			sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.api.rateLimitExceeded"), "") // fixes #694
 			return
 		}
 

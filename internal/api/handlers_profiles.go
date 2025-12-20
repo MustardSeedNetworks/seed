@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -65,11 +66,12 @@ type ProfileExportResponse struct {
 // handleProfiles routes profile requests by method.
 func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 
 	// Check if database is available
 	if s.db == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, "Database not available", "")
+			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
 	}
 
@@ -91,19 +93,20 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	case path != "" && r.Method == http.MethodDelete:
 		s.handleDeleteProfile(w, r, path)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
 // handleListProfiles returns all profiles.
 func (s *Server) handleListProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
 	profiles, err := s.db.Profiles().List(ctx)
 	if err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to list profiles", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.listFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -122,19 +125,20 @@ func (s *Server) handleListProfiles(w http.ResponseWriter, r *http.Request) {
 // handleCreateProfile creates a new profile.
 func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
 	var req ProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "Invalid request body", err.Error())
+			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate required fields
 	if req.Name == "" {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, "Profile name is required", "")
+			ErrCodeValidation, localizer.T("errors.profile.nameRequired"), "") // fixes #694
 		return
 	}
 
@@ -150,11 +154,11 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 	if err := s.db.Profiles().Create(ctx, profile); err != nil {
 		if errors.Is(err, database.ErrProfileNameExists) {
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
-				ErrCodeConflict, "Profile with this name already exists", "")
+				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to create profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.createFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -165,17 +169,18 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 // handleGetProfile returns a single profile by ID.
 func (s *Server) handleGetProfile(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
 	profile, err := s.db.Profiles().Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-				ErrCodeNotFound, "Profile not found", "")
+				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to get profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -185,12 +190,13 @@ func (s *Server) handleGetProfile(w http.ResponseWriter, r *http.Request, id str
 // handleUpdateProfile updates an existing profile.
 func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
 	var req ProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "Invalid request body", err.Error())
+			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -199,11 +205,11 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-				ErrCodeNotFound, "Profile not found", "")
+				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to get profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -220,11 +226,11 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 	if err := s.db.Profiles().Update(ctx, profile); err != nil {
 		if errors.Is(err, database.ErrProfileNameExists) {
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
-				ErrCodeConflict, "Profile with this name already exists", "")
+				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to update profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.updateFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -234,6 +240,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 // handleDeleteProfile deletes a profile.
 func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
 	// Check if profile exists
@@ -241,18 +248,18 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-				ErrCodeNotFound, "Profile not found", "")
+				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to get profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Prevent deleting the default profile
 	if profile.IsDefault {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "Cannot delete the default profile", "")
+			ErrCodeBadRequest, localizer.T("errors.profile.cannotDeleteDefault"), "") // fixes #694
 		return
 	}
 
@@ -260,13 +267,13 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 	activeID, _ := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile) //nolint:errcheck // empty string is fine if setting not found
 	if activeID == id {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "Cannot delete the currently active profile", "")
+			ErrCodeBadRequest, localizer.T("errors.profile.cannotDeleteActive"), "") // fixes #694
 		return
 	}
 
 	if err := s.db.Profiles().Delete(ctx, id); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to delete profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.deleteFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -278,10 +285,11 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 // handleActiveProfile handles getting and setting the active profile.
 func (s *Server) handleActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 
 	if s.db == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, "Database not available", "")
+			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
 	}
 
@@ -291,20 +299,21 @@ func (s *Server) handleActiveProfile(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost, http.MethodPut:
 		s.handleSetActiveProfile(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
 // handleGetActiveProfile returns the currently active profile.
 func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
 	// Get active profile ID from settings
 	activeID, err := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile)
 	if err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to get active profile setting", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.getActiveFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -314,11 +323,11 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			if errors.Is(err, database.ErrProfileNotFound) {
 				sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-					ErrCodeNotFound, "No active or default profile found", "Please create a profile first")
+					ErrCodeNotFound, localizer.T("errors.profile.noActiveOrDefault"), "") // fixes #694
 				return
 			}
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, "Failed to get default profile", err.Error())
+				ErrCodeInternal, localizer.T("errors.profile.getDefaultFailed"), err.Error()) // fixes #694
 			return
 		}
 		sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
@@ -333,14 +342,14 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 			profile, err = s.db.Profiles().GetDefault(ctx)
 			if err != nil {
 				sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-					ErrCodeNotFound, "Active profile not found and no default profile exists", "")
+					ErrCodeNotFound, localizer.T("errors.profile.activeNotFound"), "") // fixes #694
 				return
 			}
 			// Update setting to use default
 			_ = s.db.Settings().Set(ctx, database.SettingKeyActiveProfile, profile.ID) //nolint:errcheck // best effort, non-critical
 		} else {
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, "Failed to get active profile", err.Error())
+				ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
 			return
 		}
 	}
@@ -351,6 +360,7 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 // handleSetActiveProfile sets the active profile.
 func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
 	var req struct {
@@ -358,13 +368,13 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "Invalid request body", err.Error())
+			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	if req.ProfileID == "" {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, "profile_id is required", "")
+			ErrCodeValidation, localizer.T("errors.profile.idRequired"), "") // fixes #694
 		return
 	}
 
@@ -373,18 +383,18 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-				ErrCodeNotFound, "Profile not found", "")
+				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to get profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Set active profile in settings
 	if err := s.db.Settings().Set(ctx, database.SettingKeyActiveProfile, req.ProfileID); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to set active profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -406,15 +416,16 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 // handleDuplicateProfile creates a copy of an existing profile.
 func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 
 	if s.db == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, "Database not available", "")
+			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
 	}
 
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -430,11 +441,11 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-				ErrCodeNotFound, "Profile not found", "")
+				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to get profile", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -464,12 +475,12 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 			duplicate.Name = fmt.Sprintf("%s (%s)", source.Name, time.Now().Format("2006-01-02 15:04"))
 			if err := s.db.Profiles().Create(ctx, duplicate); err != nil {
 				sendErrorResponseWithDetails(w, logger, http.StatusConflict,
-					ErrCodeConflict, "Profile with this name already exists", "")
+					ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 				return
 			}
 		} else {
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, "Failed to create duplicate", err.Error())
+				ErrCodeInternal, localizer.T("errors.profile.duplicateFailed"), err.Error()) // fixes #694
 			return
 		}
 	}
@@ -480,15 +491,16 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 // handleImportProfiles imports profiles from JSON.
 func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 
 	if s.db == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, "Database not available", "")
+			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
 	}
 
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -497,7 +509,7 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 	var req ProfileImportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "Invalid JSON format", err.Error())
+			ErrCodeBadRequest, localizer.T("errors.profile.invalidJson"), err.Error()) // fixes #694
 		return
 	}
 
@@ -555,15 +567,16 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 // handleExportProfiles exports all profiles to JSON.
 func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 
 	if s.db == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, "Database not available", "")
+			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
 	}
 
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -572,7 +585,7 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 	profiles, err := s.db.Profiles().List(ctx)
 	if err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Failed to list profiles", err.Error())
+			ErrCodeInternal, localizer.T("errors.profile.listFailed"), err.Error()) // fixes #694
 		return
 	}
 

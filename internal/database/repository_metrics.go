@@ -68,6 +68,8 @@ func (r *MetricsRepository) RecordBatch(ctx context.Context, metrics []*Metric) 
 }
 
 // Query retrieves metrics matching the given criteria.
+//
+//nolint:gocritic // opts passed by value for API stability
 func (r *MetricsRepository) Query(ctx context.Context, opts MetricQueryOptions) ([]*Metric, error) {
 	query := `
 		SELECT id, interface_name, metric_type, value, unit, timestamp, metadata_json
@@ -167,6 +169,8 @@ func (r *MetricsRepository) GetLatest(ctx context.Context, interfaceName, metric
 }
 
 // GetAggregates returns aggregated metrics over a time range.
+//
+//nolint:gocritic // opts passed by value for API stability
 func (r *MetricsRepository) GetAggregates(ctx context.Context, opts MetricAggregateOptions) (*MetricAggregate, error) {
 	query := `
 		SELECT

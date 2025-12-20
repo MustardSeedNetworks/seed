@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -35,9 +36,10 @@ type RestoreRequest struct {
 // handleConfigBackups handles GET /api/config/backups - list all backups.
 func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -47,7 +49,7 @@ func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 	backups, err := backupMgr.ListBackups()
 	if err != nil {
 		logger.Error("Failed to list backups", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), "") // fixes #694
 		return
 	}
 
@@ -57,8 +59,10 @@ func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 // handleConfigBackupCreate handles POST /api/config/backup - create a new backup.
 func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -67,7 +71,7 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 
 	backup, err := backupMgr.CreateBackup()
 	if err != nil {
-		http.Error(w, "Failed to create backup: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToCreateBackup"), err.Error()) // fixes #694
 		return
 	}
 
@@ -84,8 +88,10 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 // handleConfigRestore handles POST /api/config/restore - restore from a backup.
 func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -94,12 +100,12 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 
 	var req RestoreRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	if req.BackupName == "" {
-		http.Error(w, "backup_name is required", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.config.backupNameRequired"), "") // fixes #694
 		return
 	}
 
@@ -107,14 +113,14 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 	backupMgr := config.NewBackupManager(s.configPath, backupDir, 10)
 
 	if err := backupMgr.RestoreBackup(req.BackupName); err != nil {
-		http.Error(w, "Failed to restore backup: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToRestoreBackup"), err.Error()) // fixes #694
 		return
 	}
 
 	// Reload config after restore
 	newCfg, err := config.Load(s.configPath)
 	if err != nil {
-		http.Error(w, "Backup restored but failed to reload config: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToReloadAfterRestore"), err.Error()) // fixes #694
 		return
 	}
 
@@ -137,21 +143,23 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 // handleConfigBackupDelete handles DELETE /api/config/backup - delete a backup.
 func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodDelete {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	backupName := r.URL.Query().Get("name")
 	if backupName == "" {
-		http.Error(w, "name parameter is required", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.config.nameParamRequired"), "") // fixes #694
 		return
 	}
 
 	// Prevent path traversal attacks (fixes #683)
 	// Only allow alphanumeric, dash, underscore, and dot characters
 	if !regexp.MustCompile(`^[a-zA-Z0-9._-]+$`).MatchString(backupName) {
-		http.Error(w, "Invalid backup name", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.config.invalidBackupName"), "") // fixes #694
 		return
 	}
 	// Strip any directory components as additional safety measure
@@ -161,7 +169,7 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 	backupMgr := config.NewBackupManager(s.configPath, backupDir, 10)
 
 	if err := backupMgr.DeleteBackup(backupName); err != nil {
-		http.Error(w, "Failed to delete backup: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToDeleteBackup"), err.Error()) // fixes #694
 		return
 	}
 
@@ -178,8 +186,10 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 // handleConfigVersion handles GET /api/config/version - get config version info.
 func (s *Server) handleConfigVersion(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 

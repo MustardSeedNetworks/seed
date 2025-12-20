@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/survey"
 	"github.com/krisarmstrong/seed/internal/validation"
@@ -38,24 +39,26 @@ func isValidSurveyID(id string) bool {
 
 func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	// Limit request body size to prevent DoS attacks (fixes #682)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req CreateSurveyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate survey name (fixes #695)
 	if err := validation.ValidateStringLength(req.Name, "name", 1, 100); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate description (fixes #695)
 	if len(req.Description) > 500 {
-		http.Error(w, "description too long (max 500 characters)", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.descriptionTooLong"), "") // fixes #694
 		return
 	}
 
@@ -69,14 +72,14 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !validType {
-		http.Error(w, "invalid survey type (must be passive, active, or throughput)", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidType"), "") // fixes #694
 		return
 	}
 
 	// Validate interface name if provided (fixes #695)
 	if req.Interface != "" {
 		if err := validation.ValidateInterface(req.Interface); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 			return
 		}
 	} else {
@@ -88,7 +91,7 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 	newSurvey, err := s.surveyManager.CreateSurvey(req.Name, req.Description, req.Interface, survey.Type(req.SurveyType))
 	if err != nil {
 		logger.Error("Failed to create survey", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), err.Error()) // fixes #694
 		return
 	}
 
@@ -107,17 +110,20 @@ func (s *Server) listSurveys(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, surveys)
 }
 
+//nolint:dupl // Similar to listFloors but retrieves full survey vs floors list - different operations
 func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	surveyData, err := s.surveyManager.GetSurvey(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
 		return
 	}
 
@@ -126,14 +132,16 @@ func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	if err := s.surveyManager.DeleteSurvey(id); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
 		return
 	}
 
@@ -148,21 +156,23 @@ type surveyStateAction func(id string) error
 // handleSurveyStateChange is a helper that handles survey state transitions (start/pause/complete).
 // It extracts common logic to avoid code duplication.
 func (s *Server) handleSurveyStateChange(w http.ResponseWriter, r *http.Request, logger *slog.Logger, actionName string, action surveyStateAction) {
+	localizer := i18n.FromRequest(r)
+
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	if err := action(id); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.startFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Return the updated survey so frontend can update its state
 	updatedSurvey, err := s.surveyManager.GetSurvey(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -198,9 +208,11 @@ type AddSampleRequest struct {
 
 func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -209,7 +221,7 @@ func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 
 	var req AddSampleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -257,7 +269,7 @@ func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.AddSample(id, req.X, req.Y, sampleData); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -279,16 +291,18 @@ type UpdateFloorPlanRequest struct {
 
 func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	// Rate limit file uploads (fixes #696)
 	clientIP := GetClientIP(r)
 	if !s.endpointRateLimiter.Allow(clientIP) {
-		http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+		sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.survey.rateLimitExceeded"), "") // fixes #694
 		return
 	}
 
@@ -297,29 +311,29 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateFloorPlanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate image data URL (fixes #695)
 	if err := validation.ValidateImageDataURL(req.ImageData, int(MaxBodySizeFloorPlan)); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate dimensions (fixes #695)
 	if err := validation.ValidateIntRange(req.Width, "width", 1, 10000); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 	if err := validation.ValidateIntRange(req.Height, "height", 1, 10000); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate scale (fixes #695)
 	if err := validation.ValidateFloatRange(req.ScaleM, "scaleM", 0.01, 1000.0); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -331,14 +345,14 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.UpdateFloorPlan(id, floorPlan); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
 		return
 	}
 
 	// Return the updated survey so the frontend can update its state
 	updatedSurvey, err := s.surveyManager.GetSurvey(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -355,14 +369,16 @@ type UpdateSurveySettingsRequest struct {
 // updateSurveySettings handles PUT /api/survey/settings?id=xxx.
 func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPut {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -371,7 +387,7 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateSurveySettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -386,14 +402,14 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !validType {
-		http.Error(w, "invalid survey type (must be passive, active, or throughput)", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidType"), "") // fixes #694
 		return
 	}
 
 	// Validate iPerf server if provided (fixes #695)
 	if req.IperfServer != "" {
 		if err := validation.ValidateServerAddress(req.IperfServer); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 			return
 		}
 	}
@@ -401,20 +417,20 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 	// Validate test duration (fixes #695)
 	if req.TestDuration != 0 {
 		if err := validation.ValidateIntRange(req.TestDuration, "testDuration", 1, 300); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 			return
 		}
 	}
 
 	if err := s.surveyManager.UpdateSurveySettings(id, surveyType, req.IperfServer, req.TestDuration); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.updateFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Return the updated survey so the frontend can update its state
 	settingsUpdatedSurvey, err := s.surveyManager.GetSurvey(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -426,15 +442,17 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 // floor plan, and pass/fail criteria data.
 func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	// Rate limit file uploads (fixes #696)
 	clientIP := GetClientIP(r)
 	if !s.endpointRateLimiter.Allow(clientIP) {
-		http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+		sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.survey.rateLimitExceeded"), "") // fixes #694
 		return
 	}
 
@@ -444,48 +462,48 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 
 	// Parse multipart form
 	if err := r.ParseMultipartForm(maxFileSize); err != nil {
-		http.Error(w, "File too large or invalid form data", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.fileTooLarge"), err.Error()) // fixes #694
 		return
 	}
 
 	// Get the uploaded file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "No file provided", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.noFileProvided"), err.Error()) // fixes #694
 		return
 	}
 	defer file.Close()
 
 	// Validate filename (fixes #695)
 	if err := validation.ValidateFilename(handler.Filename, "filename"); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate file extension
 	if !strings.HasSuffix(strings.ToLower(handler.Filename), ".amp") {
-		http.Error(w, "Invalid file type. Please upload an .amp file", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidFileType"), "") // fixes #694
 		return
 	}
 
 	// Read the file contents
 	data, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(w, "Failed to read file", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.readFileFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Parse the AirMapper file
 	ampFile, err := survey.ParseAirMapperFile(data)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to parse AirMapper file: %v", err), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.parseFileFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Convert to import result
 	result, err := ampFile.ToImportResult()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to process AirMapper data: %v", err), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.processFileFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -496,14 +514,16 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 // Analyzes the survey and detects areas with poor WiFi coverage.
 func (s *Server) getSurveyDeadZones(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -516,11 +536,11 @@ func (s *Server) getSurveyDeadZones(w http.ResponseWriter, r *http.Request) {
 			if t >= -100 && t <= -30 {
 				threshold = t
 			} else {
-				http.Error(w, "Threshold must be between -100 and -30 dBm", http.StatusBadRequest)
+				sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidThreshold"), "") // fixes #694
 				return
 			}
 		} else {
-			http.Error(w, "Invalid threshold value", http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidThresholdValue"), "") // fixes #694
 			return
 		}
 	}
@@ -531,7 +551,7 @@ func (s *Server) getSurveyDeadZones(w http.ResponseWriter, r *http.Request) {
 			"survey_id", id,
 			"threshold", threshold,
 			"error", err)
-		http.Error(w, fmt.Sprintf("Failed to detect dead zones: %v", err), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.deadZonesFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -577,14 +597,16 @@ func parseHeatmapConfig(r *http.Request) survey.HeatmapConfig {
 // Generates a heatmap visualization from survey sample data.
 func (s *Server) getSurveyHeatmap(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -596,7 +618,7 @@ func (s *Server) getSurveyHeatmap(w http.ResponseWriter, r *http.Request) {
 			"survey_id", id,
 			"type", config.Type,
 			"error", err)
-		http.Error(w, fmt.Sprintf("Failed to generate heatmap: %v", err), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.heatmapFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -626,7 +648,9 @@ func (s *Server) handleSurveyFloors(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		s.addFloor(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		logger := logging.FromContext(r.Context())
+		localizer := i18n.FromRequest(r)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
@@ -640,7 +664,9 @@ func (s *Server) handleSurveyFloor(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		s.deleteFloor(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		logger := logging.FromContext(r.Context())
+		localizer := i18n.FromRequest(r)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
@@ -657,17 +683,21 @@ type AddFloorRequest struct {
 
 // listFloors handles GET /api/survey/floors?id=xxx.
 // Returns all floors for a survey.
+//
+//nolint:dupl // Similar to getSurvey but returns floor list vs full survey - different operations
 func (s *Server) listFloors(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	surveyID := r.URL.Query().Get("id")
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	floors, err := s.surveyManager.GetFloors(surveyID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
 		return
 	}
 
@@ -678,9 +708,11 @@ func (s *Server) listFloors(w http.ResponseWriter, r *http.Request) {
 // Adds a new floor to a survey.
 func (s *Server) addFloor(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	surveyID := r.URL.Query().Get("id")
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -689,26 +721,26 @@ func (s *Server) addFloor(w http.ResponseWriter, r *http.Request) {
 
 	var req AddFloorRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate floor name
 	if err := validation.ValidateStringLength(req.Name, "name", 1, 50); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate floor level
 	if err := validation.ValidateIntRange(req.Level, "level", -10, 200); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	floor, err := s.surveyManager.AddFloor(surveyID, req.Name, req.Level)
 	if err != nil {
 		logger.Error("Failed to add floor", "survey_id", surveyID, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), err.Error()) // fixes #694
 		return
 	}
 
@@ -719,21 +751,23 @@ func (s *Server) addFloor(w http.ResponseWriter, r *http.Request) {
 // Returns a specific floor.
 func (s *Server) getFloor(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	surveyID := r.URL.Query().Get("id")
 	floorID := r.URL.Query().Get("floorId")
 
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 	if !isValidFloorID(floorID) {
-		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
 		return
 	}
 
@@ -750,15 +784,17 @@ type UpdateFloorRequest struct {
 // Updates floor metadata (name, level).
 func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	surveyID := r.URL.Query().Get("id")
 	floorID := r.URL.Query().Get("floorId")
 
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 	if !isValidFloorID(floorID) {
-		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -767,32 +803,32 @@ func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateFloorRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate floor name
 	if err := validation.ValidateStringLength(req.Name, "name", 1, 50); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate floor level
 	if err := validation.ValidateIntRange(req.Level, "level", -10, 200); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	if err := s.surveyManager.UpdateFloor(surveyID, floorID, req.Name, req.Level); err != nil {
 		logger.Error("Failed to update floor", "survey_id", surveyID, "floor_id", floorID, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.updateFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Return updated floor
 	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -803,21 +839,23 @@ func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
 // Removes a floor from a survey.
 func (s *Server) deleteFloor(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	surveyID := r.URL.Query().Get("id")
 	floorID := r.URL.Query().Get("floorId")
 
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 	if !isValidFloorID(floorID) {
-		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	if err := s.surveyManager.DeleteFloor(surveyID, floorID); err != nil {
 		logger.Error("Failed to delete floor", "survey_id", surveyID, "floor_id", floorID, "error", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.deleteFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -833,10 +871,12 @@ type SetActiveFloorRequest struct {
 // Sets the active floor for data collection.
 func (s *Server) setActiveFloor(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	surveyID := r.URL.Query().Get("id")
 
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -845,25 +885,25 @@ func (s *Server) setActiveFloor(w http.ResponseWriter, r *http.Request) {
 
 	var req SetActiveFloorRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	if !isValidFloorID(req.FloorID) {
-		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	if err := s.surveyManager.SetActiveFloor(surveyID, req.FloorID); err != nil {
 		logger.Error("Failed to set active floor", "survey_id", surveyID, "floor_id", req.FloorID, "error", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.updateFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Return the updated survey
 	updatedSurvey, err := s.surveyManager.GetSurvey(surveyID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -874,22 +914,24 @@ func (s *Server) setActiveFloor(w http.ResponseWriter, r *http.Request) {
 // Updates the floor plan for a specific floor.
 func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	surveyID := r.URL.Query().Get("id")
 	floorID := r.URL.Query().Get("floorId")
 
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 	if !isValidFloorID(floorID) {
-		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
 	// Rate limit file uploads
 	clientIP := GetClientIP(r)
 	if !s.endpointRateLimiter.Allow(clientIP) {
-		http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+		sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.survey.rateLimitExceeded"), "") // fixes #694
 		return
 	}
 
@@ -898,29 +940,29 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateFloorPlanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate image data URL
 	if err := validation.ValidateImageDataURL(req.ImageData, int(MaxBodySizeFloorPlan)); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate dimensions
 	if err := validation.ValidateIntRange(req.Width, "width", 1, 10000); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 	if err := validation.ValidateIntRange(req.Height, "height", 1, 10000); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate scale
 	if err := validation.ValidateFloatRange(req.ScaleM, "scaleM", 0.01, 1000.0); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -932,14 +974,14 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.UpdateFloorPlanByFloorID(surveyID, floorID, floorPlan); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
 		return
 	}
 
 	// Return updated floor
 	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -957,15 +999,17 @@ type AddFloorSampleRequest struct {
 // Adds a sample to a specific floor.
 func (s *Server) addFloorSample(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	surveyID := r.URL.Query().Get("id")
 	floorID := r.URL.Query().Get("floorId")
 
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 	if !isValidFloorID(floorID) {
-		http.Error(w, "Invalid floor ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -974,7 +1018,7 @@ func (s *Server) addFloorSample(w http.ResponseWriter, r *http.Request) {
 
 	var req AddFloorSampleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -1002,7 +1046,7 @@ func (s *Server) addFloorSample(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.AddSampleToFloor(surveyID, floorID, req.X, req.Y, sampleData); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -1026,14 +1070,16 @@ type GenerateReportRequest struct {
 // Generates a PDF report for the specified survey.
 func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	surveyID := r.URL.Query().Get("id")
 	if !isValidSurveyID(surveyID) {
-		http.Error(w, "Invalid survey ID", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidId"), "") // fixes #694
 		return
 	}
 
@@ -1044,14 +1090,14 @@ func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
 	var req GenerateReportRequest
 	if r.ContentLength > 0 {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 			return
 		}
 	}
 
 	// Validate company name length
 	if len(req.CompanyName) > 100 {
-		http.Error(w, "Company name too long (max 100 characters)", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "company name too long (max 100 characters)") // fixes #694
 		return
 	}
 
@@ -1075,7 +1121,7 @@ func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
 		logger.Error("Failed to generate report",
 			"survey_id", surveyID,
 			"error", err)
-		http.Error(w, fmt.Sprintf("Failed to generate report: %v", err), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.exportFailed"), err.Error()) // fixes #694
 		return
 	}
 

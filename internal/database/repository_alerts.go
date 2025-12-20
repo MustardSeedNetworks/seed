@@ -56,6 +56,8 @@ func (r *AlertRepository) Get(ctx context.Context, id int64) (*Alert, error) {
 }
 
 // List retrieves alerts matching the criteria.
+//
+//nolint:goconst,gocritic // SQL fragments are more readable inline; opts passed by value for API stability
 func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*Alert, error) {
 	query := `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
@@ -160,6 +162,8 @@ func (r *AlertRepository) Acknowledge(ctx context.Context, id int64, by string) 
 }
 
 // AcknowledgeAll marks all matching alerts as acknowledged.
+//
+//nolint:gocritic // opts passed by value for API stability
 func (r *AlertRepository) AcknowledgeAll(ctx context.Context, opts AlertListOptions, by string) (int64, error) {
 	now := time.Now().UTC()
 
@@ -247,6 +251,8 @@ func (r *AlertRepository) DeleteOlderThan(ctx context.Context, cutoff time.Time)
 }
 
 // Count returns the number of alerts matching the criteria.
+//
+//nolint:gocritic // opts passed by value for API stability
 func (r *AlertRepository) Count(ctx context.Context, opts AlertListOptions) (int64, error) {
 	query := "SELECT COUNT(*) FROM alerts WHERE 1=1"
 	var args []any

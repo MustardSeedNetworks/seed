@@ -26,7 +26,13 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { radius, layout, spacing, button } from "../../styles/theme";
-import { buttonClass, inputClass, cardClass, cn, icon as iconTokens } from "../../styles/theme";
+import {
+  buttonClass,
+  inputClass,
+  cardClass,
+  cn,
+  icon as iconTokens,
+} from "../../styles/theme";
 
 // API base URL for setup endpoints
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -43,6 +49,8 @@ interface SetupWizardProps {
   suggestedPassword?: string;
   /** Username from config (fixes #768 - no hardcoded 'admin') */
   username?: string;
+  /** Security fix #724, #758: One-time setup token required for setup completion */
+  setupToken?: string;
 }
 
 /**
@@ -65,10 +73,13 @@ export function SetupWizard({
   onLogin,
   suggestedPassword,
   username = "admin",
+  setupToken,
 }: SetupWizardProps) {
   const { t } = useTranslation("setup");
   // Default to custom password entry - more secure UX
-  const [passwordMode, setPasswordMode] = useState<"generated" | "custom">("custom");
+  const [passwordMode, setPasswordMode] = useState<"generated" | "custom">(
+    "custom"
+  );
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -94,7 +105,9 @@ export function SetupWizard({
 
   // Helper to check if a provider is enabled
   const isProviderEnabled = (name: string) =>
-    ssoProviders.some((p) => p.name.toLowerCase() === name.toLowerCase() && p.enabled);
+    ssoProviders.some(
+      (p) => p.name.toLowerCase() === name.toLowerCase() && p.enabled
+    );
 
   // Check if any SSO provider is enabled
   const hasEnabledSSO = ssoProviders.some((p) => p.enabled);
@@ -137,12 +150,13 @@ export function SetupWizard({
 
     try {
       // Step 1: Complete setup (set password on server)
+      // Security fix #724, #758: Include the one-time setup token to prevent CSRF attacks
       const response = await fetch(`${API_BASE}/api/setup/complete`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, setupToken }),
       });
 
       if (!response.ok) {
@@ -176,8 +190,22 @@ export function SetupWizard({
         <div className={`text-center ${spacing.margin.bottom.sectionLg}`}>
           <div className="w-16 h-16 mx-auto text-brand-primary">
             <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-              <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" opacity="0.3" />
-              <circle cx="24" cy="24" r="14" stroke="currentColor" strokeWidth="2" opacity="0.5" />
+              <circle
+                cx="24"
+                cy="24"
+                r="20"
+                stroke="currentColor"
+                strokeWidth="2"
+                opacity="0.3"
+              />
+              <circle
+                cx="24"
+                cy="24"
+                r="14"
+                stroke="currentColor"
+                strokeWidth="2"
+                opacity="0.5"
+              />
               <circle cx="24" cy="24" r="4" fill="currentColor" />
               <line
                 x1="24"
@@ -221,14 +249,19 @@ export function SetupWizard({
               <circle cx="40" cy="24" r="3" fill="currentColor" />
             </svg>
           </div>
-          <h1 className={`heading-2 ${spacing.margin.top.heading}`}>{t("welcome.title")}</h1>
-          <p className={`body-small ${spacing.margin.top.inline}`}>{t("welcome.subtitle")}</p>
+          <h1 className={`heading-2 ${spacing.margin.top.heading}`}>
+            {t("welcome.title")}
+          </h1>
+          <p className={`body-small ${spacing.margin.top.inline}`}>
+            {t("welcome.subtitle")}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className={cardClass("default", "lg")}>
           <div className={spacing.margin.bottom.content}>
             <p className={`body-small ${spacing.margin.bottom.content}`}>
-              {t("username.label")} <strong>{username}</strong> {t("username.cannotChange")}
+              {t("username.label")} <strong>{username}</strong>{" "}
+              {t("username.cannotChange")}
             </p>
           </div>
 
@@ -256,7 +289,9 @@ export function SetupWizard({
                 <span className="body-small font-medium text-text-primary">
                   {t("password.custom.title")}
                 </span>
-                <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+                <p
+                  className={`caption text-text-muted ${spacing.margin.top.inline}`}
+                >
                   {t("password.custom.description")}
                 </p>
               </div>
@@ -279,7 +314,9 @@ export function SetupWizard({
                   <span className="body-small font-medium text-text-primary">
                     {t("password.generated.title")}
                   </span>
-                  <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+                  <p
+                    className={`caption text-text-muted ${spacing.margin.top.inline}`}
+                  >
                     {t("password.generated.description")}
                   </p>
                   {passwordMode === "generated" && (
@@ -292,13 +329,17 @@ export function SetupWizard({
                         </code>
                         <button
                           type="button"
-                          onClick={() => navigator.clipboard.writeText(suggestedPassword)}
+                          onClick={() =>
+                            navigator.clipboard.writeText(suggestedPassword)
+                          }
                           className={`${button.size.xs} caption text-text-muted hover:text-text-primary border border-surface-border ${radius.md} hover:bg-surface-base transition-colors shrink-0`}
                         >
                           {t("buttons.copy")}
                         </button>
                       </div>
-                      <p className={`caption text-status-warning ${spacing.margin.top.inline}`}>
+                      <p
+                        className={`caption text-status-warning ${spacing.margin.top.inline}`}
+                      >
                         {t("password.generated.saveWarning")}
                       </p>
                     </div>
@@ -323,7 +364,10 @@ export function SetupWizard({
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className={cn(inputClass("default", "md"), spacing.padding.right.icon)}
+                    className={cn(
+                      inputClass("default", "md"),
+                      spacing.padding.right.icon
+                    )}
                     placeholder={t("password.placeholder")}
                     required
                     minLength={12}
@@ -370,7 +414,9 @@ export function SetupWizard({
                     )}
                   </button>
                 </div>
-                <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+                <p
+                  className={`caption text-text-muted ${spacing.margin.top.inline}`}
+                >
                   {t("password.minLength")}
                 </p>
               </div>
@@ -418,7 +464,10 @@ export function SetupWizard({
             <>
               {/* Separator */}
               <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div
+                  className="absolute inset-0 flex items-center"
+                  aria-hidden="true"
+                >
                   <div className="w-full border-t border-surface-border" />
                 </div>
                 <div className="relative flex justify-center">

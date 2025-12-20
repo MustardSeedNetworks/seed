@@ -28,10 +28,25 @@ import {
   type AirMapperData,
   type AirMapperParseResult,
 } from "../../utils/airmapper";
-import { getAuthHeaders } from "../../hooks/useAuth";
+// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { logger, LogComponents } from "../../lib/logger";
-import { Upload, FileArchive, AlertTriangle, Check, X, MapPin, Radio, Users } from "lucide-react";
-import { radius, spacing, layout, button, icon as iconTokens } from "../../styles/theme";
+import {
+  Upload,
+  FileArchive,
+  AlertTriangle,
+  Check,
+  X,
+  MapPin,
+  Radio,
+  Users,
+} from "lucide-react";
+import {
+  radius,
+  spacing,
+  layout,
+  button,
+  icon as iconTokens,
+} from "../../styles/theme";
 
 /** Import options */
 export interface ImportOptions {
@@ -55,7 +70,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
   // State
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [parseResult, setParseResult] = useState<AirMapperParseResult | null>(null);
+  const [parseResult, setParseResult] = useState<AirMapperParseResult | null>(
+    null
+  );
   const [importOptions, setImportOptions] = useState<ImportOptions>({
     importFloorPlan: true,
     importCalibration: true,
@@ -78,15 +95,20 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
       setIsLoading(true);
       try {
         // Try backend API first (faster for large files)
-        const backendResult = await importAirMapperViaBackend(file, getAuthHeaders());
+        // Pass empty headers - cookie auth is handled via credentials: 'include' in the utility
+        const backendResult = await importAirMapperViaBackend(file, {});
 
         if (backendResult.success) {
           setParseResult(backendResult);
         } else {
           // Fallback to client-side parsing if backend fails
-          logger.warn(LogComponents.SURVEY, "Backend parsing failed, falling back to client-side", {
-            error: backendResult.error,
-          });
+          logger.warn(
+            LogComponents.SURVEY,
+            "Backend parsing failed, falling back to client-side",
+            {
+              error: backendResult.error,
+            }
+          );
           const buffer = await file.arrayBuffer();
           const result = await parseAirMapperFile(buffer);
           setParseResult(result);
@@ -100,7 +122,10 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
         } catch (clientErr) {
           setParseResult({
             success: false,
-            error: clientErr instanceof Error ? clientErr.message : t("import.parseFailed"),
+            error:
+              clientErr instanceof Error
+                ? clientErr.message
+                : t("import.parseFailed"),
             warnings: [],
           });
         }
@@ -174,7 +199,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       className={`border-2 border-dashed ${
-        isDragging ? "border-brand-primary bg-brand-primary/10" : "border-surface-border"
+        isDragging
+          ? "border-brand-primary bg-brand-primary/10"
+          : "border-surface-border"
       } ${radius.lg} ${spacing.pad.lg} text-center transition-colors`}
     >
       {isLoading ? (
@@ -195,9 +222,16 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
             className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 cursor-pointer`}
           >
             {t("import.selectFile")}
-            <input type="file" accept=".amp" onChange={handleFileInput} className="hidden" />
+            <input
+              type="file"
+              accept=".amp"
+              onChange={handleFileInput}
+              className="hidden"
+            />
           </label>
-          <p className="caption text-text-muted">{t("import.supportedFormat")}</p>
+          <p className="caption text-text-muted">
+            {t("import.supportedFormat")}
+          </p>
         </div>
       )}
     </div>
@@ -213,7 +247,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
           <AlertTriangle className={iconTokens.size.sm} />
           <span className="body-small font-medium">{t("import.error")}</span>
         </div>
-        <p className={`body-small text-text-primary ${spacing.margin.top.tight}`}>
+        <p
+          className={`body-small text-text-primary ${spacing.margin.top.tight}`}
+        >
           {parseResult?.error}
         </p>
       </div>
@@ -249,7 +285,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
           >
             <div className={`${layout.inline.default} text-status-warning`}>
               <AlertTriangle className={iconTokens.size.sm} />
-              <span className="caption font-medium">{t("import.warnings")}</span>
+              <span className="caption font-medium">
+                {t("import.warnings")}
+              </span>
             </div>
             <ul
               className={`caption text-text-muted ${spacing.margin.top.tight} list-disc list-inside`}
@@ -263,7 +301,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
         {/* Preview info */}
         <div className={`bg-surface-base ${radius.md} ${spacing.pad.default}`}>
-          <h4 className={`body-small font-medium ${spacing.margin.bottom.content}`}>
+          <h4
+            className={`body-small font-medium ${spacing.margin.bottom.content}`}
+          >
             {summary.surveyName}
           </h4>
 
@@ -282,7 +322,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
           </div>
 
           {/* Location counts */}
-          <div className={`${layout.inline.default} ${spacing.margin.top.content} flex-wrap`}>
+          <div
+            className={`${layout.inline.default} ${spacing.margin.top.content} flex-wrap`}
+          >
             <div className={`${layout.inline.default} caption`}>
               <MapPin className="w-3 h-3 text-green-500" />
               <span>{summary.apCount} APs</span>
@@ -314,7 +356,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
         </div>
 
         {/* Import options */}
-        <div className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}>
+        <div
+          className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}
+        >
           <h4 className={`caption font-medium ${spacing.margin.bottom.inline}`}>
             {t("import.options")}
           </h4>
@@ -346,7 +390,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
                 }
                 className="w-4 h-4 accent-brand-primary"
               />
-              <span className="body-small">{t("import.optionCalibration")}</span>
+              <span className="body-small">
+                {t("import.optionCalibration")}
+              </span>
             </label>
             <label className={`${layout.inline.default} cursor-pointer`}>
               <input
@@ -396,12 +442,16 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
     <div
       className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.default}`}
     >
-      <div className={`${layout.inline.default} ${spacing.margin.bottom.content}`}>
+      <div
+        className={`${layout.inline.default} ${spacing.margin.bottom.content}`}
+      >
         <FileArchive className={iconTokens.size.sm} />
         <h3 className="heading-3">{t("import.title")}</h3>
       </div>
 
-      <p className={`body-small text-text-muted ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-muted ${spacing.margin.bottom.content}`}
+      >
         {t("import.description")}
       </p>
 

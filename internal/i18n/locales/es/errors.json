@@ -15,7 +15,13 @@
     "networkError": "Error de red",
     "timeout": "Tiempo de espera agotado",
     "serverUnavailable": "Servidor no disponible",
-    "disconnected": "Desconectado del servidor"
+    "disconnected": "Desconectado del servidor",
+    "interfaceNotFound": "Interfaz no encontrada",
+    "refreshFailed": "Error al actualizar interfaces",
+    "invalidInterface": "Interfaz inválida",
+    "staticConfigFailed": "Error al configurar IP estática",
+    "dhcpConfigFailed": "Error al configurar DHCP",
+    "invalidMode": "El modo debe ser 'dhcp' o 'static'"
   },
   "validation": {
     "failed": "Validación fallida",
@@ -44,7 +50,14 @@
   "config": {
     "failedToSave": "Error al guardar configuración",
     "failedToLoad": "Error al cargar configuración",
-    "insecureCredentials": "Credenciales predeterminadas inseguras detectadas"
+    "insecureCredentials": "Credenciales predeterminadas inseguras detectadas",
+    "backupNameRequired": "Nombre de respaldo es requerido",
+    "invalidBackupName": "Nombre de respaldo inválido",
+    "failedToCreateBackup": "Error al crear respaldo",
+    "failedToRestoreBackup": "Error al restaurar respaldo",
+    "failedToDeleteBackup": "Error al eliminar respaldo",
+    "failedToReloadAfterRestore": "Respaldo restaurado pero error al recargar configuración",
+    "nameParamRequired": "Parámetro de nombre es requerido"
   },
   "vlan": {
     "failedToCreate": "Error al crear VLAN",
@@ -77,5 +90,101 @@
   "file": {
     "failedToRead": "Error al leer archivo",
     "pathNotConfigured": "Ruta no configurada"
+  },
+  "tools": {
+    "targetRequired": "Objetivo es requerido",
+    "ipRequired": "Dirección IP es requerida",
+    "invalidTarget": "Objetivo inválido",
+    "portRequired": "Al menos un puerto es requerido",
+    "maxPortsExceeded": "Máximo 100 puertos permitidos",
+    "invalidProtocol": "El protocolo debe ser icmp, udp o tcp",
+    "invalidPort": "El puerto debe estar entre 1 y 65535",
+    "failedToResolve": "No se pudo resolver el nombre de host",
+    "failedToCreateProber": "Error al crear el sondeador",
+    "failedToCreateScanner": "Error al crear el escáner"
+  },
+  "security": {
+    "invalidAction": "Acción inválida. Use 'start' o 'stop'",
+    "gatewayTesterUnavailable": "Probador de puerta de enlace no disponible",
+    "failedToEncryptAuth": "Error al cifrar contraseña de autenticación",
+    "failedToEncryptPriv": "Error al cifrar contraseña de privacidad",
+    "nullOriginForbidden": "Prohibido: origen nulo no permitido",
+    "panicRecovered": "Error interno del servidor"
+  },
+  "logs": {
+    "notInitialized": "Registro no inicializado"
+  },
+  "vuln": {
+    "scannerNotEnabled": "Escáner de vulnerabilidades no habilitado",
+    "invalidIp": "Dirección IP inválida",
+    "missingIpParam": "Falta parámetro 'ip'",
+    "invalidJson": "JSON inválido"
+  },
+  "discovery": {
+    "managerUnavailable": "Administrador de descubrimiento no disponible",
+    "invalidProfile": "Perfil inválido: debe ser stealth, standard, full_scan o custom",
+    "failedToApplyProfile": "Error al aplicar perfil"
+  },
+  "profile": {
+    "dbNotAvailable": "Base de datos no disponible",
+    "listFailed": "Error al listar perfiles",
+    "nameRequired": "Nombre del perfil es requerido",
+    "nameExists": "Ya existe un perfil con este nombre",
+    "createFailed": "Error al crear perfil",
+    "notFound": "Perfil no encontrado",
+    "getFailed": "Error al obtener perfil",
+    "updateFailed": "Error al actualizar perfil",
+    "deleteFailed": "Error al eliminar perfil",
+    "cannotDeleteDefault": "No se puede eliminar el perfil predeterminado",
+    "cannotDeleteActive": "No se puede eliminar el perfil activo actualmente",
+    "getActiveFailed": "Error al obtener configuración de perfil activo",
+    "noActiveOrDefault": "No se encontró perfil activo ni predeterminado",
+    "getDefaultFailed": "Error al obtener perfil predeterminado",
+    "activeNotFound": "Perfil activo no encontrado y no existe perfil predeterminado",
+    "idRequired": "profile_id es requerido",
+    "setActiveFailed": "Error al establecer perfil activo",
+    "duplicateFailed": "Error al crear duplicado",
+    "invalidJson": "Formato JSON inválido"
+  },
+  "health": {
+    "dnsNotAvailable": "Probador DNS no disponible",
+    "speedtestNotAvailable": "Speedtest no disponible",
+    "speedtestInProgress": "Speedtest ya en progreso",
+    "speedtestPostRequired": "Método no permitido - use POST para iniciar un speedtest",
+    "iperfNotAvailable": "iPerf no disponible",
+    "deviceDiscoveryNotAvailable": "Descubrimiento de dispositivos no disponible",
+    "iperfInvalidAction": "Acción inválida (use 'start' o 'stop')",
+    "iperfServerStartFailed": "Error al iniciar servidor iperf",
+    "iperfServerStopFailed": "Error al detener servidor iperf",
+    "iperfValidationFailed": "Validación fallida"
+  },
+  "survey": {
+    "invalidId": "ID de encuesta inválido",
+    "invalidType": "Tipo de encuesta inválido (debe ser passive, active o throughput)",
+    "descriptionTooLong": "Descripción demasiado larga (máx 500 caracteres)",
+    "validationFailed": "Validación fallida",
+    "startFailed": "Error al iniciar encuesta",
+    "stopFailed": "Error al detener encuesta",
+    "updateFailed": "Error al actualizar encuesta",
+    "deleteFailed": "Error al eliminar encuesta",
+    "rateLimitExceeded": "Límite de solicitudes excedido. Intente más tarde.",
+    "fileTooLarge": "Archivo demasiado grande o datos de formulario inválidos",
+    "noFileProvided": "No se proporcionó archivo",
+    "invalidFileType": "Tipo de archivo inválido. Por favor suba un archivo .amp",
+    "readFileFailed": "Error al leer archivo",
+    "parseFileFailed": "Error al analizar archivo",
+    "processFileFailed": "Error al procesar archivo",
+    "invalidThreshold": "El umbral debe estar entre -100 y -30 dBm",
+    "invalidThresholdValue": "Valor de umbral inválido",
+    "deadZonesFailed": "Error al detectar zonas muertas",
+    "heatmapFailed": "Error al generar mapa de calor",
+    "batchDeleteFailed": "Error al eliminar encuestas",
+    "downloadFailed": "Error al descargar datos de encuesta",
+    "exportFailed": "Error al exportar encuestas",
+    "analysisFailed": "Error al analizar encuesta",
+    "interferenceCheckFailed": "Error al verificar interferencia",
+    "getSurveysFailed": "Error al obtener encuestas",
+    "getSurveyFailed": "Error al obtener encuesta",
+    "zonesFailed": "Error al obtener zonas"
   }
 }

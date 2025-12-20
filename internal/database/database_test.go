@@ -10,18 +10,19 @@ import (
 )
 
 // testDB creates a temporary database for testing.
-func testDB(t *testing.T) (*DB, func()) {
+func testDB(t *testing.T) (db *DB, cleanup func()) {
 	t.Helper()
 
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "test.db")
 
-	db, err := Open(dbPath)
+	var err error
+	db, err = Open(dbPath)
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
 
-	cleanup := func() {
+	cleanup = func() {
 		db.Close()
 		os.Remove(dbPath)
 	}
@@ -145,6 +146,7 @@ func TestWithTx(t *testing.T) {
 	}
 }
 
+//nolint:gocyclo // Test functions require comprehensive scenario coverage
 func TestProfileRepository(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()
@@ -345,6 +347,7 @@ func TestMetricsRepository(t *testing.T) {
 	}
 }
 
+//nolint:gocyclo // Test functions require comprehensive scenario coverage
 func TestDeviceRepository(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()

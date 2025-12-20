@@ -15,7 +15,13 @@
     "networkError": "Error de red",
     "timeout": "Tiempo de espera agotado",
     "serverUnavailable": "Servidor no disponible",
-    "disconnected": "Desconectado del servidor"
+    "disconnected": "Desconectado del servidor",
+    "interfaceNotFound": "Interfaz no encontrada",
+    "refreshFailed": "Error al actualizar interfaces",
+    "invalidInterface": "Interfaz inválida",
+    "staticConfigFailed": "Error al configurar IP estática",
+    "dhcpConfigFailed": "Error al configurar DHCP",
+    "invalidMode": "El modo debe ser 'dhcp' o 'static'"
   },
   "validation": {
     "failed": "Validación fallida",

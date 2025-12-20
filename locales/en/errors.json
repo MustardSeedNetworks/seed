@@ -15,7 +15,13 @@
     "networkError": "Network error",
     "timeout": "Request timed out",
     "serverUnavailable": "Server unavailable",
-    "disconnected": "Disconnected from server"
+    "disconnected": "Disconnected from server",
+    "interfaceNotFound": "Interface not found",
+    "refreshFailed": "Failed to refresh interfaces",
+    "invalidInterface": "Invalid interface",
+    "staticConfigFailed": "Failed to configure static IP",
+    "dhcpConfigFailed": "Failed to configure DHCP",
+    "invalidMode": "Mode must be 'dhcp' or 'static'"
   },
   "validation": {
     "failed": "Validation failed",

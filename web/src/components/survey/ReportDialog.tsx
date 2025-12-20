@@ -25,7 +25,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X, FileText, Download, Loader, CheckCircle } from "lucide-react";
 import { radius, spacing, button } from "../../styles/theme";
-import { getAuthHeaders } from "../../hooks/useAuth";
+// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -47,7 +47,12 @@ interface ReportDialogProps {
 /**
  * Modal for configuring and generating survey PDF reports.
  */
-export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDialogProps) {
+export function ReportDialog({
+  surveyId,
+  surveyName,
+  open,
+  onClose,
+}: ReportDialogProps) {
   const { t } = useTranslation("survey");
   const [options, setOptions] = useState<ReportOptions>({
     includeHeatmaps: true,
@@ -62,7 +67,10 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
 
   if (!open) return null;
 
-  const handleOptionChange = (key: keyof ReportOptions, value: boolean | string) => {
+  const handleOptionChange = (
+    key: keyof ReportOptions,
+    value: boolean | string
+  ) => {
     setOptions((prev) => ({ ...prev, [key]: value }));
     setError(null);
     setSuccess(false);
@@ -74,14 +82,17 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
     setSuccess(false);
 
     try {
-      const response = await fetch(`${API_BASE}/api/survey/report?id=${surveyId}`, {
-        method: "POST",
-        headers: {
-          ...getAuthHeaders(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(options),
-      });
+      const response = await fetch(
+        `${API_BASE}/api/survey/report?id=${surveyId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(options),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -104,7 +115,9 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
       setSuccess(true);
     } catch (err) {
       console.error("Report generation failed:", err);
-      setError(err instanceof Error ? err.message : "Failed to generate report");
+      setError(
+        err instanceof Error ? err.message : "Failed to generate report"
+      );
     } finally {
       setGenerating(false);
     }
@@ -147,7 +160,9 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
             borderBottom: "1px solid var(--color-border)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: spacing.sm }}
+          >
             <FileText size={20} />
             <h2 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600 }}>
               {t("report.title", "Generate Report")}
@@ -164,7 +179,12 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
 
         {/* Content */}
         <div style={{ padding: spacing.md }}>
-          <p style={{ margin: `0 0 ${spacing.md} 0`, color: "var(--color-text-secondary)" }}>
+          <p
+            style={{
+              margin: `0 0 ${spacing.md} 0`,
+              color: "var(--color-text-secondary)",
+            }}
+          >
             {t(
               "report.description",
               "Configure what sections to include in your PDF survey report."
@@ -172,20 +192,33 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
           </p>
 
           {/* Options */}
-          <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: spacing.md,
+            }}
+          >
             {/* Company Name */}
             <div>
               <label
                 htmlFor="companyName"
-                style={{ display: "block", marginBottom: spacing.xs, fontWeight: 500 }}
+                style={{
+                  display: "block",
+                  marginBottom: spacing.xs,
+                  fontWeight: 500,
+                }}
               >
-                {t("report.companyName", "Company Name")} ({t("common.optional", "optional")})
+                {t("report.companyName", "Company Name")} (
+                {t("common.optional", "optional")})
               </label>
               <input
                 id="companyName"
                 type="text"
                 value={options.companyName}
-                onChange={(e) => handleOptionChange("companyName", e.target.value)}
+                onChange={(e) =>
+                  handleOptionChange("companyName", e.target.value)
+                }
                 placeholder={t("report.companyNamePlaceholder", "Your Company")}
                 style={{
                   width: "100%",
@@ -199,7 +232,13 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
             </div>
 
             {/* Checkboxes */}
-            <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: spacing.sm,
+              }}
+            >
               <label
                 style={{
                   display: "flex",
@@ -211,14 +250,24 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
                 <input
                   type="checkbox"
                   checked={options.includeExecutiveSummary}
-                  onChange={(e) => handleOptionChange("includeExecutiveSummary", e.target.checked)}
+                  onChange={(e) =>
+                    handleOptionChange(
+                      "includeExecutiveSummary",
+                      e.target.checked
+                    )
+                  }
                   style={{ width: "18px", height: "18px" }}
                 />
                 <div>
                   <div style={{ fontWeight: 500 }}>
                     {t("report.executiveSummary", "Executive Summary")}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "var(--color-text-secondary)",
+                    }}
+                  >
                     {t(
                       "report.executiveSummaryDesc",
                       "Coverage score, key metrics, and signal distribution"
@@ -238,15 +287,25 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
                 <input
                   type="checkbox"
                   checked={options.includeHeatmaps}
-                  onChange={(e) => handleOptionChange("includeHeatmaps", e.target.checked)}
+                  onChange={(e) =>
+                    handleOptionChange("includeHeatmaps", e.target.checked)
+                  }
                   style={{ width: "18px", height: "18px" }}
                 />
                 <div>
                   <div style={{ fontWeight: 500 }}>
                     {t("report.heatmaps", "Heatmap References")}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
-                    {t("report.heatmapsDesc", "Note about heatmap visualization availability")}
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "var(--color-text-secondary)",
+                    }}
+                  >
+                    {t(
+                      "report.heatmapsDesc",
+                      "Note about heatmap visualization availability"
+                    )}
                   </div>
                 </div>
               </label>
@@ -262,14 +321,24 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
                 <input
                   type="checkbox"
                   checked={options.includeRecommendations}
-                  onChange={(e) => handleOptionChange("includeRecommendations", e.target.checked)}
+                  onChange={(e) =>
+                    handleOptionChange(
+                      "includeRecommendations",
+                      e.target.checked
+                    )
+                  }
                   style={{ width: "18px", height: "18px" }}
                 />
                 <div>
                   <div style={{ fontWeight: 500 }}>
                     {t("report.recommendations", "Recommendations")}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "var(--color-text-secondary)",
+                    }}
+                  >
                     {t(
                       "report.recommendationsDesc",
                       "Prioritized improvement suggestions based on analysis"
@@ -289,13 +358,25 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
                 <input
                   type="checkbox"
                   checked={options.includeRawData}
-                  onChange={(e) => handleOptionChange("includeRawData", e.target.checked)}
+                  onChange={(e) =>
+                    handleOptionChange("includeRawData", e.target.checked)
+                  }
                   style={{ width: "18px", height: "18px" }}
                 />
                 <div>
-                  <div style={{ fontWeight: 500 }}>{t("report.rawData", "Raw Sample Data")}</div>
-                  <div style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
-                    {t("report.rawDataDesc", "Appendix with individual sample measurements")}
+                  <div style={{ fontWeight: 500 }}>
+                    {t("report.rawData", "Raw Sample Data")}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "var(--color-text-secondary)",
+                    }}
+                  >
+                    {t(
+                      "report.rawDataDesc",
+                      "Appendix with individual sample measurements"
+                    )}
                   </div>
                 </div>
               </label>
@@ -354,7 +435,10 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
         >
           <button
             onClick={onClose}
-            style={{ ...button.secondary, padding: `${spacing.sm} ${spacing.md}` }}
+            style={{
+              ...button.secondary,
+              padding: `${spacing.sm} ${spacing.md}`,
+            }}
           >
             {t("common.cancel", "Cancel")}
           </button>
@@ -371,7 +455,10 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
           >
             {generating ? (
               <>
-                <Loader size={16} style={{ animation: "spin 1s linear infinite" }} />
+                <Loader
+                  size={16}
+                  style={{ animation: "spin 1s linear infinite" }}
+                />
                 {t("report.generating", "Generating...")}
               </>
             ) : (

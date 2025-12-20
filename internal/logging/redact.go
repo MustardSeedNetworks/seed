@@ -55,9 +55,10 @@ var sensitivePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)(passphrase|pin|shared[_-]?secret)\s*[=:]\s*[^\s&]+`),
 }
 
-// Sensitive header names (case-insensitive) (fixes #713).
-// Extended to include more common authentication and credential headers.
+// Sensitive header names (case-insensitive) (fixes #713, #714).
+// Extended to include authentication, credential, and privacy-sensitive headers.
 var sensitiveHeaders = map[string]bool{
+	// Authentication and credentials
 	"authorization":       true,
 	"x-api-key":           true,
 	"x-auth-token":        true,
@@ -74,6 +75,15 @@ var sensitiveHeaders = map[string]bool{
 	"x-oauth-token":       true,
 	"apikey":              true,
 	"api-key":             true,
+	// Privacy-sensitive headers (fixes #714 - client IP exposure)
+	// These headers can reveal client identity and should not be logged
+	"x-forwarded-for":     true,
+	"x-real-ip":           true,
+	"x-client-ip":         true,
+	"cf-connecting-ip":    true, // Cloudflare
+	"true-client-ip":      true, // Akamai
+	"x-cluster-client-ip": true,
+	"forwarded":           true, // RFC 7239
 }
 
 // RedactString removes sensitive data from a string.
@@ -161,9 +171,17 @@ func LogRequest(r *http.Request, message string) {
 	)
 }
 
-// GetClientIP extracts client IP from request (handles proxies).
+// GetClientIP extracts client IP from request.
+// Security note (fixes #714): This function trusts X-Forwarded-For and X-Real-IP headers,
+// which can be spoofed by clients. Only use this for logging/display purposes, NOT for
+// security decisions like rate limiting or access control. For security-critical uses,
+// see api.GetClientIP which uses only RemoteAddr.
+//
+// IMPORTANT: The returned IP is considered sensitive data and should be redacted in logs
+// unless absolutely necessary. Consider using RemoteAddr directly for security contexts.
 func GetClientIP(r *http.Request) string {
 	// Check X-Forwarded-For (but don't log it - could be sensitive)
+	// WARNING: This header can be spoofed - do not use for security decisions
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
 		if len(parts) > 0 {
@@ -172,11 +190,12 @@ func GetClientIP(r *http.Request) string {
 	}
 
 	// Check X-Real-IP
+	// WARNING: This header can be spoofed - do not use for security decisions
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
 		return xri
 	}
 
-	// Fall back to RemoteAddr
+	// Fall back to RemoteAddr (the only trustworthy source)
 	addr := r.RemoteAddr
 	if idx := strings.LastIndex(addr, ":"); idx != -1 {
 		addr = addr[:idx]

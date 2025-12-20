@@ -28,7 +28,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../hooks/useTheme";
-import { getAuthHeaders } from "../../hooks/useAuth";
+// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { useSettings } from "../../contexts/useSettings";
 import { logger, LogComponents } from "../../lib/logger";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
@@ -69,7 +69,9 @@ import { generateId } from "../../utils/id";
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 // Utility: ensure every item in an array has a stable id for React keying/updating.
-const withIds = <T extends { id?: string }>(items: T[] = []): Array<T & { id: string }> =>
+const withIds = <T extends { id?: string }>(
+  items: T[] = []
+): Array<T & { id: string }> =>
   items.map((item) => ({ ...item, id: item.id ?? generateId() }));
 
 // Normalize tests/DNS settings payload before sending to the API.
@@ -95,7 +97,10 @@ const normalizeTestsSettingsForSave = (settings: TestsSettings) => {
     .map((port) => ({
       name: port.name?.trim() || port.host.trim(),
       host: port.host.trim(),
-      port: typeof port.port === "number" ? port.port : parseInt(String(port.port), 10) || 0,
+      port:
+        typeof port.port === "number"
+          ? port.port
+          : parseInt(String(port.port), 10) || 0,
       enabled: port.enabled !== false,
     }))
     .filter((port) => port.host.length > 0 && port.port > 0);
@@ -104,7 +109,10 @@ const normalizeTestsSettingsForSave = (settings: TestsSettings) => {
     .map((port) => ({
       name: port.name?.trim() || port.host.trim(),
       host: port.host.trim(),
-      port: typeof port.port === "number" ? port.port : parseInt(String(port.port), 10) || 0,
+      port:
+        typeof port.port === "number"
+          ? port.port
+          : parseInt(String(port.port), 10) || 0,
       enabled: port.enabled !== false,
     }))
     .filter((port) => port.host.length > 0 && port.port > 0);
@@ -114,7 +122,8 @@ const normalizeTestsSettingsForSave = (settings: TestsSettings) => {
       name: endpoint.name?.trim() || endpoint.url.trim(),
       url: endpoint.url.trim(),
       expectedStatus:
-        typeof endpoint.expectedStatus === "number" && endpoint.expectedStatus > 0
+        typeof endpoint.expectedStatus === "number" &&
+        endpoint.expectedStatus > 0
           ? endpoint.expectedStatus
           : 200,
       enabled: endpoint.enabled !== false,
@@ -163,7 +172,8 @@ const VLANControl = memo(function VLANControl() {
     try {
       const response = await fetch(`${API_BASE}/api/vlan/interface`, {
         method: "POST",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ vlanId: id }),
       });
       if (response.ok) {
@@ -171,7 +181,10 @@ const VLANControl = memo(function VLANControl() {
         setVlanId("");
       } else {
         const text = await response.text();
-        setMessage({ text: text || t("network.vlan.createFailed"), isError: true });
+        setMessage({
+          text: text || t("network.vlan.createFailed"),
+          isError: true,
+        });
       }
     } catch {
       setMessage({ text: t("network.vlan.networkError"), isError: true });
@@ -192,7 +205,8 @@ const VLANControl = memo(function VLANControl() {
     try {
       const response = await fetch(`${API_BASE}/api/vlan/interface`, {
         method: "DELETE",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ vlanId: id }),
       });
       if (response.ok) {
@@ -200,7 +214,10 @@ const VLANControl = memo(function VLANControl() {
         setVlanId("");
       } else {
         const text = await response.text();
-        setMessage({ text: text || t("network.vlan.deleteFailed"), isError: true });
+        setMessage({
+          text: text || t("network.vlan.deleteFailed"),
+          isError: true,
+        });
       }
     } catch {
       setMessage({ text: t("network.vlan.networkError"), isError: true });
@@ -239,7 +256,9 @@ const VLANControl = memo(function VLANControl() {
         </button>
       </div>
       {message && (
-        <p className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}>
+        <p
+          className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}
+        >
           {message.text}
         </p>
       )}
@@ -269,14 +288,21 @@ const MTUControl = memo(function MTUControl() {
     try {
       const response = await fetch(`${API_BASE}/api/network/mtu`, {
         method: "POST",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ mtu: mtuVal }),
       });
       if (response.ok) {
-        setMessage({ text: t("network.mtuControl.setSuccess", { value: mtuVal }), isError: false });
+        setMessage({
+          text: t("network.mtuControl.setSuccess", { value: mtuVal }),
+          isError: false,
+        });
       } else {
         const text = await response.text();
-        setMessage({ text: text || t("network.mtuControl.setFailed"), isError: true });
+        setMessage({
+          text: text || t("network.mtuControl.setFailed"),
+          isError: true,
+        });
       }
     } catch {
       setMessage({ text: t("network.mtuControl.networkError"), isError: true });
@@ -308,7 +334,9 @@ const MTUControl = memo(function MTUControl() {
         </button>
       </div>
       {message && (
-        <p className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}>
+        <p
+          className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}
+        >
           {message.text}
         </p>
       )}
@@ -343,7 +371,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Create setter wrappers that use context update methods
   const setDisplayOptions = useCallback(
     (updater: React.SetStateAction<typeof displayOptions>) => {
-      const newValue = typeof updater === "function" ? updater(displayOptions) : updater;
+      const newValue =
+        typeof updater === "function" ? updater(displayOptions) : updater;
       updateDisplayOptions(newValue);
     },
     [displayOptions, updateDisplayOptions]
@@ -351,7 +380,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
   const setIperfSettings = useCallback(
     (updater: React.SetStateAction<typeof iperfSettings>) => {
-      const newValue = typeof updater === "function" ? updater(iperfSettings) : updater;
+      const newValue =
+        typeof updater === "function" ? updater(iperfSettings) : updater;
       updateIperfSettings(newValue);
     },
     [iperfSettings, updateIperfSettings]
@@ -427,11 +457,15 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     isWireless: false,
   });
   const [dnsInput, setDnsInput] = useState("");
-  const [iperfSuggestions, setIperfSuggestions] = useState<IperfSuggestion[]>([]);
+  const [iperfSuggestions, setIperfSuggestions] = useState<IperfSuggestion[]>(
+    []
+  );
   const [iperfSuggestionsStatus, setIperfSuggestionsStatus] = useState<
     "idle" | "loading" | "error"
   >("idle");
-  const [iperfSuggestionsError, setIperfSuggestionsError] = useState<string | null>(null);
+  const [iperfSuggestionsError, setIperfSuggestionsError] = useState<
+    string | null
+  >(null);
   // Network Discovery settings
   const [networkDiscoverySettings, setNetworkDiscoverySettings] =
     useState<NetworkDiscoverySettings>({
@@ -484,7 +518,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const displayStatus = settingsStatus.display;
   const iperfStatus = settingsStatus.iperf;
 
-  const [networkDiscoveryStatus, setNetworkDiscoveryStatus] = useState<SaveStatus>("idle");
+  const [networkDiscoveryStatus, setNetworkDiscoveryStatus] =
+    useState<SaveStatus>("idle");
 
   // Refs to track initial load (skip auto-save on first load)
   const initialLoadRef = useRef(true);
@@ -498,7 +533,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const testsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wifiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const snmpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Legacy state (keep for IP settings which still needs manual apply)
@@ -509,7 +546,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const fetchThresholds = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/settings`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -529,7 +566,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const fetchIPSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/ipconfig/settings`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -551,7 +588,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const fetchTestsSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -603,7 +640,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     setIperfSuggestionsError(null);
     try {
       const response = await fetch(`${API_BASE}/api/iperf/suggestions`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -615,7 +652,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       }
     } catch (err) {
       setIperfSuggestionsStatus("error");
-      setIperfSuggestionsError(err instanceof Error ? err.message : "Failed to find iperf hosts");
+      setIperfSuggestionsError(
+        err instanceof Error ? err.message : "Failed to find iperf hosts"
+      );
     }
   }, []);
 
@@ -623,7 +662,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const fetchWifiSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/wifi/settings`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -645,7 +684,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const fetchNetworkDiscoverySettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/devices/settings`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -673,7 +712,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         });
       }
     } catch (err) {
-      logger.error(LogComponents.DISCOVERY, "Failed to fetch network discovery settings", err);
+      logger.error(
+        LogComponents.DISCOVERY,
+        "Failed to fetch network discovery settings",
+        err
+      );
     }
   }, []);
 
@@ -681,7 +724,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const fetchSNMPSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/snmp/settings`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -702,7 +745,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const fetchSubnets = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/devices/subnets`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -720,7 +763,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     setLogError(null);
     try {
       const response = await fetch(`${API_BASE}/api/logs?lines=200`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
       });
       if (!response.ok) {
         throw new Error("Unable to load logs");
@@ -729,7 +772,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       setLogPreview(data.lines || []);
     } catch (err) {
       setLogPreview([]);
-      setLogError(err instanceof Error ? err.message : "Failed to load log file");
+      setLogError(
+        err instanceof Error ? err.message : "Failed to load log file"
+      );
     } finally {
       setLogLoading(false);
     }
@@ -756,9 +801,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/devices/subnets`, {
         method: "POST",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           cidr: newSubnetCidr.trim(),
           name: newSubnetName.trim() || newSubnetCidr.trim(),
@@ -785,7 +830,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         setSubnetsStatus("error");
       }
     } catch (err) {
-      setSubnetError(err instanceof Error ? err.message : "Network error adding subnet");
+      setSubnetError(
+        err instanceof Error ? err.message : "Network error adding subnet"
+      );
       setSubnetsStatus("error");
     }
   };
@@ -797,9 +844,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/devices/subnets`, {
         method: "PUT",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ cidr, enabled }),
       });
 
@@ -822,9 +869,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/devices/subnets`, {
         method: "DELETE",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ cidr }),
       });
 
@@ -847,9 +894,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/devices/settings`, {
         method: "PUT",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(networkDiscoverySettings),
       });
       if (response.ok) {
@@ -869,9 +916,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/snmp/settings`, {
         method: "PUT",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(snmpSettings),
       });
       if (response.ok) {
@@ -931,9 +978,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/settings`, {
         method: "PUT",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ thresholds }),
       });
       if (response.ok) {
@@ -960,9 +1007,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/ipconfig/settings`, {
         method: "PUT",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           mode: ipSettings.mode,
           address: ipSettings.address,
@@ -992,9 +1039,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
         method: "PUT",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
       if (response.ok) {
@@ -1016,9 +1063,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       const response = await fetch(`${API_BASE}/api/wifi/settings`, {
         method: "PUT",
         headers: {
-          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ interface: wifiSettings.interface }),
       });
       if (response.ok) {
@@ -1073,12 +1120,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Auto-save Network Discovery settings with debounce
   useEffect(() => {
     if (networkDiscoveryInitRef.current) return;
-    if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
+    if (networkDiscoveryTimerRef.current)
+      clearTimeout(networkDiscoveryTimerRef.current);
     networkDiscoveryTimerRef.current = setTimeout(() => {
       saveNetworkDiscoverySettings();
     }, 800);
     return () => {
-      if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
+      if (networkDiscoveryTimerRef.current)
+        clearTimeout(networkDiscoveryTimerRef.current);
     };
   }, [networkDiscoverySettings, saveNetworkDiscoverySettings]);
 
@@ -1131,7 +1180,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   return (
     <>
       {/* Backdrop */}
-      <div className={`fixed inset-0 ${modal.overlay} z-40`} onClick={onClose} aria-hidden="true" />
+      <div
+        className={`fixed inset-0 ${modal.overlay} z-40`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Drawer - full width on mobile, 384px on larger screens */}
       <div
@@ -1174,7 +1227,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           </button>
         </div>
 
-        <div className={`${spacing.drawerPad} section-gap body-small leading-relaxed`}>
+        <div
+          className={`${spacing.drawerPad} section-gap body-small leading-relaxed`}
+        >
           {/* Drawer content padding includes pt-4 for top spacing */}
           {/* Network Section */}
           <CollapsibleSection title={t("sections.network")}>
@@ -1184,7 +1239,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {/* Mode Toggle */}
               <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
                 <button
-                  onClick={() => setIPSettings((prev) => ({ ...prev, mode: "dhcp" }))}
+                  onClick={() =>
+                    setIPSettings((prev) => ({ ...prev, mode: "dhcp" }))
+                  }
                   className={`${spacing.tab} ${radius.md} body-small font-medium transition-colors ${
                     ipSettings.mode === "dhcp"
                       ? "bg-brand-primary text-text-inverse"
@@ -1194,7 +1251,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                   {t("network.dhcp")}
                 </button>
                 <button
-                  onClick={() => setIPSettings((prev) => ({ ...prev, mode: "static" }))}
+                  onClick={() =>
+                    setIPSettings((prev) => ({ ...prev, mode: "static" }))
+                  }
                   className={`${spacing.tab} ${radius.md} body-small font-medium transition-colors ${
                     ipSettings.mode === "static"
                       ? "bg-brand-primary text-text-inverse"
@@ -1211,7 +1270,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                   className={`stack ${spacing.padding.top.heading} border-t border-surface-border`}
                 >
                   <div>
-                    <label className="caption font-medium">{t("network.ipAddress")} *</label>
+                    <label className="caption font-medium">
+                      {t("network.ipAddress")} *
+                    </label>
                     <input
                       type="text"
                       value={ipSettings.address}
@@ -1230,7 +1291,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label className="caption font-medium">{t("network.subnetMask")} *</label>
+                    <label className="caption font-medium">
+                      {t("network.subnetMask")} *
+                    </label>
                     <input
                       type="text"
                       value={ipSettings.netmask}
@@ -1245,7 +1308,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label className="caption font-medium">{t("network.gateway")}</label>
+                    <label className="caption font-medium">
+                      {t("network.gateway")}
+                    </label>
                     <input
                       type="text"
                       value={ipSettings.gateway}
@@ -1264,7 +1329,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label className="caption font-medium">{t("network.dnsServers")}</label>
+                    <label className="caption font-medium">
+                      {t("network.dnsServers")}
+                    </label>
                     <input
                       type="text"
                       value={dnsInput}
@@ -1279,10 +1346,15 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {/* Apply Button */}
               <button
                 onClick={saveIPSettings}
-                disabled={savingIP || (ipSettings.mode === "static" && !ipSettings.address)}
+                disabled={
+                  savingIP ||
+                  (ipSettings.mode === "static" && !ipSettings.address)
+                }
                 className={`w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors`}
               >
-                {savingIP ? t("network.applying") : t("network.applyIPSettings")}
+                {savingIP
+                  ? t("network.applying")
+                  : t("network.applyIPSettings")}
               </button>
 
               {ipMessage && (
@@ -1304,8 +1376,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             <div
               className={`border-t border-surface-border ${spacing.padding.top.heading} ${spacing.margin.top.heading}`}
             >
-              <p className={`caption font-medium ${spacing.margin.bottom.inline}`}>
-                {t("network.displayOptions")} <AutoSaveIndicator status={displayStatus} />
+              <p
+                className={`caption font-medium ${spacing.margin.bottom.inline}`}
+              >
+                {t("network.displayOptions")}{" "}
+                <AutoSaveIndicator status={displayStatus} />
               </p>
               <div className="stack-sm">
                 {/* Measurement Units */}
@@ -1316,7 +1391,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     <span className="body-small text-text-primary font-medium">
                       {t("network.measurementSystem")}
                     </span>
-                    <p className="caption text-text-muted">{t("network.measurementDescription")}</p>
+                    <p className="caption text-text-muted">
+                      {t("network.measurementDescription")}
+                    </p>
                   </div>
                   <select
                     value={displayOptions.unitSystem || "sae"}
@@ -1328,8 +1405,12 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     }
                     className={`${input.size.sm} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
                   >
-                    <option value="sae">{t("display.unitSae", "SAE (feet)")}</option>
-                    <option value="metric">{t("display.unitMetric", "Metric (meters)")}</option>
+                    <option value="sae">
+                      {t("display.unitSae", "SAE (feet)")}
+                    </option>
+                    <option value="metric">
+                      {t("display.unitMetric", "Metric (meters)")}
+                    </option>
                   </select>
                 </div>
 
@@ -1341,7 +1422,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     <span className="body-small text-text-primary font-medium">
                       {t("network.showPublicIP")}
                     </span>
-                    <p className="caption text-text-muted">{t("network.displayInNetworkCard")}</p>
+                    <p className="caption text-text-muted">
+                      {t("network.displayInNetworkCard")}
+                    </p>
                   </div>
                   <input
                     type="checkbox"
@@ -1439,17 +1522,27 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           />
 
           {/* Appearance Section */}
-          <AppearanceSettings theme={theme} setTheme={setTheme} isDark={isDark} />
+          <AppearanceSettings
+            theme={theme}
+            setTheme={setTheme}
+            isDark={isDark}
+          />
 
           {/* Config Backups Section (implements #494) */}
           <ConfigBackupsSection />
 
           {/* Logs (debug) */}
-          <section className={`${spacing.padding.top.section} border-t border-surface-border`}>
+          <section
+            className={`${spacing.padding.top.section} border-t border-surface-border`}
+          >
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="body-small font-medium text-text-muted">{t("logs.title")}</h3>
-                <p className="caption text-text-muted">{t("logs.description")}</p>
+                <h3 className="body-small font-medium text-text-muted">
+                  {t("logs.title")}
+                </h3>
+                <p className="caption text-text-muted">
+                  {t("logs.description")}
+                </p>
               </div>
               <button
                 onClick={fetchLogPreview}
@@ -1459,7 +1552,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               </button>
             </div>
             {logError && (
-              <p className={`caption text-status-error ${spacing.margin.top.inline}`}>{logError}</p>
+              <p
+                className={`caption text-status-error ${spacing.margin.top.inline}`}
+              >
+                {logError}
+              </p>
             )}
             {!logError && logPreview.length > 0 && (
               <pre
@@ -1471,7 +1568,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           </section>
 
           {/* Export Section */}
-          <section className={`${spacing.padding.top.section} border-t border-surface-border`}>
+          <section
+            className={`${spacing.padding.top.section} border-t border-surface-border`}
+          >
             <h3
               className={`body-small font-medium text-text-muted ${spacing.margin.bottom.heading}`}
             >
@@ -1497,13 +1596,17 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               </svg>
               {t("export.download")}
             </a>
-            <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+            <p
+              className={`caption text-text-muted ${spacing.margin.top.inline}`}
+            >
               {t("export.description")}
             </p>
           </section>
 
           {/* About Section */}
-          <section className={`${spacing.padding.top.section} border-t border-surface-border`}>
+          <section
+            className={`${spacing.padding.top.section} border-t border-surface-border`}
+          >
             <h3
               className={`body-small font-medium text-text-muted ${spacing.margin.bottom.inline}`}
             >

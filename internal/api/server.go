@@ -54,6 +54,7 @@ type Server struct {
 	logPath             string
 	httpServer          *http.Server
 	authManager         *auth.Manager
+	setupTokenManager   *SetupTokenManager // Setup token manager for secure initial setup (fixes #724, #758)
 	loginRateLimiter    *RateLimiter
 	endpointRateLimiter *EndpointRateLimiter // Rate limiter for expensive endpoints (fixes #530)
 	wsHub               *Hub
@@ -87,6 +88,8 @@ type Server struct {
 }
 
 // NewServer creates a new server instance.
+//
+//nolint:gocyclo // Server initialization requires many configuration steps
 func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.Manager, icmpAvailable bool) *Server {
 	s := &Server{
 		config:        cfg,
@@ -104,6 +107,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		),
 		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
 		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()), // Rate limit expensive endpoints (fixes #530)
+		setupTokenManager:   NewSetupTokenManager(),                                   // Setup token for secure initial setup (fixes #724, #758)
 		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
 		discoveryManager:    discovery.NewManager(cfg.Interface.Default),
 		deviceDiscovery:     discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
@@ -455,7 +459,9 @@ func corsMiddleware(next http.Handler) http.Handler {
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusForbidden)
 			} else {
-				http.Error(w, "Forbidden: null origin not allowed", http.StatusForbidden)
+				logger := logging.FromContext(r.Context())
+				localizer := i18n.FromRequest(r)
+				sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeForbidden, localizer.T("errors.security.nullOriginForbidden"), "") // fixes #694
 			}
 			return
 		}
@@ -542,7 +548,9 @@ func recoverMiddleware(next http.Handler) http.Handler {
 					"path", r.URL.Path,
 					"error", err,
 					"stack", string(debug.Stack()))
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				logger := logging.FromContext(r.Context())
+				localizer := i18n.FromRequest(r)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.panicRecovered"), "") // fixes #694
 			}
 		}()
 		next.ServeHTTP(w, r)

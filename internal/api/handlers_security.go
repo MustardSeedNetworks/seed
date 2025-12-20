@@ -3,7 +3,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/gateway"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -47,6 +47,8 @@ type RogueDHCPConfigResponse struct {
 // handleRogueDHCP starts/stops rogue DHCP detection (POST) or gets status (GET).
 func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		// Get current status
@@ -65,7 +67,7 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 			Action string `json:"action"` // "start" or "stop"
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 			return
 		}
 
@@ -113,17 +115,19 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 			sendJSONResponse(w, logger, http.StatusOK, resp)
 
 		default:
-			http.Error(w, "Invalid action. Use 'start' or 'stop'", http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.security.invalidAction"), "") // fixes #694
 		}
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
 // handleRogueDHCPServers returns detected DHCP servers (GET) or clears the list (DELETE).
 func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		// Get all detected servers
@@ -145,13 +149,15 @@ func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) 
 		})
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
 // handleRogueDHCPConfig gets (GET) or updates (PUT) the rogue DHCP detector configuration.
 func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		// Get current configuration
@@ -175,7 +181,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 			AlertOnDetection *bool    `json:"alertOnDetection,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 			return
 		}
 
@@ -210,7 +216,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		sendJSONResponse(w, logger, http.StatusOK, resp)
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
@@ -232,13 +238,15 @@ type GatewayResponse struct {
 // handleGateway performs gateway ping testing and returns results.
 func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.gatewayTester == nil {
-		http.Error(w, "Gateway tester not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.security.gatewayTesterUnavailable"), "") // fixes #694
 		return
 	}
 
@@ -308,13 +316,16 @@ type SNMPv3CredentialResponse struct {
 
 // handleSNMPSettings handles GET/PUT for SNMP settings.
 func (s *Server) handleSNMPSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		s.getSNMPSettings(w, r)
 	case http.MethodPut:
 		s.updateSNMPSettings(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
@@ -363,12 +374,14 @@ func (s *Server) getSNMPSettings(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	// Limit request body size to prevent DoS attacks (fixes #682)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeConfig)
 
 	var req SNMPSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -394,7 +407,7 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			// New password provided - encrypt it
 			encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
 			if err != nil {
-				http.Error(w, fmt.Sprintf("Failed to encrypt auth password: %v", err), http.StatusInternalServerError)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptAuth"), err.Error()) // fixes #694
 				return
 			}
 			newCred.AuthPassword = encrypted
@@ -408,7 +421,7 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			// New password provided - encrypt it
 			encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
 			if err != nil {
-				http.Error(w, fmt.Sprintf("Failed to encrypt priv password: %v", err), http.StatusInternalServerError)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptPriv"), err.Error()) // fixes #694
 				return
 			}
 			newCred.PrivPassword = encrypted

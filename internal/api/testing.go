@@ -69,6 +69,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		speedtestTester:     speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 		iperfManager:        iperf.NewManager(),
 		publicipChecker:     publicip.NewChecker(),
+		setupTokenManager:   NewSetupTokenManager(), // Fixes test initialization
 	}
 
 	// Initialize WebSocket hub

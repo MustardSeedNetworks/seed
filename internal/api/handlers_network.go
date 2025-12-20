@@ -3,12 +3,13 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/dhcp"
+	"github.com/krisarmstrong/seed/internal/i18n"
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/validation"
 	"github.com/krisarmstrong/seed/internal/vlan"
@@ -184,18 +185,21 @@ type SetMTURequest struct {
 // ============================================================================
 
 func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.netManager == nil {
-		http.Error(w, "Network manager not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Network manager"}), "") // fixes #694
 		return
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
 		return
 	}
 	interfaces := s.netManager.GetInterfaces()
@@ -205,8 +209,11 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 
 // handleInterface handles GET/PUT for current interface.
 func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if s.netManager == nil {
-		http.Error(w, "Network manager not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Network manager"}), "") // fixes #694
 		return
 	}
 
@@ -221,12 +228,12 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 
 		var req SetInterfaceRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 			return
 		}
 
 		if err := s.netManager.SetCurrentInterface(req.Interface); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.network.invalidInterface"), err.Error()) // fixes #694
 			return
 		}
 
@@ -265,31 +272,34 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			"isWireless": isWireless,
 		})
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
 // handleLink returns link status for the current interface.
 func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.netManager == nil {
-		http.Error(w, "Network manager not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Network manager"}), "") // fixes #694
 		return
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
 		return
 	}
 	currentIface := s.netManager.GetCurrentInterface()
 
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
 	if err != nil {
-		http.Error(w, "Interface not found", http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), err.Error()) // fixes #694
 		return
 	}
 
@@ -337,25 +347,28 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 
 // handleIPConfig returns IP configuration for the current interface.
 func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.netManager == nil {
-		http.Error(w, "Network manager not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Network manager"}), "") // fixes #694
 		return
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
 		return
 	}
 	currentIface := s.netManager.GetCurrentInterface()
 
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
 	if err != nil {
-		http.Error(w, "Interface not found", http.StatusNotFound)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), err.Error()) // fixes #694
 		return
 	}
 
@@ -396,13 +409,15 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 
 // handleVLAN returns VLAN information for the current interface.
 func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694
 		return
 	}
 
 	if s.vlanManager == nil {
-		http.Error(w, "VLAN manager not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "VLAN manager not available", "") // fixes #694
 		return
 	}
 
@@ -441,13 +456,16 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 
 // handleVLANTraffic returns VLAN traffic statistics from frame capture.
 func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.vlanTrafficMonitor == nil {
-		http.Error(w, "VLAN traffic monitor not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "VLAN traffic monitor"}), "") // fixes #694
 		return
 	}
 
@@ -472,31 +490,34 @@ func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
 
 // handleVLANInterface handles POST (create) and DELETE (remove) for VLAN subinterfaces.
 func (s *Server) handleVLANInterface(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodPost:
-		s.createVLANInterface(w, r)
+		s.createVLANInterface(w, r, logger, localizer)
 	case http.MethodDelete:
-		s.deleteVLANInterface(w, r)
+		s.deleteVLANInterface(w, r, logger, localizer)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
 // parseVLANRequest parses and validates a VLAN interface request.
 // Returns the validated interface name, VLAN ID, and success boolean.
-func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (iface string, vlanID int, ok bool) {
+func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) (iface string, vlanID int, ok bool) {
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req VLANInterfaceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return "", 0, false
 	}
 
 	// Validate VLAN ID (fixes #522)
 	if err := validation.ValidateVLANID(req.VlanID); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vlan.invalidId"), err.Error()) // fixes #694
 		return "", 0, false
 	}
 
@@ -508,7 +529,7 @@ func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (iface
 
 	// Validate interface name
 	if err := validation.ValidateInterface(iface); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid interface: %v", err), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.network.invalidInterface"), err.Error()) // fixes #694
 		return "", 0, false
 	}
 
@@ -518,14 +539,16 @@ func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request) (iface
 }
 
 // createVLANInterface creates an 802.1Q VLAN subinterface.
-func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request) {
-	iface, vlanID, ok := s.parseVLANRequest(w, r)
+//
+//nolint:dupl // Intentionally similar to deleteVLANInterface - different CRUD operations
+func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
+	iface, vlanID, ok := s.parseVLANRequest(w, r, logger, localizer)
 	if !ok {
 		return
 	}
 
 	if err := vlan.CreateVlanInterface(iface, vlanID); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to create VLAN interface: %v", err), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.vlan.failedToCreate"), err.Error()) // fixes #694
 		return
 	}
 
@@ -538,14 +561,16 @@ func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request) {
 }
 
 // deleteVLANInterface removes an 802.1Q VLAN subinterface.
-func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request) {
-	iface, vlanID, ok := s.parseVLANRequest(w, r)
+//
+//nolint:dupl // Intentionally similar to createVLANInterface - different CRUD operations
+func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
+	iface, vlanID, ok := s.parseVLANRequest(w, r, logger, localizer)
 	if !ok {
 		return
 	}
 
 	if err := vlan.DeleteVlanInterface(iface, vlanID); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to delete VLAN interface: %v", err), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.vlan.failedToDelete"), err.Error()) // fixes #694
 		return
 	}
 
@@ -559,13 +584,16 @@ func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request) {
 
 // handleWiFiSettings handles GET/PUT for WiFi settings.
 func (s *Server) handleWiFiSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		s.getWiFiSettings(w, r)
 	case http.MethodPut:
-		s.updateWiFiSettings(w, r)
+		s.updateWiFiSettings(w, r, logger, localizer)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
@@ -595,7 +623,7 @@ func (s *Server) getWiFiSettings(w http.ResponseWriter, _ *http.Request) {
 	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
-func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
@@ -603,7 +631,7 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
 		Interface string `json:"interface"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
@@ -632,13 +660,16 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request) {
 
 // handleWiFi returns Wi-Fi information for the current interface.
 func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.wifiManager == nil {
-		http.Error(w, "Wi-Fi manager not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Wi-Fi manager"}), "") // fixes #694
 		return
 	}
 
@@ -676,8 +707,11 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 
 // handleWiFiScan performs a WiFi network scan and returns discovered networks.
 func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -719,8 +753,11 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 
 // handleWiFiStatus returns the WiFi adapter status without performing a scan.
 func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -772,8 +809,11 @@ func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 // handleWiFiChannelGraph returns channel overlap graph data for WiFi visualization.
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -824,13 +864,16 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 
 // handleIPSettings handles GET/PUT for IP configuration settings.
 func (s *Server) handleIPSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	switch r.Method {
 	case http.MethodGet:
 		s.handleIPSettingsGet(w, r)
 	case http.MethodPut:
-		s.handleIPSettingsPut(w, r)
+		s.handleIPSettingsPut(w, r, logger, localizer)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
@@ -851,19 +894,19 @@ func (s *Server) handleIPSettingsGet(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleIPSettingsPut updates the IP configuration settings.
-func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req IPSettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate mode
 	if req.Mode != ipModeDHCP && req.Mode != ipModeStatic {
-		http.Error(w, "Mode must be 'dhcp' or 'static'", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.network.invalidMode"), "") // fixes #694
 		return
 	}
 
@@ -883,7 +926,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := s.netManager.ConfigureStaticIP(currentIface, cfg); err != nil {
-			http.Error(w, fmt.Sprintf("Failed to configure static IP: %v", err), http.StatusInternalServerError)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.staticConfigFailed"), err.Error()) // fixes #694
 			return
 		}
 
@@ -898,7 +941,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// Switch to DHCP
 		if err := s.netManager.ConfigureDHCP(currentIface); err != nil {
-			http.Error(w, fmt.Sprintf("Failed to configure DHCP: %v", err), http.StatusInternalServerError)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.dhcpConfigFailed"), err.Error()) // fixes #694
 			return
 		}
 
@@ -915,7 +958,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 
 	// Refresh interface data
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		http.Error(w, "Failed to refresh interfaces", http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
 		return
 	}
 
@@ -927,8 +970,11 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request) {
 
 // handleSetMTU handles POST requests to set interface MTU.
 func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
@@ -937,13 +983,13 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	var req SetMTURequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
 	// Validate MTU value
 	if err := validation.ValidateMTU(req.MTU); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid MTU: %v", err), http.StatusBadRequest)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.mtu.invalidRange"), err.Error()) // fixes #694
 		return
 	}
 
@@ -955,7 +1001,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	// Set the MTU
 	if err := s.netManager.SetMTU(iface, req.MTU); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to set MTU: %v", err), http.StatusInternalServerError)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), err.Error()) // fixes #694
 		return
 	}
 
@@ -974,13 +1020,16 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 // handleCable performs a cable test and returns results.
 func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 		return
 	}
 
 	if s.cableTester == nil {
-		http.Error(w, "Cable tester not available", http.StatusServiceUnavailable)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Cable tester"}), "") // fixes #694
 		return
 	}
 

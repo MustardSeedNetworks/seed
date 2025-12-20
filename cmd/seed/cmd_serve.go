@@ -186,19 +186,34 @@ func migrateSNMPCredentials(cfg *config.Config, configPath string) {
 }
 
 // setupNetworkInterface initializes the network manager and finds an active interface.
+// Fix #571: Use auto-detection when no default interface is configured.
 func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manager {
-	if cfg.Interface.Default == "" {
-		slog.Error("No default network interface specified in configuration")
+	// Fix #571: Auto-detect interface if none specified
+	initialInterface := cfg.Interface.Default
+	if initialInterface == "" {
+		// Use config's GetActiveInterface which does auto-detection
+		detected, usedFallback := cfg.GetActiveInterface()
+		if detected != "" {
+			if usedFallback {
+				slog.Info("Auto-detected active interface", "interface", detected)
+			}
+			initialInterface = detected
+		}
+	}
+
+	// Still require at least some interface to start with
+	if initialInterface == "" {
+		slog.Error("No network interface found - please ensure at least one interface is up with an IP address")
 		os.Exit(1)
 	}
 
-	netMgr, err := network.NewManager(cfg.Interface.Default)
+	netMgr, err := network.NewManager(initialInterface)
 	if err != nil {
 		slog.Error("Failed to initialize network manager", "error", err)
 		os.Exit(1)
 	}
 
-	preferred := append([]string{cfg.Interface.Default}, cfg.Interface.Fallbacks...)
+	preferred := append([]string{initialInterface}, cfg.Interface.Fallbacks...)
 	activeInterface := findActiveInterface(netMgr, preferred, cfg.Interface.StartupRetries, cfg.Interface.StartupRetryWait)
 
 	if activeInterface == "" {

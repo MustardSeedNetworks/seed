@@ -42,12 +42,17 @@ import {
 
 interface WiFiSurveyCardProps {
   isWifi: boolean;
+  /** Current WiFi interface name - fix #572: no hardcoded interface names */
+  currentInterface?: string;
 }
 
 /**
  * Manages WiFi site surveys for signal mapping with floor plan integration.
  */
-export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
+export function WiFiSurveyCard({
+  isWifi,
+  currentInterface = "",
+}: WiFiSurveyCardProps) {
   const { t } = useTranslation("cards");
   const {
     surveys,
@@ -63,7 +68,9 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
 
-  const activeSurveys = surveys.filter((s) => s.status === "in_progress" || s.status === "paused");
+  const activeSurveys = surveys.filter(
+    (s) => s.status === "in_progress" || s.status === "paused"
+  );
 
   // Fixes #737: Use "success" for no surveys (ready state) instead of confusing "?" badge
   const getCardStatus = (): Status => {
@@ -71,7 +78,11 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
     return "success"; // Ready or completed - system is healthy
   };
 
-  const handleCreateSurvey = async (name: string, surveyType: SurveyType, iface: string) => {
+  const handleCreateSurvey = async (
+    name: string,
+    surveyType: SurveyType,
+    iface: string
+  ) => {
     try {
       const newSurvey = await createSurvey({
         name,
@@ -116,7 +127,9 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
       case "created":
         return t("survey.created");
       default:
-        return status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
+        return status
+          .replace("_", " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase());
     }
   };
 
@@ -155,12 +168,16 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
         )}
 
         {loading && surveys.length === 0 ? (
-          <div className={`text-center ${spacing.pad.lg} text-text-muted body-small`}>
+          <div
+            className={`text-center ${spacing.pad.lg} text-text-muted body-small`}
+          >
             {t("survey.loading")}
           </div>
         ) : surveys.length === 0 ? (
           <div className={`text-center ${spacing.pad.lg} text-text-muted`}>
-            <p className={`body-small ${spacing.margin.bottom.inline}`}>{t("survey.noSurveys")}</p>
+            <p className={`body-small ${spacing.margin.bottom.inline}`}>
+              {t("survey.noSurveys")}
+            </p>
             <button
               onClick={() => setShowCreateDialog(true)}
               className="body-small text-brand-primary hover:underline"
@@ -179,7 +196,9 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                 <div className={layout.flex.between}>
                   <div className="flex-1 min-w-0">
                     <div className={layout.inline.default}>
-                      <h4 className="font-medium body-small truncate">{survey.name}</h4>
+                      <h4 className="font-medium body-small truncate">
+                        {survey.name}
+                      </h4>
                       <span className="caption text-text-muted">
                         {getStatusLabel(survey.status)}
                       </span>
@@ -189,11 +208,14 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
                     >
                       <span>{getSurveyTypeLabel(survey.surveyType)}</span>
                       <span>
-                        {survey.samples?.length ?? 0} {t("survey.samples").toLowerCase()}
+                        {survey.samples?.length ?? 0}{" "}
+                        {t("survey.samples").toLowerCase()}
                       </span>
                     </div>
                   </div>
-                  <div className={`${layout.inline.tight} ${spacing.margin.left.inline}`}>
+                  <div
+                    className={`${layout.inline.tight} ${spacing.margin.left.inline}`}
+                  >
                     {survey.status === "created" && (
                       <button
                         onClick={(e) => {
@@ -257,7 +279,9 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
               </div>
             ))}
             {surveys.length > 3 && (
-              <div className={`text-center caption text-text-muted ${spacing.padding.top.tight}`}>
+              <div
+                className={`text-center caption text-text-muted ${spacing.padding.top.tight}`}
+              >
                 {t("survey.more", { count: surveys.length - 3 })}
               </div>
             )}
@@ -270,6 +294,7 @@ export function WiFiSurveyCard({ isWifi }: WiFiSurveyCardProps) {
           onClose={() => setShowCreateDialog(false)}
           onCreate={handleCreateSurvey}
           t={t}
+          currentInterface={currentInterface}
         />
       )}
 
@@ -291,16 +316,24 @@ interface CreateSurveyDialogProps {
   onClose: () => void;
   onCreate: (name: string, type: SurveyType, iface: string) => void;
   t: ReturnType<typeof useTranslation<"cards">>["t"];
+  /** Current WiFi interface name - fix #572: no hardcoded interface names */
+  currentInterface?: string;
 }
 
-function CreateSurveyDialog({ onClose, onCreate, t }: CreateSurveyDialogProps) {
+function CreateSurveyDialog({
+  onClose,
+  onCreate,
+  t,
+  currentInterface = "",
+}: CreateSurveyDialogProps) {
   const [name, setName] = useState("");
   const [surveyType, setSurveyType] = useState<SurveyType>("passive");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onCreate(name.trim(), surveyType, "wlan0");
+      // Fix #572: Use interface from props instead of hardcoded "wlan0"
+      onCreate(name.trim(), surveyType, currentInterface);
     }
   };
 
@@ -328,7 +361,10 @@ function CreateSurveyDialog({ onClose, onCreate, t }: CreateSurveyDialogProps) {
               />
             </div>
             <div>
-              <label className={`label block ${spacing.margin.bottom.tight}`} htmlFor="survey-type">
+              <label
+                className={`label block ${spacing.margin.bottom.tight}`}
+                htmlFor="survey-type"
+              >
                 {t("survey.surveyType")}
               </label>
               <select
@@ -343,7 +379,9 @@ function CreateSurveyDialog({ onClose, onCreate, t }: CreateSurveyDialogProps) {
               </select>
             </div>
           </div>
-          <div className={`${layout.inline.default} ${spacing.margin.top.section}`}>
+          <div
+            className={`${layout.inline.default} ${spacing.margin.top.section}`}
+          >
             <button
               type="button"
               onClick={onClose}
