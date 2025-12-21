@@ -1275,7 +1275,7 @@ function App() {
               {t("sections.connectivity")}
             </h2>
             <div
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${spacing.gap.comfortable}`}
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
             >
               {/* WiFi-only cards */}
               {isWifi && (
@@ -1311,7 +1311,7 @@ function App() {
               {t("sections.network")}
             </h2>
             <div
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${spacing.gap.comfortable}`}
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
             >
               <NetworkCard
                 data={cards.dhcp}
@@ -1336,7 +1336,7 @@ function App() {
               {t("sections.testingDiscovery")}
             </h2>
             <div
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${spacing.gap.comfortable}`}
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
             >
               {/* Common cards for both interface types */}
               <HealthCheckCard loading={loading} />
@@ -1382,7 +1382,7 @@ function App() {
               {t("sections.system")}
             </h2>
             <div
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${spacing.gap.comfortable}`}
+              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
             >
               <SystemHealthCard />
             </div>
