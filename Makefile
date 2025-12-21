@@ -1004,7 +1004,7 @@ license-check: ## Check license compliance (Go + npm)
 		printf "$(YELLOW)SKIP: go-licenses not installed$(RESET)\n"; \
 	fi
 	@printf "\n$(BOLD)=== npm Dependencies ===$(RESET)\n"
-	@cd web && npx license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense" --summary
+	@cd web && npx license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense;MPL-2.0" --summary
 	@printf "\n$(GREEN)✓ License compliance check complete$(RESET)\n"
 
 license-report: ## Generate license compliance reports
@@ -1055,7 +1055,7 @@ security-secrets: ## Scan for secrets in codebase (gitleaks)
 	@printf "$(BOLD)🔒 Running gitleaks...$(RESET)\n"
 	@if ! command -v gitleaks > /dev/null 2>&1; then \
 		printf "📦 Installing gitleaks...\n"; \
-		go install github.com/gitleaks/gitleaks/v8@latest; \
+		go install github.com/zricethezav/gitleaks/v8@latest; \
 	fi
 	@gitleaks detect --source . --config .gitleaks.toml --verbose
 	@printf "$(GREEN)✓ Secret scan complete$(RESET)\n"
@@ -1063,7 +1063,7 @@ security-secrets: ## Scan for secrets in codebase (gitleaks)
 # Secret scanning (quiet mode)
 security-secrets-quiet:
 	@if ! command -v gitleaks > /dev/null 2>&1; then \
-		go install github.com/gitleaks/gitleaks/v8@latest; \
+		go install github.com/zricethezav/gitleaks/v8@latest; \
 	fi
 	@printf "   Scanning for secrets...\n"
 	@gitleaks detect --source . --config .gitleaks.toml 2>&1 | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"
@@ -1211,7 +1211,7 @@ tools-go: ## Install Go development tools
 	@printf "  gofumpt (strict formatter)...\n"
 	@go install mvdan.cc/gofumpt@latest
 	@printf "  gitleaks (secret scanner)...\n"
-	@go install github.com/gitleaks/gitleaks/v8@latest
+	@go install github.com/zricethezav/gitleaks/v8@latest
 	@printf "  deadcode (unused code finder)...\n"
 	@go install golang.org/x/tools/cmd/deadcode@latest
 	@printf "  gotestsum (test runner with better output)...\n"
@@ -1227,7 +1227,7 @@ tools-go-quiet:
 	@go install golang.org/x/vuln/cmd/govulncheck@latest 2>/dev/null
 	@go install golang.org/x/tools/cmd/goimports@latest 2>/dev/null
 	@go install mvdan.cc/gofumpt@latest 2>/dev/null
-	@go install github.com/gitleaks/gitleaks/v8@latest 2>/dev/null
+	@go install github.com/zricethezav/gitleaks/v8@latest 2>/dev/null
 	@go install golang.org/x/tools/cmd/deadcode@latest 2>/dev/null
 	@go install gotest.tools/gotestsum@latest 2>/dev/null
 	@go install github.com/google/go-licenses@latest 2>/dev/null
