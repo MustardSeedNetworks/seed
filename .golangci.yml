@@ -109,6 +109,7 @@ linters:
         text: "var-naming: avoid meaningless package names"
 
 output:
+  sort-results: true
   sort-order:
     - linter
     - file

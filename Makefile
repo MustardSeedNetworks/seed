@@ -816,25 +816,27 @@ lint: ## Run all linters
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
 # golangci-lint with project configuration (.golangci.yml)
-# Auto-installs if not found
+# Auto-installs if not found, uses full path to avoid PATH issues
 lint-backend: ## Run Go linter
 	@printf "$(BOLD)🔍 Running backend linter...$(RESET)\n"
-	@if ! command -v golangci-lint > /dev/null 2>&1; then \
+	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
+	if [ ! -f "$$GOLANGCI_LINT" ]; then \
 		printf "📦 Installing golangci-lint...\n"; \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
-	fi
-	@golangci-lint run
+	fi; \
+	$$GOLANGCI_LINT run
 	@printf "$(GREEN)✓ Backend lint complete$(RESET)\n"
 
 # Backend lint (quiet mode for pipelines)
 lint-backend-quiet:
-	@if ! command -v golangci-lint > /dev/null 2>&1; then \
+	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
+	if [ ! -f "$$GOLANGCI_LINT" ]; then \
 		printf "   Installing golangci-lint...\n"; \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
-	fi
-	@LINTER_COUNT=$$(grep -c "^    - " .golangci.yml 2>/dev/null || echo "30+"); \
-	printf "   Running $$LINTER_COUNT linters...\n"
-	@golangci-lint run 2>&1 | head -20 || true
+	fi; \
+	LINTER_COUNT=$$(grep -c "^    - " .golangci.yml 2>/dev/null || echo "30+"); \
+	printf "   Running $$LINTER_COUNT linters...\n"; \
+	$$GOLANGCI_LINT run 2>&1 | head -20 || true
 
 # ESLint with TypeScript rules
 lint-frontend: ## Run frontend linter
@@ -868,20 +870,22 @@ fix: ## Auto-fix all linting issues (Go + Frontend)
 # Auto-fix Go linting issues
 fix-backend: ## Auto-fix Go linting issues
 	@printf "$(BOLD)🔧 Auto-fixing Go code...$(RESET)\n"
-	@if ! command -v golangci-lint > /dev/null 2>&1; then \
+	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
+	if [ ! -f "$$GOLANGCI_LINT" ]; then \
 		printf "📦 Installing golangci-lint...\n"; \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
-	fi
-	@golangci-lint run --fix
+	fi; \
+	$$GOLANGCI_LINT run --fix
 	@gofmt -w -s .
 	@printf "$(GREEN)✓ Go auto-fix complete$(RESET)\n"
 
 # Backend fix (quiet mode for pipelines)
 fix-backend-quiet:
-	@if ! command -v golangci-lint > /dev/null 2>&1; then \
+	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
+	if [ ! -f "$$GOLANGCI_LINT" ]; then \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
-	fi
-	@golangci-lint run --fix 2>&1 | grep -E "^[0-9]+ issues" || printf "   No issues found\n"
+	fi; \
+	$$GOLANGCI_LINT run --fix 2>&1 | grep -E "^[0-9]+ issues" || printf "   No issues found\n"
 	@gofmt -w -s .
 
 # Auto-fix frontend linting issues
