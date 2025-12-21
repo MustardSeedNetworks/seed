@@ -29,7 +29,7 @@
  * State: Manages test state, results history, current phase, progress tracking
  */
 
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
@@ -268,32 +268,51 @@ export const PerformanceCard = memo(function PerformanceCard({
     fetchStatus();
   }, []);
 
-  // Track previous server settings to detect changes
-  const prevServerSettings = useState({
-    enableServer: iperfSettings.enableServer,
-    serverPort: iperfSettings.serverPort,
-  })[0];
+  // Track if we've done initial server sync
+  const initialServerSyncDone = useRef(false);
 
-  // Manage iperf server based on settings from context
+  // Sync iperf server state on initial load and when settings change
   useEffect(() => {
-    // Only manage server on settings changes after iperf3 is confirmed installed
     if (!iperfInfo?.installed) return;
 
-    // Check if server settings changed
-    if (
-      iperfSettings.enableServer !== prevServerSettings.enableServer ||
-      iperfSettings.serverPort !== prevServerSettings.serverPort
-    ) {
-      manageIperfServer(iperfSettings.enableServer, iperfSettings.serverPort);
-      prevServerSettings.enableServer = iperfSettings.enableServer;
-      prevServerSettings.serverPort = iperfSettings.serverPort;
+    // On initial load or settings change, ensure server state matches settings
+    if (!initialServerSyncDone.current || iperfSettings.enableServer) {
+      // Check current server status and sync if needed
+      const syncServerState = async () => {
+        try {
+          const res = await fetch("/api/iperf/server/status", {
+            credentials: "include",
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const serverRunning = data.running === true;
+            const shouldBeRunning = iperfSettings.enableServer;
+
+            // If state doesn't match settings, fix it
+            if (shouldBeRunning && !serverRunning) {
+              manageIperfServer(true, iperfSettings.serverPort);
+            } else if (!shouldBeRunning && serverRunning) {
+              manageIperfServer(false, iperfSettings.serverPort);
+            }
+          }
+        } catch {
+          // If we can't check status and server should be running, try to start it
+          if (iperfSettings.enableServer) {
+            manageIperfServer(true, iperfSettings.serverPort);
+          }
+        }
+        initialServerSyncDone.current = true;
+      };
+      syncServerState();
+    } else if (!iperfSettings.enableServer) {
+      // Server should be stopped
+      manageIperfServer(false, iperfSettings.serverPort);
     }
   }, [
     iperfSettings.enableServer,
     iperfSettings.serverPort,
     iperfInfo?.installed,
     manageIperfServer,
-    prevServerSettings,
   ]);
 
   // Poll speedtest status while running

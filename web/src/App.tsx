@@ -1274,9 +1274,7 @@ function App() {
             >
               {t("sections.connectivity")}
             </h2>
-            <div
-              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
-            >
+            <div className={layout.grid.cards}>
               {/* WiFi-only cards */}
               {isWifi && (
                 <WiFiCard data={cards.wifi} loading={loading} visible={true} />
@@ -1310,9 +1308,7 @@ function App() {
             >
               {t("sections.network")}
             </h2>
-            <div
-              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
-            >
+            <div className={layout.grid.cards}>
               <NetworkCard
                 data={cards.dhcp}
                 publicip={cards.publicip}
@@ -1335,18 +1331,20 @@ function App() {
             >
               {t("sections.testingDiscovery")}
             </h2>
-            <div
-              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
-            >
+            <div className={layout.grid.cards}>
               {/* Common cards for both interface types */}
               <HealthCheckCard loading={loading} />
               {cardSettings.performance.enabled && (
                 <PerformanceCard
                   loading={loading}
                   runSpeedtestEnabled={
-                    cardSettings.performance.speedtest.enabled
+                    cardSettings.performance.speedtest.enabled &&
+                    cardSettings.performance.speedtest.autoRunOnLink
                   }
-                  runIperfEnabled={cardSettings.performance.iperf.enabled}
+                  runIperfEnabled={
+                    cardSettings.performance.iperf.enabled &&
+                    cardSettings.performance.iperf.autoRunOnLink
+                  }
                 />
               )}
 
@@ -1381,9 +1379,7 @@ function App() {
             >
               {t("sections.system")}
             </h2>
-            <div
-              className={`grid ${spacing.gap.comfortable} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center`}
-            >
+            <div className={layout.grid.cards}>
               <SystemHealthCard />
             </div>
           </section>
