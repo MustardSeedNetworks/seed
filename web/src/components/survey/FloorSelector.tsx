@@ -26,7 +26,16 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Floor } from "../../hooks/useSurvey";
-import { Plus, Trash2, Edit2, Check, X, Layers, Image, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  Check,
+  X,
+  Layers,
+  Image,
+  AlertCircle,
+} from "lucide-react";
 import { radius, spacing, button } from "../../styles/theme";
 
 interface FloorSelectorProps {
@@ -35,7 +44,11 @@ interface FloorSelectorProps {
   onSelectFloor: (floorId: string) => void;
   onAddFloor: (name: string, level: number) => Promise<void>;
   onDeleteFloor: (floorId: string) => Promise<void>;
-  onRenameFloor?: (floorId: string, name: string, level: number) => Promise<void>;
+  onRenameFloor?: (
+    floorId: string,
+    name: string,
+    level: number
+  ) => Promise<void>;
   disabled?: boolean;
 }
 
@@ -128,11 +141,20 @@ export function FloorSelector({
 
   const handleDelete = async (floorId: string) => {
     if (floors.length <= 1) {
-      alert(t("floorSelector.cannotDeleteLastFloor", "Cannot delete the last floor"));
+      alert(
+        t("floorSelector.cannotDeleteLastFloor", "Cannot delete the last floor")
+      );
       return;
     }
 
-    if (!confirm(t("floorSelector.confirmDelete", "Are you sure you want to delete this floor?"))) {
+    if (
+      !confirm(
+        t(
+          "floorSelector.confirmDelete",
+          "Are you sure you want to delete this floor?"
+        )
+      )
+    ) {
       return;
     }
 
@@ -169,7 +191,9 @@ export function FloorSelector({
       >
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
           <Layers size={16} />
-          <span style={{ fontWeight: 600 }}>{t("floorSelector.floors", "Floors")}</span>
+          <span style={{ fontWeight: 600 }}>
+            {t("floorSelector.floors", "Floors")}
+          </span>
         </div>
         <button
           onClick={handleStartAdd}
@@ -212,8 +236,12 @@ export function FloorSelector({
             }}
             autoFocus
           />
-          <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
-            <span style={{ fontSize: "0.875rem" }}>{t("floorSelector.level", "Level")}:</span>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: spacing.xs }}
+          >
+            <span style={{ fontSize: "0.875rem" }}>
+              {t("floorSelector.level", "Level")}:
+            </span>
             <input
               type="number"
               value={newFloorLevel}
@@ -266,7 +294,9 @@ export function FloorSelector({
       )}
 
       {/* Floor List */}
-      <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
+      <div
+        style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}
+      >
         {sortedFloors.map((floor) => {
           const isActive = floor.id === activeFloorId;
           const isEditing = floor.id === editingFloorId;
@@ -300,12 +330,22 @@ export function FloorSelector({
                   }}
                   autoFocus
                 />
-                <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
-                  <span style={{ fontSize: "0.875rem" }}>{t("floorSelector.level", "Level")}:</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: spacing.xs,
+                  }}
+                >
+                  <span style={{ fontSize: "0.875rem" }}>
+                    {t("floorSelector.level", "Level")}:
+                  </span>
                   <input
                     type="number"
                     value={editLevel}
-                    onChange={(e) => setEditLevel(parseInt(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setEditLevel(parseInt(e.target.value) || 0)
+                    }
                     style={{
                       width: "60px",
                       padding: spacing.xs,
@@ -361,7 +401,9 @@ export function FloorSelector({
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: spacing.sm,
-                background: isActive ? "var(--color-primary-light)" : "var(--color-background)",
+                background: isActive
+                  ? "var(--color-primary-light)"
+                  : "var(--color-background)",
                 borderRadius: radius.md,
                 border: isActive
                   ? "1px solid var(--color-primary)"
@@ -372,8 +414,16 @@ export function FloorSelector({
               }}
             >
               {/* Floor Info */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "2px" }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: spacing.xs,
+                  }}
+                >
                   <span
                     style={{
                       fontSize: "0.75rem",
@@ -385,7 +435,9 @@ export function FloorSelector({
                   >
                     L{floor.level}
                   </span>
-                  <span style={{ fontWeight: isActive ? 600 : 400 }}>{floor.name}</span>
+                  <span style={{ fontWeight: isActive ? 600 : 400 }}>
+                    {floor.name}
+                  </span>
                 </div>
                 <div
                   style={{
@@ -397,7 +449,13 @@ export function FloorSelector({
                   }}
                 >
                   {hasFloorPlan ? (
-                    <span style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "2px",
+                      }}
+                    >
                       <Image size={12} />
                       {t("floorSelector.hasFloorPlan", "Plan")}
                     </span>
@@ -449,11 +507,17 @@ export function FloorSelector({
                     ...button.icon,
                     padding: "4px",
                     borderRadius: radius.sm,
-                    color: floors.length <= 1 ? "var(--color-text-disabled)" : "var(--color-error)",
+                    color:
+                      floors.length <= 1
+                        ? "var(--color-text-disabled)"
+                        : "var(--color-error)",
                   }}
                   title={
                     floors.length <= 1
-                      ? t("floorSelector.cannotDeleteLastFloor", "Cannot delete the last floor")
+                      ? t(
+                          "floorSelector.cannotDeleteLastFloor",
+                          "Cannot delete the last floor"
+                        )
                       : t("floorSelector.deleteFloor", "Delete Floor")
                   }
                 >

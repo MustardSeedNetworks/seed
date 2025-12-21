@@ -34,7 +34,12 @@ import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Globe } from "../../ui/Icons";
 import { TestsSettings, SaveStatus, DNSServer } from "../../../types/settings";
 import { generateId } from "../../../utils/id";
-import { icon as iconTokens, layout, spacing, input as inputTokens } from "../../../styles/theme";
+import {
+  icon as iconTokens,
+  layout,
+  spacing,
+  input as inputTokens,
+} from "../../../styles/theme";
 
 interface DNSSettingsProps {
   testsSettings: TestsSettings;
@@ -52,7 +57,10 @@ export const DNSSettings = memo(function DNSSettings({
   const addDNSServer = useCallback(() => {
     setTestsSettings((prev) => ({
       ...prev,
-      dnsServers: [...prev.dnsServers, { id: generateId(), address: "", enabled: true }],
+      dnsServers: [
+        ...prev.dnsServers,
+        { id: generateId(), address: "", enabled: true },
+      ],
     }));
   }, [setTestsSettings]);
 
@@ -70,7 +78,9 @@ export const DNSSettings = memo(function DNSSettings({
     (id: string, field: keyof DNSServer, value: string | boolean) => {
       setTestsSettings((prev) => ({
         ...prev,
-        dnsServers: prev.dnsServers.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+        dnsServers: prev.dnsServers.map((s) =>
+          s.id === id ? { ...s, [field]: value } : s
+        ),
       }));
     },
     [setTestsSettings]
@@ -89,7 +99,9 @@ export const DNSSettings = memo(function DNSSettings({
       <div className="stack">
         {/* DNS Hostname */}
         <div>
-          <label className="caption text-text-muted">{t("dns.testHostname")}</label>
+          <label className="caption text-text-muted">
+            {t("dns.testHostname")}
+          </label>
           <input
             type="text"
             value={testsSettings.dnsHostname}
@@ -108,8 +120,12 @@ export const DNSSettings = memo(function DNSSettings({
         </div>
 
         {/* DNS Servers for per-server testing */}
-        <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
-          <div className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}>
+        <div
+          className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+        >
+          <div
+            className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}
+          >
             <span className="caption text-text-muted font-medium">
               {t("dns.additionalServers")}
             </span>
@@ -120,7 +136,9 @@ export const DNSSettings = memo(function DNSSettings({
               {t("common.add")}
             </button>
           </div>
-          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+          <p
+            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          >
             {t("dns.serversDescription")}
           </p>
           {testsSettings.dnsServers.map((server) => (
@@ -131,7 +149,9 @@ export const DNSSettings = memo(function DNSSettings({
               <input
                 type="text"
                 value={server.address}
-                onChange={(e) => updateDNSServer(server.id!, "address", e.target.value)}
+                onChange={(e) =>
+                  updateDNSServer(server.id!, "address", e.target.value)
+                }
                 placeholder={t("dns.serverIp")}
                 className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} flex-1 caption`}
               />

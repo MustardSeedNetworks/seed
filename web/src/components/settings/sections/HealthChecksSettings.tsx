@@ -36,7 +36,14 @@ import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { HeartPulse } from "../../ui/Icons";
-import { icon as iconTokens, layout, radius, cn, spacing, input } from "../../../styles/theme";
+import {
+  icon as iconTokens,
+  layout,
+  radius,
+  cn,
+  spacing,
+  input,
+} from "../../../styles/theme";
 import {
   TestsSettings,
   SaveStatus,
@@ -85,7 +92,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
     (id: string, field: keyof PingTarget, value: string | boolean | number) => {
       setTestsSettings((prev) => ({
         ...prev,
-        pingTargets: prev.pingTargets.map((t) => (t.id === id ? { ...t, [field]: value } : t)),
+        pingTargets: prev.pingTargets.map((t) =>
+          t.id === id ? { ...t, [field]: value } : t
+        ),
       }));
     },
     [setTestsSettings]
@@ -116,7 +125,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
     (id: string, field: keyof TCPPort, value: string | boolean | number) => {
       setTestsSettings((prev) => ({
         ...prev,
-        tcpPorts: prev.tcpPorts.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
+        tcpPorts: prev.tcpPorts.map((p) =>
+          p.id === id ? { ...p, [field]: value } : p
+        ),
       }));
     },
     [setTestsSettings]
@@ -147,7 +158,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
     (id: string, field: keyof UDPPort, value: string | boolean | number) => {
       setTestsSettings((prev) => ({
         ...prev,
-        udpPorts: prev.udpPorts.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
+        udpPorts: prev.udpPorts.map((p) =>
+          p.id === id ? { ...p, [field]: value } : p
+        ),
       }));
     },
     [setTestsSettings]
@@ -181,10 +194,16 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
   );
 
   const updateHTTPEndpoint = useCallback(
-    (id: string, field: keyof HTTPEndpoint, value: string | boolean | number) => {
+    (
+      id: string,
+      field: keyof HTTPEndpoint,
+      value: string | boolean | number
+    ) => {
       setTestsSettings((prev) => ({
         ...prev,
-        httpEndpoints: prev.httpEndpoints.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+        httpEndpoints: prev.httpEndpoints.map((e) =>
+          e.id === id ? { ...e, [field]: value } : e
+        ),
       }));
     },
     [setTestsSettings]
@@ -214,7 +233,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
             <span className="body-small text-text-primary font-medium">
               {t("health.enableHealthChecks")}
             </span>
-            <p className="caption text-text-muted">{t("health.enableDescription")}</p>
+            <p className="caption text-text-muted">
+              {t("health.enableDescription")}
+            </p>
           </div>
           <input
             type="checkbox"
@@ -231,8 +252,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
 
         {/* Ping Targets */}
         <div>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.pingTargets")}</span>
+          <div
+            className={cn(layout.flex.between, spacing.margin.bottom.inline)}
+          >
+            <span className="caption text-text-muted font-medium">
+              {t("health.pingTargets")}
+            </span>
             <button
               onClick={addPingTarget}
               className="caption text-brand-primary hover:text-brand-accent"
@@ -240,38 +265,70 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p
+            className={cn(
+              "caption text-text-muted",
+              spacing.margin.bottom.inline
+            )}
+          >
             {t("health.pingDefault")}
           </p>
           {testsSettings.pingTargets.map((target) => (
             <div
               key={target.id || target.host}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              className={cn(
+                "flex",
+                spacing.gap.compact,
+                spacing.margin.bottom.inline
+              )}
             >
               <input
                 type="text"
                 value={target.name}
-                onChange={(e) => updatePingTarget(target.id!, "name", e.target.value)}
+                onChange={(e) =>
+                  updatePingTarget(target.id!, "name", e.target.value)
+                }
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-24"
+                )}
               />
               <input
                 type="text"
                 value={target.host}
-                onChange={(e) => updatePingTarget(target.id!, "host", e.target.value)}
+                onChange={(e) =>
+                  updatePingTarget(target.id!, "host", e.target.value)
+                }
                 placeholder={t("common.hostIp")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "flex-1"
+                )}
               />
               <input
                 type="number"
                 value={target.count || 3}
                 onChange={(e) =>
-                  updatePingTarget(target.id!, "count", parseInt(e.target.value) || 3)
+                  updatePingTarget(
+                    target.id!,
+                    "count",
+                    parseInt(e.target.value) || 3
+                  )
                 }
                 min={1}
                 max={10}
                 title={t("health.numberOfPings")}
-                className={cn(input.base, input.state.default, input.size.md, "w-14 text-center")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-14 text-center"
+                )}
               />
               <button
                 onClick={() => removePingTarget(target.id!)}
@@ -285,9 +342,18 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* TCP Ports */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.tcpPortTests")}</span>
+        <div
+          className={cn(
+            "border-t border-surface-border",
+            spacing.padding.top.heading
+          )}
+        >
+          <div
+            className={cn(layout.flex.between, spacing.margin.bottom.inline)}
+          >
+            <span className="caption text-text-muted font-medium">
+              {t("health.tcpPortTests")}
+            </span>
             <button
               onClick={addTCPPort}
               className="caption text-brand-primary hover:text-brand-accent"
@@ -298,28 +364,57 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
           {testsSettings.tcpPorts.map((port) => (
             <div
               key={port.id || `${port.host}:${port.port}`}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              className={cn(
+                "flex",
+                spacing.gap.compact,
+                spacing.margin.bottom.inline
+              )}
             >
               <input
                 type="text"
                 value={port.name}
-                onChange={(e) => updateTCPPort(port.id!, "name", e.target.value)}
+                onChange={(e) =>
+                  updateTCPPort(port.id!, "name", e.target.value)
+                }
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-24"
+                )}
               />
               <input
                 type="text"
                 value={port.host}
-                onChange={(e) => updateTCPPort(port.id!, "host", e.target.value)}
+                onChange={(e) =>
+                  updateTCPPort(port.id!, "host", e.target.value)
+                }
                 placeholder={t("common.host")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "flex-1"
+                )}
               />
               <input
                 type="number"
                 value={port.port}
-                onChange={(e) => updateTCPPort(port.id!, "port", parseInt(e.target.value) || 80)}
+                onChange={(e) =>
+                  updateTCPPort(
+                    port.id!,
+                    "port",
+                    parseInt(e.target.value) || 80
+                  )
+                }
                 placeholder={t("common.port")}
-                className={cn(input.base, input.state.default, input.size.md, "w-20")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-20"
+                )}
               />
               <button
                 onClick={() => removeTCPPort(port.id!)}
@@ -333,9 +428,18 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* UDP Ports */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.udpPortTests")}</span>
+        <div
+          className={cn(
+            "border-t border-surface-border",
+            spacing.padding.top.heading
+          )}
+        >
+          <div
+            className={cn(layout.flex.between, spacing.margin.bottom.inline)}
+          >
+            <span className="caption text-text-muted font-medium">
+              {t("health.udpPortTests")}
+            </span>
             <button
               onClick={addUDPPort}
               className="caption text-brand-primary hover:text-brand-accent"
@@ -343,34 +447,68 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p
+            className={cn(
+              "caption text-text-muted",
+              spacing.margin.bottom.inline
+            )}
+          >
             {t("health.udpDescription")}
           </p>
           {testsSettings.udpPorts.map((port) => (
             <div
               key={port.id || `${port.host}:${port.port}`}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              className={cn(
+                "flex",
+                spacing.gap.compact,
+                spacing.margin.bottom.inline
+              )}
             >
               <input
                 type="text"
                 value={port.name}
-                onChange={(e) => updateUDPPort(port.id!, "name", e.target.value)}
+                onChange={(e) =>
+                  updateUDPPort(port.id!, "name", e.target.value)
+                }
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-24"
+                )}
               />
               <input
                 type="text"
                 value={port.host}
-                onChange={(e) => updateUDPPort(port.id!, "host", e.target.value)}
+                onChange={(e) =>
+                  updateUDPPort(port.id!, "host", e.target.value)
+                }
                 placeholder={t("common.host")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "flex-1"
+                )}
               />
               <input
                 type="number"
                 value={port.port}
-                onChange={(e) => updateUDPPort(port.id!, "port", parseInt(e.target.value) || 53)}
+                onChange={(e) =>
+                  updateUDPPort(
+                    port.id!,
+                    "port",
+                    parseInt(e.target.value) || 53
+                  )
+                }
                 placeholder={t("common.port")}
-                className={cn(input.base, input.state.default, input.size.md, "w-20")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "w-20"
+                )}
               />
               <button
                 onClick={() => removeUDPPort(port.id!)}
@@ -384,9 +522,18 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* HTTP Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.httpEndpoints")}</span>
+        <div
+          className={cn(
+            "border-t border-surface-border",
+            spacing.padding.top.heading
+          )}
+        >
+          <div
+            className={cn(layout.flex.between, spacing.margin.bottom.inline)}
+          >
+            <span className="caption text-text-muted font-medium">
+              {t("health.httpEndpoints")}
+            </span>
             <button
               onClick={addHTTPEndpoint}
               className="caption text-brand-primary hover:text-brand-accent"
@@ -409,7 +556,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 <input
                   type="text"
                   value={endpoint.name}
-                  onChange={(e) => updateHTTPEndpoint(endpoint.id!, "name", e.target.value)}
+                  onChange={(e) =>
+                    updateHTTPEndpoint(endpoint.id!, "name", e.target.value)
+                  }
                   placeholder={t("common.name")}
                   className={cn(
                     input.base,
@@ -447,9 +596,16 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <input
                 type="text"
                 value={endpoint.url}
-                onChange={(e) => updateHTTPEndpoint(endpoint.id!, "url", e.target.value)}
+                onChange={(e) =>
+                  updateHTTPEndpoint(endpoint.id!, "url", e.target.value)
+                }
                 placeholder="https://example.com/health"
-                className={cn(input.base, input.state.default, input.size.md, "bg-surface-raised")}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  "bg-surface-raised"
+                )}
               />
             </div>
           ))}

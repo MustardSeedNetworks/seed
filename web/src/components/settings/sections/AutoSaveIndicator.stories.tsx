@@ -123,7 +123,9 @@ export const InContext: Story = {
           className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
         >
           <div className={`flex items-center ${spacing.gap.compact}`}>
-            <span className="body-small text-text-primary font-medium">Enable Feature</span>
+            <span className="body-small text-text-primary font-medium">
+              Enable Feature
+            </span>
             <AutoSaveIndicator status="saved" />
           </div>
           <input type="checkbox" checked readOnly className="w-4 h-4" />
@@ -132,7 +134,9 @@ export const InContext: Story = {
           className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
         >
           <div className={`flex items-center ${spacing.gap.compact}`}>
-            <span className="body-small text-text-primary font-medium">Auto-refresh</span>
+            <span className="body-small text-text-primary font-medium">
+              Auto-refresh
+            </span>
             <AutoSaveIndicator status="saving" />
           </div>
           <input type="checkbox" checked readOnly className="w-4 h-4" />
@@ -141,7 +145,9 @@ export const InContext: Story = {
           className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
         >
           <div className={`flex items-center ${spacing.gap.compact}`}>
-            <span className="body-small text-text-primary font-medium">Failed Setting</span>
+            <span className="body-small text-text-primary font-medium">
+              Failed Setting
+            </span>
             <AutoSaveIndicator status="error" />
           </div>
           <input type="checkbox" checked readOnly className="w-4 h-4" />

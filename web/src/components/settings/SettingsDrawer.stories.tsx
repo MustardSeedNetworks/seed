@@ -113,7 +113,11 @@ export const Interactive: Story = {
         >
           Open Settings
         </button>
-        <SettingsDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} version="1.0.0" />
+        <SettingsDrawer
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          version="1.0.0"
+        />
       </div>
     );
   },
@@ -223,18 +227,26 @@ export const WithContent: Story = {
       <div className="h-screen bg-surface-base">
         {/* Sample page content */}
         <div className={spacing.pad.xl}>
-          <h1 className={`heading-1 ${spacing.margin.bottom.content}`}>Network Dashboard</h1>
+          <h1 className={`heading-1 ${spacing.margin.bottom.content}`}>
+            Network Dashboard
+          </h1>
           <div className={`grid grid-cols-3 ${spacing.gap.comfortable}`}>
             <div className={`${spacing.pad.lg} bg-surface-raised ${radius.lg}`}>
-              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>Network Status</h2>
+              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>
+                Network Status
+              </h2>
               <p className="body-small text-text-muted">Connected</p>
             </div>
             <div className={`${spacing.pad.lg} bg-surface-raised ${radius.lg}`}>
-              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>Speed Test</h2>
+              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>
+                Speed Test
+              </h2>
               <p className="body-small text-text-muted">150 Mbps</p>
             </div>
             <div className={`${spacing.pad.lg} bg-surface-raised ${radius.lg}`}>
-              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>Devices</h2>
+              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>
+                Devices
+              </h2>
               <p className="body-small text-text-muted">12 found</p>
             </div>
           </div>
@@ -246,7 +258,11 @@ export const WithContent: Story = {
           </button>
         </div>
 
-        <SettingsDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} version="1.0.0" />
+        <SettingsDrawer
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          version="1.0.0"
+        />
       </div>
     );
   },

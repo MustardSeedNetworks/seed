@@ -166,10 +166,14 @@ export const SpeedGauge = memo(function SpeedGauge({
             const tickAngle = startAngle + (tick / 100) * angleRange;
             const innerRadius = radius - sizeConfig.strokeWidth / 2 - 4;
             const outerRadius = radius - sizeConfig.strokeWidth / 2 - 8;
-            const tickStartX = centerX + innerRadius * Math.cos(toRadians(tickAngle));
-            const tickStartY = centerY + innerRadius * Math.sin(toRadians(tickAngle));
-            const tickEndX = centerX + outerRadius * Math.cos(toRadians(tickAngle));
-            const tickEndY = centerY + outerRadius * Math.sin(toRadians(tickAngle));
+            const tickStartX =
+              centerX + innerRadius * Math.cos(toRadians(tickAngle));
+            const tickStartY =
+              centerY + innerRadius * Math.sin(toRadians(tickAngle));
+            const tickEndX =
+              centerX + outerRadius * Math.cos(toRadians(tickAngle));
+            const tickEndY =
+              centerY + outerRadius * Math.sin(toRadians(tickAngle));
             return (
               <line
                 key={tick}
@@ -210,7 +214,11 @@ export const SpeedGauge = memo(function SpeedGauge({
           <span
             className={
               "font-mono font-bold text-text-primary tabular-nums " +
-              (size === "sm" ? "text-[12px]" : size === "md" ? "text-[14px]" : "text-[16px]")
+              (size === "sm"
+                ? "text-[12px]"
+                : size === "md"
+                  ? "text-[14px]"
+                  : "text-[16px]")
             }
           >
             {isRunning && value === 0 ? "—" : displayValue.value}
@@ -279,7 +287,9 @@ export const ProgressRing = memo(function ProgressRing({
         </div>
       </div>
       {label && (
-        <span className={`caption text-text-muted ${spacing.margin.top.tight} text-center`}>
+        <span
+          className={`caption text-text-muted ${spacing.margin.top.tight} text-center`}
+        >
           {label}
         </span>
       )}
@@ -326,7 +336,9 @@ export const PulsingDot = memo(function PulsingDot({
       <span
         className={`animate-ping absolute inline-flex h-full w-full ${radius.full} opacity-75 ${colorClass}`}
       />
-      <span className={`relative inline-flex ${radius.full} ${sizeClass} ${colorClass}`} />
+      <span
+        className={`relative inline-flex ${radius.full} ${sizeClass} ${colorClass}`}
+      />
     </span>
   );
 });

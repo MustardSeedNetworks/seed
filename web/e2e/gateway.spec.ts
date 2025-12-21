@@ -21,7 +21,9 @@ test.describe("Gateway", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display Gateway card", async ({ page }) => {
@@ -96,7 +98,9 @@ test.describe("Gateway", () => {
 
   test("should update gateway status in real-time", async ({ page }) => {
     // Get initial latency
-    const latencyElement = page.locator(':text-matches("\\\\d+(\\\\.\\\\d+)?\\\\s*ms")').first();
+    const latencyElement = page
+      .locator(':text-matches("\\\\d+(\\\\.\\\\d+)?\\\\s*ms")')
+      .first();
     const hasElement = await latencyElement.isVisible().catch(() => false);
 
     if (hasElement) {
@@ -109,7 +113,9 @@ test.describe("Gateway", () => {
     }
   });
 
-  test("should show success indicator when gateway reachable", async ({ page }) => {
+  test("should show success indicator when gateway reachable", async ({
+    page,
+  }) => {
     await page.waitForTimeout(2000);
     const successIndicator = page
       .locator('[class*="success"]')
@@ -130,7 +136,9 @@ test.describe("Gateway", () => {
     expect(hasSuccess || hasError).toBeTruthy();
   });
 
-  test("should show error indicator when gateway unreachable", async ({ page }) => {
+  test("should show error indicator when gateway unreachable", async ({
+    page,
+  }) => {
     await page.waitForTimeout(2000);
     // This test verifies error handling is present in the UI
     const statusIndicator = page
@@ -151,7 +159,9 @@ test.describe("Gateway Help", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should show gateway help in help modal", async ({ page }) => {

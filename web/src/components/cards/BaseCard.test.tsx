@@ -38,7 +38,8 @@ describe("BaseCard", () => {
   const defaultProps = {
     title: "Test Card",
     data: { value: 42, isHealthy: true } as TestData,
-    getStatus: (data: TestData) => (data.isHealthy ? ("success" as const) : ("error" as const)),
+    getStatus: (data: TestData) =>
+      data.isHealthy ? ("success" as const) : ("error" as const),
     children: (data: TestData) => <div data-testid="content">{data.value}</div>,
   };
 
@@ -87,7 +88,9 @@ describe("BaseCard", () => {
     });
 
     it("error state takes precedence over loading", () => {
-      render(<BaseCard {...defaultProps} loading={true} error="Error occurred" />);
+      render(
+        <BaseCard {...defaultProps} loading={true} error="Error occurred" />
+      );
 
       // Loading is true but error should take precedence (loading checked first)
       // Actually checking the code: loading is checked first
@@ -103,7 +106,13 @@ describe("BaseCard", () => {
     });
 
     it("renders custom empty message when provided", () => {
-      render(<BaseCard {...defaultProps} data={null} emptyMessage="Waiting for data..." />);
+      render(
+        <BaseCard
+          {...defaultProps}
+          data={null}
+          emptyMessage="Waiting for data..."
+        />
+      );
 
       expect(screen.getByText("Waiting for data...")).toBeInTheDocument();
     });
@@ -305,7 +314,12 @@ describe("state priority", () => {
 
   it("loading takes priority over error in SimpleBaseCard", () => {
     render(
-      <SimpleBaseCard title="Priority Test" status="success" loading={true} error="Should not show">
+      <SimpleBaseCard
+        title="Priority Test"
+        status="success"
+        loading={true}
+        error="Should not show"
+      >
         <div>Content</div>
       </SimpleBaseCard>
     );

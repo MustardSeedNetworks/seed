@@ -57,8 +57,18 @@ const sampleDevices: Device[] = [
 
 const deviceColumns: Column<Device>[] = [
   { key: "ip", header: "IP Address", accessor: (d) => d.ip, sortable: true },
-  { key: "hostname", header: "Hostname", accessor: (d) => d.hostname, sortable: true },
-  { key: "mac", header: "MAC Address", accessor: (d) => d.mac, hiddenOnMobile: true },
+  {
+    key: "hostname",
+    header: "Hostname",
+    accessor: (d) => d.hostname,
+    sortable: true,
+  },
+  {
+    key: "mac",
+    header: "MAC Address",
+    accessor: (d) => d.mac,
+    hiddenOnMobile: true,
+  },
   {
     key: "status",
     header: "Status",
@@ -78,7 +88,12 @@ const deviceColumns: Column<Device>[] = [
       </span>
     ),
   },
-  { key: "lastSeen", header: "Last Seen", accessor: (d) => d.lastSeen, hiddenOnMobile: true },
+  {
+    key: "lastSeen",
+    header: "Last Seen",
+    accessor: (d) => d.lastSeen,
+    hiddenOnMobile: true,
+  },
 ];
 
 /**
@@ -195,10 +210,12 @@ export const Empty: Story = {
 
 export const CustomMaxHeight: Story = {
   args: {
-    data: [...sampleDevices, ...sampleDevices, ...sampleDevices].map((d, i) => ({
-      ...d,
-      ip: `${d.ip}-${i}`,
-    })),
+    data: [...sampleDevices, ...sampleDevices, ...sampleDevices].map(
+      (d, i) => ({
+        ...d,
+        ip: `${d.ip}-${i}`,
+      })
+    ),
     columns: deviceColumns,
     keyExtractor: (d: Device) => d.ip,
     maxHeight: "max-h-48",

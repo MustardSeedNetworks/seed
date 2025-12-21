@@ -23,7 +23,9 @@ test.describe("Speed Test", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display Performance card", async ({ page }) => {
@@ -78,7 +80,9 @@ test.describe("Speed Test", () => {
 
     // iPerf may not be available on all systems, which is OK
     // Just verify the performance section is present
-    const perfSection = page.locator("text=/performance|speed|bandwidth/i").first();
+    const perfSection = page
+      .locator("text=/performance|speed|bandwidth/i")
+      .first();
     await expect(perfSection).toBeVisible({ timeout: 5000 });
   });
 
@@ -86,11 +90,15 @@ test.describe("Speed Test", () => {
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Look for performance settings section
-    await expect(page.getByText(/performance|speed|iperf|bandwidth/i)).toBeVisible({
+    await expect(
+      page.getByText(/performance|speed|iperf|bandwidth/i)
+    ).toBeVisible({
       timeout: 5000,
     });
   });

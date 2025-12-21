@@ -111,10 +111,12 @@ export const WithSearch: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
+        <div
+          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+        >
           <p className="body-small text-text-muted">
-            Use the search box in the modal sidebar to filter help sections. Try searching for
-            "wifi", "dns", or "gateway".
+            Use the search box in the modal sidebar to filter help sections. Try
+            searching for "wifi", "dns", or "gateway".
           </p>
         </div>
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
@@ -140,8 +142,12 @@ export const AllSections: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
-          <h2 className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}>
+        <div
+          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+        >
+          <h2
+            className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}
+          >
             Help Modal - All Sections
           </h2>
           <p className="body-small text-text-muted">
@@ -207,7 +213,8 @@ export const TabletView: Story = {
     },
     docs: {
       description: {
-        story: "Help modal on tablet viewport showing medium-sized layout adaptation.",
+        story:
+          "Help modal on tablet viewport showing medium-sized layout adaptation.",
       },
     },
   },
@@ -268,9 +275,16 @@ export const SimpleBasic: StoryObj<typeof HelpModal> = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Link Status Help">
-          <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
-            The Link Status card monitors the physical layer connection of your network interface.
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="Link Status Help"
+        >
+          <p
+            className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+          >
+            The Link Status card monitors the physical layer connection of your
+            network interface.
           </p>
           <ul
             className={`list-disc list-inside ${spacing.stack.sm} body-small text-text-secondary`}
@@ -302,11 +316,16 @@ export const SimpleWithSections: StoryObj<typeof HelpModal> = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="WiFi Survey Help">
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="WiFi Survey Help"
+        >
           <HelpSection title="What is a WiFi Survey?">
             <p className="body-small text-text-secondary">
-              A WiFi survey maps wireless signal coverage across different locations. Use it to
-              identify dead zones and optimize access point placement.
+              A WiFi survey maps wireless signal coverage across different
+              locations. Use it to identify dead zones and optimize access point
+              placement.
             </p>
           </HelpSection>
 
@@ -367,25 +386,33 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Speed Test Results">
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="Speed Test Results"
+        >
           <div className={`${spacing.gap.comfortable} flex flex-col`}>
             <div
               className={`bg-brand-primary/10 border border-brand-primary/20 ${radius.lg} ${spacing.pad.default}`}
             >
-              <h4 className={`font-semibold text-brand-primary ${spacing.margin.bottom.inline}`}>
+              <h4
+                className={`font-semibold text-brand-primary ${spacing.margin.bottom.inline}`}
+              >
                 Understanding Your Results
               </h4>
               <p className="body-small text-text-secondary">
-                Speed test results show your connection's maximum throughput under ideal conditions.
-                Real-world performance may vary based on network congestion, server load, and
-                simultaneous connections.
+                Speed test results show your connection's maximum throughput
+                under ideal conditions. Real-world performance may vary based on
+                network congestion, server load, and simultaneous connections.
               </p>
             </div>
 
             <div
               className={`bg-status-warning/10 border border-status-warning/20 ${radius.lg} ${spacing.pad.default}`}
             >
-              <h4 className={`font-semibold text-status-warning ${spacing.margin.bottom.inline}`}>
+              <h4
+                className={`font-semibold text-status-warning ${spacing.margin.bottom.inline}`}
+              >
                 Factors Affecting Speed
               </h4>
               <ul
@@ -402,12 +429,14 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
             <div
               className={`bg-status-success/10 border border-status-success/20 ${radius.lg} ${spacing.pad.default}`}
             >
-              <h4 className={`font-semibold text-status-success ${spacing.margin.bottom.inline}`}>
+              <h4
+                className={`font-semibold text-status-success ${spacing.margin.bottom.inline}`}
+              >
                 Improving Speed
               </h4>
               <p className="body-small text-text-secondary">
-                Move closer to the router, switch to 5GHz band, reduce device count, or upgrade your
-                internet plan for better performance.
+                Move closer to the router, switch to 5GHz band, reduce device
+                count, or upgrade your internet plan for better performance.
               </p>
             </div>
           </div>
@@ -418,7 +447,8 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
   parameters: {
     docs: {
       description: {
-        story: "Simple help modal with custom styled callout boxes and formatted content.",
+        story:
+          "Simple help modal with custom styled callout boxes and formatted content.",
       },
     },
   },
@@ -433,9 +463,13 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
 
     return (
       <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
-        <div className={`max-w-2xl mx-auto ${spacing.gap.comfortable} flex flex-col`}>
+        <div
+          className={`max-w-2xl mx-auto ${spacing.gap.comfortable} flex flex-col`}
+        >
           <h1 className="heading-2 text-text-primary">Network Dashboard</h1>
-          <p className={`body text-text-secondary ${spacing.margin.bottom.section}`}>
+          <p
+            className={`body text-text-secondary ${spacing.margin.bottom.section}`}
+          >
             Click the help button below to learn more about this feature.
           </p>
           <button
@@ -446,10 +480,16 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
           </button>
         </div>
 
-        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Network Dashboard">
-          <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
-            The Network Dashboard provides a comprehensive overview of your network's health and
-            performance.
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="Network Dashboard"
+        >
+          <p
+            className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+          >
+            The Network Dashboard provides a comprehensive overview of your
+            network's health and performance.
           </p>
           <div className={spacing.stack.default}>
             <div className={`flex items-start ${spacing.gap.default}`}>
@@ -457,11 +497,14 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 1
               </span>
               <div className="flex-1">
-                <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}>
+                <h4
+                  className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}
+                >
                   Monitor Status
                 </h4>
                 <p className="body-small text-text-secondary">
-                  View real-time status of all network interfaces and connections.
+                  View real-time status of all network interfaces and
+                  connections.
                 </p>
               </div>
             </div>
@@ -470,11 +513,14 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 2
               </span>
               <div className="flex-1">
-                <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}>
+                <h4
+                  className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}
+                >
                   Run Tests
                 </h4>
                 <p className="body-small text-text-secondary">
-                  Execute speed tests, cable diagnostics, and network discovery scans.
+                  Execute speed tests, cable diagnostics, and network discovery
+                  scans.
                 </p>
               </div>
             </div>
@@ -483,11 +529,14 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 3
               </span>
               <div className="flex-1">
-                <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}>
+                <h4
+                  className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}
+                >
                   Analyze Results
                 </h4>
                 <p className="body-small text-text-secondary">
-                  Review detailed metrics and identify potential issues or bottlenecks.
+                  Review detailed metrics and identify potential issues or
+                  bottlenecks.
                 </p>
               </div>
             </div>
@@ -515,8 +564,14 @@ export const SimpleClosed: StoryObj<typeof HelpModal> = {
 
     return (
       <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
-        <p className="body text-text-secondary">Modal is closed - nothing rendered</p>
-        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Test">
+        <p className="body text-text-secondary">
+          Modal is closed - nothing rendered
+        </p>
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="Test"
+        >
           <p>This will not be visible</p>
         </HelpModal>
       </div>
@@ -525,7 +580,8 @@ export const SimpleClosed: StoryObj<typeof HelpModal> = {
   parameters: {
     docs: {
       description: {
-        story: "Help modal in closed state returns null - no DOM elements rendered.",
+        story:
+          "Help modal in closed state returns null - no DOM elements rendered.",
       },
     },
   },
@@ -543,7 +599,9 @@ export const BackdropClose: Story = {
       <div className="min-h-screen bg-surface-base">
         {!isOpen && (
           <div className={spacing.pad.xl}>
-            <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
+            <p
+              className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+            >
               Modal was closed {clickCount} time(s)
             </p>
             <button

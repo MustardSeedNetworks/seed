@@ -91,7 +91,11 @@ export function FAB({ className = "" }: FABProps) {
       aria-label="Run All Tests"
     >
       {isRunning ? (
-        <svg className={cn(iconTokens.size.lg, "animate-spin")} fill="none" viewBox="0 0 24 24">
+        <svg
+          className={cn(iconTokens.size.lg, "animate-spin")}
+          fill="none"
+          viewBox="0 0 24 24"
+        >
           <circle
             className="opacity-25"
             cx="12"
@@ -107,7 +111,11 @@ export function FAB({ className = "" }: FABProps) {
           />
         </svg>
       ) : (
-        <svg className={iconTokens.size.lg} fill="currentColor" viewBox="0 0 24 24">
+        <svg
+          className={iconTokens.size.lg}
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path d="M8 5v14l11-7z" />
         </svg>
       )}

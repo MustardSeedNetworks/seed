@@ -31,7 +31,13 @@
 import { ReactNode } from "react";
 import { StatusBadge } from "./StatusBadge";
 import { Status, getStatusConfig } from "./statusConfig";
-import { cn, card, layout, icon as iconTokens, spacing } from "../../styles/theme";
+import {
+  cn,
+  card,
+  layout,
+  icon as iconTokens,
+  spacing,
+} from "../../styles/theme";
 
 // Re-export Status type for convenience (types don't affect react-refresh)
 export type { Status };
@@ -105,12 +111,17 @@ export function Card({
     }
   };
 
-  const interactiveProps = isInteractive ? { role: "button" as const, tabIndex: 0 } : {};
+  const interactiveProps = isInteractive
+    ? { role: "button" as const, tabIndex: 0 }
+    : {};
 
   // Fixes #674: Add aria-label and aria-live for accessibility
   const ariaProps = {
     "aria-label": ariaLabel || `${title}${subtitle ? ` - ${subtitle}` : ""}`,
-    ...(enableLiveRegion && { "aria-live": "polite" as const, "aria-atomic": "true" as const }),
+    ...(enableLiveRegion && {
+      "aria-live": "polite" as const,
+      "aria-atomic": "true" as const,
+    }),
   };
 
   return (
@@ -130,7 +141,10 @@ export function Card({
       <div className={layout.flex.between}>
         <div className={layout.inline.default}>
           {icon && (
-            <span className={cn("text-text-muted shrink-0", iconTokens.size.md)} aria-hidden="true">
+            <span
+              className={cn("text-text-muted shrink-0", iconTokens.size.md)}
+              aria-hidden="true"
+            >
               {icon}
             </span>
           )}
@@ -181,7 +195,9 @@ export function CardValue({
   mono = false,
   allowWrap = false,
 }: CardValueProps) {
-  const statusColorClass = status ? getStatusConfig(status).color : "text-text-primary";
+  const statusColorClass = status
+    ? getStatusConfig(status).color
+    : "text-text-primary";
   const textMods = [
     statusColorClass,
     mono ? "font-mono tabular-nums" : "",
@@ -194,16 +210,31 @@ export function CardValue({
 
   return (
     <div>
-      {label && <p className={`caption ${spacing.margin.bottom.tight}`}>{label}</p>}
-      <p className={cn(getSizeClass(size), textMods, layout.inline.tight)} data-testid="card-value">
+      {label && (
+        <p className={`caption ${spacing.margin.bottom.tight}`}>{label}</p>
+      )}
+      <p
+        className={cn(getSizeClass(size), textMods, layout.inline.tight)}
+        data-testid="card-value"
+      >
         {statusIcon && (
-          <span className={cn(layout.flex.center, iconTokens.size.xs, "shrink-0 text-current")}>
+          <span
+            className={cn(
+              layout.flex.center,
+              iconTokens.size.xs,
+              "shrink-0 text-current"
+            )}
+          >
             {statusIcon}
           </span>
         )}
         <span className={cn(layout.inline.tight, "items-baseline")}>
           <span>{value}</span>
-          {unit && <span className="body-small font-normal text-text-muted">{unit}</span>}
+          {unit && (
+            <span className="body-small font-normal text-text-muted">
+              {unit}
+            </span>
+          )}
         </span>
       </p>
     </div>
@@ -257,7 +288,9 @@ export function CardRow({
         data-testid="card-row-value"
       >
         {statusIcon && (
-          <span className={cn(iconTokens.size.xs, "shrink-0 text-current")}>{statusIcon}</span>
+          <span className={cn(iconTokens.size.xs, "shrink-0 text-current")}>
+            {statusIcon}
+          </span>
         )}
         <span>{value}</span>
       </span>
@@ -273,5 +306,13 @@ interface CardDividerProps {
  * Horizontal divider line for separating card sections.
  */
 export function CardDivider({ className = "" }: CardDividerProps) {
-  return <hr className={cn("border-surface-border", spacing.margin.top.content, className)} />;
+  return (
+    <hr
+      className={cn(
+        "border-surface-border",
+        spacing.margin.top.content,
+        className
+      )}
+    />
+  );
 }

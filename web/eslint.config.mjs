@@ -51,7 +51,15 @@ import security from "eslint-plugin-security";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "coverage", "storybook-static", "playwright-report"] },
+  {
+    ignores: [
+      "dist",
+      "node_modules",
+      "coverage",
+      "storybook-static",
+      "playwright-report",
+    ],
+  },
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
@@ -73,7 +81,10 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "react-refresh/only-export-components": [
+        "warn",
+        { allowConstantExport: true },
+      ],
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
@@ -166,11 +177,13 @@ export default tseslint.config(
         "warn",
         {
           selector: "Literal[value=/\\btext-white\\b/]",
-          message: "Use 'text-text-inverse' instead of 'text-white'. See web/THEMING.md",
+          message:
+            "Use 'text-text-inverse' instead of 'text-white'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/\\btext-black\\b/]",
-          message: "Use 'text-text-primary' instead of 'text-black'. See web/THEMING.md",
+          message:
+            "Use 'text-text-primary' instead of 'text-black'. See web/THEMING.md",
         },
         {
           // Flag bg-white followed by space or end of string (not opacity variants like bg-white/20)
@@ -197,50 +210,61 @@ export default tseslint.config(
         // Enforce theme tokens for icon sizes instead of hardcoded w-N h-N patterns
         {
           selector: "Literal[value=/className.*\\bw-3\\s+h-3\\b/]",
-          message: "Use iconTokens.size.xs from theme.ts instead of 'w-3 h-3'. See web/THEMING.md",
+          message:
+            "Use iconTokens.size.xs from theme.ts instead of 'w-3 h-3'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\bw-4\\s+h-4\\b/]",
-          message: "Use iconTokens.size.sm from theme.ts instead of 'w-4 h-4'. See web/THEMING.md",
+          message:
+            "Use iconTokens.size.sm from theme.ts instead of 'w-4 h-4'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\bw-5\\s+h-5\\b/]",
-          message: "Use iconTokens.size.md from theme.ts instead of 'w-5 h-5'. See web/THEMING.md",
+          message:
+            "Use iconTokens.size.md from theme.ts instead of 'w-5 h-5'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\bw-6\\s+h-6\\b/]",
-          message: "Use iconTokens.size.lg from theme.ts instead of 'w-6 h-6'. See web/THEMING.md",
+          message:
+            "Use iconTokens.size.lg from theme.ts instead of 'w-6 h-6'. See web/THEMING.md",
         },
         // Enforce theme tokens for border radius instead of hardcoded rounded-* patterns
         {
           selector: "Literal[value=/className.*\\brounded-sm\\b/]",
-          message: "Use radius.sm from theme.ts instead of 'rounded-sm'. See web/THEMING.md",
+          message:
+            "Use radius.sm from theme.ts instead of 'rounded-sm'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\brounded-md\\b/]",
-          message: "Use radius.md from theme.ts instead of 'rounded-md'. See web/THEMING.md",
+          message:
+            "Use radius.md from theme.ts instead of 'rounded-md'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\brounded-lg\\b/]",
-          message: "Use radius.lg from theme.ts instead of 'rounded-lg'. See web/THEMING.md",
+          message:
+            "Use radius.lg from theme.ts instead of 'rounded-lg'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\brounded-xl\\b/]",
-          message: "Use radius.xl from theme.ts instead of 'rounded-xl'. See web/THEMING.md",
+          message:
+            "Use radius.xl from theme.ts instead of 'rounded-xl'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\brounded-full\\b/]",
-          message: "Use radius.full from theme.ts instead of 'rounded-full'. See web/THEMING.md",
+          message:
+            "Use radius.full from theme.ts instead of 'rounded-full'. See web/THEMING.md",
         },
         // Enforce theme tokens for large padding values (p-4 and above)
         // Small values (p-1, p-2, p-3) are allowed for granular spacing
         {
           selector: "Literal[value=/className.*\\bp-[4-9]\\b/]",
-          message: "Use 'pad' or 'pad-lg' from theme.ts instead of 'p-4+'. See web/THEMING.md",
+          message:
+            "Use 'pad' or 'pad-lg' from theme.ts instead of 'p-4+'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\bp-1[0-9]\\b/]",
-          message: "Use 'pad-lg' from theme.ts instead of 'p-10+'. See web/THEMING.md",
+          message:
+            "Use 'pad-lg' from theme.ts instead of 'p-10+'. See web/THEMING.md",
         },
         // Enforce theme tokens for large gap values (gap-4 and above)
         // Small gaps (gap-1, gap-2, gap-3) are allowed for tight layouts
@@ -252,15 +276,18 @@ export default tseslint.config(
         // Enforce button size tokens for button padding patterns
         {
           selector: "Literal[value=/className.*\\bpx-4\\s+py-2\\b/]",
-          message: "Use button.size.md from theme.ts instead of 'px-4 py-2'. See web/THEMING.md",
+          message:
+            "Use button.size.md from theme.ts instead of 'px-4 py-2'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\bpx-3\\s+py-1\\.?5?\\b/]",
-          message: "Use button.size.sm from theme.ts instead of 'px-3 py-1.5'. See web/THEMING.md",
+          message:
+            "Use button.size.sm from theme.ts instead of 'px-3 py-1.5'. See web/THEMING.md",
         },
         {
           selector: "Literal[value=/className.*\\bpx-2\\s+py-1\\b/]",
-          message: "Use button.size.xs from theme.ts instead of 'px-2 py-1'. See web/THEMING.md",
+          message:
+            "Use button.size.xs from theme.ts instead of 'px-2 py-1'. See web/THEMING.md",
         },
         // i18n: Detect hardcoded English text in common UI patterns
         // This catches common patterns like <span>Settings</span> or <button>Save</button>
@@ -278,7 +305,13 @@ export default tseslint.config(
   storybook.configs["flat/recommended"],
   // Test file overrides - relax rules for test files
   {
-    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/test/**/*.ts", "**/e2e/**/*.ts"],
+    files: [
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/test/**/*.ts",
+      "**/e2e/**/*.ts",
+    ],
     rules: {
       // Disable JSDoc requirements in tests
       "jsdoc/require-jsdoc": "off",

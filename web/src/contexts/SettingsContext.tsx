@@ -40,10 +40,17 @@ interface SettingsProviderProps {
  */
 export function SettingsProvider({ children }: SettingsProviderProps) {
   // State - initialized with defaults, will be updated from API
-  const [cardSettings, setCardSettings] = useState<CardSettings>(DEFAULT_CARD_SETTINGS);
-  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(DEFAULT_DISPLAY_OPTIONS);
-  const [iperfSettings, setIperfSettings] = useState<IperfSettings>(DEFAULT_IPERF_SETTINGS);
-  const [thresholds, setThresholds] = useState<SettingsThresholds>(DEFAULT_THRESHOLDS);
+  const [cardSettings, setCardSettings] = useState<CardSettings>(
+    DEFAULT_CARD_SETTINGS
+  );
+  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(
+    DEFAULT_DISPLAY_OPTIONS
+  );
+  const [iperfSettings, setIperfSettings] = useState<IperfSettings>(
+    DEFAULT_IPERF_SETTINGS
+  );
+  const [thresholds, setThresholds] =
+    useState<SettingsThresholds>(DEFAULT_THRESHOLDS);
 
   // Status indicators
   const [status, setStatus] = useState<SettingsContextValue["status"]>({
@@ -57,8 +64,12 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   const isMountedRef = useRef(true);
   const [isLoadedState, setIsLoadedState] = useState(false);
   // Using Map for type-safe dynamic key access
-  const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const statusResetTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map()
+  );
+  const statusResetTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map()
+  );
   const saveControllers = useRef<Map<string, AbortController>>(new Map());
 
   // ============================================================================
@@ -67,18 +78,26 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
 
   const loadSettingsFromAPI = useCallback(async (signal?: AbortSignal) => {
     try {
-      const data = await api.get<Record<string, unknown>>("/api/settings", { signal });
+      const data = await api.get<Record<string, unknown>>("/api/settings", {
+        signal,
+      });
 
       if (!isMountedRef.current || signal?.aborted) return;
 
       // Load thresholds
       if (data.thresholds && typeof data.thresholds === "object") {
-        setThresholds((prev) => ({ ...prev, ...(data.thresholds as Partial<SettingsThresholds>) }));
+        setThresholds((prev) => ({
+          ...prev,
+          ...(data.thresholds as Partial<SettingsThresholds>),
+        }));
       }
 
       // Load card settings (migrate from old fabOptions if present)
       if (data.cardSettings && typeof data.cardSettings === "object") {
-        setCardSettings((prev) => ({ ...prev, ...(data.cardSettings as Partial<CardSettings>) }));
+        setCardSettings((prev) => ({
+          ...prev,
+          ...(data.cardSettings as Partial<CardSettings>),
+        }));
       } else if (data.fabOptions && typeof data.fabOptions === "object") {
         const fabOptions = data.fabOptions as Record<string, unknown>;
         setCardSettings((prev) => ({
@@ -89,7 +108,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
           },
           switch: {
             enabled: true,
-            autoRunOnLink: (fabOptions.runSwitch as boolean | undefined) ?? true,
+            autoRunOnLink:
+              (fabOptions.runSwitch as boolean | undefined) ?? true,
           },
           vlan: {
             enabled: true,
@@ -97,31 +117,42 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
           },
           network: {
             enabled: true,
-            autoRunOnLink: (fabOptions.runIPConfig as boolean | undefined) ?? true,
+            autoRunOnLink:
+              (fabOptions.runIPConfig as boolean | undefined) ?? true,
           },
           gateway: {
             enabled: true,
-            autoRunOnLink: (fabOptions.runGateway as boolean | undefined) ?? true,
+            autoRunOnLink:
+              (fabOptions.runGateway as boolean | undefined) ?? true,
           },
-          dns: { enabled: true, autoRunOnLink: (fabOptions.runDNS as boolean | undefined) ?? true },
+          dns: {
+            enabled: true,
+            autoRunOnLink: (fabOptions.runDNS as boolean | undefined) ?? true,
+          },
           healthChecks: {
             enabled: true,
-            autoRunOnLink: (fabOptions.runHealthChecks as boolean | undefined) ?? true,
+            autoRunOnLink:
+              (fabOptions.runHealthChecks as boolean | undefined) ?? true,
           },
           networkDiscovery: {
-            enabled: (fabOptions.runNetworkDiscovery as boolean | undefined) ?? true,
-            autoRunOnLink: (fabOptions.autoScanOnLink as boolean | undefined) ?? true,
+            enabled:
+              (fabOptions.runNetworkDiscovery as boolean | undefined) ?? true,
+            autoRunOnLink:
+              (fabOptions.autoScanOnLink as boolean | undefined) ?? true,
           },
           performance: {
             enabled: (fabOptions.runPerformance as boolean | undefined) ?? true,
-            autoRunOnLink: (fabOptions.runPerformance as boolean | undefined) ?? true,
+            autoRunOnLink:
+              (fabOptions.runPerformance as boolean | undefined) ?? true,
             speedtest: {
               enabled: (fabOptions.runSpeedtest as boolean | undefined) ?? true,
-              autoRunOnLink: (fabOptions.runSpeedtest as boolean | undefined) ?? true,
+              autoRunOnLink:
+                (fabOptions.runSpeedtest as boolean | undefined) ?? true,
             },
             iperf: {
               enabled: (fabOptions.runIperf as boolean | undefined) ?? false,
-              autoRunOnLink: (fabOptions.runIperf as boolean | undefined) ?? false,
+              autoRunOnLink:
+                (fabOptions.runIperf as boolean | undefined) ?? false,
             },
           },
         }));
@@ -137,7 +168,10 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
 
       // Load iperf settings
       if (data.iperf && typeof data.iperf === "object") {
-        setIperfSettings((prev) => ({ ...prev, ...(data.iperf as Partial<IperfSettings>) }));
+        setIperfSettings((prev) => ({
+          ...prev,
+          ...(data.iperf as Partial<IperfSettings>),
+        }));
       }
     } catch (err) {
       if (!signal?.aborted) {
@@ -251,7 +285,10 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   // Save to Backend API Helper
   // ============================================================================
 
-  const saveToBackend = async (updates: Record<string, unknown>, signal: AbortSignal) => {
+  const saveToBackend = async (
+    updates: Record<string, unknown>,
+    signal: AbortSignal
+  ) => {
     await api.put<{ status: string }>("/api/settings", updates, { signal });
   };
 
@@ -263,7 +300,9 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<CardSettings>) => {
       setCardSettings((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("cards", (signal) => saveToBackend({ cardSettings: next }, signal));
+        debounceSave("cards", (signal) =>
+          saveToBackend({ cardSettings: next }, signal)
+        );
         return next;
       });
     },
@@ -274,7 +313,9 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<DisplayOptions>) => {
       setDisplayOptions((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("display", (signal) => saveToBackend({ displayOptions: next }, signal));
+        debounceSave("display", (signal) =>
+          saveToBackend({ displayOptions: next }, signal)
+        );
         return next;
       });
     },
@@ -285,7 +326,9 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<IperfSettings>) => {
       setIperfSettings((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("iperf", (signal) => saveToBackend({ iperf: next }, signal));
+        debounceSave("iperf", (signal) =>
+          saveToBackend({ iperf: next }, signal)
+        );
         return next;
       });
     },
@@ -296,7 +339,9 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (updates: Partial<SettingsThresholds>) => {
       setThresholds((prev) => {
         const next = { ...prev, ...updates };
-        debounceSave("thresholds", (signal) => saveToBackend({ thresholds: next }, signal));
+        debounceSave("thresholds", (signal) =>
+          saveToBackend({ thresholds: next }, signal)
+        );
         return next;
       });
     },
@@ -321,5 +366,9 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     isLoaded: isLoadedState,
   };
 
-  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
+  return (
+    <SettingsContext.Provider value={value}>
+      {children}
+    </SettingsContext.Provider>
+  );
 }

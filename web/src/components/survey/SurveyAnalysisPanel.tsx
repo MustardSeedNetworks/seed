@@ -43,8 +43,19 @@ import {
   Activity,
   FileText,
 } from "lucide-react";
-import { radius, spacing, layout, icon as iconTokens, button } from "../../styles/theme";
-import type { Survey, SamplePoint, ScannedNetwork, APLocation } from "../../hooks/useSurvey";
+import {
+  radius,
+  spacing,
+  layout,
+  icon as iconTokens,
+  button,
+} from "../../styles/theme";
+import type {
+  Survey,
+  SamplePoint,
+  ScannedNetwork,
+  APLocation,
+} from "../../hooks/useSurvey";
 
 /** Finding severity level */
 export type FindingSeverity = "critical" | "warning" | "info" | "success";
@@ -112,11 +123,24 @@ function analyzeSurvey(
 
   // Track aggregated data
   const channelUsage = new Map<number, number>();
-  const ssidCoverage = new Map<string, { good: number; weak: number; dead: number }>();
-  const securityIssues: { ssid: string; bssid: string; security: string; x: number; y: number }[] =
-    [];
+  const ssidCoverage = new Map<
+    string,
+    { good: number; weak: number; dead: number }
+  >();
+  const securityIssues: {
+    ssid: string;
+    bssid: string;
+    security: string;
+    x: number;
+    y: number;
+  }[] = [];
   const coverageGaps: { x: number; y: number; rssi: number }[] = [];
-  const coChannelHotspots: { x: number; y: number; count: number; channel: number }[] = [];
+  const coChannelHotspots: {
+    x: number;
+    y: number;
+    count: number;
+    channel: number;
+  }[] = [];
 
   // Analyze each sample
   samples.forEach((sample) => {
@@ -127,7 +151,8 @@ function analyzeSurvey(
       const networks = data.networks as ScannedNetwork[];
 
       // Track best RSSI at this location
-      const bestRssi = networks.length > 0 ? Math.max(...networks.map((n) => n.rssi)) : -100;
+      const bestRssi =
+        networks.length > 0 ? Math.max(...networks.map((n) => n.rssi)) : -100;
 
       // Check for coverage gaps
       if (bestRssi < thresholds.minAcceptableRssi) {
@@ -143,7 +168,11 @@ function analyzeSurvey(
         }
 
         // Track SSID coverage quality
-        const ssidStats = ssidCoverage.get(n.ssid) || { good: 0, weak: 0, dead: 0 };
+        const ssidStats = ssidCoverage.get(n.ssid) || {
+          good: 0,
+          weak: 0,
+          dead: 0,
+        };
         if (n.rssi >= thresholds.minGoodRssi) {
           ssidStats.good++;
         } else if (n.rssi >= thresholds.minAcceptableRssi) {
@@ -185,7 +214,8 @@ function analyzeSurvey(
     const deadZoneThreshold = thresholds.minAcceptableRssi - 10;
     const criticalGaps = coverageGaps.filter((g) => g.rssi < deadZoneThreshold);
     const weakGaps = coverageGaps.filter(
-      (g) => g.rssi >= deadZoneThreshold && g.rssi < thresholds.minAcceptableRssi
+      (g) =>
+        g.rssi >= deadZoneThreshold && g.rssi < thresholds.minAcceptableRssi
     );
 
     if (criticalGaps.length > 0) {
@@ -282,8 +312,12 @@ function analyzeSurvey(
   }
 
   // Generate channel optimization findings
-  const sortedChannels = Array.from(channelUsage.entries()).sort((a, b) => b[1] - a[1]);
-  const overusedChannels = sortedChannels.filter(([_, count]) => count > samples.length * 0.5);
+  const sortedChannels = Array.from(channelUsage.entries()).sort(
+    (a, b) => b[1] - a[1]
+  );
+  const overusedChannels = sortedChannels.filter(
+    ([_, count]) => count > samples.length * 0.5
+  );
 
   if (overusedChannels.length > 0) {
     findings.push({
@@ -311,7 +345,9 @@ function analyzeSurvey(
   }
 
   // Overall health summary
-  const criticalCount = findings.filter((i) => i.severity === "critical").length;
+  const criticalCount = findings.filter(
+    (i) => i.severity === "critical"
+  ).length;
   const warningCount = findings.filter((i) => i.severity === "warning").length;
 
   if (criticalCount === 0 && warningCount === 0 && samples.length > 0) {
@@ -413,7 +449,9 @@ export function SurveyAnalysisPanel({
   // Group findings by severity
   const criticalFindings = findings.filter((i) => i.severity === "critical");
   const warningFindings = findings.filter((i) => i.severity === "warning");
-  const infoFindings = findings.filter((i) => i.severity === "info" || i.severity === "success");
+  const infoFindings = findings.filter(
+    (i) => i.severity === "info" || i.severity === "success"
+  );
 
   // Handle finding click
   const handleClick = (finding: AnalysisFinding) => {
@@ -438,7 +476,9 @@ export function SurveyAnalysisPanel({
         className={`${spacing.pad.sm} ${radius.md} border ${bgClass} cursor-pointer hover:opacity-80 transition-opacity`}
       >
         <div className={`${layout.inline.default}`}>
-          <Icon className={`${iconTokens.size.sm} ${colorClass} flex-shrink-0`} />
+          <Icon
+            className={`${iconTokens.size.sm} ${colorClass} flex-shrink-0`}
+          />
           <div className="flex-1 min-w-0">
             <h4 className={`body-small font-medium ${colorClass}`}>
               {t(finding.titleKey as never)}
@@ -458,8 +498,10 @@ export function SurveyAnalysisPanel({
             )}
             {finding.affectedSsids && finding.affectedSsids.length > 0 && (
               <p className="caption text-text-muted mt-1 truncate">
-                {t("analysis.affectedSsids")}: {finding.affectedSsids.slice(0, 3).join(", ")}
-                {finding.affectedSsids.length > 3 && ` +${finding.affectedSsids.length - 3}`}
+                {t("analysis.affectedSsids")}:{" "}
+                {finding.affectedSsids.slice(0, 3).join(", ")}
+                {finding.affectedSsids.length > 3 &&
+                  ` +${finding.affectedSsids.length - 3}`}
               </p>
             )}
             {finding.location && (
@@ -479,7 +521,9 @@ export function SurveyAnalysisPanel({
       className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.sm}`}
     >
       {/* Header */}
-      <div className={`${layout.inline.default} justify-between ${spacing.margin.bottom.content}`}>
+      <div
+        className={`${layout.inline.default} justify-between ${spacing.margin.bottom.content}`}
+      >
         <div className={`${layout.inline.default}`}>
           <Activity className={iconTokens.size.sm} />
           <h4 className="body-small font-medium">{t("analysis.title")}</h4>
@@ -509,7 +553,9 @@ export function SurveyAnalysisPanel({
       </div>
 
       {/* Summary */}
-      <div className={`${layout.inline.default} ${spacing.margin.bottom.content}`}>
+      <div
+        className={`${layout.inline.default} ${spacing.margin.bottom.content}`}
+      >
         {criticalFindings.length > 0 && (
           <div className={`${layout.inline.tight} text-status-error`}>
             <AlertOctagon className="w-4 h-4" />
@@ -536,7 +582,9 @@ export function SurveyAnalysisPanel({
 
       {/* Findings list */}
       {findings.length === 0 ? (
-        <p className="caption text-text-muted text-center py-4">{t("analysis.noData")}</p>
+        <p className="caption text-text-muted text-center py-4">
+          {t("analysis.noData")}
+        </p>
       ) : (
         <div className={`${layout.stack.tight} max-h-80 overflow-y-auto`}>
           {/* Critical first */}

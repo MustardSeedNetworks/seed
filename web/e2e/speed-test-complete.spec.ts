@@ -24,11 +24,15 @@ test.describe("Performance Testing - Complete Flow", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test.describe("Speed Test Flow", () => {
-    test("should display Performance card with initial state", async ({ page }) => {
+    test("should display Performance card with initial state", async ({
+      page,
+    }) => {
       // Find Performance card
       const perfCard = page
         .locator("h3, h4")
@@ -45,7 +49,9 @@ test.describe("Performance Testing - Complete Flow", () => {
       await expect(page.getByText(/internet speed/i)).toBeVisible();
 
       // Check for no results message or Run Test button
-      const noResults = page.getByText(/no results yet|run.*test|start.*test/i).first();
+      const noResults = page
+        .getByText(/no results yet|run.*test|start.*test/i)
+        .first();
       await expect(noResults).toBeVisible({ timeout: 3000 });
     });
 
@@ -66,7 +72,9 @@ test.describe("Performance Testing - Complete Flow", () => {
       // Setup request interception to verify API call
       const requestPromise = page
         .waitForRequest(
-          (request) => request.url().includes("/api/speedtest") && request.method() === "POST",
+          (request) =>
+            request.url().includes("/api/speedtest") &&
+            request.method() === "POST",
           { timeout: 5000 }
         )
         .catch(() => null);
@@ -144,7 +152,9 @@ test.describe("Performance Testing - Complete Flow", () => {
         await expect(page.getByText(/ms/i).first()).toBeVisible();
       } else {
         // No results yet - that's also a valid state
-        await expect(page.getByText(/no results|run.*test|start.*test/i).first()).toBeVisible();
+        await expect(
+          page.getByText(/no results|run.*test|start.*test/i).first()
+        ).toBeVisible();
       }
     });
 
@@ -157,14 +167,18 @@ test.describe("Performance Testing - Complete Flow", () => {
       const downloadGauge = page.getByText(/download/i).first();
       const uploadGauge = page.getByText(/upload/i).first();
 
-      const hasGauges = await downloadGauge.isVisible({ timeout: 2000 }).catch(() => false);
+      const hasGauges = await downloadGauge
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       // Either we have gauges (with results) or we have "no results" message
       if (hasGauges) {
         await expect(downloadGauge).toBeVisible();
         await expect(uploadGauge).toBeVisible();
       } else {
-        await expect(page.getByText(/no results|run.*test/i).first()).toBeVisible();
+        await expect(
+          page.getByText(/no results|run.*test/i).first()
+        ).toBeVisible();
       }
     });
 
@@ -190,7 +204,9 @@ test.describe("Performance Testing - Complete Flow", () => {
       await testButton.click();
 
       // Should show error message
-      await expect(page.getByText(/unavailable|failed|error/i)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/unavailable|failed|error/i)).toBeVisible({
+        timeout: 5000,
+      });
     });
 
     test("should handle network timeout error", async ({ page }) => {
@@ -212,7 +228,9 @@ test.describe("Performance Testing - Complete Flow", () => {
       await testButton.click();
 
       // Should show error indication
-      await expect(page.getByText(/failed|error|timeout/i)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/failed|error|timeout/i)).toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 
@@ -241,17 +259,27 @@ test.describe("Performance Testing - Complete Flow", () => {
       expect(hasVersion || hasNotInstalled).toBeTruthy();
     });
 
-    test("should enable/disable server mode from settings", async ({ page }) => {
+    test("should enable/disable server mode from settings", async ({
+      page,
+    }) => {
       // Open settings drawer
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
 
       // Look for iPerf settings
-      await expect(page.getByText(/iperf|performance/i)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/iperf|performance/i)).toBeVisible({
+        timeout: 5000,
+      });
 
       // Find server enable toggle
-      const serverToggle = page.getByLabel(/enable.*server|server.*mode/i).first();
-      const hasToggle = await serverToggle.isVisible({ timeout: 2000 }).catch(() => false);
+      const serverToggle = page
+        .getByLabel(/enable.*server|server.*mode/i)
+        .first();
+      const hasToggle = await serverToggle
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (hasToggle) {
         const isChecked = await serverToggle.isChecked();
@@ -272,12 +300,18 @@ test.describe("Performance Testing - Complete Flow", () => {
       }
     });
 
-    test("should display server connection details when running", async ({ page }) => {
+    test("should display server connection details when running", async ({
+      page,
+    }) => {
       await expect(page.getByText(/lan speed.*iperf/i)).toBeVisible();
 
       // Check for server status
-      const serverStatus = page.getByText(/server.*mode|listening|stopped/i).first();
-      const hasStatus = await serverStatus.isVisible({ timeout: 2000 }).catch(() => false);
+      const serverStatus = page
+        .getByText(/server.*mode|listening|stopped/i)
+        .first();
+      const hasStatus = await serverStatus
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (hasStatus) {
         // If server is running, should show port number
@@ -309,21 +343,31 @@ test.describe("Performance Testing - Complete Flow", () => {
 
     test("should configure iPerf3 server in settings", async ({ page }) => {
       // Open settings
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
 
-      await expect(page.getByText(/iperf|performance/i)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/iperf|performance/i)).toBeVisible({
+        timeout: 5000,
+      });
 
       // Look for server input field
-      const serverInput = page.getByLabel(/server.*host|iperf.*server/i).first();
-      const hasInput = await serverInput.isVisible({ timeout: 2000 }).catch(() => false);
+      const serverInput = page
+        .getByLabel(/server.*host|iperf.*server/i)
+        .first();
+      const hasInput = await serverInput
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (hasInput) {
         await serverInput.fill("192.168.1.100");
 
         // Look for port input
         const portInput = page.getByLabel(/port/i).first();
-        const hasPort = await portInput.isVisible({ timeout: 2000 }).catch(() => false);
+        const hasPort = await portInput
+          .isVisible({ timeout: 2000 })
+          .catch(() => false);
 
         if (hasPort) {
           await portInput.fill("5201");
@@ -333,13 +377,17 @@ test.describe("Performance Testing - Complete Flow", () => {
         await page.keyboard.press("Escape");
 
         // Verify server appears in card
-        await expect(page.getByText(/server:.*192\.168\.1\.100/i)).toBeVisible({ timeout: 3000 });
+        await expect(page.getByText(/server:.*192\.168\.1\.100/i)).toBeVisible({
+          timeout: 3000,
+        });
       } else {
         test.skip(true, "iPerf server configuration not available");
       }
     });
 
-    test("should show test configuration (protocol, direction, duration)", async ({ page }) => {
+    test("should show test configuration (protocol, direction, duration)", async ({
+      page,
+    }) => {
       await expect(page.getByText(/lan speed.*iperf/i)).toBeVisible();
 
       // Check if configured - should show test type
@@ -371,7 +419,9 @@ test.describe("Performance Testing - Complete Flow", () => {
       const iperfButton = page
         .getByRole("button", { name: /run.*iperf|iperf.*test|lan.*test/i })
         .first();
-      const hasButton = await iperfButton.isVisible({ timeout: 2000 }).catch(() => false);
+      const hasButton = await iperfButton
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasButton) {
         test.skip(true, "iPerf test button not available");
@@ -381,7 +431,9 @@ test.describe("Performance Testing - Complete Flow", () => {
       // Setup request interception
       const requestPromise = page
         .waitForRequest(
-          (request) => request.url().includes("/api/iperf/client") && request.method() === "POST",
+          (request) =>
+            request.url().includes("/api/iperf/client") &&
+            request.method() === "POST",
           { timeout: 5000 }
         )
         .catch(() => null);
@@ -415,7 +467,9 @@ test.describe("Performance Testing - Complete Flow", () => {
       }
     });
 
-    test("should display iPerf3 results with bandwidth metrics", async ({ page }) => {
+    test("should display iPerf3 results with bandwidth metrics", async ({
+      page,
+    }) => {
       await expect(page.getByText(/lan speed.*iperf/i)).toBeVisible();
 
       // Check if results exist
@@ -429,7 +483,9 @@ test.describe("Performance Testing - Complete Flow", () => {
         await expect(page.getByText(/mbps|gbps/i).first()).toBeVisible();
 
         // Should show transfer amount
-        await expect(page.getByText(/transfer.*mb|mb.*transfer/i)).toBeVisible({ timeout: 2000 });
+        await expect(page.getByText(/transfer.*mb|mb.*transfer/i)).toBeVisible({
+          timeout: 2000,
+        });
       }
       // No results yet is also valid
     });
@@ -477,8 +533,12 @@ test.describe("Performance Testing - Complete Flow", () => {
         });
       });
 
-      const iperfButton = page.getByRole("button", { name: /run.*iperf|iperf.*test/i }).first();
-      const hasButton = await iperfButton.isVisible({ timeout: 2000 }).catch(() => false);
+      const iperfButton = page
+        .getByRole("button", { name: /run.*iperf|iperf.*test/i })
+        .first();
+      const hasButton = await iperfButton
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasButton) {
         test.skip(true, "iPerf test button not available");
@@ -488,18 +548,26 @@ test.describe("Performance Testing - Complete Flow", () => {
       await iperfButton.click();
 
       // Should show error
-      await expect(page.getByText(/refused|unreachable|failed|error/i)).toBeVisible({
+      await expect(
+        page.getByText(/refused|unreachable|failed|error/i)
+      ).toBeVisible({
         timeout: 5000,
       });
     });
 
     test("should handle invalid parameters error", async ({ page }) => {
       // Open settings to configure invalid parameters
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
 
-      const serverInput = page.getByLabel(/server.*host|iperf.*server/i).first();
-      const hasInput = await serverInput.isVisible({ timeout: 2000 }).catch(() => false);
+      const serverInput = page
+        .getByLabel(/server.*host|iperf.*server/i)
+        .first();
+      const hasInput = await serverInput
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasInput) {
         test.skip(true, "iPerf configuration not available");
@@ -511,8 +579,12 @@ test.describe("Performance Testing - Complete Flow", () => {
       await page.keyboard.press("Escape");
 
       // Try to run test
-      const iperfButton = page.getByRole("button", { name: /run.*iperf|iperf.*test/i }).first();
-      const hasButton = await iperfButton.isVisible({ timeout: 2000 }).catch(() => false);
+      const iperfButton = page
+        .getByRole("button", { name: /run.*iperf|iperf.*test/i })
+        .first();
+      const hasButton = await iperfButton
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (hasButton) {
         await iperfButton.click();
@@ -528,25 +600,35 @@ test.describe("Performance Testing - Complete Flow", () => {
 
     test("should support bidirectional testing", async ({ page }) => {
       // Open settings
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
 
       // Look for direction/bidirectional option
       const directionSelect = page.getByLabel(/direction|test.*type/i).first();
-      const hasDirection = await directionSelect.isVisible({ timeout: 2000 }).catch(() => false);
+      const hasDirection = await directionSelect
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (hasDirection) {
         // Try to select bidirectional
         await directionSelect.click();
-        const bidirOption = page.getByRole("option", { name: /both|bidirectional/i }).first();
-        const hasBidir = await bidirOption.isVisible({ timeout: 2000 }).catch(() => false);
+        const bidirOption = page
+          .getByRole("option", { name: /both|bidirectional/i })
+          .first();
+        const hasBidir = await bidirOption
+          .isVisible({ timeout: 2000 })
+          .catch(() => false);
 
         if (hasBidir) {
           await bidirOption.click();
           await page.keyboard.press("Escape");
 
           // Verify configuration shows "Both" or "Bidirectional"
-          await expect(page.getByText(/both|bidirectional/i)).toBeVisible({ timeout: 3000 });
+          await expect(page.getByText(/both|bidirectional/i)).toBeVisible({
+            timeout: 3000,
+          });
         }
       }
       // Bidirectional option might not exist - that's OK
@@ -556,10 +638,14 @@ test.describe("Performance Testing - Complete Flow", () => {
   test.describe("Server Suggestions", () => {
     test("should display suggested iPerf3 servers", async ({ page }) => {
       // Open settings or look in card
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
 
-      await expect(page.getByText(/iperf|performance/i)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/iperf|performance/i)).toBeVisible({
+        timeout: 5000,
+      });
 
       // Look for suggestions section
       const hasSuggestions = await page
@@ -569,18 +655,26 @@ test.describe("Performance Testing - Complete Flow", () => {
 
       if (hasSuggestions) {
         // Verify at least one suggested server is shown
-        await expect(page.getByText(/iperf\.he\.net|bouygues\.iperf\.fr/i)).toBeVisible({
+        await expect(
+          page.getByText(/iperf\.he\.net|bouygues\.iperf\.fr/i)
+        ).toBeVisible({
           timeout: 3000,
         });
       }
       // Suggestions might not be implemented yet
     });
 
-    test("should auto-fill connection details when clicking suggested server", async ({ page }) => {
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+    test("should auto-fill connection details when clicking suggested server", async ({
+      page,
+    }) => {
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
 
-      await expect(page.getByText(/iperf|performance/i)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/iperf|performance/i)).toBeVisible({
+        timeout: 5000,
+      });
 
       const hasSuggestions = await page
         .getByText(/suggest|recommended/i)
@@ -596,13 +690,17 @@ test.describe("Performance Testing - Complete Flow", () => {
       const suggestionButton = page
         .getByRole("button", { name: /iperf\.he\.net|bouygues/i })
         .first();
-      const hasButton = await suggestionButton.isVisible({ timeout: 2000 }).catch(() => false);
+      const hasButton = await suggestionButton
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (hasButton) {
         await suggestionButton.click();
 
         // Verify server field is populated
-        const serverInput = page.getByLabel(/server.*host|iperf.*server/i).first();
+        const serverInput = page
+          .getByLabel(/server.*host|iperf.*server/i)
+          .first();
         const value = await serverInput.inputValue();
         expect(value).toBeTruthy();
         expect(value.length).toBeGreaterThan(0);
@@ -627,10 +725,14 @@ test.describe("Performance Testing - Complete Flow", () => {
       await page.reload();
 
       // Re-authenticate
-      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+        timeout: 10000,
+      });
 
       // Results should still be visible
-      await expect(page.getByText(/download|upload/i).first()).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/download|upload/i).first()).toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 });

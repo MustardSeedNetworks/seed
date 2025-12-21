@@ -25,7 +25,9 @@ test.describe("WebSocket Real-Time Updates", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test.describe("Connection Lifecycle", () => {
@@ -45,13 +47,17 @@ test.describe("WebSocket Real-Time Updates", () => {
       expect(wsConnected).toBeTruthy();
     });
 
-    test("should show connection status indicator as connected", async ({ page }) => {
+    test("should show connection status indicator as connected", async ({
+      page,
+    }) => {
       // Wait for any connection status indicator
       await page.waitForTimeout(2000);
 
       // Look for connection status indicators
       const connectedIndicators = [
-        page.locator('[data-testid="ws-status"]').filter({ hasText: /connected/i }),
+        page
+          .locator('[data-testid="ws-status"]')
+          .filter({ hasText: /connected/i }),
         page.locator('[class*="connected"]'),
         page.getByText(/connected|online/i),
         page.locator(".status-indicator.success"),
@@ -60,7 +66,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       // At least one indicator should show connected state
       let foundConnected = false;
       for (const indicator of connectedIndicators) {
-        const isVisible = await indicator.isVisible({ timeout: 1000 }).catch(() => false);
+        const isVisible = await indicator
+          .isVisible({ timeout: 1000 })
+          .catch(() => false);
         if (isVisible) {
           foundConnected = true;
           break;
@@ -78,7 +86,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       }
     });
 
-    test("should receive initial_state message on connection", async ({ page }) => {
+    test("should receive initial_state message on connection", async ({
+      page,
+    }) => {
       const messages: unknown[] = [];
 
       page.on("websocket", (ws) => {
@@ -105,7 +115,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       }
     });
 
-    test("should update page title/favicon on connection status change", async ({ page }) => {
+    test("should update page title/favicon on connection status change", async ({
+      page,
+    }) => {
       // Get initial title
       const initialTitle = await page.title();
       expect(initialTitle).toBeTruthy();
@@ -116,14 +128,19 @@ test.describe("WebSocket Real-Time Updates", () => {
   });
 
   test.describe("Card Update Messages", () => {
-    test("should receive card_update messages for LinkCard", async ({ page }) => {
+    test("should receive card_update messages for LinkCard", async ({
+      page,
+    }) => {
       const cardUpdates: unknown[] = [];
 
       page.on("websocket", (ws) => {
         ws.on("framereceived", (frame) => {
           try {
             const data = JSON.parse(frame.payload as string);
-            if (data.type === "card_update" && data.payload?.cardId === "link") {
+            if (
+              data.type === "card_update" &&
+              data.payload?.cardId === "link"
+            ) {
               cardUpdates.push(data);
             }
           } catch {
@@ -143,7 +160,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       }
     });
 
-    test("should update LinkCard UI when receiving card_update message", async ({ page }) => {
+    test("should update LinkCard UI when receiving card_update message", async ({
+      page,
+    }) => {
       // Inject mock WebSocket message to simulate card update
       await page.evaluate(() => {
         const mockUpdate = {
@@ -161,14 +180,20 @@ test.describe("WebSocket Real-Time Updates", () => {
         };
 
         // Trigger card update via custom event (simulating WebSocket message)
-        window.dispatchEvent(new CustomEvent("card_update", { detail: mockUpdate }));
+        window.dispatchEvent(
+          new CustomEvent("card_update", { detail: mockUpdate })
+        );
       });
 
       // Verify Link card shows updated data
-      await expect(page.getByText(/eth0|1000 mbps|full/i).first()).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText(/eth0|1000 mbps|full/i).first()).toBeVisible({
+        timeout: 3000,
+      });
     });
 
-    test("should update GatewayCard with new latency data", async ({ page }) => {
+    test("should update GatewayCard with new latency data", async ({
+      page,
+    }) => {
       // Find Gateway card
       const gatewayCard = page
         .locator("h3, h4")
@@ -190,7 +215,9 @@ test.describe("WebSocket Real-Time Updates", () => {
           },
         };
 
-        window.dispatchEvent(new CustomEvent("card_update", { detail: mockUpdate }));
+        window.dispatchEvent(
+          new CustomEvent("card_update", { detail: mockUpdate })
+        );
       });
 
       // Verify latency updated (should show 42 ms or 42.5 ms)
@@ -199,7 +226,10 @@ test.describe("WebSocket Real-Time Updates", () => {
 
     test("should update DNSCard with resolution status", async ({ page }) => {
       // Find DNS card
-      const dnsCard = page.locator("h3, h4").filter({ hasText: /dns/i }).first();
+      const dnsCard = page
+        .locator("h3, h4")
+        .filter({ hasText: /dns/i })
+        .first();
       await expect(dnsCard).toBeVisible({ timeout: 5000 });
 
       // Inject mock DNS update
@@ -219,20 +249,26 @@ test.describe("WebSocket Real-Time Updates", () => {
           },
         };
 
-        window.dispatchEvent(new CustomEvent("card_update", { detail: mockUpdate }));
+        window.dispatchEvent(
+          new CustomEvent("card_update", { detail: mockUpdate })
+        );
       });
 
       // Verify DNS servers are shown
       await expect(page.getByText(/8\.8\.8\.8/)).toBeVisible({ timeout: 3000 });
     });
 
-    test("should update WiFiCard with signal strength changes", async ({ page }) => {
+    test("should update WiFiCard with signal strength changes", async ({
+      page,
+    }) => {
       // Check if WiFi card exists (only on wireless interfaces)
       const wifiCard = page
         .locator("h3, h4")
         .filter({ hasText: /wifi|wireless/i })
         .first();
-      const hasWifi = await wifiCard.isVisible({ timeout: 2000 }).catch(() => false);
+      const hasWifi = await wifiCard
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasWifi) {
         test.skip(true, "WiFi card not available (wired interface)");
@@ -254,14 +290,20 @@ test.describe("WebSocket Real-Time Updates", () => {
           },
         };
 
-        window.dispatchEvent(new CustomEvent("card_update", { detail: mockUpdate }));
+        window.dispatchEvent(
+          new CustomEvent("card_update", { detail: mockUpdate })
+        );
       });
 
       // Verify signal data is shown
-      await expect(page.getByText(/TestNetwork|-45|85%/i).first()).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText(/TestNetwork|-45|85%/i).first()).toBeVisible({
+        timeout: 3000,
+      });
     });
 
-    test("should update multiple cards from single WebSocket broadcast", async ({ page }) => {
+    test("should update multiple cards from single WebSocket broadcast", async ({
+      page,
+    }) => {
       // Inject multiple card updates
       await page.evaluate(() => {
         const updates = [
@@ -289,19 +331,28 @@ test.describe("WebSocket Real-Time Updates", () => {
         ];
 
         updates.forEach((update) => {
-          window.dispatchEvent(new CustomEvent("card_update", { detail: update }));
+          window.dispatchEvent(
+            new CustomEvent("card_update", { detail: update })
+          );
         });
       });
 
       // Verify all cards updated
-      await expect(page.getByText(/eth0|1000 mbps/i).first()).toBeVisible({ timeout: 3000 });
-      await expect(page.getByText(/192\.168\.1\.1/)).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText(/eth0|1000 mbps/i).first()).toBeVisible({
+        timeout: 3000,
+      });
+      await expect(page.getByText(/192\.168\.1\.1/)).toBeVisible({
+        timeout: 3000,
+      });
       await expect(page.getByText(/1\.1\.1\.1/)).toBeVisible({ timeout: 3000 });
     });
 
     test("should reflect status color changes in card UI", async ({ page }) => {
       // Find Link card
-      const linkCard = page.locator("h3, h4").filter({ hasText: /link/i }).first();
+      const linkCard = page
+        .locator("h3, h4")
+        .filter({ hasText: /link/i })
+        .first();
       await expect(linkCard).toBeVisible();
 
       // Inject "down" status update
@@ -318,17 +369,23 @@ test.describe("WebSocket Real-Time Updates", () => {
           },
         };
 
-        window.dispatchEvent(new CustomEvent("card_update", { detail: mockUpdate }));
+        window.dispatchEvent(
+          new CustomEvent("card_update", { detail: mockUpdate })
+        );
       });
 
       // Card should show error/down status (typically red/error color)
       // Look for down indicator or error status
-      await expect(page.getByText(/down|disconnected/i).first()).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText(/down|disconnected/i).first()).toBeVisible({
+        timeout: 3000,
+      });
     });
   });
 
   test.describe("Real-Time Scan Updates", () => {
-    test("should receive scan_progress WebSocket messages during discovery", async ({ page }) => {
+    test("should receive scan_progress WebSocket messages during discovery", async ({
+      page,
+    }) => {
       const scanMessages: unknown[] = [];
 
       page.on("websocket", (ws) => {
@@ -345,8 +402,12 @@ test.describe("WebSocket Real-Time Updates", () => {
       });
 
       // Trigger a scan
-      const scanButton = page.getByRole("button", { name: /scan|discover/i }).first();
-      const hasScanButton = await scanButton.isVisible({ timeout: 2000 }).catch(() => false);
+      const scanButton = page
+        .getByRole("button", { name: /scan|discover/i })
+        .first();
+      const hasScanButton = await scanButton
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasScanButton) {
         test.skip(true, "Scan button not available");
@@ -365,13 +426,17 @@ test.describe("WebSocket Real-Time Updates", () => {
       }
     });
 
-    test('should show "Scanning... X/Y devices" progress in Discovery card', async ({ page }) => {
+    test('should show "Scanning... X/Y devices" progress in Discovery card', async ({
+      page,
+    }) => {
       // Find Network Discovery card
       const discoveryCard = page
         .locator("h3, h4")
         .filter({ hasText: /discovery|devices/i })
         .first();
-      const hasDiscovery = await discoveryCard.isVisible({ timeout: 2000 }).catch(() => false);
+      const hasDiscovery = await discoveryCard
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasDiscovery) {
         test.skip(true, "Discovery card not available");
@@ -389,14 +454,20 @@ test.describe("WebSocket Real-Time Updates", () => {
           },
         };
 
-        window.dispatchEvent(new CustomEvent("scan_progress", { detail: mockProgress }));
+        window.dispatchEvent(
+          new CustomEvent("scan_progress", { detail: mockProgress })
+        );
       });
 
       // Verify progress indicator
-      await expect(page.getByText(/scanning|10.*50|10\/50/i)).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText(/scanning|10.*50|10\/50/i)).toBeVisible({
+        timeout: 3000,
+      });
     });
 
-    test("should receive device_found messages and add to device list", async ({ page }) => {
+    test("should receive device_found messages and add to device list", async ({
+      page,
+    }) => {
       const deviceMessages: unknown[] = [];
 
       page.on("websocket", (ws) => {
@@ -413,8 +484,12 @@ test.describe("WebSocket Real-Time Updates", () => {
       });
 
       // Trigger scan
-      const scanButton = page.getByRole("button", { name: /scan|discover/i }).first();
-      const hasScanButton = await scanButton.isVisible({ timeout: 2000 }).catch(() => false);
+      const scanButton = page
+        .getByRole("button", { name: /scan|discover/i })
+        .first();
+      const hasScanButton = await scanButton
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasScanButton) {
         test.skip(true, "Scan button not available");
@@ -427,17 +502,23 @@ test.describe("WebSocket Real-Time Updates", () => {
       // If we received device_found messages, verify they appear in UI
       if (deviceMessages.length > 0) {
         // Should show device count increased
-        await expect(page.getByText(/\d+\s*device/i)).toBeVisible({ timeout: 3000 });
+        await expect(page.getByText(/\d+\s*device/i)).toBeVisible({
+          timeout: 3000,
+        });
       }
     });
 
-    test("should update device count in real-time as devices are found", async ({ page }) => {
+    test("should update device count in real-time as devices are found", async ({
+      page,
+    }) => {
       // Find Discovery card
       const discoveryCard = page
         .locator("h3, h4")
         .filter({ hasText: /discovery|devices/i })
         .first();
-      const hasDiscovery = await discoveryCard.isVisible({ timeout: 2000 }).catch(() => false);
+      const hasDiscovery = await discoveryCard
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasDiscovery) {
         test.skip(true, "Discovery card not available");
@@ -458,7 +539,9 @@ test.describe("WebSocket Real-Time Updates", () => {
               },
             };
 
-            window.dispatchEvent(new CustomEvent("device_found", { detail: mockDevice }));
+            window.dispatchEvent(
+              new CustomEvent("device_found", { detail: mockDevice })
+            );
           }, i * 500);
         }
       });
@@ -467,16 +550,22 @@ test.describe("WebSocket Real-Time Updates", () => {
       await page.waitForTimeout(2000);
 
       // Should show device IPs
-      await expect(page.getByText(/192\.168\.1\.\d+/).first()).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText(/192\.168\.1\.\d+/).first()).toBeVisible({
+        timeout: 3000,
+      });
     });
 
-    test("should show new device appear in list immediately", async ({ page }) => {
+    test("should show new device appear in list immediately", async ({
+      page,
+    }) => {
       // Find Discovery card or device list
       const discoveryCard = page
         .locator("h3, h4")
         .filter({ hasText: /discovery|devices/i })
         .first();
-      const hasDiscovery = await discoveryCard.isVisible({ timeout: 2000 }).catch(() => false);
+      const hasDiscovery = await discoveryCard
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (!hasDiscovery) {
         test.skip(true, "Discovery card not available");
@@ -494,18 +583,24 @@ test.describe("WebSocket Real-Time Updates", () => {
           },
         };
 
-        window.dispatchEvent(new CustomEvent("device_found", { detail: newDevice }));
+        window.dispatchEvent(
+          new CustomEvent("device_found", { detail: newDevice })
+        );
       });
 
       // Verify new device appears
-      await expect(page.getByText(/192\.168\.1\.123|new-test-device/i)).toBeVisible({
+      await expect(
+        page.getByText(/192\.168\.1\.123|new-test-device/i)
+      ).toBeVisible({
         timeout: 3000,
       });
     });
   });
 
   test.describe("Reconnection", () => {
-    test('should show "disconnected" status when WebSocket closes', async ({ page }) => {
+    test('should show "disconnected" status when WebSocket closes', async ({
+      page,
+    }) => {
       // Simulate WebSocket close
       await page.evaluate(() => {
         // Find and close WebSocket connection
@@ -525,7 +620,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       ];
 
       for (const indicator of disconnectedIndicators) {
-        const isVisible = await indicator.isVisible({ timeout: 2000 }).catch(() => false);
+        const isVisible = await indicator
+          .isVisible({ timeout: 2000 })
+          .catch(() => false);
         if (isVisible) {
           break;
         }
@@ -557,7 +654,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       // But we can verify the attempt was made
     });
 
-    test('should show "reconnecting" status during reconnection attempts', async ({ page }) => {
+    test('should show "reconnecting" status during reconnection attempts', async ({
+      page,
+    }) => {
       // Simulate disconnect
       await page.evaluate(() => {
         const ws = (window as unknown as { __ws?: WebSocket }).__ws;
@@ -577,7 +676,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       ];
 
       for (const indicator of reconnectingIndicators) {
-        const isVisible = await indicator.isVisible({ timeout: 2000 }).catch(() => false);
+        const isVisible = await indicator
+          .isVisible({ timeout: 2000 })
+          .catch(() => false);
         if (isVisible) {
           break;
         }
@@ -586,12 +687,16 @@ test.describe("WebSocket Real-Time Updates", () => {
       // Reconnecting indicator might not be visible in E2E - that's OK
     });
 
-    test('should show "connected" status after successful reconnection', async ({ page }) => {
+    test('should show "connected" status after successful reconnection', async ({
+      page,
+    }) => {
       // Page refresh simulates full reconnection cycle
       await page.reload();
 
       // Re-authenticate
-      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+        timeout: 10000,
+      });
 
       // Wait for WebSocket to reconnect
       await page.waitForTimeout(3000);
@@ -606,8 +711,12 @@ test.describe("WebSocket Real-Time Updates", () => {
 
     test("should support manual reconnect button", async ({ page }) => {
       // Look for reconnect button (might be in connection status area)
-      const reconnectButton = page.getByRole("button", { name: /reconnect/i }).first();
-      const hasButton = await reconnectButton.isVisible({ timeout: 2000 }).catch(() => false);
+      const reconnectButton = page
+        .getByRole("button", { name: /reconnect/i })
+        .first();
+      const hasButton = await reconnectButton
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (hasButton) {
         // Simulate disconnect first
@@ -635,7 +744,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       // Manual reconnect button might not exist - that's OK if auto-reconnect works
     });
 
-    test("should implement exponential backoff for reconnection attempts", async ({ page }) => {
+    test("should implement exponential backoff for reconnection attempts", async ({
+      page,
+    }) => {
       const reconnectTimes: number[] = [];
 
       page.on("websocket", (_ws) => {
@@ -714,7 +825,9 @@ test.describe("WebSocket Real-Time Updates", () => {
           payload: { foo: "bar" },
         };
 
-        window.dispatchEvent(new CustomEvent("websocket_message", { detail: unknownMsg }));
+        window.dispatchEvent(
+          new CustomEvent("websocket_message", { detail: unknownMsg })
+        );
       });
 
       await page.waitForTimeout(1000);
@@ -736,7 +849,9 @@ test.describe("WebSocket Real-Time Updates", () => {
         ];
 
         malformedUpdates.forEach((msg) => {
-          window.dispatchEvent(new CustomEvent("websocket_message", { detail: msg }));
+          window.dispatchEvent(
+            new CustomEvent("websocket_message", { detail: msg })
+          );
         });
       });
 
@@ -767,17 +882,20 @@ test.describe("WebSocket Real-Time Updates", () => {
       expect(hasData).toBeTruthy();
     });
 
-    test("should display error message for WebSocket failures", async ({ page }) => {
+    test("should display error message for WebSocket failures", async ({
+      page,
+    }) => {
       // Mock WebSocket to fail immediately
       await page.addInitScript(() => {
         const OriginalWebSocket = window.WebSocket;
-        (window as unknown as { WebSocket: typeof WebSocket }).WebSocket = function (url: string) {
-          const ws = new OriginalWebSocket(url);
-          setTimeout(() => {
-            ws.close(1006, "Mock error");
-          }, 100);
-          return ws;
-        } as unknown as typeof WebSocket;
+        (window as unknown as { WebSocket: typeof WebSocket }).WebSocket =
+          function (url: string) {
+            const ws = new OriginalWebSocket(url);
+            setTimeout(() => {
+              ws.close(1006, "Mock error");
+            }, 100);
+            return ws;
+          } as unknown as typeof WebSocket;
       });
 
       await page.reload();
@@ -798,13 +916,24 @@ test.describe("WebSocket Real-Time Updates", () => {
   });
 
   test.describe("Message Processing", () => {
-    test("should handle multiple newline-separated messages in one frame", async ({ page }) => {
+    test("should handle multiple newline-separated messages in one frame", async ({
+      page,
+    }) => {
       // Inject multiple messages at once
       await page.evaluate(() => {
         const messages = [
-          { type: "card_update", payload: { cardId: "link", data: { status: "up" } } },
-          { type: "card_update", payload: { cardId: "gateway", data: { reachable: true } } },
-          { type: "card_update", payload: { cardId: "dns", data: { servers: ["8.8.8.8"] } } },
+          {
+            type: "card_update",
+            payload: { cardId: "link", data: { status: "up" } },
+          },
+          {
+            type: "card_update",
+            payload: { cardId: "gateway", data: { reachable: true } },
+          },
+          {
+            type: "card_update",
+            payload: { cardId: "dns", data: { servers: ["8.8.8.8"] } },
+          },
         ];
 
         messages.forEach((msg) => {
@@ -815,7 +944,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       await page.waitForTimeout(1000);
 
       // All cards should have updated
-      await expect(page.getByText(/up|down/i).first()).toBeVisible({ timeout: 2000 });
+      await expect(page.getByText(/up|down/i).first()).toBeVisible({
+        timeout: 2000,
+      });
     });
 
     test("should process messages in correct order", async ({ page }) => {
@@ -836,10 +967,12 @@ test.describe("WebSocket Real-Time Updates", () => {
 
         messages.forEach((msg, i) => {
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("card_update", { detail: msg }));
-            (window as unknown as { trackUpdate: (cardId: string) => void }).trackUpdate(
-              msg.payload.cardId
+            window.dispatchEvent(
+              new CustomEvent("card_update", { detail: msg })
             );
+            (
+              window as unknown as { trackUpdate: (cardId: string) => void }
+            ).trackUpdate(msg.payload.cardId);
           }, i * 100);
         });
       });
@@ -854,7 +987,9 @@ test.describe("WebSocket Real-Time Updates", () => {
       }
     });
 
-    test("should handle high-frequency updates without lag", async ({ page }) => {
+    test("should handle high-frequency updates without lag", async ({
+      page,
+    }) => {
       // Send 50 rapid updates
       await page.evaluate(() => {
         for (let i = 0; i < 50; i++) {
@@ -866,14 +1001,19 @@ test.describe("WebSocket Real-Time Updates", () => {
             },
           };
 
-          window.dispatchEvent(new CustomEvent("card_update", { detail: update }));
+          window.dispatchEvent(
+            new CustomEvent("card_update", { detail: update })
+          );
         }
       });
 
       await page.waitForTimeout(500);
 
       // App should still be responsive
-      const linkCard = page.locator("h3, h4").filter({ hasText: /link/i }).first();
+      const linkCard = page
+        .locator("h3, h4")
+        .filter({ hasText: /link/i })
+        .first();
       await expect(linkCard).toBeVisible({ timeout: 2000 });
     });
   });
@@ -881,7 +1021,11 @@ test.describe("WebSocket Real-Time Updates", () => {
   test.describe("Integration with Card Components", () => {
     test("should trigger card re-render on data update", async ({ page }) => {
       // Get link card
-      const linkCard = page.locator("h3, h4").filter({ hasText: /link/i }).locator("..").first();
+      const linkCard = page
+        .locator("h3, h4")
+        .filter({ hasText: /link/i })
+        .locator("..")
+        .first();
 
       // Inject update
       await page.evaluate(() => {
@@ -897,7 +1041,9 @@ test.describe("WebSocket Real-Time Updates", () => {
           },
         };
 
-        window.dispatchEvent(new CustomEvent("card_update", { detail: update }));
+        window.dispatchEvent(
+          new CustomEvent("card_update", { detail: update })
+        );
       });
 
       await page.waitForTimeout(1000);
@@ -910,7 +1056,10 @@ test.describe("WebSocket Real-Time Updates", () => {
 
     test("should preserve card state between updates", async ({ page }) => {
       // Expand a card or open details (if such functionality exists)
-      const linkCard = page.locator("h3, h4").filter({ hasText: /link/i }).first();
+      const linkCard = page
+        .locator("h3, h4")
+        .filter({ hasText: /link/i })
+        .first();
       await linkCard.click();
 
       // Inject update

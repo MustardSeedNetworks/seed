@@ -24,7 +24,9 @@ test.describe("iPerf Integration", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display Performance card on dashboard", async ({ page }) => {
@@ -40,11 +42,15 @@ test.describe("iPerf Integration", () => {
     // Open settings
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Wait for settings drawer
-    await expect(page.getByText(/performance|iperf/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/performance|iperf/i)).toBeVisible({
+      timeout: 5000,
+    });
 
     // Look for iPerf server configuration
     const iperfSection = page.getByText(/iperf|server/i).first();
@@ -176,7 +182,9 @@ test.describe("iPerf Integration", () => {
     }
   });
 
-  test("should handle iPerf server connection error gracefully", async ({ page }) => {
+  test("should handle iPerf server connection error gracefully", async ({
+    page,
+  }) => {
     // This test verifies error handling when iPerf server is unavailable
     // Open settings and set an unreachable server
     const settingsButton = page.getByRole("button", { name: /settings/i });
@@ -215,7 +223,9 @@ test.describe("iPerf Integration", () => {
         await page.waitForTimeout(3000);
 
         // Should show error or timeout message (not crash)
-        const errorIndicator = page.getByText(/error|failed|timeout|unavailable/i);
+        const errorIndicator = page.getByText(
+          /error|failed|timeout|unavailable/i
+        );
         const _hasError = await errorIndicator.isVisible().catch(() => false);
 
         // Test passes if app doesn't crash - error display is optional
@@ -256,7 +266,9 @@ test.describe("iPerf Integration", () => {
 
       // Reload page
       await page.reload();
-      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+        timeout: 10000,
+      });
 
       // Reopen settings
       await settingsButton.click();
@@ -275,7 +287,9 @@ test.describe("iPerf Integration", () => {
     }
   });
 
-  test("should show iPerf server suggestions if available", async ({ page }) => {
+  test("should show iPerf server suggestions if available", async ({
+    page,
+  }) => {
     // Open settings
     const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
@@ -302,14 +316,20 @@ test.describe("iPerf Test Execution", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should show test progress during iPerf execution", async ({ page }) => {
     // Find Performance card and look for test button
     const testButton = page
       .locator('button:has-text("LAN")')
-      .or(page.locator('button:has-text("iPerf")').or(page.locator('button:has-text("Test")')))
+      .or(
+        page
+          .locator('button:has-text("iPerf")')
+          .or(page.locator('button:has-text("Test")'))
+      )
       .first();
 
     const hasButton = await testButton.isVisible().catch(() => false);

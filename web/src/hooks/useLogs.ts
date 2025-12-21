@@ -169,7 +169,8 @@ export function useLogs({
       const data = await response.json();
       setAllLogs(data.logs || []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch logs";
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch logs";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -234,7 +235,9 @@ export function useLogs({
 
     // Filter by component
     if (filters.components.length > 0) {
-      result = result.filter((log) => log.component && filters.components.includes(log.component));
+      result = result.filter(
+        (log) => log.component && filters.components.includes(log.component)
+      );
     }
 
     // Filter by search text
@@ -243,13 +246,17 @@ export function useLogs({
       result = result.filter(
         (log) =>
           log.message.toLowerCase().includes(searchLower) ||
-          (log.component && log.component.toLowerCase().includes(searchLower)) ||
+          (log.component &&
+            log.component.toLowerCase().includes(searchLower)) ||
           (log.request_id && log.request_id.toLowerCase().includes(searchLower))
       );
     }
 
     // Sort by timestamp (newest first)
-    result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    result.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
 
     return result;
   }, [allLogs, filters]);

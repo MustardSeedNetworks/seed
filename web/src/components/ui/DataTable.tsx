@@ -38,8 +38,22 @@
 
 import { useState, useMemo, useCallback, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronUp, ChevronDown, ArrowUpDown, Search, X, Filter } from "lucide-react";
-import { cn, layout, radius, border, icon as iconTokens, spacing } from "../../styles/theme";
+import {
+  ChevronUp,
+  ChevronDown,
+  ArrowUpDown,
+  Search,
+  X,
+  Filter,
+} from "lucide-react";
+import {
+  cn,
+  layout,
+  radius,
+  border,
+  icon as iconTokens,
+  spacing,
+} from "../../styles/theme";
 
 export type SortDirection = "asc" | "desc" | null;
 
@@ -76,7 +90,13 @@ export interface DataTableProps<T> {
   loading?: boolean;
 }
 
-function SortIcon({ direction, active }: { direction: SortDirection; active: boolean }) {
+function SortIcon({
+  direction,
+  active,
+}: {
+  direction: SortDirection;
+  active: boolean;
+}) {
   if (!active || !direction) {
     return <ArrowUpDown className={cn(iconTokens.size.xs, "opacity-40")} />;
   }
@@ -113,7 +133,9 @@ export function DataTable<T>({
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>(
+    {}
+  );
   const [showFilters, setShowFilters] = useState(false);
   const [renderError, setRenderError] = useState<Error | null>(null);
 
@@ -190,7 +212,10 @@ export function DataTable<T>({
               if (!item) return false; // Null check
               try {
                 const value = column.accessor(item);
-                return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+                return value
+                  ?.toString()
+                  .toLowerCase()
+                  .includes(filterValue.toLowerCase());
               } catch (err) {
                 console.error("DataTable: Error filtering column value", err);
                 return false;
@@ -240,9 +265,18 @@ export function DataTable<T>({
       setRenderError(err instanceof Error ? err : new Error(String(err)));
       return [];
     }
-  }, [data, searchQuery, searchKeys, activeFilters, sortKey, sortDirection, columns]);
+  }, [
+    data,
+    searchQuery,
+    searchKeys,
+    activeFilters,
+    sortKey,
+    sortDirection,
+    columns,
+  ]);
 
-  const hasActiveFilters = searchQuery !== "" || Object.keys(activeFilters).length > 0;
+  const hasActiveFilters =
+    searchQuery !== "" || Object.keys(activeFilters).length > 0;
 
   // Fixes #680: Show error state if error prop is provided or render error occurred
   const displayError = error || renderError?.message;
@@ -328,7 +362,13 @@ export function DataTable<T>({
 
       {/* Filter Dropdowns */}
       {showFilters && filterOptions && (
-        <div className={cn(layout.inline.wrap, `${spacing.pad.xs} bg-surface-hover`, radius.lg)}>
+        <div
+          className={cn(
+            layout.inline.wrap,
+            `${spacing.pad.xs} bg-surface-hover`,
+            radius.lg
+          )}
+        >
           {filterOptions.map((filter) => (
             <select
               key={filter.key}
@@ -382,23 +422,32 @@ export function DataTable<T>({
                   className={cn(
                     `${spacing.cell.px} ${spacing.compact.pyMd} text-left section-title`,
                     column.hiddenOnMobile && "hidden sm:table-cell",
-                    column.sortable && "cursor-pointer hover:text-text-primary select-none",
+                    column.sortable &&
+                      "cursor-pointer hover:text-text-primary select-none",
                     column.width ? `w-[${column.width}]` : ""
                   )}
-                  onClick={column.sortable ? () => handleSort(column.key) : undefined}
+                  onClick={
+                    column.sortable ? () => handleSort(column.key) : undefined
+                  }
                 >
                   <span className={layout.inline.tight}>
                     {column.header}
                     {column.sortable && (
                       <SortIcon
-                        direction={sortKey === column.key ? sortDirection : null}
+                        direction={
+                          sortKey === column.key ? sortDirection : null
+                        }
                         active={sortKey === column.key}
                       />
                     )}
                   </span>
                 </th>
               ))}
-              {actions && <th className={`${spacing.cell.px} ${spacing.compact.pyMd} w-16`}></th>}
+              {actions && (
+                <th
+                  className={`${spacing.cell.px} ${spacing.compact.pyMd} w-16`}
+                ></th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -415,7 +464,9 @@ export function DataTable<T>({
               filteredAndSortedData.map((item) => {
                 // Fixes #680: Add null checks for safe rendering
                 if (!item) {
-                  console.warn("DataTable: Encountered null/undefined item in data");
+                  console.warn(
+                    "DataTable: Encountered null/undefined item in data"
+                  );
                   return null;
                 }
 
@@ -443,11 +494,17 @@ export function DataTable<T>({
                                 column.hiddenOnMobile && "hidden sm:table-cell"
                               )}
                             >
-                              {column.render ? column.render(item) : (column.accessor(item) ?? "-")}
+                              {column.render
+                                ? column.render(item)
+                                : (column.accessor(item) ?? "-")}
                             </td>
                           );
                         } catch (err) {
-                          console.error("DataTable: Error rendering column", column.key, err);
+                          console.error(
+                            "DataTable: Error rendering column",
+                            column.key,
+                            err
+                          );
                           return (
                             <td
                               key={`${key}-${column.key}`}
@@ -456,18 +513,25 @@ export function DataTable<T>({
                                 column.hiddenOnMobile && "hidden sm:table-cell"
                               )}
                             >
-                              <span className="text-status-error">{t("status.error")}</span>
+                              <span className="text-status-error">
+                                {t("status.error")}
+                              </span>
                             </td>
                           );
                         }
                       })}
                       {actions && (
-                        <td className={`${spacing.cell.px} ${spacing.row.py} text-right`}>
+                        <td
+                          className={`${spacing.cell.px} ${spacing.row.py} text-right`}
+                        >
                           {(() => {
                             try {
                               return actions(item);
                             } catch (err) {
-                              console.error("DataTable: Error rendering actions", err);
+                              console.error(
+                                "DataTable: Error rendering actions",
+                                err
+                              );
                               return null;
                             }
                           })()}

@@ -50,7 +50,10 @@ export interface ProfileContextValue {
 
   // CRUD operations
   createProfile: (profile: ProfileRequest) => Promise<Profile | null>;
-  updateProfile: (id: string, profile: ProfileRequest) => Promise<Profile | null>;
+  updateProfile: (
+    id: string,
+    profile: ProfileRequest
+  ) => Promise<Profile | null>;
   deleteProfile: (id: string) => Promise<boolean>;
 
   // Profile switching
@@ -60,13 +63,17 @@ export interface ProfileContextValue {
   duplicateProfile: (id: string, newName?: string) => Promise<Profile | null>;
 
   // Import/Export
-  importProfiles: (request: ProfileImportRequest) => Promise<ProfileImportResponse | null>;
+  importProfiles: (
+    request: ProfileImportRequest
+  ) => Promise<ProfileImportResponse | null>;
   exportProfiles: () => Promise<ProfileExportResponse | null>;
   downloadProfiles: () => Promise<boolean>;
 }
 
 // Create context with undefined default to enforce provider requirement
-const ProfileContext = createContext<ProfileContextValue | undefined>(undefined);
+const ProfileContext = createContext<ProfileContextValue | undefined>(
+  undefined
+);
 
 // ============================================================================
 // Provider Component
@@ -101,7 +108,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
       }
     } catch (err) {
       if (isMountedRef.current) {
-        const message = err instanceof Error ? err.message : "Failed to fetch profiles";
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch profiles";
         setError(message);
         logger.error(LogComponents.PROFILES, "Failed to fetch profiles", err);
       }
@@ -123,9 +131,16 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
       if (isMountedRef.current) {
         // Active profile may not exist yet, which is okay
         if (!(err instanceof Error && err.message.includes("404"))) {
-          const message = err instanceof Error ? err.message : "Failed to fetch active profile";
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Failed to fetch active profile";
           setError(message);
-          logger.error(LogComponents.PROFILES, "Failed to fetch active profile", err);
+          logger.error(
+            LogComponents.PROFILES,
+            "Failed to fetch active profile",
+            err
+          );
         }
       }
     }
@@ -135,32 +150,36 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   // CRUD Operations
   // ============================================================================
 
-  const createProfile = useCallback(async (profile: ProfileRequest): Promise<Profile | null> => {
-    try {
-      setError(null);
-      setIsLoading(true);
-      const created = await api.post<Profile>("/api/profiles", profile);
-      if (isMountedRef.current) {
-        setProfiles((prev) => [...prev, created]);
+  const createProfile = useCallback(
+    async (profile: ProfileRequest): Promise<Profile | null> => {
+      try {
+        setError(null);
+        setIsLoading(true);
+        const created = await api.post<Profile>("/api/profiles", profile);
+        if (isMountedRef.current) {
+          setProfiles((prev) => [...prev, created]);
+        }
+        logger.info(LogComponents.PROFILES, "Profile created", {
+          profileId: created.id,
+          name: created.name,
+        });
+        return created;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to create profile";
+        if (isMountedRef.current) {
+          setError(message);
+        }
+        logger.error(LogComponents.PROFILES, "Failed to create profile", err);
+        return null;
+      } finally {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
-      logger.info(LogComponents.PROFILES, "Profile created", {
-        profileId: created.id,
-        name: created.name,
-      });
-      return created;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create profile";
-      if (isMountedRef.current) {
-        setError(message);
-      }
-      logger.error(LogComponents.PROFILES, "Failed to create profile", err);
-      return null;
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   const updateProfile = useCallback(
     async (id: string, profile: ProfileRequest): Promise<Profile | null> => {
@@ -180,7 +199,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         });
         return updated;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to update profile";
+        const message =
+          err instanceof Error ? err.message : "Failed to update profile";
         if (isMountedRef.current) {
           setError(message);
         }
@@ -206,7 +226,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
       logger.info(LogComponents.PROFILES, "Profile deleted", { profileId: id });
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to delete profile";
+      const message =
+        err instanceof Error ? err.message : "Failed to delete profile";
       if (isMountedRef.current) {
         setError(message);
       }
@@ -223,34 +244,41 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   // Profile Switching
   // ============================================================================
 
-  const switchProfile = useCallback(async (profileId: string): Promise<boolean> => {
-    try {
-      setError(null);
-      setIsLoading(true);
-      const result = await api.post<ActiveProfileResponse>("/api/profiles/active", {
-        profile_id: profileId,
-      });
-      if (isMountedRef.current) {
-        setActiveProfile(result.profile);
+  const switchProfile = useCallback(
+    async (profileId: string): Promise<boolean> => {
+      try {
+        setError(null);
+        setIsLoading(true);
+        const result = await api.post<ActiveProfileResponse>(
+          "/api/profiles/active",
+          {
+            profile_id: profileId,
+          }
+        );
+        if (isMountedRef.current) {
+          setActiveProfile(result.profile);
+        }
+        logger.info(LogComponents.PROFILES, "Profile switched", {
+          profileId,
+          name: result.profile.name,
+        });
+        return true;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to switch profile";
+        if (isMountedRef.current) {
+          setError(message);
+        }
+        logger.error(LogComponents.PROFILES, "Failed to switch profile", err);
+        return false;
+      } finally {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
-      logger.info(LogComponents.PROFILES, "Profile switched", {
-        profileId,
-        name: result.profile.name,
-      });
-      return true;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to switch profile";
-      if (isMountedRef.current) {
-        setError(message);
-      }
-      logger.error(LogComponents.PROFILES, "Failed to switch profile", err);
-      return false;
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   // ============================================================================
   // Duplication
@@ -261,9 +289,12 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
       try {
         setError(null);
         setIsLoading(true);
-        const duplicated = await api.post<Profile>(`/api/profiles/${id}/duplicate`, {
-          name: newName,
-        });
+        const duplicated = await api.post<Profile>(
+          `/api/profiles/${id}/duplicate`,
+          {
+            name: newName,
+          }
+        );
         if (isMountedRef.current) {
           setProfiles((prev) => [...prev, duplicated]);
         }
@@ -274,11 +305,16 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         });
         return duplicated;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to duplicate profile";
+        const message =
+          err instanceof Error ? err.message : "Failed to duplicate profile";
         if (isMountedRef.current) {
           setError(message);
         }
-        logger.error(LogComponents.PROFILES, "Failed to duplicate profile", err);
+        logger.error(
+          LogComponents.PROFILES,
+          "Failed to duplicate profile",
+          err
+        );
         return null;
       } finally {
         if (isMountedRef.current) {
@@ -294,11 +330,16 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   // ============================================================================
 
   const importProfiles = useCallback(
-    async (request: ProfileImportRequest): Promise<ProfileImportResponse | null> => {
+    async (
+      request: ProfileImportRequest
+    ): Promise<ProfileImportResponse | null> => {
       try {
         setError(null);
         setIsLoading(true);
-        const result = await api.post<ProfileImportResponse>("/api/profiles/import", request);
+        const result = await api.post<ProfileImportResponse>(
+          "/api/profiles/import",
+          request
+        );
         // Refresh the profile list after import
         await refreshProfiles();
         logger.info(LogComponents.PROFILES, "Profiles imported", {
@@ -308,7 +349,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         });
         return result;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to import profiles";
+        const message =
+          err instanceof Error ? err.message : "Failed to import profiles";
         if (isMountedRef.current) {
           setError(message);
         }
@@ -323,23 +365,27 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     [refreshProfiles]
   );
 
-  const exportProfiles = useCallback(async (): Promise<ProfileExportResponse | null> => {
-    try {
-      setError(null);
-      const result = await api.get<ProfileExportResponse>("/api/profiles/export");
-      logger.info(LogComponents.PROFILES, "Profiles exported", {
-        count: result.profiles.length,
-      });
-      return result;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to export profiles";
-      if (isMountedRef.current) {
-        setError(message);
+  const exportProfiles =
+    useCallback(async (): Promise<ProfileExportResponse | null> => {
+      try {
+        setError(null);
+        const result = await api.get<ProfileExportResponse>(
+          "/api/profiles/export"
+        );
+        logger.info(LogComponents.PROFILES, "Profiles exported", {
+          count: result.profiles.length,
+        });
+        return result;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to export profiles";
+        if (isMountedRef.current) {
+          setError(message);
+        }
+        logger.error(LogComponents.PROFILES, "Failed to export profiles", err);
+        return null;
       }
-      logger.error(LogComponents.PROFILES, "Failed to export profiles", err);
-      return null;
-    }
-  }, []);
+    }, []);
 
   const downloadProfiles = useCallback(async (): Promise<boolean> => {
     try {
@@ -406,7 +452,11 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     downloadProfiles,
   };
 
-  return <ProfileContext.Provider value={contextValue}>{children}</ProfileContext.Provider>;
+  return (
+    <ProfileContext.Provider value={contextValue}>
+      {children}
+    </ProfileContext.Provider>
+  );
 }
 
 // ============================================================================

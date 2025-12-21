@@ -27,7 +27,13 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Radio, Plus, Trash2, Edit2, Check, X, MapPin } from "lucide-react";
-import { radius, spacing, layout, button, icon as iconTokens } from "../../styles/theme";
+import {
+  radius,
+  spacing,
+  layout,
+  button,
+  icon as iconTokens,
+} from "../../styles/theme";
 import type { APLocation, WiFiBand } from "../../hooks/useSurvey";
 
 interface APPlacementPanelProps {
@@ -99,7 +105,9 @@ export function APPlacementPanel({
       className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.sm}`}
     >
       {/* Header */}
-      <div className={`${layout.inline.default} justify-between ${spacing.margin.bottom.content}`}>
+      <div
+        className={`${layout.inline.default} justify-between ${spacing.margin.bottom.content}`}
+      >
         <div className={`${layout.inline.default}`}>
           <Radio className={iconTokens.size.sm} />
           <h4 className="body-small font-medium">{t("apPlacement.title")}</h4>
@@ -131,7 +139,9 @@ export function APPlacementPanel({
 
       {/* AP List */}
       {apLocations.length === 0 ? (
-        <p className="caption text-text-muted text-center py-4">{t("apPlacement.noAps")}</p>
+        <p className="caption text-text-muted text-center py-4">
+          {t("apPlacement.noAps")}
+        </p>
       ) : (
         <div className={`${layout.stack.tight} max-h-64 overflow-y-auto`}>
           {apLocations.map((ap) => (
@@ -146,12 +156,17 @@ export function APPlacementPanel({
             >
               {editingApId === ap.id ? (
                 // Edit mode
-                <div className={`${layout.stack.tight}`} onClick={(e) => e.stopPropagation()}>
+                <div
+                  className={`${layout.stack.tight}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {/* Label */}
                   <input
                     type="text"
                     value={editForm.label || ""}
-                    onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, label: e.target.value })
+                    }
                     placeholder={t("apPlacement.label")}
                     className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
                   />
@@ -160,7 +175,9 @@ export function APPlacementPanel({
                   <input
                     type="text"
                     value={editForm.bssid || ""}
-                    onChange={(e) => setEditForm({ ...editForm, bssid: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, bssid: e.target.value })
+                    }
                     placeholder={t("apPlacement.bssid")}
                     className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small font-mono`}
                   />
@@ -188,7 +205,9 @@ export function APPlacementPanel({
                       onChange={(e) =>
                         setEditForm({
                           ...editForm,
-                          channel: e.target.value ? parseInt(e.target.value, 10) : undefined,
+                          channel: e.target.value
+                            ? parseInt(e.target.value, 10)
+                            : undefined,
                         })
                       }
                       placeholder={t("apPlacement.channel")}
@@ -200,7 +219,9 @@ export function APPlacementPanel({
                   <input
                     type="text"
                     value={editForm.model || ""}
-                    onChange={(e) => setEditForm({ ...editForm, model: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, model: e.target.value })
+                    }
                     placeholder={t("apPlacement.model")}
                     className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
                   />
@@ -231,7 +252,11 @@ export function APPlacementPanel({
                       />
                       <span className="body-small font-medium">{ap.label}</span>
                     </div>
-                    {ap.bssid && <p className="caption text-text-muted font-mono">{ap.bssid}</p>}
+                    {ap.bssid && (
+                      <p className="caption text-text-muted font-mono">
+                        {ap.bssid}
+                      </p>
+                    )}
                     {(ap.band || ap.channel) && (
                       <p className="caption text-text-muted">
                         {ap.band && `${ap.band} GHz`}
@@ -240,7 +265,10 @@ export function APPlacementPanel({
                       </p>
                     )}
                   </div>
-                  <div className={`${layout.inline.tight}`} onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className={`${layout.inline.tight}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       onClick={() => handleEdit(ap)}
                       className={`${button.size.xs} ${radius.md} hover:bg-surface-hover`}

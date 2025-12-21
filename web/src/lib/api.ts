@@ -45,7 +45,9 @@ let refreshPromise: Promise<boolean> | null = null;
  *
  * @param callback - Function to call when session expires
  */
-export function setSessionExpiredCallback(callback: SessionExpiredCallback | null): void {
+export function setSessionExpiredCallback(
+  callback: SessionExpiredCallback | null
+): void {
   onSessionExpired = callback;
 }
 
@@ -162,11 +164,17 @@ export const api = {
    * @example
    * const result = await api.post<Result>('/api/network/scan', { subnet: '192.168.1.0/24' });
    */
-  async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
+  async post<T>(
+    endpoint: string,
+    body?: unknown,
+    init?: RequestInit
+  ): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
-      new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
+      new Headers(init?.headers).forEach((value, key) =>
+        headers.set(key, value)
+      );
 
       return fetch(`${API_BASE}${endpoint}`, {
         ...init,
@@ -190,11 +198,17 @@ export const api = {
    * @example
    * await api.put('/api/settings', { theme: 'dark' });
    */
-  async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
+  async put<T>(
+    endpoint: string,
+    body?: unknown,
+    init?: RequestInit
+  ): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
-      new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
+      new Headers(init?.headers).forEach((value, key) =>
+        headers.set(key, value)
+      );
 
       return fetch(`${API_BASE}${endpoint}`, {
         ...init,

@@ -38,7 +38,13 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { radius, spacing, layout, button, icon as iconTokens } from "../../styles/theme";
+import {
+  radius,
+  spacing,
+  layout,
+  button,
+  icon as iconTokens,
+} from "../../styles/theme";
 import type {
   HeatmapMetric,
   HeatmapFilter,
@@ -196,7 +202,9 @@ export function HeatmapFilterPanel({
   }, [samples]);
 
   // Available metrics for current survey type
-  const availableMetrics = METRIC_OPTIONS.filter((m) => m.availableFor.includes(surveyType));
+  const availableMetrics = METRIC_OPTIONS.filter((m) =>
+    m.availableFor.includes(surveyType)
+  );
 
   // Group metrics by category
   const metricsByCategory = {
@@ -241,13 +249,17 @@ export function HeatmapFilterPanel({
     >
       {/* Metric Selection */}
       <div className={spacing.margin.bottom.content}>
-        <h4 className={`caption font-medium text-text-muted ${spacing.margin.bottom.tight}`}>
+        <h4
+          className={`caption font-medium text-text-muted ${spacing.margin.bottom.tight}`}
+        >
           {t("heatmaps.title")}
         </h4>
 
         {/* Signal metrics */}
         {metricsByCategory.signal.length > 0 && (
-          <div className={`${layout.inline.default} flex-wrap ${spacing.margin.bottom.tight}`}>
+          <div
+            className={`${layout.inline.default} flex-wrap ${spacing.margin.bottom.tight}`}
+          >
             {metricsByCategory.signal.map((option) => {
               const Icon = option.icon;
               const isSelected = metric === option.id;
@@ -271,7 +283,9 @@ export function HeatmapFilterPanel({
 
         {/* Performance metrics */}
         {metricsByCategory.performance.length > 0 && (
-          <div className={`${layout.inline.default} flex-wrap ${spacing.margin.bottom.tight}`}>
+          <div
+            className={`${layout.inline.default} flex-wrap ${spacing.margin.bottom.tight}`}
+          >
             {metricsByCategory.performance.map((option) => {
               const Icon = option.icon;
               const isSelected = metric === option.id;
@@ -341,10 +355,14 @@ export function HeatmapFilterPanel({
 
       {/* Filter Options */}
       {showFilters && (
-        <div className={`${layout.stack.default} ${spacing.margin.top.content}`}>
+        <div
+          className={`${layout.stack.default} ${spacing.margin.top.content}`}
+        >
           {/* SSID Filter */}
           <div>
-            <label className="caption text-text-muted">{t("heatmaps.filterSsid")}</label>
+            <label className="caption text-text-muted">
+              {t("heatmaps.filterSsid")}
+            </label>
             <select
               value={filter?.ssid || ""}
               onChange={(e) => updateFilter("ssid", e.target.value)}
@@ -361,7 +379,9 @@ export function HeatmapFilterPanel({
 
           {/* BSSID Filter */}
           <div>
-            <label className="caption text-text-muted">{t("heatmaps.filterBssid")}</label>
+            <label className="caption text-text-muted">
+              {t("heatmaps.filterBssid")}
+            </label>
             <select
               value={filter?.bssid || ""}
               onChange={(e) => updateFilter("bssid", e.target.value)}
@@ -379,7 +399,9 @@ export function HeatmapFilterPanel({
           {/* AP Location Filter */}
           {apLocations.length > 0 && (
             <div>
-              <label className="caption text-text-muted">{t("heatmaps.filterAp")}</label>
+              <label className="caption text-text-muted">
+                {t("heatmaps.filterAp")}
+              </label>
               <select
                 value={filter?.apId || ""}
                 onChange={(e) => updateFilter("apId", e.target.value)}
@@ -397,12 +419,19 @@ export function HeatmapFilterPanel({
 
           {/* Band Filter */}
           <div>
-            <label className="caption text-text-muted">{t("heatmaps.filterBand")}</label>
+            <label className="caption text-text-muted">
+              {t("heatmaps.filterBand")}
+            </label>
             <div className={`${layout.inline.default}`}>
               {(["2.4", "5", "6"] as WiFiBand[]).map((band) => (
                 <button
                   key={band}
-                  onClick={() => updateFilter("band", filter?.band === band ? undefined : band)}
+                  onClick={() =>
+                    updateFilter(
+                      "band",
+                      filter?.band === band ? undefined : band
+                    )
+                  }
                   className={`${button.size.xs} ${radius.md} transition-colors ${
                     filter?.band === band
                       ? band === "2.4"
@@ -422,11 +451,16 @@ export function HeatmapFilterPanel({
           {/* Channel Filter */}
           {uniqueChannels.length > 0 && (
             <div>
-              <label className="caption text-text-muted">{t("heatmaps.filterChannel")}</label>
+              <label className="caption text-text-muted">
+                {t("heatmaps.filterChannel")}
+              </label>
               <select
                 value={filter?.channel || ""}
                 onChange={(e) =>
-                  updateFilter("channel", e.target.value ? parseInt(e.target.value, 10) : undefined)
+                  updateFilter(
+                    "channel",
+                    e.target.value ? parseInt(e.target.value, 10) : undefined
+                  )
                 }
                 className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
               >
@@ -443,7 +477,9 @@ export function HeatmapFilterPanel({
           {/* Channel Width Filter */}
           {uniqueChannelWidths.length > 0 && (
             <div>
-              <label className="caption text-text-muted">{t("heatmaps.filterChannelWidth")}</label>
+              <label className="caption text-text-muted">
+                {t("heatmaps.filterChannelWidth")}
+              </label>
               <div className={`${layout.inline.default} flex-wrap`}>
                 {([20, 40, 80, 160, 320] as ChannelWidth[]).map((width) => (
                   <button
@@ -473,26 +509,33 @@ export function HeatmapFilterPanel({
           {/* PHY Type / 802.11 Standard Filter */}
           {uniquePhyTypes.length > 0 && (
             <div>
-              <label className="caption text-text-muted">{t("heatmaps.filterPhyType")}</label>
+              <label className="caption text-text-muted">
+                {t("heatmaps.filterPhyType")}
+              </label>
               <div className={`${layout.inline.default} flex-wrap`}>
-                {(["a", "b", "g", "n", "ac", "ax", "be"] as PhyType[]).map((phy) => (
-                  <button
-                    key={phy}
-                    onClick={() =>
-                      updateFilter("phyType", filter?.phyType === phy ? undefined : phy)
-                    }
-                    disabled={!uniquePhyTypes.includes(phy)}
-                    className={`${button.size.xs} ${radius.md} transition-colors ${
-                      filter?.phyType === phy
-                        ? "bg-indigo-500 text-text-inverse"
-                        : uniquePhyTypes.includes(phy)
-                          ? "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                          : "bg-surface-base border border-surface-border opacity-40"
-                    }`}
-                  >
-                    802.11{phy}
-                  </button>
-                ))}
+                {(["a", "b", "g", "n", "ac", "ax", "be"] as PhyType[]).map(
+                  (phy) => (
+                    <button
+                      key={phy}
+                      onClick={() =>
+                        updateFilter(
+                          "phyType",
+                          filter?.phyType === phy ? undefined : phy
+                        )
+                      }
+                      disabled={!uniquePhyTypes.includes(phy)}
+                      className={`${button.size.xs} ${radius.md} transition-colors ${
+                        filter?.phyType === phy
+                          ? "bg-indigo-500 text-text-inverse"
+                          : uniquePhyTypes.includes(phy)
+                            ? "bg-surface-base border border-surface-border hover:bg-surface-hover"
+                            : "bg-surface-base border border-surface-border opacity-40"
+                      }`}
+                    >
+                      802.11{phy}
+                    </button>
+                  )
+                )}
               </div>
             </div>
           )}
@@ -500,10 +543,14 @@ export function HeatmapFilterPanel({
           {/* Security Type Filter */}
           {uniqueSecurityTypes.length > 0 && (
             <div>
-              <label className="caption text-text-muted">{t("heatmaps.filterSecurity")}</label>
+              <label className="caption text-text-muted">
+                {t("heatmaps.filterSecurity")}
+              </label>
               <select
                 value={filter?.security || ""}
-                onChange={(e) => updateFilter("security", e.target.value || undefined)}
+                onChange={(e) =>
+                  updateFilter("security", e.target.value || undefined)
+                }
                 className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
               >
                 <option value="">{t("heatmaps.allSecurity")}</option>
@@ -519,10 +566,14 @@ export function HeatmapFilterPanel({
           {/* Vendor Filter */}
           {uniqueVendors.length > 0 && (
             <div>
-              <label className="caption text-text-muted">{t("heatmaps.filterVendor")}</label>
+              <label className="caption text-text-muted">
+                {t("heatmaps.filterVendor")}
+              </label>
               <select
                 value={filter?.vendor || ""}
-                onChange={(e) => updateFilter("vendor", e.target.value || undefined)}
+                onChange={(e) =>
+                  updateFilter("vendor", e.target.value || undefined)
+                }
                 className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
               >
                 <option value="">{t("heatmaps.allVendors")}</option>
@@ -537,31 +588,44 @@ export function HeatmapFilterPanel({
 
           {/* Survey View Mode (for imported surveys with multiple modes) */}
           <div>
-            <label className="caption text-text-muted">{t("heatmaps.viewMode")}</label>
+            <label className="caption text-text-muted">
+              {t("heatmaps.viewMode")}
+            </label>
             <div className={`${layout.inline.default} flex-wrap`}>
-              {(["all", "passive", "active", "client", "probingClient"] as SurveyViewMode[]).map(
-                (mode) => (
-                  <button
-                    key={mode}
-                    onClick={() =>
-                      updateFilter("viewMode", filter?.viewMode === mode ? undefined : mode)
-                    }
-                    className={`${button.size.xs} ${radius.md} transition-colors ${
-                      filter?.viewMode === mode
-                        ? "bg-amber-500 text-text-inverse"
-                        : "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                    }`}
-                  >
-                    {t(`heatmaps.viewModes.${mode}` as never)}
-                  </button>
-                )
-              )}
+              {(
+                [
+                  "all",
+                  "passive",
+                  "active",
+                  "client",
+                  "probingClient",
+                ] as SurveyViewMode[]
+              ).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() =>
+                    updateFilter(
+                      "viewMode",
+                      filter?.viewMode === mode ? undefined : mode
+                    )
+                  }
+                  className={`${button.size.xs} ${radius.md} transition-colors ${
+                    filter?.viewMode === mode
+                      ? "bg-amber-500 text-text-inverse"
+                      : "bg-surface-base border border-surface-border hover:bg-surface-hover"
+                  }`}
+                >
+                  {t(`heatmaps.viewModes.${mode}` as never)}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Min RSSI Filter */}
           <div>
-            <label className="caption text-text-muted">{t("heatmaps.minRssi")}</label>
+            <label className="caption text-text-muted">
+              {t("heatmaps.minRssi")}
+            </label>
             <div className={`${layout.inline.default}`}>
               <input
                 type="range"
@@ -571,12 +635,16 @@ export function HeatmapFilterPanel({
                 onChange={(e) =>
                   updateFilter(
                     "minRssi",
-                    parseInt(e.target.value, 10) === -100 ? undefined : parseInt(e.target.value, 10)
+                    parseInt(e.target.value, 10) === -100
+                      ? undefined
+                      : parseInt(e.target.value, 10)
                   )
                 }
                 className="flex-1"
               />
-              <span className="body-small w-16 text-right">{filter?.minRssi || -100} dBm</span>
+              <span className="body-small w-16 text-right">
+                {filter?.minRssi || -100} dBm
+              </span>
             </div>
           </div>
 

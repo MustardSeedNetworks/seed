@@ -36,11 +36,15 @@ test.describe("Settings", () => {
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Wait for drawer to open
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByText(/thresholds|appearance|discovery/i)
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test("should display Appearance settings section", async ({ page }) => {
@@ -133,7 +137,9 @@ test.describe("Settings", () => {
     });
   });
 
-  test("should persist settings after drawer close and reopen", async ({ page }) => {
+  test("should persist settings after drawer close and reopen", async ({
+    page,
+  }) => {
     // Find a theme toggle or setting to change
     const themeToggle = page
       .getByRole("button", { name: /dark|light/i })
@@ -155,7 +161,9 @@ test.describe("Settings", () => {
       await page.waitForTimeout(500);
 
       // Reopen drawer
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
       await page.waitForTimeout(500);
 
@@ -192,11 +200,15 @@ test.describe("Settings CRUD Operations", () => {
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Wait for drawer to open
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByText(/thresholds|appearance|discovery/i)
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test("should update threshold values and persist", async ({ page }) => {
@@ -297,7 +309,9 @@ test.describe("Settings CRUD Operations", () => {
     await page.waitForTimeout(500);
   });
 
-  test("should change performance settings and verify persistence", async ({ page }) => {
+  test("should change performance settings and verify persistence", async ({
+    page,
+  }) => {
     // Look for performance-related toggles (speedtest, iperf)
     const perfToggles = page.locator('input[type="checkbox"]');
     const toggleCount = await perfToggles.count();
@@ -312,7 +326,9 @@ test.describe("Settings CRUD Operations", () => {
       .locator('label:has-text("Speedtest"), label:has-text("Speed Test")')
       .locator('input[type="checkbox"]')
       .first();
-    const hasSpeedtestToggle = await speedtestToggle.isVisible().catch(() => false);
+    const hasSpeedtestToggle = await speedtestToggle
+      .isVisible()
+      .catch(() => false);
 
     if (hasSpeedtestToggle) {
       const wasChecked = await speedtestToggle.isChecked();
@@ -331,7 +347,9 @@ test.describe("Settings CRUD Operations", () => {
     }
   });
 
-  test("should validate and reject invalid threshold values", async ({ page }) => {
+  test("should validate and reject invalid threshold values", async ({
+    page,
+  }) => {
     const numberInputs = page.locator('input[type="number"]');
     const inputCount = await numberInputs.count();
 
@@ -362,9 +380,13 @@ test.describe("Settings CRUD Operations", () => {
     await page.waitForTimeout(500);
   });
 
-  test("should show auto-save indicator when settings change", async ({ page }) => {
+  test("should show auto-save indicator when settings change", async ({
+    page,
+  }) => {
     // Look for auto-save indicator
-    const autoSaveIndicator = page.locator('text=/saving|saved/i, [data-testid="auto-save"]');
+    const autoSaveIndicator = page.locator(
+      'text=/saving|saved/i, [data-testid="auto-save"]'
+    );
 
     // Make a change to trigger auto-save
     const checkboxes = page.locator('input[type="checkbox"]');
@@ -379,7 +401,9 @@ test.describe("Settings CRUD Operations", () => {
       await page.waitForTimeout(500);
 
       // Check if indicator was visible (it may be transient)
-      const indicatorVisible = await autoSaveIndicator.isVisible().catch(() => false);
+      const indicatorVisible = await autoSaveIndicator
+        .isVisible()
+        .catch(() => false);
 
       // Indicator may not always be visible depending on implementation
       expect(indicatorVisible).toBeDefined();
@@ -426,7 +450,9 @@ test.describe("Settings CRUD Operations", () => {
       // Open settings again
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
       await settingsButton.click();
       await page.waitForTimeout(1000);
 
@@ -449,7 +475,9 @@ test.describe("Settings CRUD Operations", () => {
     }
   });
 
-  test("should handle concurrent setting changes correctly", async ({ page }) => {
+  test("should handle concurrent setting changes correctly", async ({
+    page,
+  }) => {
     // Find multiple inputs
     const checkboxes = page.locator('input[type="checkbox"]');
     const checkboxCount = await checkboxes.count();
@@ -575,7 +603,9 @@ test.describe("Settings CRUD Operations", () => {
     await page.waitForTimeout(500);
   });
 
-  test("should maintain settings state when drawer is closed", async ({ page }) => {
+  test("should maintain settings state when drawer is closed", async ({
+    page,
+  }) => {
     // Make a change
     const checkboxes = page.locator('input[type="checkbox"]');
     const hasCheckbox = (await checkboxes.count()) > 0;
@@ -602,7 +632,9 @@ test.describe("Settings CRUD Operations", () => {
     // Reopen drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
     await page.waitForTimeout(1000);
 

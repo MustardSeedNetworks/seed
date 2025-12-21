@@ -21,7 +21,9 @@ test.describe("Link Card", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display Link card", async ({ page }) => {
@@ -103,7 +105,9 @@ test.describe("Link Card", () => {
 
   test("should update link status in real-time", async ({ page }) => {
     // Get initial status
-    const statusElement = page.getByText(/connected|disconnected|link/i).first();
+    const statusElement = page
+      .getByText(/connected|disconnected|link/i)
+      .first();
     const hasElement = await statusElement.isVisible().catch(() => false);
 
     if (hasElement) {
@@ -125,7 +129,9 @@ test.describe("Link Card Help", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should show link help in help modal", async ({ page }) => {
@@ -158,7 +164,9 @@ test.describe("Link Card MTU Configuration", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Open settings
     const settingsButton = page.getByRole("button", { name: /settings/i });

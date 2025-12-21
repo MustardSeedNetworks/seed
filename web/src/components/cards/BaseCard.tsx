@@ -88,7 +88,9 @@ export function BaseCard<T>({
         enableLiveRegion={true}
       >
         <CardValue value={t("status.error")} size="md" status="error" />
-        <p className={`caption text-status-error ${spacing.margin.top.tight}`}>{error}</p>
+        <p className={`caption text-status-error ${spacing.margin.top.tight}`}>
+          {error}
+        </p>
       </Card>
     );
   }
@@ -215,7 +217,9 @@ export function SimpleBaseCard({
         enableLiveRegion={true}
       >
         <CardValue value={t("status.error")} size="md" status="error" />
-        <p className={`caption text-status-error ${spacing.margin.top.tight}`}>{error}</p>
+        <p className={`caption text-status-error ${spacing.margin.top.tight}`}>
+          {error}
+        </p>
       </Card>
     );
   }

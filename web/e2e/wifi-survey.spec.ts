@@ -24,7 +24,9 @@ test.describe("WiFi Survey", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display WiFi card", async ({ page }) => {
@@ -68,11 +70,15 @@ test.describe("WiFi Survey", () => {
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Look for WiFi settings section
-    await expect(page.getByText(/wifi|wireless/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/wifi|wireless/i)).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("should display available networks list", async ({ page }) => {

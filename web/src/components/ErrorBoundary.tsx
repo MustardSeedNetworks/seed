@@ -118,7 +118,8 @@ export class ErrorBoundary extends Component<Props, State> {
                   {t("errorBoundary.title")}
                 </h1>
                 <p className={`body-small ${spacing.margin.bottom.content}`}>
-                  {this.state.error?.message || t("errorBoundary.defaultMessage")}
+                  {this.state.error?.message ||
+                    t("errorBoundary.defaultMessage")}
                 </p>
                 <button
                   type="button"

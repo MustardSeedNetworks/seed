@@ -28,7 +28,10 @@ import type {
   PassiveSample,
 } from "../hooks/useSurvey";
 import type { AnalysisFinding } from "../components/survey/SurveyAnalysisPanel";
-import { calculateMetricStatistics, getPercentageMeetingThreshold } from "./surveyValidation";
+import {
+  calculateMetricStatistics,
+  getPercentageMeetingThreshold,
+} from "./surveyValidation";
 
 /** Report metadata */
 export interface ReportMetadata {
@@ -107,11 +110,23 @@ export interface ReportOptions {
 type HeatmapThreshold = { value: number; comparison: "gte" | "lte" };
 type NonNullHeatmapMetric = Exclude<HeatmapMetric, null>;
 
-const DEFAULT_HEATMAPS_PASSIVE: HeatmapMetric[] = ["rssi", "snr", "noise", "cochannel", "adjacent"];
+const DEFAULT_HEATMAPS_PASSIVE: HeatmapMetric[] = [
+  "rssi",
+  "snr",
+  "noise",
+  "cochannel",
+  "adjacent",
+];
 const DEFAULT_HEATMAPS_ACTIVE: HeatmapMetric[] = ["rssi", "snr", "throughput"];
-const DEFAULT_HEATMAPS_THROUGHPUT: HeatmapMetric[] = ["rssi", "throughput", "latency"];
+const DEFAULT_HEATMAPS_THROUGHPUT: HeatmapMetric[] = [
+  "rssi",
+  "throughput",
+  "latency",
+];
 
-function getDefaultHeatmapsForSurveyType(surveyType: Survey["surveyType"]): HeatmapMetric[] {
+function getDefaultHeatmapsForSurveyType(
+  surveyType: Survey["surveyType"]
+): HeatmapMetric[] {
   switch (surveyType) {
     case "passive":
       return DEFAULT_HEATMAPS_PASSIVE;
@@ -172,7 +187,9 @@ function getHeatmapUnit(metric: NonNullHeatmapMetric): string {
   }
 }
 
-function getDefaultThreshold(metric: NonNullHeatmapMetric): HeatmapThreshold | null {
+function getDefaultThreshold(
+  metric: NonNullHeatmapMetric
+): HeatmapThreshold | null {
   switch (metric) {
     case "rssi":
       return { value: -65, comparison: "gte" };
@@ -261,7 +278,10 @@ function generateKeyFindings(
 /**
  * Generate heatmap statistics for a metric
  */
-function generateHeatmapData(samples: SamplePoint[], metric: HeatmapMetric): ReportHeatmap {
+function generateHeatmapData(
+  samples: SamplePoint[],
+  metric: HeatmapMetric
+): ReportHeatmap {
   if (!metric) {
     return {
       type: null,
@@ -275,7 +295,12 @@ function generateHeatmapData(samples: SamplePoint[], metric: HeatmapMetric): Rep
   const stats = calculateMetricStatistics(samples, metric);
   const threshold = getDefaultThreshold(metric);
   const percentMeeting = threshold
-    ? getPercentageMeetingThreshold(samples, metric, threshold.value, threshold.comparison)
+    ? getPercentageMeetingThreshold(
+        samples,
+        metric,
+        threshold.value,
+        threshold.comparison
+      )
     : 0;
 
   return {
@@ -392,7 +417,10 @@ function generateRecommendations(
   if (validation) {
     for (const result of validation.results) {
       if (!result.passed && result.failedSampleCount > 0) {
-        if (result.criterionName.includes("signal") || result.criterionName.includes("Signal")) {
+        if (
+          result.criterionName.includes("signal") ||
+          result.criterionName.includes("Signal")
+        ) {
           recommendations.push("analysis.coverage.weakAreasAction");
         } else if (
           result.criterionName.includes("channel") ||
@@ -423,7 +451,8 @@ export function generateReport(
     companyName = "Mustard Seed Networks",
   } = options;
   const includeHeatmaps =
-    options.includeHeatmaps ?? getDefaultHeatmapsForSurveyType(survey.surveyType);
+    options.includeHeatmaps ??
+    getDefaultHeatmapsForSurveyType(survey.surveyType);
 
   // Build metadata
   const metadata: ReportMetadata = {
@@ -453,7 +482,9 @@ export function generateReport(
     .map((metric) => generateHeatmapData(survey.samples, metric));
 
   // Build AP inventory
-  const apInventory = includeAPInventory ? buildAPInventory(survey.samples) : [];
+  const apInventory = includeAPInventory
+    ? buildAPInventory(survey.samples)
+    : [];
 
   // Generate recommendations
   const recommendations = generateRecommendations(validation, analysis);
@@ -487,7 +518,9 @@ export function exportReportToCSV(report: SurveyReport): string {
   // Summary
   lines.push("Summary");
   lines.push(`Overall Status,${report.summary.overallStatus.toUpperCase()}`);
-  lines.push(`Criteria Passed,${report.summary.passedCriteria}/${report.summary.totalCriteria}`);
+  lines.push(
+    `Criteria Passed,${report.summary.passedCriteria}/${report.summary.totalCriteria}`
+  );
   lines.push(`Overall Percentage,${report.summary.overallPercentage}%`);
   lines.push("");
 
@@ -510,8 +543,14 @@ export function exportReportToCSV(report: SurveyReport): string {
   lines.push("Metric,Min,Max,Average,Median,Samples,% Meeting Threshold");
   for (const heatmap of report.heatmaps) {
     if (heatmap.statistics) {
-      const { min, max, average, median, sampleCount, percentMeetingThreshold } =
-        heatmap.statistics;
+      const {
+        min,
+        max,
+        average,
+        median,
+        sampleCount,
+        percentMeetingThreshold,
+      } = heatmap.statistics;
       lines.push(
         `${heatmap.displayName},${min.toFixed(1)},${max.toFixed(1)},${average.toFixed(1)},${median.toFixed(1)},${sampleCount},${percentMeetingThreshold}%`
       );

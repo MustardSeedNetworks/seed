@@ -86,17 +86,23 @@ test.describe("FAB - Run All Tests Flow", () => {
 
     // Verify key endpoints were called (based on default FAB options)
     // Link layer
-    expect(apiCalls.has("link") || apiCalls.has("wifi") || apiCalls.has("cable")).toBeTruthy();
+    expect(
+      apiCalls.has("link") || apiCalls.has("wifi") || apiCalls.has("cable")
+    ).toBeTruthy();
 
     // Network layer - at least one of these should be called
     const networkCalled =
-      apiCalls.has("ipconfig") || apiCalls.has("gateway") || apiCalls.has("dns");
+      apiCalls.has("ipconfig") ||
+      apiCalls.has("gateway") ||
+      apiCalls.has("dns");
     expect(networkCalled).toBeTruthy();
   });
 
   test("should refresh card data after tests complete", async ({ page }) => {
     // Get initial link card data
-    const linkCard = page.locator('h3:has-text("Link"), h4:has-text("Link")').first();
+    const linkCard = page
+      .locator('h3:has-text("Link"), h4:has-text("Link")')
+      .first();
     await expect(linkCard).toBeVisible();
 
     // Track if any card updates occur
@@ -126,7 +132,9 @@ test.describe("FAB - Run All Tests Flow", () => {
     expect(cardUpdated).toBeTruthy();
   });
 
-  test("should complete and stop spinner after tests finish", async ({ page }) => {
+  test("should complete and stop spinner after tests finish", async ({
+    page,
+  }) => {
     const fab = page
       .locator('button[title="Run All Tests"]')
       .or(page.locator('button[aria-label="Run All Tests"]'));
@@ -150,11 +158,15 @@ test.describe("FAB - Run All Tests Flow", () => {
     await expect(playIcon).toBeVisible();
 
     // Verify it's not a spinner anymore
-    const hasSpinClass = await playIcon.evaluate((el) => el.classList.contains("animate-spin"));
+    const hasSpinClass = await playIcon.evaluate((el) =>
+      el.classList.contains("animate-spin")
+    );
     expect(hasSpinClass).toBe(false);
   });
 
-  test("should not trigger tests if FAB is clicked while already running", async ({ page }) => {
+  test("should not trigger tests if FAB is clicked while already running", async ({
+    page,
+  }) => {
     const fab = page
       .locator('button[title="Run All Tests"]')
       .or(page.locator('button[aria-label="Run All Tests"]'));
@@ -189,15 +201,21 @@ test.describe("FAB - Run All Tests Flow", () => {
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Wait for settings drawer
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByText(/thresholds|appearance|discovery/i)
+    ).toBeVisible({ timeout: 5000 });
 
     // Look for FAB-related settings (if they exist in UI)
     // This will help verify FAB options are configurable
-    const fabSettings = page.locator("text=/FAB|Run All Tests|Test Options/i").first();
+    const fabSettings = page
+      .locator("text=/FAB|Run All Tests|Test Options/i")
+      .first();
     const hasFabSettings = await fabSettings.isVisible().catch(() => false);
 
     if (hasFabSettings) {
@@ -210,12 +228,17 @@ test.describe("FAB - Run All Tests Flow", () => {
     await closeButton.click();
   });
 
-  test("should trigger network discovery scan when FAB is clicked", async ({ page }) => {
+  test("should trigger network discovery scan when FAB is clicked", async ({
+    page,
+  }) => {
     // Track if network discovery scan endpoint is called
     let scanTriggered = false;
 
     page.on("request", (request) => {
-      if (request.url().includes("/api/devices/scan") && request.method() === "POST") {
+      if (
+        request.url().includes("/api/devices/scan") &&
+        request.method() === "POST"
+      ) {
         scanTriggered = true;
       }
     });
@@ -332,6 +355,8 @@ test.describe("FAB - Run All Tests Flow", () => {
 
     // Should contain meaningful text
     const labelText = (ariaLabel || title || "").toLowerCase();
-    expect(labelText.includes("run") || labelText.includes("test")).toBeTruthy();
+    expect(
+      labelText.includes("run") || labelText.includes("test")
+    ).toBeTruthy();
   });
 });

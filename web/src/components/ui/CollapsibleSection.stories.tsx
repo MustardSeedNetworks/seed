@@ -10,7 +10,8 @@ const meta: Meta<typeof CollapsibleSection> = {
     layout: "centered",
     docs: {
       description: {
-        component: "Collapsible/accordion section for organizing content within cards and modals.",
+        component:
+          "Collapsible/accordion section for organizing content within cards and modals.",
       },
     },
   },
@@ -81,7 +82,9 @@ export const DefaultOpen: Story = {
     defaultOpen: true,
     children: (
       <div className="stack-sm">
-        <p className="body-small text-text-muted">These settings are shown by default.</p>
+        <p className="body-small text-text-muted">
+          These settings are shown by default.
+        </p>
       </div>
     ),
   },
@@ -173,7 +176,9 @@ export const CustomTitle: Story = {
     defaultOpen: true,
     children: (
       <div className="stack-sm">
-        <p className="body-small text-text-muted">Custom title with icon support.</p>
+        <p className="body-small text-text-muted">
+          Custom title with icon support.
+        </p>
       </div>
     ),
   },

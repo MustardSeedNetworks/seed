@@ -65,10 +65,13 @@ interface ToastProviderProps {
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((message: string, type: ToastType = "info", duration = 5000) => {
-    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setToasts((prev) => [...prev, { id, message, type, duration }]);
-  }, []);
+  const addToast = useCallback(
+    (message: string, type: ToastType = "info", duration = 5000) => {
+      const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      setToasts((prev) => [...prev, { id, message, type, duration }]);
+    },
+    []
+  );
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
@@ -92,10 +95,17 @@ function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
     <div
       aria-live="polite"
       aria-label="Notifications"
-      className={cn("fixed bottom-20 right-4 z-50 max-w-sm", layout.stack.default)}
+      className={cn(
+        "fixed bottom-20 right-4 z-50 max-w-sm",
+        layout.stack.default
+      )}
     >
       {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
+        <ToastItem
+          key={toast.id}
+          toast={toast}
+          onClose={() => removeToast(toast.id)}
+        />
       ))}
     </div>
   );

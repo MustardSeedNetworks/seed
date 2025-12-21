@@ -69,7 +69,10 @@ export const InterfaceSelector = memo(function InterfaceSelector({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -109,10 +112,16 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
   // Get display name for an interface
   const getDisplayName = (iface: NetworkInterface) => {
-    if (iface.friendlyName && iface.friendlyName.toLowerCase() !== iface.name.toLowerCase()) {
+    if (
+      iface.friendlyName &&
+      iface.friendlyName.toLowerCase() !== iface.name.toLowerCase()
+    ) {
       return `${iface.friendlyName} (${iface.name})`;
     }
-    if (iface.description && iface.description.toLowerCase() !== iface.name.toLowerCase()) {
+    if (
+      iface.description &&
+      iface.description.toLowerCase() !== iface.name.toLowerCase()
+    ) {
       return `${iface.description} (${iface.name})`;
     }
     return iface.name;
@@ -129,7 +138,9 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
   const getDetailText = (iface: NetworkInterface) => {
     if (iface.description) return iface.description;
-    const vendorModel = [iface.chipsetVendor, iface.chipsetModel].filter(Boolean).join(" ");
+    const vendorModel = [iface.chipsetVendor, iface.chipsetModel]
+      .filter(Boolean)
+      .join(" ");
     if (vendorModel) return vendorModel;
     return "";
   };
@@ -171,7 +182,10 @@ export const InterfaceSelector = memo(function InterfaceSelector({
         className={`flex items-center ${spacing.gap.tight} ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed`}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t("accessibility.selectInterface", "Select network interface")}
+        aria-label={t(
+          "accessibility.selectInterface",
+          "Select network interface"
+        )}
       >
         {/* Current interface icon */}
         {getTypeIcon(isWifi ? "wifi" : "ethernet", currentInfo?.up ?? true)}
@@ -196,7 +210,12 @@ export const InterfaceSelector = memo(function InterfaceSelector({
           viewBox="0 0 24 24"
           aria-hidden="true"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -205,12 +224,17 @@ export const InterfaceSelector = memo(function InterfaceSelector({
         <div
           className={`absolute top-full left-0 mt-1 w-64 ${radius.md} border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden`}
           role="listbox"
-          aria-label={t("accessibility.interfaceList", "Available network interfaces")}
+          aria-label={t(
+            "accessibility.interfaceList",
+            "Available network interfaces"
+          )}
         >
           {/* Ethernet section */}
           {ethernetInterfaces.length > 0 && (
             <div>
-              <div className={`${spacing.pad.sm} bg-surface-base border-b border-surface-border`}>
+              <div
+                className={`${spacing.pad.sm} bg-surface-base border-b border-surface-border`}
+              >
                 <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t("interface.ethernet", "Ethernet")}
                 </span>
@@ -229,7 +253,9 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                   {/* Selection indicator */}
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      iface.name === currentInterface ? "bg-brand-primary" : "bg-transparent"
+                      iface.name === currentInterface
+                        ? "bg-brand-primary"
+                        : "bg-transparent"
                     }`}
                   />
 
@@ -242,7 +268,9 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                       {getDisplayName(iface)}
                     </div>
                     {getDetailText(iface) && (
-                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
+                      <div className="caption text-text-muted truncate">
+                        {getDetailText(iface)}
+                      </div>
                     )}
                   </div>
 
@@ -281,7 +309,9 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                   {/* Selection indicator */}
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      iface.name === currentInterface ? "bg-brand-primary" : "bg-transparent"
+                      iface.name === currentInterface
+                        ? "bg-brand-primary"
+                        : "bg-transparent"
                     }`}
                   />
 
@@ -294,7 +324,9 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                       {getDisplayName(iface)}
                     </div>
                     {getDetailText(iface) && (
-                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
+                      <div className="caption text-text-muted truncate">
+                        {getDetailText(iface)}
+                      </div>
                     )}
                   </div>
 
