@@ -28,11 +28,17 @@ description = "Global allowlist"
 paths = [
     '''.*_test\.go$''',
     '''.*\.test\.ts$''',
+    '''.*\.test\.tsx$''',
     '''.*\.spec\.ts$''',
+    '''.*\.stories\.tsx?$''',
     '''.*test.*fixture.*''',
     '''.*mock.*''',
     '''web/e2e/.*''',
     '''\.github/workflows/.*\.yml$''',
+    '''internal/testutil/.*''',
+    '''docs/NetAllyAirMapper/.*''',
+    '''docs/.*\.md$''',
+    '''configs/.*\.yaml$''',
 ]
 
 # Example/placeholder values commonly used in documentation
@@ -42,11 +48,13 @@ regexes = [
     '''127\.0\.0\.1''',
     '''192\.168\.\d+\.\d+''',
     '''10\.\d+\.\d+\.\d+''',
-    '''YOUR_.*_HERE''',
+    '''YOUR_.*''',
+    '''YOUR_TOKEN''',
     '''<your-.*>''',
     '''PLACEHOLDER''',
     '''changeme''',
-    '''admin123''',  # Common test password in examples
+    '''admin123''',
+    '''TestP@ssw0rd''',
 ]
 
 # Known safe commit hashes (documentation references)

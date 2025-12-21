@@ -686,14 +686,16 @@ test-all: ## Run ALL tests (unit + E2E + Storybook)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
 # Go tests with race detection and coverage (verbose output)
+# Excludes packages without test files to avoid covdata tool errors
 test-backend: ## Run Go tests with progress
 	@printf "\n$(BOLD)🧪 Running backend tests...$(RESET)\n"
-	@PKG_COUNT=$$(go list ./... | wc -l | tr -d ' '); \
-	printf "   📦 Testing $$PKG_COUNT packages...\n\n"
-	@if command -v gotestsum > /dev/null 2>&1; then \
-		gotestsum --format pkgname-and-test-fails -- -race -coverprofile=coverage.out ./...; \
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/web$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
+	printf "   📦 Testing $$PKG_COUNT packages...\n\n"; \
+	if command -v gotestsum > /dev/null 2>&1; then \
+		gotestsum --format pkgname-and-test-fails -- -race -coverprofile=coverage.out $$PKGS; \
 	else \
-		go test -race -coverprofile=coverage.out ./...; \
+		go test -race -coverprofile=coverage.out $$PKGS; \
 	fi
 	@if [ -f coverage.out ]; then \
 		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
@@ -703,9 +705,10 @@ test-backend: ## Run Go tests with progress
 
 # Go tests (quiet mode for use in pipelines)
 test-backend-quiet:
-	@PKG_COUNT=$$(go list ./... | wc -l | tr -d ' '); \
-	printf "   Testing $$PKG_COUNT packages...\n"
-	@go test -race -coverprofile=coverage.out ./... 2>&1 | grep -E "^(ok|FAIL|---)" || true
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/web$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
+	printf "   Testing $$PKG_COUNT packages...\n"; \
+	go test -race -coverprofile=coverage.out $$PKGS 2>&1 | grep -E "^(ok|FAIL|---)" || true
 	@if [ -f coverage.out ]; then \
 		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
 		printf "   📊 Coverage: %s\n" "$$COV"; \
@@ -748,7 +751,8 @@ test-e2e-install: ## Install Playwright browsers
 
 # Generate HTML coverage report
 test-coverage: ## Generate coverage report
-	go test -race -coverprofile=coverage.out ./...
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/web$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	go test -race -coverprofile=coverage.out $$PKGS
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
 
@@ -1050,23 +1054,27 @@ security-frontend-quiet:
 	@cd web && npm audit --audit-level=high 2>&1 | grep -E "(found|vulnerabilities)" | head -3 || printf "   No vulnerabilities found\n"
 
 # Secret scanning (gitleaks)
-# Auto-installs if not found
+# Auto-installs if not found, uses full path for portability
 security-secrets: ## Scan for secrets in codebase (gitleaks)
 	@printf "$(BOLD)🔒 Running gitleaks...$(RESET)\n"
-	@if ! command -v gitleaks > /dev/null 2>&1; then \
+	@GITLEAKS=$$(command -v gitleaks 2>/dev/null || echo "$$(go env GOPATH)/bin/gitleaks"); \
+	if [ ! -x "$$GITLEAKS" ]; then \
 		printf "📦 Installing gitleaks...\n"; \
 		go install github.com/zricethezav/gitleaks/v8@latest; \
-	fi
-	@gitleaks detect --source . --config .gitleaks.toml --verbose
+		GITLEAKS="$$(go env GOPATH)/bin/gitleaks"; \
+	fi; \
+	$$GITLEAKS detect --source . --config .gitleaks.toml --verbose
 	@printf "$(GREEN)✓ Secret scan complete$(RESET)\n"
 
 # Secret scanning (quiet mode)
 security-secrets-quiet:
-	@if ! command -v gitleaks > /dev/null 2>&1; then \
+	@GITLEAKS=$$(command -v gitleaks 2>/dev/null || echo "$$(go env GOPATH)/bin/gitleaks"); \
+	if [ ! -x "$$GITLEAKS" ]; then \
 		go install github.com/zricethezav/gitleaks/v8@latest; \
-	fi
-	@printf "   Scanning for secrets...\n"
-	@gitleaks detect --source . --config .gitleaks.toml 2>&1 | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"
+		GITLEAKS="$$(go env GOPATH)/bin/gitleaks"; \
+	fi; \
+	printf "   Scanning for secrets...\n"; \
+	$$GITLEAKS detect --source . --config .gitleaks.toml 2>&1 | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"
 
 # Trivy filesystem scan (if available)
 security-trivy: ## Run Trivy vulnerability scan
