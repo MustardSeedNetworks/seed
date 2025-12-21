@@ -130,13 +130,14 @@ func GetDefaultGatewayInterface() (string, error) {
 		return "", err
 	}
 
-	for _, route := range routes {
-		// Default route has nil Dst OR 0.0.0.0/0
+	for i := range routes {
+		route := &routes[i]
+		// Default route has nil Dst OR 0.0.0.0/0.
 		isDefault := route.Dst == nil ||
 			(route.Dst != nil && route.Dst.IP.Equal(net.IPv4zero) && route.Dst.Mask.String() == "00000000")
 		if isDefault && route.LinkIndex > 0 {
-			link, err := netlink.LinkByIndex(route.LinkIndex)
-			if err == nil {
+			link, linkErr := netlink.LinkByIndex(route.LinkIndex)
+			if linkErr == nil {
 				return link.Attrs().Name, nil
 			}
 		}

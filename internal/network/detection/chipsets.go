@@ -85,7 +85,6 @@ func NewChipsetDatabase() *ChipsetDatabase {
 // NewChipsetDatabaseFromFile creates a database from a specific YAML file.
 // Returns error if file cannot be loaded.
 func NewChipsetDatabaseFromFile(path string) (*ChipsetDatabase, error) {
-	//nolint:gosec // G304: path is provided by caller/config, not user input
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -120,7 +119,6 @@ func loadChipsetsFromFile() ([]ChipsetInfo, error) {
 	}
 
 	for _, path := range paths {
-		//nolint:gosec // G304: paths are hardcoded trusted locations
 		if data, err := os.ReadFile(path); err == nil {
 			chipsets, parseErr := parseChipsetYAML(data)
 			if parseErr == nil {
