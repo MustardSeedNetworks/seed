@@ -519,6 +519,11 @@ body {
   .table-cell-empty {
     @apply px-2 py-4; /* Empty state table cell padding */
   }
+
+  /* Custom max-width for main container */
+  .max-w-8xl {
+    max-width: 88rem; /* 1408px */
+  }
 }
 
 /* Toast animation */
