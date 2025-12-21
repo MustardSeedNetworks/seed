@@ -46,7 +46,10 @@ export const ProfileSelector = memo(function ProfileSelector({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -187,7 +190,12 @@ export const ProfileSelector = memo(function ProfileSelector({
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         )}
       </button>
@@ -202,7 +210,9 @@ export const ProfileSelector = memo(function ProfileSelector({
           {/* Profiles section */}
           {profiles.length > 0 && (
             <div>
-              <div className={`${spacing.pad.sm} bg-surface-base border-b border-surface-border`}>
+              <div
+                className={`${spacing.pad.sm} bg-surface-base border-b border-surface-border`}
+              >
                 <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t("profile.profiles", "Profiles")}
                 </span>
@@ -215,7 +225,9 @@ export const ProfileSelector = memo(function ProfileSelector({
                     onClick={() => selectProfile(profile.id)}
                     disabled={switching}
                     className={`w-full flex items-center ${spacing.gap.tight} ${spacing.pad.sm} hover:bg-surface-hover focus:bg-surface-hover focus:outline-none disabled:opacity-50 ${
-                      profile.id === activeProfile?.id ? "bg-brand-primary/10" : ""
+                      profile.id === activeProfile?.id
+                        ? "bg-brand-primary/10"
+                        : ""
                     }`}
                     role="option"
                     aria-selected={profile.id === activeProfile?.id}
@@ -223,7 +235,9 @@ export const ProfileSelector = memo(function ProfileSelector({
                     {/* Selection indicator */}
                     <span
                       className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        profile.id === activeProfile?.id ? "bg-brand-primary" : "bg-transparent"
+                        profile.id === activeProfile?.id
+                          ? "bg-brand-primary"
+                          : "bg-transparent"
                       }`}
                     />
 

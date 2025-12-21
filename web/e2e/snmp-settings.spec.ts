@@ -25,12 +25,16 @@ test.describe("SNMP Settings", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Wait for settings drawer
@@ -60,7 +64,9 @@ test.describe("SNMP Settings", () => {
     }
   });
 
-  test("should allow configuring community string for SNMPv2c", async ({ page }) => {
+  test("should allow configuring community string for SNMPv2c", async ({
+    page,
+  }) => {
     // Look for community string input
     const communityInput = page
       .locator('input[name*="community" i]')
@@ -105,8 +111,12 @@ test.describe("SNMP Settings", () => {
       const usernameField = page.locator(
         'input[name*="username" i], input[placeholder*="username" i]'
       );
-      const authField = page.locator('input[name*="auth" i], select[name*="auth" i]');
-      const privField = page.locator('input[name*="priv" i], select[name*="priv" i]');
+      const authField = page.locator(
+        'input[name*="auth" i], select[name*="auth" i]'
+      );
+      const privField = page.locator(
+        'input[name*="priv" i], select[name*="priv" i]'
+      );
 
       const hasUsername = await usernameField.isVisible().catch(() => false);
       const hasAuth = await authField.isVisible().catch(() => false);
@@ -226,9 +236,13 @@ test.describe("SNMP Settings", () => {
     }
   });
 
-  test("should hide/show SNMP fields based on enable toggle", async ({ page }) => {
+  test("should hide/show SNMP fields based on enable toggle", async ({
+    page,
+  }) => {
     // Find enable toggle
-    const enableToggle = page.locator('input[type="checkbox"]:near(:text("SNMP"))').first();
+    const enableToggle = page
+      .locator('input[type="checkbox"]:near(:text("SNMP"))')
+      .first();
 
     const hasToggle = await enableToggle.isVisible().catch(() => false);
 
@@ -258,14 +272,18 @@ test.describe("SNMP Authentication", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
   });
 
-  test("should have authentication protocol selector for SNMPv3", async ({ page }) => {
+  test("should have authentication protocol selector for SNMPv3", async ({
+    page,
+  }) => {
     // Select v3 first
     const versionSelector = page.locator('select:near(:text("SNMP"))').first();
     const hasSelector = await versionSelector.isVisible().catch(() => false);
@@ -282,11 +300,15 @@ test.describe("SNMP Authentication", () => {
           .or(page.getByRole("combobox", { name: /auth/i }))
           .first();
 
-        const hasAuthProtocol = await authProtocol.isVisible().catch(() => false);
+        const hasAuthProtocol = await authProtocol
+          .isVisible()
+          .catch(() => false);
 
         // Should have auth protocol options (MD5, SHA, etc.)
         if (hasAuthProtocol) {
-          const options = await authProtocol.locator("option").allTextContents();
+          const options = await authProtocol
+            .locator("option")
+            .allTextContents();
           expect(options.length).toBeGreaterThan(0);
         }
       } catch {
@@ -312,11 +334,15 @@ test.describe("SNMP Authentication", () => {
           .or(page.getByRole("combobox", { name: /priv/i }))
           .first();
 
-        const hasPrivProtocol = await privProtocol.isVisible().catch(() => false);
+        const hasPrivProtocol = await privProtocol
+          .isVisible()
+          .catch(() => false);
 
         // Should have privacy protocol options (DES, AES, etc.)
         if (hasPrivProtocol) {
-          const options = await privProtocol.locator("option").allTextContents();
+          const options = await privProtocol
+            .locator("option")
+            .allTextContents();
           expect(options.length).toBeGreaterThan(0);
         }
       } catch {
@@ -350,7 +376,9 @@ test.describe("SNMP Test Connection", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     const settingsButton = page.getByRole("button", { name: /settings/i });
     await settingsButton.click();
@@ -383,7 +411,9 @@ test.describe("SNMP Test Connection", () => {
       await page.waitForTimeout(3000);
 
       // Look for status message
-      const statusMessage = page.getByText(/success|failed|error|connected|timeout/i).first();
+      const statusMessage = page
+        .getByText(/success|failed|error|connected|timeout/i)
+        .first();
 
       const hasStatus = await statusMessage.isVisible().catch(() => false);
       expect(hasStatus).toBeDefined();
@@ -412,7 +442,9 @@ test.describe("SNMP Test Connection", () => {
         await page.waitForTimeout(5000);
 
         // Should show timeout/error message (not crash)
-        const errorMessage = page.getByText(/timeout|error|failed|unreachable/i);
+        const errorMessage = page.getByText(
+          /timeout|error|failed|unreachable/i
+        );
         const _hasError = await errorMessage.isVisible().catch(() => false);
 
         // App should handle gracefully

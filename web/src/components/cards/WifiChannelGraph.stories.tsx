@@ -361,7 +361,8 @@ export const NoAdapter: Story = {
   args: {
     data: {
       available: false,
-      error: "No wireless adapter available. Connect a WiFi adapter to scan networks.",
+      error:
+        "No wireless adapter available. Connect a WiFi adapter to scan networks.",
     },
     loading: false,
     visible: true,

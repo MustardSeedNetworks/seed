@@ -74,7 +74,11 @@ type BandType = "2.4GHz" | "5GHz" | "6GHz";
 /**
  * Get channel range for a given band
  */
-function getChannelRange(band: BandType): { min: number; max: number; step: number } {
+function getChannelRange(band: BandType): {
+  min: number;
+  max: number;
+  step: number;
+} {
   switch (band) {
     case "2.4GHz":
       return { min: 1, max: 14, step: 1 };
@@ -144,7 +148,9 @@ function ChannelGraph({
 }) {
   const { t: tCards } = useTranslation("cards");
   const { t: tCommon } = useTranslation("common");
-  const [hoveredNetwork, setHoveredNetwork] = useState<ChannelNetwork | null>(null);
+  const [hoveredNetwork, setHoveredNetwork] = useState<ChannelNetwork | null>(
+    null
+  );
 
   const channelRange = getChannelRange(band);
   const width = 600;
@@ -179,7 +185,12 @@ function ChannelGraph({
 
   return (
     <div className="relative">
-      <svg width={width} height={height} className="w-full" viewBox={`0 0 ${width} ${height}`}>
+      <svg
+        width={width}
+        height={height}
+        className="w-full"
+        viewBox={`0 0 ${width} ${height}`}
+      >
         {/* Background grid */}
         <g className="opacity-10">
           {/* Horizontal lines (signal strength) */}
@@ -216,7 +227,12 @@ function ChannelGraph({
           {signalMarkers.map((signal) => {
             const y = padding.top + signalToY(signal, graphHeight);
             return (
-              <text key={signal} x={padding.left - 10} y={y + 3} textAnchor="end">
+              <text
+                key={signal}
+                x={padding.left - 10}
+                y={y + 3}
+                textAnchor="end"
+              >
                 {signal}
               </text>
             );
@@ -226,7 +242,12 @@ function ChannelGraph({
         {/* X-axis labels (channels) */}
         <g className="text-text-muted" style={{ fontSize: "10px" }}>
           {channelMarkers.map(({ channel, x }) => (
-            <text key={channel} x={x} y={height - padding.bottom + 15} textAnchor="middle">
+            <text
+              key={channel}
+              x={x}
+              y={height - padding.bottom + 15}
+              textAnchor="middle"
+            >
               {channel}
             </text>
           ))}
@@ -254,7 +275,12 @@ function ChannelGraph({
         {/* Network curves */}
         <g transform={`translate(${padding.left}, ${padding.top})`}>
           {networks.map((network) => {
-            const path = generateNetworkPath(network, channelRange, graphWidth, graphHeight);
+            const path = generateNetworkPath(
+              network,
+              channelRange,
+              graphWidth,
+              graphHeight
+            );
             const isConnected = network.bssid === connectedBSSID;
             const isHovered = hoveredNetwork?.bssid === network.bssid;
 
@@ -262,9 +288,17 @@ function ChannelGraph({
               <path
                 key={network.bssid}
                 d={path}
-                fill={isConnected ? "var(--color-brand-primary)" : "var(--color-status-info)"}
+                fill={
+                  isConnected
+                    ? "var(--color-brand-primary)"
+                    : "var(--color-status-info)"
+                }
                 opacity={isHovered ? 0.9 : isConnected ? 0.7 : 0.4}
-                stroke={isConnected ? "var(--color-brand-primary)" : "var(--color-status-info)"}
+                stroke={
+                  isConnected
+                    ? "var(--color-brand-primary)"
+                    : "var(--color-status-info)"
+                }
                 strokeWidth={isHovered ? 2 : isConnected ? 2 : 1}
                 className="transition-all cursor-pointer"
                 onMouseEnter={() => setHoveredNetwork(network)}
@@ -281,14 +315,22 @@ function ChannelGraph({
           className="absolute bg-surface-raised border border-surface-border rounded shadow-lg p-2 z-10"
           style={{ top: "10px", right: "10px" }}
         >
-          <p className="body-small font-semibold">{hoveredNetwork.ssid || "(Hidden)"}</p>
+          <p className="body-small font-semibold">
+            {hoveredNetwork.ssid || "(Hidden)"}
+          </p>
           <p className="caption text-text-muted">
-            {tCards("wifi.channelGraph.tooltipChannel", { channel: hoveredNetwork.channel })}
+            {tCards("wifi.channelGraph.tooltipChannel", {
+              channel: hoveredNetwork.channel,
+            })}
           </p>
           <p className="caption text-text-muted">{hoveredNetwork.signal} dBm</p>
-          <p className="caption text-text-muted">{hoveredNetwork.channelWidth} MHz</p>
+          <p className="caption text-text-muted">
+            {hoveredNetwork.channelWidth} MHz
+          </p>
           {hoveredNetwork.isConnected && (
-            <p className="caption text-brand-primary font-medium">{tCommon("status.connected")}</p>
+            <p className="caption text-brand-primary font-medium">
+              {tCommon("status.connected")}
+            </p>
           )}
         </div>
       )}
@@ -300,7 +342,11 @@ function ChannelGraph({
  * WiFi Channel Graph Card
  * Displays channel overlap visualization for WiFi networks
  */
-export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelGraphProps) {
+export function WifiChannelGraph({
+  data,
+  loading,
+  visible = true,
+}: WifiChannelGraphProps) {
   const { t: tr } = useTranslation("cards");
   const { t: tc } = useTranslation("common");
   const [selectedBand, setSelectedBand] = useState<BandType>("2.4GHz");
@@ -348,12 +394,18 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
       loadingContent={<CardValue value={tc("status.scanning")} size="lg" />}
     >
       {!data?.available ? (
-        <CardValue value={data?.error || tc("status.unavailable")} size="md" status="error" />
+        <CardValue
+          value={data?.error || tc("status.unavailable")}
+          size="md"
+          status="error"
+        />
       ) : (
         <>
           {/* Band selection tabs */}
           {availableBands.length > 1 && (
-            <div className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}>
+            <div
+              className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+            >
               {availableBands.map((band) => (
                 <button
                   key={band}
@@ -378,10 +430,14 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
           />
 
           {/* Legend */}
-          <div className={`${layout.inline.default} ${spacing.margin.top.inline}`}>
+          <div
+            className={`${layout.inline.default} ${spacing.margin.top.inline}`}
+          >
             <div className={layout.inline.tight}>
               <div className="w-4 h-4 bg-brand-primary opacity-70 rounded" />
-              <span className="caption text-text-muted">{tc("status.connected")}</span>
+              <span className="caption text-text-muted">
+                {tc("status.connected")}
+              </span>
             </div>
             <div className={layout.inline.tight}>
               <div className="w-4 h-4 bg-status-info opacity-40 rounded" />

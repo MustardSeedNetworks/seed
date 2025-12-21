@@ -35,7 +35,9 @@ test.describe("Theme Toggle and Help Modal", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard
-    await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: /link|dashboard/i })
+    ).toBeVisible({
       timeout: 10000,
     });
   });
@@ -45,7 +47,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open settings to find theme toggle
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       await settingsButton.click();
       await page.waitForTimeout(500);
@@ -76,11 +80,15 @@ test.describe("Theme Toggle and Help Modal", () => {
       }
     });
 
-    test("should update document root class when theme changes", async ({ page }) => {
+    test("should update document root class when theme changes", async ({
+      page,
+    }) => {
       // Open settings
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       await settingsButton.click();
       await page.waitForTimeout(500);
@@ -117,7 +125,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open settings
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       await settingsButton.click();
       await page.waitForTimeout(500);
@@ -133,7 +143,9 @@ test.describe("Theme Toggle and Help Modal", () => {
 
       // Check localStorage for theme preference
       const storedTheme = await page.evaluate(() => {
-        return localStorage.getItem("theme") || localStorage.getItem("seed-theme");
+        return (
+          localStorage.getItem("theme") || localStorage.getItem("seed-theme")
+        );
       });
 
       // Should have a theme preference stored
@@ -145,7 +157,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open settings
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       await settingsButton.click();
       await page.waitForTimeout(500);
@@ -180,7 +194,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       expect(stillDark).toBe(wasDark);
     });
 
-    test("should render all cards correctly in both themes", async ({ page }) => {
+    test("should render all cards correctly in both themes", async ({
+      page,
+    }) => {
       // Get initial card count
       const initialCards = await page.locator('[class*="card"]').count();
       expect(initialCards).toBeGreaterThan(0);
@@ -188,7 +204,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open settings
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       await settingsButton.click();
       await page.waitForTimeout(500);
@@ -224,7 +242,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       await page.waitForTimeout(500);
 
       // Verify cards still visible in original theme
-      const cardsAfterSecondToggle = await page.locator('[class*="card"]').count();
+      const cardsAfterSecondToggle = await page
+        .locator('[class*="card"]')
+        .count();
       expect(cardsAfterSecondToggle).toBeGreaterThanOrEqual(initialCards - 1);
     });
 
@@ -232,7 +252,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open settings
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       await settingsButton.click();
       await page.waitForTimeout(500);
@@ -260,7 +282,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       expect(stillDark).toBe(isDark);
     });
 
-    test.skip("should respect system theme preference if implemented", async ({ page }) => {
+    test.skip("should respect system theme preference if implemented", async ({
+      page,
+    }) => {
       // This test is skipped as system theme preference may not be implemented
       // To implement: check if theme matches system preference on first load
 
@@ -279,11 +303,15 @@ test.describe("Theme Toggle and Help Modal", () => {
   });
 
   test.describe("Help Modal", () => {
-    test("should open help modal when clicking help button", async ({ page }) => {
+    test("should open help modal when clicking help button", async ({
+      page,
+    }) => {
       // Find and click help button
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
 
@@ -296,17 +324,23 @@ test.describe("Theme Toggle and Help Modal", () => {
       await expect(modal).toBeVisible({ timeout: 5000 });
     });
 
-    test("should display help modal with navigation/table of contents", async ({ page }) => {
+    test("should display help modal with navigation/table of contents", async ({
+      page,
+    }) => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
 
       // Look for navigation/TOC
-      const navigation = page.locator("text=/table.*contents|navigation|contents|sections/i");
+      const navigation = page.locator(
+        "text=/table.*contents|navigation|contents|sections/i"
+      );
       const hasNavigation = await navigation
         .first()
         .isVisible()
@@ -320,7 +354,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
@@ -334,7 +370,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       await closeButton.click();
 
       // Verify modal closes
-      const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+      const modal = page
+        .getByRole("dialog")
+        .or(page.locator('[role="dialog"]'));
       await expect(modal).not.toBeVisible({ timeout: 3000 });
     });
 
@@ -342,13 +380,17 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
 
       // Verify modal is open
-      const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+      const modal = page
+        .getByRole("dialog")
+        .or(page.locator('[role="dialog"]'));
       await expect(modal).toBeVisible();
 
       // Press ESC key
@@ -363,17 +405,23 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
 
       // Verify modal is open
-      const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+      const modal = page
+        .getByRole("dialog")
+        .or(page.locator('[role="dialog"]'));
       await expect(modal).toBeVisible();
 
       // Click outside modal (on backdrop)
-      const backdrop = page.locator('[class*="backdrop"], [class*="overlay"]').first();
+      const backdrop = page
+        .locator('[class*="backdrop"], [class*="overlay"]')
+        .first();
       const hasBackdrop = await backdrop.isVisible().catch(() => false);
 
       if (hasBackdrop) {
@@ -389,7 +437,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
@@ -403,11 +453,15 @@ test.describe("Theme Toggle and Help Modal", () => {
       expect(topicCount).toBeGreaterThan(0);
     });
 
-    test("should scroll to section when clicking TOC link", async ({ page }) => {
+    test("should scroll to section when clicking TOC link", async ({
+      page,
+    }) => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
@@ -422,18 +476,24 @@ test.describe("Theme Toggle and Help Modal", () => {
         await page.waitForTimeout(500);
 
         // Modal should still be open
-        const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+        const modal = page
+          .getByRole("dialog")
+          .or(page.locator('[role="dialog"]'));
         await expect(modal).toBeVisible();
       }
     });
 
-    test.skip("should filter help content with search functionality", async ({ page }) => {
+    test.skip("should filter help content with search functionality", async ({
+      page,
+    }) => {
       // This test is skipped if search is not implemented
 
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
@@ -461,7 +521,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
@@ -477,17 +539,23 @@ test.describe("Theme Toggle and Help Modal", () => {
       expect(headingCount + paragraphCount).toBeGreaterThan(0);
     });
 
-    test("should maintain scroll position when reopening help modal", async ({ page }) => {
+    test("should maintain scroll position when reopening help modal", async ({
+      page,
+    }) => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
 
       // Scroll within modal
-      const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+      const modal = page
+        .getByRole("dialog")
+        .or(page.locator('[role="dialog"]'));
       await modal.evaluate((el) => {
         const scrollable = el.querySelector('[class*="scroll"]') || el;
         scrollable.scrollTop = 100;
@@ -513,16 +581,22 @@ test.describe("Theme Toggle and Help Modal", () => {
       expect(scrollPosition).toBeGreaterThanOrEqual(0);
     });
 
-    test("should display help modal in both light and dark themes", async ({ page }) => {
+    test("should display help modal in both light and dark themes", async ({
+      page,
+    }) => {
       // Test in light theme
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
 
-      const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+      const modal = page
+        .getByRole("dialog")
+        .or(page.locator('[role="dialog"]'));
       await expect(modal).toBeVisible();
 
       // Close modal
@@ -532,7 +606,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Toggle to dark theme
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       await settingsButton.click();
       await page.waitForTimeout(500);
@@ -569,11 +645,15 @@ test.describe("Theme Toggle and Help Modal", () => {
   });
 
   test.describe("Theme and Help Integration", () => {
-    test("should allow theme toggle while help modal is open", async ({ page }) => {
+    test("should allow theme toggle while help modal is open", async ({
+      page,
+    }) => {
       // Open help modal
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
@@ -581,9 +661,13 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open settings (if possible with modal open)
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
-      const settingsVisible = await settingsButton.isVisible().catch(() => false);
+      const settingsVisible = await settingsButton
+        .isVisible()
+        .catch(() => false);
 
       if (settingsVisible) {
         await settingsButton.click();
@@ -602,13 +686,17 @@ test.describe("Theme Toggle and Help Modal", () => {
           await page.waitForTimeout(500);
 
           // Help modal should still be open
-          const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+          const modal = page
+            .getByRole("dialog")
+            .or(page.locator('[role="dialog"]'));
           await expect(modal).toBeVisible();
         }
       }
     });
 
-    test("should maintain help modal state when toggling theme", async ({ page }) => {
+    test("should maintain help modal state when toggling theme", async ({
+      page,
+    }) => {
       // Get initial theme
       const initialClasses = await page.locator("html").getAttribute("class");
       const initialTheme = initialClasses?.includes("dark") ? "dark" : "light";
@@ -616,7 +704,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open settings and toggle theme
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       await settingsButton.click();
       await page.waitForTimeout(500);
@@ -640,7 +730,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       // Open help modal in new theme
       const helpButton = page
         .getByRole("button", { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(
+          page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+        );
 
       await helpButton.click();
       await page.waitForTimeout(500);
@@ -652,7 +744,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       expect(newTheme).not.toBe(initialTheme);
 
       // Help modal should be visible
-      const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+      const modal = page
+        .getByRole("dialog")
+        .or(page.locator('[role="dialog"]'));
       await expect(modal).toBeVisible();
     });
   });

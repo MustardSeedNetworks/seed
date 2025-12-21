@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { spacing, button, radius, section, layout, icon } from "../../styles/theme";
+import {
+  spacing,
+  button,
+  radius,
+  section,
+  layout,
+  icon,
+} from "../../styles/theme";
 
 /**
  * ErrorBoundary catches JavaScript errors in child component trees,
@@ -69,10 +76,14 @@ function ClickToBrokenComponent() {
     <div
       className={`${spacing.pad.default} bg-surface-raised border border-surface-border ${radius.lg}`}
     >
-      <h3 className={`heading-4 ${spacing.margin.bottom.heading}`}>Interactive Error Demo</h3>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
-        Click the button below to trigger an error. The Error Boundary will catch it and display the
-        fallback UI.
+      <h3 className={`heading-4 ${spacing.margin.bottom.heading}`}>
+        Interactive Error Demo
+      </h3>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
+        Click the button below to trigger an error. The Error Boundary will
+        catch it and display the fallback UI.
       </p>
       <button
         onClick={() => setShouldThrow(true)}
@@ -90,7 +101,9 @@ function ClickToBrokenComponent() {
 function ComponentWithStackTrace() {
   function deepNestedFunction() {
     function evenDeeperFunction() {
-      throw new Error("Detailed error message with stack trace from deep nested function call");
+      throw new Error(
+        "Detailed error message with stack trace from deep nested function call"
+      );
     }
     evenDeeperFunction();
   }
@@ -121,12 +134,14 @@ function WorkingComponent() {
           />
         </svg>
         <div>
-          <h3 className={`font-semibold text-status-success ${spacing.margin.bottom.tight}`}>
+          <h3
+            className={`font-semibold text-status-success ${spacing.margin.bottom.tight}`}
+          >
             Component Working Correctly
           </h3>
           <p className="body-small text-text-secondary">
-            This component is functioning normally with no errors. The Error Boundary is monitoring
-            it but not displaying any fallback UI.
+            This component is functioning normally with no errors. The Error
+            Boundary is monitoring it but not displaying any fallback UI.
           </p>
         </div>
       </div>
@@ -138,7 +153,9 @@ function WorkingComponent() {
  * Component simulating a network error
  */
 function NetworkErrorComponent(): React.ReactElement {
-  throw new Error("Network request failed: Unable to fetch data from API endpoint");
+  throw new Error(
+    "Network request failed: Unable to fetch data from API endpoint"
+  );
 }
 
 /**
@@ -279,12 +296,17 @@ export const CustomFallback: Story = {
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className={`heading-3 text-status-error ${spacing.margin.bottom.inline}`}>
+              <h3
+                className={`heading-3 text-status-error ${spacing.margin.bottom.inline}`}
+              >
                 Custom Error Fallback UI
               </h3>
-              <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
-                This is a custom fallback component passed as a prop to the Error Boundary. You can
-                design any UI you want to display when errors occur.
+              <p
+                className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+              >
+                This is a custom fallback component passed as a prop to the
+                Error Boundary. You can design any UI you want to display when
+                errors occur.
               </p>
               <div className={`${layout.inline.comfortable}`}>
                 <button
@@ -323,7 +345,9 @@ export const MultipleErrorBoundaries: Story = {
   render: () => (
     <div className={`${section.spacing.default} w-full`}>
       <div>
-        <h3 className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}>
+        <h3
+          className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}
+        >
           Section 1 - Working
         </h3>
         <ErrorBoundary>
@@ -332,7 +356,9 @@ export const MultipleErrorBoundaries: Story = {
       </div>
 
       <div>
-        <h3 className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}>
+        <h3
+          className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}
+        >
           Section 2 - Error
         </h3>
         <ErrorBoundary>
@@ -341,7 +367,9 @@ export const MultipleErrorBoundaries: Story = {
       </div>
 
       <div>
-        <h3 className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}>
+        <h3
+          className={`heading-4 ${spacing.margin.bottom.inline} text-text-primary`}
+        >
           Section 3 - Working
         </h3>
         <ErrorBoundary>
@@ -392,12 +420,15 @@ export const WithRetry: Story = {
               />
             </svg>
             <div>
-              <h3 className={`font-semibold text-status-success ${spacing.margin.bottom.tight}`}>
+              <h3
+                className={`font-semibold text-status-success ${spacing.margin.bottom.tight}`}
+              >
                 Success After Retries!
               </h3>
               <p className="body-small text-text-secondary">
-                The component successfully rendered after {attemptCount + 1} attempts. Error
-                Boundary retry functionality allowed recovery without page reload.
+                The component successfully rendered after {attemptCount + 1}{" "}
+                attempts. Error Boundary retry functionality allowed recovery
+                without page reload.
               </p>
             </div>
           </div>
@@ -411,8 +442,8 @@ export const WithRetry: Story = {
           className={`${spacing.pad.default} bg-surface-hover border border-surface-border ${radius.lg}`}
         >
           <p className="body-small text-text-secondary">
-            This demo simulates a component that fails twice then succeeds. Click "Try again" when
-            you see an error to retry rendering.
+            This demo simulates a component that fails twice then succeeds.
+            Click "Try again" when you see an error to retry rendering.
           </p>
           <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
             Attempts: {attemptCount + 1}/3
@@ -479,10 +510,14 @@ export const NestedErrorBoundaries: Story = {
         <div
           className={`${spacing.pad.default} bg-surface-raised border border-surface-border ${radius.lg}`}
         >
-          <h3 className={`heading-4 ${spacing.margin.bottom.heading}`}>Outer Boundary</h3>
-          <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
-            This outer boundary protects the entire section. The inner boundary handles the specific
-            error.
+          <h3 className={`heading-4 ${spacing.margin.bottom.heading}`}>
+            Outer Boundary
+          </h3>
+          <p
+            className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+          >
+            This outer boundary protects the entire section. The inner boundary
+            handles the specific error.
           </p>
 
           <ErrorBoundary
@@ -499,9 +534,11 @@ export const NestedErrorBoundaries: Story = {
             <BrokenComponent />
           </ErrorBoundary>
 
-          <p className={`body-small text-text-secondary ${spacing.margin.top.content}`}>
-            Content after inner error boundary still renders because error was caught by inner
-            boundary.
+          <p
+            className={`body-small text-text-secondary ${spacing.margin.top.content}`}
+          >
+            Content after inner error boundary still renders because error was
+            caught by inner boundary.
           </p>
         </div>
       </ErrorBoundary>
@@ -531,15 +568,21 @@ export const RealWorldCardExample: Story = {
         <div className="stack-sm">
           <div className="flex justify-between">
             <span className="caption text-text-muted">Speed</span>
-            <span className="body-small font-medium text-text-primary">1000 Mbps</span>
+            <span className="body-small font-medium text-text-primary">
+              1000 Mbps
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="caption text-text-muted">Duplex</span>
-            <span className="body-small font-medium text-text-primary">Full</span>
+            <span className="body-small font-medium text-text-primary">
+              Full
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="caption text-text-muted">MTU</span>
-            <span className="body-small font-medium text-text-primary">1500</span>
+            <span className="body-small font-medium text-text-primary">
+              1500
+            </span>
           </div>
         </div>
       );
@@ -550,7 +593,9 @@ export const RealWorldCardExample: Story = {
         <div
           className={`${spacing.pad.default} bg-surface-raised border border-surface-border ${radius.lg}`}
         >
-          <h3 className={`heading-4 ${spacing.margin.bottom.heading} text-text-primary`}>
+          <h3
+            className={`heading-4 ${spacing.margin.bottom.heading} text-text-primary`}
+          >
             Link Status - Working
           </h3>
           <ErrorBoundary>
@@ -561,7 +606,9 @@ export const RealWorldCardExample: Story = {
         <div
           className={`${spacing.pad.default} bg-surface-raised border border-surface-border ${radius.lg}`}
         >
-          <h3 className={`heading-4 ${spacing.margin.bottom.heading} text-text-primary`}>
+          <h3
+            className={`heading-4 ${spacing.margin.bottom.heading} text-text-primary`}
+          >
             Link Status - Error
           </h3>
           <ErrorBoundary>

@@ -125,7 +125,9 @@ export const AllStatuses: Story = {
   render: () => (
     <div className={`${layout.stack.spacious}`}>
       <div>
-        <h3 className={`body-small font-semibold ${spacing.margin.bottom.inline} text-text-muted`}>
+        <h3
+          className={`body-small font-semibold ${spacing.margin.bottom.inline} text-text-muted`}
+        >
           Icon Variant (Medium)
         </h3>
         <div className={`${layout.inline.spacious}`}>
@@ -152,7 +154,9 @@ export const AllStatuses: Story = {
         </div>
       </div>
       <div>
-        <h3 className={`body-small font-semibold ${spacing.margin.bottom.inline} text-text-muted`}>
+        <h3
+          className={`body-small font-semibold ${spacing.margin.bottom.inline} text-text-muted`}
+        >
           Dot Variant
         </h3>
         <div className={`${layout.inline.spacious}`}>

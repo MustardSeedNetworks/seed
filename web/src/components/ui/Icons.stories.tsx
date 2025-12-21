@@ -91,7 +91,13 @@ import {
   Palette,
 } from "./Icons";
 import { ICON_SIZES } from "./iconConfig";
-import { spacing, button, section, icon as iconTheme, layout } from "../../styles/theme";
+import {
+  spacing,
+  button,
+  section,
+  icon as iconTheme,
+  layout,
+} from "../../styles/theme";
 
 /**
  * Icon Library showcases all available icons re-exported from lucide-react.
@@ -143,10 +149,22 @@ export const AllIcons: Story = {
       </IconCategory>
 
       <IconCategory title="Status Icons">
-        <IconItem icon={<CheckCircle className="text-status-success" />} name="CheckCircle" />
-        <IconItem icon={<XCircle className="text-status-error" />} name="XCircle" />
-        <IconItem icon={<AlertTriangle className="text-status-warning" />} name="AlertTriangle" />
-        <IconItem icon={<AlertCircle className="text-status-info" />} name="AlertCircle" />
+        <IconItem
+          icon={<CheckCircle className="text-status-success" />}
+          name="CheckCircle"
+        />
+        <IconItem
+          icon={<XCircle className="text-status-error" />}
+          name="XCircle"
+        />
+        <IconItem
+          icon={<AlertTriangle className="text-status-warning" />}
+          name="AlertTriangle"
+        />
+        <IconItem
+          icon={<AlertCircle className="text-status-info" />}
+          name="AlertCircle"
+        />
         <IconItem icon={<Info className="text-brand-primary" />} name="Info" />
       </IconCategory>
 
@@ -226,8 +244,14 @@ export const AllIcons: Story = {
         <IconItem icon={<Unlock />} name="Unlock" />
         <IconItem icon={<Key />} name="Key" />
         <IconItem icon={<Shield />} name="Shield" />
-        <IconItem icon={<ShieldCheck className="text-status-success" />} name="ShieldCheck" />
-        <IconItem icon={<ShieldAlert className="text-status-warning" />} name="ShieldAlert" />
+        <IconItem
+          icon={<ShieldCheck className="text-status-success" />}
+          name="ShieldCheck"
+        />
+        <IconItem
+          icon={<ShieldAlert className="text-status-warning" />}
+          name="ShieldAlert"
+        />
       </IconCategory>
 
       <IconCategory title="Layout Icons">
@@ -253,13 +277,21 @@ export const Sizes: Story = {
     <div className={`${section.spacing.comfortable} ${spacing.pad.default}`}>
       <h3 className="heading-3 text-text-primary">Icon Size Presets</h3>
       <div className={`flex items-end ${spacing.gap.spacious}`}>
-        {(Object.keys(ICON_SIZES) as Array<keyof typeof ICON_SIZES>).map((size) => (
-          <div key={size} className="text-center">
-            <Activity className={`${ICON_SIZES[size]} text-brand-primary mx-auto`} />
-            <p className={`body-small text-text-muted ${spacing.margin.top.inline}`}>{size}</p>
-            <p className="caption text-text-muted">{ICON_SIZES[size]}</p>
-          </div>
-        ))}
+        {(Object.keys(ICON_SIZES) as Array<keyof typeof ICON_SIZES>).map(
+          (size) => (
+            <div key={size} className="text-center">
+              <Activity
+                className={`${ICON_SIZES[size]} text-brand-primary mx-auto`}
+              />
+              <p
+                className={`body-small text-text-muted ${spacing.margin.top.inline}`}
+              >
+                {size}
+              </p>
+              <p className="caption text-text-muted">{ICON_SIZES[size]}</p>
+            </div>
+          )
+        )}
       </div>
     </div>
   ),
@@ -279,22 +311,36 @@ export const Sizes: Story = {
 export const StatusIcons: Story = {
   render: () => (
     <div className={`${section.spacing.default} ${spacing.pad.default}`}>
-      <h3 className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}>
+      <h3
+        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+      >
         Status Icons with Semantic Colors
       </h3>
-      <div className={`grid grid-cols-2 md:grid-cols-4 ${spacing.gap.comfortable}`}>
+      <div
+        className={`grid grid-cols-2 md:grid-cols-4 ${spacing.gap.comfortable}`}
+      >
         <StatusExample
-          icon={<CheckCircle className={`${iconTheme.size.lg} text-status-success`} />}
+          icon={
+            <CheckCircle
+              className={`${iconTheme.size.lg} text-status-success`}
+            />
+          }
           label="Success"
           description="Operation completed"
         />
         <StatusExample
-          icon={<AlertTriangle className={`${iconTheme.size.lg} text-status-warning`} />}
+          icon={
+            <AlertTriangle
+              className={`${iconTheme.size.lg} text-status-warning`}
+            />
+          }
           label="Warning"
           description="Needs attention"
         />
         <StatusExample
-          icon={<XCircle className={`${iconTheme.size.lg} text-status-error`} />}
+          icon={
+            <XCircle className={`${iconTheme.size.lg} text-status-error`} />
+          }
           label="Error"
           description="Operation failed"
         />
@@ -314,7 +360,9 @@ export const StatusIcons: Story = {
 export const NetworkStatus: Story = {
   render: () => (
     <div className={`${section.spacing.default} ${spacing.pad.default}`}>
-      <h3 className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}>
+      <h3
+        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+      >
         Network Status Indicators
       </h3>
       <div className={`flex ${spacing.gap.spacious}`}>
@@ -346,7 +394,9 @@ export const NetworkStatus: Story = {
           <div
             className={`${iconTheme.size["2xl"]} rounded-full bg-status-info/10 flex items-center justify-center ${spacing.margin.bottom.inline}`}
           >
-            <Loader className={`${iconTheme.size.lg} text-status-info animate-spin`} />
+            <Loader
+              className={`${iconTheme.size.lg} text-status-info animate-spin`}
+            />
           </div>
           <p className="body-small">Connecting</p>
         </div>
@@ -361,10 +411,14 @@ export const NetworkStatus: Story = {
 export const DeviceTypes: Story = {
   render: () => (
     <div className={`${section.spacing.default} ${spacing.pad.default}`}>
-      <h3 className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}>
+      <h3
+        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+      >
         Device Type Icons
       </h3>
-      <div className={`grid grid-cols-3 md:grid-cols-7 ${spacing.gap.comfortable}`}>
+      <div
+        className={`grid grid-cols-3 md:grid-cols-7 ${spacing.gap.comfortable}`}
+      >
         <DeviceExample icon={<Monitor />} name="Desktop" />
         <DeviceExample icon={<Laptop />} name="Laptop" />
         <DeviceExample icon={<Smartphone />} name="Phone" />
@@ -383,7 +437,9 @@ export const DeviceTypes: Story = {
 export const ButtonIcons: Story = {
   render: () => (
     <div className={`${section.spacing.default} ${spacing.pad.default}`}>
-      <h3 className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}>
+      <h3
+        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+      >
         Button Icons
       </h3>
       <div className={`flex flex-wrap ${spacing.gap.default}`}>
@@ -422,10 +478,14 @@ export const ButtonIcons: Story = {
 export const CardHeaders: Story = {
   render: () => (
     <div className={`${section.spacing.default} ${spacing.pad.default}`}>
-      <h3 className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}>
+      <h3
+        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+      >
         Card Header Icons
       </h3>
-      <div className={`grid grid-cols-2 md:grid-cols-4 ${spacing.gap.comfortable}`}>
+      <div
+        className={`grid grid-cols-2 md:grid-cols-4 ${spacing.gap.comfortable}`}
+      >
         <CardHeaderExample icon={<Activity />} title="Link Status" />
         <CardHeaderExample icon={<Wifi />} title="WiFi" />
         <CardHeaderExample icon={<Cable />} title="Cable Test" />
@@ -440,7 +500,13 @@ export const CardHeaders: Story = {
 };
 
 // Helper components for stories
-function IconCategory({ title, children }: { title: string; children: React.ReactNode }) {
+function IconCategory({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <h4
@@ -448,7 +514,9 @@ function IconCategory({ title, children }: { title: string; children: React.Reac
       >
         {title}
       </h4>
-      <div className={`grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 ${spacing.gap.comfortable}`}>
+      <div
+        className={`grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 ${spacing.gap.comfortable}`}
+      >
         {children}
       </div>
     </div>
@@ -461,7 +529,9 @@ function IconItem({ icon, name }: { icon: React.ReactNode; name: string }) {
       className={`flex flex-col items-center text-center ${spacing.pad.sm} rounded-lg hover:bg-surface-hover`}
     >
       <span className={`text-text-primary ${iconTheme.size.md}`}>{icon}</span>
-      <span className={`caption text-text-muted ${spacing.margin.top.inline} truncate w-full`}>
+      <span
+        className={`caption text-text-muted ${spacing.margin.top.inline} truncate w-full`}
+      >
         {name}
       </span>
     </div>
@@ -490,24 +560,42 @@ function StatusExample({
   );
 }
 
-function DeviceExample({ icon, name }: { icon: React.ReactNode; name: string }) {
+function DeviceExample({
+  icon,
+  name,
+}: {
+  icon: React.ReactNode;
+  name: string;
+}) {
   return (
     <div
       className={`flex flex-col items-center ${spacing.pad.sm} rounded-lg bg-surface-raised border border-surface-border`}
     >
       <span className={`${iconTheme.size.xl} text-text-secondary`}>{icon}</span>
-      <span className={`body-small text-text-muted ${spacing.margin.top.inline}`}>{name}</span>
+      <span
+        className={`body-small text-text-muted ${spacing.margin.top.inline}`}
+      >
+        {name}
+      </span>
     </div>
   );
 }
 
-function CardHeaderExample({ icon, title }: { icon: React.ReactNode; title: string }) {
+function CardHeaderExample({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
   return (
     <div
       className={`${spacing.pad.default} rounded-lg bg-surface-raised border border-surface-border`}
     >
       <div className={`flex items-center ${spacing.gap.compact}`}>
-        <span className={`${iconTheme.size.md} text-brand-primary`}>{icon}</span>
+        <span className={`${iconTheme.size.md} text-brand-primary`}>
+          {icon}
+        </span>
         <span className="body font-medium text-text-primary">{title}</span>
       </div>
     </div>

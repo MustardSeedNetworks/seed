@@ -114,7 +114,13 @@ export const Interactive: Story = {
       // For "system", we'd normally detect OS preference
     };
 
-    return <AppearanceSettings theme={theme} setTheme={handleSetTheme} isDark={isDark} />;
+    return (
+      <AppearanceSettings
+        theme={theme}
+        setTheme={handleSetTheme}
+        isDark={isDark}
+      />
+    );
   },
 };
 
@@ -125,15 +131,27 @@ export const Comparison: Story = {
   render: () => (
     <div className="stack-lg">
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Light Theme</p>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
+          Light Theme
+        </p>
         <AppearanceSettings theme="light" setTheme={() => {}} isDark={false} />
       </div>
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Dark Theme</p>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
+          Dark Theme
+        </p>
         <AppearanceSettings theme="dark" setTheme={() => {}} isDark={true} />
       </div>
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>System Theme</p>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
+          System Theme
+        </p>
         <AppearanceSettings theme="system" setTheme={() => {}} isDark={false} />
       </div>
     </div>

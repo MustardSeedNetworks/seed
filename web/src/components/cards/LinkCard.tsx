@@ -28,7 +28,12 @@ import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
 import { BaseCard } from "./BaseCard";
 import { Cable } from "../ui/Icons";
-import { layout, radius, spacing, icon as iconTokens } from "../../styles/theme";
+import {
+  layout,
+  radius,
+  spacing,
+  icon as iconTokens,
+} from "../../styles/theme";
 
 /**
  * Historical link state event
@@ -94,7 +99,10 @@ function LinkLoadingSkeleton() {
   );
 }
 
-export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps) {
+export const LinkCard = memo(function LinkCard({
+  data,
+  loading,
+}: LinkCardProps) {
   const { t } = useTranslation("cards");
   const { t: tc } = useTranslation("common");
 
@@ -118,42 +126,64 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
         const status = getStatus(linkData);
         return (
           <>
-            <CardValue value={getLocalizedStatusText(linkData)} size="lg" status={status} />
+            <CardValue
+              value={getLocalizedStatusText(linkData)}
+              size="lg"
+              status={status}
+            />
             <CardDivider />
             <CardRow
               label={t("link.carrier")}
-              value={linkData.carrier ? tc("status.connected") : tc("status.noSignal")}
+              value={
+                linkData.carrier
+                  ? tc("status.connected")
+                  : tc("status.noSignal")
+              }
             />
             {linkData.carrier && (
               <>
-                <CardRow label={t("link.duplex")} value={linkData.duplex || tc("status.unknown")} />
-                {linkData.mtu && <CardRow label={t("link.mtu")} value={linkData.mtu.toString()} />}
+                <CardRow
+                  label={t("link.duplex")}
+                  value={linkData.duplex || tc("status.unknown")}
+                />
+                {linkData.mtu && (
+                  <CardRow
+                    label={t("link.mtu")}
+                    value={linkData.mtu.toString()}
+                  />
+                )}
                 {linkData.autoNeg !== undefined && (
                   <CardRow
                     label={t("link.autoNeg")}
-                    value={linkData.autoNeg ? tc("status.on") : tc("status.off")}
+                    value={
+                      linkData.autoNeg ? tc("status.on") : tc("status.off")
+                    }
                   />
                 )}
                 {linkData.flapCount24h !== undefined && (
-                  <CardRow label={t("link.flaps24h")} value={linkData.flapCount24h.toString()} />
+                  <CardRow
+                    label={t("link.flaps24h")}
+                    value={linkData.flapCount24h.toString()}
+                  />
                 )}
-                {linkData.advertisedSpeeds && linkData.advertisedSpeeds.length > 0 && (
-                  <div className={spacing.margin.top.inline}>
-                    <p className={`caption ${spacing.margin.bottom.inline}`}>
-                      {t("link.advertisedSpeeds")}
-                    </p>
-                    <div className={layout.inline.wrap}>
-                      {linkData.advertisedSpeeds.map((speed) => (
-                        <span
-                          key={speed}
-                          className={`caption ${spacing.chip.sm} bg-surface-hover ${radius.default}`}
-                        >
-                          {speed}
-                        </span>
-                      ))}
+                {linkData.advertisedSpeeds &&
+                  linkData.advertisedSpeeds.length > 0 && (
+                    <div className={spacing.margin.top.inline}>
+                      <p className={`caption ${spacing.margin.bottom.inline}`}>
+                        {t("link.advertisedSpeeds")}
+                      </p>
+                      <div className={layout.inline.wrap}>
+                        {linkData.advertisedSpeeds.map((speed) => (
+                          <span
+                            key={speed}
+                            className={`caption ${spacing.chip.sm} bg-surface-hover ${radius.default}`}
+                          >
+                            {speed}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </>
             )}
           </>

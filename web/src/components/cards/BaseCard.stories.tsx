@@ -53,7 +53,11 @@ export const Default: Story = {
     icon: <Globe className="w-4 h-4" />,
     data: sampleData,
     getStatus: (data) =>
-      data.status === "healthy" ? "success" : data.status === "warning" ? "warning" : "error",
+      data.status === "healthy"
+        ? "success"
+        : data.status === "warning"
+          ? "warning"
+          : "error",
     children: (data) => (
       <>
         <CardValue value={data.value} size="lg" />
@@ -175,7 +179,12 @@ export const CardGrid: Story = {
       >
         {() => null}
       </BaseCard>
-      <BaseCard title="Link" data={null} error="Connection failed" getStatus={() => "error"}>
+      <BaseCard
+        title="Link"
+        data={null}
+        error="Connection failed"
+        getStatus={() => "error"}
+      >
         {() => null}
       </BaseCard>
     </div>

@@ -23,9 +23,26 @@
 
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Settings2, RotateCcw, Play, ChevronDown, ChevronRight, Upload } from "lucide-react";
-import { radius, spacing, layout, icon as iconTokens, button } from "../../styles/theme";
-import type { PassFailCriterion, SurveyType, ComparisonOperator } from "../../hooks/useSurvey";
+import {
+  Settings2,
+  RotateCcw,
+  Play,
+  ChevronDown,
+  ChevronRight,
+  Upload,
+} from "lucide-react";
+import {
+  radius,
+  spacing,
+  layout,
+  icon as iconTokens,
+  button,
+} from "../../styles/theme";
+import type {
+  PassFailCriterion,
+  SurveyType,
+  ComparisonOperator,
+} from "../../hooks/useSurvey";
 import {
   getDefaultCriteria,
   DEFAULT_PASSIVE_CRITERIA,
@@ -44,7 +61,9 @@ interface PassFailCriteriaPanelProps {
 }
 
 /** Group criteria by mode for display */
-function groupCriteriaByMode(criteria: PassFailCriterion[]): Map<string, PassFailCriterion[]> {
+function groupCriteriaByMode(
+  criteria: PassFailCriterion[]
+): Map<string, PassFailCriterion[]> {
   const groups = new Map<string, PassFailCriterion[]>();
   for (const criterion of criteria) {
     const mode = criterion.mode === "all" ? "all" : criterion.mode;
@@ -59,7 +78,9 @@ function groupCriteriaByMode(criteria: PassFailCriterion[]): Map<string, PassFai
 /** Render comparison operator symbol */
 function ComparisonSymbol({ comparison }: { comparison: ComparisonOperator }) {
   return (
-    <span className="text-text-muted font-mono">{comparison === "gte" ? "\u2265" : "\u2264"}</span>
+    <span className="text-text-muted font-mono">
+      {comparison === "gte" ? "\u2265" : "\u2264"}
+    </span>
   );
 }
 
@@ -104,7 +125,9 @@ function CriterionRow({
           disabled={disabled}
           className="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
         />
-        <span className={`caption ${criterion.enabled ? "text-text-primary" : "text-text-muted"}`}>
+        <span
+          className={`caption ${criterion.enabled ? "text-text-primary" : "text-text-muted"}`}
+        >
           {t(criterion.displayKey as never)}
         </span>
       </label>
@@ -192,7 +215,9 @@ export function PassFailCriteriaPanel({
   const { t } = useTranslation("survey");
 
   // Track which sections are expanded
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([surveyType]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set([surveyType])
+  );
 
   // Toggle section expansion
   const toggleSection = useCallback((mode: string) => {
@@ -253,7 +278,9 @@ export function PassFailCriteriaPanel({
       className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.sm}`}
     >
       {/* Header */}
-      <div className={`${layout.inline.default} justify-between ${spacing.margin.bottom.content}`}>
+      <div
+        className={`${layout.inline.default} justify-between ${spacing.margin.bottom.content}`}
+      >
         <div className={layout.inline.default}>
           <Settings2 className={iconTokens.size.sm} />
           <h4 className="body-small font-medium">{t("criteria.title")}</h4>
@@ -266,7 +293,9 @@ export function PassFailCriteriaPanel({
             className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:opacity-90 disabled:opacity-50 ${layout.inline.tight}`}
           >
             <Play className="w-3 h-3" />
-            <span>{validating ? t("criteria.validating") : t("criteria.runTest")}</span>
+            <span>
+              {validating ? t("criteria.validating") : t("criteria.runTest")}
+            </span>
           </button>
         )}
       </div>

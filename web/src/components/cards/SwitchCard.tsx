@@ -30,7 +30,14 @@ import { useTranslation } from "react-i18next";
 import { CardValue, CardRow, CardDivider } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
 import { Network } from "../ui/Icons";
-import { cn, layout, radius, spacing, icon as iconTokens, border } from "../../styles/theme";
+import {
+  cn,
+  layout,
+  radius,
+  spacing,
+  icon as iconTokens,
+  border,
+} from "../../styles/theme";
 
 export interface SwitchData {
   protocol: "lldp" | "cdp" | "edp" | "fdp" | "unknown";
@@ -78,7 +85,11 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
     (vlanData.nativeVlan !== null ||
       vlanData.taggedVlans.length > 0 ||
       vlanData.voiceVlan !== null);
-  const status = loading ? "loading" : hasSwitch || hasVlanInfo ? "success" : "unknown";
+  const status = loading
+    ? "loading"
+    : hasSwitch || hasVlanInfo
+      ? "success"
+      : "unknown";
 
   return (
     <SimpleBaseCard
@@ -92,18 +103,28 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
       {!hasSwitch ? (
         <>
           <CardValue value={t("switch.noDiscoveryFrames")} size="md" />
-          <p className={`caption ${spacing.margin.top.inline}`}>{t("switch.waitingFrames")}</p>
+          <p className={`caption ${spacing.margin.top.inline}`}>
+            {t("switch.waitingFrames")}
+          </p>
         </>
       ) : (
         <>
           <CardValue value={data!.switchName!} size="lg" />
           <CardDivider />
-          {data!.portId && <CardRow label={t("switch.port")} value={data!.portId} />}
+          {data!.portId && (
+            <CardRow label={t("switch.port")} value={data!.portId} />
+          )}
           {data!.portDescription && (
-            <CardRow label={t("switch.description")} value={data!.portDescription} />
+            <CardRow
+              label={t("switch.description")}
+              value={data!.portDescription}
+            />
           )}
           {data!.managementIp && (
-            <CardRow label={t("switch.managementIp")} value={data!.managementIp} />
+            <CardRow
+              label={t("switch.managementIp")}
+              value={data!.managementIp}
+            />
           )}
           <div className={spacing.margin.top.inline}>
             <span
@@ -122,23 +143,39 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
       {vlanData && (
         <>
           <CardDivider />
-          <p className={`section-title ${spacing.margin.bottom.inline}`}>{t("switch.vlans")}</p>
+          <p className={`section-title ${spacing.margin.bottom.inline}`}>
+            {t("switch.vlans")}
+          </p>
           {vlanData.nativeVlan !== null ? (
-            <CardRow label={t("switch.nativeVlan")} value={vlanData.nativeVlan.toString()} />
+            <CardRow
+              label={t("switch.nativeVlan")}
+              value={vlanData.nativeVlan.toString()}
+            />
           ) : (
-            <CardRow label={t("switch.nativeVlan")} value={t("switch.untagged")} />
+            <CardRow
+              label={t("switch.nativeVlan")}
+              value={t("switch.untagged")}
+            />
           )}
           {vlanData.voiceVlan !== null && (
-            <CardRow label={t("switch.voiceVlan")} value={vlanData.voiceVlan.toString()} />
+            <CardRow
+              label={t("switch.voiceVlan")}
+              value={vlanData.voiceVlan.toString()}
+            />
           )}
           {vlanData.taggedVlans.length > 0 && (
             <div className={spacing.margin.top.inline}>
-              <p className={`caption ${spacing.margin.bottom.inline}`}>{t("switch.taggedVlans")}</p>
+              <p className={`caption ${spacing.margin.bottom.inline}`}>
+                {t("switch.taggedVlans")}
+              </p>
               <div className={layout.inline.wrap}>
                 {vlanData.taggedVlans.map((vlan) => (
                   <span
                     key={vlan}
-                    className={cn(`caption ${spacing.chip.sm} bg-surface-hover`, radius.default)}
+                    className={cn(
+                      `caption ${spacing.chip.sm} bg-surface-hover`,
+                      radius.default
+                    )}
                   >
                     {vlan}
                   </span>

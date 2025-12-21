@@ -45,7 +45,9 @@ async function login(page: Page) {
   await page.getByLabel(/password/i).fill("seed");
   await page.getByRole("button", { name: /sign in|login/i }).click();
 
-  await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    timeout: 10000,
+  });
 }
 
 test.describe("API Error Scenarios", () => {
@@ -69,7 +71,9 @@ test.describe("API Error Scenarios", () => {
       await page.getByRole("button", { name: /sign in|login/i }).click();
 
       // Should show user-friendly error message
-      await expect(page.getByText(/error|failed|unable/i)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/error|failed|unable/i)).toBeVisible({
+        timeout: 5000,
+      });
 
       // Should not crash the app
       await expect(page.getByLabel(/username/i)).toBeVisible();
@@ -90,16 +94,22 @@ test.describe("API Error Scenarios", () => {
       });
 
       // Try to trigger a scan
-      const scanButton = page.getByRole("button", { name: /scan|discover|refresh/i }).first();
+      const scanButton = page
+        .getByRole("button", { name: /scan|discover|refresh/i })
+        .first();
 
       if (await scanButton.isVisible({ timeout: 5000 })) {
         await scanButton.click();
 
         // Should show error message
-        await expect(page.getByText(/error|failed/i)).toBeVisible({ timeout: 5000 });
+        await expect(page.getByText(/error|failed/i)).toBeVisible({
+          timeout: 5000,
+        });
 
         // App should remain functional
-        await expect(page.getByRole("heading", { name: /link/i })).toBeVisible();
+        await expect(
+          page.getByRole("heading", { name: /link/i })
+        ).toBeVisible();
       }
     });
 
@@ -118,15 +128,21 @@ test.describe("API Error Scenarios", () => {
       });
 
       // Try to find and click speed test button
-      const speedTestButton = page.getByRole("button", { name: /speed test|test speed/i }).first();
+      const speedTestButton = page
+        .getByRole("button", { name: /speed test|test speed/i })
+        .first();
 
-      const isVisible = await speedTestButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const isVisible = await speedTestButton
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
 
       if (isVisible) {
         await speedTestButton.click();
 
         // Should show error message
-        await expect(page.getByText(/error|failed|unavailable/i)).toBeVisible({ timeout: 5000 });
+        await expect(page.getByText(/error|failed|unavailable/i)).toBeVisible({
+          timeout: 5000,
+        });
       }
     });
 
@@ -154,14 +170,20 @@ test.describe("API Error Scenarios", () => {
       });
 
       // Try to create a survey if available
-      const surveyButton = page.getByRole("button", { name: /survey|wifi survey/i }).first();
-      const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const surveyButton = page
+        .getByRole("button", { name: /survey|wifi survey/i })
+        .first();
+      const isVisible = await surveyButton
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
 
       if (isVisible) {
         await surveyButton.click();
 
         // Try to create new survey
-        const createButton = page.getByRole("button", { name: /create|new survey/i }).first();
+        const createButton = page
+          .getByRole("button", { name: /create|new survey/i })
+          .first();
         if (await createButton.isVisible({ timeout: 3000 })) {
           await createButton.click();
 
@@ -171,12 +193,16 @@ test.describe("API Error Scenarios", () => {
             await nameInput.fill("Test Survey");
 
             // Submit
-            const submitButton = page.getByRole("button", { name: /create|save|submit/i }).first();
+            const submitButton = page
+              .getByRole("button", { name: /create|save|submit/i })
+              .first();
             if (await submitButton.isVisible({ timeout: 2000 })) {
               await submitButton.click();
 
               // Should show error
-              await expect(page.getByText(/error|failed/i)).toBeVisible({ timeout: 5000 });
+              await expect(page.getByText(/error|failed/i)).toBeVisible({
+                timeout: 5000,
+              });
             }
           }
         }
@@ -216,7 +242,9 @@ test.describe("API Error Scenarios", () => {
       }
 
       // Either error shown or loading state ended
-      expect(errorShown || (await page.getByLabel(/username/i).isVisible())).toBeTruthy();
+      expect(
+        errorShown || (await page.getByLabel(/username/i).isVisible())
+      ).toBeTruthy();
     });
 
     test("should handle device scan timeout", async ({ page }) => {
@@ -228,7 +256,9 @@ test.describe("API Error Scenarios", () => {
         await route.abort("timedout");
       });
 
-      const scanButton = page.getByRole("button", { name: /scan|discover|refresh/i }).first();
+      const scanButton = page
+        .getByRole("button", { name: /scan|discover|refresh/i })
+        .first();
 
       if (await scanButton.isVisible({ timeout: 5000 })) {
         await scanButton.click();
@@ -237,7 +267,9 @@ test.describe("API Error Scenarios", () => {
         await page.waitForTimeout(5000);
 
         // App should remain functional
-        await expect(page.getByRole("heading", { name: /link/i })).toBeVisible();
+        await expect(
+          page.getByRole("heading", { name: /link/i })
+        ).toBeVisible();
       }
     });
   });
@@ -276,8 +308,12 @@ test.describe("API Error Scenarios", () => {
       });
 
       // Try to open survey view if available
-      const surveyButton = page.getByRole("button", { name: /survey|wifi survey/i }).first();
-      const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const surveyButton = page
+        .getByRole("button", { name: /survey|wifi survey/i })
+        .first();
+      const isVisible = await surveyButton
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
 
       if (isVisible) {
         await surveyButton.click();
@@ -299,7 +335,8 @@ test.describe("API Error Scenarios", () => {
 
           // Either shows error or remains functional
           expect(
-            notFoundShown || (await page.getByRole("heading", { name: /link/i }).isVisible())
+            notFoundShown ||
+              (await page.getByRole("heading", { name: /link/i }).isVisible())
           ).toBeTruthy();
         }
       }
@@ -401,7 +438,9 @@ test.describe("API Error Scenarios", () => {
         });
       });
 
-      const scanButton = page.getByRole("button", { name: /scan|discover|refresh/i }).first();
+      const scanButton = page
+        .getByRole("button", { name: /scan|discover|refresh/i })
+        .first();
 
       if (await scanButton.isVisible({ timeout: 5000 })) {
         await scanButton.click();
@@ -428,12 +467,17 @@ test.describe("API Error Scenarios", () => {
   });
 
   test.describe("403 Forbidden", () => {
-    test("should handle permission denied on settings update", async ({ page }) => {
+    test("should handle permission denied on settings update", async ({
+      page,
+    }) => {
       await login(page);
 
       // Mock settings update returning 403
       await page.route("**/api/settings", async (route) => {
-        if (route.request().method() === "PUT" || route.request().method() === "POST") {
+        if (
+          route.request().method() === "PUT" ||
+          route.request().method() === "POST"
+        ) {
           await route.fulfill({
             status: 403,
             contentType: "application/json",
@@ -449,19 +493,25 @@ test.describe("API Error Scenarios", () => {
       // Try to open settings
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       if (await settingsButton.isVisible({ timeout: 3000 })) {
         await settingsButton.click();
         await page.waitForTimeout(1000);
 
         // Try to modify a setting if available
-        const input = page.locator('input[type="number"], input[type="text"]').first();
+        const input = page
+          .locator('input[type="number"], input[type="text"]')
+          .first();
         if (await input.isVisible({ timeout: 2000 })) {
           await input.fill("123");
 
           // Try to save
-          const saveButton = page.getByRole("button", { name: /save|apply/i }).first();
+          const saveButton = page
+            .getByRole("button", { name: /save|apply/i })
+            .first();
           if (await saveButton.isVisible({ timeout: 2000 })) {
             await saveButton.click();
 
@@ -473,7 +523,8 @@ test.describe("API Error Scenarios", () => {
 
             // Either error shown or app remains functional
             expect(
-              errorShown || (await page.getByRole("heading", { name: /link/i }).isVisible())
+              errorShown ||
+                (await page.getByRole("heading", { name: /link/i }).isVisible())
             ).toBeTruthy();
           }
         }
@@ -501,13 +552,17 @@ test.describe("Validation Error Scenarios", () => {
       expect(hasError || buttonDisabled).toBeTruthy();
     });
 
-    test("should validate invalid threshold values in settings", async ({ page }) => {
+    test("should validate invalid threshold values in settings", async ({
+      page,
+    }) => {
       await login(page);
 
       // Open settings
       const settingsButton = page
         .getByRole("button", { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(
+          page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+        );
 
       if (await settingsButton.isVisible({ timeout: 3000 })) {
         await settingsButton.click();
@@ -524,7 +579,9 @@ test.describe("Validation Error Scenarios", () => {
             .isVisible({ timeout: 3000 })
             .catch(() => false);
 
-          const saveButton = page.getByRole("button", { name: /save|apply/i }).first();
+          const saveButton = page
+            .getByRole("button", { name: /save|apply/i })
+            .first();
           const saveDisabled = await saveButton.isDisabled().catch(() => false);
 
           expect(errorShown || saveDisabled).toBeTruthy();
@@ -551,12 +608,16 @@ test.describe("Validation Error Scenarios", () => {
       if (await dnsInput.isVisible({ timeout: 3000 })) {
         await dnsInput.fill("invalid hostname with spaces!@#");
 
-        const testButton = page.getByRole("button", { name: /test|check|lookup/i }).first();
+        const testButton = page
+          .getByRole("button", { name: /test|check|lookup/i })
+          .first();
         if (await testButton.isVisible({ timeout: 2000 })) {
           await testButton.click();
 
           // Should show validation error
-          await expect(page.getByText(/invalid|format|error/i)).toBeVisible({ timeout: 5000 });
+          await expect(page.getByText(/invalid|format|error/i)).toBeVisible({
+            timeout: 5000,
+          });
         }
       }
     });
@@ -574,18 +635,26 @@ test.describe("Validation Error Scenarios", () => {
       });
 
       // Try to create survey without name
-      const surveyButton = page.getByRole("button", { name: /survey|wifi survey/i }).first();
-      const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const surveyButton = page
+        .getByRole("button", { name: /survey|wifi survey/i })
+        .first();
+      const isVisible = await surveyButton
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
 
       if (isVisible) {
         await surveyButton.click();
 
-        const createButton = page.getByRole("button", { name: /create|new survey/i }).first();
+        const createButton = page
+          .getByRole("button", { name: /create|new survey/i })
+          .first();
         if (await createButton.isVisible({ timeout: 3000 })) {
           await createButton.click();
 
           // Try to submit without filling name
-          const submitButton = page.getByRole("button", { name: /create|save|submit/i }).first();
+          const submitButton = page
+            .getByRole("button", { name: /create|save|submit/i })
+            .first();
           if (await submitButton.isVisible({ timeout: 2000 })) {
             await submitButton.click();
 
@@ -594,7 +663,9 @@ test.describe("Validation Error Scenarios", () => {
               .getByText(/required|name|enter/i)
               .isVisible({ timeout: 3000 })
               .catch(() => false);
-            const submitDisabled = await submitButton.isDisabled().catch(() => false);
+            const submitDisabled = await submitButton
+              .isDisabled()
+              .catch(() => false);
 
             expect(errorShown || submitDisabled).toBeTruthy();
           }
@@ -642,8 +713,12 @@ test.describe("Validation Error Scenarios", () => {
       });
 
       // Try to upload invalid file type (if file upload available)
-      const surveyButton = page.getByRole("button", { name: /survey|wifi survey/i }).first();
-      const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const surveyButton = page
+        .getByRole("button", { name: /survey|wifi survey/i })
+        .first();
+      const isVisible = await surveyButton
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
 
       if (isVisible) {
         await surveyButton.click();
@@ -692,15 +767,18 @@ test.describe("Validation Error Scenarios", () => {
         });
       });
 
-      await page.route("**/api/survey/floorplan?id=test-survey", async (route) => {
-        await route.fulfill({
-          status: 400,
-          contentType: "application/json",
-          body: JSON.stringify({
-            error: "File too large. Maximum size is 10MB",
-          }),
-        });
-      });
+      await page.route(
+        "**/api/survey/floorplan?id=test-survey",
+        async (route) => {
+          await route.fulfill({
+            status: 400,
+            contentType: "application/json",
+            body: JSON.stringify({
+              error: "File too large. Maximum size is 10MB",
+            }),
+          });
+        }
+      );
 
       // App should remain functional
       await page.waitForTimeout(2000);
@@ -710,7 +788,9 @@ test.describe("Validation Error Scenarios", () => {
 });
 
 test.describe("WebSocket Error Scenarios", () => {
-  test("should handle WebSocket connection failure gracefully", async ({ page }) => {
+  test("should handle WebSocket connection failure gracefully", async ({
+    page,
+  }) => {
     // Block WebSocket connections
     await page.route("**/ws", (route) => route.abort());
 
@@ -756,7 +836,9 @@ test.describe("WebSocket Error Scenarios", () => {
 
     // Should not have critical crashes (some errors may be expected)
     const hasCriticalError = errors.some(
-      (e) => e.toLowerCase().includes("uncaught") || e.toLowerCase().includes("fatal")
+      (e) =>
+        e.toLowerCase().includes("uncaught") ||
+        e.toLowerCase().includes("fatal")
     );
 
     expect(hasCriticalError).toBeFalsy();
@@ -801,7 +883,8 @@ test.describe("Resource Error Scenarios - Empty States", () => {
 
     // Should show either empty state or scan prompt
     expect(
-      emptyStateShown || (await page.getByRole("button", { name: /scan/i }).isVisible())
+      emptyStateShown ||
+        (await page.getByRole("button", { name: /scan/i }).isVisible())
     ).toBeTruthy();
   });
 
@@ -820,8 +903,12 @@ test.describe("Resource Error Scenarios - Empty States", () => {
     });
 
     // Open survey view
-    const surveyButton = page.getByRole("button", { name: /survey|wifi survey/i }).first();
-    const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+    const surveyButton = page
+      .getByRole("button", { name: /survey|wifi survey/i })
+      .first();
+    const isVisible = await surveyButton
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
 
     if (isVisible) {
       await surveyButton.click();
@@ -834,12 +921,15 @@ test.describe("Resource Error Scenarios - Empty States", () => {
         .catch(() => false);
 
       expect(
-        emptyStateShown || (await page.getByRole("button", { name: /create|new/i }).isVisible())
+        emptyStateShown ||
+          (await page.getByRole("button", { name: /create|new/i }).isVisible())
       ).toBeTruthy();
     }
   });
 
-  test('should show "No vulnerabilities found" success state', async ({ page }) => {
+  test('should show "No vulnerabilities found" success state', async ({
+    page,
+  }) => {
     await login(page);
 
     // Mock vulnerability scan with no findings
@@ -875,7 +965,8 @@ test.describe("Resource Error Scenarios - Empty States", () => {
       .catch(() => false);
 
     expect(
-      successShown || (await page.getByRole("heading", { name: /link/i }).isVisible())
+      successShown ||
+        (await page.getByRole("heading", { name: /link/i }).isVisible())
     ).toBeTruthy();
   });
 });
@@ -907,7 +998,8 @@ test.describe("Backend Service Unavailable", () => {
 
     // Either shows prompt or app remains functional
     expect(
-      promptShown || (await page.getByRole("heading", { name: /link/i }).isVisible())
+      promptShown ||
+        (await page.getByRole("heading", { name: /link/i }).isVisible())
     ).toBeTruthy();
   });
 
@@ -942,7 +1034,9 @@ test.describe("Backend Service Unavailable", () => {
 });
 
 test.describe("Edge Cases", () => {
-  test("should handle very large device list (1000+ devices)", async ({ page }) => {
+  test("should handle very large device list (1000+ devices)", async ({
+    page,
+  }) => {
     await login(page);
 
     // Generate 1000 mock devices
@@ -981,7 +1075,9 @@ test.describe("Edge Cases", () => {
     expect(deviceCount || true).toBeTruthy(); // App didn't crash
   });
 
-  test("should prevent duplicate scan requests from rapid clicks", async ({ page }) => {
+  test("should prevent duplicate scan requests from rapid clicks", async ({
+    page,
+  }) => {
     await login(page);
 
     let scanCount = 0;
@@ -999,7 +1095,9 @@ test.describe("Edge Cases", () => {
       });
     });
 
-    const scanButton = page.getByRole("button", { name: /scan|discover|refresh/i }).first();
+    const scanButton = page
+      .getByRole("button", { name: /scan|discover|refresh/i })
+      .first();
 
     if (await scanButton.isVisible({ timeout: 5000 })) {
       // Rapidly click scan button 5 times
@@ -1015,7 +1113,9 @@ test.describe("Edge Cases", () => {
     }
   });
 
-  test("should handle concurrent speed test and discovery scan", async ({ page }) => {
+  test("should handle concurrent speed test and discovery scan", async ({
+    page,
+  }) => {
     await login(page);
 
     // Mock both endpoints
@@ -1042,11 +1142,19 @@ test.describe("Edge Cases", () => {
     });
 
     // Try to start both operations
-    const scanButton = page.getByRole("button", { name: /scan|discover/i }).first();
-    const speedButton = page.getByRole("button", { name: /speed test/i }).first();
+    const scanButton = page
+      .getByRole("button", { name: /scan|discover/i })
+      .first();
+    const speedButton = page
+      .getByRole("button", { name: /speed test/i })
+      .first();
 
-    const scanVisible = await scanButton.isVisible({ timeout: 3000 }).catch(() => false);
-    const speedVisible = await speedButton.isVisible({ timeout: 3000 }).catch(() => false);
+    const scanVisible = await scanButton
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
+    const speedVisible = await speedButton
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
 
     if (scanVisible) {
       await scanButton.click();
@@ -1084,7 +1192,9 @@ test.describe("Edge Cases", () => {
     }
 
     // App should remain functional
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 5000,
+    });
   });
 });
 
@@ -1114,7 +1224,9 @@ test.describe("Error Recovery Mechanisms", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Should show error
-    await expect(page.getByText(/error|failed/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/error|failed/i)).toBeVisible({
+      timeout: 5000,
+    });
 
     // Retry
     await page.getByRole("button", { name: /sign in|login|retry/i }).click();
@@ -1150,13 +1262,17 @@ test.describe("Error Recovery Mechanisms", () => {
 
       if (errorVisible) {
         // Try to dismiss (close button, X, or click away)
-        const closeButton = page.getByRole("button", { name: /close|dismiss|ok/i }).first();
+        const closeButton = page
+          .getByRole("button", { name: /close|dismiss|ok/i })
+          .first();
         if (await closeButton.isVisible({ timeout: 2000 })) {
           await closeButton.click();
 
           // Error should be dismissable
           await page.waitForTimeout(1000);
-          await expect(page.getByRole("heading", { name: /link/i })).toBeVisible();
+          await expect(
+            page.getByRole("heading", { name: /link/i })
+          ).toBeVisible();
         }
       }
     }
@@ -1166,7 +1282,9 @@ test.describe("Error Recovery Mechanisms", () => {
     await login(page);
 
     // Note some initial state
-    const initialHeading = await page.getByRole("heading", { name: /link/i }).textContent();
+    const initialHeading = await page
+      .getByRole("heading", { name: /link/i })
+      .textContent();
 
     // Mock error
     await page.route("**/api/devices/scan", async (route) => {
@@ -1185,13 +1303,17 @@ test.describe("Error Recovery Mechanisms", () => {
     }
 
     // State should be preserved
-    const currentHeading = await page.getByRole("heading", { name: /link/i }).textContent();
+    const currentHeading = await page
+      .getByRole("heading", { name: /link/i })
+      .textContent();
     expect(currentHeading).toBe(initialHeading);
   });
 });
 
 test.describe("Cross-Browser Error Handling", () => {
-  test("should handle errors consistently across browsers", async ({ page }) => {
+  test("should handle errors consistently across browsers", async ({
+    page,
+  }) => {
     await login(page);
 
     // Mock error

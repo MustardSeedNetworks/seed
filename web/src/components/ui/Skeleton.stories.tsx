@@ -50,7 +50,8 @@ export const TextLines: StoryObj<typeof TextSkeleton> = {
   parameters: {
     docs: {
       description: {
-        story: "Multiple text lines with the last line shorter, simulating a paragraph.",
+        story:
+          "Multiple text lines with the last line shorter, simulating a paragraph.",
       },
     },
   },
@@ -61,7 +62,8 @@ export const Card: StoryObj<typeof CardSkeleton> = {
   parameters: {
     docs: {
       description: {
-        story: "Pre-configured card skeleton matching the dashboard card layout.",
+        story:
+          "Pre-configured card skeleton matching the dashboard card layout.",
       },
     },
   },
@@ -79,7 +81,8 @@ export const DashboardGrid: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Grid of card skeletons matching the dashboard layout during initial load.",
+        story:
+          "Grid of card skeletons matching the dashboard layout during initial load.",
       },
     },
   },
@@ -87,7 +90,9 @@ export const DashboardGrid: Story = {
 
 export const UserProfile: Story = {
   render: () => (
-    <div className={`${layout.inline.spacious} ${spacing.pad.default} bg-surface-base rounded-lg`}>
+    <div
+      className={`${layout.inline.spacious} ${spacing.pad.default} bg-surface-base rounded-lg`}
+    >
       <Skeleton variant="circular" className="h-16 w-16" />
       <div className={`${layout.stack.default}`}>
         <Skeleton variant="text" className="h-5 w-32" />
@@ -107,8 +112,12 @@ export const UserProfile: Story = {
 
 export const TableRows: Story = {
   render: () => (
-    <div className={`w-[500px] bg-surface-base rounded-lg ${spacing.pad.default}`}>
-      <div className={`${layout.flex.between} ${spacing.margin.bottom.content}`}>
+    <div
+      className={`w-[500px] bg-surface-base rounded-lg ${spacing.pad.default}`}
+    >
+      <div
+        className={`${layout.flex.between} ${spacing.margin.bottom.content}`}
+      >
         <Skeleton variant="text" className="h-5 w-20" />
         <Skeleton variant="text" className="h-5 w-24" />
         <Skeleton variant="text" className="h-5 w-16" />

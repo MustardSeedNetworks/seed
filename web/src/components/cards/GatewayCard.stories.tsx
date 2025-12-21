@@ -85,7 +85,8 @@ export const Unreachable: StoryObj = {
         <CardRow label="Packet Loss" value="100%" status="error" />
         <CardDivider />
         <p className="caption text-status-danger">
-          Gateway is not responding to ICMP ping requests. Check network connectivity.
+          Gateway is not responding to ICMP ping requests. Check network
+          connectivity.
         </p>
       </div>
     </Card>
@@ -102,14 +103,22 @@ export const DualStack: StoryObj = {
     >
       <div className={spacing.stack.default}>
         <div>
-          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>IPv4</p>
+          <p
+            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          >
+            IPv4
+          </p>
           <CardValue value="192.168.1.1" size="md" />
           <CardRow label="Latency" value="2.3ms" status="success" />
           <CardRow label="Loss" value="0%" />
         </div>
         <CardDivider />
         <div>
-          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>IPv6</p>
+          <p
+            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          >
+            IPv6
+          </p>
           <CardValue value="fe80::1" size="md" />
           <CardRow label="Latency" value="1.8ms" status="success" />
           <CardRow label="Loss" value="0%" />

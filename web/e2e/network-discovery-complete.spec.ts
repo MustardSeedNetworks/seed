@@ -30,7 +30,9 @@ async function loginAndNavigate(page: Page) {
   await page.getByRole("button", { name: /sign in|login/i }).click();
 
   // Wait for dashboard to load
-  await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    timeout: 10000,
+  });
 }
 
 /**
@@ -78,7 +80,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await loginAndNavigate(page);
   });
 
-  test("should display Network Discovery card on dashboard", async ({ page }) => {
+  test("should display Network Discovery card on dashboard", async ({
+    page,
+  }) => {
     const discoveryCard = page
       .locator('h3:has-text("Discovery"), h4:has-text("Discovery")')
       .or(page.locator('[data-testid="network-discovery-card"]'))
@@ -87,7 +91,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(discoveryCard).toBeVisible({ timeout: 5000 });
   });
 
-  test("should trigger network scan when Scan button is clicked", async ({ page }) => {
+  test("should trigger network scan when Scan button is clicked", async ({
+    page,
+  }) => {
     // Mock the scan endpoint
     let scanTriggered = false;
     await page.route("**/api/devices/scan", async (route) => {
@@ -148,7 +154,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(loadingIndicator).toBeVisible({ timeout: 3000 });
   });
 
-  test("should display discovered devices after scan completion", async ({ page }) => {
+  test("should display discovered devices after scan completion", async ({
+    page,
+  }) => {
     // Mock devices endpoint with discovered devices
     await page.route("**/api/devices", async (route) => {
       await route.fulfill({
@@ -222,7 +230,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(page.locator("text=192.168.1.20")).toBeVisible();
   });
 
-  test("should display device details with IP, MAC, hostname, type, and OS", async ({ page }) => {
+  test("should display device details with IP, MAC, hostname, type, and OS", async ({
+    page,
+  }) => {
     // Mock device data
     await page.route("**/api/devices", async (route) => {
       await route.fulfill({
@@ -268,7 +278,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(page.locator("text=/Dell/i")).toBeVisible();
   });
 
-  test("should expand device to show detailed information when clicked", async ({ page }) => {
+  test("should expand device to show detailed information when clicked", async ({
+    page,
+  }) => {
     // Mock device with detailed info
     await page.route("**/api/devices", async (route) => {
       await route.fulfill({
@@ -365,7 +377,13 @@ test.describe("Network Discovery - Complete Flow", () => {
           results: [
             { port: 22, state: "open", protocol: "tcp", ttl: 64, rtt: 1500000 },
             { port: 80, state: "open", protocol: "tcp", ttl: 64, rtt: 2000000 },
-            { port: 443, state: "open", protocol: "tcp", ttl: 64, rtt: 1800000 },
+            {
+              port: 443,
+              state: "open",
+              protocol: "tcp",
+              ttl: 64,
+              rtt: 1800000,
+            },
           ],
         }),
       });
@@ -613,7 +631,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(nameSortButton).toHaveClass(/brand-primary/);
   });
 
-  test("should toggle sort direction (ascending/descending)", async ({ page }) => {
+  test("should toggle sort direction (ascending/descending)", async ({
+    page,
+  }) => {
     // Mock devices
     await page.route("**/api/devices", async (route) => {
       await route.fulfill({
@@ -727,7 +747,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(searchInput).toHaveValue("");
   });
 
-  test('should show "no devices found" message when scan returns empty', async ({ page }) => {
+  test('should show "no devices found" message when scan returns empty', async ({
+    page,
+  }) => {
     // Mock empty device list
     await page.route("**/api/devices", async (route) => {
       await route.fulfill({
@@ -755,7 +777,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(noDevicesMsg).toBeVisible();
   });
 
-  test("should handle network error during scan gracefully", async ({ page }) => {
+  test("should handle network error during scan gracefully", async ({
+    page,
+  }) => {
     // Mock scan endpoint to return error
     await page.route("**/api/devices/scan", async (route) => {
       await route.fulfill({
@@ -862,7 +886,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(page.locator("text=en0")).toBeVisible();
   });
 
-  test("should display discovery method badges for each device", async ({ page }) => {
+  test("should display discovery method badges for each device", async ({
+    page,
+  }) => {
     // Mock device with multiple discovery methods
     await page.route("**/api/devices", async (route) => {
       await route.fulfill({
@@ -958,7 +984,9 @@ test.describe("Network Discovery - Complete Flow", () => {
     await expect(page.locator("text=/Printers/i").first()).toBeVisible();
   });
 
-  test("should disable scan button while scanning is in progress", async ({ page }) => {
+  test("should disable scan button while scanning is in progress", async ({
+    page,
+  }) => {
     // Mock scanning status
     await page.route("**/api/devices/scan", async (route) => {
       await route.fulfill({

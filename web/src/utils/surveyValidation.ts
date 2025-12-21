@@ -40,7 +40,10 @@ import type {
 /**
  * Extract metric value from a sample based on the criterion
  */
-function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): number | null {
+function extractMetricValue(
+  sample: SamplePoint,
+  criterion: PassFailCriterion
+): number | null {
   const data = sample.sampleData;
 
   // Handle passive samples (array of networks)
@@ -85,7 +88,9 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
         const primaryChannel = sortedNetworks[0]?.channel;
         if (!primaryChannel) return 0;
         // Count APs with strong signal on same channel (exclude the primary)
-        return networks.filter((n) => n.channel === primaryChannel && n.rssi >= -85).length;
+        return networks.filter(
+          (n) => n.channel === primaryChannel && n.rssi >= -85
+        ).length;
       }
 
       case "adjacent": {
@@ -193,12 +198,15 @@ export function validateCriterion(
   const totalSampleCount = values.length;
   const failedSampleCount = failedLocations.length;
   const passedSampleCount = totalSampleCount - failedSampleCount;
-  const percentage = totalSampleCount > 0 ? (passedSampleCount / totalSampleCount) * 100 : 0;
+  const percentage =
+    totalSampleCount > 0 ? (passedSampleCount / totalSampleCount) * 100 : 0;
 
   // Calculate statistics
   const allValues = values.map((v) => v.value);
   const averageValue =
-    allValues.length > 0 ? allValues.reduce((a, b) => a + b, 0) / allValues.length : 0;
+    allValues.length > 0
+      ? allValues.reduce((a, b) => a + b, 0) / allValues.length
+      : 0;
 
   // For "gte" comparisons, worst is minimum; for "lte", worst is maximum
   const worstValue =
@@ -235,7 +243,10 @@ export function validateCriterion(
 /**
  * Validate a survey against all provided criteria
  */
-export function validateSurvey(survey: Survey, criteria: PassFailCriterion[]): SurveyValidation {
+export function validateSurvey(
+  survey: Survey,
+  criteria: PassFailCriterion[]
+): SurveyValidation {
   // Filter to enabled criteria that match the survey type
   const applicableCriteria = criteria.filter(
     (c) => c.enabled && (c.mode === "all" || c.mode === survey.surveyType)
@@ -250,7 +261,8 @@ export function validateSurvey(survey: Survey, criteria: PassFailCriterion[]): S
   const passedCount = results.filter((r) => r.passed).length;
   const failedCount = results.filter((r) => !r.passed).length;
   const overallPass = failedCount === 0;
-  const overallPercentage = results.length > 0 ? (passedCount / results.length) * 100 : 100;
+  const overallPercentage =
+    results.length > 0 ? (passedCount / results.length) * 100 : 100;
 
   return {
     overallPass,

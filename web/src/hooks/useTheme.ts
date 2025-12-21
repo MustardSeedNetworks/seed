@@ -40,7 +40,9 @@ const STORAGE_KEY = "seed-theme";
  */
 function getSystemTheme(): "light" | "dark" {
   if (typeof window !== "undefined" && window.matchMedia) {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   }
   return "dark"; // Default to dark if unable to detect
 }

@@ -22,7 +22,10 @@
 import type { SurveyReport } from "./reportGenerator";
 
 /** Translation function type */
-type TranslateFunction = (key: string, options?: Record<string, unknown>) => string;
+type TranslateFunction = (
+  key: string,
+  options?: Record<string, unknown>
+) => string;
 
 /** Report style configuration */
 const REPORT_STYLES = `
@@ -351,11 +354,17 @@ function formatDate(isoDate: string): string {
 /**
  * Render executive summary section
  */
-function renderExecutiveSummary(report: SurveyReport, t: TranslateFunction): string {
+function renderExecutiveSummary(
+  report: SurveyReport,
+  t: TranslateFunction
+): string {
   const { summary, metadata } = report;
-  const statusClass = summary.overallStatus === "pass" ? "status-pass" : "status-fail";
+  const statusClass =
+    summary.overallStatus === "pass" ? "status-pass" : "status-fail";
   const statusText =
-    summary.overallStatus === "pass" ? t("criteria.statusPass") : t("criteria.statusFail");
+    summary.overallStatus === "pass"
+      ? t("criteria.statusPass")
+      : t("criteria.statusFail");
 
   return `
     <div class="section">
@@ -404,14 +413,19 @@ function renderExecutiveSummary(report: SurveyReport, t: TranslateFunction): str
 /**
  * Render pass/fail criteria results section
  */
-function renderCriteriaResults(report: SurveyReport, t: TranslateFunction): string {
+function renderCriteriaResults(
+  report: SurveyReport,
+  t: TranslateFunction
+): string {
   if (!report.validation || report.validation.results.length === 0) {
     return "";
   }
 
   const rows = report.validation.results
     .map((result) => {
-      const statusClass = result.passed ? "status-pass-cell" : "status-fail-cell";
+      const statusClass = result.passed
+        ? "status-pass-cell"
+        : "status-fail-cell";
       const statusText = result.passed ? "\u2713 PASS" : "\u2717 FAIL";
       const comparison = result.comparison === "gte" ? "\u2265" : "\u2264";
 
@@ -572,7 +586,10 @@ function renderAPInventory(report: SurveyReport, t: TranslateFunction): string {
 /**
  * Render recommendations section
  */
-function renderRecommendations(report: SurveyReport, t: TranslateFunction): string {
+function renderRecommendations(
+  report: SurveyReport,
+  t: TranslateFunction
+): string {
   if (report.recommendations.length === 0) {
     return "";
   }
@@ -604,7 +621,10 @@ function renderRecommendations(report: SurveyReport, t: TranslateFunction): stri
 /**
  * Render complete HTML report
  */
-export function renderReportToHTML(report: SurveyReport, t: TranslateFunction): string {
+export function renderReportToHTML(
+  report: SurveyReport,
+  t: TranslateFunction
+): string {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -645,7 +665,10 @@ export function renderReportToHTML(report: SurveyReport, t: TranslateFunction): 
  * Open report in a new window for print/save
  * Uses Blob URL instead of document.write() to prevent potential XSS risks
  */
-export function openReportForPrint(report: SurveyReport, t: TranslateFunction): void {
+export function openReportForPrint(
+  report: SurveyReport,
+  t: TranslateFunction
+): void {
   const html = renderReportToHTML(report, t);
   // Create a Blob URL for the HTML content - safer than document.write()
   const blob = new Blob([html], { type: "text/html" });
@@ -665,7 +688,10 @@ export function openReportForPrint(report: SurveyReport, t: TranslateFunction): 
 /**
  * Download report as HTML file
  */
-export function downloadReportAsHTML(report: SurveyReport, t: TranslateFunction): void {
+export function downloadReportAsHTML(
+  report: SurveyReport,
+  t: TranslateFunction
+): void {
   const html = renderReportToHTML(report, t);
   const blob = new Blob([html], { type: "text/html" });
   const url = URL.createObjectURL(blob);

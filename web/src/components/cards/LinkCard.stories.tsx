@@ -51,7 +51,12 @@ const linkDataNoIP = {
 
 export const Online: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="success">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="success"
+    >
       <CardValue value="Connected" size="lg" status="success" />
       <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Speed" value={linkDataOnline.speed} />
@@ -68,7 +73,12 @@ export const Online: StoryObj = {
 
 export const NoIPAddress: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="warning">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="warning"
+    >
       <CardValue value="No IP" size="lg" status="warning" />
       <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Speed" value={linkDataNoIP.speed} />
@@ -76,7 +86,8 @@ export const NoIPAddress: StoryObj = {
         <CardRow label="Carrier" value="Detected" />
         <CardDivider />
         <p className="caption text-status-warning">
-          Physical link present but no IP address assigned. Check DHCP or static IP configuration.
+          Physical link present but no IP address assigned. Check DHCP or static
+          IP configuration.
         </p>
       </div>
     </Card>
@@ -85,7 +96,12 @@ export const NoIPAddress: StoryObj = {
 
 export const Disconnected: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="error">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="error"
+    >
       <CardValue value="No Carrier" size="lg" status="error" />
       <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Speed" value="—" />
@@ -102,7 +118,12 @@ export const Disconnected: StoryObj = {
 
 export const Loading: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="loading">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="loading"
+    >
       <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.content}`} />
       <div className={`${spacing.stack.sm} ${spacing.margin.top.content}`}>
         <div className="flex justify-between">
@@ -124,7 +145,12 @@ export const Loading: StoryObj = {
 
 export const WithLinkFlaps: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="warning">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="warning"
+    >
       <CardValue value="Unstable" size="lg" status="warning" />
       <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
         <CardRow label="Speed" value="1000Mb/s" />

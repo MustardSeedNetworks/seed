@@ -79,7 +79,8 @@ function isValidIPv6(ip: string): boolean {
   const lastPart = allParts.at(-1);
   const hasIPv4Tail = lastPart ? lastPart.includes(".") : false;
 
-  const validateHextet = (part: string): boolean => /^[0-9a-fA-F]{1,4}$/.test(part);
+  const validateHextet = (part: string): boolean =>
+    /^[0-9a-fA-F]{1,4}$/.test(part);
 
   if (hasIPv4Tail) {
     if (!isValidIPv4(lastPart!)) return false;
@@ -147,7 +148,10 @@ export function useVulnerabilities() {
         : "/api/vulnerabilities/scan";
 
       const data = await api.post<ScanResponse>(endpoint);
-      return data.status === "scan started" || data.status === "scan already in progress";
+      return (
+        data.status === "scan started" ||
+        data.status === "scan already in progress"
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setScanError(message);
@@ -157,41 +161,57 @@ export function useVulnerabilities() {
     }
   }, []);
 
-  const fetchStatus = useCallback(async (): Promise<VulnerabilityScannerStatus | null> => {
-    try {
-      return await api.get<VulnerabilityScannerStatus>("/api/vulnerabilities/status");
-    } catch (error) {
-      logger.error(LogComponents.VULN, "Failed to fetch vulnerability status", error, {
-        endpoint: "/api/vulnerabilities/status",
-      });
-      return null;
-    }
-  }, []);
-
-  const fetchResults = useCallback(async (severity?: string): Promise<DeviceVulnerabilities[]> => {
-    try {
-      const params = new URLSearchParams();
-      if (severity) {
-        const validSeverity = normalizeSeverityFilter(severity);
-        if (!validSeverity) {
-          throw new Error("Invalid severity filter");
-        }
-        params.set("severity", validSeverity);
+  const fetchStatus =
+    useCallback(async (): Promise<VulnerabilityScannerStatus | null> => {
+      try {
+        return await api.get<VulnerabilityScannerStatus>(
+          "/api/vulnerabilities/status"
+        );
+      } catch (error) {
+        logger.error(
+          LogComponents.VULN,
+          "Failed to fetch vulnerability status",
+          error,
+          {
+            endpoint: "/api/vulnerabilities/status",
+          }
+        );
+        return null;
       }
+    }, []);
 
-      const endpoint = params.size
-        ? `/api/vulnerabilities/results?${params.toString()}`
-        : "/api/vulnerabilities/results";
-      const data = await api.get<ResultsResponse>(endpoint);
-      return data.results || [];
-    } catch (error) {
-      logger.error(LogComponents.VULN, "Failed to fetch vulnerability results", error, {
-        endpoint: "/api/vulnerabilities/results",
-        severity,
-      });
-      return [];
-    }
-  }, []);
+  const fetchResults = useCallback(
+    async (severity?: string): Promise<DeviceVulnerabilities[]> => {
+      try {
+        const params = new URLSearchParams();
+        if (severity) {
+          const validSeverity = normalizeSeverityFilter(severity);
+          if (!validSeverity) {
+            throw new Error("Invalid severity filter");
+          }
+          params.set("severity", validSeverity);
+        }
+
+        const endpoint = params.size
+          ? `/api/vulnerabilities/results?${params.toString()}`
+          : "/api/vulnerabilities/results";
+        const data = await api.get<ResultsResponse>(endpoint);
+        return data.results || [];
+      } catch (error) {
+        logger.error(
+          LogComponents.VULN,
+          "Failed to fetch vulnerability results",
+          error,
+          {
+            endpoint: "/api/vulnerabilities/results",
+            severity,
+          }
+        );
+        return [];
+      }
+    },
+    []
+  );
 
   const fetchDeviceVulnerabilities = useCallback(
     async (ip: string): Promise<DeviceVulnerabilities | null> => {
@@ -206,36 +226,57 @@ export function useVulnerabilities() {
           `/api/vulnerabilities/device?${params.toString()}`
         );
       } catch (error) {
-        logger.error(LogComponents.VULN, "Failed to fetch vulnerabilities for device", error, {
-          ip,
-        });
+        logger.error(
+          LogComponents.VULN,
+          "Failed to fetch vulnerabilities for device",
+          error,
+          {
+            ip,
+          }
+        );
         return null;
       }
     },
     []
   );
 
-  const fetchSettings = useCallback(async (): Promise<VulnerabilityScannerConfig | null> => {
-    try {
-      return await api.get<VulnerabilityScannerConfig>("/api/vulnerabilities/settings");
-    } catch (error) {
-      logger.error(LogComponents.VULN, "Failed to fetch vulnerability settings", error, {
-        endpoint: "/api/vulnerabilities/settings",
-      });
-      return null;
-    }
-  }, []);
+  const fetchSettings =
+    useCallback(async (): Promise<VulnerabilityScannerConfig | null> => {
+      try {
+        return await api.get<VulnerabilityScannerConfig>(
+          "/api/vulnerabilities/settings"
+        );
+      } catch (error) {
+        logger.error(
+          LogComponents.VULN,
+          "Failed to fetch vulnerability settings",
+          error,
+          {
+            endpoint: "/api/vulnerabilities/settings",
+          }
+        );
+        return null;
+      }
+    }, []);
 
   const updateSettings = useCallback(
     async (settings: Partial<VulnerabilityScannerConfig>): Promise<boolean> => {
       try {
-        await api.put<{ status: string }>("/api/vulnerabilities/settings", settings);
+        await api.put<{ status: string }>(
+          "/api/vulnerabilities/settings",
+          settings
+        );
         return true;
       } catch (error) {
-        logger.error(LogComponents.VULN, "Failed to update vulnerability settings", error, {
-          endpoint: "/api/vulnerabilities/settings",
-          updates: settings,
-        });
+        logger.error(
+          LogComponents.VULN,
+          "Failed to update vulnerability settings",
+          error,
+          {
+            endpoint: "/api/vulnerabilities/settings",
+            updates: settings,
+          }
+        );
         return false;
       }
     },

@@ -24,7 +24,9 @@ test.describe("Dashboard", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display Link Status card", async ({ page }) => {
@@ -35,12 +37,16 @@ test.describe("Dashboard", () => {
   });
 
   test("should display Gateway card", async ({ page }) => {
-    const gatewayCard = page.locator('h3:has-text("Gateway"), h4:has-text("Gateway")').first();
+    const gatewayCard = page
+      .locator('h3:has-text("Gateway"), h4:has-text("Gateway")')
+      .first();
     await expect(gatewayCard).toBeVisible();
   });
 
   test("should display DNS card", async ({ page }) => {
-    const dnsCard = page.locator('h3:has-text("DNS"), h4:has-text("DNS")').first();
+    const dnsCard = page
+      .locator('h3:has-text("DNS"), h4:has-text("DNS")')
+      .first();
     await expect(dnsCard).toBeVisible();
   });
 
@@ -48,18 +54,24 @@ test.describe("Dashboard", () => {
     // Click settings button
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Settings drawer should be visible
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByText(/thresholds|appearance|discovery/i)
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test("should toggle theme in settings", async ({ page }) => {
     // Open settings
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Find and click theme toggle
@@ -71,11 +83,15 @@ test.describe("Dashboard", () => {
     // Click help button
     const helpButton = page
       .getByRole("button", { name: /help/i })
-      .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+      .or(
+        page.locator('button:has(svg[class*="help"], svg[class*="question"])')
+      );
     await helpButton.click();
 
     // Help modal should be visible
-    await expect(page.getByRole("dialog").or(page.locator('[role="dialog"]'))).toBeVisible({
+    await expect(
+      page.getByRole("dialog").or(page.locator('[role="dialog"]'))
+    ).toBeVisible({
       timeout: 5000,
     });
   });

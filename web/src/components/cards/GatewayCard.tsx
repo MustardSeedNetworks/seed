@@ -66,7 +66,10 @@ function formatTime(ms: number): string {
   return `${Math.round(ms * 10) / 10}ms`;
 }
 
-export const GatewayCard = memo(function GatewayCard({ data, loading }: GatewayCardProps) {
+export const GatewayCard = memo(function GatewayCard({
+  data,
+  loading,
+}: GatewayCardProps) {
   const { t: tr } = useTranslation("cards");
   const { thresholds } = useSettings();
   // Map context ThresholdPair (good/warning) to card format (warning/critical)
@@ -99,7 +102,9 @@ export const GatewayCard = memo(function GatewayCard({ data, loading }: GatewayC
         status="unknown"
       >
         <CardValue value={tr("gateway.noGateway")} size="md" />
-        <p className={`caption ${spacing.margin.top.tight}`}>{tr("gateway.unableToDetect")}</p>
+        <p className={`caption ${spacing.margin.top.tight}`}>
+          {tr("gateway.unableToDetect")}
+        </p>
       </Card>
     );
   }
@@ -133,7 +138,9 @@ export const GatewayCard = memo(function GatewayCard({ data, loading }: GatewayC
       <CardDivider />
 
       {/* Latency stats */}
-      <div className={`grid grid-cols-3 ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}>
+      <div
+        className={`grid grid-cols-3 ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+      >
         <div className="text-center">
           <p className="caption">{tr("gateway.min")}</p>
           <p
@@ -187,7 +194,13 @@ export const GatewayCard = memo(function GatewayCard({ data, loading }: GatewayC
       <CardRow
         label={tr("gateway.packets")}
         value={`${data.received}/${data.sent}`}
-        status={data.lossPercent === 0 ? "success" : data.lossPercent < 50 ? "warning" : "error"}
+        status={
+          data.lossPercent === 0
+            ? "success"
+            : data.lossPercent < 50
+              ? "warning"
+              : "error"
+        }
       />
       {data.lossPercent > 0 && (
         <CardRow
@@ -206,7 +219,9 @@ export const GatewayCard = memo(function GatewayCard({ data, loading }: GatewayC
           </p>
           <CardValue value={data.ipv6.gateway} size="md" />
           <p className={`caption ${spacing.margin.bottom.inline}`}>
-            {data.ipv6.reachable ? tr("gateway.reachable") : tr("gateway.unreachable")}
+            {data.ipv6.reachable
+              ? tr("gateway.reachable")
+              : tr("gateway.unreachable")}
           </p>
           <div
             className={`grid grid-cols-3 ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}

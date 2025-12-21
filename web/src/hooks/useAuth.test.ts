@@ -111,7 +111,9 @@ describe("useAuth", () => {
 
     await waitFor(() => {
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-token");
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-token-expiry");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+        "seed-token-expiry"
+      );
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-username");
     });
   });

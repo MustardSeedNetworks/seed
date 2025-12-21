@@ -13,7 +13,8 @@
   --max-height-modal: 85vh;
 
   /* Font families */
-  --font-family-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-display:
+    "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-family-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-family-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
@@ -52,27 +53,27 @@
 
 :root {
   /* Light Mode - Themed from BRAND_GUIDELINES.md */
-  --color-brand-primary: #2D7A3E; /* Seed Green */
-  --color-brand-accent: #4CAF50; /* Lighter Seed Green */
-  --color-brand-secondary: #5C4033; /* Soil Brown */
-  --color-brand-secondary-dark: #4E342E; /* Darker Soil Brown */
+  --color-brand-primary: #2d7a3e; /* Seed Green */
+  --color-brand-accent: #4caf50; /* Lighter Seed Green */
+  --color-brand-secondary: #5c4033; /* Soil Brown */
+  --color-brand-secondary-dark: #4e342e; /* Darker Soil Brown */
 
-  --color-surface-base: #F8F8F8; /* Snow */
-  --color-surface-raised: #FFFFFF; /* Pure White */
-  --color-surface-border: #E5E5E5; /* Cloud */
-  --color-surface-hover: #E5E5E5; /* Cloud */
-  --color-surface-sunken: #E5E5E5; /* Cloud */
+  --color-surface-base: #f8f8f8; /* Snow */
+  --color-surface-raised: #ffffff; /* Pure White */
+  --color-surface-border: #e5e5e5; /* Cloud */
+  --color-surface-hover: #e5e5e5; /* Cloud */
+  --color-surface-sunken: #e5e5e5; /* Cloud */
 
-  --color-text-primary: #1A1A1A; /* Midnight */
+  --color-text-primary: #1a1a1a; /* Midnight */
   --color-text-secondary: #333333; /* Charcoal */
   --color-text-muted: #666666; /* Slate */
-  --color-text-accent: #2D7A3E; /* Seed Green */
-  --color-text-inverse: #FFFFFF; /* Pure White */
+  --color-text-accent: #2d7a3e; /* Seed Green */
+  --color-text-inverse: #ffffff; /* Pure White */
 
-  --color-status-success: #28A745;
-  --color-status-warning: #FFC107;
-  --color-status-error: #DC3545;
-  --color-status-info: #17A2B8;
+  --color-status-success: #28a745;
+  --color-status-warning: #ffc107;
+  --color-status-error: #dc3545;
+  --color-status-info: #17a2b8;
 
   /* Gauge/progress colors (for SVG) */
   --gauge-amber: #d97706;
@@ -81,27 +82,27 @@
 
 .dark {
   /* Dark Mode - Themed from BRAND_GUIDELINES.md */
-  --color-brand-primary: #81C784; /* Lighter Seed Green */
-  --color-brand-accent: #A5D6A7; /* Even Lighter Seed Green */
-  --color-brand-secondary: #A1887F; /* Lighter Soil Brown */
-  --color-brand-secondary-dark: #8D6E63; /* Slightly Lighter Soil Brown */
+  --color-brand-primary: #81c784; /* Lighter Seed Green */
+  --color-brand-accent: #a5d6a7; /* Even Lighter Seed Green */
+  --color-brand-secondary: #a1887f; /* Lighter Soil Brown */
+  --color-brand-secondary-dark: #8d6e63; /* Slightly Lighter Soil Brown */
 
-  --color-surface-base: #1A1A1A; /* Midnight */
+  --color-surface-base: #1a1a1a; /* Midnight */
   --color-surface-raised: #333333; /* Charcoal */
   --color-surface-border: #666666; /* Slate */
   --color-surface-hover: #666666; /* Slate */
   --color-surface-sunken: #000000;
 
-  --color-text-primary: #F8F8F8; /* Snow */
-  --color-text-secondary: #E5E5E5; /* Cloud */
+  --color-text-primary: #f8f8f8; /* Snow */
+  --color-text-secondary: #e5e5e5; /* Cloud */
   --color-text-muted: #999999; /* Silver */
-  --color-text-accent: #81C784; /* Lighter Seed Green */
-  --color-text-inverse: #1A1A1A; /* Midnight */
+  --color-text-accent: #81c784; /* Lighter Seed Green */
+  --color-text-inverse: #1a1a1a; /* Midnight */
 
-  --color-status-success: #28A745;
-  --color-status-warning: #FFC107;
-  --color-status-error: #DC3545;
-  --color-status-info: #17A2B8;
+  --color-status-success: #28a745;
+  --color-status-warning: #ffc107;
+  --color-status-error: #dc3545;
+  --color-status-info: #17a2b8;
 
   /* Gauge/progress colors (for SVG) */
   --gauge-amber: #fbbf24;
@@ -116,11 +117,12 @@ body {
     "Segoe UI",
     sans-serif;
   /* Light mode gradient - subtle green tints */
-  background: linear-gradient(135deg,
-    #F8F8F8 0%,
-    #E8F5E9 35%,
-    #F1F8E9 65%,
-    #F8F8F8 100%
+  background: linear-gradient(
+    135deg,
+    #f8f8f8 0%,
+    #e8f5e9 35%,
+    #f1f8e9 65%,
+    #f8f8f8 100%
   );
   background-attachment: fixed;
   min-height: 100vh;
@@ -131,11 +133,12 @@ body {
 
 /* Dark mode gradient - richer green/teal undertones visible on dark */
 .dark body {
-  background: linear-gradient(135deg,
-    #1A1A1A 0%,
-    #1A2E1C 30%,
-    #1C2823 60%,
-    #1A1A1A 100%
+  background: linear-gradient(
+    135deg,
+    #1a1a1a 0%,
+    #1a2e1c 30%,
+    #1c2823 60%,
+    #1a1a1a 100%
   );
 }
 

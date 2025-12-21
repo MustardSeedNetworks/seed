@@ -65,8 +65,11 @@ export const WeakSignal: StoryObj = {
         <CardRow label="Channel" value="36 (5 GHz)" />
         <CardRow label="Security" value="WPA2" />
         <CardRow label="Speed" value="72 Mbps" />
-        <p className={`caption text-status-warning ${spacing.margin.top.inline}`}>
-          Weak signal. Move closer to the access point or check for interference.
+        <p
+          className={`caption text-status-warning ${spacing.margin.top.inline}`}
+        >
+          Weak signal. Move closer to the access point or check for
+          interference.
         </p>
       </div>
     </Card>
@@ -87,7 +90,9 @@ export const VeryWeakSignal: StoryObj = {
         <CardRow label="Quality" value="Poor" status="error" />
         <CardDivider />
         <CardRow label="Channel" value="11 (2.4 GHz)" />
-        <p className={`caption text-status-danger ${spacing.margin.top.inline}`}>
+        <p
+          className={`caption text-status-danger ${spacing.margin.top.inline}`}
+        >
           Very weak signal. Connection may be unstable or drop frequently.
         </p>
       </div>
@@ -108,7 +113,8 @@ export const Disconnected: StoryObj = {
         <CardRow label="Status" value="Disconnected" status="error" />
         <CardDivider />
         <p className="caption text-text-muted">
-          No wireless network connection. Check WiFi adapter and available networks.
+          No wireless network connection. Check WiFi adapter and available
+          networks.
         </p>
       </div>
     </Card>

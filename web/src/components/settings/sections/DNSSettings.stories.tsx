@@ -221,7 +221,9 @@ export const Interactive: Story = {
     });
     const [status, setStatus] = useState<SaveStatus>("idle");
 
-    const handleSetTestsSettings = (updater: React.SetStateAction<TestsSettings>) => {
+    const handleSetTestsSettings = (
+      updater: React.SetStateAction<TestsSettings>
+    ) => {
       setTestsSettings(updater);
       setStatus("saving");
 
@@ -250,7 +252,9 @@ export const Comparison: Story = {
   render: () => (
     <div className={`stack-lg ${spacing.pad.default}`}>
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
           Default (no servers)
         </p>
         <DNSSettings
@@ -264,7 +268,9 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
           With DNS servers
         </p>
         <DNSSettings
@@ -281,7 +287,11 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Saving state</p>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
+          Saving state
+        </p>
         <DNSSettings
           testsSettings={{
             ...baseSettings,

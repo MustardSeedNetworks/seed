@@ -15,7 +15,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { SNMPSettings } from "./SNMPSettings";
-import type { SNMPSettings as SNMPSettingsType, SaveStatus } from "../../../types/settings";
+import type {
+  SNMPSettings as SNMPSettingsType,
+  SaveStatus,
+} from "../../../types/settings";
 
 const defaultSettings: SNMPSettingsType = {
   communities: ["public"],
@@ -289,10 +292,13 @@ export const Saving: Story = {
  */
 export const Interactive: Story = {
   render: function InteractiveStory() {
-    const [snmpSettings, setSnmpSettings] = useState<SNMPSettingsType>(defaultSettings);
+    const [snmpSettings, setSnmpSettings] =
+      useState<SNMPSettingsType>(defaultSettings);
     const [status, setStatus] = useState<SaveStatus>("idle");
 
-    const handleSetSnmpSettings = (updater: React.SetStateAction<SNMPSettingsType>) => {
+    const handleSetSnmpSettings = (
+      updater: React.SetStateAction<SNMPSettingsType>
+    ) => {
       setSnmpSettings(updater);
       setStatus("saving");
 

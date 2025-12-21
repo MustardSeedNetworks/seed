@@ -39,7 +39,14 @@
 import { useState, ReactNode } from "react";
 import { Status } from "./Card";
 import { StatusBadge } from "./StatusBadge";
-import { cn, layout, radius, border, spacing, icon as iconTokens } from "../../styles/theme";
+import {
+  cn,
+  layout,
+  radius,
+  border,
+  spacing,
+  icon as iconTokens,
+} from "../../styles/theme";
 
 interface CollapsibleSectionProps {
   title: ReactNode;
@@ -97,15 +104,25 @@ export function CollapsibleSection({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
           {status && <StatusBadge status={status} size="sm" />}
           <span
-            className={cn("font-medium text-text-primary", isCompact ? "caption" : "body-small")}
+            className={cn(
+              "font-medium text-text-primary",
+              isCompact ? "caption" : "body-small"
+            )}
           >
             {title}
             {count !== undefined && (
-              <span className={`text-text-muted ${spacing.margin.left.tight}`}>({count})</span>
+              <span className={`text-text-muted ${spacing.margin.left.tight}`}>
+                ({count})
+              </span>
             )}
           </span>
         </div>

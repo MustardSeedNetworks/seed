@@ -41,7 +41,12 @@ interface SkeletonProps {
 /**
  * Animated placeholder component for loading states with configurable shape.
  */
-export function Skeleton({ className = "", variant = "text", width, height }: SkeletonProps) {
+export function Skeleton({
+  className = "",
+  variant = "text",
+  width,
+  height,
+}: SkeletonProps) {
   const baseClasses = "animate-pulse bg-surface-hover";
 
   // Type-safe variant class getter
@@ -57,15 +62,28 @@ export function Skeleton({ className = "", variant = "text", width, height }: Sk
   }
 
   const sizeClasses = [
-    width ? (typeof width === "number" ? `w-[${width}px]` : `w-[${width}]`) : "",
-    height ? (typeof height === "number" ? `h-[${height}px]` : `h-[${height}]`) : "",
+    width
+      ? typeof width === "number"
+        ? `w-[${width}px]`
+        : `w-[${width}]`
+      : "",
+    height
+      ? typeof height === "number"
+        ? `h-[${height}px]`
+        : `h-[${height}]`
+      : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div
-      className={cn(baseClasses, getVariantClass(variant), sizeClasses, className)}
+      className={cn(
+        baseClasses,
+        getVariantClass(variant),
+        sizeClasses,
+        className
+      )}
       aria-hidden="true"
     />
   );
@@ -103,7 +121,11 @@ export function TextSkeleton({ lines = 3 }: { lines?: number }) {
   return (
     <div className="stack-sm">
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton key={i} className="h-4" width={i === lines - 1 ? "60%" : "100%"} />
+        <Skeleton
+          key={i}
+          className="h-4"
+          width={i === lines - 1 ? "60%" : "100%"}
+        />
       ))}
     </div>
   );

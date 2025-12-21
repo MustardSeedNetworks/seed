@@ -21,7 +21,9 @@ test.describe("VLAN Information", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display VLAN information in Switch card", async ({ page }) => {
@@ -100,7 +102,9 @@ test.describe("VLAN Configuration", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Open settings
     const settingsButton = page.getByRole("button", { name: /settings/i });
@@ -148,7 +152,9 @@ test.describe("VLAN Configuration", () => {
   });
 
   test("should validate VLAN ID range", async ({ page }) => {
-    const vlanIdInput = page.locator('input[name*="vlan" i][type="number"]').first();
+    const vlanIdInput = page
+      .locator('input[name*="vlan" i][type="number"]')
+      .first();
 
     const hasInput = await vlanIdInput.isVisible().catch(() => false);
 
@@ -175,10 +181,14 @@ test.describe("Switch Card Details", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test("should show switch details when LLDP/CDP available", async ({ page }) => {
+  test("should show switch details when LLDP/CDP available", async ({
+    page,
+  }) => {
     // Switch card shows neighbor info
     const switchCard = page
       .locator('[data-testid="switch-card"]')
@@ -194,7 +204,9 @@ test.describe("Switch Card Details", () => {
     }
   });
 
-  test('should show "No neighbor" when not connected to managed switch', async ({ page }) => {
+  test('should show "No neighbor" when not connected to managed switch', async ({
+    page,
+  }) => {
     const noNeighbor = page.getByText(/no.*neighbor|not.*detected|no.*switch/i);
 
     const hasNoNeighbor = await noNeighbor.isVisible().catch(() => false);
@@ -219,7 +231,9 @@ test.describe("VLAN Help", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should explain VLAN concepts in help", async ({ page }) => {

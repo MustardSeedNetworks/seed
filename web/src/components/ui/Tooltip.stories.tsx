@@ -39,7 +39,11 @@ export const PositionTop: Story = {
   args: {
     content: "Tooltip appears above the element",
     position: "top",
-    children: <span className="text-text-secondary cursor-help underline">Hover me (top)</span>,
+    children: (
+      <span className="text-text-secondary cursor-help underline">
+        Hover me (top)
+      </span>
+    ),
   },
 };
 
@@ -47,7 +51,11 @@ export const PositionBottom: Story = {
   args: {
     content: "Tooltip appears below the element",
     position: "bottom",
-    children: <span className="text-text-secondary cursor-help underline">Hover me (bottom)</span>,
+    children: (
+      <span className="text-text-secondary cursor-help underline">
+        Hover me (bottom)
+      </span>
+    ),
   },
 };
 
@@ -55,7 +63,9 @@ export const WithIcon: Story = {
   args: {
     content: "Click to access settings",
     children: (
-      <button className={`${spacing.pad.xs} rounded-lg bg-surface-raised hover:bg-surface-hover`}>
+      <button
+        className={`${spacing.pad.xs} rounded-lg bg-surface-raised hover:bg-surface-hover`}
+      >
         <Settings className="w-5 h-5 text-text-secondary" />
       </button>
     ),
@@ -66,7 +76,9 @@ export const LongContent: Story = {
   args: {
     content:
       "This is a much longer tooltip that explains a complex concept in detail. It will wrap to multiple lines if needed.",
-    children: <HelpCircle className="w-5 h-5 text-text-secondary cursor-help" />,
+    children: (
+      <HelpCircle className="w-5 h-5 text-text-secondary cursor-help" />
+    ),
   },
 };
 

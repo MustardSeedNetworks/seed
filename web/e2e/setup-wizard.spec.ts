@@ -24,7 +24,9 @@ test.describe("Setup Wizard", () => {
 
     // Wait for either login form or setup wizard
     const loginForm = page.getByRole("heading", { name: /login/i });
-    const setupWizard = page.getByText(/setup|welcome|get started|configure/i).first();
+    const setupWizard = page
+      .getByText(/setup|welcome|get started|configure/i)
+      .first();
 
     await page.waitForTimeout(3000);
 
@@ -40,7 +42,9 @@ test.describe("Setup Wizard", () => {
     await page.waitForTimeout(2000);
 
     // Check if we're in setup mode
-    const setupIndicator = page.getByText(/setup|configure|interface selection/i).first();
+    const setupIndicator = page
+      .getByText(/setup|configure|interface selection/i)
+      .first();
     const isInSetup = await setupIndicator.isVisible().catch(() => false);
 
     if (isInSetup) {
@@ -67,7 +71,9 @@ test.describe("Setup Wizard", () => {
 
     if (isInSetup) {
       // Look for next/continue/skip buttons
-      const navButton = page.getByRole("button", { name: /next|continue|skip|finish/i }).first();
+      const navButton = page
+        .getByRole("button", { name: /next|continue|skip|finish/i })
+        .first();
 
       await expect(navButton).toBeVisible({ timeout: 5000 });
     } else {
@@ -106,7 +112,9 @@ test.describe("Setup Wizard", () => {
       }
 
       // After setup, should see login or dashboard
-      const afterSetup = page.getByRole("heading", { name: /login|dashboard|link/i }).first();
+      const afterSetup = page
+        .getByRole("heading", { name: /login|dashboard|link/i })
+        .first();
 
       await expect(afterSetup).toBeVisible({ timeout: 10000 });
     } else {
@@ -115,7 +123,9 @@ test.describe("Setup Wizard", () => {
       await page.getByLabel(/password/i).fill("seed");
       await page.getByRole("button", { name: /sign in|login/i }).click();
 
-      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 });

@@ -172,7 +172,9 @@ describe("CardRow", () => {
 
   it("applies status color to value", () => {
     render(<CardRow label="Status" value="Failed" status="error" />);
-    expect(screen.getByTestId("card-row-value")).toHaveClass("text-status-error");
+    expect(screen.getByTestId("card-row-value")).toHaveClass(
+      "text-status-error"
+    );
   });
 
   it("sets title attribute for truncation", () => {

@@ -34,7 +34,13 @@ import {
   TrendingDown,
   Minus,
 } from "lucide-react";
-import { radius, spacing, layout, icon as iconTokens, button } from "../../styles/theme";
+import {
+  radius,
+  spacing,
+  layout,
+  icon as iconTokens,
+  button,
+} from "../../styles/theme";
 import type { SurveyValidation, PassFailResult } from "../../hooks/useSurvey";
 
 interface PassFailResultsPanelProps {
@@ -156,19 +162,23 @@ function ResultRow({
       </div>
 
       {/* Statistics row */}
-      <div className={`${layout.inline.default} justify-between mt-1 text-text-muted`}>
+      <div
+        className={`${layout.inline.default} justify-between mt-1 text-text-muted`}
+      >
         <div className={layout.inline.tight}>
           <span className="caption">
             {t("criteria.passRate")}: {result.percentage.toFixed(1)}%
           </span>
           <span className="caption">
-            ({result.totalSampleCount - result.failedSampleCount}/{result.totalSampleCount})
+            ({result.totalSampleCount - result.failedSampleCount}/
+            {result.totalSampleCount})
           </span>
         </div>
         <div className={layout.inline.tight}>
           <TrendIndicator result={result} />
           <span className="caption">
-            {t("criteria.range")}: {result.worstValue.toFixed(1)} - {result.bestValue.toFixed(1)}
+            {t("criteria.range")}: {result.worstValue.toFixed(1)} -{" "}
+            {result.bestValue.toFixed(1)}
           </span>
         </div>
       </div>
@@ -203,7 +213,8 @@ function StatusBanner({
   validation: SurveyValidation;
   t: (key: string, options?: Record<string, unknown>) => string;
 }) {
-  const { overallPass, passedCount, failedCount, overallPercentage } = validation;
+  const { overallPass, passedCount, failedCount, overallPercentage } =
+    validation;
   const totalCount = passedCount + failedCount;
 
   const statusConfig = overallPass
@@ -228,9 +239,13 @@ function StatusBanner({
     >
       <div className={`${layout.inline.default} justify-between`}>
         <div className={layout.inline.default}>
-          <Icon className={`${iconTokens.size.md} ${statusConfig.colorClass}`} />
+          <Icon
+            className={`${iconTokens.size.md} ${statusConfig.colorClass}`}
+          />
           <div>
-            <h3 className={`body-default font-semibold ${statusConfig.colorClass}`}>
+            <h3
+              className={`body-default font-semibold ${statusConfig.colorClass}`}
+            >
               {statusConfig.label}
             </h3>
             <p className="caption text-text-muted">

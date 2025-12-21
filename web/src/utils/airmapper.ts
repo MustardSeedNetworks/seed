@@ -155,7 +155,9 @@ function toMeters(value: number, unit: string): number {
  * @param data - ArrayBuffer of the .amp file
  * @returns Parse result with extracted data or error
  */
-export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperParseResult> {
+export async function parseAirMapperFile(
+  data: ArrayBuffer
+): Promise<AirMapperParseResult> {
   const warnings: string[] = [];
 
   try {
@@ -194,7 +196,9 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
     }
 
     if (!surveyResultFile) {
-      warnings.push("No .SurveyResult file found - survey sample data will not be imported");
+      warnings.push(
+        "No .SurveyResult file found - survey sample data will not be imported"
+      );
     }
 
     // Parse .serial JSON
@@ -228,7 +232,8 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
     // Extract metadata
     const metadata: AirMapperMetadata = {
       fileName: serialJson.fileName || "Unknown",
-      surveyName: serialJson.surveyName || serialJson.fileName || "Imported Survey",
+      surveyName:
+        serialJson.surveyName || serialJson.fileName || "Imported Survey",
       surveyMode: serialJson.surveyMode || "passive",
       surveyPointCount: serialJson.surveyPointCount || 0,
       surveyItemsCount: serialJson.surveyItemsCount || 0,
@@ -342,7 +347,12 @@ export interface BackendImportResult {
     propagationM: number;
   };
   apLocations?: Array<{ bssid: string; x: number; y: number; label?: string }>;
-  clientLocations?: Array<{ mac: string; x: number; y: number; label?: string }>;
+  clientLocations?: Array<{
+    mac: string;
+    x: number;
+    y: number;
+    label?: string;
+  }>;
   passFailCriteria?: Array<{
     option: string;
     name?: string;
@@ -444,7 +454,8 @@ export async function importAirMapperViaBackend(
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to import AirMapper file",
+      error:
+        err instanceof Error ? err.message : "Failed to import AirMapper file",
       warnings: [],
     };
   }
@@ -464,8 +475,10 @@ export function getAirMapperSummary(data: AirMapperData): {
   propagation: string;
 } {
   const apCount = data.locations.passive.length;
-  const clientCount = data.locations.client.length + data.locations.probingClient.length;
-  const hasBothModes = data.metadata.hasActiveData && data.metadata.surveyMode === "passive";
+  const clientCount =
+    data.locations.client.length + data.locations.probingClient.length;
+  const hasBothModes =
+    data.metadata.hasActiveData && data.metadata.surveyMode === "passive";
 
   // Calculate facility size in meters
   const widthM = data.calibration.widthPx * data.calibration.scaleM;

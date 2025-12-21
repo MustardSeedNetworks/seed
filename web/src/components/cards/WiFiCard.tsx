@@ -119,8 +119,12 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
       ) : (
         <>
           <CardValue value={data.ssid} size="lg" />
-          <div className={`${layout.inline.default} ${spacing.margin.top.tight}`}>
-            <span className="body-large font-mono">{getSignalBars(data.signal)}</span>
+          <div
+            className={`${layout.inline.default} ${spacing.margin.top.tight}`}
+          >
+            <span className="body-large font-mono">
+              {getSignalBars(data.signal)}
+            </span>
             <span className="body-small text-text-muted">
               {data.signal} dBm ({signalToPercentage(data.signal)}%)
             </span>
@@ -128,7 +132,10 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
           <CardDivider />
           <CardRow label={tr("wifi.bssid")} value={data.bssid} />
           <CardRow label={tr("wifi.channel")} value={data.channel.toString()} />
-          <CardRow label={tr("wifi.frequency")} value={`${data.frequency} MHz`} />
+          <CardRow
+            label={tr("wifi.frequency")}
+            value={`${data.frequency} MHz`}
+          />
           <CardRow label={tr("wifi.security")} value={data.security} />
         </>
       )}

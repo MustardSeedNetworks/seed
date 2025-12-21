@@ -23,7 +23,9 @@ test.describe("Vulnerability Scanning", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should have vulnerability scanning section", async ({ page }) => {
@@ -40,10 +42,14 @@ test.describe("Vulnerability Scanning", () => {
 
     if (!hasSection) {
       // Check in settings drawer
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
 
-      const vulnSettings = page.getByText(/vulnerabilit|security|scan/i).first();
+      const vulnSettings = page
+        .getByText(/vulnerabilit|security|scan/i)
+        .first();
       await expect(vulnSettings).toBeVisible({ timeout: 5000 });
     }
   });
@@ -99,11 +105,17 @@ test.describe("Vulnerability Scanning", () => {
 
     if (!hasButton) {
       // Open settings and check there
-      const settingsButton = page.getByRole("button", { name: /settings/i }).first();
+      const settingsButton = page
+        .getByRole("button", { name: /settings/i })
+        .first();
       await settingsButton.click();
 
-      const settingsScanBtn = page.getByRole("button", { name: /scan|enable/i }).first();
-      const hasScanInSettings = await settingsScanBtn.isVisible().catch(() => false);
+      const settingsScanBtn = page
+        .getByRole("button", { name: /scan|enable/i })
+        .first();
+      const hasScanInSettings = await settingsScanBtn
+        .isVisible()
+        .catch(() => false);
       expect(hasScanInSettings).toBeTruthy();
     }
   });
