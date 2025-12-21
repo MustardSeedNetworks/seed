@@ -281,7 +281,7 @@ build-linux-arm64: build-frontend ## Build for Linux ARM64 (Raspberry Pi, ARM se
 # Uses official Go image with libpcap installed
 build-linux-docker: build-frontend ## Build for Linux AMD64 using Docker (cross-platform)
 	@echo "Building for Linux AMD64 using Docker..."
-	docker run --rm -v "$(PWD):/build" -w /build golang:1.21 bash -c "\
+	docker run --rm -v "$(PWD):/build" -w /build golang:1.25.5 bash -c "\
 		apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
 		go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-amd64 ./cmd/seed"
 	@echo "Built: $(BINARY_NAME)-linux-amd64"
@@ -311,7 +311,7 @@ build-all: build-frontend ## Build for all platforms (native + Linux via Docker)
 	@printf "$(CYAN)│$(RESET) $(BOLD)[2/3]$(RESET) Linux AMD64 (Docker)                                                 $(CYAN)│$(RESET)\n"
 	$(call timer-start,build-linux-amd64)
 	@if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then \
-		docker run --rm -v "$(PWD):/build" -w /build golang:1.21 bash -c "\
+		docker run --rm -v "$(PWD):/build" -w /build golang:1.25.5 bash -c "\
 			apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
 			go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-amd64 ./cmd/seed"; \
 	else \
@@ -321,7 +321,7 @@ build-all: build-frontend ## Build for all platforms (native + Linux via Docker)
 	@printf "$(CYAN)│$(RESET) $(BOLD)[3/3]$(RESET) Linux ARM64 (Docker)                                                 $(CYAN)│$(RESET)\n"
 	$(call timer-start,build-linux-arm64)
 	@if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then \
-		docker run --rm -v "$(PWD):/build" -w /build --platform linux/arm64 golang:1.21 bash -c "\
+		docker run --rm -v "$(PWD):/build" -w /build --platform linux/arm64 golang:1.25.5 bash -c "\
 			apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
 			go build $(GOFLAGS) -ldflags=\"$(LDFLAGS)\" -o $(BINARY_NAME)-linux-arm64 ./cmd/seed" 2>/dev/null || \
 		printf "$(YELLOW)   SKIP: ARM64 emulation not available$(RESET)\n"; \
