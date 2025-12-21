@@ -245,7 +245,6 @@ func extractValue(sampleData interface{}, valueType string) float64 {
 	}
 }
 
-//nolint:goconst // Value type strings are intentionally inline for clarity.
 func extractPassiveValue(data *PassiveSample, valueType string) float64 {
 	if data == nil || len(data.Networks) == 0 {
 		return math.NaN()

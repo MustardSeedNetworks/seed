@@ -57,13 +57,9 @@ func Resolve(mode Mode) *Paths {
 	p := &Paths{Mode: actualMode}
 
 	if actualMode == ModeSystem {
-		//nolint:gocritic // Using filepath.Join for standard system paths is intentional
 		p.ConfigDir = filepath.Join("/etc", appName)
-		//nolint:gocritic // Using filepath.Join for standard system paths is intentional
 		p.DataDir = filepath.Join("/var/lib", appName)
-		//nolint:gocritic // Using filepath.Join for standard system paths is intentional
 		p.LogDir = filepath.Join("/var/log", appName)
-		//nolint:gocritic // Using filepath.Join for standard system paths is intentional
 		p.CacheDir = filepath.Join("/var/cache", appName)
 		p.BinaryDir = "/usr/local/bin"
 	} else {

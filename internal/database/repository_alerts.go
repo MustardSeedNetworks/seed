@@ -57,7 +57,7 @@ func (r *AlertRepository) Get(ctx context.Context, id int64) (*Alert, error) {
 
 // List retrieves alerts matching the criteria.
 //
-//nolint:goconst,gocritic // SQL fragments are more readable inline; opts passed by value for API stability
+//nolint:gocritic // opts passed by value for API stability
 func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*Alert, error) {
 	query := `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,

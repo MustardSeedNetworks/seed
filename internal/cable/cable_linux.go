@@ -36,13 +36,13 @@ type ethtoolDrvInfo struct {
 	regdumpLen  uint32
 }
 
-// ethtoolValue structure for simple queries
+// ethtoolValue structure for simple queries.
 type ethtoolValue struct {
 	cmd  uint32
 	data uint32
 }
 
-// ifreq structure for ioctl
+// ifreq structure for ioctl.
 type ifreq struct {
 	name [16]byte
 	data uintptr
@@ -111,9 +111,9 @@ func isSupportedPlatform(iface string) bool {
 // testPlatform performs a cable test on Linux.
 // Since the ethtool cable-test uses genetlink (not ioctl), and implementing
 // the full genetlink protocol is complex, we use a simplified approach:
-// - Check link state via ioctl (can indicate cable issues)
-// - Check interface flags
-// - Return basic connectivity info
+//   - Check link state via ioctl (can indicate cable issues).
+//   - Check interface flags.
+//   - Return basic connectivity info.
 func testPlatform(iface string) *TestResult {
 	result := &TestResult{
 		Supported: false,

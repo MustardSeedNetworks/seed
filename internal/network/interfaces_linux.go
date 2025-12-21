@@ -132,9 +132,9 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 
 		// Delete existing default route (errors expected if no route exists).
 		routes, _ := netlink.RouteList(nil, netlink.FAMILY_V4) //nolint:errcheck // Expected to fail if no routes.
-		for _, route := range routes {
-			if route.Dst == nil { // default route
-				_ = netlink.RouteDel(&route) //nolint:errcheck // Best effort cleanup.
+		for i := range routes {
+			if routes[i].Dst == nil { // default route
+				_ = netlink.RouteDel(&routes[i]) //nolint:errcheck // Best effort cleanup.
 			}
 		}
 

@@ -155,6 +155,15 @@ linters:
       - path: internal/wifi/wifi.go
         linters:
           - goconst
+      # IPv4 and IPv6 route handling is intentionally similar
+      - path: internal/gateway/gateway_linux.go
+        linters:
+          - dupl
+      # DNS resolver path is system path, not user input
+      - path: internal/dns/dns_linux.go
+        linters:
+          - gosec
+        text: "G304"
 
 output:
   sort-results: true
