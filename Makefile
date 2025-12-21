@@ -1004,7 +1004,7 @@ license-check: ## Check license compliance (Go + npm)
 		printf "$(YELLOW)SKIP: go-licenses not installed$(RESET)\n"; \
 	fi
 	@printf "\n$(BOLD)=== npm Dependencies ===$(RESET)\n"
-	@cd web && npx license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense;MPL-2.0" --summary
+	@cd web && npx license-checker --production --excludePrivatePackages --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense;MPL-2.0" --summary
 	@printf "\n$(GREEN)✓ License compliance check complete$(RESET)\n"
 
 license-report: ## Generate license compliance reports
