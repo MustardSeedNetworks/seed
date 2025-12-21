@@ -23,7 +23,13 @@
 
 import { Component, ErrorInfo, ReactNode } from "react";
 import { Translation } from "react-i18next";
-import { icon as iconTokens, radius, button, layout, spacing } from "../../styles/theme";
+import {
+  icon as iconTokens,
+  radius,
+  button,
+  layout,
+  spacing,
+} from "../../styles/theme";
 import { logger, LogComponents } from "../../lib/logger";
 
 /**
@@ -144,7 +150,8 @@ export class ErrorBoundary extends Component<Props, State> {
                   </h3>
                   <p className="body-small text-text-muted">
                     {/* Display caught error message or generic fallback message */}
-                    {this.state.error?.message || t("errorBoundary.defaultMessage")}
+                    {this.state.error?.message ||
+                      t("errorBoundary.defaultMessage")}
                   </p>
                   {/* Retry button to attempt recovery by resetting error state */}
                   <button

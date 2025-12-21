@@ -40,7 +40,9 @@ test.describe("Card Lifecycle Tests", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard
-    await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: /link|dashboard/i })
+    ).toBeVisible({
       timeout: 10000,
     });
   });
@@ -65,8 +67,12 @@ test.describe("Card Lifecycle Tests", () => {
       const contentIndicator = page.locator("text=/health.*check/i").first();
 
       // Either we caught loading or content already loaded (both valid outcomes)
-      const hasLoading = await loadingIndicator.isVisible({ timeout: 1000 }).catch(() => false);
-      const hasContent = await contentIndicator.isVisible({ timeout: 3000 }).catch(() => false);
+      const hasLoading = await loadingIndicator
+        .isVisible({ timeout: 1000 })
+        .catch(() => false);
+      const hasContent = await contentIndicator
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
       expect(hasLoading || hasContent).toBeTruthy();
     });
 
@@ -75,10 +81,15 @@ test.describe("Card Lifecycle Tests", () => {
       await page.waitForTimeout(2000);
 
       // Look for health check types
-      const healthCheckCard = page.locator("text=/health.*check/i").first().locator("..");
+      const healthCheckCard = page
+        .locator("text=/health.*check/i")
+        .first()
+        .locator("..");
 
       // Common health checks: ping, HTTP, DNS, etc.
-      const checkTypes = healthCheckCard.locator("text=/ping|http|tcp|udp|dns/i");
+      const checkTypes = healthCheckCard.locator(
+        "text=/ping|http|tcp|udp|dns/i"
+      );
       const count = await checkTypes.count();
 
       // Should have at least one health check displayed
@@ -97,13 +108,19 @@ test.describe("Card Lifecycle Tests", () => {
       expect(count).toBeGreaterThanOrEqual(0); // May be 0 if all checks pass
     });
 
-    test("should display retry button on health check card", async ({ page }) => {
+    test("should display retry button on health check card", async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Look for retry/refresh button or action controls
       const retryButton = page
         .getByRole("button", { name: /retry|refresh|run.*check/i })
-        .or(page.locator('button:has(svg[class*="refresh"], svg[class*="rotate"])'));
+        .or(
+          page.locator(
+            'button:has(svg[class*="refresh"], svg[class*="rotate"])'
+          )
+        );
 
       const cardContent = page.locator("text=/health.*check/i").first();
 
@@ -121,7 +138,9 @@ test.describe("Card Lifecycle Tests", () => {
 
       // Look for certificate-related warnings OR success state
       const certWarning = page.getByText(/certificate|cert|ssl|tls/i);
-      const healthCheck = page.locator("text=/health.*check|ping|http|tcp/i").first();
+      const healthCheck = page
+        .locator("text=/health.*check|ping|http|tcp/i")
+        .first();
 
       // Health check card should show something (warnings or checks)
       const hasWarning = await certWarning
@@ -167,7 +186,9 @@ test.describe("Card Lifecycle Tests", () => {
       await expect(diskIndicator.first()).toBeVisible({ timeout: 5000 });
     });
 
-    test("should show warning state for high resource usage", async ({ page }) => {
+    test("should show warning state for high resource usage", async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Look for warning indicators (yellow/orange colors)
@@ -180,7 +201,9 @@ test.describe("Card Lifecycle Tests", () => {
       expect(count).toBeGreaterThanOrEqual(0);
     });
 
-    test("should show critical state for very high resource usage", async ({ page }) => {
+    test("should show critical state for very high resource usage", async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Look for critical indicators (red colors)
@@ -203,7 +226,10 @@ test.describe("Card Lifecycle Tests", () => {
       await page.waitForTimeout(3000);
 
       // Get updated CPU value
-      const updatedCpuText = await page.locator("text=/cpu/i").first().textContent();
+      const updatedCpuText = await page
+        .locator("text=/cpu/i")
+        .first()
+        .textContent();
 
       // Values might change or stay the same (both valid)
       expect(updatedCpuText).toBeDefined();
@@ -220,7 +246,9 @@ test.describe("Card Lifecycle Tests", () => {
       await page.waitForTimeout(2000);
 
       // Look for cable status indicators - should have some status
-      const statusText = page.locator("text=/ok|open|short|mismatch|not.*supported|cable/i");
+      const statusText = page.locator(
+        "text=/ok|open|short|mismatch|not.*supported|cable/i"
+      );
       await expect(statusText.first()).toBeVisible({ timeout: 5000 });
     });
 
@@ -229,7 +257,9 @@ test.describe("Card Lifecycle Tests", () => {
 
       // Look for length measurement OR status (length not always available)
       const lengthText = page.locator("text=/meter|feet|length/i");
-      const statusText = page.locator("text=/ok|open|short|not.*supported|cable/i");
+      const statusText = page.locator(
+        "text=/ok|open|short|not.*supported|cable/i"
+      );
 
       const hasLength = await lengthText
         .first()
@@ -242,7 +272,9 @@ test.describe("Card Lifecycle Tests", () => {
       expect(hasLength || hasStatus).toBeTruthy();
     });
 
-    test("should display status colors: OK (green), issues (red/yellow)", async ({ page }) => {
+    test("should display status colors: OK (green), issues (red/yellow)", async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Look for status color indicators
@@ -254,7 +286,9 @@ test.describe("Card Lifecycle Tests", () => {
       expect(count).toBeGreaterThanOrEqual(0);
     });
 
-    test('should show "not supported" for non-Ethernet interfaces', async ({ page }) => {
+    test('should show "not supported" for non-Ethernet interfaces', async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Look for not supported message OR supported status
@@ -331,7 +365,9 @@ test.describe("Card Lifecycle Tests", () => {
 
       // Look for IPv6 OR IPv4 (at least one should be present)
       const ipv6Text = page.locator("text=/ipv6|::/i");
-      const ipv4Text = page.locator("text=/\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/");
+      const ipv4Text = page.locator(
+        "text=/\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/"
+      );
 
       const hasIpv6 = await ipv6Text
         .first()
@@ -349,7 +385,9 @@ test.describe("Card Lifecycle Tests", () => {
 
       // Look for location info OR IP address (GeoIP may not always be available)
       const locationText = page.locator("text=/city|country|isp|location/i");
-      const ipText = page.locator("text=/\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/");
+      const ipText = page.locator(
+        "text=/\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/"
+      );
 
       const hasLocation = await locationText
         .first()
@@ -362,7 +400,9 @@ test.describe("Card Lifecycle Tests", () => {
       expect(hasLocation || hasIp).toBeTruthy();
     });
 
-    test("should handle dual-stack (IPv4 + IPv6) scenario", async ({ page }) => {
+    test("should handle dual-stack (IPv4 + IPv6) scenario", async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Check for IP addresses - at least one protocol should be present
@@ -411,7 +451,9 @@ test.describe("Card Lifecycle Tests", () => {
       await page.waitForTimeout(2000);
 
       // Look for DHCP/network status indicators
-      const dhcpStatus = page.locator("text=/dhcp|static|active|enabled|disabled|network/i");
+      const dhcpStatus = page.locator(
+        "text=/dhcp|static|active|enabled|disabled|network/i"
+      );
       await expect(dhcpStatus.first()).toBeVisible({ timeout: 5000 });
     });
 
@@ -475,7 +517,9 @@ test.describe("Card Lifecycle Tests", () => {
 
       // Look for IPv6 OR IPv4 (at least one should be shown)
       const ipv6Text = page.locator("text=/ipv6/i");
-      const ipv4Text = page.locator("text=/ipv4|\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/i");
+      const ipv4Text = page.locator(
+        "text=/ipv4|\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/i"
+      );
 
       const hasIpv6 = await ipv6Text
         .first()
@@ -500,7 +544,9 @@ test.describe("Card Lifecycle Tests", () => {
 
       // Look for LLDP/neighbor info OR no-data message
       const lldpText = page.locator("text=/lldp|neighbor|switch/i");
-      const noDataText = page.locator("text=/no.*data|not.*detected|not.*available/i");
+      const noDataText = page.locator(
+        "text=/no.*data|not.*detected|not.*available/i"
+      );
 
       const hasLldp = await lldpText
         .first()
@@ -572,11 +618,15 @@ test.describe("Card Lifecycle Tests", () => {
       expect(hasCdp || hasLldp || hasNoData).toBeTruthy();
     });
 
-    test('should display "no switch info" when no LLDP/CDP response', async ({ page }) => {
+    test('should display "no switch info" when no LLDP/CDP response', async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Look for no-data message OR actual switch data
-      const noDataText = page.locator("text=/no.*switch|not.*available|not.*detected/i");
+      const noDataText = page.locator(
+        "text=/no.*switch|not.*available|not.*detected/i"
+      );
       const switchData = page.locator("text=/switch|lldp|cdp|port/i");
 
       const hasNoData = await noDataText
@@ -614,7 +664,9 @@ test.describe("Card Lifecycle Tests", () => {
       await page.waitForTimeout(2000);
 
       // Look for status indicators - should be visible
-      const statusText = page.locator("text=/up|down|connected|disconnected|link/i");
+      const statusText = page.locator(
+        "text=/up|down|connected|disconnected|link/i"
+      );
       await expect(statusText.first()).toBeVisible({ timeout: 5000 });
     });
 
@@ -658,7 +710,9 @@ test.describe("Card Lifecycle Tests", () => {
 
   test.describe("Gateway Card", () => {
     test("should render Gateway card", async ({ page }) => {
-      const card = page.locator('h3:has-text("Gateway"), h4:has-text("Gateway")').first();
+      const card = page
+        .locator('h3:has-text("Gateway"), h4:has-text("Gateway")')
+        .first();
       await expect(card).toBeVisible({ timeout: 5000 });
     });
 
@@ -680,7 +734,9 @@ test.describe("Card Lifecycle Tests", () => {
       await page.waitForTimeout(2000);
 
       // Look for reachability indicators
-      const statusText = page.locator("text=/reachable|unreachable|responding|timeout/i");
+      const statusText = page.locator(
+        "text=/reachable|unreachable|responding|timeout/i"
+      );
       const hasStatus = await statusText
         .first()
         .isVisible()
@@ -705,7 +761,9 @@ test.describe("Card Lifecycle Tests", () => {
 
   test.describe("DNS Card", () => {
     test("should render DNS card", async ({ page }) => {
-      const card = page.locator('h3:has-text("DNS"), h4:has-text("DNS")').first();
+      const card = page
+        .locator('h3:has-text("DNS"), h4:has-text("DNS")')
+        .first();
       await expect(card).toBeVisible({ timeout: 5000 });
     });
 
@@ -794,11 +852,15 @@ test.describe("Card Lifecycle Tests", () => {
       expect(hasFreq).toBeDefined();
     });
 
-    test('should show "not connected" state for wired interfaces', async ({ page }) => {
+    test('should show "not connected" state for wired interfaces', async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Look for not connected message
-      const notConnected = page.locator("text=/not.*connected|not.*available|wired/i");
+      const notConnected = page.locator(
+        "text=/not.*connected|not.*available|wired/i"
+      );
       const hasMessage = await notConnected
         .first()
         .isVisible()
@@ -809,13 +871,19 @@ test.describe("Card Lifecycle Tests", () => {
   });
 
   test.describe("Card Refresh Functionality", () => {
-    test("should refresh card data on refresh button click", async ({ page }) => {
+    test("should refresh card data on refresh button click", async ({
+      page,
+    }) => {
       await page.waitForTimeout(2000);
 
       // Find any refresh button
       const refreshButton = page
         .getByRole("button", { name: /refresh|reload/i })
-        .or(page.locator('button:has(svg[class*="refresh"], svg[class*="rotate"])'))
+        .or(
+          page.locator(
+            'button:has(svg[class*="refresh"], svg[class*="rotate"])'
+          )
+        )
         .first();
 
       const hasRefresh = await refreshButton.isVisible().catch(() => false);
@@ -888,7 +956,9 @@ test.describe("Card Lifecycle Tests", () => {
       await page.waitForTimeout(2000);
 
       // Look for retry button
-      const retryButton = page.getByRole("button", { name: /retry|try.*again/i });
+      const retryButton = page.getByRole("button", {
+        name: /retry|try.*again/i,
+      });
       const hasRetry = await retryButton.isVisible().catch(() => false);
 
       expect(hasRetry).toBeDefined();

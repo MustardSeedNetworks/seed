@@ -132,9 +132,14 @@ export function useAuth(): UseAuthReturn {
       .catch((err) => {
         // Error checking auth, assume not authenticated
         // fixes #678 - added logging for auth check errors
-        logger.error(LogComponents.AUTH, "Failed to check authentication status", err, {
-          endpoint: "/api/status",
-        });
+        logger.error(
+          LogComponents.AUTH,
+          "Failed to check authentication status",
+          err,
+          {
+            endpoint: "/api/status",
+          }
+        );
         setState({
           isAuthenticated: false,
           token: null,
@@ -146,49 +151,55 @@ export function useAuth(): UseAuthReturn {
       });
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
+  const login = useCallback(
+    async (username: string, password: string): Promise<boolean> => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Receive httpOnly cookies
-        body: JSON.stringify({ username, password }),
-      });
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Receive httpOnly cookies
+          body: JSON.stringify({ username, password }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Invalid credentials");
+        if (!response.ok) {
+          throw new Error("Invalid credentials");
+        }
+
+        const data: LoginResponse = await response.json();
+
+        // Backend sets httpOnly cookies automatically
+        // Store access token in memory ONLY for WebSocket connections
+        setState({
+          isAuthenticated: true,
+          token: data.token, // Access token for WebSocket (short-lived, 15min)
+          username,
+        });
+
+        logger.info(LogComponents.AUTH, "User logged in successfully", {
+          username,
+        });
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Login failed";
+        setError(errorMessage);
+        // fixes #678 - added structured error logging for login failures
+        logger.error(LogComponents.AUTH, "Login failed", err, {
+          endpoint: "/api/auth/login",
+          username,
+        });
+        return false;
+      } finally {
+        setIsLoading(false);
       }
-
-      const data: LoginResponse = await response.json();
-
-      // Backend sets httpOnly cookies automatically
-      // Store access token in memory ONLY for WebSocket connections
-      setState({
-        isAuthenticated: true,
-        token: data.token, // Access token for WebSocket (short-lived, 15min)
-        username,
-      });
-
-      logger.info(LogComponents.AUTH, "User logged in successfully", { username });
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Login failed";
-      setError(errorMessage);
-      // fixes #678 - added structured error logging for login failures
-      logger.error(LogComponents.AUTH, "Login failed", err, {
-        endpoint: "/api/auth/login",
-        username,
-      });
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     const currentUsername = state.username;

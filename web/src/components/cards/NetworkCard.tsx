@@ -25,7 +25,14 @@ import { useTranslation } from "react-i18next";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
 import { Network } from "../ui/Icons";
-import { cn, layout, radius, icon as iconTokens, border, spacing } from "../../styles/theme";
+import {
+  cn,
+  layout,
+  radius,
+  icon as iconTokens,
+  border,
+  spacing,
+} from "../../styles/theme";
 
 /**
  * DHCP timing information for each phase of address assignment
@@ -103,7 +110,10 @@ interface DHCPCardProps {
  * @param thresholds - Warning and critical thresholds in ms
  * @returns Status color ('success', 'warning', 'error')
  */
-function getTimingStatus(value: number, thresholds: { warning: number; critical: number }): Status {
+function getTimingStatus(
+  value: number,
+  thresholds: { warning: number; critical: number }
+): Status {
   if (value >= thresholds.critical) return "error";
   if (value >= thresholds.warning) return "warning";
   return "success";
@@ -184,8 +194,12 @@ function compressIPv6(address: string): string {
   }
 
   // Build compressed address
-  const before = groups.slice(0, longestStart).map((g) => g.replace(/^0+/, "") || "0");
-  const after = groups.slice(longestStart + longestLength).map((g) => g.replace(/^0+/, "") || "0");
+  const before = groups
+    .slice(0, longestStart)
+    .map((g) => g.replace(/^0+/, "") || "0");
+  const after = groups
+    .slice(longestStart + longestLength)
+    .map((g) => g.replace(/^0+/, "") || "0");
 
   if (before.length === 0 && after.length === 0) return "::";
   if (before.length === 0) return "::" + after.join(":");
@@ -288,9 +302,15 @@ export function NetworkCard({
   const primaryIPRaw =
     ipv4?.address ||
     globalIPv6[0]?.address ||
-    (loading ? tc("status.loading") : hasData ? tr("network.noIP") : tr("network.noData"));
+    (loading
+      ? tc("status.loading")
+      : hasData
+        ? tr("network.noIP")
+        : tr("network.noData"));
   const primaryIP =
-    primaryIPRaw && primaryIPRaw.includes(":") ? compressIPv6(primaryIPRaw) : primaryIPRaw;
+    primaryIPRaw && primaryIPRaw.includes(":")
+      ? compressIPv6(primaryIPRaw)
+      : primaryIPRaw;
 
   return (
     <SimpleBaseCard
@@ -303,19 +323,26 @@ export function NetworkCard({
 
       <CardDivider />
 
-      {!hasData && <CardValue value={tr("network.noDataAvailable")} size="md" />}
+      {!hasData && (
+        <CardValue value={tr("network.noDataAvailable")} size="md" />
+      )}
 
       {hasData && (
         <>
           {/* MAC Address */}
           <CardRow label={tr("network.mac")} value={data!.mac} />
-          <CardRow label={tr("network.mode")} value={data!.mode.toUpperCase()} />
+          <CardRow
+            label={tr("network.mode")}
+            value={data!.mode.toUpperCase()}
+          />
 
           {/* IPv4 Section */}
           {hasIPv4 && ipv4 && (
             <>
               <CardDivider />
-              <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>
+              <p
+                className={`caption font-medium ${spacing.margin.bottom.tight}`}
+              >
                 {tr("network.ipv4")}
               </p>
               <CardRow
@@ -325,13 +352,26 @@ export function NetworkCard({
                 mono
               />
               {ipv4.gateway && (
-                <CardRow label={tr("network.gateway")} value={ipv4.gateway} wrap mono />
+                <CardRow
+                  label={tr("network.gateway")}
+                  value={ipv4.gateway}
+                  wrap
+                  mono
+                />
               )}
               {ipv4.dhcpServer && (
-                <CardRow label={tr("network.dhcpServer")} value={ipv4.dhcpServer} wrap mono />
+                <CardRow
+                  label={tr("network.dhcpServer")}
+                  value={ipv4.dhcpServer}
+                  wrap
+                  mono
+                />
               )}
               {ipv4.leaseTime && (
-                <CardRow label={tr("network.lease")} value={formatLeaseTime(ipv4.leaseTime)} />
+                <CardRow
+                  label={tr("network.lease")}
+                  value={formatLeaseTime(ipv4.leaseTime)}
+                />
               )}
             </>
           )}
@@ -340,7 +380,9 @@ export function NetworkCard({
           {hasIPv6 && (
             <>
               <CardDivider />
-              <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>
+              <p
+                className={`caption font-medium ${spacing.margin.bottom.tight}`}
+              >
                 {tr("network.ipv6")}
               </p>
               <div className="stack-sm">
@@ -370,8 +412,12 @@ export function NetworkCard({
           {timing && (
             <>
               <CardDivider />
-              <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                <p className="caption font-medium">{tr("network.dhcpTiming")}</p>
+              <div
+                className={cn(layout.flex.between, spacing.margin.bottom.tight)}
+              >
+                <p className="caption font-medium">
+                  {tr("network.dhcpTiming")}
+                </p>
                 {showTiming ? (
                   <button
                     type="button"
@@ -417,7 +463,9 @@ export function NetworkCard({
                     value={formatTime(timing.request)}
                     status={getTimingStatus(timing.request, th.perPhase)}
                   />
-                  <div className={cn(spacing.padding.top.tight, border.divider)}>
+                  <div
+                    className={cn(spacing.padding.top.tight, border.divider)}
+                  >
                     <CardRow
                       label={tr("network.total")}
                       value={formatTime(timing.total)}
@@ -440,10 +488,14 @@ export function NetworkCard({
           {showPublicIP && publicip && (publicip.ipv4 || publicip.ipv6) && (
             <>
               <CardDivider />
-              <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>
+              <p
+                className={`caption font-medium ${spacing.margin.bottom.tight}`}
+              >
                 {tr("network.publicIp")}
               </p>
-              {publicip.ipv4 && <CardRow label={tr("network.ipv4")} value={publicip.ipv4} />}
+              {publicip.ipv4 && (
+                <CardRow label={tr("network.ipv4")} value={publicip.ipv4} />
+              )}
               {publicip.ipv6 && (
                 <CardRow
                   label={tr("network.ipv6")}
@@ -454,7 +506,9 @@ export function NetworkCard({
                 />
               )}
               {publicip.error && (
-                <p className={`caption text-status-error ${spacing.margin.top.tight}`}>
+                <p
+                  className={`caption text-status-error ${spacing.margin.top.tight}`}
+                >
                   {publicip.error}
                 </p>
               )}

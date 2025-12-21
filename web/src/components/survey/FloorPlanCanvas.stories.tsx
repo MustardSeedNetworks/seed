@@ -68,8 +68,20 @@ const passiveSamples: SamplePoint[] = [
     timestamp: "2025-12-15T10:00:00Z",
     sampleData: {
       networks: [
-        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:01", rssi: -42, channel: 6, frequency: 2437 },
-        { ssid: "Guest", bssid: "AA:BB:CC:DD:EE:02", rssi: -58, channel: 11, frequency: 2462 },
+        {
+          ssid: "OfficeMain",
+          bssid: "AA:BB:CC:DD:EE:01",
+          rssi: -42,
+          channel: 6,
+          frequency: 2437,
+        },
+        {
+          ssid: "Guest",
+          bssid: "AA:BB:CC:DD:EE:02",
+          rssi: -58,
+          channel: 11,
+          frequency: 2462,
+        },
       ],
     } as PassiveSample,
   },
@@ -79,7 +91,13 @@ const passiveSamples: SamplePoint[] = [
     timestamp: "2025-12-15T10:05:00Z",
     sampleData: {
       networks: [
-        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:01", rssi: -38, channel: 6, frequency: 2437 },
+        {
+          ssid: "OfficeMain",
+          bssid: "AA:BB:CC:DD:EE:01",
+          rssi: -38,
+          channel: 6,
+          frequency: 2437,
+        },
       ],
     } as PassiveSample,
   },
@@ -89,7 +107,13 @@ const passiveSamples: SamplePoint[] = [
     timestamp: "2025-12-15T10:10:00Z",
     sampleData: {
       networks: [
-        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:03", rssi: -55, channel: 6, frequency: 2437 },
+        {
+          ssid: "OfficeMain",
+          bssid: "AA:BB:CC:DD:EE:03",
+          rssi: -55,
+          channel: 6,
+          frequency: 2437,
+        },
       ],
     } as PassiveSample,
   },
@@ -99,7 +123,13 @@ const passiveSamples: SamplePoint[] = [
     timestamp: "2025-12-15T10:15:00Z",
     sampleData: {
       networks: [
-        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:01", rssi: -68, channel: 6, frequency: 2437 },
+        {
+          ssid: "OfficeMain",
+          bssid: "AA:BB:CC:DD:EE:01",
+          rssi: -68,
+          channel: 6,
+          frequency: 2437,
+        },
       ],
     } as PassiveSample,
   },
@@ -109,7 +139,13 @@ const passiveSamples: SamplePoint[] = [
     timestamp: "2025-12-15T10:20:00Z",
     sampleData: {
       networks: [
-        { ssid: "OfficeMain", bssid: "AA:BB:CC:DD:EE:03", rssi: -72, channel: 6, frequency: 2437 },
+        {
+          ssid: "OfficeMain",
+          bssid: "AA:BB:CC:DD:EE:03",
+          rssi: -72,
+          channel: 6,
+          frequency: 2437,
+        },
       ],
     } as PassiveSample,
   },
@@ -249,10 +285,15 @@ export const Interactive: Story = {
     };
 
     return (
-      <div className={`w-full max-w-4xl ${spacing.pad.default} bg-surface-base`}>
+      <div
+        className={`w-full max-w-4xl ${spacing.pad.default} bg-surface-base`}
+      >
         <div className={spacing.margin.bottom.content}>
-          <p className={`body-small text-text-muted ${spacing.margin.bottom.inline}`}>
-            Click on the floor plan to add sample points. {samples.length} points added.
+          <p
+            className={`body-small text-text-muted ${spacing.margin.bottom.inline}`}
+          >
+            Click on the floor plan to add sample points. {samples.length}{" "}
+            points added.
           </p>
           {samples.length > 0 && (
             <button
@@ -276,7 +317,8 @@ export const Interactive: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Interactive canvas where clicking adds sample points at that location.",
+        story:
+          "Interactive canvas where clicking adds sample points at that location.",
       },
     },
   },
@@ -364,7 +406,9 @@ export const DenseSampling: Story = {
           {
             ssid: "OfficeMain",
             bssid: "AA:BB:CC:DD:EE:01",
-            rssi: -35 - (Math.abs(2 - (i % 5)) + Math.abs(2 - Math.floor(i / 5))) * 8,
+            rssi:
+              -35 -
+              (Math.abs(2 - (i % 5)) + Math.abs(2 - Math.floor(i / 5))) * 8,
             channel: 6,
             frequency: 2437,
           },
@@ -390,11 +434,17 @@ export const DenseSampling: Story = {
  */
 export const MetricToggle: Story = {
   render: () => {
-    const [metric, setMetric] = useState<"rssi" | "throughput" | "latency" | null>("rssi");
+    const [metric, setMetric] = useState<
+      "rssi" | "throughput" | "latency" | null
+    >("rssi");
 
     return (
-      <div className={`w-full max-w-4xl ${spacing.pad.default} bg-surface-base`}>
-        <div className={`${spacing.margin.bottom.content} flex ${spacing.gap.compact}`}>
+      <div
+        className={`w-full max-w-4xl ${spacing.pad.default} bg-surface-base`}
+      >
+        <div
+          className={`${spacing.margin.bottom.content} flex ${spacing.gap.compact}`}
+        >
           <button
             onClick={() => setMetric(null)}
             className={`${spacing.chip.sm} rounded text-sm ${
@@ -448,7 +498,8 @@ export const MetricToggle: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Toggle between different heatmap metrics or disable heatmap overlay entirely.",
+        story:
+          "Toggle between different heatmap metrics or disable heatmap overlay entirely.",
       },
     },
   },
@@ -499,7 +550,8 @@ export const WeakSignalCorner: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Heatmap showing a dead zone in the bottom-right corner with -85 dBm signal.",
+        story:
+          "Heatmap showing a dead zone in the bottom-right corner with -85 dBm signal.",
       },
     },
   },

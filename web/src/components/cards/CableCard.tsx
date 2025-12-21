@@ -89,7 +89,9 @@ export function CableCard({ data, loading }: CableCardProps) {
       ) : !data.supported ? (
         <>
           <CardValue value={t("cable.notSupported")} size="md" />
-          <p className={`caption ${spacing.margin.top.inline}`}>{t("cable.tdrNotSupported")}</p>
+          <p className={`caption ${spacing.margin.top.inline}`}>
+            {t("cable.tdrNotSupported")}
+          </p>
         </>
       ) : (
         <>
@@ -107,7 +109,9 @@ export function CableCard({ data, loading }: CableCardProps) {
           {data.faults.length > 0 && (
             <>
               <CardDivider />
-              <p className={`caption ${spacing.margin.bottom.tight}`}>{t("cable.faults")}</p>
+              <p className={`caption ${spacing.margin.bottom.tight}`}>
+                {t("cable.faults")}
+              </p>
               <ul className="body-small text-status-error">
                 {data.faults.map((fault, index) => (
                   <li key={index}>• {fault}</li>

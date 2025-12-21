@@ -106,7 +106,8 @@ export function useDevices() {
       setIsScanning(data.status?.scanning || false);
       return data.devices || [];
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch devices";
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch devices";
       setError(message);
       logger.error(LogComponents.DEVICES, "Failed to fetch devices", err, {
         endpoint: "/api/devices",
@@ -126,7 +127,8 @@ export function useDevices() {
       setIsScanning(Boolean(data.scanning));
       return data.scanning;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to start scan";
+      const message =
+        err instanceof Error ? err.message : "Failed to start scan";
       setError(message);
       setIsScanning(false);
       logger.error(LogComponents.DEVICES, "Failed to trigger scan", err, {
@@ -139,33 +141,37 @@ export function useDevices() {
   /**
    * Fetches the current scan status.
    */
-  const fetchStatus = useCallback(async (): Promise<DeviceDiscoveryStatus | null> => {
-    try {
-      const data = await api.get<DeviceDiscoveryStatus>("/api/devices/status");
-      setStatus(data);
-      setIsScanning(data.scanning);
-      return data;
-    } catch (err) {
-      logger.error(LogComponents.DEVICES, "Failed to fetch status", err, {
-        endpoint: "/api/devices/status",
-      });
-      return null;
-    }
-  }, []);
+  const fetchStatus =
+    useCallback(async (): Promise<DeviceDiscoveryStatus | null> => {
+      try {
+        const data = await api.get<DeviceDiscoveryStatus>(
+          "/api/devices/status"
+        );
+        setStatus(data);
+        setIsScanning(data.scanning);
+        return data;
+      } catch (err) {
+        logger.error(LogComponents.DEVICES, "Failed to fetch status", err, {
+          endpoint: "/api/devices/status",
+        });
+        return null;
+      }
+    }, []);
 
   /**
    * Fetches device discovery settings.
    */
-  const fetchSettings = useCallback(async (): Promise<DeviceDiscoverySettings | null> => {
-    try {
-      return await api.get<DeviceDiscoverySettings>("/api/devices/settings");
-    } catch (err) {
-      logger.error(LogComponents.DEVICES, "Failed to fetch settings", err, {
-        endpoint: "/api/devices/settings",
-      });
-      return null;
-    }
-  }, []);
+  const fetchSettings =
+    useCallback(async (): Promise<DeviceDiscoverySettings | null> => {
+      try {
+        return await api.get<DeviceDiscoverySettings>("/api/devices/settings");
+      } catch (err) {
+        logger.error(LogComponents.DEVICES, "Failed to fetch settings", err, {
+          endpoint: "/api/devices/settings",
+        });
+        return null;
+      }
+    }, []);
 
   /**
    * Updates device discovery settings.
@@ -203,34 +209,40 @@ export function useDevices() {
   /**
    * Adds a new subnet for scanning.
    */
-  const addSubnet = useCallback(async (subnet: SubnetConfig): Promise<boolean> => {
-    try {
-      await api.post("/api/devices/subnets", subnet);
-      return true;
-    } catch (err) {
-      logger.error(LogComponents.DEVICES, "Failed to add subnet", err, {
-        endpoint: "/api/devices/subnets",
-        cidr: subnet.cidr,
-      });
-      return false;
-    }
-  }, []);
+  const addSubnet = useCallback(
+    async (subnet: SubnetConfig): Promise<boolean> => {
+      try {
+        await api.post("/api/devices/subnets", subnet);
+        return true;
+      } catch (err) {
+        logger.error(LogComponents.DEVICES, "Failed to add subnet", err, {
+          endpoint: "/api/devices/subnets",
+          cidr: subnet.cidr,
+        });
+        return false;
+      }
+    },
+    []
+  );
 
   /**
    * Updates an existing subnet configuration.
    */
-  const updateSubnet = useCallback(async (subnet: SubnetConfig): Promise<boolean> => {
-    try {
-      await api.put("/api/devices/subnets", subnet);
-      return true;
-    } catch (err) {
-      logger.error(LogComponents.DEVICES, "Failed to update subnet", err, {
-        endpoint: "/api/devices/subnets",
-        cidr: subnet.cidr,
-      });
-      return false;
-    }
-  }, []);
+  const updateSubnet = useCallback(
+    async (subnet: SubnetConfig): Promise<boolean> => {
+      try {
+        await api.put("/api/devices/subnets", subnet);
+        return true;
+      } catch (err) {
+        logger.error(LogComponents.DEVICES, "Failed to update subnet", err, {
+          endpoint: "/api/devices/subnets",
+          cidr: subnet.cidr,
+        });
+        return false;
+      }
+    },
+    []
+  );
 
   /**
    * Deletes a subnet from scanning configuration.

@@ -67,7 +67,12 @@ export const Warning: Story = {
     icon: <Wifi className="w-5 h-5" />,
     children: (
       <div className="stack-sm">
-        <CardValue label="Signal Strength" value="-72" unit="dBm" status="warning" />
+        <CardValue
+          label="Signal Strength"
+          value="-72"
+          unit="dBm"
+          status="warning"
+        />
         <CardRow label="SSID" value="Office-5G" />
         <CardRow label="Channel" value="36" />
       </div>

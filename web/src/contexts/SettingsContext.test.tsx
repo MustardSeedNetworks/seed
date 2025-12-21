@@ -93,7 +93,9 @@ describe("SettingsContext", () => {
   describe("useSettings hook", () => {
     it("throws error when used outside provider", () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       expect(() => {
         renderHook(() => useSettings());
@@ -214,7 +216,9 @@ describe("SettingsContext", () => {
     });
 
     it("handles API error gracefully and uses defaults", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockFetch.mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => useSettings(), {
@@ -269,7 +273,9 @@ describe("SettingsContext", () => {
     });
 
     it("handles API error gracefully", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockFetch.mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => useSettings(), {
@@ -293,7 +299,9 @@ describe("SettingsContext", () => {
       });
 
       act(() => {
-        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
+        result.current.updateCardSettings({
+          link: { enabled: true, autoRunOnLink: false },
+        });
       });
 
       expect(result.current.cardSettings.link.autoRunOnLink).toBe(false);
@@ -309,7 +317,9 @@ describe("SettingsContext", () => {
       });
 
       act(() => {
-        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
+        result.current.updateCardSettings({
+          link: { enabled: true, autoRunOnLink: false },
+        });
       });
 
       expect(result.current.status.cards).toBe("saving");
@@ -417,7 +427,10 @@ describe("SettingsContext", () => {
         await result.current.refreshSettings();
       });
 
-      expect(mockFetch).toHaveBeenCalledWith("/api/settings", expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/settings",
+        expect.any(Object)
+      );
     });
   });
 });
@@ -452,11 +465,15 @@ describe("SettingsContext with fake timers", () => {
       mockFetch.mockClear();
 
       act(() => {
-        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
+        result.current.updateCardSettings({
+          link: { enabled: true, autoRunOnLink: false },
+        });
       });
 
       // Not saved yet (no PUT calls)
-      const putCalls1 = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
+      const putCalls1 = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT"
+      );
       expect(putCalls1.length).toBe(0);
 
       // After debounce (DEBOUNCE_MS = 1000ms, so advance 1100ms to be safe)
@@ -464,7 +481,9 @@ describe("SettingsContext with fake timers", () => {
         vi.advanceTimersByTime(1100);
       });
 
-      const putCalls2 = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
+      const putCalls2 = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT"
+      );
       expect(putCalls2.length).toBe(1);
       expect(putCalls2[0][1].body).toContain('"autoRunOnLink":false');
     });
@@ -484,7 +503,9 @@ describe("SettingsContext with fake timers", () => {
         vi.advanceTimersByTime(1100);
       });
 
-      const putCalls = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
+      const putCalls = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT"
+      );
       expect(putCalls.length).toBe(1);
       expect(putCalls[0][1].body).toContain('"showPublicIP":false');
     });
@@ -504,7 +525,9 @@ describe("SettingsContext with fake timers", () => {
         vi.advanceTimersByTime(1100);
       });
 
-      const putCalls = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
+      const putCalls = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT"
+      );
       expect(putCalls.length).toBe(1);
       expect(putCalls[0][1].body).toContain('"server":"10.0.0.1"');
     });
@@ -517,7 +540,9 @@ describe("SettingsContext with fake timers", () => {
       mockFetch.mockClear();
 
       act(() => {
-        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
+        result.current.updateCardSettings({
+          link: { enabled: true, autoRunOnLink: false },
+        });
       });
 
       await act(async () => {
@@ -525,7 +550,9 @@ describe("SettingsContext with fake timers", () => {
       });
 
       act(() => {
-        result.current.updateCardSettings({ dns: { enabled: true, autoRunOnLink: false } });
+        result.current.updateCardSettings({
+          dns: { enabled: true, autoRunOnLink: false },
+        });
       });
 
       await act(async () => {
@@ -533,7 +560,9 @@ describe("SettingsContext with fake timers", () => {
       });
 
       // Only the final state should be saved (once)
-      const putCalls = mockFetch.mock.calls.filter((call) => call[1]?.method === "PUT");
+      const putCalls = mockFetch.mock.calls.filter(
+        (call) => call[1]?.method === "PUT"
+      );
       expect(putCalls.length).toBe(1);
       // Both link and dns should have autoRunOnLink: false
       const body = putCalls[0][1].body;
@@ -547,7 +576,9 @@ describe("SettingsContext with fake timers", () => {
       });
 
       act(() => {
-        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
+        result.current.updateCardSettings({
+          link: { enabled: true, autoRunOnLink: false },
+        });
       });
 
       expect(result.current.status.cards).toBe("saving");
@@ -565,7 +596,9 @@ describe("SettingsContext with fake timers", () => {
       });
 
       act(() => {
-        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
+        result.current.updateCardSettings({
+          link: { enabled: true, autoRunOnLink: false },
+        });
       });
 
       await act(async () => {
@@ -589,7 +622,9 @@ describe("SettingsContext with fake timers", () => {
       });
 
       act(() => {
-        result.current.updateCardSettings({ link: { enabled: true, autoRunOnLink: false } });
+        result.current.updateCardSettings({
+          link: { enabled: true, autoRunOnLink: false },
+        });
       });
 
       // Unmount before debounce completes

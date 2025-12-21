@@ -90,7 +90,9 @@ export function FloorPlanCanvas({
   // Track canvas dimensions for responsive sizing
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   // Track mouse position for calibration line preview
-  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(
+    null
+  );
 
   // Calculate canvas dimensions maintaining aspect ratio
   useEffect(() => {
@@ -288,9 +290,16 @@ export function FloorPlanCanvas({
           ctx.setLineDash([]); // Reset dash
 
           // Draw preview pixel distance at cursor
-          const previewDist = Math.sqrt((mousePos.x - p1.x) ** 2 + (mousePos.y - p1.y) ** 2);
+          const previewDist = Math.sqrt(
+            (mousePos.x - p1.x) ** 2 + (mousePos.y - p1.y) ** 2
+          );
           ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-          ctx.fillRect(mousePos.x * scaleX + 10, mousePos.y * scaleY - 10, 60, 20);
+          ctx.fillRect(
+            mousePos.x * scaleX + 10,
+            mousePos.y * scaleY - 10,
+            60,
+            20
+          );
           ctx.fillStyle = "#ffffff";
           ctx.font = "bold 10px sans-serif";
           ctx.textAlign = "left";
@@ -387,7 +396,9 @@ export function FloorPlanCanvas({
         onClick={handleCanvasClick}
         onMouseMove={handleMouseMove}
         className={`border border-surface-border ${radius.md} ${
-          interactive || calibrationMode || apPlacementMode ? "cursor-crosshair" : ""
+          interactive || calibrationMode || apPlacementMode
+            ? "cursor-crosshair"
+            : ""
         }`}
         width={dimensions.width}
         height={dimensions.height}
@@ -397,7 +408,10 @@ export function FloorPlanCanvas({
 }
 
 /** Apply filter to sample data and extract matching networks */
-function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedNetwork[] {
+function filterSampleData(
+  sample: SamplePoint,
+  filter?: HeatmapFilter
+): ScannedNetwork[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Polymorphic sample data
   const data = sample.sampleData as any;
 
@@ -407,7 +421,9 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
 
     if (filter) {
       if (filter.ssid) {
-        networks = networks.filter((n) => n.ssid === filter.ssid || n.ssid.includes(filter.ssid));
+        networks = networks.filter(
+          (n) => n.ssid === filter.ssid || n.ssid.includes(filter.ssid)
+        );
       }
       if (filter.bssid) {
         networks = networks.filter((n) =>
@@ -419,9 +435,12 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
       }
       if (filter.band) {
         networks = networks.filter((n) => {
-          if (filter.band === "2.4") return n.frequency >= 2400 && n.frequency < 2500;
-          if (filter.band === "5") return n.frequency >= 5000 && n.frequency < 6000;
-          if (filter.band === "6") return n.frequency >= 5925 && n.frequency < 7125;
+          if (filter.band === "2.4")
+            return n.frequency >= 2400 && n.frequency < 2500;
+          if (filter.band === "5")
+            return n.frequency >= 5000 && n.frequency < 6000;
+          if (filter.band === "6")
+            return n.frequency >= 5925 && n.frequency < 7125;
           return true;
         });
       }
@@ -430,7 +449,9 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
       }
       // New filters
       if (filter.channelWidth) {
-        networks = networks.filter((n) => n.channelWidth === filter.channelWidth);
+        networks = networks.filter(
+          (n) => n.channelWidth === filter.channelWidth
+        );
       }
       if (filter.phyType) {
         networks = networks.filter((n) => n.phyType === filter.phyType);
@@ -463,10 +484,15 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
     // Apply filter for active surveys
     if (filter) {
       if (filter.ssid && !network.ssid.includes(filter.ssid)) return [];
-      if (filter.bssid && !network.bssid.toLowerCase().includes(filter.bssid.toLowerCase()))
+      if (
+        filter.bssid &&
+        !network.bssid.toLowerCase().includes(filter.bssid.toLowerCase())
+      )
         return [];
-      if (filter.minRssi !== undefined && network.rssi < filter.minRssi) return [];
-      if (filter.channelWidth && network.channelWidth !== filter.channelWidth) return [];
+      if (filter.minRssi !== undefined && network.rssi < filter.minRssi)
+        return [];
+      if (filter.channelWidth && network.channelWidth !== filter.channelWidth)
+        return [];
       if (filter.phyType && network.phyType !== filter.phyType) return [];
       if (filter.security && network.security !== filter.security) return [];
       if (filter.vendor && network.vendor !== filter.vendor) return [];
@@ -518,7 +544,9 @@ function extractMetricValue(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Access all networks
       const allNetworks = (data.networks || []) as any[];
       return (
-        allNetworks.filter((n: { channel: number }) => n.channel === primaryChannel).length - 1
+        allNetworks.filter(
+          (n: { channel: number }) => n.channel === primaryChannel
+        ).length - 1
       );
     }
     case "adjacent": {
@@ -529,7 +557,8 @@ function extractMetricValue(
       const allNetworks = (data.networks || []) as any[];
       return allNetworks.filter(
         (n: { channel: number }) =>
-          Math.abs(n.channel - primaryChannel) > 0 && Math.abs(n.channel - primaryChannel) <= 2
+          Math.abs(n.channel - primaryChannel) > 0 &&
+          Math.abs(n.channel - primaryChannel) <= 2
       ).length;
     }
     case "channelUtil":
@@ -538,7 +567,9 @@ function extractMetricValue(
     case "apDensity": {
       // Count unique BSSIDs (APs) at this location
       if (data.networks && Array.isArray(data.networks)) {
-        const uniqueBSSIDs = new Set(data.networks.map((n: ScannedNetwork) => n.bssid));
+        const uniqueBSSIDs = new Set(
+          data.networks.map((n: ScannedNetwork) => n.bssid)
+        );
         return uniqueBSSIDs.size;
       }
       return data.uniqueBSSIDs || 0;
@@ -636,7 +667,8 @@ function getHeatmapColor(
   // Determine if higher is better for this metric
   // Higher is better: RSSI, SNR, throughput
   // Lower is better: latency, noise, cochannel, adjacent, channelUtil
-  const higherIsBetter = metric === "rssi" || metric === "snr" || metric === "throughput";
+  const higherIsBetter =
+    metric === "rssi" || metric === "snr" || metric === "throughput";
 
   // For metrics where higher is better, invert the normalization
   // so that high values appear green and low values appear red

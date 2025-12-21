@@ -35,9 +35,19 @@ import {
   ListChecks,
   ClipboardList,
 } from "lucide-react";
-import { radius, spacing, layout, icon as iconTokens, button, modal } from "../../styles/theme";
+import {
+  radius,
+  spacing,
+  layout,
+  icon as iconTokens,
+  button,
+  modal,
+} from "../../styles/theme";
 import type { SurveyReport } from "../../utils/reportGenerator";
-import { openReportForPrint, downloadReportAsHTML } from "../../utils/reportRenderer";
+import {
+  openReportForPrint,
+  downloadReportAsHTML,
+} from "../../utils/reportRenderer";
 
 interface ReportPreviewModalProps {
   isOpen: boolean;
@@ -75,14 +85,20 @@ function SectionPreview({
   count?: number;
 }) {
   return (
-    <div className={`${layout.inline.default} ${spacing.pad.sm} bg-surface-default ${radius.md}`}>
-      <Icon className={`${iconTokens.size.sm} text-brand-primary flex-shrink-0`} />
+    <div
+      className={`${layout.inline.default} ${spacing.pad.sm} bg-surface-default ${radius.md}`}
+    >
+      <Icon
+        className={`${iconTokens.size.sm} text-brand-primary flex-shrink-0`}
+      />
       <div className="flex-1 min-w-0">
         <div className="body-small font-medium">{title}</div>
         <div className="caption text-text-muted">{description}</div>
       </div>
       {count !== undefined && (
-        <span className="caption bg-surface-raised px-2 py-0.5 rounded-full">{count}</span>
+        <span className="caption bg-surface-raised px-2 py-0.5 rounded-full">
+          {count}
+        </span>
       )}
     </div>
   );
@@ -91,7 +107,11 @@ function SectionPreview({
 /**
  * ReportPreviewModal displays a preview before export
  */
-export function ReportPreviewModal({ isOpen, onClose, report }: ReportPreviewModalProps) {
+export function ReportPreviewModal({
+  isOpen,
+  onClose,
+  report,
+}: ReportPreviewModalProps) {
   const { t } = useTranslation("survey");
 
   // Compute section counts
@@ -172,11 +192,16 @@ export function ReportPreviewModal({ isOpen, onClose, report }: ReportPreviewMod
   if (!isOpen || !report) return null;
 
   const statusColor =
-    report.summary.overallStatus === "pass" ? "text-status-success" : "text-status-error";
-  const StatusIcon = report.summary.overallStatus === "pass" ? CheckCircle2 : XCircle;
+    report.summary.overallStatus === "pass"
+      ? "text-status-success"
+      : "text-status-error";
+  const StatusIcon =
+    report.summary.overallStatus === "pass" ? CheckCircle2 : XCircle;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${spacing.pad.default}`}>
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center ${spacing.pad.default}`}
+    >
       {/* Backdrop */}
       <div
         className={`absolute inset-0 ${modal.overlay} backdrop-blur-sm`}
@@ -201,7 +226,9 @@ export function ReportPreviewModal({ isOpen, onClose, report }: ReportPreviewMod
               <h2 id="report-modal-title" className="heading-3">
                 {t("report.title")}
               </h2>
-              <p className="caption text-text-muted">{report.metadata.surveyName}</p>
+              <p className="caption text-text-muted">
+                {report.metadata.surveyName}
+              </p>
             </div>
           </div>
           <button
@@ -225,7 +252,9 @@ export function ReportPreviewModal({ isOpen, onClose, report }: ReportPreviewMod
           >
             <div className={`${layout.inline.default} justify-between`}>
               <div className={layout.inline.default}>
-                <StatusIcon className={`${iconTokens.size.lg} ${statusColor}`} />
+                <StatusIcon
+                  className={`${iconTokens.size.lg} ${statusColor}`}
+                />
                 <div>
                   <div className={`body-default font-semibold ${statusColor}`}>
                     {t("report.overallStatus")}:{" "}
@@ -252,15 +281,29 @@ export function ReportPreviewModal({ isOpen, onClose, report }: ReportPreviewMod
           <div
             className={`grid grid-cols-3 ${spacing.gap.default} ${spacing.margin.bottom.content}`}
           >
-            <div className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}>
-              <div className="caption text-text-muted">{t("report.surveyType")}</div>
-              <div className="body-small font-medium capitalize">{report.metadata.surveyType}</div>
+            <div
+              className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}
+            >
+              <div className="caption text-text-muted">
+                {t("report.surveyType")}
+              </div>
+              <div className="body-small font-medium capitalize">
+                {report.metadata.surveyType}
+              </div>
             </div>
-            <div className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}>
-              <div className="caption text-text-muted">{t("report.samplePoints")}</div>
-              <div className="body-small font-medium">{report.metadata.sampleCount}</div>
+            <div
+              className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}
+            >
+              <div className="caption text-text-muted">
+                {t("report.samplePoints")}
+              </div>
+              <div className="body-small font-medium">
+                {report.metadata.sampleCount}
+              </div>
             </div>
-            <div className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}>
+            <div
+              className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}
+            >
               <div className="caption text-text-muted">{t("report.date")}</div>
               <div className="body-small font-medium">
                 {formatDate(report.metadata.generatedAt)}
@@ -270,7 +313,9 @@ export function ReportPreviewModal({ isOpen, onClose, report }: ReportPreviewMod
 
           {/* Sections Preview */}
           <div className={spacing.margin.bottom.content}>
-            <h3 className="body-small font-medium mb-2">{t("report.reportSections")}</h3>
+            <h3 className="body-small font-medium mb-2">
+              {t("report.reportSections")}
+            </h3>
             <div className={layout.stack.tight}>
               {sections.map((section, index) => (
                 <SectionPreview
@@ -286,12 +331,18 @@ export function ReportPreviewModal({ isOpen, onClose, report }: ReportPreviewMod
 
           {/* Key Findings */}
           {report.summary.keyFindings.length > 0 && (
-            <div className={`${spacing.pad.sm} bg-surface-default ${radius.md}`}>
-              <h3 className="body-small font-medium mb-2">{t("report.keyFindings")}</h3>
+            <div
+              className={`${spacing.pad.sm} bg-surface-default ${radius.md}`}
+            >
+              <h3 className="body-small font-medium mb-2">
+                {t("report.keyFindings")}
+              </h3>
               <ul className="list-disc list-inside caption text-text-muted space-y-1">
-                {report.summary.keyFindings.slice(0, 5).map((finding, index) => (
-                  <li key={index}>{finding}</li>
-                ))}
+                {report.summary.keyFindings
+                  .slice(0, 5)
+                  .map((finding, index) => (
+                    <li key={index}>{finding}</li>
+                  ))}
               </ul>
             </div>
           )}

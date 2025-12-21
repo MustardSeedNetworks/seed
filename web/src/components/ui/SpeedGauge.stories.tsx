@@ -74,7 +74,8 @@ export const LowSpeed: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Low speed scenario showing red indicator for poor performance (< 1% of max).",
+        story:
+          "Low speed scenario showing red indicator for poor performance (< 1% of max).",
       },
     },
   },
@@ -94,7 +95,8 @@ export const MediumSpeed: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Medium speed scenario showing yellow indicator for moderate performance.",
+        story:
+          "Medium speed scenario showing yellow indicator for moderate performance.",
       },
     },
   },
@@ -114,7 +116,8 @@ export const HighSpeed: Story = {
   parameters: {
     docs: {
       description: {
-        story: "High speed scenario showing green indicator for good performance.",
+        story:
+          "High speed scenario showing green indicator for good performance.",
       },
     },
   },
@@ -216,7 +219,8 @@ export const RunningInitial: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Test starting state showing pulsing animation with dash (—) placeholder for value.",
+        story:
+          "Test starting state showing pulsing animation with dash (—) placeholder for value.",
       },
     },
   },
@@ -236,7 +240,8 @@ export const SmallSize: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Compact gauge variant for space-constrained layouts (100x60 pixels).",
+        story:
+          "Compact gauge variant for space-constrained layouts (100x60 pixels).",
       },
     },
   },
@@ -276,7 +281,8 @@ export const UploadSpeed: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Upload speed example showing typically lower speeds compared to download.",
+        story:
+          "Upload speed example showing typically lower speeds compared to download.",
       },
     },
   },
@@ -295,7 +301,8 @@ export const DownloadUploadPair: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Common use case showing download and upload speeds side-by-side for comparison.",
+        story:
+          "Common use case showing download and upload speeds side-by-side for comparison.",
       },
     },
   },
@@ -339,7 +346,13 @@ export const SpeedProgression: Story = {
     return (
       <div className={`grid grid-cols-3 ${spacing.gap.spacious}`}>
         {speeds.map((speed) => (
-          <SpeedGauge key={speed} value={speed} maxValue={1000} label={`${speed} Mbps`} size="md" />
+          <SpeedGauge
+            key={speed}
+            value={speed}
+            maxValue={1000}
+            label={`${speed} Mbps`}
+            size="md"
+          />
         ))}
       </div>
     );
@@ -628,7 +641,9 @@ export const PulsingDotInContext: StoryObj<typeof PulsingDot> = {
         className={`${layout.inline.comfortable} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
       >
         <PulsingDot color="primary" size="sm" />
-        <span className="body-small text-text-primary">Network scan in progress...</span>
+        <span className="body-small text-text-primary">
+          Network scan in progress...
+        </span>
       </div>
       <div
         className={`${layout.inline.comfortable} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
@@ -640,20 +655,25 @@ export const PulsingDotInContext: StoryObj<typeof PulsingDot> = {
         className={`${layout.inline.comfortable} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
       >
         <PulsingDot color="warning" size="sm" />
-        <span className="body-small text-text-primary">Waiting for response...</span>
+        <span className="body-small text-text-primary">
+          Waiting for response...
+        </span>
       </div>
       <div
         className={`${layout.inline.comfortable} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
       >
         <PulsingDot color="error" size="sm" />
-        <span className="body-small text-text-primary">Connection unstable</span>
+        <span className="body-small text-text-primary">
+          Connection unstable
+        </span>
       </div>
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: "Real-world usage examples showing pulsing dots as status indicators in cards.",
+        story:
+          "Real-world usage examples showing pulsing dots as status indicators in cards.",
       },
     },
   },

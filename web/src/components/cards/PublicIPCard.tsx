@@ -66,7 +66,10 @@ function getStatus(data: PublicIPData): Status {
   return "unknown";
 }
 
-export const PublicIPCard = memo(function PublicIPCard({ data, loading }: PublicIPCardProps) {
+export const PublicIPCard = memo(function PublicIPCard({
+  data,
+  loading,
+}: PublicIPCardProps) {
   const { t } = useTranslation("cards");
 
   return (
@@ -90,7 +93,9 @@ export const PublicIPCard = memo(function PublicIPCard({ data, loading }: Public
           ) : (
             <>
               <p className="caption font-medium">{t("publicIp.ipv4")}</p>
-              <p className="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
+              <p className="body-small text-text-muted">
+                {t("publicIp.notAvailable")}
+              </p>
             </>
           )}
 
@@ -100,12 +105,16 @@ export const PublicIPCard = memo(function PublicIPCard({ data, loading }: Public
           {ipData.ipv6 ? (
             <>
               <p className="caption font-medium">{t("publicIp.ipv6")}</p>
-              <p className="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
+              <p className="body-small font-mono break-all text-text-primary">
+                {ipData.ipv6}
+              </p>
             </>
           ) : (
             <>
               <p className="caption font-medium">{t("publicIp.ipv6")}</p>
-              <p className="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
+              <p className="body-small text-text-muted">
+                {t("publicIp.notAvailable")}
+              </p>
             </>
           )}
 

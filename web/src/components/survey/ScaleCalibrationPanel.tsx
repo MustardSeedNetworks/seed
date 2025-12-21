@@ -121,7 +121,9 @@ export function ScaleCalibrationPanel({
   const isMetric = displayOptions.unitSystem === "metric";
 
   // Dimension entry state
-  const [dimensionMode, setDimensionMode] = useState<"length" | "width">("length");
+  const [dimensionMode, setDimensionMode] = useState<"length" | "width">(
+    "length"
+  );
   const [dimensionValue, setDimensionValue] = useState("");
 
   // Propagation state - initialize from floorPlan prop
@@ -129,8 +131,10 @@ export function ScaleCalibrationPanel({
   const [propagation, setPropagation] = useState(floorPlan.propagationM || 10);
 
   // Unit conversion helpers
-  const metersToDisplay = (meters: number): number => (isMetric ? meters : meters * 3.281);
-  const displayToMeters = (display: number): number => (isMetric ? display : display * 0.3048);
+  const metersToDisplay = (meters: number): number =>
+    isMetric ? meters : meters * 3.281;
+  const displayToMeters = (display: number): number =>
+    isMetric ? display : display * 0.3048;
   const formatDistance = (meters: number, decimals = 1): string =>
     `${metersToDisplay(meters).toFixed(decimals)} ${isMetric ? "m" : "ft"}`;
   const formatArea = (sqMeters: number): string => {
@@ -146,8 +150,12 @@ export function ScaleCalibrationPanel({
   // Calculate recommended samples based on propagation
   // Use floorPlan.propagationM if available, otherwise use local state
   const effectivePropagation = floorPlan.propagationM || propagation;
-  const coverageAreaPerSample = Math.PI * effectivePropagation * effectivePropagation;
-  const recommendedSamples = Math.max(1, Math.ceil(facilityAreaM2 / coverageAreaPerSample));
+  const coverageAreaPerSample =
+    Math.PI * effectivePropagation * effectivePropagation;
+  const recommendedSamples = Math.max(
+    1,
+    Math.ceil(facilityAreaM2 / coverageAreaPerSample)
+  );
 
   // Handle dimension entry to calculate scale
   const handleDimensionSubmit = () => {
@@ -158,7 +166,8 @@ export function ScaleCalibrationPanel({
     const valueM = displayToMeters(value);
 
     // Calculate scale based on which dimension was entered
-    const pixelDimension = dimensionMode === "length" ? floorPlan.width : floorPlan.height;
+    const pixelDimension =
+      dimensionMode === "length" ? floorPlan.width : floorPlan.height;
     const newScaleM = valueM / pixelDimension;
 
     onUpdate({
@@ -202,25 +211,37 @@ export function ScaleCalibrationPanel({
     <div
       className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.default}`}
     >
-      <h3 className={`heading-3 ${spacing.margin.bottom.content}`}>{t("scalePanel.title")}</h3>
+      <h3 className={`heading-3 ${spacing.margin.bottom.content}`}>
+        {t("scalePanel.title")}
+      </h3>
 
       {/* Current Scale Info */}
       <div
         className={`bg-surface-base ${radius.md} ${spacing.pad.sm} ${spacing.margin.bottom.content}`}
       >
         <div className={`${layout.flex.between} body-small`}>
-          <span className="text-text-muted">{t("scalePanel.currentScale")}:</span>
-          <span className="font-medium">{floorPlan.scaleM.toFixed(4)} m/px</span>
+          <span className="text-text-muted">
+            {t("scalePanel.currentScale")}:
+          </span>
+          <span className="font-medium">
+            {floorPlan.scaleM.toFixed(4)} m/px
+          </span>
         </div>
-        <div className={`${layout.flex.between} body-small ${spacing.margin.top.tight}`}>
+        <div
+          className={`${layout.flex.between} body-small ${spacing.margin.top.tight}`}
+        >
           <span className="text-text-muted">{t("scalePanel.source")}:</span>
           <span className="font-medium">{getScaleSourceText()}</span>
         </div>
-        <div className={`${layout.flex.between} body-small ${spacing.margin.top.tight}`}>
-          <span className="text-text-muted">{t("scalePanel.facilitySize")}:</span>
+        <div
+          className={`${layout.flex.between} body-small ${spacing.margin.top.tight}`}
+        >
+          <span className="text-text-muted">
+            {t("scalePanel.facilitySize")}:
+          </span>
           <span className="font-medium">
-            {formatDistance(facilityWidthM)} × {formatDistance(facilityHeightM)} (
-            {formatArea(facilityAreaM2)})
+            {formatDistance(facilityWidthM)} × {formatDistance(facilityHeightM)}{" "}
+            ({formatArea(facilityAreaM2)})
           </span>
         </div>
       </div>
@@ -228,15 +249,23 @@ export function ScaleCalibrationPanel({
       {/* Calibration Methods */}
       <div className={`${spacing.stack.default}`}>
         {/* Method 1: Enter Dimensions */}
-        <div className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}>
-          <div className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}>
+        <div
+          className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}
+        >
+          <div
+            className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+          >
             <Building className={iconTokens.size.sm} />
-            <span className="body-small font-medium">{t("scalePanel.enterDimensions")}</span>
+            <span className="body-small font-medium">
+              {t("scalePanel.enterDimensions")}
+            </span>
           </div>
           <div className={`${layout.inline.default}`}>
             <select
               value={dimensionMode}
-              onChange={(e) => setDimensionMode(e.target.value as "length" | "width")}
+              onChange={(e) =>
+                setDimensionMode(e.target.value as "length" | "width")
+              }
               className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm}`}
             >
               <option value="length">{t("scalePanel.length")}</option>
@@ -251,7 +280,9 @@ export function ScaleCalibrationPanel({
               placeholder={t("scalePanel.enterValue")}
               className={`flex-1 ${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm}`}
             />
-            <span className="body-small text-text-muted min-w-8">{isMetric ? "m" : "ft"}</span>
+            <span className="body-small text-text-muted min-w-8">
+              {isMetric ? "m" : "ft"}
+            </span>
             <button
               onClick={handleDimensionSubmit}
               disabled={!dimensionValue}
@@ -263,12 +294,20 @@ export function ScaleCalibrationPanel({
         </div>
 
         {/* Method 2: Two-Point Calibration */}
-        <div className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}>
-          <div className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}>
+        <div
+          className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}
+        >
+          <div
+            className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+          >
             <Ruler className={iconTokens.size.sm} />
-            <span className="body-small font-medium">{t("scalePanel.measureDistance")}</span>
+            <span className="body-small font-medium">
+              {t("scalePanel.measureDistance")}
+            </span>
           </div>
-          <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+          <p
+            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          >
             {t("scalePanel.measureInstructions")}
           </p>
           <button
@@ -276,21 +315,31 @@ export function ScaleCalibrationPanel({
             disabled={isCalibrating}
             className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover disabled:opacity-50`}
           >
-            {isCalibrating ? t("scalePanel.calibrating") : t("scalePanel.startMeasurement")}
+            {isCalibrating
+              ? t("scalePanel.calibrating")
+              : t("scalePanel.startMeasurement")}
           </button>
         </div>
       </div>
 
       {/* Signal Propagation Section */}
-      <div className={`border-t border-surface-border ${spacing.margin.top.content} pt-4`}>
-        <div className={`${layout.inline.default} ${spacing.margin.bottom.content}`}>
+      <div
+        className={`border-t border-surface-border ${spacing.margin.top.content} pt-4`}
+      >
+        <div
+          className={`${layout.inline.default} ${spacing.margin.bottom.content}`}
+        >
           <Sliders className={iconTokens.size.sm} />
-          <span className="body-small font-medium">{t("scalePanel.signalPropagation")}</span>
+          <span className="body-small font-medium">
+            {t("scalePanel.signalPropagation")}
+          </span>
         </div>
 
         {/* Environment Presets */}
         <div className={`${spacing.margin.bottom.content}`}>
-          <label className={`caption text-text-muted block ${spacing.margin.bottom.tight}`}>
+          <label
+            className={`caption text-text-muted block ${spacing.margin.bottom.tight}`}
+          >
             {t("scalePanel.environmentType")}
           </label>
           <div className="flex flex-wrap gap-2">
@@ -312,9 +361,15 @@ export function ScaleCalibrationPanel({
 
         {/* Propagation Slider */}
         <div>
-          <div className={`${layout.flex.between} ${spacing.margin.bottom.tight}`}>
-            <label className="caption text-text-muted">{t("scalePanel.propagationRadius")}</label>
-            <span className="body-small font-medium">{formatDistance(propagation)}</span>
+          <div
+            className={`${layout.flex.between} ${spacing.margin.bottom.tight}`}
+          >
+            <label className="caption text-text-muted">
+              {t("scalePanel.propagationRadius")}
+            </label>
+            <span className="body-small font-medium">
+              {formatDistance(propagation)}
+            </span>
           </div>
           <input
             type="range"
@@ -340,8 +395,12 @@ export function ScaleCalibrationPanel({
           <div className="body-small text-status-info">
             {t("scalePanel.recommendedSamples", { count: recommendedSamples })}
           </div>
-          <div className={`caption text-text-muted ${spacing.margin.top.tight}`}>
-            {t("scalePanel.coveragePerSample", { area: formatArea(coverageAreaPerSample) })}
+          <div
+            className={`caption text-text-muted ${spacing.margin.top.tight}`}
+          >
+            {t("scalePanel.coveragePerSample", {
+              area: formatArea(coverageAreaPerSample),
+            })}
           </div>
         </div>
       </div>

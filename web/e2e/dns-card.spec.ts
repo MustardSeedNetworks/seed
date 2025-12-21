@@ -22,7 +22,9 @@ test.describe("DNS Card", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display DNS card", async ({ page }) => {
@@ -63,7 +65,9 @@ test.describe("DNS Card", () => {
   });
 
   test("should show success/fail status for each lookup", async ({ page }) => {
-    const successIndicator = page.locator('[class*="success"], svg[class*="check"]');
+    const successIndicator = page.locator(
+      '[class*="success"], svg[class*="check"]'
+    );
     const errorIndicator = page.locator('[class*="error"], svg[class*="x"]');
 
     const successCount = await successIndicator.count();
@@ -100,7 +104,9 @@ test.describe("DNS Settings", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Open settings
     const settingsButton = page.getByRole("button", { name: /settings/i });
@@ -203,7 +209,9 @@ test.describe("DNS Help", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should show DNS help in help modal", async ({ page }) => {

@@ -75,12 +75,16 @@ export const Interactive: Story = {
     return (
       <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
         <div className="max-w-xl mx-auto text-center">
-          <h1 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
+          <h1
+            className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}
+          >
             Help Center Demo
           </h1>
-          <p className={`body text-text-secondary ${spacing.margin.bottom.section}`}>
-            Click the button below to open the help center. Use the sidebar to navigate between
-            sections, or use the search to filter content.
+          <p
+            className={`body text-text-secondary ${spacing.margin.bottom.section}`}
+          >
+            Click the button below to open the help center. Use the sidebar to
+            navigate between sections, or use the search to filter content.
           </p>
           <button
             onClick={() => setIsOpen(true)}
@@ -111,12 +115,17 @@ export const SearchDemo: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
-          <h2 className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}>
+        <div
+          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+        >
+          <h2
+            className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}
+          >
             Search Functionality
           </h2>
           <p className="body-small text-text-muted">
-            Use the search box in the sidebar to filter help sections. Try searching for:
+            Use the search box in the sidebar to filter help sections. Try
+            searching for:
           </p>
           <ul
             className={`list-disc list-inside body-small text-text-muted ${spacing.margin.top.inline}`}
@@ -134,7 +143,8 @@ export const SearchDemo: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Demonstrates the search functionality - type in the search box to filter sections.",
+        story:
+          "Demonstrates the search functionality - type in the search box to filter sections.",
       },
     },
   },
@@ -149,8 +159,12 @@ export const AllSections: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
-          <h2 className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}>
+        <div
+          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+        >
+          <h2
+            className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}
+          >
             All Help Sections
           </h2>
           <p className="body-small text-text-muted">
@@ -203,7 +217,8 @@ export const MobileView: Story = {
     },
     docs: {
       description: {
-        story: "Help modal on mobile viewport - sidebar and content may stack vertically.",
+        story:
+          "Help modal on mobile viewport - sidebar and content may stack vertically.",
       },
     },
   },
@@ -269,7 +284,9 @@ export const BackdropClose: Story = {
       <div className="min-h-screen bg-surface-base">
         {!isOpen && (
           <div className={`${spacing.pad.xl} text-center`}>
-            <p className={`body text-text-secondary ${spacing.margin.bottom.content}`}>
+            <p
+              className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+            >
               Modal closed {closeCount} time(s)
             </p>
             <button
@@ -309,24 +326,45 @@ export const KeyboardNavigation: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <div className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}>
-          <h2 className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}>
+        <div
+          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+        >
+          <h2
+            className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}
+          >
             Keyboard Navigation
           </h2>
-          <p className="body-small text-text-muted">The help modal supports keyboard navigation:</p>
+          <p className="body-small text-text-muted">
+            The help modal supports keyboard navigation:
+          </p>
           <ul
             className={`list-disc list-inside body-small text-text-muted ${spacing.margin.top.inline}`}
           >
             <li>
-              Press <kbd className={`${spacing.kbd} bg-surface-hover rounded text-xs`}>ESC</kbd> to
-              close
+              Press{" "}
+              <kbd
+                className={`${spacing.kbd} bg-surface-hover rounded text-xs`}
+              >
+                ESC
+              </kbd>{" "}
+              to close
             </li>
             <li>
-              Use <kbd className={`${spacing.kbd} bg-surface-hover rounded text-xs`}>Tab</kbd> to
-              navigate between elements
+              Use{" "}
+              <kbd
+                className={`${spacing.kbd} bg-surface-hover rounded text-xs`}
+              >
+                Tab
+              </kbd>{" "}
+              to navigate between elements
             </li>
             <li>
-              Press <kbd className={`${spacing.kbd} bg-surface-hover rounded text-xs`}>Enter</kbd>{" "}
+              Press{" "}
+              <kbd
+                className={`${spacing.kbd} bg-surface-hover rounded text-xs`}
+              >
+                Enter
+              </kbd>{" "}
               to select a section
             </li>
           </ul>

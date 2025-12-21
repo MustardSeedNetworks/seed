@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { SurveyView } from "./SurveyView";
-import type { PassiveSample, ActiveSample, ThroughputSample } from "../../hooks/useSurvey";
+import type {
+  PassiveSample,
+  ActiveSample,
+  ThroughputSample,
+} from "../../hooks/useSurvey";
 
 // No-op function for story event handlers
 const noop = () => {};
@@ -558,7 +562,8 @@ export const WithRSSIHeatmap: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Click "RSSI Heatmap" button to visualize signal strength distribution.',
+        story:
+          'Click "RSSI Heatmap" button to visualize signal strength distribution.',
       },
     },
   },

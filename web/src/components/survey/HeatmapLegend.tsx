@@ -42,19 +42,43 @@ function getMetricInfo(metric: HeatmapMetric, t: (key: string) => string) {
     case "noise":
       return { name: t("heatmaps.noise"), unit: "dBm", higherIsBetter: false };
     case "cochannel":
-      return { name: t("heatmaps.cochannel"), unit: "APs", higherIsBetter: false };
+      return {
+        name: t("heatmaps.cochannel"),
+        unit: "APs",
+        higherIsBetter: false,
+      };
     case "adjacent":
-      return { name: t("heatmaps.adjacent"), unit: "APs", higherIsBetter: false };
+      return {
+        name: t("heatmaps.adjacent"),
+        unit: "APs",
+        higherIsBetter: false,
+      };
     case "throughput":
-      return { name: t("heatmaps.throughput"), unit: "Mbps", higherIsBetter: true };
+      return {
+        name: t("heatmaps.throughput"),
+        unit: "Mbps",
+        higherIsBetter: true,
+      };
     case "latency":
       return { name: t("heatmaps.latency"), unit: "ms", higherIsBetter: false };
     case "channelUtil":
-      return { name: t("heatmaps.channelUtil"), unit: "%", higherIsBetter: false };
+      return {
+        name: t("heatmaps.channelUtil"),
+        unit: "%",
+        higherIsBetter: false,
+      };
     case "apDensity":
-      return { name: t("heatmaps.apDensity"), unit: "APs", higherIsBetter: false };
+      return {
+        name: t("heatmaps.apDensity"),
+        unit: "APs",
+        higherIsBetter: false,
+      };
     case "ssidCount":
-      return { name: t("heatmaps.ssidCount"), unit: "SSIDs", higherIsBetter: false };
+      return {
+        name: t("heatmaps.ssidCount"),
+        unit: "SSIDs",
+        higherIsBetter: false,
+      };
     default:
       return { name: "Unknown", unit: "", higherIsBetter: true };
   }
@@ -64,7 +88,11 @@ function getMetricInfo(metric: HeatmapMetric, t: (key: string) => string) {
  * HeatmapLegend Component
  * Displays color gradient legend for heatmap visualizations
  */
-export function HeatmapLegend({ metric, minValue, maxValue }: HeatmapLegendProps) {
+export function HeatmapLegend({
+  metric,
+  minValue,
+  maxValue,
+}: HeatmapLegendProps) {
   const { t } = useTranslation("survey");
 
   if (!metric) return null;
@@ -79,13 +107,16 @@ export function HeatmapLegend({ metric, minValue, maxValue }: HeatmapLegendProps
 
   if (isInterference) {
     // Blue (good) to purple (bad)
-    gradient = "linear-gradient(to right, rgb(100, 150, 255), rgb(200, 50, 255))";
+    gradient =
+      "linear-gradient(to right, rgb(100, 150, 255), rgb(200, 50, 255))";
   } else if (info.higherIsBetter) {
     // Higher is better: green (high) to red (low)
-    gradient = "linear-gradient(to right, rgb(255, 0, 0), rgb(255, 255, 0), rgb(0, 255, 0))";
+    gradient =
+      "linear-gradient(to right, rgb(255, 0, 0), rgb(255, 255, 0), rgb(0, 255, 0))";
   } else {
     // Lower is better: green (low) to red (high)
-    gradient = "linear-gradient(to right, rgb(0, 255, 0), rgb(255, 255, 0), rgb(255, 0, 0))";
+    gradient =
+      "linear-gradient(to right, rgb(0, 255, 0), rgb(255, 255, 0), rgb(255, 0, 0))";
   }
 
   return (

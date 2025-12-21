@@ -63,8 +63,11 @@ export const SlowResolution: StoryObj = {
         <CardDivider />
         <CardRow label="Primary DNS" value="192.168.1.1" />
         <CardRow label="Test Domain" value="google.com" />
-        <p className={`caption text-status-warning ${spacing.margin.top.inline}`}>
-          DNS resolution is slower than expected. Consider using a faster DNS server.
+        <p
+          className={`caption text-status-warning ${spacing.margin.top.inline}`}
+        >
+          DNS resolution is slower than expected. Consider using a faster DNS
+          server.
         </p>
       </div>
     </Card>
@@ -85,7 +88,8 @@ export const Failed: StoryObj = {
         <CardRow label="Primary DNS" value="8.8.8.8" />
         <CardDivider />
         <p className="caption text-status-danger">
-          DNS server is not responding. Check network connectivity or try a different DNS server.
+          DNS server is not responding. Check network connectivity or try a
+          different DNS server.
         </p>
       </div>
     </Card>

@@ -279,7 +279,9 @@ export const InteractiveSetupFlow: Story = {
                 />
               </svg>
             </div>
-            <h2 className={`heading-2 ${spacing.margin.bottom.inline}`}>Setup Complete!</h2>
+            <h2 className={`heading-2 ${spacing.margin.bottom.inline}`}>
+              Setup Complete!
+            </h2>
             <p className="body-small text-text-muted">You are now logged in.</p>
           </div>
         </div>
@@ -301,7 +303,8 @@ export const InteractiveSetupFlow: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Fill out the form and submit to see the complete setup flow with success state.",
+        story:
+          "Fill out the form and submit to see the complete setup flow with success state.",
       },
     },
   },

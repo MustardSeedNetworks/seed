@@ -139,7 +139,11 @@ export const MultipleFaults: Story = {
       supported: true,
       length: 45.3,
       status: "open",
-      faults: ["Open circuit at 45.3m", "Impedance variations detected", "Possible water damage"],
+      faults: [
+        "Open circuit at 45.3m",
+        "Impedance variations detected",
+        "Possible water damage",
+      ],
     },
     loading: false,
   },

@@ -22,7 +22,13 @@ import "../src/index.css";
  * Storybook background parameter controls the visual background,
  * while this applies the Tailwind theme class.
  */
-function ThemeWrapper({ children, dark = true }: { children: ReactNode; dark?: boolean }) {
+function ThemeWrapper({
+  children,
+  dark = true,
+}: {
+  children: ReactNode;
+  dark?: boolean;
+}) {
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add("dark");
@@ -40,7 +46,11 @@ function ThemeWrapper({ children, dark = true }: { children: ReactNode; dark?: b
  * Loading fallback for Suspense during i18n initialization
  */
 function LoadingFallback() {
-  return <div className="flex items-center justify-center p-4 text-text-muted">Loading...</div>;
+  return (
+    <div className="flex items-center justify-center p-4 text-text-muted">
+      Loading...
+    </div>
+  );
 }
 
 const preview: Preview = {
@@ -65,7 +75,8 @@ const preview: Preview = {
     (Story, context) => {
       // Determine theme from background parameter
       const isDark =
-        context.globals.backgrounds?.value !== "var(--color-surface-base-light, #f8fafc)";
+        context.globals.backgrounds?.value !==
+        "var(--color-surface-base-light, #f8fafc)";
 
       return (
         <I18nextProvider i18n={i18n}>

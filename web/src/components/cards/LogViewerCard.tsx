@@ -45,7 +45,8 @@ interface FilterBadgeProps {
  * FilterBadge renders a clickable badge for filtering logs.
  */
 function FilterBadge({ label, active, onClick, color }: FilterBadgeProps) {
-  const baseClasses = "px-2 py-1 text-xs font-medium rounded-md cursor-pointer transition-all";
+  const baseClasses =
+    "px-2 py-1 text-xs font-medium rounded-md cursor-pointer transition-all";
   const activeClasses = color || "bg-primary-600 text-text-inverse";
   const inactiveClasses =
     "bg-surface-secondary dark:bg-dark-surface-secondary text-content-secondary dark:text-dark-content-secondary hover:bg-surface-tertiary dark:hover:bg-dark-surface-tertiary";
@@ -117,7 +118,10 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
         )}
 
         {/* Message */}
-        <span className={`${colors.text} flex-1 truncate text-sm`} title={entry.message}>
+        <span
+          className={`${colors.text} flex-1 truncate text-sm`}
+          title={entry.message}
+        >
           {entry.message}
         </span>
 
@@ -129,7 +133,9 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
         )}
 
         {/* Expand indicator */}
-        <span className="text-xs text-content-tertiary">{expanded ? "▼" : "▶"}</span>
+        <span className="text-xs text-content-tertiary">
+          {expanded ? "▼" : "▶"}
+        </span>
       </div>
 
       {/* Expanded content */}
@@ -157,7 +163,8 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
           {/* Full details */}
           <div className="grid grid-cols-2 gap-2 text-xs text-content-secondary dark:text-dark-content-secondary">
             <div>
-              <strong>Timestamp:</strong> {new Date(entry.timestamp).toISOString()}
+              <strong>Timestamp:</strong>{" "}
+              {new Date(entry.timestamp).toISOString()}
             </div>
             {entry.session_id && (
               <div>
@@ -316,7 +323,11 @@ interface LogStatsBarProps {
 /**
  * LogStatsBar displays log statistics and streaming toggle.
  */
-function LogStatsBar({ stats, isStreaming, onToggleStreaming }: LogStatsBarProps) {
+function LogStatsBar({
+  stats,
+  isStreaming,
+  onToggleStreaming,
+}: LogStatsBarProps) {
   const { t } = useTranslation("common");
 
   return (
@@ -329,13 +340,17 @@ function LogStatsBar({ stats, isStreaming, onToggleStreaming }: LogStatsBarProps
             </span>
             <span className="text-red-600 dark:text-red-400">
               <strong>
-                {stats.by_level && "ERROR" in stats.by_level ? stats.by_level.ERROR : 0}
+                {stats.by_level && "ERROR" in stats.by_level
+                  ? stats.by_level.ERROR
+                  : 0}
               </strong>{" "}
               {t("logs.errors", "errors")}
             </span>
             <span className="text-yellow-600 dark:text-yellow-400">
               <strong>
-                {stats.by_level && "WARN" in stats.by_level ? stats.by_level.WARN : 0}
+                {stats.by_level && "WARN" in stats.by_level
+                  ? stats.by_level.WARN
+                  : 0}
               </strong>{" "}
               {t("logs.warnings", "warnings")}
             </span>
@@ -375,7 +390,10 @@ export interface LogViewerCardProps {
  * LogViewerCard displays real-time logs with color-coded severity levels.
  * Supports filtering by level, layer, component, and search text.
  */
-export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewerCardProps) {
+export function LogViewerCard({
+  maxHeight = "500px",
+  className = "",
+}: LogViewerCardProps) {
   const { t } = useTranslation("common");
   const {
     logs,
@@ -437,7 +455,9 @@ export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewer
   }, [addLog]);
 
   const exportJSON = useCallback(() => {
-    const blob = new Blob([JSON.stringify(logs, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(logs, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -503,14 +523,18 @@ export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewer
             className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
             onClick={() => setCollapsed((prev) => !prev)}
           >
-            {collapsed ? t("logs.expand", "Expand") : t("logs.collapse", "Collapse")}
+            {collapsed
+              ? t("logs.expand", "Expand")
+              : t("logs.collapse", "Collapse")}
           </button>
           <button
             type="button"
             className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
             onClick={() => setIsStreaming(!isStreaming)}
           >
-            {isStreaming ? t("logs.pause", "Pause") : t("logs.resume", "Resume")}
+            {isStreaming
+              ? t("logs.pause", "Pause")
+              : t("logs.resume", "Resume")}
           </button>
           <button
             type="button"
@@ -569,7 +593,11 @@ export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewer
           )}
 
           {/* Error state */}
-          {error && <div className="p-4 text-center text-red-600 dark:text-red-400">{error}</div>}
+          {error && (
+            <div className="p-4 text-center text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
 
           {/* Log entries */}
           <div
@@ -580,8 +608,13 @@ export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewer
           >
             {logs.length === 0 && !isLoading && (
               <div className="text-center text-content-secondary dark:text-dark-content-secondary py-8">
-                {filters.search || filters.levels.length > 0 || filters.layers.length > 0
-                  ? t("logs.noMatchingLogs", "No logs match the current filters")
+                {filters.search ||
+                filters.levels.length > 0 ||
+                filters.layers.length > 0
+                  ? t(
+                      "logs.noMatchingLogs",
+                      "No logs match the current filters"
+                    )
                   : t("logs.noLogs", "No logs yet")}
               </div>
             )}
@@ -604,7 +637,8 @@ export function LogViewerCard({ maxHeight = "500px", className = "" }: LogViewer
                 onClick={() => {
                   setAutoScroll(true);
                   if (logContainerRef.current) {
-                    logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+                    logContainerRef.current.scrollTop =
+                      logContainerRef.current.scrollHeight;
                   }
                 }}
                 className="text-sm text-primary-600 dark:text-primary-400 hover:underline"

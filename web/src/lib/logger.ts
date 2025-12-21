@@ -191,7 +191,10 @@ class Logger {
 
   private startFlushTimer(): void {
     if (this.flushTimer) return;
-    this.flushTimer = setInterval(() => this.flush(), this.config.flushInterval);
+    this.flushTimer = setInterval(
+      () => this.flush(),
+      this.config.flushInterval
+    );
   }
 
   private stopFlushTimer(): void {
@@ -253,7 +256,11 @@ class Logger {
   /**
    * Log a debug message.
    */
-  debug(component: string, message: string, metadata?: Record<string, unknown>): void {
+  debug(
+    component: string,
+    message: string,
+    metadata?: Record<string, unknown>
+  ): void {
     if (!this.shouldLog("DEBUG")) return;
     const entry = this.createEntry("DEBUG", component, message, metadata);
     this.addToBuffer(entry);
@@ -262,7 +269,11 @@ class Logger {
   /**
    * Log an info message.
    */
-  info(component: string, message: string, metadata?: Record<string, unknown>): void {
+  info(
+    component: string,
+    message: string,
+    metadata?: Record<string, unknown>
+  ): void {
     if (!this.shouldLog("INFO")) return;
     const entry = this.createEntry("INFO", component, message, metadata);
     this.addToBuffer(entry);
@@ -271,7 +282,11 @@ class Logger {
   /**
    * Log a warning message.
    */
-  warn(component: string, message: string, metadata?: Record<string, unknown>): void {
+  warn(
+    component: string,
+    message: string,
+    metadata?: Record<string, unknown>
+  ): void {
     if (!this.shouldLog("WARN")) return;
     const entry = this.createEntry("WARN", component, message, metadata);
     this.addToBuffer(entry);
@@ -305,7 +320,13 @@ class Logger {
       };
     }
 
-    const entry = this.createEntry("ERROR", component, message, errorMeta, stack);
+    const entry = this.createEntry(
+      "ERROR",
+      component,
+      message,
+      errorMeta,
+      stack
+    );
     this.addToBuffer(entry);
   }
 
@@ -318,7 +339,9 @@ class Logger {
 
     return () => {
       const duration = Math.round(performance.now() - startTime);
-      this.debug(component, `${operation} completed`, { duration_ms: duration });
+      this.debug(component, `${operation} completed`, {
+        duration_ms: duration,
+      });
     };
   }
 
@@ -373,7 +396,11 @@ class ComponentLogger {
     this.parent.warn(this.component, message, metadata);
   }
 
-  error(message: string, error?: Error | unknown, metadata?: Record<string, unknown>): void {
+  error(
+    message: string,
+    error?: Error | unknown,
+    metadata?: Record<string, unknown>
+  ): void {
     this.parent.error(this.component, message, error, metadata);
   }
 

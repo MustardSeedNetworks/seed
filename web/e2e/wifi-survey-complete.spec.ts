@@ -119,7 +119,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should complete full survey creation flow", async ({ page }) => {
@@ -138,14 +140,18 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await newButton.click();
 
     // 3. Verify create dialog appears
-    await expect(page.getByRole("heading", { name: /Create New Survey/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Create New Survey/i })
+    ).toBeVisible();
 
     // 4. Fill in survey details
     const surveyNameInput = page.getByLabel(/Survey Name/i);
     await surveyNameInput.fill("Office Floor 1 Survey");
 
     // 5. Select survey type
-    const surveyTypeSelect = page.locator('#survey-type, select[name="survey-type"]').first();
+    const surveyTypeSelect = page
+      .locator('#survey-type, select[name="survey-type"]')
+      .first();
     await surveyTypeSelect.selectOption("passive");
 
     // 6. Submit the form
@@ -153,7 +159,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await createButton.click();
 
     // 7. Verify dialog closes and survey is created
-    await expect(page.getByRole("heading", { name: /Create New Survey/i })).not.toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: /Create New Survey/i })
+    ).not.toBeVisible({
       timeout: 3000,
     });
   });
@@ -170,7 +178,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await cancelButton.click();
 
     // Verify dialog closes
-    await expect(page.getByRole("heading", { name: /Create New Survey/i })).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Create New Survey/i })
+    ).not.toBeVisible();
   });
 
   test("should display empty state when no surveys exist", async ({ page }) => {
@@ -195,7 +205,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await expect(createLink).toBeVisible();
   });
 
-  test("should show WiFi interface warning when not on WiFi", async ({ page }) => {
+  test("should show WiFi interface warning when not on WiFi", async ({
+    page,
+  }) => {
     // The WiFi warning should be visible if isWifi prop is false
     const wifiWarning = page.locator("text=/WiFi interface required/i");
 
@@ -208,11 +220,18 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     }
   });
 
-  test("should display survey list with correct information", async ({ page }) => {
+  test("should display survey list with correct information", async ({
+    page,
+  }) => {
     // Mock survey list with multiple surveys
     const mockSurveys = [
       createMockSurveyWithSamples("survey-1", "Office Floor 1", "completed", 5),
-      createMockSurveyWithSamples("survey-2", "Conference Room", "in_progress", 3),
+      createMockSurveyWithSamples(
+        "survey-2",
+        "Conference Room",
+        "in_progress",
+        3
+      ),
       createMockSurveyWithSamples("survey-3", "Lobby Area", "paused", 8),
     ];
 
@@ -246,7 +265,12 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should open survey view when clicking on survey", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "created", 0);
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "created",
+      0
+    );
 
     await page.route("**/api/survey/list", async (route) => {
       await route.fulfill({
@@ -271,14 +295,23 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await surveyItem.click();
 
     // Verify survey view opens (should show survey name as heading)
-    await expect(page.getByRole("heading", { name: /Test Survey/i })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: /Test Survey/i })
+    ).toBeVisible({
       timeout: 3000,
     });
   });
 
-  test("should handle survey lifecycle: start, pause, resume, complete", async ({ page }) => {
+  test("should handle survey lifecycle: start, pause, resume, complete", async ({
+    page,
+  }) => {
     let currentStatus = "created";
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", currentStatus, 0);
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      currentStatus,
+      0
+    );
 
     await page.route("**/api/survey/list", async (route) => {
       const survey = { ...mockSurvey, status: currentStatus };
@@ -373,7 +406,12 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should upload and display floor plan", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "created", 0);
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "created",
+      0
+    );
     mockSurvey.floorPlan = undefined; // Start without floor plan
 
     await page.route("**/api/survey/list", async (route) => {
@@ -418,7 +456,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await page.waitForTimeout(1000);
 
     // Should see upload prompt
-    await expect(page.locator("text=/Upload a floor plan to begin/i")).toBeVisible();
+    await expect(
+      page.locator("text=/Upload a floor plan to begin/i")
+    ).toBeVisible();
 
     // Note: Actual file upload testing would require more complex setup
     // This verifies the UI is in the correct state for upload
@@ -426,8 +466,15 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await expect(uploadLabel).toBeVisible();
   });
 
-  test("should add sample points when clicking on floor plan", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "in_progress", 0);
+  test("should add sample points when clicking on floor plan", async ({
+    page,
+  }) => {
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "in_progress",
+      0
+    );
 
     await page.route("**/api/survey/list", async (route) => {
       await route.fulfill({
@@ -491,7 +538,12 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should display sample list with details", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "completed", 3);
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "completed",
+      3
+    );
 
     await page.route("**/api/survey/list", async (route) => {
       await route.fulfill({
@@ -530,7 +582,12 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should show and hide heatmap visualization", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "completed", 5);
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "completed",
+      5
+    );
 
     await page.route("**/api/survey/list", async (route) => {
       await route.fulfill({
@@ -556,7 +613,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await page.waitForTimeout(1000);
 
     // Should see heatmap buttons
-    const rssiHeatmapButton = page.getByRole("button", { name: /RSSI Heatmap/i });
+    const rssiHeatmapButton = page.getByRole("button", {
+      name: /RSSI Heatmap/i,
+    });
     await expect(rssiHeatmapButton).toBeVisible();
 
     // Click to show heatmap
@@ -564,7 +623,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await page.waitForTimeout(500);
 
     // Should now see "Hide Heatmap" button
-    const hideHeatmapButton = page.getByRole("button", { name: /Hide Heatmap/i });
+    const hideHeatmapButton = page.getByRole("button", {
+      name: /Hide Heatmap/i,
+    });
     await expect(hideHeatmapButton).toBeVisible();
 
     // Click to hide
@@ -576,7 +637,12 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should delete survey with confirmation", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "completed", 2);
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "completed",
+      2
+    );
 
     await page.route("**/api/survey/list", async (route) => {
       await route.fulfill({
@@ -645,7 +711,12 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should handle floor plan upload error", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "created", 0);
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "created",
+      0
+    );
     mockSurvey.floorPlan = undefined;
 
     await page.route("**/api/survey/list", async (route) => {
@@ -684,7 +755,12 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should handle sample collection error", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "in_progress", 0);
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "in_progress",
+      0
+    );
 
     await page.route("**/api/survey/list", async (route) => {
       await route.fulfill({
@@ -723,13 +799,23 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should show different survey types correctly", async ({ page }) => {
-    const passiveSurvey = createMockSurveyWithSamples("survey-1", "Passive Survey", "created", 0);
+    const passiveSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Passive Survey",
+      "created",
+      0
+    );
     const activeSurvey = {
       ...createMockSurveyWithSamples("survey-2", "Active Survey", "created", 0),
       surveyType: "active",
     };
     const throughputSurvey = {
-      ...createMockSurveyWithSamples("survey-3", "Throughput Survey", "created", 0),
+      ...createMockSurveyWithSamples(
+        "survey-3",
+        "Throughput Survey",
+        "created",
+        0
+      ),
       surveyType: "throughput",
     };
 
@@ -737,7 +823,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ surveys: [passiveSurvey, activeSurvey, throughputSurvey] }),
+        body: JSON.stringify({
+          surveys: [passiveSurvey, activeSurvey, throughputSurvey],
+        }),
       });
     });
 
@@ -755,7 +843,14 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   test("should limit display to 3 surveys and show count", async ({ page }) => {
     const surveys = [];
     for (let i = 1; i <= 5; i++) {
-      surveys.push(createMockSurveyWithSamples(`survey-${i}`, `Survey ${i}`, "completed", i));
+      surveys.push(
+        createMockSurveyWithSamples(
+          `survey-${i}`,
+          `Survey ${i}`,
+          "completed",
+          i
+        )
+      );
     }
 
     await page.route("**/api/survey/list", async (route) => {
@@ -772,8 +867,15 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await expect(page.locator("text=/\\+2 more/i")).toBeVisible();
   });
 
-  test("should close survey view when Close button clicked", async ({ page }) => {
-    const mockSurvey = createMockSurveyWithSamples("survey-1", "Test Survey", "created", 0);
+  test("should close survey view when Close button clicked", async ({
+    page,
+  }) => {
+    const mockSurvey = createMockSurveyWithSamples(
+      "survey-1",
+      "Test Survey",
+      "created",
+      0
+    );
 
     await page.route("**/api/survey/list", async (route) => {
       await route.fulfill({
@@ -799,7 +901,9 @@ test.describe("WiFi Survey - Complete User Journey", () => {
     await page.waitForTimeout(1000);
 
     // Verify survey view is open
-    await expect(page.getByRole("heading", { name: /Test Survey/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Test Survey/i })
+    ).toBeVisible();
 
     // Close survey view
     const closeButton = page.getByRole("button", { name: /Close/i });

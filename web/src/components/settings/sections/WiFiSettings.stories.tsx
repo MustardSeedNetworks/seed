@@ -15,7 +15,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { WiFiSettings } from "./WiFiSettings";
-import type { WiFiSettings as WiFiSettingsType, SaveStatus } from "../../../types/settings";
+import type {
+  WiFiSettings as WiFiSettingsType,
+  SaveStatus,
+} from "../../../types/settings";
 import { spacing } from "../../../styles/theme";
 
 const meta: Meta<typeof WiFiSettings> = {
@@ -182,7 +185,9 @@ export const Interactive: Story = {
     });
     const [status, setStatus] = useState<SaveStatus>("idle");
 
-    const handleSetWifiSettings = (updater: React.SetStateAction<WiFiSettingsType>) => {
+    const handleSetWifiSettings = (
+      updater: React.SetStateAction<WiFiSettingsType>
+    ) => {
       setWifiSettings(updater);
       setStatus("saving");
 
@@ -211,7 +216,9 @@ export const Comparison: Story = {
   render: () => (
     <div className={`stack-lg ${spacing.pad.default}`}>
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
           Multiple interfaces available
         </p>
         <WiFiSettings
@@ -225,7 +232,9 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
           No interfaces (manual entry)
         </p>
         <WiFiSettings
@@ -239,7 +248,11 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className={`caption text-text-muted ${spacing.margin.bottom.inline}`}>Saving state</p>
+        <p
+          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+        >
+          Saving state
+        </p>
         <WiFiSettings
           wifiSettings={{
             interface: "wlan0",

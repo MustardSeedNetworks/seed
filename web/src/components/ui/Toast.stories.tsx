@@ -46,19 +46,27 @@ function ToastDemo({
 }
 
 export const Success: StoryObj = {
-  render: () => <ToastDemo type="success" message="Operation completed successfully!" />,
+  render: () => (
+    <ToastDemo type="success" message="Operation completed successfully!" />
+  ),
 };
 
 export const Error: StoryObj = {
-  render: () => <ToastDemo type="error" message="An error occurred. Please try again." />,
+  render: () => (
+    <ToastDemo type="error" message="An error occurred. Please try again." />
+  ),
 };
 
 export const Warning: StoryObj = {
-  render: () => <ToastDemo type="warning" message="This action cannot be undone." />,
+  render: () => (
+    <ToastDemo type="warning" message="This action cannot be undone." />
+  ),
 };
 
 export const Info: StoryObj = {
-  render: () => <ToastDemo type="info" message="Network scan is in progress..." />,
+  render: () => (
+    <ToastDemo type="info" message="Network scan is in progress..." />
+  ),
 };
 
 function AllToastsDemo() {

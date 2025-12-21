@@ -112,7 +112,9 @@ export function useHealthChecks() {
       const data = await api.get<{ results: DNSTestResult[] }>("/api/dns");
       return data.results || [];
     } catch (err) {
-      logger.error(LogComponents.DNS, "DNS tests failed", err, { endpoint: "/api/dns" });
+      logger.error(LogComponents.DNS, "DNS tests failed", err, {
+        endpoint: "/api/dns",
+      });
       return [];
     }
   }, []);
@@ -120,14 +122,17 @@ export function useHealthChecks() {
   /**
    * Runs gateway connectivity test.
    */
-  const runGatewayTest = useCallback(async (): Promise<GatewayTestResult | null> => {
-    try {
-      return await api.get<GatewayTestResult>("/api/gateway");
-    } catch (err) {
-      logger.error(LogComponents.GATEWAY, "Gateway test failed", err, { endpoint: "/api/gateway" });
-      return null;
-    }
-  }, []);
+  const runGatewayTest =
+    useCallback(async (): Promise<GatewayTestResult | null> => {
+      try {
+        return await api.get<GatewayTestResult>("/api/gateway");
+      } catch (err) {
+        logger.error(LogComponents.GATEWAY, "Gateway test failed", err, {
+          endpoint: "/api/gateway",
+        });
+        return null;
+      }
+    }, []);
 
   /**
    * Runs custom tests.
@@ -135,7 +140,9 @@ export function useHealthChecks() {
   const runCustomTests = useCallback(async (): Promise<CustomTestResult[]> => {
     try {
       setIsRunning(true);
-      const data = await api.post<{ results: CustomTestResult[] }>("/api/health-checks/run");
+      const data = await api.post<{ results: CustomTestResult[] }>(
+        "/api/health-checks/run"
+      );
       return data.results || [];
     } catch (err) {
       logger.error(LogComponents.SYSTEM, "Custom tests failed", err, {
@@ -151,7 +158,9 @@ export function useHealthChecks() {
    * Runs specified health check tests.
    */
   const runTests = useCallback(
-    async (options: RunTestsOptions = {}): Promise<HealthCheckResults | null> => {
+    async (
+      options: RunTestsOptions = {}
+    ): Promise<HealthCheckResults | null> => {
       const { types = ["dns", "gateway", "custom"] } = options;
 
       try {
@@ -224,7 +233,8 @@ export function useHealthChecks() {
         setResults(healthResults);
         return healthResults;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Health check failed";
+        const message =
+          err instanceof Error ? err.message : "Health check failed";
         setError(message);
         logger.error(LogComponents.SYSTEM, "Health check failed", err, {
           types,
@@ -254,18 +264,26 @@ export function useHealthChecks() {
   /**
    * Updates test settings.
    */
-  const updateSettings = useCallback(async (settings: Partial<TestsSettings>): Promise<boolean> => {
-    try {
-      await api.put("/api/health-checks/settings", settings);
-      return true;
-    } catch (err) {
-      logger.error(LogComponents.CONFIG, "Failed to update test settings", err, {
-        endpoint: "/api/health-checks/settings",
-        updates: settings,
-      });
-      return false;
-    }
-  }, []);
+  const updateSettings = useCallback(
+    async (settings: Partial<TestsSettings>): Promise<boolean> => {
+      try {
+        await api.put("/api/health-checks/settings", settings);
+        return true;
+      } catch (err) {
+        logger.error(
+          LogComponents.CONFIG,
+          "Failed to update test settings",
+          err,
+          {
+            endpoint: "/api/health-checks/settings",
+            updates: settings,
+          }
+        );
+        return false;
+      }
+    },
+    []
+  );
 
   return {
     // State

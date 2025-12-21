@@ -36,14 +36,22 @@ type Story = StoryObj;
  */
 export const AllSections: Story = {
   render: () => (
-    <div className={`max-w-3xl mx-auto ${spacing.pad.default} ${section.spacing.comfortable}`}>
-      <h1 className={`heading-1 text-text-primary ${spacing.margin.bottom.section}`}>
+    <div
+      className={`max-w-3xl mx-auto ${spacing.pad.default} ${section.spacing.comfortable}`}
+    >
+      <h1
+        className={`heading-1 text-text-primary ${spacing.margin.bottom.section}`}
+      >
         WiFi Survey Help
       </h1>
       {WIFI_SURVEY_HELP.map((section, sectionIdx) => (
         <HelpSection key={sectionIdx} title={section.title}>
           {section.items.map((item, itemIdx) => (
-            <HelpItem key={itemIdx} question={item.question} answer={item.answer} />
+            <HelpItem
+              key={itemIdx}
+              question={item.question}
+              answer={item.answer}
+            />
           ))}
         </HelpSection>
       ))}
@@ -56,7 +64,9 @@ export const AllSections: Story = {
  */
 export const Overview: Story = {
   render: () => {
-    const overviewSection = WIFI_SURVEY_HELP.find((s) => s.title === "Overview");
+    const overviewSection = WIFI_SURVEY_HELP.find(
+      (s) => s.title === "Overview"
+    );
     if (!overviewSection) return <div>Section not found</div>;
 
     return (
@@ -72,7 +82,8 @@ export const Overview: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Overview section explaining WiFi Survey purpose, use cases, and requirements.",
+        story:
+          "Overview section explaining WiFi Survey purpose, use cases, and requirements.",
       },
     },
   },
@@ -83,7 +94,9 @@ export const Overview: Story = {
  */
 export const SurveyModes: Story = {
   render: () => {
-    const modesSection = WIFI_SURVEY_HELP.find((s) => s.title === "Survey Modes");
+    const modesSection = WIFI_SURVEY_HELP.find(
+      (s) => s.title === "Survey Modes"
+    );
     if (!modesSection) return <div>Section not found</div>;
 
     return (
@@ -111,7 +124,9 @@ export const SurveyModes: Story = {
  */
 export const CreatingSurvey: Story = {
   render: () => {
-    const createSection = WIFI_SURVEY_HELP.find((s) => s.title === "Creating a Survey");
+    const createSection = WIFI_SURVEY_HELP.find(
+      (s) => s.title === "Creating a Survey"
+    );
     if (!createSection) return <div>Section not found</div>;
 
     return (
@@ -139,7 +154,9 @@ export const CreatingSurvey: Story = {
  */
 export const ConductingSurvey: Story = {
   render: () => {
-    const conductSection = WIFI_SURVEY_HELP.find((s) => s.title === "Conducting a Survey");
+    const conductSection = WIFI_SURVEY_HELP.find(
+      (s) => s.title === "Conducting a Survey"
+    );
     if (!conductSection) return <div>Section not found</div>;
 
     return (
@@ -155,7 +172,8 @@ export const ConductingSurvey: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Instructions for taking measurements, sample point density, and pausing surveys.",
+        story:
+          "Instructions for taking measurements, sample point density, and pausing surveys.",
       },
     },
   },
@@ -166,7 +184,9 @@ export const ConductingSurvey: Story = {
  */
 export const ViewingResults: Story = {
   render: () => {
-    const resultsSection = WIFI_SURVEY_HELP.find((s) => s.title === "Viewing Results");
+    const resultsSection = WIFI_SURVEY_HELP.find(
+      (s) => s.title === "Viewing Results"
+    );
     if (!resultsSection) return <div>Section not found</div>;
 
     return (
@@ -182,7 +202,8 @@ export const ViewingResults: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Guide for viewing survey results, interpreting heatmap colors, and exporting data.",
+        story:
+          "Guide for viewing survey results, interpreting heatmap colors, and exporting data.",
       },
     },
   },
@@ -193,7 +214,9 @@ export const ViewingResults: Story = {
  */
 export const Troubleshooting: Story = {
   render: () => {
-    const troubleSection = WIFI_SURVEY_HELP.find((s) => s.title === "Troubleshooting");
+    const troubleSection = WIFI_SURVEY_HELP.find(
+      (s) => s.title === "Troubleshooting"
+    );
     if (!troubleSection) return <div>Section not found</div>;
 
     return (
@@ -221,7 +244,9 @@ export const Troubleshooting: Story = {
  */
 export const BestPractices: Story = {
   render: () => {
-    const bestSection = WIFI_SURVEY_HELP.find((s) => s.title === "Best Practices");
+    const bestSection = WIFI_SURVEY_HELP.find(
+      (s) => s.title === "Best Practices"
+    );
     if (!bestSection) return <div>Section not found</div>;
 
     return (
@@ -237,7 +262,8 @@ export const BestPractices: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Recommended workflow and best practices for comprehensive WiFi surveys.",
+        story:
+          "Recommended workflow and best practices for comprehensive WiFi surveys.",
       },
     },
   },
@@ -249,7 +275,9 @@ export const BestPractices: Story = {
 export const SignalStrengthLegend: Story = {
   render: () => (
     <div className={`max-w-xl mx-auto ${spacing.pad.default}`}>
-      <h2 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
+      <h2
+        className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}
+      >
         Signal Strength Heatmap Legend
       </h2>
       <div className="stack-sm">
@@ -301,7 +329,9 @@ export const SignalStrengthLegend: Story = {
 export const ThroughputLegend: Story = {
   render: () => (
     <div className={`max-w-xl mx-auto ${spacing.pad.default}`}>
-      <h2 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
+      <h2
+        className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}
+      >
         Throughput Heatmap Legend
       </h2>
       <div className="stack-sm">
@@ -341,7 +371,8 @@ export const ThroughputLegend: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Visual legend for interpreting throughput performance heatmap colors.",
+        story:
+          "Visual legend for interpreting throughput performance heatmap colors.",
       },
     },
   },
@@ -353,7 +384,9 @@ export const ThroughputLegend: Story = {
 export const ModesComparison: Story = {
   render: () => (
     <div className={`max-w-4xl mx-auto ${spacing.pad.default}`}>
-      <h2 className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}>
+      <h2
+        className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}
+      >
         Survey Modes Comparison
       </h2>
       <div className={`grid md:grid-cols-3 ${spacing.gap.comfortable}`}>
@@ -361,7 +394,11 @@ export const ModesComparison: Story = {
           title="Passive Scan"
           icon="📡"
           description="Scans all visible networks"
-          pros={["See all nearby APs", "Detect interference", "No connection required"]}
+          pros={[
+            "See all nearby APs",
+            "Detect interference",
+            "No connection required",
+          ]}
           cons={["Doesn't test actual speed", "No roaming detection"]}
           bestFor="Initial site assessment"
         />
@@ -369,7 +406,11 @@ export const ModesComparison: Story = {
           title="Active Monitoring"
           icon="📶"
           description="Monitors current connection"
-          pros={["Real-time signal tracking", "Roaming detection", "Data rate monitoring"]}
+          pros={[
+            "Real-time signal tracking",
+            "Roaming detection",
+            "Data rate monitoring",
+          ]}
           cons={["Single network only", "Requires connection"]}
           bestFor="Coverage validation"
         />
@@ -377,7 +418,11 @@ export const ModesComparison: Story = {
           title="Throughput Testing"
           icon="⚡"
           description="Measures actual speeds"
-          pros={["True performance data", "Latency & jitter metrics", "Most comprehensive"]}
+          pros={[
+            "True performance data",
+            "Latency & jitter metrics",
+            "Most comprehensive",
+          ]}
           cons={["Requires iperf3 server", "Slower to collect"]}
           bestFor="Performance validation"
         />
@@ -387,7 +432,8 @@ export const ModesComparison: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Side-by-side comparison of survey modes with pros, cons, and use cases.",
+        story:
+          "Side-by-side comparison of survey modes with pros, cons, and use cases.",
       },
     },
   },
@@ -395,7 +441,13 @@ export const ModesComparison: Story = {
 
 // Helper Components
 
-function HelpSection({ title, children }: { title: string; children: React.ReactNode }) {
+function HelpSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-surface-raised border border-surface-border rounded-lg overflow-hidden">
       <h2
@@ -411,10 +463,14 @@ function HelpSection({ title, children }: { title: string; children: React.React
 function HelpItem({ question, answer }: { question: string; answer: string }) {
   return (
     <div className={spacing.pad.default}>
-      <h3 className={`body font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>
+      <h3
+        className={`body font-semibold text-text-primary ${spacing.margin.bottom.inline}`}
+      >
         {question}
       </h3>
-      <div className="body-small text-text-secondary whitespace-pre-line">{answer}</div>
+      <div className="body-small text-text-secondary whitespace-pre-line">
+        {answer}
+      </div>
     </div>
   );
 }
@@ -466,8 +522,16 @@ function ModeCard({
       className={`bg-surface-raised border border-surface-border rounded-lg ${spacing.pad.default}`}
     >
       <div className={`text-3xl ${spacing.margin.bottom.inline}`}>{icon}</div>
-      <h3 className={`heading-4 text-text-primary ${spacing.margin.bottom.tight}`}>{title}</h3>
-      <p className={`body-small text-text-muted ${spacing.margin.bottom.content}`}>{description}</p>
+      <h3
+        className={`heading-4 text-text-primary ${spacing.margin.bottom.tight}`}
+      >
+        {title}
+      </h3>
+      <p
+        className={`body-small text-text-muted ${spacing.margin.bottom.content}`}
+      >
+        {description}
+      </p>
 
       <div className="stack-sm">
         <div>
@@ -494,9 +558,13 @@ function ModeCard({
             ))}
           </ul>
         </div>
-        <div className={`${spacing.padding.bottom.inline} border-t border-surface-border`}>
+        <div
+          className={`${spacing.padding.bottom.inline} border-t border-surface-border`}
+        >
           <span className="caption text-text-muted">Best for: </span>
-          <span className="caption text-text-primary font-medium">{bestFor}</span>
+          <span className="caption text-text-primary font-medium">
+            {bestFor}
+          </span>
         </div>
       </div>
     </div>

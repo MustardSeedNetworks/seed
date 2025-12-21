@@ -25,7 +25,9 @@ test.describe("Authentication", () => {
     await expect(page.getByRole("heading", { name: /login/i })).toBeVisible();
     await expect(page.getByLabel(/username/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /sign in|login/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /sign in|login/i })
+    ).toBeVisible();
   });
 
   test("should show error with invalid credentials", async ({ page }) => {
@@ -37,7 +39,9 @@ test.describe("Authentication", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Should show error message
-    await expect(page.getByText(/invalid|incorrect|failed/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/invalid|incorrect|failed/i)).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("should login successfully with valid credentials", async ({ page }) => {
@@ -49,7 +53,9 @@ test.describe("Authentication", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Should redirect to dashboard
-    await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: /link|dashboard/i })
+    ).toBeVisible({
       timeout: 10000,
     });
   });

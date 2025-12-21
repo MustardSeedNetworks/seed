@@ -26,7 +26,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { api } from "../lib/api";
 import { logger, LogComponents } from "../lib/logger";
 
-function isFulfilled<T>(result: PromiseSettledResult<T>): result is PromiseFulfilledResult<T> {
+function isFulfilled<T>(
+  result: PromiseSettledResult<T>
+): result is PromiseFulfilledResult<T> {
   return result.status === "fulfilled";
 }
 
@@ -204,30 +206,42 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
             : "",
         ipConfig: isFulfilled(ipConfigRes) ? ipConfigRes.value : null,
         gateway: isFulfilled(gatewayRes) ? gatewayRes.value : null,
-        dnsResults: isFulfilled(dnsRes) && dnsRes.value ? dnsRes.value.results || [] : [],
-        vlanInfo: isFulfilled(vlanRes) && vlanRes.value ? vlanRes.value.vlans || [] : [],
+        dnsResults:
+          isFulfilled(dnsRes) && dnsRes.value ? dnsRes.value.results || [] : [],
+        vlanInfo:
+          isFulfilled(vlanRes) && vlanRes.value
+            ? vlanRes.value.vlans || []
+            : [],
         publicIP: isFulfilled(publicIPRes) ? publicIPRes.value : null,
         systemHealth: isFulfilled(healthRes) ? healthRes.value : null,
         discoveryNeighbors:
-          isFulfilled(discoveryRes) && discoveryRes.value ? discoveryRes.value.neighbors || [] : [],
+          isFulfilled(discoveryRes) && discoveryRes.value
+            ? discoveryRes.value.neighbors || []
+            : [],
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch network data";
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch network data";
       setError(message);
-      logger.error(LogComponents.NETWORK, "Failed to refresh network data", err, {
-        endpoints: [
-          "/api/link",
-          "/api/interfaces",
-          "/api/interface",
-          "/api/ipconfig",
-          "/api/gateway",
-          "/api/dns",
-          "/api/vlan",
-          "/api/publicip",
-          "/api/system/health",
-          "/api/discovery",
-        ],
-      });
+      logger.error(
+        LogComponents.NETWORK,
+        "Failed to refresh network data",
+        err,
+        {
+          endpoints: [
+            "/api/link",
+            "/api/interfaces",
+            "/api/interface",
+            "/api/ipconfig",
+            "/api/gateway",
+            "/api/dns",
+            "/api/vlan",
+            "/api/publicip",
+            "/api/system/health",
+            "/api/discovery",
+          ],
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -236,18 +250,24 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
   /**
    * Fetches only link status (for quick updates).
    */
-  const refreshLinkStatus = useCallback(async (): Promise<LinkStatus | null> => {
-    try {
-      const data = await api.get<LinkStatus>("/api/link");
-      setNetworkData((prev) => ({ ...prev, linkStatus: data }));
-      return data;
-    } catch (err) {
-      logger.error(LogComponents.NETWORK, "Failed to refresh link status", err, {
-        endpoint: "/api/link",
-      });
-      return null;
-    }
-  }, []);
+  const refreshLinkStatus =
+    useCallback(async (): Promise<LinkStatus | null> => {
+      try {
+        const data = await api.get<LinkStatus>("/api/link");
+        setNetworkData((prev) => ({ ...prev, linkStatus: data }));
+        return data;
+      } catch (err) {
+        logger.error(
+          LogComponents.NETWORK,
+          "Failed to refresh link status",
+          err,
+          {
+            endpoint: "/api/link",
+          }
+        );
+        return null;
+      }
+    }, []);
 
   /**
    * Fetches only gateway info (for connectivity checks).
@@ -268,18 +288,24 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
   /**
    * Fetches only public IP (force refresh).
    */
-  const refreshPublicIP = useCallback(async (): Promise<PublicIPInfo | null> => {
-    try {
-      const data = await api.post<PublicIPInfo>("/api/publicip");
-      setNetworkData((prev) => ({ ...prev, publicIP: data }));
-      return data;
-    } catch (err) {
-      logger.error(LogComponents.PUBLICIP, "Failed to refresh public IP", err, {
-        endpoint: "/api/publicip",
-      });
-      return null;
-    }
-  }, []);
+  const refreshPublicIP =
+    useCallback(async (): Promise<PublicIPInfo | null> => {
+      try {
+        const data = await api.post<PublicIPInfo>("/api/publicip");
+        setNetworkData((prev) => ({ ...prev, publicIP: data }));
+        return data;
+      } catch (err) {
+        logger.error(
+          LogComponents.PUBLICIP,
+          "Failed to refresh public IP",
+          err,
+          {
+            endpoint: "/api/publicip",
+          }
+        );
+        return null;
+      }
+    }, []);
 
   // Set up auto-refresh interval
   useEffect(() => {

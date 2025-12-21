@@ -52,7 +52,8 @@ export const WithSimulatedTest: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Click the FAB to see it enter loading state. Tests complete after 3 seconds.",
+        story:
+          "Click the FAB to see it enter loading state. Tests complete after 3 seconds.",
       },
     },
   },

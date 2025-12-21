@@ -23,7 +23,9 @@ test.describe("WebSocket Connectivity", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should establish WebSocket connection", async ({ page }) => {
@@ -97,14 +99,19 @@ test.describe("WebSocket Connectivity", () => {
 
   test("should handle page refresh without losing state", async ({ page }) => {
     // Note some initial state
-    const hasCards = await page.locator("text=/link|gateway|dns/i").first().isVisible();
+    const hasCards = await page
+      .locator("text=/link|gateway|dns/i")
+      .first()
+      .isVisible();
     expect(hasCards).toBeTruthy();
 
     // Refresh the page
     await page.reload();
 
     // Should remain authenticated and see dashboard
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Cards should reappear
     const cardsAfterRefresh = page.locator("text=/link|gateway|dns/i").first();

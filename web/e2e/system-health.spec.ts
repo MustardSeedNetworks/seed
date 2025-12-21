@@ -21,7 +21,9 @@ test.describe("System Health", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display System Health card", async ({ page }) => {
@@ -99,7 +101,9 @@ test.describe("System Health", () => {
     await page.waitForTimeout(2000);
 
     // Get initial CPU value
-    const cpuElement = page.locator(':text-matches("\\\\d+(\\\\.\\\\d+)?%")').first();
+    const cpuElement = page
+      .locator(':text-matches("\\\\d+(\\\\.\\\\d+)?%")')
+      .first();
     const hasElement = await cpuElement.isVisible().catch(() => false);
 
     if (hasElement) {
@@ -142,7 +146,9 @@ test.describe("System Health Thresholds", () => {
     await page.getByLabel(/username/i).fill("admin");
     await page.getByLabel(/password/i).fill("seed");
     await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should have configurable thresholds in settings", async ({ page }) => {

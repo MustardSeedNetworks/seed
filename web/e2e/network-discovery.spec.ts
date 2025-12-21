@@ -24,7 +24,9 @@ test.describe("Network Discovery", () => {
     await page.getByRole("button", { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display Network Discovery card", async ({ page }) => {
@@ -59,7 +61,9 @@ test.describe("Network Discovery", () => {
     // Open settings drawer
     const settingsButton = page
       .getByRole("button", { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(
+        page.locator('button:has(svg[class*="settings"], svg[class*="cog"])')
+      );
     await settingsButton.click();
 
     // Look for discovery settings section
