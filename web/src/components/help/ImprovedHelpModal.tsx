@@ -25,7 +25,14 @@
 
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn, icon as iconTokens, layout, radius, modal, spacing } from "../../styles/theme";
+import {
+  cn,
+  icon as iconTokens,
+  layout,
+  radius,
+  modal,
+  spacing,
+} from "../../styles/theme";
 import {
   Activity,
   Wifi,
@@ -135,17 +142,13 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
   const currentSection = sections.find((s) => s.id === activeSection);
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${spacing.pad.default}`}>
+    <div className={modal.overlay}>
       {/* Backdrop */}
-      <div
-        className={`absolute inset-0 ${modal.overlay} backdrop-blur-sm`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
 
       {/* Modal */}
       <div
-        className={`relative bg-surface-raised border border-surface-border ${radius.lg} shadow-xl w-full max-w-6xl max-h-modal flex flex-col overflow-hidden`}
+        className={`relative ${modal.content} ${modal.size.xl} ${radius.lg} flex flex-col overflow-hidden`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-modal-title"
@@ -162,7 +165,11 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
             className={`${spacing.pad.xs} text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-hover`}
             aria-label={t("modal.closeHelp")}
           >
-            <svg className={iconTokens.size.md} viewBox="0 0 20 20" fill="currentColor">
+            <svg
+              className={iconTokens.size.md}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
               <path
                 fillRule="evenodd"
                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -194,7 +201,9 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
 
             {/* Table of Contents */}
             <nav className={`${spacing.pad.xs} stack-xs`}>
-              <p className={`caption ${spacing.chip.lg} uppercase tracking-wider`}>
+              <p
+                className={`caption ${spacing.chip.lg} uppercase tracking-wider`}
+              >
                 {t("modal.contents")}
               </p>
               {filteredSections.map((section) => (
@@ -245,7 +254,9 @@ function AboutSection() {
       <div className={`grid md:grid-cols-2 ${spacing.gap.comfortable}`}>
         <FeatureCard
           title={t("content.about.features.realTimeMonitoring.title")}
-          description={t("content.about.features.realTimeMonitoring.description")}
+          description={t(
+            "content.about.features.realTimeMonitoring.description"
+          )}
         />
         <FeatureCard
           title={t("content.about.features.networkDiscovery.title")}
@@ -253,7 +264,9 @@ function AboutSection() {
         />
         <FeatureCard
           title={t("content.about.features.performanceTesting.title")}
-          description={t("content.about.features.performanceTesting.description")}
+          description={t(
+            "content.about.features.performanceTesting.description"
+          )}
         />
         <FeatureCard
           title={t("content.about.features.cableDiagnostics.title")}
@@ -264,7 +277,9 @@ function AboutSection() {
       <div
         className={`border-l-4 border-brand-primary bg-brand-primary/5 ${spacing.pad.default} ${radius.default}`}
       >
-        <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>
+        <h4
+          className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}
+        >
           {t("content.about.openSource.title")}
         </h4>
         <p className="body-small text-text-secondary">
@@ -273,15 +288,23 @@ function AboutSection() {
       </div>
 
       <div>
-        <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.heading}`}>
+        <h4
+          className={`font-semibold text-text-primary ${spacing.margin.bottom.heading}`}
+        >
           {t("content.about.versionInfo.title")}
         </h4>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 body-small">
-          <dt className="text-text-muted">{t("content.about.versionInfo.currentVersion")}</dt>
+          <dt className="text-text-muted">
+            {t("content.about.versionInfo.currentVersion")}
+          </dt>
           <dd className="font-mono text-text-primary">v0.13.0</dd>
-          <dt className="text-text-muted">{t("content.about.versionInfo.backend")}</dt>
+          <dt className="text-text-muted">
+            {t("content.about.versionInfo.backend")}
+          </dt>
           <dd className="text-text-primary">Go 1.25+</dd>
-          <dt className="text-text-muted">{t("content.about.versionInfo.frontend")}</dt>
+          <dt className="text-text-muted">
+            {t("content.about.versionInfo.frontend")}
+          </dt>
           <dd className="text-text-primary">React 18 + TypeScript</dd>
         </dl>
       </div>
@@ -291,7 +314,9 @@ function AboutSection() {
 
 function GettingStartedSection() {
   const { t } = useTranslation("help");
-  const tips = t("content.gettingStarted.proTips.tips", { returnObjects: true }) as string[];
+  const tips = t("content.gettingStarted.proTips.tips", {
+    returnObjects: true,
+  }) as string[];
   return (
     <div className="section-gap max-w-3xl">
       <h3 className={`heading-2 ${spacing.margin.bottom.heading}`}>
@@ -322,7 +347,9 @@ function GettingStartedSection() {
         <StepCard
           number={5}
           title={t("content.gettingStarted.steps.exploreCards.title")}
-          description={t("content.gettingStarted.steps.exploreCards.description")}
+          description={t(
+            "content.gettingStarted.steps.exploreCards.description"
+          )}
         />
       </div>
 
@@ -335,7 +362,9 @@ function GettingStartedSection() {
           <span className="text-status-info">💡</span>
           {t("content.gettingStarted.proTips.title")}
         </h4>
-        <ul className={`body-small stack-sm ${spacing.margin.left.spacious} list-disc`}>
+        <ul
+          className={`body-small stack-sm ${spacing.margin.left.spacious} list-disc`}
+        >
           {tips.map((tip, index) => (
             <li key={index}>{tip}</li>
           ))}
@@ -349,7 +378,9 @@ function LinkStatusSection() {
   const { t } = useTranslation("help");
   return (
     <HelpContentSection title={t("sections.link")}>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
         {t("content.linkStatus.description")}
       </p>
       <HelpTermList
@@ -384,7 +415,9 @@ function CableTestSection() {
   const { t } = useTranslation("help");
   return (
     <HelpContentSection title={t("sections.cable")}>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
         {t("content.cableTest.description")}
       </p>
       <HelpTermList
@@ -411,7 +444,8 @@ function CableTestSection() {
         className={`${spacing.margin.top.content} bg-status-warning/10 border border-status-warning/20 ${radius.default} ${spacing.pad.sm}`}
       >
         <p className="caption text-status-warning">
-          <strong>{t("common:labels.note", "Note")}:</strong> {t("content.cableTest.note")}
+          <strong>{t("common:labels.note", "Note")}:</strong>{" "}
+          {t("content.cableTest.note")}
         </p>
       </div>
     </HelpContentSection>
@@ -422,7 +456,9 @@ function WiFiStatusSection() {
   const { t } = useTranslation("help");
   return (
     <HelpContentSection title={t("sections.wifi")}>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
         {t("content.wifiStatus.description")}
       </p>
       <HelpTermList
@@ -434,7 +470,8 @@ function WiFiStatusSection() {
           },
           {
             term: "BSSID",
-            description: "Basic Service Set Identifier - MAC address of the access point.",
+            description:
+              "Basic Service Set Identifier - MAC address of the access point.",
           },
           {
             term: "Signal Strength",
@@ -466,14 +503,17 @@ function NetworkSection() {
   const { t } = useTranslation("help");
   return (
     <HelpContentSection title={t("sections.network")}>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
         {t("content.networkDhcp.description")}
       </p>
       <HelpTermList
         items={[
           {
             term: "Lease Time",
-            description: "Duration of current IP address assignment before renewal is needed.",
+            description:
+              "Duration of current IP address assignment before renewal is needed.",
           },
           {
             term: "DHCP Server",
@@ -482,7 +522,8 @@ function NetworkSection() {
           },
           {
             term: "Gateway",
-            description: "Default gateway assigned by DHCP for routing traffic off-subnet.",
+            description:
+              "Default gateway assigned by DHCP for routing traffic off-subnet.",
           },
           {
             term: "DNS Servers",
@@ -502,18 +543,22 @@ function GatewaySection() {
   const { t } = useTranslation("help");
   return (
     <HelpContentSection title={t("sections.gateway")}>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
         {t("content.gatewayHelp.description")}
       </p>
       <HelpTermList
         items={[
           {
             term: "IPv4 Gateway",
-            description: "Default router for IPv4 traffic leaving your local network.",
+            description:
+              "Default router for IPv4 traffic leaving your local network.",
           },
           {
             term: "IPv6 Gateway",
-            description: "Default router for IPv6 traffic (may be link-local address).",
+            description:
+              "Default router for IPv6 traffic (may be link-local address).",
           },
           {
             term: "Reachability",
@@ -521,11 +566,13 @@ function GatewaySection() {
           },
           {
             term: "Latency",
-            description: "Round-trip time to gateway. Should be <1ms for local networks.",
+            description:
+              "Round-trip time to gateway. Should be <1ms for local networks.",
           },
           {
             term: "Packet Loss",
-            description: "Percentage of ping packets that didn't receive a response.",
+            description:
+              "Percentage of ping packets that didn't receive a response.",
           },
         ]}
       />
@@ -537,7 +584,9 @@ function DNSSection() {
   const { t } = useTranslation("help");
   return (
     <HelpContentSection title={t("sections.dns")}>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
         {t("content.dnsTests.description")}
       </p>
       <HelpTermList
@@ -556,7 +605,8 @@ function DNSSection() {
           },
           {
             term: "Latency",
-            description: "Time taken for the DNS query to complete. Good: <50ms for local DNS.",
+            description:
+              "Time taken for the DNS query to complete. Good: <50ms for local DNS.",
           },
         ]}
       />
@@ -568,7 +618,9 @@ function PerformanceSection() {
   const { t } = useTranslation("help");
   return (
     <HelpContentSection title={t("sections.performance")}>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
         {t("content.performanceTests.description")}
       </p>
       <HelpTermList
@@ -610,7 +662,9 @@ function DiscoverySection() {
   const { t } = useTranslation("help");
   return (
     <HelpContentSection title={t("sections.discovery")}>
-      <p className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}>
+      <p
+        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+      >
         {t("content.networkDiscovery.description")}
       </p>
       <HelpTermList
@@ -627,7 +681,8 @@ function DiscoverySection() {
           },
           {
             term: "Vendor",
-            description: "Manufacturer identified from the MAC address OUI (first 3 bytes).",
+            description:
+              "Manufacturer identified from the MAC address OUI (first 3 bytes).",
           },
           {
             term: "Hostname",
@@ -648,12 +703,22 @@ function DiscoverySection() {
 // HELPER COMPONENTS
 // ============================================================================
 
-function FeatureCard({ title, description }: { title: string; description: string }) {
+function FeatureCard({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div
       className={`bg-surface-hover border border-surface-border ${radius.lg} ${spacing.pad.default}`}
     >
-      <h4 className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>{title}</h4>
+      <h4
+        className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}
+      >
+        {title}
+      </h4>
       <p className="body-small text-text-secondary">{description}</p>
     </div>
   );
@@ -676,14 +741,22 @@ function StepCard({
         {number}
       </div>
       <div className="flex-1">
-        <h4 className={`font-semibold ${spacing.margin.bottom.inline}`}>{title}</h4>
+        <h4 className={`font-semibold ${spacing.margin.bottom.inline}`}>
+          {title}
+        </h4>
         <p className="body-small">{description}</p>
       </div>
     </div>
   );
 }
 
-function HelpContentSection({ title, children }: { title: string; children: ReactNode }) {
+function HelpContentSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
   return (
     <div className="max-w-3xl">
       <h3 className={`heading-2 ${spacing.margin.bottom.content}`}>{title}</h3>
@@ -692,12 +765,21 @@ function HelpContentSection({ title, children }: { title: string; children: Reac
   );
 }
 
-function HelpTermList({ items }: { items: Array<{ term: string; description: string }> }) {
+function HelpTermList({
+  items,
+}: {
+  items: Array<{ term: string; description: string }>;
+}) {
   return (
     <dl className="stack-lg">
       {items.map((item, idx) => (
-        <div key={idx} className={`border-l-2 border-surface-border ${spacing.pad.default}`}>
-          <dt className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}>
+        <div
+          key={idx}
+          className={`border-l-2 border-surface-border ${spacing.pad.default}`}
+        >
+          <dt
+            className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}
+          >
             {item.term}
           </dt>
           <dd className="body-small text-text-secondary">{item.description}</dd>

@@ -31,7 +31,13 @@
  */
 
 import { ReactNode } from "react";
-import { icon as iconTokens, layout, radius, modal, spacing } from "../../styles/theme";
+import {
+  icon as iconTokens,
+  layout,
+  radius,
+  modal,
+  spacing,
+} from "../../styles/theme";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -43,21 +49,22 @@ interface HelpModalProps {
 /**
  * Modal dialog for displaying help and documentation content.
  */
-export function HelpModal({ isOpen, onClose, title, children }: HelpModalProps) {
+export function HelpModal({
+  isOpen,
+  onClose,
+  title,
+  children,
+}: HelpModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${spacing.pad.default}`}>
+    <div className={modal.overlay}>
       {/* Backdrop */}
-      <div
-        className={`absolute inset-0 ${modal.overlay} backdrop-blur-sm`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
 
       {/* Modal */}
       <div
-        className={`relative bg-surface-raised border border-surface-border ${radius.lg} shadow-xl max-w-2xl w-full max-h-modal overflow-hidden flex flex-col`}
+        className={`relative ${modal.content} ${modal.size.md} ${radius.lg} flex flex-col overflow-hidden`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-modal-title"
@@ -74,7 +81,11 @@ export function HelpModal({ isOpen, onClose, title, children }: HelpModalProps) 
             className={`${spacing.iconBtn.sm} text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-base`}
             aria-label="Close help"
           >
-            <svg className={iconTokens.size.md} viewBox="0 0 20 20" fill="currentColor">
+            <svg
+              className={iconTokens.size.md}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
               <path
                 fillRule="evenodd"
                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -85,7 +96,9 @@ export function HelpModal({ isOpen, onClose, title, children }: HelpModalProps) 
         </div>
 
         {/* Content */}
-        <div className={`${spacing.pad.default} overflow-y-auto flex-1`}>{children}</div>
+        <div className={`${spacing.pad.default} overflow-y-auto flex-1`}>
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -125,7 +138,11 @@ export function HelpItem({ term, description, color }: HelpItemProps) {
   return (
     <div className={`flex ${spacing.gap.default} body-small`}>
       <div className={`flex items-center ${spacing.gap.compact} shrink-0 w-24`}>
-        {color && <span className={`inline-block w-2.5 h-2.5 ${radius.full} ${color}`} />}{" "}
+        {color && (
+          <span
+            className={`inline-block w-2.5 h-2.5 ${radius.full} ${color}`}
+          />
+        )}{" "}
         {/* w-2.5 h-2.5 for status dot */}
         <span className="font-medium text-text-primary">{term}</span>
       </div>

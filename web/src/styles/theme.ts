@@ -273,7 +273,8 @@ export const button = {
 
   variant: {
     primary: "bg-brand-primary text-text-inverse hover:bg-brand-accent",
-    secondary: "border border-surface-border bg-surface-raised hover:bg-surface-hover",
+    secondary:
+      "border border-surface-border bg-surface-raised hover:bg-surface-hover",
     ghost: "hover:bg-surface-hover",
     danger: "bg-status-error text-text-inverse hover:opacity-90",
     success: "bg-status-success text-text-inverse hover:opacity-90",
@@ -424,7 +425,8 @@ export const sizing = {
  * Modal/Dialog variants
  */
 export const modal = {
-  overlay: "fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4",
+  overlay: "fixed inset-0 z-50 flex items-center justify-center p-4",
+  backdrop: "absolute inset-0 bg-black/50 backdrop-blur-sm",
   content:
     "bg-surface-raised border border-surface-border rounded-lg shadow-xl max-h-modal overflow-y-auto",
 
@@ -667,7 +669,8 @@ export const layout = {
   // Grid layouts
   grid: {
     // Responsive card grids
-    cards: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4",
+    cards:
+      "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-comfortable",
     cardsWide: "grid grid-cols-1 lg:grid-cols-3 gap-6",
     // Form layouts
     form2col: "grid grid-cols-2 gap-2",
@@ -702,7 +705,9 @@ export const layout = {
 /**
  * Combine class names, filtering out falsy values
  */
-export function cn(...classes: (string | boolean | undefined | null)[]): string {
+export function cn(
+  ...classes: (string | boolean | undefined | null)[]
+): string {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -722,7 +727,12 @@ export function buttonClass(
   size: keyof typeof button.size = "md",
   className?: string
 ): string {
-  return cn(button.base, buttonVariantMap.get(variant), buttonSizeMap.get(size), className);
+  return cn(
+    button.base,
+    buttonVariantMap.get(variant),
+    buttonSizeMap.get(size),
+    className
+  );
 }
 
 // Type-safe Maps for input lookups
@@ -741,7 +751,12 @@ export function inputClass(
   size: keyof typeof input.size = "md",
   className?: string
 ): string {
-  return cn(input.base, inputStateMap.get(state), inputSizeMap.get(size), className);
+  return cn(
+    input.base,
+    inputStateMap.get(state),
+    inputSizeMap.get(size),
+    className
+  );
 }
 
 // Type-safe Maps for card lookups
@@ -760,7 +775,12 @@ export function cardClass(
   padding: keyof typeof card.padding = "md",
   className?: string
 ): string {
-  return cn(card.base, cardVariantMap.get(variant), cardPaddingMap.get(padding), className);
+  return cn(
+    card.base,
+    cardVariantMap.get(variant),
+    cardPaddingMap.get(padding),
+    className
+  );
 }
 
 // Type-safe Map for badge lookups
@@ -794,5 +814,10 @@ export function modalClass(
   padding: keyof typeof modal.padding = "md",
   className?: string
 ): string {
-  return cn(modal.content, modalSizeMap.get(size), modalPaddingMap.get(padding), className);
+  return cn(
+    modal.content,
+    modalSizeMap.get(size),
+    modalPaddingMap.get(padding),
+    className
+  );
 }
