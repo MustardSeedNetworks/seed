@@ -9,7 +9,7 @@
 # =============================================================================
 
 # Stage 1: Build frontend
-FROM node:25-noble AS builder-frontend
+FROM node:25.2.1-bookworm AS builder-frontend
 WORKDIR /app/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
@@ -17,7 +17,7 @@ COPY web/ .
 RUN npm run build
 
 # Stage 2: Build Go backend with embedded frontend
-FROM golang:1.25-noble AS builder-backend
+FROM golang:1.25.5-bookworm AS builder-backend
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libpcap-dev ca-certificates && \
