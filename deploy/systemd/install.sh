@@ -165,19 +165,15 @@ if systemctl is-active --quiet seed; then
         log_info "Configuration file created at: $INSTALL_DIR/configs/seed.yaml"
     fi
 
-    # Generate and display initial credentials (fixes #489)
-    CRED_FILE="$INSTALL_DIR/.seed-credentials"
-    log_info "Generating initial admin credentials..."
-    if "$INSTALL_DIR/$BINARY_NAME" credentials -config "$INSTALL_DIR/configs/seed.yaml" -file "$CRED_FILE"; then
+    # Check if initial setup is required and display instructions
+    log_info "Checking setup status..."
+    if "$INSTALL_DIR/$BINARY_NAME" credentials --config "$INSTALL_DIR/configs/seed.yaml" --json 2>/dev/null | grep -q '"needs_setup":true'; then
         echo ""
-        cat "$CRED_FILE"
+        log_warn "Initial setup required!"
+        log_warn "Visit the web UI to set your admin password: https://$(hostname -I | awk '{print $1}'):8443"
         echo ""
-        log_warn "Credentials saved to: $CRED_FILE (mode 0600)"
-        log_warn "DELETE this file after saving the credentials securely!"
-        # Set ownership on credentials file
-        chown "$SERVICE_USER:$SERVICE_GROUP" "$CRED_FILE"
     else
-        log_warn "Could not generate credentials. Visit the web UI to complete setup."
+        log_info "Setup already complete. Use the web UI to change your password if needed."
     fi
 else
     log_error "The Seed failed to start. Check logs with: journalctl -u seed"

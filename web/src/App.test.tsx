@@ -164,7 +164,8 @@ describe("App", () => {
       if (url.includes("/api/interfaces")) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve([{ name: "eth0", type: "ethernet", up: true }]),
+          json: () =>
+            Promise.resolve([{ name: "eth0", type: "ethernet", up: true }]),
         });
       }
       // Default response for other endpoints (including version)
@@ -187,10 +188,14 @@ describe("App", () => {
       await waitFor(() => {
         expect(screen.getByText("The Seed")).toBeInTheDocument();
       });
-      expect(screen.getByText("Network Diagnostics by Mustard Seed Networks")).toBeInTheDocument();
+      expect(
+        screen.getByText("Network Diagnostics by Mustard Seed Networks")
+      ).toBeInTheDocument();
       expect(screen.getByPlaceholderText("admin")).toBeInTheDocument();
       expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /login/i })
+      ).toBeInTheDocument();
     });
 
     it("shows default credentials hint", async () => {
@@ -206,7 +211,8 @@ describe("App", () => {
         if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
         if (url.includes("/api/status")) {
@@ -264,7 +270,8 @@ describe("App", () => {
         if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
         if (url.includes("/api/status")) {
@@ -315,7 +322,8 @@ describe("App", () => {
         if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
         if (url.includes("/api/status")) {
@@ -353,7 +361,9 @@ describe("App", () => {
       fireEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /logging in/i })).toBeDisabled();
+        expect(
+          screen.getByRole("button", { name: /logging in/i })
+        ).toBeDisabled();
       });
 
       // Cleanup - resolve the pending promise
@@ -370,7 +380,8 @@ describe("App", () => {
         if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
         if (url.includes("/api/status")) {
@@ -378,13 +389,21 @@ describe("App", () => {
           return Promise.resolve({
             ok: true,
             status: 200,
-            json: () => Promise.resolve({ version: "test", authenticated: true }),
+            json: () =>
+              Promise.resolve({ version: "test", authenticated: true }),
           });
         }
         if (url.includes("/api/settings")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ thresholds: {} }),
+          });
+        }
+        if (url.includes("/api/interfaces")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve([{ name: "eth0", type: "ethernet", up: true }]),
           });
         }
         return Promise.resolve({
@@ -398,7 +417,9 @@ describe("App", () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText("The Seed")).toBeInTheDocument();
+        // Multiple "The Seed" elements may exist (header + other places)
+        const seedElements = screen.getAllByText("The Seed");
+        expect(seedElements.length).toBeGreaterThan(0);
       });
 
       // Should show logout button(s) - desktop and mobile versions may both render
