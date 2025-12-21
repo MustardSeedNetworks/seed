@@ -36,6 +36,7 @@
  * State: Manages speedtest, iperf, and suggestion configurations
  */
 
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
@@ -47,7 +48,12 @@ import {
   spacing,
   input as inputTokens,
 } from "../../../styles/theme";
-import { TestsSettings, IperfSettings, IperfSuggestion, SaveStatus } from "../../../types/settings";
+import {
+  TestsSettings,
+  IperfSettings,
+  IperfSuggestion,
+  SaveStatus,
+} from "../../../types/settings";
 
 interface PerformanceSettingsProps {
   testsSettings: TestsSettings;
@@ -63,8 +69,9 @@ interface PerformanceSettingsProps {
 
 /**
  * Settings section for speed test and iPerf performance testing configuration.
+ * Memoized to prevent unnecessary re-renders when parent state changes.
  */
-export function PerformanceSettings({
+export const PerformanceSettings = memo(function PerformanceSettings({
   testsSettings,
   setTestsSettings,
   iperfSettings,
@@ -111,7 +118,9 @@ export function PerformanceSettings({
               <span className="body-small text-text-primary font-medium">
                 {t("performance.enableSpeedtest")}
               </span>
-              <p className="caption text-text-muted">{t("performance.speedtestDesc")}</p>
+              <p className="caption text-text-muted">
+                {t("performance.speedtestDesc")}
+              </p>
             </div>
             <input
               type="checkbox"
@@ -132,7 +141,9 @@ export function PerformanceSettings({
               <span className="body-small text-text-primary font-medium">
                 {t("performance.enableIperf")}
               </span>
-              <p className="caption text-text-muted">{t("performance.iperfDesc")}</p>
+              <p className="caption text-text-muted">
+                {t("performance.iperfDesc")}
+              </p>
             </div>
             <input
               type="checkbox"
@@ -149,7 +160,9 @@ export function PerformanceSettings({
         </div>
 
         {/* Auto-Run on Link Up */}
-        <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
+        <div
+          className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+        >
           <span className="caption text-text-muted font-medium">
             {t("performance.autoRunOnLink")}
           </span>
@@ -157,7 +170,9 @@ export function PerformanceSettings({
             <label
               className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
             >
-              <span className="body-small text-text-primary">{t("performance.speedtest")}</span>
+              <span className="body-small text-text-primary">
+                {t("performance.speedtest")}
+              </span>
               <input
                 type="checkbox"
                 checked={testsSettings.speedtest.autoRunOnLink}
@@ -176,7 +191,9 @@ export function PerformanceSettings({
             <label
               className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
             >
-              <span className="body-small text-text-primary">{t("performance.iperf")}</span>
+              <span className="body-small text-text-primary">
+                {t("performance.iperf")}
+              </span>
               <input
                 type="checkbox"
                 checked={testsSettings.iperf.autoRunOnLink}
@@ -196,7 +213,9 @@ export function PerformanceSettings({
         </div>
 
         {/* Internet Speed (Speedtest) Subsection */}
-        <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
+        <div
+          className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+        >
           <h4
             className={`body-small font-semibold text-text-primary ${spacing.margin.bottom.inline} uppercase tracking-wide`}
           >
@@ -222,8 +241,12 @@ export function PerformanceSettings({
                 placeholder={t("performance.autoClosestServer")}
                 className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small`}
               />
-              <div className={`${layout.flex.between} ${spacing.margin.top.tight}`}>
-                <p className="caption text-text-muted">{t("performance.autoSelectDesc")}</p>
+              <div
+                className={`${layout.flex.between} ${spacing.margin.top.tight}`}
+              >
+                <p className="caption text-text-muted">
+                  {t("performance.autoSelectDesc")}
+                </p>
                 <button
                   type="button"
                   onClick={() =>
@@ -249,7 +272,9 @@ export function PerformanceSettings({
             {t("performance.lanSpeed")}
           </h4>
           <div className="stack">
-            <p className="caption text-text-muted">{t("performance.lanSpeedDesc")}</p>
+            <p className="caption text-text-muted">
+              {t("performance.lanSpeedDesc")}
+            </p>
 
             {/* Server Address */}
             <div>
@@ -268,7 +293,9 @@ export function PerformanceSettings({
                 placeholder="192.168.1.100"
                 className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
               />
-              <div className={`${layout.flex.between} ${spacing.margin.top.inline}`}>
+              <div
+                className={`${layout.flex.between} ${spacing.margin.top.inline}`}
+              >
                 <button
                   type="button"
                   disabled={iperfSuggestionsStatus === "loading"}
@@ -302,7 +329,9 @@ export function PerformanceSettings({
                 )}
               </div>
               {iperfSuggestionsStatus === "error" && (
-                <p className={`caption text-status-warning ${spacing.margin.top.tight}`}>
+                <p
+                  className={`caption text-status-warning ${spacing.margin.top.tight}`}
+                >
                   {iperfSuggestionsError || t("performance.noIperfHosts")}
                 </p>
               )}
@@ -322,10 +351,16 @@ export function PerformanceSettings({
                         }))
                       }
                     >
-                      <span className="font-medium">{sugg.hostname || sugg.host}</span>
-                      <span className={`text-text-muted ${spacing.margin.left.tight}`}>
+                      <span className="font-medium">
+                        {sugg.hostname || sugg.host}
+                      </span>
+                      <span
+                        className={`text-text-muted ${spacing.margin.left.tight}`}
+                      >
                         {sugg.hostname ? `(${sugg.host})` : ""}
-                        {sugg.latencyMs !== undefined ? ` · ${Math.round(sugg.latencyMs)}ms` : ""}
+                        {sugg.latencyMs !== undefined
+                          ? ` · ${Math.round(sugg.latencyMs)}ms`
+                          : ""}
                       </span>
                     </button>
                   ))}
@@ -335,7 +370,10 @@ export function PerformanceSettings({
 
             {/* Port */}
             <div>
-              <label className="caption text-text-muted font-medium" htmlFor="iperf-port">
+              <label
+                className="caption text-text-muted font-medium"
+                htmlFor="iperf-port"
+              >
                 {t("performance.port")}
               </label>
               <input
@@ -408,41 +446,46 @@ export function PerformanceSettings({
                 role="radiogroup"
                 aria-label="Direction selection"
               >
-                {(["download", "upload", "bidirectional"] as const).map((direction) => {
-                  const checked = iperfSettings.direction === direction;
-                  return (
-                    <label
-                      key={direction}
-                      className={`cursor-pointer ${spacing.chip.md} ${radius.full} border body-small font-medium transition-colors ${
-                        checked
-                          ? "bg-brand-primary text-text-inverse border-brand-primary"
-                          : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="iperf-direction"
-                        value={direction}
-                        checked={checked}
-                        onChange={() =>
-                          setIperfSettings((prev) => ({
-                            ...prev,
-                            direction: direction,
-                          }))
-                        }
-                        className="sr-only"
-                        aria-label={`${getDirectionLabel(direction)} direction`}
-                      />
-                      {getDirectionLabel(direction)}
-                    </label>
-                  );
-                })}
+                {(["download", "upload", "bidirectional"] as const).map(
+                  (direction) => {
+                    const checked = iperfSettings.direction === direction;
+                    return (
+                      <label
+                        key={direction}
+                        className={`cursor-pointer ${spacing.chip.md} ${radius.full} border body-small font-medium transition-colors ${
+                          checked
+                            ? "bg-brand-primary text-text-inverse border-brand-primary"
+                            : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="iperf-direction"
+                          value={direction}
+                          checked={checked}
+                          onChange={() =>
+                            setIperfSettings((prev) => ({
+                              ...prev,
+                              direction: direction,
+                            }))
+                          }
+                          className="sr-only"
+                          aria-label={`${getDirectionLabel(direction)} direction`}
+                        />
+                        {getDirectionLabel(direction)}
+                      </label>
+                    );
+                  }
+                )}
               </div>
             </div>
 
             {/* Duration */}
             <div>
-              <label className="caption text-text-muted font-medium" htmlFor="iperf-duration">
+              <label
+                className="caption text-text-muted font-medium"
+                htmlFor="iperf-duration"
+              >
                 {t("performance.duration")}
               </label>
               <input
@@ -462,7 +505,9 @@ export function PerformanceSettings({
             </div>
 
             {/* Server Mode */}
-            <div className={`border-t border-surface-border ${spacing.padding.top.heading}`}>
+            <div
+              className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+            >
               <label
                 className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border ${spacing.margin.bottom.inline}`}
               >
@@ -482,7 +527,10 @@ export function PerformanceSettings({
                 />
               </label>
               <div>
-                <label className="caption text-text-muted font-medium" htmlFor="iperf-server-port">
+                <label
+                  className="caption text-text-muted font-medium"
+                  htmlFor="iperf-server-port"
+                >
                   {t("performance.serverPort")}
                 </label>
                 <input
@@ -498,7 +546,9 @@ export function PerformanceSettings({
                   className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
                 />
               </div>
-              <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+              <p
+                className={`caption text-text-muted ${spacing.margin.top.tight}`}
+              >
                 {t("performance.serverAutoStart")}
               </p>
             </div>
@@ -507,4 +557,4 @@ export function PerformanceSettings({
       </div>
     </CollapsibleSection>
   );
-}
+});

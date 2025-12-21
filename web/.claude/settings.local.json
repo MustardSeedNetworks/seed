@@ -18,7 +18,11 @@
       "Bash(gofumpt:*)",
       "Bash(goimports:*)",
       "Bash(go run:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(scp:*)",
+      "Bash(xargs -I{} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && grep -E \"\"\"\"^export \\(function|const.*= memo\\)\"\"\"\" {} | head -2')",
+      "Bash(for f in /Users/krisarmstrong/Developer/projects/seed/web/src/components/settings/sections/*.tsx)",
+      "Bash(do echo '=== $\\(basename $f\\) ===' grep -E \"^export \\(function|const.*= memo\\)\" $f)"
     ]
   }
 }
