@@ -1199,7 +1199,7 @@ function App() {
   // Show loading while checking setup status
   if (needsSetup === null) {
     return (
-      <div className="min-h-screen bg-surface-base flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-text-muted">{t("status.loading")}</div>
       </div>
     );
@@ -1216,7 +1216,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-base text-text-primary font-body">
+    <div className="min-h-screen text-text-primary font-body">
       <HeaderBar
         wsStatus={wsStatus}
         onReconnect={reconnect}
@@ -1540,7 +1540,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   };
 
   return (
-    <div className={`min-h-screen bg-surface-base ${layout.flex.center} pad`}>
+    <div className={`min-h-screen ${layout.flex.center} pad`}>
       <div className="w-full max-w-sm">
         <div className={`text-center ${spacing.margin.bottom.sectionLg}`}>
           <div className="w-16 h-16 mx-auto text-brand-primary">
