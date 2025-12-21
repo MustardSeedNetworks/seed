@@ -191,6 +191,8 @@ function App() {
   // Fix #572: Don't hardcode interface name - fetch from backend
   const [currentInterface, setCurrentInterface] = useState("");
   const [isWifi, setIsWifi] = useState(false);
+  // Track if user manually selected Wi-Fi/Ethernet mode - prevents auto-switching from API responses
+  const userSetWifiModeRef = useRef(false);
   const [interfaces, setInterfaces] = useState<
     Array<{
       name: string;
@@ -243,7 +245,11 @@ function App() {
         setCurrentInterface(payload.interface);
       }
 
-      if (typeof payload.isWireless === "boolean") {
+      // Only auto-set WiFi mode if user hasn't manually selected
+      if (
+        typeof payload.isWireless === "boolean" &&
+        !userSetWifiModeRef.current
+      ) {
         setIsWifi(payload.isWireless);
       }
 
@@ -644,10 +650,16 @@ function App() {
               security: data.security || "Unknown",
             },
           }));
-          setIsWifi(true);
+          // Only auto-set WiFi mode if user hasn't manually selected
+          if (!userSetWifiModeRef.current) {
+            setIsWifi(true);
+          }
         } else {
           setCards((prev) => ({ ...prev, wifi: null }));
-          setIsWifi(data.wireless === true);
+          // Only auto-set WiFi mode if user hasn't manually selected
+          if (!userSetWifiModeRef.current) {
+            setIsWifi(data.wireless === true);
+          }
         }
       }
     } catch (err) {
@@ -843,8 +855,10 @@ function App() {
         if (response.ok) {
           const data = await response.json();
           setCurrentInterface(interfaceName);
-          // Use isWireless from API response (works for macOS and Linux)
-          setIsWifi(data.isWireless === true);
+          // Only auto-set WiFi mode if user hasn't manually selected via Ethernet/WiFi buttons
+          if (!userSetWifiModeRef.current) {
+            setIsWifi(data.isWireless === true);
+          }
           // Refresh data for new interface
           fetchLinkData();
           fetchIPConfig();
@@ -882,15 +896,22 @@ function App() {
   );
   const switchToInterfaceType = useCallback(
     (type: "ethernet" | "wifi") => {
+      // Mark that user explicitly selected this mode - prevents API responses from flipping back
+      userSetWifiModeRef.current = true;
+
       const candidates = interfaces.filter((iface) => iface.type === type);
       // If switching to WiFi with no WiFi interfaces, still allow UI to show WiFi view
       // for planning/survey purposes (Fix #572 extension)
       if (candidates.length === 0) {
         if (type === "wifi") {
           setIsWifi(true);
+        } else {
+          setIsWifi(false);
         }
         return;
       }
+      // Set the mode immediately for responsive UI
+      setIsWifi(type === "wifi");
       // Prefer a link-up interface, otherwise first in list
       const target = candidates.find((iface) => iface.up) ?? candidates[0];
       if (target) {
