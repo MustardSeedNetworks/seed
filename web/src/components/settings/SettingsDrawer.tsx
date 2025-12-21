@@ -622,7 +622,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           runDiscovery: data.runDiscovery ?? true,
           speedtest: {
             serverId: data.speedtest?.serverId || "",
-            autoRunOnLink: data.speedtest?.autoRunOnLink || false,
+            autoRunOnLink: data.speedtest?.autoRunOnLink ?? true, // Default to true
           },
           iperf: {
             autoRunOnLink: data.iperf?.autoRunOnLink || false,
