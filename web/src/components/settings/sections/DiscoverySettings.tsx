@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
@@ -81,9 +81,10 @@ const SECURITY_LEVEL_VALUES = [
 ] as const;
 
 /**
- *
+ * Settings section for network discovery profiles and subnet management.
+ * Memoized to prevent unnecessary re-renders when parent state changes.
  */
-export function DiscoverySettings({
+export const DiscoverySettings = memo(function DiscoverySettings({
   networkDiscoverySettings,
   setNetworkDiscoverySettings,
   networkDiscoveryStatus,
@@ -1229,4 +1230,4 @@ export function DiscoverySettings({
       </div>
     </CollapsibleSection>
   );
-}
+});

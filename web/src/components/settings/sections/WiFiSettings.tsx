@@ -28,12 +28,21 @@
  * State: Manages active interface selection and WiFi-specific configurations
  */
 
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Wifi } from "../../ui/Icons";
-import { icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
-import { WiFiSettings as WiFiSettingsType, SaveStatus } from "../../../types/settings";
+import {
+  icon as iconTokens,
+  layout,
+  radius,
+  spacing,
+} from "../../../styles/theme";
+import {
+  WiFiSettings as WiFiSettingsType,
+  SaveStatus,
+} from "../../../types/settings";
 
 interface WiFiSettingsProps {
   wifiSettings: WiFiSettingsType;
@@ -43,8 +52,13 @@ interface WiFiSettingsProps {
 
 /**
  * Settings section for WiFi scanning configuration and adapter selection.
+ * Memoized to prevent unnecessary re-renders when parent state changes.
  */
-export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
+export const WiFiSettings = memo(function WiFiSettings({
+  wifiSettings,
+  setWifiSettings,
+  wifiStatus,
+}: WiFiSettingsProps) {
   const { t } = useTranslation("settings");
 
   return (
@@ -96,10 +110,12 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
             />
           )}
           <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
-            {wifiSettings.isWireless ? t("wifi.wirelessMonitoring") : t("wifi.noWireless")}
+            {wifiSettings.isWireless
+              ? t("wifi.wirelessMonitoring")
+              : t("wifi.noWireless")}
           </p>
         </div>
       </div>
     </CollapsibleSection>
   );
-}
+});
