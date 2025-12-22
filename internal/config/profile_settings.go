@@ -13,7 +13,11 @@ type ProfileSettings struct {
 	// Version for future migrations
 	Version int `json:"version"`
 
-	// Thresholds for network tests
+	// Interfaces contains per-interface configurations (v2+).
+	// Each profile can select one ethernet and one wifi interface.
+	Interfaces ProfileInterfaceConfigs `json:"interfaces,omitempty"`
+
+	// Thresholds for network tests (profile-level defaults, can be overridden per-interface)
 	Thresholds ProfileThresholds `json:"thresholds,omitempty"`
 
 	// HealthChecks contains custom test configurations
@@ -217,8 +221,33 @@ type ProfileFingerprintingConfig struct {
 	ServiceProbes bool `json:"service_probes"`
 }
 
+// ProfileInterfaceConfigs stores the selected interfaces for a profile.
+// Each profile can have one ethernet and one wifi interface selected.
+type ProfileInterfaceConfigs struct {
+	Ethernet *ProfileInterfaceSelection `json:"ethernet,omitempty" yaml:"ethernet,omitempty"`
+	WiFi     *ProfileInterfaceSelection `json:"wifi,omitempty" yaml:"wifi,omitempty"`
+}
+
+// ProfileInterfaceSelection stores configuration for a selected interface within a profile.
+// Per-interface settings (thresholds, health checks, etc.) will be added
+// as the multi-interface implementation progresses.
+type ProfileInterfaceSelection struct {
+	// Name is the interface name (e.g., "eth0", "wlan0").
+	Name string `json:"name" yaml:"name"`
+
+	// Enabled indicates if this interface is active for testing.
+	Enabled bool `json:"enabled" yaml:"enabled"`
+
+	// Thresholds for this specific interface (optional override).
+	Thresholds *ProfileThresholds `json:"thresholds,omitempty" yaml:"thresholds,omitempty"`
+
+	// HealthChecks for this specific interface (optional override).
+	HealthChecks *ProfileHealthChecks `json:"health_checks,omitempty" yaml:"health_checks,omitempty"`
+}
+
 // ProfileSettingsVersion is the current profile settings schema version.
-const ProfileSettingsVersion = 1
+// Version 2 adds per-interface configurations.
+const ProfileSettingsVersion = 2
 
 // NewProfileSettings creates a new ProfileSettings with defaults from config.
 func NewProfileSettings() *ProfileSettings {
@@ -565,5 +594,62 @@ func ParseProfileSettings(jsonStr string) (*ProfileSettings, error) {
 	if err := ps.FromJSON(jsonStr); err != nil {
 		return nil, err
 	}
+	// Migrate older versions.
+	ps.Migrate()
 	return ps, nil
+}
+
+// Migrate updates older profile settings to the current version.
+func (ps *ProfileSettings) Migrate() {
+	if ps.Version < 2 {
+		ps.migrateV1ToV2()
+	}
+	ps.Version = ProfileSettingsVersion
+}
+
+// migrateV1ToV2 migrates from v1 (no interface configs) to v2 (with interface configs).
+// V1 profiles had no interface selection - they used whatever was the system default.
+// V2 adds explicit interface selection per profile with optional per-interface settings.
+//
+// Migration behavior:
+//   - Interfaces are left empty (nil) - user will configure on first use.
+//   - Existing profile-level settings (thresholds, health checks, etc.) are preserved
+//     as defaults that apply when no per-interface override exists.
+//   - We don't pre-populate interfaces since we don't know which are available.
+func (ps *ProfileSettings) migrateV1ToV2() {
+	// No-op: interfaces are already nil by default.
+	// This function exists for documentation and future migration logic.
+	_ = ps // Prevent unused receiver warning.
+}
+
+// SetEthernetInterface sets the selected ethernet interface for this profile.
+func (ps *ProfileSettings) SetEthernetInterface(name string, enabled bool) {
+	ps.Interfaces.Ethernet = &ProfileInterfaceSelection{
+		Name:    name,
+		Enabled: enabled,
+	}
+}
+
+// SetWiFiInterface sets the selected WiFi interface for this profile.
+func (ps *ProfileSettings) SetWiFiInterface(name string, enabled bool) {
+	ps.Interfaces.WiFi = &ProfileInterfaceSelection{
+		Name:    name,
+		Enabled: enabled,
+	}
+}
+
+// GetEthernetInterfaceName returns the selected ethernet interface name, or empty string.
+func (ps *ProfileSettings) GetEthernetInterfaceName() string {
+	if ps.Interfaces.Ethernet != nil {
+		return ps.Interfaces.Ethernet.Name
+	}
+	return ""
+}
+
+// GetWiFiInterfaceName returns the selected WiFi interface name, or empty string.
+func (ps *ProfileSettings) GetWiFiInterfaceName() string {
+	if ps.Interfaces.WiFi != nil {
+		return ps.Interfaces.WiFi.Name
+	}
+	return ""
 }

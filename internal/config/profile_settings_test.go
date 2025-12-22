@@ -387,8 +387,9 @@ func TestParseProfileSettings(t *testing.T) {
 		t.Fatalf("ParseProfileSettings failed: %v", err)
 	}
 
-	if ps.Version != 1 {
-		t.Errorf("expected version 1, got %d", ps.Version)
+	// After parsing, v1 profiles are migrated to current version.
+	if ps.Version != ProfileSettingsVersion {
+		t.Errorf("expected version %d (migrated from v1), got %d", ProfileSettingsVersion, ps.Version)
 	}
 	if ps.Thresholds.DNS.Warning != 60 {
 		t.Errorf("expected DNS warning 60, got %d", ps.Thresholds.DNS.Warning)
@@ -415,6 +416,95 @@ func TestParseProfileSettingsInvalidJSON(t *testing.T) {
 	_, err := ParseProfileSettings("{invalid json}")
 	if err == nil {
 		t.Error("expected error for invalid JSON")
+	}
+}
+
+func TestProfileSettingsMigration(t *testing.T) {
+	// V1 profile should be migrated to V2.
+	v1JSON := `{"version": 1, "notes": "v1 profile"}`
+	ps, err := ParseProfileSettings(v1JSON)
+	if err != nil {
+		t.Fatalf("ParseProfileSettings failed: %v", err)
+	}
+
+	if ps.Version != ProfileSettingsVersion {
+		t.Errorf("expected version %d after migration, got %d", ProfileSettingsVersion, ps.Version)
+	}
+
+	// Notes should be preserved after migration.
+	if ps.Notes != "v1 profile" {
+		t.Errorf("expected notes 'v1 profile', got %s", ps.Notes)
+	}
+
+	// Interfaces should be empty (will be configured by user).
+	if ps.Interfaces.Ethernet != nil {
+		t.Error("expected nil Ethernet interface after migration")
+	}
+	if ps.Interfaces.WiFi != nil {
+		t.Error("expected nil WiFi interface after migration")
+	}
+}
+
+func TestProfileSettingsInterfaceSelection(t *testing.T) {
+	ps := NewProfileSettings()
+
+	// Set ethernet interface.
+	ps.SetEthernetInterface("eth0", true)
+	if ps.GetEthernetInterfaceName() != "eth0" {
+		t.Errorf("expected ethernet interface 'eth0', got '%s'", ps.GetEthernetInterfaceName())
+	}
+	if !ps.Interfaces.Ethernet.Enabled {
+		t.Error("expected ethernet interface to be enabled")
+	}
+
+	// Set WiFi interface.
+	ps.SetWiFiInterface("wlan0", true)
+	if ps.GetWiFiInterfaceName() != "wlan0" {
+		t.Errorf("expected WiFi interface 'wlan0', got '%s'", ps.GetWiFiInterfaceName())
+	}
+	if !ps.Interfaces.WiFi.Enabled {
+		t.Error("expected WiFi interface to be enabled")
+	}
+
+	// Test empty interface names.
+	ps2 := NewProfileSettings()
+	if ps2.GetEthernetInterfaceName() != "" {
+		t.Error("expected empty ethernet interface name for new profile")
+	}
+	if ps2.GetWiFiInterfaceName() != "" {
+		t.Error("expected empty WiFi interface name for new profile")
+	}
+}
+
+func TestProfileSettingsInterfaceJSON(t *testing.T) {
+	ps := NewProfileSettings()
+	ps.SetEthernetInterface("enp0s1", true)
+	ps.SetWiFiInterface("wlp2s0", false)
+
+	// Serialize to JSON.
+	jsonStr, err := ps.ToJSON()
+	if err != nil {
+		t.Fatalf("ToJSON failed: %v", err)
+	}
+
+	// Parse back.
+	ps2, err := ParseProfileSettings(jsonStr)
+	if err != nil {
+		t.Fatalf("ParseProfileSettings failed: %v", err)
+	}
+
+	if ps2.GetEthernetInterfaceName() != "enp0s1" {
+		t.Errorf("expected ethernet 'enp0s1', got '%s'", ps2.GetEthernetInterfaceName())
+	}
+	if !ps2.Interfaces.Ethernet.Enabled {
+		t.Error("expected ethernet to be enabled")
+	}
+
+	if ps2.GetWiFiInterfaceName() != "wlp2s0" {
+		t.Errorf("expected WiFi 'wlp2s0', got '%s'", ps2.GetWiFiInterfaceName())
+	}
+	if ps2.Interfaces.WiFi.Enabled {
+		t.Error("expected WiFi to be disabled")
 	}
 }
 
