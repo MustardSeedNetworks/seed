@@ -139,7 +139,7 @@ function App() {
   } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   // Use settings from context instead of local state
-  const { cardSettings, displayOptions } = useSettings();
+  const { cardSettings, displayOptions, refreshSettings } = useSettings();
   // Profile management (#754)
   const {
     profiles,
@@ -177,6 +177,29 @@ function App() {
       }
     });
   }, []);
+
+  // Refresh settings when profile changes (fixes #781)
+  const prevActiveProfileRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentProfileId = activeProfile?.id ?? null;
+    // Skip initial render and only refresh when profile actually changes
+    if (
+      prevActiveProfileRef.current !== null &&
+      prevActiveProfileRef.current !== currentProfileId
+    ) {
+      logger.info(
+        LogComponents.CONFIG,
+        "Profile changed, refreshing settings",
+        {
+          from: prevActiveProfileRef.current,
+          to: currentProfileId,
+        }
+      );
+      refreshSettings();
+    }
+    prevActiveProfileRef.current = currentProfileId;
+  }, [activeProfile?.id, refreshSettings]);
+
   const [cards, setCards] = useState<CardState>({
     link: null,
     cable: null,
