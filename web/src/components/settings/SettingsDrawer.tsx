@@ -40,6 +40,7 @@ import {
   button,
   input,
   spacing,
+  cn,
 } from "../../styles/theme";
 import {
   AutoSaveIndicator,
@@ -236,27 +237,46 @@ const VLANControl = memo(function VLANControl() {
           value={vlanId}
           onChange={(e) => setVlanId(e.target.value)}
           placeholder={t("network.vlan.placeholder")}
-          className={`flex-1 ${input.size.sm} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+          className={cn(
+            "flex-1",
+            input.size.sm,
+            "bg-surface-base border border-surface-border",
+            radius.md,
+            "body-small text-text-primary"
+          )}
           disabled={loading}
         />
         <button
           onClick={handleCreate}
           disabled={loading || !vlanId}
-          className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} body-small font-medium hover:bg-brand-accent disabled:opacity-50`}
+          className={cn(
+            button.size.sm,
+            "bg-brand-primary text-text-inverse",
+            radius.md,
+            "body-small font-medium hover:bg-brand-accent disabled:opacity-50"
+          )}
         >
           {t("network.vlan.add")}
         </button>
         <button
           onClick={handleDelete}
           disabled={loading || !vlanId}
-          className={`${button.size.sm} bg-status-error text-text-inverse ${radius.md} body-small font-medium hover:opacity-80 disabled:opacity-50`}
+          className={cn(
+            button.size.sm,
+            "bg-status-error text-text-inverse",
+            radius.md,
+            "body-small font-medium hover:opacity-80 disabled:opacity-50"
+          )}
         >
           {t("network.vlan.remove")}
         </button>
       </div>
       {message && (
         <p
-          className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}
+          className={cn(
+            "caption",
+            message.isError ? "text-status-error" : "text-status-success"
+          )}
         >
           {message.text}
         </p>
@@ -321,20 +341,34 @@ const MTUControl = memo(function MTUControl() {
           value={mtu}
           onChange={(e) => setMtu(e.target.value)}
           placeholder={t("network.mtuControl.placeholder")}
-          className={`flex-1 ${input.size.sm} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+          className={cn(
+            "flex-1",
+            input.size.sm,
+            "bg-surface-base border border-surface-border",
+            radius.md,
+            "body-small text-text-primary"
+          )}
           disabled={loading}
         />
         <button
           onClick={handleApply}
           disabled={loading}
-          className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} body-small font-medium hover:bg-brand-accent disabled:opacity-50`}
+          className={cn(
+            button.size.md,
+            "bg-brand-primary text-text-inverse",
+            radius.md,
+            "body-small font-medium hover:bg-brand-accent disabled:opacity-50"
+          )}
         >
           {loading ? t("network.applying") : t("network.mtuControl.apply")}
         </button>
       </div>
       {message && (
         <p
-          className={`caption ${message.isError ? "text-status-error" : "text-status-success"}`}
+          className={cn(
+            "caption",
+            message.isError ? "text-status-error" : "text-status-success"
+          )}
         >
           {message.text}
         </p>
@@ -1180,7 +1214,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 ${modal.overlay} z-40`}
+        className={cn("fixed inset-0", modal.overlay, "z-40")}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -1195,7 +1229,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       >
         {/* Header */}
         <div
-          className={`${layout.flex.between} pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10`}
+          className={cn(
+            layout.flex.between,
+            "pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10"
+          )}
         >
           <div className="stack-xs">
             <h2 id="settings-drawer-title" className="heading-3">
@@ -1206,7 +1243,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            className={`${button.size.md} ${radius.md} hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised`}
+            className={cn(
+              button.size.md,
+              radius.md,
+              "hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised"
+            )}
             aria-label={t("network.closeSettings")}
           >
             <svg
@@ -1227,7 +1268,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         </div>
 
         <div
-          className={`${spacing.drawerPad} section-gap body-small leading-relaxed`}
+          className={cn(
+            spacing.drawerPad,
+            "section-gap body-small leading-relaxed"
+          )}
         >
           {/* Drawer content padding includes pt-4 for top spacing */}
           {/* Network Section */}
@@ -1236,16 +1280,19 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             <div className="stack">
               <p className="section-title">{t("network.title")}</p>
               {/* Mode Toggle */}
-              <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+              <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
                 <button
                   onClick={() =>
                     setIPSettings((prev) => ({ ...prev, mode: "dhcp" }))
                   }
-                  className={`${spacing.tab} ${radius.md} body-small font-medium transition-colors ${
+                  className={cn(
+                    spacing.tab,
+                    radius.md,
+                    "body-small font-medium transition-colors",
                     ipSettings.mode === "dhcp"
                       ? "bg-brand-primary text-text-inverse"
                       : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
-                  }`}
+                  )}
                 >
                   {t("network.dhcp")}
                 </button>
@@ -1253,11 +1300,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                   onClick={() =>
                     setIPSettings((prev) => ({ ...prev, mode: "static" }))
                   }
-                  className={`${spacing.tab} ${radius.md} body-small font-medium transition-colors ${
+                  className={cn(
+                    spacing.tab,
+                    radius.md,
+                    "body-small font-medium transition-colors",
                     ipSettings.mode === "static"
                       ? "bg-brand-primary text-text-inverse"
                       : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover"
-                  }`}
+                  )}
                 >
                   {t("network.static")}
                 </button>
@@ -1266,7 +1316,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {/* Static IP Fields */}
               {ipSettings.mode === "static" && (
                 <div
-                  className={`stack ${spacing.padding.top.heading} border-t border-surface-border`}
+                  className={cn(
+                    "stack",
+                    spacing.padding.top.heading,
+                    "border-t border-surface-border"
+                  )}
                 >
                   <div>
                     <label className="caption font-medium">
@@ -1282,11 +1336,17 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="192.168.1.100"
-                      className={`w-full ${spacing.margin.top.tight} ${spacing.chip.sm} bg-surface-base border ${radius.md} body-small text-text-primary ${
+                      className={cn(
+                        "w-full",
+                        spacing.margin.top.tight,
+                        spacing.chip.sm,
+                        "bg-surface-base border",
+                        radius.md,
+                        "body-small text-text-primary",
                         ipSettings.address && !isValidIP(ipSettings.address)
                           ? "border-status-error"
                           : "border-surface-border"
-                      }`}
+                      )}
                     />
                   </div>
                   <div>
@@ -1303,7 +1363,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="24 or 255.255.255.0"
-                      className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+                      className={cn(
+                        "w-full",
+                        spacing.margin.top.tight,
+                        spacing.chip.lg,
+                        "bg-surface-base border border-surface-border",
+                        radius.md,
+                        "body-small text-text-primary"
+                      )}
                     />
                   </div>
                   <div>
@@ -1320,11 +1387,17 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="192.168.1.1"
-                      className={`w-full ${spacing.margin.top.tight} ${spacing.chip.sm} bg-surface-base border ${radius.md} body-small text-text-primary ${
+                      className={cn(
+                        "w-full",
+                        spacing.margin.top.tight,
+                        spacing.chip.sm,
+                        "bg-surface-base border",
+                        radius.md,
+                        "body-small text-text-primary",
                         ipSettings.gateway && !isValidIP(ipSettings.gateway)
                           ? "border-status-error"
                           : "border-surface-border"
-                      }`}
+                      )}
                     />
                   </div>
                   <div>
@@ -1336,7 +1409,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                       value={dnsInput}
                       onChange={(e) => setDnsInput(e.target.value)}
                       placeholder="8.8.8.8, 8.8.4.4"
-                      className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+                      className={cn(
+                        "w-full",
+                        spacing.margin.top.tight,
+                        spacing.chip.lg,
+                        "bg-surface-base border border-surface-border",
+                        radius.md,
+                        "body-small text-text-primary"
+                      )}
                     />
                   </div>
                 </div>
@@ -1349,7 +1429,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                   savingIP ||
                   (ipSettings.mode === "static" && !ipSettings.address)
                 }
-                className={`w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors`}
+                className={cn(
+                  "w-full",
+                  button.size.md,
+                  "bg-brand-primary text-text-inverse",
+                  radius.md,
+                  "font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors"
+                )}
               >
                 {savingIP
                   ? t("network.applying")
@@ -1358,11 +1444,12 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
               {ipMessage && (
                 <p
-                  className={`caption text-center ${
+                  className={cn(
+                    "caption text-center",
                     ipMessage.includes("Failed") || ipMessage.includes("Error")
                       ? "text-status-error"
                       : "text-status-success"
-                  }`}
+                  )}
                 >
                   {ipMessage}
                 </p>
@@ -1373,10 +1460,17 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
             {/* Display Options */}
             <div
-              className={`border-t border-surface-border ${spacing.padding.top.heading} ${spacing.margin.top.heading}`}
+              className={cn(
+                "border-t border-surface-border",
+                spacing.padding.top.heading,
+                spacing.margin.top.heading
+              )}
             >
               <p
-                className={`caption font-medium ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  "caption font-medium",
+                  spacing.margin.bottom.inline
+                )}
               >
                 {t("network.displayOptions")}{" "}
                 <AutoSaveIndicator status={displayStatus} />
@@ -1384,7 +1478,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               <div className="stack-sm">
                 {/* Measurement Units */}
                 <div
-                  className={`flex items-center justify-between ${spacing.pad.xs} bg-surface-base ${radius.md} border border-surface-border`}
+                  className={cn(
+                    "flex items-center justify-between",
+                    spacing.pad.xs,
+                    "bg-surface-base",
+                    radius.md,
+                    "border border-surface-border"
+                  )}
                 >
                   <div>
                     <span className="body-small text-text-primary font-medium">
@@ -1402,7 +1502,12 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         unitSystem: e.target.value as "sae" | "metric",
                       }))
                     }
-                    className={`${input.size.sm} bg-surface-base border border-surface-border ${radius.md} body-small text-text-primary`}
+                    className={cn(
+                      input.size.sm,
+                      "bg-surface-base border border-surface-border",
+                      radius.md,
+                      "body-small text-text-primary"
+                    )}
                   >
                     <option value="sae">
                       {t("display.unitSae", "SAE (feet)")}
@@ -1415,7 +1520,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
                 {/* Show Public IP */}
                 <label
-                  className={`flex items-center justify-between ${spacing.pad.xs} bg-surface-base ${radius.md} border border-surface-border`}
+                  className={cn(
+                    "flex items-center justify-between",
+                    spacing.pad.xs,
+                    "bg-surface-base",
+                    radius.md,
+                    "border border-surface-border"
+                  )}
                 >
                   <div>
                     <span className="body-small text-text-primary font-medium">
@@ -1442,9 +1553,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
             {/* VLAN Configuration */}
             <div
-              className={`border-t border-surface-border ${spacing.padding.top.heading} ${spacing.margin.top.heading}`}
+              className={cn(
+                "border-t border-surface-border",
+                spacing.padding.top.heading,
+                spacing.margin.top.heading
+              )}
             >
-              <p className={`section-title ${spacing.margin.bottom.inline}`}>
+              <p className={cn("section-title", spacing.margin.bottom.inline)}>
                 {t("network.vlanTag")}
               </p>
               <VLANControl />
@@ -1452,9 +1567,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
             {/* MTU Configuration */}
             <div
-              className={`border-t border-surface-border ${spacing.padding.top.heading} ${spacing.margin.top.heading}`}
+              className={cn(
+                "border-t border-surface-border",
+                spacing.padding.top.heading,
+                spacing.margin.top.heading
+              )}
             >
-              <p className={`section-title ${spacing.margin.bottom.inline}`}>
+              <p className={cn("section-title", spacing.margin.bottom.inline)}>
                 {t("network.mtuSetting")}
               </p>
               <MTUControl />
@@ -1529,7 +1648,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
           {/* Logs (debug) */}
           <section
-            className={`${spacing.padding.top.section} border-t border-surface-border`}
+            className={cn(
+              spacing.padding.top.section,
+              "border-t border-surface-border"
+            )}
           >
             <div className="flex items-start justify-between">
               <div>
@@ -1542,21 +1664,36 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               </div>
               <button
                 onClick={fetchLogPreview}
-                className={`caption ${spacing.chip.sm} border border-surface-border ${radius.md} text-text-muted hover:text-text-primary hover:border-text-muted transition-colors`}
+                className={cn(
+                  "caption",
+                  spacing.chip.sm,
+                  "border border-surface-border",
+                  radius.md,
+                  "text-text-muted hover:text-text-primary hover:border-text-muted transition-colors"
+                )}
               >
                 {logLoading ? t("logs.loading") : t("logs.view")}
               </button>
             </div>
             {logError && (
               <p
-                className={`caption text-status-error ${spacing.margin.top.inline}`}
+                className={cn(
+                  "caption text-status-error",
+                  spacing.margin.top.inline
+                )}
               >
                 {logError}
               </p>
             )}
             {!logError && logPreview.length > 0 && (
               <pre
-                className={`${spacing.margin.top.inline} max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border ${radius.md} ${spacing.chip.lg} text-text-primary whitespace-pre-wrap`}
+                className={cn(
+                  spacing.margin.top.inline,
+                  "max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border",
+                  radius.md,
+                  spacing.chip.lg,
+                  "text-text-primary whitespace-pre-wrap"
+                )}
               >
                 {logPreview.join("\n")}
               </pre>
@@ -1565,17 +1702,31 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
           {/* Export Section */}
           <section
-            className={`${spacing.padding.top.section} border-t border-surface-border`}
+            className={cn(
+              spacing.padding.top.section,
+              "border-t border-surface-border"
+            )}
           >
             <h3
-              className={`body-small font-medium text-text-muted ${spacing.margin.bottom.heading}`}
+              className={cn(
+                "body-small font-medium text-text-muted",
+                spacing.margin.bottom.heading
+              )}
             >
               {t("export.title")}
             </h3>
             <a
               href={`${API_BASE}/api/export`}
               download="seed-export.json"
-              className={`w-full ${button.size.md} bg-surface-base border border-surface-border text-text-primary ${radius.md} font-medium hover:bg-surface-hover transition-colors flex items-center justify-center ${spacing.gap.compact} touch-manipulation`}
+              className={cn(
+                "w-full",
+                button.size.md,
+                "bg-surface-base border border-surface-border text-text-primary",
+                radius.md,
+                "font-medium hover:bg-surface-hover transition-colors flex items-center justify-center",
+                spacing.gap.compact,
+                "touch-manipulation"
+              )}
             >
               <svg
                 className={iconTokens.size.sm}
@@ -1593,7 +1744,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {t("export.download")}
             </a>
             <p
-              className={`caption text-text-muted ${spacing.margin.top.inline}`}
+              className={cn(
+                "caption text-text-muted",
+                spacing.margin.top.inline
+              )}
             >
               {t("export.description")}
             </p>
@@ -1601,10 +1755,16 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
           {/* About Section */}
           <section
-            className={`${spacing.padding.top.section} border-t border-surface-border`}
+            className={cn(
+              spacing.padding.top.section,
+              "border-t border-surface-border"
+            )}
           >
             <h3
-              className={`body-small font-medium text-text-muted ${spacing.margin.bottom.inline}`}
+              className={cn(
+                "body-small font-medium text-text-muted",
+                spacing.margin.bottom.inline
+              )}
             >
               {t("about.title")}
             </h3>

@@ -148,21 +148,36 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
 
       {/* Modal */}
       <div
-        className={`relative ${modal.content} ${modal.size.xl} ${radius.lg} flex flex-col overflow-hidden`}
+        className={cn(
+          "relative",
+          modal.content,
+          modal.size.xl,
+          radius.lg,
+          "flex flex-col overflow-hidden"
+        )}
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-modal-title"
       >
         {/* Header */}
         <div
-          className={`${layout.flex.between} ${spacing.pad.default} border-b border-surface-border shrink-0`}
+          className={cn(
+            layout.flex.between,
+            spacing.pad.default,
+            "border-b border-surface-border shrink-0"
+          )}
         >
           <h2 id="help-modal-title" className="heading-3">
             {t("modal.title")}
           </h2>
           <button
             onClick={onClose}
-            className={`${spacing.pad.xs} text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-hover`}
+            className={cn(
+              spacing.pad.xs,
+              "text-text-muted hover:text-text-primary transition-colors",
+              radius.default,
+              "hover:bg-surface-hover"
+            )}
             aria-label={t("modal.closeHelp")}
           >
             <svg
@@ -184,25 +199,41 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
           {/* Sidebar / TOC */}
           <aside className="w-64 border-r border-surface-border bg-surface-base overflow-y-auto shrink-0">
             {/* Search */}
-            <div className={`${spacing.pad.sm} border-b border-surface-border`}>
+            <div
+              className={cn(spacing.pad.sm, "border-b border-surface-border")}
+            >
               <div className="relative">
                 <Search
-                  className={`absolute left-3 top-1/2 -translate-y-1/2 ${iconTokens.size.sm} text-text-muted`}
+                  className={cn(
+                    "absolute left-3 top-1/2 -translate-y-1/2",
+                    iconTokens.size.sm,
+                    "text-text-muted"
+                  )}
                 />
                 <input
                   type="text"
                   placeholder={t("modal.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full pl-9 ${spacing.chip.lg} body-small ${radius.default} border border-surface-border bg-surface-raised text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary`}
+                  className={cn(
+                    "w-full pl-9",
+                    spacing.chip.lg,
+                    "body-small",
+                    radius.default,
+                    "border border-surface-border bg-surface-raised text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  )}
                 />
               </div>
             </div>
 
             {/* Table of Contents */}
-            <nav className={`${spacing.pad.xs} stack-xs`}>
+            <nav className={cn(spacing.pad.xs, "stack-xs")}>
               <p
-                className={`caption ${spacing.chip.lg} uppercase tracking-wider`}
+                className={cn(
+                  "caption",
+                  spacing.chip.lg,
+                  "uppercase tracking-wider"
+                )}
               >
                 {t("modal.contents")}
               </p>
@@ -211,7 +242,11 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   className={cn(
-                    `w-full flex items-center ${spacing.gap.default} ${spacing.tab} ${radius.default} body-small transition-colors text-left`,
+                    "w-full flex items-center",
+                    spacing.gap.default,
+                    spacing.tab,
+                    radius.default,
+                    "body-small transition-colors text-left",
                     activeSection === section.id
                       ? "bg-brand-primary/10 text-brand-primary font-medium"
                       : "text-text-secondary hover:bg-surface-hover hover:text-text-primary"
@@ -225,7 +260,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
           </aside>
 
           {/* Main content */}
-          <main className={`flex-1 overflow-y-auto ${spacing.pad.lg}`}>
+          <main className={cn("flex-1 overflow-y-auto", spacing.pad.lg)}>
             {currentSection && <div>{currentSection.content}</div>}
           </main>
         </div>
@@ -243,15 +278,17 @@ function AboutSection() {
   return (
     <div className="section-gap max-w-3xl">
       <div>
-        <h3 className={`heading-2 ${spacing.margin.bottom.heading}`}>
+        <h3 className={cn("heading-2", spacing.margin.bottom.heading)}>
           {t("content.about.welcome")}
         </h3>
-        <p className={`body leading-relaxed ${spacing.margin.bottom.content}`}>
+        <p
+          className={cn("body leading-relaxed", spacing.margin.bottom.content)}
+        >
           {t("content.about.description")}
         </p>
       </div>
 
-      <div className={`grid md:grid-cols-2 ${spacing.gap.comfortable}`}>
+      <div className={cn("grid md:grid-cols-2", spacing.gap.comfortable)}>
         <FeatureCard
           title={t("content.about.features.realTimeMonitoring.title")}
           description={t(
@@ -275,10 +312,17 @@ function AboutSection() {
       </div>
 
       <div
-        className={`border-l-4 border-brand-primary bg-brand-primary/5 ${spacing.pad.default} ${radius.default}`}
+        className={cn(
+          "border-l-4 border-brand-primary bg-brand-primary/5",
+          spacing.pad.default,
+          radius.default
+        )}
       >
         <h4
-          className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}
+          className={cn(
+            "font-semibold text-text-primary",
+            spacing.margin.bottom.inline
+          )}
         >
           {t("content.about.openSource.title")}
         </h4>
@@ -289,7 +333,10 @@ function AboutSection() {
 
       <div>
         <h4
-          className={`font-semibold text-text-primary ${spacing.margin.bottom.heading}`}
+          className={cn(
+            "font-semibold text-text-primary",
+            spacing.margin.bottom.heading
+          )}
         >
           {t("content.about.versionInfo.title")}
         </h4>
@@ -319,7 +366,7 @@ function GettingStartedSection() {
   }) as string[];
   return (
     <div className="section-gap max-w-3xl">
-      <h3 className={`heading-2 ${spacing.margin.bottom.heading}`}>
+      <h3 className={cn("heading-2", spacing.margin.bottom.heading)}>
         {t("content.gettingStarted.title")}
       </h3>
 
@@ -354,16 +401,30 @@ function GettingStartedSection() {
       </div>
 
       <div
-        className={`bg-surface-hover border border-surface-border ${radius.default} ${spacing.pad.default} ${spacing.margin.top.section}`}
+        className={cn(
+          "bg-surface-hover border border-surface-border",
+          radius.default,
+          spacing.pad.default,
+          spacing.margin.top.section
+        )}
       >
         <h4
-          className={`font-semibold text-text-primary ${spacing.margin.bottom.inline} flex items-center ${spacing.gap.compact}`}
+          className={cn(
+            "font-semibold text-text-primary",
+            spacing.margin.bottom.inline,
+            "flex items-center",
+            spacing.gap.compact
+          )}
         >
           <span className="text-status-info">💡</span>
           {t("content.gettingStarted.proTips.title")}
         </h4>
         <ul
-          className={`body-small stack-sm ${spacing.margin.left.spacious} list-disc`}
+          className={cn(
+            "body-small stack-sm",
+            spacing.margin.left.spacious,
+            "list-disc"
+          )}
         >
           {tips.map((tip, index) => (
             <li key={index}>{tip}</li>
@@ -379,7 +440,10 @@ function LinkStatusSection() {
   return (
     <HelpContentSection title={t("sections.link")}>
       <p
-        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-secondary",
+          spacing.margin.bottom.content
+        )}
       >
         {t("content.linkStatus.description")}
       </p>
@@ -416,7 +480,10 @@ function CableTestSection() {
   return (
     <HelpContentSection title={t("sections.cable")}>
       <p
-        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-secondary",
+          spacing.margin.bottom.content
+        )}
       >
         {t("content.cableTest.description")}
       </p>
@@ -441,7 +508,12 @@ function CableTestSection() {
         ]}
       />
       <div
-        className={`${spacing.margin.top.content} bg-status-warning/10 border border-status-warning/20 ${radius.default} ${spacing.pad.sm}`}
+        className={cn(
+          spacing.margin.top.content,
+          "bg-status-warning/10 border border-status-warning/20",
+          radius.default,
+          spacing.pad.sm
+        )}
       >
         <p className="caption text-status-warning">
           <strong>{t("common:labels.note", "Note")}:</strong>{" "}
@@ -457,7 +529,10 @@ function WiFiStatusSection() {
   return (
     <HelpContentSection title={t("sections.wifi")}>
       <p
-        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-secondary",
+          spacing.margin.bottom.content
+        )}
       >
         {t("content.wifiStatus.description")}
       </p>
@@ -504,7 +579,10 @@ function NetworkSection() {
   return (
     <HelpContentSection title={t("sections.network")}>
       <p
-        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-secondary",
+          spacing.margin.bottom.content
+        )}
       >
         {t("content.networkDhcp.description")}
       </p>
@@ -544,7 +622,10 @@ function GatewaySection() {
   return (
     <HelpContentSection title={t("sections.gateway")}>
       <p
-        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-secondary",
+          spacing.margin.bottom.content
+        )}
       >
         {t("content.gatewayHelp.description")}
       </p>
@@ -585,7 +666,10 @@ function DNSSection() {
   return (
     <HelpContentSection title={t("sections.dns")}>
       <p
-        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-secondary",
+          spacing.margin.bottom.content
+        )}
       >
         {t("content.dnsTests.description")}
       </p>
@@ -619,7 +703,10 @@ function PerformanceSection() {
   return (
     <HelpContentSection title={t("sections.performance")}>
       <p
-        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-secondary",
+          spacing.margin.bottom.content
+        )}
       >
         {t("content.performanceTests.description")}
       </p>
@@ -663,7 +750,10 @@ function DiscoverySection() {
   return (
     <HelpContentSection title={t("sections.discovery")}>
       <p
-        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-secondary",
+          spacing.margin.bottom.content
+        )}
       >
         {t("content.networkDiscovery.description")}
       </p>
@@ -712,10 +802,17 @@ function FeatureCard({
 }) {
   return (
     <div
-      className={`bg-surface-hover border border-surface-border ${radius.lg} ${spacing.pad.default}`}
+      className={cn(
+        "bg-surface-hover border border-surface-border",
+        radius.lg,
+        spacing.pad.default
+      )}
     >
       <h4
-        className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}
+        className={cn(
+          "font-semibold text-text-primary",
+          spacing.margin.bottom.inline
+        )}
       >
         {title}
       </h4>
@@ -734,14 +831,20 @@ function StepCard({
   description: string;
 }) {
   return (
-    <div className={`flex ${spacing.gap.comfortable}`}>
+    <div className={cn("flex", spacing.gap.comfortable)}>
       <div
-        className={`shrink-0 w-8 h-8 ${radius.full} bg-brand-primary text-text-inverse ${layout.flex.center} font-semibold`}
+        className={cn(
+          "shrink-0 w-8 h-8",
+          radius.full,
+          "bg-brand-primary text-text-inverse",
+          layout.flex.center,
+          "font-semibold"
+        )}
       >
         {number}
       </div>
       <div className="flex-1">
-        <h4 className={`font-semibold ${spacing.margin.bottom.inline}`}>
+        <h4 className={cn("font-semibold", spacing.margin.bottom.inline)}>
           {title}
         </h4>
         <p className="body-small">{description}</p>
@@ -759,7 +862,9 @@ function HelpContentSection({
 }) {
   return (
     <div className="max-w-3xl">
-      <h3 className={`heading-2 ${spacing.margin.bottom.content}`}>{title}</h3>
+      <h3 className={cn("heading-2", spacing.margin.bottom.content)}>
+        {title}
+      </h3>
       {children}
     </div>
   );
@@ -775,10 +880,16 @@ function HelpTermList({
       {items.map((item, idx) => (
         <div
           key={idx}
-          className={`border-l-2 border-surface-border ${spacing.pad.default}`}
+          className={cn(
+            "border-l-2 border-surface-border",
+            spacing.pad.default
+          )}
         >
           <dt
-            className={`font-semibold text-text-primary ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "font-semibold text-text-primary",
+              spacing.margin.bottom.inline
+            )}
           >
             {item.term}
           </dt>

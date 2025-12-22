@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { WIFI_SURVEY_HELP } from "./WiFiSurveyHelp";
-import { spacing, section } from "../../styles/theme";
+import { cn, spacing, section } from "../../styles/theme";
 
 /**
  * WiFiSurveyHelp provides comprehensive help documentation for the WiFi Site Survey feature.
@@ -37,10 +37,17 @@ type Story = StoryObj;
 export const AllSections: Story = {
   render: () => (
     <div
-      className={`max-w-3xl mx-auto ${spacing.pad.default} ${section.spacing.comfortable}`}
+      className={cn(
+        "max-w-3xl mx-auto",
+        spacing.pad.default,
+        section.spacing.comfortable
+      )}
     >
       <h1
-        className={`heading-1 text-text-primary ${spacing.margin.bottom.section}`}
+        className={cn(
+          "heading-1 text-text-primary",
+          spacing.margin.bottom.section
+        )}
       >
         WiFi Survey Help
       </h1>
@@ -70,7 +77,7 @@ export const Overview: Story = {
     if (!overviewSection) return <div>Section not found</div>;
 
     return (
-      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
+      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
         <HelpSection title={overviewSection.title}>
           {overviewSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -100,7 +107,7 @@ export const SurveyModes: Story = {
     if (!modesSection) return <div>Section not found</div>;
 
     return (
-      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
+      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
         <HelpSection title={modesSection.title}>
           {modesSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -130,7 +137,7 @@ export const CreatingSurvey: Story = {
     if (!createSection) return <div>Section not found</div>;
 
     return (
-      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
+      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
         <HelpSection title={createSection.title}>
           {createSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -160,7 +167,7 @@ export const ConductingSurvey: Story = {
     if (!conductSection) return <div>Section not found</div>;
 
     return (
-      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
+      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
         <HelpSection title={conductSection.title}>
           {conductSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -190,7 +197,7 @@ export const ViewingResults: Story = {
     if (!resultsSection) return <div>Section not found</div>;
 
     return (
-      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
+      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
         <HelpSection title={resultsSection.title}>
           {resultsSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -220,7 +227,7 @@ export const Troubleshooting: Story = {
     if (!troubleSection) return <div>Section not found</div>;
 
     return (
-      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
+      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
         <HelpSection title={troubleSection.title}>
           {troubleSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -250,7 +257,7 @@ export const BestPractices: Story = {
     if (!bestSection) return <div>Section not found</div>;
 
     return (
-      <div className={`max-w-3xl mx-auto ${spacing.pad.default}`}>
+      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
         <HelpSection title={bestSection.title}>
           {bestSection.items.map((item, idx) => (
             <HelpItem key={idx} question={item.question} answer={item.answer} />
@@ -274,9 +281,12 @@ export const BestPractices: Story = {
  */
 export const SignalStrengthLegend: Story = {
   render: () => (
-    <div className={`max-w-xl mx-auto ${spacing.pad.default}`}>
+    <div className={cn("max-w-xl mx-auto", spacing.pad.default)}>
       <h2
-        className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "heading-2 text-text-primary",
+          spacing.margin.bottom.content
+        )}
       >
         Signal Strength Heatmap Legend
       </h2>
@@ -328,9 +338,12 @@ export const SignalStrengthLegend: Story = {
  */
 export const ThroughputLegend: Story = {
   render: () => (
-    <div className={`max-w-xl mx-auto ${spacing.pad.default}`}>
+    <div className={cn("max-w-xl mx-auto", spacing.pad.default)}>
       <h2
-        className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "heading-2 text-text-primary",
+          spacing.margin.bottom.content
+        )}
       >
         Throughput Heatmap Legend
       </h2>
@@ -383,13 +396,16 @@ export const ThroughputLegend: Story = {
  */
 export const ModesComparison: Story = {
   render: () => (
-    <div className={`max-w-4xl mx-auto ${spacing.pad.default}`}>
+    <div className={cn("max-w-4xl mx-auto", spacing.pad.default)}>
       <h2
-        className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "heading-2 text-text-primary",
+          spacing.margin.bottom.content
+        )}
       >
         Survey Modes Comparison
       </h2>
-      <div className={`grid md:grid-cols-3 ${spacing.gap.comfortable}`}>
+      <div className={cn("grid md:grid-cols-3", spacing.gap.comfortable)}>
         <ModeCard
           title="Passive Scan"
           icon="📡"
@@ -451,7 +467,10 @@ function HelpSection({
   return (
     <div className="bg-surface-raised border border-surface-border rounded-lg overflow-hidden">
       <h2
-        className={`heading-3 text-text-primary ${spacing.pad.default} bg-surface-base border-b border-surface-border`}
+        className={cn(
+          "heading-3 text-text-primary bg-surface-base border-b border-surface-border",
+          spacing.pad.default
+        )}
       >
         {title}
       </h2>
@@ -464,7 +483,10 @@ function HelpItem({ question, answer }: { question: string; answer: string }) {
   return (
     <div className={spacing.pad.default}>
       <h3
-        className={`body font-semibold text-text-primary ${spacing.margin.bottom.inline}`}
+        className={cn(
+          "body font-semibold text-text-primary",
+          spacing.margin.bottom.inline
+        )}
       >
         {question}
       </h3>
@@ -488,11 +510,15 @@ function SignalLevel({
 }) {
   return (
     <div
-      className={`flex items-center ${spacing.gap.default} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
+      className={cn(
+        "flex items-center bg-surface-raised border border-surface-border rounded-lg",
+        spacing.gap.default,
+        spacing.pad.sm
+      )}
     >
-      <div className={`w-8 h-8 rounded ${color}`} />
+      <div className={cn("w-8 h-8 rounded", color)} />
       <div className="flex-1">
-        <div className={`flex items-baseline ${spacing.gap.compact}`}>
+        <div className={cn("flex items-baseline", spacing.gap.compact)}>
           <span className="body font-semibold text-text-primary">{label}</span>
           <span className="body-small text-text-muted">({range})</span>
         </div>
@@ -519,16 +545,25 @@ function ModeCard({
 }) {
   return (
     <div
-      className={`bg-surface-raised border border-surface-border rounded-lg ${spacing.pad.default}`}
+      className={cn(
+        "bg-surface-raised border border-surface-border rounded-lg",
+        spacing.pad.default
+      )}
     >
-      <div className={`text-3xl ${spacing.margin.bottom.inline}`}>{icon}</div>
+      <div className={cn("text-3xl", spacing.margin.bottom.inline)}>{icon}</div>
       <h3
-        className={`heading-4 text-text-primary ${spacing.margin.bottom.tight}`}
+        className={cn(
+          "heading-4 text-text-primary",
+          spacing.margin.bottom.tight
+        )}
       >
         {title}
       </h3>
       <p
-        className={`body-small text-text-muted ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-muted",
+          spacing.margin.bottom.content
+        )}
       >
         {description}
       </p>
@@ -536,7 +571,10 @@ function ModeCard({
       <div className="stack-sm">
         <div>
           <h4
-            className={`caption font-semibold text-status-success ${spacing.margin.bottom.tight}`}
+            className={cn(
+              "caption font-semibold text-status-success",
+              spacing.margin.bottom.tight
+            )}
           >
             Pros
           </h4>
@@ -548,7 +586,10 @@ function ModeCard({
         </div>
         <div>
           <h4
-            className={`caption font-semibold text-status-warning ${spacing.margin.bottom.tight}`}
+            className={cn(
+              "caption font-semibold text-status-warning",
+              spacing.margin.bottom.tight
+            )}
           >
             Cons
           </h4>
@@ -559,7 +600,10 @@ function ModeCard({
           </ul>
         </div>
         <div
-          className={`${spacing.padding.bottom.inline} border-t border-surface-border`}
+          className={cn(
+            "border-t border-surface-border",
+            spacing.padding.bottom.inline
+          )}
         >
           <span className="caption text-text-muted">Best for: </span>
           <span className="caption text-text-primary font-medium">

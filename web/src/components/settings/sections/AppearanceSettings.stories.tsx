@@ -14,7 +14,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { AppearanceSettings } from "./AppearanceSettings";
-import { spacing } from "../../../styles/theme";
+import { spacing, cn } from "../../../styles/theme";
 
 const meta: Meta<typeof AppearanceSettings> = {
   title: "Settings/AppearanceSettings",
@@ -132,7 +132,10 @@ export const Comparison: Story = {
     <div className="stack-lg">
       <div>
         <p
-          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          className={cn(
+            "caption text-text-muted",
+            spacing.margin.bottom.inline
+          )}
         >
           Light Theme
         </p>
@@ -140,7 +143,10 @@ export const Comparison: Story = {
       </div>
       <div>
         <p
-          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          className={cn(
+            "caption text-text-muted",
+            spacing.margin.bottom.inline
+          )}
         >
           Dark Theme
         </p>
@@ -148,7 +154,10 @@ export const Comparison: Story = {
       </div>
       <div>
         <p
-          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          className={cn(
+            "caption text-text-muted",
+            spacing.margin.bottom.inline
+          )}
         >
           System Theme
         </p>

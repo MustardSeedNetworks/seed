@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ToastProvider } from "./Toast";
 import { useToast } from "./useToast";
-import { button, radius, layout } from "../../styles/theme";
+import { button, radius, layout, cn } from "../../styles/theme";
 
 /**
  * Toast notifications provide non-modal feedback to users for actions
@@ -38,7 +38,11 @@ function ToastDemo({
   return (
     <button
       onClick={() => addToast(message, type)}
-      className={`${button.size.md} bg-surface-raised hover:bg-surface-hover ${radius.lg} border border-surface-border text-text-primary`}
+      className={cn(
+        button.size.md,
+        "bg-surface-raised hover:bg-surface-hover border border-surface-border text-text-primary",
+        radius.lg
+      )}
     >
       Show {type} toast
     </button>
@@ -73,7 +77,7 @@ function AllToastsDemo() {
   const { addToast } = useToast();
 
   return (
-    <div className={`${layout.stack.default}`}>
+    <div className={layout.stack.default}>
       <button
         onClick={() => {
           addToast("Success message", "success", 3000);
@@ -81,7 +85,11 @@ function AllToastsDemo() {
           setTimeout(() => addToast("Warning message", "warning", 3000), 1000);
           setTimeout(() => addToast("Info message", "info", 3000), 1500);
         }}
-        className={`${button.size.md} bg-status-info hover:bg-status-info/80 ${radius.lg} text-text-inverse`}
+        className={cn(
+          button.size.md,
+          "bg-status-info hover:bg-status-info/80 text-text-inverse",
+          radius.lg
+        )}
       >
         Show all toast types
       </button>

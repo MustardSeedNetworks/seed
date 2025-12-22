@@ -13,7 +13,7 @@
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
-import { spacing, radius } from "../../../styles/theme";
+import { spacing, radius, cn } from "../../../styles/theme";
 
 const meta: Meta<typeof AutoSaveIndicator> = {
   title: "Settings/AutoSaveIndicator",
@@ -37,8 +37,8 @@ const meta: Meta<typeof AutoSaveIndicator> = {
   },
   decorators: [
     (Story) => (
-      <div className={`${spacing.pad.default} bg-surface-base`}>
-        <div className={`flex items-center ${spacing.gap.compact}`}>
+      <div className={cn(spacing.pad.default, "bg-surface-base")}>
+        <div className={cn("flex items-center", spacing.gap.compact)}>
           <span className="body-small font-medium">Setting Name</span>
           <Story />
         </div>
@@ -91,20 +91,20 @@ export const Error: Story = {
  */
 export const AllStates: Story = {
   render: () => (
-    <div className={`stack ${spacing.pad.default} bg-surface-base`}>
-      <div className={`flex items-center ${spacing.gap.compact}`}>
+    <div className={cn("stack", spacing.pad.default, "bg-surface-base")}>
+      <div className={cn("flex items-center", spacing.gap.compact)}>
         <span className="body-small">Idle (hidden):</span>
         <AutoSaveIndicator status="idle" />
       </div>
-      <div className={`flex items-center ${spacing.gap.compact}`}>
+      <div className={cn("flex items-center", spacing.gap.compact)}>
         <span className="body-small">Saving:</span>
         <AutoSaveIndicator status="saving" />
       </div>
-      <div className={`flex items-center ${spacing.gap.compact}`}>
+      <div className={cn("flex items-center", spacing.gap.compact)}>
         <span className="body-small">Saved:</span>
         <AutoSaveIndicator status="saved" />
       </div>
-      <div className={`flex items-center ${spacing.gap.compact}`}>
+      <div className={cn("flex items-center", spacing.gap.compact)}>
         <span className="body-small">Error:</span>
         <AutoSaveIndicator status="error" />
       </div>
@@ -117,12 +117,17 @@ export const AllStates: Story = {
  */
 export const InContext: Story = {
   render: () => (
-    <div className={`w-[400px] ${spacing.pad.default} bg-surface-raised`}>
+    <div className={cn("w-[400px]", spacing.pad.default, "bg-surface-raised")}>
       <div className="stack">
         <label
-          className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
+          className={cn(
+            "flex items-center justify-between",
+            spacing.pad.sm,
+            "bg-surface-base border border-surface-border",
+            radius.lg
+          )}
         >
-          <div className={`flex items-center ${spacing.gap.compact}`}>
+          <div className={cn("flex items-center", spacing.gap.compact)}>
             <span className="body-small text-text-primary font-medium">
               Enable Feature
             </span>
@@ -131,9 +136,14 @@ export const InContext: Story = {
           <input type="checkbox" checked readOnly className="w-4 h-4" />
         </label>
         <label
-          className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
+          className={cn(
+            "flex items-center justify-between",
+            spacing.pad.sm,
+            "bg-surface-base border border-surface-border",
+            radius.lg
+          )}
         >
-          <div className={`flex items-center ${spacing.gap.compact}`}>
+          <div className={cn("flex items-center", spacing.gap.compact)}>
             <span className="body-small text-text-primary font-medium">
               Auto-refresh
             </span>
@@ -142,9 +152,14 @@ export const InContext: Story = {
           <input type="checkbox" checked readOnly className="w-4 h-4" />
         </label>
         <label
-          className={`flex items-center justify-between ${spacing.pad.sm} bg-surface-base border border-surface-border ${radius.lg}`}
+          className={cn(
+            "flex items-center justify-between",
+            spacing.pad.sm,
+            "bg-surface-base border border-surface-border",
+            radius.lg
+          )}
         >
-          <div className={`flex items-center ${spacing.gap.compact}`}>
+          <div className={cn("flex items-center", spacing.gap.compact)}>
             <span className="body-small text-text-primary font-medium">
               Failed Setting
             </span>

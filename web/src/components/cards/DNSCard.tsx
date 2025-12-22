@@ -30,7 +30,7 @@ import { Card, CardValue, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Globe } from "../ui/Icons";
-import { icon as iconTokens, layout, spacing } from "../../styles/theme";
+import { cn, icon as iconTokens, layout, spacing } from "../../styles/theme";
 
 interface LookupResult {
   result: string;
@@ -95,7 +95,7 @@ function LookupRow({
         <span className="caption">{label}</span>
         <span className={layout.inline.default}>
           <StatusBadge status={statusBadge} size="sm" />
-          <span className={`caption font-medium ${statusColor}`}>
+          <span className={cn("caption font-medium", statusColor)}>
             {formatTime(lookup.timeMs || lookup.time)}
           </span>
         </span>
@@ -160,7 +160,7 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
     >
       {/* DNS Servers */}
       <div className={spacing.margin.bottom.inline}>
-        <p className={`caption ${spacing.margin.bottom.tight}`}>
+        <p className={cn("caption", spacing.margin.bottom.tight)}>
           {t("dns.dnsServers")}
         </p>
         <div className="stack-xs">
@@ -184,7 +184,7 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
       {/* IPv4 Lookups */}
       {(data.forward || data.reverse) && (
         <div className={spacing.margin.bottom.inline}>
-          <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>
+          <p className={cn("caption font-medium", spacing.margin.bottom.tight)}>
             IPv4
           </p>
           <LookupRow label={t("dns.forwardA")} lookup={data.forward} />
@@ -197,7 +197,9 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
         <>
           <CardDivider />
           <div>
-            <p className={`caption font-medium ${spacing.margin.bottom.tight}`}>
+            <p
+              className={cn("caption font-medium", spacing.margin.bottom.tight)}
+            >
               IPv6
             </p>
             <LookupRow label={t("dns.forwardAAAA")} lookup={data.forwardIpv6} />
@@ -225,23 +227,27 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
             {data.perServerResults.map((server) => (
               <div key={server.server} className={spacing.chip.sm}>
                 <div
-                  className={`${layout.flex.between} ${spacing.margin.bottom.tight}`}
+                  className={cn(
+                    layout.flex.between,
+                    spacing.margin.bottom.tight
+                  )}
                 >
                   <span className="caption font-mono">{server.server}</span>
                   <span
-                    className={`caption font-medium ${
+                    className={cn(
+                      "caption font-medium",
                       server.status === "success"
                         ? "text-status-success"
                         : server.status === "warning"
                           ? "text-status-warning"
                           : "text-status-error"
-                    }`}
+                    )}
                   >
                     {formatTime(server.avgTimeMs)}
                   </span>
                 </div>
                 {server.forward && (
-                  <div className={`${layout.flex.between} caption`}>
+                  <div className={cn(layout.flex.between, "caption")}>
                     <span>A</span>
                     <span className={layout.inline.default}>
                       <StatusBadge status={server.forward.status} size="sm" />
@@ -262,7 +268,7 @@ export const DNSCard = memo(function DNSCard({ data, loading }: DNSCardProps) {
                   </div>
                 )}
                 {server.forwardIpv6 && (
-                  <div className={`${layout.flex.between} caption`}>
+                  <div className={cn(layout.flex.between, "caption")}>
                     <span>AAAA</span>
                     <span className={layout.inline.default}>
                       <StatusBadge

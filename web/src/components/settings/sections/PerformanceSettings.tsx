@@ -47,6 +47,7 @@ import {
   radius,
   spacing,
   input as inputTokens,
+  cn,
 } from "../../../styles/theme";
 import {
   TestsSettings,
@@ -112,7 +113,13 @@ export const PerformanceSettings = memo(function PerformanceSettings({
         {/* Enable/Disable Toggles */}
         <div className="stack-sm">
           <label
-            className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border"
+            )}
           >
             <div>
               <span className="body-small text-text-primary font-medium">
@@ -135,7 +142,13 @@ export const PerformanceSettings = memo(function PerformanceSettings({
             />
           </label>
           <label
-            className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border"
+            )}
           >
             <div>
               <span className="body-small text-text-primary font-medium">
@@ -161,14 +174,23 @@ export const PerformanceSettings = memo(function PerformanceSettings({
 
         {/* Auto-Run on Link Up */}
         <div
-          className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+          className={cn(
+            "border-t border-surface-border",
+            spacing.padding.top.heading
+          )}
         >
           <span className="caption text-text-muted font-medium">
             {t("performance.autoRunOnLink")}
           </span>
-          <div className={`${spacing.margin.top.inline} stack-sm`}>
+          <div className={cn(spacing.margin.top.inline, "stack-sm")}>
             <label
-              className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
+              className={cn(
+                layout.flex.between,
+                spacing.pad.sm,
+                "bg-surface-base",
+                radius.default,
+                "border border-surface-border"
+              )}
             >
               <span className="body-small text-text-primary">
                 {t("performance.speedtest")}
@@ -189,7 +211,13 @@ export const PerformanceSettings = memo(function PerformanceSettings({
               />
             </label>
             <label
-              className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
+              className={cn(
+                layout.flex.between,
+                spacing.pad.sm,
+                "bg-surface-base",
+                radius.default,
+                "border border-surface-border"
+              )}
             >
               <span className="body-small text-text-primary">
                 {t("performance.iperf")}
@@ -214,10 +242,17 @@ export const PerformanceSettings = memo(function PerformanceSettings({
 
         {/* Internet Speed (Speedtest) Subsection */}
         <div
-          className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+          className={cn(
+            "border-t border-surface-border",
+            spacing.padding.top.heading
+          )}
         >
           <h4
-            className={`body-small font-semibold text-text-primary ${spacing.margin.bottom.inline} uppercase tracking-wide`}
+            className={cn(
+              "body-small font-semibold text-text-primary",
+              spacing.margin.bottom.inline,
+              "uppercase tracking-wide"
+            )}
           >
             {t("performance.internetSpeed")}
           </h4>
@@ -239,10 +274,17 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   }))
                 }
                 placeholder={t("performance.autoClosestServer")}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md,
+                  "w-full",
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
               <div
-                className={`${layout.flex.between} ${spacing.margin.top.tight}`}
+                className={cn(layout.flex.between, spacing.margin.top.tight)}
               >
                 <p className="caption text-text-muted">
                   {t("performance.autoSelectDesc")}
@@ -267,7 +309,11 @@ export const PerformanceSettings = memo(function PerformanceSettings({
         {/* LAN Speed (iperf3) Subsection */}
         <div>
           <h4
-            className={`body-small font-semibold text-text-primary ${spacing.margin.bottom.inline} uppercase tracking-wide`}
+            className={cn(
+              "body-small font-semibold text-text-primary",
+              spacing.margin.bottom.inline,
+              "uppercase tracking-wide"
+            )}
           >
             {t("performance.lanSpeed")}
           </h4>
@@ -291,10 +337,17 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   }))
                 }
                 placeholder="192.168.1.100"
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md,
+                  "w-full",
+                  spacing.margin.top.tight,
+                  "body-small disabled:opacity-60"
+                )}
               />
               <div
-                className={`${layout.flex.between} ${spacing.margin.top.inline}`}
+                className={cn(layout.flex.between, spacing.margin.top.inline)}
               >
                 <button
                   type="button"
@@ -308,7 +361,10 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 </button>
                 {iperfSuggestionsStatus === "loading" && (
                   <svg
-                    className={`${iconTokens.size.sm} animate-spin text-text-muted`}
+                    className={cn(
+                      iconTokens.size.sm,
+                      "animate-spin text-text-muted"
+                    )}
                     viewBox="0 0 24 24"
                     fill="none"
                   >
@@ -330,20 +386,31 @@ export const PerformanceSettings = memo(function PerformanceSettings({
               </div>
               {iperfSuggestionsStatus === "error" && (
                 <p
-                  className={`caption text-status-warning ${spacing.margin.top.tight}`}
+                  className={cn(
+                    "caption text-status-warning",
+                    spacing.margin.top.tight
+                  )}
                 >
                   {iperfSuggestionsError || t("performance.noIperfHosts")}
                 </p>
               )}
               {iperfSuggestions.length > 0 && (
                 <div
-                  className={`flex flex-wrap ${spacing.gap.compact} ${spacing.margin.top.inline}`}
+                  className={cn(
+                    "flex flex-wrap",
+                    spacing.gap.compact,
+                    spacing.margin.top.inline
+                  )}
                 >
                   {iperfSuggestions.map((sugg) => (
                     <button
                       type="button"
                       key={`${sugg.host}-${sugg.hostname || ""}`}
-                      className={`${spacing.chip.sm} ${radius.full} border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover`}
+                      className={cn(
+                        spacing.chip.sm,
+                        radius.full,
+                        "border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover"
+                      )}
                       onClick={() =>
                         setIperfSettings((prev) => ({
                           ...prev,
@@ -355,7 +422,10 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                         {sugg.hostname || sugg.host}
                       </span>
                       <span
-                        className={`text-text-muted ${spacing.margin.left.tight}`}
+                        className={cn(
+                          "text-text-muted",
+                          spacing.margin.left.tight
+                        )}
                       >
                         {sugg.hostname ? `(${sugg.host})` : ""}
                         {sugg.latencyMs !== undefined
@@ -386,19 +456,29 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                     port: parseInt(e.target.value) || 5201,
                   }))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md,
+                  "w-full",
+                  spacing.margin.top.tight,
+                  "body-small disabled:opacity-60"
+                )}
               />
             </div>
 
             {/* Protocol Toggle */}
             <div>
               <label
-                className={`caption text-text-muted font-medium block ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  "caption text-text-muted font-medium block",
+                  spacing.margin.bottom.inline
+                )}
               >
                 {t("performance.protocol")}
               </label>
               <div
-                className={`flex flex-wrap ${spacing.gap.compact}`}
+                className={cn("flex flex-wrap", spacing.gap.compact)}
                 role="radiogroup"
                 aria-label="Protocol selection"
               >
@@ -407,11 +487,15 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   return (
                     <label
                       key={proto}
-                      className={`cursor-pointer ${spacing.chip.md} ${radius.full} border body-small font-medium transition-colors ${
+                      className={cn(
+                        "cursor-pointer",
+                        spacing.chip.md,
+                        radius.full,
+                        "border body-small font-medium transition-colors",
                         checked
                           ? "bg-brand-primary text-text-inverse border-brand-primary"
                           : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
-                      }`}
+                      )}
                     >
                       <input
                         type="radio"
@@ -437,12 +521,15 @@ export const PerformanceSettings = memo(function PerformanceSettings({
             {/* Direction Toggle */}
             <div>
               <label
-                className={`caption text-text-muted font-medium block ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  "caption text-text-muted font-medium block",
+                  spacing.margin.bottom.inline
+                )}
               >
                 {t("performance.direction")}
               </label>
               <div
-                className={`flex flex-wrap ${spacing.gap.compact}`}
+                className={cn("flex flex-wrap", spacing.gap.compact)}
                 role="radiogroup"
                 aria-label="Direction selection"
               >
@@ -452,11 +539,15 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                     return (
                       <label
                         key={direction}
-                        className={`cursor-pointer ${spacing.chip.md} ${radius.full} border body-small font-medium transition-colors ${
+                        className={cn(
+                          "cursor-pointer",
+                          spacing.chip.md,
+                          radius.full,
+                          "border body-small font-medium transition-colors",
                           checked
                             ? "bg-brand-primary text-text-inverse border-brand-primary"
                             : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
-                        }`}
+                        )}
                       >
                         <input
                           type="radio"
@@ -500,16 +591,33 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 }
                 min={1}
                 max={60}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md,
+                  "w-full",
+                  spacing.margin.top.tight,
+                  "body-small disabled:opacity-60"
+                )}
               />
             </div>
 
             {/* Server Mode */}
             <div
-              className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+              className={cn(
+                "border-t border-surface-border",
+                spacing.padding.top.heading
+              )}
             >
               <label
-                className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  layout.flex.between,
+                  spacing.pad.sm,
+                  "bg-surface-base",
+                  radius.default,
+                  "border border-surface-border",
+                  spacing.margin.bottom.inline
+                )}
               >
                 <span className="body-small text-text-primary">
                   {t("performance.enableServer")}
@@ -543,11 +651,21 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                       serverPort: parseInt(e.target.value) || 5201,
                     }))
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small disabled:opacity-60`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.md,
+                    "w-full",
+                    spacing.margin.top.tight,
+                    "body-small disabled:opacity-60"
+                  )}
                 />
               </div>
               <p
-                className={`caption text-text-muted ${spacing.margin.top.tight}`}
+                className={cn(
+                  "caption text-text-muted",
+                  spacing.margin.top.tight
+                )}
               >
                 {t("performance.serverAutoStart")}
               </p>

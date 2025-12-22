@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Skeleton, CardSkeleton, TextSkeleton } from "./Skeleton";
-import { spacing, layout } from "../../styles/theme";
+import { spacing, layout, cn } from "../../styles/theme";
 
 /**
  * Skeleton components provide visual loading placeholders while content is being fetched.
@@ -71,7 +71,7 @@ export const Card: StoryObj<typeof CardSkeleton> = {
 
 export const DashboardGrid: Story = {
   render: () => (
-    <div className={`grid grid-cols-2 ${spacing.gap.comfortable} w-[600px]`}>
+    <div className={cn("grid grid-cols-2 w-[600px]", spacing.gap.comfortable)}>
       <CardSkeleton />
       <CardSkeleton />
       <CardSkeleton />
@@ -91,10 +91,14 @@ export const DashboardGrid: Story = {
 export const UserProfile: Story = {
   render: () => (
     <div
-      className={`${layout.inline.spacious} ${spacing.pad.default} bg-surface-base rounded-lg`}
+      className={cn(
+        layout.inline.spacious,
+        spacing.pad.default,
+        "bg-surface-base rounded-lg"
+      )}
     >
       <Skeleton variant="circular" className="h-16 w-16" />
-      <div className={`${layout.stack.default}`}>
+      <div className={layout.stack.default}>
         <Skeleton variant="text" className="h-5 w-32" />
         <Skeleton variant="text" className="h-4 w-48" />
         <Skeleton variant="text" className="h-3 w-24" />
@@ -113,11 +117,12 @@ export const UserProfile: Story = {
 export const TableRows: Story = {
   render: () => (
     <div
-      className={`w-[500px] bg-surface-base rounded-lg ${spacing.pad.default}`}
+      className={cn(
+        "w-[500px] bg-surface-base rounded-lg",
+        spacing.pad.default
+      )}
     >
-      <div
-        className={`${layout.flex.between} ${spacing.margin.bottom.content}`}
-      >
+      <div className={cn(layout.flex.between, spacing.margin.bottom.content)}>
         <Skeleton variant="text" className="h-5 w-20" />
         <Skeleton variant="text" className="h-5 w-24" />
         <Skeleton variant="text" className="h-5 w-16" />
@@ -125,7 +130,11 @@ export const TableRows: Story = {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className={`${layout.flex.between} ${spacing.row.pyLg} border-t border-surface-border`}
+          className={cn(
+            layout.flex.between,
+            spacing.row.pyLg,
+            "border-t border-surface-border"
+          )}
         >
           {" "}
           {/* spacing.row.pyLg for table row spacing */}

@@ -22,7 +22,7 @@
 
 import { useTranslation } from "react-i18next";
 import type { HeatmapMetric } from "../../hooks/useSurvey";
-import { radius, spacing, layout } from "../../styles/theme";
+import { cn, radius, spacing, layout } from "../../styles/theme";
 
 interface HeatmapLegendProps {
   metric: HeatmapMetric;
@@ -121,15 +121,24 @@ export function HeatmapLegend({
 
   return (
     <div
-      className={`bg-surface-raised border border-surface-border ${radius.md} ${spacing.pad.sm}`}
+      className={cn(
+        "bg-surface-raised border border-surface-border",
+        radius.md,
+        spacing.pad.sm
+      )}
     >
-      <div className={`${layout.flex.between} ${spacing.margin.bottom.tight}`}>
+      <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
         <span className="body-small font-medium">{info.name}</span>
       </div>
 
       {/* Color gradient bar */}
       <div
-        className={`relative h-6 ${radius.default} overflow-hidden ${spacing.margin.bottom.tight}`}
+        className={cn(
+          "relative h-6",
+          radius.default,
+          "overflow-hidden",
+          spacing.margin.bottom.tight
+        )}
       >
         <div
           className="absolute inset-0"

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Tooltip } from "./Tooltip";
 import { Info, HelpCircle, Settings } from "lucide-react";
-import { spacing } from "../../styles/theme";
+import { spacing, cn } from "../../styles/theme";
 
 /**
  * Tooltips provide contextual help text on hover or focus.
@@ -64,7 +64,10 @@ export const WithIcon: Story = {
     content: "Click to access settings",
     children: (
       <button
-        className={`${spacing.pad.xs} rounded-lg bg-surface-raised hover:bg-surface-hover`}
+        className={cn(
+          spacing.pad.xs,
+          "rounded-lg bg-surface-raised hover:bg-surface-hover"
+        )}
       >
         <Settings className="w-5 h-5 text-text-secondary" />
       </button>
@@ -84,7 +87,7 @@ export const LongContent: Story = {
 
 export const InContext: Story = {
   render: () => (
-    <div className={`flex items-center ${spacing.gap.compact}`}>
+    <div className={cn("flex items-center", spacing.gap.compact)}>
       <span className="text-text-primary">Upload limit</span>
       <Tooltip content="Maximum file size for uploads is 10MB">
         <HelpCircle className="w-4 h-4 text-text-muted cursor-help" />

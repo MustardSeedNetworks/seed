@@ -32,6 +32,7 @@ import {
   Upload,
 } from "lucide-react";
 import {
+  cn,
   radius,
   spacing,
   layout,
@@ -114,10 +115,13 @@ function CriterionRow({
 
   return (
     <div
-      className={`${layout.inline.default} justify-between py-1.5 border-b border-surface-border/50 last:border-b-0`}
+      className={cn(
+        layout.inline.default,
+        "justify-between py-1.5 border-b border-surface-border/50 last:border-b-0"
+      )}
     >
       {/* Enable checkbox and name */}
-      <label className={`${layout.inline.tight} cursor-pointer flex-1`}>
+      <label className={cn(layout.inline.tight, "cursor-pointer flex-1")}>
         <input
           type="checkbox"
           checked={criterion.enabled}
@@ -126,21 +130,27 @@ function CriterionRow({
           className="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
         />
         <span
-          className={`caption ${criterion.enabled ? "text-text-primary" : "text-text-muted"}`}
+          className={cn(
+            "caption",
+            criterion.enabled ? "text-text-primary" : "text-text-muted"
+          )}
         >
           {t(criterion.displayKey as never)}
         </span>
       </label>
 
       {/* Comparison and threshold */}
-      <div className={`${layout.inline.tight}`}>
+      <div className={cn(layout.inline.tight)}>
         <ComparisonSymbol comparison={criterion.comparison} />
         <input
           type="number"
           value={criterion.threshold}
           onChange={handleThresholdChange}
           disabled={disabled || !criterion.enabled}
-          className={`w-16 px-2 py-1 text-right caption bg-surface-default border border-surface-border ${radius.sm} disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-brand-primary`}
+          className={cn(
+            "w-16 px-2 py-1 text-right caption bg-surface-default border border-surface-border disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-brand-primary",
+            radius.sm
+          )}
           step={criterion.suffix === "%" || criterion.suffix === "ms" ? 1 : 0.1}
         />
         <span className="caption text-text-muted w-12">{criterion.suffix}</span>
@@ -173,7 +183,11 @@ function CriteriaSection({
       <button
         type="button"
         onClick={onToggle}
-        className={`w-full ${layout.inline.default} justify-between py-1.5 hover:bg-surface-hover ${radius.sm} transition-colors`}
+        className={cn(
+          "w-full justify-between py-1.5 hover:bg-surface-hover transition-colors",
+          layout.inline.default,
+          radius.sm
+        )}
       >
         <span className="caption font-medium text-text-secondary">{title}</span>
         {expanded ? (
@@ -185,7 +199,7 @@ function CriteriaSection({
 
       {/* Criteria list */}
       {expanded && (
-        <div className={`pl-2 ${spacing.margin.top.tight}`}>
+        <div className={cn("pl-2", spacing.margin.top.tight)}>
           {criteria.map((criterion) => (
             <CriterionRow
               key={criterion.id}
@@ -275,13 +289,21 @@ export function PassFailCriteriaPanel({
 
   return (
     <div
-      className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.sm}`}
+      className={cn(
+        "bg-surface-raised border border-surface-border",
+        radius.md,
+        spacing.pad.sm
+      )}
     >
       {/* Header */}
       <div
-        className={`${layout.inline.default} justify-between ${spacing.margin.bottom.content}`}
+        className={cn(
+          "justify-between",
+          layout.inline.default,
+          spacing.margin.bottom.content
+        )}
       >
-        <div className={layout.inline.default}>
+        <div className={cn(layout.inline.default)}>
           <Settings2 className={iconTokens.size.sm} />
           <h4 className="body-small font-medium">{t("criteria.title")}</h4>
         </div>
@@ -290,7 +312,12 @@ export function PassFailCriteriaPanel({
             type="button"
             onClick={onValidate}
             disabled={disabled || validating}
-            className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:opacity-90 disabled:opacity-50 ${layout.inline.tight}`}
+            className={cn(
+              "bg-brand-primary text-text-inverse hover:opacity-90 disabled:opacity-50",
+              button.size.sm,
+              radius.md,
+              layout.inline.tight
+            )}
           >
             <Play className="w-3 h-3" />
             <span>
@@ -317,14 +344,22 @@ export function PassFailCriteriaPanel({
 
       {/* Actions */}
       <div
-        className={`${layout.inline.default} justify-between pt-2 border-t border-surface-border`}
+        className={cn(
+          "justify-between pt-2 border-t border-surface-border",
+          layout.inline.default
+        )}
       >
-        <div className={layout.inline.tight}>
+        <div className={cn(layout.inline.tight)}>
           <button
             type="button"
             onClick={handleReset}
             disabled={disabled}
-            className={`${button.size.sm} bg-surface-default border border-surface-border ${radius.md} hover:bg-surface-hover disabled:opacity-50 ${layout.inline.tight}`}
+            className={cn(
+              "bg-surface-default border border-surface-border hover:bg-surface-hover disabled:opacity-50",
+              button.size.sm,
+              radius.md,
+              layout.inline.tight
+            )}
           >
             <RotateCcw className="w-3 h-3" />
             <span>{t("criteria.resetDefaults")}</span>
@@ -333,7 +368,11 @@ export function PassFailCriteriaPanel({
             type="button"
             onClick={handleLoadAll}
             disabled={disabled}
-            className={`${button.size.sm} bg-surface-default border border-surface-border ${radius.md} hover:bg-surface-hover disabled:opacity-50`}
+            className={cn(
+              "bg-surface-default border border-surface-border hover:bg-surface-hover disabled:opacity-50",
+              button.size.sm,
+              radius.md
+            )}
           >
             {t("criteria.loadAll")}
           </button>
@@ -343,7 +382,12 @@ export function PassFailCriteriaPanel({
             type="button"
             onClick={onImportFromAirMapper}
             disabled={disabled}
-            className={`${button.size.sm} bg-surface-default border border-surface-border ${radius.md} hover:bg-surface-hover disabled:opacity-50 ${layout.inline.tight}`}
+            className={cn(
+              "bg-surface-default border border-surface-border hover:bg-surface-hover disabled:opacity-50",
+              button.size.sm,
+              radius.md,
+              layout.inline.tight
+            )}
           >
             <Upload className="w-3 h-3" />
             <span>{t("criteria.importAirMapper")}</span>

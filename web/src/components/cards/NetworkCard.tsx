@@ -341,7 +341,10 @@ export function NetworkCard({
             <>
               <CardDivider />
               <p
-                className={`caption font-medium ${spacing.margin.bottom.tight}`}
+                className={cn(
+                  "caption font-medium",
+                  spacing.margin.bottom.tight
+                )}
               >
                 {tr("network.ipv4")}
               </p>
@@ -381,7 +384,10 @@ export function NetworkCard({
             <>
               <CardDivider />
               <p
-                className={`caption font-medium ${spacing.margin.bottom.tight}`}
+                className={cn(
+                  "caption font-medium",
+                  spacing.margin.bottom.tight
+                )}
               >
                 {tr("network.ipv6")}
               </p>
@@ -489,7 +495,10 @@ export function NetworkCard({
             <>
               <CardDivider />
               <p
-                className={`caption font-medium ${spacing.margin.bottom.tight}`}
+                className={cn(
+                  "caption font-medium",
+                  spacing.margin.bottom.tight
+                )}
               >
                 {tr("network.publicIp")}
               </p>
@@ -507,7 +516,10 @@ export function NetworkCard({
               )}
               {publicip.error && (
                 <p
-                  className={`caption text-status-error ${spacing.margin.top.tight}`}
+                  className={cn(
+                    "caption text-status-error",
+                    spacing.margin.top.tight
+                  )}
                 >
                   {publicip.error}
                 </p>

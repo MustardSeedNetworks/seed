@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { ImprovedHelpModal } from "../help/ImprovedHelpModal";
 import { HelpModal, HelpSection, HelpItem } from "./HelpModal";
-import { spacing, button, radius } from "../../styles/theme";
+import { spacing, button, radius, cn } from "../../styles/theme";
 
 /**
  * HelpModal provides contextual help content in a modal dialog overlay.
@@ -81,10 +81,15 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
+      <div className={cn("min-h-screen bg-surface-base", spacing.pad.xl)}>
         <button
           onClick={() => setIsOpen(true)}
-          className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.lg} hover:bg-brand-primary/90 transition-colors`}
+          className={cn(
+            button.size.md,
+            "bg-brand-primary text-text-inverse",
+            radius.lg,
+            "hover:bg-brand-primary/90 transition-colors"
+          )}
         >
           Open Help Center
         </button>
@@ -112,7 +117,10 @@ export const WithSearch: Story = {
     return (
       <div className="min-h-screen bg-surface-base">
         <div
-          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+          className={cn(
+            spacing.pad.default,
+            "bg-surface-raised border-b border-surface-border"
+          )}
         >
           <p className="body-small text-text-muted">
             Use the search box in the modal sidebar to filter help sections. Try
@@ -143,10 +151,16 @@ export const AllSections: Story = {
     return (
       <div className="min-h-screen bg-surface-base">
         <div
-          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+          className={cn(
+            spacing.pad.default,
+            "bg-surface-raised border-b border-surface-border"
+          )}
         >
           <h2
-            className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "heading-3 text-text-primary",
+              spacing.margin.bottom.inline
+            )}
           >
             Help Modal - All Sections
           </h2>
@@ -281,13 +295,19 @@ export const SimpleBasic: StoryObj<typeof HelpModal> = {
           title="Link Status Help"
         >
           <p
-            className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+            className={cn(
+              "body text-text-secondary",
+              spacing.margin.bottom.content
+            )}
           >
             The Link Status card monitors the physical layer connection of your
             network interface.
           </p>
           <ul
-            className={`list-disc list-inside ${spacing.stack.sm} body-small text-text-secondary`}
+            className={cn(
+              "list-disc list-inside body-small text-text-secondary",
+              spacing.stack.sm
+            )}
           >
             <li>Carrier: Shows if cable is physically connected</li>
             <li>Speed: Negotiated link speed (e.g., 1000 Mbps)</li>
@@ -354,7 +374,10 @@ export const SimpleWithSections: StoryObj<typeof HelpModal> = {
 
           <HelpSection title="How to Use">
             <ol
-              className={`list-decimal list-inside ${spacing.stack.sm} body-small text-text-secondary`}
+              className={cn(
+                "list-decimal list-inside body-small text-text-secondary",
+                spacing.stack.sm
+              )}
             >
               <li>Click "Start Survey" to begin</li>
               <li>Upload a floor plan image (optional)</li>
@@ -391,12 +414,19 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
           onClose={() => setIsOpen(false)}
           title="Speed Test Results"
         >
-          <div className={`${spacing.gap.comfortable} flex flex-col`}>
+          <div className={cn(spacing.gap.comfortable, "flex flex-col")}>
             <div
-              className={`bg-brand-primary/10 border border-brand-primary/20 ${radius.lg} ${spacing.pad.default}`}
+              className={cn(
+                "bg-brand-primary/10 border border-brand-primary/20",
+                radius.lg,
+                spacing.pad.default
+              )}
             >
               <h4
-                className={`font-semibold text-brand-primary ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  "font-semibold text-brand-primary",
+                  spacing.margin.bottom.inline
+                )}
               >
                 Understanding Your Results
               </h4>
@@ -408,15 +438,25 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
             </div>
 
             <div
-              className={`bg-status-warning/10 border border-status-warning/20 ${radius.lg} ${spacing.pad.default}`}
+              className={cn(
+                "bg-status-warning/10 border border-status-warning/20",
+                radius.lg,
+                spacing.pad.default
+              )}
             >
               <h4
-                className={`font-semibold text-status-warning ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  "font-semibold text-status-warning",
+                  spacing.margin.bottom.inline
+                )}
               >
                 Factors Affecting Speed
               </h4>
               <ul
-                className={`list-disc list-inside body-small text-text-secondary ${spacing.stack.xs}`}
+                className={cn(
+                  "list-disc list-inside body-small text-text-secondary",
+                  spacing.stack.xs
+                )}
               >
                 <li>Distance from router or access point</li>
                 <li>Number of connected devices</li>
@@ -427,10 +467,17 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
             </div>
 
             <div
-              className={`bg-status-success/10 border border-status-success/20 ${radius.lg} ${spacing.pad.default}`}
+              className={cn(
+                "bg-status-success/10 border border-status-success/20",
+                radius.lg,
+                spacing.pad.default
+              )}
             >
               <h4
-                className={`font-semibold text-status-success ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  "font-semibold text-status-success",
+                  spacing.margin.bottom.inline
+                )}
               >
                 Improving Speed
               </h4>
@@ -462,19 +509,29 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
+      <div className={cn("min-h-screen bg-surface-base", spacing.pad.xl)}>
         <div
-          className={`max-w-2xl mx-auto ${spacing.gap.comfortable} flex flex-col`}
+          className={cn(
+            "max-w-2xl mx-auto flex flex-col",
+            spacing.gap.comfortable
+          )}
         >
           <h1 className="heading-2 text-text-primary">Network Dashboard</h1>
           <p
-            className={`body text-text-secondary ${spacing.margin.bottom.section}`}
+            className={cn(
+              "body text-text-secondary",
+              spacing.margin.bottom.section
+            )}
           >
             Click the help button below to learn more about this feature.
           </p>
           <button
             onClick={() => setIsOpen(true)}
-            className={`${button.size.md} bg-surface-raised border border-surface-border ${radius.lg} hover:bg-surface-hover transition-colors text-text-primary`}
+            className={cn(
+              button.size.md,
+              "bg-surface-raised border border-surface-border hover:bg-surface-hover transition-colors text-text-primary",
+              radius.lg
+            )}
           >
             Show Help
           </button>
@@ -486,19 +543,25 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
           title="Network Dashboard"
         >
           <p
-            className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+            className={cn(
+              "body text-text-secondary",
+              spacing.margin.bottom.content
+            )}
           >
             The Network Dashboard provides a comprehensive overview of your
             network's health and performance.
           </p>
           <div className={spacing.stack.default}>
-            <div className={`flex items-start ${spacing.gap.default}`}>
+            <div className={cn("flex items-start", spacing.gap.default)}>
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 1
               </span>
               <div className="flex-1">
                 <h4
-                  className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}
+                  className={cn(
+                    "font-semibold text-text-primary",
+                    spacing.margin.bottom.tight
+                  )}
                 >
                   Monitor Status
                 </h4>
@@ -508,13 +571,16 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 </p>
               </div>
             </div>
-            <div className={`flex items-start ${spacing.gap.default}`}>
+            <div className={cn("flex items-start", spacing.gap.default)}>
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 2
               </span>
               <div className="flex-1">
                 <h4
-                  className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}
+                  className={cn(
+                    "font-semibold text-text-primary",
+                    spacing.margin.bottom.tight
+                  )}
                 >
                   Run Tests
                 </h4>
@@ -524,13 +590,16 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
                 </p>
               </div>
             </div>
-            <div className={`flex items-start ${spacing.gap.default}`}>
+            <div className={cn("flex items-start", spacing.gap.default)}>
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 3
               </span>
               <div className="flex-1">
                 <h4
-                  className={`font-semibold text-text-primary ${spacing.margin.bottom.tight}`}
+                  className={cn(
+                    "font-semibold text-text-primary",
+                    spacing.margin.bottom.tight
+                  )}
                 >
                   Analyze Results
                 </h4>
@@ -563,7 +632,7 @@ export const SimpleClosed: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
+      <div className={cn("min-h-screen bg-surface-base", spacing.pad.xl)}>
         <p className="body text-text-secondary">
           Modal is closed - nothing rendered
         </p>
@@ -600,13 +669,20 @@ export const BackdropClose: Story = {
         {!isOpen && (
           <div className={spacing.pad.xl}>
             <p
-              className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+              className={cn(
+                "body text-text-secondary",
+                spacing.margin.bottom.content
+              )}
             >
               Modal was closed {clickCount} time(s)
             </p>
             <button
               onClick={() => setIsOpen(true)}
-              className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.lg} hover:bg-brand-primary/90`}
+              className={cn(
+                button.size.md,
+                "bg-brand-primary text-text-inverse hover:bg-brand-primary/90",
+                radius.lg
+              )}
             >
               Reopen Modal
             </button>

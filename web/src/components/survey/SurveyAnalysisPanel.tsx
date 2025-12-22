@@ -49,6 +49,7 @@ import {
   layout,
   icon as iconTokens,
   button,
+  cn,
 } from "../../styles/theme";
 import type {
   Survey,
@@ -473,14 +474,20 @@ export function SurveyAnalysisPanel({
       <div
         key={finding.id}
         onClick={() => handleClick(finding)}
-        className={`${spacing.pad.sm} ${radius.md} border ${bgClass} cursor-pointer hover:opacity-80 transition-opacity`}
+        className={cn(
+          spacing.pad.sm,
+          radius.md,
+          "border",
+          bgClass,
+          "cursor-pointer hover:opacity-80 transition-opacity"
+        )}
       >
-        <div className={`${layout.inline.default}`}>
+        <div className={cn(layout.inline.default)}>
           <Icon
-            className={`${iconTokens.size.sm} ${colorClass} flex-shrink-0`}
+            className={cn(iconTokens.size.sm, colorClass, "flex-shrink-0")}
           />
           <div className="flex-1 min-w-0">
-            <h4 className={`body-small font-medium ${colorClass}`}>
+            <h4 className={cn("body-small font-medium", colorClass)}>
               {t(finding.titleKey as never)}
             </h4>
             <p className="caption text-text-muted">
@@ -518,17 +525,26 @@ export function SurveyAnalysisPanel({
 
   return (
     <div
-      className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.sm}`}
+      className={cn(
+        "bg-surface-raised",
+        radius.md,
+        "border border-surface-border",
+        spacing.pad.sm
+      )}
     >
       {/* Header */}
       <div
-        className={`${layout.inline.default} justify-between ${spacing.margin.bottom.content}`}
+        className={cn(
+          layout.inline.default,
+          "justify-between",
+          spacing.margin.bottom.content
+        )}
       >
-        <div className={`${layout.inline.default}`}>
+        <div className={cn(layout.inline.default)}>
           <Activity className={iconTokens.size.sm} />
           <h4 className="body-small font-medium">{t("analysis.title")}</h4>
         </div>
-        <div className={`${layout.inline.default}`}>
+        <div className={cn(layout.inline.default)}>
           {criticalFindings.length > 0 && (
             <span className="px-2 py-0.5 text-xs bg-status-error text-text-inverse rounded-full">
               {criticalFindings.length}
@@ -543,7 +559,13 @@ export function SurveyAnalysisPanel({
             <button
               type="button"
               onClick={() => onGenerateReport(findings)}
-              className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:opacity-90 ${layout.inline.tight}`}
+              className={cn(
+                button.size.sm,
+                "bg-brand-primary text-text-inverse",
+                radius.md,
+                "hover:opacity-90",
+                layout.inline.tight
+              )}
             >
               <FileText className="w-3 h-3" />
               <span>{t("criteria.generateReport")}</span>
@@ -553,11 +575,9 @@ export function SurveyAnalysisPanel({
       </div>
 
       {/* Summary */}
-      <div
-        className={`${layout.inline.default} ${spacing.margin.bottom.content}`}
-      >
+      <div className={cn(layout.inline.default, spacing.margin.bottom.content)}>
         {criticalFindings.length > 0 && (
-          <div className={`${layout.inline.tight} text-status-error`}>
+          <div className={cn(layout.inline.tight, "text-status-error")}>
             <AlertOctagon className="w-4 h-4" />
             <span className="caption">
               {criticalFindings.length} {t("analysis.critical")}
@@ -565,7 +585,7 @@ export function SurveyAnalysisPanel({
           </div>
         )}
         {warningFindings.length > 0 && (
-          <div className={`${layout.inline.tight} text-status-warning`}>
+          <div className={cn(layout.inline.tight, "text-status-warning")}>
             <AlertTriangle className="w-4 h-4" />
             <span className="caption">
               {warningFindings.length} {t("analysis.warnings")}
@@ -573,7 +593,7 @@ export function SurveyAnalysisPanel({
           </div>
         )}
         {criticalFindings.length === 0 && warningFindings.length === 0 && (
-          <div className={`${layout.inline.tight} text-status-success`}>
+          <div className={cn(layout.inline.tight, "text-status-success")}>
             <CheckCircle2 className="w-4 h-4" />
             <span className="caption">{t("analysis.noIssues")}</span>
           </div>
@@ -586,7 +606,7 @@ export function SurveyAnalysisPanel({
           {t("analysis.noData")}
         </p>
       ) : (
-        <div className={`${layout.stack.tight} max-h-80 overflow-y-auto`}>
+        <div className={cn(layout.stack.tight, "max-h-80 overflow-y-auto")}>
           {/* Critical first */}
           {criticalFindings.map(renderFinding)}
           {/* Then warnings */}

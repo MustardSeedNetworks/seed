@@ -4,7 +4,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { radius, spacing } from "../../styles/theme";
+import { radius, spacing, cn } from "../../styles/theme";
 import type { Profile, ProfileRequest } from "../../types/profile";
 
 interface ProfileEditorProps {
@@ -50,11 +50,15 @@ export function ProfileEditor({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/50" onClick={onCancel} />
       <div
-        className={`relative w-full max-w-lg ${radius.lg} bg-surface-raised shadow-xl overflow-hidden`}
+        className={cn(
+          "relative w-full max-w-lg",
+          radius.lg,
+          "bg-surface-raised shadow-xl overflow-hidden"
+        )}
       >
         {/* Header */}
-        <div className={`${spacing.pad.md} border-b border-surface-border`}>
-          <h2 className="heading-md text-text-primary">
+        <div className={cn(spacing.pad.md, "border-b border-surface-border")}>
+          <h2 className="heading-2 text-text-primary">
             {isEditing
               ? t("profile.edit", "Edit Profile")
               : t("profile.create", "Create Profile")}
@@ -63,7 +67,7 @@ export function ProfileEditor({
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div className={`${spacing.pad.md} space-y-4`}>
+          <div className={cn(spacing.pad.md, "space-y-4")}>
             {/* Name */}
             <div>
               <label className="block body-small font-medium text-text-primary mb-1">
@@ -74,7 +78,12 @@ export function ProfileEditor({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary`}
+                className={cn(
+                  "w-full",
+                  spacing.pad.sm,
+                  radius.md,
+                  "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                )}
                 placeholder={t("profile.namePlaceholder", "e.g., Client A")}
               />
             </div>
@@ -88,7 +97,12 @@ export function ProfileEditor({
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary`}
+                className={cn(
+                  "w-full",
+                  spacing.pad.sm,
+                  radius.md,
+                  "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                )}
                 placeholder={t(
                   "profile.descriptionPlaceholder",
                   "Brief description"
@@ -105,7 +119,12 @@ export function ProfileEditor({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none`}
+                className={cn(
+                  "w-full",
+                  spacing.pad.sm,
+                  radius.md,
+                  "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"
+                )}
                 placeholder={t(
                   "profile.notesPlaceholder",
                   "Contact info, VPN requirements, etc."
@@ -129,20 +148,33 @@ export function ProfileEditor({
 
           {/* Footer */}
           <div
-            className={`${spacing.pad.md} border-t border-surface-border flex justify-end gap-3`}
+            className={cn(
+              spacing.pad.md,
+              "border-t border-surface-border flex justify-end gap-3"
+            )}
           >
             <button
               type="button"
               onClick={onCancel}
               disabled={isLoading}
-              className={`${spacing.pad.sm} px-4 ${radius.md} border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:opacity-50`}
+              className={cn(
+                spacing.pad.sm,
+                "px-4",
+                radius.md,
+                "border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:opacity-50"
+              )}
             >
               {t("common.cancel", "Cancel")}
             </button>
             <button
               type="submit"
               disabled={isLoading || !name.trim()}
-              className={`${spacing.pad.sm} px-4 ${radius.md} bg-brand-primary hover:bg-brand-primary-hover text-white body-small font-medium disabled:opacity-50`}
+              className={cn(
+                spacing.pad.sm,
+                "px-4",
+                radius.md,
+                "bg-brand-primary hover:bg-brand-primary-hover text-white body-small font-medium disabled:opacity-50"
+              )}
             >
               {isLoading
                 ? t("common.saving", "Saving...")

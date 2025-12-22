@@ -39,6 +39,7 @@ import {
   layout,
   spacing,
   input as inputTokens,
+  cn,
 } from "../../../styles/theme";
 
 interface DNSSettingsProps {
@@ -112,19 +113,36 @@ export const DNSSettings = memo(function DNSSettings({
               }))
             }
             placeholder="google.com"
-            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} w-full ${spacing.margin.top.tight} body-small`}
+            className={cn(
+              inputTokens.base,
+              inputTokens.state.default,
+              inputTokens.size.md,
+              "w-full",
+              spacing.margin.top.tight,
+              "body-small"
+            )}
           />
-          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+          <p
+            className={cn(
+              "caption",
+              "text-text-muted",
+              spacing.margin.top.tight
+            )}
+          >
             {t("dns.testHostnameDesc")}
           </p>
         </div>
 
         {/* DNS Servers for per-server testing */}
         <div
-          className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+          className={cn(
+            "border-t",
+            "border-surface-border",
+            spacing.padding.top.heading
+          )}
         >
           <div
-            className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.flex.between, spacing.margin.bottom.inline)}
           >
             <span className="caption text-text-muted font-medium">
               {t("dns.additionalServers")}
@@ -137,14 +155,22 @@ export const DNSSettings = memo(function DNSSettings({
             </button>
           </div>
           <p
-            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "caption",
+              "text-text-muted",
+              spacing.margin.bottom.inline
+            )}
           >
             {t("dns.serversDescription")}
           </p>
           {testsSettings.dnsServers.map((server) => (
             <div
               key={server.id || server.address}
-              className={`flex ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+              className={cn(
+                "flex",
+                spacing.gap.compact,
+                spacing.margin.bottom.inline
+              )}
             >
               <input
                 type="text"
@@ -153,11 +179,21 @@ export const DNSSettings = memo(function DNSSettings({
                   updateDNSServer(server.id!, "address", e.target.value)
                 }
                 placeholder={t("dns.serverIp")}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} flex-1 caption`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md,
+                  "flex-1",
+                  "caption"
+                )}
               />
               <button
                 onClick={() => removeDNSServer(server.id!)}
-                className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                className={cn(
+                  "text-status-error",
+                  "hover:text-status-error/80",
+                  spacing.actionBtn
+                )}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}

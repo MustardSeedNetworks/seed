@@ -17,7 +17,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { SettingsDrawer } from "./SettingsDrawer";
-import { spacing, button, radius } from "../../styles/theme";
+import { spacing, button, radius, cn } from "../../styles/theme";
 
 const meta: Meta<typeof SettingsDrawer> = {
   title: "Settings/SettingsDrawer",
@@ -106,10 +106,15 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className={`h-screen bg-surface-base ${spacing.pad.default}`}>
+      <div className={cn("h-screen bg-surface-base", spacing.pad.default)}>
         <button
           onClick={() => setIsOpen(true)}
-          className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.lg} hover:bg-brand-accent`}
+          className={cn(
+            button.size.md,
+            "bg-brand-primary text-text-inverse",
+            radius.lg,
+            "hover:bg-brand-accent"
+          )}
         >
           Open Settings
         </button>
@@ -187,14 +192,21 @@ export const WithBackdrop: Story = {
     };
 
     return (
-      <div className={`h-screen bg-surface-base ${spacing.pad.default}`}>
+      <div className={cn("h-screen bg-surface-base", spacing.pad.default)}>
         <div
-          className={`${spacing.margin.bottom.content} ${spacing.pad.default} bg-surface-raised ${radius.lg}`}
+          className={cn(
+            spacing.margin.bottom.content,
+            spacing.pad.default,
+            "bg-surface-raised",
+            radius.lg
+          )}
         >
           <p className="body-small text-text-primary">
             Click the dark backdrop to close the drawer.
           </p>
-          <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+          <p
+            className={cn("caption text-text-muted", spacing.margin.top.inline)}
+          >
             Backdrop clicks: {clickCount}
           </p>
         </div>
@@ -227,24 +239,24 @@ export const WithContent: Story = {
       <div className="h-screen bg-surface-base">
         {/* Sample page content */}
         <div className={spacing.pad.xl}>
-          <h1 className={`heading-1 ${spacing.margin.bottom.content}`}>
+          <h1 className={cn("heading-1", spacing.margin.bottom.content)}>
             Network Dashboard
           </h1>
-          <div className={`grid grid-cols-3 ${spacing.gap.comfortable}`}>
-            <div className={`${spacing.pad.lg} bg-surface-raised ${radius.lg}`}>
-              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>
+          <div className={cn("grid grid-cols-3", spacing.gap.comfortable)}>
+            <div className={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
+              <h2 className={cn("heading-3", spacing.margin.bottom.inline)}>
                 Network Status
               </h2>
               <p className="body-small text-text-muted">Connected</p>
             </div>
-            <div className={`${spacing.pad.lg} bg-surface-raised ${radius.lg}`}>
-              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>
+            <div className={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
+              <h2 className={cn("heading-3", spacing.margin.bottom.inline)}>
                 Speed Test
               </h2>
               <p className="body-small text-text-muted">150 Mbps</p>
             </div>
-            <div className={`${spacing.pad.lg} bg-surface-raised ${radius.lg}`}>
-              <h2 className={`heading-3 ${spacing.margin.bottom.inline}`}>
+            <div className={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
+              <h2 className={cn("heading-3", spacing.margin.bottom.inline)}>
                 Devices
               </h2>
               <p className="body-small text-text-muted">12 found</p>
@@ -252,7 +264,13 @@ export const WithContent: Story = {
           </div>
           <button
             onClick={() => setIsOpen(true)}
-            className={`${spacing.margin.top.content} ${button.size.md} bg-brand-primary text-text-inverse ${radius.lg} hover:bg-brand-accent`}
+            className={cn(
+              spacing.margin.top.content,
+              button.size.md,
+              "bg-brand-primary text-text-inverse",
+              radius.lg,
+              "hover:bg-brand-accent"
+            )}
           >
             Open Settings
           </button>

@@ -37,6 +37,7 @@ import { HTTP_TIMING_HELP } from "../help/HelpContent";
 import { useSettings } from "../../contexts/useSettings";
 import { HeartPulse } from "../ui/Icons";
 import {
+  cn,
   timing,
   icon as iconTokens,
   layout,
@@ -254,15 +255,15 @@ export const HealthCheckCard = memo(function HealthCheckCard({
             {displayName}
             {details}
           </span>
-          <span className={`inline-flex items-center ${spacing.gap.compact}`}>
+          <span className={cn("inline-flex items-center", spacing.gap.compact)}>
             <StatusBadge status={statusLabel} size="sm" />
-            <span className={`body-small font-medium ${statusColor}`}>
+            <span className={cn("body-small font-medium", statusColor)}>
               {result.success ? formatLatency(result.latency) : "fail"}
             </span>
           </span>
         </div>
         {extendedInfo && (
-          <div className={`caption text-text-muted ${spacing.micro.mt}`}>
+          <div className={cn("caption text-text-muted", spacing.micro.mt)}>
             {extendedInfo}
           </div>
         )}
@@ -342,7 +343,11 @@ export const HealthCheckCard = memo(function HealthCheckCard({
       <div className={spacing.micro.mtCompactMd}>
         {/* Stacked bar */}
         <div
-          className={`h-2 ${radius.full} overflow-hidden flex bg-bg-tertiary`}
+          className={cn(
+            "h-2",
+            radius.full,
+            "overflow-hidden flex bg-bg-tertiary"
+          )}
         >
           {segments.map((seg, i) => {
             const widthPercent = Math.min(
@@ -353,7 +358,12 @@ export const HealthCheckCard = memo(function HealthCheckCard({
             return (
               <div
                 key={seg.label}
-                className={`${seg.color} ${widthClass} ${i === 0 ? "rounded-l-full" : ""} ${i === segments.length - 1 ? "rounded-r-full" : ""}`}
+                className={cn(
+                  seg.color,
+                  widthClass,
+                  i === 0 ? "rounded-l-full" : "",
+                  i === segments.length - 1 ? "rounded-r-full" : ""
+                )}
                 title={`${seg.label}: ${fmt(seg.value)}${seg.status && seg.status !== "success" ? ` (${seg.status})` : ""}`}
               />
             );
@@ -361,7 +371,12 @@ export const HealthCheckCard = memo(function HealthCheckCard({
         </div>
         {/* Legend with tooltips */}
         <div
-          className={`flex flex-wrap gap-x-3 ${spacing.margin.top.tight} caption ${spacing.micro.gap}`}
+          className={cn(
+            "flex flex-wrap gap-x-3",
+            spacing.margin.top.tight,
+            "caption",
+            spacing.micro.gap
+          )}
         >
           {segments.map((seg) => (
             <Tooltip
@@ -370,10 +385,14 @@ export const HealthCheckCard = memo(function HealthCheckCard({
               position="bottom"
             >
               <span
-                className={`inline-flex items-center ${spacing.gap.tight} ${getStatusTextColor(seg.status)}`}
+                className={cn(
+                  "inline-flex items-center",
+                  spacing.gap.tight,
+                  getStatusTextColor(seg.status)
+                )}
               >
                 <span
-                  className={`inline-block w-2 h-2 ${radius.full} ${seg.color}`}
+                  className={cn("inline-block w-2 h-2", radius.full, seg.color)}
                 />
                 {seg.label} {fmt(seg.value)}
               </span>
@@ -440,21 +459,28 @@ export const HealthCheckCard = memo(function HealthCheckCard({
             {result.name}
             {result.status ? ` (${result.status})` : ""}
           </span>
-          <span className={`body-small font-medium ${statusColor}`}>
+          <span className={cn("body-small font-medium", statusColor)}>
             {result.success ? formatLatency(result.latency) : "fail"}
           </span>
         </div>
         {hasTimingData && <TimingBar result={result} />}
         {!result.success && result.error && (
           <div
-            className={`caption text-status-error ${spacing.margin.top.tight}`}
+            className={cn(
+              "caption text-status-error",
+              spacing.margin.top.tight
+            )}
           >
             {result.error}
           </div>
         )}
         {(hasTLS || hasCertInfo) && (
           <div
-            className={`caption ${spacing.margin.top.tight} ${layout.inline.default}`}
+            className={cn(
+              "caption",
+              spacing.margin.top.tight,
+              layout.inline.default
+            )}
           >
             {hasTLS && (
               <span className="text-text-muted">{result.tlsVersion}</span>

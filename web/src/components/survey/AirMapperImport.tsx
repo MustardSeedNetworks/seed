@@ -41,6 +41,7 @@ import {
   Users,
 } from "lucide-react";
 import {
+  cn,
   radius,
   spacing,
   layout,
@@ -198,28 +199,39 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={`border-2 border-dashed ${
+      className={cn(
+        "border-2 border-dashed",
         isDragging
           ? "border-brand-primary bg-brand-primary/10"
-          : "border-surface-border"
-      } ${radius.lg} ${spacing.pad.lg} text-center transition-colors`}
+          : "border-surface-border",
+        radius.lg,
+        spacing.pad.lg,
+        "text-center transition-colors"
+      )}
     >
       {isLoading ? (
-        <div className={`${layout.stack.default} items-center`}>
+        <div className={cn(layout.stack.default, "items-center")}>
           <div className="animate-spin">
-            <FileArchive className={`${iconTokens.size.lg} text-text-muted`} />
+            <FileArchive
+              className={cn(iconTokens.size.lg, "text-text-muted")}
+            />
           </div>
           <p className="body-small text-text-muted">{t("import.parsing")}</p>
         </div>
       ) : (
-        <div className={`${layout.stack.default} items-center`}>
-          <Upload className={`${iconTokens.size.lg} text-text-muted`} />
+        <div className={cn(layout.stack.default, "items-center")}>
+          <Upload className={cn(iconTokens.size.lg, "text-text-muted")} />
           <div>
             <p className="body-small font-medium">{t("import.dropPrompt")}</p>
             <p className="caption text-text-muted">{t("import.orClick")}</p>
           </div>
           <label
-            className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 cursor-pointer`}
+            className={cn(
+              button.size.sm,
+              "bg-brand-primary text-text-inverse",
+              radius.md,
+              "hover:bg-brand-primary/90 cursor-pointer"
+            )}
           >
             {t("import.selectFile")}
             <input
@@ -239,30 +251,47 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
   // Render error state
   const renderError = () => (
-    <div className={`${layout.stack.default}`}>
+    <div className={layout.stack.default}>
       <div
-        className={`bg-status-error/10 border border-status-error/20 ${radius.md} ${spacing.pad.default}`}
+        className={cn(
+          "bg-status-error/10 border border-status-error/20",
+          radius.md,
+          spacing.pad.default
+        )}
       >
-        <div className={`${layout.inline.default} text-status-error`}>
+        <div className={cn(layout.inline.default, "text-status-error")}>
           <AlertTriangle className={iconTokens.size.sm} />
           <span className="body-small font-medium">{t("import.error")}</span>
         </div>
         <p
-          className={`body-small text-text-primary ${spacing.margin.top.tight}`}
+          className={cn(
+            "body-small text-text-primary",
+            spacing.margin.top.tight
+          )}
         >
           {parseResult?.error}
         </p>
       </div>
-      <div className={`${layout.inline.default} justify-end`}>
+      <div className={cn(layout.inline.default, "justify-end")}>
         <button
           onClick={handleReset}
-          className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover`}
+          className={cn(
+            button.size.sm,
+            "border border-surface-border",
+            radius.md,
+            "hover:bg-surface-hover"
+          )}
         >
           {t("import.tryAnother")}
         </button>
         <button
           onClick={onCancel}
-          className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover`}
+          className={cn(
+            button.size.sm,
+            "border border-surface-border",
+            radius.md,
+            "hover:bg-surface-hover"
+          )}
         >
           {t("buttons.cancel")}
         </button>
@@ -277,20 +306,28 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
     const summary = getAirMapperSummary(parseResult.data);
 
     return (
-      <div className={`${layout.stack.default}`}>
+      <div className={layout.stack.default}>
         {/* Warnings */}
         {parseResult.warnings.length > 0 && (
           <div
-            className={`bg-status-warning/10 border border-status-warning/20 ${radius.md} ${spacing.pad.sm}`}
+            className={cn(
+              "bg-status-warning/10 border border-status-warning/20",
+              radius.md,
+              spacing.pad.sm
+            )}
           >
-            <div className={`${layout.inline.default} text-status-warning`}>
+            <div className={cn(layout.inline.default, "text-status-warning")}>
               <AlertTriangle className={iconTokens.size.sm} />
               <span className="caption font-medium">
                 {t("import.warnings")}
               </span>
             </div>
             <ul
-              className={`caption text-text-muted ${spacing.margin.top.tight} list-disc list-inside`}
+              className={cn(
+                "caption text-text-muted",
+                spacing.margin.top.tight,
+                "list-disc list-inside"
+              )}
             >
               {parseResult.warnings.map((w, i) => (
                 <li key={i}>{w}</li>
@@ -300,9 +337,12 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
         )}
 
         {/* Preview info */}
-        <div className={`bg-surface-base ${radius.md} ${spacing.pad.default}`}>
+        <div className={cn("bg-surface-base", radius.md, spacing.pad.default)}>
           <h4
-            className={`body-small font-medium ${spacing.margin.bottom.content}`}
+            className={cn(
+              "body-small font-medium",
+              spacing.margin.bottom.content
+            )}
           >
             {summary.surveyName}
           </h4>
@@ -323,20 +363,24 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
           {/* Location counts */}
           <div
-            className={`${layout.inline.default} ${spacing.margin.top.content} flex-wrap`}
+            className={cn(
+              layout.inline.default,
+              spacing.margin.top.content,
+              "flex-wrap"
+            )}
           >
-            <div className={`${layout.inline.default} caption`}>
+            <div className={cn(layout.inline.default, "caption")}>
               <MapPin className="w-3 h-3 text-green-500" />
               <span>{summary.apCount} APs</span>
             </div>
-            <div className={`${layout.inline.default} caption`}>
+            <div className={cn(layout.inline.default, "caption")}>
               <Users className="w-3 h-3 text-blue-500" />
               <span>
                 {summary.clientCount} {t("import.clients")}
               </span>
             </div>
             {summary.hasBothModes && (
-              <div className={`${layout.inline.default} caption`}>
+              <div className={cn(layout.inline.default, "caption")}>
                 <Radio className="w-3 h-3 text-purple-500" />
                 <span>{t("import.passiveAndActive")}</span>
               </div>
@@ -345,11 +389,15 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
           {/* Floor plan preview */}
           {parseResult.data.floorPlanImage && (
-            <div className={`${spacing.margin.top.content}`}>
+            <div className={spacing.margin.top.content}>
               <img
                 src={parseResult.data.floorPlanImage}
                 alt="Floor plan preview"
-                className={`max-h-40 ${radius.md} border border-surface-border`}
+                className={cn(
+                  "max-h-40",
+                  radius.md,
+                  "border border-surface-border"
+                )}
               />
             </div>
           )}
@@ -357,13 +405,19 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
         {/* Import options */}
         <div
-          className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}
+          className={cn(
+            "border border-surface-border",
+            radius.md,
+            spacing.pad.sm
+          )}
         >
-          <h4 className={`caption font-medium ${spacing.margin.bottom.inline}`}>
+          <h4
+            className={cn("caption font-medium", spacing.margin.bottom.inline)}
+          >
             {t("import.options")}
           </h4>
-          <div className={`${layout.stack.default}`}>
-            <label className={`${layout.inline.default} cursor-pointer`}>
+          <div className={layout.stack.default}>
+            <label className={cn(layout.inline.default, "cursor-pointer")}>
               <input
                 type="checkbox"
                 checked={importOptions.importFloorPlan}
@@ -378,7 +432,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
               />
               <span className="body-small">{t("import.optionFloorPlan")}</span>
             </label>
-            <label className={`${layout.inline.default} cursor-pointer`}>
+            <label className={cn(layout.inline.default, "cursor-pointer")}>
               <input
                 type="checkbox"
                 checked={importOptions.importCalibration}
@@ -394,7 +448,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
                 {t("import.optionCalibration")}
               </span>
             </label>
-            <label className={`${layout.inline.default} cursor-pointer`}>
+            <label className={cn(layout.inline.default, "cursor-pointer")}>
               <input
                 type="checkbox"
                 checked={importOptions.importLocations}
@@ -412,23 +466,40 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
         </div>
 
         {/* Actions */}
-        <div className={`${layout.inline.default} justify-end`}>
+        <div className={cn(layout.inline.default, "justify-end")}>
           <button
             onClick={handleReset}
-            className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
+            className={cn(
+              button.size.sm,
+              "border border-surface-border",
+              radius.md,
+              "hover:bg-surface-hover",
+              layout.inline.default
+            )}
           >
             <X className={iconTokens.size.sm} />
             {t("import.tryAnother")}
           </button>
           <button
             onClick={onCancel}
-            className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover`}
+            className={cn(
+              button.size.sm,
+              "border border-surface-border",
+              radius.md,
+              "hover:bg-surface-hover"
+            )}
           >
             {t("buttons.cancel")}
           </button>
           <button
             onClick={handleConfirmImport}
-            className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default}`}
+            className={cn(
+              button.size.sm,
+              "bg-brand-primary text-text-inverse",
+              radius.md,
+              "hover:bg-brand-primary/90",
+              layout.inline.default
+            )}
           >
             <Check className={iconTokens.size.sm} />
             {t("import.confirm")}
@@ -440,17 +511,23 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
   return (
     <div
-      className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.default}`}
+      className={cn(
+        "bg-surface-raised",
+        radius.md,
+        "border border-surface-border",
+        spacing.pad.default
+      )}
     >
-      <div
-        className={`${layout.inline.default} ${spacing.margin.bottom.content}`}
-      >
+      <div className={cn(layout.inline.default, spacing.margin.bottom.content)}>
         <FileArchive className={iconTokens.size.sm} />
         <h3 className="heading-3">{t("import.title")}</h3>
       </div>
 
       <p
-        className={`body-small text-text-muted ${spacing.margin.bottom.content}`}
+        className={cn(
+          "body-small text-text-muted",
+          spacing.margin.bottom.content
+        )}
       >
         {t("import.description")}
       </p>

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { SpeedGauge, ProgressRing, PulsingDot } from "./SpeedGauge";
-import { spacing, layout } from "../../styles/theme";
+import { spacing, layout, cn } from "../../styles/theme";
 
 /**
  * SpeedGauge displays internet speed test results as an arc-based speedometer gauge.
@@ -50,7 +50,7 @@ const meta: Meta<typeof SpeedGauge> = {
   },
   decorators: [
     (Story) => (
-      <div className={`${spacing.pad.xl}`}>
+      <div className={spacing.pad.xl}>
         <Story />
       </div>
     ),
@@ -293,7 +293,7 @@ export const UploadSpeed: Story = {
  */
 export const DownloadUploadPair: Story = {
   render: () => (
-    <div className={`${layout.inline.spacious}`}>
+    <div className={layout.inline.spacious}>
       <SpeedGauge value={450.8} maxValue={1000} label="Download" size="md" />
       <SpeedGauge value={52.3} maxValue={1000} label="Upload" size="md" />
     </div>
@@ -313,16 +313,16 @@ export const DownloadUploadPair: Story = {
  */
 export const AllSizes: Story = {
   render: () => (
-    <div className={`flex items-end ${spacing.gap.spacious}`}>
-      <div className={`${layout.stack.default} items-center`}>
+    <div className={cn("flex items-end", spacing.gap.spacious)}>
+      <div className={cn(layout.stack.default, "items-center")}>
         <SpeedGauge value={125.5} maxValue={1000} label="Small" size="sm" />
         <span className="caption text-text-muted">100x60</span>
       </div>
-      <div className={`${layout.stack.default} items-center`}>
+      <div className={cn(layout.stack.default, "items-center")}>
         <SpeedGauge value={125.5} maxValue={1000} label="Medium" size="md" />
         <span className="caption text-text-muted">140x85</span>
       </div>
-      <div className={`${layout.stack.default} items-center`}>
+      <div className={cn(layout.stack.default, "items-center")}>
         <SpeedGauge value={125.5} maxValue={1000} label="Large" size="lg" />
         <span className="caption text-text-muted">180x110</span>
       </div>
@@ -344,7 +344,7 @@ export const SpeedProgression: Story = {
   render: () => {
     const speeds = [0, 50, 150, 350, 650, 950];
     return (
-      <div className={`grid grid-cols-3 ${spacing.gap.spacious}`}>
+      <div className={cn("grid grid-cols-3", spacing.gap.spacious)}>
         {speeds.map((speed) => (
           <SpeedGauge
             key={speed}
@@ -496,7 +496,7 @@ export const ProgressRingSmall: StoryObj<typeof ProgressRing> = {
  */
 export const ProgressRingStates: StoryObj<typeof ProgressRing> = {
   render: () => (
-    <div className={`flex ${spacing.gap.spacious} items-end`}>
+    <div className={cn("flex items-end", spacing.gap.spacious)}>
       <ProgressRing progress={0} size={48} label="0%" />
       <ProgressRing progress={25} size={48} label="25%" />
       <ProgressRing progress={50} size={48} label="50%" />
@@ -603,20 +603,20 @@ export const PulsingDotSmall: StoryObj<typeof PulsingDot> = {
  */
 export const PulsingDotAllColors: StoryObj<typeof PulsingDot> = {
   render: () => (
-    <div className={`flex ${spacing.gap.spacious} items-center`}>
-      <div className={`${layout.stack.default} items-center`}>
+    <div className={cn("flex items-center", spacing.gap.spacious)}>
+      <div className={cn(layout.stack.default, "items-center")}>
         <PulsingDot color="primary" size="md" />
         <span className="caption text-text-muted">Primary</span>
       </div>
-      <div className={`${layout.stack.default} items-center`}>
+      <div className={cn(layout.stack.default, "items-center")}>
         <PulsingDot color="success" size="md" />
         <span className="caption text-text-muted">Success</span>
       </div>
-      <div className={`${layout.stack.default} items-center`}>
+      <div className={cn(layout.stack.default, "items-center")}>
         <PulsingDot color="warning" size="md" />
         <span className="caption text-text-muted">Warning</span>
       </div>
-      <div className={`${layout.stack.default} items-center`}>
+      <div className={cn(layout.stack.default, "items-center")}>
         <PulsingDot color="error" size="md" />
         <span className="caption text-text-muted">Error</span>
       </div>
@@ -636,9 +636,13 @@ export const PulsingDotAllColors: StoryObj<typeof PulsingDot> = {
  */
 export const PulsingDotInContext: StoryObj<typeof PulsingDot> = {
   render: () => (
-    <div className={`${spacing.section.default}`}>
+    <div className={spacing.section.default}>
       <div
-        className={`${layout.inline.comfortable} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
+        className={cn(
+          layout.inline.comfortable,
+          spacing.pad.sm,
+          "bg-surface-raised border border-surface-border rounded-lg"
+        )}
       >
         <PulsingDot color="primary" size="sm" />
         <span className="body-small text-text-primary">
@@ -646,13 +650,21 @@ export const PulsingDotInContext: StoryObj<typeof PulsingDot> = {
         </span>
       </div>
       <div
-        className={`${layout.inline.comfortable} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
+        className={cn(
+          layout.inline.comfortable,
+          spacing.pad.sm,
+          "bg-surface-raised border border-surface-border rounded-lg"
+        )}
       >
         <PulsingDot color="success" size="sm" />
         <span className="body-small text-text-primary">Speed test running</span>
       </div>
       <div
-        className={`${layout.inline.comfortable} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
+        className={cn(
+          layout.inline.comfortable,
+          spacing.pad.sm,
+          "bg-surface-raised border border-surface-border rounded-lg"
+        )}
       >
         <PulsingDot color="warning" size="sm" />
         <span className="body-small text-text-primary">
@@ -660,7 +672,11 @@ export const PulsingDotInContext: StoryObj<typeof PulsingDot> = {
         </span>
       </div>
       <div
-        className={`${layout.inline.comfortable} ${spacing.pad.sm} bg-surface-raised border border-surface-border rounded-lg`}
+        className={cn(
+          layout.inline.comfortable,
+          spacing.pad.sm,
+          "bg-surface-raised border border-surface-border rounded-lg"
+        )}
       >
         <PulsingDot color="error" size="sm" />
         <span className="body-small text-text-primary">

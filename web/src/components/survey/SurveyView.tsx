@@ -70,6 +70,7 @@ import {
   spacing,
   button,
   icon as iconTokens,
+  cn,
 } from "../../styles/theme";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -748,10 +749,10 @@ export function SurveyView({
     <div className="fixed inset-0 bg-surface-base z-50 overflow-auto">
       {/* Header */}
       <div className="sticky top-0 bg-surface-raised border-b border-surface-border z-10">
-        <div className={`max-w-7xl mx-auto pad ${layout.flex.between}`}>
+        <div className={cn("max-w-7xl mx-auto pad", layout.flex.between)}>
           <div>
             <h1 className="heading-1">{survey.name}</h1>
-            <p className={`body-small ${spacing.margin.top.tight}`}>
+            <p className={cn("body-small", spacing.margin.top.tight)}>
               {(survey.surveyType ?? "wifi").charAt(0).toUpperCase() +
                 (survey.surveyType ?? "wifi").slice(1)}{" "}
               {t("status.survey")} • {currentSamples.length}{" "}
@@ -759,7 +760,7 @@ export function SurveyView({
             </p>
           </div>
 
-          <div className={`${layout.inline.default}`}>
+          <div className={layout.inline.default}>
             {/* Status controls */}
             {survey.status === "created" && (
               <button
@@ -774,7 +775,14 @@ export function SurveyView({
                           .join(", ")}`
                       : undefined
                 }
-                className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default} disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={cn(
+                  button.size.md,
+                  "bg-brand-primary text-text-inverse",
+                  radius.md,
+                  "hover:bg-brand-primary/90",
+                  layout.inline.default,
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
               >
                 <Play className={iconTokens.size.sm} />
                 {t("buttons.startSurvey")}
@@ -785,14 +793,26 @@ export function SurveyView({
               <>
                 <button
                   onClick={() => handleStatusChange("pause")}
-                  className={`${button.size.md} border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
+                  className={cn(
+                    button.size.md,
+                    "border border-surface-border",
+                    radius.md,
+                    "hover:bg-surface-hover",
+                    layout.inline.default
+                  )}
                 >
                   <Pause className={iconTokens.size.sm} />
                   {t("buttons.pause")}
                 </button>
                 <button
                   onClick={() => handleStatusChange("complete")}
-                  className={`${button.size.md} bg-status-success text-text-inverse ${radius.md} hover:bg-status-success/90 ${layout.inline.default}`}
+                  className={cn(
+                    button.size.md,
+                    "bg-status-success text-text-inverse",
+                    radius.md,
+                    "hover:bg-status-success/90",
+                    layout.inline.default
+                  )}
                 >
                   <CheckCircle className={iconTokens.size.sm} />
                   {t("buttons.complete")}
@@ -814,14 +834,27 @@ export function SurveyView({
                             .join(", ")}`
                         : undefined
                   }
-                  className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 ${layout.inline.default} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={cn(
+                    button.size.md,
+                    "bg-brand-primary text-text-inverse",
+                    radius.md,
+                    "hover:bg-brand-primary/90",
+                    layout.inline.default,
+                    "disabled:opacity-50 disabled:cursor-not-allowed"
+                  )}
                 >
                   <Play className={iconTokens.size.sm} />
                   {t("buttons.resume")}
                 </button>
                 <button
                   onClick={() => handleStatusChange("complete")}
-                  className={`${button.size.md} bg-status-success text-text-inverse ${radius.md} hover:bg-status-success/90 ${layout.inline.default}`}
+                  className={cn(
+                    button.size.md,
+                    "bg-status-success text-text-inverse",
+                    radius.md,
+                    "hover:bg-status-success/90",
+                    layout.inline.default
+                  )}
                 >
                   <CheckCircle className={iconTokens.size.sm} />
                   {t("buttons.complete")}
@@ -831,7 +864,13 @@ export function SurveyView({
 
             <button
               onClick={onClose}
-              className={`${button.size.md} border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
+              className={cn(
+                button.size.md,
+                "border border-surface-border",
+                radius.md,
+                "hover:bg-surface-hover",
+                layout.inline.default
+              )}
             >
               <X className={iconTokens.size.sm} />
               {t("buttons.close")}
@@ -842,11 +881,16 @@ export function SurveyView({
 
       {/* Main content */}
       <div
-        className={`max-w-7xl mx-auto ${spacing.pad.default} ${spacing.pad.lg}`}
+        className={cn("max-w-7xl mx-auto", spacing.pad.default, spacing.pad.lg)}
       >
         {error && (
           <div
-            className={`bg-status-error/10 border border-status-error/20 text-status-error ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content}`}
+            className={cn(
+              "bg-status-error/10 border border-status-error/20 text-status-error",
+              spacing.pad.sm,
+              radius.md,
+              spacing.margin.bottom.content
+            )}
           >
             {error}
           </div>
@@ -854,7 +898,12 @@ export function SurveyView({
 
         {!readyToStart && (
           <div
-            className={`bg-status-warning/10 border border-status-warning/30 text-status-warning ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content}`}
+            className={cn(
+              "bg-status-warning/10 border border-status-warning/30 text-status-warning",
+              spacing.pad.sm,
+              radius.md,
+              spacing.margin.bottom.content
+            )}
           >
             {t("setup.readyToStart")}:{" "}
             {missingSetupSteps.map((s) => s.label).join(", ")}
@@ -863,7 +912,7 @@ export function SurveyView({
 
         {/* AirMapper Import Modal */}
         {showImport && (
-          <div className={`${spacing.margin.bottom.content}`}>
+          <div className={spacing.margin.bottom.content}>
             <AirMapperImport
               onImport={handleAirMapperImport}
               onCancel={() => setShowImport(false)}
@@ -874,11 +923,15 @@ export function SurveyView({
         {/* WiFi adapter status banner */}
         {wifiStatus && wifiStatus.status !== "ready" && (
           <div
-            className={`${
+            className={cn(
               wifiStatus.status === "unavailable"
                 ? "bg-status-info/10 border-status-info/20 text-status-info"
-                : "bg-status-info/10 border-status-info/20 text-status-info"
-            } border ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content}`}
+                : "bg-status-info/10 border-status-info/20 text-status-info",
+              "border",
+              spacing.pad.sm,
+              radius.md,
+              spacing.margin.bottom.content
+            )}
           >
             <div className="font-medium">
               {wifiStatus.status === "unavailable"
@@ -886,12 +939,12 @@ export function SurveyView({
                 : t("wifi.adapterAvailable")}
             </div>
             {wifiStatus.availableAdapters.length > 0 && (
-              <div className={`caption ${spacing.margin.top.tight}`}>
+              <div className={cn("caption", spacing.margin.top.tight)}>
                 {t("wifi.availableAdapters")}:{" "}
                 {wifiStatus.availableAdapters.join(", ")}
               </div>
             )}
-            <div className={`caption ${spacing.margin.top.tight}`}>
+            <div className={cn("caption", spacing.margin.top.tight)}>
               {t("wifi.setupWithoutAdapter")}
             </div>
           </div>
@@ -899,29 +952,50 @@ export function SurveyView({
 
         {sampling && (
           <div
-            className={`bg-status-info/10 border border-status-info/20 text-status-info ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content} ${layout.inline.default}`}
+            className={cn(
+              "bg-status-info/10 border border-status-info/20 text-status-info",
+              spacing.pad.sm,
+              radius.md,
+              spacing.margin.bottom.content,
+              layout.inline.default
+            )}
           >
-            <Loader className={`${iconTokens.size.sm} animate-spin`} />
+            <Loader className={cn(iconTokens.size.sm, "animate-spin")} />
             {t("progress.takingMeasurement")}
           </div>
         )}
 
         <div
-          className={`grid grid-cols-1 lg:grid-cols-3 ${spacing.gap.spacious}`}
+          className={cn(
+            "grid grid-cols-1 lg:grid-cols-3",
+            spacing.gap.spacious
+          )}
         >
           {/* Floor plan */}
           <div className="lg:col-span-2">
             <div
-              className={`bg-surface-raised ${radius.md} border border-surface-border pad`}
+              className={cn(
+                "bg-surface-raised",
+                radius.md,
+                "border border-surface-border pad"
+              )}
             >
               <div
-                className={`${layout.flex.between} ${spacing.margin.bottom.content}`}
+                className={cn(
+                  layout.flex.between,
+                  spacing.margin.bottom.content
+                )}
               >
                 <h2 className="heading-3">{t("floorPlan.title")}</h2>
                 {heatmapMetric !== null && (
                   <button
                     onClick={() => setHeatmapMetric(null)}
-                    className={`${button.size.sm} body-small bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90`}
+                    className={cn(
+                      button.size.sm,
+                      "body-small bg-brand-primary text-text-inverse",
+                      radius.md,
+                      "hover:bg-brand-primary/90"
+                    )}
                   >
                     {t("buttons.hideHeatmap")}
                   </button>
@@ -931,33 +1005,57 @@ export function SurveyView({
               {/* Heatmap metric selector - categorized */}
               {heatmapMetric === null && currentSamples.length > 0 && (
                 <div
-                  className={`${spacing.margin.bottom.content} ${spacing.stack.sm}`}
+                  className={cn(
+                    spacing.margin.bottom.content,
+                    spacing.stack.sm
+                  )}
                 >
                   {/* Signal Category */}
                   <div>
                     <div
-                      className={`body-small text-text-muted ${spacing.margin.bottom.tight}`}
+                      className={cn(
+                        "body-small text-text-muted",
+                        spacing.margin.bottom.tight
+                      )}
                     >
                       {t("heatmaps.categories.signal")}
                     </div>
                     <div className={layout.inline.default}>
                       <button
                         onClick={() => setHeatmapMetric("rssi")}
-                        className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                        className={cn(
+                          button.size.sm,
+                          "body-small border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover",
+                          layout.inline.tight
+                        )}
                       >
                         <Wifi className={iconTokens.size.sm} />
                         {t("heatmaps.rssi")}
                       </button>
                       <button
                         onClick={() => setHeatmapMetric("snr")}
-                        className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                        className={cn(
+                          button.size.sm,
+                          "body-small border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover",
+                          layout.inline.tight
+                        )}
                       >
                         <Activity className={iconTokens.size.sm} />
                         {t("heatmaps.snr")}
                       </button>
                       <button
                         onClick={() => setHeatmapMetric("noise")}
-                        className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                        className={cn(
+                          button.size.sm,
+                          "body-small border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover",
+                          layout.inline.tight
+                        )}
                       >
                         <Radio className={iconTokens.size.sm} />
                         {t("heatmaps.noise")}
@@ -968,35 +1066,62 @@ export function SurveyView({
                   {/* Interference Category */}
                   <div>
                     <div
-                      className={`body-small text-text-muted ${spacing.margin.bottom.tight}`}
+                      className={cn(
+                        "body-small text-text-muted",
+                        spacing.margin.bottom.tight
+                      )}
                     >
                       {t("heatmaps.categories.interference")}
                     </div>
                     <div className={layout.inline.default}>
                       <button
                         onClick={() => setHeatmapMetric("cochannel")}
-                        className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                        className={cn(
+                          button.size.sm,
+                          "body-small border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover",
+                          layout.inline.tight
+                        )}
                       >
                         <Waves className={iconTokens.size.sm} />
                         {t("heatmaps.cochannel")}
                       </button>
                       <button
                         onClick={() => setHeatmapMetric("adjacent")}
-                        className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                        className={cn(
+                          button.size.sm,
+                          "body-small border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover",
+                          layout.inline.tight
+                        )}
                       >
                         <Waves className={iconTokens.size.sm} />
                         {t("heatmaps.adjacent")}
                       </button>
                       <button
                         onClick={() => setHeatmapMetric("apDensity")}
-                        className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                        className={cn(
+                          button.size.sm,
+                          "body-small border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover",
+                          layout.inline.tight
+                        )}
                       >
                         <Hash className={iconTokens.size.sm} />
                         {t("heatmaps.apDensity")}
                       </button>
                       <button
                         onClick={() => setHeatmapMetric("ssidCount")}
-                        className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                        className={cn(
+                          button.size.sm,
+                          "body-small border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover",
+                          layout.inline.tight
+                        )}
                       >
                         <Hash className={iconTokens.size.sm} />
                         {t("heatmaps.ssidCount")}
@@ -1008,21 +1133,36 @@ export function SurveyView({
                   {survey.surveyType === "throughput" && (
                     <div>
                       <div
-                        className={`body-small text-text-muted ${spacing.margin.bottom.tight}`}
+                        className={cn(
+                          "body-small text-text-muted",
+                          spacing.margin.bottom.tight
+                        )}
                       >
                         {t("heatmaps.categories.performance")}
                       </div>
                       <div className={layout.inline.default}>
                         <button
                           onClick={() => setHeatmapMetric("throughput")}
-                          className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                          className={cn(
+                            button.size.sm,
+                            "body-small border border-surface-border",
+                            radius.md,
+                            "hover:bg-surface-hover",
+                            layout.inline.tight
+                          )}
                         >
                           <Gauge className={iconTokens.size.sm} />
                           {t("heatmaps.throughput")}
                         </button>
                         <button
                           onClick={() => setHeatmapMetric("latency")}
-                          className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                          className={cn(
+                            button.size.sm,
+                            "body-small border border-surface-border",
+                            radius.md,
+                            "hover:bg-surface-hover",
+                            layout.inline.tight
+                          )}
                         >
                           <Clock className={iconTokens.size.sm} />
                           {t("heatmaps.latency")}
@@ -1035,18 +1175,35 @@ export function SurveyView({
 
               {!currentFloorPlan ? (
                 <div
-                  className={`border-2 border-dashed border-surface-border ${radius.md} pad-lg text-center`}
+                  className={cn(
+                    "border-2 border-dashed border-surface-border",
+                    radius.md,
+                    "pad-lg text-center"
+                  )}
                 >
                   <Upload
-                    className={`${iconTokens.size.xl} mx-auto text-text-muted ${spacing.margin.bottom.content}`}
+                    className={cn(
+                      iconTokens.size.xl,
+                      "mx-auto text-text-muted",
+                      spacing.margin.bottom.content
+                    )}
                   />
                   <p
-                    className={`text-text-muted ${spacing.margin.bottom.content}`}
+                    className={cn(
+                      "text-text-muted",
+                      spacing.margin.bottom.content
+                    )}
                   >
                     {t("floorPlan.uploadPrompt")}
                   </p>
                   <label
-                    className={`inline-block ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} cursor-pointer hover:bg-brand-primary/90`}
+                    className={cn(
+                      "inline-block",
+                      button.size.md,
+                      "bg-brand-primary text-text-inverse",
+                      radius.md,
+                      "cursor-pointer hover:bg-brand-primary/90"
+                    )}
                   >
                     {uploadingFloorPlan
                       ? t("floorPlan.uploading")
@@ -1067,21 +1224,37 @@ export function SurveyView({
                     />
                   </label>
                   <p
-                    className={`caption text-text-muted ${spacing.margin.top.inline}`}
+                    className={cn(
+                      "caption text-text-muted",
+                      spacing.margin.top.inline
+                    )}
                   >
                     {t("floorPlan.supportedFormats")}
                   </p>
                   <div
-                    className={`${spacing.margin.top.content} border-t border-surface-border ${spacing.padding.top}`}
+                    className={cn(
+                      spacing.margin.top.content,
+                      "border-t border-surface-border",
+                      spacing.padding.top
+                    )}
                   >
                     <p
-                      className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+                      className={cn(
+                        "caption text-text-muted",
+                        spacing.margin.bottom.inline
+                      )}
                     >
                       {t("import.description")}
                     </p>
                     <button
                       onClick={() => setShowImport(true)}
-                      className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.default}`}
+                      className={cn(
+                        button.size.sm,
+                        "border border-surface-border",
+                        radius.md,
+                        "hover:bg-surface-hover",
+                        layout.inline.default
+                      )}
                     >
                       <FileArchive className={iconTokens.size.sm} />
                       {t("import.button")}
@@ -1093,20 +1266,31 @@ export function SurveyView({
                   {/* Calibration panel */}
                   {calibrationMode && (
                     <div
-                      className={`bg-status-warning/10 border border-status-warning/20 ${spacing.pad.sm} ${radius.md} ${spacing.margin.bottom.content}`}
+                      className={cn(
+                        "bg-status-warning/10 border border-status-warning/20",
+                        spacing.pad.sm,
+                        radius.md,
+                        spacing.margin.bottom.content
+                      )}
                     >
                       <div
-                        className={`font-medium text-status-warning ${spacing.margin.bottom.inline}`}
+                        className={cn(
+                          "font-medium text-status-warning",
+                          spacing.margin.bottom.inline
+                        )}
                       >
                         📐 {t("calibration.title")}
                       </div>
                       <p
-                        className={`body-small text-text-secondary ${spacing.margin.bottom.content}`}
+                        className={cn(
+                          "body-small text-text-secondary",
+                          spacing.margin.bottom.content
+                        )}
                       >
                         {t("calibration.instructions")}
                       </p>
                       <div className="stack-sm">
-                        <div className={`${layout.inline.default}`}>
+                        <div className={layout.inline.default}>
                           <span className="body-small text-text-muted w-20">
                             {t("calibration.pointA")}:
                           </span>
@@ -1121,7 +1305,7 @@ export function SurveyView({
                             </span>
                           )}
                         </div>
-                        <div className={`${layout.inline.default}`}>
+                        <div className={layout.inline.default}>
                           <span className="body-small text-text-muted w-20">
                             {t("calibration.pointB")}:
                           </span>
@@ -1137,7 +1321,7 @@ export function SurveyView({
                           )}
                         </div>
                         {calibrationPoints.length === 2 && (
-                          <div className={`${layout.inline.default}`}>
+                          <div className={layout.inline.default}>
                             <span className="body-small text-text-muted w-20">
                               {t("calibration.pixelDistance")}:
                             </span>
@@ -1155,7 +1339,10 @@ export function SurveyView({
                           </div>
                         )}
                         <div
-                          className={`${layout.inline.default} ${spacing.margin.top.inline}`}
+                          className={cn(
+                            layout.inline.default,
+                            spacing.margin.top.inline
+                          )}
                         >
                           <label className="body-small text-text-muted w-20">
                             {t("calibration.distance")}:
@@ -1173,7 +1360,13 @@ export function SurveyView({
                                 ? t("calibration.enterFeet")
                                 : t("calibration.enterMeters")
                             }
-                            className={`flex-1 ${button.size.sm} border border-surface-border ${radius.md} bg-surface-base text-text-primary`}
+                            className={cn(
+                              "flex-1",
+                              button.size.sm,
+                              "border border-surface-border",
+                              radius.md,
+                              "bg-surface-base text-text-primary"
+                            )}
                           />
                           <span className="body-small text-text-muted">
                             {useSAE
@@ -1182,7 +1375,10 @@ export function SurveyView({
                           </span>
                         </div>
                         <div
-                          className={`${layout.inline.default} ${spacing.margin.top.inline}`}
+                          className={cn(
+                            layout.inline.default,
+                            spacing.margin.top.inline
+                          )}
                         >
                           <button
                             onClick={handleSaveCalibration}
@@ -1190,19 +1386,34 @@ export function SurveyView({
                               calibrationPoints.length !== 2 ||
                               !calibrationDistance
                             }
-                            className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed`}
+                            className={cn(
+                              button.size.sm,
+                              "bg-brand-primary text-text-inverse",
+                              radius.md,
+                              "hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                            )}
                           >
                             {t("buttons.saveScale")}
                           </button>
                           <button
                             onClick={handleCancelCalibration}
-                            className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                            className={cn(
+                              button.size.sm,
+                              "border border-surface-border",
+                              radius.md,
+                              "hover:bg-surface-hover"
+                            )}
                           >
                             {t("buttons.cancel")}
                           </button>
                           <button
                             onClick={() => setCalibrationPoints([])}
-                            className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                            className={cn(
+                              button.size.sm,
+                              "border border-surface-border",
+                              radius.md,
+                              "hover:bg-surface-hover"
+                            )}
                           >
                             {t("buttons.resetPoints")}
                           </button>
@@ -1214,7 +1425,10 @@ export function SurveyView({
                   {/* Calibrate button and current scale info */}
                   {!calibrationMode && currentFloorPlan && (
                     <div
-                      className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}
+                      className={cn(
+                        layout.flex.between,
+                        spacing.margin.bottom.inline
+                      )}
                     >
                       <div className="body-small text-text-muted">
                         {t("floorPlan.scale")}:{" "}
@@ -1224,7 +1438,13 @@ export function SurveyView({
                       </div>
                       <button
                         onClick={() => setCalibrationMode(true)}
-                        className={`${button.size.sm} body-small border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+                        className={cn(
+                          button.size.sm,
+                          "body-small border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover",
+                          layout.inline.tight
+                        )}
                       >
                         <Ruler className={iconTokens.size.sm} />
                         {t("buttons.calibrateScale")}
@@ -1270,14 +1490,21 @@ export function SurveyView({
           </div>
 
           {/* Settings panel (shown when survey is in created status) and Sample list */}
-          <div className={`lg:col-span-1 ${spacing.stack.default}`}>
+          <div className={cn("lg:col-span-1", spacing.stack.default)}>
             {/* Setup checklist to guide users before starting a survey */}
             {survey.status === "created" && (
               <div
-                className={`bg-surface-raised ${radius.md} border border-surface-border pad`}
+                className={cn(
+                  "bg-surface-raised",
+                  radius.md,
+                  "border border-surface-border pad"
+                )}
               >
                 <div
-                  className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}
+                  className={cn(
+                    layout.flex.between,
+                    spacing.margin.bottom.inline
+                  )}
                 >
                   <h2 className="heading-3">{t("setup.checklist")}</h2>
                   <span className="caption text-text-muted">
@@ -1288,18 +1515,27 @@ export function SurveyView({
                   {setupSteps.map((step) => (
                     <div
                       key={step.key}
-                      className={`flex items-center justify-between ${spacing.pad.xs} ${radius.sm} ${
+                      className={cn(
+                        "flex items-center justify-between",
+                        spacing.pad.xs,
+                        radius.sm,
                         step.done ? "bg-surface-hover" : "bg-transparent"
-                      }`}
+                      )}
                     >
                       <div className={layout.inline.default}>
                         {step.done ? (
                           <CheckCircle
-                            className={`${iconTokens.size.sm} text-status-success`}
+                            className={cn(
+                              iconTokens.size.sm,
+                              "text-status-success"
+                            )}
                           />
                         ) : (
                           <Clock
-                            className={`${iconTokens.size.sm} text-text-muted`}
+                            className={cn(
+                              iconTokens.size.sm,
+                              "text-text-muted"
+                            )}
                           />
                         )}
                         <span className="body-small">{step.label}</span>
@@ -1316,16 +1552,23 @@ export function SurveyView({
             {/* Survey Settings Panel - only show when survey hasn't started */}
             {survey.status === "created" && (
               <div
-                className={`bg-surface-raised ${radius.md} border border-surface-border pad`}
+                className={cn(
+                  "bg-surface-raised",
+                  radius.md,
+                  "border border-surface-border pad"
+                )}
               >
-                <h2 className={`heading-3 ${spacing.margin.bottom.content}`}>
+                <h2 className={cn("heading-3", spacing.margin.bottom.content)}>
                   {t("settings.title")}
                 </h2>
                 <div className="stack">
                   {/* Survey Type */}
                   <div>
                     <label
-                      className={`body-small text-text-muted block ${spacing.margin.bottom.tight}`}
+                      className={cn(
+                        "body-small text-text-muted block",
+                        spacing.margin.bottom.tight
+                      )}
                     >
                       {t("settings.surveyType")}
                     </label>
@@ -1336,7 +1579,13 @@ export function SurveyView({
                           e.target.value as "passive" | "active" | "throughput"
                         )
                       }
-                      className={`w-full ${button.size.md} border border-surface-border ${radius.md} bg-surface-base text-text-primary`}
+                      className={cn(
+                        "w-full",
+                        button.size.md,
+                        "border border-surface-border",
+                        radius.md,
+                        "bg-surface-base text-text-primary"
+                      )}
                     >
                       <option value="passive">
                         {t("settings.types.passive")}
@@ -1355,7 +1604,10 @@ export function SurveyView({
                     <>
                       <div>
                         <label
-                          className={`body-small text-text-muted block ${spacing.margin.bottom.tight}`}
+                          className={cn(
+                            "body-small text-text-muted block",
+                            spacing.margin.bottom.tight
+                          )}
                         >
                           {t("settings.iperfServer")}
                         </label>
@@ -1364,10 +1616,19 @@ export function SurveyView({
                           value={editIperfServer}
                           onChange={(e) => setEditIperfServer(e.target.value)}
                           placeholder="hostname:5201"
-                          className={`w-full ${button.size.md} border border-surface-border ${radius.md} bg-surface-base text-text-primary`}
+                          className={cn(
+                            "w-full",
+                            button.size.md,
+                            "border border-surface-border",
+                            radius.md,
+                            "bg-surface-base text-text-primary"
+                          )}
                         />
                         <p
-                          className={`caption text-text-muted ${spacing.margin.top.tight}`}
+                          className={cn(
+                            "caption text-text-muted",
+                            spacing.margin.top.tight
+                          )}
                         >
                           {t("settings.iperfServerHint")}
                         </p>
@@ -1375,7 +1636,10 @@ export function SurveyView({
 
                       <div>
                         <label
-                          className={`body-small text-text-muted block ${spacing.margin.bottom.tight}`}
+                          className={cn(
+                            "body-small text-text-muted block",
+                            spacing.margin.bottom.tight
+                          )}
                         >
                           {t("settings.testDuration")}
                         </label>
@@ -1387,7 +1651,13 @@ export function SurveyView({
                           onChange={(e) =>
                             setEditTestDuration(parseInt(e.target.value) || 3)
                           }
-                          className={`w-full ${button.size.md} border border-surface-border ${radius.md} bg-surface-base text-text-primary`}
+                          className={cn(
+                            "w-full",
+                            button.size.md,
+                            "border border-surface-border",
+                            radius.md,
+                            "bg-surface-base text-text-primary"
+                          )}
                         />
                       </div>
                     </>
@@ -1397,7 +1667,13 @@ export function SurveyView({
                   <button
                     onClick={handleSaveSettings}
                     disabled={savingSettings}
-                    className={`w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 disabled:opacity-50`}
+                    className={cn(
+                      "w-full",
+                      button.size.md,
+                      "bg-brand-primary text-text-inverse",
+                      radius.md,
+                      "hover:bg-brand-primary/90 disabled:opacity-50"
+                    )}
                   >
                     {savingSettings
                       ? t("buttons.saving")
@@ -1406,14 +1682,23 @@ export function SurveyView({
 
                   {/* Survey type descriptions */}
                   <div
-                    className={`caption text-text-muted border-t border-surface-border ${spacing.padding.top.section} ${spacing.margin.top.inline}`}
+                    className={cn(
+                      "caption text-text-muted border-t border-surface-border",
+                      spacing.padding.top.section,
+                      spacing.margin.top.inline
+                    )}
                   >
                     <p
-                      className={`font-medium ${spacing.margin.bottom.inline}`}
+                      className={cn(
+                        "font-medium",
+                        spacing.margin.bottom.inline
+                      )}
                     >
                       {t("settings.typesDescription")}
                     </p>
-                    <ul className={`list-disc list-inside ${spacing.stack.xs}`}>
+                    <ul
+                      className={cn("list-disc list-inside", spacing.stack.xs)}
+                    >
                       <li>
                         <strong>Passive:</strong> {t("settings.passiveDesc")}
                       </li>
@@ -1459,14 +1744,18 @@ export function SurveyView({
 
             {/* Sample list */}
             <div
-              className={`bg-surface-raised ${radius.md} border border-surface-border pad`}
+              className={cn(
+                "bg-surface-raised",
+                radius.md,
+                "border border-surface-border pad"
+              )}
             >
-              <h2 className={`heading-3 ${spacing.margin.bottom.content}`}>
+              <h2 className={cn("heading-3", spacing.margin.bottom.content)}>
                 {t("samples.title")} ({currentSamples.length})
               </h2>
               <div className="stack-sm max-h-[70vh] overflow-y-auto">
                 {currentSamples.length === 0 ? (
-                  <p className={`body-small text-center ${spacing.pad.lg}`}>
+                  <p className={cn("body-small text-center", spacing.pad.lg)}>
                     {t("samples.noSamples")}{" "}
                     {survey.status === "in_progress"
                       ? t("samples.clickToStart")
@@ -1476,10 +1765,17 @@ export function SurveyView({
                   currentSamples.map((sample, idx) => (
                     <div
                       key={idx}
-                      className={`border border-surface-border ${radius.md} pad-sm body-small`}
+                      className={cn(
+                        "border border-surface-border",
+                        radius.md,
+                        "pad-sm body-small"
+                      )}
                     >
                       <div
-                        className={`flex items-center justify-between ${spacing.margin.bottom.inline}`}
+                        className={cn(
+                          "flex items-center justify-between",
+                          spacing.margin.bottom.inline
+                        )}
                       >
                         <span className="font-semibold">#{idx + 1}</span>
                         <span className="caption">

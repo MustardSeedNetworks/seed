@@ -205,14 +205,24 @@ function DeviceSearchBar({
       {/* Search input */}
       <div className="relative">
         <Search
-          className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${iconTokens.size.sm} text-text-muted pointer-events-none`}
+          className={cn(
+            "absolute left-2.5 top-1/2 -translate-y-1/2",
+            iconTokens.size.sm,
+            "text-text-muted pointer-events-none"
+          )}
         />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t("discovery.searchPlaceholder")}
-          className={`w-full pl-9 pr-8 ${spacing.chip.sm} body-small bg-surface-base border border-surface-border ${radius.md} focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted`}
+          className={cn(
+            "w-full pl-9 pr-8",
+            spacing.chip.sm,
+            "body-small bg-surface-base border border-surface-border",
+            radius.md,
+            "focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted"
+          )}
         />
         {searchQuery && (
           <button
@@ -228,9 +238,13 @@ function DeviceSearchBar({
 
       {/* Sort buttons row */}
       <div
-        className={`flex items-center justify-between ${spacing.gap.compact} flex-wrap`}
+        className={cn(
+          "flex items-center justify-between",
+          spacing.gap.compact,
+          "flex-wrap"
+        )}
       >
-        <div className={`flex items-center ${spacing.gap.tight}`}>
+        <div className={cn("flex items-center", spacing.gap.tight)}>
           <span className="caption text-text-muted">
             {t("discovery.sort")}:
           </span>
@@ -240,11 +254,16 @@ function DeviceSearchBar({
                 key={field}
                 type="button"
                 onClick={() => onSortChange(field)}
-                className={`${spacing.chip.sm} caption ${radius.md} transition-colors flex items-center ${spacing.gap.tight} ${
+                className={cn(
+                  spacing.chip.sm,
+                  "caption",
+                  radius.md,
+                  "transition-colors flex items-center",
+                  spacing.gap.tight,
                   sortField === field
                     ? "bg-brand-primary/20 text-brand-primary"
                     : "bg-surface-hover text-text-muted hover:text-text-primary"
-                }`}
+                )}
               >
                 {field === "ip"
                   ? t("discovery.sortIp")
@@ -324,7 +343,12 @@ function getMethodColor(method: DiscoveryMethod): string {
 function MethodBadge({ method }: { method: DiscoveryMethod }) {
   return (
     <span
-      className={`${spacing.chip.sm} ${radius.md} caption font-medium uppercase ${getMethodColor(method)}`}
+      className={cn(
+        spacing.chip.sm,
+        radius.md,
+        "caption font-medium uppercase",
+        getMethodColor(method)
+      )}
     >
       {method}
     </span>
@@ -362,13 +386,17 @@ function ProfileIcons({
   if (!icons || icons.length === 0) return null;
 
   return (
-    <div className={`flex items-center ${spacing.micro.gap} flex-wrap`}>
+    <div className={cn("flex items-center", spacing.micro.gap, "flex-wrap")}>
       {icons.slice(0, 5).map((icon) => {
         const IconComponent = SERVICE_ICONS_MAP.get(icon);
         return (
           <span
             key={icon}
-            className={`${spacing.pad.xs} ${radius.md} bg-brand-primary/20 text-brand-primary flex items-center justify-center`}
+            className={cn(
+              spacing.pad.xs,
+              radius.md,
+              "bg-brand-primary/20 text-brand-primary flex items-center justify-center"
+            )}
             title={`${icon}${deviceType ? ` (${deviceType})` : ""}`}
           >
             {IconComponent ? (
@@ -511,10 +539,12 @@ function DiscoverySummary({
   ].filter((s) => s.count > 0);
 
   return (
-    <div className={`bg-surface-hover ${radius.md} ${spacing.pad.sm} stack-sm`}>
+    <div
+      className={cn("bg-surface-hover", radius.md, spacing.pad.sm, "stack-sm")}
+    >
       {/* Status row */}
       <div className="flex items-center justify-between body-small">
-        <div className={`flex items-center ${spacing.gap.compact}`}>
+        <div className={cn("flex items-center", spacing.gap.compact)}>
           {status.scanning ? (
             <>
               <RefreshCw
@@ -539,7 +569,11 @@ function DiscoverySummary({
           )}
         </div>
         <div
-          className={`flex items-center ${spacing.inline.sm} text-text-muted`}
+          className={cn(
+            "flex items-center",
+            spacing.inline.sm,
+            "text-text-muted"
+          )}
         >
           <Clock className={iconTokens.size.sm} />
           <span className="caption">{formatLastSeen(status.lastScan, t)}</span>
@@ -576,12 +610,17 @@ function DiscoverySummary({
       {/* Category stats row */}
       {stats.length > 0 && (
         <div
-          className={`flex items-center ${spacing.gap.default} flex-wrap ${spacing.padding.top.heading}`}
+          className={cn(
+            "flex items-center",
+            spacing.gap.default,
+            "flex-wrap",
+            spacing.padding.top.heading
+          )}
         >
           {stats.map(({ icon: Icon, label, count, color }) => (
             <div
               key={label}
-              className={`flex items-center ${spacing.gap.tight}`}
+              className={cn("flex items-center", spacing.gap.tight)}
               title={`${count} ${label}`}
             >
               <Icon className={cn(iconTokens.size.sm, color)} />
@@ -657,19 +696,35 @@ function DeviceRow({
 
   return (
     <div
-      className={`border border-surface-border ${radius.md} overflow-hidden`}
+      className={cn(
+        "border border-surface-border",
+        radius.md,
+        "overflow-hidden"
+      )}
     >
       <button
         type="button"
         onClick={onToggle}
-        className={`w-full ${spacing.pad.xs} sm:${spacing.pad.sm} text-left hover:bg-surface-hover transition-colors focus:outline-none focus:ring-1 focus:ring-brand-primary`}
+        className={cn(
+          "w-full",
+          spacing.pad.xs,
+          `sm:${spacing.pad.sm}`,
+          "text-left hover:bg-surface-hover transition-colors focus:outline-none focus:ring-1 focus:ring-brand-primary"
+        )}
       >
         <div
-          className={`flex items-center justify-between ${spacing.gap.compact}`}
+          className={cn(
+            "flex items-center justify-between",
+            spacing.gap.compact
+          )}
         >
           <div className="flex-1 min-w-0">
             <div
-              className={`flex items-center ${spacing.gap.compact} flex-wrap`}
+              className={cn(
+                "flex items-center",
+                spacing.gap.compact,
+                "flex-wrap"
+              )}
             >
               <span className="font-mono body-small text-text-primary">
                 {device.ip || t("network.noIP")}
@@ -694,7 +749,11 @@ function DeviceRow({
               )}
               {openPorts.length > 0 && (
                 <span
-                  className={`caption bg-status-success/20 text-status-success ${spacing.chip.sm} ${radius.md}`}
+                  className={cn(
+                    "caption bg-status-success/20 text-status-success",
+                    spacing.chip.sm,
+                    radius.md
+                  )}
                 >
                   {t("discovery.open", { count: openPorts.length })}
                 </span>
@@ -713,7 +772,13 @@ function DeviceRow({
                     e.stopPropagation();
                     onVulnerabilityClick?.(device.ip);
                   }}
-                  className={`inline-flex items-center ${spacing.gap.tight} caption ${spacing.chip.sm} ${radius.md} cursor-pointer hover:opacity-80 transition-opacity ${
+                  className={cn(
+                    "inline-flex items-center",
+                    spacing.gap.tight,
+                    "caption",
+                    spacing.chip.sm,
+                    radius.md,
+                    "cursor-pointer hover:opacity-80 transition-opacity",
                     device.vulnerabilities.highestSeverity === "CRITICAL"
                       ? `${severityTheme.critical.bg} ${severityTheme.critical.text}`
                       : device.vulnerabilities.highestSeverity === "HIGH"
@@ -721,7 +786,7 @@ function DeviceRow({
                         : device.vulnerabilities.highestSeverity === "MEDIUM"
                           ? `${severityTheme.medium.bg} ${severityTheme.medium.text}`
                           : `${severityTheme.low.bg} ${severityTheme.low.text}`
-                  }`}
+                  )}
                   title={t("discovery.clickViewVulnerabilities")}
                 >
                   <AlertTriangle className={iconTokens.size.xs} />
@@ -730,7 +795,12 @@ function DeviceRow({
               )}
             </div>
             <div
-              className={`flex items-center ${spacing.inline.sm} ${spacing.margin.top.inline} flex-wrap`}
+              className={cn(
+                "flex items-center",
+                spacing.inline.sm,
+                spacing.margin.top.inline,
+                "flex-wrap"
+              )}
             >
               {device.discoveryMethod.map((method) => (
                 <MethodBadge key={method} method={method} />
@@ -745,7 +815,9 @@ function DeviceRow({
               )}
             </div>
           </div>
-          <div className={`flex items-center ${spacing.gap.compact} shrink-0`}>
+          <div
+            className={cn("flex items-center", spacing.gap.compact, "shrink-0")}
+          >
             {device.osGuess && (
               <span className="caption text-text-muted hidden sm:inline">
                 {device.osGuess}
@@ -756,11 +828,16 @@ function DeviceRow({
                 type="button"
                 onClick={handleDeepScan}
                 disabled={isScanning}
-                className={`${spacing.chip.sm} caption bg-status-info/20 text-status-info ${radius.md} hover:bg-status-info/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={cn(
+                  spacing.chip.sm,
+                  "caption bg-status-info/20 text-status-info",
+                  radius.md,
+                  "hover:bg-status-info/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
                 title={t("discovery.deepScan")}
               >
                 {isScanning ? (
-                  <span className={`flex items-center ${spacing.gap.tight}`}>
+                  <span className={cn("flex items-center", spacing.gap.tight)}>
                     <span className="animate-spin">◐</span>
                   </span>
                 ) : (
@@ -769,7 +846,10 @@ function DeviceRow({
               </button>
             )}
             <span
-              className={`text-lg transition-transform ${isExpanded ? "rotate-180" : ""}`}
+              className={cn(
+                "text-lg transition-transform",
+                isExpanded ? "rotate-180" : ""
+              )}
             >
               {hasDetails || scanResult ? "▼" : "○"}
             </span>
@@ -779,7 +859,12 @@ function DeviceRow({
 
       {isExpanded && (
         <div
-          className={`${spacing.pad.xs} sm:${spacing.pad.sm} ${spacing.padding.top.heading} border-t border-surface-border bg-surface-base`}
+          className={cn(
+            spacing.pad.xs,
+            `sm:${spacing.pad.sm}`,
+            spacing.padding.top.heading,
+            "border-t border-surface-border bg-surface-base"
+          )}
         >
           <div className="stack-xs caption">
             <CardRow label={t("discovery.mac")} value={device.mac} />
@@ -817,7 +902,10 @@ function DeviceRow({
               <>
                 <CardDivider />
                 <p
-                  className={`font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+                  className={cn(
+                    "font-medium text-text-primary",
+                    spacing.margin.bottom.inline
+                  )}
                 >
                   {t("discovery.portScanResults")}
                 </p>
@@ -826,7 +914,10 @@ function DeviceRow({
                     {openPorts.map((result) => (
                       <div
                         key={result.port}
-                        className={`flex items-center justify-between ${spacing.chip.sm}`}
+                        className={cn(
+                          "flex items-center justify-between",
+                          spacing.chip.sm
+                        )}
                       >
                         <span className="text-status-success">
                           {result.port}/{getServiceName(result.port)}
@@ -850,20 +941,28 @@ function DeviceRow({
               <>
                 <CardDivider />
                 <p
-                  className={`font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+                  className={cn(
+                    "font-medium text-text-primary",
+                    spacing.margin.bottom.inline
+                  )}
                 >
                   {t("discovery.autoProfile")}
                   {device.profile.deviceType &&
                     device.profile.deviceType !== "unknown" && (
                       <span
-                        className={`${spacing.margin.left.inline} caption font-normal text-text-muted`}
+                        className={cn(
+                          spacing.margin.left.inline,
+                          "caption font-normal text-text-muted"
+                        )}
                       >
                         ({device.profile.deviceType})
                       </span>
                     )}
                 </p>
                 {device.profile.httpInfo && (
-                  <div className={`gap-y-0.5 ${spacing.margin.bottom.inline}`}>
+                  <div
+                    className={cn("gap-y-0.5", spacing.margin.bottom.inline)}
+                  >
                     <CardRow
                       label={device.profile.httpInfo.isHttps ? "HTTPS" : "HTTP"}
                       value={`Port ${device.profile.httpInfo.port} (${device.profile.httpInfo.statusCode})`}
@@ -885,15 +984,22 @@ function DeviceRow({
                 {profileOpenPorts.length > 0 && (
                   <div className="gap-y-0.5">
                     <p
-                      className={`text-text-muted text-[10px] uppercase tracking-wide ${spacing.margin.bottom.inline}`}
+                      className={cn(
+                        "text-text-muted text-[10px] uppercase tracking-wide",
+                        spacing.margin.bottom.inline
+                      )}
                     >
                       {t("discovery.openPorts")}
                     </p>
-                    <div className={`flex flex-wrap ${spacing.gap.tight}`}>
+                    <div className={cn("flex flex-wrap", spacing.gap.tight)}>
                       {profileOpenPorts.map((port) => (
                         <span
                           key={port.port}
-                          className={`${spacing.chip.sm} ${radius.md} text-[10px] bg-status-success/20 text-status-success`}
+                          className={cn(
+                            spacing.chip.sm,
+                            radius.md,
+                            "text-[10px] bg-status-success/20 text-status-success"
+                          )}
                           title={port.banner || port.service || undefined}
                         >
                           {port.port}
@@ -910,7 +1016,10 @@ function DeviceRow({
               <>
                 <CardDivider />
                 <p
-                  className={`font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+                  className={cn(
+                    "font-medium text-text-primary",
+                    spacing.margin.bottom.inline
+                  )}
                 >
                   {t("discovery.lldpInfo")}
                 </p>
@@ -960,7 +1069,10 @@ function DeviceRow({
               <>
                 <CardDivider />
                 <p
-                  className={`font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+                  className={cn(
+                    "font-medium text-text-primary",
+                    spacing.margin.bottom.inline
+                  )}
                 >
                   {t("discovery.cdpInfo")}
                 </p>
@@ -1010,7 +1122,10 @@ function DeviceRow({
               <>
                 <CardDivider />
                 <p
-                  className={`font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+                  className={cn(
+                    "font-medium text-text-primary",
+                    spacing.margin.bottom.inline
+                  )}
                 >
                   {t("discovery.edpInfo")}
                 </p>
@@ -1306,7 +1421,14 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           <button
             type="button"
             onClick={onScan}
-            className={`${spacing.margin.top.heading} w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium body-small`}
+            className={cn(
+              spacing.margin.top.heading,
+              "w-full",
+              button.size.md,
+              "bg-brand-primary text-text-inverse",
+              radius.md,
+              "hover:bg-brand-primary/90 transition-colors font-medium body-small"
+            )}
             aria-label="Start network discovery scan"
           >
             {t("discovery.startScan")}
@@ -1344,7 +1466,13 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             type="button"
             onClick={onScan}
             disabled={status.scanning}
-            className={`${spacing.chip.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${spacing.inline.sm}`}
+            className={cn(
+              spacing.chip.sm,
+              "bg-brand-primary text-text-inverse",
+              radius.md,
+              "hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center",
+              spacing.inline.sm
+            )}
             aria-label={
               status.scanning ? "Scanning network" : "Start network scan"
             }
@@ -1448,7 +1576,10 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
       {deviceCount === 0 && !status.scanning && (
         <p
-          className={`body-small text-text-muted text-center ${spacing.pad.default}`}
+          className={cn(
+            "body-small text-text-muted text-center",
+            spacing.pad.default
+          )}
         >
           {t("discovery.noDevices")}
         </p>

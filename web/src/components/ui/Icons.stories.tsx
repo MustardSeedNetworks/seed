@@ -92,6 +92,7 @@ import {
 } from "./Icons";
 import { ICON_SIZES } from "./iconConfig";
 import {
+  cn,
   spacing,
   button,
   section,
@@ -132,7 +133,7 @@ type Story = StoryObj;
  */
 export const AllIcons: Story = {
   render: () => (
-    <div className={`${section.spacing.spacious} ${spacing.pad.default}`}>
+    <div className={cn(section.spacing.spacious, spacing.pad.default)}>
       <IconCategory title="Card Header Icons">
         <IconItem icon={<Activity />} name="Activity" />
         <IconItem icon={<Cable />} name="Cable" />
@@ -274,17 +275,20 @@ export const AllIcons: Story = {
  */
 export const Sizes: Story = {
   render: () => (
-    <div className={`${section.spacing.comfortable} ${spacing.pad.default}`}>
+    <div className={cn(section.spacing.comfortable, spacing.pad.default)}>
       <h3 className="heading-3 text-text-primary">Icon Size Presets</h3>
-      <div className={`flex items-end ${spacing.gap.spacious}`}>
+      <div className={cn("flex items-end", spacing.gap.spacious)}>
         {(Object.keys(ICON_SIZES) as Array<keyof typeof ICON_SIZES>).map(
           (size) => (
             <div key={size} className="text-center">
               <Activity
-                className={`${ICON_SIZES[size]} text-brand-primary mx-auto`}
+                className={cn(ICON_SIZES[size], "text-brand-primary mx-auto")}
               />
               <p
-                className={`body-small text-text-muted ${spacing.margin.top.inline}`}
+                className={cn(
+                  "body-small text-text-muted",
+                  spacing.margin.top.inline
+                )}
               >
                 {size}
               </p>
@@ -310,19 +314,25 @@ export const Sizes: Story = {
  */
 export const StatusIcons: Story = {
   render: () => (
-    <div className={`${section.spacing.default} ${spacing.pad.default}`}>
+    <div className={cn(section.spacing.default, spacing.pad.default)}>
       <h3
-        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "heading-3 text-text-primary",
+          spacing.margin.bottom.content
+        )}
       >
         Status Icons with Semantic Colors
       </h3>
       <div
-        className={`grid grid-cols-2 md:grid-cols-4 ${spacing.gap.comfortable}`}
+        className={cn(
+          "grid grid-cols-2 md:grid-cols-4",
+          spacing.gap.comfortable
+        )}
       >
         <StatusExample
           icon={
             <CheckCircle
-              className={`${iconTheme.size.lg} text-status-success`}
+              className={cn(iconTheme.size.lg, "text-status-success")}
             />
           }
           label="Success"
@@ -331,7 +341,7 @@ export const StatusIcons: Story = {
         <StatusExample
           icon={
             <AlertTriangle
-              className={`${iconTheme.size.lg} text-status-warning`}
+              className={cn(iconTheme.size.lg, "text-status-warning")}
             />
           }
           label="Warning"
@@ -339,13 +349,13 @@ export const StatusIcons: Story = {
         />
         <StatusExample
           icon={
-            <XCircle className={`${iconTheme.size.lg} text-status-error`} />
+            <XCircle className={cn(iconTheme.size.lg, "text-status-error")} />
           }
           label="Error"
           description="Operation failed"
         />
         <StatusExample
-          icon={<Info className={`${iconTheme.size.lg} text-status-info`} />}
+          icon={<Info className={cn(iconTheme.size.lg, "text-status-info")} />}
           label="Info"
           description="Additional info"
         />
@@ -359,43 +369,64 @@ export const StatusIcons: Story = {
  */
 export const NetworkStatus: Story = {
   render: () => (
-    <div className={`${section.spacing.default} ${spacing.pad.default}`}>
+    <div className={cn(section.spacing.default, spacing.pad.default)}>
       <h3
-        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "heading-3 text-text-primary",
+          spacing.margin.bottom.content
+        )}
       >
         Network Status Indicators
       </h3>
-      <div className={`flex ${spacing.gap.spacious}`}>
+      <div className={cn("flex", spacing.gap.spacious)}>
         <div className="text-center">
           <div
-            className={`${iconTheme.size["2xl"]} rounded-full bg-status-success/10 flex items-center justify-center ${spacing.margin.bottom.inline}`}
+            className={cn(
+              iconTheme.size["2xl"],
+              "rounded-full bg-status-success/10 flex items-center justify-center",
+              spacing.margin.bottom.inline
+            )}
           >
-            <Wifi className={`${iconTheme.size.lg} text-status-success`} />
+            <Wifi className={cn(iconTheme.size.lg, "text-status-success")} />
           </div>
           <p className="body-small">Connected</p>
         </div>
         <div className="text-center">
           <div
-            className={`${iconTheme.size["2xl"]} rounded-full bg-status-warning/10 flex items-center justify-center ${spacing.margin.bottom.inline}`}
+            className={cn(
+              iconTheme.size["2xl"],
+              "rounded-full bg-status-warning/10 flex items-center justify-center",
+              spacing.margin.bottom.inline
+            )}
           >
-            <SignalLow className={`${iconTheme.size.lg} text-status-warning`} />
+            <SignalLow
+              className={cn(iconTheme.size.lg, "text-status-warning")}
+            />
           </div>
           <p className="body-small">Weak Signal</p>
         </div>
         <div className="text-center">
           <div
-            className={`${iconTheme.size["2xl"]} rounded-full bg-status-error/10 flex items-center justify-center ${spacing.margin.bottom.inline}`}
+            className={cn(
+              iconTheme.size["2xl"],
+              "rounded-full bg-status-error/10 flex items-center justify-center",
+              spacing.margin.bottom.inline
+            )}
           >
-            <Unplug className={`${iconTheme.size.lg} text-status-error`} />
+            <Unplug className={cn(iconTheme.size.lg, "text-status-error")} />
           </div>
           <p className="body-small">Disconnected</p>
         </div>
         <div className="text-center">
           <div
-            className={`${iconTheme.size["2xl"]} rounded-full bg-status-info/10 flex items-center justify-center ${spacing.margin.bottom.inline}`}
+            className={cn(
+              iconTheme.size["2xl"],
+              "rounded-full bg-status-info/10 flex items-center justify-center",
+              spacing.margin.bottom.inline
+            )}
           >
             <Loader
-              className={`${iconTheme.size.lg} text-status-info animate-spin`}
+              className={cn(iconTheme.size.lg, "text-status-info animate-spin")}
             />
           </div>
           <p className="body-small">Connecting</p>
@@ -410,14 +441,20 @@ export const NetworkStatus: Story = {
  */
 export const DeviceTypes: Story = {
   render: () => (
-    <div className={`${section.spacing.default} ${spacing.pad.default}`}>
+    <div className={cn(section.spacing.default, spacing.pad.default)}>
       <h3
-        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "heading-3 text-text-primary",
+          spacing.margin.bottom.content
+        )}
       >
         Device Type Icons
       </h3>
       <div
-        className={`grid grid-cols-3 md:grid-cols-7 ${spacing.gap.comfortable}`}
+        className={cn(
+          "grid grid-cols-3 md:grid-cols-7",
+          spacing.gap.comfortable
+        )}
       >
         <DeviceExample icon={<Monitor />} name="Desktop" />
         <DeviceExample icon={<Laptop />} name="Laptop" />
@@ -436,33 +473,52 @@ export const DeviceTypes: Story = {
  */
 export const ButtonIcons: Story = {
   render: () => (
-    <div className={`${section.spacing.default} ${spacing.pad.default}`}>
+    <div className={cn(section.spacing.default, spacing.pad.default)}>
       <h3
-        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "heading-3 text-text-primary",
+          spacing.margin.bottom.content
+        )}
       >
         Button Icons
       </h3>
-      <div className={`flex flex-wrap ${spacing.gap.default}`}>
+      <div className={cn("flex flex-wrap", spacing.gap.default)}>
         <button
-          className={`${layout.inline.default} ${button.size.md} bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90`}
+          className={cn(
+            layout.inline.default,
+            button.size.md,
+            "bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90"
+          )}
         >
           <Play className={iconTheme.size.sm} />
           Run Test
         </button>
         <button
-          className={`${layout.inline.default} ${button.size.md} bg-surface-raised border border-surface-border rounded-lg hover:bg-surface-hover`}
+          className={cn(
+            layout.inline.default,
+            button.size.md,
+            "bg-surface-raised border border-surface-border rounded-lg hover:bg-surface-hover"
+          )}
         >
           <RefreshCw className={iconTheme.size.sm} />
           Refresh
         </button>
         <button
-          className={`${layout.inline.default} ${button.size.md} bg-status-success/10 text-status-success border border-status-success/20 rounded-lg hover:bg-status-success/20`}
+          className={cn(
+            layout.inline.default,
+            button.size.md,
+            "bg-status-success/10 text-status-success border border-status-success/20 rounded-lg hover:bg-status-success/20"
+          )}
         >
           <Download className={iconTheme.size.sm} />
           Export
         </button>
         <button
-          className={`${layout.inline.default} ${button.size.md} bg-status-error/10 text-status-error border border-status-error/20 rounded-lg hover:bg-status-error/20`}
+          className={cn(
+            layout.inline.default,
+            button.size.md,
+            "bg-status-error/10 text-status-error border border-status-error/20 rounded-lg hover:bg-status-error/20"
+          )}
         >
           <Trash2 className={iconTheme.size.sm} />
           Delete
@@ -477,14 +533,20 @@ export const ButtonIcons: Story = {
  */
 export const CardHeaders: Story = {
   render: () => (
-    <div className={`${section.spacing.default} ${spacing.pad.default}`}>
+    <div className={cn(section.spacing.default, spacing.pad.default)}>
       <h3
-        className={`heading-3 text-text-primary ${spacing.margin.bottom.content}`}
+        className={cn(
+          "heading-3 text-text-primary",
+          spacing.margin.bottom.content
+        )}
       >
         Card Header Icons
       </h3>
       <div
-        className={`grid grid-cols-2 md:grid-cols-4 ${spacing.gap.comfortable}`}
+        className={cn(
+          "grid grid-cols-2 md:grid-cols-4",
+          spacing.gap.comfortable
+        )}
       >
         <CardHeaderExample icon={<Activity />} title="Link Status" />
         <CardHeaderExample icon={<Wifi />} title="WiFi" />
@@ -510,12 +572,19 @@ function IconCategory({
   return (
     <div>
       <h4
-        className={`heading-4 text-text-primary ${spacing.margin.bottom.heading} border-b border-surface-border ${spacing.margin.bottom.inline}`}
+        className={cn(
+          "heading-4 text-text-primary border-b border-surface-border",
+          spacing.margin.bottom.heading,
+          spacing.margin.bottom.inline
+        )}
       >
         {title}
       </h4>
       <div
-        className={`grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 ${spacing.gap.comfortable}`}
+        className={cn(
+          "grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12",
+          spacing.gap.comfortable
+        )}
       >
         {children}
       </div>
@@ -526,11 +595,17 @@ function IconCategory({
 function IconItem({ icon, name }: { icon: React.ReactNode; name: string }) {
   return (
     <div
-      className={`flex flex-col items-center text-center ${spacing.pad.sm} rounded-lg hover:bg-surface-hover`}
+      className={cn(
+        "flex flex-col items-center text-center rounded-lg hover:bg-surface-hover",
+        spacing.pad.sm
+      )}
     >
-      <span className={`text-text-primary ${iconTheme.size.md}`}>{icon}</span>
+      <span className={cn("text-text-primary", iconTheme.size.md)}>{icon}</span>
       <span
-        className={`caption text-text-muted ${spacing.margin.top.inline} truncate w-full`}
+        className={cn(
+          "caption text-text-muted truncate w-full",
+          spacing.margin.top.inline
+        )}
       >
         {name}
       </span>
@@ -549,7 +624,11 @@ function StatusExample({
 }) {
   return (
     <div
-      className={`flex items-center ${spacing.gap.default} ${spacing.pad.sm} rounded-lg bg-surface-raised border border-surface-border`}
+      className={cn(
+        "flex items-center rounded-lg bg-surface-raised border border-surface-border",
+        spacing.gap.default,
+        spacing.pad.sm
+      )}
     >
       {icon}
       <div>
@@ -569,11 +648,16 @@ function DeviceExample({
 }) {
   return (
     <div
-      className={`flex flex-col items-center ${spacing.pad.sm} rounded-lg bg-surface-raised border border-surface-border`}
+      className={cn(
+        "flex flex-col items-center rounded-lg bg-surface-raised border border-surface-border",
+        spacing.pad.sm
+      )}
     >
-      <span className={`${iconTheme.size.xl} text-text-secondary`}>{icon}</span>
+      <span className={cn(iconTheme.size.xl, "text-text-secondary")}>
+        {icon}
+      </span>
       <span
-        className={`body-small text-text-muted ${spacing.margin.top.inline}`}
+        className={cn("body-small text-text-muted", spacing.margin.top.inline)}
       >
         {name}
       </span>
@@ -590,10 +674,13 @@ function CardHeaderExample({
 }) {
   return (
     <div
-      className={`${spacing.pad.default} rounded-lg bg-surface-raised border border-surface-border`}
+      className={cn(
+        "rounded-lg bg-surface-raised border border-surface-border",
+        spacing.pad.default
+      )}
     >
-      <div className={`flex items-center ${spacing.gap.compact}`}>
-        <span className={`${iconTheme.size.md} text-brand-primary`}>
+      <div className={cn("flex items-center", spacing.gap.compact)}>
+        <span className={cn(iconTheme.size.md, "text-brand-primary")}>
           {icon}
         </span>
         <span className="body font-medium text-text-primary">{title}</span>

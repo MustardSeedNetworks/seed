@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { Settings } from "lucide-react";
-import { spacing } from "../../styles/theme";
+import { spacing, cn } from "../../styles/theme";
 
 const meta: Meta<typeof CollapsibleSection> = {
   title: "UI/CollapsibleSection",
@@ -62,11 +62,11 @@ export const Default: Story = {
         <p className="body-small text-text-muted">
           Configure advanced settings for network discovery.
         </p>
-        <label className={`flex items-center ${spacing.gap.compact}`}>
+        <label className={cn("flex items-center", spacing.gap.compact)}>
           <input type="checkbox" className="w-4 h-4" />
           <span className="body-small">Enable deep scanning</span>
         </label>
-        <label className={`flex items-center ${spacing.gap.compact}`}>
+        <label className={cn("flex items-center", spacing.gap.compact)}>
           <input type="checkbox" className="w-4 h-4" />
           <span className="body-small">Include SNMP queries</span>
         </label>
@@ -168,7 +168,7 @@ export const WithWarningStatus: Story = {
 export const CustomTitle: Story = {
   args: {
     title: (
-      <div className={`flex items-center ${spacing.gap.compact}`}>
+      <div className={cn("flex items-center", spacing.gap.compact)}>
         <Settings className="w-4 h-4" />
         <span>Configuration</span>
       </div>

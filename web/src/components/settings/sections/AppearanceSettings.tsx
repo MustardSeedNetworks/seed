@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { Palette } from "../../ui/Icons";
 import {
+  cn,
   icon as iconTokens,
   layout,
   radius,
@@ -78,7 +79,13 @@ export const AppearanceSettings = memo(function AppearanceSettings({
     >
       <div className="stack-sm">
         <label
-          className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
+          className={cn(
+            layout.flex.between,
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.default,
+            "border border-surface-border"
+          )}
         >
           <span className="body-small text-text-primary">
             {t("appearance.theme")}
@@ -88,7 +95,12 @@ export const AppearanceSettings = memo(function AppearanceSettings({
             onChange={(e) =>
               setTheme(e.target.value as "light" | "dark" | "system")
             }
-            className={`bg-surface-raised border border-surface-border ${radius.default} ${spacing.chip.sm} body-small text-text-primary`}
+            className={cn(
+              "bg-surface-raised border border-surface-border",
+              radius.default,
+              spacing.chip.sm,
+              "body-small text-text-primary"
+            )}
           >
             <option value="light">{t("appearance.themeLight")}</option>
             <option value="dark">{t("appearance.themeDark")}</option>
@@ -97,7 +109,13 @@ export const AppearanceSettings = memo(function AppearanceSettings({
         </label>
 
         <label
-          className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
+          className={cn(
+            layout.flex.between,
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.default,
+            "border border-surface-border"
+          )}
         >
           <span className="body-small text-text-primary">
             {t("appearance.language")}
@@ -105,7 +123,12 @@ export const AppearanceSettings = memo(function AppearanceSettings({
           <select
             value={currentLanguage}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className={`bg-surface-raised border border-surface-border ${radius.default} ${spacing.chip.sm} body-small text-text-primary`}
+            className={cn(
+              "bg-surface-raised border border-surface-border",
+              radius.default,
+              spacing.chip.sm,
+              "body-small text-text-primary"
+            )}
           >
             {languages.map((lang) => (
               <option key={lang.code} value={lang.code}>
@@ -117,7 +140,14 @@ export const AppearanceSettings = memo(function AppearanceSettings({
 
         <button
           onClick={() => setTheme(isDark ? "light" : "dark")}
-          className={`w-full ${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border hover:bg-surface-hover transition-colors`}
+          className={cn(
+            "w-full",
+            layout.flex.between,
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.default,
+            "border border-surface-border hover:bg-surface-hover transition-colors"
+          )}
         >
           <span className="body-small text-text-primary">
             {t("appearance.quickToggle")}

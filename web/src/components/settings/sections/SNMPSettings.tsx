@@ -15,6 +15,7 @@ import {
   radius,
   input as inputTokens,
   spacing,
+  cn,
 } from "../../../styles/theme";
 
 interface SNMPSettingsProps {
@@ -180,9 +181,17 @@ export const SNMPSettings = memo(function SNMPSettings({
             }
             min="1"
             max="65535"
-            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} ${spacing.margin.top.tight} body-small`}
+            className={cn(
+              inputTokens.base,
+              inputTokens.state.default,
+              inputTokens.size.md,
+              spacing.margin.top.tight,
+              "body-small"
+            )}
           />
-          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+          <p
+            className={cn("caption text-text-muted", spacing.margin.top.tight)}
+          >
             {t("snmp.portDesc")}
           </p>
         </div>
@@ -205,9 +214,17 @@ export const SNMPSettings = memo(function SNMPSettings({
             min="1"
             max="30"
             step="1"
-            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} ${spacing.margin.top.tight} body-small`}
+            className={cn(
+              inputTokens.base,
+              inputTokens.state.default,
+              inputTokens.size.md,
+              spacing.margin.top.tight,
+              "body-small"
+            )}
           />
-          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+          <p
+            className={cn("caption text-text-muted", spacing.margin.top.tight)}
+          >
             {t("snmp.timeoutDesc")}
           </p>
         </div>
@@ -229,19 +246,33 @@ export const SNMPSettings = memo(function SNMPSettings({
             }
             min="0"
             max="10"
-            className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} ${spacing.margin.top.tight} body-small`}
+            className={cn(
+              inputTokens.base,
+              inputTokens.state.default,
+              inputTokens.size.md,
+              spacing.margin.top.tight,
+              "body-small"
+            )}
           />
-          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+          <p
+            className={cn("caption text-text-muted", spacing.margin.top.tight)}
+          >
             {t("snmp.retriesDesc")}
           </p>
         </div>
 
         {/* Community Strings (v1/v2c) */}
         <div
-          className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+          className={cn(
+            "border-t border-surface-border",
+            spacing.padding.top.heading
+          )}
         >
           <div
-            className={`flex items-center justify-between ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "flex items-center justify-between",
+              spacing.margin.bottom.inline
+            )}
           >
             <span className="caption text-text-muted font-medium">
               {t("snmp.communityStrings")}
@@ -255,12 +286,19 @@ export const SNMPSettings = memo(function SNMPSettings({
             </button>
           </div>
           <p
-            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "caption text-text-muted",
+              spacing.margin.bottom.inline
+            )}
           >
             {t("snmp.communityDesc")}
           </p>
           <div
-            className={`flex ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "flex",
+              spacing.gap.compact,
+              spacing.margin.bottom.inline
+            )}
           >
             <label className="sr-only" htmlFor="snmp-community-new">
               {t("snmp.communityString")}
@@ -274,24 +312,41 @@ export const SNMPSettings = memo(function SNMPSettings({
                 if (e.key === "Enter") addCommunity();
               }}
               placeholder={t("snmp.communityString")}
-              className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} flex-1 caption`}
+              className={cn(
+                inputTokens.base,
+                inputTokens.state.default,
+                inputTokens.size.md,
+                "flex-1 caption"
+              )}
             />
           </div>
           {snmpSettings.communities.map((community, index) => (
             <div
               key={`${community}-${index}`}
-              className={`flex ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+              className={cn(
+                "flex",
+                spacing.gap.compact,
+                spacing.margin.bottom.inline
+              )}
             >
               <input
                 aria-label={`Community string ${community}`}
                 type="text"
                 value={community}
                 readOnly
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} flex-1 bg-surface-hover caption`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md,
+                  "flex-1 bg-surface-hover caption"
+                )}
               />
               <button
                 onClick={() => removeCommunity(community)}
-                className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                className={cn(
+                  "text-status-error hover:text-status-error/80",
+                  spacing.actionBtn
+                )}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}
@@ -302,10 +357,16 @@ export const SNMPSettings = memo(function SNMPSettings({
 
         {/* SNMPv3 Credentials */}
         <div
-          className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+          className={cn(
+            "border-t border-surface-border",
+            spacing.padding.top.heading
+          )}
         >
           <div
-            className={`flex items-center justify-between ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "flex items-center justify-between",
+              spacing.margin.bottom.inline
+            )}
           >
             <span className="caption text-text-muted font-medium">
               {t("snmp.v3Credentials")}
@@ -318,17 +379,29 @@ export const SNMPSettings = memo(function SNMPSettings({
             </button>
           </div>
           <p
-            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "caption text-text-muted",
+              spacing.margin.bottom.inline
+            )}
           >
             {t("snmp.v3CredentialsDesc")}
           </p>
           {snmpSettings.v3Credentials.map((cred) => (
             <div
               key={cred.id}
-              className={`${spacing.margin.bottom.inline} border border-surface-border ${radius.md} overflow-hidden`}
+              className={cn(
+                spacing.margin.bottom.inline,
+                "border border-surface-border",
+                radius.md,
+                "overflow-hidden"
+              )}
             >
               <div
-                className={`flex items-center justify-between ${spacing.pad.xs} bg-surface-base cursor-pointer hover:bg-surface-hover`}
+                className={cn(
+                  "flex items-center justify-between",
+                  spacing.pad.xs,
+                  "bg-surface-base cursor-pointer hover:bg-surface-hover"
+                )}
                 onClick={() =>
                   setExpandedCredential(
                     expandedCredential === cred.id ? null : cred.id!
@@ -338,7 +411,7 @@ export const SNMPSettings = memo(function SNMPSettings({
                 <span className="body-small text-text-primary">
                   {cred.name || t("snmp.unnamedCredential")}
                 </span>
-                <div className={`flex items-center ${spacing.gap.compact}`}>
+                <div className={cn("flex items-center", spacing.gap.compact)}>
                   <span className="caption text-text-muted">
                     {cred.username || t("snmp.noUsername")}
                   </span>
@@ -347,7 +420,10 @@ export const SNMPSettings = memo(function SNMPSettings({
                       e.stopPropagation();
                       removeV3Credential(cred.id!);
                     }}
-                    className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                    className={cn(
+                      "text-status-error hover:text-status-error/80",
+                      spacing.actionBtn
+                    )}
                     aria-label={t("common.remove")}
                   >
                     {t("common.remove")}
@@ -355,7 +431,9 @@ export const SNMPSettings = memo(function SNMPSettings({
                 </div>
               </div>
               {expandedCredential === cred.id && (
-                <div className={`${spacing.pad.sm} bg-surface-hover stack-sm`}>
+                <div
+                  className={cn(spacing.pad.sm, "bg-surface-hover stack-sm")}
+                >
                   {/* Name */}
                   <div>
                     <label
@@ -372,7 +450,13 @@ export const SNMPSettings = memo(function SNMPSettings({
                         updateV3Credential(cred.id!, "name", e.target.value)
                       }
                       placeholder={t("snmp.credentialName")}
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                      className={cn(
+                        inputTokens.base,
+                        inputTokens.state.default,
+                        inputTokens.size.sm,
+                        spacing.margin.top.tight,
+                        "caption"
+                      )}
                     />
                   </div>
 
@@ -392,7 +476,13 @@ export const SNMPSettings = memo(function SNMPSettings({
                         updateV3Credential(cred.id!, "username", e.target.value)
                       }
                       placeholder={t("snmp.snmpv3Username")}
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                      className={cn(
+                        inputTokens.base,
+                        inputTokens.state.default,
+                        inputTokens.size.sm,
+                        spacing.margin.top.tight,
+                        "caption"
+                      )}
                     />
                   </div>
 
@@ -414,7 +504,13 @@ export const SNMPSettings = memo(function SNMPSettings({
                           e.target.value
                         )
                       }
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                      className={cn(
+                        inputTokens.base,
+                        inputTokens.state.default,
+                        inputTokens.size.sm,
+                        spacing.margin.top.tight,
+                        "caption"
+                      )}
                     >
                       {SECURITY_LEVEL_VALUES.map((value) => (
                         <option key={value} value={value}>
@@ -442,7 +538,13 @@ export const SNMPSettings = memo(function SNMPSettings({
                           e.target.value
                         )
                       }
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                      className={cn(
+                        inputTokens.base,
+                        inputTokens.state.default,
+                        inputTokens.size.sm,
+                        spacing.margin.top.tight,
+                        "caption"
+                      )}
                     >
                       {AUTH_PROTOCOL_VALUES.map((value) => (
                         <option key={value} value={value}>
@@ -473,7 +575,13 @@ export const SNMPSettings = memo(function SNMPSettings({
                           )
                         }
                         placeholder={t("snmp.authPasswordPlaceholder")}
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                        className={cn(
+                          inputTokens.base,
+                          inputTokens.state.default,
+                          inputTokens.size.sm,
+                          spacing.margin.top.tight,
+                          "caption"
+                        )}
                       />
                     </div>
                   )}
@@ -496,7 +604,13 @@ export const SNMPSettings = memo(function SNMPSettings({
                           e.target.value
                         )
                       }
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                      className={cn(
+                        inputTokens.base,
+                        inputTokens.state.default,
+                        inputTokens.size.sm,
+                        spacing.margin.top.tight,
+                        "caption"
+                      )}
                     >
                       {PRIV_PROTOCOL_VALUES.map((value) => (
                         <option key={value} value={value}>
@@ -527,7 +641,13 @@ export const SNMPSettings = memo(function SNMPSettings({
                           )
                         }
                         placeholder={t("snmp.privPasswordPlaceholder")}
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                        className={cn(
+                          inputTokens.base,
+                          inputTokens.state.default,
+                          inputTokens.size.sm,
+                          spacing.margin.top.tight,
+                          "caption"
+                        )}
                       />
                     </div>
                   )}
@@ -552,7 +672,13 @@ export const SNMPSettings = memo(function SNMPSettings({
                         )
                       }
                       placeholder={t("snmp.snmpContext")}
-                      className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                      className={cn(
+                        inputTokens.base,
+                        inputTokens.state.default,
+                        inputTokens.size.sm,
+                        spacing.margin.top.tight,
+                        "caption"
+                      )}
                     />
                   </div>
                 </div>

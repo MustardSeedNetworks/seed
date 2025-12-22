@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { BaseCard, SimpleBaseCard } from "./BaseCard";
 import { CardValue, CardRow } from "../ui/Card";
 import { Wifi, Server, Globe } from "lucide-react";
-import { spacing } from "../../styles/theme";
+import { spacing, cn } from "../../styles/theme";
 
 interface SampleData {
   value: string;
@@ -153,7 +153,7 @@ export const SimpleCardLoading: StoryObj<typeof SimpleBaseCard> = {
 
 export const CardGrid: Story = {
   render: () => (
-    <div className={`grid grid-cols-2 ${spacing.gap.comfortable} w-150`}>
+    <div className={cn("grid grid-cols-2 w-150", spacing.gap.comfortable)}>
       <BaseCard
         title="Gateway"
         icon={<Server className="w-4 h-4" />}

@@ -30,7 +30,7 @@ import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { useSettings } from "../../contexts/useSettings";
 import { Router } from "../ui/Icons";
-import { icon as iconTokens, layout, spacing } from "../../styles/theme";
+import { cn, icon as iconTokens, layout, spacing } from "../../styles/theme";
 
 export interface GatewayData {
   gateway: string;
@@ -102,7 +102,7 @@ export const GatewayCard = memo(function GatewayCard({
         status="unknown"
       >
         <CardValue value={tr("gateway.noGateway")} size="md" />
-        <p className={`caption ${spacing.margin.top.tight}`}>
+        <p className={cn("caption", spacing.margin.top.tight)}>
           {tr("gateway.unableToDetect")}
         </p>
       </Card>
@@ -139,12 +139,17 @@ export const GatewayCard = memo(function GatewayCard({
 
       {/* Latency stats */}
       <div
-        className={`grid grid-cols-3 ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+        className={cn(
+          "grid grid-cols-3",
+          spacing.gap.compact,
+          spacing.margin.bottom.inline
+        )}
       >
         <div className="text-center">
           <p className="caption">{tr("gateway.min")}</p>
           <p
-            className={`body-small font-medium ${
+            className={cn(
+              "body-small font-medium",
               data.minTime > 0
                 ? getLatencyStatus(data.minTime, th) === "success"
                   ? "text-status-success"
@@ -152,7 +157,7 @@ export const GatewayCard = memo(function GatewayCard({
                     ? "text-status-warning"
                     : "text-status-error"
                 : "text-text-muted"
-            }`}
+            )}
           >
             {data.minTime > 0 ? formatTime(data.minTime) : "-"}
           </p>
@@ -160,7 +165,8 @@ export const GatewayCard = memo(function GatewayCard({
         <div className="text-center">
           <p className="caption">{tr("gateway.avg")}</p>
           <p
-            className={`body-small font-medium ${
+            className={cn(
+              "body-small font-medium",
               data.avgTime > 0
                 ? getLatencyStatus(data.avgTime, th) === "success"
                   ? "text-status-success"
@@ -168,7 +174,7 @@ export const GatewayCard = memo(function GatewayCard({
                     ? "text-status-warning"
                     : "text-status-error"
                 : "text-text-muted"
-            }`}
+            )}
           >
             {data.avgTime > 0 ? formatTime(data.avgTime) : "-"}
           </p>
@@ -176,7 +182,8 @@ export const GatewayCard = memo(function GatewayCard({
         <div className="text-center">
           <p className="caption">{tr("gateway.max")}</p>
           <p
-            className={`body-small font-medium ${
+            className={cn(
+              "body-small font-medium",
               data.maxTime > 0
                 ? getLatencyStatus(data.maxTime, th) === "success"
                   ? "text-status-success"
@@ -184,7 +191,7 @@ export const GatewayCard = memo(function GatewayCard({
                     ? "text-status-warning"
                     : "text-status-error"
                 : "text-text-muted"
-            }`}
+            )}
           >
             {data.maxTime > 0 ? formatTime(data.maxTime) : "-"}
           </p>
@@ -214,22 +221,33 @@ export const GatewayCard = memo(function GatewayCard({
       {data.ipv6 && data.ipv6.gateway && (
         <>
           <CardDivider />
-          <p className={`caption ${spacing.margin.bottom.tight} font-medium`}>
+          <p
+            className={cn(
+              "caption",
+              spacing.margin.bottom.tight,
+              "font-medium"
+            )}
+          >
             {tr("gateway.ipv6Gateway")}
           </p>
           <CardValue value={data.ipv6.gateway} size="md" />
-          <p className={`caption ${spacing.margin.bottom.inline}`}>
+          <p className={cn("caption", spacing.margin.bottom.inline)}>
             {data.ipv6.reachable
               ? tr("gateway.reachable")
               : tr("gateway.unreachable")}
           </p>
           <div
-            className={`grid grid-cols-3 ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "grid grid-cols-3",
+              spacing.gap.compact,
+              spacing.margin.bottom.inline
+            )}
           >
             <div className="text-center">
               <p className="caption">{tr("gateway.min")}</p>
               <p
-                className={`body-small font-medium ${
+                className={cn(
+                  "body-small font-medium",
                   data.ipv6.minTime > 0
                     ? getLatencyStatus(data.ipv6.minTime, th) === "success"
                       ? "text-status-success"
@@ -237,7 +255,7 @@ export const GatewayCard = memo(function GatewayCard({
                         ? "text-status-warning"
                         : "text-status-error"
                     : "text-text-muted"
-                }`}
+                )}
               >
                 {data.ipv6.minTime > 0 ? formatTime(data.ipv6.minTime) : "-"}
               </p>
@@ -245,7 +263,8 @@ export const GatewayCard = memo(function GatewayCard({
             <div className="text-center">
               <p className="caption">{tr("gateway.avg")}</p>
               <p
-                className={`body-small font-medium ${
+                className={cn(
+                  "body-small font-medium",
                   data.ipv6.avgTime > 0
                     ? getLatencyStatus(data.ipv6.avgTime, th) === "success"
                       ? "text-status-success"
@@ -253,7 +272,7 @@ export const GatewayCard = memo(function GatewayCard({
                         ? "text-status-warning"
                         : "text-status-error"
                     : "text-text-muted"
-                }`}
+                )}
               >
                 {data.ipv6.avgTime > 0 ? formatTime(data.ipv6.avgTime) : "-"}
               </p>
@@ -261,7 +280,8 @@ export const GatewayCard = memo(function GatewayCard({
             <div className="text-center">
               <p className="caption">{tr("gateway.max")}</p>
               <p
-                className={`body-small font-medium ${
+                className={cn(
+                  "body-small font-medium",
                   data.ipv6.maxTime > 0
                     ? getLatencyStatus(data.ipv6.maxTime, th) === "success"
                       ? "text-status-success"
@@ -269,7 +289,7 @@ export const GatewayCard = memo(function GatewayCard({
                         ? "text-status-warning"
                         : "text-status-error"
                     : "text-text-muted"
-                }`}
+                )}
               >
                 {data.ipv6.maxTime > 0 ? formatTime(data.ipv6.maxTime) : "-"}
               </p>

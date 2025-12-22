@@ -103,7 +103,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
       {!hasSwitch ? (
         <>
           <CardValue value={t("switch.noDiscoveryFrames")} size="md" />
-          <p className={`caption ${spacing.margin.top.inline}`}>
+          <p className={cn("caption", spacing.margin.top.inline)}>
             {t("switch.waitingFrames")}
           </p>
         </>
@@ -129,7 +129,10 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
           <div className={spacing.margin.top.inline}>
             <span
               className={cn(
-                `caption ${spacing.chip.sm} bg-brand-primary/20 text-brand-primary`,
+                "caption",
+                spacing.chip.sm,
+                "bg-brand-primary/20",
+                "text-brand-primary",
                 radius.default
               )}
             >
@@ -143,7 +146,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
       {vlanData && (
         <>
           <CardDivider />
-          <p className={`section-title ${spacing.margin.bottom.inline}`}>
+          <p className={cn("section-title", spacing.margin.bottom.inline)}>
             {t("switch.vlans")}
           </p>
           {vlanData.nativeVlan !== null ? (
@@ -165,7 +168,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
           )}
           {vlanData.taggedVlans.length > 0 && (
             <div className={spacing.margin.top.inline}>
-              <p className={`caption ${spacing.margin.bottom.inline}`}>
+              <p className={cn("caption", spacing.margin.bottom.inline)}>
                 {t("switch.taggedVlans")}
               </p>
               <div className={layout.inline.wrap}>
@@ -173,7 +176,9 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
                   <span
                     key={vlan}
                     className={cn(
-                      `caption ${spacing.chip.sm} bg-surface-hover`,
+                      "caption",
+                      spacing.chip.sm,
+                      "bg-surface-hover",
                       radius.default
                     )}
                   >

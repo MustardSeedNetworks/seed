@@ -99,8 +99,8 @@ export function CardSkeleton() {
         <Skeleton className="h-4 w-24" />
         <Skeleton variant="circular" className="h-3 w-3" />
       </div>
-      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.inline}`} />
-      <div className={`stack-sm ${spacing.margin.top.content}`}>
+      <Skeleton className={cn("h-8 w-32", spacing.margin.bottom.inline)} />
+      <div className={cn("stack-sm", spacing.margin.top.content)}>
         <div className={layout.flex.between}>
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />

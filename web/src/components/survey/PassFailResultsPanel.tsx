@@ -40,6 +40,7 @@ import {
   layout,
   icon as iconTokens,
   button,
+  cn,
 } from "../../styles/theme";
 import type { SurveyValidation, PassFailResult } from "../../hooks/useSurvey";
 
@@ -139,18 +140,23 @@ function ResultRow({
 
   return (
     <div
-      className={`${spacing.pad.sm} ${radius.md} ${bgClass} border border-transparent hover:border-surface-border transition-colors`}
+      className={cn(
+        spacing.pad.sm,
+        radius.md,
+        bgClass,
+        "border border-transparent hover:border-surface-border transition-colors"
+      )}
     >
       {/* Header row */}
-      <div className={`${layout.inline.default} justify-between`}>
+      <div className={cn(layout.inline.default, "justify-between")}>
         <div className={layout.inline.tight}>
-          <Icon className={`${iconTokens.size.sm} ${colorClass}`} />
+          <Icon className={cn(iconTokens.size.sm, colorClass)} />
           <span className="body-small font-medium">
             {t(`criteria.${result.criterionName}` as never)}
           </span>
         </div>
         <div className={layout.inline.tight}>
-          <span className={`body-small font-medium ${colorClass}`}>
+          <span className={cn("body-small font-medium", colorClass)}>
             {result.averageValue.toFixed(1)} {result.suffix}
           </span>
           <ComparisonDisplay
@@ -163,7 +169,10 @@ function ResultRow({
 
       {/* Statistics row */}
       <div
-        className={`${layout.inline.default} justify-between mt-1 text-text-muted`}
+        className={cn(
+          layout.inline.default,
+          "justify-between mt-1 text-text-muted"
+        )}
       >
         <div className={layout.inline.tight}>
           <span className="caption">
@@ -188,7 +197,10 @@ function ResultRow({
         <button
           type="button"
           onClick={onShowLocations}
-          className={`${layout.inline.tight} mt-1 caption text-brand-primary hover:underline`}
+          className={cn(
+            layout.inline.tight,
+            "mt-1 caption text-brand-primary hover:underline"
+          )}
         >
           <MapPin className="w-3 h-3" />
           <span>
@@ -235,16 +247,23 @@ function StatusBanner({
 
   return (
     <div
-      className={`${spacing.pad.default} ${radius.md} ${statusConfig.bgClass} border ${spacing.margin.bottom.content}`}
+      className={cn(
+        spacing.pad.default,
+        radius.md,
+        statusConfig.bgClass,
+        "border",
+        spacing.margin.bottom.content
+      )}
     >
-      <div className={`${layout.inline.default} justify-between`}>
+      <div className={cn(layout.inline.default, "justify-between")}>
         <div className={layout.inline.default}>
-          <Icon
-            className={`${iconTokens.size.md} ${statusConfig.colorClass}`}
-          />
+          <Icon className={cn(iconTokens.size.md, statusConfig.colorClass)} />
           <div>
             <h3
-              className={`body-default font-semibold ${statusConfig.colorClass}`}
+              className={cn(
+                "body-default font-semibold",
+                statusConfig.colorClass
+              )}
             >
               {statusConfig.label}
             </h3>
@@ -258,7 +277,7 @@ function StatusBanner({
           </div>
         </div>
         <div className="text-right">
-          <span className={`heading-3 ${statusConfig.colorClass}`}>
+          <span className={cn("heading-3", statusConfig.colorClass)}>
             {overallPercentage.toFixed(0)}%
           </span>
           <p className="caption text-text-muted">
@@ -302,7 +321,12 @@ export function PassFailResultsPanel({
 
   return (
     <div
-      className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.sm}`}
+      className={cn(
+        "bg-surface-raised",
+        radius.md,
+        "border border-surface-border",
+        spacing.pad.sm
+      )}
     >
       {/* Status banner */}
       <StatusBanner validation={validation} t={t} />
@@ -349,13 +373,22 @@ export function PassFailResultsPanel({
 
       {/* Actions */}
       <div
-        className={`${layout.inline.default} justify-center pt-2 border-t border-surface-border`}
+        className={cn(
+          layout.inline.default,
+          "justify-center pt-2 border-t border-surface-border"
+        )}
       >
         {onGenerateReport && (
           <button
             type="button"
             onClick={onGenerateReport}
-            className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:opacity-90 ${layout.inline.tight}`}
+            className={cn(
+              button.size.sm,
+              "bg-brand-primary text-text-inverse",
+              radius.md,
+              "hover:opacity-90",
+              layout.inline.tight
+            )}
           >
             <FileText className="w-3 h-3" />
             <span>{t("criteria.generateReport")}</span>
@@ -365,7 +398,13 @@ export function PassFailResultsPanel({
           <button
             type="button"
             onClick={onExportCSV}
-            className={`${button.size.sm} bg-surface-default border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+            className={cn(
+              button.size.sm,
+              "bg-surface-default border border-surface-border",
+              radius.md,
+              "hover:bg-surface-hover",
+              layout.inline.tight
+            )}
           >
             <Download className="w-3 h-3" />
             <span>{t("criteria.exportCSV")}</span>

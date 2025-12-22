@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 import { SimpleBaseCard } from "./BaseCard";
 import { CardValue } from "../ui/Card";
 import { Wifi } from "../ui/Icons";
-import { icon as iconTokens, spacing, layout } from "../../styles/theme";
+import { cn, icon as iconTokens, spacing, layout } from "../../styles/theme";
 
 /**
  * Network data for channel graph visualization
@@ -404,17 +404,23 @@ export function WifiChannelGraph({
           {/* Band selection tabs */}
           {availableBands.length > 1 && (
             <div
-              className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+              className={cn(
+                layout.inline.default,
+                spacing.margin.bottom.inline
+              )}
             >
               {availableBands.map((band) => (
                 <button
                   key={band}
                   onClick={() => setSelectedBand(band)}
-                  className={`${spacing.chip.md} rounded transition-colors ${
+                  className={cn(
+                    spacing.chip.md,
+                    "rounded",
+                    "transition-colors",
                     selectedBand === band
                       ? "bg-brand-primary text-text-inverse"
                       : "bg-surface-hover text-text-primary hover:bg-surface-border"
-                  }`}
+                  )}
                 >
                   {band}
                 </button>
@@ -430,9 +436,7 @@ export function WifiChannelGraph({
           />
 
           {/* Legend */}
-          <div
-            className={`${layout.inline.default} ${spacing.margin.top.inline}`}
-          >
+          <div className={cn(layout.inline.default, spacing.margin.top.inline)}>
             <div className={layout.inline.tight}>
               <div className="w-4 h-4 bg-brand-primary opacity-70 rounded" />
               <span className="caption text-text-muted">

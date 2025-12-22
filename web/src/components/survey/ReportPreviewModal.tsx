@@ -36,6 +36,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import {
+  cn,
   radius,
   spacing,
   layout,
@@ -86,10 +87,15 @@ function SectionPreview({
 }) {
   return (
     <div
-      className={`${layout.inline.default} ${spacing.pad.sm} bg-surface-default ${radius.md}`}
+      className={cn(
+        layout.inline.default,
+        spacing.pad.sm,
+        "bg-surface-default",
+        radius.md
+      )}
     >
       <Icon
-        className={`${iconTokens.size.sm} text-brand-primary flex-shrink-0`}
+        className={cn(iconTokens.size.sm, "text-brand-primary flex-shrink-0")}
       />
       <div className="flex-1 min-w-0">
         <div className="body-small font-medium">{title}</div>
@@ -200,28 +206,41 @@ export function ReportPreviewModal({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center ${spacing.pad.default}`}
+      className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center",
+        spacing.pad.default
+      )}
     >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 ${modal.overlay} backdrop-blur-sm`}
+        className={cn("absolute inset-0", modal.overlay, "backdrop-blur-sm")}
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal */}
       <div
-        className={`relative bg-surface-raised border border-surface-border ${radius.lg} shadow-xl max-w-xl w-full max-h-modal overflow-hidden flex flex-col`}
+        className={cn(
+          "relative bg-surface-raised border border-surface-border",
+          radius.lg,
+          "shadow-xl max-w-xl w-full max-h-modal overflow-hidden flex flex-col"
+        )}
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"
       >
         {/* Header */}
         <div
-          className={`${layout.flex.between} ${spacing.pad.default} border-b border-surface-border bg-surface-raised shrink-0`}
+          className={cn(
+            layout.flex.between,
+            spacing.pad.default,
+            "border-b border-surface-border bg-surface-raised shrink-0"
+          )}
         >
           <div className={layout.inline.default}>
-            <FileText className={`${iconTokens.size.md} text-brand-primary`} />
+            <FileText
+              className={cn(iconTokens.size.md, "text-brand-primary")}
+            />
             <div>
               <h2 id="report-modal-title" className="heading-3">
                 {t("report.title")}
@@ -233,7 +252,12 @@ export function ReportPreviewModal({
           </div>
           <button
             onClick={onClose}
-            className={`${spacing.iconBtn.sm} text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-base`}
+            className={cn(
+              spacing.iconBtn.sm,
+              "text-text-muted hover:text-text-primary transition-colors",
+              radius.default,
+              "hover:bg-surface-base"
+            )}
             aria-label={t("report.close")}
           >
             <X className={iconTokens.size.md} />
@@ -241,22 +265,25 @@ export function ReportPreviewModal({
         </div>
 
         {/* Content */}
-        <div className={`${spacing.pad.default} overflow-y-auto flex-1`}>
+        <div className={cn(spacing.pad.default, "overflow-y-auto flex-1")}>
           {/* Status Summary */}
           <div
-            className={`${spacing.pad.default} ${radius.md} ${
+            className={cn(
+              spacing.pad.default,
+              radius.md,
               report.summary.overallStatus === "pass"
                 ? "bg-status-success/10 border border-status-success/20"
-                : "bg-status-error/10 border border-status-error/20"
-            } ${spacing.margin.bottom.content}`}
+                : "bg-status-error/10 border border-status-error/20",
+              spacing.margin.bottom.content
+            )}
           >
-            <div className={`${layout.inline.default} justify-between`}>
+            <div className={cn(layout.inline.default, "justify-between")}>
               <div className={layout.inline.default}>
-                <StatusIcon
-                  className={`${iconTokens.size.lg} ${statusColor}`}
-                />
+                <StatusIcon className={cn(iconTokens.size.lg, statusColor)} />
                 <div>
-                  <div className={`body-default font-semibold ${statusColor}`}>
+                  <div
+                    className={cn("body-default font-semibold", statusColor)}
+                  >
                     {t("report.overallStatus")}:{" "}
                     {t(
                       `criteria.status${report.summary.overallStatus === "pass" ? "Pass" : "Fail"}`
@@ -271,7 +298,7 @@ export function ReportPreviewModal({
                   </div>
                 </div>
               </div>
-              <div className={`heading-2 ${statusColor}`}>
+              <div className={cn("heading-2", statusColor)}>
                 {report.summary.overallPercentage.toFixed(0)}%
               </div>
             </div>
@@ -279,10 +306,19 @@ export function ReportPreviewModal({
 
           {/* Report Info Grid */}
           <div
-            className={`grid grid-cols-3 ${spacing.gap.default} ${spacing.margin.bottom.content}`}
+            className={cn(
+              "grid grid-cols-3",
+              spacing.gap.default,
+              spacing.margin.bottom.content
+            )}
           >
             <div
-              className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}
+              className={cn(
+                spacing.pad.sm,
+                "bg-surface-default",
+                radius.md,
+                "text-center"
+              )}
             >
               <div className="caption text-text-muted">
                 {t("report.surveyType")}
@@ -292,7 +328,12 @@ export function ReportPreviewModal({
               </div>
             </div>
             <div
-              className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}
+              className={cn(
+                spacing.pad.sm,
+                "bg-surface-default",
+                radius.md,
+                "text-center"
+              )}
             >
               <div className="caption text-text-muted">
                 {t("report.samplePoints")}
@@ -302,7 +343,12 @@ export function ReportPreviewModal({
               </div>
             </div>
             <div
-              className={`${spacing.pad.sm} bg-surface-default ${radius.md} text-center`}
+              className={cn(
+                spacing.pad.sm,
+                "bg-surface-default",
+                radius.md,
+                "text-center"
+              )}
             >
               <div className="caption text-text-muted">{t("report.date")}</div>
               <div className="body-small font-medium">
@@ -332,7 +378,7 @@ export function ReportPreviewModal({
           {/* Key Findings */}
           {report.summary.keyFindings.length > 0 && (
             <div
-              className={`${spacing.pad.sm} bg-surface-default ${radius.md}`}
+              className={cn(spacing.pad.sm, "bg-surface-default", radius.md)}
             >
               <h3 className="body-small font-medium mb-2">
                 {t("report.keyFindings")}
@@ -350,19 +396,35 @@ export function ReportPreviewModal({
 
         {/* Footer Actions */}
         <div
-          className={`${layout.inline.default} justify-end ${spacing.pad.default} border-t border-surface-border bg-surface-base shrink-0`}
+          className={cn(
+            layout.inline.default,
+            "justify-end",
+            spacing.pad.default,
+            "border-t border-surface-border bg-surface-base shrink-0"
+          )}
         >
           <button
             type="button"
             onClick={onClose}
-            className={`${button.size.md} bg-surface-default border border-surface-border ${radius.md} hover:bg-surface-hover`}
+            className={cn(
+              button.size.md,
+              "bg-surface-default border border-surface-border",
+              radius.md,
+              "hover:bg-surface-hover"
+            )}
           >
             {t("report.close")}
           </button>
           <button
             type="button"
             onClick={handleDownloadHTML}
-            className={`${button.size.md} bg-surface-default border border-surface-border ${radius.md} hover:bg-surface-hover ${layout.inline.tight}`}
+            className={cn(
+              button.size.md,
+              "bg-surface-default border border-surface-border",
+              radius.md,
+              "hover:bg-surface-hover",
+              layout.inline.tight
+            )}
           >
             <Download className="w-4 h-4" />
             <span>{t("report.downloadHTML")}</span>
@@ -370,7 +432,13 @@ export function ReportPreviewModal({
           <button
             type="button"
             onClick={handlePrint}
-            className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:opacity-90 ${layout.inline.tight}`}
+            className={cn(
+              button.size.md,
+              "bg-brand-primary text-text-inverse",
+              radius.md,
+              "hover:opacity-90",
+              layout.inline.tight
+            )}
           >
             <Printer className="w-4 h-4" />
             <span>{t("report.download")}</span>

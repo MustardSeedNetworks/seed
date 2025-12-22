@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FAB } from "./FAB";
 import { useEffect } from "react";
-import { spacing } from "../../styles/theme";
+import { spacing, cn } from "../../styles/theme";
 
 /**
  * The Floating Action Button (FAB) provides quick access to running all diagnostic tests.
@@ -17,7 +17,7 @@ const meta: Meta<typeof FAB> = {
   decorators: [
     (Story) => (
       <div className="relative h-96 bg-surface-base">
-        <div className={`${spacing.pad.default}`}>
+        <div className={cn(spacing.pad.default)}>
           <p className="text-text-secondary">
             The FAB is fixed in the bottom-right corner. Click to trigger tests.
           </p>

@@ -185,9 +185,11 @@ export function SetupWizard({
   };
 
   return (
-    <div className={`min-h-screen bg-surface-base ${layout.flex.center} pad`}>
+    <div
+      className={cn("min-h-screen bg-surface-base", layout.flex.center, "pad")}
+    >
       <div className="w-full max-w-md">
-        <div className={`text-center ${spacing.margin.bottom.sectionLg}`}>
+        <div className={cn("text-center", spacing.margin.bottom.sectionLg)}>
           <div className="w-16 h-16 mx-auto text-brand-primary">
             <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
               <circle
@@ -249,33 +251,42 @@ export function SetupWizard({
               <circle cx="40" cy="24" r="3" fill="currentColor" />
             </svg>
           </div>
-          <h1 className={`heading-2 ${spacing.margin.top.heading}`}>
+          <h1 className={cn("heading-2", spacing.margin.top.heading)}>
             {t("welcome.title")}
           </h1>
-          <p className={`body-small ${spacing.margin.top.inline}`}>
+          <p className={cn("body-small", spacing.margin.top.inline)}>
             {t("welcome.subtitle")}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className={cardClass("default", "lg")}>
           <div className={spacing.margin.bottom.content}>
-            <p className={`body-small ${spacing.margin.bottom.content}`}>
+            <p className={cn("body-small", spacing.margin.bottom.content)}>
               {t("username.label")} <strong>{username}</strong>{" "}
               {t("username.cannotChange")}
             </p>
           </div>
 
           {/* Password mode selection */}
-          <div className={`${spacing.margin.bottom.section} stack-sm`}>
+          <div className={cn(spacing.margin.bottom.section, "stack-sm")}>
             <p
-              className={`body-small font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+              className={cn(
+                "body-small font-medium text-text-primary",
+                spacing.margin.bottom.inline
+              )}
             >
               {t("password.chooseMethod")}
             </p>
 
             {/* Custom password option */}
             <label
-              className={`flex items-start ${spacing.gap.default} pad-sm ${radius.md} border border-surface-border cursor-pointer hover:bg-surface-base transition-colors`}
+              className={cn(
+                "flex items-start",
+                spacing.gap.default,
+                "pad-sm",
+                radius.md,
+                "border border-surface-border cursor-pointer hover:bg-surface-base transition-colors"
+              )}
             >
               <input
                 type="radio"
@@ -283,14 +294,21 @@ export function SetupWizard({
                 value="custom"
                 checked={passwordMode === "custom"}
                 onChange={() => handlePasswordModeChange("custom")}
-                className={`${spacing.margin.top.inline} ${iconTokens.size.sm} text-brand-primary focus:ring-brand-primary`}
+                className={cn(
+                  spacing.margin.top.inline,
+                  iconTokens.size.sm,
+                  "text-brand-primary focus:ring-brand-primary"
+                )}
               />
               <div>
                 <span className="body-small font-medium text-text-primary">
                   {t("password.custom.title")}
                 </span>
                 <p
-                  className={`caption text-text-muted ${spacing.margin.top.inline}`}
+                  className={cn(
+                    "caption text-text-muted",
+                    spacing.margin.top.inline
+                  )}
                 >
                   {t("password.custom.description")}
                 </p>
@@ -300,7 +318,13 @@ export function SetupWizard({
             {/* Generated password option */}
             {suggestedPassword && (
               <label
-                className={`flex items-start ${spacing.gap.default} pad-sm ${radius.md} border border-surface-border cursor-pointer hover:bg-surface-base transition-colors`}
+                className={cn(
+                  "flex items-start",
+                  spacing.gap.default,
+                  "pad-sm",
+                  radius.md,
+                  "border border-surface-border cursor-pointer hover:bg-surface-base transition-colors"
+                )}
               >
                 <input
                   type="radio"
@@ -308,22 +332,34 @@ export function SetupWizard({
                   value="generated"
                   checked={passwordMode === "generated"}
                   onChange={() => handlePasswordModeChange("generated")}
-                  className={`${spacing.margin.top.inline} ${iconTokens.size.sm} text-brand-primary focus:ring-brand-primary`}
+                  className={cn(
+                    spacing.margin.top.inline,
+                    iconTokens.size.sm,
+                    "text-brand-primary focus:ring-brand-primary"
+                  )}
                 />
                 <div className="flex-1">
                   <span className="body-small font-medium text-text-primary">
                     {t("password.generated.title")}
                   </span>
                   <p
-                    className={`caption text-text-muted ${spacing.margin.top.inline}`}
+                    className={cn(
+                      "caption text-text-muted",
+                      spacing.margin.top.inline
+                    )}
                   >
                     {t("password.generated.description")}
                   </p>
                   {passwordMode === "generated" && (
                     <div
-                      className={`${spacing.margin.top.inline} ${spacing.pad.sm} bg-surface-sunken ${radius.default}`}
+                      className={cn(
+                        spacing.margin.top.inline,
+                        spacing.pad.sm,
+                        "bg-surface-sunken",
+                        radius.default
+                      )}
                     >
-                      <div className={`${layout.inline.default}`}>
+                      <div className={cn(layout.inline.default)}>
                         <code className="flex-1 font-mono body-small text-brand-primary select-all break-all">
                           {suggestedPassword}
                         </code>
@@ -332,13 +368,21 @@ export function SetupWizard({
                           onClick={() =>
                             navigator.clipboard.writeText(suggestedPassword)
                           }
-                          className={`${button.size.xs} caption text-text-muted hover:text-text-primary border border-surface-border ${radius.md} hover:bg-surface-base transition-colors shrink-0`}
+                          className={cn(
+                            button.size.xs,
+                            "caption text-text-muted hover:text-text-primary border border-surface-border",
+                            radius.md,
+                            "hover:bg-surface-base transition-colors shrink-0"
+                          )}
                         >
                           {t("buttons.copy")}
                         </button>
                       </div>
                       <p
-                        className={`caption text-status-warning ${spacing.margin.top.inline}`}
+                        className={cn(
+                          "caption text-status-warning",
+                          spacing.margin.top.inline
+                        )}
                       >
                         {t("password.generated.saveWarning")}
                       </p>
@@ -354,7 +398,10 @@ export function SetupWizard({
               <div className={spacing.margin.bottom.content}>
                 <label
                   htmlFor="setup-password"
-                  className={`block body-small font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+                  className={cn(
+                    "block body-small font-medium text-text-primary",
+                    spacing.margin.bottom.inline
+                  )}
                 >
                   {t("password.label")}
                 </label>
@@ -415,7 +462,10 @@ export function SetupWizard({
                   </button>
                 </div>
                 <p
-                  className={`caption text-text-muted ${spacing.margin.top.inline}`}
+                  className={cn(
+                    "caption text-text-muted",
+                    spacing.margin.top.inline
+                  )}
                 >
                   {t("password.minLength")}
                 </p>
@@ -424,7 +474,10 @@ export function SetupWizard({
               <div className={spacing.margin.bottom.section}>
                 <label
                   htmlFor="setup-confirm-password"
-                  className={`block body-small font-medium text-text-primary ${spacing.margin.bottom.inline}`}
+                  className={cn(
+                    "block body-small font-medium text-text-primary",
+                    spacing.margin.bottom.inline
+                  )}
                 >
                   {t("password.confirm.label")}
                 </label>
@@ -445,7 +498,12 @@ export function SetupWizard({
             <div
               role="alert"
               aria-live="assertive"
-              className={`${spacing.margin.bottom.content} pad-sm bg-status-error/10 border border-status-error/20 ${radius.md} text-status-error body-small`}
+              className={cn(
+                spacing.margin.bottom.content,
+                "pad-sm bg-status-error/10 border border-status-error/20",
+                radius.md,
+                "text-status-error body-small"
+              )}
             >
               {error}
             </div>
@@ -484,7 +542,13 @@ export function SetupWizard({
                     onClick={() =>
                       (window.location.href = `${API_BASE}/api/sso/login?provider=google`)
                     }
-                    className={`w-full ${button.size.md} bg-status-info text-text-inverse ${radius.md} font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+                    className={cn(
+                      "w-full",
+                      button.size.md,
+                      "bg-status-info text-text-inverse",
+                      radius.md,
+                      "font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
+                    )}
                   >
                     {t("common:buttons.signInWithGoogle")}
                   </button>
@@ -495,7 +559,13 @@ export function SetupWizard({
                     onClick={() =>
                       (window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`)
                     }
-                    className={`w-full ${button.size.md} bg-brand-secondary text-text-inverse ${radius.md} font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+                    className={cn(
+                      "w-full",
+                      button.size.md,
+                      "bg-brand-secondary text-text-inverse",
+                      radius.md,
+                      "font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
+                    )}
                   >
                     {t("common:buttons.signInWithMicrosoft")}
                   </button>
@@ -506,7 +576,13 @@ export function SetupWizard({
                     onClick={() =>
                       (window.location.href = `${API_BASE}/api/sso/login?provider=github`)
                     }
-                    className={`w-full ${button.size.md} bg-surface-sunken text-text-primary ${radius.md} font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50`}
+                    className={cn(
+                      "w-full",
+                      button.size.md,
+                      "bg-surface-sunken text-text-primary",
+                      radius.md,
+                      "font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50"
+                    )}
                   >
                     {t("common:buttons.signInWithGitHub")}
                   </button>

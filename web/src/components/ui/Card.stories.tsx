@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Card, CardValue, CardRow, CardDivider } from "./Card";
 import { Cable, Wifi, Server } from "lucide-react";
-import { spacing } from "../../styles/theme";
+import { spacing, cn } from "../../styles/theme";
 
 const meta: Meta<typeof Card> = {
   title: "UI/Card",
@@ -151,7 +151,10 @@ export const WithHeaderAction: Story = {
     status: "success",
     headerAction: (
       <button
-        className={`${spacing.chip.sm} caption bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90`}
+        className={cn(
+          spacing.chip.sm,
+          "caption bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90"
+        )}
       >
         Refresh
       </button>

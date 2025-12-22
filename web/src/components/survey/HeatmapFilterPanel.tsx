@@ -39,6 +39,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import {
+  cn,
   radius,
   spacing,
   layout,
@@ -245,12 +246,20 @@ export function HeatmapFilterPanel({
 
   return (
     <div
-      className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.sm}`}
+      className={cn(
+        "bg-surface-raised",
+        radius.md,
+        "border border-surface-border",
+        spacing.pad.sm
+      )}
     >
       {/* Metric Selection */}
       <div className={spacing.margin.bottom.content}>
         <h4
-          className={`caption font-medium text-text-muted ${spacing.margin.bottom.tight}`}
+          className={cn(
+            "caption font-medium text-text-muted",
+            spacing.margin.bottom.tight
+          )}
         >
           {t("heatmaps.title")}
         </h4>
@@ -258,7 +267,11 @@ export function HeatmapFilterPanel({
         {/* Signal metrics */}
         {metricsByCategory.signal.length > 0 && (
           <div
-            className={`${layout.inline.default} flex-wrap ${spacing.margin.bottom.tight}`}
+            className={cn(
+              layout.inline.default,
+              "flex-wrap",
+              spacing.margin.bottom.tight
+            )}
           >
             {metricsByCategory.signal.map((option) => {
               const Icon = option.icon;
@@ -267,11 +280,15 @@ export function HeatmapFilterPanel({
                 <button
                   key={option.id}
                   onClick={() => handleMetricSelect(option.id)}
-                  className={`${button.size.xs} ${radius.md} ${layout.inline.default} transition-colors ${
+                  className={cn(
+                    button.size.xs,
+                    radius.md,
+                    layout.inline.default,
+                    "transition-colors",
                     isSelected
                       ? "bg-brand-primary text-text-inverse"
                       : "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                  }`}
+                  )}
                 >
                   <Icon className={iconTokens.size.xs} />
                   <span>{t(option.labelKey as never)}</span>
@@ -284,7 +301,11 @@ export function HeatmapFilterPanel({
         {/* Performance metrics */}
         {metricsByCategory.performance.length > 0 && (
           <div
-            className={`${layout.inline.default} flex-wrap ${spacing.margin.bottom.tight}`}
+            className={cn(
+              layout.inline.default,
+              "flex-wrap",
+              spacing.margin.bottom.tight
+            )}
           >
             {metricsByCategory.performance.map((option) => {
               const Icon = option.icon;
@@ -293,11 +314,15 @@ export function HeatmapFilterPanel({
                 <button
                   key={option.id}
                   onClick={() => handleMetricSelect(option.id)}
-                  className={`${button.size.xs} ${radius.md} ${layout.inline.default} transition-colors ${
+                  className={cn(
+                    button.size.xs,
+                    radius.md,
+                    layout.inline.default,
+                    "transition-colors",
                     isSelected
                       ? "bg-green-600 text-text-inverse"
                       : "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                  }`}
+                  )}
                 >
                   <Icon className={iconTokens.size.xs} />
                   <span>{t(option.labelKey as never)}</span>
@@ -309,7 +334,7 @@ export function HeatmapFilterPanel({
 
         {/* Interference metrics */}
         {metricsByCategory.interference.length > 0 && (
-          <div className={`${layout.inline.default} flex-wrap`}>
+          <div className={cn(layout.inline.default, "flex-wrap")}>
             {metricsByCategory.interference.map((option) => {
               const Icon = option.icon;
               const isSelected = metric === option.id;
@@ -317,11 +342,15 @@ export function HeatmapFilterPanel({
                 <button
                   key={option.id}
                   onClick={() => handleMetricSelect(option.id)}
-                  className={`${button.size.xs} ${radius.md} ${layout.inline.default} transition-colors ${
+                  className={cn(
+                    button.size.xs,
+                    radius.md,
+                    layout.inline.default,
+                    "transition-colors",
                     isSelected
                       ? "bg-purple-600 text-text-inverse"
                       : "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                  }`}
+                  )}
                 >
                   <Icon className={iconTokens.size.xs} />
                   <span>{t(option.labelKey as never)}</span>
@@ -335,9 +364,15 @@ export function HeatmapFilterPanel({
       {/* Filter Toggle */}
       <button
         onClick={() => setShowFilters(!showFilters)}
-        className={`${layout.inline.default} w-full justify-between ${spacing.pad.sm} ${radius.md} bg-surface-base border border-surface-border hover:bg-surface-hover`}
+        className={cn(
+          layout.inline.default,
+          "w-full justify-between",
+          spacing.pad.sm,
+          radius.md,
+          "bg-surface-base border border-surface-border hover:bg-surface-hover"
+        )}
       >
-        <div className={`${layout.inline.default}`}>
+        <div className={cn(layout.inline.default)}>
           <Filter className={iconTokens.size.sm} />
           <span className="body-small">{t("heatmaps.filters")}</span>
           {hasActiveFilters && (
@@ -355,9 +390,7 @@ export function HeatmapFilterPanel({
 
       {/* Filter Options */}
       {showFilters && (
-        <div
-          className={`${layout.stack.default} ${spacing.margin.top.content}`}
-        >
+        <div className={cn(layout.stack.default, spacing.margin.top.content)}>
           {/* SSID Filter */}
           <div>
             <label className="caption text-text-muted">
@@ -366,7 +399,12 @@ export function HeatmapFilterPanel({
             <select
               value={filter?.ssid || ""}
               onChange={(e) => updateFilter("ssid", e.target.value)}
-              className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
+              className={cn(
+                "w-full",
+                spacing.pad.sm,
+                radius.md,
+                "border border-surface-border bg-surface-base body-small"
+              )}
             >
               <option value="">{t("heatmaps.allSsids")}</option>
               {uniqueSsids.map((ssid) => (
@@ -385,7 +423,12 @@ export function HeatmapFilterPanel({
             <select
               value={filter?.bssid || ""}
               onChange={(e) => updateFilter("bssid", e.target.value)}
-              className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
+              className={cn(
+                "w-full",
+                spacing.pad.sm,
+                radius.md,
+                "border border-surface-border bg-surface-base body-small"
+              )}
             >
               <option value="">{t("heatmaps.allAps")}</option>
               {uniqueBssids.map((bssid) => (
@@ -405,7 +448,12 @@ export function HeatmapFilterPanel({
               <select
                 value={filter?.apId || ""}
                 onChange={(e) => updateFilter("apId", e.target.value)}
-                className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
+                className={cn(
+                  "w-full",
+                  spacing.pad.sm,
+                  radius.md,
+                  "border border-surface-border bg-surface-base body-small"
+                )}
               >
                 <option value="">{t("heatmaps.allApLocations")}</option>
                 {apLocations.map((ap) => (
@@ -422,7 +470,7 @@ export function HeatmapFilterPanel({
             <label className="caption text-text-muted">
               {t("heatmaps.filterBand")}
             </label>
-            <div className={`${layout.inline.default}`}>
+            <div className={cn(layout.inline.default)}>
               {(["2.4", "5", "6"] as WiFiBand[]).map((band) => (
                 <button
                   key={band}
@@ -432,7 +480,10 @@ export function HeatmapFilterPanel({
                       filter?.band === band ? undefined : band
                     )
                   }
-                  className={`${button.size.xs} ${radius.md} transition-colors ${
+                  className={cn(
+                    button.size.xs,
+                    radius.md,
+                    "transition-colors",
                     filter?.band === band
                       ? band === "2.4"
                         ? "bg-blue-500 text-text-inverse"
@@ -440,7 +491,7 @@ export function HeatmapFilterPanel({
                           ? "bg-green-500 text-text-inverse"
                           : "bg-purple-500 text-text-inverse"
                       : "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                  }`}
+                  )}
                 >
                   {band} GHz
                 </button>
@@ -462,7 +513,12 @@ export function HeatmapFilterPanel({
                     e.target.value ? parseInt(e.target.value, 10) : undefined
                   )
                 }
-                className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
+                className={cn(
+                  "w-full",
+                  spacing.pad.sm,
+                  radius.md,
+                  "border border-surface-border bg-surface-base body-small"
+                )}
               >
                 <option value="">{t("heatmaps.allChannels")}</option>
                 {uniqueChannels.map((ch) => (
@@ -480,7 +536,7 @@ export function HeatmapFilterPanel({
               <label className="caption text-text-muted">
                 {t("heatmaps.filterChannelWidth")}
               </label>
-              <div className={`${layout.inline.default} flex-wrap`}>
+              <div className={cn(layout.inline.default, "flex-wrap")}>
                 {([20, 40, 80, 160, 320] as ChannelWidth[]).map((width) => (
                   <button
                     key={width}
@@ -491,13 +547,16 @@ export function HeatmapFilterPanel({
                       )
                     }
                     disabled={!uniqueChannelWidths.includes(width)}
-                    className={`${button.size.xs} ${radius.md} transition-colors ${
+                    className={cn(
+                      button.size.xs,
+                      radius.md,
+                      "transition-colors",
                       filter?.channelWidth === width
                         ? "bg-cyan-500 text-text-inverse"
                         : uniqueChannelWidths.includes(width)
                           ? "bg-surface-base border border-surface-border hover:bg-surface-hover"
                           : "bg-surface-base border border-surface-border opacity-40"
-                    }`}
+                    )}
                   >
                     {width} MHz
                   </button>
@@ -512,7 +571,7 @@ export function HeatmapFilterPanel({
               <label className="caption text-text-muted">
                 {t("heatmaps.filterPhyType")}
               </label>
-              <div className={`${layout.inline.default} flex-wrap`}>
+              <div className={cn(layout.inline.default, "flex-wrap")}>
                 {(["a", "b", "g", "n", "ac", "ax", "be"] as PhyType[]).map(
                   (phy) => (
                     <button
@@ -524,13 +583,16 @@ export function HeatmapFilterPanel({
                         )
                       }
                       disabled={!uniquePhyTypes.includes(phy)}
-                      className={`${button.size.xs} ${radius.md} transition-colors ${
+                      className={cn(
+                        button.size.xs,
+                        radius.md,
+                        "transition-colors",
                         filter?.phyType === phy
                           ? "bg-indigo-500 text-text-inverse"
                           : uniquePhyTypes.includes(phy)
                             ? "bg-surface-base border border-surface-border hover:bg-surface-hover"
                             : "bg-surface-base border border-surface-border opacity-40"
-                      }`}
+                      )}
                     >
                       802.11{phy}
                     </button>
@@ -551,7 +613,12 @@ export function HeatmapFilterPanel({
                 onChange={(e) =>
                   updateFilter("security", e.target.value || undefined)
                 }
-                className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
+                className={cn(
+                  "w-full",
+                  spacing.pad.sm,
+                  radius.md,
+                  "border border-surface-border bg-surface-base body-small"
+                )}
               >
                 <option value="">{t("heatmaps.allSecurity")}</option>
                 {uniqueSecurityTypes.map((sec) => (
@@ -574,7 +641,12 @@ export function HeatmapFilterPanel({
                 onChange={(e) =>
                   updateFilter("vendor", e.target.value || undefined)
                 }
-                className={`w-full ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base body-small`}
+                className={cn(
+                  "w-full",
+                  spacing.pad.sm,
+                  radius.md,
+                  "border border-surface-border bg-surface-base body-small"
+                )}
               >
                 <option value="">{t("heatmaps.allVendors")}</option>
                 {uniqueVendors.map((vendor) => (
@@ -591,7 +663,7 @@ export function HeatmapFilterPanel({
             <label className="caption text-text-muted">
               {t("heatmaps.viewMode")}
             </label>
-            <div className={`${layout.inline.default} flex-wrap`}>
+            <div className={cn(layout.inline.default, "flex-wrap")}>
               {(
                 [
                   "all",
@@ -609,11 +681,14 @@ export function HeatmapFilterPanel({
                       filter?.viewMode === mode ? undefined : mode
                     )
                   }
-                  className={`${button.size.xs} ${radius.md} transition-colors ${
+                  className={cn(
+                    button.size.xs,
+                    radius.md,
+                    "transition-colors",
                     filter?.viewMode === mode
                       ? "bg-amber-500 text-text-inverse"
                       : "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                  }`}
+                  )}
                 >
                   {t(`heatmaps.viewModes.${mode}` as never)}
                 </button>
@@ -626,7 +701,7 @@ export function HeatmapFilterPanel({
             <label className="caption text-text-muted">
               {t("heatmaps.minRssi")}
             </label>
-            <div className={`${layout.inline.default}`}>
+            <div className={cn(layout.inline.default)}>
               <input
                 type="range"
                 min="-100"
@@ -652,7 +727,13 @@ export function HeatmapFilterPanel({
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className={`${button.size.sm} ${radius.md} border border-surface-border hover:bg-surface-hover ${layout.inline.default} justify-center`}
+              className={cn(
+                button.size.sm,
+                radius.md,
+                "border border-surface-border hover:bg-surface-hover",
+                layout.inline.default,
+                "justify-center"
+              )}
             >
               <X className={iconTokens.size.sm} />
               <span>{t("heatmaps.clearFilters")}</span>

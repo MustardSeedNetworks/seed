@@ -29,6 +29,7 @@ import { Skeleton } from "../ui/Skeleton";
 import { BaseCard } from "./BaseCard";
 import { Cable } from "../ui/Icons";
 import {
+  cn,
   layout,
   radius,
   spacing,
@@ -84,8 +85,8 @@ function getStatus(data: LinkData): Status {
 function LinkLoadingSkeleton() {
   return (
     <>
-      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.heading}`} />
-      <div className={`stack-sm ${spacing.margin.top.content}`}>
+      <Skeleton className={cn("h-8 w-32", spacing.margin.bottom.heading)} />
+      <div className={cn("stack-sm", spacing.margin.top.content)}>
         <div className={layout.flex.between}>
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
@@ -169,14 +170,20 @@ export const LinkCard = memo(function LinkCard({
                 {linkData.advertisedSpeeds &&
                   linkData.advertisedSpeeds.length > 0 && (
                     <div className={spacing.margin.top.inline}>
-                      <p className={`caption ${spacing.margin.bottom.inline}`}>
+                      <p
+                        className={cn("caption", spacing.margin.bottom.inline)}
+                      >
                         {t("link.advertisedSpeeds")}
                       </p>
                       <div className={layout.inline.wrap}>
                         {linkData.advertisedSpeeds.map((speed) => (
                           <span
                             key={speed}
-                            className={`caption ${spacing.chip.sm} bg-surface-hover ${radius.default}`}
+                            className={cn(
+                              "caption bg-surface-hover",
+                              spacing.chip.sm,
+                              radius.default
+                            )}
                           >
                             {speed}
                           </span>

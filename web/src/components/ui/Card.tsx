@@ -129,7 +129,9 @@ export function Card({
       className={cn(
         card.base,
         card.variant.default,
-        `${spacing.pad.sm} sm:${spacing.pad.default} transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none`,
+        spacing.pad.sm,
+        `sm:${spacing.pad.default}`,
+        "transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none",
         isInteractive && "cursor-pointer active:scale-[0.98]",
         className
       )}
@@ -164,7 +166,10 @@ export function Card({
         </div>
       </div>
       <div
-        className={`${spacing.margin.top.inline} sm:${spacing.margin.top.content}`}
+        className={cn(
+          spacing.margin.top.inline,
+          `sm:${spacing.margin.top.content}`
+        )}
         aria-describedby={`card-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
       >
         {children}
@@ -211,7 +216,7 @@ export function CardValue({
   return (
     <div>
       {label && (
-        <p className={`caption ${spacing.margin.bottom.tight}`}>{label}</p>
+        <p className={cn("caption", spacing.margin.bottom.tight)}>{label}</p>
       )}
       <p
         className={cn(getSizeClass(size), textMods, layout.inline.tight)}
@@ -268,7 +273,8 @@ export function CardRow({
   return (
     <div
       className={cn(
-        `flex justify-between ${spacing.compact.py}`,
+        "flex justify-between",
+        spacing.compact.py,
         layout.inline.default,
         wrap ? "items-start" : "items-center"
       )}

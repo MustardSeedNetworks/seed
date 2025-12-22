@@ -37,6 +37,7 @@ import {
   radius,
   modal,
   spacing,
+  cn,
 } from "../../styles/theme";
 
 interface HelpModalProps {
@@ -64,21 +65,43 @@ export function HelpModal({
 
       {/* Modal */}
       <div
-        className={`relative ${modal.content} ${modal.size.md} ${radius.lg} flex flex-col overflow-hidden`}
+        className={cn(
+          "relative",
+          modal.content,
+          modal.size.md,
+          radius.lg,
+          "flex",
+          "flex-col",
+          "overflow-hidden"
+        )}
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-modal-title"
       >
         {/* Header */}
         <div
-          className={`${layout.flex.between} ${spacing.pad.default} border-b border-surface-border bg-surface-raised shrink-0`}
+          className={cn(
+            layout.flex.between,
+            spacing.pad.default,
+            "border-b",
+            "border-surface-border",
+            "bg-surface-raised",
+            "shrink-0"
+          )}
         >
           <h2 id="help-modal-title" className="heading-3">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className={`${spacing.iconBtn.sm} text-text-muted hover:text-text-primary transition-colors ${radius.default} hover:bg-surface-base`}
+            className={cn(
+              spacing.iconBtn.sm,
+              "text-text-muted",
+              "hover:text-text-primary",
+              "transition-colors",
+              radius.default,
+              "hover:bg-surface-base"
+            )}
             aria-label="Close help"
           >
             <svg
@@ -96,7 +119,7 @@ export function HelpModal({
         </div>
 
         {/* Content */}
-        <div className={`${spacing.pad.default} overflow-y-auto flex-1`}>
+        <div className={cn(spacing.pad.default, "overflow-y-auto", "flex-1")}>
           {children}
         </div>
       </div>
@@ -114,9 +137,15 @@ interface HelpSectionProps {
  */
 export function HelpSection({ title, children }: HelpSectionProps) {
   return (
-    <div className={`${spacing.margin.bottom.section} last:mb-0`}>
+    <div className={cn(spacing.margin.bottom.section, "last:mb-0")}>
       <h3
-        className={`heading-4 ${spacing.margin.bottom.heading} ${spacing.padding.bottom.tight} border-b border-surface-border`}
+        className={cn(
+          "heading-4",
+          spacing.margin.bottom.heading,
+          spacing.padding.bottom.tight,
+          "border-b",
+          "border-surface-border"
+        )}
       >
         {title}
       </h3>
@@ -136,11 +165,19 @@ interface HelpItemProps {
  */
 export function HelpItem({ term, description, color }: HelpItemProps) {
   return (
-    <div className={`flex ${spacing.gap.default} body-small`}>
-      <div className={`flex items-center ${spacing.gap.compact} shrink-0 w-24`}>
+    <div className={cn("flex", spacing.gap.default, "body-small")}>
+      <div
+        className={cn(
+          "flex",
+          "items-center",
+          spacing.gap.compact,
+          "shrink-0",
+          "w-24"
+        )}
+      >
         {color && (
           <span
-            className={`inline-block w-2.5 h-2.5 ${radius.full} ${color}`}
+            className={cn("inline-block", "w-2.5", "h-2.5", radius.full, color)}
           />
         )}{" "}
         {/* w-2.5 h-2.5 for status dot */}

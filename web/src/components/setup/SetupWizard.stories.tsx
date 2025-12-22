@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { SetupWizard } from "./SetupWizard";
 import { useState } from "react";
-import { spacing, radius } from "../../styles/theme";
+import { spacing, radius, cn } from "../../styles/theme";
 
 // No-op function for story event handlers
 const noop = () => {};
@@ -263,7 +263,11 @@ export const InteractiveSetupFlow: Story = {
         <div className="min-h-screen bg-surface-base flex items-center justify-center">
           <div className="text-center">
             <div
-              className={`w-16 h-16 mx-auto ${spacing.margin.bottom.content} ${radius.full} bg-status-success/20 flex items-center justify-center`}
+              className={cn(
+                spacing.margin.bottom.content,
+                radius.full,
+                "w-16 h-16 mx-auto bg-status-success/20 flex items-center justify-center"
+              )}
             >
               <svg
                 className="w-8 h-8 text-status-success"
@@ -279,7 +283,7 @@ export const InteractiveSetupFlow: Story = {
                 />
               </svg>
             </div>
-            <h2 className={`heading-2 ${spacing.margin.bottom.inline}`}>
+            <h2 className={cn(spacing.margin.bottom.inline, "heading-2")}>
               Setup Complete!
             </h2>
             <p className="body-small text-text-muted">You are now logged in.</p>

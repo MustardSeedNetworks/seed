@@ -141,7 +141,8 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
       <button
         onClick={onClose}
         className={cn(
-          `${spacing.iconBtn.sm} hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border`,
+          spacing.iconBtn.sm,
+          "hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border",
           radius.default
         )}
         aria-label="Dismiss notification"

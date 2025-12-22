@@ -31,7 +31,7 @@
  */
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { radius } from "../../styles/theme";
+import { radius, cn } from "../../styles/theme";
 import type {
   FloorPlan,
   SamplePoint,
@@ -395,11 +395,13 @@ export function FloorPlanCanvas({
         ref={canvasRef}
         onClick={handleCanvasClick}
         onMouseMove={handleMouseMove}
-        className={`border border-surface-border ${radius.md} ${
+        className={cn(
+          "border border-surface-border",
+          radius.md,
           interactive || calibrationMode || apPlacementMode
             ? "cursor-crosshair"
             : ""
-        }`}
+        )}
         width={dimensions.width}
         height={dimensions.height}
       />

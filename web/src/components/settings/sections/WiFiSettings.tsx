@@ -34,6 +34,7 @@ import { CollapsibleSection } from "../../ui/CollapsibleSection";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Wifi } from "../../ui/Icons";
 import {
+  cn,
   icon as iconTokens,
   layout,
   radius,
@@ -86,7 +87,14 @@ export const WiFiSettings = memo(function WiFiSettings({
                   interface: e.target.value,
                 }))
               }
-              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={cn(
+                "w-full",
+                spacing.margin.top.tight,
+                spacing.chip.lg,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+                "body-small text-text-primary"
+              )}
             >
               {wifiSettings.availableWifi.map((iface) => (
                 <option key={iface} value={iface}>
@@ -106,10 +114,19 @@ export const WiFiSettings = memo(function WiFiSettings({
                 }))
               }
               placeholder="wlan0 or en0"
-              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={cn(
+                "w-full",
+                spacing.margin.top.tight,
+                spacing.chip.lg,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+                "body-small text-text-primary"
+              )}
             />
           )}
-          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+          <p
+            className={cn("caption text-text-muted", spacing.margin.top.tight)}
+          >
             {wifiSettings.isWireless
               ? t("wifi.wirelessMonitoring")
               : t("wifi.noWireless")}

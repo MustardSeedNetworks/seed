@@ -17,7 +17,7 @@
 
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { useTranslation } from "react-i18next";
-import { radius, spacing, icon as iconTokens } from "../../styles/theme";
+import { radius, spacing, icon as iconTokens, cn } from "../../styles/theme";
 import type { Profile } from "../../types/profile";
 
 interface ProfileSelectorProps {
@@ -108,7 +108,7 @@ export const ProfileSelector = memo(function ProfileSelector({
   // Profile icon
   const ProfileIcon = () => (
     <svg
-      className={`${iconTokens.size.sm} text-brand-primary`}
+      className={cn(iconTokens.size.sm, "text-brand-primary")}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -140,7 +140,13 @@ export const ProfileSelector = memo(function ProfileSelector({
         type="button"
         disabled={isDisabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center ${spacing.gap.tight} ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+        className={cn(
+          "flex items-center",
+          spacing.gap.tight,
+          spacing.pad.sm,
+          radius.md,
+          "border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={t("accessibility.selectProfile", "Select profile")}
@@ -160,7 +166,7 @@ export const ProfileSelector = memo(function ProfileSelector({
         {/* Loading/switching indicator */}
         {(loading || switching) && (
           <svg
-            className={`${iconTokens.size.sm} text-text-muted animate-spin`}
+            className={cn(iconTokens.size.sm, "text-text-muted animate-spin")}
             fill="none"
             viewBox="0 0 24 24"
             aria-hidden="true"
@@ -184,7 +190,11 @@ export const ProfileSelector = memo(function ProfileSelector({
         {/* Dropdown arrow */}
         {!loading && !switching && (
           <svg
-            className={`${iconTokens.size.sm} text-text-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={cn(
+              iconTokens.size.sm,
+              "text-text-muted transition-transform",
+              isOpen ? "rotate-180" : ""
+            )}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -203,7 +213,11 @@ export const ProfileSelector = memo(function ProfileSelector({
       {/* Dropdown menu */}
       {isOpen && (
         <div
-          className={`absolute top-full left-0 mt-1 w-64 ${radius.md} border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden`}
+          className={cn(
+            "absolute top-full left-0 mt-1 w-64",
+            radius.md,
+            "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden"
+          )}
           role="listbox"
           aria-label={t("accessibility.profileList", "Available profiles")}
         >
@@ -211,7 +225,10 @@ export const ProfileSelector = memo(function ProfileSelector({
           {profiles.length > 0 && (
             <div>
               <div
-                className={`${spacing.pad.sm} bg-surface-base border-b border-surface-border`}
+                className={cn(
+                  spacing.pad.sm,
+                  "bg-surface-base border-b border-surface-border"
+                )}
               >
                 <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t("profile.profiles", "Profiles")}
@@ -224,21 +241,26 @@ export const ProfileSelector = memo(function ProfileSelector({
                     type="button"
                     onClick={() => selectProfile(profile.id)}
                     disabled={switching}
-                    className={`w-full flex items-center ${spacing.gap.tight} ${spacing.pad.sm} hover:bg-surface-hover focus:bg-surface-hover focus:outline-none disabled:opacity-50 ${
+                    className={cn(
+                      "w-full flex items-center",
+                      spacing.gap.tight,
+                      spacing.pad.sm,
+                      "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none disabled:opacity-50",
                       profile.id === activeProfile?.id
                         ? "bg-brand-primary/10"
                         : ""
-                    }`}
+                    )}
                     role="option"
                     aria-selected={profile.id === activeProfile?.id}
                   >
                     {/* Selection indicator */}
                     <span
-                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      className={cn(
+                        "w-2 h-2 rounded-full flex-shrink-0",
                         profile.id === activeProfile?.id
                           ? "bg-brand-primary"
                           : "bg-transparent"
-                      }`}
+                      )}
                     />
 
                     {/* Profile info */}
@@ -259,7 +281,10 @@ export const ProfileSelector = memo(function ProfileSelector({
                     {/* Active check */}
                     {profile.id === activeProfile?.id && (
                       <svg
-                        className={`${iconTokens.size.sm} text-brand-primary flex-shrink-0`}
+                        className={cn(
+                          iconTokens.size.sm,
+                          "text-brand-primary flex-shrink-0"
+                        )}
                         fill="currentColor"
                         viewBox="0 0 24 24"
                         aria-hidden="true"
@@ -275,7 +300,7 @@ export const ProfileSelector = memo(function ProfileSelector({
 
           {/* Empty state */}
           {profiles.length === 0 && (
-            <div className={`${spacing.pad.md} text-center`}>
+            <div className={cn(spacing.pad.md, "text-center")}>
               <span className="caption text-text-muted">
                 {t("profile.noProfiles", "No profiles found")}
               </span>
@@ -283,11 +308,16 @@ export const ProfileSelector = memo(function ProfileSelector({
           )}
 
           {/* Manage profiles link */}
-          <div className={`border-t border-surface-border`}>
+          <div className="border-t border-surface-border">
             <button
               type="button"
               onClick={goToManagement}
-              className={`w-full flex items-center justify-center ${spacing.gap.tight} ${spacing.pad.sm} hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary`}
+              className={cn(
+                "w-full flex items-center justify-center",
+                spacing.gap.tight,
+                spacing.pad.sm,
+                "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary"
+              )}
             >
               <svg
                 className={iconTokens.size.sm}

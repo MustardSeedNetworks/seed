@@ -29,7 +29,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Server } from "lucide-react";
-import { radius, icon as iconTokens, spacing } from "../../styles/theme";
+import { cn, radius, icon as iconTokens, spacing } from "../../styles/theme";
 import { BaseCard } from "./BaseCard";
 import { CardRow, CardDivider } from "../ui/Card";
 import { Status } from "../ui/StatusBadge";
@@ -137,9 +137,9 @@ function ResourceBar({
           {percent.toFixed(0)}%
         </span>
       </div>
-      <div className={`h-2 bg-surface-border ${radius.md} overflow-hidden`}>
+      <div className={cn("h-2 bg-surface-border overflow-hidden", radius.md)}>
         <div
-          className={`h-full ${barColor} transition-all duration-300`}
+          className={cn("h-full transition-all duration-300", barColor)}
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>
@@ -225,7 +225,7 @@ export function SystemHealthCard() {
 
           <CardDivider />
 
-          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+          <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
             <CardRow
               label={t("system.uptime")}
               value={formatUptime(health.uptime ?? 0)}
@@ -253,7 +253,7 @@ export function SystemHealthCard() {
             />
           </div>
 
-          <div className={`caption text-center ${spacing.padding.top.tight}`}>
+          <div className={cn("caption text-center", spacing.padding.top.tight)}>
             {health.os ?? "Unknown"}/{health.arch ?? "Unknown"} -{" "}
             {health.numCpu ?? 0} CPUs
           </div>

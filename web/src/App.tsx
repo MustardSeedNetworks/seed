@@ -78,6 +78,7 @@ import {
   button,
   input,
   section,
+  cn,
 } from "./styles/theme";
 
 /**
@@ -1262,7 +1263,7 @@ function App() {
 
       {/* Main content */}
       <main className={spacing.mainPadding.y}>
-        <div className={`${section.width.xl} mx-auto ${spacing.mainPadding.x}`}>
+        <div className={cn(section.width.xl, "mx-auto", spacing.mainPadding.x)}>
           {/* Section: Primary Connectivity - cards differ by interface type */}
           <section
             aria-labelledby="connectivity-heading"
@@ -1270,7 +1271,7 @@ function App() {
           >
             <h2
               id="connectivity-heading"
-              className={`section-title ${spacing.margin.bottom.heading}`}
+              className={cn("section-title", spacing.margin.bottom.heading)}
             >
               {t("sections.connectivity")}
             </h2>
@@ -1304,7 +1305,7 @@ function App() {
           >
             <h2
               id="network-heading"
-              className={`section-title ${spacing.margin.bottom.heading}`}
+              className={cn("section-title", spacing.margin.bottom.heading)}
             >
               {t("sections.network")}
             </h2>
@@ -1327,7 +1328,7 @@ function App() {
           >
             <h2
               id="performance-heading"
-              className={`section-title ${spacing.margin.bottom.heading}`}
+              className={cn("section-title", spacing.margin.bottom.heading)}
             >
               {t("sections.testingDiscovery")}
             </h2>
@@ -1375,7 +1376,7 @@ function App() {
           >
             <h2
               id="system-heading"
-              className={`section-title ${spacing.margin.bottom.heading}`}
+              className={cn("section-title", spacing.margin.bottom.heading)}
             >
               {t("sections.system")}
             </h2>
@@ -1386,7 +1387,12 @@ function App() {
 
           {/* Footer */}
           <footer
-            className={`${spacing.margin.top.section} ${radius.lg} border border-surface-border bg-surface-raised ${spacing.pad.lg}`}
+            className={cn(
+              spacing.margin.top.section,
+              radius.lg,
+              "border border-surface-border bg-surface-raised",
+              spacing.pad.lg
+            )}
           >
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {/* Product Info */}
@@ -1557,9 +1563,9 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   };
 
   return (
-    <div className={`min-h-screen ${layout.flex.center} pad`}>
+    <div className={cn("min-h-screen", layout.flex.center, "pad")}>
       <div className="w-full max-w-sm">
-        <div className={`text-center ${spacing.margin.bottom.sectionLg}`}>
+        <div className={cn("text-center", spacing.margin.bottom.sectionLg)}>
           <div className="w-16 h-16 mx-auto text-brand-primary">
             <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
               <circle
@@ -1661,22 +1667,26 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 className={`heading-1 ${spacing.margin.top.heading}`}>
+          <h1 className={cn("heading-1", spacing.margin.top.heading)}>
             {t("app.title")}
           </h1>
-          <p className={`body-small ${spacing.margin.top.inline}`}>
+          <p className={cn("body-small", spacing.margin.top.inline)}>
             {t("app.tagline")}
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className={`bg-surface-raised ${radius.md} border border-surface-border pad-lg stack-lg`}
+          className={cn(
+            "bg-surface-raised",
+            radius.md,
+            "border border-surface-border pad-lg stack-lg"
+          )}
         >
           <div>
             <label
               htmlFor="login-username"
-              className={`label block ${spacing.margin.bottom.inline}`}
+              className={cn("label block", spacing.margin.bottom.inline)}
             >
               {t("labels.username")}
             </label>
@@ -1685,7 +1695,12 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className={`w-full ${input.size.md} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary`}
+              className={cn(
+                "w-full",
+                input.size.md,
+                radius.md,
+                "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
+              )}
               placeholder="admin"
               required
             />
@@ -1694,7 +1709,7 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           <div>
             <label
               htmlFor="login-password"
-              className={`label block ${spacing.margin.bottom.inline}`}
+              className={cn("label block", spacing.margin.bottom.inline)}
             >
               {t("labels.password")}
             </label>
@@ -1703,7 +1718,12 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={`w-full ${input.size.md} ${radius.md} border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary`}
+              className={cn(
+                "w-full",
+                input.size.md,
+                radius.md,
+                "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary"
+              )}
               placeholder="••••••••"
               required
             />
@@ -1713,7 +1733,11 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             <div
               role="alert"
               aria-live="assertive"
-              className={`pad-sm bg-status-error/10 border border-status-error/20 ${radius.md} text-status-error body-small`}
+              className={cn(
+                "pad-sm bg-status-error/10 border border-status-error/20",
+                radius.md,
+                "text-status-error body-small"
+              )}
             >
               {error || ssoError}
             </div>
@@ -1722,7 +1746,13 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+            className={cn(
+              "w-full",
+              button.size.md,
+              "bg-brand-primary text-text-inverse",
+              radius.md,
+              "font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
+            )}
           >
             {isLoading ? t("status.loggingIn") : t("buttons.login")}
           </button>
@@ -1740,7 +1770,13 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
                   onClick={() =>
                     (window.location.href = `${API_BASE}/api/sso/login?provider=google`)
                   }
-                  className={`w-full ${button.size.md} bg-status-info text-text-inverse ${radius.md} font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+                  className={cn(
+                    "w-full",
+                    button.size.md,
+                    "bg-status-info text-text-inverse",
+                    radius.md,
+                    "font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
+                  )}
                 >
                   {t("buttons.signInWithGoogle")}
                 </button>
@@ -1751,7 +1787,13 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
                   onClick={() =>
                     (window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`)
                   }
-                  className={`w-full ${button.size.md} bg-brand-secondary text-text-inverse ${radius.md} font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50`}
+                  className={cn(
+                    "w-full",
+                    button.size.md,
+                    "bg-brand-secondary text-text-inverse",
+                    radius.md,
+                    "font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50"
+                  )}
                 >
                   {t("buttons.signInWithMicrosoft")}
                 </button>
@@ -1762,7 +1804,13 @@ function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
                   onClick={() =>
                     (window.location.href = `${API_BASE}/api/sso/login?provider=github`)
                   }
-                  className={`w-full ${button.size.md} bg-surface-sunken text-text-primary ${radius.md} font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50`}
+                  className={cn(
+                    "w-full",
+                    button.size.md,
+                    "bg-surface-sunken text-text-primary",
+                    radius.md,
+                    "font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50"
+                  )}
                 >
                   {t("buttons.signInWithGitHub")}
                 </button>

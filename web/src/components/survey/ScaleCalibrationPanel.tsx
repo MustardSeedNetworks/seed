@@ -27,6 +27,7 @@ import type { FloorPlan, ScaleSource } from "../../hooks/useSurvey";
 import { Ruler, Building, Sliders } from "lucide-react";
 import { useSettings } from "../../contexts/useSettings";
 import {
+  cn,
   radius,
   spacing,
   layout,
@@ -209,17 +210,27 @@ export function ScaleCalibrationPanel({
 
   return (
     <div
-      className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.default}`}
+      className={cn(
+        "bg-surface-raised",
+        radius.md,
+        "border border-surface-border",
+        spacing.pad.default
+      )}
     >
-      <h3 className={`heading-3 ${spacing.margin.bottom.content}`}>
+      <h3 className={cn("heading-3", spacing.margin.bottom.content)}>
         {t("scalePanel.title")}
       </h3>
 
       {/* Current Scale Info */}
       <div
-        className={`bg-surface-base ${radius.md} ${spacing.pad.sm} ${spacing.margin.bottom.content}`}
+        className={cn(
+          "bg-surface-base",
+          radius.md,
+          spacing.pad.sm,
+          spacing.margin.bottom.content
+        )}
       >
-        <div className={`${layout.flex.between} body-small`}>
+        <div className={cn(layout.flex.between, "body-small")}>
           <span className="text-text-muted">
             {t("scalePanel.currentScale")}:
           </span>
@@ -228,13 +239,21 @@ export function ScaleCalibrationPanel({
           </span>
         </div>
         <div
-          className={`${layout.flex.between} body-small ${spacing.margin.top.tight}`}
+          className={cn(
+            layout.flex.between,
+            "body-small",
+            spacing.margin.top.tight
+          )}
         >
           <span className="text-text-muted">{t("scalePanel.source")}:</span>
           <span className="font-medium">{getScaleSourceText()}</span>
         </div>
         <div
-          className={`${layout.flex.between} body-small ${spacing.margin.top.tight}`}
+          className={cn(
+            layout.flex.between,
+            "body-small",
+            spacing.margin.top.tight
+          )}
         >
           <span className="text-text-muted">
             {t("scalePanel.facilitySize")}:
@@ -247,26 +266,34 @@ export function ScaleCalibrationPanel({
       </div>
 
       {/* Calibration Methods */}
-      <div className={`${spacing.stack.default}`}>
+      <div className={spacing.stack.default}>
         {/* Method 1: Enter Dimensions */}
         <div
-          className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}
+          className={cn(
+            "border border-surface-border",
+            radius.md,
+            spacing.pad.sm
+          )}
         >
           <div
-            className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.default, spacing.margin.bottom.inline)}
           >
             <Building className={iconTokens.size.sm} />
             <span className="body-small font-medium">
               {t("scalePanel.enterDimensions")}
             </span>
           </div>
-          <div className={`${layout.inline.default}`}>
+          <div className={layout.inline.default}>
             <select
               value={dimensionMode}
               onChange={(e) =>
                 setDimensionMode(e.target.value as "length" | "width")
               }
-              className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm}`}
+              className={cn(
+                inputTokens.base,
+                inputTokens.state.default,
+                inputTokens.size.sm
+              )}
             >
               <option value="length">{t("scalePanel.length")}</option>
               <option value="width">{t("scalePanel.width")}</option>
@@ -278,7 +305,12 @@ export function ScaleCalibrationPanel({
               value={dimensionValue}
               onChange={(e) => setDimensionValue(e.target.value)}
               placeholder={t("scalePanel.enterValue")}
-              className={`flex-1 ${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm}`}
+              className={cn(
+                "flex-1",
+                inputTokens.base,
+                inputTokens.state.default,
+                inputTokens.size.sm
+              )}
             />
             <span className="body-small text-text-muted min-w-8">
               {isMetric ? "m" : "ft"}
@@ -286,7 +318,12 @@ export function ScaleCalibrationPanel({
             <button
               onClick={handleDimensionSubmit}
               disabled={!dimensionValue}
-              className={`${button.size.sm} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={cn(
+                button.size.sm,
+                "bg-brand-primary text-text-inverse",
+                radius.md,
+                "hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
             >
               {t("scalePanel.apply")}
             </button>
@@ -295,10 +332,14 @@ export function ScaleCalibrationPanel({
 
         {/* Method 2: Two-Point Calibration */}
         <div
-          className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}
+          className={cn(
+            "border border-surface-border",
+            radius.md,
+            spacing.pad.sm
+          )}
         >
           <div
-            className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.default, spacing.margin.bottom.inline)}
           >
             <Ruler className={iconTokens.size.sm} />
             <span className="body-small font-medium">
@@ -306,14 +347,22 @@ export function ScaleCalibrationPanel({
             </span>
           </div>
           <p
-            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "caption text-text-muted",
+              spacing.margin.bottom.inline
+            )}
           >
             {t("scalePanel.measureInstructions")}
           </p>
           <button
             onClick={onStartCalibration}
             disabled={isCalibrating}
-            className={`${button.size.sm} border border-surface-border ${radius.md} hover:bg-surface-hover disabled:opacity-50`}
+            className={cn(
+              button.size.sm,
+              "border border-surface-border",
+              radius.md,
+              "hover:bg-surface-hover disabled:opacity-50"
+            )}
           >
             {isCalibrating
               ? t("scalePanel.calibrating")
@@ -324,10 +373,14 @@ export function ScaleCalibrationPanel({
 
       {/* Signal Propagation Section */}
       <div
-        className={`border-t border-surface-border ${spacing.margin.top.content} pt-4`}
+        className={cn(
+          "border-t border-surface-border",
+          spacing.margin.top.content,
+          "pt-4"
+        )}
       >
         <div
-          className={`${layout.inline.default} ${spacing.margin.bottom.content}`}
+          className={cn(layout.inline.default, spacing.margin.bottom.content)}
         >
           <Sliders className={iconTokens.size.sm} />
           <span className="body-small font-medium">
@@ -336,9 +389,12 @@ export function ScaleCalibrationPanel({
         </div>
 
         {/* Environment Presets */}
-        <div className={`${spacing.margin.bottom.content}`}>
+        <div className={spacing.margin.bottom.content}>
           <label
-            className={`caption text-text-muted block ${spacing.margin.bottom.tight}`}
+            className={cn(
+              "caption text-text-muted block",
+              spacing.margin.bottom.tight
+            )}
           >
             {t("scalePanel.environmentType")}
           </label>
@@ -347,11 +403,14 @@ export function ScaleCalibrationPanel({
               <button
                 key={preset.id}
                 onClick={() => handlePresetSelect(preset)}
-                className={`${button.size.xs} ${radius.md} border ${
+                className={cn(
+                  button.size.xs,
+                  radius.md,
+                  "border",
                   selectedPreset === preset.id
                     ? "bg-brand-primary text-text-inverse border-brand-primary"
                     : "border-surface-border hover:bg-surface-hover"
-                }`}
+                )}
               >
                 {t(preset.labelKey as never)}
               </button>
@@ -361,9 +420,7 @@ export function ScaleCalibrationPanel({
 
         {/* Propagation Slider */}
         <div>
-          <div
-            className={`${layout.flex.between} ${spacing.margin.bottom.tight}`}
-          >
+          <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
             <label className="caption text-text-muted">
               {t("scalePanel.propagationRadius")}
             </label>
@@ -381,7 +438,11 @@ export function ScaleCalibrationPanel({
             className="w-full"
           />
           <div
-            className={`${layout.flex.between} caption text-text-muted ${spacing.margin.top.tight}`}
+            className={cn(
+              layout.flex.between,
+              "caption text-text-muted",
+              spacing.margin.top.tight
+            )}
           >
             <span>{formatDistance(3, 0)}</span>
             <span>{formatDistance(30, 0)}</span>
@@ -390,13 +451,18 @@ export function ScaleCalibrationPanel({
 
         {/* Sample Recommendation */}
         <div
-          className={`bg-status-info/10 border border-status-info/20 ${radius.md} ${spacing.pad.sm} ${spacing.margin.top.content}`}
+          className={cn(
+            "bg-status-info/10 border border-status-info/20",
+            radius.md,
+            spacing.pad.sm,
+            spacing.margin.top.content
+          )}
         >
           <div className="body-small text-status-info">
             {t("scalePanel.recommendedSamples", { count: recommendedSamples })}
           </div>
           <div
-            className={`caption text-text-muted ${spacing.margin.top.tight}`}
+            className={cn("caption text-text-muted", spacing.margin.top.tight)}
           >
             {t("scalePanel.coveragePerSample", {
               area: formatArea(coverageAreaPerSample),

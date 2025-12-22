@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { ImprovedHelpModal } from "./ImprovedHelpModal";
-import { spacing, button, radius } from "../../styles/theme";
+import { spacing, button, radius, cn } from "../../styles/theme";
 
 /**
  * ImprovedHelpModal is a comprehensive help center with tabbed navigation,
@@ -73,22 +73,33 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className={`min-h-screen bg-surface-base ${spacing.pad.xl}`}>
+      <div className={cn("min-h-screen bg-surface-base", spacing.pad.xl)}>
         <div className="max-w-xl mx-auto text-center">
           <h1
-            className={`heading-2 text-text-primary ${spacing.margin.bottom.content}`}
+            className={cn(
+              "heading-2 text-text-primary",
+              spacing.margin.bottom.content
+            )}
           >
             Help Center Demo
           </h1>
           <p
-            className={`body text-text-secondary ${spacing.margin.bottom.section}`}
+            className={cn(
+              "body text-text-secondary",
+              spacing.margin.bottom.section
+            )}
           >
             Click the button below to open the help center. Use the sidebar to
             navigate between sections, or use the search to filter content.
           </p>
           <button
             onClick={() => setIsOpen(true)}
-            className={`${button.size.lg} bg-brand-primary text-text-inverse ${radius.lg} hover:bg-brand-primary/90 transition-colors font-medium`}
+            className={cn(
+              button.size.lg,
+              "bg-brand-primary text-text-inverse",
+              radius.lg,
+              "hover:bg-brand-primary/90 transition-colors font-medium"
+            )}
           >
             Open Help Center
           </button>
@@ -116,10 +127,16 @@ export const SearchDemo: Story = {
     return (
       <div className="min-h-screen bg-surface-base">
         <div
-          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+          className={cn(
+            spacing.pad.default,
+            "bg-surface-raised border-b border-surface-border"
+          )}
         >
           <h2
-            className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "heading-3 text-text-primary",
+              spacing.margin.bottom.inline
+            )}
           >
             Search Functionality
           </h2>
@@ -128,7 +145,10 @@ export const SearchDemo: Story = {
             searching for:
           </p>
           <ul
-            className={`list-disc list-inside body-small text-text-muted ${spacing.margin.top.inline}`}
+            className={cn(
+              "list-disc list-inside body-small text-text-muted",
+              spacing.margin.top.inline
+            )}
           >
             <li>"wifi" - Shows WiFi-related sections</li>
             <li>"dns" - Shows DNS test section</li>
@@ -160,10 +180,16 @@ export const AllSections: Story = {
     return (
       <div className="min-h-screen bg-surface-base">
         <div
-          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+          className={cn(
+            spacing.pad.default,
+            "bg-surface-raised border-b border-surface-border"
+          )}
         >
           <h2
-            className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "heading-3 text-text-primary",
+              spacing.margin.bottom.inline
+            )}
           >
             All Help Sections
           </h2>
@@ -171,7 +197,11 @@ export const AllSections: Story = {
             Navigate through all available sections using the sidebar:
           </p>
           <div
-            className={`grid grid-cols-2 md:grid-cols-5 ${spacing.gap.compact} ${spacing.margin.top.heading}`}
+            className={cn(
+              "grid grid-cols-2 md:grid-cols-5",
+              spacing.gap.compact,
+              spacing.margin.top.heading
+            )}
           >
             <SectionBadge name="About" />
             <SectionBadge name="Getting Started" />
@@ -283,15 +313,22 @@ export const BackdropClose: Story = {
     return (
       <div className="min-h-screen bg-surface-base">
         {!isOpen && (
-          <div className={`${spacing.pad.xl} text-center`}>
+          <div className={cn(spacing.pad.xl, "text-center")}>
             <p
-              className={`body text-text-secondary ${spacing.margin.bottom.content}`}
+              className={cn(
+                "body text-text-secondary",
+                spacing.margin.bottom.content
+              )}
             >
               Modal closed {closeCount} time(s)
             </p>
             <button
               onClick={() => setIsOpen(true)}
-              className={`${button.size.md} bg-brand-primary text-text-inverse ${radius.lg}`}
+              className={cn(
+                button.size.md,
+                "bg-brand-primary text-text-inverse",
+                radius.lg
+              )}
             >
               Reopen Modal
             </button>
@@ -327,10 +364,16 @@ export const KeyboardNavigation: Story = {
     return (
       <div className="min-h-screen bg-surface-base">
         <div
-          className={`${spacing.pad.default} bg-surface-raised border-b border-surface-border`}
+          className={cn(
+            spacing.pad.default,
+            "bg-surface-raised border-b border-surface-border"
+          )}
         >
           <h2
-            className={`heading-3 text-text-primary ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "heading-3 text-text-primary",
+              spacing.margin.bottom.inline
+            )}
           >
             Keyboard Navigation
           </h2>
@@ -338,12 +381,15 @@ export const KeyboardNavigation: Story = {
             The help modal supports keyboard navigation:
           </p>
           <ul
-            className={`list-disc list-inside body-small text-text-muted ${spacing.margin.top.inline}`}
+            className={cn(
+              "list-disc list-inside body-small text-text-muted",
+              spacing.margin.top.inline
+            )}
           >
             <li>
               Press{" "}
               <kbd
-                className={`${spacing.kbd} bg-surface-hover rounded text-xs`}
+                className={cn(spacing.kbd, "bg-surface-hover rounded text-xs")}
               >
                 ESC
               </kbd>{" "}
@@ -352,7 +398,7 @@ export const KeyboardNavigation: Story = {
             <li>
               Use{" "}
               <kbd
-                className={`${spacing.kbd} bg-surface-hover rounded text-xs`}
+                className={cn(spacing.kbd, "bg-surface-hover rounded text-xs")}
               >
                 Tab
               </kbd>{" "}
@@ -361,7 +407,7 @@ export const KeyboardNavigation: Story = {
             <li>
               Press{" "}
               <kbd
-                className={`${spacing.kbd} bg-surface-hover rounded text-xs`}
+                className={cn(spacing.kbd, "bg-surface-hover rounded text-xs")}
               >
                 Enter
               </kbd>{" "}
@@ -386,7 +432,10 @@ export const KeyboardNavigation: Story = {
 function SectionBadge({ name }: { name: string }) {
   return (
     <span
-      className={`${spacing.chip.sm} bg-surface-base border border-surface-border rounded text-xs text-text-secondary`}
+      className={cn(
+        spacing.chip.sm,
+        "bg-surface-base border border-surface-border rounded text-xs text-text-secondary"
+      )}
     >
       {name}
     </span>

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Card, CardValue, CardRow, CardDivider } from "../ui/Card";
 import { Wifi, WifiOff, Signal } from "lucide-react";
 import { Skeleton } from "../ui/Skeleton";
-import { spacing } from "../../styles/theme";
+import { spacing, cn } from "../../styles/theme";
 
 /**
  * WiFiCard displays wireless network connection status and signal quality.
@@ -36,7 +36,7 @@ export const Connected: StoryObj = {
       status="success"
     >
       <CardValue value="HomeNetwork" size="lg" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Signal" value="-45 dBm" status="success" />
         <CardRow label="Quality" value="Excellent" status="success" />
         <CardDivider />
@@ -58,7 +58,7 @@ export const WeakSignal: StoryObj = {
       status="warning"
     >
       <CardValue value="OfficeWiFi" size="lg" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Signal" value="-75 dBm" status="warning" />
         <CardRow label="Quality" value="Fair" status="warning" />
         <CardDivider />
@@ -66,7 +66,10 @@ export const WeakSignal: StoryObj = {
         <CardRow label="Security" value="WPA2" />
         <CardRow label="Speed" value="72 Mbps" />
         <p
-          className={`caption text-status-warning ${spacing.margin.top.inline}`}
+          className={cn(
+            "caption text-status-warning",
+            spacing.margin.top.inline
+          )}
         >
           Weak signal. Move closer to the access point or check for
           interference.
@@ -85,13 +88,16 @@ export const VeryWeakSignal: StoryObj = {
       status="error"
     >
       <CardValue value="GuestNetwork" size="lg" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Signal" value="-85 dBm" status="error" />
         <CardRow label="Quality" value="Poor" status="error" />
         <CardDivider />
         <CardRow label="Channel" value="11 (2.4 GHz)" />
         <p
-          className={`caption text-status-danger ${spacing.margin.top.inline}`}
+          className={cn(
+            "caption text-status-danger",
+            spacing.margin.top.inline
+          )}
         >
           Very weak signal. Connection may be unstable or drop frequently.
         </p>
@@ -109,7 +115,7 @@ export const Disconnected: StoryObj = {
       status="error"
     >
       <CardValue value="Not Connected" size="lg" status="error" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Status" value="Disconnected" status="error" />
         <CardDivider />
         <p className="caption text-text-muted">
@@ -129,8 +135,8 @@ export const Scanning: StoryObj = {
       icon={<Wifi className="w-4 h-4" />}
       status="loading"
     >
-      <Skeleton className={`h-8 w-40 ${spacing.margin.bottom.content}`} />
-      <div className={`${spacing.stack.sm} ${spacing.margin.top.content}`}>
+      <Skeleton className={cn("h-8 w-40", spacing.margin.bottom.content)} />
+      <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div className="flex justify-between">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
@@ -157,27 +163,39 @@ export const MultipleNetworks: StoryObj = {
       status="success"
     >
       <CardValue value="5 Networks Found" size="md" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.sm}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.sm)}>
         <div
-          className={`flex justify-between items-center ${spacing.compact.py} border-b border-surface-border/50 /* spacing.compact.py for compact list item */`}
+          className={cn(
+            "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
+            spacing.compact.py
+          )}
         >
           <span className="body-small">HomeNetwork</span>
           <span className="caption text-status-success">-45 dBm</span>
         </div>
         <div
-          className={`flex justify-between items-center ${spacing.compact.py} border-b border-surface-border/50 /* spacing.compact.py for compact list item */`}
+          className={cn(
+            "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
+            spacing.compact.py
+          )}
         >
           <span className="body-small">Neighbor_5G</span>
           <span className="caption text-status-warning">-65 dBm</span>
         </div>
         <div
-          className={`flex justify-between items-center ${spacing.compact.py} border-b border-surface-border/50 /* spacing.compact.py for compact list item */`}
+          className={cn(
+            "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
+            spacing.compact.py
+          )}
         >
           <span className="body-small">Guest</span>
           <span className="caption text-status-warning">-70 dBm</span>
         </div>
         <div
-          className={`flex justify-between items-center ${spacing.compact.py} border-b border-surface-border/50 /* spacing.compact.py for compact list item */`}
+          className={cn(
+            "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
+            spacing.compact.py
+          )}
         >
           <span className="body-small text-text-muted">Hidden Network</span>
           <span className="caption text-status-danger">-82 dBm</span>
@@ -196,7 +214,7 @@ export const NoAdapter: StoryObj = {
       status="unknown"
     >
       <CardValue value="Not Available" size="md" />
-      <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+      <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
         No wireless adapter detected on this system.
       </p>
     </Card>

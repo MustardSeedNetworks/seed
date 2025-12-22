@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CardValue, CardRow, CardDivider, Card } from "../ui/Card";
 import { Cable } from "../ui/Icons";
 import { Skeleton } from "../ui/Skeleton";
-import { spacing } from "../../styles/theme";
+import { spacing, cn } from "../../styles/theme";
 
 /**
  * LinkCard displays physical link layer (L2) and network layer (L3) status.
@@ -58,7 +58,7 @@ export const Online: StoryObj = {
       status="success"
     >
       <CardValue value="Connected" size="lg" status="success" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value={linkDataOnline.speed} />
         <CardRow label="Duplex" value={linkDataOnline.duplex} />
         <CardRow label="MTU" value={String(linkDataOnline.mtu)} />
@@ -80,7 +80,7 @@ export const NoIPAddress: StoryObj = {
       status="warning"
     >
       <CardValue value="No IP" size="lg" status="warning" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value={linkDataNoIP.speed} />
         <CardRow label="Duplex" value={linkDataNoIP.duplex} />
         <CardRow label="Carrier" value="Detected" />
@@ -103,7 +103,7 @@ export const Disconnected: StoryObj = {
       status="error"
     >
       <CardValue value="No Carrier" size="lg" status="error" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value="—" />
         <CardRow label="Duplex" value="—" />
         <CardRow label="Carrier" value="Not Detected" status="error" />
@@ -124,8 +124,8 @@ export const Loading: StoryObj = {
       icon={<Cable className="w-4 h-4" />}
       status="loading"
     >
-      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.content}`} />
-      <div className={`${spacing.stack.sm} ${spacing.margin.top.content}`}>
+      <Skeleton className={cn("h-8 w-32", spacing.margin.bottom.content)} />
+      <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div className="flex justify-between">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
@@ -152,7 +152,7 @@ export const WithLinkFlaps: StoryObj = {
       status="warning"
     >
       <CardValue value="Unstable" size="lg" status="warning" />
-      <div className={`${spacing.margin.top.content} ${spacing.stack.xs}`}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value="1000Mb/s" />
         <CardRow label="Duplex" value="Full" />
         <CardRow label="Link Flaps (24h)" value="12" status="warning" />

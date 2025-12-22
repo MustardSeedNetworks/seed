@@ -31,6 +31,7 @@ import {
   radius,
   spacing,
   button,
+  cn,
 } from "../../../styles/theme";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -198,7 +199,13 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
         {/* Version Info */}
         {version && (
           <div
-            className={`${layout.flex.between} ${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border"
+            )}
           >
             <span className="body-small text-text-muted">
               {t("configBackups.version")}
@@ -218,7 +225,15 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
         <button
           onClick={createBackup}
           disabled={actionLoading === "create"}
-          className={`w-full ${button.size.md} bg-brand-primary text-white ${radius.md} font-medium hover:bg-brand-primary-hover transition-colors flex items-center justify-center ${spacing.gap.compact} touch-manipulation disabled:opacity-50`}
+          className={cn(
+            "w-full",
+            button.size.md,
+            "bg-brand-primary text-white",
+            radius.md,
+            "font-medium hover:bg-brand-primary-hover transition-colors flex items-center justify-center",
+            spacing.gap.compact,
+            "touch-manipulation disabled:opacity-50"
+          )}
         >
           {actionLoading === "create" ? (
             t("configBackups.creating")
@@ -262,7 +277,12 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
             {backups.map((backup) => (
               <div
                 key={backup.name}
-                className={`${spacing.pad.sm} bg-surface-base ${radius.default} border border-surface-border`}
+                className={cn(
+                  spacing.pad.sm,
+                  "bg-surface-base",
+                  radius.default,
+                  "border border-surface-border"
+                )}
               >
                 <div className={layout.flex.between}>
                   <div>
@@ -273,13 +293,17 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                       {formatSize(backup.size)} • v{backup.version || "?"}
                     </p>
                   </div>
-                  <div className={`flex ${spacing.gap.compact}`}>
+                  <div className={cn("flex", spacing.gap.compact)}>
                     {restoreConfirm === backup.name ? (
                       <>
                         <button
                           onClick={() => restoreBackup(backup.name)}
                           disabled={!!actionLoading}
-                          className={`${spacing.chip.sm} ${radius.md} bg-status-warning text-white caption hover:opacity-90 disabled:opacity-50`}
+                          className={cn(
+                            spacing.chip.sm,
+                            radius.md,
+                            "bg-status-warning text-white caption hover:opacity-90 disabled:opacity-50"
+                          )}
                         >
                           {actionLoading === backup.name
                             ? t("configBackups.restoring")
@@ -288,7 +312,11 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                         <button
                           onClick={() => setRestoreConfirm(null)}
                           disabled={!!actionLoading}
-                          className={`${spacing.chip.sm} ${radius.md} border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50`}
+                          className={cn(
+                            spacing.chip.sm,
+                            radius.md,
+                            "border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50"
+                          )}
                         >
                           {t("configBackups.cancel")}
                         </button>
@@ -298,7 +326,11 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                         <button
                           onClick={() => setRestoreConfirm(backup.name)}
                           disabled={!!actionLoading}
-                          className={`${spacing.chip.sm} ${radius.md} border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50`}
+                          className={cn(
+                            spacing.chip.sm,
+                            radius.md,
+                            "border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50"
+                          )}
                           title={t("configBackups.restoreTooltip")}
                         >
                           {t("configBackups.restore")}
@@ -306,7 +338,11 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                         <button
                           onClick={() => deleteBackup(backup.name)}
                           disabled={!!actionLoading}
-                          className={`${spacing.chip.sm} ${radius.md} border border-status-error caption text-status-error hover:bg-status-error hover:text-white disabled:opacity-50`}
+                          className={cn(
+                            spacing.chip.sm,
+                            radius.md,
+                            "border border-status-error caption text-status-error hover:bg-status-error hover:text-white disabled:opacity-50"
+                          )}
                           title={t("configBackups.deleteTooltip")}
                         >
                           {actionLoading === backup.name
@@ -322,7 +358,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
           </div>
         )}
 
-        <p className={`caption text-text-muted ${spacing.margin.top.inline}`}>
+        <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
           {t("configBackups.description")}
         </p>
       </div>

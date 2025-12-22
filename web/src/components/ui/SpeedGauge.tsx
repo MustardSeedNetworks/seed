@@ -38,7 +38,7 @@
  */
 
 import { memo, useMemo } from "react";
-import { gauge, radius, spacing } from "../../styles/theme";
+import { cn, gauge, radius, spacing } from "../../styles/theme";
 
 interface SpeedGaugeProps {
   value: number; // Current speed in Mbps
@@ -127,7 +127,11 @@ export const SpeedGauge = memo(function SpeedGauge({
     <div className="flex flex-col items-center">
       {label && (
         <p
-          className={`caption text-text-muted ${spacing.margin.bottom.tight} uppercase tracking-wider`}
+          className={cn(
+            "caption text-text-muted",
+            spacing.margin.bottom.tight,
+            "uppercase tracking-wider"
+          )}
         >
           {label}
         </p>
@@ -202,28 +206,28 @@ export const SpeedGauge = memo(function SpeedGauge({
 
         {/* Center value display */}
         <div
-          className={
-            "absolute inset-0 flex flex-col items-center justify-end " +
-            (size === "sm"
+          className={cn(
+            "absolute inset-0 flex flex-col items-center justify-end",
+            size === "sm"
               ? spacing.micro.pb
               : size === "md"
                 ? spacing.micro.pbCompact
-                : spacing.micro.pbCompactMd) // Semantic tokens for gauge value positioning
-          }
+                : spacing.micro.pbCompactMd // Semantic tokens for gauge value positioning
+          )}
         >
           <span
-            className={
-              "font-mono font-bold text-text-primary tabular-nums " +
-              (size === "sm"
+            className={cn(
+              "font-mono font-bold text-text-primary tabular-nums",
+              size === "sm"
                 ? "text-[12px]"
                 : size === "md"
                   ? "text-[14px]"
-                  : "text-[16px]")
-            }
+                  : "text-[16px]"
+            )}
           >
             {isRunning && value === 0 ? "—" : displayValue.value}
           </span>
-          <span className={`caption text-text-muted ${spacing.micro.mtNeg}`}>
+          <span className={cn("caption text-text-muted", spacing.micro.mtNeg)}>
             {displayValue.unit}
           </span>{" "}
           {/* Negative margin for tight visual alignment between value and unit */}
@@ -288,7 +292,11 @@ export const ProgressRing = memo(function ProgressRing({
       </div>
       {label && (
         <span
-          className={`caption text-text-muted ${spacing.margin.top.tight} text-center`}
+          className={cn(
+            "caption text-text-muted",
+            spacing.margin.top.tight,
+            "text-center"
+          )}
         >
           {label}
         </span>
@@ -334,10 +342,20 @@ export const PulsingDot = memo(function PulsingDot({
   return (
     <span className="relative flex">
       <span
-        className={`animate-ping absolute inline-flex h-full w-full ${radius.full} opacity-75 ${colorClass}`}
+        className={cn(
+          "animate-ping absolute inline-flex h-full w-full",
+          radius.full,
+          "opacity-75",
+          colorClass
+        )}
       />
       <span
-        className={`relative inline-flex ${radius.full} ${sizeClass} ${colorClass}`}
+        className={cn(
+          "relative inline-flex",
+          radius.full,
+          sizeClass,
+          colorClass
+        )}
       />
     </span>
   );

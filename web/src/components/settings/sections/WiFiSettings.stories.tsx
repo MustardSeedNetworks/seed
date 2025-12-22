@@ -19,7 +19,7 @@ import type {
   WiFiSettings as WiFiSettingsType,
   SaveStatus,
 } from "../../../types/settings";
-import { spacing } from "../../../styles/theme";
+import { spacing, cn } from "../../../styles/theme";
 
 const meta: Meta<typeof WiFiSettings> = {
   title: "Settings/WiFiSettings",
@@ -214,10 +214,13 @@ export const Interactive: Story = {
  */
 export const Comparison: Story = {
   render: () => (
-    <div className={`stack-lg ${spacing.pad.default}`}>
+    <div className={cn("stack-lg", spacing.pad.default)}>
       <div>
         <p
-          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          className={cn(
+            "caption text-text-muted",
+            spacing.margin.bottom.inline
+          )}
         >
           Multiple interfaces available
         </p>
@@ -233,7 +236,10 @@ export const Comparison: Story = {
       </div>
       <div>
         <p
-          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          className={cn(
+            "caption text-text-muted",
+            spacing.margin.bottom.inline
+          )}
         >
           No interfaces (manual entry)
         </p>
@@ -249,7 +255,10 @@ export const Comparison: Story = {
       </div>
       <div>
         <p
-          className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+          className={cn(
+            "caption text-text-muted",
+            spacing.margin.bottom.inline
+          )}
         >
           Saving state
         </p>

@@ -29,6 +29,7 @@ import {
   button,
   layout,
   spacing,
+  cn,
 } from "../../styles/theme";
 import { logger, LogComponents } from "../../lib/logger";
 
@@ -127,12 +128,19 @@ export class ErrorBoundary extends Component<Props, State> {
           {(t) => (
             <div
               role="alert"
-              className={`pad bg-status-error/10 border border-status-error/20 ${radius.lg}`}
+              className={cn(
+                "pad bg-status-error/10 border border-status-error/20",
+                radius.lg
+              )}
             >
-              <div className={`flex items-start ${spacing.gap.default}`}>
+              <div className={cn("flex items-start", spacing.gap.default)}>
                 {/* Error icon SVG */}
                 <svg
-                  className={`${iconTokens.size.md} text-status-error shrink-0 ${spacing.micro.mt}`}
+                  className={cn(
+                    iconTokens.size.md,
+                    "text-status-error shrink-0",
+                    spacing.micro.mt
+                  )}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   aria-hidden="true"
@@ -144,7 +152,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   />
                 </svg>
                 {/* Error content: heading, message, and retry button */}
-                <div className={`flex-1 ${layout.stack.tight}`}>
+                <div className={cn("flex-1", layout.stack.tight)}>
                   <h3 className="body-small font-medium text-status-error">
                     {t("errorBoundary.title")}
                   </h3>
@@ -157,7 +165,12 @@ export class ErrorBoundary extends Component<Props, State> {
                   <button
                     type="button"
                     onClick={this.handleRetry}
-                    className={`${button.size.sm} font-medium text-text-inverse bg-status-error ${radius.default} hover:bg-status-error/90 focus:outline-none focus:ring-2 focus:ring-status-error focus:ring-offset-2`}
+                    className={cn(
+                      button.size.sm,
+                      "font-medium text-text-inverse bg-status-error",
+                      radius.default,
+                      "hover:bg-status-error/90 focus:outline-none focus:ring-2 focus:ring-status-error focus:ring-offset-2"
+                    )}
                   >
                     {t("errorBoundary.tryAgain")}
                   </button>

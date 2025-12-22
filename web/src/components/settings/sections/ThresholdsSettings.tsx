@@ -12,6 +12,7 @@ import {
   radius,
   input as inputTokens,
   spacing,
+  cn,
 } from "../../../styles/theme";
 
 interface ThresholdsSettingsProps {
@@ -115,21 +116,29 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
       <div className="stack-sm">
         {/* DNS Thresholds */}
         <div
-          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+          className={cn(
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.md,
+            "border border-surface-border"
+          )}
         >
           <div
-            className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
           >
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.dnsLookup")}
             </span>
             <Tooltip content={THRESHOLD_HELP["DNS Lookup"]} position="top">
               <Info
-                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                className={cn(
+                  iconTokens.size.xs,
+                  "text-text-muted hover:text-text-secondary cursor-help"
+                )}
               />
             </Tooltip>
           </div>
-          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+          <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
             <div>
               <label className="caption text-text-muted" htmlFor="dns-good">
                 {t("thresholds.goodLess")}
@@ -141,7 +150,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("dns", "good", Number(e.target.value))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
             <div>
@@ -155,7 +170,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("dns", "warning", Number(e.target.value))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
           </div>
@@ -163,21 +184,29 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
 
         {/* Gateway Thresholds */}
         <div
-          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+          className={cn(
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.md,
+            "border border-surface-border"
+          )}
         >
           <div
-            className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
           >
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.gatewayPing")}
             </span>
             <Tooltip content={THRESHOLD_HELP["Gateway Ping"]} position="top">
               <Info
-                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                className={cn(
+                  iconTokens.size.xs,
+                  "text-text-muted hover:text-text-secondary cursor-help"
+                )}
               />
             </Tooltip>
           </div>
-          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+          <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
             <div>
               <label className="caption text-text-muted" htmlFor="gateway-good">
                 {t("thresholds.goodLess")}
@@ -189,7 +218,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("gateway", "good", Number(e.target.value))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
             <div>
@@ -206,7 +241,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("gateway", "warning", Number(e.target.value))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
           </div>
@@ -214,21 +255,29 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
 
         {/* Wi-Fi Signal Thresholds */}
         <div
-          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+          className={cn(
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.md,
+            "border border-surface-border"
+          )}
         >
           <div
-            className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
           >
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.wifiSignal")}
             </span>
             <Tooltip content={THRESHOLD_HELP["Wi-Fi Signal"]} position="top">
               <Info
-                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                className={cn(
+                  iconTokens.size.xs,
+                  "text-text-muted hover:text-text-secondary cursor-help"
+                )}
               />
             </Tooltip>
           </div>
-          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+          <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
             <div>
               <label className="caption text-text-muted" htmlFor="wifi-good">
                 {t("thresholds.goodGreater")}
@@ -240,7 +289,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("wifi", "good", Number(e.target.value))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
             <div>
@@ -254,7 +309,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("wifi", "warning", Number(e.target.value))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
           </div>
@@ -262,10 +323,15 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
 
         {/* Health Check Ping Thresholds */}
         <div
-          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+          className={cn(
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.md,
+            "border border-surface-border"
+          )}
         >
           <div
-            className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
           >
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.healthPing")}
@@ -275,11 +341,14 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
               position="top"
             >
               <Info
-                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                className={cn(
+                  iconTokens.size.xs,
+                  "text-text-muted hover:text-text-secondary cursor-help"
+                )}
               />
             </Tooltip>
           </div>
-          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+          <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
             <div>
               <label className="caption text-text-muted" htmlFor="ping-good">
                 {t("thresholds.goodLess")}
@@ -291,7 +360,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("customPing", "good", Number(e.target.value))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
             <div>
@@ -309,7 +384,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                     Number(e.target.value)
                   )
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
           </div>
@@ -317,10 +398,15 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
 
         {/* Health Check TCP Thresholds */}
         <div
-          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+          className={cn(
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.md,
+            "border border-surface-border"
+          )}
         >
           <div
-            className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
           >
             <span className="body-small font-medium text-text-primary">
               {t("thresholds.healthTcp")}
@@ -330,11 +416,14 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
               position="top"
             >
               <Info
-                className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                className={cn(
+                  iconTokens.size.xs,
+                  "text-text-muted hover:text-text-secondary cursor-help"
+                )}
               />
             </Tooltip>
           </div>
-          <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+          <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
             <div>
               <label className="caption text-text-muted" htmlFor="tcp-good">
                 {t("thresholds.goodLess")}
@@ -346,7 +435,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                 onChange={(e) =>
                   updateThreshold("customTcp", "good", Number(e.target.value))
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
             <div>
@@ -364,7 +459,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                     Number(e.target.value)
                   )
                 }
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  spacing.margin.top.tight,
+                  "body-small"
+                )}
               />
             </div>
           </div>
@@ -372,10 +473,18 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
 
         {/* HTTP Thresholds (Total + Timing Phases) */}
         <div
-          className={`${spacing.pad.sm} bg-surface-base ${radius.md} border border-surface-border`}
+          className={cn(
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.md,
+            "border border-surface-border"
+          )}
         >
           <span
-            className={`body-small font-medium text-text-primary block ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "body-small font-medium text-text-primary block",
+              spacing.margin.bottom.inline
+            )}
           >
             {t("thresholds.httpThresholds")}
           </span>
@@ -383,18 +492,21 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
           {/* Total */}
           <div className={spacing.margin.bottom.heading}>
             <div
-              className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+              className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
             >
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.totalResponseTime")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP Total"]} position="top">
                 <Info
-                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                  className={cn(
+                    iconTokens.size.xs,
+                    "text-text-muted hover:text-text-secondary cursor-help"
+                  )}
                 />
               </Tooltip>
             </div>
-            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+            <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
               <div>
                 <label
                   className="caption text-text-muted"
@@ -413,7 +525,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
               <div>
@@ -434,14 +552,25 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
             </div>
           </div>
 
           <p
-            className={`caption text-text-muted ${spacing.margin.bottom.heading} border-t border-surface-border ${spacing.pad.sm}`}
+            className={cn(
+              "caption text-text-muted",
+              spacing.margin.bottom.heading,
+              "border-t border-surface-border",
+              spacing.pad.sm
+            )}
           >
             {t("thresholds.perPhaseThresholds")}
           </p>
@@ -449,18 +578,21 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
           {/* DNS */}
           <div className={spacing.margin.bottom.heading}>
             <div
-              className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+              className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
             >
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.dnsLookupPhase")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP DNS"]} position="top">
                 <Info
-                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                  className={cn(
+                    iconTokens.size.xs,
+                    "text-text-muted hover:text-text-secondary cursor-help"
+                  )}
                 />
               </Tooltip>
             </div>
-            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+            <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
               <div>
                 <label
                   className="caption text-text-muted"
@@ -479,7 +611,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
               <div>
@@ -500,7 +638,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
             </div>
@@ -509,18 +653,21 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
           {/* TCP */}
           <div className={spacing.margin.bottom.heading}>
             <div
-              className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+              className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
             >
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.tcpConnect")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP TCP"]} position="top">
                 <Info
-                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                  className={cn(
+                    iconTokens.size.xs,
+                    "text-text-muted hover:text-text-secondary cursor-help"
+                  )}
                 />
               </Tooltip>
             </div>
-            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+            <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
               <div>
                 <label
                   className="caption text-text-muted"
@@ -539,7 +686,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
               <div>
@@ -560,7 +713,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
             </div>
@@ -569,18 +728,21 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
           {/* TLS */}
           <div className={spacing.margin.bottom.heading}>
             <div
-              className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+              className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
             >
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.tlsHandshake")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP TLS"]} position="top">
                 <Info
-                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                  className={cn(
+                    iconTokens.size.xs,
+                    "text-text-muted hover:text-text-secondary cursor-help"
+                  )}
                 />
               </Tooltip>
             </div>
-            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+            <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
               <div>
                 <label
                   className="caption text-text-muted"
@@ -599,7 +761,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
               <div>
@@ -620,7 +788,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
             </div>
@@ -629,18 +803,21 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
           {/* TTFB */}
           <div>
             <div
-              className={`${layout.inline.tight} ${spacing.margin.bottom.inline}`}
+              className={cn(layout.inline.tight, spacing.margin.bottom.inline)}
             >
               <span className="caption font-medium text-text-primary">
                 {t("thresholds.ttfb")}
               </span>
               <Tooltip content={THRESHOLD_HELP["HTTP TTFB"]} position="top">
                 <Info
-                  className={`${iconTokens.size.xs} text-text-muted hover:text-text-secondary cursor-help`}
+                  className={cn(
+                    iconTokens.size.xs,
+                    "text-text-muted hover:text-text-secondary cursor-help"
+                  )}
                 />
               </Tooltip>
             </div>
-            <div className={`grid grid-cols-2 ${spacing.gap.compact}`}>
+            <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
               <div>
                 <label
                   className="caption text-text-muted"
@@ -659,7 +836,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
               <div>
@@ -680,7 +863,13 @@ export const ThresholdsSettings = memo(function ThresholdsSettings({
                       Number(e.target.value)
                     )
                   }
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} body-small`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    spacing.margin.top.tight,
+                    "body-small"
+                  )}
                 />
               </div>
             </div>

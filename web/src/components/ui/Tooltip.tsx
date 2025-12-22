@@ -45,8 +45,11 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
 
   const positionClasses =
     position === "top"
-      ? `bottom-full left-1/2 -translate-x-1/2 ${spacing.margin.bottom.inline}`
-      : `top-full left-1/2 -translate-x-1/2 ${spacing.margin.top.inline}`;
+      ? cn(
+          "bottom-full left-1/2 -translate-x-1/2",
+          spacing.margin.bottom.inline
+        )
+      : cn("top-full left-1/2 -translate-x-1/2", spacing.margin.top.inline);
 
   return (
     <div className="relative inline-flex items-center">
@@ -62,7 +65,9 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       {show && (
         <div
           className={cn(
-            `absolute z-50 ${spacing.cell.px} ${spacing.compact.pyMd} shadow-lg max-w-xs`,
+            "absolute z-50 shadow-lg max-w-xs",
+            spacing.cell.px,
+            spacing.compact.pyMd,
             positionClasses,
             radius.default,
             border.card,

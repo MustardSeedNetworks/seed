@@ -38,6 +38,7 @@ import {
   button,
   spacing,
   layout,
+  cn,
 } from "../../styles/theme";
 
 interface WiFiSurveyCardProps {
@@ -153,7 +154,13 @@ export function WiFiSurveyCard({
       >
         {!isWifi && (
           <div
-            className={`bg-status-warning/10 border border-status-warning/20 text-status-warning ${spacing.pad.sm} ${radius.md} body-small ${spacing.margin.bottom.heading}`}
+            className={cn(
+              "bg-status-warning/10 border border-status-warning/20 text-status-warning",
+              spacing.pad.sm,
+              radius.md,
+              "body-small",
+              spacing.margin.bottom.heading
+            )}
           >
             {t("survey.wifiRequired")}
           </div>
@@ -161,7 +168,13 @@ export function WiFiSurveyCard({
 
         {error && (
           <div
-            className={`bg-status-error/10 border border-status-error/20 text-status-error ${spacing.pad.sm} ${radius.md} body-small ${spacing.margin.bottom.heading}`}
+            className={cn(
+              "bg-status-error/10 border border-status-error/20 text-status-error",
+              spacing.pad.sm,
+              radius.md,
+              "body-small",
+              spacing.margin.bottom.heading
+            )}
           >
             {error}
           </div>
@@ -169,13 +182,17 @@ export function WiFiSurveyCard({
 
         {loading && surveys.length === 0 ? (
           <div
-            className={`text-center ${spacing.pad.lg} text-text-muted body-small`}
+            className={cn(
+              "text-center",
+              spacing.pad.lg,
+              "text-text-muted body-small"
+            )}
           >
             {t("survey.loading")}
           </div>
         ) : surveys.length === 0 ? (
-          <div className={`text-center ${spacing.pad.lg} text-text-muted`}>
-            <p className={`body-small ${spacing.margin.bottom.inline}`}>
+          <div className={cn("text-center", spacing.pad.lg, "text-text-muted")}>
+            <p className={cn("body-small", spacing.margin.bottom.inline)}>
               {t("survey.noSurveys")}
             </p>
             <button
@@ -190,7 +207,11 @@ export function WiFiSurveyCard({
             {surveys.slice(0, 3).map((survey) => (
               <div
                 key={survey.id}
-                className={`border border-surface-border ${radius.md} pad-sm hover:bg-surface-hover transition-colors cursor-pointer`}
+                className={cn(
+                  "border border-surface-border",
+                  radius.md,
+                  "pad-sm hover:bg-surface-hover transition-colors cursor-pointer"
+                )}
                 onClick={() => setSelectedSurvey(survey)}
               >
                 <div className={layout.flex.between}>
@@ -204,7 +225,11 @@ export function WiFiSurveyCard({
                       </span>
                     </div>
                     <div
-                      className={`${layout.inline.comfortable} ${spacing.margin.top.inline} caption text-text-muted`}
+                      className={cn(
+                        layout.inline.comfortable,
+                        spacing.margin.top.inline,
+                        "caption text-text-muted"
+                      )}
                     >
                       <span>{getSurveyTypeLabel(survey.surveyType)}</span>
                       <span>
@@ -214,7 +239,10 @@ export function WiFiSurveyCard({
                     </div>
                   </div>
                   <div
-                    className={`${layout.inline.tight} ${spacing.margin.left.inline}`}
+                    className={cn(
+                      layout.inline.tight,
+                      spacing.margin.left.inline
+                    )}
                   >
                     {survey.status === "created" && (
                       <button
@@ -222,7 +250,12 @@ export function WiFiSurveyCard({
                           e.stopPropagation();
                           startSurvey(survey.id);
                         }}
-                        className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                        className={cn(
+                          button.size.xs,
+                          "caption border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover"
+                        )}
                         title={t("survey.start")}
                       >
                         ▶
@@ -234,7 +267,12 @@ export function WiFiSurveyCard({
                           e.stopPropagation();
                           pauseSurvey(survey.id);
                         }}
-                        className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                        className={cn(
+                          button.size.xs,
+                          "caption border border-surface-border",
+                          radius.md,
+                          "hover:bg-surface-hover"
+                        )}
                         title={t("survey.pause")}
                       >
                         ⏸
@@ -247,7 +285,12 @@ export function WiFiSurveyCard({
                             e.stopPropagation();
                             startSurvey(survey.id);
                           }}
-                          className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                          className={cn(
+                            button.size.xs,
+                            "caption border border-surface-border",
+                            radius.md,
+                            "hover:bg-surface-hover"
+                          )}
                           title={t("survey.resume")}
                         >
                           ▶
@@ -257,7 +300,12 @@ export function WiFiSurveyCard({
                             e.stopPropagation();
                             completeSurvey(survey.id);
                           }}
-                          className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-surface-hover`}
+                          className={cn(
+                            button.size.xs,
+                            "caption border border-surface-border",
+                            radius.md,
+                            "hover:bg-surface-hover"
+                          )}
                           title={t("survey.complete")}
                         >
                           ✓
@@ -269,7 +317,12 @@ export function WiFiSurveyCard({
                         e.stopPropagation();
                         handleDelete(survey.id);
                       }}
-                      className={`${button.size.xs} caption border border-surface-border ${radius.md} hover:bg-status-error/10 text-status-error`}
+                      className={cn(
+                        button.size.xs,
+                        "caption border border-surface-border",
+                        radius.md,
+                        "hover:bg-status-error/10 text-status-error"
+                      )}
                       title={t("survey.delete")}
                     >
                       ×
@@ -280,7 +333,10 @@ export function WiFiSurveyCard({
             ))}
             {surveys.length > 3 && (
               <div
-                className={`text-center caption text-text-muted ${spacing.padding.top.tight}`}
+                className={cn(
+                  "text-center caption text-text-muted",
+                  spacing.padding.top.tight
+                )}
               >
                 {t("survey.more", { count: surveys.length - 3 })}
               </div>
@@ -340,29 +396,39 @@ function CreateSurveyDialog({
   return (
     <div className={modal.overlay}>
       <div
-        className={`bg-surface-raised ${radius.md} ${spacing.pad.lg} max-w-md w-full ${spacing.pad.default}`}
+        className={cn(
+          "bg-surface-raised",
+          radius.md,
+          spacing.pad.lg,
+          "max-w-md w-full",
+          spacing.pad.default
+        )}
       >
-        <h2 className={`heading-2 ${spacing.margin.bottom.content}`}>
+        <h2 className={cn("heading-2", spacing.margin.bottom.content)}>
           {t("survey.createNewSurvey")}
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="stack">
             <div>
-              <label className={`label block ${spacing.margin.bottom.tight}`}>
+              <label className={cn("label block", spacing.margin.bottom.tight)}>
                 {t("survey.surveyName")}
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md}`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md
+                )}
                 placeholder={t("survey.namePlaceholder")}
                 required
               />
             </div>
             <div>
               <label
-                className={`label block ${spacing.margin.bottom.tight}`}
+                className={cn("label block", spacing.margin.bottom.tight)}
                 htmlFor="survey-type"
               >
                 {t("survey.surveyType")}
@@ -371,7 +437,11 @@ function CreateSurveyDialog({
                 id="survey-type"
                 value={surveyType}
                 onChange={(e) => setSurveyType(e.target.value as SurveyType)}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md}`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md
+                )}
               >
                 <option value="passive">{t("survey.typePassive")}</option>
                 <option value="active">{t("survey.typeActive")}</option>
@@ -380,18 +450,30 @@ function CreateSurveyDialog({
             </div>
           </div>
           <div
-            className={`${layout.inline.default} ${spacing.margin.top.section}`}
+            className={cn(layout.inline.default, spacing.margin.top.section)}
           >
             <button
               type="button"
               onClick={onClose}
-              className={`flex-1 ${button.size.md} border border-surface-border ${radius.md} hover:bg-surface-hover`}
+              className={cn(
+                "flex-1",
+                button.size.md,
+                "border border-surface-border",
+                radius.md,
+                "hover:bg-surface-hover"
+              )}
             >
               {t("survey.cancel")}
             </button>
             <button
               type="submit"
-              className={`flex-1 ${button.size.md} bg-brand-primary text-text-inverse ${radius.md} hover:bg-brand-primary/90`}
+              className={cn(
+                "flex-1",
+                button.size.md,
+                "bg-brand-primary text-text-inverse",
+                radius.md,
+                "hover:bg-brand-primary/90"
+              )}
             >
               {t("survey.create")}
             </button>

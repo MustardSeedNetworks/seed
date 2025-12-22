@@ -7,7 +7,7 @@ import type {
   PassiveSample,
   ThroughputSample,
 } from "../../hooks/useSurvey";
-import { spacing } from "../../styles/theme";
+import { spacing, cn } from "../../styles/theme";
 
 /**
  * FloorPlanCanvas renders floor plan images with interactive sample points
@@ -286,11 +286,14 @@ export const Interactive: Story = {
 
     return (
       <div
-        className={`w-full max-w-4xl ${spacing.pad.default} bg-surface-base`}
+        className={cn(spacing.pad.default, "w-full max-w-4xl bg-surface-base")}
       >
         <div className={spacing.margin.bottom.content}>
           <p
-            className={`body-small text-text-muted ${spacing.margin.bottom.inline}`}
+            className={cn(
+              spacing.margin.bottom.inline,
+              "body-small text-text-muted"
+            )}
           >
             Click on the floor plan to add sample points. {samples.length}{" "}
             points added.
@@ -298,7 +301,10 @@ export const Interactive: Story = {
           {samples.length > 0 && (
             <button
               onClick={() => setSamples([])}
-              className={`${spacing.chip.sm} bg-status-error/10 text-status-error rounded text-sm hover:bg-status-error/20`}
+              className={cn(
+                spacing.chip.sm,
+                "bg-status-error/10 text-status-error rounded text-sm hover:bg-status-error/20"
+              )}
             >
               Clear Points
             </button>
@@ -440,48 +446,60 @@ export const MetricToggle: Story = {
 
     return (
       <div
-        className={`w-full max-w-4xl ${spacing.pad.default} bg-surface-base`}
+        className={cn(spacing.pad.default, "w-full max-w-4xl bg-surface-base")}
       >
         <div
-          className={`${spacing.margin.bottom.content} flex ${spacing.gap.compact}`}
+          className={cn(
+            spacing.margin.bottom.content,
+            spacing.gap.compact,
+            "flex"
+          )}
         >
           <button
             onClick={() => setMetric(null)}
-            className={`${spacing.chip.sm} rounded text-sm ${
+            className={cn(
+              spacing.chip.sm,
+              "rounded text-sm",
               metric === null
                 ? "bg-brand-primary text-text-inverse"
                 : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
-            }`}
+            )}
           >
             No Heatmap
           </button>
           <button
             onClick={() => setMetric("rssi")}
-            className={`${spacing.chip.sm} rounded text-sm ${
+            className={cn(
+              spacing.chip.sm,
+              "rounded text-sm",
               metric === "rssi"
                 ? "bg-brand-primary text-text-inverse"
                 : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
-            }`}
+            )}
           >
             RSSI
           </button>
           <button
             onClick={() => setMetric("throughput")}
-            className={`${spacing.chip.sm} rounded text-sm ${
+            className={cn(
+              spacing.chip.sm,
+              "rounded text-sm",
               metric === "throughput"
                 ? "bg-brand-primary text-text-inverse"
                 : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
-            }`}
+            )}
           >
             Throughput
           </button>
           <button
             onClick={() => setMetric("latency")}
-            className={`${spacing.chip.sm} rounded text-sm ${
+            className={cn(
+              spacing.chip.sm,
+              "rounded text-sm",
               metric === "latency"
                 ? "bg-brand-primary text-text-inverse"
                 : "bg-surface-raised border border-surface-border hover:bg-surface-hover"
-            }`}
+            )}
           >
             Latency
           </button>

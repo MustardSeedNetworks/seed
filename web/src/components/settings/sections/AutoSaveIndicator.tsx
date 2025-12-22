@@ -24,7 +24,7 @@
 
 import { useTranslation } from "react-i18next";
 import { SaveStatus } from "../../../types/settings";
-import { spacing } from "../../../styles/theme";
+import { cn, spacing } from "../../../styles/theme";
 
 interface AutoSaveIndicatorProps {
   status: SaveStatus;
@@ -40,13 +40,15 @@ export function AutoSaveIndicator({ status }: AutoSaveIndicatorProps) {
   if (status === "idle") return null;
   return (
     <span
-      className={`caption ${spacing.margin.left.inline} ${
+      className={cn(
+        "caption",
+        spacing.margin.left.inline,
         status === "saving"
           ? "text-text-muted"
           : status === "saved"
             ? "text-status-success"
             : "text-status-error"
-      }`}
+      )}
     >
       {status === "saving"
         ? t("autoSave.saving")

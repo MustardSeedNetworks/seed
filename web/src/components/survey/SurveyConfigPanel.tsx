@@ -39,6 +39,7 @@ import {
   Info,
 } from "lucide-react";
 import {
+  cn,
   radius,
   spacing,
   layout,
@@ -378,30 +379,42 @@ export function SurveyConfigPanel({
 
   return (
     <div
-      className={`bg-surface-raised ${radius.md} border border-surface-border ${spacing.pad.default}`}
+      className={cn(
+        "bg-surface-raised",
+        radius.md,
+        "border border-surface-border",
+        spacing.pad.default
+      )}
     >
-      <h3 className={`heading-3 ${spacing.margin.bottom.content}`}>
+      <h3 className={cn("heading-3", spacing.margin.bottom.content)}>
         {t("config.title")}
       </h3>
 
       {/* Survey Goal Selection - Goal-First Approach */}
-      <div className={`${spacing.margin.bottom.content}`}>
+      <div className={cn(spacing.margin.bottom.content)}>
         <h4
-          className={`body-small font-medium ${spacing.margin.bottom.content}`}
+          className={cn(
+            "body-small font-medium",
+            spacing.margin.bottom.content
+          )}
         >
           {t("config.whatGoal")}
         </h4>
-        <div className={`${layout.stack.default}`}>
+        <div className={cn(layout.stack.default)}>
           {SURVEY_GOALS.map((goal) => {
             const isSelected = selectedGoal === goal.id;
             return (
               <label
                 key={goal.id}
-                className={`flex items-start gap-3 ${spacing.pad.sm} ${radius.md} border cursor-pointer transition-colors ${
+                className={cn(
+                  "flex items-start gap-3",
+                  spacing.pad.sm,
+                  radius.md,
+                  "border cursor-pointer transition-colors",
                   isSelected
                     ? "bg-brand-primary/5 border-brand-primary"
                     : "border-surface-border hover:bg-surface-hover"
-                }`}
+                )}
               >
                 <input
                   type="radio"
@@ -422,12 +435,19 @@ export function SurveyConfigPanel({
                     )}
                   </div>
                   <p
-                    className={`caption text-text-muted ${spacing.margin.top.tight}`}
+                    className={cn(
+                      "caption text-text-muted",
+                      spacing.margin.top.tight
+                    )}
                   >
                     {t(goal.descriptionKey as never)}
                   </p>
                   <div
-                    className={`caption text-text-muted ${spacing.margin.top.tight} flex items-center gap-3`}
+                    className={cn(
+                      "caption text-text-muted",
+                      spacing.margin.top.tight,
+                      "flex items-center gap-3"
+                    )}
                   >
                     <span>{formatSurveyTypes(goal.surveyTypes)}</span>
                     <span className="text-surface-border">|</span>
@@ -448,10 +468,19 @@ export function SurveyConfigPanel({
           SURVEY_GOALS.find((g) => g.id === selectedGoal)?.radiosRequired ===
             2 && (
             <div
-              className={`${layout.inline.default} bg-status-info/10 border border-status-info/20 ${radius.md} ${spacing.pad.sm} ${spacing.margin.top.content}`}
+              className={cn(
+                layout.inline.default,
+                "bg-status-info/10 border border-status-info/20",
+                radius.md,
+                spacing.pad.sm,
+                spacing.margin.top.content
+              )}
             >
               <Info
-                className={`${iconTokens.size.sm} text-status-info flex-shrink-0`}
+                className={cn(
+                  iconTokens.size.sm,
+                  "text-status-info flex-shrink-0"
+                )}
               />
               <div>
                 <div className="body-small text-status-info font-medium">
@@ -467,10 +496,15 @@ export function SurveyConfigPanel({
 
       {/* Band Selection */}
       <div
-        className={`border border-surface-border ${radius.md} ${spacing.pad.sm} ${spacing.margin.bottom.content}`}
+        className={cn(
+          "border border-surface-border",
+          radius.md,
+          spacing.pad.sm,
+          spacing.margin.bottom.content
+        )}
       >
         <div
-          className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+          className={cn(layout.inline.default, spacing.margin.bottom.inline)}
         >
           <Radio className={iconTokens.size.sm} />
           <span className="body-small font-medium">
@@ -483,7 +517,7 @@ export function SurveyConfigPanel({
             return (
               <label
                 key={band}
-                className={`${layout.inline.default} cursor-pointer`}
+                className={cn(layout.inline.default, "cursor-pointer")}
               >
                 <input
                   type="checkbox"
@@ -491,9 +525,9 @@ export function SurveyConfigPanel({
                   onChange={() => handleBandToggle(band)}
                   className="w-4 h-4 accent-brand-primary"
                 />
-                <span className={`${layout.inline.default}`}>
+                <span className={cn(layout.inline.default)}>
                   <span
-                    className={`w-2 h-2 ${bandInfo.color} ${radius.full}`}
+                    className={cn("w-2 h-2", bandInfo.color, radius.full)}
                   />
                   <span className="body-small">{bandInfo.label}</span>
                 </span>
@@ -505,11 +539,20 @@ export function SurveyConfigPanel({
 
       {/* Channel Selection (Collapsible) */}
       <div
-        className={`border border-surface-border ${radius.md} ${spacing.pad.sm} ${spacing.margin.bottom.content}`}
+        className={cn(
+          "border border-surface-border",
+          radius.md,
+          spacing.pad.sm,
+          spacing.margin.bottom.content
+        )}
       >
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className={`w-full ${layout.flex.between} body-small font-medium`}
+          className={cn(
+            "w-full",
+            layout.flex.between,
+            "body-small font-medium"
+          )}
         >
           <div className={layout.inline.default}>
             <Settings className={iconTokens.size.sm} />
@@ -523,12 +566,15 @@ export function SurveyConfigPanel({
         </button>
 
         {showAdvanced && (
-          <div className={`${spacing.margin.top.content}`}>
+          <div className={cn(spacing.margin.top.content)}>
             {/* Channel mode toggle */}
             <div
-              className={`${layout.inline.default} ${spacing.margin.bottom.content}`}
+              className={cn(
+                layout.inline.default,
+                spacing.margin.bottom.content
+              )}
             >
-              <label className={`${layout.inline.default} cursor-pointer`}>
+              <label className={cn(layout.inline.default, "cursor-pointer")}>
                 <input
                   type="radio"
                   name="channelMode"
@@ -538,7 +584,7 @@ export function SurveyConfigPanel({
                 />
                 <span className="body-small">{t("config.allChannels")}</span>
               </label>
-              <label className={`${layout.inline.default} cursor-pointer`}>
+              <label className={cn(layout.inline.default, "cursor-pointer")}>
                 <input
                   type="radio"
                   name="channelMode"
@@ -558,12 +604,12 @@ export function SurveyConfigPanel({
                   band
                 );
                 return (
-                  <div
-                    key={band}
-                    className={`${spacing.margin.bottom.content}`}
-                  >
+                  <div key={band} className={cn(spacing.margin.bottom.content)}>
                     <label
-                      className={`caption text-text-muted block ${spacing.margin.bottom.tight}`}
+                      className={cn(
+                        "caption text-text-muted block",
+                        spacing.margin.bottom.tight
+                      )}
                     >
                       {getBandInfo(band).label} {t("config.channels")}
                     </label>
@@ -572,11 +618,14 @@ export function SurveyConfigPanel({
                         <button
                           key={channel}
                           onClick={() => handleChannelToggle(band, channel)}
-                          className={`${button.size.xs} ${radius.sm} min-w-[2.5rem] ${
+                          className={cn(
+                            button.size.xs,
+                            radius.sm,
+                            "min-w-[2.5rem]",
                             selectedChannels.includes(channel)
                               ? "bg-brand-primary text-text-inverse"
                               : "bg-surface-base border border-surface-border hover:bg-surface-hover"
-                          }`}
+                          )}
                         >
                           {channel}
                         </button>
@@ -592,16 +641,21 @@ export function SurveyConfigPanel({
       {/* Multi-Adapter Configuration */}
       {hasMultipleAdapters && (
         <div
-          className={`border border-surface-border ${radius.md} ${spacing.pad.sm} ${spacing.margin.bottom.content}`}
+          className={cn(
+            "border border-surface-border",
+            radius.md,
+            spacing.pad.sm,
+            spacing.margin.bottom.content
+          )}
         >
           <div
-            className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.default, spacing.margin.bottom.inline)}
           >
             <Wifi className={iconTokens.size.sm} />
             <span className="body-small font-medium">
               {t("config.adapterConfig")}
             </span>
-            <span className={`caption text-text-muted`}>
+            <span className={cn("caption text-text-muted")}>
               ({availableAdapters.length} {t("config.detected")})
             </span>
           </div>
@@ -610,12 +664,18 @@ export function SurveyConfigPanel({
           {adapterConfigs.map((adapter, index) => (
             <div
               key={adapter.interface}
-              className={`bg-surface-base ${radius.md} ${spacing.pad.sm} ${
+              className={cn(
+                "bg-surface-base",
+                radius.md,
+                spacing.pad.sm,
                 index > 0 ? spacing.margin.top.content : ""
-              }`}
+              )}
             >
               <div
-                className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  layout.flex.between,
+                  spacing.margin.bottom.inline
+                )}
               >
                 <span className="body-small font-medium">
                   {adapter.interface}
@@ -629,7 +689,7 @@ export function SurveyConfigPanel({
                   </button>
                 )}
               </div>
-              <div className={`${layout.inline.default}`}>
+              <div className={cn(layout.inline.default)}>
                 <div>
                   <label className="caption text-text-muted">
                     {t("config.mode")}
@@ -642,7 +702,11 @@ export function SurveyConfigPanel({
                         e.target.value as SurveyType
                       )
                     }
-                    className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm}`}
+                    className={cn(
+                      inputTokens.base,
+                      inputTokens.state.default,
+                      inputTokens.size.sm
+                    )}
                   >
                     <option value="passive">
                       {t("settings.types.passive")}
@@ -661,7 +725,7 @@ export function SurveyConfigPanel({
                     {(["2.4", "5", "6"] as WiFiBand[]).map((band) => (
                       <label
                         key={band}
-                        className={`${layout.inline.default} cursor-pointer`}
+                        className={cn(layout.inline.default, "cursor-pointer")}
                       >
                         <input
                           type="checkbox"
@@ -689,7 +753,13 @@ export function SurveyConfigPanel({
           {adapterConfigs.length < availableAdapters.length && (
             <button
               onClick={handleAddAdapter}
-              className={`${button.size.sm} border border-dashed border-surface-border ${radius.md} hover:bg-surface-hover w-full ${spacing.margin.top.content}`}
+              className={cn(
+                button.size.sm,
+                "border border-dashed border-surface-border",
+                radius.md,
+                "hover:bg-surface-hover w-full",
+                spacing.margin.top.content
+              )}
             >
               + {t("config.addAdapter")}
             </button>
@@ -698,7 +768,12 @@ export function SurveyConfigPanel({
           {/* Multi-adapter recommendation */}
           {adapterConfigs.length > 1 && (
             <div
-              className={`bg-status-info/10 border border-status-info/20 ${radius.md} ${spacing.pad.sm} ${spacing.margin.top.content}`}
+              className={cn(
+                "bg-status-info/10 border border-status-info/20",
+                radius.md,
+                spacing.pad.sm,
+                spacing.margin.top.content
+              )}
             >
               <div className="body-small text-status-info">
                 {t("config.multiAdapterTip")}
@@ -712,20 +787,27 @@ export function SurveyConfigPanel({
       {(surveyType === "throughput" ||
         adapterConfigs.some((a) => a.mode === "throughput")) && (
         <div
-          className={`border border-surface-border ${radius.md} ${spacing.pad.sm}`}
+          className={cn(
+            "border border-surface-border",
+            radius.md,
+            spacing.pad.sm
+          )}
         >
           <div
-            className={`${layout.inline.default} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.inline.default, spacing.margin.bottom.inline)}
           >
             <Settings className={iconTokens.size.sm} />
             <span className="body-small font-medium">
               {t("config.throughputSettings")}
             </span>
           </div>
-          <div className={`${layout.stack.default}`}>
+          <div className={cn(layout.stack.default)}>
             <div>
               <label
-                className={`caption text-text-muted block ${spacing.margin.bottom.tight}`}
+                className={cn(
+                  "caption text-text-muted block",
+                  spacing.margin.bottom.tight
+                )}
               >
                 {t("settings.iperfServer")}
               </label>
@@ -735,17 +817,28 @@ export function SurveyConfigPanel({
                 onChange={(e) => setLocalIperfServer(e.target.value)}
                 onBlur={handleIperfSave}
                 placeholder="192.168.1.100:5201"
-                className={`w-full ${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm}`}
+                className={cn(
+                  "w-full",
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm
+                )}
               />
               <p
-                className={`caption text-text-muted ${spacing.margin.top.tight}`}
+                className={cn(
+                  "caption text-text-muted",
+                  spacing.margin.top.tight
+                )}
               >
                 {t("settings.iperfServerHint")}
               </p>
             </div>
             <div>
               <label
-                className={`caption text-text-muted block ${spacing.margin.bottom.tight}`}
+                className={cn(
+                  "caption text-text-muted block",
+                  spacing.margin.bottom.tight
+                )}
               >
                 {t("settings.testDuration")}
               </label>
@@ -758,7 +851,12 @@ export function SurveyConfigPanel({
                   setLocalTestDuration(parseInt(e.target.value) || 3)
                 }
                 onBlur={handleIperfSave}
-                className={`w-24 ${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm}`}
+                className={cn(
+                  "w-24",
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm
+                )}
               />
             </div>
           </div>

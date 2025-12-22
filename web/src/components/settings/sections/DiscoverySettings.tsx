@@ -9,6 +9,7 @@ import {
   radius,
   spacing,
   input as inputTokens,
+  cn,
 } from "../../../styles/theme";
 import {
   NetworkDiscoverySettings as NetworkDiscoverySettingsType,
@@ -298,7 +299,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
       <div className="stack">
         {/* Enable Toggle */}
         <label
-          className={`${layout.flex.between} ${spacing.pad.xs} bg-surface-base ${radius.default} border border-surface-border`}
+          className={cn(
+            layout.flex.between,
+            spacing.pad.xs,
+            "bg-surface-base",
+            radius.default,
+            "border border-surface-border"
+          )}
         >
           <div>
             <span className="body-small text-text-primary font-medium">
@@ -323,7 +330,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
 
         {/* Auto-Scan on Link Up */}
         <label
-          className={`${layout.flex.between} ${spacing.pad.xs} bg-surface-base ${radius.default} border border-surface-border`}
+          className={cn(
+            layout.flex.between,
+            spacing.pad.xs,
+            "bg-surface-base",
+            radius.default,
+            "border border-surface-border"
+          )}
         >
           <div>
             <span className="body-small text-text-primary font-medium">
@@ -349,22 +362,27 @@ export const DiscoverySettings = memo(function DiscoverySettings({
         {/* Service Status Banner */}
         {serviceStatus && (
           <div
-            className={`${spacing.pad.sm} ${radius.lg} border ${
+            className={cn(
+              spacing.pad.sm,
+              radius.lg,
+              "border",
               serviceStatus.running
                 ? "bg-status-success/10 border-status-success/30"
                 : "bg-status-error/10 border-status-error/30"
-            }`}
+            )}
           >
             <div className={layout.flex.between}>
               <div className={layout.inline.default}>
                 <div
-                  className={`w-2 h-2 ${radius.full} ${
+                  className={cn(
+                    "w-2 h-2",
+                    radius.full,
                     serviceStatus.running
                       ? serviceStatus.scanning
                         ? "bg-status-warning animate-pulse"
                         : "bg-status-success"
                       : "bg-status-error"
-                  }`}
+                  )}
                 />
                 <span className="body-small font-medium text-text-primary">
                   {serviceStatus.running
@@ -384,7 +402,12 @@ export const DiscoverySettings = memo(function DiscoverySettings({
             </div>
             {serviceStatus.running && (
               <div
-                className={`${spacing.margin.top.inline} grid grid-cols-2 ${spacing.gap.compact} caption text-text-muted`}
+                className={cn(
+                  spacing.margin.top.inline,
+                  "grid grid-cols-2",
+                  spacing.gap.compact,
+                  "caption text-text-muted"
+                )}
               >
                 <div>
                   <span className="font-medium">
@@ -415,12 +438,21 @@ export const DiscoverySettings = memo(function DiscoverySettings({
             {serviceStatus.activeMethods &&
               serviceStatus.activeMethods.length > 0 && (
                 <div
-                  className={`${spacing.margin.top.inline} flex flex-wrap ${spacing.gap.tight}`}
+                  className={cn(
+                    spacing.margin.top.inline,
+                    "flex flex-wrap",
+                    spacing.gap.tight
+                  )}
                 >
                   {serviceStatus.activeMethods.map((method) => (
                     <span
                       key={method}
-                      className={`${spacing.chip.sm} bg-surface-base ${radius.default} caption text-text-muted`}
+                      className={cn(
+                        spacing.chip.sm,
+                        "bg-surface-base",
+                        radius.default,
+                        "caption text-text-muted"
+                      )}
                     >
                       {method}
                     </span>
@@ -435,15 +467,20 @@ export const DiscoverySettings = memo(function DiscoverySettings({
           <label className="caption text-text-muted font-medium">
             {t("discovery.profile")}
           </label>
-          <div className={`${spacing.margin.top.inline} stack-sm`}>
+          <div className={cn(spacing.margin.top.inline, "stack-sm")}>
             {PROFILE_VALUES.map((profile) => (
               <label
                 key={profile}
-                className={`${layout.inline.default} items-start ${spacing.pad.sm} ${radius.lg} border cursor-pointer transition-colors ${
+                className={cn(
+                  layout.inline.default,
+                  "items-start",
+                  spacing.pad.sm,
+                  radius.lg,
+                  "border cursor-pointer transition-colors",
                   currentProfile === profile
                     ? "border-brand-primary bg-brand-primary/5"
                     : "border-surface-border hover:border-brand-primary/50"
-                }`}
+                )}
               >
                 <input
                   type="radio"
@@ -458,7 +495,10 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                     {getProfileLabel(profile)}
                   </div>
                   <div
-                    className={`caption text-text-muted ${spacing.margin.top.tight}`}
+                    className={cn(
+                      "caption text-text-muted",
+                      spacing.margin.top.tight
+                    )}
                   >
                     {getProfileDescription(profile)}
                   </div>
@@ -470,11 +510,11 @@ export const DiscoverySettings = memo(function DiscoverySettings({
 
         {/* Custom Options (only shown when Custom profile is selected) */}
         {showCustomOptions && (
-          <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
+          <div className={cn("border-t border-surface-border", spacing.pad.sm)}>
             <span className="caption text-text-muted font-medium">
               {t("discovery.customOptions")}
             </span>
-            <div className={`${spacing.margin.top.inline} stack-sm`}>
+            <div className={cn(spacing.margin.top.inline, "stack-sm")}>
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
@@ -614,7 +654,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
         )}
 
         {/* Timing Settings */}
-        <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
+        <div className={cn("border-t border-surface-border", spacing.pad.sm)}>
           <span className="caption text-text-muted font-medium">
             {t("discovery.timingSettings")}
           </span>
@@ -639,10 +679,20 @@ export const DiscoverySettings = memo(function DiscoverySettings({
               }
               min={1}
               max={100}
-              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={cn(
+                "w-full",
+                spacing.margin.top.tight,
+                spacing.chip.lg,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+                "body-small text-text-primary"
+              )}
             />
             <p
-              className={`caption text-text-muted ${spacing.margin.top.tight}`}
+              className={cn(
+                "caption text-text-muted",
+                spacing.margin.top.tight
+              )}
             >
               {t("discovery.workersDesc")}
             </p>
@@ -668,7 +718,14 @@ export const DiscoverySettings = memo(function DiscoverySettings({
               }
               min={100}
               max={5000}
-              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={cn(
+                "w-full",
+                spacing.margin.top.tight,
+                spacing.chip.lg,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+                "body-small text-text-primary"
+              )}
             />
           </div>
 
@@ -692,7 +749,14 @@ export const DiscoverySettings = memo(function DiscoverySettings({
               }
               min={5000}
               max={120000}
-              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={cn(
+                "w-full",
+                spacing.margin.top.tight,
+                spacing.chip.lg,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+                "body-small text-text-primary"
+              )}
             />
           </div>
 
@@ -715,10 +779,20 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                 }))
               }
               min={0}
-              className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+              className={cn(
+                "w-full",
+                spacing.margin.top.tight,
+                spacing.chip.lg,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+                "body-small text-text-primary"
+              )}
             />
             <p
-              className={`caption text-text-muted ${spacing.margin.top.tight}`}
+              className={cn(
+                "caption text-text-muted",
+                spacing.margin.top.tight
+              )}
             >
               {t("discovery.rescanIntervalDesc")}
             </p>
@@ -726,7 +800,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
         </div>
 
         {/* OUI File Path */}
-        <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
+        <div className={cn("border-t border-surface-border", spacing.pad.sm)}>
           <label
             className="caption text-text-muted font-medium"
             htmlFor="discovery-oui-path"
@@ -744,18 +818,27 @@ export const DiscoverySettings = memo(function DiscoverySettings({
               }))
             }
             placeholder="oui.txt"
-            className={`w-full ${spacing.margin.top.tight} ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+            className={cn(
+              "w-full",
+              spacing.margin.top.tight,
+              spacing.chip.lg,
+              "bg-surface-base border border-surface-border",
+              radius.default,
+              "body-small text-text-primary"
+            )}
           />
-          <p className={`caption text-text-muted ${spacing.margin.top.tight}`}>
+          <p
+            className={cn("caption text-text-muted", spacing.margin.top.tight)}
+          >
             {t("discovery.ouiFileDesc")}
           </p>
         </div>
 
         {/* Target Networks (only for full_scan or custom profile) */}
         {showSubnets && (
-          <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
+          <div className={cn("border-t border-surface-border", spacing.pad.sm)}>
             <div
-              className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}
+              className={cn(layout.flex.between, spacing.margin.bottom.inline)}
             >
               <span className="caption text-text-muted font-medium">
                 {t("discovery.targetNetworks")}{" "}
@@ -763,18 +846,27 @@ export const DiscoverySettings = memo(function DiscoverySettings({
               </span>
             </div>
             <p
-              className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+              className={cn(
+                "caption text-text-muted",
+                spacing.margin.bottom.inline
+              )}
             >
               {t("discovery.targetNetworksDesc")}
             </p>
 
             {/* List of configured subnets */}
             {subnets.length > 0 && (
-              <div className={`stack-sm ${spacing.margin.bottom.heading}`}>
+              <div className={cn("stack-sm", spacing.margin.bottom.heading)}>
                 {subnets.map((subnet) => (
                   <div
                     key={subnet.cidr}
-                    className={`${layout.flex.between} ${spacing.pad.xs} bg-surface-base ${radius.default} border border-surface-border`}
+                    className={cn(
+                      layout.flex.between,
+                      spacing.pad.xs,
+                      "bg-surface-base",
+                      radius.default,
+                      "border border-surface-border"
+                    )}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="body-small text-text-primary truncate">
@@ -785,7 +877,10 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                       </div>
                     </div>
                     <div
-                      className={`${layout.inline.default} ${spacing.margin.left.inline}`}
+                      className={cn(
+                        layout.inline.default,
+                        spacing.margin.left.inline
+                      )}
                     >
                       <input
                         type="checkbox"
@@ -823,21 +918,39 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                   setSubnetError(null);
                 }}
                 placeholder={t("discovery.cidrPlaceholder")}
-                className={`w-full ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+                className={cn(
+                  "w-full",
+                  spacing.chip.lg,
+                  "bg-surface-base border border-surface-border",
+                  radius.default,
+                  "body-small text-text-primary"
+                )}
               />
               <input
                 type="text"
                 value={newSubnetName}
                 onChange={(e) => setNewSubnetName(e.target.value)}
                 placeholder={t("discovery.namePlaceholder")}
-                className={`w-full ${spacing.chip.lg} bg-surface-base border border-surface-border ${radius.default} body-small text-text-primary`}
+                className={cn(
+                  "w-full",
+                  spacing.chip.lg,
+                  "bg-surface-base border border-surface-border",
+                  radius.default,
+                  "body-small text-text-primary"
+                )}
               />
               {subnetError && (
                 <p className="caption text-status-error">{subnetError}</p>
               )}
               <button
                 onClick={addSubnet}
-                className={`w-full ${spacing.pad.sm} bg-brand-primary hover:bg-brand-accent text-text-inverse ${radius.default} body-small`}
+                className={cn(
+                  "w-full",
+                  spacing.pad.sm,
+                  "bg-brand-primary hover:bg-brand-accent text-text-inverse",
+                  radius.default,
+                  "body-small"
+                )}
               >
                 {t("discovery.addSubnet")}
               </button>
@@ -846,16 +959,19 @@ export const DiscoverySettings = memo(function DiscoverySettings({
         )}
 
         {/* SNMP Settings Section */}
-        <div className={`border-t border-surface-border ${spacing.pad.sm}`}>
+        <div className={cn("border-t border-surface-border", spacing.pad.sm)}>
           <div
-            className={`${layout.flex.between} ${spacing.margin.bottom.inline}`}
+            className={cn(layout.flex.between, spacing.margin.bottom.inline)}
           >
             <span className="body-small text-text-primary font-medium">
               {t("sections.snmp")} <AutoSaveIndicator status={snmpStatus} />
             </span>
           </div>
           <p
-            className={`caption text-text-muted ${spacing.margin.bottom.inline}`}
+            className={cn(
+              "caption text-text-muted",
+              spacing.margin.bottom.inline
+            )}
           >
             {t(
               "snmp.description",
@@ -880,7 +996,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
               }
               min="1"
               max="65535"
-              className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} ${spacing.margin.top.tight} body-small`}
+              className={cn(
+                inputTokens.base,
+                inputTokens.state.default,
+                inputTokens.size.md,
+                spacing.margin.top.tight,
+                "body-small"
+              )}
             />
           </div>
 
@@ -902,16 +1024,29 @@ export const DiscoverySettings = memo(function DiscoverySettings({
               min="1"
               max="30"
               step="1"
-              className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} ${spacing.margin.top.tight} body-small`}
+              className={cn(
+                inputTokens.base,
+                inputTokens.state.default,
+                inputTokens.size.md,
+                spacing.margin.top.tight,
+                "body-small"
+              )}
             />
           </div>
 
           {/* Community Strings (v1/v2c) */}
           <div
-            className={`border-t border-surface-border ${spacing.padding.top.heading} ${spacing.margin.top.inline}`}
+            className={cn(
+              "border-t border-surface-border",
+              spacing.padding.top.heading,
+              spacing.margin.top.inline
+            )}
           >
             <div
-              className={`flex items-center justify-between ${spacing.margin.bottom.inline}`}
+              className={cn(
+                "flex items-center justify-between",
+                spacing.margin.bottom.inline
+              )}
             >
               <span className="caption text-text-muted font-medium">
                 {t("snmp.communityStrings")}
@@ -925,7 +1060,11 @@ export const DiscoverySettings = memo(function DiscoverySettings({
               </button>
             </div>
             <div
-              className={`flex ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+              className={cn(
+                "flex",
+                spacing.gap.compact,
+                spacing.margin.bottom.inline
+              )}
             >
               <label className="sr-only" htmlFor="snmp-community-new">
                 {t("snmp.communityString")}
@@ -939,24 +1078,41 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                   if (e.key === "Enter") addCommunity();
                 }}
                 placeholder={t("snmp.communityString")}
-                className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} flex-1 caption`}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md,
+                  "flex-1 caption"
+                )}
               />
             </div>
             {snmpSettings.communities.map((community, index) => (
               <div
                 key={`${community}-${index}`}
-                className={`flex ${spacing.gap.compact} ${spacing.margin.bottom.inline}`}
+                className={cn(
+                  "flex",
+                  spacing.gap.compact,
+                  spacing.margin.bottom.inline
+                )}
               >
                 <input
                   aria-label={`Community string ${community}`}
                   type="text"
                   value={community}
                   readOnly
-                  className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.md} flex-1 bg-surface-hover caption`}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.md,
+                    "flex-1 bg-surface-hover caption"
+                  )}
                 />
                 <button
                   onClick={() => removeCommunity(community)}
-                  className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                  className={cn(
+                    "text-status-error hover:text-status-error/80",
+                    spacing.actionBtn
+                  )}
                   aria-label={t("common.remove")}
                 >
                   {t("common.remove")}
@@ -967,10 +1123,16 @@ export const DiscoverySettings = memo(function DiscoverySettings({
 
           {/* SNMPv3 Credentials */}
           <div
-            className={`border-t border-surface-border ${spacing.padding.top.heading}`}
+            className={cn(
+              "border-t border-surface-border",
+              spacing.padding.top.heading
+            )}
           >
             <div
-              className={`flex items-center justify-between ${spacing.margin.bottom.inline}`}
+              className={cn(
+                "flex items-center justify-between",
+                spacing.margin.bottom.inline
+              )}
             >
               <span className="caption text-text-muted font-medium">
                 {t("snmp.v3Credentials")}
@@ -985,10 +1147,19 @@ export const DiscoverySettings = memo(function DiscoverySettings({
             {snmpSettings.v3Credentials.map((cred) => (
               <div
                 key={cred.id}
-                className={`${spacing.margin.bottom.inline} border border-surface-border ${radius.default} overflow-hidden`}
+                className={cn(
+                  spacing.margin.bottom.inline,
+                  "border border-surface-border",
+                  radius.default,
+                  "overflow-hidden"
+                )}
               >
                 <div
-                  className={`flex items-center justify-between ${spacing.pad.xs} bg-surface-base cursor-pointer hover:bg-surface-hover`}
+                  className={cn(
+                    "flex items-center justify-between",
+                    spacing.pad.xs,
+                    "bg-surface-base cursor-pointer hover:bg-surface-hover"
+                  )}
                   onClick={() =>
                     setExpandedCredential(
                       expandedCredential === cred.id ? null : cred.id!
@@ -998,7 +1169,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                   <span className="body-small text-text-primary">
                     {cred.name || t("snmp.unnamedCredential")}
                   </span>
-                  <div className={`flex items-center ${spacing.gap.compact}`}>
+                  <div className={cn("flex items-center", spacing.gap.compact)}>
                     <span className="caption text-text-muted">
                       {cred.username || t("snmp.noUsername")}
                     </span>
@@ -1007,7 +1178,10 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                         e.stopPropagation();
                         removeV3Credential(cred.id!);
                       }}
-                      className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                      className={cn(
+                        "text-status-error hover:text-status-error/80",
+                        spacing.actionBtn
+                      )}
                       aria-label={t("common.remove")}
                     >
                       {t("common.remove")}
@@ -1016,7 +1190,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                 </div>
                 {expandedCredential === cred.id && (
                   <div
-                    className={`${spacing.pad.sm} bg-surface-hover stack-sm`}
+                    className={cn(spacing.pad.sm, "bg-surface-hover stack-sm")}
                   >
                     {/* Name */}
                     <div>
@@ -1034,7 +1208,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                           updateV3Credential(cred.id!, "name", e.target.value)
                         }
                         placeholder={t("snmp.credentialName")}
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                        className={cn(
+                          inputTokens.base,
+                          inputTokens.state.default,
+                          inputTokens.size.sm,
+                          spacing.margin.top.tight,
+                          "caption"
+                        )}
                       />
                     </div>
 
@@ -1058,7 +1238,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                           )
                         }
                         placeholder={t("snmp.snmpv3Username")}
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                        className={cn(
+                          inputTokens.base,
+                          inputTokens.state.default,
+                          inputTokens.size.sm,
+                          spacing.margin.top.tight,
+                          "caption"
+                        )}
                       />
                     </div>
 
@@ -1080,7 +1266,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                             e.target.value
                           )
                         }
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                        className={cn(
+                          inputTokens.base,
+                          inputTokens.state.default,
+                          inputTokens.size.sm,
+                          spacing.margin.top.tight,
+                          "caption"
+                        )}
                       >
                         {SECURITY_LEVEL_VALUES.map((value) => (
                           <option key={value} value={value}>
@@ -1108,7 +1300,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                             e.target.value
                           )
                         }
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                        className={cn(
+                          inputTokens.base,
+                          inputTokens.state.default,
+                          inputTokens.size.sm,
+                          spacing.margin.top.tight,
+                          "caption"
+                        )}
                       >
                         {AUTH_PROTOCOL_VALUES.map((value) => (
                           <option key={value} value={value}>
@@ -1139,7 +1337,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                             )
                           }
                           placeholder={t("snmp.authPasswordPlaceholder")}
-                          className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                          className={cn(
+                            inputTokens.base,
+                            inputTokens.state.default,
+                            inputTokens.size.sm,
+                            spacing.margin.top.tight,
+                            "caption"
+                          )}
                         />
                       </div>
                     )}
@@ -1162,7 +1366,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                             e.target.value
                           )
                         }
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                        className={cn(
+                          inputTokens.base,
+                          inputTokens.state.default,
+                          inputTokens.size.sm,
+                          spacing.margin.top.tight,
+                          "caption"
+                        )}
                       >
                         {PRIV_PROTOCOL_VALUES.map((value) => (
                           <option key={value} value={value}>
@@ -1193,7 +1403,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                             )
                           }
                           placeholder={t("snmp.privPasswordPlaceholder")}
-                          className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                          className={cn(
+                            inputTokens.base,
+                            inputTokens.state.default,
+                            inputTokens.size.sm,
+                            spacing.margin.top.tight,
+                            "caption"
+                          )}
                         />
                       </div>
                     )}
@@ -1218,7 +1434,13 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                           )
                         }
                         placeholder={t("snmp.snmpContext")}
-                        className={`${inputTokens.base} ${inputTokens.state.default} ${inputTokens.size.sm} ${spacing.margin.top.tight} caption`}
+                        className={cn(
+                          inputTokens.base,
+                          inputTokens.state.default,
+                          inputTokens.size.sm,
+                          spacing.margin.top.tight,
+                          "caption"
+                        )}
                       />
                     </div>
                   </div>

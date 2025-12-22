@@ -22,7 +22,7 @@
 
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { useTranslation } from "react-i18next";
-import { radius, spacing, icon as iconTokens } from "../../styles/theme";
+import { radius, spacing, icon as iconTokens, cn } from "../../styles/theme";
 
 export interface NetworkInterface {
   name: string;
@@ -150,7 +150,10 @@ export const InterfaceSelector = memo(function InterfaceSelector({
     if (type === "wifi") {
       return (
         <svg
-          className={`${iconTokens.size.sm} ${up ? "text-status-success" : "text-text-muted"}`}
+          className={cn(
+            iconTokens.size.sm,
+            up ? "text-status-success" : "text-text-muted"
+          )}
           fill="currentColor"
           viewBox="0 0 24 24"
           aria-hidden="true"
@@ -161,7 +164,10 @@ export const InterfaceSelector = memo(function InterfaceSelector({
     }
     return (
       <svg
-        className={`${iconTokens.size.sm} ${up ? "text-status-success" : "text-text-muted"}`}
+        className={cn(
+          iconTokens.size.sm,
+          up ? "text-status-success" : "text-text-muted"
+        )}
         fill="currentColor"
         viewBox="0 0 24 24"
         aria-hidden="true"
@@ -179,7 +185,13 @@ export const InterfaceSelector = memo(function InterfaceSelector({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center ${spacing.gap.tight} ${spacing.pad.sm} ${radius.md} border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+        className={cn(
+          "flex items-center",
+          spacing.gap.tight,
+          spacing.pad.sm,
+          radius.md,
+          "border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={t(
@@ -204,7 +216,11 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
         {/* Dropdown arrow */}
         <svg
-          className={`${iconTokens.size.sm} text-text-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={cn(
+            iconTokens.size.sm,
+            "text-text-muted transition-transform",
+            isOpen ? "rotate-180" : ""
+          )}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -222,7 +238,11 @@ export const InterfaceSelector = memo(function InterfaceSelector({
       {/* Dropdown menu */}
       {isOpen && (
         <div
-          className={`absolute top-full left-0 mt-1 w-64 ${radius.md} border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden`}
+          className={cn(
+            "absolute top-full left-0 mt-1 w-64",
+            radius.md,
+            "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden"
+          )}
           role="listbox"
           aria-label={t(
             "accessibility.interfaceList",
@@ -233,7 +253,10 @@ export const InterfaceSelector = memo(function InterfaceSelector({
           {ethernetInterfaces.length > 0 && (
             <div>
               <div
-                className={`${spacing.pad.sm} bg-surface-base border-b border-surface-border`}
+                className={cn(
+                  spacing.pad.sm,
+                  "bg-surface-base border-b border-surface-border"
+                )}
               >
                 <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t("interface.ethernet", "Ethernet")}
@@ -244,19 +267,24 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                   key={iface.name}
                   type="button"
                   onClick={() => selectInterface(iface.name)}
-                  className={`w-full flex items-center ${spacing.gap.tight} ${spacing.pad.sm} hover:bg-surface-hover focus:bg-surface-hover focus:outline-none ${
+                  className={cn(
+                    "w-full flex items-center",
+                    spacing.gap.tight,
+                    spacing.pad.sm,
+                    "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none",
                     iface.name === currentInterface ? "bg-brand-primary/10" : ""
-                  }`}
+                  )}
                   role="option"
                   aria-selected={iface.name === currentInterface}
                 >
                   {/* Selection indicator */}
                   <span
-                    className={`w-2 h-2 rounded-full ${
+                    className={cn(
+                      "w-2 h-2 rounded-full",
                       iface.name === currentInterface
                         ? "bg-brand-primary"
                         : "bg-transparent"
-                    }`}
+                    )}
                   />
 
                   {/* Icon */}
@@ -276,7 +304,10 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
                   {/* Status */}
                   <span
-                    className={`caption ${iface.up ? "text-text-secondary" : "text-text-muted"}`}
+                    className={cn(
+                      "caption",
+                      iface.up ? "text-text-secondary" : "text-text-muted"
+                    )}
                   >
                     {getStatusText(iface)}
                   </span>
@@ -289,7 +320,12 @@ export const InterfaceSelector = memo(function InterfaceSelector({
           {wifiInterfaces.length > 0 && (
             <div>
               <div
-                className={`${spacing.pad.sm} bg-surface-base ${ethernetInterfaces.length > 0 ? "border-t" : ""} border-b border-surface-border`}
+                className={cn(
+                  spacing.pad.sm,
+                  "bg-surface-base",
+                  ethernetInterfaces.length > 0 ? "border-t" : "",
+                  "border-b border-surface-border"
+                )}
               >
                 <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t("interface.wifi", "WiFi")}
@@ -300,19 +336,24 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                   key={iface.name}
                   type="button"
                   onClick={() => selectInterface(iface.name)}
-                  className={`w-full flex items-center ${spacing.gap.tight} ${spacing.pad.sm} hover:bg-surface-hover focus:bg-surface-hover focus:outline-none ${
+                  className={cn(
+                    "w-full flex items-center",
+                    spacing.gap.tight,
+                    spacing.pad.sm,
+                    "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none",
                     iface.name === currentInterface ? "bg-brand-primary/10" : ""
-                  }`}
+                  )}
                   role="option"
                   aria-selected={iface.name === currentInterface}
                 >
                   {/* Selection indicator */}
                   <span
-                    className={`w-2 h-2 rounded-full ${
+                    className={cn(
+                      "w-2 h-2 rounded-full",
                       iface.name === currentInterface
                         ? "bg-brand-primary"
                         : "bg-transparent"
-                    }`}
+                    )}
                   />
 
                   {/* Icon */}
@@ -332,7 +373,10 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
                   {/* Status */}
                   <span
-                    className={`caption ${iface.up ? "text-text-secondary" : "text-text-muted"}`}
+                    className={cn(
+                      "caption",
+                      iface.up ? "text-text-secondary" : "text-text-muted"
+                    )}
                   >
                     {getStatusText(iface)}
                   </span>
@@ -343,7 +387,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
           {/* Empty state */}
           {ethernetInterfaces.length === 0 && wifiInterfaces.length === 0 && (
-            <div className={`${spacing.pad.md} text-center`}>
+            <div className={cn(spacing.pad.md, "text-center")}>
               <span className="caption text-text-muted">
                 {t("interface.noInterfaces", "No network interfaces found")}
               </span>

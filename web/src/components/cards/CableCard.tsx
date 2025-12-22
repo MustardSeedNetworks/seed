@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { SimpleBaseCard } from "./BaseCard";
 import { Cable } from "../ui/Icons";
-import { icon as iconTokens, spacing } from "../../styles/theme";
+import { cn, icon as iconTokens, spacing } from "../../styles/theme";
 
 export interface CableData {
   supported: boolean;
@@ -89,7 +89,7 @@ export function CableCard({ data, loading }: CableCardProps) {
       ) : !data.supported ? (
         <>
           <CardValue value={t("cable.notSupported")} size="md" />
-          <p className={`caption ${spacing.margin.top.inline}`}>
+          <p className={cn("caption", spacing.margin.top.inline)}>
             {t("cable.tdrNotSupported")}
           </p>
         </>
@@ -109,7 +109,7 @@ export function CableCard({ data, loading }: CableCardProps) {
           {data.faults.length > 0 && (
             <>
               <CardDivider />
-              <p className={`caption ${spacing.margin.bottom.tight}`}>
+              <p className={cn("caption", spacing.margin.bottom.tight)}>
                 {t("cable.faults")}
               </p>
               <ul className="body-small text-status-error">

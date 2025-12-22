@@ -31,7 +31,7 @@ import { CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { useSettings } from "../../contexts/useSettings";
 import { SimpleBaseCard } from "./BaseCard";
 import { Wifi } from "../ui/Icons";
-import { layout, icon as iconTokens, spacing } from "../../styles/theme";
+import { cn, layout, icon as iconTokens, spacing } from "../../styles/theme";
 
 /**
  * Current WiFi connection information
@@ -119,9 +119,7 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
       ) : (
         <>
           <CardValue value={data.ssid} size="lg" />
-          <div
-            className={`${layout.inline.default} ${spacing.margin.top.tight}`}
-          >
+          <div className={cn(layout.inline.default, spacing.margin.top.tight)}>
             <span className="body-large font-mono">
               {getSignalBars(data.signal)}
             </span>

@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardValue, Status } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
-import { layout, spacing } from "../../styles/theme";
+import { cn, layout, spacing } from "../../styles/theme";
 
 interface BaseCardProps<T> {
   title: string;
@@ -88,7 +88,9 @@ export function BaseCard<T>({
         enableLiveRegion={true}
       >
         <CardValue value={t("status.error")} size="md" status="error" />
-        <p className={`caption text-status-error ${spacing.margin.top.tight}`}>
+        <p
+          className={cn("caption text-status-error", spacing.margin.top.tight)}
+        >
           {error}
         </p>
       </Card>
@@ -136,8 +138,8 @@ export function BaseCard<T>({
 function DefaultLoadingSkeleton() {
   return (
     <>
-      <Skeleton className={`h-8 w-32 ${spacing.margin.bottom.heading}`} />
-      <div className={`${spacing.stack.sm} ${spacing.margin.top.content}`}>
+      <Skeleton className={cn("h-8 w-32", spacing.margin.bottom.heading)} />
+      <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div className={layout.flex.between}>
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-20" />
@@ -217,7 +219,9 @@ export function SimpleBaseCard({
         enableLiveRegion={true}
       >
         <CardValue value={t("status.error")} size="md" status="error" />
-        <p className={`caption text-status-error ${spacing.margin.top.tight}`}>
+        <p
+          className={cn("caption text-status-error", spacing.margin.top.tight)}
+        >
           {error}
         </p>
       </Card>

@@ -90,7 +90,7 @@ export function CollapsibleSection({
           layout.flex.between,
           isCompact
             ? cn(spacing.chip.md, "hover:bg-surface-hover/50", radius.default)
-            : `${spacing.pad.sm} bg-surface-base hover:bg-surface-hover`
+            : cn(spacing.pad.sm, "bg-surface-base hover:bg-surface-hover")
         )}
       >
         <div className={layout.inline.default}>
@@ -120,7 +120,9 @@ export function CollapsibleSection({
           >
             {title}
             {count !== undefined && (
-              <span className={`text-text-muted ${spacing.margin.left.tight}`}>
+              <span
+                className={cn("text-text-muted", spacing.margin.left.tight)}
+              >
                 ({count})
               </span>
             )}
@@ -131,8 +133,11 @@ export function CollapsibleSection({
         <div
           className={cn(
             isCompact
-              ? `${spacing.indent} ${spacing.padding.bottom.inline} stack-xs`
-              : `${spacing.pad.sm} border-t border-surface-border bg-surface-raised stack`
+              ? cn(spacing.indent, spacing.padding.bottom.inline, "stack-xs")
+              : cn(
+                  spacing.pad.sm,
+                  "border-t border-surface-border bg-surface-raised stack"
+                )
           )}
         >
           {children}

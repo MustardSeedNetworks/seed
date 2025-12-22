@@ -31,7 +31,7 @@ import {
   LOG_LEVEL_COLORS,
   formatLogTimestamp,
 } from "../../hooks/useLogs";
-import { spacing, button as buttonTokens } from "../../styles/theme";
+import { cn, spacing, button, radius, layout, input } from "../../styles/theme";
 
 // Filter badge component
 interface FilterBadgeProps {
@@ -45,16 +45,17 @@ interface FilterBadgeProps {
  * FilterBadge renders a clickable badge for filtering logs.
  */
 function FilterBadge({ label, active, onClick, color }: FilterBadgeProps) {
-  const baseClasses =
-    "px-2 py-1 text-xs font-medium rounded-md cursor-pointer transition-all";
-  const activeClasses = color || "bg-primary-600 text-text-inverse";
-  const inactiveClasses =
-    "bg-surface-secondary dark:bg-dark-surface-secondary text-content-secondary dark:text-dark-content-secondary hover:bg-surface-tertiary dark:hover:bg-dark-surface-tertiary";
-
   return (
     <button
       type="button"
-      className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}
+      className={cn(
+        spacing.chip.sm,
+        radius.md,
+        "text-xs font-medium cursor-pointer transition-all",
+        active
+          ? color || "bg-brand-primary text-text-inverse"
+          : "bg-surface-base text-text-secondary hover:bg-surface-hover"
+      )}
       onClick={onClick}
     >
       {label}
@@ -74,7 +75,14 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
 
   return (
     <div
-      className={`${colors.bg} ${colors.border} p-2 mb-1 rounded cursor-pointer transition-colors hover:brightness-95`}
+      className={cn(
+        colors.bg,
+        colors.border,
+        spacing.pad.xs,
+        spacing.margin.bottom.tight,
+        radius.default,
+        "cursor-pointer transition-colors hover:brightness-95"
+      )}
       onClick={onToggle}
       role="button"
       tabIndex={0}
@@ -85,41 +93,64 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
         }
       }}
     >
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className={cn(layout.inline.default, "flex-wrap")}>
         {/* Level badge */}
         <span
-          className={`${colors.badge} px-2 py-0.5 text-xs rounded font-mono font-bold min-w-[50px] text-center`}
+          className={cn(
+            colors.badge,
+            spacing.chip.sm,
+            radius.default,
+            "font-mono font-bold min-w-[50px] text-center text-xs"
+          )}
         >
           {entry.level}
         </span>
 
         {/* Timestamp */}
-        <span className="text-xs text-content-tertiary dark:text-dark-content-tertiary font-mono">
+        <span className="text-xs text-text-muted font-mono">
           {formatLogTimestamp(entry.timestamp)}
         </span>
 
         {/* Layer badge */}
-        <span className="px-1.5 py-0.5 bg-surface-secondary dark:bg-dark-surface-secondary text-xs rounded">
+        <span
+          className={cn(
+            spacing.chip.sm,
+            radius.default,
+            "bg-surface-base text-xs"
+          )}
+        >
           {entry.layer}
         </span>
 
         {/* Component badge */}
         {entry.component && (
-          <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-xs rounded">
+          <span
+            className={cn(
+              spacing.chip.sm,
+              radius.default,
+              "bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs"
+            )}
+          >
             {entry.component}
           </span>
         )}
 
         {/* Request ID badge */}
         {entry.request_id && (
-          <span className="px-1.5 py-0.5 bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 text-xs rounded font-mono">
+          <span
+            className={cn(
+              spacing.chip.sm,
+              radius.default,
+              "bg-status-info/20 text-status-info text-xs font-mono"
+            )}
+          >
             {entry.request_id.substring(0, 8)}
           </span>
         )}
 
         {/* Message */}
         <span
-          className={`${colors.text} flex-1 truncate text-sm`}
+          className={cn(colors.text, "flex-1 truncate text-sm")}
           title={entry.message}
         >
           {entry.message}
@@ -127,41 +158,63 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
 
         {/* Duration badge */}
         {entry.duration_ms !== undefined && entry.duration_ms > 0 && (
-          <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs rounded">
+          <span
+            className={cn(
+              spacing.chip.sm,
+              radius.default,
+              "bg-status-success/20 text-status-success text-xs"
+            )}
+          >
             {entry.duration_ms}ms
           </span>
         )}
 
         {/* Expand indicator */}
-        <span className="text-xs text-content-tertiary">
-          {expanded ? "▼" : "▶"}
-        </span>
+        <span className="text-xs text-text-muted">{expanded ? "▼" : "▶"}</span>
       </div>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="mt-2 space-y-2">
+        <div className={cn(spacing.margin.top.inline, "space-y-2")}>
           {/* Full message */}
-          <div className="text-sm text-content-primary dark:text-dark-content-primary break-words whitespace-pre-wrap">
+          <div className="text-sm text-text-primary break-words whitespace-pre-wrap">
             {entry.message}
           </div>
 
           {/* Metadata */}
           {entry.metadata && Object.keys(entry.metadata).length > 0 && (
-            <pre className="text-xs bg-black/10 dark:bg-white/10 p-2 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
+            <pre
+              className={cn(
+                spacing.pad.xs,
+                radius.default,
+                "text-xs bg-surface-sunken overflow-x-auto font-mono whitespace-pre-wrap break-words"
+              )}
+            >
               {JSON.stringify(entry.metadata, null, 2)}
             </pre>
           )}
 
           {/* Stack trace */}
           {entry.stack && (
-            <pre className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 p-2 rounded overflow-x-auto font-mono whitespace-pre-wrap">
+            <pre
+              className={cn(
+                spacing.pad.xs,
+                radius.default,
+                "text-xs text-status-error bg-status-error/10 overflow-x-auto font-mono whitespace-pre-wrap"
+              )}
+            >
               {entry.stack}
             </pre>
           )}
 
           {/* Full details */}
-          <div className="grid grid-cols-2 gap-2 text-xs text-content-secondary dark:text-dark-content-secondary">
+          <div
+            className={cn(
+              "grid grid-cols-2",
+              spacing.gap.compact,
+              "text-xs text-text-secondary"
+            )}
+          >
             <div>
               <strong>Timestamp:</strong>{" "}
               {new Date(entry.timestamp).toISOString()}
@@ -229,21 +282,32 @@ function LogFiltersBar({
     filters.search !== "";
 
   return (
-    <div className="space-y-2 p-3 bg-surface-secondary dark:bg-dark-surface-secondary rounded-lg">
+    <div
+      className={cn("space-y-2", spacing.pad.sm, "bg-surface-base", radius.lg)}
+    >
       {/* Search bar */}
-      <div className="flex items-center gap-2">
+      <div className={cn(layout.inline.default)}>
         <input
           type="text"
           placeholder={t("logs.searchPlaceholder", "Search logs...")}
           value={filters.search}
           onChange={(e) => onFilterChange({ search: e.target.value })}
-          className="flex-1 px-3 py-1.5 text-sm rounded-md border border-border dark:border-dark-border bg-surface-primary dark:bg-dark-surface-primary focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className={cn(
+            "flex-1",
+            input.size.sm,
+            radius.md,
+            "border border-surface-border bg-surface-raised text-text-primary",
+            "focus:outline-none focus:ring-2 focus:ring-brand-primary"
+          )}
         />
         {hasActiveFilters && (
           <button
             type="button"
             onClick={onReset}
-            className="px-3 py-1.5 text-sm text-content-secondary hover:text-content-primary dark:text-dark-content-secondary dark:hover:text-dark-content-primary"
+            className={cn(
+              spacing.chip.sm,
+              "text-sm text-text-secondary hover:text-text-primary"
+            )}
           >
             {t("logs.clearFilters", "Clear")}
           </button>
@@ -251,8 +315,8 @@ function LogFiltersBar({
       </div>
 
       {/* Level filters */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-content-secondary dark:text-dark-content-secondary font-medium">
+      <div className={cn(layout.inline.default, "flex-wrap")}>
+        <span className="text-xs text-text-secondary font-medium">
           {t("logs.level", "Level")}:
         </span>
         {levels.map((level) => {
@@ -271,8 +335,8 @@ function LogFiltersBar({
       </div>
 
       {/* Layer filters */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-content-secondary dark:text-dark-content-secondary font-medium">
+      <div className={cn(layout.inline.default, "flex-wrap")}>
+        <span className="text-xs text-text-secondary font-medium">
           {t("logs.layer", "Layer")}:
         </span>
         {layers.map((layer) => (
@@ -287,8 +351,8 @@ function LogFiltersBar({
 
       {/* Component filters (if any available) */}
       {availableComponents.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-content-secondary dark:text-dark-content-secondary font-medium">
+        <div className={cn(layout.inline.default, "flex-wrap")}>
+          <span className="text-xs text-text-secondary font-medium">
             {t("logs.component", "Component")}:
           </span>
           {availableComponents.slice(0, 10).map((component) => (
@@ -331,14 +395,22 @@ function LogStatsBar({
   const { t } = useTranslation("common");
 
   return (
-    <div className="flex items-center justify-between p-2 bg-surface-tertiary dark:bg-dark-surface-tertiary rounded-lg text-sm">
-      <div className="flex items-center gap-4">
+    <div
+      className={cn(
+        layout.flex.between,
+        spacing.pad.xs,
+        "bg-surface-hover",
+        radius.lg,
+        "text-sm"
+      )}
+    >
+      <div className={cn(layout.inline.comfortable)}>
         {stats && (
           <>
             <span>
               <strong>{stats.total_count}</strong> {t("logs.totalLogs", "logs")}
             </span>
-            <span className="text-red-600 dark:text-red-400">
+            <span className="text-status-error">
               <strong>
                 {stats.by_level && "ERROR" in stats.by_level
                   ? stats.by_level.ERROR
@@ -346,7 +418,7 @@ function LogStatsBar({
               </strong>{" "}
               {t("logs.errors", "errors")}
             </span>
-            <span className="text-yellow-600 dark:text-yellow-400">
+            <span className="text-status-warning">
               <strong>
                 {stats.by_level && "WARN" in stats.by_level
                   ? stats.by_level.WARN
@@ -355,7 +427,7 @@ function LogStatsBar({
               {t("logs.warnings", "warnings")}
             </span>
             {stats.errors_last_hour > 0 && (
-              <span className="text-red-600 dark:text-red-400 text-xs">
+              <span className="text-status-error text-xs">
                 ({stats.errors_last_hour} {t("logs.lastHour", "last hour")})
               </span>
             )}
@@ -366,11 +438,14 @@ function LogStatsBar({
       <button
         type="button"
         onClick={onToggleStreaming}
-        className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+        className={cn(
+          spacing.chip.sm,
+          radius.md,
+          "text-xs font-medium transition-colors",
           isStreaming
             ? "bg-status-success text-text-inverse hover:brightness-90"
-            : "bg-surface-tertiary text-text-inverse hover:brightness-90"
-        }`}
+            : "bg-surface-base text-text-primary hover:bg-surface-hover"
+        )}
       >
         {isStreaming ? t("logs.streaming", "Live") : t("logs.paused", "Paused")}
       </button>
@@ -505,22 +580,39 @@ export function LogViewerCard({
 
   return (
     <div
-      className={`bg-surface-primary dark:bg-dark-surface-primary rounded-lg border border-border dark:border-dark-border overflow-hidden ${className}`}
+      className={cn(
+        "bg-surface-raised",
+        radius.lg,
+        "border border-surface-border overflow-hidden",
+        className
+      )}
     >
       {/* Header */}
-      <div className="p-4 border-b border-border dark:border-dark-border flex items-start justify-between gap-3 flex-wrap">
+      <div
+        className={cn(
+          spacing.pad.md,
+          "border-b border-surface-border",
+          layout.flex.between,
+          "items-start flex-wrap",
+          spacing.gap.default
+        )}
+      >
         <div>
-          <h2 className="text-lg font-semibold text-content-primary dark:text-dark-content-primary">
+          <h2 className="heading-3 text-text-primary">
             {t("logs.title", "System Logs")}
           </h2>
-          <p className="text-sm text-content-secondary dark:text-dark-content-secondary">
+          <p className="body-small text-text-secondary">
             {t("logs.subtitle", "Real-time application logs with filtering")}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className={cn(layout.inline.default, "flex-wrap")}>
           <button
             type="button"
-            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            className={cn(
+              button.size.sm,
+              radius.default,
+              "border border-surface-border text-sm hover:bg-surface-hover"
+            )}
             onClick={() => setCollapsed((prev) => !prev)}
           >
             {collapsed
@@ -529,7 +621,11 @@ export function LogViewerCard({
           </button>
           <button
             type="button"
-            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            className={cn(
+              button.size.sm,
+              radius.default,
+              "border border-surface-border text-sm hover:bg-surface-hover"
+            )}
             onClick={() => setIsStreaming(!isStreaming)}
           >
             {isStreaming
@@ -538,21 +634,33 @@ export function LogViewerCard({
           </button>
           <button
             type="button"
-            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            className={cn(
+              button.size.sm,
+              radius.default,
+              "border border-surface-border text-sm hover:bg-surface-hover"
+            )}
             onClick={clearLogs}
           >
             {t("logs.clear", "Clear")}
           </button>
           <button
             type="button"
-            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            className={cn(
+              button.size.sm,
+              radius.default,
+              "border border-surface-border text-sm hover:bg-surface-hover"
+            )}
             onClick={exportJSON}
           >
             {t("logs.exportJson", "Export JSON")}
           </button>
           <button
             type="button"
-            className={`${buttonTokens.size.sm} rounded border border-border dark:border-dark-border text-sm`}
+            className={cn(
+              button.size.sm,
+              radius.default,
+              "border border-surface-border text-sm hover:bg-surface-hover"
+            )}
             onClick={exportCSV}
           >
             {t("logs.exportCsv", "Export CSV")}
@@ -561,13 +669,13 @@ export function LogViewerCard({
       </div>
 
       {collapsed ? (
-        <div className="p-4 text-content-secondary dark:text-dark-content-secondary">
+        <div className={cn(spacing.pad.md, "text-text-secondary")}>
           {t("logs.collapsed", "Log viewer collapsed")}
         </div>
       ) : (
         <>
           {/* Stats bar */}
-          <div className={`px-4 pt-3 ${spacing.stack.sm}`}>
+          <div className={cn("px-4 pt-3", spacing.stack.sm)}>
             <LogStatsBar
               stats={stats}
               isStreaming={isStreaming}
@@ -576,7 +684,7 @@ export function LogViewerCard({
           </div>
 
           {/* Filters */}
-          <div className={`px-4 ${spacing.stack.sm}`}>
+          <div className={cn("px-4", spacing.stack.sm)}>
             <LogFiltersBar
               filters={filters}
               onFilterChange={setFilters}
@@ -587,14 +695,18 @@ export function LogViewerCard({
 
           {/* Loading state */}
           {isLoading && (
-            <div className="p-4 text-center text-content-secondary dark:text-dark-content-secondary">
+            <div
+              className={cn(spacing.pad.md, "text-center text-text-secondary")}
+            >
               {t("logs.loading", "Loading logs...")}
             </div>
           )}
 
           {/* Error state */}
           {error && (
-            <div className="p-4 text-center text-red-600 dark:text-red-400">
+            <div
+              className={cn(spacing.pad.md, "text-center text-status-error")}
+            >
               {error}
             </div>
           )}
@@ -602,12 +714,22 @@ export function LogViewerCard({
           {/* Log entries */}
           <div
             ref={logContainerRef}
-            className="p-4 overflow-y-auto font-mono text-sm bg-surface-secondary/40 dark:bg-dark-surface-secondary/40 rounded-lg mx-4"
+            className={cn(
+              spacing.pad.md,
+              "overflow-y-auto font-mono text-sm bg-surface-base/40",
+              radius.lg,
+              "mx-4"
+            )}
             style={{ maxHeight, minHeight: "320px" }}
             onScroll={handleScroll}
           >
             {logs.length === 0 && !isLoading && (
-              <div className="text-center text-content-secondary dark:text-dark-content-secondary py-8">
+              <div
+                className={cn(
+                  "text-center text-text-secondary",
+                  spacing.pad.lg
+                )}
+              >
                 {filters.search ||
                 filters.levels.length > 0 ||
                 filters.layers.length > 0
@@ -631,7 +753,12 @@ export function LogViewerCard({
 
           {/* Auto-scroll indicator */}
           {!autoScroll && logs.length > 0 && (
-            <div className="p-2 text-center border-t border-border dark:border-dark-border">
+            <div
+              className={cn(
+                spacing.pad.xs,
+                "text-center border-t border-surface-border"
+              )}
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -641,7 +768,7 @@ export function LogViewerCard({
                       logContainerRef.current.scrollHeight;
                   }
                 }}
-                className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                className="text-sm text-brand-primary hover:underline"
               >
                 {t("logs.scrollToBottom", "Scroll to latest")}
               </button>

@@ -287,7 +287,9 @@ export function DataTable<T>({
       {displayError && (
         <div
           className={cn(
-            `${spacing.pad.sm} ${radius.md} bg-status-error/10 border border-status-error/20 text-status-error body-small`,
+            spacing.pad.sm,
+            radius.md,
+            "bg-status-error/10 border border-status-error/20 text-status-error body-small",
             layout.inline.tight
           )}
           role="alert"
@@ -301,7 +303,9 @@ export function DataTable<T>({
       {loading && (
         <div
           className={cn(
-            `${spacing.pad.sm} ${radius.md} bg-surface-hover text-text-muted body-small text-center`
+            spacing.pad.sm,
+            radius.md,
+            "bg-surface-hover text-text-muted body-small text-center"
           )}
           role="status"
           aria-live="polite"
@@ -325,7 +329,9 @@ export function DataTable<T>({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={searchPlaceholder}
             className={cn(
-              `w-full pl-9 pr-8 ${spacing.compact.pyMd} body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary`,
+              "w-full pl-9 pr-8",
+              spacing.compact.pyMd,
+              "body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary",
               border.card,
               radius.lg
             )}
@@ -346,7 +352,8 @@ export function DataTable<T>({
             type="button"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              `${spacing.iconBtn.md} transition-colors`,
+              spacing.iconBtn.md,
+              "transition-colors",
               radius.lg,
               border.width.default,
               showFilters || hasActiveFilters
@@ -365,7 +372,8 @@ export function DataTable<T>({
         <div
           className={cn(
             layout.inline.wrap,
-            `${spacing.pad.xs} bg-surface-hover`,
+            spacing.pad.xs,
+            "bg-surface-hover",
             radius.lg
           )}
         >
@@ -375,7 +383,9 @@ export function DataTable<T>({
               value={activeFilters[filter.key] || ""}
               onChange={(e) => handleFilterChange(filter.key, e.target.value)}
               className={cn(
-                `${spacing.cell.px} ${spacing.compact.py} caption bg-surface-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary`,
+                spacing.cell.px,
+                spacing.compact.py,
+                "caption bg-surface-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary",
                 border.card,
                 radius.default
               )}
@@ -393,7 +403,11 @@ export function DataTable<T>({
             <button
               type="button"
               onClick={clearFilters}
-              className={`${spacing.cell.px} ${spacing.compact.py} caption text-text-muted hover:text-text-primary`}
+              className={cn(
+                spacing.cell.px,
+                spacing.compact.py,
+                "caption text-text-muted hover:text-text-primary"
+              )}
             >
               {t("dataTable.clearAll")}
             </button>
@@ -420,7 +434,9 @@ export function DataTable<T>({
                 <th
                   key={column.key}
                   className={cn(
-                    `${spacing.cell.px} ${spacing.compact.pyMd} text-left section-title`,
+                    spacing.cell.px,
+                    spacing.compact.pyMd,
+                    "text-left section-title",
                     column.hiddenOnMobile && "hidden sm:table-cell",
                     column.sortable &&
                       "cursor-pointer hover:text-text-primary select-none",
@@ -445,7 +461,7 @@ export function DataTable<T>({
               ))}
               {actions && (
                 <th
-                  className={`${spacing.cell.px} ${spacing.compact.pyMd} w-16`}
+                  className={cn(spacing.cell.px, spacing.compact.pyMd, "w-16")}
                 ></th>
               )}
             </tr>
@@ -455,7 +471,10 @@ export function DataTable<T>({
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className={`${spacing.tableCell.empty} text-center text-text-muted`}
+                  className={cn(
+                    spacing.tableCell.empty,
+                    "text-center text-text-muted"
+                  )}
                 >
                   {emptyMessage}
                 </td>
@@ -490,7 +509,8 @@ export function DataTable<T>({
                             <td
                               key={`${key}-${column.key}`}
                               className={cn(
-                                `${spacing.cell.px} ${spacing.row.py}`,
+                                spacing.cell.px,
+                                spacing.row.py,
                                 column.hiddenOnMobile && "hidden sm:table-cell"
                               )}
                             >
@@ -509,7 +529,8 @@ export function DataTable<T>({
                             <td
                               key={`${key}-${column.key}`}
                               className={cn(
-                                `${spacing.cell.px} ${spacing.row.py}`,
+                                spacing.cell.px,
+                                spacing.row.py,
                                 column.hiddenOnMobile && "hidden sm:table-cell"
                               )}
                             >
@@ -522,7 +543,11 @@ export function DataTable<T>({
                       })}
                       {actions && (
                         <td
-                          className={`${spacing.cell.px} ${spacing.row.py} text-right`}
+                          className={cn(
+                            spacing.cell.px,
+                            spacing.row.py,
+                            "text-right"
+                          )}
                         >
                           {(() => {
                             try {

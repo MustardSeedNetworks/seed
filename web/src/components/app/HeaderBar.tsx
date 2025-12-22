@@ -9,6 +9,7 @@ import {
   layout,
   icon as iconTokens,
   section,
+  cn,
 } from "../../styles/theme";
 
 type WSStatus = "connecting" | "connected" | "disconnected" | "error";
@@ -65,10 +66,17 @@ export const HeaderBar = memo(function HeaderBar({
   return (
     <header className="border-b border-surface-border bg-surface-raised">
       <div
-        className={`${section.width.xl} mx-auto ${spacing.mainPadding.x} ${spacing.headerPadding.y} ${layout.flex.between} ${spacing.gap.compact}`}
+        className={cn(
+          section.width.xl,
+          "mx-auto",
+          spacing.mainPadding.x,
+          spacing.headerPadding.y,
+          layout.flex.between,
+          spacing.gap.compact
+        )}
       >
         {/* Logo and title - hide title on very small screens */}
-        <div className={`${layout.inline.default} min-w-0`}>
+        <div className={cn(layout.inline.default, "min-w-0")}>
           <span className="heading-3 text-brand-primary shrink-0">◉</span>
           <div className="min-w-0">
             <h1 className="heading-4 hidden xs:block sm:block truncate">
@@ -82,7 +90,11 @@ export const HeaderBar = memo(function HeaderBar({
 
         {/* Controls */}
         <div
-          className={`flex items-center ${spacing.gap.tight} sm:${spacing.gap.compact}`}
+          className={cn(
+            "flex items-center",
+            spacing.gap.tight,
+            `sm:${spacing.gap.compact}`
+          )}
         >
           {/* Profile selector */}
           <ProfileSelector
@@ -95,7 +107,11 @@ export const HeaderBar = memo(function HeaderBar({
 
           {/* Quick mode toggle: Ethernet vs Wi-Fi with icons */}
           <div
-            className={`${layout.inline.default} bg-surface-base border border-surface-border ${radius.full}`}
+            className={cn(
+              layout.inline.default,
+              "bg-surface-base border border-surface-border",
+              radius.full
+            )}
           >
             <button
               type="button"
@@ -103,11 +119,15 @@ export const HeaderBar = memo(function HeaderBar({
               disabled={!hasEthernet}
               aria-label={t("interface.ethernet", "Ethernet")}
               title={t("interface.ethernet", "Ethernet")}
-              className={`${spacing.pad.xs} ${radius.full} transition ${
+              className={cn(
+                spacing.pad.xs,
+                radius.full,
+                "transition",
                 !isWifi
                   ? "bg-brand-primary text-text-inverse"
-                  : "text-text-primary hover:bg-surface-hover"
-              } ${!hasEthernet ? "opacity-50 cursor-not-allowed" : ""}`}
+                  : "text-text-primary hover:bg-surface-hover",
+                !hasEthernet && "opacity-50 cursor-not-allowed"
+              )}
             >
               {/* Cable/Ethernet icon */}
               <svg
@@ -137,11 +157,14 @@ export const HeaderBar = memo(function HeaderBar({
                       "Wi-Fi (no adapter detected)"
                     )
               }
-              className={`${spacing.pad.xs} ${radius.full} transition ${
+              className={cn(
+                spacing.pad.xs,
+                radius.full,
+                "transition",
                 isWifi
                   ? "bg-brand-primary text-text-inverse"
                   : "text-text-primary hover:bg-surface-hover"
-              }`}
+              )}
             >
               {/* Wi-Fi icon */}
               <svg
@@ -171,7 +194,11 @@ export const HeaderBar = memo(function HeaderBar({
 
           {/* Theme toggle */}
           <button
-            className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
+            className={cn(
+              radius.md,
+              spacing.pad.sm,
+              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+            )}
             onClick={toggleTheme}
             aria-label={
               isDark
@@ -206,7 +233,11 @@ export const HeaderBar = memo(function HeaderBar({
 
           {/* Help */}
           <button
-            className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
+            className={cn(
+              radius.md,
+              spacing.pad.sm,
+              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+            )}
             onClick={onHelpOpen}
             aria-label={t("accessibility.openHelp")}
           >
@@ -228,7 +259,11 @@ export const HeaderBar = memo(function HeaderBar({
 
           {/* Settings */}
           <button
-            className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation`}
+            className={cn(
+              radius.md,
+              spacing.pad.sm,
+              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
+            )}
             onClick={onSettingsOpen}
             aria-label={t("accessibility.openSettings")}
           >
@@ -256,14 +291,22 @@ export const HeaderBar = memo(function HeaderBar({
 
           {/* Logout buttons */}
           <button
-            className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation`}
+            className={cn(
+              radius.md,
+              spacing.pad.sm,
+              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation"
+            )}
             onClick={logout}
             aria-label={t("buttons.logout")}
           >
             {t("buttons.logout")}
           </button>
           <button
-            className={`${radius.md} ${spacing.pad.sm} hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation`}
+            className={cn(
+              radius.md,
+              spacing.pad.sm,
+              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation"
+            )}
             onClick={logout}
             aria-label={t("buttons.logout")}
           >
@@ -287,7 +330,13 @@ export const HeaderBar = memo(function HeaderBar({
 
       {/* Mobile connection status */}
       <div
-        className={`sm:hidden ${spacing.margin.top.inline} ${layout.flex.center} ${spacing.mainPadding.x} ${spacing.padding.bottom.inline}`}
+        className={cn(
+          "sm:hidden",
+          spacing.margin.top.inline,
+          layout.flex.center,
+          spacing.mainPadding.x,
+          spacing.padding.bottom.inline
+        )}
       >
         <ConnectionStatus status={wsStatus} onReconnect={onReconnect} />
       </div>
@@ -343,23 +392,29 @@ export function ConnectionStatus({
 
   return (
     <div
-      className={`${layout.inline.default} ${spacing.margin.left.content}`}
+      className={cn(layout.inline.default, spacing.margin.left.content)}
       role="status"
       aria-live="polite"
     >
       <span
-        className={`${layout.inline.tight} ${spacing.inline.sm} caption ${config.color}`}
+        className={cn(
+          layout.inline.tight,
+          spacing.inline.sm,
+          "caption",
+          config.color
+        )}
       >
         <span
-          className={`${layout.flex.center} ${radius.full} ${config.color} ${
-            config.icon === "spinner"
-              ? `bg-status-info/10 ${spacing.pad.xs}`
-              : ""
-          }`}
+          className={cn(
+            layout.flex.center,
+            radius.full,
+            config.color,
+            config.icon === "spinner" && `bg-status-info/10 ${spacing.pad.xs}`
+          )}
         >
           {config.icon === "spinner" ? (
             <svg
-              className={`${iconTokens.size.sm} animate-spin`}
+              className={cn(iconTokens.size.sm, "animate-spin")}
               fill="none"
               viewBox="0 0 24 24"
               aria-hidden="true"
@@ -379,14 +434,17 @@ export function ConnectionStatus({
               />
             </svg>
           ) : (
-            <span className={`${iconTokens.size.xs} ${config.color}`}>●</span>
+            <span className={cn(iconTokens.size.xs, config.color)}>●</span>
           )}
         </span>
         <span>{label}</span>
       </span>
       {status !== "connected" && (
         <button
-          className={`caption text-brand-primary hover:text-brand-accent ${spacing.margin.left.inline}`}
+          className={cn(
+            "caption text-brand-primary hover:text-brand-accent",
+            spacing.margin.left.inline
+          )}
           onClick={onReconnect}
         >
           {t("status.reconnect")}

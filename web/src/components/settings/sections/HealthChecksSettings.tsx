@@ -332,7 +332,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               />
               <button
                 onClick={() => removePingTarget(target.id!)}
-                className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                className={cn(
+                  "text-status-error hover:text-status-error/80",
+                  spacing.actionBtn
+                )}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}
@@ -418,7 +421,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               />
               <button
                 onClick={() => removeTCPPort(port.id!)}
-                className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                className={cn(
+                  "text-status-error hover:text-status-error/80",
+                  spacing.actionBtn
+                )}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}
@@ -512,7 +518,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               />
               <button
                 onClick={() => removeUDPPort(port.id!)}
-                className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                className={cn(
+                  "text-status-error hover:text-status-error/80",
+                  spacing.actionBtn
+                )}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}
@@ -587,7 +596,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 />
                 <button
                   onClick={() => removeHTTPEndpoint(endpoint.id!)}
-                  className={`text-status-error hover:text-status-error/80 ${spacing.actionBtn}`}
+                  className={cn(
+                    "text-status-error hover:text-status-error/80",
+                    spacing.actionBtn
+                  )}
                   aria-label={t("common.remove")}
                 >
                   {t("common.remove")}
