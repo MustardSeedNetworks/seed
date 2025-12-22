@@ -110,29 +110,38 @@ func (s *Server) startBroadcastLoop() {
 // Card update order is not significant - all updates are sent concurrently by the hub.
 // The order here reflects typical user priority/importance rather than technical dependency.
 //
+// Multi-interface support (#754): Interface-specific cards include the interface name
+// in the broadcast message so clients can filter updates based on their selected interface.
+//
 // Called by: startBroadcastLoop every 5 seconds when clients are connected.
 func (s *Server) broadcastAllCards() {
-	// Link card
+	// Get current interface for scoped broadcasts
+	currentIface := ""
+	if s.netManager != nil {
+		currentIface = s.netManager.GetCurrentInterface()
+	}
+
+	// Link card (interface-specific)
 	if linkData := s.collectLinkData(); linkData != nil {
-		s.wsHub.BroadcastCardUpdate("link", linkData)
+		s.wsHub.BroadcastCardUpdateForInterface("link", linkData, currentIface)
 	}
 
-	// Gateway card
+	// Gateway card (interface-specific - routes through selected interface)
 	if gatewayData := s.collectGatewayData(); gatewayData != nil {
-		s.wsHub.BroadcastCardUpdate("gateway", gatewayData)
+		s.wsHub.BroadcastCardUpdateForInterface("gateway", gatewayData, currentIface)
 	}
 
-	// DNS card
+	// DNS card (interface-specific - uses interface's DNS servers)
 	if dnsData := s.collectDNSData(); dnsData != nil {
-		s.wsHub.BroadcastCardUpdate("dns", dnsData)
+		s.wsHub.BroadcastCardUpdateForInterface("dns", dnsData, currentIface)
 	}
 
-	// Discovery/Switch card
+	// Discovery/Switch card (interface-specific - LLDP/CDP on selected interface)
 	if switchData := s.collectDiscoveryData(); switchData != nil {
-		s.wsHub.BroadcastCardUpdate("switch", switchData)
+		s.wsHub.BroadcastCardUpdateForInterface("switch", switchData, currentIface)
 	}
 
-	// Public IP card
+	// Public IP card (global - not interface-specific)
 	if publicIPData := s.collectPublicIPData(); publicIPData != nil {
 		s.wsHub.BroadcastCardUpdate("publicip", publicIPData)
 	}

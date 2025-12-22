@@ -275,8 +275,9 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 		// Also broadcast link card update immediately to trigger frontend auto-run tests.
 		// The frontend listens for card_update messages on the "link" card to detect
 		// link-up transitions and run speedtest/iperf tests.
+		// Multi-interface support (#754): Include interface in broadcast.
 		if linkData := s.collectLinkData(); linkData != nil {
-			s.wsHub.BroadcastCardUpdate("link", linkData)
+			s.wsHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 		}
 	case network.LinkStateDown:
 		// Link went down - notify clients
@@ -292,8 +293,9 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 
 		// Also broadcast link card update for proper state tracking.
 		// Frontend uses this to track DOWN state for detecting DOWN→UP transitions.
+		// Multi-interface support (#754): Include interface in broadcast.
 		if linkData := s.collectLinkData(); linkData != nil {
-			s.wsHub.BroadcastCardUpdate("link", linkData)
+			s.wsHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 		}
 	case network.LinkStateUnknown:
 		// Unknown state - log but don't take action

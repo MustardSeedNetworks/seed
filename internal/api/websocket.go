@@ -360,9 +360,14 @@ type Message struct {
 //   - DHCP monitor status
 //   - WiFi signal strength
 //   - Interface statistics
+//
+// Multi-interface support (#754): The Interface field identifies which network
+// interface the card data pertains to. Clients can filter updates based on their
+// currently selected interface.
 type CardUpdate struct {
-	CardID string      `json:"cardId"` // Unique card identifier (e.g., "link", "dns", "gateway")
-	Data   interface{} `json:"data"`   // Complete card data (structure varies by CardID)
+	CardID    string      `json:"cardId"`              // Unique card identifier (e.g., "link", "dns", "gateway")
+	Data      interface{} `json:"data"`                // Complete card data (structure varies by CardID)
+	Interface string      `json:"interface,omitempty"` // Network interface name (e.g., "eth0", "wlan0")
 }
 
 // Client represents a single WebSocket client connection.
@@ -477,12 +482,27 @@ func (h *Hub) Broadcast(msg Message) {
 }
 
 // BroadcastCardUpdate sends a card update to all clients.
+// For interface-specific updates, use BroadcastCardUpdateForInterface instead.
 func (h *Hub) BroadcastCardUpdate(cardID string, data interface{}) {
 	h.Broadcast(Message{
 		Type: "card_update",
 		Payload: CardUpdate{
 			CardID: cardID,
 			Data:   data,
+		},
+	})
+}
+
+// BroadcastCardUpdateForInterface sends a card update scoped to a specific interface.
+// This allows clients to filter updates based on their currently selected interface.
+// Multi-interface support (#754).
+func (h *Hub) BroadcastCardUpdateForInterface(cardID string, data interface{}, iface string) {
+	h.Broadcast(Message{
+		Type: "card_update",
+		Payload: CardUpdate{
+			CardID:    cardID,
+			Data:      data,
+			Interface: iface,
 		},
 	})
 }

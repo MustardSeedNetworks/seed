@@ -99,6 +99,7 @@ export interface Message {
 export interface CardUpdate {
   cardId: string; // ID of the card to update
   data: unknown; // Updated card data
+  interface?: string; // Network interface name (e.g., "eth0", "wlan0") - multi-interface support (#754)
 }
 
 /** Configuration options for useWebSocket hook */
