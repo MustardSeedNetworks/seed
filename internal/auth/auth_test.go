@@ -421,9 +421,14 @@ func TestIsDefaultPasswordHash(t *testing.T) {
 		t.Error("expected secure password hash to NOT be detected as default")
 	}
 
-	// Empty hash should not be detected as default
-	if IsDefaultPasswordHash("") {
-		t.Error("empty hash should not be detected as default")
+	// Empty hash should be detected as default (triggers setup wizard)
+	if !IsDefaultPasswordHash("") {
+		t.Error("empty hash should be detected as default (setup required)")
+	}
+
+	// Setup placeholder should be detected as default
+	if !IsDefaultPasswordHash(SetupModePlaceholder) {
+		t.Error("setup placeholder should be detected as default")
 	}
 }
 
