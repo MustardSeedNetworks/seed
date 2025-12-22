@@ -2,6 +2,7 @@ import { memo, useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Profile } from "../../types/profile";
 import { NetworkInterface } from "../ui/InterfaceSelector";
+import { useProfileContext } from "../../contexts/ProfileContext";
 import {
   radius,
   spacing,
@@ -87,6 +88,7 @@ export const HeaderBar = memo(function HeaderBar({
   logout,
 }: HeaderBarProps) {
   const { t } = useTranslation();
+  const { setEthernetInterface, setWifiInterface } = useProfileContext();
 
   // Dropdown states
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -151,15 +153,27 @@ export const HeaderBar = memo(function HeaderBar({
     [onProfileSwitch]
   );
 
-  // Handle interface selection - also switches to appropriate mode
+  // Handle interface selection - also switches to appropriate mode and persists to profile.
   const handleInterfaceSelect = useCallback(
-    (interfaceName: string, isWifiInterface: boolean) => {
+    async (interfaceName: string, isWifiInterface: boolean) => {
       // Switch to the correct mode (ethernet vs wifi) before changing interface
       switchToInterfaceType(isWifiInterface ? "wifi" : "ethernet");
       onInterfaceChange(interfaceName);
       setInterfaceDropdownOpen(false);
+
+      // Persist the interface selection to the active profile (#754 multi-interface support)
+      if (isWifiInterface) {
+        await setWifiInterface(interfaceName, true);
+      } else {
+        await setEthernetInterface(interfaceName, true);
+      }
     },
-    [onInterfaceChange, switchToInterfaceType]
+    [
+      onInterfaceChange,
+      switchToInterfaceType,
+      setEthernetInterface,
+      setWifiInterface,
+    ]
   );
 
   // Common icon button style

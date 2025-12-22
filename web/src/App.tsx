@@ -146,6 +146,8 @@ function App() {
     activeProfile,
     isLoading: profilesLoading,
     switchProfile,
+    setEthernetInterface,
+    setWifiInterface,
   } = useProfileContext();
   const [profilesOpen, setProfilesOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -975,7 +977,7 @@ function App() {
     [interfaces]
   );
   const switchToInterfaceType = useCallback(
-    (type: "ethernet" | "wifi") => {
+    async (type: "ethernet" | "wifi") => {
       // Mark that user explicitly selected this mode - prevents API responses from flipping back
       userSetWifiModeRef.current = true;
 
@@ -996,10 +998,72 @@ function App() {
       const target = candidates.find((iface) => iface.up) ?? candidates[0];
       if (target) {
         changeInterface(target.name);
+        // Persist the interface selection to the active profile (#754 multi-interface support)
+        if (type === "wifi") {
+          await setWifiInterface(target.name, true);
+        } else {
+          await setEthernetInterface(target.name, true);
+        }
       }
     },
-    [interfaces, changeInterface]
+    [interfaces, changeInterface, setEthernetInterface, setWifiInterface]
   );
+
+  // Load interface selections from active profile (#754 multi-interface support)
+  const profileInterfaceLoadedRef = useRef<string | null>(null);
+  useEffect(() => {
+    // Only load once per profile change, and only if interfaces are available
+    if (
+      !activeProfile ||
+      interfaces.length === 0 ||
+      profileInterfaceLoadedRef.current === activeProfile.id
+    ) {
+      return;
+    }
+
+    const profileInterfaces = activeProfile.config?.interfaces;
+    if (profileInterfaces) {
+      // Load ethernet interface if saved in profile
+      if (profileInterfaces.ethernet?.name) {
+        const savedEthernet = profileInterfaces.ethernet.name;
+        const exists = interfaces.some(
+          (i) => i.name === savedEthernet && i.type === "ethernet"
+        );
+        if (exists && savedEthernet !== currentInterface) {
+          logger.info(
+            LogComponents.CONFIG,
+            "Restoring ethernet interface from profile",
+            { interface: savedEthernet }
+          );
+          // Schedule interface change to avoid cascading renders
+          setTimeout(() => {
+            changeInterface(savedEthernet);
+            setIsWifi(false);
+          }, 0);
+        }
+      }
+      // Load wifi interface if saved in profile
+      else if (profileInterfaces.wifi?.name) {
+        const savedWifi = profileInterfaces.wifi.name;
+        const exists = interfaces.some(
+          (i) => i.name === savedWifi && i.type === "wifi"
+        );
+        if (exists && savedWifi !== currentInterface) {
+          logger.info(
+            LogComponents.CONFIG,
+            "Restoring WiFi interface from profile",
+            { interface: savedWifi }
+          );
+          // Schedule interface change to avoid cascading renders
+          setTimeout(() => {
+            changeInterface(savedWifi);
+            setIsWifi(true);
+          }, 0);
+        }
+      }
+    }
+    profileInterfaceLoadedRef.current = activeProfile.id;
+  }, [activeProfile, interfaces, currentInterface, changeInterface]);
 
   // Memoize run options to prevent unnecessary re-computation (fixes #671)
   const runOpts = useMemo(
