@@ -2,6 +2,13 @@
 
 /* Tailwind v4 CSS-first configuration */
 @theme {
+  /* ==========================================================================
+     TAILWIND CSS v4 THEME CONFIGURATION
+     ==========================================================================
+     Maps CSS custom properties to Tailwind utility classes.
+     Usage: bg-brand-primary, text-module-roots, etc.
+     ========================================================================== */
+
   /* Custom font sizes */
   --font-size-2xs: 0.6875rem;
   --font-size-2xs--line-height: 1rem;
@@ -18,31 +25,42 @@
   --font-family-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-family-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Brand colors */
+  /* Brand Colors - Mustard Seed Networks */
   --color-brand-primary: var(--color-brand-primary);
   --color-brand-accent: var(--color-brand-accent);
+  --color-brand-gold: var(--color-brand-gold);
+
+  /* Legacy: Soil Brown (commented out - uncomment to restore)
   --color-brand-secondary: var(--color-brand-secondary);
   --color-brand-secondary-dark: var(--color-brand-secondary-dark);
+  */
 
-  /* Surface colors */
+  /* Surface Colors - Elevation system */
   --color-surface-base: var(--color-surface-base);
   --color-surface-raised: var(--color-surface-raised);
   --color-surface-border: var(--color-surface-border);
   --color-surface-hover: var(--color-surface-hover);
   --color-surface-sunken: var(--color-surface-sunken);
 
-  /* Text colors */
+  /* Text Colors */
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
   --color-text-accent: var(--color-text-accent);
   --color-text-inverse: var(--color-text-inverse);
 
-  /* Status colors */
+  /* Status Colors - INDUSTRY STANDARD (do not change) */
   --color-status-success: var(--color-status-success);
   --color-status-warning: var(--color-status-warning);
   --color-status-error: var(--color-status-error);
   --color-status-info: var(--color-status-info);
+
+  /* Module Accent Colors - for icons/badges only */
+  --color-module-roots: var(--color-module-roots);
+  --color-module-canopy: var(--color-module-canopy);
+  --color-module-shell: var(--color-module-shell);
+  --color-module-sap: var(--color-module-sap);
+  --color-module-harvest: var(--color-module-harvest);
 }
 
 /* Source detection for Tailwind */
@@ -52,59 +70,102 @@
 /* The Seed Theme - Mustard Seed Networks */
 
 :root {
-  /* Light Mode - Themed from BRAND_GUIDELINES.md */
-  --color-brand-primary: #2d7a3e; /* Seed Green */
-  --color-brand-accent: #4caf50; /* Lighter Seed Green */
-  --color-brand-secondary: #5c4033; /* Soil Brown */
-  --color-brand-secondary-dark: #4e342e; /* Darker Soil Brown */
+  /* ==========================================================================
+     LIGHT MODE - Mustard Seed Networks Brand
+     ==========================================================================
+     Brand Identity: Growth, Network, Reliability
+     Primary: Forest Green (Seed Green) - stable, mature, trustworthy
+     Accent: Mustard Gold - the "mustard seed" highlight
+     ========================================================================== */
 
-  --color-surface-base: #f8f8f8; /* Snow */
-  --color-surface-raised: #ffffff; /* Pure White */
-  --color-surface-border: #e5e5e5; /* Cloud */
-  --color-surface-hover: #e5e5e5; /* Cloud */
-  --color-surface-sunken: #e5e5e5; /* Cloud */
+  /* Brand Colors */
+  --color-brand-primary: #2d7a3e; /* Seed Green - primary actions, links */
+  --color-brand-accent: #4caf50; /* Lighter Seed Green - hover states */
+  --color-brand-gold: #d4a017; /* Mustard Gold - special highlights, premium features */
 
-  --color-text-primary: #1a1a1a; /* Midnight */
-  --color-text-secondary: #333333; /* Charcoal */
-  --color-text-muted: #666666; /* Slate */
-  --color-text-accent: #2d7a3e; /* Seed Green */
-  --color-text-inverse: #ffffff; /* Pure White */
+  /* Legacy: Soil Brown (commented out - uncomment to restore)
+  --color-brand-secondary: #5c4033;
+  --color-brand-secondary-dark: #4e342e;
+  */
 
-  --color-status-success: #28a745;
-  --color-status-warning: #ffc107;
-  --color-status-error: #dc3545;
-  --color-status-info: #17a2b8;
+  /* Surface Colors - Standard elevation pattern */
+  --color-surface-base: #f8f8f8; /* Snow - page background */
+  --color-surface-raised: #ffffff; /* Pure White - cards, modals */
+  --color-surface-border: #e5e5e5; /* Cloud - borders, dividers */
+  --color-surface-hover: #e5e5e5; /* Cloud - hover backgrounds */
+  --color-surface-sunken: #e5e5e5; /* Cloud - inset areas */
 
-  /* Gauge/progress colors (for SVG) */
+  /* Text Colors */
+  --color-text-primary: #1a1a1a; /* Midnight - main text */
+  --color-text-secondary: #333333; /* Charcoal - secondary text */
+  --color-text-muted: #666666; /* Slate - subtle text, captions */
+  --color-text-accent: #2d7a3e; /* Seed Green - links, highlights */
+  --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
+
+  /* Status Colors - INDUSTRY STANDARD (do not change) */
+  --color-status-success: #28a745; /* Green - positive states */
+  --color-status-warning: #ffc107; /* Amber - caution states */
+  --color-status-error: #dc3545; /* Red - error/danger states */
+  --color-status-info: #17a2b8; /* Cyan - informational states */
+
+  /* Module Accent Colors - for icons/badges only, not backgrounds */
+  --color-module-roots: #b45309; /* Amber/Brown - foundation, path analysis */
+  --color-module-canopy: #2d7a3e; /* Green - coverage, WiFi (matches brand) */
+  --color-module-shell: #ea580c; /* Orange - security, protection */
+  --color-module-sap: #0891b2; /* Cyan - telemetry, data flow */
+  --color-module-harvest: #d4a017; /* Gold - reports, results */
+
+  /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #d97706;
   --gauge-orange: #ea580c;
 }
 
 .dark {
-  /* Dark Mode - Themed from BRAND_GUIDELINES.md */
+  /* ==========================================================================
+     DARK MODE - Mustard Seed Networks Brand
+     ==========================================================================
+     Colors are lightened for proper contrast on dark backgrounds.
+     Status colors remain constant (industry standard).
+     ========================================================================== */
+
+  /* Brand Colors - Lightened for dark backgrounds */
   --color-brand-primary: #81c784; /* Lighter Seed Green */
   --color-brand-accent: #a5d6a7; /* Even Lighter Seed Green */
-  --color-brand-secondary: #a1887f; /* Lighter Soil Brown */
-  --color-brand-secondary-dark: #8d6e63; /* Slightly Lighter Soil Brown */
+  --color-brand-gold: #fbbf24; /* Lighter Mustard Gold */
 
-  --color-surface-base: #1a1a1a; /* Midnight */
-  --color-surface-raised: #333333; /* Charcoal */
-  --color-surface-border: #666666; /* Slate */
-  --color-surface-hover: #666666; /* Slate */
-  --color-surface-sunken: #000000;
+  /* Legacy: Soil Brown (commented out - uncomment to restore)
+  --color-brand-secondary: #a1887f;
+  --color-brand-secondary-dark: #8d6e63;
+  */
 
-  --color-text-primary: #f8f8f8; /* Snow */
-  --color-text-secondary: #e5e5e5; /* Cloud */
-  --color-text-muted: #999999; /* Silver */
-  --color-text-accent: #81c784; /* Lighter Seed Green */
-  --color-text-inverse: #1a1a1a; /* Midnight */
+  /* Surface Colors - Standard elevation pattern (lighter = more elevated) */
+  --color-surface-base: #1a1a1a; /* Midnight - page background */
+  --color-surface-raised: #333333; /* Charcoal - cards, modals */
+  --color-surface-border: #666666; /* Slate - borders, dividers */
+  --color-surface-hover: #666666; /* Slate - hover backgrounds */
+  --color-surface-sunken: #000000; /* Black - inset areas */
 
+  /* Text Colors - Inverted for dark backgrounds */
+  --color-text-primary: #f8f8f8; /* Snow - main text */
+  --color-text-secondary: #e5e5e5; /* Cloud - secondary text */
+  --color-text-muted: #999999; /* Silver - subtle text, captions */
+  --color-text-accent: #81c784; /* Lighter Seed Green - links, highlights */
+  --color-text-inverse: #1a1a1a; /* Midnight - text on colored backgrounds */
+
+  /* Status Colors - INDUSTRY STANDARD (same as light mode) */
   --color-status-success: #28a745;
   --color-status-warning: #ffc107;
   --color-status-error: #dc3545;
   --color-status-info: #17a2b8;
 
-  /* Gauge/progress colors (for SVG) */
+  /* Module Accent Colors - Lightened for dark backgrounds */
+  --color-module-roots: #fbbf24; /* Lighter Amber - foundation, path analysis */
+  --color-module-canopy: #81c784; /* Lighter Green - coverage, WiFi */
+  --color-module-shell: #fb923c; /* Lighter Orange - security, protection */
+  --color-module-sap: #22d3ee; /* Lighter Cyan - telemetry, data flow */
+  --color-module-harvest: #fbbf24; /* Lighter Gold - reports, results */
+
+  /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #fbbf24;
   --gauge-orange: #fb923c;
 }

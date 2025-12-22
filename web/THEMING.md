@@ -1,6 +1,6 @@
 # The Seed Design System & Theming Guide
 
-This document describes the design system and theming architecture used in the The Seed frontend.
+This document describes the design system and theming architecture for **The Seed** by **Mustard Seed Networks**.
 
 ## Architecture Overview
 
@@ -12,40 +12,66 @@ The theming system consists of three layers:
 
 ## Color Tokens
 
-### Brand Colors
+### Brand Colors - Mustard Seed Networks
 
-| Token                   | Light     | Dark      | Usage                  |
-| ----------------------- | --------- | --------- | ---------------------- |
-| `--color-brand-primary` | `#1d4ed8` | `#93c5fd` | Primary actions, links |
-| `--color-brand-accent`  | `#2563eb` | `#60a5fa` | Hover states           |
+| Token                   | Light     | Dark      | Usage                             |
+| ----------------------- | --------- | --------- | --------------------------------- |
+| `--color-brand-primary` | `#2d7a3e` | `#81c784` | Seed Green - primary actions      |
+| `--color-brand-accent`  | `#4caf50` | `#a5d6a7` | Lighter Seed Green - hover states |
+| `--color-brand-gold`    | `#d4a017` | `#fbbf24` | Mustard Gold - premium highlights |
 
 ### Surface Colors
 
-| Token                    | Light     | Dark      | Usage             |
-| ------------------------ | --------- | --------- | ----------------- |
-| `--color-surface-base`   | `#e5edf5` | `#0c1626` | Page background   |
-| `--color-surface-raised` | `#f9fbfd` | `#131f32` | Cards, modals     |
-| `--color-surface-border` | `#8fa3ba` | `#2a3a52` | Borders           |
-| `--color-surface-hover`  | `#d4deea` | `#1c2a40` | Hover backgrounds |
+| Token                    | Light     | Dark      | Usage                   |
+| ------------------------ | --------- | --------- | ----------------------- |
+| `--color-surface-base`   | `#f8f8f8` | `#1a1a1a` | Snow/Midnight - page bg |
+| `--color-surface-raised` | `#ffffff` | `#333333` | White/Charcoal - cards  |
+| `--color-surface-border` | `#e5e5e5` | `#666666` | Cloud/Slate - borders   |
+| `--color-surface-hover`  | `#e5e5e5` | `#666666` | Hover backgrounds       |
+| `--color-surface-sunken` | `#e5e5e5` | `#000000` | Inset areas             |
 
 ### Text Colors
 
 | Token                    | Light     | Dark      | Usage                       |
 | ------------------------ | --------- | --------- | --------------------------- |
-| `--color-text-primary`   | `#0b1220` | `#f8fbff` | Main text                   |
-| `--color-text-secondary` | `#1b2737` | `#dbe5f3` | Secondary text              |
-| `--color-text-muted`     | `#334155` | `#b8c5d9` | Subtle text                 |
-| `--color-text-accent`    | `#1d4ed8` | `#93c5fd` | Links, highlights           |
-| `--color-text-inverse`   | `#f8fafc` | `#0f172a` | Text on colored backgrounds |
+| `--color-text-primary`   | `#1a1a1a` | `#f8f8f8` | Midnight/Snow - main text   |
+| `--color-text-secondary` | `#333333` | `#e5e5e5` | Charcoal/Cloud - secondary  |
+| `--color-text-muted`     | `#666666` | `#999999` | Slate/Silver - subtle text  |
+| `--color-text-accent`    | `#2d7a3e` | `#81c784` | Seed Green - links          |
+| `--color-text-inverse`   | `#ffffff` | `#1a1a1a` | Text on colored backgrounds |
 
-### Status Colors (Industry Standard)
+### Status Colors (Industry Standard - DO NOT CHANGE)
 
-| Token                    | Light     | Dark      | Usage          |
-| ------------------------ | --------- | --------- | -------------- |
-| `--color-status-success` | `#047857` | `#86efac` | Success states |
-| `--color-status-warning` | `#92400e` | `#fcd34d` | Warning states |
-| `--color-status-error`   | `#b91c1c` | `#fca5a5` | Error states   |
-| `--color-status-info`    | `#1d4ed8` | `#93c5fd` | Informational  |
+These colors are industry standard and should remain constant:
+
+| Token                    | Value     | Usage                   |
+| ------------------------ | --------- | ----------------------- |
+| `--color-status-success` | `#28a745` | Green - positive states |
+| `--color-status-warning` | `#ffc107` | Amber - caution states  |
+| `--color-status-error`   | `#dc3545` | Red - error/danger      |
+| `--color-status-info`    | `#17a2b8` | Cyan - informational    |
+
+### Module Colors (Icons/Badges Only)
+
+These colors identify The Seed's feature modules. Use for icons and small badges only - NOT for card backgrounds.
+
+| Token                    | Light     | Dark      | Module                 |
+| ------------------------ | --------- | --------- | ---------------------- |
+| `--color-module-roots`   | `#b45309` | `#fbbf24` | Roots - path analysis  |
+| `--color-module-canopy`  | `#2d7a3e` | `#81c784` | Canopy - WiFi planning |
+| `--color-module-shell`   | `#ea580c` | `#fb923c` | Shell - security       |
+| `--color-module-sap`     | `#0891b2` | `#22d3ee` | Sap - telemetry        |
+| `--color-module-harvest` | `#d4a017` | `#fbbf24` | Harvest - reports      |
+
+```tsx
+import { moduleColor } from '../styles/theme';
+
+// Icon usage
+<RootsIcon className={moduleColor.roots.icon} />
+
+// Badge usage
+<span className={moduleColor.canopy.badge}>WiFi</span>
+```
 
 ## Typography Scale
 

@@ -1,7 +1,38 @@
 /**
- * The Seed Design System
+ * =============================================================================
+ * THE SEED DESIGN SYSTEM - Mustard Seed Networks
+ * =============================================================================
  *
- * Centralized design tokens and utilities for consistent UI
+ * Centralized design tokens and utilities for consistent UI across the app.
+ *
+ * ARCHITECTURE:
+ * 1. CSS Variables (index.css) - Core color tokens for light/dark modes
+ * 2. This file (theme.ts) - TypeScript tokens and utility functions
+ * 3. Tailwind Classes - CSS-first configuration using @theme directive
+ *
+ * BRAND COLORS:
+ * - Primary: Seed Green (#2d7a3e / #81c784 dark) - Actions, links, focus states
+ * - Accent: Lighter Seed Green (#4caf50 / #a5d6a7 dark) - Hover states
+ * - Gold: Mustard Gold (#d4a017 / #fbbf24 dark) - Special highlights, premium
+ *
+ * STATUS COLORS (Industry Standard - DO NOT CHANGE):
+ * - Success: Green (#28a745) - Positive states
+ * - Warning: Amber (#ffc107) - Caution states
+ * - Error: Red (#dc3545) - Error/danger states
+ * - Info: Cyan (#17a2b8) - Informational states
+ *
+ * MODULE COLORS (for icons/badges only, not backgrounds):
+ * - Roots: Amber/Brown - Path analysis, foundation
+ * - Canopy: Green - WiFi planning, coverage
+ * - Shell: Orange - Security, protection
+ * - Sap: Cyan - Telemetry, data flow
+ * - Harvest: Gold - Reports, results
+ *
+ * USAGE:
+ * import { spacing, button, cn, moduleColor } from '../styles/theme';
+ * <button className={cn(button.base, button.variant.primary)}>Action</button>
+ *
+ * =============================================================================
  */
 
 // ============================================================================
@@ -559,6 +590,66 @@ export const category = {
   mobile: "text-cyan-500 dark:text-cyan-400",
   network: "text-teal-500 dark:text-teal-400",
   unknown: "text-text-muted",
+} as const;
+
+/**
+ * Module colors - accent colors for The Seed's feature modules
+ *
+ * IMPORTANT: Use these for icons and small badges only, NOT for card backgrounds.
+ * Cards should remain consistent (surface-raised) across all modules.
+ *
+ * Usage:
+ * <RootIcon className={moduleColor.roots.icon} />
+ * <span className={cn(moduleColor.canopy.badge, "px-2 py-1")}>WiFi</span>
+ */
+export const moduleColor = {
+  // Roots - Path Analysis, Traceroute, Deep Connectivity
+  roots: {
+    icon: "text-module-roots", // Uses CSS variable
+    badge: "bg-module-roots/20 text-module-roots",
+    border: "border-module-roots/30",
+  },
+  // Canopy - WiFi Planning, Surveys, Coverage
+  canopy: {
+    icon: "text-module-canopy", // Matches brand primary
+    badge: "bg-module-canopy/20 text-module-canopy",
+    border: "border-module-canopy/30",
+  },
+  // Shell - Security Posture, Hardening
+  shell: {
+    icon: "text-module-shell",
+    badge: "bg-module-shell/20 text-module-shell",
+    border: "border-module-shell/30",
+  },
+  // Sap - Live Telemetry, Monitoring, Data Flow
+  sap: {
+    icon: "text-module-sap",
+    badge: "bg-module-sap/20 text-module-sap",
+    border: "border-module-sap/30",
+  },
+  // Harvest - Reports, Compliance, Exports
+  harvest: {
+    icon: "text-module-harvest", // Matches brand gold
+    badge: "bg-module-harvest/20 text-module-harvest",
+    border: "border-module-harvest/30",
+  },
+} as const;
+
+/**
+ * Brand colors - for special brand elements
+ *
+ * Usage:
+ * <span className={brand.gold.text}>Premium Feature</span>
+ * <div className={brand.gold.badge}>PRO</div>
+ */
+export const brand = {
+  // Mustard Gold - for premium/special highlights
+  gold: {
+    text: "text-brand-gold",
+    bg: "bg-brand-gold",
+    badge: "bg-brand-gold/20 text-brand-gold",
+    border: "border-brand-gold/30",
+  },
 } as const;
 
 /**
