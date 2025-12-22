@@ -1,3 +1,5 @@
+import { twMerge } from "tailwind-merge";
+
 /**
  * =============================================================================
  * THE SEED DESIGN SYSTEM - Mustard Seed Networks
@@ -759,9 +761,9 @@ export const layout = {
 
   // Grid layouts
   grid: {
-    // Responsive card grids
+    // Responsive card grids - centered with spacious gap
     cards:
-      "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-comfortable justify-items-center",
+      "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-spacious justify-items-center",
     cardsWide: "grid grid-cols-1 lg:grid-cols-3 gap-6",
     // Form layouts
     form2col: "grid grid-cols-2 gap-2",
@@ -794,12 +796,14 @@ export const layout = {
 // ============================================================================
 
 /**
- * Combine class names, filtering out falsy values
+ * Combine class names with Tailwind class conflict resolution.
+ * Uses tailwind-merge to properly handle conflicting Tailwind classes
+ * (e.g., z-50 vs z-20, p-4 vs p-2 will resolve to the last value).
  */
 export function cn(
   ...classes: (string | boolean | undefined | null)[]
 ): string {
-  return classes.filter(Boolean).join(" ");
+  return twMerge(classes.filter(Boolean).join(" "));
 }
 
 // Type-safe Maps for dynamic lookups

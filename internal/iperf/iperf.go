@@ -241,74 +241,106 @@ func NewManager() *Manager {
 	}
 }
 
-// findIperf3Binary locates the iperf3 binary, checking bundled paths first.
+// findIperf3Binary locates the iperf3 binary using a robust detection strategy:
+//  1. Try embedded binary (extracted to user cache directory).
+//  2. Search system PATH using exec.LookPath (the proper way).
+//  3. Return detailed error with OS-specific install instructions if not found.
 func findIperf3Binary() (string, error) {
+	// Return cached path if already found
 	if iperfBinaryPath != "" {
 		return iperfBinaryPath, nil
 	}
 
-	searchedPaths := make([]string, 0, 10) //nolint:mnd // Pre-allocate for typical path count
+	searchedPaths := make([]string, 0, 8) // Preallocate for typical search paths
+	var embeddedErr, systemErr error
 
-	// Check bundled paths relative to executable
+	// Strategy 1: Try embedded binary (extract to cache if needed)
+	if HasEmbeddedBinary() {
+		if path, err := extractEmbeddedBinary(); err == nil {
+			// Validate the extracted binary works
+			if validateBinary(path) {
+				iperfBinaryPath = path
+				slog.Info("Using embedded iperf3 binary", "path", path, "version", EmbeddedVersion)
+				return path, nil
+			}
+			slog.Warn("Extracted iperf3 binary failed validation", "path", path)
+		} else {
+			embeddedErr = err
+			slog.Debug("Failed to extract embedded iperf3", "error", err)
+		}
+	}
+
+	// Strategy 2: Search system PATH using exec.LookPath
+	// This is the proper way to find executables - it searches the entire PATH
+	if path, err := findSystemIperf3(); err == nil {
+		if validateBinary(path) {
+			iperfBinaryPath = path
+			slog.Info("Using system iperf3 binary", "path", path)
+			return path, nil
+		}
+		slog.Warn("System iperf3 binary failed validation", "path", path)
+	} else {
+		systemErr = err
+	}
+
+	// Strategy 3: Check legacy paths for backwards compatibility
+	// These are less reliable but may help in edge cases
+	legacyPaths := getLegacyPaths()
+	for _, path := range legacyPaths {
+		searchedPaths = append(searchedPaths, path)
+		if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
+			if validateBinary(path) {
+				iperfBinaryPath = path
+				slog.Info("Using iperf3 from legacy path", "path", path)
+				return path, nil
+			}
+		}
+	}
+
+	// Not found - return detailed error with install instructions.
+	return "", &NotFoundError{
+		SearchedPaths: searchedPaths,
+		SystemError:   systemErr,
+		EmbeddedError: embeddedErr,
+	}
+}
+
+// getLegacyPaths returns platform-specific paths to check as a last resort.
+func getLegacyPaths() []string {
+	var paths []string
+
+	// Paths relative to executable
 	if execPath, err := os.Executable(); err == nil {
 		execDir := filepath.Dir(execPath)
-		bundledPaths := []string{
+		paths = append(paths,
 			filepath.Join(execDir, "bin", "iperf3"),
 			filepath.Join(execDir, "iperf3"),
-			filepath.Join(execDir, "..", "bin", "iperf3"),
-		}
-		if path := findExecutablePath(bundledPaths, &searchedPaths); path != "" {
-			iperfBinaryPath = path
-			return path, nil
-		}
+		)
 	}
 
-	// Check development paths relative to working directory
+	// Paths relative to working directory (for development)
 	if cwd, err := os.Getwd(); err == nil {
-		devPaths := []string{filepath.Join(cwd, "bin", "iperf3"), filepath.Join(cwd, "iperf3")}
-		if path := findExecutablePath(devPaths, &searchedPaths); path != "" {
-			iperfBinaryPath = path
-			return path, nil
-		}
+		paths = append(paths,
+			filepath.Join(cwd, "bin", "iperf3"),
+		)
 	}
 
-	// Check common system paths
-	systemPaths := []string{
-		"/usr/local/bin/iperf3", "/usr/bin/iperf3", "/bin/iperf3",
-		"/usr/local/sbin/iperf3", "/usr/sbin/iperf3",
-	}
-	if path := findExecutablePath(systemPaths, &searchedPaths); path != "" {
-		iperfBinaryPath = path
-		return path, nil
-	}
-
-	// Fall back to system PATH
-	if path, err := exec.LookPath("iperf3"); err == nil {
-		iperfBinaryPath = path
-		return path, nil
-	}
-
-	return "", buildIperfNotFoundError(searchedPaths)
+	return paths
 }
 
-// findExecutablePath checks paths and returns the first executable found.
-func findExecutablePath(paths []string, searched *[]string) string {
-	for _, path := range paths {
-		*searched = append(*searched, path)
-		if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
-			return path
-		}
-	}
-	return ""
-}
+// validateBinary checks if the binary at the given path is a valid iperf3 executable.
+func validateBinary(path string) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
 
-func buildIperfNotFoundError(searchedPaths []string) error {
-	errMsg := "iperf3 not found. Searched paths:\n"
-	for _, p := range searchedPaths {
-		errMsg += fmt.Sprintf("  - %s\n", p)
+	cmd := exec.CommandContext(ctx, path, "--version")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
 	}
-	errMsg += "\nTo build a bundled iperf3 binary, run:\n  scripts/build-iperf3.sh"
-	return fmt.Errorf("%s", errMsg)
+
+	// Should output something like "iperf 3.x"
+	return strings.Contains(string(out), "iperf")
 }
 
 // CheckInstalled checks if iperf3 is available.

@@ -243,6 +243,8 @@ function App() {
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const networkDiscoveryAbortRef = useRef<AbortController | null>(null);
   const currentInterfaceRef = useRef(currentInterface);
+  // Track previous link state to detect link-up transitions for auto-run
+  const prevLinkUpRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     currentInterfaceRef.current = currentInterface;
@@ -289,6 +291,15 @@ function App() {
           switch (key) {
             case "link":
               updates.link = normalized as CardState["link"];
+              // Initialize prevLinkUpRef on first load (don't trigger auto-run)
+              if (
+                normalized &&
+                typeof (normalized as { linkUp?: boolean }).linkUp === "boolean"
+              ) {
+                prevLinkUpRef.current = (
+                  normalized as { linkUp: boolean }
+                ).linkUp;
+              }
               break;
             case "cable":
               updates.cable = normalized as CardState["cable"];
@@ -363,6 +374,30 @@ function App() {
       return;
     }
 
+    // Detect link-up transition for auto-run tests
+    if (cardId === "link" && data && typeof data === "object") {
+      const linkData = data as { linkUp?: boolean };
+      const newLinkUp = linkData.linkUp === true;
+      const wasDown = prevLinkUpRef.current === false;
+
+      // Update previous state
+      if (typeof linkData.linkUp === "boolean") {
+        prevLinkUpRef.current = linkData.linkUp;
+      }
+
+      // Trigger auto-run when link transitions from down to up
+      if (newLinkUp && wasDown) {
+        logger.info(
+          LogComponents.NETWORK,
+          "Link up detected, triggering auto-run tests"
+        );
+        // Small delay to let link stabilize before running tests
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("runAllTests"));
+        }, 1500);
+      }
+    }
+
     setCards((prev) => ({
       ...prev,
       [cardId]: data as CardState[typeof cardId],
@@ -377,6 +412,27 @@ function App() {
       });
       if (response.ok) {
         const data = await response.json();
+
+        // Detect link-up transition for auto-run tests (fallback polling case)
+        const newLinkUp = data.linkUp === true;
+        const wasDown = prevLinkUpRef.current === false;
+
+        // Update previous state
+        if (typeof data.linkUp === "boolean") {
+          prevLinkUpRef.current = data.linkUp;
+        }
+
+        // Trigger auto-run when link transitions from down to up
+        if (newLinkUp && wasDown) {
+          logger.info(
+            LogComponents.NETWORK,
+            "Link up detected (poll), triggering auto-run tests"
+          );
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("runAllTests"));
+          }, 1500);
+        }
+
         setCards((prev) => ({
           ...prev,
           link: {
@@ -1284,8 +1340,8 @@ function App() {
         logout={logout}
       />
 
-      {/* Main content */}
-      <main className={spacing.mainPadding.y}>
+      {/* Main content - pb-24 adds bottom padding for fixed FAB */}
+      <main className={cn(spacing.mainPadding.y, "pb-24")}>
         <div className={cn(section.width.xl, "mx-auto", spacing.mainPadding.x)}>
           {/* Section: Primary Connectivity - cards differ by interface type */}
           <section
@@ -1517,15 +1573,30 @@ function App() {
       />
 
       {/* Help Modal - improved with TOC, About, and search */}
-      <ImprovedHelpModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
+      <ImprovedHelpModal
+        isOpen={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        version={appVersion}
+      />
 
       {/* Profile Management Modal (#754) */}
       {profilesOpen && (
         <ProfileManagement onClose={() => setProfilesOpen(false)} />
       )}
 
-      {/* FAB - Run All Tests */}
-      <FAB />
+      {/* FAB - Run All Tests - constrained to content width */}
+      <div className="fixed bottom-0 left-0 right-0 pointer-events-none z-50">
+        <div
+          className={cn(
+            section.width.xl,
+            "mx-auto",
+            spacing.mainPadding.x,
+            "relative"
+          )}
+        >
+          <FAB className="pointer-events-auto absolute bottom-6 right-0" />
+        </div>
+      </div>
     </div>
   );
 }

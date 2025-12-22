@@ -402,6 +402,60 @@ export const DEFAULT_SNMP_SETTINGS: SNMPSettings = {
 };
 
 // ============================================================================
+// Link Settings
+// ============================================================================
+
+/** Supported link speed values */
+export type LinkSpeed =
+  | "auto"
+  | "10"
+  | "100"
+  | "1000"
+  | "2500"
+  | "5000"
+  | "10000";
+
+/** Supported duplex modes */
+export type DuplexMode = "auto" | "full" | "half";
+
+export interface LinkSettings {
+  /** Whether to use auto-negotiation */
+  autoNegotiation: boolean;
+  /** Fixed speed when auto-negotiation is disabled (Mbps) */
+  speed: LinkSpeed;
+  /** Duplex mode when auto-negotiation is disabled */
+  duplex: DuplexMode;
+  /** Available speed/duplex modes for the interface */
+  availableModes: string[];
+}
+
+// ============================================================================
+// Cable Test Settings
+// ============================================================================
+
+export interface CableTestSettings {
+  /** Whether the cable test card is enabled */
+  enabled: boolean;
+  /** Automatically run cable test when link is down */
+  autoRunOnLinkDown: boolean;
+  /** Unit for cable length display */
+  lengthUnit: "feet" | "meters";
+}
+
+export const DEFAULT_LINK_SETTINGS: LinkSettings = {
+  autoNegotiation: true,
+  speed: "auto",
+  duplex: "auto",
+  availableModes: [],
+};
+
+export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
+  enabled: true,
+  autoRunOnLinkDown: false,
+  lengthUnit: "feet",
+};
+
+// ============================================================================
 // localStorage Keys
 // ============================================================================
 

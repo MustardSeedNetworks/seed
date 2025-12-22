@@ -131,6 +131,8 @@ export function Card({
         card.variant.default,
         spacing.pad.sm,
         `sm:${spacing.pad.default}`,
+        // Fixed width for consistent card grid layout
+        "w-full max-w-sm",
         "transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none",
         isInteractive && "cursor-pointer active:scale-[0.98]",
         className

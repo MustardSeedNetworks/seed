@@ -157,6 +157,22 @@ func (m *Manager) GetInterfaces() []*InterfaceInfo {
 	return result
 }
 
+// GetPhysicalInterfaces returns only physical network interfaces (ethernet and wifi).
+// Excludes loopback, virtual, and other non-physical interfaces.
+func (m *Manager) GetPhysicalInterfaces() []*InterfaceInfo {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	result := make([]*InterfaceInfo, 0, len(m.interfaces))
+	for _, info := range m.interfaces {
+		// Only include ethernet and wifi interfaces
+		if info.Type == InterfaceTypeEthernet || info.Type == InterfaceTypeWiFi {
+			result = append(result, info)
+		}
+	}
+	return result
+}
+
 // GetInterface returns information about a specific interface.
 func (m *Manager) GetInterface(name string) (*InterfaceInfo, error) {
 	m.mu.RLock()
@@ -354,9 +370,12 @@ func getLinkInfoFromIfconfig(_ string) (speed, duplex string) {
 
 // detectInterfaceType determines the type of interface from its name.
 func detectInterfaceType(name string) InterfaceType {
-	// Loopback
-	if name == "lo" || name == "lo0" {
-		return InterfaceTypeLoopback
+	// Loopback (lo, lo0, lo1, etc.)
+	if name == "lo" || strings.HasPrefix(name, "lo") && len(name) <= 3 {
+		// Check if remaining chars are digits (lo0, lo1, lo2)
+		if len(name) == 2 || (len(name) == 3 && name[2] >= '0' && name[2] <= '9') {
+			return InterfaceTypeLoopback
+		}
 	}
 
 	// Virtual interfaces (docker, bridge, veth, tun, tap, virbr, etc.)

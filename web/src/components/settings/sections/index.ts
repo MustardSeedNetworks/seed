@@ -29,10 +29,12 @@
 
 export { AutoSaveIndicator } from "./AutoSaveIndicator";
 export { AppearanceSettings } from "./AppearanceSettings";
+export { CableTestSettings } from "./CableTestSettings";
 export { ConfigBackupsSection } from "./ConfigBackupsSection";
 export { DiscoverySettings } from "./DiscoverySettings";
 export { DNSSettings } from "./DNSSettings";
 export { HealthChecksSettings } from "./HealthChecksSettings";
+export { LinkSettings } from "./LinkSettings";
 export { PerformanceSettings } from "./PerformanceSettings";
 export { SNMPSettings } from "./SNMPSettings";
 export { ThresholdsSettings } from "./ThresholdsSettings";

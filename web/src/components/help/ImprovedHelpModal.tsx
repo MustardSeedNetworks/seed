@@ -48,6 +48,8 @@ import {
 interface HelpModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Application version from backend */
+  version?: string;
 }
 
 interface HelpSection {
@@ -61,7 +63,11 @@ interface HelpSection {
  * ImprovedHelpModal Component
  * Renders a modal dialog with tabbed help content and search functionality
  */
-export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
+export function ImprovedHelpModal({
+  isOpen,
+  onClose,
+  version = "dev",
+}: HelpModalProps) {
   const { t } = useTranslation("help");
   // Track which help section is currently active
   const [activeSection, setActiveSection] = useState<string>("about");
@@ -75,7 +81,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
       id: "about",
       title: t("sections.about"),
       icon: <Info className={iconTokens.size.sm} />,
-      content: <AboutSection />,
+      content: <AboutSection version={version} />,
     },
     {
       id: "getting-started",
@@ -273,7 +279,11 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps) {
 // CONTENT SECTIONS
 // ============================================================================
 
-function AboutSection() {
+interface AboutSectionProps {
+  version: string;
+}
+
+function AboutSection({ version }: AboutSectionProps) {
   const { t } = useTranslation("help");
   return (
     <div className="section-gap max-w-3xl">
@@ -324,10 +334,13 @@ function AboutSection() {
             spacing.margin.bottom.inline
           )}
         >
-          {t("content.about.openSource.title")}
+          {t("content.about.licensing.title", "Commercial Software")}
         </h4>
         <p className="body-small text-text-secondary">
-          {t("content.about.openSource.description")}
+          {t(
+            "content.about.licensing.description",
+            "SEED is commercial software developed by Mustard Seed Networks. All rights reserved. Unauthorized distribution or modification is prohibited."
+          )}
         </p>
       </div>
 
@@ -344,15 +357,19 @@ function AboutSection() {
           <dt className="text-text-muted">
             {t("content.about.versionInfo.currentVersion")}
           </dt>
-          <dd className="font-mono text-text-primary">v0.13.0</dd>
+          <dd className="font-mono text-text-primary">{version}</dd>
           <dt className="text-text-muted">
             {t("content.about.versionInfo.backend")}
           </dt>
-          <dd className="text-text-primary">Go 1.25+</dd>
+          <dd className="text-text-primary">Go 1.25.5+</dd>
           <dt className="text-text-muted">
             {t("content.about.versionInfo.frontend")}
           </dt>
-          <dd className="text-text-primary">React 18 + TypeScript</dd>
+          <dd className="text-text-primary">React 19.2 + TypeScript</dd>
+          <dt className="text-text-muted">
+            {t("content.about.versionInfo.runtime", "Runtime")}
+          </dt>
+          <dd className="text-text-primary">Node.js 25.2</dd>
         </dl>
       </div>
     </div>

@@ -112,19 +112,52 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 			"serverPort":    s.config.Iperf.ServerPort,
 			"enableServer":  s.config.Iperf.EnableServer,
 		},
-		"fabOptions": map[string]interface{}{
-			"runLink":             s.config.FABOptions.RunLink,
-			"runSwitch":           s.config.FABOptions.RunSwitch,
-			"runVLAN":             s.config.FABOptions.RunVLAN,
-			"runIPConfig":         s.config.FABOptions.RunIPConfig,
-			"runGateway":          s.config.FABOptions.RunGateway,
-			"runDNS":              s.config.FABOptions.RunDNS,
-			"runHealthChecks":     s.config.FABOptions.RunHealthChecks,
-			"runNetworkDiscovery": s.config.FABOptions.RunNetworkDiscovery,
-			"runSpeedtest":        s.config.FABOptions.RunSpeedtest,
-			"runIperf":            s.config.FABOptions.RunIperf,
-			"runPerformance":      s.config.FABOptions.RunPerformance,
-			"autoScanOnLink":      s.config.FABOptions.AutoScanOnLink,
+		// Card visibility and auto-run settings (renamed from fabOptions for clarity)
+		"cardSettings": map[string]interface{}{
+			"link": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunLink,
+				"autoRunOnLink": s.config.FABOptions.RunLink,
+			},
+			"switch": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunSwitch,
+				"autoRunOnLink": s.config.FABOptions.RunSwitch,
+			},
+			"vlan": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunVLAN,
+				"autoRunOnLink": s.config.FABOptions.RunVLAN,
+			},
+			"network": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunIPConfig,
+				"autoRunOnLink": s.config.FABOptions.RunIPConfig,
+			},
+			"gateway": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunGateway,
+				"autoRunOnLink": s.config.FABOptions.RunGateway,
+			},
+			"dns": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunDNS,
+				"autoRunOnLink": s.config.FABOptions.RunDNS,
+			},
+			"healthChecks": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunHealthChecks,
+				"autoRunOnLink": s.config.FABOptions.RunHealthChecks,
+			},
+			"networkDiscovery": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunNetworkDiscovery,
+				"autoRunOnLink": s.config.FABOptions.AutoScanOnLink,
+			},
+			"performance": map[string]interface{}{
+				"visible":       s.config.FABOptions.RunPerformance,
+				"autoRunOnLink": s.config.FABOptions.RunPerformance,
+				"speedtest": map[string]interface{}{
+					"enabled":       s.config.FABOptions.RunSpeedtest,
+					"autoRunOnLink": s.config.FABOptions.RunSpeedtest,
+				},
+				"iperf": map[string]interface{}{
+					"enabled":       s.config.FABOptions.RunIperf,
+					"autoRunOnLink": s.config.FABOptions.RunIperf,
+				},
+			},
 		},
 		"displayOptions": map[string]interface{}{
 			"showPublicIP": s.config.DisplayOptions.ShowPublicIP,

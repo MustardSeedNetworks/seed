@@ -295,6 +295,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
           <AutoSaveIndicator status={networkDiscoveryStatus} />
         </div>
       }
+      defaultOpen={true}
     >
       <div className="stack">
         {/* Enable Toggle */}

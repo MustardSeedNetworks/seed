@@ -772,10 +772,10 @@ func DefaultConfig() *Config {
 			RunGateway:          true,
 			RunDNS:              true,
 			RunHealthChecks:     true,
-			RunNetworkDiscovery: false,
-			RunSpeedtest:        false,
+			RunNetworkDiscovery: true, // Enable by default (fixes Network Discovery card visibility)
+			RunSpeedtest:        true, // Enable by default (fixes Performance card visibility)
 			RunIperf:            false,
-			RunPerformance:      false,
+			RunPerformance:      true, // Enable by default (fixes Performance card visibility)
 			AutoScanOnLink:      true,
 		},
 		DisplayOptions: DisplayOptionsConfig{

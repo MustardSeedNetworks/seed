@@ -9,7 +9,7 @@ Type=simple
 User=krisarmstrong
 Group=krisarmstrong
 WorkingDirectory=/home/krisarmstrong/seed
-ExecStartPre=/usr/sbin/setcap cap_net_raw=+ep /home/krisarmstrong/seed/seed
+ExecStartPre=+/usr/sbin/setcap cap_net_raw=+ep /home/krisarmstrong/seed/seed
 ExecStart=/home/krisarmstrong/seed/seed
 Restart=on-failure
 RestartSec=5

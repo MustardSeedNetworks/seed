@@ -454,11 +454,11 @@ describe("App", () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        // InterfaceSelector uses a button with aria-haspopup="listbox" instead of native select
-        const interfaceButton = screen.getByRole("button", {
-          name: /select network interface/i,
+        // HeaderBar has separate buttons for Ethernet and WiFi interface selection
+        const ethernetButton = screen.getByRole("button", {
+          name: /select ethernet interface/i,
         });
-        expect(interfaceButton).toBeInTheDocument();
+        expect(ethernetButton).toBeInTheDocument();
       });
     });
 

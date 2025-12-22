@@ -88,18 +88,18 @@
   --color-brand-secondary-dark: #4e342e;
   */
 
-  /* Surface Colors - Standard elevation pattern */
-  --color-surface-base: #f8f8f8; /* Snow - page background */
-  --color-surface-raised: #ffffff; /* Pure White - cards, modals */
-  --color-surface-border: #e5e5e5; /* Cloud - borders, dividers */
-  --color-surface-hover: #e5e5e5; /* Cloud - hover backgrounds */
-  --color-surface-sunken: #e5e5e5; /* Cloud - inset areas */
+  /* Surface Colors - Dark slate palette (significantly reduced brightness) */
+  --color-surface-base: #a8a098; /* Warm slate - page background */
+  --color-surface-raised: #b8b0a8; /* Light slate - cards, modals */
+  --color-surface-border: #888078; /* Dark taupe - borders, dividers */
+  --color-surface-hover: #98908a; /* Medium slate - hover backgrounds */
+  --color-surface-sunken: #989088; /* Inset slate - inset areas */
 
-  /* Text Colors */
-  --color-text-primary: #1a1a1a; /* Midnight - main text */
-  --color-text-secondary: #333333; /* Charcoal - secondary text */
-  --color-text-muted: #666666; /* Slate - subtle text, captions */
-  --color-text-accent: #2d7a3e; /* Seed Green - links, highlights */
+  /* Text Colors - High contrast for dark backgrounds */
+  --color-text-primary: #1a1612; /* Near black - main text */
+  --color-text-secondary: #2c2620; /* Dark brown - secondary text */
+  --color-text-muted: #4a423a; /* Muted brown - subtle text, captions */
+  --color-text-accent: #1d5a2e; /* Dark Seed Green - links, highlights */
   --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
 
   /* Status Colors - INDUSTRY STANDARD (do not change) */
@@ -177,13 +177,13 @@ body {
     -apple-system,
     "Segoe UI",
     sans-serif;
-  /* Light mode gradient - subtle green tints */
+  /* Light mode gradient - warm off-white with subtle green tints (reduced brightness) */
   background: linear-gradient(
     135deg,
-    #f8f8f8 0%,
-    #e8f5e9 35%,
-    #f1f8e9 65%,
-    #f8f8f8 100%
+    #f2f2ef 0%,
+    #e8f0e5 35%,
+    #edf3eb 65%,
+    #f2f2ef 100%
   );
   background-attachment: fixed;
   min-height: 100vh;

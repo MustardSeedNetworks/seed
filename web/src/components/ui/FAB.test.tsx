@@ -123,11 +123,12 @@ describe("FAB", () => {
   });
 
   it("renders with correct styling", () => {
-    const { container } = render(<FAB />);
+    render(<FAB />);
 
-    const fabButton = container.firstChild;
-    expect(fabButton).toHaveClass("fixed");
-    expect(fabButton).toHaveClass("rounded-full");
+    const button = screen.getByRole("button");
+    // FAB uses radius.full for rounded corners and has shadow
+    expect(button).toHaveClass("rounded-full");
+    expect(button).toHaveClass("shadow-lg");
   });
 
   it("accepts custom className", () => {

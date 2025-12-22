@@ -938,8 +938,11 @@ func TestDefaultFABOptions(t *testing.T) {
 	if !cfg.FABOptions.RunSwitch {
 		t.Error("expected RunSwitch enabled by default")
 	}
-	if cfg.FABOptions.RunSpeedtest {
-		t.Error("expected RunSpeedtest disabled by default")
+	if !cfg.FABOptions.RunSpeedtest {
+		t.Error("expected RunSpeedtest enabled by default")
+	}
+	if !cfg.FABOptions.RunPerformance {
+		t.Error("expected RunPerformance enabled by default")
 	}
 	if !cfg.FABOptions.AutoScanOnLink {
 		t.Error("expected AutoScanOnLink enabled by default")

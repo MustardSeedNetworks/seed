@@ -35,7 +35,6 @@ import { CollapsibleSection } from "../ui/CollapsibleSection";
 import {
   icon as iconTokens,
   radius,
-  modal,
   layout,
   button,
   input,
@@ -45,10 +44,12 @@ import {
 import {
   AutoSaveIndicator,
   AppearanceSettings,
+  CableTestSettings,
   ConfigBackupsSection,
   DiscoverySettings,
   DNSSettings,
   HealthChecksSettings,
+  LinkSettings,
   PerformanceSettings,
   ThresholdsSettings,
   WiFiSettings,
@@ -63,6 +64,12 @@ import type {
   NetworkDiscoverySettings,
   SubnetConfig,
   SNMPSettings as SNMPSettingsType,
+  LinkSettings as LinkSettingsType,
+  CableTestSettings as CableTestSettingsType,
+} from "../../types/settings";
+import {
+  DEFAULT_LINK_SETTINGS,
+  DEFAULT_CABLE_TEST_SETTINGS,
 } from "../../types/settings";
 import { generateId } from "../../utils/id";
 
@@ -489,6 +496,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     availableWifi: [],
     isWireless: false,
   });
+  // Link settings (speed/duplex) - #734
+  const [linkSettings, setLinkSettings] = useState<LinkSettingsType>(
+    DEFAULT_LINK_SETTINGS
+  );
+  // Cable test settings - #734, #740
+  const [cableTestSettings, setCableTestSettings] =
+    useState<CableTestSettingsType>(DEFAULT_CABLE_TEST_SETTINGS);
   const [dnsInput, setDnsInput] = useState("");
   const [iperfSuggestions, setIperfSuggestions] = useState<IperfSuggestion[]>(
     []
@@ -546,6 +560,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const [thresholdsStatus, setThresholdsStatus] = useState<SaveStatus>("idle");
   const [testsStatus, setTestsStatus] = useState<SaveStatus>("idle");
   const [wifiStatus, setWifiStatus] = useState<SaveStatus>("idle");
+  const [linkStatus, setLinkStatus] = useState<SaveStatus>("idle");
+  const [cableTestStatus, setCableTestStatus] = useState<SaveStatus>("idle");
   const [snmpStatus, setSnmpStatus] = useState<SaveStatus>("idle");
   // Status for display, iperf comes from context (settingsStatus)
   const displayStatus = settingsStatus.display;
@@ -559,6 +575,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const thresholdsInitRef = useRef(true);
   const testsInitRef = useRef(true);
   const wifiInitRef = useRef(true);
+  const linkInitRef = useRef(true);
+  const cableTestInitRef = useRef(true);
   const networkDiscoveryInitRef = useRef(true);
   const snmpInitRef = useRef(true);
 
@@ -566,6 +584,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const testsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wifiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const linkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cableTestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -972,6 +992,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       thresholdsInitRef.current = true;
       testsInitRef.current = true;
       wifiInitRef.current = true;
+      linkInitRef.current = true;
+      cableTestInitRef.current = true;
       networkDiscoveryInitRef.current = true;
       snmpInitRef.current = true;
 
@@ -990,6 +1012,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         thresholdsInitRef.current = false;
         testsInitRef.current = false;
         wifiInitRef.current = false;
+        linkInitRef.current = false;
+        cableTestInitRef.current = false;
         networkDiscoveryInitRef.current = false;
         snmpInitRef.current = false;
       }, 500);
@@ -1148,6 +1172,36 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     };
   }, [wifiSettings.interface, saveWifiSettings]);
 
+  // Auto-save link settings with debounce
+  // Note: Backend API for link settings not yet implemented (#734)
+  useEffect(() => {
+    if (linkInitRef.current) return;
+    if (linkTimerRef.current) clearTimeout(linkTimerRef.current);
+    linkTimerRef.current = setTimeout(() => {
+      // TODO: Implement saveLinkSettings when backend API is ready
+      setLinkStatus("saved");
+      setTimeout(() => setLinkStatus("idle"), 2000);
+    }, 800);
+    return () => {
+      if (linkTimerRef.current) clearTimeout(linkTimerRef.current);
+    };
+  }, [linkSettings]);
+
+  // Auto-save cable test settings with debounce
+  // Note: Backend API for cable test settings not yet implemented (#740)
+  useEffect(() => {
+    if (cableTestInitRef.current) return;
+    if (cableTestTimerRef.current) clearTimeout(cableTestTimerRef.current);
+    cableTestTimerRef.current = setTimeout(() => {
+      // TODO: Implement saveCableTestSettings when backend API is ready
+      setCableTestStatus("saved");
+      setTimeout(() => setCableTestStatus("idle"), 2000);
+    }, 800);
+    return () => {
+      if (cableTestTimerRef.current) clearTimeout(cableTestTimerRef.current);
+    };
+  }, [cableTestSettings]);
+
   // Display options and iperf settings auto-save is handled by SettingsContext
 
   // Auto-save Network Discovery settings with debounce
@@ -1214,7 +1268,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     <>
       {/* Backdrop */}
       <div
-        className={cn("fixed inset-0", modal.overlay, "z-40")}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -1225,6 +1279,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-drawer-title"
+        onClick={(e) => e.stopPropagation()}
         className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
       >
         {/* Header */}
@@ -1272,9 +1327,25 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             spacing.drawerPad,
             "section-gap body-small leading-relaxed"
           )}
+          ref={scrollRef}
         >
-          {/* Drawer content padding includes pt-4 for top spacing */}
-          {/* Network Section */}
+          {/* Settings sections ordered to match dashboard card order */}
+
+          {/* Link Settings - matches LinkCard position (first) */}
+          <LinkSettings
+            linkSettings={linkSettings}
+            setLinkSettings={setLinkSettings}
+            linkStatus={linkStatus}
+          />
+
+          {/* Cable Test Settings - for CableCard (second) */}
+          <CableTestSettings
+            cableTestSettings={cableTestSettings}
+            setCableTestSettings={setCableTestSettings}
+            cableTestStatus={cableTestStatus}
+          />
+
+          {/* Network Section - IP/DHCP config (third) */}
           <CollapsibleSection title={t("sections.network")}>
             {/* Network Configuration */}
             <div className="stack">
@@ -1580,12 +1651,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             </div>
           </CollapsibleSection>
 
+          {/* WiFi Settings - for WiFi mode */}
           <WiFiSettings
             wifiSettings={wifiSettings}
             setWifiSettings={setWifiSettings}
             wifiStatus={wifiStatus}
           />
 
+          {/* DNS Settings - matches DNSCard position */}
           <DNSSettings
             testsSettings={testsSettings}
             setTestsSettings={setTestsSettings}

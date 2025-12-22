@@ -92,67 +92,88 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         }));
       }
 
-      // Load card settings (migrate from old fabOptions if present)
+      // Load card settings from new API structure
       if (data.cardSettings && typeof data.cardSettings === "object") {
-        setCardSettings((prev) => ({
-          ...prev,
-          ...(data.cardSettings as Partial<CardSettings>),
-        }));
-      } else if (data.fabOptions && typeof data.fabOptions === "object") {
-        const fabOptions = data.fabOptions as Record<string, unknown>;
+        const cs = data.cardSettings as Record<string, unknown>;
         setCardSettings((prev) => ({
           ...prev,
           link: {
-            enabled: true,
-            autoRunOnLink: (fabOptions.runLink as boolean | undefined) ?? true,
+            enabled: (cs.link as { visible?: boolean })?.visible ?? true,
+            autoRunOnLink:
+              (cs.link as { autoRunOnLink?: boolean })?.autoRunOnLink ?? true,
           },
           switch: {
-            enabled: true,
+            enabled: (cs.switch as { visible?: boolean })?.visible ?? true,
             autoRunOnLink:
-              (fabOptions.runSwitch as boolean | undefined) ?? true,
+              (cs.switch as { autoRunOnLink?: boolean })?.autoRunOnLink ?? true,
           },
           vlan: {
-            enabled: true,
-            autoRunOnLink: (fabOptions.runVLAN as boolean | undefined) ?? true,
+            enabled: (cs.vlan as { visible?: boolean })?.visible ?? true,
+            autoRunOnLink:
+              (cs.vlan as { autoRunOnLink?: boolean })?.autoRunOnLink ?? true,
           },
           network: {
-            enabled: true,
+            enabled: (cs.network as { visible?: boolean })?.visible ?? true,
             autoRunOnLink:
-              (fabOptions.runIPConfig as boolean | undefined) ?? true,
+              (cs.network as { autoRunOnLink?: boolean })?.autoRunOnLink ??
+              true,
           },
           gateway: {
-            enabled: true,
+            enabled: (cs.gateway as { visible?: boolean })?.visible ?? true,
             autoRunOnLink:
-              (fabOptions.runGateway as boolean | undefined) ?? true,
+              (cs.gateway as { autoRunOnLink?: boolean })?.autoRunOnLink ??
+              true,
           },
           dns: {
-            enabled: true,
-            autoRunOnLink: (fabOptions.runDNS as boolean | undefined) ?? true,
+            enabled: (cs.dns as { visible?: boolean })?.visible ?? true,
+            autoRunOnLink:
+              (cs.dns as { autoRunOnLink?: boolean })?.autoRunOnLink ?? true,
           },
           healthChecks: {
-            enabled: true,
+            enabled:
+              (cs.healthChecks as { visible?: boolean })?.visible ?? true,
             autoRunOnLink:
-              (fabOptions.runHealthChecks as boolean | undefined) ?? true,
+              (cs.healthChecks as { autoRunOnLink?: boolean })?.autoRunOnLink ??
+              true,
           },
           networkDiscovery: {
             enabled:
-              (fabOptions.runNetworkDiscovery as boolean | undefined) ?? true,
+              (cs.networkDiscovery as { visible?: boolean })?.visible ?? true,
             autoRunOnLink:
-              (fabOptions.autoScanOnLink as boolean | undefined) ?? true,
+              (cs.networkDiscovery as { autoRunOnLink?: boolean })
+                ?.autoRunOnLink ?? true,
           },
           performance: {
-            enabled: (fabOptions.runPerformance as boolean | undefined) ?? true,
+            enabled: (cs.performance as { visible?: boolean })?.visible ?? true,
             autoRunOnLink:
-              (fabOptions.runPerformance as boolean | undefined) ?? true,
+              (cs.performance as { autoRunOnLink?: boolean })?.autoRunOnLink ??
+              true,
             speedtest: {
-              enabled: (fabOptions.runSpeedtest as boolean | undefined) ?? true,
+              enabled:
+                (
+                  (cs.performance as { speedtest?: { enabled?: boolean } })
+                    ?.speedtest as { enabled?: boolean }
+                )?.enabled ?? true,
               autoRunOnLink:
-                (fabOptions.runSpeedtest as boolean | undefined) ?? true,
+                (
+                  (
+                    cs.performance as {
+                      speedtest?: { autoRunOnLink?: boolean };
+                    }
+                  )?.speedtest as { autoRunOnLink?: boolean }
+                )?.autoRunOnLink ?? true,
             },
             iperf: {
-              enabled: (fabOptions.runIperf as boolean | undefined) ?? false,
+              enabled:
+                (
+                  (cs.performance as { iperf?: { enabled?: boolean } })
+                    ?.iperf as { enabled?: boolean }
+                )?.enabled ?? false,
               autoRunOnLink:
-                (fabOptions.runIperf as boolean | undefined) ?? false,
+                (
+                  (cs.performance as { iperf?: { autoRunOnLink?: boolean } })
+                    ?.iperf as { autoRunOnLink?: boolean }
+                )?.autoRunOnLink ?? false,
             },
           },
         }));

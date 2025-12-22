@@ -1,8 +1,8 @@
 /**
  * ProfileManagement Component
  *
- * Drawer-style profile management interface for MSP profiles (#754).
- * Slides in from the right, similar to SettingsDrawer.
+ * Modal-style profile management interface for MSP profiles (#754).
+ * Centered modal similar to HelpModal.
  *
  * Features:
  * - Profile list with search/filter
@@ -31,7 +31,7 @@ interface ProfileManagementProps {
 }
 
 /**
- * Drawer-style management UI for MSP profiles (create, edit, delete, duplicate, import/export).
+ * Modal-style management UI for MSP profiles (create, edit, delete, duplicate, import/export).
  */
 export function ProfileManagement({ onClose }: ProfileManagementProps) {
   const { t } = useTranslation();
@@ -55,7 +55,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const drawerRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // Filter profiles by search
@@ -69,7 +69,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
     );
   }, [profiles, searchQuery]);
 
-  // Handle ESC key to close drawer
+  // Handle ESC key to close modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -79,7 +79,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
 
     document.addEventListener("keydown", handleKeyDown);
 
-    // Focus the close button when drawer opens
+    // Focus the close button when modal opens
     setTimeout(() => closeButtonRef.current?.focus(), 100);
 
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -145,184 +145,90 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className={cn("fixed inset-0", modal.overlay, "z-40")}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      {/* Modal overlay */}
+      <div className={modal.overlay}>
+        {/* Backdrop */}
+        <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
 
-      {/* Drawer */}
-      <div
-        ref={drawerRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="profile-drawer-title"
-        className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-[32rem] bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
-      >
-        {/* Header */}
+        {/* Modal content */}
         <div
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="profile-modal-title"
           className={cn(
-            layout.flex.between,
-            "pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10"
+            "relative",
+            modal.content,
+            modal.size.lg,
+            "flex flex-col"
           )}
+          style={{ maxHeight: "85vh" }}
         >
-          <div className="stack-xs">
-            <h2 id="profile-drawer-title" className="heading-3">
-              {t("profile.management", "Profile Management")}
-            </h2>
-            <p className="body-small text-text-muted">
-              {t(
-                "profile.managementDesc",
-                "Create and manage client-specific configurations"
-              )}
-            </p>
-          </div>
-          <button
-            ref={closeButtonRef}
-            onClick={onClose}
-            className={cn(
-              "p-2",
-              radius.md,
-              "hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            )}
-            aria-label={t("common.close", "Close")}
-          >
-            <svg
-              className={iconTokens.size.lg}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Actions bar */}
-        <div
-          className={cn(
-            spacing.pad.md,
-            "border-b border-surface-border bg-surface-base flex items-center gap-2"
-          )}
-        >
-          <button
-            type="button"
-            onClick={handleCreate}
-            className={cn(
-              "flex-1",
-              spacing.pad.sm,
-              radius.md,
-              "bg-brand-primary hover:bg-brand-primary-hover text-white body-small font-medium flex items-center justify-center gap-2"
-            )}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            {t("profile.create", "Create Profile")}
-          </button>
-          <button
-            type="button"
-            onClick={handleExport}
-            className={cn(
-              spacing.pad.sm,
-              radius.md,
-              "border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-2"
-            )}
-            title={t("profile.export", "Export")}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Search bar */}
-        <div className={cn(spacing.pad.md)}>
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder={t("profile.searchPlaceholder", "Search profiles...")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={cn(
-                "w-full pl-9 pr-4 py-2",
-                radius.md,
-                "border border-surface-border bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary body-small"
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Error message */}
-        {error && (
+          {/* Header */}
           <div
             className={cn(
-              "mx-4 mb-4",
-              spacing.pad.sm,
-              radius.md,
-              "bg-status-error/10 border border-status-error/20 text-status-error body-small"
+              layout.flex.between,
+              spacing.pad.lg,
+              "border-b border-surface-border shrink-0"
             )}
           >
-            {error}
-          </div>
-        )}
-
-        {/* Loading state */}
-        {isLoading && profiles.length === 0 && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
-            <p className="mt-3 body-small text-text-muted">
-              {t("common.loading", "Loading...")}
-            </p>
-          </div>
-        )}
-
-        {/* Profile list */}
-        <div className={cn(spacing.pad.md, "pt-0")}>
-          {!isLoading && filteredProfiles.length === 0 ? (
-            <div className="text-center py-8">
+            <div>
+              <h2 id="profile-modal-title" className="heading-2">
+                {t("profile.management", "Profile Management")}
+              </h2>
+              <p className="body-small text-text-muted mt-1">
+                {t(
+                  "profile.managementDesc",
+                  "Create and manage client-specific configurations"
+                )}
+              </p>
+            </div>
+            <button
+              ref={closeButtonRef}
+              onClick={onClose}
+              className={cn(
+                "p-2",
+                radius.md,
+                "hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              )}
+              aria-label={t("common.close", "Close")}
+            >
               <svg
-                className="mx-auto w-12 h-12 text-text-muted mb-3"
+                className={iconTokens.size.lg}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Actions bar */}
+          <div
+            className={cn(
+              spacing.pad.md,
+              "border-b border-surface-border bg-surface-base flex items-center gap-2 shrink-0"
+            )}
+          >
+            <button
+              type="button"
+              onClick={handleCreate}
+              className={cn(
+                spacing.pad.sm,
+                "px-4",
+                radius.md,
+                "bg-brand-primary hover:bg-brand-primary-hover text-text-inverse body-small font-medium flex items-center gap-2"
+              )}
+            >
+              <svg
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -330,42 +236,160 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
                 />
               </svg>
-              <h3 className="body-small font-medium text-text-primary mb-1">
-                {searchQuery
-                  ? t("profile.noResults", "No profiles found")
-                  : t("profile.noProfiles", "No profiles yet")}
-              </h3>
-              <p className="caption text-text-muted mb-4">
-                {searchQuery
-                  ? t(
-                      "profile.noResultsDesc",
-                      "Try adjusting your search criteria"
-                    )
-                  : t(
-                      "profile.noProfilesDesc",
-                      "Create your first profile to get started"
-                    )}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredProfiles.map((profile) => (
-                <ProfileCard
-                  key={profile.id}
-                  profile={profile}
-                  isActive={profile.id === activeProfile?.id}
-                  onEdit={() => handleEdit(profile)}
-                  onDelete={() => setDeleteConfirm(profile.id)}
-                  onDuplicate={() => handleDuplicate(profile)}
-                  onSetActive={() => handleSetActive(profile.id)}
+              {t("profile.create", "Create Profile")}
+            </button>
+            <button
+              type="button"
+              onClick={handleExport}
+              className={cn(
+                spacing.pad.sm,
+                "px-4",
+                radius.md,
+                "border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-2"
+              )}
+              title={t("profile.export", "Export All")}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 />
-              ))}
+              </svg>
+              {t("profile.export", "Export")}
+            </button>
+
+            {/* Search bar */}
+            <div className="relative flex-1 ml-4">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder={t(
+                  "profile.searchPlaceholder",
+                  "Search profiles..."
+                )}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={cn(
+                  "w-full pl-9 pr-4 py-2",
+                  radius.md,
+                  "border border-surface-border bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary body-small"
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Error message */}
+          {error && (
+            <div
+              className={cn(
+                "mx-4 mt-4",
+                spacing.pad.sm,
+                radius.md,
+                "bg-status-error/10 border border-status-error/20 text-status-error body-small shrink-0"
+              )}
+            >
+              {error}
             </div>
           )}
+
+          {/* Scrollable content */}
+          <div className={cn(spacing.pad.lg, "overflow-y-auto flex-1")}>
+            {/* Loading state */}
+            {isLoading && profiles.length === 0 && (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
+                <p className="mt-3 body-small text-text-muted">
+                  {t("common.loading", "Loading...")}
+                </p>
+              </div>
+            )}
+
+            {/* Profile grid */}
+            {!isLoading && filteredProfiles.length === 0 ? (
+              <div className="text-center py-12">
+                <svg
+                  className="mx-auto w-16 h-16 text-text-muted mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+                <h3 className="body font-medium text-text-primary mb-2">
+                  {searchQuery
+                    ? t("profile.noResults", "No profiles found")
+                    : t("profile.noProfiles", "No profiles yet")}
+                </h3>
+                <p className="body-small text-text-muted mb-6">
+                  {searchQuery
+                    ? t(
+                        "profile.noResultsDesc",
+                        "Try adjusting your search criteria"
+                      )
+                    : t(
+                        "profile.noProfilesDesc",
+                        "Create your first profile to get started"
+                      )}
+                </p>
+                {!searchQuery && (
+                  <button
+                    type="button"
+                    onClick={handleCreate}
+                    className={cn(
+                      spacing.pad.sm,
+                      "px-4",
+                      radius.md,
+                      "bg-brand-primary hover:bg-brand-primary-hover text-text-inverse body-small font-medium"
+                    )}
+                  >
+                    {t("profile.createFirst", "Create Your First Profile")}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredProfiles.map((profile) => (
+                  <ProfileCard
+                    key={profile.id}
+                    profile={profile}
+                    isActive={profile.id === activeProfile?.id}
+                    onEdit={() => handleEdit(profile)}
+                    onDelete={() => setDeleteConfirm(profile.id)}
+                    onDuplicate={() => handleDuplicate(profile)}
+                    onSetActive={() => handleSetActive(profile.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -552,7 +576,7 @@ function ProfileCard({
               className={cn(
                 spacing.chip.sm,
                 radius.md,
-                "bg-brand-primary hover:bg-brand-primary-hover text-white caption font-medium flex items-center gap-1.5 ml-auto"
+                "bg-brand-primary hover:bg-brand-primary-hover text-text-inverse caption font-medium flex items-center gap-1.5 ml-auto"
               )}
               title={t("profile.activate", "Activate")}
             >
@@ -598,7 +622,7 @@ function DeleteConfirmModal({
   const { t } = useTranslation();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/50" onClick={onCancel} />
       <div
         className={cn(
@@ -640,7 +664,7 @@ function DeleteConfirmModal({
               spacing.pad.sm,
               "px-4",
               radius.md,
-              "bg-status-error hover:bg-status-error/90 text-white body-small font-medium disabled:opacity-50"
+              "bg-status-error hover:bg-status-error/90 text-text-inverse body-small font-medium disabled:opacity-50"
             )}
           >
             {isLoading

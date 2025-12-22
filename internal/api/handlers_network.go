@@ -202,7 +202,8 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
 		return
 	}
-	interfaces := s.netManager.GetInterfaces()
+	// Return only physical interfaces (ethernet and wifi) - excludes loopback, docker, veth, etc.
+	interfaces := s.netManager.GetPhysicalInterfaces()
 
 	sendJSONResponse(w, nil, http.StatusOK, interfaces)
 }

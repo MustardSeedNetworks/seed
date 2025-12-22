@@ -354,16 +354,16 @@ export const HealthCheckCard = memo(function HealthCheckCard({
               100,
               Math.max(0, (seg.value / total) * 100)
             );
-            const widthClass = `w-[${widthPercent}%]`;
             return (
               <div
                 key={seg.label}
                 className={cn(
+                  "h-full",
                   seg.color,
-                  widthClass,
                   i === 0 ? "rounded-l-full" : "",
                   i === segments.length - 1 ? "rounded-r-full" : ""
                 )}
+                style={{ width: `${widthPercent}%` }}
                 title={`${seg.label}: ${fmt(seg.value)}${seg.status && seg.status !== "success" ? ` (${seg.status})` : ""}`}
               />
             );
