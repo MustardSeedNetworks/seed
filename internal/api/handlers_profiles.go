@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
@@ -357,7 +358,7 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
 }
 
-// handleSetActiveProfile sets the active profile.
+// handleSetActiveProfile sets the active profile and applies its settings.
 func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -396,6 +397,23 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), err.Error()) // fixes #694
 		return
+	}
+
+	// Apply profile settings to the active config (fixes #781)
+	if profile.ConfigJSON != "" {
+		profileSettings, err := config.ParseProfileSettings(profile.ConfigJSON)
+		if err != nil {
+			logger.Warn("Failed to parse profile settings, using defaults", "error", err, "profile_id", profile.ID)
+		} else {
+			s.config.Lock()
+			profileSettings.ApplyTo(s.config)
+			// Save updated config to file
+			if saveErr := s.config.Save(s.configPath); saveErr != nil {
+				logger.Warn("Failed to save config after profile switch", "error", saveErr)
+			}
+			s.config.Unlock()
+			logger.Info("Applied profile settings", "profile_id", profile.ID, "profile_name", profile.Name)
+		}
 	}
 
 	// Broadcast profile change via WebSocket
