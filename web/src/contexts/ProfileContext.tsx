@@ -108,9 +108,12 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
       }
     } catch (err) {
       if (isMountedRef.current) {
+        // Don't show session expired errors in profile panel - handled globally
         const message =
           err instanceof Error ? err.message : "Failed to fetch profiles";
-        setError(message);
+        if (!message.toLowerCase().includes("session")) {
+          setError(message);
+        }
         logger.error(LogComponents.PROFILES, "Failed to fetch profiles", err);
       }
     } finally {
@@ -130,11 +133,13 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     } catch (err) {
       if (isMountedRef.current) {
         // Active profile may not exist yet, which is okay
-        if (!(err instanceof Error && err.message.includes("404"))) {
-          const message =
-            err instanceof Error
-              ? err.message
-              : "Failed to fetch active profile";
+        // Don't show session expired errors - handled globally
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch active profile";
+        if (
+          !(err instanceof Error && err.message.includes("404")) &&
+          !message.toLowerCase().includes("session")
+        ) {
           setError(message);
           logger.error(
             LogComponents.PROFILES,
