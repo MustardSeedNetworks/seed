@@ -37,8 +37,8 @@ interface HeaderBarProps {
 }
 
 /**
- * Primary application header with profile selector, interface switcher, theme toggle, and chrome controls.
- * Renders the top bar used across the app shell.
+ * Primary application header with seed logo (connection-colored), profile selector,
+ * interface switcher, theme toggle, and chrome controls.
  */
 export const HeaderBar = memo(function HeaderBar({
   wsStatus,
@@ -52,9 +52,6 @@ export const HeaderBar = memo(function HeaderBar({
   currentInterface,
   isWifi,
   onInterfaceChange,
-  hasEthernet,
-  hasWifiInterface,
-  switchToInterfaceType,
   toggleTheme,
   isDark,
   onHelpOpen,
@@ -62,6 +59,33 @@ export const HeaderBar = memo(function HeaderBar({
   logout,
 }: HeaderBarProps) {
   const { t } = useTranslation();
+
+  // Get seed icon color based on connection status
+  const getSeedColor = () => {
+    switch (wsStatus) {
+      case "connected":
+        return "text-status-success";
+      case "connecting":
+        return "text-status-warning";
+      case "disconnected":
+      case "error":
+        return "text-status-error";
+    }
+  };
+
+  // Get connection status tooltip
+  const getStatusTooltip = () => {
+    switch (wsStatus) {
+      case "connected":
+        return t("status.connected", "Connected");
+      case "connecting":
+        return t("status.connecting", "Connecting...");
+      case "disconnected":
+        return t("status.disconnected", "Disconnected");
+      case "error":
+        return t("status.error", "Connection Error");
+    }
+  };
 
   return (
     <header className="border-b border-surface-border bg-surface-raised">
@@ -75,20 +99,41 @@ export const HeaderBar = memo(function HeaderBar({
           spacing.gap.compact
         )}
       >
-        {/* Logo and title - hide title on very small screens */}
-        <div className={cn(layout.inline.default, "min-w-0")}>
-          <span className="heading-3 text-brand-primary shrink-0">◉</span>
-          <div className="min-w-0">
-            <h1 className="heading-4 hidden xs:block sm:block truncate">
-              {t("app.title")}
-            </h1>
-            <div className="hidden sm:block">
-              <ConnectionStatus status={wsStatus} onReconnect={onReconnect} />
-            </div>
-          </div>
-        </div>
+        {/* Logo and title */}
+        <button
+          className={cn(
+            layout.inline.default,
+            "min-w-0 group",
+            wsStatus !== "connected" && "cursor-pointer"
+          )}
+          onClick={wsStatus !== "connected" ? onReconnect : undefined}
+          title={getStatusTooltip()}
+          aria-label={
+            wsStatus !== "connected"
+              ? t("status.clickToReconnect", "Click to reconnect")
+              : getStatusTooltip()
+          }
+        >
+          {/* Seed icon - color indicates connection status */}
+          <svg
+            className={cn(
+              "w-7 h-7 shrink-0 transition-colors",
+              getSeedColor(),
+              wsStatus === "connecting" && "animate-pulse",
+              wsStatus !== "connected" && "group-hover:opacity-80"
+            )}
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93H13v-.93zM13 7h5.24c.25.31.48.65.68 1H13V7zm0 3h6.74c.08.33.15.66.19 1H13v-1zm0 9.93V19h2.87c-.87.48-1.84.8-2.87.93zM18.24 17H13v-1h5.92c-.2.35-.43.69-.68 1zm1.5-3H13v-1h6.93c-.04.34-.11.67-.19 1z" />
+          </svg>
+          <h1 className="heading-4 hidden xs:block sm:block truncate text-text-primary">
+            {t("app.title")}
+          </h1>
+        </button>
 
-        {/* Controls */}
+        {/* Icon toolbar */}
         <div
           className={cn(
             "flex items-center",
@@ -105,86 +150,7 @@ export const HeaderBar = memo(function HeaderBar({
             loading={profilesLoading}
           />
 
-          {/* Quick mode toggle: Ethernet vs Wi-Fi with icons */}
-          <div
-            className={cn(
-              layout.inline.default,
-              "bg-surface-base border border-surface-border",
-              radius.full
-            )}
-          >
-            <button
-              type="button"
-              onClick={() => switchToInterfaceType("ethernet")}
-              disabled={!hasEthernet}
-              aria-label={t("interface.ethernet", "Ethernet")}
-              title={t("interface.ethernet", "Ethernet")}
-              className={cn(
-                spacing.pad.xs,
-                radius.full,
-                "transition",
-                !isWifi
-                  ? "bg-brand-primary text-text-inverse"
-                  : "text-text-primary hover:bg-surface-hover",
-                !hasEthernet && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              {/* Cable/Ethernet icon */}
-              <svg
-                className={iconTokens.size.md}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => switchToInterfaceType("wifi")}
-              aria-label={t("interface.wifi", "Wi-Fi")}
-              title={
-                hasWifiInterface
-                  ? t("interface.wifi", "Wi-Fi")
-                  : t(
-                      "interface.wifiNotDetected",
-                      "Wi-Fi (no adapter detected)"
-                    )
-              }
-              className={cn(
-                spacing.pad.xs,
-                radius.full,
-                "transition",
-                isWifi
-                  ? "bg-brand-primary text-text-inverse"
-                  : "text-text-primary hover:bg-surface-hover"
-              )}
-            >
-              {/* Wi-Fi icon */}
-              <svg
-                className={iconTokens.size.md}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* Interface selector with grouped dropdown */}
+          {/* Interface selector (wrench icon with dropdown) */}
           <InterfaceSelector
             interfaces={interfaces}
             currentInterface={currentInterface}
@@ -204,6 +170,11 @@ export const HeaderBar = memo(function HeaderBar({
               isDark
                 ? t("accessibility.switchToLightMode")
                 : t("accessibility.switchToDarkMode")
+            }
+            title={
+              isDark
+                ? t("accessibility.switchToLightMode", "Switch to light mode")
+                : t("accessibility.switchToDarkMode", "Switch to dark mode")
             }
           >
             {isDark ? (
@@ -231,32 +202,6 @@ export const HeaderBar = memo(function HeaderBar({
             )}
           </button>
 
-          {/* Help */}
-          <button
-            className={cn(
-              radius.md,
-              spacing.pad.sm,
-              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
-            )}
-            onClick={onHelpOpen}
-            aria-label={t("accessibility.openHelp")}
-          >
-            <svg
-              className={iconTokens.size.md}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </button>
-
           {/* Settings */}
           <button
             className={cn(
@@ -266,6 +211,7 @@ export const HeaderBar = memo(function HeaderBar({
             )}
             onClick={onSettingsOpen}
             aria-label={t("accessibility.openSettings")}
+            title={t("settings.title", "Settings")}
           >
             <svg
               className={iconTokens.size.md}
@@ -289,26 +235,43 @@ export const HeaderBar = memo(function HeaderBar({
             </svg>
           </button>
 
-          {/* Logout buttons */}
+          {/* Help */}
           <button
             className={cn(
               radius.md,
               spacing.pad.sm,
-              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary body-small hidden sm:block touch-manipulation"
+              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
             )}
-            onClick={logout}
-            aria-label={t("buttons.logout")}
+            onClick={onHelpOpen}
+            aria-label={t("accessibility.openHelp")}
+            title={t("help.title", "Help")}
           >
-            {t("buttons.logout")}
+            <svg
+              className={iconTokens.size.md}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
           </button>
+
+          {/* Logout - icon only */}
           <button
             className={cn(
               radius.md,
               spacing.pad.sm,
-              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary sm:hidden touch-manipulation"
+              "hover:bg-surface-hover active:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 focus:ring-offset-surface-raised touch-manipulation"
             )}
             onClick={logout}
             aria-label={t("buttons.logout")}
+            title={t("buttons.logout", "Logout")}
           >
             <svg
               className={iconTokens.size.md}
@@ -328,29 +291,71 @@ export const HeaderBar = memo(function HeaderBar({
         </div>
       </div>
 
-      {/* Mobile connection status */}
-      <div
-        className={cn(
-          "sm:hidden",
-          spacing.margin.top.inline,
-          layout.flex.center,
-          spacing.mainPadding.x,
-          spacing.padding.bottom.inline
-        )}
-      >
-        <ConnectionStatus status={wsStatus} onReconnect={onReconnect} />
-      </div>
+      {/* Mobile connection status - visible on small screens */}
+      {wsStatus !== "connected" && (
+        <div
+          className={cn(
+            "sm:hidden",
+            spacing.mainPadding.x,
+            spacing.padding.bottom.inline,
+            layout.flex.center
+          )}
+        >
+          <button
+            onClick={onReconnect}
+            className={cn(
+              "caption flex items-center gap-1.5",
+              wsStatus === "connecting"
+                ? "text-status-warning"
+                : "text-status-error"
+            )}
+          >
+            {wsStatus === "connecting" ? (
+              <>
+                <svg
+                  className={cn(iconTokens.size.sm, "animate-spin")}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                  />
+                </svg>
+                {t("status.connecting", "Connecting...")}
+              </>
+            ) : (
+              <>
+                <span>●</span>
+                {t("status.tapToReconnect", "Tap to reconnect")}
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </header>
   );
 });
 
+// Export ConnectionStatus for backwards compatibility if needed elsewhere
 interface ConnectionStatusProps {
   status: WSStatus;
   onReconnect: () => void;
 }
 
 /**
- * Displays WebSocket connection status and a reconnect button for small screens.
+ * Displays WebSocket connection status and a reconnect button.
+ * @deprecated Use the seed icon in HeaderBar which shows status via color
  */
 export function ConnectionStatus({
   status,
@@ -358,9 +363,6 @@ export function ConnectionStatus({
 }: ConnectionStatusProps) {
   const { t } = useTranslation("common");
 
-  /**
-   * Provide human-friendly labels and styling for WebSocket status.
-   */
   function getStatusLabel(s: WSStatus): string {
     switch (s) {
       case "connecting":
