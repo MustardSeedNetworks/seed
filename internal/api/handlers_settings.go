@@ -2,11 +2,14 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/validation"
 )
@@ -134,6 +137,8 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	ctx := r.Context()
+
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
@@ -161,7 +166,63 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Also save settings to the active profile (fixes #781)
+	if s.db != nil {
+		s.saveSettingsToActiveProfile(ctx, logger)
+	}
+
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+// saveSettingsToActiveProfile saves current settings to the active profile's ConfigJSON.
+// This ensures profile-specific settings are persisted (fixes #781).
+func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.Logger) {
+	// Get active profile ID
+	activeID, err := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile)
+	if err != nil || activeID == "" {
+		// No active profile, try to get default
+		defaultProfile, err := s.db.Profiles().GetDefault(ctx)
+		if err != nil {
+			logger.Debug("No active or default profile to save settings to")
+			return
+		}
+		activeID = defaultProfile.ID
+	}
+
+	// Get the profile
+	profile, err := s.db.Profiles().Get(ctx, activeID)
+	if err != nil {
+		logger.Warn("Failed to get active profile for settings save", "error", err, "profile_id", activeID)
+		return
+	}
+
+	// Extract current settings from config
+	profileSettings := config.NewProfileSettings()
+	profileSettings.FromConfig(s.config)
+
+	// Preserve existing notes if any
+	if profile.ConfigJSON != "" {
+		existingSettings, err := config.ParseProfileSettings(profile.ConfigJSON)
+		if err == nil && existingSettings.Notes != "" {
+			profileSettings.Notes = existingSettings.Notes
+		}
+	}
+
+	// Serialize to JSON
+	configJSON, err := profileSettings.ToJSON()
+	if err != nil {
+		logger.Warn("Failed to serialize profile settings", "error", err)
+		return
+	}
+
+	// Update profile
+	profile.ConfigJSON = configJSON
+	if err := s.db.Profiles().Update(ctx, profile); err != nil {
+		logger.Warn("Failed to save settings to profile", "error", err, "profile_id", profile.ID)
+		return
+	}
+
+	logger.Debug("Saved settings to active profile", "profile_id", profile.ID, "profile_name", profile.Name)
 }
 
 // applyThresholdUpdates applies threshold configuration updates.
