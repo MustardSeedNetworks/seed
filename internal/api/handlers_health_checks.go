@@ -435,9 +435,11 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	// (Save acquires RLock which deadlocks if Lock is held)
 	s.config.Unlock()
 
-	// Save config to file (no longer holding lock)
+	// Save config to file (no longer holding lock) - fixes #735
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Warn("Failed to save config", "error", err)
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), err.Error())
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{

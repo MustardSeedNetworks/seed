@@ -406,6 +406,9 @@
         "fingerprinting": {
           "$ref": "#/$defs/FingerprintingConfig"
         },
+        "profiler": {
+          "$ref": "#/$defs/DeviceProfilerConfig"
+        },
         "ipv6_enabled": {
           "type": "boolean",
           "description": "Enable IPv6 Neighbor Discovery Protocol (NDP) scanning",
@@ -421,8 +424,11 @@
       "properties": {
         "passive_listen": {
           "type": "boolean",
-          "description": "Listen for LLDP, CDP, EDP, DHCP",
+          "description": "Legacy: enables all passive protocols",
           "default": true
+        },
+        "passive_protocols": {
+          "$ref": "#/$defs/PassiveProtocolConfig"
         },
         "arp_scan": {
           "type": "boolean",
@@ -437,6 +443,9 @@
         "port_scan": {
           "$ref": "#/$defs/PortScanConfig"
         },
+        "tcp_probe": {
+          "$ref": "#/$defs/TCPProbeConfig"
+        },
         "traceroute": {
           "type": "boolean",
           "description": "Path discovery",
@@ -446,6 +455,86 @@
           "type": "boolean",
           "description": "SNMP device interrogation",
           "default": false
+        }
+      }
+    },
+    "PassiveProtocolConfig": {
+      "type": "object",
+      "description": "Granular control over passive discovery protocols",
+      "additionalProperties": false,
+      "properties": {
+        "lldp": {
+          "type": "boolean",
+          "description": "IEEE 802.1AB Link Layer Discovery Protocol",
+          "default": true
+        },
+        "cdp": {
+          "type": "boolean",
+          "description": "Cisco Discovery Protocol",
+          "default": true
+        },
+        "edp": {
+          "type": "boolean",
+          "description": "Extreme Discovery Protocol",
+          "default": true
+        },
+        "ndp": {
+          "type": "boolean",
+          "description": "IPv6 Neighbor Discovery Protocol",
+          "default": true
+        }
+      }
+    },
+    "TCPProbeConfig": {
+      "type": "object",
+      "description": "TCP connection probing configuration",
+      "additionalProperties": false,
+      "properties": {
+        "timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "Connection timeout",
+          "default": "2s"
+        },
+        "workers": {
+          "type": "integer",
+          "description": "Concurrent probe workers",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    },
+    "DeviceProfilerConfig": {
+      "type": "object",
+      "description": "Automatic device profiling configuration",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable automatic profiling",
+          "default": true
+        },
+        "timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "Profile operation timeout",
+          "default": "2s"
+        },
+        "max_concurrent": {
+          "type": "integer",
+          "description": "Max concurrent profile operations",
+          "minimum": 1,
+          "maximum": 50,
+          "default": 5
+        },
+        "quick_ports": {
+          "type": "array",
+          "description": "Quick scan ports for profiling",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "default": [22, 80, 443, 8080]
         }
       }
     },
@@ -469,6 +558,11 @@
           "type": "string",
           "description": "Comma-separated UDP ports or ranges",
           "default": ""
+        },
+        "banner_timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "Timeout for banner grabbing",
+          "default": "2s"
         }
       }
     },

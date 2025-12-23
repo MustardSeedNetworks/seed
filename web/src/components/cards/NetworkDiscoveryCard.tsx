@@ -317,6 +317,37 @@ function formatLastSeen(
   return t("discovery.dAgo", { day: Math.floor(diffSec / 86400) });
 }
 
+/**
+ * Convert host IP/CIDR to network address (fixes #738)
+ * e.g., "192.168.64.7/24" -> "192.168.64.0/24"
+ */
+function calculateNetworkAddress(cidr: string): string {
+  const [ip, maskStr] = cidr.split("/");
+  if (!ip || !maskStr) return cidr;
+
+  const mask = parseInt(maskStr, 10);
+  if (isNaN(mask) || mask < 0 || mask > 32) return cidr;
+
+  const octets = ip.split(".").map(Number);
+  if (octets.length !== 4 || octets.some(isNaN)) return cidr;
+
+  // Calculate network mask and apply to IP
+  const netmask = (0xffffffff << (32 - mask)) >>> 0;
+  const ipInt =
+    ((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3]) >>>
+    0;
+  const networkInt = (ipInt & netmask) >>> 0;
+
+  const networkOctets = [
+    (networkInt >>> 24) & 0xff,
+    (networkInt >>> 16) & 0xff,
+    (networkInt >>> 8) & 0xff,
+    networkInt & 0xff,
+  ];
+
+  return `${networkOctets.join(".")}/${mask}`;
+}
+
 // Discovery method colors - from theme tokens (dark mode aware)
 // These use colored backgrounds for visual distinction between methods
 
@@ -580,10 +611,12 @@ function DiscoverySummary({
         </div>
       </div>
 
-      {/* Network info row */}
+      {/* Network info row - fixes #738: show network address, not host IP */}
       <div className="flex items-center justify-between caption text-text-muted">
         <span className="font-mono">
-          {status.subnet || t("discovery.unknownSubnet")}
+          {status.subnet
+            ? calculateNetworkAddress(status.subnet)
+            : t("discovery.unknownSubnet")}
         </span>
         <span>
           {deviceCount === 1

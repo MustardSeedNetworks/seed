@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -147,6 +148,7 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 
 // NetworkDiscoverySettingsResponse represents network discovery settings.
 type NetworkDiscoverySettingsResponse struct {
+	// Legacy fields (backward compatibility)
 	Enabled        bool   `json:"enabled"`
 	ARPScanWorkers int    `json:"arpScanWorkers"`
 	PingTimeoutMs  int64  `json:"pingTimeoutMs"`
@@ -154,6 +156,70 @@ type NetworkDiscoverySettingsResponse struct {
 	AutoScan       bool   `json:"autoScan"`
 	ScanIntervalMs int64  `json:"scanIntervalMs"`
 	OUIFilePath    string `json:"ouiFilePath"`
+
+	// New profile-based configuration (fixes #773, #774)
+	Profile        string                 `json:"profile"`
+	CustomOptions  CustomOptionsResponse  `json:"customOptions"`
+	Timing         TimingResponse         `json:"timing"`
+	Profiler       ProfilerResponse       `json:"profiler"`
+	Fingerprinting FingerprintingResponse `json:"fingerprinting"`
+	IPv6Enabled    bool                   `json:"ipv6Enabled"`
+}
+
+// PassiveProtocolResponse represents granular passive protocol settings.
+type PassiveProtocolResponse struct {
+	LLDP bool `json:"lldp"`
+	CDP  bool `json:"cdp"`
+	EDP  bool `json:"edp"`
+	NDP  bool `json:"ndp"`
+}
+
+// PortScanResponse represents port scanning settings.
+type PortScanResponse struct {
+	Enabled         bool   `json:"enabled"`
+	TCPPorts        string `json:"tcpPorts"`
+	UDPPorts        string `json:"udpPorts"`
+	BannerTimeoutMs int64  `json:"bannerTimeoutMs"`
+}
+
+// TCPProbeSettingsResponse represents TCP probe settings in the discovery config.
+type TCPProbeSettingsResponse struct {
+	TimeoutMs int64 `json:"timeoutMs"`
+	Workers   int   `json:"workers"`
+}
+
+// CustomOptionsResponse represents custom discovery options.
+type CustomOptionsResponse struct {
+	PassiveListen    bool                     `json:"passiveListen"`
+	PassiveProtocols PassiveProtocolResponse  `json:"passiveProtocols"`
+	ARPScan          bool                     `json:"arpScan"`
+	ICMPScan         bool                     `json:"icmpScan"`
+	PortScan         PortScanResponse         `json:"portScan"`
+	TCPProbe         TCPProbeSettingsResponse `json:"tcpProbe"`
+	Traceroute       bool                     `json:"traceroute"`
+	SNMPQuery        bool                     `json:"snmpQuery"`
+}
+
+// TimingResponse represents discovery timing settings.
+type TimingResponse struct {
+	ProbeIntervalMs  int64 `json:"probeIntervalMs"`
+	RescanIntervalMs int64 `json:"rescanIntervalMs"`
+	Workers          int   `json:"workers"`
+}
+
+// ProfilerResponse represents device profiler settings.
+type ProfilerResponse struct {
+	Enabled       bool  `json:"enabled"`
+	TimeoutMs     int64 `json:"timeoutMs"`
+	MaxConcurrent int   `json:"maxConcurrent"`
+	QuickPorts    []int `json:"quickPorts"`
+}
+
+// FingerprintingResponse represents fingerprinting settings.
+type FingerprintingResponse struct {
+	Enabled       bool `json:"enabled"`
+	OSDetection   bool `json:"osDetection"`
+	ServiceProbes bool `json:"serviceProbes"`
 }
 
 // handleDevicesSettings handles GET/PUT for network discovery settings (fixes #702 - uses r.Context()).
@@ -171,14 +237,60 @@ func (s *Server) handleDevicesSettings(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	cfg := s.config.NetworkDiscovery
+
 	resp := NetworkDiscoverySettingsResponse{
-		Enabled:        s.config.NetworkDiscovery.Enabled,
-		ARPScanWorkers: s.config.NetworkDiscovery.ARPScanWorkers,
-		PingTimeoutMs:  s.config.NetworkDiscovery.PingTimeout.Milliseconds(),
-		ScanTimeoutMs:  s.config.NetworkDiscovery.ScanTimeout.Milliseconds(),
-		AutoScan:       s.config.NetworkDiscovery.AutoScan,
-		ScanIntervalMs: s.config.NetworkDiscovery.ScanInterval.Milliseconds(),
-		OUIFilePath:    s.config.NetworkDiscovery.OUIFilePath,
+		// Legacy fields (backward compatibility)
+		Enabled:        cfg.Enabled,
+		ARPScanWorkers: cfg.ARPScanWorkers,
+		PingTimeoutMs:  cfg.PingTimeout.Milliseconds(),
+		ScanTimeoutMs:  cfg.ScanTimeout.Milliseconds(),
+		AutoScan:       cfg.AutoScan,
+		ScanIntervalMs: cfg.ScanInterval.Milliseconds(),
+		OUIFilePath:    cfg.OUIFilePath,
+
+		// Profile-based configuration (fixes #773, #774)
+		Profile:     string(cfg.Profile),
+		IPv6Enabled: cfg.IPv6Enabled,
+		CustomOptions: CustomOptionsResponse{
+			PassiveListen: cfg.CustomOptions.PassiveListen,
+			PassiveProtocols: PassiveProtocolResponse{
+				LLDP: cfg.CustomOptions.PassiveProtocols.LLDP,
+				CDP:  cfg.CustomOptions.PassiveProtocols.CDP,
+				EDP:  cfg.CustomOptions.PassiveProtocols.EDP,
+				NDP:  cfg.CustomOptions.PassiveProtocols.NDP,
+			},
+			ARPScan:  cfg.CustomOptions.ARPScan,
+			ICMPScan: cfg.CustomOptions.ICMPScan,
+			PortScan: PortScanResponse{
+				Enabled:         cfg.CustomOptions.PortScan.Enabled,
+				TCPPorts:        cfg.CustomOptions.PortScan.TCPPorts,
+				UDPPorts:        cfg.CustomOptions.PortScan.UDPPorts,
+				BannerTimeoutMs: cfg.CustomOptions.PortScan.BannerTimeout.Milliseconds(),
+			},
+			TCPProbe: TCPProbeSettingsResponse{
+				TimeoutMs: cfg.CustomOptions.TCPProbe.Timeout.Milliseconds(),
+				Workers:   cfg.CustomOptions.TCPProbe.Workers,
+			},
+			Traceroute: cfg.CustomOptions.Traceroute,
+			SNMPQuery:  cfg.CustomOptions.SNMPQuery,
+		},
+		Timing: TimingResponse{
+			ProbeIntervalMs:  cfg.Timing.ProbeInterval.Milliseconds(),
+			RescanIntervalMs: cfg.Timing.RescanInterval.Milliseconds(),
+			Workers:          cfg.Timing.Workers,
+		},
+		Profiler: ProfilerResponse{
+			Enabled:       cfg.Profiler.Enabled,
+			TimeoutMs:     cfg.Profiler.Timeout.Milliseconds(),
+			MaxConcurrent: cfg.Profiler.MaxConcurrent,
+			QuickPorts:    cfg.Profiler.QuickPorts,
+		},
+		Fingerprinting: FingerprintingResponse{
+			Enabled:       cfg.Fingerprinting.Enabled,
+			OSDetection:   cfg.Fingerprinting.OSDetection,
+			ServiceProbes: cfg.Fingerprinting.ServiceProbes,
+		},
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
@@ -186,6 +298,7 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
@@ -195,7 +308,10 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update config
+	// Lock config for write access (fixes #759 - race condition)
+	s.config.Lock()
+
+	// Update legacy config fields (backward compatibility)
 	s.config.NetworkDiscovery.Enabled = req.Enabled
 	if req.ARPScanWorkers > 0 {
 		s.config.NetworkDiscovery.ARPScanWorkers = req.ARPScanWorkers
@@ -212,9 +328,79 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		s.config.NetworkDiscovery.OUIFilePath = req.OUIFilePath
 	}
 
-	// Save config to file
+	// Update profile-based config (fixes #773, #774)
+	if req.Profile != "" {
+		s.config.NetworkDiscovery.Profile = config.DiscoveryProfile(req.Profile)
+	}
+	s.config.NetworkDiscovery.IPv6Enabled = req.IPv6Enabled
+
+	// Update custom options
+	s.config.NetworkDiscovery.CustomOptions.PassiveListen = req.CustomOptions.PassiveListen
+	s.config.NetworkDiscovery.CustomOptions.PassiveProtocols.LLDP = req.CustomOptions.PassiveProtocols.LLDP
+	s.config.NetworkDiscovery.CustomOptions.PassiveProtocols.CDP = req.CustomOptions.PassiveProtocols.CDP
+	s.config.NetworkDiscovery.CustomOptions.PassiveProtocols.EDP = req.CustomOptions.PassiveProtocols.EDP
+	s.config.NetworkDiscovery.CustomOptions.PassiveProtocols.NDP = req.CustomOptions.PassiveProtocols.NDP
+	s.config.NetworkDiscovery.CustomOptions.ARPScan = req.CustomOptions.ARPScan
+	s.config.NetworkDiscovery.CustomOptions.ICMPScan = req.CustomOptions.ICMPScan
+	s.config.NetworkDiscovery.CustomOptions.Traceroute = req.CustomOptions.Traceroute
+	s.config.NetworkDiscovery.CustomOptions.SNMPQuery = req.CustomOptions.SNMPQuery
+
+	// Update port scan config
+	s.config.NetworkDiscovery.CustomOptions.PortScan.Enabled = req.CustomOptions.PortScan.Enabled
+	if req.CustomOptions.PortScan.TCPPorts != "" {
+		s.config.NetworkDiscovery.CustomOptions.PortScan.TCPPorts = req.CustomOptions.PortScan.TCPPorts
+	}
+	if req.CustomOptions.PortScan.UDPPorts != "" {
+		s.config.NetworkDiscovery.CustomOptions.PortScan.UDPPorts = req.CustomOptions.PortScan.UDPPorts
+	}
+	if req.CustomOptions.PortScan.BannerTimeoutMs > 0 {
+		s.config.NetworkDiscovery.CustomOptions.PortScan.BannerTimeout = time.Duration(req.CustomOptions.PortScan.BannerTimeoutMs) * time.Millisecond
+	}
+
+	// Update TCP probe config
+	if req.CustomOptions.TCPProbe.TimeoutMs > 0 {
+		s.config.NetworkDiscovery.CustomOptions.TCPProbe.Timeout = time.Duration(req.CustomOptions.TCPProbe.TimeoutMs) * time.Millisecond
+	}
+	if req.CustomOptions.TCPProbe.Workers > 0 {
+		s.config.NetworkDiscovery.CustomOptions.TCPProbe.Workers = req.CustomOptions.TCPProbe.Workers
+	}
+
+	// Update timing config
+	if req.Timing.ProbeIntervalMs > 0 {
+		s.config.NetworkDiscovery.Timing.ProbeInterval = time.Duration(req.Timing.ProbeIntervalMs) * time.Millisecond
+	}
+	if req.Timing.RescanIntervalMs > 0 {
+		s.config.NetworkDiscovery.Timing.RescanInterval = time.Duration(req.Timing.RescanIntervalMs) * time.Millisecond
+	}
+	if req.Timing.Workers > 0 {
+		s.config.NetworkDiscovery.Timing.Workers = req.Timing.Workers
+	}
+
+	// Update profiler config
+	s.config.NetworkDiscovery.Profiler.Enabled = req.Profiler.Enabled
+	if req.Profiler.TimeoutMs > 0 {
+		s.config.NetworkDiscovery.Profiler.Timeout = time.Duration(req.Profiler.TimeoutMs) * time.Millisecond
+	}
+	if req.Profiler.MaxConcurrent > 0 {
+		s.config.NetworkDiscovery.Profiler.MaxConcurrent = req.Profiler.MaxConcurrent
+	}
+	if len(req.Profiler.QuickPorts) > 0 {
+		s.config.NetworkDiscovery.Profiler.QuickPorts = req.Profiler.QuickPorts
+	}
+
+	// Update fingerprinting config
+	s.config.NetworkDiscovery.Fingerprinting.Enabled = req.Fingerprinting.Enabled
+	s.config.NetworkDiscovery.Fingerprinting.OSDetection = req.Fingerprinting.OSDetection
+	s.config.NetworkDiscovery.Fingerprinting.ServiceProbes = req.Fingerprinting.ServiceProbes
+
+	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
+	s.config.Unlock()
+
+	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Warn("Failed to save config", "error", err)
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), err.Error())
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
@@ -270,6 +456,7 @@ func (s *Server) getDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
@@ -308,9 +495,11 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	// Update the device discovery scanner
 	s.syncDeviceDiscoverySubnets(logger)
 
-	// Save config to file
+	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Warn("Failed to save config", "error", err)
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), err.Error())
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
@@ -321,6 +510,7 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
@@ -355,9 +545,11 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	// Update the device discovery scanner
 	s.syncDeviceDiscoverySubnets(logger)
 
-	// Save config to file
+	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Warn("Failed to save config", "error", err)
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), err.Error())
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
@@ -368,6 +560,7 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	cidr := r.URL.Query().Get("cidr")
 	if cidr == "" {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "CIDR parameter required", "") // fixes #694, #699
@@ -395,9 +588,11 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	// Update the device discovery scanner
 	s.syncDeviceDiscoverySubnets(logger)
 
-	// Save config to file
+	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Warn("Failed to save config", "error", err)
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), err.Error())
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{

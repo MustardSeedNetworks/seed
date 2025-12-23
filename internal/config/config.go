@@ -257,25 +257,53 @@ type NetworkDiscoveryConfig struct {
 	// Fingerprinting enables OS/service detection.
 	Fingerprinting FingerprintingConfig `yaml:"fingerprinting,omitempty"`
 
+	// Profiler controls automatic device profiling.
+	Profiler DeviceProfilerConfig `yaml:"profiler,omitempty"`
+
 	// IPv6Enabled enables IPv6 Neighbor Discovery Protocol (NDP) scanning.
 	IPv6Enabled bool `yaml:"ipv6_enabled"`
 }
 
 // DiscoveryCustomOptions provides fine-grained control when Profile is "custom".
 type DiscoveryCustomOptions struct {
-	PassiveListen bool           `yaml:"passive_listen"` // LLDP, CDP, EDP, DHCP listening
-	ARPScan       bool           `yaml:"arp_scan"`       // ARP-based host discovery
-	ICMPScan      bool           `yaml:"icmp_scan"`      // ICMP ping sweep
-	PortScan      PortScanConfig `yaml:"port_scan"`      // TCP/UDP port scanning
-	Traceroute    bool           `yaml:"traceroute"`     // Path discovery
-	SNMPQuery     bool           `yaml:"snmp_query"`     // SNMP device interrogation
+	PassiveListen    bool                  `yaml:"passive_listen"`    // Legacy: enables all passive protocols
+	PassiveProtocols PassiveProtocolConfig `yaml:"passive_protocols"` // Granular passive protocol control
+	ARPScan          bool                  `yaml:"arp_scan"`          // ARP-based host discovery
+	ICMPScan         bool                  `yaml:"icmp_scan"`         // ICMP ping sweep
+	PortScan         PortScanConfig        `yaml:"port_scan"`         // TCP/UDP port scanning
+	TCPProbe         TCPProbeConfig        `yaml:"tcp_probe"`         // TCP probe settings
+	Traceroute       bool                  `yaml:"traceroute"`        // Path discovery
+	SNMPQuery        bool                  `yaml:"snmp_query"`        // SNMP device interrogation
 }
 
 // PortScanConfig controls port scanning behavior.
 type PortScanConfig struct {
-	Enabled  bool   `yaml:"enabled"`
-	TCPPorts string `yaml:"tcp_ports"` // Comma-separated ports or ranges (e.g., "22,80,443,8000-8100")
-	UDPPorts string `yaml:"udp_ports"` // Comma-separated ports or ranges
+	Enabled       bool          `yaml:"enabled"`
+	TCPPorts      string        `yaml:"tcp_ports"`      // Comma-separated ports or ranges (e.g., "22,80,443,8000-8100")
+	UDPPorts      string        `yaml:"udp_ports"`      // Comma-separated ports or ranges
+	BannerTimeout time.Duration `yaml:"banner_timeout"` // Timeout for banner grabbing (default 2s)
+}
+
+// PassiveProtocolConfig provides granular control over passive discovery protocols.
+type PassiveProtocolConfig struct {
+	LLDP bool `yaml:"lldp"` // IEEE 802.1AB Link Layer Discovery Protocol
+	CDP  bool `yaml:"cdp"`  // Cisco Discovery Protocol
+	EDP  bool `yaml:"edp"`  // Extreme Discovery Protocol
+	NDP  bool `yaml:"ndp"`  // IPv6 Neighbor Discovery Protocol
+}
+
+// TCPProbeConfig controls TCP connection probing behavior.
+type TCPProbeConfig struct {
+	Timeout time.Duration `yaml:"timeout"` // Connection timeout (default 2s)
+	Workers int           `yaml:"workers"` // Concurrent probe workers (default 20)
+}
+
+// DeviceProfilerConfig controls automatic device profiling.
+type DeviceProfilerConfig struct {
+	Enabled       bool          `yaml:"enabled"`        // Enable automatic profiling
+	Timeout       time.Duration `yaml:"timeout"`        // Profile operation timeout (default 2s)
+	MaxConcurrent int           `yaml:"max_concurrent"` // Max concurrent profile operations (default 5)
+	QuickPorts    []int         `yaml:"quick_ports"`    // Quick scan ports for profiling (default: 22,80,443,8080)
 }
 
 // DiscoveryTiming controls scan frequency and probe intervals.
@@ -615,12 +643,33 @@ func DefaultConfig() *Config {
 			// New profile-based configuration (recommended)
 			Profile: ProfileStandard, // Safe default: ARP/ICMP on local subnet only
 			CustomOptions: DiscoveryCustomOptions{
-				PassiveListen: true, // Always listen for LLDP/CDP
-				ARPScan:       true, // ARP scan local subnet
-				ICMPScan:      true, // ICMP ping sweep
-				PortScan:      PortScanConfig{Enabled: false},
-				Traceroute:    false,
-				SNMPQuery:     false, // Requires SNMP config
+				PassiveListen: true, // Legacy: enables all passive protocols
+				PassiveProtocols: PassiveProtocolConfig{
+					LLDP: true, // IEEE 802.1AB
+					CDP:  true, // Cisco Discovery Protocol
+					EDP:  true, // Extreme Discovery Protocol
+					NDP:  true, // IPv6 Neighbor Discovery
+				},
+				ARPScan:  true, // ARP scan local subnet
+				ICMPScan: true, // ICMP ping sweep
+				PortScan: PortScanConfig{
+					Enabled:       false,
+					TCPPorts:      "22,80,443,8080-8100",
+					UDPPorts:      "53,123,161",
+					BannerTimeout: 2 * time.Second,
+				},
+				TCPProbe: TCPProbeConfig{
+					Timeout: 2 * time.Second,
+					Workers: 20, // Concurrent TCP probe workers
+				},
+				Traceroute: false,
+				SNMPQuery:  false, // Requires SNMP config
+			},
+			Profiler: DeviceProfilerConfig{
+				Enabled:       true,
+				Timeout:       2 * time.Second,
+				MaxConcurrent: 5,
+				QuickPorts:    []int{22, 80, 443, 8080},
 			},
 			Timing: DiscoveryTiming{
 				ProbeInterval:  75 * time.Millisecond, // Time between probes
