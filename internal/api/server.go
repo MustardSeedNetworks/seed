@@ -66,6 +66,7 @@ type Server struct {
 	deviceDiscovery     *discovery.DeviceDiscovery // Legacy: device aggregation
 	discoveryService    *discovery.Service         // New unified discovery orchestrator
 	dnsTester           *dns.Tester
+	dnsSecurityScanner  *dns.SecurityScanner
 	dhcpMonitor         *dhcp.Monitor
 	rogueDetector       *dhcp.RogueDetector
 	gatewayTester       *gateway.Tester
@@ -113,6 +114,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		deviceDiscovery:     discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
 		discoveryService:    discovery.NewService(cfg, cfg.Interface.Default),
 		dnsTester:           dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
+		dnsSecurityScanner:  dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
 		dhcpMonitor:         dhcp.NewMonitor(cfg.Interface.Default),
 		rogueDetector: dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
 			Interface:        cfg.Interface.Default,
@@ -323,6 +325,8 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/discovery/traceroute", s.handleTraceroute)
 	s.mux.HandleFunc("/api/discovery/portscan", s.handlePortScan)
 	s.mux.HandleFunc("/api/dns", s.handleDNS)
+	s.mux.HandleFunc("/api/dns/security", s.handleDNSSecurity)
+	s.mux.HandleFunc("/api/dns/security/settings", s.handleDNSSecuritySettings)
 	s.mux.HandleFunc("/api/dhcp/rogue", s.handleRogueDHCP)
 	s.mux.HandleFunc("/api/dhcp/rogue/servers", s.handleRogueDHCPServers)
 	s.mux.HandleFunc("/api/dhcp/rogue/config", s.handleRogueDHCPConfig)

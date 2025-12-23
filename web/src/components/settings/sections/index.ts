@@ -38,4 +38,5 @@ export { LinkSettings } from "./LinkSettings";
 export { PerformanceSettings } from "./PerformanceSettings";
 export { SNMPSettings } from "./SNMPSettings";
 export { ThresholdsSettings } from "./ThresholdsSettings";
+export { VulnerabilitySettings } from "./VulnerabilitySettings";
 export { WiFiSettings } from "./WiFiSettings";

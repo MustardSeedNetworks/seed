@@ -140,3 +140,33 @@ export interface Settings {
   thresholds: Thresholds;
   darkMode: boolean;
 }
+
+// ============================================================================
+// Traceroute Types
+// ============================================================================
+
+export interface TracerouteRequest {
+  target: string;
+  protocol: "icmp" | "udp" | "tcp";
+  port?: number;
+  maxHops?: number;
+  timeout?: number;
+}
+
+export interface TracerouteHop {
+  ttl: number;
+  ip?: string;
+  hostname?: string;
+  rtt: number; // nanoseconds
+  state: "reply" | "timeout" | "error";
+}
+
+export interface TracerouteResult {
+  target: string;
+  targetIp: string;
+  protocol: string;
+  port?: number;
+  hops: TracerouteHop[];
+  completed: boolean;
+  error?: string;
+}

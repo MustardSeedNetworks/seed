@@ -272,7 +272,7 @@ export function CableCard({
                       className={cn(
                         "w-4 h-6 mx-auto border",
                         radius.sm,
-                        wireColorMap[pin.color] || "bg-gray-400"
+                        wireColorMap[pin.color] || "bg-surface-border"
                       )}
                       title={pin.color}
                     />

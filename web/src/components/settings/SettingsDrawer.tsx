@@ -52,6 +52,7 @@ import {
   LinkSettings,
   PerformanceSettings,
   ThresholdsSettings,
+  VulnerabilitySettings,
   WiFiSettings,
 } from "./sections";
 import type {
@@ -66,10 +67,12 @@ import type {
   SNMPSettings as SNMPSettingsType,
   LinkSettings as LinkSettingsType,
   CableTestSettings as CableTestSettingsType,
+  VulnerabilityScanSettings,
 } from "../../types/settings";
 import {
   DEFAULT_LINK_SETTINGS,
   DEFAULT_CABLE_TEST_SETTINGS,
+  DEFAULT_VULNERABILITY_SETTINGS,
 } from "../../types/settings";
 import { generateId } from "../../utils/id";
 
@@ -566,6 +569,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const [linkStatus, setLinkStatus] = useState<SaveStatus>("idle");
   const [cableTestStatus, setCableTestStatus] = useState<SaveStatus>("idle");
   const [snmpStatus, setSnmpStatus] = useState<SaveStatus>("idle");
+  const [vulnSettings, setVulnSettings] = useState<VulnerabilityScanSettings>(
+    DEFAULT_VULNERABILITY_SETTINGS
+  );
+  const [vulnStatus, setVulnStatus] = useState<SaveStatus>("idle");
   // Status for display, iperf comes from context (settingsStatus)
   const displayStatus = settingsStatus.display;
   const iperfStatus = settingsStatus.iperf;
@@ -582,6 +589,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const cableTestInitRef = useRef(true);
   const networkDiscoveryInitRef = useRef(true);
   const snmpInitRef = useRef(true);
+  const vulnInitRef = useRef(true);
 
   // Debounce timers (fab, display, iperf now handled by context)
   const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -593,6 +601,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     null
   );
   const snmpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const vulnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Legacy state (keep for IP settings which still needs manual apply)
   const [savingIP, setSavingIP] = useState(false);
@@ -988,6 +997,64 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     }
   }, [snmpSettings]);
 
+  // Fetch vulnerability scanner settings from API
+  const fetchVulnSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/vulnerabilities/settings`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setVulnSettings({
+          enabled: data.enabled ?? false,
+          cveDatabase: data.cve_database ?? data.cveDatabase ?? "nvd",
+          nvdApiKey: data.nvd_api_key ?? data.nvdApiKey ?? "",
+          updateInterval: data.update_interval ?? data.updateInterval ?? 86400,
+          severityThreshold:
+            data.severity_threshold ?? data.severityThreshold ?? "medium",
+          maxConcurrent: data.max_concurrent ?? data.maxConcurrent ?? 5,
+          autoScan: data.auto_scan ?? data.autoScan ?? false,
+        });
+      }
+    } catch (err) {
+      logger.error(
+        LogComponents.CONFIG,
+        "Failed to fetch vulnerability settings",
+        err
+      );
+    }
+  }, []);
+
+  const saveVulnSettings = useCallback(async () => {
+    setVulnStatus("saving");
+    try {
+      const response = await fetch(`${API_BASE}/api/vulnerabilities/settings`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          enabled: vulnSettings.enabled,
+          cve_database: vulnSettings.cveDatabase,
+          nvd_api_key: vulnSettings.nvdApiKey,
+          update_interval: vulnSettings.updateInterval,
+          severity_threshold: vulnSettings.severityThreshold,
+          max_concurrent: vulnSettings.maxConcurrent,
+          auto_scan: vulnSettings.autoScan,
+        }),
+      });
+      if (response.ok) {
+        setVulnStatus("saved");
+        setTimeout(() => setVulnStatus("idle"), 2000);
+      } else {
+        setVulnStatus("error");
+      }
+    } catch {
+      setVulnStatus("error");
+    }
+  }, [vulnSettings]);
+
   useEffect(() => {
     if (isOpen) {
       // Reset init refs on open
@@ -999,6 +1066,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       cableTestInitRef.current = true;
       networkDiscoveryInitRef.current = true;
       snmpInitRef.current = true;
+      vulnInitRef.current = true;
 
       fetchThresholds();
       fetchIPSettings();
@@ -1007,6 +1075,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       // FAB options, display options, and iperf settings come from SettingsContext
       fetchNetworkDiscoverySettings();
       fetchSNMPSettings();
+      fetchVulnSettings();
       fetchSubnets();
 
       // Mark initial load as done after a short delay
@@ -1019,6 +1088,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         cableTestInitRef.current = false;
         networkDiscoveryInitRef.current = false;
         snmpInitRef.current = false;
+        vulnInitRef.current = false;
       }, 500);
     }
   }, [
@@ -1029,6 +1099,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     fetchWifiSettings,
     fetchNetworkDiscoverySettings,
     fetchSNMPSettings,
+    fetchVulnSettings,
     fetchSubnets,
   ]);
 
@@ -1232,6 +1303,18 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       if (snmpTimerRef.current) clearTimeout(snmpTimerRef.current);
     };
   }, [snmpSettings, saveSNMPSettings]);
+
+  // Auto-save vulnerability settings with debounce
+  useEffect(() => {
+    if (vulnInitRef.current) return;
+    if (vulnTimerRef.current) clearTimeout(vulnTimerRef.current);
+    vulnTimerRef.current = setTimeout(() => {
+      saveVulnSettings();
+    }, 800);
+    return () => {
+      if (vulnTimerRef.current) clearTimeout(vulnTimerRef.current);
+    };
+  }, [vulnSettings, saveVulnSettings]);
 
   // Validate IP address format
   const isValidIP = (ip: string): boolean => {
@@ -1705,6 +1788,12 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             snmpSettings={snmpSettings}
             setSnmpSettings={setSnmpSettings}
             snmpStatus={snmpStatus}
+          />
+
+          <VulnerabilitySettings
+            settings={vulnSettings}
+            setSettings={setVulnSettings}
+            status={vulnStatus}
           />
 
           <ThresholdsSettings
