@@ -88,18 +88,18 @@
   --color-brand-secondary-dark: #4e342e;
   */
 
-  /* Surface Colors - Dark slate palette (significantly reduced brightness) */
-  --color-surface-base: #a8a098; /* Warm slate - page background */
-  --color-surface-raised: #b8b0a8; /* Light slate - cards, modals */
-  --color-surface-border: #888078; /* Dark taupe - borders, dividers */
-  --color-surface-hover: #98908a; /* Medium slate - hover backgrounds */
-  --color-surface-sunken: #989088; /* Inset slate - inset areas */
+  /* Surface Colors - Clean professional light palette */
+  --color-surface-base: #f8fafc; /* Cool white - page background */
+  --color-surface-raised: #ffffff; /* Pure white - cards, modals */
+  --color-surface-border: #e2e8f0; /* Light slate - borders, dividers */
+  --color-surface-hover: #f1f5f9; /* Subtle blue-gray - hover backgrounds */
+  --color-surface-sunken: #e2e8f0; /* Light slate - inset areas */
 
-  /* Text Colors - High contrast for dark backgrounds */
-  --color-text-primary: #1a1612; /* Near black - main text */
-  --color-text-secondary: #2c2620; /* Dark brown - secondary text */
-  --color-text-muted: #4a423a; /* Muted brown - subtle text, captions */
-  --color-text-accent: #1d5a2e; /* Dark Seed Green - links, highlights */
+  /* Text Colors - Optimized for light backgrounds */
+  --color-text-primary: #0f172a; /* Slate 900 - main text */
+  --color-text-secondary: #475569; /* Slate 600 - secondary text */
+  --color-text-muted: #64748b; /* Slate 500 - subtle text, captions */
+  --color-text-accent: #166534; /* Green 800 - links, highlights */
   --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
 
   /* Status Colors - INDUSTRY STANDARD (do not change) */
@@ -177,13 +177,13 @@ body {
     -apple-system,
     "Segoe UI",
     sans-serif;
-  /* Light mode gradient - warm off-white with subtle green tints (reduced brightness) */
+  /* Light mode gradient - clean with subtle blue-green tints */
   background: linear-gradient(
     135deg,
-    #f2f2ef 0%,
-    #e8f0e5 35%,
-    #edf3eb 65%,
-    #f2f2ef 100%
+    #f8fafc 0%,
+    #f0f9ff 35%,
+    #ecfdf5 65%,
+    #f8fafc 100%
   );
   background-attachment: fixed;
   min-height: 100vh;
