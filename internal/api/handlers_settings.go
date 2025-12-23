@@ -112,50 +112,51 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 			"serverPort":    s.config.Iperf.ServerPort,
 			"enableServer":  s.config.Iperf.EnableServer,
 		},
-		// Card visibility and auto-run settings (renamed from fabOptions for clarity)
+		// Card visibility settings - all cards visible by default
+		// Card visibility is managed entirely by the frontend via DEFAULT_CARD_SETTINGS
 		"cardSettings": map[string]interface{}{
 			"link": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunLink,
-				"autoRunOnLink": s.config.FABOptions.RunLink,
+				"visible":       true,
+				"autoRunOnLink": true,
 			},
 			"switch": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunSwitch,
-				"autoRunOnLink": s.config.FABOptions.RunSwitch,
+				"visible":       true,
+				"autoRunOnLink": true,
 			},
 			"vlan": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunVLAN,
-				"autoRunOnLink": s.config.FABOptions.RunVLAN,
+				"visible":       true,
+				"autoRunOnLink": true,
 			},
 			"network": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunIPConfig,
-				"autoRunOnLink": s.config.FABOptions.RunIPConfig,
+				"visible":       true,
+				"autoRunOnLink": true,
 			},
 			"gateway": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunGateway,
-				"autoRunOnLink": s.config.FABOptions.RunGateway,
+				"visible":       true,
+				"autoRunOnLink": true,
 			},
 			"dns": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunDNS,
-				"autoRunOnLink": s.config.FABOptions.RunDNS,
+				"visible":       true,
+				"autoRunOnLink": true,
 			},
 			"healthChecks": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunHealthChecks,
-				"autoRunOnLink": s.config.FABOptions.RunHealthChecks,
+				"visible":       true,
+				"autoRunOnLink": true,
 			},
 			"networkDiscovery": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunNetworkDiscovery,
-				"autoRunOnLink": s.config.FABOptions.AutoScanOnLink,
+				"visible":       true,
+				"autoRunOnLink": true,
 			},
 			"performance": map[string]interface{}{
-				"visible":       s.config.FABOptions.RunPerformance,
-				"autoRunOnLink": s.config.FABOptions.RunPerformance,
+				"visible":       true,
+				"autoRunOnLink": true,
 				"speedtest": map[string]interface{}{
-					"enabled":       s.config.FABOptions.RunSpeedtest,
-					"autoRunOnLink": s.config.FABOptions.RunSpeedtest,
+					"enabled":       true,
+					"autoRunOnLink": true,
 				},
 				"iperf": map[string]interface{}{
-					"enabled":       s.config.FABOptions.RunIperf,
-					"autoRunOnLink": s.config.FABOptions.RunIperf,
+					"enabled":       false, // iPerf disabled by default (requires server)
+					"autoRunOnLink": false,
 				},
 			},
 		},
