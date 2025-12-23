@@ -55,7 +55,6 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 
 	cfg.NetworkDiscovery.Enabled = true
 	cfg.NetworkDiscovery.AutoScan = true
-	cfg.NetworkDiscovery.Profile = ProfileStandard
 	cfg.NetworkDiscovery.AdditionalSubnets = []SubnetConfig{
 		{CIDR: "10.0.0.0/24", Name: "LAN", Enabled: true},
 	}
@@ -143,9 +142,6 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	if !ps.NetworkDiscovery.AutoScan {
 		t.Error("expected NetworkDiscovery.AutoScan to be true")
 	}
-	if ps.NetworkDiscovery.Profile != string(ProfileStandard) {
-		t.Errorf("expected discovery profile 'standard', got %s", ps.NetworkDiscovery.Profile)
-	}
 	if len(ps.NetworkDiscovery.AdditionalSubnets) != 1 {
 		t.Errorf("expected 1 additional subnet, got %d", len(ps.NetworkDiscovery.AdditionalSubnets))
 	}
@@ -207,7 +203,6 @@ func TestProfileSettingsApplyTo(t *testing.T) {
 			Retries:     3,
 		},
 		NetworkDiscovery: ProfileNetworkDiscovery{
-			Profile:  "full_scan",
 			Enabled:  true,
 			AutoScan: false,
 			AdditionalSubnets: []ProfileSubnet{
@@ -280,9 +275,6 @@ func TestProfileSettingsApplyTo(t *testing.T) {
 	}
 
 	// Verify network discovery was applied
-	if cfg.NetworkDiscovery.Profile != ProfileFullScan {
-		t.Errorf("expected discovery profile 'full_scan', got %s", cfg.NetworkDiscovery.Profile)
-	}
 	if !cfg.NetworkDiscovery.Enabled {
 		t.Error("expected discovery enabled")
 	}

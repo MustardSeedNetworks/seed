@@ -523,24 +523,51 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const [networkDiscoverySettings, setNetworkDiscoverySettings] =
     useState<NetworkDiscoverySettings>({
       enabled: true,
-      profile: "standard",
       arpScanWorkers: 50,
       pingTimeoutMs: 500,
       scanTimeoutMs: 30000,
       autoScan: false,
       scanIntervalMs: 0,
       ouiFilePath: "oui.txt",
-      customOptions: {
-        passiveListen: true,
+      ipv6Enabled: true,
+      options: {
+        passiveProtocols: {
+          lldp: true,
+          cdp: true,
+          edp: true,
+          ndp: true,
+        },
         arpScan: true,
         icmpScan: true,
         portScan: {
           enabled: false,
-          ports: [],
-          topPorts: 100,
+          preset: "common",
+          tcpPorts: "22,80,443,8080-8100",
+          udpPorts: "53,123,161",
+          bannerTimeoutMs: 2000,
+        },
+        tcpProbe: {
+          timeoutMs: 2000,
+          workers: 20,
         },
         traceroute: false,
         snmpQuery: false,
+      },
+      timing: {
+        probeIntervalMs: 75,
+        rescanIntervalMs: 600000,
+        workers: 50,
+      },
+      profiler: {
+        enabled: true,
+        timeoutMs: 2000,
+        maxConcurrent: 5,
+        quickPorts: [22, 80, 443, 8080],
+      },
+      fingerprinting: {
+        enabled: false,
+        osDetection: false,
+        serviceProbes: false,
       },
     });
   // SNMP settings
@@ -755,24 +782,51 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         const data = await response.json();
         setNetworkDiscoverySettings({
           enabled: data.enabled ?? true,
-          profile: data.profile ?? "standard",
           arpScanWorkers: data.arpScanWorkers ?? 50,
           pingTimeoutMs: data.pingTimeoutMs ?? 500,
           scanTimeoutMs: data.scanTimeoutMs ?? 30000,
           autoScan: data.autoScan ?? false,
           scanIntervalMs: data.scanIntervalMs ?? 0,
           ouiFilePath: data.ouiFilePath ?? "oui.txt",
-          customOptions: data.customOptions ?? {
-            passiveListen: true,
+          ipv6Enabled: data.ipv6Enabled ?? true,
+          options: data.options ?? {
+            passiveProtocols: {
+              lldp: true,
+              cdp: true,
+              edp: true,
+              ndp: true,
+            },
             arpScan: true,
             icmpScan: true,
             portScan: {
               enabled: false,
-              ports: [],
-              topPorts: 100,
+              preset: "common",
+              tcpPorts: "22,80,443,8080-8100",
+              udpPorts: "53,123,161",
+              bannerTimeoutMs: 2000,
+            },
+            tcpProbe: {
+              timeoutMs: 2000,
+              workers: 20,
             },
             traceroute: false,
             snmpQuery: false,
+          },
+          timing: data.timing ?? {
+            probeIntervalMs: 75,
+            rescanIntervalMs: 600000,
+            workers: 50,
+          },
+          profiler: data.profiler ?? {
+            enabled: true,
+            timeoutMs: 2000,
+            maxConcurrent: 5,
+            quickPorts: [22, 80, 443, 8080],
+          },
+          fingerprinting: data.fingerprinting ?? {
+            enabled: false,
+            osDetection: false,
+            serviceProbes: false,
           },
         });
       }

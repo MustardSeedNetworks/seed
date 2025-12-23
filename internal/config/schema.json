@@ -338,17 +338,11 @@
     "NetworkDiscoveryConfig": {
       "type": "object",
       "description": "Network device discovery settings",
-      "required": ["profile", "timing", "additional_subnets", "enabled", "arp_scan_workers", "ping_timeout", "scan_timeout", "auto_scan", "scan_interval", "oui_file_path", "oui_max_age", "ipv6_enabled"],
+      "required": ["options", "timing", "additional_subnets", "enabled", "arp_scan_workers", "ping_timeout", "scan_timeout", "auto_scan", "scan_interval", "oui_file_path", "oui_max_age", "ipv6_enabled"],
       "additionalProperties": false,
       "properties": {
-        "profile": {
-          "type": "string",
-          "description": "Discovery profile preset",
-          "enum": ["stealth", "standard", "full_scan", "custom"],
-          "default": "standard"
-        },
-        "custom_options": {
-          "$ref": "#/$defs/DiscoveryCustomOptions"
+        "options": {
+          "$ref": "#/$defs/DiscoveryOptions"
         },
         "timing": {
           "$ref": "#/$defs/DiscoveryTiming"
@@ -416,17 +410,12 @@
         }
       }
     },
-    "DiscoveryCustomOptions": {
+    "DiscoveryOptions": {
       "type": "object",
-      "description": "Fine-grained control when profile is 'custom'",
-      "required": ["passive_listen", "arp_scan", "icmp_scan", "port_scan", "traceroute", "snmp_query"],
+      "description": "Discovery options configuration (replaces profile-based selection).",
+      "required": ["arp_scan", "icmp_scan", "port_scan", "traceroute", "snmp_query"],
       "additionalProperties": false,
       "properties": {
-        "passive_listen": {
-          "type": "boolean",
-          "description": "Legacy: enables all passive protocols",
-          "default": true
-        },
         "passive_protocols": {
           "$ref": "#/$defs/PassiveProtocolConfig"
         },
@@ -541,7 +530,7 @@
     "PortScanConfig": {
       "type": "object",
       "description": "Port scanning configuration",
-      "required": ["enabled", "tcp_ports", "udp_ports"],
+      "required": ["enabled", "preset", "tcp_ports", "udp_ports"],
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -549,14 +538,20 @@
           "description": "Enable port scanning",
           "default": false
         },
+        "preset": {
+          "type": "string",
+          "description": "Port preset (common, secure, insecure, custom)",
+          "enum": ["common", "secure", "insecure", "custom"],
+          "default": "common"
+        },
         "tcp_ports": {
           "type": "string",
-          "description": "Comma-separated TCP ports or ranges (e.g., '22,80,443,8000-8100')",
+          "description": "Comma-separated TCP ports or ranges (used when preset is 'custom')",
           "default": ""
         },
         "udp_ports": {
           "type": "string",
-          "description": "Comma-separated UDP ports or ranges",
+          "description": "Comma-separated UDP ports or ranges (used when preset is 'custom')",
           "default": ""
         },
         "banner_timeout": {

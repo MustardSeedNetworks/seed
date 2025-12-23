@@ -38,7 +38,7 @@ type DiscoveryService interface {
 	Scan(ctx context.Context) error
 	GetDevices() []*discovery.DiscoveredDevice
 	GetStatus() *discovery.ServiceStatus
-	GetProfile() config.DiscoveryProfile
+	GetOptions() config.DiscoveryOptions
 }
 
 // DeviceDiscovery provides access to device discovery functionality.

@@ -157,9 +157,8 @@ type NetworkDiscoverySettingsResponse struct {
 	ScanIntervalMs int64  `json:"scanIntervalMs"`
 	OUIFilePath    string `json:"ouiFilePath"`
 
-	// New profile-based configuration (fixes #773, #774)
-	Profile        string                 `json:"profile"`
-	CustomOptions  CustomOptionsResponse  `json:"customOptions"`
+	// Direct options configuration (profiles removed in favor of direct settings).
+	Options        OptionsResponse        `json:"options"`
 	Timing         TimingResponse         `json:"timing"`
 	Profiler       ProfilerResponse       `json:"profiler"`
 	Fingerprinting FingerprintingResponse `json:"fingerprinting"`
@@ -188,9 +187,8 @@ type TCPProbeSettingsResponse struct {
 	Workers   int   `json:"workers"`
 }
 
-// CustomOptionsResponse represents custom discovery options.
-type CustomOptionsResponse struct {
-	PassiveListen    bool                     `json:"passiveListen"`
+// OptionsResponse represents discovery options.
+type OptionsResponse struct {
 	PassiveProtocols PassiveProtocolResponse  `json:"passiveProtocols"`
 	ARPScan          bool                     `json:"arpScan"`
 	ICMPScan         bool                     `json:"icmpScan"`
@@ -249,31 +247,29 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		ScanIntervalMs: cfg.ScanInterval.Milliseconds(),
 		OUIFilePath:    cfg.OUIFilePath,
 
-		// Profile-based configuration (fixes #773, #774)
-		Profile:     string(cfg.Profile),
+		// Direct options configuration (profiles removed).
 		IPv6Enabled: cfg.IPv6Enabled,
-		CustomOptions: CustomOptionsResponse{
-			PassiveListen: cfg.CustomOptions.PassiveListen,
+		Options: OptionsResponse{
 			PassiveProtocols: PassiveProtocolResponse{
-				LLDP: cfg.CustomOptions.PassiveProtocols.LLDP,
-				CDP:  cfg.CustomOptions.PassiveProtocols.CDP,
-				EDP:  cfg.CustomOptions.PassiveProtocols.EDP,
-				NDP:  cfg.CustomOptions.PassiveProtocols.NDP,
+				LLDP: cfg.Options.PassiveProtocols.LLDP,
+				CDP:  cfg.Options.PassiveProtocols.CDP,
+				EDP:  cfg.Options.PassiveProtocols.EDP,
+				NDP:  cfg.Options.PassiveProtocols.NDP,
 			},
-			ARPScan:  cfg.CustomOptions.ARPScan,
-			ICMPScan: cfg.CustomOptions.ICMPScan,
+			ARPScan:  cfg.Options.ARPScan,
+			ICMPScan: cfg.Options.ICMPScan,
 			PortScan: PortScanResponse{
-				Enabled:         cfg.CustomOptions.PortScan.Enabled,
-				TCPPorts:        cfg.CustomOptions.PortScan.TCPPorts,
-				UDPPorts:        cfg.CustomOptions.PortScan.UDPPorts,
-				BannerTimeoutMs: cfg.CustomOptions.PortScan.BannerTimeout.Milliseconds(),
+				Enabled:         cfg.Options.PortScan.Enabled,
+				TCPPorts:        cfg.Options.PortScan.TCPPorts,
+				UDPPorts:        cfg.Options.PortScan.UDPPorts,
+				BannerTimeoutMs: cfg.Options.PortScan.BannerTimeout.Milliseconds(),
 			},
 			TCPProbe: TCPProbeSettingsResponse{
-				TimeoutMs: cfg.CustomOptions.TCPProbe.Timeout.Milliseconds(),
-				Workers:   cfg.CustomOptions.TCPProbe.Workers,
+				TimeoutMs: cfg.Options.TCPProbe.Timeout.Milliseconds(),
+				Workers:   cfg.Options.TCPProbe.Workers,
 			},
-			Traceroute: cfg.CustomOptions.Traceroute,
-			SNMPQuery:  cfg.CustomOptions.SNMPQuery,
+			Traceroute: cfg.Options.Traceroute,
+			SNMPQuery:  cfg.Options.SNMPQuery,
 		},
 		Timing: TimingResponse{
 			ProbeIntervalMs:  cfg.Timing.ProbeInterval.Milliseconds(),
@@ -296,6 +292,7 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+//nolint:gocyclo // Settings update requires multiple field validations.
 func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -328,41 +325,37 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		s.config.NetworkDiscovery.OUIFilePath = req.OUIFilePath
 	}
 
-	// Update profile-based config (fixes #773, #774)
-	if req.Profile != "" {
-		s.config.NetworkDiscovery.Profile = config.DiscoveryProfile(req.Profile)
-	}
+	// Update IPv6 setting
 	s.config.NetworkDiscovery.IPv6Enabled = req.IPv6Enabled
 
-	// Update custom options
-	s.config.NetworkDiscovery.CustomOptions.PassiveListen = req.CustomOptions.PassiveListen
-	s.config.NetworkDiscovery.CustomOptions.PassiveProtocols.LLDP = req.CustomOptions.PassiveProtocols.LLDP
-	s.config.NetworkDiscovery.CustomOptions.PassiveProtocols.CDP = req.CustomOptions.PassiveProtocols.CDP
-	s.config.NetworkDiscovery.CustomOptions.PassiveProtocols.EDP = req.CustomOptions.PassiveProtocols.EDP
-	s.config.NetworkDiscovery.CustomOptions.PassiveProtocols.NDP = req.CustomOptions.PassiveProtocols.NDP
-	s.config.NetworkDiscovery.CustomOptions.ARPScan = req.CustomOptions.ARPScan
-	s.config.NetworkDiscovery.CustomOptions.ICMPScan = req.CustomOptions.ICMPScan
-	s.config.NetworkDiscovery.CustomOptions.Traceroute = req.CustomOptions.Traceroute
-	s.config.NetworkDiscovery.CustomOptions.SNMPQuery = req.CustomOptions.SNMPQuery
+	// Update discovery options
+	s.config.NetworkDiscovery.Options.PassiveProtocols.LLDP = req.Options.PassiveProtocols.LLDP
+	s.config.NetworkDiscovery.Options.PassiveProtocols.CDP = req.Options.PassiveProtocols.CDP
+	s.config.NetworkDiscovery.Options.PassiveProtocols.EDP = req.Options.PassiveProtocols.EDP
+	s.config.NetworkDiscovery.Options.PassiveProtocols.NDP = req.Options.PassiveProtocols.NDP
+	s.config.NetworkDiscovery.Options.ARPScan = req.Options.ARPScan
+	s.config.NetworkDiscovery.Options.ICMPScan = req.Options.ICMPScan
+	s.config.NetworkDiscovery.Options.Traceroute = req.Options.Traceroute
+	s.config.NetworkDiscovery.Options.SNMPQuery = req.Options.SNMPQuery
 
 	// Update port scan config
-	s.config.NetworkDiscovery.CustomOptions.PortScan.Enabled = req.CustomOptions.PortScan.Enabled
-	if req.CustomOptions.PortScan.TCPPorts != "" {
-		s.config.NetworkDiscovery.CustomOptions.PortScan.TCPPorts = req.CustomOptions.PortScan.TCPPorts
+	s.config.NetworkDiscovery.Options.PortScan.Enabled = req.Options.PortScan.Enabled
+	if req.Options.PortScan.TCPPorts != "" {
+		s.config.NetworkDiscovery.Options.PortScan.TCPPorts = req.Options.PortScan.TCPPorts
 	}
-	if req.CustomOptions.PortScan.UDPPorts != "" {
-		s.config.NetworkDiscovery.CustomOptions.PortScan.UDPPorts = req.CustomOptions.PortScan.UDPPorts
+	if req.Options.PortScan.UDPPorts != "" {
+		s.config.NetworkDiscovery.Options.PortScan.UDPPorts = req.Options.PortScan.UDPPorts
 	}
-	if req.CustomOptions.PortScan.BannerTimeoutMs > 0 {
-		s.config.NetworkDiscovery.CustomOptions.PortScan.BannerTimeout = time.Duration(req.CustomOptions.PortScan.BannerTimeoutMs) * time.Millisecond
+	if req.Options.PortScan.BannerTimeoutMs > 0 {
+		s.config.NetworkDiscovery.Options.PortScan.BannerTimeout = time.Duration(req.Options.PortScan.BannerTimeoutMs) * time.Millisecond
 	}
 
 	// Update TCP probe config
-	if req.CustomOptions.TCPProbe.TimeoutMs > 0 {
-		s.config.NetworkDiscovery.CustomOptions.TCPProbe.Timeout = time.Duration(req.CustomOptions.TCPProbe.TimeoutMs) * time.Millisecond
+	if req.Options.TCPProbe.TimeoutMs > 0 {
+		s.config.NetworkDiscovery.Options.TCPProbe.Timeout = time.Duration(req.Options.TCPProbe.TimeoutMs) * time.Millisecond
 	}
-	if req.CustomOptions.TCPProbe.Workers > 0 {
-		s.config.NetworkDiscovery.CustomOptions.TCPProbe.Workers = req.CustomOptions.TCPProbe.Workers
+	if req.Options.TCPProbe.Workers > 0 {
+		s.config.NetworkDiscovery.Options.TCPProbe.Workers = req.Options.TCPProbe.Workers
 	}
 
 	// Update timing config

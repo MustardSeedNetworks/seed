@@ -109,66 +109,52 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-// handleDiscoveryProfile handles GET/PUT for the discovery profile.
-func (s *Server) handleDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
+// handleDiscoveryOptions handles GET/PUT for the discovery options.
+func (s *Server) handleDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
 	switch r.Method {
 	case http.MethodGet:
-		s.getDiscoveryProfile(w, r)
+		s.getDiscoveryOptions(w, r)
 	case http.MethodPut:
-		s.setDiscoveryProfile(w, r)
+		s.setDiscoveryOptions(w, r)
 	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
 	}
 }
 
-func (s *Server) getDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	profile := s.discoveryService.GetProfile()
+	opts := s.discoveryService.GetOptions()
 	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
-		"profile": profile,
+		"options": opts,
 	})
 }
 
-func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
+func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
-	var req struct {
-		Profile string `json:"profile"`
-	}
+	var req config.DiscoveryOptions
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
 		return
 	}
 
-	// Convert string to DiscoveryProfile
-	profile := config.DiscoveryProfile(req.Profile)
-
-	// Validate profile
-	switch profile {
-	case config.ProfileStealth, config.ProfileStandard, config.ProfileFullScan, config.ProfileCustom:
-		// Valid profile
-	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.discovery.invalidProfile"), "") // fixes #694
-		return
-	}
-
 	// Lock config for write access (fixes #759 - race condition)
 	s.config.Lock()
-	s.config.NetworkDiscovery.Profile = profile
+	s.config.NetworkDiscovery.Options = req
 	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
 	s.config.Unlock()
 
-	// Apply the profile change to the running service
-	if err := s.discoveryService.SetProfile(profile); err != nil {
-		logger.Error("Failed to set discovery profile", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.discovery.failedToApplyProfile"), err.Error()) // fixes #694
+	// Apply the options change to the running service
+	if err := s.discoveryService.Reload(); err != nil {
+		logger.Error("Failed to reload discovery options", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.discovery.failedToApplyOptions"), err.Error()) // fixes #694
 		return
 	}
 
@@ -181,7 +167,7 @@ func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 		"status":  "success",
-		"message": "Profile updated to " + string(profile),
+		"message": "Discovery options updated",
 	})
 }
 
