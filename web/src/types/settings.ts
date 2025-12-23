@@ -171,22 +171,65 @@ export interface IperfSuggestion {
 }
 
 // ============================================================================
-// Network Discovery Settings
+// Network Discovery Settings (fixes #773, #774)
 // ============================================================================
 
 export type DiscoveryProfile = "stealth" | "standard" | "full_scan" | "custom";
 
+/** Passive protocol configuration (LLDP, CDP, EDP, NDP) */
+export interface PassiveProtocolConfig {
+  lldp: boolean; // IEEE 802.1AB Link Layer Discovery Protocol
+  cdp: boolean; // Cisco Discovery Protocol
+  edp: boolean; // Extreme Discovery Protocol
+  ndp: boolean; // IPv6 Neighbor Discovery Protocol
+}
+
+/** Port scan configuration */
+export interface PortScanConfig {
+  enabled: boolean;
+  tcpPorts: string; // Comma-separated ports or ranges (e.g., "22,80,443,8000-8100")
+  udpPorts: string; // Comma-separated ports or ranges
+  bannerTimeoutMs: number; // Timeout for banner grabbing
+}
+
+/** TCP probe configuration */
+export interface TCPProbeConfig {
+  timeoutMs: number; // Connection timeout
+  workers: number; // Concurrent probe workers
+}
+
+/** Discovery custom options - granular protocol control */
 export interface DiscoveryCustomOptions {
-  passiveListen: boolean;
+  passiveListen: boolean; // Legacy: enables all passive protocols
+  passiveProtocols: PassiveProtocolConfig; // Granular passive protocol control
   arpScan: boolean;
   icmpScan: boolean;
-  portScan: {
-    enabled: boolean;
-    ports: number[];
-    topPorts: number;
-  };
+  portScan: PortScanConfig;
+  tcpProbe: TCPProbeConfig;
   traceroute: boolean;
   snmpQuery: boolean;
+}
+
+/** Discovery timing configuration */
+export interface DiscoveryTimingConfig {
+  probeIntervalMs: number; // Time between probes
+  rescanIntervalMs: number; // Time between full rescans
+  workers: number; // Concurrent workers
+}
+
+/** Device profiler configuration */
+export interface DeviceProfilerConfig {
+  enabled: boolean;
+  timeoutMs: number;
+  maxConcurrent: number;
+  quickPorts: number[];
+}
+
+/** Fingerprinting configuration */
+export interface FingerprintingConfig {
+  enabled: boolean;
+  osDetection: boolean;
+  serviceProbes: boolean;
 }
 
 export interface DiscoveryServiceStatus {
@@ -202,16 +245,24 @@ export interface DiscoveryServiceStatus {
   rescanInterval: number;
 }
 
+/** Full network discovery settings - matches API response */
 export interface NetworkDiscoverySettings {
+  // Legacy fields (backward compatibility)
   enabled: boolean;
-  profile: DiscoveryProfile;
   arpScanWorkers: number;
   pingTimeoutMs: number;
   scanTimeoutMs: number;
   autoScan: boolean;
   scanIntervalMs: number;
   ouiFilePath: string;
+
+  // Profile-based configuration
+  profile: DiscoveryProfile;
   customOptions: DiscoveryCustomOptions;
+  timing: DiscoveryTimingConfig;
+  profiler: DeviceProfilerConfig;
+  fingerprinting: FingerprintingConfig;
+  ipv6Enabled: boolean;
 }
 
 export interface SubnetConfig {
@@ -371,25 +422,56 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
 };
 
 export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
+  // Legacy fields
   enabled: true,
-  profile: "standard",
   arpScanWorkers: 50,
   pingTimeoutMs: 500,
   scanTimeoutMs: 30000,
-  autoScan: false,
-  scanIntervalMs: 300000,
+  autoScan: true,
+  scanIntervalMs: 600000, // 10 minutes
   ouiFilePath: "",
+
+  // Profile-based configuration
+  profile: "standard",
+  ipv6Enabled: true,
   customOptions: {
     passiveListen: true,
+    passiveProtocols: {
+      lldp: true,
+      cdp: true,
+      edp: true,
+      ndp: true,
+    },
     arpScan: true,
     icmpScan: true,
     portScan: {
       enabled: false,
-      ports: [],
-      topPorts: 100,
+      tcpPorts: "22,80,443,8080-8100",
+      udpPorts: "53,123,161",
+      bannerTimeoutMs: 2000,
+    },
+    tcpProbe: {
+      timeoutMs: 2000,
+      workers: 20,
     },
     traceroute: false,
     snmpQuery: false,
+  },
+  timing: {
+    probeIntervalMs: 75,
+    rescanIntervalMs: 600000, // 10 minutes
+    workers: 50,
+  },
+  profiler: {
+    enabled: true,
+    timeoutMs: 2000,
+    maxConcurrent: 5,
+    quickPorts: [22, 80, 443, 8080],
+  },
+  fingerprinting: {
+    enabled: false,
+    osDetection: false,
+    serviceProbes: false,
   },
 };
 

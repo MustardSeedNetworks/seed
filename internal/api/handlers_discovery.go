@@ -159,8 +159,11 @@ func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update the config
+	// Lock config for write access (fixes #759 - race condition)
+	s.config.Lock()
 	s.config.NetworkDiscovery.Profile = profile
+	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
+	s.config.Unlock()
 
 	// Apply the profile change to the running service
 	if err := s.discoveryService.SetProfile(profile); err != nil {
@@ -169,9 +172,11 @@ func (s *Server) setDiscoveryProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save config to file
+	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Warn("Failed to save config", "error", err)
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), err.Error())
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
