@@ -75,9 +75,11 @@ type Result struct {
 
 // Status represents the current test status.
 type Status struct {
-	Running  bool    `json:"running"`
-	Phase    string  `json:"phase"`    // "idle", "finding_server", "testing_latency", "testing_download", "testing_upload", "complete"
-	Progress float64 `json:"progress"` // 0-100
+	Running         bool    `json:"running"`
+	Phase           string  `json:"phase"`           // "idle", "finding_server", "testing_latency", "testing_download", "testing_upload", "complete"
+	Progress        float64 `json:"progress"`        // 0-100
+	CurrentDownload float64 `json:"currentDownload"` // Live download speed in Mbps during test
+	CurrentUpload   float64 `json:"currentUpload"`   // Live upload speed in Mbps during test
 }
 
 // Tester handles speedtest operations.
@@ -137,6 +139,13 @@ func (t *Tester) setRunning(running bool) {
 	t.status.Running = running
 }
 
+func (t *Tester) setCurrentSpeeds(download, upload float64) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.status.CurrentDownload = download
+	t.status.CurrentUpload = upload
+}
+
 // RunTest performs a complete speedtest.
 func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	// Check if already running
@@ -184,19 +193,66 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 		return nil, fmt.Errorf("latency test failed: %w", err)
 	}
 
-	// Test download
+	// Test download with live speed updates
 	t.setStatus("testing_download", 40)
+	t.setCurrentSpeeds(0, 0)
+
+	// Start polling goroutine for live download speed from Context
+	downloadDone := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-downloadDone:
+				return
+			case <-ticker.C:
+				// GetEWMADownloadRate returns bytes/sec, convert to Mbps
+				rate := server.Context.GetEWMADownloadRate()
+				mbps := rate / 125000.0
+				t.setCurrentSpeeds(mbps, 0)
+			}
+		}
+	}()
+
 	err = server.DownloadTest()
+	close(downloadDone)
 	if err != nil {
 		t.setStatus("idle", 0)
+		t.setCurrentSpeeds(0, 0)
 		return nil, fmt.Errorf("download test failed: %w", err)
 	}
 
-	// Test upload
+	// Capture final download speed
+	finalDownload := server.DLSpeed.Mbps()
+	t.setCurrentSpeeds(finalDownload, 0)
+
+	// Test upload with live speed updates
 	t.setStatus("testing_upload", 70)
+
+	// Start polling goroutine for live upload speed from Context
+	uploadDone := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-uploadDone:
+				return
+			case <-ticker.C:
+				// GetEWMAUploadRate returns bytes/sec, convert to Mbps
+				rate := server.Context.GetEWMAUploadRate()
+				mbps := rate / 125000.0
+				t.setCurrentSpeeds(finalDownload, mbps)
+			}
+		}
+	}()
+
 	err = server.UploadTest()
+	close(uploadDone)
 	if err != nil {
 		t.setStatus("idle", 0)
+		t.setCurrentSpeeds(0, 0)
 		return nil, fmt.Errorf("upload test failed: %w", err)
 	}
 

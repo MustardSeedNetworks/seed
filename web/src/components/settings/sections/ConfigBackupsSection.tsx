@@ -228,7 +228,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
           className={cn(
             "w-full",
             button.size.md,
-            "bg-brand-primary text-white",
+            "bg-brand-primary text-text-inverse",
             radius.md,
             "font-medium hover:bg-brand-primary-hover transition-colors flex items-center justify-center",
             spacing.gap.compact,
@@ -302,7 +302,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                           className={cn(
                             spacing.chip.sm,
                             radius.md,
-                            "bg-status-warning text-white caption hover:opacity-90 disabled:opacity-50"
+                            "bg-status-warning text-text-inverse caption hover:opacity-90 disabled:opacity-50"
                           )}
                         >
                           {actionLoading === backup.name
@@ -341,7 +341,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                           className={cn(
                             spacing.chip.sm,
                             radius.md,
-                            "border border-status-error caption text-status-error hover:bg-status-error hover:text-white disabled:opacity-50"
+                            "border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50"
                           )}
                           title={t("configBackups.deleteTooltip")}
                         >

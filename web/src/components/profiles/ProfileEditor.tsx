@@ -173,7 +173,7 @@ export function ProfileEditor({
                 spacing.pad.sm,
                 "px-4",
                 radius.md,
-                "bg-brand-primary hover:bg-brand-primary-hover text-white body-small font-medium disabled:opacity-50"
+                "bg-brand-primary hover:bg-brand-primary-hover text-text-inverse body-small font-medium disabled:opacity-50"
               )}
             >
               {isLoading

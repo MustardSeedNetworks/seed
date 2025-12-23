@@ -62,6 +62,8 @@ interface SpeedtestStatus {
   running: boolean;
   phase: string;
   progress: number;
+  currentDownload: number; // Live download speed during test
+  currentUpload: number; // Live upload speed during test
   last?: SpeedtestData;
 }
 
@@ -316,7 +318,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     manageIperfServer,
   ]);
 
-  // Poll speedtest status while running
+  // Poll speedtest status while running (300ms for smooth gauge updates)
   useEffect(() => {
     if (!speedtestRunning) return;
 
@@ -348,7 +350,7 @@ export const PerformanceCard = memo(function PerformanceCard({
           err
         );
       }
-    }, 1000);
+    }, 300);
 
     return () => clearInterval(interval);
   }, [speedtestRunning]);
@@ -531,16 +533,16 @@ export const PerformanceCard = memo(function PerformanceCard({
               )}
             >
               <SpeedGauge
-                value={speedtestResult?.download ?? 0}
+                value={speedtestStatus.currentDownload || 0}
                 label={t("performance.download")}
                 size="md"
-                isRunning={true}
+                isRunning={speedtestStatus.phase === "testing_download"}
               />
               <SpeedGauge
-                value={speedtestResult?.upload ?? 0}
+                value={speedtestStatus.currentUpload || 0}
                 label={t("performance.upload")}
                 size="md"
-                isRunning={true}
+                isRunning={speedtestStatus.phase === "testing_upload"}
               />
             </div>
             <div
