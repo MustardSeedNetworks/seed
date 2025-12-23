@@ -2,17 +2,17 @@
  * LinkSettings Component
  *
  * Purpose: Configure interface link speed and duplex settings.
- * Allows users to select auto-negotiation or fixed speed/duplex modes.
+ * Single dropdown with all speed/duplex preset combinations.
  *
  * Key Features:
- * - Auto-negotiation toggle
- * - Speed selection (10/100/1000/2500/5000/10000 Mbps)
- * - Duplex selection (Full/Half)
+ * - Auto-negotiation option
+ * - Combined speed/duplex presets (10M-100G)
+ * - Copper: 10/100 support half/full duplex
+ * - 1G+: Full duplex only (IEEE standard)
+ * - Fiber speeds: 25G/40G/100G
  * - Shows available modes for selected interface
- * - AutoSaveIndicator for save status
  *
  * Dependencies: CollapsibleSection, AutoSaveIndicator, theme utilities
- * State: Manages link configuration settings
  */
 
 import { memo } from "react";
@@ -29,8 +29,6 @@ import {
 } from "../../../styles/theme";
 import type {
   LinkSettings as LinkSettingsType,
-  LinkSpeed,
-  DuplexMode,
   SaveStatus,
 } from "../../../types/settings";
 
@@ -40,27 +38,90 @@ interface LinkSettingsProps {
   linkStatus: SaveStatus;
 }
 
-// Speed options with labels
-const SPEED_OPTIONS: { value: LinkSpeed; label: string }[] = [
-  { value: "auto", label: "Auto" },
-  { value: "10", label: "10 Mbps" },
-  { value: "100", label: "100 Mbps" },
-  { value: "1000", label: "1 Gbps" },
-  { value: "2500", label: "2.5 Gbps" },
-  { value: "5000", label: "5 Gbps" },
-  { value: "10000", label: "10 Gbps" },
-];
-
-// Duplex options with labels
-const DUPLEX_OPTIONS: { value: DuplexMode; label: string }[] = [
-  { value: "auto", label: "Auto" },
-  { value: "full", label: "Full Duplex" },
-  { value: "half", label: "Half Duplex" },
+// Combined speed/duplex preset options
+// Note: Half duplex only available at 10/100 Mbps per IEEE standards
+const LINK_PRESETS: {
+  value: string;
+  label: string;
+  speed: string;
+  duplex: string;
+}[] = [
+  { value: "auto", label: "Auto-Negotiate", speed: "auto", duplex: "auto" },
+  // 10 Mbps - supports half and full duplex
+  {
+    value: "10-half",
+    label: "10 Mbps Half Duplex",
+    speed: "10",
+    duplex: "half",
+  },
+  {
+    value: "10-full",
+    label: "10 Mbps Full Duplex",
+    speed: "10",
+    duplex: "full",
+  },
+  // 100 Mbps - supports half and full duplex
+  {
+    value: "100-half",
+    label: "100 Mbps Half Duplex",
+    speed: "100",
+    duplex: "half",
+  },
+  {
+    value: "100-full",
+    label: "100 Mbps Full Duplex",
+    speed: "100",
+    duplex: "full",
+  },
+  // 1 Gbps+ - full duplex only (IEEE 802.3)
+  {
+    value: "1000-full",
+    label: "1 Gbps Full Duplex",
+    speed: "1000",
+    duplex: "full",
+  },
+  {
+    value: "2500-full",
+    label: "2.5 Gbps Full Duplex",
+    speed: "2500",
+    duplex: "full",
+  },
+  {
+    value: "5000-full",
+    label: "5 Gbps Full Duplex",
+    speed: "5000",
+    duplex: "full",
+  },
+  {
+    value: "10000-full",
+    label: "10 Gbps Full Duplex",
+    speed: "10000",
+    duplex: "full",
+  },
+  // Fiber speeds
+  {
+    value: "25000-full",
+    label: "25 Gbps Full Duplex",
+    speed: "25000",
+    duplex: "full",
+  },
+  {
+    value: "40000-full",
+    label: "40 Gbps Full Duplex",
+    speed: "40000",
+    duplex: "full",
+  },
+  {
+    value: "100000-full",
+    label: "100 Gbps Full Duplex",
+    speed: "100000",
+    duplex: "full",
+  },
 ];
 
 /**
  * Settings section for link speed and duplex configuration.
- * Memoized to prevent unnecessary re-renders when parent state changes.
+ * Uses a single dropdown with preset speed/duplex combinations.
  */
 export const LinkSettings = memo(function LinkSettings({
   linkSettings,
@@ -68,6 +129,27 @@ export const LinkSettings = memo(function LinkSettings({
   linkStatus,
 }: LinkSettingsProps) {
   const { t } = useTranslation("settings");
+
+  // Get current preset value from speed/duplex
+  const getCurrentPreset = (): string => {
+    if (linkSettings.autoNegotiation || linkSettings.speed === "auto") {
+      return "auto";
+    }
+    return `${linkSettings.speed}-${linkSettings.duplex}`;
+  };
+
+  // Handle preset change
+  const handlePresetChange = (presetValue: string) => {
+    const preset = LINK_PRESETS.find((p) => p.value === presetValue);
+    if (!preset) return;
+
+    setLinkSettings((prev) => ({
+      ...prev,
+      autoNegotiation: presetValue === "auto",
+      speed: preset.speed as LinkSettingsType["speed"],
+      duplex: preset.duplex as LinkSettingsType["duplex"],
+    }));
+  };
 
   return (
     <CollapsibleSection
@@ -81,135 +163,48 @@ export const LinkSettings = memo(function LinkSettings({
       defaultOpen={false}
     >
       <div className="stack">
-        {/* Auto-Negotiation Toggle */}
-        <label
-          className={cn(
-            layout.flex.between,
-            spacing.pad.sm,
-            "bg-surface-base",
-            radius.default,
-            "border border-surface-border"
-          )}
-        >
-          <div>
-            <span className="body-small text-text-primary font-medium">
-              {t("link.autoNegotiation", "Auto-Negotiation")}
-            </span>
-            <p className="caption text-text-muted">
-              {t(
-                "link.autoNegotiationDesc",
-                "Automatically negotiate best speed and duplex"
-              )}
-            </p>
-          </div>
-          <input
-            type="checkbox"
-            checked={linkSettings.autoNegotiation}
-            onChange={(e) =>
-              setLinkSettings((prev) => ({
-                ...prev,
-                autoNegotiation: e.target.checked,
-                // Reset to auto when enabling auto-negotiation
-                speed: e.target.checked ? "auto" : prev.speed,
-                duplex: e.target.checked ? "auto" : prev.duplex,
-              }))
-            }
-            className={iconTokens.size.sm}
-          />
-        </label>
+        {/* Combined Speed/Duplex Dropdown */}
+        <div>
+          <label
+            className="caption text-text-muted font-medium"
+            htmlFor="link-preset"
+          >
+            {t("link.speedDuplex", "Speed / Duplex")}
+          </label>
+          <select
+            id="link-preset"
+            value={getCurrentPreset()}
+            onChange={(e) => handlePresetChange(e.target.value)}
+            className={cn(
+              "w-full",
+              spacing.margin.top.tight,
+              spacing.chip.lg,
+              "bg-surface-base border border-surface-border",
+              radius.default,
+              "body-small text-text-primary"
+            )}
+          >
+            {LINK_PRESETS.map((preset) => (
+              <option key={preset.value} value={preset.value}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        {/* Manual Speed/Duplex Configuration (only when auto-neg is off) */}
+        {/* Warning for manual settings */}
         {!linkSettings.autoNegotiation && (
-          <>
-            {/* Speed Selection */}
-            <div
-              className={cn(
-                "border-t border-surface-border",
-                spacing.padding.top.heading
-              )}
-            >
-              <label
-                className="caption text-text-muted font-medium"
-                htmlFor="link-speed"
-              >
-                {t("link.speed", "Link Speed")}
-              </label>
-              <select
-                id="link-speed"
-                value={linkSettings.speed}
-                onChange={(e) =>
-                  setLinkSettings((prev) => ({
-                    ...prev,
-                    speed: e.target.value as LinkSpeed,
-                  }))
-                }
-                className={cn(
-                  "w-full",
-                  spacing.margin.top.tight,
-                  spacing.chip.lg,
-                  "bg-surface-base border border-surface-border",
-                  radius.default,
-                  "body-small text-text-primary"
-                )}
-              >
-                {SPEED_OPTIONS.filter((opt) => opt.value !== "auto").map(
-                  (option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
-
-            {/* Duplex Selection */}
-            <div className={spacing.margin.top.content}>
-              <label
-                className="caption text-text-muted font-medium"
-                htmlFor="link-duplex"
-              >
-                {t("link.duplex", "Duplex Mode")}
-              </label>
-              <select
-                id="link-duplex"
-                value={linkSettings.duplex}
-                onChange={(e) =>
-                  setLinkSettings((prev) => ({
-                    ...prev,
-                    duplex: e.target.value as DuplexMode,
-                  }))
-                }
-                className={cn(
-                  "w-full",
-                  spacing.margin.top.tight,
-                  spacing.chip.lg,
-                  "bg-surface-base border border-surface-border",
-                  radius.default,
-                  "body-small text-text-primary"
-                )}
-              >
-                {DUPLEX_OPTIONS.filter((opt) => opt.value !== "auto").map(
-                  (option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
-
-            <p
-              className={cn(
-                "caption text-status-warning",
-                spacing.margin.top.inline
-              )}
-            >
-              {t(
-                "link.manualWarning",
-                "Manual speed/duplex may cause link issues if mismatched with switch"
-              )}
-            </p>
-          </>
+          <p
+            className={cn(
+              "caption text-status-warning",
+              spacing.margin.top.inline
+            )}
+          >
+            {t(
+              "link.manualWarning",
+              "Manual speed/duplex may cause link issues if mismatched with switch"
+            )}
+          </p>
         )}
 
         {/* Available Modes Display */}

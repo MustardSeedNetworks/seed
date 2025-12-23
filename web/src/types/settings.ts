@@ -405,15 +405,18 @@ export const DEFAULT_SNMP_SETTINGS: SNMPSettings = {
 // Link Settings
 // ============================================================================
 
-/** Supported link speed values */
+/** Supported link speed values (Mbps) - includes copper and fiber speeds */
 export type LinkSpeed =
   | "auto"
-  | "10"
-  | "100"
-  | "1000"
-  | "2500"
-  | "5000"
-  | "10000";
+  | "10" // 10BASE-T
+  | "100" // 100BASE-TX
+  | "1000" // 1000BASE-T (1G)
+  | "2500" // 2.5GBASE-T
+  | "5000" // 5GBASE-T
+  | "10000" // 10GBASE-T
+  | "25000" // 25GBASE-CR/SR (fiber)
+  | "40000" // 40GBASE-CR4/SR4 (fiber)
+  | "100000"; // 100GBASE-CR4/SR4 (fiber)
 
 /** Supported duplex modes */
 export type DuplexMode = "auto" | "full" | "half";
