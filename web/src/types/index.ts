@@ -170,3 +170,42 @@ export interface TracerouteResult {
   completed: boolean;
   error?: string;
 }
+
+// ============================================================================
+// L2 Path Discovery Types
+// ============================================================================
+
+export interface PortInfo {
+  name: string; // "Gi0/1"
+  index: number;
+  speed: string; // "1Gbps"
+  duplex: string;
+  vlans: number[];
+  isTrunk: boolean;
+  connectedTo: string; // Device name/MAC
+}
+
+export interface L2Hop {
+  device: string; // Switch name
+  deviceIp: string;
+  ingressPort: PortInfo | null;
+  egressPort: PortInfo | null;
+  source: "lldp" | "cdp" | "snmp";
+}
+
+export interface L2PathResult {
+  hops: L2Hop[];
+}
+
+export interface PathRequest {
+  source: string; // IP or "self"
+  destination: string; // IP or hostname
+  method: "l3" | "l2" | "both";
+  protocol: "icmp" | "udp" | "tcp";
+  port?: number;
+}
+
+export interface PathResponse {
+  l3Path?: TracerouteResult;
+  l2Path?: L2PathResult;
+}

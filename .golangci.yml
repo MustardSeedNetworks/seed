@@ -159,6 +159,10 @@ linters:
       - path: internal/gateway/gateway_linux.go
         linters:
           - dupl
+      # SNMP v2c and v3 wrappers have similar structure by design
+      - path: internal/snmp/interface.go
+        linters:
+          - dupl
       # DNS resolver path is system path, not user input
       - path: internal/dns/dns_linux.go
         linters:
