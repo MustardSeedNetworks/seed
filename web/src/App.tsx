@@ -247,6 +247,8 @@ function App() {
   const currentInterfaceRef = useRef(currentInterface);
   // Track previous link state to detect link-up transitions for auto-run
   const prevLinkUpRef = useRef<boolean | null>(null);
+  // Track if we've triggered initial auto-run on page load
+  const initialAutoRunDoneRef = useRef(false);
 
   useEffect(() => {
     currentInterfaceRef.current = currentInterface;
@@ -293,14 +295,25 @@ function App() {
           switch (key) {
             case "link":
               updates.link = normalized as CardState["link"];
-              // Initialize prevLinkUpRef on first load (don't trigger auto-run)
+              // Initialize prevLinkUpRef on first load
               if (
                 normalized &&
                 typeof (normalized as { linkUp?: boolean }).linkUp === "boolean"
               ) {
-                prevLinkUpRef.current = (
-                  normalized as { linkUp: boolean }
-                ).linkUp;
+                const linkUp = (normalized as { linkUp: boolean }).linkUp;
+                prevLinkUpRef.current = linkUp;
+
+                // Trigger initial auto-run if link is up on page load
+                if (linkUp && !initialAutoRunDoneRef.current) {
+                  initialAutoRunDoneRef.current = true;
+                  logger.info(
+                    LogComponents.NETWORK,
+                    "Link up on initial load, triggering auto-run tests"
+                  );
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent("runAllTests"));
+                  }, 2000);
+                }
               }
               break;
             case "cable":
