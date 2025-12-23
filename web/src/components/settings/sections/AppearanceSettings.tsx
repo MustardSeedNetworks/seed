@@ -75,7 +75,7 @@ export const AppearanceSettings = memo(function AppearanceSettings({
           <span>{t("sections.appearance")}</span>
         </div>
       }
-      defaultOpen={true}
+      defaultOpen={false}
     >
       <div className="stack-sm">
         <label

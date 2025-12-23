@@ -120,7 +120,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
           <AutoSaveIndicator status={networkDiscoveryStatus} />
         </div>
       }
-      defaultOpen={true}
+      defaultOpen={false}
     >
       <div className="stack">
         {/* Enable/Auto-scan Toggles */}

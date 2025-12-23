@@ -108,7 +108,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
           <AutoSaveIndicator status={iperfStatus} />
         </div>
       }
-      defaultOpen={true}
+      defaultOpen={false}
     >
       <div className="stack">
         {/* Enable/Disable Toggles */}
