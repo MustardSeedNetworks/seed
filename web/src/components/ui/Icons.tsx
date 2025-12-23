@@ -126,6 +126,8 @@ export {
   SlidersHorizontal,
   Palette,
   Eye as EyeOpen,
+  // Path/route icons
+  Route,
 } from "lucide-react";
 
 // Icon size presets are in iconConfig.ts - import from there for non-component needs

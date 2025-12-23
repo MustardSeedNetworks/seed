@@ -176,6 +176,122 @@ func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// ============================================================================
+// DNS Security Scanning Handlers
+// ============================================================================
+
+// DNSSecurityScanRequest represents a request to scan DNS servers for security issues.
+type DNSSecurityScanRequest struct {
+	Servers []string `json:"servers"`
+}
+
+// handleDNSSecurity handles DNS security scanning operations.
+// POST - Scan specific DNS servers for security issues.
+// GET - Get results of previous scans.
+func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if s.dnsSecurityScanner == nil {
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, localizer.T("errors.health.dnsSecurityNotAvailable"), "")
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPost:
+		// Trigger a security scan
+		var req DNSSecurityScanRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error())
+			return
+		}
+
+		if len(req.Servers) == 0 {
+			// Use configured DNS servers from config
+			s.config.RLock()
+			for _, srv := range s.config.DNS.Servers {
+				if srv.Enabled {
+					req.Servers = append(req.Servers, srv.Address)
+				}
+			}
+			s.config.RUnlock()
+		}
+
+		if len(req.Servers) == 0 {
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+				ErrCodeBadRequest, localizer.T("errors.health.noServersToScan"), "No DNS servers provided or configured")
+			return
+		}
+
+		// Check if already running
+		if s.dnsSecurityScanner.IsRunning() {
+			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
+				ErrCodeConflict, localizer.T("errors.health.scanInProgress"), "")
+			return
+		}
+
+		// Run concurrent scans
+		results, err := s.dnsSecurityScanner.ScanServers(r.Context(), req.Servers, 5)
+		if err != nil {
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.health.scanFailed"), err.Error())
+			return
+		}
+
+		sendJSONResponse(w, logger, http.StatusOK, results)
+
+	case http.MethodGet:
+		// Return cached results
+		results := s.dnsSecurityScanner.GetResults()
+		sendJSONResponse(w, logger, http.StatusOK, results)
+
+	default:
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+	}
+}
+
+// handleDNSSecuritySettings handles DNS security scanner settings.
+// GET - Get current settings.
+// PUT - Update settings.
+func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if s.dnsSecurityScanner == nil {
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, localizer.T("errors.health.dnsSecurityNotAvailable"), "")
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		scanConfig := s.dnsSecurityScanner.GetConfig()
+		sendJSONResponse(w, logger, http.StatusOK, scanConfig)
+
+	case http.MethodPut:
+		var newConfig dns.SecurityScanConfig
+		if err := json.NewDecoder(r.Body).Decode(&newConfig); err != nil {
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error())
+			return
+		}
+
+		s.dnsSecurityScanner.SetConfig(newConfig)
+
+		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
+			"status":  "success",
+			"message": "DNS security settings updated",
+		})
+
+	default:
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+	}
+}
+
 // SetMTURequest represents the request to set interface MTU.
 
 // TestsSettingsResponse represents the custom tests configuration.

@@ -541,6 +541,46 @@ export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
 };
 
 // ============================================================================
+// Vulnerability Scanning Settings
+// ============================================================================
+
+export type CVEDatabase = "nvd" | "local";
+export type SeverityLevel = "low" | "medium" | "high" | "critical";
+
+export interface VulnerabilityScanSettings {
+  enabled: boolean;
+  cveDatabase: CVEDatabase;
+  nvdApiKey: string;
+  updateInterval: number; // seconds between database updates
+  severityThreshold: SeverityLevel;
+  maxConcurrent: number; // max concurrent vulnerability checks
+  autoScan: boolean; // auto-scan after device discovery
+}
+
+export interface VulnerabilityScanStatus {
+  enabled: boolean;
+  scanning: boolean;
+  stats: {
+    totalDevices: number;
+    scannedDevices: number;
+    totalVulnerabilities: number;
+    bySeverity: Record<string, number>;
+    lastScanTime: string;
+  };
+  severityFilter: string;
+}
+
+export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
+  enabled: false,
+  cveDatabase: "nvd",
+  nvdApiKey: "",
+  updateInterval: 86400, // 24 hours
+  severityThreshold: "medium",
+  maxConcurrent: 5,
+  autoScan: false,
+};
+
+// ============================================================================
 // localStorage Keys
 // ============================================================================
 

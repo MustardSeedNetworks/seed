@@ -186,10 +186,12 @@ function calculateStats(values: number[]): MetricStats {
   const sum = sorted.reduce((acc, v) => acc + v, 0);
   const average = sum / count;
 
-  // Median
+  // Median - using at() for safe array access
   const mid = Math.floor(count / 2);
   const median =
-    count % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+    count % 2 === 0
+      ? ((sorted.at(mid - 1) ?? 0) + (sorted.at(mid) ?? 0)) / 2
+      : (sorted.at(mid) ?? 0);
 
   // Standard deviation
   const squaredDiffs = sorted.map((v) => Math.pow(v - average, 2));
