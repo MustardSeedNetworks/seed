@@ -45,6 +45,48 @@ interface LinkHistoryEvent {
 }
 
 /**
+ * PoE (Power over Ethernet) status
+ */
+interface PoEInfo {
+  detected: boolean;
+  standard?: string; // 802.3af, 802.3at, 802.3bt
+  class?: number;
+  powerMw?: number;
+  voltage?: number;
+}
+
+/**
+ * SFP DDM (Digital Diagnostics Monitoring) readings
+ */
+interface SFPDDMInfo {
+  temperature: number; // Celsius
+  voltage: number; // Volts
+  txPowerDbm: number;
+  txPowerMw: number;
+  rxPowerDbm: number;
+  rxPowerMw: number;
+  laserBiasMa: number;
+  alarms?: string[];
+  warnings?: string[];
+}
+
+/**
+ * SFP module information
+ */
+interface SFPInfo {
+  present: boolean;
+  vendor?: string;
+  partNumber?: string;
+  serial?: string;
+  type?: string; // SR, LR, ER
+  wavelength?: number; // nm
+  distance?: number; // meters
+  connector?: string; // LC, SC
+  ddmSupport: boolean;
+  ddm?: SFPDDMInfo;
+}
+
+/**
  * Link layer and network layer status data
  */
 export interface LinkData {
@@ -59,6 +101,8 @@ export interface LinkData {
   flapCount24h?: number; // Number of link state changes in last 24h
   history?: LinkHistoryEvent[]; // Recent link state events
   uptimeMs?: number; // Time since last state change (ms)
+  poe?: PoEInfo; // Power over Ethernet status
+  sfp?: SFPInfo; // SFP module and DDM info
 }
 
 /**
@@ -191,6 +235,138 @@ export const LinkCard = memo(function LinkCard({
                       </div>
                     </div>
                   )}
+
+                {/* PoE Status */}
+                {linkData.poe?.detected && (
+                  <>
+                    <CardDivider />
+                    <p
+                      className={cn(
+                        "caption font-medium text-text-muted",
+                        spacing.margin.bottom.tight
+                      )}
+                    >
+                      {t("link.poe", "Power over Ethernet")}
+                    </p>
+                    <CardRow
+                      label={t("link.poeStandard", "Standard")}
+                      value={linkData.poe.standard || "Unknown"}
+                    />
+                    {linkData.poe.class !== undefined && (
+                      <CardRow
+                        label={t("link.poeClass", "Class")}
+                        value={linkData.poe.class.toString()}
+                      />
+                    )}
+                    {linkData.poe.powerMw !== undefined && (
+                      <CardRow
+                        label={t("link.poePower", "Power")}
+                        value={`${(linkData.poe.powerMw / 1000).toFixed(1)} W`}
+                      />
+                    )}
+                    {linkData.poe.voltage !== undefined && (
+                      <CardRow
+                        label={t("link.poeVoltage", "Voltage")}
+                        value={`${linkData.poe.voltage.toFixed(1)} V`}
+                      />
+                    )}
+                  </>
+                )}
+
+                {/* SFP Module Info */}
+                {linkData.sfp?.present && (
+                  <>
+                    <CardDivider />
+                    <p
+                      className={cn(
+                        "caption font-medium text-text-muted",
+                        spacing.margin.bottom.tight
+                      )}
+                    >
+                      {t("link.sfp", "SFP Module")}
+                    </p>
+                    {linkData.sfp.vendor && (
+                      <CardRow
+                        label={t("link.sfpVendor", "Vendor")}
+                        value={linkData.sfp.vendor}
+                      />
+                    )}
+                    {linkData.sfp.type && (
+                      <CardRow
+                        label={t("link.sfpType", "Type")}
+                        value={linkData.sfp.type}
+                      />
+                    )}
+                    {linkData.sfp.wavelength && (
+                      <CardRow
+                        label={t("link.sfpWavelength", "Wavelength")}
+                        value={`${linkData.sfp.wavelength} nm`}
+                      />
+                    )}
+                    {linkData.sfp.distance && (
+                      <CardRow
+                        label={t("link.sfpDistance", "Max Distance")}
+                        value={`${linkData.sfp.distance} m`}
+                      />
+                    )}
+
+                    {/* SFP DDM Readings */}
+                    {linkData.sfp.ddmSupport && linkData.sfp.ddm && (
+                      <div className={spacing.margin.top.inline}>
+                        <p
+                          className={cn(
+                            "caption font-medium text-text-muted",
+                            spacing.margin.bottom.tight
+                          )}
+                        >
+                          {t("link.ddm", "DDM Readings")}
+                        </p>
+                        <CardRow
+                          label={t("link.ddmTemp", "Temperature")}
+                          value={`${linkData.sfp.ddm.temperature.toFixed(1)}°C`}
+                        />
+                        <CardRow
+                          label={t("link.ddmVoltage", "Voltage")}
+                          value={`${linkData.sfp.ddm.voltage.toFixed(2)} V`}
+                        />
+                        <CardRow
+                          label={t("link.ddmTxPower", "TX Power")}
+                          value={`${linkData.sfp.ddm.txPowerDbm.toFixed(1)} dBm`}
+                        />
+                        <CardRow
+                          label={t("link.ddmRxPower", "RX Power")}
+                          value={`${linkData.sfp.ddm.rxPowerDbm.toFixed(1)} dBm`}
+                        />
+                        {linkData.sfp.ddm.alarms &&
+                          linkData.sfp.ddm.alarms.length > 0 && (
+                            <div
+                              className={cn(
+                                "caption text-status-error",
+                                spacing.margin.top.tight
+                              )}
+                            >
+                              {linkData.sfp.ddm.alarms.map((alarm, i) => (
+                                <p key={i}>{alarm}</p>
+                              ))}
+                            </div>
+                          )}
+                        {linkData.sfp.ddm.warnings &&
+                          linkData.sfp.ddm.warnings.length > 0 && (
+                            <div
+                              className={cn(
+                                "caption text-status-warning",
+                                spacing.margin.top.tight
+                              )}
+                            >
+                              {linkData.sfp.ddm.warnings.map((warning, i) => (
+                                <p key={i}>{warning}</p>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    )}
+                  </>
+                )}
               </>
             )}
           </>
