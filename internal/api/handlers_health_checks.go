@@ -58,8 +58,9 @@ type DNSServerTestResult struct {
 
 // DNSResponse represents the DNS test results for the API.
 type DNSResponse struct {
+	Interface        string                 `json:"interface"`
 	Server           string                 `json:"server"`
-	Servers          []string               `json:"servers"` // All configured DNS servers
+	Servers          []string               `json:"servers"`
 	TestHostname     string                 `json:"testHostname"`
 	Forward          *DNSLookupResult       `json:"forward,omitempty"`
 	ForwardIpv6      *DNSLookupResult       `json:"forwardIpv6,omitempty"`
@@ -83,10 +84,14 @@ func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get interface from query param or use current
+	currentIface := s.getInterfaceFromRequest(r)
+
 	// Perform DNS test
 	result := s.dnsTester.Test(r.Context())
 
 	resp := DNSResponse{
+		Interface:    currentIface,
 		Server:       result.Server,
 		Servers:      result.Servers,
 		TestHostname: result.TestHostname,

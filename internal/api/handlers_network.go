@@ -681,19 +681,23 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get interface from query param or use current/default
+	wlanIface := s.getInterfaceFromRequest(r)
+	if wlanIface == "" {
+		wlanIface = s.config.Interface.WiFi
+		if wlanIface == "" {
+			wlanIface = s.config.Interface.Default
+		}
+	}
+
 	// Check if interface is wireless
 	if !s.wifiManager.IsWireless() {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
-			"wireless": false,
-			"message":  "Current interface is not a wireless adapter",
+			"interface": wlanIface,
+			"wireless":  false,
+			"message":   "Current interface is not a wireless adapter",
 		})
 		return
-	}
-
-	// Get WLAN interface being used (IEEE 802.11)
-	wlanIface := s.config.Interface.WiFi
-	if wlanIface == "" {
-		wlanIface = s.config.Interface.Default
 	}
 
 	info := s.wifiManager.GetInfo()
@@ -731,10 +735,13 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get WLAN interface being used (IEEE 802.11)
-	wlanIface := s.config.Interface.WiFi
+	// Get interface from query param or use current/default
+	wlanIface := s.getInterfaceFromRequest(r)
 	if wlanIface == "" {
-		wlanIface = s.config.Interface.Default
+		wlanIface = s.config.Interface.WiFi
+		if wlanIface == "" {
+			wlanIface = s.config.Interface.Default
+		}
 	}
 
 	if s.wifiScanner == nil {
@@ -797,15 +804,19 @@ func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check current interface
-	currentInterface := ""
-	isWireless := false
-	if s.wifiManager != nil {
-		isWireless = s.wifiManager.IsWireless()
+	// Get interface from query param or use current/default
+	currentInterface := s.getInterfaceFromRequest(r)
+	if currentInterface == "" {
 		currentInterface = s.config.Interface.WiFi
 		if currentInterface == "" {
 			currentInterface = s.config.Interface.Default
 		}
+	}
+
+	// Check if current interface is wireless
+	isWireless := false
+	if s.wifiManager != nil {
+		isWireless = s.wifiManager.IsWireless()
 	}
 
 	// Determine status message
@@ -843,10 +854,13 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Get WLAN interface being used (IEEE 802.11)
-	wlanIface := s.config.Interface.WiFi
+	// Get interface from query param or use current/default
+	wlanIface := s.getInterfaceFromRequest(r)
 	if wlanIface == "" {
-		wlanIface = s.config.Interface.Default
+		wlanIface = s.config.Interface.WiFi
+		if wlanIface == "" {
+			wlanIface = s.config.Interface.Default
+		}
 	}
 
 	if s.wifiScanner == nil {

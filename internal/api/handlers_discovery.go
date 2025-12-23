@@ -82,11 +82,8 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get current interface from network manager
-	currentIface := ""
-	if s.netManager != nil {
-		currentIface = s.netManager.GetCurrentInterface()
-	}
+	// Get interface from query param or use current
+	currentIface := s.getInterfaceFromRequest(r)
 
 	neighbors := s.discoveryManager.GetNeighbors()
 	resp := DiscoveryResponse{
