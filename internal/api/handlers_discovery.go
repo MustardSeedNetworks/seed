@@ -16,6 +16,7 @@ import (
 
 // DiscoveryResponse contains the status and results of network discovery operations.
 type DiscoveryResponse struct {
+	Interface string                  `json:"interface"` // Interface used for discovery
 	Running   bool                    `json:"running"`   // True if discovery managers are actively capturing
 	Neighbors []DiscoveryNeighborInfo `json:"neighbors"` // All discovered neighbors (deduplicated by ChassisID + PortID)
 }
@@ -81,8 +82,15 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get current interface from network manager
+	currentIface := ""
+	if s.netManager != nil {
+		currentIface = s.netManager.GetCurrentInterface()
+	}
+
 	neighbors := s.discoveryManager.GetNeighbors()
 	resp := DiscoveryResponse{
+		Interface: currentIface,
 		Running:   s.discoveryManager.IsRunning(),
 		Neighbors: make([]DiscoveryNeighborInfo, 0, len(neighbors)),
 	}
