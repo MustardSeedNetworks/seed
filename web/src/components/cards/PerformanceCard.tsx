@@ -522,42 +522,42 @@ export const PerformanceCard = memo(function PerformanceCard({
         </p>
 
         {speedtestRunning && speedtestStatus && (
-          <div
-            className={cn(
-              layout.inline.spacious,
-              spacing.margin.bottom.heading,
-              spacing.pad.sm,
-              "bg-surface-hover",
-              radius.lg
-            )}
-          >
-            <ProgressRing
-              progress={speedtestStatus.progress}
-              size={56}
-              strokeWidth={5}
-            />
-            <div className="flex-1">
-              <div className={layout.inline.default}>
-                <PulsingDot color="primary" size="sm" />
-                <span className="body-small font-medium">
-                  {getSpeedtestPhaseLabel(speedtestStatus.phase)}
-                </span>
-              </div>
-              {(() => {
-                const sp = Math.min(Math.max(speedtestStatus.progress, 0), 100);
-                return (
-                  <progress
-                    value={sp}
-                    max={100}
-                    aria-label={t("performance.progress")}
-                    className={cn(
-                      spacing.margin.top.inline,
-                      "w-full",
-                      radius.full
-                    )}
-                  />
-                );
-              })()}
+          <div className={spacing.margin.bottom.heading}>
+            <div
+              className={cn(
+                layout.flex.center,
+                spacing.gap.spacious,
+                spacing.padding.bottom.inline
+              )}
+            >
+              <SpeedGauge
+                value={speedtestResult?.download ?? 0}
+                label={t("performance.download")}
+                size="md"
+                isRunning={true}
+              />
+              <SpeedGauge
+                value={speedtestResult?.upload ?? 0}
+                label={t("performance.upload")}
+                size="md"
+                isRunning={true}
+              />
+            </div>
+            <div
+              className={cn(
+                layout.inline.default,
+                spacing.pad.xs,
+                "bg-surface-hover",
+                radius.md
+              )}
+            >
+              <PulsingDot color="primary" size="sm" />
+              <span className="body-small font-medium">
+                {getSpeedtestPhaseLabel(speedtestStatus.phase)}
+              </span>
+              <span className="body-small text-text-muted ml-auto">
+                {Math.round(speedtestStatus.progress)}%
+              </span>
             </div>
           </div>
         )}
