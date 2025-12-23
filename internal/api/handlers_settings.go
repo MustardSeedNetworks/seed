@@ -93,14 +93,14 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		"healthChecks": map[string]interface{}{
-			"runPerformance": s.config.HealthChecks.RunPerformance,
-			"runSpeedtest":   s.config.HealthChecks.RunSpeedtest,
-			"runIperf":       s.config.HealthChecks.RunIperf,
-			"runDiscovery":   s.config.HealthChecks.RunDiscovery,
+			"runPerformance": true,
+			"runSpeedtest":   true,
+			"runIperf":       false, // iPerf disabled by default (requires server)
+			"runDiscovery":   true,
 		},
 		"speedtest": map[string]interface{}{
 			"serverId":      s.config.Speedtest.ServerID,
-			"autoRunOnLink": s.config.Speedtest.AutoRunOnLink,
+			"autoRunOnLink": true, // Always auto-run speedtest on link
 		},
 		"iperf": map[string]interface{}{
 			"autoRunOnLink": s.config.Iperf.AutoRunOnLink,
