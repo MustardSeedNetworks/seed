@@ -337,6 +337,12 @@
     "generateReport": "Generar Reporte",
     "exportCSV": "Exportar CSV"
   },
+  "heatmapStats": {
+    "average": "Prom",
+    "median": "Mediana",
+    "stdDev": "Desv Est",
+    "samples": "Muestras"
+  },
   "report": {
     "title": "Reporte de Encuesta WiFi",
     "generatedBy": "Generado por The Seed",

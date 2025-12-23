@@ -214,9 +214,34 @@ function App() {
     publicip: null,
   });
   const [loading, setLoading] = useState(true);
-  // Fix #572: Don't hardcode interface name - fetch from backend
-  const [currentInterface, setCurrentInterface] = useState("");
-  const [isWifi, setIsWifi] = useState(false);
+  // Dual interface state: track both ethernet and WiFi interfaces separately (#754 enhancement)
+  // This allows seamless switching between modes without losing the previously selected interface
+  const [ethernetInterface, setEthernetInterfaceState] = useState("");
+  const [wifiInterface, setWifiInterfaceState] = useState("");
+  const [activeMode, setActiveMode] = useState<"ethernet" | "wifi">("ethernet");
+
+  // Computed values for backwards compatibility with existing components
+  const currentInterface =
+    activeMode === "wifi" ? wifiInterface : ethernetInterface;
+  const isWifi = activeMode === "wifi";
+
+  // Helper to set the appropriate interface based on mode
+  const setCurrentInterface = useCallback(
+    (name: string) => {
+      if (activeMode === "wifi") {
+        setWifiInterfaceState(name);
+      } else {
+        setEthernetInterfaceState(name);
+      }
+    },
+    [activeMode]
+  );
+
+  // Helper to set isWifi (actually sets activeMode)
+  const setIsWifi = useCallback((wifi: boolean) => {
+    setActiveMode(wifi ? "wifi" : "ethernet");
+  }, []);
+
   // Track if user manually selected Wi-Fi/Ethernet mode - prevents auto-switching from API responses
   const userSetWifiModeRef = useRef(false);
   const [interfaces, setInterfaces] = useState<
@@ -260,95 +285,103 @@ function App() {
     };
   }, []);
 
-  const handleMessage = useCallback((message: Message) => {
-    if (message.type === "initial_state") {
-      setLoading(false);
-      if (!isPlainObject(message.payload)) {
-        logger.warn(LogComponents.WEBSOCKET, "Invalid initial_state payload", {
-          payload: message.payload,
-        });
-        return;
-      }
+  const handleMessage = useCallback(
+    (message: Message) => {
+      if (message.type === "initial_state") {
+        setLoading(false);
+        if (!isPlainObject(message.payload)) {
+          logger.warn(
+            LogComponents.WEBSOCKET,
+            "Invalid initial_state payload",
+            {
+              payload: message.payload,
+            }
+          );
+          return;
+        }
 
-      const payload = message.payload;
-      if (typeof payload.interface === "string" && payload.interface) {
-        setCurrentInterface(payload.interface);
-      }
+        const payload = message.payload;
+        if (typeof payload.interface === "string" && payload.interface) {
+          setCurrentInterface(payload.interface);
+        }
 
-      // Only auto-set WiFi mode if user hasn't manually selected
-      if (
-        typeof payload.isWireless === "boolean" &&
-        !userSetWifiModeRef.current
-      ) {
-        setIsWifi(payload.isWireless);
-      }
+        // Only auto-set WiFi mode if user hasn't manually selected
+        if (
+          typeof payload.isWireless === "boolean" &&
+          !userSetWifiModeRef.current
+        ) {
+          setIsWifi(payload.isWireless);
+        }
 
-      if (isPlainObject(payload.cards)) {
-        const updates: Partial<CardState> = {};
-        for (const [key, value] of Object.entries(payload.cards)) {
-          if (!isCardId(key)) continue;
+        if (isPlainObject(payload.cards)) {
+          const updates: Partial<CardState> = {};
+          for (const [key, value] of Object.entries(payload.cards)) {
+            if (!isCardId(key)) continue;
 
-          const normalized =
-            value === null ? null : isPlainObject(value) ? value : undefined;
-          if (normalized === undefined) continue;
+            const normalized =
+              value === null ? null : isPlainObject(value) ? value : undefined;
+            if (normalized === undefined) continue;
 
-          switch (key) {
-            case "link":
-              updates.link = normalized as CardState["link"];
-              // Initialize prevLinkUpRef on first load
-              if (
-                normalized &&
-                typeof (normalized as { linkUp?: boolean }).linkUp === "boolean"
-              ) {
-                const linkUp = (normalized as { linkUp: boolean }).linkUp;
-                prevLinkUpRef.current = linkUp;
+            switch (key) {
+              case "link":
+                updates.link = normalized as CardState["link"];
+                // Initialize prevLinkUpRef on first load
+                if (
+                  normalized &&
+                  typeof (normalized as { linkUp?: boolean }).linkUp ===
+                    "boolean"
+                ) {
+                  const linkUp = (normalized as { linkUp: boolean }).linkUp;
+                  prevLinkUpRef.current = linkUp;
 
-                // Trigger initial auto-run if link is up on page load
-                if (linkUp && !initialAutoRunDoneRef.current) {
-                  initialAutoRunDoneRef.current = true;
-                  logger.info(
-                    LogComponents.NETWORK,
-                    "Link up on initial load, triggering auto-run tests"
-                  );
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent("runAllTests"));
-                  }, 2000);
+                  // Trigger initial auto-run if link is up on page load
+                  if (linkUp && !initialAutoRunDoneRef.current) {
+                    initialAutoRunDoneRef.current = true;
+                    logger.info(
+                      LogComponents.NETWORK,
+                      "Link up on initial load, triggering auto-run tests"
+                    );
+                    setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent("runAllTests"));
+                    }, 2000);
+                  }
                 }
-              }
-              break;
-            case "cable":
-              updates.cable = normalized as CardState["cable"];
-              break;
-            case "vlan":
-              updates.vlan = normalized as CardState["vlan"];
-              break;
-            case "switch":
-              updates.switch = normalized as CardState["switch"];
-              break;
-            case "wifi":
-              updates.wifi = normalized as CardState["wifi"];
-              break;
-            case "dhcp":
-              updates.dhcp = normalized as CardState["dhcp"];
-              break;
-            case "dns":
-              updates.dns = normalized as CardState["dns"];
-              break;
-            case "gateway":
-              updates.gateway = normalized as CardState["gateway"];
-              break;
-            case "publicip":
-              updates.publicip = normalized as CardState["publicip"];
-              break;
+                break;
+              case "cable":
+                updates.cable = normalized as CardState["cable"];
+                break;
+              case "vlan":
+                updates.vlan = normalized as CardState["vlan"];
+                break;
+              case "switch":
+                updates.switch = normalized as CardState["switch"];
+                break;
+              case "wifi":
+                updates.wifi = normalized as CardState["wifi"];
+                break;
+              case "dhcp":
+                updates.dhcp = normalized as CardState["dhcp"];
+                break;
+              case "dns":
+                updates.dns = normalized as CardState["dns"];
+                break;
+              case "gateway":
+                updates.gateway = normalized as CardState["gateway"];
+                break;
+              case "publicip":
+                updates.publicip = normalized as CardState["publicip"];
+                break;
+            }
+          }
+
+          if (Object.keys(updates).length > 0) {
+            setCards((prev) => ({ ...prev, ...updates }));
           }
         }
-
-        if (Object.keys(updates).length > 0) {
-          setCards((prev) => ({ ...prev, ...updates }));
-        }
       }
-    }
-  }, []);
+    },
+    [setCurrentInterface, setIsWifi]
+  );
 
   // Handle session expiration via API client callback
   useEffect(() => {
@@ -472,7 +505,7 @@ function App() {
     } catch (err) {
       logger.error(LogComponents.NETWORK, "Failed to fetch link data", err);
     }
-  }, []);
+  }, [setCurrentInterface]);
 
   // Fetch IP configuration (DHCP card - Layer 3)
   const fetchIPConfig = useCallback(async () => {
@@ -770,7 +803,7 @@ function App() {
     } catch (err) {
       logger.error(LogComponents.WIFI, "Failed to fetch Wi-Fi data", err);
     }
-  }, []);
+  }, [setIsWifi]);
 
   // Fetch Cable test data
   const fetchCableData = useCallback(async () => {
@@ -987,6 +1020,8 @@ function App() {
       fetchVLANData,
       fetchWiFiData,
       fetchCableData,
+      setCurrentInterface,
+      setIsWifi,
     ]
   );
 
@@ -1004,22 +1039,36 @@ function App() {
       // Mark that user explicitly selected this mode - prevents API responses from flipping back
       userSetWifiModeRef.current = true;
 
-      const candidates = interfaces.filter((iface) => iface.type === type);
-      // If switching to WiFi with no WiFi interfaces, still allow UI to show WiFi view
-      // for planning/survey purposes (Fix #572 extension)
-      if (candidates.length === 0) {
-        if (type === "wifi") {
-          setIsWifi(true);
-        } else {
-          setIsWifi(false);
-        }
+      // Set the mode immediately for responsive UI
+      setActiveMode(type);
+
+      // Check if we already have a stored interface for this mode
+      const storedInterface =
+        type === "wifi" ? wifiInterface : ethernetInterface;
+      if (storedInterface) {
+        // We already have an interface stored, just switch mode
+        // Backend notification happens via changeInterface
+        changeInterface(storedInterface);
         return;
       }
-      // Set the mode immediately for responsive UI
-      setIsWifi(type === "wifi");
+
+      // No stored interface - find one from available interfaces
+      const candidates = interfaces.filter((iface) => iface.type === type);
+      if (candidates.length === 0) {
+        // No interfaces of this type available, just show the view anyway
+        // for planning/survey purposes (Fix #572 extension)
+        return;
+      }
+
       // Prefer a link-up interface, otherwise first in list
       const target = candidates.find((iface) => iface.up) ?? candidates[0];
       if (target) {
+        // Update the appropriate interface state directly
+        if (type === "wifi") {
+          setWifiInterfaceState(target.name);
+        } else {
+          setEthernetInterfaceState(target.name);
+        }
         changeInterface(target.name);
         // Persist the interface selection to the active profile (#754 multi-interface support)
         if (type === "wifi") {
@@ -1029,10 +1078,18 @@ function App() {
         }
       }
     },
-    [interfaces, changeInterface, setEthernetInterface, setWifiInterface]
+    [
+      interfaces,
+      changeInterface,
+      setEthernetInterface,
+      setWifiInterface,
+      ethernetInterface,
+      wifiInterface,
+    ]
   );
 
   // Load interface selections from active profile (#754 multi-interface support)
+  // With dual interface state, we load BOTH interfaces into state
   const profileInterfaceLoadedRef = useRef<string | null>(null);
   useEffect(() => {
     // Only load once per profile change, and only if interfaces are available
@@ -1045,6 +1102,9 @@ function App() {
     }
 
     const profileInterfaces = activeProfile.config?.interfaces;
+    let restoredEthernet = false;
+    let restoredWifi = false;
+
     if (profileInterfaces) {
       // Load ethernet interface if saved in profile
       if (profileInterfaces.ethernet?.name) {
@@ -1052,41 +1112,54 @@ function App() {
         const exists = interfaces.some(
           (i) => i.name === savedEthernet && i.type === "ethernet"
         );
-        if (exists && savedEthernet !== currentInterface) {
+        if (exists) {
           logger.info(
             LogComponents.CONFIG,
             "Restoring ethernet interface from profile",
             { interface: savedEthernet }
           );
-          // Schedule interface change to avoid cascading renders
-          setTimeout(() => {
-            changeInterface(savedEthernet);
-            setIsWifi(false);
-          }, 0);
+          restoredEthernet = true;
         }
       }
-      // Load wifi interface if saved in profile
-      else if (profileInterfaces.wifi?.name) {
+
+      // Load wifi interface if saved in profile (load BOTH, not either/or)
+      if (profileInterfaces.wifi?.name) {
         const savedWifi = profileInterfaces.wifi.name;
         const exists = interfaces.some(
           (i) => i.name === savedWifi && i.type === "wifi"
         );
-        if (exists && savedWifi !== currentInterface) {
+        if (exists) {
           logger.info(
             LogComponents.CONFIG,
             "Restoring WiFi interface from profile",
             { interface: savedWifi }
           );
-          // Schedule interface change to avoid cascading renders
-          setTimeout(() => {
-            changeInterface(savedWifi);
-            setIsWifi(true);
-          }, 0);
+          restoredWifi = true;
         }
       }
+
+      // Batch all state updates in a single setTimeout to avoid cascading renders
+      // and satisfy React Compiler requirements
+      setTimeout(() => {
+        if (restoredEthernet && profileInterfaces.ethernet?.name) {
+          setEthernetInterfaceState(profileInterfaces.ethernet.name);
+        }
+        if (restoredWifi && profileInterfaces.wifi?.name) {
+          setWifiInterfaceState(profileInterfaces.wifi.name);
+        }
+        // Set the active interface on the backend
+        // Prefer ethernet if both are restored, otherwise use whichever was restored
+        if (restoredEthernet) {
+          changeInterface(profileInterfaces.ethernet!.name);
+          setActiveMode("ethernet");
+        } else if (restoredWifi) {
+          changeInterface(profileInterfaces.wifi!.name);
+          setActiveMode("wifi");
+        }
+      }, 0);
     }
     profileInterfaceLoadedRef.current = activeProfile.id;
-  }, [activeProfile, interfaces, currentInterface, changeInterface]);
+  }, [activeProfile, interfaces, changeInterface]);
 
   // Memoize run options to prevent unnecessary re-computation (fixes #671)
   const runOpts = useMemo(

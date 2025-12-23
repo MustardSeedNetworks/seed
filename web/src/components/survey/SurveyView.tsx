@@ -37,6 +37,7 @@ import { ScaleCalibrationPanel } from "./ScaleCalibrationPanel";
 import { SurveyConfigPanel } from "./SurveyConfigPanel";
 import { AirMapperImport, type ImportOptions } from "./AirMapperImport";
 import { HeatmapLegend } from "./HeatmapLegend";
+import { HeatmapStats } from "./HeatmapStats";
 import type { AirMapperData } from "../../utils/airmapper";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { useSettings } from "../../contexts/useSettings";
@@ -1468,7 +1469,7 @@ export function SurveyView({
                     onCalibrationClick={handleCalibrationClick}
                   />
 
-                  {/* Heatmap Legend - show when heatmap is active */}
+                  {/* Heatmap Legend and Stats - show when heatmap is active */}
                   {heatmapMetric !== null && currentSamples.length > 0 && (
                     <div className={spacing.margin.top.content}>
                       <HeatmapLegend
@@ -1481,6 +1482,10 @@ export function SurveyView({
                           calculateMetricRange(currentSamples, heatmapMetric)
                             .max
                         }
+                      />
+                      <HeatmapStats
+                        samples={currentSamples}
+                        metric={heatmapMetric}
                       />
                     </div>
                   )}

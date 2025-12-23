@@ -30,5 +30,11 @@
   },
   "progress": {
     "takingMeasurement": "Taking measurement..."
+  },
+  "heatmapStats": {
+    "average": "Avg",
+    "median": "Median",
+    "stdDev": "Std Dev",
+    "samples": "Samples"
   }
 }
