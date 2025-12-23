@@ -1,6 +1,6 @@
 // Package discovery implements multi-protocol network device discovery.
 // Test suite validates device discovery functionality across all discovery methods,
-// profile configurations, and state management operations. Ensures device aggregation,
+// settings configurations, and state management operations. Ensures device aggregation,
 // protocol-specific information, and discovery timing work correctly.
 package discovery
 
@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
@@ -146,7 +145,6 @@ func TestNeighborInfo(t *testing.T) {
 func TestDiscoveryService(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().
 		WithInterface("lo").
-		WithDiscoveryProfile("standard").
 		Build()
 
 	service := NewService(cfg, "lo")
@@ -166,10 +164,10 @@ func TestDiscoveryService(t *testing.T) {
 		t.Fatal("GetStatus returned nil")
 	}
 
-	// Test GetProfile
-	profile := service.GetProfile()
-	if profile != "standard" {
-		t.Errorf("Expected profile 'standard', got %s", profile)
+	// Test GetOptions
+	opts := service.GetOptions()
+	if !opts.ARPScan && !opts.ICMPScan {
+		t.Log("Discovery methods ARP and ICMP are both disabled")
 	}
 
 	// Test IsRunning
@@ -191,30 +189,28 @@ func TestDiscoveryService(t *testing.T) {
 	}
 }
 
-func TestSetProfile(t *testing.T) {
+func TestReload(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
 	service := NewService(cfg, "lo")
 
-	tests := []struct {
-		profile config.DiscoveryProfile
-	}{
-		{"stealth"},
-		{"standard"},
-		{"full_scan"},
-		{"custom"},
+	// Test Reload without starting
+	err := service.Reload()
+	if err != nil {
+		t.Errorf("Reload returned error: %v", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(string(tt.profile), func(t *testing.T) {
-			err := service.SetProfile(tt.profile)
-			if err != nil {
-				t.Errorf("SetProfile(%s) returned error: %v", tt.profile, err)
-			}
+	// Start service and test Reload
+	if startErr := service.Start(); startErr != nil {
+		t.Logf("Start failed: %v", startErr)
+		return
+	}
+	defer service.Stop()
 
-			if service.GetProfile() != tt.profile {
-				t.Errorf("Expected profile %s, got %s", tt.profile, service.GetProfile())
-			}
-		})
+	// Change options and reload
+	cfg.NetworkDiscovery.Options.ARPScan = false
+	err = service.Reload()
+	if err != nil {
+		t.Errorf("Reload returned error: %v", err)
 	}
 }
 
@@ -254,29 +250,33 @@ func TestClearDevicesService(t *testing.T) {
 	}
 }
 
-func TestDiscoveryProfiles(t *testing.T) {
-	profiles := []config.DiscoveryProfile{
-		"stealth",
-		"standard",
-		"full_scan",
-		"custom",
+func TestDiscoveryOptions(t *testing.T) {
+	tests := []struct {
+		name     string
+		arpScan  bool
+		icmpScan bool
+		portScan bool
+	}{
+		{"passive_only", false, false, false},
+		{"arp_icmp", true, true, false},
+		{"full_scan", true, true, true},
 	}
 
-	for _, profile := range profiles {
-		t.Run(string(profile), func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			cfg := testutil.NewConfigBuilder().
-				WithDiscoveryProfile(profile).
+				WithDiscoveryMethods(tt.arpScan, tt.icmpScan, tt.portScan).
 				Build()
 			service := NewService(cfg, "lo")
 
 			if err := service.Start(); err != nil {
-				t.Logf("Start failed for profile %s: %v", profile, err)
+				t.Logf("Start failed for %s: %v", tt.name, err)
 			}
 			defer service.Stop()
 
 			status := service.GetStatus()
-			if status.Profile != profile {
-				t.Errorf("Expected profile %s, got %s", profile, status.Profile)
+			if status == nil {
+				t.Fatal("GetStatus returned nil")
 			}
 		})
 	}

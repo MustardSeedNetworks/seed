@@ -725,29 +725,66 @@ func TestValidateInvalidSNMPRetries(t *testing.T) {
 	}
 }
 
-// ========== Discovery Profile Tests ==========
+// ========== Port Preset Tests ==========
 
-func TestDiscoveryProfileConstants(t *testing.T) {
-	if ProfileStealth != "stealth" {
-		t.Errorf("ProfileStealth should be 'stealth', got %q", ProfileStealth)
+func TestPortPresetConstants(t *testing.T) {
+	if PortPresetCommon != "common" {
+		t.Errorf("PortPresetCommon should be 'common', got %q", PortPresetCommon)
 	}
-	if ProfileStandard != "standard" {
-		t.Errorf("ProfileStandard should be 'standard', got %q", ProfileStandard)
+	if PortPresetSecure != "secure" {
+		t.Errorf("PortPresetSecure should be 'secure', got %q", PortPresetSecure)
 	}
-	if ProfileFullScan != "full_scan" {
-		t.Errorf("ProfileFullScan should be 'full_scan', got %q", ProfileFullScan)
+	if PortPresetInsecure != "insecure" {
+		t.Errorf("PortPresetInsecure should be 'insecure', got %q", PortPresetInsecure)
 	}
-	if ProfileCustom != "custom" {
-		t.Errorf("ProfileCustom should be 'custom', got %q", ProfileCustom)
+	if PortPresetCustom != "custom" {
+		t.Errorf("PortPresetCustom should be 'custom', got %q", PortPresetCustom)
 	}
 }
 
-func TestDefaultNetworkDiscoveryProfile(t *testing.T) {
+func TestDefaultPortScanConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
-	if cfg.NetworkDiscovery.Profile != ProfileStandard {
-		t.Errorf("expected default profile 'standard', got %q", cfg.NetworkDiscovery.Profile)
+	if cfg.NetworkDiscovery.Options.PortScan.Preset != PortPresetCommon {
+		t.Errorf("expected default port preset 'common', got %q", cfg.NetworkDiscovery.Options.PortScan.Preset)
 	}
+}
+
+func TestGetEffectivePorts(t *testing.T) {
+	tests := []struct {
+		preset     PortPreset
+		wantTCPLen int
+		wantUDPLen int
+	}{
+		{PortPresetCommon, len(PortsCommonTCP), len(PortsCommonUDP)},
+		{PortPresetSecure, len(PortsSecureTCP), len(PortsSecureUDP)},
+		{PortPresetInsecure, len(PortsInsecureTCP), len(PortsInsecureUDP)},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.preset), func(t *testing.T) {
+			cfg := PortScanConfig{Preset: tt.preset}
+			tcp, udp := cfg.GetEffectivePorts()
+			if len(tcp) != tt.wantTCPLen {
+				t.Errorf("preset %s: expected TCP ports length %d, got %d", tt.preset, tt.wantTCPLen, len(tcp))
+			}
+			if len(udp) != tt.wantUDPLen {
+				t.Errorf("preset %s: expected UDP ports length %d, got %d", tt.preset, tt.wantUDPLen, len(udp))
+			}
+		})
+	}
+
+	// Test custom preset
+	t.Run("custom", func(t *testing.T) {
+		cfg := PortScanConfig{Preset: PortPresetCustom, TCPPorts: "22,80", UDPPorts: "53"}
+		tcp, udp := cfg.GetEffectivePorts()
+		if tcp != "22,80" {
+			t.Errorf("expected custom TCP ports '22,80', got %q", tcp)
+		}
+		if udp != "53" {
+			t.Errorf("expected custom UDP ports '53', got %q", udp)
+		}
+	})
 }
 
 // ========== SubnetConfig Tests ==========

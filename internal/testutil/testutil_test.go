@@ -88,7 +88,7 @@ func TestConfigBuilder(t *testing.T) {
 			WithPort(9090).
 			WithInterface("eth0").
 			WithHTTPS(true).
-			WithDiscoveryProfile(config.ProfileFullScan).
+			WithDiscoveryMethods(true, true, true). // All methods enabled
 			WithDiscoveryConcurrency(100).
 			Build()
 
@@ -104,8 +104,9 @@ func TestConfigBuilder(t *testing.T) {
 			t.Error("expected HTTPS enabled")
 		}
 
-		if cfg.NetworkDiscovery.Profile != config.ProfileFullScan {
-			t.Errorf("expected ProfileFullScan, got %v", cfg.NetworkDiscovery.Profile)
+		// WithDiscoveryMethods(true, true, true) enables all methods
+		if !cfg.NetworkDiscovery.Options.ARPScan {
+			t.Error("expected ARP scan enabled")
 		}
 
 		if cfg.NetworkDiscovery.ARPScanWorkers != 100 {
@@ -132,15 +133,15 @@ func TestConfigBuilder(t *testing.T) {
 			WithDiscoveryMethods(true, false, true).
 			Build()
 
-		if !cfg.NetworkDiscovery.CustomOptions.ARPScan {
+		if !cfg.NetworkDiscovery.Options.ARPScan {
 			t.Error("expected ARP enabled")
 		}
 
-		if cfg.NetworkDiscovery.CustomOptions.ICMPScan {
+		if cfg.NetworkDiscovery.Options.ICMPScan {
 			t.Error("expected ICMP disabled")
 		}
 
-		if !cfg.NetworkDiscovery.CustomOptions.PortScan.Enabled {
+		if !cfg.NetworkDiscovery.Options.PortScan.Enabled {
 			t.Error("expected PortScan enabled")
 		}
 	})
@@ -151,8 +152,8 @@ func TestConfigBuilder(t *testing.T) {
 			WithTCPPorts(ports).
 			Build()
 
-		if cfg.NetworkDiscovery.CustomOptions.PortScan.TCPPorts != ports {
-			t.Errorf("expected ports %q, got %q", ports, cfg.NetworkDiscovery.CustomOptions.PortScan.TCPPorts)
+		if cfg.NetworkDiscovery.Options.PortScan.TCPPorts != ports {
+			t.Errorf("expected ports %q, got %q", ports, cfg.NetworkDiscovery.Options.PortScan.TCPPorts)
 		}
 	})
 }
@@ -243,15 +244,11 @@ func TestFixtures(t *testing.T) {
 			t.Fatal("expected non-nil config")
 		}
 
-		if cfg.NetworkDiscovery.Profile != config.ProfileFullScan {
-			t.Error("expected ProfileFullScan")
-		}
-
-		if !cfg.NetworkDiscovery.CustomOptions.ARPScan || !cfg.NetworkDiscovery.CustomOptions.ICMPScan || !cfg.NetworkDiscovery.CustomOptions.PortScan.Enabled {
+		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan || !cfg.NetworkDiscovery.Options.PortScan.Enabled {
 			t.Error("expected all discovery methods enabled")
 		}
 
-		if cfg.NetworkDiscovery.CustomOptions.PortScan.TCPPorts == "" {
+		if cfg.NetworkDiscovery.Options.PortScan.TCPPorts == "" {
 			t.Error("expected TCP ports configured")
 		}
 	})
@@ -270,26 +267,18 @@ func TestFixtures(t *testing.T) {
 		}
 	})
 
-	t.Run("StealthScanConfig has passive only", func(t *testing.T) {
-		cfg := StealthScanConfig()
+	t.Run("PassiveOnlyConfig has passive only", func(t *testing.T) {
+		cfg := PassiveOnlyConfig()
 
-		if cfg.NetworkDiscovery.Profile != config.ProfileStealth {
-			t.Error("expected ProfileStealth")
-		}
-
-		if cfg.NetworkDiscovery.CustomOptions.ARPScan || cfg.NetworkDiscovery.CustomOptions.ICMPScan || cfg.NetworkDiscovery.CustomOptions.PortScan.Enabled {
-			t.Error("expected passive only for stealth scan")
+		if cfg.NetworkDiscovery.Options.ARPScan || cfg.NetworkDiscovery.Options.ICMPScan || cfg.NetworkDiscovery.Options.PortScan.Enabled {
+			t.Error("expected passive only for passive scan")
 		}
 	})
 
 	t.Run("StandardScanConfig has ARP and ICMP", func(t *testing.T) {
 		cfg := StandardScanConfig()
 
-		if cfg.NetworkDiscovery.Profile != config.ProfileStandard {
-			t.Error("expected ProfileStandard")
-		}
-
-		if !cfg.NetworkDiscovery.CustomOptions.ARPScan || !cfg.NetworkDiscovery.CustomOptions.ICMPScan || cfg.NetworkDiscovery.CustomOptions.PortScan.Enabled {
+		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan || cfg.NetworkDiscovery.Options.PortScan.Enabled {
 			t.Error("expected ARP + ICMP for standard scan")
 		}
 	})

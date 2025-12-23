@@ -57,8 +57,8 @@ func TestEndpointAuthentication(t *testing.T) {
 		{"TCP Probe", "POST", "/api/discovery/probe", false, "TCP probing requires auth"},
 		{"Traceroute", "POST", "/api/discovery/traceroute", false, "Traceroute requires auth"},
 		{"Port Scan", "POST", "/api/discovery/portscan", false, "Port scanning requires auth"},
-		{"Discovery Profile GET", "GET", "/api/discovery/profile", false, "Discovery profile requires auth"},
-		{"Discovery Profile PUT", "PUT", "/api/discovery/profile", false, "Changing profile requires auth"},
+		{"Discovery Options GET", "GET", "/api/discovery/options", false, "Discovery options require auth"},
+		{"Discovery Options PUT", "PUT", "/api/discovery/options", false, "Changing options requires auth"},
 		{"Discovery Service Status", "GET", "/api/discovery/service/status", false, "Service status requires auth"},
 		{"Advanced Fingerprint", "POST", "/api/discovery/fingerprint", false, "Fingerprinting requires auth"},
 

@@ -209,34 +209,33 @@ type DiscoveryConfig struct {
 	Timeout  time.Duration `yaml:"timeout"`
 }
 
-// DiscoveryProfile defines preset discovery modes for ease of use.
-type DiscoveryProfile string
+// PortPreset defines commonly used port scanning presets.
+type PortPreset string
 
 const (
-	// ProfileStealth performs no active scanning - only passive listening (LLDP, CDP, DHCP).
-	// Safest for sensitive networks, generates zero noise.
-	ProfileStealth DiscoveryProfile = "stealth"
+	// PortPresetCommon scans common service ports for OS/app identification.
+	// TCP: 21,22,23,25,53,80,110,111,135,139,143,443,445,993,995,1433,1521,3306,3389,5432,5900,5985,8080,8443.
+	// UDP: 53,67,68,69,123,137,138,161,162,500,514,1900.
+	PortPresetCommon PortPreset = "common"
 
-	// ProfileStandard performs safe active discovery using ARP/ICMP on local subnet only.
-	// Recommended for most networks, low noise.
-	ProfileStandard DiscoveryProfile = "standard"
+	// PortPresetSecure scans encrypted/authenticated service ports (good services).
+	// TCP: 22,443,465,587,636,853,993,995,8443,9443.
+	// UDP: 443,500,4500,853.
+	PortPresetSecure PortPreset = "secure"
 
-	// ProfileFullScan performs aggressive discovery including port scans and additional subnets.
-	// High noise, may trigger IDS/IPS.
-	ProfileFullScan DiscoveryProfile = "full_scan"
+	// PortPresetInsecure scans ports that should probably be disabled if found running.
+	// TCP: 21,23,25,69,80,110,111,135,139,143,445,512,513,514,1099,2049,3389,5800,5900,6000-6009.
+	// UDP: 67,68,69,111,137,138,161,162,514,1900,2049.
+	PortPresetInsecure PortPreset = "insecure"
 
-	// ProfileCustom allows fine-grained control over all discovery methods.
-	ProfileCustom DiscoveryProfile = "custom"
+	// PortPresetCustom uses user-defined port lists.
+	PortPresetCustom PortPreset = "custom"
 )
 
 // NetworkDiscoveryConfig contains network device discovery settings.
 type NetworkDiscoveryConfig struct {
-	// Profile selects a preset discovery configuration.
-	// Options: "stealth", "standard", "full_scan", "custom"
-	Profile DiscoveryProfile `yaml:"profile"`
-
-	// CustomOptions are used only when Profile is "custom".
-	CustomOptions DiscoveryCustomOptions `yaml:"custom_options,omitempty"`
+	// Options controls all discovery methods (no profile system).
+	Options DiscoveryOptions `yaml:"options"`
 
 	// Timing controls the "chattiness" of active scans.
 	Timing DiscoveryTiming `yaml:"timing"`
@@ -264,9 +263,8 @@ type NetworkDiscoveryConfig struct {
 	IPv6Enabled bool `yaml:"ipv6_enabled"`
 }
 
-// DiscoveryCustomOptions provides fine-grained control when Profile is "custom".
-type DiscoveryCustomOptions struct {
-	PassiveListen    bool                  `yaml:"passive_listen"`    // Legacy: enables all passive protocols
+// DiscoveryOptions provides control over all discovery methods.
+type DiscoveryOptions struct {
 	PassiveProtocols PassiveProtocolConfig `yaml:"passive_protocols"` // Granular passive protocol control
 	ARPScan          bool                  `yaml:"arp_scan"`          // ARP-based host discovery
 	ICMPScan         bool                  `yaml:"icmp_scan"`         // ICMP ping sweep
@@ -279,10 +277,45 @@ type DiscoveryCustomOptions struct {
 // PortScanConfig controls port scanning behavior.
 type PortScanConfig struct {
 	Enabled       bool          `yaml:"enabled"`
-	TCPPorts      string        `yaml:"tcp_ports"`      // Comma-separated ports or ranges (e.g., "22,80,443,8000-8100")
-	UDPPorts      string        `yaml:"udp_ports"`      // Comma-separated ports or ranges
+	Preset        PortPreset    `yaml:"preset"`         // Port preset: common, secure, insecure, custom
+	TCPPorts      string        `yaml:"tcp_ports"`      // Comma-separated ports or ranges (used when preset is "custom")
+	UDPPorts      string        `yaml:"udp_ports"`      // Comma-separated ports or ranges (used when preset is "custom")
 	BannerTimeout time.Duration `yaml:"banner_timeout"` // Timeout for banner grabbing (default 2s)
 }
+
+// GetEffectivePorts returns the TCP and UDP ports based on the preset or custom settings.
+func (c *PortScanConfig) GetEffectivePorts() (tcpPorts, udpPorts string) {
+	switch c.Preset {
+	case PortPresetCommon:
+		return PortsCommonTCP, PortsCommonUDP
+	case PortPresetSecure:
+		return PortsSecureTCP, PortsSecureUDP
+	case PortPresetInsecure:
+		return PortsInsecureTCP, PortsInsecureUDP
+	case PortPresetCustom:
+		return c.TCPPorts, c.UDPPorts
+	default:
+		return PortsCommonTCP, PortsCommonUDP
+	}
+}
+
+// Port preset definitions.
+const (
+	// PortsCommonTCP are common service ports for OS/app identification.
+	PortsCommonTCP = "21,22,23,25,53,80,110,111,135,139,143,443,445,993,995,1433,1521,3306,3389,5432,5900,5985,8080,8443"
+	// PortsCommonUDP are common UDP service ports.
+	PortsCommonUDP = "53,67,68,69,123,137,138,161,162,500,514,1900"
+
+	// PortsSecureTCP are encrypted/authenticated service ports (good services).
+	PortsSecureTCP = "22,443,465,587,636,853,993,995,8443,9443"
+	// PortsSecureUDP are encrypted UDP service ports.
+	PortsSecureUDP = "443,500,4500,853"
+
+	// PortsInsecureTCP are ports that should probably be disabled if found running.
+	PortsInsecureTCP = "21,23,25,69,80,110,111,135,139,143,445,512,513,514,1099,2049,3389,5800,5900,6000-6009"
+	// PortsInsecureUDP are insecure UDP service ports.
+	PortsInsecureUDP = "67,68,69,111,137,138,161,162,514,1900,2049"
+)
 
 // PassiveProtocolConfig provides granular control over passive discovery protocols.
 type PassiveProtocolConfig struct {
@@ -640,10 +673,8 @@ func DefaultConfig() *Config {
 			Timeout:  30 * time.Second,
 		},
 		NetworkDiscovery: NetworkDiscoveryConfig{
-			// New profile-based configuration (recommended)
-			Profile: ProfileStandard, // Safe default: ARP/ICMP on local subnet only
-			CustomOptions: DiscoveryCustomOptions{
-				PassiveListen: true, // Legacy: enables all passive protocols
+			// Direct options configuration (no profile system)
+			Options: DiscoveryOptions{
 				PassiveProtocols: PassiveProtocolConfig{
 					LLDP: true, // IEEE 802.1AB
 					CDP:  true, // Cisco Discovery Protocol
@@ -654,8 +685,9 @@ func DefaultConfig() *Config {
 				ICMPScan: true, // ICMP ping sweep
 				PortScan: PortScanConfig{
 					Enabled:       false,
-					TCPPorts:      "22,80,443,8080-8100",
-					UDPPorts:      "53,123,161",
+					Preset:        PortPresetCommon, // Default to common service ports
+					TCPPorts:      "",               // Custom ports (used when preset is "custom")
+					UDPPorts:      "",               // Custom ports (used when preset is "custom")
 					BannerTimeout: 2 * time.Second,
 				},
 				TCPProbe: TCPProbeConfig{

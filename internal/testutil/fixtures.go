@@ -31,7 +31,6 @@ var Fixtures = struct {
 			WithPort(8080).
 			WithInterface("lo").
 			WithHTTPS(false).
-			WithDiscoveryProfile(config.ProfileFullScan).
 			WithDiscoveryConcurrency(50).
 			WithDiscoveryMethods(true, true, true). // All methods enabled
 			WithTCPPorts("22,80,443,445,8080").
@@ -57,13 +56,12 @@ func FullScanConfig() *config.Config {
 	return Fixtures.FullConfig()
 }
 
-// StealthScanConfig returns a configuration with stealth profile (passive only).
-func StealthScanConfig() *config.Config {
+// PassiveOnlyConfig returns a configuration with passive scanning only.
+func PassiveOnlyConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(8080).
 		WithInterface("lo").
 		WithHTTPS(false).
-		WithDiscoveryProfile(config.ProfileStealth).
 		WithDiscoveryConcurrency(10).
 		WithDiscoveryMethods(false, false, false). // Passive only
 		Build()
@@ -75,7 +73,6 @@ func StandardScanConfig() *config.Config {
 		WithPort(8080).
 		WithInterface("lo").
 		WithHTTPS(false).
-		WithDiscoveryProfile(config.ProfileStandard).
 		WithDiscoveryConcurrency(25).
 		WithDiscoveryMethods(true, true, false). // ARP + ICMP
 		Build()

@@ -160,36 +160,36 @@ func TestValidateConfig_InvalidIPMode(t *testing.T) {
 	}
 }
 
-func TestValidateConfig_DiscoveryProfile(t *testing.T) {
+func TestValidateConfig_PortPreset(t *testing.T) {
 	validator, err := NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
 
 	tests := []struct {
-		name    string
-		profile DiscoveryProfile
-		want    bool // true = should have errors
+		name   string
+		preset PortPreset
+		want   bool // true = should have errors
 	}{
-		{"stealth profile", ProfileStealth, false},
-		{"standard profile", ProfileStandard, false},
-		{"full_scan profile", ProfileFullScan, false},
-		{"custom profile", ProfileCustom, false},
-		{"invalid profile", DiscoveryProfile("invalid"), true},
+		{"common preset", PortPresetCommon, false},
+		{"secure preset", PortPresetSecure, false},
+		{"insecure preset", PortPresetInsecure, false},
+		{"custom preset", PortPresetCustom, false},
+		{"invalid preset", PortPreset("invalid"), true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := DefaultConfig()
-			cfg.NetworkDiscovery.Profile = tt.profile
+			cfg.NetworkDiscovery.Options.PortScan.Preset = tt.preset
 			errors := validator.ValidateConfig(cfg)
 
 			hasErrors := len(errors) > 0
 			if hasErrors != tt.want {
 				if tt.want {
-					t.Errorf("expected validation errors for profile %q, got none", tt.profile)
+					t.Errorf("expected validation errors for preset %q, got none", tt.preset)
 				} else {
-					t.Errorf("expected no validation errors for profile %q, got: %+v", tt.profile, errors)
+					t.Errorf("expected no validation errors for preset %q, got: %+v", tt.preset, errors)
 					for _, e := range errors {
 						t.Logf("  - Path: %s, Message: %s", e.Path, e.Message)
 					}

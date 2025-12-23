@@ -45,11 +45,10 @@ type DiscoveryDefaults struct {
 
 // NetworkDiscoveryDefaults contains network discovery-related test defaults.
 type NetworkDiscoveryDefaults struct {
-	Profile        config.DiscoveryProfile // Discovery profile
-	ARPScanWorkers int                     // Concurrent workers
-	PingTimeout    time.Duration           // Ping timeout
-	ScanTimeout    time.Duration           // Scan timeout
-	AutoScan       bool                    // Auto-scan on startup
+	ARPScanWorkers int           // Concurrent workers
+	PingTimeout    time.Duration // Ping timeout
+	ScanTimeout    time.Duration // Scan timeout
+	AutoScan       bool          // Auto-scan on startup
 }
 
 var (
@@ -84,7 +83,6 @@ func GetTestDefaults() *TestDefaults {
 				Timeout:  cfg.Discovery.Timeout,
 			},
 			NetworkDiscovery: NetworkDiscoveryDefaults{
-				Profile:        cfg.NetworkDiscovery.Profile,
 				ARPScanWorkers: cfg.NetworkDiscovery.ARPScanWorkers,
 				PingTimeout:    cfg.NetworkDiscovery.PingTimeout,
 				ScanTimeout:    cfg.NetworkDiscovery.ScanTimeout,

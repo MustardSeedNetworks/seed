@@ -40,8 +40,8 @@ func (a *discoveryServiceAdapter) GetStatus() *discovery.ServiceStatus {
 	return a.svc.GetStatus()
 }
 
-func (a *discoveryServiceAdapter) GetProfile() config.DiscoveryProfile {
-	return a.svc.GetProfile()
+func (a *discoveryServiceAdapter) GetOptions() config.DiscoveryOptions {
+	return a.svc.GetOptions()
 }
 
 // deviceDiscoveryAdapter adapts DeviceDiscovery to the mcp.DeviceDiscovery interface.

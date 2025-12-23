@@ -357,7 +357,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/devices/status", s.handleDevicesStatus)
 	s.mux.HandleFunc("/api/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc("/api/devices/subnets", s.handleDevicesSubnets)
-	s.mux.HandleFunc("/api/discovery/profile", s.handleDiscoveryProfile)
+	s.mux.HandleFunc("/api/discovery/options", s.handleDiscoveryOptions)
 	s.mux.HandleFunc("/api/discovery/service/status", s.handleDiscoveryServiceStatus)
 	s.mux.HandleFunc("/api/discovery/fingerprint", s.handleAdvancedFingerprint)
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
@@ -681,13 +681,12 @@ func (s *Server) Start() error {
 			"state", s.linkMonitor.GetState())
 	}
 
-	// Start unified discovery service (applies profile-based configuration)
+	// Start unified discovery service.
 	if err := s.discoveryService.Start(); err != nil {
 		slog.Warn("Discovery service failed to start (may require root)", "error", err)
 	} else {
 		status := s.discoveryService.GetStatus()
 		slog.Info("Discovery service started",
-			"profile", status.Profile,
 			"methods", status.ActiveMethods)
 	}
 

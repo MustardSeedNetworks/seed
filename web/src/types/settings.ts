@@ -174,7 +174,8 @@ export interface IperfSuggestion {
 // Network Discovery Settings (fixes #773, #774)
 // ============================================================================
 
-export type DiscoveryProfile = "stealth" | "standard" | "full_scan" | "custom";
+/** Port preset for quick configuration */
+export type PortPreset = "common" | "secure" | "insecure" | "custom";
 
 /** Passive protocol configuration (LLDP, CDP, EDP, NDP) */
 export interface PassiveProtocolConfig {
@@ -187,6 +188,7 @@ export interface PassiveProtocolConfig {
 /** Port scan configuration */
 export interface PortScanConfig {
   enabled: boolean;
+  preset: PortPreset; // Quick selection of port sets
   tcpPorts: string; // Comma-separated ports or ranges (e.g., "22,80,443,8000-8100")
   udpPorts: string; // Comma-separated ports or ranges
   bannerTimeoutMs: number; // Timeout for banner grabbing
@@ -198,9 +200,8 @@ export interface TCPProbeConfig {
   workers: number; // Concurrent probe workers
 }
 
-/** Discovery custom options - granular protocol control */
-export interface DiscoveryCustomOptions {
-  passiveListen: boolean; // Legacy: enables all passive protocols
+/** Discovery options - granular protocol control */
+export interface DiscoveryOptions {
   passiveProtocols: PassiveProtocolConfig; // Granular passive protocol control
   arpScan: boolean;
   icmpScan: boolean;
@@ -234,7 +235,6 @@ export interface FingerprintingConfig {
 
 export interface DiscoveryServiceStatus {
   running: boolean;
-  profile: DiscoveryProfile;
   scanning: boolean;
   deviceCount: number;
   lastScan: string;
@@ -256,9 +256,8 @@ export interface NetworkDiscoverySettings {
   scanIntervalMs: number;
   ouiFilePath: string;
 
-  // Profile-based configuration
-  profile: DiscoveryProfile;
-  customOptions: DiscoveryCustomOptions;
+  // Direct options configuration (no profile abstraction)
+  options: DiscoveryOptions;
   timing: DiscoveryTimingConfig;
   profiler: DeviceProfilerConfig;
   fingerprinting: FingerprintingConfig;
@@ -431,11 +430,9 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
   scanIntervalMs: 600000, // 10 minutes
   ouiFilePath: "",
 
-  // Profile-based configuration
-  profile: "standard",
+  // Direct options configuration (no profile abstraction)
   ipv6Enabled: true,
-  customOptions: {
-    passiveListen: true,
+  options: {
     passiveProtocols: {
       lldp: true,
       cdp: true,
@@ -446,6 +443,7 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
     icmpScan: true,
     portScan: {
       enabled: false,
+      preset: "common",
       tcpPorts: "22,80,443,8080-8100",
       udpPorts: "53,123,161",
       bannerTimeoutMs: 2000,
