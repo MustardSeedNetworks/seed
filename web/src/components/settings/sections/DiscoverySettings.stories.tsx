@@ -1,15 +1,16 @@
 /**
  * DiscoverySettings Storybook Stories
  *
- * Demonstrates the network discovery configuration component with multiple
- * discovery profiles and customizable scan options.
+ * Demonstrates the network discovery configuration component with granular
+ * control over discovery methods and scan options.
  *
  * Variants:
- * - Discovery profiles: Stealth, Standard, Full Scan, Custom
+ * - Discovery methods: Passive protocols, ARP, ICMP, port scanning, traceroute, SNMP
+ * - Port scan presets: Common, secure, insecure, custom
  * - Service status: Running, stopped, scanning
  * - With subnets: Additional target networks configured
- * - Custom options: Granular control over discovery methods
  * - Timing settings: Workers, timeouts, intervals
+ * - SNMP configuration: Communities, v3 credentials, timeout, retries
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -19,25 +20,65 @@ import type {
   NetworkDiscoverySettings,
   SubnetConfig,
   SaveStatus,
+  SNMPSettings,
 } from "../../../types/settings";
 
 const defaultSettings: NetworkDiscoverySettings = {
   enabled: true,
-  profile: "standard",
   arpScanWorkers: 50,
   pingTimeoutMs: 500,
   scanTimeoutMs: 30000,
   autoScan: false,
   scanIntervalMs: 0,
   ouiFilePath: "oui.txt",
-  customOptions: {
-    passiveListen: true,
+  options: {
+    passiveProtocols: {
+      lldp: true,
+      cdp: true,
+      edp: false,
+      ndp: false,
+    },
     arpScan: true,
     icmpScan: true,
-    portScan: { enabled: false, ports: [], topPorts: 100 },
+    portScan: {
+      enabled: false,
+      preset: "common",
+      tcpPorts: "",
+      udpPorts: "",
+      bannerTimeoutMs: 3000,
+    },
+    tcpProbe: {
+      timeoutMs: 3000,
+      workers: 10,
+    },
     traceroute: false,
     snmpQuery: false,
   },
+  timing: {
+    probeIntervalMs: 100,
+    rescanIntervalMs: 300000,
+    workers: 50,
+  },
+  profiler: {
+    enabled: true,
+    timeoutMs: 5000,
+    maxConcurrent: 10,
+    quickPorts: [22, 80, 443],
+  },
+  fingerprinting: {
+    enabled: true,
+    osDetection: true,
+    serviceProbes: true,
+  },
+  ipv6Enabled: false,
+};
+
+const defaultSNMPSettings: SNMPSettings = {
+  communities: ["public"],
+  v3Credentials: [],
+  timeout: 5000,
+  retries: 2,
+  port: 161,
 };
 
 const meta: Meta<typeof DiscoverySettings> = {
@@ -48,7 +89,7 @@ const meta: Meta<typeof DiscoverySettings> = {
     docs: {
       description: {
         component:
-          "Network discovery configuration panel with multiple profiles (stealth, standard, full scan, custom). Manages scan methods, timing, subnets, and service status monitoring.",
+          "Network discovery configuration panel with granular control over discovery methods (passive protocols, ARP, ICMP, port scanning, traceroute, SNMP). Manages scan options, timing, subnets, SNMP settings, and service status monitoring.",
       },
     },
   },
@@ -57,12 +98,17 @@ const meta: Meta<typeof DiscoverySettings> = {
     networkDiscoveryStatus: {
       control: "select",
       options: ["idle", "saving", "saved", "error"],
-      description: "Auto-save status indicator",
+      description: "Auto-save status indicator for discovery settings",
     },
     subnetsStatus: {
       control: "select",
       options: ["idle", "saving", "saved", "error"],
       description: "Subnet save status",
+    },
+    snmpStatus: {
+      control: "select",
+      options: ["idle", "saving", "saved", "error"],
+      description: "Auto-save status indicator for SNMP settings",
     },
   },
   decorators: [
@@ -78,13 +124,60 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Stealth profile - passive listening only
+ * Default discovery settings with basic methods enabled
  */
-export const StealthProfile: Story = {
+export const Default: Story = {
+  args: {
+    networkDiscoverySettings: defaultSettings,
+    setNetworkDiscoverySettings: () => {},
+    networkDiscoveryStatus: "idle",
+    subnets: [],
+    subnetsStatus: "idle",
+    newSubnetCidr: "",
+    setNewSubnetCidr: () => {},
+    newSubnetName: "",
+    setNewSubnetName: () => {},
+    subnetError: null,
+    setSubnetError: () => {},
+    addSubnet: () => {},
+    toggleSubnet: () => {},
+    deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
+  },
+};
+
+/**
+ * Passive discovery only - using link-layer protocols
+ */
+export const PassiveOnly: Story = {
   args: {
     networkDiscoverySettings: {
       ...defaultSettings,
-      profile: "stealth",
+      options: {
+        passiveProtocols: {
+          lldp: true,
+          cdp: true,
+          edp: true,
+          ndp: true,
+        },
+        arpScan: false,
+        icmpScan: false,
+        portScan: {
+          enabled: false,
+          preset: "common",
+          tcpPorts: "",
+          udpPorts: "",
+          bannerTimeoutMs: 3000,
+        },
+        tcpProbe: {
+          timeoutMs: 3000,
+          workers: 10,
+        },
+        traceroute: false,
+        snmpQuery: false,
+      },
     },
     setNetworkDiscoverySettings: () => {},
     networkDiscoveryStatus: "idle",
@@ -99,42 +192,42 @@ export const StealthProfile: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
 /**
- * Standard profile - ARP and ICMP on local subnet
+ * Full discovery with all methods enabled
  */
-export const StandardProfile: Story = {
+export const FullDiscovery: Story = {
   args: {
     networkDiscoverySettings: {
       ...defaultSettings,
-      profile: "standard",
-    },
-    setNetworkDiscoverySettings: () => {},
-    networkDiscoveryStatus: "idle",
-    subnets: [],
-    subnetsStatus: "idle",
-    newSubnetCidr: "",
-    setNewSubnetCidr: () => {},
-    newSubnetName: "",
-    setNewSubnetName: () => {},
-    subnetError: null,
-    setSubnetError: () => {},
-    addSubnet: () => {},
-    toggleSubnet: () => {},
-    deleteSubnet: () => {},
-  },
-};
-
-/**
- * Full scan profile - all methods including port scanning
- */
-export const FullScanProfile: Story = {
-  args: {
-    networkDiscoverySettings: {
-      ...defaultSettings,
-      profile: "full_scan",
+      options: {
+        passiveProtocols: {
+          lldp: true,
+          cdp: true,
+          edp: true,
+          ndp: true,
+        },
+        arpScan: true,
+        icmpScan: true,
+        portScan: {
+          enabled: true,
+          preset: "common",
+          tcpPorts: "22,80,443,8080,8443",
+          udpPorts: "53,161,162",
+          bannerTimeoutMs: 3000,
+        },
+        tcpProbe: {
+          timeoutMs: 3000,
+          workers: 10,
+        },
+        traceroute: true,
+        snmpQuery: true,
+      },
     },
     setNetworkDiscoverySettings: () => {},
     networkDiscoveryStatus: "idle",
@@ -152,24 +245,34 @@ export const FullScanProfile: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: {
+      communities: ["public", "private"],
+      v3Credentials: [],
+      timeout: 5000,
+      retries: 3,
+      port: 161,
+    },
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
 /**
- * Custom profile - granular control
+ * Port scanning with common ports preset
  */
-export const CustomProfile: Story = {
+export const WithPortScanCommon: Story = {
   args: {
     networkDiscoverySettings: {
       ...defaultSettings,
-      profile: "custom",
-      customOptions: {
-        passiveListen: true,
-        arpScan: true,
-        icmpScan: false,
-        portScan: { enabled: true, ports: [22, 80, 443], topPorts: 100 },
-        traceroute: true,
-        snmpQuery: true,
+      options: {
+        ...defaultSettings.options,
+        portScan: {
+          enabled: true,
+          preset: "common",
+          tcpPorts: "22,80,443,8080",
+          udpPorts: "53,161",
+          bannerTimeoutMs: 3000,
+        },
       },
     },
     setNetworkDiscoverySettings: () => {},
@@ -185,6 +288,120 @@ export const CustomProfile: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
+  },
+};
+
+/**
+ * Port scanning with secure ports preset
+ */
+export const WithPortScanSecure: Story = {
+  args: {
+    networkDiscoverySettings: {
+      ...defaultSettings,
+      options: {
+        ...defaultSettings.options,
+        portScan: {
+          enabled: true,
+          preset: "secure",
+          tcpPorts: "22,443,8443",
+          udpPorts: "",
+          bannerTimeoutMs: 3000,
+        },
+      },
+    },
+    setNetworkDiscoverySettings: () => {},
+    networkDiscoveryStatus: "idle",
+    subnets: [],
+    subnetsStatus: "idle",
+    newSubnetCidr: "",
+    setNewSubnetCidr: () => {},
+    newSubnetName: "",
+    setNewSubnetName: () => {},
+    subnetError: null,
+    setSubnetError: () => {},
+    addSubnet: () => {},
+    toggleSubnet: () => {},
+    deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
+  },
+};
+
+/**
+ * Port scanning with insecure ports preset
+ */
+export const WithPortScanInsecure: Story = {
+  args: {
+    networkDiscoverySettings: {
+      ...defaultSettings,
+      options: {
+        ...defaultSettings.options,
+        portScan: {
+          enabled: true,
+          preset: "insecure",
+          tcpPorts: "21,23,25,80,110,143",
+          udpPorts: "69,161",
+          bannerTimeoutMs: 3000,
+        },
+      },
+    },
+    setNetworkDiscoverySettings: () => {},
+    networkDiscoveryStatus: "idle",
+    subnets: [],
+    subnetsStatus: "idle",
+    newSubnetCidr: "",
+    setNewSubnetCidr: () => {},
+    newSubnetName: "",
+    setNewSubnetName: () => {},
+    subnetError: null,
+    setSubnetError: () => {},
+    addSubnet: () => {},
+    toggleSubnet: () => {},
+    deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
+  },
+};
+
+/**
+ * Custom port ranges configuration
+ */
+export const CustomPorts: Story = {
+  args: {
+    networkDiscoverySettings: {
+      ...defaultSettings,
+      options: {
+        ...defaultSettings.options,
+        portScan: {
+          enabled: true,
+          preset: "custom",
+          tcpPorts: "22,80,443,3000-3010,8000-8100",
+          udpPorts: "53,161,500-600",
+          bannerTimeoutMs: 5000,
+        },
+      },
+    },
+    setNetworkDiscoverySettings: () => {},
+    networkDiscoveryStatus: "idle",
+    subnets: [],
+    subnetsStatus: "idle",
+    newSubnetCidr: "",
+    setNewSubnetCidr: () => {},
+    newSubnetName: "",
+    setNewSubnetName: () => {},
+    subnetError: null,
+    setSubnetError: () => {},
+    addSubnet: () => {},
+    toggleSubnet: () => {},
+    deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
@@ -210,6 +427,9 @@ export const Disabled: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
@@ -236,6 +456,9 @@ export const AutoScanEnabled: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
@@ -244,10 +467,7 @@ export const AutoScanEnabled: Story = {
  */
 export const WithSubnets: Story = {
   args: {
-    networkDiscoverySettings: {
-      ...defaultSettings,
-      profile: "full_scan",
-    },
+    networkDiscoverySettings: defaultSettings,
     setNetworkDiscoverySettings: () => {},
     networkDiscoveryStatus: "idle",
     subnets: [
@@ -266,6 +486,9 @@ export const WithSubnets: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
@@ -288,19 +511,38 @@ export const SubnetError: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
 /**
- * Custom timing settings - fast scan
+ * Fast timing settings - aggressive scan parameters
  */
-export const FastScan: Story = {
+export const FastTiming: Story = {
   args: {
     networkDiscoverySettings: {
       ...defaultSettings,
       arpScanWorkers: 100,
       pingTimeoutMs: 200,
       scanTimeoutMs: 15000,
+      timing: {
+        probeIntervalMs: 50,
+        rescanIntervalMs: 60000, // 1 minute
+        workers: 100,
+      },
+      options: {
+        ...defaultSettings.options,
+        tcpProbe: {
+          timeoutMs: 1000,
+          workers: 20,
+        },
+        portScan: {
+          ...defaultSettings.options.portScan,
+          bannerTimeoutMs: 1000,
+        },
+      },
     },
     setNetworkDiscoverySettings: () => {},
     networkDiscoveryStatus: "idle",
@@ -315,19 +557,38 @@ export const FastScan: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
 /**
- * Custom timing settings - slow/thorough scan
+ * Thorough timing settings - slow/careful scan parameters
  */
-export const ThoroughScan: Story = {
+export const ThoroughTiming: Story = {
   args: {
     networkDiscoverySettings: {
       ...defaultSettings,
       arpScanWorkers: 20,
       pingTimeoutMs: 2000,
       scanTimeoutMs: 120000,
+      timing: {
+        probeIntervalMs: 500,
+        rescanIntervalMs: 600000, // 10 minutes
+        workers: 20,
+      },
+      options: {
+        ...defaultSettings.options,
+        tcpProbe: {
+          timeoutMs: 10000,
+          workers: 5,
+        },
+        portScan: {
+          ...defaultSettings.options.portScan,
+          bannerTimeoutMs: 10000,
+        },
+      },
     },
     setNetworkDiscoverySettings: () => {},
     networkDiscoveryStatus: "idle",
@@ -342,11 +603,14 @@ export const ThoroughScan: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
 /**
- * Saving state
+ * Saving state for discovery settings
  */
 export const Saving: Story = {
   args: {
@@ -364,6 +628,57 @@ export const Saving: Story = {
     addSubnet: () => {},
     toggleSubnet: () => {},
     deleteSubnet: () => {},
+    snmpSettings: defaultSNMPSettings,
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
+  },
+};
+
+/**
+ * SNMP settings with multiple communities and v3 credentials
+ */
+export const WithSNMPSettings: Story = {
+  args: {
+    networkDiscoverySettings: {
+      ...defaultSettings,
+      options: {
+        ...defaultSettings.options,
+        snmpQuery: true,
+      },
+    },
+    setNetworkDiscoverySettings: () => {},
+    networkDiscoveryStatus: "idle",
+    subnets: [],
+    subnetsStatus: "idle",
+    newSubnetCidr: "",
+    setNewSubnetCidr: () => {},
+    newSubnetName: "",
+    setNewSubnetName: () => {},
+    subnetError: null,
+    setSubnetError: () => {},
+    addSubnet: () => {},
+    toggleSubnet: () => {},
+    deleteSubnet: () => {},
+    snmpSettings: {
+      communities: ["public", "private", "secret"],
+      v3Credentials: [
+        {
+          name: "Admin User",
+          username: "admin",
+          authProtocol: "SHA",
+          authPassword: "authpass123",
+          privProtocol: "AES",
+          privPassword: "privpass123",
+          contextName: "",
+          securityLevel: "authPriv",
+        },
+      ],
+      timeout: 10000,
+      retries: 5,
+      port: 161,
+    },
+    setSnmpSettings: () => {},
+    snmpStatus: "idle",
   },
 };
 
@@ -375,6 +690,9 @@ export const Interactive: Story = {
     const [settings, setSettings] =
       useState<NetworkDiscoverySettings>(defaultSettings);
     const [status, setStatus] = useState<SaveStatus>("idle");
+    const [snmpSettings, setSnmpSettings] =
+      useState<SNMPSettings>(defaultSNMPSettings);
+    const [snmpStatus, setSnmpStatus] = useState<SaveStatus>("idle");
     const subnets: SubnetConfig[] = [
       { cidr: "10.0.0.0/24", name: "Server VLAN", enabled: true },
     ];
@@ -390,6 +708,17 @@ export const Interactive: Story = {
       setTimeout(() => {
         setStatus("saved");
         setTimeout(() => setStatus("idle"), 2000);
+      }, 800);
+    };
+
+    const handleSetSnmpSettings = (
+      updater: React.SetStateAction<SNMPSettings>
+    ) => {
+      setSnmpSettings(updater);
+      setSnmpStatus("saving");
+      setTimeout(() => {
+        setSnmpStatus("saved");
+        setTimeout(() => setSnmpStatus("idle"), 2000);
       }, 800);
     };
 
@@ -409,6 +738,9 @@ export const Interactive: Story = {
         addSubnet={() => {}}
         toggleSubnet={() => {}}
         deleteSubnet={() => {}}
+        snmpSettings={snmpSettings}
+        setSnmpSettings={handleSetSnmpSettings}
+        snmpStatus={snmpStatus}
       />
     );
   },

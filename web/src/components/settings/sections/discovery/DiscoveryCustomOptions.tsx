@@ -18,8 +18,7 @@ interface DiscoveryCustomOptionsProps {
 }
 
 /**
- * Custom discovery method options.
- * Only displayed when "custom" profile is selected.
+ * Discovery scan method options.
  */
 export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
   settings,
@@ -30,71 +29,40 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
   return (
     <div className={cn("border-t border-surface-border", spacing.pad.sm)}>
       <span className="caption text-text-muted font-medium">
-        {t("discovery.customOptions")}
+        {t("discovery.scanMethods", "Scan Methods")}
       </span>
       <div className={cn(spacing.margin.top.inline, "stack-sm")}>
-        {/* Passive Listeners */}
-        <label className={layout.inline.default}>
-          <input
-            type="checkbox"
-            checked={settings.customOptions?.passiveListen ?? true}
-            onChange={(e) =>
-              onSettingsChange((prev) => ({
-                ...prev,
-                customOptions: {
-                  ...prev.customOptions,
-                  passiveListen: e.target.checked,
-                },
-              }))
-            }
-            className={iconTokens.size.sm}
-          />
-          <span className="body-small text-text-primary">
-            {t("discovery.passiveListeners")}
+        {/* Passive Protocol Details */}
+        <div>
+          <span className="body-small text-text-primary font-medium">
+            {t("discovery.passiveProtocols", "Passive Protocols")}
           </span>
-        </label>
-
-        {/* Passive Protocol Details (shown when enabled) */}
-        {settings.customOptions?.passiveListen && (
           <div
             className={cn(
               "ml-6",
               spacing.pad.xs,
+              spacing.margin.top.tight,
               "bg-surface-base",
               radius.default,
               "border border-surface-border"
             )}
           >
-            <span className="caption text-text-muted">
-              {t("discovery.passiveProtocols", "Protocols")}:
-            </span>
-            <div
-              className={cn(
-                "flex flex-wrap",
-                spacing.gap.compact,
-                spacing.margin.top.tight
-              )}
-            >
+            <div className={cn("flex flex-wrap", spacing.gap.compact)}>
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    settings.customOptions?.passiveProtocols?.lldp ?? true
-                  }
+                  checked={settings.options?.passiveProtocols?.lldp ?? true}
                   onChange={(e) =>
                     onSettingsChange((prev) => ({
                       ...prev,
-                      customOptions: {
-                        ...prev.customOptions,
+                      options: {
+                        ...prev.options,
                         passiveProtocols: {
-                          ...prev.customOptions?.passiveProtocols,
+                          ...prev.options?.passiveProtocols,
                           lldp: e.target.checked,
-                          cdp:
-                            prev.customOptions?.passiveProtocols?.cdp ?? true,
-                          edp:
-                            prev.customOptions?.passiveProtocols?.edp ?? true,
-                          ndp:
-                            prev.customOptions?.passiveProtocols?.ndp ?? true,
+                          cdp: prev.options?.passiveProtocols?.cdp ?? true,
+                          edp: prev.options?.passiveProtocols?.edp ?? true,
+                          ndp: prev.options?.passiveProtocols?.ndp ?? true,
                         },
                       },
                     }))
@@ -106,23 +74,18 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    settings.customOptions?.passiveProtocols?.cdp ?? true
-                  }
+                  checked={settings.options?.passiveProtocols?.cdp ?? true}
                   onChange={(e) =>
                     onSettingsChange((prev) => ({
                       ...prev,
-                      customOptions: {
-                        ...prev.customOptions,
+                      options: {
+                        ...prev.options,
                         passiveProtocols: {
-                          ...prev.customOptions?.passiveProtocols,
-                          lldp:
-                            prev.customOptions?.passiveProtocols?.lldp ?? true,
+                          ...prev.options?.passiveProtocols,
+                          lldp: prev.options?.passiveProtocols?.lldp ?? true,
                           cdp: e.target.checked,
-                          edp:
-                            prev.customOptions?.passiveProtocols?.edp ?? true,
-                          ndp:
-                            prev.customOptions?.passiveProtocols?.ndp ?? true,
+                          edp: prev.options?.passiveProtocols?.edp ?? true,
+                          ndp: prev.options?.passiveProtocols?.ndp ?? true,
                         },
                       },
                     }))
@@ -134,23 +97,18 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    settings.customOptions?.passiveProtocols?.edp ?? true
-                  }
+                  checked={settings.options?.passiveProtocols?.edp ?? true}
                   onChange={(e) =>
                     onSettingsChange((prev) => ({
                       ...prev,
-                      customOptions: {
-                        ...prev.customOptions,
+                      options: {
+                        ...prev.options,
                         passiveProtocols: {
-                          ...prev.customOptions?.passiveProtocols,
-                          lldp:
-                            prev.customOptions?.passiveProtocols?.lldp ?? true,
-                          cdp:
-                            prev.customOptions?.passiveProtocols?.cdp ?? true,
+                          ...prev.options?.passiveProtocols,
+                          lldp: prev.options?.passiveProtocols?.lldp ?? true,
+                          cdp: prev.options?.passiveProtocols?.cdp ?? true,
                           edp: e.target.checked,
-                          ndp:
-                            prev.customOptions?.passiveProtocols?.ndp ?? true,
+                          ndp: prev.options?.passiveProtocols?.ndp ?? true,
                         },
                       },
                     }))
@@ -162,22 +120,17 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               <label className={layout.inline.default}>
                 <input
                   type="checkbox"
-                  checked={
-                    settings.customOptions?.passiveProtocols?.ndp ?? true
-                  }
+                  checked={settings.options?.passiveProtocols?.ndp ?? true}
                   onChange={(e) =>
                     onSettingsChange((prev) => ({
                       ...prev,
-                      customOptions: {
-                        ...prev.customOptions,
+                      options: {
+                        ...prev.options,
                         passiveProtocols: {
-                          ...prev.customOptions?.passiveProtocols,
-                          lldp:
-                            prev.customOptions?.passiveProtocols?.lldp ?? true,
-                          cdp:
-                            prev.customOptions?.passiveProtocols?.cdp ?? true,
-                          edp:
-                            prev.customOptions?.passiveProtocols?.edp ?? true,
+                          ...prev.options?.passiveProtocols,
+                          lldp: prev.options?.passiveProtocols?.lldp ?? true,
+                          cdp: prev.options?.passiveProtocols?.cdp ?? true,
+                          edp: prev.options?.passiveProtocols?.edp ?? true,
                           ndp: e.target.checked,
                         },
                       },
@@ -189,18 +142,18 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               </label>
             </div>
           </div>
-        )}
+        </div>
 
         {/* ARP Scanning */}
         <label className={layout.inline.default}>
           <input
             type="checkbox"
-            checked={settings.customOptions?.arpScan ?? true}
+            checked={settings.options?.arpScan ?? true}
             onChange={(e) =>
               onSettingsChange((prev) => ({
                 ...prev,
-                customOptions: {
-                  ...prev.customOptions,
+                options: {
+                  ...prev.options,
                   arpScan: e.target.checked,
                 },
               }))
@@ -216,12 +169,12 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
         <label className={layout.inline.default}>
           <input
             type="checkbox"
-            checked={settings.customOptions?.icmpScan ?? true}
+            checked={settings.options?.icmpScan ?? true}
             onChange={(e) =>
               onSettingsChange((prev) => ({
                 ...prev,
-                customOptions: {
-                  ...prev.customOptions,
+                options: {
+                  ...prev.options,
                   icmpScan: e.target.checked,
                 },
               }))
@@ -237,21 +190,20 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
         <label className={layout.inline.default}>
           <input
             type="checkbox"
-            checked={settings.customOptions?.portScan?.enabled ?? false}
+            checked={settings.options?.portScan?.enabled ?? false}
             onChange={(e) =>
               onSettingsChange((prev) => ({
                 ...prev,
-                customOptions: {
-                  ...prev.customOptions,
+                options: {
+                  ...prev.options,
                   portScan: {
-                    ...prev.customOptions?.portScan,
+                    ...prev.options?.portScan,
                     enabled: e.target.checked,
-                    tcpPorts:
-                      prev.customOptions?.portScan?.tcpPorts ?? "22,80,443",
-                    udpPorts:
-                      prev.customOptions?.portScan?.udpPorts ?? "53,161",
+                    preset: prev.options?.portScan?.preset ?? "common",
+                    tcpPorts: prev.options?.portScan?.tcpPorts ?? "22,80,443",
+                    udpPorts: prev.options?.portScan?.udpPorts ?? "53,161",
                     bannerTimeoutMs:
-                      prev.customOptions?.portScan?.bannerTimeoutMs ?? 2000,
+                      prev.options?.portScan?.bannerTimeoutMs ?? 2000,
                   },
                 },
               }))
@@ -264,7 +216,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
         </label>
 
         {/* Port Scan Details (shown when enabled) */}
-        {settings.customOptions?.portScan?.enabled && (
+        {settings.options?.portScan?.enabled && (
           <div
             className={cn(
               "ml-6 stack-sm",
@@ -277,6 +229,61 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
             <div>
               <label
                 className="caption text-text-muted"
+                htmlFor="port-scan-preset"
+              >
+                {t("discovery.portScanPreset", "Port Preset")}
+              </label>
+              <select
+                id="port-scan-preset"
+                value={settings.options?.portScan?.preset ?? "common"}
+                onChange={(e) =>
+                  onSettingsChange((prev) => ({
+                    ...prev,
+                    options: {
+                      ...prev.options,
+                      portScan: {
+                        ...prev.options?.portScan,
+                        enabled: prev.options?.portScan?.enabled ?? false,
+                        preset: e.target.value as
+                          | "common"
+                          | "secure"
+                          | "insecure"
+                          | "custom",
+                        tcpPorts:
+                          prev.options?.portScan?.tcpPorts ?? "22,80,443",
+                        udpPorts: prev.options?.portScan?.udpPorts ?? "53,161",
+                        bannerTimeoutMs:
+                          prev.options?.portScan?.bannerTimeoutMs ?? 2000,
+                      },
+                    },
+                  }))
+                }
+                className={cn(
+                  "w-full",
+                  spacing.margin.top.tight,
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  "body-small"
+                )}
+              >
+                <option value="common">
+                  {t("discovery.portPresetCommon", "Common Services")}
+                </option>
+                <option value="secure">
+                  {t("discovery.portPresetSecure", "Secure Ports")}
+                </option>
+                <option value="insecure">
+                  {t("discovery.portPresetInsecure", "Insecure Ports")}
+                </option>
+                <option value="custom">
+                  {t("discovery.portPresetCustom", "Custom")}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label
+                className="caption text-text-muted"
                 htmlFor="port-scan-tcp"
               >
                 {t("discovery.portScanTcpPorts", "TCP Ports")}
@@ -284,22 +291,20 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               <input
                 id="port-scan-tcp"
                 type="text"
-                value={
-                  settings.customOptions?.portScan?.tcpPorts ?? "22,80,443"
-                }
+                value={settings.options?.portScan?.tcpPorts ?? "22,80,443"}
                 onChange={(e) =>
                   onSettingsChange((prev) => ({
                     ...prev,
-                    customOptions: {
-                      ...prev.customOptions,
+                    options: {
+                      ...prev.options,
                       portScan: {
-                        ...prev.customOptions?.portScan,
-                        enabled: prev.customOptions?.portScan?.enabled ?? false,
+                        ...prev.options?.portScan,
+                        enabled: prev.options?.portScan?.enabled ?? false,
+                        preset: prev.options?.portScan?.preset ?? "common",
                         tcpPorts: e.target.value,
-                        udpPorts:
-                          prev.customOptions?.portScan?.udpPorts ?? "53,161",
+                        udpPorts: prev.options?.portScan?.udpPorts ?? "53,161",
                         bannerTimeoutMs:
-                          prev.customOptions?.portScan?.bannerTimeoutMs ?? 2000,
+                          prev.options?.portScan?.bannerTimeoutMs ?? 2000,
                       },
                     },
                   }))
@@ -325,20 +330,21 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               <input
                 id="port-scan-udp"
                 type="text"
-                value={settings.customOptions?.portScan?.udpPorts ?? "53,161"}
+                value={settings.options?.portScan?.udpPorts ?? "53,161"}
                 onChange={(e) =>
                   onSettingsChange((prev) => ({
                     ...prev,
-                    customOptions: {
-                      ...prev.customOptions,
+                    options: {
+                      ...prev.options,
                       portScan: {
-                        ...prev.customOptions?.portScan,
-                        enabled: prev.customOptions?.portScan?.enabled ?? false,
+                        ...prev.options?.portScan,
+                        enabled: prev.options?.portScan?.enabled ?? false,
+                        preset: prev.options?.portScan?.preset ?? "common",
                         tcpPorts:
-                          prev.customOptions?.portScan?.tcpPorts ?? "22,80,443",
+                          prev.options?.portScan?.tcpPorts ?? "22,80,443",
                         udpPorts: e.target.value,
                         bannerTimeoutMs:
-                          prev.customOptions?.portScan?.bannerTimeoutMs ?? 2000,
+                          prev.options?.portScan?.bannerTimeoutMs ?? 2000,
                       },
                     },
                   }))
@@ -364,21 +370,19 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               <input
                 id="port-scan-banner"
                 type="number"
-                value={
-                  settings.customOptions?.portScan?.bannerTimeoutMs ?? 2000
-                }
+                value={settings.options?.portScan?.bannerTimeoutMs ?? 2000}
                 onChange={(e) =>
                   onSettingsChange((prev) => ({
                     ...prev,
-                    customOptions: {
-                      ...prev.customOptions,
+                    options: {
+                      ...prev.options,
                       portScan: {
-                        ...prev.customOptions?.portScan,
-                        enabled: prev.customOptions?.portScan?.enabled ?? false,
+                        ...prev.options?.portScan,
+                        enabled: prev.options?.portScan?.enabled ?? false,
+                        preset: prev.options?.portScan?.preset ?? "common",
                         tcpPorts:
-                          prev.customOptions?.portScan?.tcpPorts ?? "22,80,443",
-                        udpPorts:
-                          prev.customOptions?.portScan?.udpPorts ?? "53,161",
+                          prev.options?.portScan?.tcpPorts ?? "22,80,443",
+                        udpPorts: prev.options?.portScan?.udpPorts ?? "53,161",
                         bannerTimeoutMs: parseInt(e.target.value) || 2000,
                       },
                     },
@@ -433,16 +437,16 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               <input
                 id="tcp-probe-timeout"
                 type="number"
-                value={settings.customOptions?.tcpProbe?.timeoutMs ?? 2000}
+                value={settings.options?.tcpProbe?.timeoutMs ?? 2000}
                 onChange={(e) =>
                   onSettingsChange((prev) => ({
                     ...prev,
-                    customOptions: {
-                      ...prev.customOptions,
+                    options: {
+                      ...prev.options,
                       tcpProbe: {
-                        ...prev.customOptions?.tcpProbe,
+                        ...prev.options?.tcpProbe,
                         timeoutMs: parseInt(e.target.value) || 2000,
-                        workers: prev.customOptions?.tcpProbe?.workers ?? 20,
+                        workers: prev.options?.tcpProbe?.workers ?? 20,
                       },
                     },
                   }))
@@ -469,16 +473,15 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               <input
                 id="tcp-probe-workers"
                 type="number"
-                value={settings.customOptions?.tcpProbe?.workers ?? 20}
+                value={settings.options?.tcpProbe?.workers ?? 20}
                 onChange={(e) =>
                   onSettingsChange((prev) => ({
                     ...prev,
-                    customOptions: {
-                      ...prev.customOptions,
+                    options: {
+                      ...prev.options,
                       tcpProbe: {
-                        ...prev.customOptions?.tcpProbe,
-                        timeoutMs:
-                          prev.customOptions?.tcpProbe?.timeoutMs ?? 2000,
+                        ...prev.options?.tcpProbe,
+                        timeoutMs: prev.options?.tcpProbe?.timeoutMs ?? 2000,
                         workers: parseInt(e.target.value) || 20,
                       },
                     },
@@ -503,12 +506,12 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
         <label className={layout.inline.default}>
           <input
             type="checkbox"
-            checked={settings.customOptions?.traceroute ?? false}
+            checked={settings.options?.traceroute ?? false}
             onChange={(e) =>
               onSettingsChange((prev) => ({
                 ...prev,
-                customOptions: {
-                  ...prev.customOptions,
+                options: {
+                  ...prev.options,
                   traceroute: e.target.checked,
                 },
               }))
@@ -524,12 +527,12 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
         <label className={layout.inline.default}>
           <input
             type="checkbox"
-            checked={settings.customOptions?.snmpQuery ?? false}
+            checked={settings.options?.snmpQuery ?? false}
             onChange={(e) =>
               onSettingsChange((prev) => ({
                 ...prev,
-                customOptions: {
-                  ...prev.customOptions,
+                options: {
+                  ...prev.options,
                   snmpQuery: e.target.checked,
                 },
               }))

@@ -46,12 +46,6 @@ func (b *ConfigBuilder) WithInterface(iface string) *ConfigBuilder {
 	return b
 }
 
-// WithDiscoveryProfile sets the discovery profile.
-func (b *ConfigBuilder) WithDiscoveryProfile(profile config.DiscoveryProfile) *ConfigBuilder {
-	b.cfg.NetworkDiscovery.Profile = profile
-	return b
-}
-
 // WithHTTPS enables or disables HTTPS.
 func (b *ConfigBuilder) WithHTTPS(enabled bool) *ConfigBuilder {
 	b.cfg.Server.HTTPS = enabled
@@ -78,15 +72,15 @@ func (b *ConfigBuilder) WithDiscoveryConcurrency(concurrency int) *ConfigBuilder
 
 // WithDiscoveryMethods configures which discovery methods are enabled.
 func (b *ConfigBuilder) WithDiscoveryMethods(arp, icmp, portScan bool) *ConfigBuilder {
-	b.cfg.NetworkDiscovery.CustomOptions.ARPScan = arp
-	b.cfg.NetworkDiscovery.CustomOptions.ICMPScan = icmp
-	b.cfg.NetworkDiscovery.CustomOptions.PortScan.Enabled = portScan
+	b.cfg.NetworkDiscovery.Options.ARPScan = arp
+	b.cfg.NetworkDiscovery.Options.ICMPScan = icmp
+	b.cfg.NetworkDiscovery.Options.PortScan.Enabled = portScan
 	return b
 }
 
 // WithTCPPorts sets the TCP ports to probe during discovery.
 func (b *ConfigBuilder) WithTCPPorts(ports string) *ConfigBuilder {
-	b.cfg.NetworkDiscovery.CustomOptions.PortScan.TCPPorts = ports
+	b.cfg.NetworkDiscovery.Options.PortScan.TCPPorts = ports
 	return b
 }
 

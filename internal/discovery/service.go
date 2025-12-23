@@ -1,7 +1,6 @@
 // Package discovery implements multi-protocol network device discovery.
 // Discovery service coordinates all discovery methods (ARP, NDP, LLDP, CDP, EDP, ICMP, profiling)
-// with profile-based configuration. Manages orchestration, timing, and aggregation of discovery results
-// according to user-selected discovery profiles (e.g., Quick, Standard, Comprehensive).
+// with direct settings configuration. Manages orchestration, timing, and aggregation of discovery results.
 package discovery
 
 import (
@@ -13,8 +12,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 )
 
-// Service is the unified discovery orchestrator that applies profile-based
-// configuration to control which discovery methods are active.
+// Service is the unified discovery orchestrator that applies direct
+// configuration settings to control which discovery methods are active.
 type Service struct {
 	cfg             *config.Config
 	interfaceName   string
@@ -22,25 +21,23 @@ type Service struct {
 	profiler        *DeviceProfiler
 
 	// Runtime state
-	mu            sync.RWMutex
-	running       bool
-	activeProfile config.DiscoveryProfile
-	rescanTicker  *time.Ticker
-	stopCh        chan struct{}
+	mu           sync.RWMutex
+	running      bool
+	rescanTicker *time.Ticker
+	stopCh       chan struct{}
 }
 
 // ServiceStatus represents the current state of the discovery service.
 type ServiceStatus struct {
-	Running        bool                    `json:"running"`
-	Profile        config.DiscoveryProfile `json:"profile"`
-	Scanning       bool                    `json:"scanning"`
-	DeviceCount    int                     `json:"deviceCount"`
-	LastScan       time.Time               `json:"lastScan"`
-	Subnet         string                  `json:"subnet"`
-	LocalIP        string                  `json:"localIP"`
-	Interface      string                  `json:"interface"`
-	ActiveMethods  []string                `json:"activeMethods"`
-	RescanInterval time.Duration           `json:"rescanInterval"`
+	Running        bool          `json:"running"`
+	Scanning       bool          `json:"scanning"`
+	DeviceCount    int           `json:"deviceCount"`
+	LastScan       time.Time     `json:"lastScan"`
+	Subnet         string        `json:"subnet"`
+	LocalIP        string        `json:"localIP"`
+	Interface      string        `json:"interface"`
+	ActiveMethods  []string      `json:"activeMethods"`
+	RescanInterval time.Duration `json:"rescanInterval"`
 }
 
 // NewService creates a new unified discovery service.
@@ -50,11 +47,10 @@ func NewService(cfg *config.Config, interfaceName string) *Service {
 		interfaceName:   interfaceName,
 		deviceDiscovery: NewDeviceDiscoveryWithOUI(interfaceName, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
 		profiler:        NewDeviceProfiler(DefaultProfilerConfig(), &cfg.SNMP),
-		activeProfile:   cfg.NetworkDiscovery.Profile,
 	}
 }
 
-// Start begins the discovery service based on the configured profile.
+// Start begins the discovery service based on the configured options.
 func (s *Service) Start() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -64,13 +60,12 @@ func (s *Service) Start() error {
 	}
 
 	s.stopCh = make(chan struct{})
-	profile := s.cfg.NetworkDiscovery.Profile
-	s.activeProfile = profile
+	opts := &s.cfg.NetworkDiscovery.Options
 
-	slog.Info("Starting discovery service", "profile", profile)
+	slog.Info("Starting discovery service", "methods", s.getActiveMethods())
 
-	// Apply profile settings
-	if err := s.applyProfile(profile); err != nil {
+	// Apply discovery settings
+	if err := s.applyOptions(opts); err != nil {
 		return err
 	}
 
@@ -81,7 +76,7 @@ func (s *Service) Start() error {
 
 	// Start background rescan loop if configured
 	rescanInterval := s.cfg.NetworkDiscovery.Timing.RescanInterval
-	if rescanInterval > 0 && s.shouldDoActiveScan(profile) {
+	if rescanInterval > 0 && s.shouldDoActiveScan() {
 		s.rescanTicker = time.NewTicker(rescanInterval)
 		go s.rescanLoop()
 	}
@@ -113,67 +108,19 @@ func (s *Service) Stop() {
 	slog.Info("Discovery service stopped")
 }
 
-// applyProfile configures discovery methods based on the selected profile.
+// applyOptions configures discovery methods based on the direct settings.
 // Must be called with s.mu held.
-func (s *Service) applyProfile(profile config.DiscoveryProfile) error {
-	switch profile {
-	case config.ProfileStealth:
-		// Stealth: passive listening only (LLDP, CDP, EDP, DHCP)
-		// No active scanning
-		slog.Info("Profile stealth: enabling passive protocol listeners only")
-		return s.deviceDiscovery.Start() // Starts LLDP/CDP/EDP listeners
-
-	case config.ProfileStandard:
-		// Standard: passive + ARP/ICMP on local subnet
-		slog.Info("Profile standard: enabling passive listeners + ARP/ICMP scan")
-		if err := s.deviceDiscovery.Start(); err != nil {
-			return err
-		}
-		// Configure for local subnet only
-		if err := s.deviceDiscovery.SetAdditionalSubnets(nil); err != nil {
-			slog.Warn("Failed to clear additional subnets", "error", err)
-		}
-		return nil
-
-	case config.ProfileFullScan:
-		// Full scan: all methods including additional subnets and port scanning
-		slog.Info("Profile full_scan: enabling all discovery methods")
-		if err := s.deviceDiscovery.Start(); err != nil {
-			return err
-		}
-		// Configure additional subnets from config
-		cidrs := make([]string, 0)
-		for _, subnet := range s.cfg.NetworkDiscovery.AdditionalSubnets {
-			if subnet.Enabled && subnet.CIDR != "" {
-				cidrs = append(cidrs, subnet.CIDR)
-			}
-		}
-		return s.deviceDiscovery.SetAdditionalSubnets(cidrs)
-
-	case config.ProfileCustom:
-		// Custom: fine-grained control via CustomOptions
-		slog.Info("Profile custom: applying custom options")
-		return s.applyCustomOptions()
-
-	default:
-		// Default to standard
-		slog.Warn("Unknown profile, defaulting to standard", "profile", profile)
-		return s.applyProfile(config.ProfileStandard)
-	}
-}
-
-// applyCustomOptions applies fine-grained custom discovery options.
-func (s *Service) applyCustomOptions() error {
-	opts := s.cfg.NetworkDiscovery.CustomOptions
-
-	// Start passive listeners if enabled
-	if opts.PassiveListen {
+func (s *Service) applyOptions(opts *config.DiscoveryOptions) error {
+	// Start passive listeners if any passive protocols are enabled
+	passiveEnabled := opts.PassiveProtocols.LLDP || opts.PassiveProtocols.CDP ||
+		opts.PassiveProtocols.EDP || opts.PassiveProtocols.NDP
+	if passiveEnabled {
 		if err := s.deviceDiscovery.Start(); err != nil {
 			return err
 		}
 	}
 
-	// Configure additional subnets if needed
+	// Configure additional subnets if any active scanning is enabled
 	if opts.ARPScan || opts.ICMPScan || opts.PortScan.Enabled {
 		cidrs := make([]string, 0)
 		for _, subnet := range s.cfg.NetworkDiscovery.AdditionalSubnets {
@@ -189,19 +136,10 @@ func (s *Service) applyCustomOptions() error {
 	return nil
 }
 
-// shouldDoActiveScan returns true if the profile includes active scanning.
-func (s *Service) shouldDoActiveScan(profile config.DiscoveryProfile) bool {
-	switch profile {
-	case config.ProfileStealth:
-		return false
-	case config.ProfileStandard, config.ProfileFullScan:
-		return true
-	case config.ProfileCustom:
-		opts := s.cfg.NetworkDiscovery.CustomOptions
-		return opts.ARPScan || opts.ICMPScan || opts.PortScan.Enabled
-	default:
-		return true
-	}
+// shouldDoActiveScan returns true if any active scanning methods are enabled.
+func (s *Service) shouldDoActiveScan() bool {
+	opts := s.cfg.NetworkDiscovery.Options
+	return opts.ARPScan || opts.ICMPScan || opts.PortScan.Enabled
 }
 
 // rescanLoop periodically triggers network scans based on RescanInterval.
@@ -221,10 +159,9 @@ func (s *Service) rescanLoop() {
 	}
 }
 
-// Scan performs an active network scan (if the profile allows it).
+// Scan performs an active network scan (if enabled in options).
 func (s *Service) Scan(ctx context.Context) error {
 	s.mu.RLock()
-	profile := s.activeProfile
 	running := s.running
 	s.mu.RUnlock()
 
@@ -232,22 +169,18 @@ func (s *Service) Scan(ctx context.Context) error {
 		return nil
 	}
 
-	if !s.shouldDoActiveScan(profile) {
-		slog.Debug("Discovery: active scanning disabled for profile", "profile", profile)
+	if !s.shouldDoActiveScan() {
+		slog.Debug("Discovery: active scanning disabled in options")
 		return nil
 	}
 
 	return s.deviceDiscovery.Scan(ctx)
 }
 
-// SetProfile changes the active discovery profile at runtime.
-func (s *Service) SetProfile(profile config.DiscoveryProfile) error {
+// Reload reapplies discovery options from config at runtime.
+func (s *Service) Reload() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	if s.activeProfile == profile {
-		return nil // No change needed
-	}
 
 	wasRunning := s.running
 
@@ -260,21 +193,17 @@ func (s *Service) SetProfile(profile config.DiscoveryProfile) error {
 		s.deviceDiscovery.Stop()
 	}
 
-	// Clear discovered devices when switching profiles
-	s.deviceDiscovery.ClearDevices()
-
-	// Apply new profile
-	s.activeProfile = profile
-	slog.Info("Discovery: switching to profile", "profile", profile)
+	opts := &s.cfg.NetworkDiscovery.Options
+	slog.Info("Discovery: reloading options", "methods", s.getActiveMethods())
 
 	if wasRunning {
-		if err := s.applyProfile(profile); err != nil {
+		if err := s.applyOptions(opts); err != nil {
 			return err
 		}
 
 		// Restart rescan ticker if needed
 		rescanInterval := s.cfg.NetworkDiscovery.Timing.RescanInterval
-		if rescanInterval > 0 && s.shouldDoActiveScan(profile) {
+		if rescanInterval > 0 && s.shouldDoActiveScan() {
 			s.rescanTicker = time.NewTicker(rescanInterval)
 			go s.rescanLoop()
 		}
@@ -329,7 +258,6 @@ func (s *Service) GetNeighbors() []*Neighbor {
 // GetStatus returns the current status of the discovery service.
 func (s *Service) GetStatus() *ServiceStatus {
 	s.mu.RLock()
-	profile := s.activeProfile
 	running := s.running
 	rescanInterval := s.cfg.NetworkDiscovery.Timing.RescanInterval
 	s.mu.RUnlock()
@@ -338,7 +266,6 @@ func (s *Service) GetStatus() *ServiceStatus {
 
 	status := &ServiceStatus{
 		Running:        running,
-		Profile:        profile,
 		Scanning:       deviceStatus.Scanning,
 		DeviceCount:    deviceStatus.DeviceCount,
 		LastScan:       deviceStatus.LastScan,
@@ -346,43 +273,46 @@ func (s *Service) GetStatus() *ServiceStatus {
 		LocalIP:        deviceStatus.LocalIP,
 		Interface:      deviceStatus.Interface,
 		RescanInterval: rescanInterval,
-		ActiveMethods:  s.getActiveMethods(profile),
+		ActiveMethods:  s.getActiveMethods(),
 	}
 
 	return status
 }
 
 // getActiveMethods returns a list of currently active discovery methods.
-func (s *Service) getActiveMethods(profile config.DiscoveryProfile) []string {
+func (s *Service) getActiveMethods() []string {
+	opts := s.cfg.NetworkDiscovery.Options
 	methods := []string{}
 
-	switch profile {
-	case config.ProfileStealth:
-		methods = append(methods, "lldp", "cdp", "edp")
-	case config.ProfileStandard:
-		methods = append(methods, "lldp", "cdp", "edp", "arp", "icmp")
-	case config.ProfileFullScan:
-		methods = append(methods, "lldp", "cdp", "edp", "arp", "icmp", "port_scan")
-	case config.ProfileCustom:
-		opts := s.cfg.NetworkDiscovery.CustomOptions
-		if opts.PassiveListen {
-			methods = append(methods, "lldp", "cdp", "edp")
-		}
-		if opts.ARPScan {
-			methods = append(methods, "arp")
-		}
-		if opts.ICMPScan {
-			methods = append(methods, "icmp")
-		}
-		if opts.PortScan.Enabled {
-			methods = append(methods, "port_scan")
-		}
-		if opts.Traceroute {
-			methods = append(methods, "traceroute")
-		}
-		if opts.SNMPQuery {
-			methods = append(methods, "snmp")
-		}
+	// Passive protocols
+	if opts.PassiveProtocols.LLDP {
+		methods = append(methods, "lldp")
+	}
+	if opts.PassiveProtocols.CDP {
+		methods = append(methods, "cdp")
+	}
+	if opts.PassiveProtocols.EDP {
+		methods = append(methods, "edp")
+	}
+	if opts.PassiveProtocols.NDP {
+		methods = append(methods, "ndp")
+	}
+
+	// Active scanning methods
+	if opts.ARPScan {
+		methods = append(methods, "arp")
+	}
+	if opts.ICMPScan {
+		methods = append(methods, "icmp")
+	}
+	if opts.PortScan.Enabled {
+		methods = append(methods, "port_scan")
+	}
+	if opts.Traceroute {
+		methods = append(methods, "traceroute")
+	}
+	if opts.SNMPQuery {
+		methods = append(methods, "snmp")
 	}
 
 	return methods
@@ -395,11 +325,11 @@ func (s *Service) IsRunning() bool {
 	return s.running
 }
 
-// GetProfile returns the current active profile.
-func (s *Service) GetProfile() config.DiscoveryProfile {
+// GetOptions returns the current discovery options.
+func (s *Service) GetOptions() config.DiscoveryOptions {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.activeProfile
+	return s.cfg.NetworkDiscovery.Options
 }
 
 // ClearDevices removes all discovered devices and profiles from memory.

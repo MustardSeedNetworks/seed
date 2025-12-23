@@ -198,7 +198,6 @@ type ProfileSNMPv3Credential struct {
 
 // ProfileNetworkDiscovery contains network discovery settings.
 type ProfileNetworkDiscovery struct {
-	Profile           string                      `json:"profile,omitempty"`
 	Enabled           bool                        `json:"enabled"`
 	AutoScan          bool                        `json:"auto_scan"`
 	ScanIntervalSecs  int64                       `json:"scan_interval_secs,omitempty"`
@@ -398,7 +397,6 @@ func (ps *ProfileSettings) FromConfig(cfg *Config) {
 
 	// Network Discovery
 	ps.NetworkDiscovery = ProfileNetworkDiscovery{
-		Profile:          string(cfg.NetworkDiscovery.Profile),
 		Enabled:          cfg.NetworkDiscovery.Enabled,
 		AutoScan:         cfg.NetworkDiscovery.AutoScan,
 		ScanIntervalSecs: int64(cfg.NetworkDiscovery.ScanInterval.Seconds()),
@@ -552,9 +550,6 @@ func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	}
 
 	// Network Discovery
-	if ps.NetworkDiscovery.Profile != "" {
-		cfg.NetworkDiscovery.Profile = DiscoveryProfile(ps.NetworkDiscovery.Profile)
-	}
 	cfg.NetworkDiscovery.Enabled = ps.NetworkDiscovery.Enabled
 	cfg.NetworkDiscovery.AutoScan = ps.NetworkDiscovery.AutoScan
 	if ps.NetworkDiscovery.ScanIntervalSecs > 0 {

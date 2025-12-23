@@ -14,7 +14,6 @@ import {
 import {
   DiscoveryServiceStatus,
   DiscoveryToggles,
-  DiscoveryProfileSelector,
   DiscoveryCustomOptions,
   DiscoveryTimingSettings,
   SubnetManager,
@@ -45,7 +44,7 @@ interface DiscoverySettingsProps {
 }
 
 /**
- * Settings section for network discovery profiles and subnet management.
+ * Settings section for network discovery options and subnet management.
  * Refactored into sub-components for better maintainability.
  */
 export const DiscoverySettings = memo(function DiscoverySettings({
@@ -95,21 +94,6 @@ export const DiscoverySettings = memo(function DiscoverySettings({
     return () => clearInterval(interval);
   }, [fetchServiceStatus]);
 
-  // Handle profile change
-  const handleProfileChange = useCallback(
-    (profile: NetworkDiscoverySettingsType["profile"]) => {
-      setNetworkDiscoverySettings((prev) => ({
-        ...prev,
-        profile,
-      }));
-    },
-    [setNetworkDiscoverySettings]
-  );
-
-  const currentProfile = networkDiscoverySettings.profile || "standard";
-  const showSubnets =
-    currentProfile === "full_scan" || currentProfile === "custom";
-
   return (
     <CollapsibleSection
       title={
@@ -135,14 +119,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
           onRefresh={fetchServiceStatus}
         />
 
-        {/* Discovery Profile Selector */}
-        <DiscoveryProfileSelector
-          currentProfile={currentProfile}
-          onProfileChange={handleProfileChange}
-          onStatusRefresh={fetchServiceStatus}
-        />
-
-        {/* Advanced Options - always available for fine-tuning */}
+        {/* Discovery Options */}
         <DiscoveryCustomOptions
           settings={networkDiscoverySettings}
           onSettingsChange={setNetworkDiscoverySettings}
@@ -154,22 +131,20 @@ export const DiscoverySettings = memo(function DiscoverySettings({
           onSettingsChange={setNetworkDiscoverySettings}
         />
 
-        {/* Target Networks (only for full_scan or custom profile) */}
-        {showSubnets && (
-          <SubnetManager
-            subnets={subnets}
-            subnetsStatus={subnetsStatus}
-            newSubnetCidr={newSubnetCidr}
-            setNewSubnetCidr={setNewSubnetCidr}
-            newSubnetName={newSubnetName}
-            setNewSubnetName={setNewSubnetName}
-            subnetError={subnetError}
-            setSubnetError={setSubnetError}
-            addSubnet={addSubnet}
-            toggleSubnet={toggleSubnet}
-            deleteSubnet={deleteSubnet}
-          />
-        )}
+        {/* Target Networks */}
+        <SubnetManager
+          subnets={subnets}
+          subnetsStatus={subnetsStatus}
+          newSubnetCidr={newSubnetCidr}
+          setNewSubnetCidr={setNewSubnetCidr}
+          newSubnetName={newSubnetName}
+          setNewSubnetName={setNewSubnetName}
+          subnetError={subnetError}
+          setSubnetError={setSubnetError}
+          addSubnet={addSubnet}
+          toggleSubnet={toggleSubnet}
+          deleteSubnet={deleteSubnet}
+        />
 
         {/* SNMP Settings Section */}
         <SNMPSettingsSection
