@@ -269,15 +269,16 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		existingIPs[entry.IP] = true
 	}
 
-	// Add ping responders not in ARP table (these are from remote/additional subnets)
+	// Add ping responders not in ARP table
+	// These could be local (in our subnet but no ARP entry yet) or remote (additional subnets)
 	for _, ip := range responders {
 		if !existingIPs[ip] {
 			entries = append(entries, &ARPEntry{
 				IP:       ip,
-				MAC:      "", // No MAC for remote hosts (ARP doesn't work across routers)
+				MAC:      "", // No MAC - either not in ARP cache or remote host
 				State:    "PING_ONLY",
 				LastSeen: time.Now(),
-				IsLocal:  false, // Remote subnet - not local
+				IsLocal:  s.isInSubnet(ip), // Fix #792: Check actual subnet membership
 			})
 		}
 	}
