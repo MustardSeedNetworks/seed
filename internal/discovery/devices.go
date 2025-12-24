@@ -477,6 +477,34 @@ func (d *DeviceDiscovery) detectDuplicateIPs() {
 	}
 }
 
+// isLocallyAdministeredMAC checks if a MAC address is locally administered.
+// LAAs have the second-least-significant bit of the first octet set to 1.
+// These are typically used by VMs, containers, or MAC randomization features.
+func isLocallyAdministeredMAC(mac string) bool {
+	if len(mac) < 2 {
+		return false
+	}
+	// Parse first octet (handles both AA:BB:CC and AA-BB-CC formats)
+	firstOctet := mac[:2]
+	var b byte
+	for i := range 2 {
+		c := firstOctet[i]
+		b <<= 4
+		switch {
+		case c >= '0' && c <= '9':
+			b |= c - '0'
+		case c >= 'A' && c <= 'F':
+			b |= c - 'A' + 10
+		case c >= 'a' && c <= 'f':
+			b |= c - 'a' + 10
+		default:
+			return false
+		}
+	}
+	// Check the locally administered bit (second bit from right of first octet)
+	return (b & 0x02) != 0
+}
+
 // ensureVendorInfo populates vendor information for devices missing it. Must be called with mu held.
 func (d *DeviceDiscovery) ensureVendorInfo() {
 	if d.oui == nil {
@@ -485,8 +513,15 @@ func (d *DeviceDiscovery) ensureVendorInfo() {
 	}
 
 	vendorCount := 0
+	laaCount := 0
 	for _, device := range d.devices {
 		if device.Vendor == "" && device.MAC != "" {
+			// Check if this is a locally administered address
+			if isLocallyAdministeredMAC(device.MAC) {
+				device.Vendor = "Private"
+				laaCount++
+				continue
+			}
 			vendor := d.oui.LookupWithDefault(device.MAC, "Unknown")
 			device.Vendor = vendor
 			if vendor != "Unknown" {
@@ -494,7 +529,11 @@ func (d *DeviceDiscovery) ensureVendorInfo() {
 			}
 		}
 	}
-	slog.Info("Vendor info populated", "total_devices", len(d.devices), "vendors_found", vendorCount, "oui_entries", d.oui.Count())
+	slog.Info("Vendor info populated",
+		"total_devices", len(d.devices),
+		"vendors_found", vendorCount,
+		"private_macs", laaCount,
+		"oui_entries", d.oui.Count())
 }
 
 // mergeMDNSNames merges passively captured mDNS names into devices. Must be called with mu held.

@@ -26,7 +26,7 @@ body:
     id: chipset
     attributes:
       label: Chipset/Model
-      description: "Specific chipset or NIC model (run: lspci | grep -i 'network\|ethernet' OR lsusb for USB)"
+      description: "Specific chipset or NIC model (run: lspci | grep -i 'network|ethernet' OR lsusb for USB)"
       placeholder: "e.g., Intel AX200, Realtek RTL8111, Atheros AR9271"
     validations:
       required: true

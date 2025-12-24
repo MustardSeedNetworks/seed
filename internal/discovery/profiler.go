@@ -207,6 +207,7 @@ func (p *DeviceProfiler) worker() {
 // QueueProfile adds an IP to the profiling queue.
 func (p *DeviceProfiler) QueueProfile(ip string) {
 	if !p.config.Enabled || ip == "" {
+		slog.Debug("QueueProfile skipped", "ip", ip, "enabled", p.config.Enabled)
 		return
 	}
 
@@ -214,10 +215,12 @@ func (p *DeviceProfiler) QueueProfile(ip string) {
 	// Skip if already profiled or in progress
 	if _, exists := p.profiles[ip]; exists {
 		p.mu.Unlock()
+		slog.Debug("QueueProfile skipped - already profiled", "ip", ip)
 		return
 	}
 	if p.profiling[ip] {
 		p.mu.Unlock()
+		slog.Debug("QueueProfile skipped - in progress", "ip", ip)
 		return
 	}
 	p.profiling[ip] = true
@@ -225,11 +228,13 @@ func (p *DeviceProfiler) QueueProfile(ip string) {
 
 	select {
 	case p.queue <- ip:
+		slog.Info("Queued device for profiling", "ip", ip)
 	default:
 		// Queue full, skip
 		p.mu.Lock()
 		delete(p.profiling, ip)
 		p.mu.Unlock()
+		slog.Warn("Profile queue full, skipped", "ip", ip)
 	}
 }
 

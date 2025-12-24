@@ -1,78 +1,78 @@
 labels:
   # Types
-  - name: type: defect
+  - name: "type: defect"
     color: D73A4A
     description: Product defect or regression
-  - name: type: feature
+  - name: "type: feature"
     color: 0E8A16
     description: New feature or enhancement
-  - name: type: chore
+  - name: "type: chore"
     color: FEF2C0
     description: Maintenance or refactoring
-  - name: type: docs
+  - name: "type: docs"
     color: 0075CA
     description: Documentation
-  - name: type: security
+  - name: "type: security"
     color: B60205
     description: Security vulnerabilities and hardening
-  - name: type: epic
+  - name: "type: epic"
     color: 8B5CF6
     description: Epic grouping multiple related issues
 
   # Priorities
-  - name: priority: critical
+  - name: "priority: critical"
     color: B60205
     description: Must have for release
-  - name: priority: high
+  - name: "priority: high"
     color: D93F0B
     description: Should have
-  - name: priority: medium
+  - name: "priority: medium"
     color: FBCA04
     description: Nice to have
-  - name: priority: low
+  - name: "priority: low"
     color: C5DEF5
     description: Future consideration
 
   # Status
-  - name: status: needs-triage
+  - name: "status: needs-triage"
     color: EDEDED
     description: Awaiting triage and label assignment
-  - name: status: investigating
+  - name: "status: investigating"
     color: 0E8A16
     description: Being actively investigated
-  - name: status: blocked
+  - name: "status: blocked"
     color: B60205
     description: Blocked by dependency or prerequisite
-  - name: status: regression
+  - name: "status: regression"
     color: D93F0B
     description: Regression from previous release
 
   # Areas
-  - name: area: auth/setup
+  - name: "area: auth/setup"
     color: 6F42C1
     description: Authentication, authorization, and setup wizard
-  - name: area: survey/floorplan
+  - name: "area: survey/floorplan"
     color: 0052CC
     description: Surveys, floorplans, and planner
-  - name: area: discovery/network
+  - name: "area: discovery/network"
     color: 0C88FF
     description: Network discovery, link tests, DHCP, gateway, speedtest
-  - name: area: logging
+  - name: "area: logging"
     color: F9D0C4
     description: Logging, observability, log viewer
-  - name: area: UI/UX
+  - name: "area: UI/UX"
     color: CFD3D7
     description: User interface and experience
-  - name: area: backend
+  - name: "area: backend"
     color: 5319E7
     description: Backend/Go services
-  - name: area: frontend
+  - name: "area: frontend"
     color: 1D76DB
     description: Frontend/React UI
-  - name: area: infra
+  - name: "area: infra"
     color: 006B75
     description: CI/CD, packaging, deployment
-  - name: area: i18n
+  - name: "area: i18n"
     color: 9B59B6
     description: Internationalization and localization
 
@@ -113,10 +113,10 @@ labels:
   - name: tracking issue
     color: 1D76DB
     description: Meta-issue tracking related tasks
-  - name: autorelease: pending
+  - name: "autorelease: pending"
     color: EDEDED
     description: ""
-  - name: autorelease: tagged
+  - name: "autorelease: tagged"
     color: EDEDED
     description: ""
   - name: Review effort 1/5
@@ -125,18 +125,18 @@ labels:
   - name: hardware-testing
     color: 0E8A16
     description: Hardware compatibility testing and validation
-  - name: component: ai
+  - name: "component: ai"
     color: 8B5CF6
     description: AI/ML features
-  - name: ai: foundation
+  - name: "ai: foundation"
     color: A78BFA
     description: AI infrastructure and foundation
-  - name: ai: intelligence
+  - name: "ai: intelligence"
     color: 7C3AED
     description: AI analysis and intelligence
-  - name: ai: wifi
+  - name: "ai: wifi"
     color: 6D28D9
     description: WiFi AI features (heatmaps, optimization)
-  - name: component: mcp
+  - name: "component: mcp"
     color: 5319E7
     description: MCP (Model Context Protocol) server
