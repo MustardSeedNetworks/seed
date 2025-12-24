@@ -1327,24 +1327,26 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     const fetchSettings = async () => {
       const apiBase = import.meta.env.VITE_API_BASE || "";
       try {
-        // Fetch discovery settings
-        const discoveryResponse = await fetch(`${apiBase}/api/settings/discovery`, {
+        // Fetch discovery options from correct endpoint
+        const discoveryResponse = await fetch(`${apiBase}/api/discovery/options`, {
           credentials: "include",
         });
         if (discoveryResponse.ok) {
           const discoveryData = await discoveryResponse.json();
-          const portScanEnabled = discoveryData?.options?.portScan?.enabled ?? false;
+          // Backend returns { options: { PortScan: { Enabled: true, ... } } }
+          const portScanEnabled = discoveryData?.options?.PortScan?.Enabled ?? false;
 
-          // Fetch vulnerability settings
-          const vulnResponse = await fetch(`${apiBase}/api/settings/vulnerability`, {
+          // Fetch vulnerability settings from correct endpoint
+          const vulnResponse = await fetch(`${apiBase}/api/vulnerabilities/settings`, {
             credentials: "include",
           });
           let vulnEnabled = false;
           let vulnAutoScan = false;
           if (vulnResponse.ok) {
             const vulnData = await vulnResponse.json();
-            vulnEnabled = vulnData?.enabled ?? false;
-            vulnAutoScan = vulnData?.autoScan ?? false;
+            // Backend returns { Enabled: false, AutoScan: false, ... }
+            vulnEnabled = vulnData?.Enabled ?? false;
+            vulnAutoScan = vulnData?.AutoScan ?? false;
           }
 
           setAutoScanSettings({
@@ -1460,7 +1462,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         ip,
         reasons: reasons.join(", "),
       });
-      await fetch(`${apiBase}/api/vulnerability/scan`, {
+      await fetch(`${apiBase}/api/vulnerabilities/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
