@@ -588,6 +588,54 @@ body {
   .max-w-8xl {
     max-width: 88rem; /* 1408px */
   }
+
+  /* ========================================================================
+     RANGE SLIDER STYLING
+     ========================================================================
+     Consistent slider styling for timing/performance controls.
+     Uses theme colors for track and thumb.
+     ======================================================================== */
+
+  /* Range input base styles */
+  input[type="range"] {
+    @apply w-full h-2 bg-surface-border rounded-lg appearance-none cursor-pointer;
+  }
+
+  /* Range input track - WebKit/Blink */
+  input[type="range"]::-webkit-slider-track {
+    @apply h-2 bg-surface-border rounded-lg;
+  }
+
+  /* Range input thumb - WebKit/Blink */
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none w-5 h-5 bg-brand-primary rounded-full cursor-pointer;
+    @apply hover:bg-brand-accent transition-colors;
+    @apply focus:ring-2 focus:ring-brand-primary focus:ring-offset-2;
+  }
+
+  /* Range input track - Firefox */
+  input[type="range"]::-moz-range-track {
+    @apply h-2 bg-surface-border rounded-lg;
+  }
+
+  /* Range input thumb - Firefox */
+  input[type="range"]::-moz-range-thumb {
+    @apply w-5 h-5 bg-brand-primary rounded-full cursor-pointer border-0;
+    @apply hover:bg-brand-accent transition-colors;
+  }
+
+  /* Range input focus state */
+  input[type="range"]:focus {
+    @apply outline-none;
+  }
+
+  input[type="range"]:focus::-webkit-slider-thumb {
+    @apply ring-2 ring-brand-primary ring-offset-2 ring-offset-surface-raised;
+  }
+
+  input[type="range"]:focus::-moz-range-thumb {
+    @apply ring-2 ring-brand-primary ring-offset-2 ring-offset-surface-raised;
+  }
 }
 
 /* Toast animation */
