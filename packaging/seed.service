@@ -16,7 +16,9 @@ StandardOutput=journal
 StandardError=journal
 
 # Security hardening
-# Note: Capabilities are set at install time via postinst script
+# Grant network capabilities for ICMP ping, ARP scanning, and packet capture
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=true

@@ -229,8 +229,9 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	s.mu.Unlock()
 
 	// Perform ping sweep on primary subnet
+	// Note: ping sweep may fail without CAP_NET_RAW - continue with ARP table
 	if err := s.pingSweep(ctx, subnet); err != nil {
-		return fmt.Errorf("ping sweep failed: %w", err)
+		slog.Warn("Ping sweep failed (continuing with ARP table only)", "subnet", subnet, "error", err)
 	}
 
 	// Perform ping sweep on additional subnets
