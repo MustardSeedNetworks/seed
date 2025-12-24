@@ -146,9 +146,10 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Lock config for write access (fixes #759 - race condition)
+	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
 	s.config.NetworkDiscovery.Options = req
-	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
+	// Unlock before Save() to avoid deadlock
 	s.config.Unlock()
 
 	// Apply the options change to the running service

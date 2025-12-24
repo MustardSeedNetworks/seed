@@ -45,18 +45,26 @@ type CSRFToken struct {
 type CSRFManager struct {
 	mu     sync.RWMutex
 	tokens map[string]*CSRFToken // Map of token to metadata, keyed by user session
+	stopCh chan struct{}         // Channel to signal cleanup goroutine to stop (fixes #785)
 }
 
 // NewCSRFManager creates a new CSRF manager.
 func NewCSRFManager() *CSRFManager {
 	manager := &CSRFManager{
 		tokens: make(map[string]*CSRFToken),
+		stopCh: make(chan struct{}),
 	}
 
-	// Start background cleanup goroutine
+	// Start background cleanup goroutine (fixes #785 - now has shutdown coordination)
 	go manager.cleanupExpiredTokens()
 
 	return manager
+}
+
+// Stop gracefully shuts down the CSRF manager's cleanup goroutine (fixes #785).
+// This should be called during application shutdown to prevent goroutine leaks.
+func (m *CSRFManager) Stop() {
+	close(m.stopCh)
 }
 
 // GenerateToken creates a new CSRF token for the given session/user.
@@ -121,20 +129,26 @@ func (m *CSRFManager) RevokeToken(sessionID string) {
 	delete(m.tokens, sessionID)
 }
 
-// cleanupExpiredTokens periodically removes expired tokens.
+// cleanupExpiredTokens periodically removes expired tokens (fixes #785 - respects shutdown signal).
 func (m *CSRFManager) cleanupExpiredTokens() {
 	ticker := time.NewTicker(15 * time.Minute)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		m.mu.Lock()
-		now := time.Now()
-		for sessionID, token := range m.tokens {
-			if now.After(token.ExpiresAt) {
-				delete(m.tokens, sessionID)
+	for {
+		select {
+		case <-m.stopCh:
+			// Shutdown signal received, exit goroutine
+			return
+		case <-ticker.C:
+			m.mu.Lock()
+			now := time.Now()
+			for sessionID, token := range m.tokens {
+				if now.After(token.ExpiresAt) {
+					delete(m.tokens, sessionID)
+				}
 			}
+			m.mu.Unlock()
 		}
-		m.mu.Unlock()
 	}
 }
 

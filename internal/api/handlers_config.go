@@ -126,9 +126,10 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 
 	// Update server config using CopyFieldsFrom to prevent race conditions (fixes #691)
 	// CopyFieldsFrom uses struct literals for compile-time checking that no fields are missed
+	// Using defer for panic safety (fixes #783)
 	s.config.Lock()
+	defer s.config.Unlock()
 	s.config.CopyFieldsFrom(newCfg)
-	s.config.Unlock()
 
 	// Security audit log: config restored from backup (fixes #697)
 	clientIP := GetClientIP(r)

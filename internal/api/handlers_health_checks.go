@@ -455,7 +455,7 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Lock config for write access
-	// NOTE: We explicitly unlock before Save() to avoid deadlock
+	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
 
 	// Update DNS hostname
