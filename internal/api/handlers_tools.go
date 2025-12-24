@@ -90,19 +90,22 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 
 	var req TCPProbeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
 	ip, err := resolveTargetIP(req.Target)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), err.Error()) // fixes #694
+		logger.Warn("Invalid target", "error", err, "target", req.Target)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), "")
 		return
 	}
 
 	ports, err := validateTCPProbePorts(&req)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.portRequired"), err.Error()) // fixes #694
+		logger.Warn("Port validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.portRequired"), "")
 		return
 	}
 
@@ -116,7 +119,7 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	prober, err := discovery.NewTCPProber(timeout)
 	if err != nil {
 		logger.Error("Failed to create TCP prober", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.tools.failedToCreateProber"), err.Error()) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.tools.failedToCreateProber"), "")
 		return
 	}
 	defer prober.Close()
@@ -159,7 +162,8 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 
 	var req TracerouteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
@@ -258,20 +262,23 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 
 	var req PortScanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
 	// Validate target
 	if err := validation.ValidateServerAddress(req.Target); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), err.Error()) // fixes #694
+		logger.Warn("Invalid target", "error", err, "target", req.Target)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), "")
 		return
 	}
 
 	// Create scanner
 	scanner, err := discovery.NewPortScanner(3 * time.Second)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.tools.failedToCreateScanner"), err.Error()) // fixes #694
+		logger.Error("Failed to create port scanner", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.tools.failedToCreateScanner"), "")
 		return
 	}
 	defer scanner.Close()
@@ -320,7 +327,8 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 		IP string `json:"ip"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 

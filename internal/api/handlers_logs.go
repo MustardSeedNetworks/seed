@@ -67,7 +67,8 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 
 	var req ClientLogRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 

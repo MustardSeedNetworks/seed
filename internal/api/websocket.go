@@ -537,27 +537,12 @@ func (a *logBroadcastAdapter) BroadcastLogEntry(entry *logging.LogEntry) {
 }
 
 // handleWebSocket handles WebSocket connections.
-// Security fix #660: Uses httpOnly cookie authentication instead of protocol headers
+// Security fix #660: Uses httpOnly cookie authentication.
+// Cookies are automatically sent by the browser and are httpOnly (not accessible to JS)
 // to prevent token exposure in logs, browser dev tools, and proxy servers.
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Extract token from httpOnly cookie (fixes #660 - secure method)
-	// Cookies are automatically sent by the browser and are httpOnly (not accessible to JS)
 	token, source := auth.GetTokenFromRequest(r)
-
-	// Fallback: Check Sec-WebSocket-Protocol for backwards compatibility during transition
-	// TODO: Remove this fallback after clients are updated (deprecated)
-	if token == "" {
-		protocols := r.Header.Get("Sec-WebSocket-Protocol")
-		if protocols != "" {
-			parts := strings.Split(protocols, ",")
-			if len(parts) == 2 && strings.TrimSpace(parts[0]) == "access_token" {
-				token = strings.TrimSpace(parts[1])
-				source = "protocol_header_deprecated"
-				slog.Warn("WebSocket using deprecated protocol header auth - migrate to cookie auth",
-					"client_ip", GetClientIP(r))
-			}
-		}
-	}
 
 	// Validate token
 	if token == "" {
@@ -572,7 +557,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		slog.Warn("WebSocket auth failed", "error", err, "source", source)
 		logger := logging.FromContext(r.Context())
 		localizer := i18n.FromRequest(r)
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, localizer.T("errors.auth.invalidToken"), err.Error()) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, localizer.T("errors.auth.invalidToken"), "")
 		return
 	}
 

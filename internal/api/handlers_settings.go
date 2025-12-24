@@ -179,7 +179,8 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	var updates map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", err.Error()) // fixes #694, #699
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
 		return
 	}
 
@@ -226,7 +227,8 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file
 	if err := s.config.Save(s.configPath); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to save config", err.Error()) // fixes #694, #699
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to save config", "")
 		return
 	}
 
@@ -253,8 +255,8 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 		defaultProfile, getDefaultErr := s.db.Profiles().GetDefault(ctx)
 		if getDefaultErr != nil {
 			// No profile exists - this is not an error, just nothing to save to
-			logger.Debug("No active or default profile to save settings to")
-			return nil
+			logger.Debug("No active or default profile to save settings to", "reason", getDefaultErr.Error())
+			return nil //nolint:nilerr // Intentionally returning nil - no profile means nothing to save
 		}
 		activeID = defaultProfile.ID
 	}
@@ -446,7 +448,12 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 		return fmt.Errorf("thresholds.httpTimings must be an object")
 	}
 
-	if dnsT, ok := httpTimings["dns"].(map[string]interface{}); ok {
+	// DNS timing thresholds
+	if dnsVal, exists := httpTimings["dns"]; exists {
+		dnsT, ok := dnsVal.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("thresholds.httpTimings.dns must be an object")
+		}
 		if good, ok := dnsT["good"].(float64); ok {
 			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(good) * time.Millisecond
 		}
@@ -455,7 +462,12 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 		}
 	}
 
-	if tcpT, ok := httpTimings["tcp"].(map[string]interface{}); ok {
+	// TCP timing thresholds
+	if tcpVal, exists := httpTimings["tcp"]; exists {
+		tcpT, ok := tcpVal.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("thresholds.httpTimings.tcp must be an object")
+		}
 		if good, ok := tcpT["good"].(float64); ok {
 			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(good) * time.Millisecond
 		}
@@ -464,7 +476,12 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 		}
 	}
 
-	if tlsT, ok := httpTimings["tls"].(map[string]interface{}); ok {
+	// TLS timing thresholds
+	if tlsVal, exists := httpTimings["tls"]; exists {
+		tlsT, ok := tlsVal.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("thresholds.httpTimings.tls must be an object")
+		}
 		if good, ok := tlsT["good"].(float64); ok {
 			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(good) * time.Millisecond
 		}
@@ -473,7 +490,12 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 		}
 	}
 
-	if ttfb, ok := httpTimings["ttfb"].(map[string]interface{}); ok {
+	// TTFB timing thresholds
+	if ttfbVal, exists := httpTimings["ttfb"]; exists {
+		ttfb, ok := ttfbVal.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("thresholds.httpTimings.ttfb must be an object")
+		}
 		if good, ok := ttfb["good"].(float64); ok {
 			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(good) * time.Millisecond
 		}

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 // testDB creates a temporary database for testing.
@@ -198,7 +200,8 @@ func TestProfileRepository(t *testing.T) {
 		t.Fatalf("failed to update profile: %v", err)
 	}
 
-	got, _ = repo.Get(ctx, profile.ID)
+	got, err = repo.Get(ctx, profile.ID)
+	require.NoError(t, err)
 	if got.Description != "Updated description" {
 		t.Errorf("expected updated description, got %q", got.Description)
 	}
@@ -219,7 +222,8 @@ func TestProfileRepository(t *testing.T) {
 		t.Fatalf("failed to set default: %v", err)
 	}
 
-	got, _ = repo.GetDefault(ctx)
+	got, err = repo.GetDefault(ctx)
+	require.NoError(t, err)
 	if got.ID != profile.ID {
 		t.Errorf("expected default profile %q, got %q", profile.ID, got.ID)
 	}
@@ -323,7 +327,8 @@ func TestMetricsRepository(t *testing.T) {
 		t.Fatalf("failed to record batch: %v", err)
 	}
 
-	count, _ := repo.Count(ctx)
+	count, err := repo.Count(ctx)
+	require.NoError(t, err)
 	if count != 4 {
 		t.Errorf("expected 4 metrics, got %d", count)
 	}
@@ -341,7 +346,8 @@ func TestMetricsRepository(t *testing.T) {
 	}
 
 	// Verify records are gone
-	count, _ = repo.Count(ctx)
+	count, err = repo.Count(ctx)
+	require.NoError(t, err)
 	if count != 0 {
 		t.Errorf("expected 0 remaining metrics, got %d", count)
 	}
@@ -431,7 +437,8 @@ func TestDeviceRepository(t *testing.T) {
 		t.Fatalf("failed to upsert device: %v", err)
 	}
 
-	got, _ = repo.GetByIP(ctx, "192.168.1.100")
+	got, err = repo.GetByIP(ctx, "192.168.1.100")
+	require.NoError(t, err)
 	if got.Hostname != "upserted-device" {
 		t.Errorf("expected hostname 'upserted-device', got %q", got.Hostname)
 	}
@@ -509,7 +516,8 @@ func TestAlertRepository(t *testing.T) {
 		t.Fatalf("failed to acknowledge: %v", err)
 	}
 
-	got, _ = repo.Get(ctx, alert.ID)
+	got, err = repo.Get(ctx, alert.ID)
+	require.NoError(t, err)
 	if !got.Acknowledged {
 		t.Error("alert should be acknowledged")
 	}
@@ -520,7 +528,8 @@ func TestAlertRepository(t *testing.T) {
 		t.Fatalf("failed to resolve: %v", err)
 	}
 
-	got, _ = repo.Get(ctx, alert.ID)
+	got, err = repo.Get(ctx, alert.ID)
+	require.NoError(t, err)
 	if !got.Resolved {
 		t.Error("alert should be resolved")
 	}
@@ -644,7 +653,8 @@ func TestRetention(t *testing.T) {
 	}
 
 	// First, verify data exists
-	count, _ := db.Metrics().Count(ctx)
+	count, err := db.Metrics().Count(ctx)
+	require.NoError(t, err)
 	if count != 5 {
 		t.Fatalf("expected 5 metrics, got %d", count)
 	}
@@ -656,7 +666,8 @@ func TestRetention(t *testing.T) {
 	}
 
 	// Data should still exist (it's not old enough)
-	count, _ = db.Metrics().Count(ctx)
+	count, err = db.Metrics().Count(ctx)
+	require.NoError(t, err)
 	if count != 5 {
 		t.Errorf("expected 5 metrics after cleanup, got %d", count)
 	}
