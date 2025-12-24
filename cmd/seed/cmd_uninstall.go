@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -106,17 +107,17 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 	fmt.Println("\nStopping service...")
 	if mode == paths.ModeSystem {
 		if err := exec.Command("systemctl", "stop", "seed").Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to stop service: %v\n", err)
+			slog.Warn("Failed to stop seed service", "error", err)
 		}
 		if err := exec.Command("systemctl", "disable", "seed").Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to disable service: %v\n", err)
+			slog.Warn("Failed to disable seed service", "error", err)
 		}
 	} else {
 		if err := exec.Command("systemctl", "--user", "stop", "seed").Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to stop user service: %v\n", err)
+			slog.Warn("Failed to stop seed user service", "error", err)
 		}
 		if err := exec.Command("systemctl", "--user", "disable", "seed").Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to disable user service: %v\n", err)
+			slog.Warn("Failed to disable seed user service", "error", err)
 		}
 	}
 
@@ -128,23 +129,23 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 	} else {
 		userConfigDir, err := os.UserConfigDir()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to get user config dir: %v\n", err)
+			slog.Warn("Failed to get user config dir", "error", err)
 			return
 		}
 		servicePath = filepath.Join(userConfigDir, "systemd", "user", "seed.service")
 	}
 	if err := os.Remove(servicePath); err != nil && !os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to remove service file: %v\n", err)
+		slog.Warn("Failed to remove service file", "error", err)
 	}
 
 	// Reload systemd (fixes #789 - log errors instead of silently ignoring)
 	if mode == paths.ModeSystem {
 		if err := exec.Command("systemctl", "daemon-reload").Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to reload systemd: %v\n", err)
+			slog.Warn("Failed to reload systemd", "error", err)
 		}
 	} else {
 		if err := exec.Command("systemctl", "--user", "daemon-reload").Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to reload user systemd: %v\n", err)
+			slog.Warn("Failed to reload user systemd", "error", err)
 		}
 	}
 
@@ -155,7 +156,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 		binaryPath = filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
 	}
 	if err := os.Remove(binaryPath); err != nil && !os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to remove binary: %v\n", err)
+		slog.Warn("Failed to remove binary", "error", err)
 	}
 
 	// Purge data
@@ -164,7 +165,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 		dirs := []string{p.ConfigDir, p.DataDir, p.LogDir, p.CacheDir}
 		for _, dir := range dirs {
 			if err := os.RemoveAll(dir); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: Failed to remove %s: %v\n", dir, err)
+				slog.Warn("Failed to remove directory", "path", dir, "error", err)
 			} else {
 				fmt.Printf("  Removed: %s\n", dir)
 			}
@@ -174,7 +175,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 		if mode == paths.ModeSystem {
 			fmt.Println("Removing seed user...")
 			if err := exec.Command("userdel", "seed").Run(); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: Failed to remove seed user: %v\n", err)
+				slog.Warn("Failed to remove seed user", "error", err)
 			}
 		}
 	}

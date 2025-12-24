@@ -164,6 +164,11 @@ export function SystemHealthCard() {
       const response = await fetch("/api/system/health", {
         credentials: "include",
       });
+      if (response.status === 401) {
+        // Trigger session refresh - dispatch custom event for app-level handling
+        window.dispatchEvent(new CustomEvent("session-expired"));
+        return; // Don't treat as error, let session refresh handle it
+      }
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }

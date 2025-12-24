@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
@@ -54,8 +55,9 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
 func generateRequestID() string {
 	b := make([]byte, 8)
 	if _, err := rand.Read(b); err != nil {
-		// Fallback to timestamp-based ID if crypto/rand fails
-		return hex.EncodeToString([]byte(time.Now().Format("20060102150405.000000")))[:16]
+		// Crypto failure is unrecoverable - log critical and let service restart
+		slog.Error("crypto/rand failed - system is in insecure state", "error", err)
+		panic("crypto/rand failed: " + err.Error())
 	}
 	return hex.EncodeToString(b)
 }
