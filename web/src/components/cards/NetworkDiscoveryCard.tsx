@@ -638,7 +638,7 @@ function DiscoverySummary({
         </div>
       </div>
 
-      {/* Network info row - fixes #738: show network address, not host IP */}
+      {/* Simplified network info row */}
       <div className="flex items-center justify-between caption text-text-muted">
         <span className="font-mono">
           {status.subnet
@@ -651,21 +651,6 @@ function DiscoverySummary({
             : t("discovery.devicesFound", { count: deviceCount })}
         </span>
       </div>
-
-      {(status.localIP || status.interface) && (
-        <div className="flex items-center justify-between caption text-text-muted mt-1">
-          <span className="font-mono">
-            {status.localIP
-              ? t("discovery.localAddress", { ip: status.localIP })
-              : t("discovery.localIp")}
-          </span>
-          <span className="text-right truncate">
-            {t("discovery.listeningInterface", {
-              iface: status.interface || t("discovery.unknownInterface"),
-            })}
-          </span>
-        </div>
-      )}
 
       {/* Category stats row */}
       {stats.length > 0 && (

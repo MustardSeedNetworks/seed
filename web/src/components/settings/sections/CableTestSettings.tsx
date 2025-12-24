@@ -7,9 +7,10 @@
  * Key Features:
  * - Enable/disable cable test card
  * - Auto-run on link down option
- * - Length unit selection (feet/meters)
  * - TDR support status display
  * - AutoSaveIndicator for save status
+ *
+ * Note: Length unit is controlled by global Display Options (unitSystem).
  *
  * Dependencies: CollapsibleSection, AutoSaveIndicator, theme utilities
  * State: Manages cable test configuration settings
@@ -228,67 +229,10 @@ export const CableTestSettings = memo(function CableTestSettings({
           />
         </label>
 
-        {/* Length Unit Selection */}
-        <div
-          className={cn(
-            "border-t border-surface-border",
-            spacing.padding.top.heading
-          )}
-        >
-          <label
-            className="caption text-text-muted font-medium"
-            htmlFor="cable-length-unit"
-          >
-            {t("cableTest.lengthUnit", "Length Unit")}
-          </label>
-          <div
-            className={cn(
-              "flex",
-              spacing.gap.compact,
-              spacing.margin.top.inline
-            )}
-          >
-            {(["feet", "meters"] as const).map((unit) => {
-              const checked = cableTestSettings.lengthUnit === unit;
-              return (
-                <label
-                  key={unit}
-                  className={cn(
-                    "cursor-pointer flex-1 text-center",
-                    spacing.chip.md,
-                    radius.default,
-                    "border body-small font-medium transition-colors",
-                    checked
-                      ? "bg-brand-primary text-text-inverse border-brand-primary"
-                      : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover"
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="cable-length-unit"
-                    value={unit}
-                    checked={checked}
-                    onChange={() =>
-                      setCableTestSettings((prev) => ({
-                        ...prev,
-                        lengthUnit: unit,
-                      }))
-                    }
-                    className="sr-only"
-                  />
-                  {unit === "feet"
-                    ? t("cableTest.feet", "Feet")
-                    : t("cableTest.meters", "Meters")}
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
         <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
           {t(
             "cableTest.tdrNote",
-            "TDR cable testing requires compatible network hardware and drivers"
+            "TDR cable testing requires compatible network hardware and drivers. Length units are controlled by global Display Options."
           )}
         </p>
       </div>

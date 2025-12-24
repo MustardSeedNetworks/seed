@@ -46,6 +46,7 @@ export const CableOK: Story = {
       faults: [],
     },
     loading: false,
+    unitSystem: "sae", // Display in feet
   },
 };
 
@@ -232,5 +233,23 @@ export const MaxLengthCable: Story = {
       faults: [],
     },
     loading: false,
+    unitSystem: "sae",
+  },
+};
+
+/**
+ * Cable displayed in metric units.
+ * Shows same cable with metric unit system.
+ */
+export const CableMetricUnits: Story = {
+  args: {
+    data: {
+      supported: true,
+      length: 15.2,
+      status: "ok",
+      faults: [],
+    },
+    loading: false,
+    unitSystem: "metric", // Display in meters
   },
 };

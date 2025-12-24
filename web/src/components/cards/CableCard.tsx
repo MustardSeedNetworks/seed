@@ -8,7 +8,7 @@
  * - Detects cable status: ok, open circuit, short circuit, impedance mismatch, unknown
  * - Per-pair TDR results (Pairs A-D / pins 1-2, 3-6, 4-5, 7-8)
  * - 568A/568B wiring standard color mapping display
- * - Displays cable length in both meters and feet
+ * - Displays cable length using global unitSystem setting (SAE=feet, metric=meters)
  * - Shows crossover cable detection
  * - Shows list of detected faults (if any)
  * - Gracefully handles unsupported NICs (displays "Not Supported" message)
@@ -19,7 +19,7 @@
  * <CableCard
  *   data={cableTestData}
  *   loading={isTesting}
- *   wiringStandard="568B"
+ *   unitSystem="sae"
  * />
  * ```
  *
@@ -38,6 +38,7 @@ import {
   radius,
   spacing,
 } from "../../styles/theme";
+import type { UnitSystem } from "../../types/settings";
 
 /** Per-pair TDR test result */
 interface CablePairResult {
@@ -79,6 +80,7 @@ interface CableCardProps {
   data: CableData | null;
   loading?: boolean;
   showPinout?: boolean; // Whether to show pinout color mapping
+  unitSystem?: UnitSystem; // Unit system for length display (default: "sae")
 }
 
 // Status mapping - labels are resolved dynamically using i18n
@@ -116,6 +118,7 @@ export function CableCard({
   data,
   loading,
   showPinout = true,
+  unitSystem = "sae", // Default to SAE (feet)
 }: CableCardProps) {
   const { t } = useTranslation("cards");
 
@@ -144,7 +147,13 @@ export function CableCard({
   ): string => {
     if (meters === null || meters === undefined) return "-";
     const ft = feet ?? meters * 3.28084;
-    return `${meters.toFixed(1)}m / ${ft.toFixed(1)}ft`;
+
+    // Use global unitSystem setting
+    if (unitSystem === "metric") {
+      return `${meters.toFixed(1)}m`;
+    } else {
+      return `${ft.toFixed(1)}ft`;
+    }
   };
 
   return (
@@ -238,7 +247,7 @@ export function CableCard({
                       {getStatusLabel(pair.status)}
                       {pair.lengthM !== null &&
                         pair.lengthM !== undefined &&
-                        ` (${pair.lengthM.toFixed(1)}m)`}
+                        ` (${formatLength(pair.lengthM, pair.lengthFt)})`}
                     </span>
                   </div>
                 ))}

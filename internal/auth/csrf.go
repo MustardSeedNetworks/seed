@@ -181,11 +181,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Extract session ID from request (use username from JWT)
-		sessionID := r.Header.Get("X-Username")
-		if sessionID == "" {
-			// Fall back to trying to get from cookie/header
-			sessionID = getSessionIDFromRequest(r)
-		}
+		sessionID := getSessionIDFromRequest(r)
 
 		if sessionID == "" {
 			slog.Warn("CSRF validation failed: no session ID",
@@ -222,12 +218,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 
 // getSessionIDFromRequest attempts to extract a session identifier from the request.
 func getSessionIDFromRequest(r *http.Request) string {
-	// Try to get username from header (set by auth middleware)
-	if username := r.Header.Get("X-Username"); username != "" {
-		return username
-	}
-
-	// Try to extract from JWT token in cookie
+	// Extract from JWT token in cookie (verified source)
 	token, _ := GetTokenFromRequest(r)
 	if token != "" {
 		// Use the first part of the token as a session identifier

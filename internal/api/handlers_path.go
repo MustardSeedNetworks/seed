@@ -94,7 +94,8 @@ func (s *Server) handlePath(w http.ResponseWriter, r *http.Request) {
 
 	var req PathRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error())
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
@@ -144,7 +145,8 @@ func (s *Server) performPathDiscovery(ctx context.Context, w http.ResponseWriter
 			logger.Warn("L3 traceroute failed", "error", l3Path.Error)
 			// Don't fail the entire request if only L3 fails and L2 was also requested
 			if req.Method == PathMethodL3 {
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "L3 traceroute failed", l3Path.Error)
+				logger.Error("L3 traceroute failed", "error_details", l3Path.Error)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "L3 traceroute failed", "")
 				return nil
 			}
 		}
@@ -158,7 +160,8 @@ func (s *Server) performPathDiscovery(ctx context.Context, w http.ResponseWriter
 			logger.Warn("L2 path discovery failed", "error", err)
 			// Don't fail the entire request if only L2 fails and L3 was also requested
 			if req.Method == PathMethodL2 {
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "L2 path discovery failed", err.Error())
+				logger.Error("L2 path discovery failed", "error", err)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "L2 path discovery failed", "")
 				return nil
 			}
 		} else {

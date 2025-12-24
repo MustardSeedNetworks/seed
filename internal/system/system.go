@@ -4,6 +4,7 @@ package system
 import (
 	"os"
 	"runtime"
+	"sort"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -11,7 +12,16 @@ import (
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/load"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/process"
 )
+
+// ProcessInfo contains information about a single process.
+type ProcessInfo struct {
+	Name       string  `json:"name"`
+	PID        int     `json:"pid"`
+	CPUPercent float64 `json:"cpuPercent"`
+	MemoryMB   float64 `json:"memoryMb"`
+}
 
 // Health contains system health metrics.
 type Health struct {
@@ -47,6 +57,74 @@ type Health struct {
 	Arch string `json:"arch"`
 	// Number of CPUs
 	NumCPU int `json:"numCpu"`
+	// Top CPU consuming processes (only populated when CPU > 75%)
+	TopCPUProcesses []ProcessInfo `json:"topCpuProcesses,omitempty"`
+	// Top memory consuming processes (only populated when memory > 75%)
+	TopMemoryProcesses []ProcessInfo `json:"topMemoryProcesses,omitempty"`
+}
+
+// getTopProcesses collects information about top resource-consuming processes.
+// Returns top 5 processes by CPU and memory usage.
+func getTopProcesses() (topCPU, topMemory []ProcessInfo) {
+	procs, err := process.Processes()
+	if err != nil {
+		return nil, nil
+	}
+
+	var processes []ProcessInfo
+	for _, p := range procs {
+		// Get process name
+		name, err := p.Name()
+		if err != nil {
+			continue
+		}
+
+		// Get CPU percent (over a short interval)
+		cpuPercent, err := p.CPUPercent()
+		if err != nil {
+			cpuPercent = 0
+		}
+
+		// Get memory info
+		memInfo, err := p.MemoryInfo()
+		if err != nil {
+			continue
+		}
+		memoryMB := float64(memInfo.RSS) / (1024 * 1024)
+
+		processes = append(processes, ProcessInfo{
+			Name:       name,
+			PID:        int(p.Pid),
+			CPUPercent: cpuPercent,
+			MemoryMB:   memoryMB,
+		})
+	}
+
+	// Sort by CPU and get top 5
+	cpuSorted := make([]ProcessInfo, len(processes))
+	copy(cpuSorted, processes)
+	sort.Slice(cpuSorted, func(i, j int) bool {
+		return cpuSorted[i].CPUPercent > cpuSorted[j].CPUPercent
+	})
+	if len(cpuSorted) > 5 {
+		topCPU = cpuSorted[:5]
+	} else {
+		topCPU = cpuSorted
+	}
+
+	// Sort by memory and get top 5
+	memSorted := make([]ProcessInfo, len(processes))
+	copy(memSorted, processes)
+	sort.Slice(memSorted, func(i, j int) bool {
+		return memSorted[i].MemoryMB > memSorted[j].MemoryMB
+	})
+	if len(memSorted) > 5 {
+		topMemory = memSorted[:5]
+	} else {
+		topMemory = memSorted
+	}
+
+	return topCPU, topMemory
 }
 
 // GetHealth collects current system health metrics.
@@ -98,6 +176,18 @@ func GetHealth() (*Health, error) {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	h.ProcessMemory = memStats.Alloc
+
+	// Collect top processes only when thresholds exceeded (75%)
+	const warningThreshold = 75.0
+	if h.CPUPercent >= warningThreshold || h.MemoryPercent >= warningThreshold {
+		topCPU, topMemory := getTopProcesses()
+		if h.CPUPercent >= warningThreshold {
+			h.TopCPUProcesses = topCPU
+		}
+		if h.MemoryPercent >= warningThreshold {
+			h.TopMemoryProcesses = topMemory
+		}
+	}
 
 	return h, nil
 }

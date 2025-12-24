@@ -35,6 +35,13 @@ import { CardRow, CardDivider } from "../ui/Card";
 import { Status } from "../ui/StatusBadge";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 
+interface ProcessInfo {
+  name: string;
+  pid: number;
+  cpuPercent: number;
+  memoryMb: number;
+}
+
 interface SystemHealth {
   cpuPercent?: number;
   memoryPercent?: number;
@@ -53,6 +60,8 @@ interface SystemHealth {
   os: string;
   arch: string;
   numCpu: number;
+  topCpuProcesses?: ProcessInfo[];
+  topMemoryProcesses?: ProcessInfo[];
 }
 
 /**
@@ -108,11 +117,13 @@ function ResourceBar({
   percent,
   used,
   total,
+  topProcesses,
 }: {
   label: string;
   percent: number;
   used: number;
   total: number;
+  topProcesses?: ProcessInfo[];
 }) {
   const status = getResourceStatus(percent);
   const barColor = (() => {
@@ -129,6 +140,8 @@ function ResourceBar({
     }
   })();
 
+  const showConsumers = topProcesses && topProcesses.length > 0 && percent >= 75;
+
   return (
     <div className="stack-xs">
       <div className="flex justify-between caption">
@@ -143,9 +156,21 @@ function ResourceBar({
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>
-      <div className="caption">
-        {formatBytes(used)} / {formatBytes(total)}
-      </div>
+      {used > 0 && total > 0 && (
+        <div className="caption">
+          {formatBytes(used)} / {formatBytes(total)}
+        </div>
+      )}
+      {showConsumers && (
+        <div className="caption text-text-muted pl-3 mt-1">
+          <div>Top consumers:</div>
+          {topProcesses.slice(0, 3).map((proc) => (
+            <div key={proc.pid} className="pl-2">
+              - {proc.name} ({Math.round(proc.memoryMb)} MB)
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -214,12 +239,14 @@ export function SystemHealthCard() {
             percent={health.cpuPercent ?? 0}
             used={0}
             total={0}
+            topProcesses={health.topCpuProcesses}
           />
           <ResourceBar
             label={t("system.memory")}
             percent={health.memoryPercent ?? 0}
             used={health.memoryUsed ?? 0}
             total={health.memoryTotal ?? 0}
+            topProcesses={health.topMemoryProcesses}
           />
           <ResourceBar
             label={t("system.disk")}

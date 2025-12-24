@@ -76,7 +76,8 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	// Get interface from query param or fallback to current.
 	currentIface := s.getInterfaceFromRequest(r)
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to refresh interfaces", err.Error()) // fixes #694, #699
+		logger.Error("Failed to refresh interfaces", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to refresh interfaces", "")
 		return
 	}
 
@@ -287,7 +288,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	lines, err := readLastLines(s.logPath, maxBytes, maxLines)
 	if err != nil {
 		logger.Error("Failed to read log file", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to read log file", err.Error()) // fixes #694, #699
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to read log file", "")
 		return
 	}
 

@@ -141,7 +141,8 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 
 	var req config.DiscoveryOptions
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
@@ -155,14 +156,14 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	// Apply the options change to the running service
 	if err := s.discoveryService.Reload(); err != nil {
 		logger.Error("Failed to reload discovery options", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.discovery.failedToApplyOptions"), err.Error()) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.discovery.failedToApplyOptions"), "")
 		return
 	}
 
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), err.Error())
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
 		return
 	}
 

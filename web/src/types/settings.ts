@@ -521,8 +521,6 @@ export interface CableTestSettings {
   enabled: boolean;
   /** Automatically run cable test when link is down */
   autoRunOnLinkDown: boolean;
-  /** Unit for cable length display */
-  lengthUnit: "feet" | "meters";
 }
 
 export const DEFAULT_LINK_SETTINGS: LinkSettings = {
@@ -535,7 +533,6 @@ export const DEFAULT_LINK_SETTINGS: LinkSettings = {
 export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
   enabled: true,
   autoRunOnLinkDown: false,
-  lengthUnit: "feet",
 };
 
 // ============================================================================

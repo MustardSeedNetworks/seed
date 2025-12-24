@@ -262,7 +262,8 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to refresh interfaces", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
 		return
 	}
 	// Return only physical interfaces (ethernet and wifi) - excludes loopback, docker, veth, etc.
@@ -292,12 +293,14 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 
 		var req SetInterfaceRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+			logger.Warn("Invalid request body", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 			return
 		}
 
 		if err := s.netManager.SetCurrentInterface(req.Interface); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.network.invalidInterface"), err.Error()) // fixes #694
+			logger.Warn("Invalid interface", "error", err, "interface", req.Interface)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.network.invalidInterface"), "")
 			return
 		}
 
@@ -357,7 +360,8 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to refresh interfaces", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
 		return
 	}
 
@@ -366,7 +370,8 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), err.Error()) // fixes #694
+		logger.Warn("Interface not found", "error", err, "interface", currentIface)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), "")
 		return
 	}
 
@@ -473,7 +478,8 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to refresh interfaces", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
 		return
 	}
 
@@ -482,7 +488,8 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), err.Error()) // fixes #694
+		logger.Warn("Interface not found", "error", err, "interface", currentIface)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), "")
 		return
 	}
 
@@ -625,13 +632,15 @@ func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request, logger
 
 	var req VLANInterfaceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return "", 0, false
 	}
 
 	// Validate VLAN ID (fixes #522)
 	if err := validation.ValidateVLANID(req.VlanID); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vlan.invalidId"), err.Error()) // fixes #694
+		logger.Warn("Invalid VLAN ID", "error", err, "vlanID", req.VlanID)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vlan.invalidId"), "")
 		return "", 0, false
 	}
 
@@ -643,7 +652,8 @@ func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request, logger
 
 	// Validate interface name
 	if err := validation.ValidateInterface(iface); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.network.invalidInterface"), err.Error()) // fixes #694
+		logger.Warn("Invalid interface", "error", err, "interface", iface)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.network.invalidInterface"), "")
 		return "", 0, false
 	}
 
@@ -662,7 +672,8 @@ func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request, log
 	}
 
 	if err := vlan.CreateVlanInterface(iface, vlanID); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.vlan.failedToCreate"), err.Error()) // fixes #694
+		logger.Error("Failed to create VLAN interface", "error", err, "interface", iface, "vlanID", vlanID)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.vlan.failedToCreate"), "")
 		return
 	}
 
@@ -684,7 +695,8 @@ func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request, log
 	}
 
 	if err := vlan.DeleteVlanInterface(iface, vlanID); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.vlan.failedToDelete"), err.Error()) // fixes #694
+		logger.Error("Failed to delete VLAN interface", "error", err, "interface", iface, "vlanID", vlanID)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.vlan.failedToDelete"), "")
 		return
 	}
 
@@ -745,7 +757,8 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request, logg
 		Interface string `json:"interface"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
@@ -767,7 +780,7 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request, logg
 	// Save config (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), err.Error())
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
 		return
 	}
 
@@ -1062,7 +1075,8 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 
 	var req IPSettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
@@ -1090,7 +1104,8 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 
 		if err := s.netManager.ConfigureStaticIP(currentIface, cfg); err != nil {
 			s.config.Unlock()
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.staticConfigFailed"), err.Error()) // fixes #694
+			logger.Error("Failed to configure static IP", "error", err, "interface", currentIface)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.staticConfigFailed"), "")
 			return
 		}
 
@@ -1106,7 +1121,8 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 		// Switch to DHCP
 		if err := s.netManager.ConfigureDHCP(currentIface); err != nil {
 			s.config.Unlock()
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.dhcpConfigFailed"), err.Error()) // fixes #694
+			logger.Error("Failed to configure DHCP", "error", err, "interface", currentIface)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.dhcpConfigFailed"), "")
 			return
 		}
 
@@ -1121,13 +1137,14 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 	// Save config to file (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), err.Error())
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
 		return
 	}
 
 	// Refresh interface data
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to refresh interfaces", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
 		return
 	}
 
@@ -1152,13 +1169,15 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	var req SetMTURequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
 	// Validate MTU value
 	if err := validation.ValidateMTU(req.MTU); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.mtu.invalidRange"), err.Error()) // fixes #694
+		logger.Warn("Invalid MTU value", "error", err, "mtu", req.MTU)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.mtu.invalidRange"), "")
 		return
 	}
 
@@ -1170,7 +1189,8 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	// Set the MTU
 	if err := s.netManager.SetMTU(iface, req.MTU); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), err.Error()) // fixes #694
+		logger.Error("Failed to set MTU", "error", err, "interface", iface, "mtu", req.MTU)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), "")
 		return
 	}
 
