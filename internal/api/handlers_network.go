@@ -750,8 +750,8 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request, logg
 	}
 
 	// Lock config for write access
+	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
-	defer s.config.Unlock()
 
 	// Update WiFi interface in config
 	s.config.Interface.WiFi = req.Interface
@@ -761,12 +761,17 @@ func (s *Server) updateWiFiSettings(w http.ResponseWriter, r *http.Request, logg
 		s.wifiManager.SetInterface(req.Interface)
 	}
 
-	// Save config
+	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
+	s.config.Unlock()
+
+	// Save config (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {
-		slog.Warn("Failed to save config", "error", err)
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), err.Error())
+		return
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]string{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "WiFi settings updated",
 	})
@@ -1068,8 +1073,8 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 	}
 
 	// Lock config for write access
+	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
-	defer s.config.Unlock()
 
 	// Get interface from query param or fallback to current.
 	currentIface := s.getInterfaceFromRequest(r)
@@ -1084,6 +1089,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 		}
 
 		if err := s.netManager.ConfigureStaticIP(currentIface, cfg); err != nil {
+			s.config.Unlock()
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.staticConfigFailed"), err.Error()) // fixes #694
 			return
 		}
@@ -1099,6 +1105,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 	} else {
 		// Switch to DHCP
 		if err := s.netManager.ConfigureDHCP(currentIface); err != nil {
+			s.config.Unlock()
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.dhcpConfigFailed"), err.Error()) // fixes #694
 			return
 		}
@@ -1108,10 +1115,14 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 		s.config.IP.Static = nil
 	}
 
-	// Save config to file
+	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
+	s.config.Unlock()
+
+	// Save config to file (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {
-		// Log but don't fail - the config was applied
-		slog.Warn("Failed to save config", "error", err)
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), err.Error())
+		return
 	}
 
 	// Refresh interface data
@@ -1120,7 +1131,7 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 		return
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]string{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "IP configuration updated",
 	})

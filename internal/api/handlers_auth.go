@@ -348,6 +348,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update config with new password hash
+	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
 	s.config.Auth.DefaultPasswordHash = hash
 	s.config.Unlock()

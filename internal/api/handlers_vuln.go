@@ -225,6 +225,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 		}
 
 		// Update config
+		// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 		s.config.Lock()
 		s.config.Security.VulnerabilityScanning.Enabled = settings.Enabled
 		s.config.Security.VulnerabilityScanning.CVEDatabase = settings.CVEDatabase
@@ -232,6 +233,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 		s.config.Security.VulnerabilityScanning.UpdateInterval = settings.UpdateInterval
 		s.config.Security.VulnerabilityScanning.SeverityThreshold = settings.SeverityThreshold
 		s.config.Security.VulnerabilityScanning.MaxConcurrent = settings.MaxConcurrent
+		// Unlock before Save() to avoid deadlock
 		s.config.Unlock()
 
 		// Save config

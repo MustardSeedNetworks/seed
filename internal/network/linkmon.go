@@ -4,10 +4,12 @@
 package network
 
 import (
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -165,13 +167,18 @@ func (m *LinkMonitor) pollLoop() {
 				copy(callbacks, m.callbacks)
 				m.mu.Unlock()
 
-				// Notify callbacks with panic recovery
+				// Notify callbacks with panic recovery (fixes #790 - log panic details)
 				for _, cb := range callbacks {
 					go func(callback LinkStateCallback) {
 						defer func() {
-							// Silently recover from panic in callback
-							// to prevent crashing the link monitor
-							recover() //nolint:errcheck // Intentionally ignoring panic value
+							if r := recover(); r != nil {
+								// Log panic details to help debug callback issues
+								slog.Error("Panic in link monitor callback",
+									"panic", r,
+									"interface", event.Interface,
+									"state", event.State.String(),
+									"stack", string(debug.Stack()))
+							}
 						}()
 						callback(event)
 					}(cb)

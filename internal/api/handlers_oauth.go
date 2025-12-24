@@ -429,8 +429,8 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Lock config during update (fixes #760)
+	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
-	defer s.config.Unlock()
 
 	// Find and update the provider config
 	found := false
@@ -447,6 +447,9 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		found = true
 		break
 	}
+
+	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
+	s.config.Unlock()
 
 	if !found {
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, "Provider not found", "")

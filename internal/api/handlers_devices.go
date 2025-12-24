@@ -306,6 +306,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Lock config for write access (fixes #759 - race condition)
+	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
 
 	// Update legacy config fields (backward compatibility)

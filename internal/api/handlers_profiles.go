@@ -405,13 +405,19 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			logger.Warn("Failed to parse profile settings, using defaults", "error", err, "profile_id", profile.ID)
 		} else {
+			// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 			s.config.Lock()
 			profileSettings.ApplyTo(s.config)
-			// Save updated config to file
-			if saveErr := s.config.Save(s.configPath); saveErr != nil {
-				logger.Warn("Failed to save config after profile switch", "error", saveErr)
-			}
+			// Unlock before Save() to avoid deadlock
 			s.config.Unlock()
+
+			// Save updated config to file (fixes #782 - return error instead of silent warning)
+			if saveErr := s.config.Save(s.configPath); saveErr != nil {
+				logger.Error("Failed to save config after profile switch", "error", saveErr)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+					ErrCodeInternal, localizer.T("errors.config.failedToSave"), saveErr.Error())
+				return
+			}
 			logger.Info("Applied profile settings", "profile_id", profile.ID, "profile_name", profile.Name)
 		}
 	}
