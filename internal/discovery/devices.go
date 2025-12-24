@@ -188,7 +188,14 @@ func (d *DeviceDiscovery) Start() error {
 		}
 	}
 
-	return d.protoManager.Start()
+	// Start protocol manager (LLDP/CDP/EDP captures)
+	// This may fail without root/CAP_NET_RAW, but we continue with other features
+	if err := d.protoManager.Start(); err != nil {
+		slog.Warn("Failed to start protocol manager (passive discovery disabled)", "error", err)
+		// Return nil to allow ARP scanning, port scanning, and profiling to continue
+	}
+
+	return nil
 }
 
 // Stop stops all discovery.
