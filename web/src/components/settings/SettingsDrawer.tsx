@@ -32,6 +32,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { useSettings } from "../../contexts/useSettings";
 import { logger, LogComponents } from "../../lib/logger";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
+import { Network } from "../ui/Icons";
 import {
   icon as iconTokens,
   radius,
@@ -1485,7 +1486,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           />
 
           {/* Network Section - IP/DHCP config (third) */}
-          <CollapsibleSection title={t("sections.network")}>
+          <CollapsibleSection
+            title={
+              <div className={layout.inline.default}>
+                <Network className={iconTokens.size.sm} />
+                <span>{t("sections.network")}</span>
+              </div>
+            }
+          >
             {/* Network Configuration */}
             <div className="stack">
               <p className="section-title">{t("network.title")}</p>
