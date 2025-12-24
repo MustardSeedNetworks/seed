@@ -241,19 +241,3 @@ func getSessionIDFromRequest(r *http.Request) string {
 	return ""
 }
 
-// SetCSRFCookie sets the CSRF token as a secure HttpOnly cookie (fixes #708).
-// Note: This function is currently unused. The CSRF implementation uses server-side
-// token storage (synchronizer token pattern) rather than cookies. If using this
-// function, the CSRF token should be provided to the client via a response header
-// or body field instead, not via a readable cookie.
-func SetCSRFCookie(w http.ResponseWriter, token string, secure bool) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     CSRFCookieName,
-		Value:    token,
-		Path:     "/",
-		HttpOnly: true, // Prevent XSS attacks (fixes #708)
-		Secure:   secure,
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   int(CSRFTokenExpiry.Seconds()),
-	})
-}

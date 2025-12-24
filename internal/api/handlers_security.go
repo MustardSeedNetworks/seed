@@ -392,6 +392,7 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	// Lock config for write access
 	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
+	defer s.config.Unlock()
 
 	// Convert request v3 credentials to config format (fixes #518)
 	v3Creds := make([]config.SNMPv3Credential, len(req.V3Credentials))
@@ -411,7 +412,6 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			// New password provided - encrypt it
 			encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
 			if err != nil {
-				s.config.Unlock()
 				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptAuth"), err.Error()) // fixes #694
 				return
 			}
@@ -426,7 +426,6 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			// New password provided - encrypt it
 			encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
 			if err != nil {
-				s.config.Unlock()
 				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptPriv"), err.Error()) // fixes #694
 				return
 			}
@@ -445,9 +444,6 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	s.config.SNMP.Timeout = time.Duration(req.Timeout) * time.Millisecond
 	s.config.SNMP.Retries = req.Retries
 	s.config.SNMP.Port = req.Port
-
-	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
-	s.config.Unlock()
 
 	// Save config (passwords are now encrypted) (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {

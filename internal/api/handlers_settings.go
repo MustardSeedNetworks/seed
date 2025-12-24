@@ -232,7 +232,12 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Also save settings to the active profile (fixes #781)
 	if s.db != nil {
-		s.saveSettingsToActiveProfile(ctx, logger)
+		if err := s.saveSettingsToActiveProfile(ctx, logger); err != nil {
+			sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
+				"error": "Failed to save settings",
+			})
+			return
+		}
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
@@ -240,15 +245,16 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 // saveSettingsToActiveProfile saves current settings to the active profile's ConfigJSON.
 // This ensures profile-specific settings are persisted (fixes #781).
-func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.Logger) {
+func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.Logger) error {
 	// Get active profile ID
 	activeID, err := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile)
 	if err != nil || activeID == "" {
 		// No active profile, try to get default
-		defaultProfile, err := s.db.Profiles().GetDefault(ctx)
-		if err != nil {
+		defaultProfile, getDefaultErr := s.db.Profiles().GetDefault(ctx)
+		if getDefaultErr != nil {
+			// No profile exists - this is not an error, just nothing to save to
 			logger.Debug("No active or default profile to save settings to")
-			return
+			return nil
 		}
 		activeID = defaultProfile.ID
 	}
@@ -257,7 +263,7 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 	profile, err := s.db.Profiles().Get(ctx, activeID)
 	if err != nil {
 		logger.Warn("Failed to get active profile for settings save", "error", err, "profile_id", activeID)
-		return
+		return nil
 	}
 
 	// Extract current settings from config
@@ -276,17 +282,18 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 	configJSON, err := profileSettings.ToJSON()
 	if err != nil {
 		logger.Warn("Failed to serialize profile settings", "error", err)
-		return
+		return nil
 	}
 
 	// Update profile
 	profile.ConfigJSON = configJSON
 	if err := s.db.Profiles().Update(ctx, profile); err != nil {
-		logger.Warn("Failed to save settings to profile", "error", err, "profile_id", profile.ID)
-		return
+		logger.Error("Failed to save settings to profile", "error", err, "profile_id", profile.ID)
+		return err
 	}
 
 	logger.Debug("Saved settings to active profile", "profile_id", profile.ID, "profile_name", profile.Name)
+	return nil
 }
 
 // applyThresholdUpdates applies threshold configuration updates.
