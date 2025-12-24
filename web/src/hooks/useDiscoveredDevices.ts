@@ -180,7 +180,9 @@ export function useDiscoveredDevices(autoRefresh = false) {
   const fetchDevices = useCallback(async (): Promise<void> => {
     try {
       setError(null);
-      const data = await api.get<DiscoveryResponse>("/api/discovery");
+      // Use /api/devices endpoint which returns discovered network devices
+      // (not /api/discovery which returns LLDP/CDP protocol neighbors)
+      const data = await api.get<DiscoveryResponse>("/api/devices");
       setDevices(data.devices || []);
       setStatus(data.status);
     } catch (err) {

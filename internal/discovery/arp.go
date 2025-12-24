@@ -252,9 +252,10 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		return fmt.Errorf("failed to read ARP table: %w", err)
 	}
 
-	// Mark ARP entries as local (ARP only works on local subnet)
+	// Mark ARP entries based on whether they're in the primary subnet
+	// Note: ARP can capture entries from additional subnets if they're routed through us
 	for _, entry := range entries {
-		entry.IsLocal = true
+		entry.IsLocal = s.isInLocalSubnet(entry.IP)
 	}
 
 	// Merge ping responders that aren't in ARP table (remote subnets)
@@ -270,7 +271,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	}
 
 	// Add ping responders not in ARP table
-	// These could be local (in our subnet but no ARP entry yet) or remote (additional subnets)
+	// These could be local (in primary subnet) or from additional/extended subnets
 	for _, ip := range responders {
 		if !existingIPs[ip] {
 			entries = append(entries, &ARPEntry{
@@ -278,7 +279,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 				MAC:      "", // No MAC - either not in ARP cache or remote host
 				State:    "PING_ONLY",
 				LastSeen: time.Now(),
-				IsLocal:  s.isInSubnet(ip), // Fix #792: Check actual subnet membership
+				IsLocal:  s.isInLocalSubnet(ip), // Only primary subnet is "local"
 			})
 		}
 	}
@@ -378,6 +379,18 @@ func (s *ARPScanner) isInSubnet(ipStr string) bool {
 
 	// If no subnets configured, accept all (fallback)
 	return s.subnet == nil && len(s.additionalSubnets) == 0
+}
+
+// isInLocalSubnet checks if an IP is in the PRIMARY subnet only (not additional subnets).
+// This is used to determine if a device should be shown in "Local Network" vs "Extended Networks".
+func (s *ARPScanner) isInLocalSubnet(ipStr string) bool {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return false
+	}
+
+	// Only check primary subnet - additional subnets are "extended" networks
+	return s.subnet != nil && s.subnet.Contains(ip)
 }
 
 // enrichEntries adds OUI lookups, hostname resolution, and TTL-based OS guessing.
