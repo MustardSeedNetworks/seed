@@ -96,9 +96,9 @@ func DefaultProfilerConfig() *ProfilerConfig {
 			23,   // Telnet
 			80,   // HTTP
 			443,  // HTTPS
-			161,  // SNMP
 			8080, // HTTP Alt
 			8443, // HTTPS Alt
+			// Note: SNMP (port 161) is UDP, probed separately via probeSNMP()
 		},
 	}
 }
@@ -291,14 +291,11 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 		}
 	}
 
-	// Check SNMP if port 161 is open
-	for _, op := range profile.OpenPorts {
-		if op.Port == 161 && op.IsOpen {
-			if info := p.probeSNMP(ctx, ip); info != nil {
-				profile.SNMPInfo = info
-			}
-			break
-		}
+	// Always try SNMP probing - SNMP uses UDP port 161, not TCP,
+	// so we can't detect it via TCP port scanning. Just try to query.
+	if info := p.probeSNMP(ctx, ip); info != nil {
+		profile.SNMPInfo = info
+		slog.Debug("Got SNMP info from device", "ip", ip, "sysName", info.SysName)
 	}
 
 	// Infer device type and icons from profile
@@ -382,15 +379,25 @@ func (p *DeviceProfiler) probeHTTP(ctx context.Context, ip string, port int, isH
 
 // probeSNMP attempts to retrieve SNMP information from the device.
 func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
-	if p.snmpConfig == nil || len(p.snmpConfig.Communities) == 0 {
+	if p.snmpConfig == nil {
+		slog.Debug("SNMP probe skipped - no SNMP config", "ip", ip)
 		return nil
 	}
+	if len(p.snmpConfig.Communities) == 0 && len(p.snmpConfig.V3Credentials) == 0 {
+		slog.Debug("SNMP probe skipped - no communities or v3 credentials configured", "ip", ip)
+		return nil
+	}
+
+	slog.Debug("Attempting SNMP probe", "ip", ip, "communities", len(p.snmpConfig.Communities), "v3creds", len(p.snmpConfig.V3Credentials))
 
 	// Query system information
 	sysInfo, err := snmp.GetSystemInfo(ctx, ip, p.snmpConfig)
 	if err != nil {
+		slog.Debug("SNMP probe failed", "ip", ip, "error", err)
 		return nil
 	}
+
+	slog.Info("SNMP probe succeeded", "ip", ip, "sysName", sysInfo.SysName, "sysDescr", truncateString(sysInfo.SysDescr, 50))
 
 	return &SNMPInfo{
 		SysDescr:    sysInfo.SysDescr,
@@ -398,6 +405,14 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		SysContact:  sysInfo.SysContact,
 		SysLocation: sysInfo.SysLocation,
 	}
+}
+
+// truncateString truncates a string to maxLen with ellipsis.
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen-3] + "..."
 }
 
 // extractHTMLTitle extracts the <title> from HTML content.
