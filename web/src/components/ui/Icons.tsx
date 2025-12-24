@@ -128,6 +128,8 @@ export {
   Eye as EyeOpen,
   // Path/route icons
   Route,
+  // External link
+  ExternalLink,
 } from "lucide-react";
 
 // Icon size presets are in iconConfig.ts - import from there for non-component needs
