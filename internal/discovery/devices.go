@@ -108,7 +108,8 @@ type DeviceDiscovery struct {
 	ndpScanner      *NDPScanner
 	protoManager    *Manager
 	netbiosResolver *NetBIOSResolver
-	mdnsListener    *MDNSListener
+	mdnsResolver    *MDNSResolver // Active mDNS resolution
+	mdnsListener    *MDNSListener // Passive mDNS capture
 	mu              sync.RWMutex
 	devices         map[string]*DiscoveredDevice // Key by MAC
 	lastScan        time.Time
@@ -165,6 +166,7 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 		ndpScanner:      NewNDPScanner(interfaceName),
 		protoManager:    NewManager(interfaceName),
 		netbiosResolver: NewNetBIOSResolver(),
+		mdnsResolver:    NewMDNSResolver(interfaceName),
 		mdnsListener:    NewMDNSListener(interfaceName),
 		devices:         make(map[string]*DiscoveredDevice),
 		nameResolution:  true, // Enabled by default
@@ -241,9 +243,10 @@ func (d *DeviceDiscovery) Scan(ctx context.Context) error {
 	// Aggregate results
 	d.aggregateResults()
 
-	// Trigger NetBIOS name resolution in background
+	// Trigger name resolution in background (NetBIOS for Windows, mDNS for Apple/Linux)
 	if d.nameResolution {
 		go d.ResolveNetBIOSNames(ctx)
+		go d.ResolveMDNSNames(ctx)
 	}
 
 	return nil
@@ -645,8 +648,8 @@ func (d *DeviceDiscovery) ResolveNetBIOSNames(ctx context.Context) {
 	var ips []string
 	deviceMap := make(map[string]*DiscoveredDevice)
 	for _, device := range d.devices {
-		// Only resolve for local devices without a NetBIOS name
-		if device.IP != "" && device.NetBIOSName == "" && device.IsLocal {
+		// Resolve for all devices without a NetBIOS name (not just local)
+		if device.IP != "" && device.NetBIOSName == "" {
 			ips = append(ips, device.IP)
 			deviceMap[device.IP] = device
 		}
@@ -670,6 +673,51 @@ func (d *DeviceDiscovery) ResolveNetBIOSNames(ctx context.Context) {
 				device.NetBIOSName = result.Name
 				device.DisplayName = device.ComputeDisplayName()
 				slog.Debug("NetBIOS: resolved name", "ip", result.IP, "name", result.Name)
+			}
+		}
+	}
+	d.mu.Unlock()
+}
+
+// ResolveMDNSNames triggers active mDNS name resolution for discovered devices.
+// This queries devices directly for their .local hostname (Bonjour/Avahi).
+func (d *DeviceDiscovery) ResolveMDNSNames(ctx context.Context) {
+	if d.mdnsResolver == nil || !d.nameResolution {
+		return
+	}
+
+	d.mu.RLock()
+	var ips []string
+	deviceMap := make(map[string]*DiscoveredDevice)
+	for _, device := range d.devices {
+		// Resolve for all devices without an mDNS name
+		if device.IP != "" && device.MDNSName == "" {
+			ips = append(ips, device.IP)
+			deviceMap[device.IP] = device
+		}
+	}
+	d.mu.RUnlock()
+
+	if len(ips) == 0 {
+		return
+	}
+
+	slog.Debug("mDNS: resolving names", "count", len(ips))
+
+	// Resolve in batch
+	results := d.mdnsResolver.ResolveBatch(ctx, ips)
+
+	// Update devices with resolved names
+	d.mu.Lock()
+	for _, result := range results {
+		if result.Err == nil && result.Name != "" {
+			if device, ok := deviceMap[result.IP]; ok {
+				device.MDNSName = result.Name
+				device.DisplayName = device.ComputeDisplayName()
+				if !containsMethod(device.DiscoveryMethod, MethodMDNS) {
+					device.DiscoveryMethod = append(device.DiscoveryMethod, MethodMDNS)
+				}
+				slog.Debug("mDNS: resolved name", "ip", result.IP, "name", result.Name)
 			}
 		}
 	}
