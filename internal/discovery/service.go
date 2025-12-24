@@ -174,7 +174,29 @@ func (s *Service) Scan(ctx context.Context) error {
 		return nil
 	}
 
-	return s.deviceDiscovery.Scan(ctx)
+	if err := s.deviceDiscovery.Scan(ctx); err != nil {
+		return err
+	}
+
+	// Queue all discovered devices for profiling (port scan, SNMP, HTTP detection)
+	s.queueDevicesForProfiling()
+
+	return nil
+}
+
+// queueDevicesForProfiling queues all discovered devices for profiling.
+func (s *Service) queueDevicesForProfiling() {
+	devices := s.deviceDiscovery.GetDevices()
+	queued := 0
+	for _, device := range devices {
+		if device.IP != "" && s.profiler.GetProfile(device.IP) == nil && !s.profiler.IsProfiling(device.IP) {
+			s.profiler.QueueProfile(device.IP)
+			queued++
+		}
+	}
+	if queued > 0 {
+		slog.Info("Queued devices for profiling after scan", "count", queued)
+	}
 }
 
 // Reload reapplies discovery options from config at runtime.
