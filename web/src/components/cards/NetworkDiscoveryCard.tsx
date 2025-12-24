@@ -1,7 +1,8 @@
-import { useState, memo, useCallback, useMemo } from "react";
+import { useState, memo, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
+import { Tooltip } from "../ui/Tooltip";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { logger, LogComponents } from "../../lib/logger";
 import {
@@ -154,13 +155,33 @@ export interface NetworkDiscoveryData {
   status: DiscoveryStatus;
 }
 
-// Deep Scan (Port Scan) Types
-export interface PortScanResult {
-  ip: string;
+// Deep Scan (Port Scan) Types - matches backend discovery.ServiceInfo
+export interface ServiceInfo {
   port: number;
   state: "open" | "closed" | "filtered";
-  ttl: number;
-  rtt: number; // nanoseconds
+  service: string;
+  banner?: string;
+  version?: string;
+  protocol?: string;
+}
+
+// PortScanResult for display - normalized from backend response
+export interface PortScanResult {
+  port: number;
+  state: "open" | "closed" | "filtered";
+  service: string;
+  banner?: string;
+  version?: string;
+  rtt: number; // nanoseconds (0 if not available from backend)
+}
+
+// Backend API response structure
+interface PortScanAPIResponse {
+  ip: string;
+  hostname?: string;
+  services: ServiceInfo[];
+  scanTime: number;
+  error?: string;
 }
 
 export interface DeepScanResult {
@@ -168,6 +189,12 @@ export interface DeepScanResult {
   results: PortScanResult[];
   osGuess?: string;
   scannedAt: Date;
+}
+
+interface DiscoverySettingsForAutoScan {
+  portScanEnabled?: boolean;
+  vulnScanEnabled?: boolean;
+  vulnAutoScan?: boolean;
 }
 
 interface NetworkDiscoveryCardProps {
@@ -839,16 +866,23 @@ function DeviceRow({
                 <MethodBadge key={method} method={method} />
               ))}
               {device.vendor && device.vendor !== "Unknown" && (
-                <span
-                  className="caption text-text-muted truncate max-w-25"
-                  title={
-                    device.vendor === "LAA"
-                      ? "Locally Administered Address - A MAC address that was locally assigned rather than by the manufacturer. Common in virtual machines, containers, and devices with MAC randomization enabled for privacy."
-                      : device.vendor
-                  }
-                >
-                  {device.vendor}
-                </span>
+                device.vendor === "LAA" ? (
+                  <Tooltip
+                    content="Locally Administered Address - A MAC address that was locally assigned rather than by the manufacturer. Common in virtual machines, containers, and devices with MAC randomization enabled for privacy."
+                    position="bottom"
+                  >
+                    <span className="caption text-text-muted truncate max-w-25 underline decoration-dotted cursor-help">
+                      {device.vendor}
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <span
+                    className="caption text-text-muted truncate max-w-25"
+                    title={device.vendor}
+                  >
+                    {device.vendor}
+                  </span>
+                )
               )}
             </div>
           </div>
@@ -931,16 +965,20 @@ function DeviceRow({
                 <span className="body-small shrink-0">
                   {t("discovery.vendor")}
                 </span>
-                <span
-                  className="body-small font-medium text-text-secondary text-right"
-                  title={
-                    device.vendor === "LAA"
-                      ? "Locally Administered Address - A MAC address that was locally assigned rather than by the manufacturer. Common in virtual machines, containers, and devices with MAC randomization enabled for privacy."
-                      : undefined
-                  }
-                >
-                  {device.vendor}
-                </span>
+                {device.vendor === "LAA" ? (
+                  <Tooltip
+                    content="Locally Administered Address - A MAC address that was locally assigned rather than by the manufacturer. Common in virtual machines, containers, and devices with MAC randomization enabled for privacy."
+                    position="top"
+                  >
+                    <span className="body-small font-medium text-text-secondary text-right underline decoration-dotted cursor-help">
+                      {device.vendor}
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <span className="body-small font-medium text-text-secondary text-right">
+                    {device.vendor}
+                  </span>
+                )}
               </div>
             )}
             {device.osGuess && (
@@ -967,21 +1005,40 @@ function DeviceRow({
                   {t("discovery.portScanResults")}
                 </p>
                 {openPorts.length > 0 ? (
-                  <div className="gap-y-0.5">
+                  <div className="stack-xs">
                     {openPorts.map((result) => (
                       <div
                         key={result.port}
                         className={cn(
-                          "flex items-center justify-between",
-                          spacing.chip.sm
+                          "flex flex-col",
+                          spacing.pad.xs,
+                          "bg-surface-hover",
+                          radius.sm
                         )}
                       >
-                        <span className="text-status-success">
-                          {result.port}/{getServiceName(result.port)}
-                        </span>
-                        <span className="text-text-muted">
-                          {(result.rtt / 1000000).toFixed(1)}ms
-                        </span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-status-success font-mono body-small">
+                            {result.port}/
+                            {result.service && result.service !== "unknown"
+                              ? result.service
+                              : getServiceName(result.port)}
+                          </span>
+                          {result.version && (
+                            <span className="caption text-text-muted">
+                              {result.version}
+                            </span>
+                          )}
+                        </div>
+                        {result.banner && (
+                          <span
+                            className="caption text-text-secondary font-mono mt-0.5 break-all"
+                            title={result.banner}
+                          >
+                            {result.banner.length > 80
+                              ? result.banner.substring(0, 80) + "..."
+                              : result.banner}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1253,10 +1310,56 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
+  // Settings for auto-scan behavior - fetched from API
+  const [autoScanSettings, setAutoScanSettings] = useState<DiscoverySettingsForAutoScan>({
+    portScanEnabled: false,
+    vulnScanEnabled: false,
+    vulnAutoScan: false,
+  });
+
   // Vulnerability modal state
   const [selectedDeviceForVuln, setSelectedDeviceForVuln] = useState<
     string | null
   >(null);
+
+  // Fetch settings for auto-scan behavior on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const apiBase = import.meta.env.VITE_API_BASE || "";
+      try {
+        // Fetch discovery settings
+        const discoveryResponse = await fetch(`${apiBase}/api/settings/discovery`, {
+          credentials: "include",
+        });
+        if (discoveryResponse.ok) {
+          const discoveryData = await discoveryResponse.json();
+          const portScanEnabled = discoveryData?.options?.portScan?.enabled ?? false;
+
+          // Fetch vulnerability settings
+          const vulnResponse = await fetch(`${apiBase}/api/settings/vulnerability`, {
+            credentials: "include",
+          });
+          let vulnEnabled = false;
+          let vulnAutoScan = false;
+          if (vulnResponse.ok) {
+            const vulnData = await vulnResponse.json();
+            vulnEnabled = vulnData?.enabled ?? false;
+            vulnAutoScan = vulnData?.autoScan ?? false;
+          }
+
+          setAutoScanSettings({
+            portScanEnabled,
+            vulnScanEnabled: vulnEnabled,
+            vulnAutoScan,
+          });
+        }
+      } catch (error) {
+        logger.debug(LogComponents.DISCOVERY, "Failed to fetch auto-scan settings", error);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   // Toggle sort field/direction
   const handleSortChange = useCallback(
@@ -1289,6 +1392,87 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     });
   };
 
+  // Trigger vulnerability scan for a device based on any good info we have
+  const triggerVulnScan = useCallback(async (ip: string, device?: DiscoveredDevice, services?: ServiceInfo[]) => {
+    if (!autoScanSettings.vulnScanEnabled || !autoScanSettings.vulnAutoScan) {
+      return;
+    }
+
+    // Check if we have any good info to run vuln scan against:
+    // - Port scan results with services/banners/versions
+    // - Device OS guess
+    // - SNMP info (system description, software version)
+    // - LLDP/CDP info (capabilities, software version)
+    // - Device profile with open ports
+
+    let hasGoodInfo = false;
+    const reasons: string[] = [];
+
+    // Check port scan services
+    if (services && services.length > 0) {
+      const openServices = services.filter(
+        (s) => s.state === "open" && (s.banner || s.version || s.service !== "unknown")
+      );
+      if (openServices.length > 0) {
+        hasGoodInfo = true;
+        reasons.push(`${openServices.length} services`);
+      }
+    }
+
+    // Check device info if provided
+    if (device) {
+      // OS guess
+      if (device.osGuess) {
+        hasGoodInfo = true;
+        reasons.push("OS guess");
+      }
+
+      // LLDP info
+      if (device.lldpInfo?.systemDescription) {
+        hasGoodInfo = true;
+        reasons.push("LLDP system info");
+      }
+
+      // CDP info
+      if (device.cdpInfo?.platform || device.cdpInfo?.softwareVersion) {
+        hasGoodInfo = true;
+        reasons.push("CDP info");
+      }
+
+      // Device profile with open ports
+      if (device.profile?.openPorts && device.profile.openPorts.some((p) => p.isOpen)) {
+        hasGoodInfo = true;
+        reasons.push("profile ports");
+      }
+
+      // HTTP info from profile
+      if (device.profile?.httpInfo?.server) {
+        hasGoodInfo = true;
+        reasons.push("HTTP server");
+      }
+    }
+
+    if (!hasGoodInfo) return;
+
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE || "";
+      logger.info(LogComponents.DISCOVERY, "Triggering auto vulnerability scan", {
+        ip,
+        reasons: reasons.join(", "),
+      });
+      await fetch(`${apiBase}/api/vulnerability/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          targets: [ip],
+        }),
+      });
+    } catch (error) {
+      logger.debug(LogComponents.DISCOVERY, "Failed to trigger vulnerability scan", error);
+    }
+  }, [autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan]);
+
   const handleDeepScan = useCallback(async (ip: string) => {
     setScanningDevices((prev) => new Set(prev).add(ip));
 
@@ -1308,19 +1492,32 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       });
 
       if (response.ok) {
-        const data = (await response.json()) as {
-          target: string;
-          results: PortScanResult[];
-        };
+        const apiResponse = (await response.json()) as PortScanAPIResponse;
+        // Transform backend response to frontend format
+        const results: PortScanResult[] = apiResponse.services.map((svc) => ({
+          port: svc.port,
+          state: svc.state,
+          service: svc.service,
+          banner: svc.banner,
+          version: svc.version,
+          rtt: 0, // Backend doesn't return individual RTT per port
+        }));
         setScanResults((prev) => {
           const next = new Map(prev);
           next.set(ip, {
-            target: data.target,
-            results: data.results,
+            target: apiResponse.ip,
+            results: results,
             scannedAt: new Date(),
           });
           return next;
         });
+
+        // If vulnerability scanning is enabled with auto-scan, trigger vuln scan
+        // Find the device from data to pass additional info
+        const device = data?.devices.find((d) => d.ip === ip);
+        if (apiResponse.services && apiResponse.services.length > 0) {
+          triggerVulnScan(ip, device, apiResponse.services);
+        }
       }
     } catch (error) {
       logger.error(LogComponents.DISCOVERY, "Deep scan failed", error);
@@ -1331,7 +1528,127 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         return next;
       });
     }
-  }, []);
+  }, [triggerVulnScan, data?.devices]);
+
+  // Track devices we've already auto-scanned to avoid duplicates
+  const autoScannedDevices = useRef<Set<string>>(new Set());
+
+  // Auto-scan devices after discovery completes (only if port scanning is enabled)
+  // Triggers when new devices appear and discovery is not actively scanning
+  useEffect(() => {
+    // Only auto-scan if port scanning is enabled in settings
+    if (!autoScanSettings.portScanEnabled) return;
+
+    // Don't auto-scan while discovery is still in progress
+    if (!data?.status || data.status.scanning) return;
+    if (!data.devices || data.devices.length === 0) return;
+
+    // Find devices we haven't auto-scanned yet
+    const devicesToScan = data.devices.filter((device) => {
+      if (!device.ip) return false;
+      // Skip if already scanned or currently scanning
+      if (autoScannedDevices.current.has(device.ip)) return false;
+      if (scanningDevices.has(device.ip)) return false;
+      if (scanResults.has(device.ip)) return false;
+      return true;
+    });
+
+    if (devicesToScan.length === 0) return;
+
+    // Mark these devices as queued for auto-scan
+    devicesToScan.forEach((device) => {
+      autoScannedDevices.current.add(device.ip);
+    });
+
+    logger.info(LogComponents.DISCOVERY, "Auto-scanning devices for open ports", {
+      count: devicesToScan.length,
+      portScanEnabled: autoScanSettings.portScanEnabled,
+    });
+
+    // Scan devices with a small delay between each to avoid overwhelming the network
+    // Limit concurrent scans to 3 at a time
+    const MAX_CONCURRENT_SCANS = 3;
+    let scanIndex = 0;
+
+    const scanNextBatch = () => {
+      const batch = devicesToScan.slice(scanIndex, scanIndex + MAX_CONCURRENT_SCANS);
+      if (batch.length === 0) return;
+
+      batch.forEach((device) => {
+        handleDeepScan(device.ip);
+      });
+
+      scanIndex += MAX_CONCURRENT_SCANS;
+
+      // Schedule next batch after a delay
+      if (scanIndex < devicesToScan.length) {
+        setTimeout(scanNextBatch, 1000);
+      }
+    };
+
+    // Start scanning with a small initial delay
+    const timeoutId = setTimeout(scanNextBatch, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data?.status?.scanning, data?.devices, handleDeepScan, scanningDevices, scanResults, autoScanSettings.portScanEnabled]);
+
+  // Track devices we've already queued for vuln scan to avoid duplicates
+  const vulnScannedDevices = useRef<Set<string>>(new Set());
+
+  // Auto-trigger vulnerability scans based on device discovery info
+  // This runs independently of port scanning - any device with good info gets vuln scanned
+  useEffect(() => {
+    // Only run if vuln scanning is enabled with auto-scan
+    if (!autoScanSettings.vulnScanEnabled || !autoScanSettings.vulnAutoScan) return;
+
+    // Don't run while discovery is still in progress
+    if (!data?.status || data.status.scanning) return;
+    if (!data.devices || data.devices.length === 0) return;
+
+    // Find devices with good info that we haven't vuln-scanned yet
+    const devicesToVulnScan = data.devices.filter((device) => {
+      if (!device.ip) return false;
+      // Skip if already queued for vuln scan
+      if (vulnScannedDevices.current.has(device.ip)) return false;
+
+      // Check if device has any good info for vulnerability scanning
+      const hasGoodInfo =
+        device.osGuess ||
+        device.lldpInfo?.systemDescription ||
+        device.cdpInfo?.platform ||
+        device.cdpInfo?.softwareVersion ||
+        device.profile?.httpInfo?.server ||
+        (device.profile?.openPorts && device.profile.openPorts.some((p) => p.isOpen));
+
+      return hasGoodInfo;
+    });
+
+    if (devicesToVulnScan.length === 0) return;
+
+    // Mark devices as queued
+    devicesToVulnScan.forEach((device) => {
+      vulnScannedDevices.current.add(device.ip);
+    });
+
+    logger.info(LogComponents.DISCOVERY, "Auto-triggering vulnerability scans for devices with discovery info", {
+      count: devicesToVulnScan.length,
+    });
+
+    // Trigger vuln scans with a small delay between each
+    let index = 0;
+    const triggerNext = () => {
+      if (index >= devicesToVulnScan.length) return;
+      const device = devicesToVulnScan[index];
+      triggerVulnScan(device.ip, device);
+      index++;
+      if (index < devicesToVulnScan.length) {
+        setTimeout(triggerNext, 200);
+      }
+    };
+
+    const timeoutId = setTimeout(triggerNext, 300);
+    return () => clearTimeout(timeoutId);
+  }, [data?.status?.scanning, data?.devices, autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan, triggerVulnScan]);
 
   // Extract data with safe defaults (must come before any hooks to avoid conditional hook calls)
   const rawDevices = data?.devices;
