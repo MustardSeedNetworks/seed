@@ -22,11 +22,10 @@
  * Dependencies: Card UI, DeviceSelector, theme utilities, path discovery API
  */
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardValue, CardDivider, Status } from "../ui/Card";
 import { Route, ChevronDown, ChevronUp } from "../ui/Icons";
-import { DeviceSelector } from "../ui/DeviceSelector";
 import {
   cn,
   icon as iconTokens,
@@ -47,7 +46,6 @@ import type {
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 type Protocol = "icmp" | "udp" | "tcp";
-type PathMethod = "l3" | "l2" | "both";
 
 interface PathDiscoveryCardProps {
   gateway?: string;
@@ -78,13 +76,12 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
   const [target, setTarget] = useState("");
   const [protocol, setProtocol] = useState<Protocol>("icmp");
   const [port, setPort] = useState<number>(80);
-  const [method, setMethod] = useState<PathMethod>("both");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PathResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandedL2Hop, setExpandedL2Hop] = useState<number | null>(null);
 
-  // Run path discovery (combined L2+L3)
+  // Run path discovery (always L2+L3 combined)
   const runTrace = useCallback(
     async (traceTarget: string) => {
       if (!traceTarget.trim()) return;
@@ -102,7 +99,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
           body: JSON.stringify({
             source: "self",
             destination: traceTarget.trim(),
-            method,
+            method: "both", // Always do both L2+L3
             protocol,
             port: protocol !== "icmp" ? port : undefined,
           }),
@@ -121,7 +118,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
         setLoading(false);
       }
     },
-    [protocol, port, method]
+    [protocol, port]
   );
 
   // Handle form submit
@@ -213,16 +210,23 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
     navigator.clipboard.writeText(JSON.stringify(result, null, 2));
   }, [result]);
 
-  // Determine card status
-  const cardStatus: Status = loading
-    ? "loading"
-    : error
-      ? "error"
-      : result?.l3Path?.completed || result?.l2Path
-        ? "success"
-        : result
-          ? "warning"
-          : "unknown";
+  // Determine card status based on worst hop result
+  const cardStatus: Status = useMemo(() => {
+    if (loading) return "loading";
+    if (error) return "error";
+    if (!result) return "unknown";
+
+    // Check L3 path for issues
+    const l3Hops = result.l3Path?.hops || [];
+    const hasErrors = l3Hops.some((h) => h.state === "error" || h.state === "unreachable");
+    const hasTimeouts = l3Hops.some((h) => h.state === "timeout");
+    const hasHighLatency = l3Hops.some((h) => h.rtt > 100000000); // > 100ms
+
+    if (hasErrors) return "error";
+    if (hasTimeouts || hasHighLatency) return "warning";
+    if (result.l3Path?.completed || result.l2Path) return "success";
+    return "warning";
+  }, [loading, error, result]);
 
   const maxRTT = result?.l3Path ? getMaxRTT(result.l3Path.hops) : 1;
 
@@ -232,112 +236,68 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
       icon={<Route className={iconTokens.size.md} />}
       status={cardStatus}
     >
-      {/* Target Input Form */}
+      {/* Target Input Form - Simplified: just enter IP/hostname and trace */}
       <form
         onSubmit={handleSubmit}
         className={cn("stack-sm", spacing.margin.bottom.content)}
       >
-        {/* Device Selector */}
-        <DeviceSelector
-          value={target}
-          onChange={setTarget}
-          placeholder={t("pathDiscovery.selectDevice", "Select target device")}
-          disabled={loading}
-        />
-
-        {/* Method and Protocol Selection */}
-        <div className={cn(layout.inline.default, spacing.gap.compact)}>
-          {/* Path Method Toggle */}
-          <div
+        {/* Target Input - Can type IP directly or select from discovered devices */}
+        <div className={cn(layout.inline.default, spacing.gap.tight, "items-center")}>
+          <input
+            type="text"
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            placeholder={t("pathDiscovery.enterTarget", "Enter IP or hostname...")}
+            disabled={loading}
             className={cn(
-              layout.inline.default,
-              spacing.gap.none,
-              "border border-surface-border",
-              radius.md,
-              "overflow-hidden"
+              "flex-1 min-w-0",
+              inputTokens.base,
+              inputTokens.state.default,
+              inputTokens.size.sm,
+              "body-small"
             )}
-          >
-            <button
-              type="button"
-              onClick={() => setMethod("l3")}
-              disabled={loading}
-              className={cn(
-                buttonTokens.size.sm,
-                "font-medium transition-colors whitespace-nowrap",
-                method === "l3"
-                  ? "bg-brand-primary text-text-inverse"
-                  : "bg-surface-base text-text-secondary hover:bg-surface-hover"
-              )}
-            >
-              L3
-            </button>
-            <button
-              type="button"
-              onClick={() => setMethod("l2")}
-              disabled={loading}
-              className={cn(
-                buttonTokens.size.sm,
-                "font-medium transition-colors whitespace-nowrap border-x border-surface-border",
-                method === "l2"
-                  ? "bg-brand-primary text-text-inverse"
-                  : "bg-surface-base text-text-secondary hover:bg-surface-hover"
-              )}
-            >
-              L2
-            </button>
-            <button
-              type="button"
-              onClick={() => setMethod("both")}
-              disabled={loading}
-              className={cn(
-                buttonTokens.size.sm,
-                "font-medium transition-colors whitespace-nowrap",
-                method === "both"
-                  ? "bg-brand-primary text-text-inverse"
-                  : "bg-surface-base text-text-secondary hover:bg-surface-hover"
-              )}
-            >
-              {t("pathDiscovery.both", "Both")}
-            </button>
-          </div>
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && target.trim()) {
+                e.preventDefault();
+                handleSubmit(e as unknown as React.FormEvent);
+              }
+            }}
+          />
 
-          {/* Protocol selector (only for L3) */}
-          {(method === "l3" || method === "both") && (
-            <>
-              <select
-                value={protocol}
-                onChange={(e) => setProtocol(e.target.value as Protocol)}
-                disabled={loading}
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  "body-small"
-                )}
-              >
-                <option value="icmp">ICMP</option>
-                <option value="udp">UDP</option>
-                <option value="tcp">TCP</option>
-              </select>
-              {protocol !== "icmp" && (
-                <input
-                  type="number"
-                  value={port}
-                  onChange={(e) => setPort(parseInt(e.target.value) || 80)}
-                  placeholder="Port"
-                  min={1}
-                  max={65535}
-                  disabled={loading}
-                  className={cn(
-                    "w-20",
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.sm,
-                    "body-small"
-                  )}
-                />
+          {/* Protocol selector - compact */}
+          <select
+            value={protocol}
+            onChange={(e) => setProtocol(e.target.value as Protocol)}
+            disabled={loading}
+            className={cn(
+              inputTokens.base,
+              inputTokens.state.default,
+              "px-2 py-1 caption shrink-0"
+            )}
+            title={t("pathDiscovery.protocol", "Traceroute protocol")}
+          >
+            <option value="icmp">ICMP</option>
+            <option value="udp">UDP</option>
+            <option value="tcp">TCP</option>
+          </select>
+
+          {/* Port input (only for TCP/UDP) */}
+          {protocol !== "icmp" && (
+            <input
+              type="number"
+              value={port}
+              onChange={(e) => setPort(parseInt(e.target.value) || 80)}
+              placeholder="Port"
+              min={1}
+              max={65535}
+              disabled={loading}
+              className={cn(
+                "w-16",
+                inputTokens.base,
+                inputTokens.state.default,
+                "px-2 py-1 caption shrink-0"
               )}
-            </>
+            />
           )}
 
           <button
@@ -346,7 +306,8 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
             className={cn(
               buttonTokens.base,
               buttonTokens.variant.primary,
-              buttonTokens.size.sm
+              buttonTokens.size.sm,
+              "shrink-0"
             )}
           >
             {loading ? "..." : t("pathDiscovery.trace", "Trace")}
