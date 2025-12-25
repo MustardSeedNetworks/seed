@@ -33,7 +33,8 @@ type ServiceStatus struct {
 	Scanning       bool          `json:"scanning"`
 	DeviceCount    int           `json:"deviceCount"`
 	LastScan       time.Time     `json:"lastScan"`
-	Subnet         string        `json:"subnet"`
+	Subnet         string        `json:"subnet"`  // Primary subnet (for backwards compatibility)
+	Subnets        []string      `json:"subnets"` // All subnets being scanned (I3)
 	LocalIP        string        `json:"localIP"`
 	Interface      string        `json:"interface"`
 	ActiveMethods  []string      `json:"activeMethods"`
@@ -286,12 +287,20 @@ func (s *Service) GetStatus() *ServiceStatus {
 
 	deviceStatus := s.deviceDiscovery.GetStatus()
 
+	// Collect all subnets (primary + additional) for I3
+	subnets := []string{}
+	if deviceStatus.Subnet != "" {
+		subnets = append(subnets, deviceStatus.Subnet)
+	}
+	subnets = append(subnets, s.deviceDiscovery.GetAdditionalSubnets()...)
+
 	status := &ServiceStatus{
 		Running:        running,
 		Scanning:       deviceStatus.Scanning,
 		DeviceCount:    deviceStatus.DeviceCount,
 		LastScan:       deviceStatus.LastScan,
 		Subnet:         deviceStatus.Subnet,
+		Subnets:        subnets,
 		LocalIP:        deviceStatus.LocalIP,
 		Interface:      deviceStatus.Interface,
 		RescanInterval: rescanInterval,

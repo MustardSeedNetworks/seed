@@ -74,16 +74,67 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 	}
 }
 
+// cryptoRandRead attempts to read random bytes with retry logic.
+// This provides resilience against transient crypto/rand failures (fixes G7).
+// Returns error only after exhausting all retry attempts.
+func cryptoRandRead(b []byte, operation string) error {
+	const (
+		maxRetries     = 3
+		initialBackoff = 10 * time.Millisecond
+		maxBackoff     = 100 * time.Millisecond
+	)
+
+	var lastErr error
+	backoff := initialBackoff
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if _, err := rand.Read(b); err != nil {
+			lastErr = err
+			if attempt < maxRetries {
+				slog.Warn("crypto/rand failed, retrying",
+					"operation", operation,
+					"attempt", attempt+1,
+					"max_attempts", maxRetries+1,
+					"error", err,
+					"retry_in", backoff)
+				time.Sleep(backoff)
+				// Exponential backoff with cap
+				backoff *= 2
+				if backoff > maxBackoff {
+					backoff = maxBackoff
+				}
+				continue
+			}
+			// All retries exhausted
+			slog.Error("crypto/rand failed after all retries - system is in insecure state",
+				"operation", operation,
+				"attempts", maxRetries+1,
+				"error", err)
+			return err
+		}
+		// Success
+		if attempt > 0 {
+			slog.Info("crypto/rand recovered after retry",
+				"operation", operation,
+				"attempts", attempt+1)
+		}
+		return nil
+	}
+
+	return lastErr
+}
+
 // GenerateJWTSecret creates a cryptographically secure JWT signing secret.
 // Note: This generates a new secret on each server restart, which will invalidate
 // existing tokens. For persistent sessions across restarts, configure jwt_secret in the config file.
 // Fixes #539: Consolidated JWT secret generation into single function.
+// Fixes G7: Added retry logic for crypto/rand failures instead of immediate panic.
 func GenerateJWTSecret() string {
 	bytes := make([]byte, 32) // 256-bit key
-	if _, err := rand.Read(bytes); err != nil {
-		// If crypto/rand fails, the system is critically insecure (fixes #543)
-		// Panic instead of using a weak fallback - this should never happen on modern systems
-		panic("crypto/rand failed: " + err.Error() + " - system is insecure, cannot continue")
+	if err := cryptoRandRead(bytes, "GenerateJWTSecret"); err != nil {
+		// If crypto/rand fails after retries, the system is critically insecure
+		// Panic to prevent operation in an insecure state - this should never happen on modern systems
+		panic("crypto/rand failed after retries: " + err.Error() + " - system is insecure, cannot continue")
 	}
 	return base64.URLEncoding.EncodeToString(bytes)
 }
@@ -366,6 +417,7 @@ func ValidatePasswordStrength(password string) error {
 
 // randomChar selects an unbiased random character from the given charset.
 // Uses rejection sampling to avoid modulo bias (fixes #517).
+// Fixes G7: Uses cryptoRandRead for retry logic on crypto/rand failures.
 func randomChar(chars string) (byte, error) {
 	charsLen := byte(len(chars))
 	// Calculate the largest multiple of charsLen that fits in a byte
@@ -373,7 +425,7 @@ func randomChar(chars string) (byte, error) {
 
 	for {
 		var b [1]byte
-		if _, err := rand.Read(b[:]); err != nil {
+		if err := cryptoRandRead(b[:], "randomChar"); err != nil {
 			return 0, err
 		}
 		// Accept only if the random byte is in the unbiased range
@@ -386,6 +438,7 @@ func randomChar(chars string) (byte, error) {
 
 // randomInt returns an unbiased random integer in the range [0, n).
 // Uses rejection sampling to avoid modulo bias.
+// Fixes G7: Uses cryptoRandRead for retry logic on crypto/rand failures.
 func randomInt(n int) (int, error) {
 	if n <= 0 {
 		return 0, nil
@@ -396,7 +449,7 @@ func randomInt(n int) (int, error) {
 		maxValid := 256 - (256 % n)
 		for {
 			var b [1]byte
-			if _, err := rand.Read(b[:]); err != nil {
+			if err := cryptoRandRead(b[:], "randomInt"); err != nil {
 				return 0, err
 			}
 			if int(b[0]) < maxValid {
@@ -413,7 +466,7 @@ func randomInt(n int) (int, error) {
 	maxValid := uint32(maxUint - (maxUint % uint64(n)))
 
 	for {
-		if _, err := rand.Read(b[:]); err != nil {
+		if err := cryptoRandRead(b[:], "randomInt"); err != nil {
 			return 0, err
 		}
 		val := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24

@@ -146,6 +146,7 @@ export interface DiscoveryStatus {
   deviceCount: number;
   lastScan: string;
   subnet: string;
+  subnets?: string[]; // All subnets being scanned (I3)
   localIP: string;
   interface: string;
 }
@@ -373,6 +374,82 @@ function calculateNetworkAddress(cidr: string): string {
   ];
 
   return `${networkOctets.join(".")}/${mask}`;
+}
+
+/**
+ * SubnetList component for I3 - displays subnets with smart rollup.
+ * - Inline display for ≤5 subnets
+ * - Expandable dropdown for >5 subnets
+ */
+function SubnetList({
+  subnets,
+  fallbackSubnet,
+  unknownLabel,
+}: {
+  subnets?: string[];
+  fallbackSubnet?: string;
+  unknownLabel: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  // Use subnets array if available, otherwise fall back to single subnet
+  const allSubnets = useMemo(() => {
+    if (subnets && subnets.length > 0) {
+      return subnets.map(calculateNetworkAddress);
+    }
+    if (fallbackSubnet) {
+      return [calculateNetworkAddress(fallbackSubnet)];
+    }
+    return [];
+  }, [subnets, fallbackSubnet]);
+
+  if (allSubnets.length === 0) {
+    return <span className="font-mono">{unknownLabel}</span>;
+  }
+
+  // Single subnet - simple display
+  if (allSubnets.length === 1) {
+    return <span className="font-mono">{allSubnets[0]}</span>;
+  }
+
+  // ≤5 subnets - inline display
+  if (allSubnets.length <= 5) {
+    return (
+      <span className="font-mono">{allSubnets.join(", ")}</span>
+    );
+  }
+
+  // >5 subnets - collapsible display
+  if (!expanded) {
+    return (
+      <button
+        onClick={() => setExpanded(true)}
+        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
+      >
+        <span>{allSubnets.length} subnets</span>
+        <ChevronDown className={iconTokens.size.xs} />
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        onClick={() => setExpanded(false)}
+        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
+      >
+        <span>{allSubnets.length} subnets</span>
+        <ChevronUp className={iconTokens.size.xs} />
+      </button>
+      <div className="flex flex-wrap gap-1">
+        {allSubnets.map((subnet) => (
+          <span key={subnet} className="font-mono text-xs">
+            {subnet}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // Discovery method colors - from theme tokens (dark mode aware)
@@ -638,13 +715,13 @@ function DiscoverySummary({
         </div>
       </div>
 
-      {/* Simplified network info row */}
+      {/* Simplified network info row - I3: Uses SubnetList for multi-subnet display */}
       <div className="flex items-center justify-between caption text-text-muted">
-        <span className="font-mono">
-          {status.subnet
-            ? calculateNetworkAddress(status.subnet)
-            : t("discovery.unknownSubnet")}
-        </span>
+        <SubnetList
+          subnets={status.subnets}
+          fallbackSubnet={status.subnet}
+          unknownLabel={t("discovery.unknownSubnet")}
+        />
         <span>
           {deviceCount === 1
             ? t("discovery.deviceFound", { count: deviceCount })
