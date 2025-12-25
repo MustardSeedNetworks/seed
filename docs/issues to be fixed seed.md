@@ -1089,21 +1089,21 @@ Extensive use of `map[string]interface{}` creates type safety issues.
 | Settings save returns 200 on failure | ✅ COMPLETE | Critical | 30 min    | G1   |
 | Lock/Unlock without defer            | ✅ COMPLETE | Critical | 30 min    | G2   |
 | Default Profile Single Source        | Documented  | Critical | 3-5 days  | E    |
-| Type assertions silently fail        | NEW         | High     | 2-3 hours | G3   |
+| Type assertions silently fail        | ✅ COMPLETE | High     | 2-3 hours | G3   |
 | Settings not plumbed to backend      | NEW         | High     | 1 day     | G4   |
 | App.tsx Monolith                     | Documented  | High     | 1-2 days  | B, C |
 | Profile Multi-Interface Support      | Documented  | High     | 1-2 days  | D    |
 | Silent Errors in Uninstall           | ✅ COMPLETE | High     | 1 hour    | A2   |
-| Cleanup goroutine no shutdown        | NEW         | Medium   | 1 hour    | G5   |
-| X-Forwarded-For inconsistent         | NEW         | Medium   | 1 hour    | G6   |
+| Cleanup goroutine no shutdown        | ✅ COMPLETE | Medium   | 1 hour    | G5   |
+| X-Forwarded-For inconsistent         | ✅ COMPLETE | Medium   | 1 hour    | G6   |
 | Crypto panic no recovery             | ✅ COMPLETE | Medium   | 2 hours   | G7   |
-| Request body size inconsistent       | NEW         | Medium   | 1 hour    | G8   |
+| Request body size inconsistent       | ✅ COMPLETE | Medium   | 1 hour    | G8   |
 | Frontend-backend type mismatch       | NEW         | Medium   | 2-3 hours | G9   |
 | Code Structure Inconsistency         | Documented  | Medium   | 3-5 days  | F    |
-| Metric/SAE Settings Duplication      | Documented  | Medium   | 2 hours   | A5   |
-| Deprecated WebSocket Auth            | Documented  | Medium   | 30 min    | A4   |
+| Metric/SAE Settings Duplication      | ✅ COMPLETE | Medium   | 2 hours   | A5   |
+| Deprecated WebSocket Auth            | ✅ COMPLETE | Medium   | 30 min    | A4   |
 | Panic Recovery Hides Errors          | ✅ COMPLETE | Medium   | 30 min    | A3   |
-| Database tests ignore errors         | NEW         | Low      | 1 hour    | G10  |
+| Database tests ignore errors         | ✅ COMPLETE | Low      | 1 hour    | G10  |
 | Empty interface usage                | NEW         | Low      | Ongoing   | -    |
 | Network Settings Icon                | ✅ COMPLETE | Low      | 15 min    | A1   |
 | PoE Detection                        | Documented  | Low      | Needs HW  | -    |
@@ -1176,11 +1176,15 @@ Define constants and apply consistently across all handlers.
 Create shared documentation or OpenAPI spec defining exact types between frontend and backend. Consider future code
 generation.
 
-### G10. Fix Test Error Handling (1 hour)
+### G10. Fix Test Error Handling (1 hour) ✅ COMPLETED
+
+**Status:** Fixed in commit f11979b
 
 **File:** [database_test.go](internal/database/database_test.go)
 
-Replace `_, _ =` with proper error assertions using `require.NoError()`.
+Replaced all 10 instances of `_, _ =` with proper error assertions using `require.NoError()`. Tests now
+fail immediately with clear error messages if setup operations fail, preventing silent failures and
+improving test reliability.
 
 ---
 
@@ -1427,29 +1431,29 @@ func SetCSRFCookie(w http.ResponseWriter, token string, secure bool) {
 | Settings save returns 200 on failure | ✅ COMPLETE | Critical | 30 min    | G1   |
 | Lock/Unlock without defer            | ✅ COMPLETE | Critical | 30 min    | G2   |
 | Default Profile Single Source        | Documented  | Critical | 3-5 days  | E    |
-| Type assertions silently fail        | NEW         | High     | 2-3 hours | G3   |
+| Type assertions silently fail        | ✅ COMPLETE | High     | 2-3 hours | G3   |
 | Settings not plumbed to backend      | NEW         | High     | 1 day     | G4   |
 | App.tsx Monolith                     | Documented  | High     | 1-2 days  | B, C |
 | Profile Multi-Interface Support      | Documented  | High     | 1-2 days  | D    |
 | Silent Errors in Uninstall           | ✅ COMPLETE | High     | 1 hour    | A2   |
-| Session ID trusts X-Username         | NEW         | Medium   | 1 hour    | H1   |
-| No WebSocket rate limiting           | NEW         | Medium   | 2 hours   | H2   |
-| SNMP allows MD5                      | NEW         | Medium   | 1 hour    | H3   |
-| Cleanup goroutine no shutdown        | NEW         | Medium   | 1 hour    | G5   |
-| X-Forwarded-For inconsistent         | NEW         | Medium   | 1 hour    | G6   |
+| Session ID trusts X-Username         | ✅ COMPLETE | Medium   | 1 hour    | H1   |
+| No WebSocket rate limiting           | ✅ COMPLETE | Medium   | 2 hours   | H2   |
+| SNMP allows MD5                      | ✅ COMPLETE | Medium   | 1 hour    | H3   |
+| Cleanup goroutine no shutdown        | ✅ COMPLETE | Medium   | 1 hour    | G5   |
+| X-Forwarded-For inconsistent         | ✅ COMPLETE | Medium   | 1 hour    | G6   |
 | Crypto panic no recovery             | ✅ COMPLETE | Medium   | 2 hours   | G7   |
-| Request body size inconsistent       | NEW         | Medium   | 1 hour    | G8   |
+| Request body size inconsistent       | ✅ COMPLETE | Medium   | 1 hour    | G8   |
 | Frontend-backend type mismatch       | NEW         | Medium   | 2-3 hours | G9   |
 | Trusted proxy support (nginx)        | NEW         | Medium   | 4-6 hours | H4   |
 | Code Structure Inconsistency         | Documented  | Medium   | 3-5 days  | F    |
-| Metric/SAE Settings Duplication      | Documented  | Medium   | 2 hours   | A5   |
-| Deprecated WebSocket Auth            | Documented  | Medium   | 30 min    | A4   |
+| Metric/SAE Settings Duplication      | ✅ COMPLETE | Medium   | 2 hours   | A5   |
+| Deprecated WebSocket Auth            | ✅ COMPLETE | Medium   | 30 min    | A4   |
 | Panic Recovery Hides Errors          | ✅ COMPLETE | Medium   | 30 min    | A3   |
 | Report renderer XSS pattern          | ✅ COMPLETE | Low      | 30 min    | H5   |
 | Crypto fallback in request IDs       | ✅ COMPLETE | Low      | 30 min    | H6   |
-| Error details leaked to clients      | NEW         | Low      | 1 hour    | H7   |
+| Error details leaked to clients      | ✅ COMPLETE | Low      | 1 hour    | H7   |
 | Unused CSRF cookie function          | ✅ COMPLETE | Low      | 15 min    | H8   |
-| Database tests ignore errors         | NEW         | Low      | 1 hour    | G10  |
+| Database tests ignore errors         | ✅ COMPLETE | Low      | 1 hour    | G10  |
 | Empty interface usage                | NEW         | Low      | Ongoing   | -    |
 | Network Settings Icon                | ✅ COMPLETE | Low      | 15 min    | A1   |
 | PoE Detection                        | Documented  | Low      | Needs HW  | -    |
@@ -1798,10 +1802,10 @@ Add contextual suggestions based on what's consuming resources (e.g., "Restart p
 | ------------------------------- | ----------- | -------- | --------- | ---- |
 | ICMP devices marked as extended | ✅ COMPLETE | High     | 1 hour    | I1   |
 | System Health 401 flakiness     | ✅ COMPLETE | Medium   | 1-2 hours | J1   |
-| Discovery header too verbose    | NEW         | Medium   | 30 min    | I2   |
-| Show top resource consumers     | NEW         | Medium   | 4-6 hours | J2   |
-| Remediation suggestions         | NEW         | Medium   | 2 hours   | J3   |
-| Subnet list needs rollup        | NEW         | Low      | 1 hour    | I3   |
+| Discovery header too verbose    | ✅ COMPLETE | Medium   | 30 min    | I2   |
+| Show top resource consumers     | ✅ COMPLETE | Medium   | 4-6 hours | J2   |
+| Remediation suggestions         | ✅ COMPLETE | Medium   | 2 hours   | J3   |
+| Subnet list needs rollup        | ✅ COMPLETE | Low      | 1 hour    | I3   |
 
 ---
 
