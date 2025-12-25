@@ -30,7 +30,10 @@
     "language": "Language",
     "languageEn": "English",
     "languageEs": "Español",
-    "quickToggle": "Quick Toggle"
+    "quickToggle": "Quick Toggle",
+    "measurementUnits": "Measurement Units",
+    "unitSae": "SAE (feet)",
+    "unitMetric": "Metric (meters)"
   },
   "network": {
     "title": "Network Configuration",

@@ -644,7 +644,8 @@ func TestRetention(t *testing.T) {
 			MetricType:    MetricTypeLatency,
 			Value:         float64(i * 10),
 		}
-		db.Metrics().Record(ctx, metric)
+		err := db.Metrics().Record(ctx, metric)
+		require.NoError(t, err)
 	}
 
 	// Run cleanup with all data retention set to delete everything

@@ -201,7 +201,7 @@ func validateTracerouteTarget(target string) string {
 	}
 	if ip := net.ParseIP(target); ip == nil {
 		if err := validation.ValidateServerAddress(target); err != nil {
-			return "Invalid target: " + err.Error()
+			return "Invalid target format. Must be a valid IP address or hostname."
 		}
 	}
 	return ""
