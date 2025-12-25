@@ -726,7 +726,7 @@ func DefaultConfig() *Config {
 			ScanTimeout:       30 * time.Second,
 			AutoScan:          true,                // Auto-scan on startup by default
 			ScanInterval:      0,                   // Disabled by default
-			OUIFilePath:       "oui.txt",           // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
+			OUIFilePath:       "data/oui.txt",      // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
 			OUIMaxAge:         30 * 24 * time.Hour, // Auto-update OUI database monthly
 			AdditionalSubnets: []SubnetConfig{},    // No additional subnets by default
 		},

@@ -330,7 +330,7 @@ export const DeviceSelector = memo(function DeviceSelector({
         <ChevronDown
           className={cn(
             iconTokens.size.sm,
-            "text-text-muted transition-transform flex-shrink-0",
+            "text-text-muted transition-transform shrink-0",
             isOpen ? "rotate-180" : ""
           )}
         />
@@ -513,7 +513,7 @@ export const DeviceSelector = memo(function DeviceSelector({
                         {/* Selection indicator */}
                         <span
                           className={cn(
-                            "w-2 h-2 rounded-full flex-shrink-0",
+                            "w-2 h-2 rounded-full shrink-0",
                             isSelected ? "bg-brand-primary" : "bg-transparent"
                           )}
                         />
@@ -541,7 +541,7 @@ export const DeviceSelector = memo(function DeviceSelector({
                         </div>
 
                         {/* IP address */}
-                        <span className="caption text-text-secondary flex-shrink-0">
+                        <span className="caption text-text-secondary shrink-0">
                           {device.ip}
                         </span>
                       </button>

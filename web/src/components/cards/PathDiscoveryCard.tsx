@@ -650,7 +650,7 @@ const L2PathDisplay = memo(function L2PathDisplay({
         )}
       >
         {result.hops.map((hop, index) => (
-          <div key={index} className="flex items-center flex-shrink-0">
+          <div key={index} className="flex items-center shrink-0">
             {/* Switch Box */}
             <div
               className={cn(

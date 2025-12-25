@@ -98,9 +98,25 @@ node_modules/
 # Logs
 logs/
 
-# Data
+# Data (auto-generated/downloaded)
 data/
+
+# Debug images
+DebugImages/
 
 # Agent artifacts
 .gemini/
 .ignore
+*.code-workspace
+
+# Internal/planning docs (keep in separate private location)
+docs/internal/
+docs/AI_*.md
+docs/*_PLAN.md
+docs/WIKI_CONTENT.md
+docs/DOCUMENTATION_STRUCTURE.md
+docs/issues*.md
+
+# Root planning files (use docs/ or GitHub issues instead)
+/*_PLAN.md
+/issue*.md

@@ -133,12 +133,15 @@
     "location": "Location",
     "isp": "ISP",
     "asn": "ASN",
+    "ispAsn": "ISP/ASN",
     "ipv4": "IPv4",
     "ipv6": "IPv6",
     "notAvailable": "Not available",
     "lastChecked": "Last checked",
     "checking": "Checking...",
-    "unableToDetect": "Unable to detect public IP"
+    "unableToDetect": "Unable to detect public IP",
+    "history": "IP History",
+    "noHistory": "No IP history available"
   },
   "dns": {
     "title": "DNS",

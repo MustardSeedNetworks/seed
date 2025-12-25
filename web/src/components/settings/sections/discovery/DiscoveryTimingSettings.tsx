@@ -167,7 +167,7 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
               ouiFilePath: e.target.value,
             }))
           }
-          placeholder="oui.txt"
+          placeholder="data/oui.txt"
           className={cn(
             "w-full",
             spacing.margin.top.tight,
