@@ -445,7 +445,9 @@ func TestProfileSettingsInterfaceSelection(t *testing.T) {
 	if ps.GetEthernetInterfaceName() != "eth0" {
 		t.Errorf("expected ethernet interface 'eth0', got '%s'", ps.GetEthernetInterfaceName())
 	}
-	if !ps.Interfaces.Ethernet.Enabled {
+	// Verify the interface is in the array and enabled
+	ethIface := ps.GetActiveEthernetInterface()
+	if ethIface == nil || !ethIface.Enabled {
 		t.Error("expected ethernet interface to be enabled")
 	}
 
@@ -454,7 +456,9 @@ func TestProfileSettingsInterfaceSelection(t *testing.T) {
 	if ps.GetWiFiInterfaceName() != "wlan0" {
 		t.Errorf("expected WiFi interface 'wlan0', got '%s'", ps.GetWiFiInterfaceName())
 	}
-	if !ps.Interfaces.WiFi.Enabled {
+	// Verify the interface is in the array and enabled
+	wifiIface := ps.GetActiveWiFiInterface()
+	if wifiIface == nil || !wifiIface.Enabled {
 		t.Error("expected WiFi interface to be enabled")
 	}
 
@@ -488,14 +492,18 @@ func TestProfileSettingsInterfaceJSON(t *testing.T) {
 	if ps2.GetEthernetInterfaceName() != "enp0s1" {
 		t.Errorf("expected ethernet 'enp0s1', got '%s'", ps2.GetEthernetInterfaceName())
 	}
-	if !ps2.Interfaces.Ethernet.Enabled {
+	// Verify the interface is in the array and enabled
+	ethIface := ps2.GetActiveEthernetInterface()
+	if ethIface == nil || !ethIface.Enabled {
 		t.Error("expected ethernet to be enabled")
 	}
 
 	if ps2.GetWiFiInterfaceName() != "wlp2s0" {
 		t.Errorf("expected WiFi 'wlp2s0', got '%s'", ps2.GetWiFiInterfaceName())
 	}
-	if ps2.Interfaces.WiFi.Enabled {
+	// Verify the interface is in the array and disabled
+	wifiIface := ps2.GetActiveWiFiInterface()
+	if wifiIface == nil || wifiIface.Enabled {
 		t.Error("expected WiFi to be disabled")
 	}
 }

@@ -19,6 +19,20 @@ import (
 // Settings Handlers (fixes #544 - split from handlers.go)
 // ============================================================================
 
+// handleSettingsDefaults returns all default settings as the single source of truth.
+// This eliminates the need for duplicated DEFAULT_* constants in the frontend.
+// The defaults are served from the backend's DefaultConfig() function.
+func (s *Server) handleSettingsDefaults(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	if r.Method != http.MethodGet {
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
+		return
+	}
+
+	defaults := config.GetDefaultSettings()
+	sendJSONResponse(w, logger, http.StatusOK, defaults)
+}
+
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	switch r.Method {

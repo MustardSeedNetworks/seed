@@ -80,13 +80,13 @@ type Server struct {
 	surveyManager       *survey.Manager
 	vulnScanner         *discovery.VulnerabilityScanner
 	publicipChecker     *publicip.Checker
-	oauthManager        *oauth.Manager // OAuth SSO provider manager
-	db                  *database.DB   // SQLite database for persistence (#755)
-	icmpAvailable       bool             // Whether raw ICMP sockets are available
-	startTime           time.Time        // Application start time for uptime tracking (fixes #540)
-	redirectServer      *http.Server     // HTTP→HTTPS redirect server (fixes #515)
-	redirectServerErr   chan error       // Error channel for redirect server
-	trustedProxies      *TrustedProxies  // Trusted proxy IPs for X-Forwarded-For handling (#H4)
+	oauthManager        *oauth.Manager  // OAuth SSO provider manager
+	db                  *database.DB    // SQLite database for persistence (#755)
+	icmpAvailable       bool            // Whether raw ICMP sockets are available
+	startTime           time.Time       // Application start time for uptime tracking (fixes #540)
+	redirectServer      *http.Server    // HTTP→HTTPS redirect server (fixes #515)
+	redirectServerErr   chan error      // Error channel for redirect server
+	trustedProxies      *TrustedProxies // Trusted proxy IPs for X-Forwarded-For handling (#H4)
 }
 
 // getClientIP extracts the client IP from a request, considering trusted proxies.
@@ -350,8 +350,9 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/wifi/channel-graph", s.handleWiFiChannelGraph)
 	s.mux.HandleFunc("/api/wifi/settings", s.handleWiFiSettings)
 	s.mux.HandleFunc("/api/snmp/settings", s.handleSNMPSettings)
-	s.mux.HandleFunc("/api/settings/link", s.handleLinkSettings)       // Link speed/duplex settings (#734)
-	s.mux.HandleFunc("/api/settings/cable", s.handleCableTestSettings) // Cable test settings (#740)
+	s.mux.HandleFunc("/api/settings/defaults", s.handleSettingsDefaults) // Single source of truth for defaults (#E)
+	s.mux.HandleFunc("/api/settings/link", s.handleLinkSettings)         // Link speed/duplex settings (#734)
+	s.mux.HandleFunc("/api/settings/cable", s.handleCableTestSettings)   // Cable test settings (#740)
 	s.mux.HandleFunc("/api/cable", s.handleCable)
 	// Rate-limited expensive endpoints (fixes #530)
 	s.mux.Handle("/api/speedtest", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)))

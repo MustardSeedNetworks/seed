@@ -49,3 +49,6 @@ export { useNetworkFetchers } from "./useNetworkFetchers";
 
 // Interface state management (Plan C)
 export { useInterfaceState } from "./useInterfaceState";
+
+// Default settings (Plan E - single source of truth)
+export { useDefaults, getDefaultsSync, clearDefaultsCache } from "./useDefaults";

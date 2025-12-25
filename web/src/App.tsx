@@ -457,35 +457,37 @@ function App() {
     const profileInterfaces = activeProfile.config?.interfaces;
     let restoredEthernet = false;
     let restoredWifi = false;
+    let savedEthernetName = "";
+    let savedWifiName = "";
 
     if (profileInterfaces) {
-      // Load ethernet interface if saved in profile
-      if (profileInterfaces.ethernet?.name) {
-        const savedEthernet = profileInterfaces.ethernet.name;
+      // Load ethernet interface if saved in profile (using active_ethernet from array)
+      if (profileInterfaces.active_ethernet) {
+        savedEthernetName = profileInterfaces.active_ethernet;
         const exists = interfaces.some(
-          (i) => i.name === savedEthernet && i.type === "ethernet"
+          (i) => i.name === savedEthernetName && i.type === "ethernet"
         );
         if (exists) {
           logger.info(
             LogComponents.CONFIG,
             "Restoring ethernet interface from profile",
-            { interface: savedEthernet }
+            { interface: savedEthernetName }
           );
           restoredEthernet = true;
         }
       }
 
-      // Load wifi interface if saved in profile (load BOTH, not either/or)
-      if (profileInterfaces.wifi?.name) {
-        const savedWifi = profileInterfaces.wifi.name;
+      // Load wifi interface if saved in profile (using active_wifi from array)
+      if (profileInterfaces.active_wifi) {
+        savedWifiName = profileInterfaces.active_wifi;
         const exists = interfaces.some(
-          (i) => i.name === savedWifi && i.type === "wifi"
+          (i) => i.name === savedWifiName && i.type === "wifi"
         );
         if (exists) {
           logger.info(
             LogComponents.CONFIG,
             "Restoring WiFi interface from profile",
-            { interface: savedWifi }
+            { interface: savedWifiName }
           );
           restoredWifi = true;
         }
@@ -493,18 +495,18 @@ function App() {
 
       // Batch all state updates in a single setTimeout to avoid cascading renders
       setTimeout(() => {
-        if (restoredEthernet && profileInterfaces.ethernet?.name) {
-          setEthernetInterfaceState(profileInterfaces.ethernet.name);
+        if (restoredEthernet && savedEthernetName) {
+          setEthernetInterfaceState(savedEthernetName);
         }
-        if (restoredWifi && profileInterfaces.wifi?.name) {
-          setWifiInterfaceState(profileInterfaces.wifi.name);
+        if (restoredWifi && savedWifiName) {
+          setWifiInterfaceState(savedWifiName);
         }
         // Set the active interface on the backend
         if (restoredEthernet) {
-          changeInterface(profileInterfaces.ethernet!.name);
+          changeInterface(savedEthernetName);
           setActiveMode("ethernet");
         } else if (restoredWifi) {
-          changeInterface(profileInterfaces.wifi!.name);
+          changeInterface(savedWifiName);
           setActiveMode("wifi");
         }
       }, 0);

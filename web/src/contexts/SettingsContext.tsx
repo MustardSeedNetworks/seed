@@ -6,6 +6,9 @@
  *
  * All settings (CardSettings, DisplayOptions, IperfSettings, Thresholds) are
  * persisted to the backend config file for persistence across sessions.
+ *
+ * NOTE: The backend is the single source of truth for default values.
+ * Defaults are loaded from /api/settings/defaults instead of hardcoded constants.
  */
 
 import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
@@ -17,12 +20,9 @@ import {
   IperfSettings,
   SettingsThresholds,
   SaveStatus,
-  DEFAULT_CARD_SETTINGS,
-  DEFAULT_DISPLAY_OPTIONS,
-  DEFAULT_IPERF_SETTINGS,
-  DEFAULT_THRESHOLDS,
 } from "../types/settings";
 import { SettingsContext, SettingsContextValue } from "./settingsContextDef";
+import { useDefaults } from "../hooks/useDefaults";
 
 // ============================================================================
 // Provider Component
@@ -37,20 +37,59 @@ interface SettingsProviderProps {
 
 /**
  * Context provider that manages application settings state and API synchronization.
+ * Uses defaults from the backend via /api/settings/defaults (single source of truth).
  */
 export function SettingsProvider({ children }: SettingsProviderProps) {
-  // State - initialized with defaults, will be updated from API
-  const [cardSettings, setCardSettings] = useState<CardSettings>(
-    DEFAULT_CARD_SETTINGS
-  );
-  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(
-    DEFAULT_DISPLAY_OPTIONS
-  );
-  const [iperfSettings, setIperfSettings] = useState<IperfSettings>(
-    DEFAULT_IPERF_SETTINGS
-  );
+  // Load defaults from the backend (single source of truth)
+  const { defaults } = useDefaults();
+
+  // Convert backend defaults to the CardSettings format
+  const defaultCardSettings: CardSettings = {
+    link: defaults.cardSettings.link,
+    switch: defaults.cardSettings.switch,
+    vlan: defaults.cardSettings.vlan,
+    network: defaults.cardSettings.network,
+    gateway: defaults.cardSettings.gateway,
+    dns: defaults.cardSettings.dns,
+    healthChecks: defaults.cardSettings.healthChecks,
+    networkDiscovery: defaults.cardSettings.networkDiscovery,
+    performance: defaults.cardSettings.performance,
+  };
+
+  const defaultDisplayOptions: DisplayOptions = {
+    showPublicIP: defaults.displayOptions.showPublicIP,
+    unitSystem: defaults.displayOptions.unitSystem as "sae" | "metric",
+  };
+
+  const defaultIperfSettings: IperfSettings = {
+    server: defaults.iperf.server,
+    port: defaults.iperf.port,
+    protocol: defaults.iperf.protocol as "tcp" | "udp",
+    direction: defaults.iperf.direction as "download" | "upload" | "both",
+    duration: defaults.iperf.duration,
+    serverPort: defaults.iperf.serverPort,
+    enableServer: defaults.iperf.enableServer,
+  };
+
+  const defaultThresholds: SettingsThresholds = {
+    dns: defaults.thresholds.dns,
+    gateway: defaults.thresholds.gateway,
+    wifi: defaults.thresholds.wifi,
+    customPing: defaults.thresholds.customPing,
+    customTcp: defaults.thresholds.customTcp,
+    customHttp: defaults.thresholds.customHttp,
+    httpTimings: defaults.thresholds.httpTimings,
+  };
+
+  // State - initialized with backend defaults, will be updated from API
+  const [cardSettings, setCardSettings] =
+    useState<CardSettings>(defaultCardSettings);
+  const [displayOptions, setDisplayOptions] =
+    useState<DisplayOptions>(defaultDisplayOptions);
+  const [iperfSettings, setIperfSettings] =
+    useState<IperfSettings>(defaultIperfSettings);
   const [thresholds, setThresholds] =
-    useState<SettingsThresholds>(DEFAULT_THRESHOLDS);
+    useState<SettingsThresholds>(defaultThresholds);
 
   // Status indicators
   const [status, setStatus] = useState<SettingsContextValue["status"]>({

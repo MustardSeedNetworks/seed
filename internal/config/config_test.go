@@ -1039,8 +1039,9 @@ func TestACMEConfig(t *testing.T) {
 func TestVulnerabilityScanConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
-	if cfg.Security.VulnerabilityScanning.Enabled {
-		t.Error("expected vulnerability scanning disabled by default")
+	// Vulnerability scanning is enabled by default for security visibility
+	if !cfg.Security.VulnerabilityScanning.Enabled {
+		t.Error("expected vulnerability scanning enabled by default")
 	}
 	if cfg.Security.VulnerabilityScanning.CVEDatabase != "nvd" {
 		t.Errorf("expected CVE database 'nvd', got %q", cfg.Security.VulnerabilityScanning.CVEDatabase)

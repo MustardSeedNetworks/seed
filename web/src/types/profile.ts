@@ -35,11 +35,17 @@ export interface ProfileConfig {
 
 /**
  * ProfileInterfaceConfigs stores the selected interfaces for a profile.
- * Supports both ethernet and WiFi interfaces independently.
+ * Each profile can have multiple ethernet and WiFi interfaces, each with independent settings.
  */
 export interface ProfileInterfaceConfigs {
-  ethernet?: ProfileInterfaceSelection | null;
-  wifi?: ProfileInterfaceSelection | null;
+  /** All configured ethernet interfaces for this profile */
+  ethernet?: ProfileInterfaceSelection[];
+  /** All configured WiFi interfaces for this profile */
+  wifi?: ProfileInterfaceSelection[];
+  /** Name of the currently active ethernet interface */
+  active_ethernet?: string;
+  /** Name of the currently active WiFi interface */
+  active_wifi?: string;
 }
 
 /**
@@ -55,6 +61,26 @@ export interface ProfileInterfaceSelection {
   thresholds?: ProfileInterfaceThresholds;
   /** Optional per-interface health check overrides */
   health_checks?: ProfileInterfaceHealthChecks;
+}
+
+/**
+ * Helper to get the active ethernet interface from a ProfileInterfaceConfigs.
+ */
+export function getActiveEthernetInterface(
+  configs?: ProfileInterfaceConfigs
+): ProfileInterfaceSelection | undefined {
+  if (!configs?.active_ethernet || !configs.ethernet) return undefined;
+  return configs.ethernet.find((i) => i.name === configs.active_ethernet);
+}
+
+/**
+ * Helper to get the active WiFi interface from a ProfileInterfaceConfigs.
+ */
+export function getActiveWiFiInterface(
+  configs?: ProfileInterfaceConfigs
+): ProfileInterfaceSelection | undefined {
+  if (!configs?.active_wifi || !configs.wifi) return undefined;
+  return configs.wifi.find((i) => i.name === configs.active_wifi);
 }
 
 /**

@@ -328,7 +328,16 @@ export interface LogsResponse {
 // ============================================================================
 // Default Values
 // ============================================================================
+//
+// DEPRECATED: These constants are now fallbacks only.
+// The single source of truth for defaults is the backend API:
+//   GET /api/settings/defaults
+//
+// Use the useDefaults() hook from "../hooks/useDefaults" to get defaults.
+// These constants will be removed in a future version.
+// ============================================================================
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_CARD_SETTINGS: CardSettings = {
   link: { enabled: true, autoRunOnLink: true },
   switch: { enabled: true, autoRunOnLink: true },
@@ -346,11 +355,13 @@ export const DEFAULT_CARD_SETTINGS: CardSettings = {
   },
 };
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showPublicIP: true,
   unitSystem: "sae", // Default to SAE (feet) for US users
 };
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_THRESHOLDS: SettingsThresholds = {
   dns: { good: 50, warning: 100 },
   gateway: { good: 20, warning: 50 },
@@ -366,6 +377,7 @@ export const DEFAULT_THRESHOLDS: SettingsThresholds = {
   },
 };
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_IPERF_SETTINGS: IperfSettings = {
   server: "",
   port: 5201,
@@ -376,7 +388,10 @@ export const DEFAULT_IPERF_SETTINGS: IperfSettings = {
   enableServer: true,
 };
 
-// Fixes #730: Add sensible default health check tests so the card appears by default
+/**
+ * Fixes #730: Add sensible default health check tests so the card appears by default
+ * @deprecated Use useDefaults() hook instead - backend is single source of truth
+ */
 export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
   dnsHostname: "google.com",
   dnsServers: [],
@@ -420,6 +435,7 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
   },
 };
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
   // Legacy fields
   enabled: true,
@@ -473,6 +489,7 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
   },
 };
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_SNMP_SETTINGS: SNMPSettings = {
   communities: ["public"],
   v3Credentials: [],
@@ -523,6 +540,7 @@ export interface CableTestSettings {
   autoRunOnLinkDown: boolean;
 }
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_LINK_SETTINGS: LinkSettings = {
   autoNegotiation: true,
   speed: "auto",
@@ -530,6 +548,7 @@ export const DEFAULT_LINK_SETTINGS: LinkSettings = {
   availableModes: [],
 };
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
   enabled: true,
   autoRunOnLinkDown: false,
@@ -565,6 +584,7 @@ export interface VulnerabilityScanStatus {
   severityFilter: string;
 }
 
+/** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   enabled: true, // Enable by default for security visibility
   cveDatabase: "nvd", // NVD works without API key (rate limited)

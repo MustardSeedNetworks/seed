@@ -250,10 +250,24 @@ type ProfileCableTestSettings struct {
 }
 
 // ProfileInterfaceConfigs stores the selected interfaces for a profile.
-// Each profile can have one ethernet and one wifi interface selected.
+// Each profile can have multiple ethernet and wifi interfaces, each with independent settings.
+// Version 3 changed from single interface per type to arrays supporting multiple interfaces.
 type ProfileInterfaceConfigs struct {
-	Ethernet *ProfileInterfaceSelection `json:"ethernet,omitempty" yaml:"ethernet,omitempty"`
-	WiFi     *ProfileInterfaceSelection `json:"wifi,omitempty" yaml:"wifi,omitempty"`
+	// Ethernet contains all configured ethernet interfaces for this profile.
+	// Each interface can have its own thresholds and health check configurations.
+	Ethernet []ProfileInterfaceSelection `json:"ethernet,omitempty" yaml:"ethernet,omitempty"`
+
+	// WiFi contains all configured WiFi interfaces for this profile.
+	// Each interface can have its own thresholds and health check configurations.
+	WiFi []ProfileInterfaceSelection `json:"wifi,omitempty" yaml:"wifi,omitempty"`
+
+	// ActiveEthernet is the name of the currently active ethernet interface.
+	// Used to track which interface is being monitored when multiple are configured.
+	ActiveEthernet string `json:"active_ethernet,omitempty" yaml:"active_ethernet,omitempty"`
+
+	// ActiveWiFi is the name of the currently active WiFi interface.
+	// Used to track which interface is being monitored when multiple are configured.
+	ActiveWiFi string `json:"active_wifi,omitempty" yaml:"active_wifi,omitempty"`
 }
 
 // ProfileInterfaceSelection stores configuration for a selected interface within a profile.
@@ -274,8 +288,8 @@ type ProfileInterfaceSelection struct {
 }
 
 // ProfileSettingsVersion is the current profile settings schema version.
-// Version 2 adds per-interface configurations.
-const ProfileSettingsVersion = 2
+// Supports multiple interfaces per type with per-interface settings.
+const ProfileSettingsVersion = 1
 
 // NewProfileSettings creates a new ProfileSettings with defaults from config.
 func NewProfileSettings() *ProfileSettings {
@@ -623,57 +637,166 @@ func ParseProfileSettings(jsonStr string) (*ProfileSettings, error) {
 	return ps, nil
 }
 
-// Migrate updates older profile settings to the current version.
+// Migrate updates profile settings to the current version if needed.
+// Currently a no-op as this is the initial version with multi-interface support.
 func (ps *ProfileSettings) Migrate() {
-	if ps.Version < 2 {
-		ps.migrateV1ToV2()
-	}
 	ps.Version = ProfileSettingsVersion
 }
 
-// migrateV1ToV2 migrates from v1 (no interface configs) to v2 (with interface configs).
-// V1 profiles had no interface selection - they used whatever was the system default.
-// V2 adds explicit interface selection per profile with optional per-interface settings.
-//
-// Migration behavior:
-//   - Interfaces are left empty (nil) - user will configure on first use.
-//   - Existing profile-level settings (thresholds, health checks, etc.) are preserved
-//     as defaults that apply when no per-interface override exists.
-//   - We don't pre-populate interfaces since we don't know which are available.
-func (ps *ProfileSettings) migrateV1ToV2() {
-	// No-op: interfaces are already nil by default.
-	// This function exists for documentation and future migration logic.
-	_ = ps // Prevent unused receiver warning.
-}
-
-// SetEthernetInterface sets the selected ethernet interface for this profile.
-func (ps *ProfileSettings) SetEthernetInterface(name string, enabled bool) {
-	ps.Interfaces.Ethernet = &ProfileInterfaceSelection{
+// AddEthernetInterface adds or updates an ethernet interface in this profile.
+// If an interface with the same name exists, it is updated; otherwise, a new one is added.
+func (ps *ProfileSettings) AddEthernetInterface(name string, enabled bool) {
+	for i, iface := range ps.Interfaces.Ethernet {
+		if iface.Name == name {
+			ps.Interfaces.Ethernet[i].Enabled = enabled
+			return
+		}
+	}
+	ps.Interfaces.Ethernet = append(ps.Interfaces.Ethernet, ProfileInterfaceSelection{
 		Name:    name,
 		Enabled: enabled,
+	})
+}
+
+// AddWiFiInterface adds or updates a WiFi interface in this profile.
+// If an interface with the same name exists, it is updated; otherwise, a new one is added.
+func (ps *ProfileSettings) AddWiFiInterface(name string, enabled bool) {
+	for i, iface := range ps.Interfaces.WiFi {
+		if iface.Name == name {
+			ps.Interfaces.WiFi[i].Enabled = enabled
+			return
+		}
+	}
+	ps.Interfaces.WiFi = append(ps.Interfaces.WiFi, ProfileInterfaceSelection{
+		Name:    name,
+		Enabled: enabled,
+	})
+}
+
+// RemoveEthernetInterface removes an ethernet interface from this profile.
+func (ps *ProfileSettings) RemoveEthernetInterface(name string) {
+	for i, iface := range ps.Interfaces.Ethernet {
+		if iface.Name == name {
+			ps.Interfaces.Ethernet = append(ps.Interfaces.Ethernet[:i], ps.Interfaces.Ethernet[i+1:]...)
+			// Clear active if we removed the active interface
+			if ps.Interfaces.ActiveEthernet == name {
+				ps.Interfaces.ActiveEthernet = ""
+			}
+			return
+		}
 	}
 }
 
-// SetWiFiInterface sets the selected WiFi interface for this profile.
-func (ps *ProfileSettings) SetWiFiInterface(name string, enabled bool) {
-	ps.Interfaces.WiFi = &ProfileInterfaceSelection{
-		Name:    name,
-		Enabled: enabled,
+// RemoveWiFiInterface removes a WiFi interface from this profile.
+func (ps *ProfileSettings) RemoveWiFiInterface(name string) {
+	for i, iface := range ps.Interfaces.WiFi {
+		if iface.Name == name {
+			ps.Interfaces.WiFi = append(ps.Interfaces.WiFi[:i], ps.Interfaces.WiFi[i+1:]...)
+			// Clear active if we removed the active interface
+			if ps.Interfaces.ActiveWiFi == name {
+				ps.Interfaces.ActiveWiFi = ""
+			}
+			return
+		}
 	}
 }
 
-// GetEthernetInterfaceName returns the selected ethernet interface name, or empty string.
+// SetActiveEthernetInterface sets the active ethernet interface.
+// The interface must already be in the Ethernet list.
+func (ps *ProfileSettings) SetActiveEthernetInterface(name string) bool {
+	for _, iface := range ps.Interfaces.Ethernet {
+		if iface.Name == name {
+			ps.Interfaces.ActiveEthernet = name
+			return true
+		}
+	}
+	return false
+}
+
+// SetActiveWiFiInterface sets the active WiFi interface.
+// The interface must already be in the WiFi list.
+func (ps *ProfileSettings) SetActiveWiFiInterface(name string) bool {
+	for _, iface := range ps.Interfaces.WiFi {
+		if iface.Name == name {
+			ps.Interfaces.ActiveWiFi = name
+			return true
+		}
+	}
+	return false
+}
+
+// GetActiveEthernetInterface returns the active ethernet interface configuration.
+// Returns nil if no active interface is set or the active interface is not in the list.
+func (ps *ProfileSettings) GetActiveEthernetInterface() *ProfileInterfaceSelection {
+	if ps.Interfaces.ActiveEthernet == "" {
+		return nil
+	}
+	for i, iface := range ps.Interfaces.Ethernet {
+		if iface.Name == ps.Interfaces.ActiveEthernet {
+			return &ps.Interfaces.Ethernet[i]
+		}
+	}
+	return nil
+}
+
+// GetActiveWiFiInterface returns the active WiFi interface configuration.
+// Returns nil if no active interface is set or the active interface is not in the list.
+func (ps *ProfileSettings) GetActiveWiFiInterface() *ProfileInterfaceSelection {
+	if ps.Interfaces.ActiveWiFi == "" {
+		return nil
+	}
+	for i, iface := range ps.Interfaces.WiFi {
+		if iface.Name == ps.Interfaces.ActiveWiFi {
+			return &ps.Interfaces.WiFi[i]
+		}
+	}
+	return nil
+}
+
+// GetEthernetInterfaceName returns the active ethernet interface name, or empty string.
+// This is a convenience method for backwards compatibility.
 func (ps *ProfileSettings) GetEthernetInterfaceName() string {
-	if ps.Interfaces.Ethernet != nil {
-		return ps.Interfaces.Ethernet.Name
-	}
-	return ""
+	return ps.Interfaces.ActiveEthernet
 }
 
-// GetWiFiInterfaceName returns the selected WiFi interface name, or empty string.
+// GetWiFiInterfaceName returns the active WiFi interface name, or empty string.
+// This is a convenience method for backwards compatibility.
 func (ps *ProfileSettings) GetWiFiInterfaceName() string {
-	if ps.Interfaces.WiFi != nil {
-		return ps.Interfaces.WiFi.Name
+	return ps.Interfaces.ActiveWiFi
+}
+
+// GetEthernetInterface returns the configuration for a specific ethernet interface.
+// Returns nil if the interface is not configured in this profile.
+func (ps *ProfileSettings) GetEthernetInterface(name string) *ProfileInterfaceSelection {
+	for i, iface := range ps.Interfaces.Ethernet {
+		if iface.Name == name {
+			return &ps.Interfaces.Ethernet[i]
+		}
 	}
-	return ""
+	return nil
+}
+
+// GetWiFiInterface returns the configuration for a specific WiFi interface.
+// Returns nil if the interface is not configured in this profile.
+func (ps *ProfileSettings) GetWiFiInterface(name string) *ProfileInterfaceSelection {
+	for i, iface := range ps.Interfaces.WiFi {
+		if iface.Name == name {
+			return &ps.Interfaces.WiFi[i]
+		}
+	}
+	return nil
+}
+
+// SetEthernetInterface adds/updates an ethernet interface and sets it as active.
+// This is a convenience method for backwards compatibility with single-interface usage.
+func (ps *ProfileSettings) SetEthernetInterface(name string, enabled bool) {
+	ps.AddEthernetInterface(name, enabled)
+	ps.Interfaces.ActiveEthernet = name
+}
+
+// SetWiFiInterface adds/updates a WiFi interface and sets it as active.
+// This is a convenience method for backwards compatibility with single-interface usage.
+func (ps *ProfileSettings) SetWiFiInterface(name string, enabled bool) {
+	ps.AddWiFiInterface(name, enabled)
+	ps.Interfaces.ActiveWiFi = name
 }
