@@ -33,9 +33,10 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get client IP for rate limiting (fixes #716)
+	// Get client IP for rate limiting (fixes #716, #H4)
 	// Each IP is tracked independently, providing protection against distributed attacks
-	clientIP := GetClientIP(r)
+	// Uses trusted proxy support if configured
+	clientIP := s.getClientIP(r)
 
 	// Check if IP is rate limited
 	if s.loginRateLimiter.IsBlocked(clientIP) {
@@ -153,7 +154,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Security audit log: user logout (fixes #697)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 	logger.Info("User logout",
 		"client_ip", clientIP,
 		"event", "auth.logout")
@@ -182,7 +183,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := auth.GetRefreshTokenFromCookie(r)
 	if err != nil {
 		// Security audit log: refresh token not found (fixes #697)
-		clientIP := GetClientIP(r)
+		clientIP := s.getClientIP(r)
 		logger.Warn("Token refresh failed - token not found",
 			"client_ip", clientIP,
 			"event", "auth.refresh.failed",
@@ -197,7 +198,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	newAccessToken, err := s.authManager.RefreshAccessToken(refreshToken)
 	if err != nil {
 		// Security audit log: invalid/expired refresh token (fixes #697)
-		clientIP := GetClientIP(r)
+		clientIP := s.getClientIP(r)
 		logger.Warn("Token refresh failed - invalid or expired token",
 			"client_ip", clientIP,
 			"event", "auth.refresh.failed",
@@ -209,7 +210,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Security audit log: successful token refresh (fixes #697)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 	logger.Info("Token refresh successful",
 		"client_ip", clientIP,
 		"event", "auth.refresh.success")
@@ -291,7 +292,7 @@ type SetupCompleteRequest struct {
 func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 
 	if r.Method != http.MethodPost {
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694, #699

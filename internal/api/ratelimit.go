@@ -218,10 +218,8 @@ func (rl *RateLimiter) RemainingAttempts(ip string) int {
 // headers if we trust them. For rate limiting purposes, we must use the
 // actual TCP connection source (RemoteAddr).
 //
-// If The Seed is behind a trusted reverse proxy, the proxy should be
-// configured to overwrite X-Forwarded-For and The Seed's RemoteAddr will
-// reflect the proxy's IP. For more sophisticated setups, consider using
-// a dedicated reverse proxy that handles rate limiting.
+// If The Seed is behind a trusted reverse proxy, use GetClientIPWithProxy
+// which checks the --trusted-proxies configuration.
 func GetClientIP(r *http.Request) string {
 	// Always use RemoteAddr for rate limiting to prevent header spoofing bypass
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -229,6 +227,16 @@ func GetClientIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return ip
+}
+
+// GetClientIPWithTrustedProxies extracts the client IP considering trusted proxies.
+// If trustedProxies is nil or empty, falls back to GetClientIP (RemoteAddr only).
+// If the request comes from a trusted proxy, uses X-Forwarded-For header.
+func GetClientIPWithTrustedProxies(r *http.Request, tp *TrustedProxies) string {
+	if tp == nil || tp.IsEmpty() {
+		return GetClientIP(r)
+	}
+	return tp.GetClientIPWithProxy(r)
 }
 
 // EndpointRateLimiter implements rate limiting for expensive API endpoints (fixes #530).

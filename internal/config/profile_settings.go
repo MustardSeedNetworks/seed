@@ -44,6 +44,12 @@ type ProfileSettings struct {
 	// NetworkDiscovery settings
 	NetworkDiscovery ProfileNetworkDiscovery `json:"network_discovery,omitempty"`
 
+	// Link settings for interface speed/duplex configuration
+	Link ProfileLinkSettings `json:"link,omitempty"`
+
+	// CableTest settings for TDR cable diagnostics
+	CableTest ProfileCableTestSettings `json:"cable_test,omitempty"`
+
 	// Notes field for user documentation
 	Notes string `json:"notes,omitempty"`
 }
@@ -218,6 +224,29 @@ type ProfileFingerprintingConfig struct {
 	Enabled       bool `json:"enabled"`
 	OSDetection   bool `json:"os_detection"`
 	ServiceProbes bool `json:"service_probes"`
+}
+
+// ProfileLinkSettings contains interface speed/duplex configuration.
+// These settings control how the network interface negotiates link parameters.
+type ProfileLinkSettings struct {
+	// AutoNegotiation enables automatic speed/duplex negotiation (default: true)
+	AutoNegotiation bool `json:"auto_negotiation"`
+	// Speed is the fixed link speed in Mbps when auto-negotiation is disabled
+	// Valid values: "auto", "10", "100", "1000", "2500", "5000", "10000"
+	Speed string `json:"speed,omitempty"`
+	// Duplex is the duplex mode when auto-negotiation is disabled
+	// Valid values: "auto", "full", "half"
+	Duplex string `json:"duplex,omitempty"`
+	// AvailableModes lists the speed/duplex combinations supported by the interface
+	AvailableModes []string `json:"available_modes,omitempty"`
+}
+
+// ProfileCableTestSettings contains TDR cable diagnostic settings.
+type ProfileCableTestSettings struct {
+	// Enabled controls whether the cable test card is shown
+	Enabled bool `json:"enabled"`
+	// AutoRunOnLinkDown triggers cable test automatically when link goes down
+	AutoRunOnLinkDown bool `json:"auto_run_on_link_down"`
 }
 
 // ProfileInterfaceConfigs stores the selected interfaces for a profile.

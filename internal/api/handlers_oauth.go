@@ -105,7 +105,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Warn("Invalid SSO provider requested",
 			"provider", providerName,
-			"client_ip", GetClientIP(r),
+			"client_ip", s.getClientIP(r),
 			"error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, fmt.Sprintf("Invalid provider: %s", providerName), "")
 		return
@@ -144,7 +144,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	// Security audit log
 	logger.Info("SSO login initiated",
 		"provider", providerName,
-		"client_ip", GetClientIP(r),
+		"client_ip", s.getClientIP(r),
 		"event", "auth.sso.initiated")
 
 	// Redirect to OAuth provider
@@ -156,7 +156,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 
 	if r.Method != http.MethodGet {
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
@@ -394,7 +394,7 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	// Security: Require authentication (fixes #757)
 	token, _ := auth.GetTokenFromRequest(r)
 	if token == "" {
-		clientIP := GetClientIP(r)
+		clientIP := s.getClientIP(r)
 		logger.Warn("Unauthenticated SSO update attempt",
 			"client_ip", clientIP,
 			"event", "auth.sso.blocked")
@@ -402,7 +402,7 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := s.authManager.ValidateToken(token); err != nil {
-		clientIP := GetClientIP(r)
+		clientIP := s.getClientIP(r)
 		logger.Warn("Invalid token SSO update attempt",
 			"client_ip", clientIP,
 			"event", "auth.sso.blocked")

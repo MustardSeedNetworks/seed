@@ -52,7 +52,13 @@ func runServe(_ *cobra.Command, _ []string) {
 
 	netMgr := setupNetworkInterface(cfg, configPath)
 
-	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable)
+	// Create trusted proxies configuration
+	proxies := api.NewTrustedProxies(trustedProxies)
+	if !proxies.IsEmpty() {
+		slog.Info("Trusted proxies configured", "count", proxies.Count())
+	}
+
+	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable, proxies)
 	runServerWithShutdown(server, cfg)
 }
 

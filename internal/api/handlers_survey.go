@@ -310,7 +310,7 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Rate limit file uploads (fixes #696)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 	if !s.endpointRateLimiter.Allow(clientIP) {
 		sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.survey.rateLimitExceeded"), "") // fixes #694
 		return
@@ -472,7 +472,7 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Rate limit file uploads (fixes #696)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 	if !s.endpointRateLimiter.Allow(clientIP) {
 		sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.survey.rateLimitExceeded"), "") // fixes #694
 		return
@@ -973,7 +973,7 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Rate limit file uploads
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 	if !s.endpointRateLimiter.Allow(clientIP) {
 		sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.survey.rateLimitExceeded"), "") // fixes #694
 		return

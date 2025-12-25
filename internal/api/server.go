@@ -82,24 +82,33 @@ type Server struct {
 	publicipChecker     *publicip.Checker
 	oauthManager        *oauth.Manager // OAuth SSO provider manager
 	db                  *database.DB   // SQLite database for persistence (#755)
-	icmpAvailable       bool           // Whether raw ICMP sockets are available
-	startTime           time.Time      // Application start time for uptime tracking (fixes #540)
-	redirectServer      *http.Server   // HTTP→HTTPS redirect server (fixes #515)
-	redirectServerErr   chan error     // Error channel for redirect server
+	icmpAvailable       bool             // Whether raw ICMP sockets are available
+	startTime           time.Time        // Application start time for uptime tracking (fixes #540)
+	redirectServer      *http.Server     // HTTP→HTTPS redirect server (fixes #515)
+	redirectServerErr   chan error       // Error channel for redirect server
+	trustedProxies      *TrustedProxies  // Trusted proxy IPs for X-Forwarded-For handling (#H4)
+}
+
+// getClientIP extracts the client IP from a request, considering trusted proxies.
+// If trusted proxies are configured and the request comes from one, uses X-Forwarded-For.
+// Otherwise, uses RemoteAddr (the only secure option).
+func (s *Server) getClientIP(r *http.Request) string {
+	return GetClientIPWithTrustedProxies(r, s.trustedProxies)
 }
 
 // NewServer creates a new server instance.
 //
 //nolint:gocyclo // Server initialization requires many configuration steps
-func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.Manager, icmpAvailable bool) *Server {
+func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.Manager, icmpAvailable bool, trustedProxies *TrustedProxies) *Server {
 	s := &Server{
-		config:        cfg,
-		configPath:    configPath,
-		logPath:       logPath,
-		mux:           http.NewServeMux(),
-		netManager:    netMgr,
-		icmpAvailable: icmpAvailable,
-		startTime:     time.Now(), // Track application start time (fixes #540)
+		config:         cfg,
+		configPath:     configPath,
+		logPath:        logPath,
+		mux:            http.NewServeMux(),
+		netManager:     netMgr,
+		icmpAvailable:  icmpAvailable,
+		trustedProxies: trustedProxies, // Trusted proxy support (#H4)
+		startTime:      time.Now(),     // Track application start time (fixes #540)
 		authManager: auth.NewManager(
 			cfg.Auth.JWTSecret,
 			cfg.Auth.SessionTimeout,
@@ -341,6 +350,8 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/wifi/channel-graph", s.handleWiFiChannelGraph)
 	s.mux.HandleFunc("/api/wifi/settings", s.handleWiFiSettings)
 	s.mux.HandleFunc("/api/snmp/settings", s.handleSNMPSettings)
+	s.mux.HandleFunc("/api/settings/link", s.handleLinkSettings)       // Link speed/duplex settings (#734)
+	s.mux.HandleFunc("/api/settings/cable", s.handleCableTestSettings) // Cable test settings (#740)
 	s.mux.HandleFunc("/api/cable", s.handleCable)
 	// Rate-limited expensive endpoints (fixes #530)
 	s.mux.Handle("/api/speedtest", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)))

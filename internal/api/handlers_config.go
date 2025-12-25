@@ -77,7 +77,7 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 	}
 
 	// Security audit log: config backup created (fixes #697)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 	logger.Info("Configuration backup created",
 		"client_ip", clientIP,
 		"backup_name", backup.Name,
@@ -136,7 +136,7 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 	s.config.CopyFieldsFrom(newCfg)
 
 	// Security audit log: config restored from backup (fixes #697)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 	logger.Info("Configuration restored from backup",
 		"client_ip", clientIP,
 		"backup_name", req.BackupName,
@@ -180,7 +180,7 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 	}
 
 	// Security audit log: config backup deleted (fixes #697)
-	clientIP := GetClientIP(r)
+	clientIP := s.getClientIP(r)
 	logger.Info("Configuration backup deleted",
 		"client_ip", clientIP,
 		"backup_name", backupName,
