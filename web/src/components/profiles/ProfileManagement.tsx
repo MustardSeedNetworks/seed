@@ -213,7 +213,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
           {/* Actions bar */}
           <div
             className={cn(
-              spacing.pad.md,
+              spacing.pad.default,
               "border-b border-surface-border bg-surface-base flex items-center gap-2 shrink-0"
             )}
           >
@@ -451,7 +451,7 @@ function ProfileCard({
       )}
     >
       {/* Card content */}
-      <div className={cn(spacing.pad.md)}>
+      <div className={cn(spacing.pad.default)}>
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -622,14 +622,15 @@ function DeleteConfirmModal({
   const { t } = useTranslation();
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/50" onClick={onCancel} />
+    // z-60 required: nested modal must appear above parent modal (z-50)
+    <div className={cn(modal.overlay, "z-60")}>
+      <div className={modal.backdrop} onClick={onCancel} />
       <div
         className={cn(
-          "relative w-full max-w-md",
-          radius.lg,
-          "bg-surface-raised shadow-xl",
-          spacing.pad.lg
+          "relative",
+          modal.content,
+          modal.size.sm,
+          modal.padding.md
         )}
       >
         <h3 className="heading-2 text-text-primary mb-2">

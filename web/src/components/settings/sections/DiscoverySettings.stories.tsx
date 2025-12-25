@@ -30,7 +30,7 @@ const defaultSettings: NetworkDiscoverySettings = {
   scanTimeoutMs: 30000,
   autoScan: false,
   scanIntervalMs: 0,
-  ouiFilePath: "oui.txt",
+  ouiFilePath: "data/oui.txt",
   options: {
     passiveProtocols: {
       lldp: true,

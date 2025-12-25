@@ -390,7 +390,7 @@
         "oui_file_path": {
           "type": "string",
           "description": "Path to IEEE OUI file for MAC address vendor lookup",
-          "default": "oui.txt"
+          "default": "data/oui.txt"
         },
         "oui_max_age": {
           "$ref": "#/$defs/Duration",

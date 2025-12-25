@@ -293,6 +293,7 @@ func (db *OUIDatabase) Count() int {
 // TryLoadIEEEFile attempts to load the IEEE OUI file from common locations.
 func (db *OUIDatabase) TryLoadIEEEFile() error {
 	locations := []string{
+		"data/oui.txt", // Project data directory
 		"/usr/share/ieee-data/oui.txt",
 		"/var/lib/ieee-data/oui.txt",
 		"/usr/local/share/oui.txt",

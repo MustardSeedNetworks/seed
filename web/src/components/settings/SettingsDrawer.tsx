@@ -304,7 +304,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       scanTimeoutMs: 30000,
       autoScan: false,
       scanIntervalMs: 0,
-      ouiFilePath: "oui.txt",
+      ouiFilePath: "data/oui.txt",
       ipv6Enabled: true,
       options: {
         passiveProtocols: {
@@ -563,7 +563,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           scanTimeoutMs: data.scanTimeoutMs ?? 30000,
           autoScan: data.autoScan ?? false,
           scanIntervalMs: data.scanIntervalMs ?? 0,
-          ouiFilePath: data.ouiFilePath ?? "oui.txt",
+          ouiFilePath: data.ouiFilePath ?? "data/oui.txt",
           ipv6Enabled: data.ipv6Enabled ?? true,
           options: data.options ?? {
             passiveProtocols: {
