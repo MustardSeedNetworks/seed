@@ -106,8 +106,9 @@ func (s *Server) handleListProfiles(w http.ResponseWriter, r *http.Request) {
 
 	profiles, err := s.db.Profiles().List(ctx)
 	if err != nil {
+		logger.Error("Failed to list profiles", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.listFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.listFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -131,8 +132,9 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 
 	var req ProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn("Invalid request body", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -158,8 +160,9 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 			return
 		}
+		logger.Error("Failed to create profile", "error", err, "profile_name", req.Name)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.createFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.createFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -181,7 +184,7 @@ func (s *Server) handleGetProfile(w http.ResponseWriter, r *http.Request, id str
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -196,8 +199,9 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 
 	var req ProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn("Invalid request body", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -210,7 +214,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -231,7 +235,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.updateFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.updateFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -253,7 +257,7 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -274,7 +278,7 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 
 	if err := s.db.Profiles().Delete(ctx, id); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.deleteFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.deleteFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -314,7 +318,7 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	activeID, err := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile)
 	if err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getActiveFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.getActiveFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -328,7 +332,7 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, localizer.T("errors.profile.getDefaultFailed"), err.Error()) // fixes #694
+				ErrCodeInternal, localizer.T("errors.profile.getDefaultFailed"), "") // fixes #694, #H7
 			return
 		}
 		sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
@@ -350,7 +354,7 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 			_ = s.db.Settings().Set(ctx, database.SettingKeyActiveProfile, profile.ID) //nolint:errcheck // best effort, non-critical
 		} else {
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
+				ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
 			return
 		}
 	}
@@ -369,7 +373,7 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -388,14 +392,14 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Set active profile in settings
 	if err := s.db.Settings().Set(ctx, database.SettingKeyActiveProfile, req.ProfileID); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -469,7 +473,7 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -504,7 +508,7 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 			}
 		} else {
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, localizer.T("errors.profile.duplicateFailed"), err.Error()) // fixes #694
+				ErrCodeInternal, localizer.T("errors.profile.duplicateFailed"), "") // fixes #694, #H7
 			return
 		}
 	}
@@ -533,7 +537,7 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 	var req ProfileImportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.profile.invalidJson"), err.Error()) // fixes #694
+			ErrCodeBadRequest, localizer.T("errors.profile.invalidJson"), "") // fixes #694, #H7
 		return
 	}
 
@@ -608,8 +612,9 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 
 	profiles, err := s.db.Profiles().List(ctx)
 	if err != nil {
+		logger.Error("Failed to list profiles", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.listFailed"), err.Error()) // fixes #694
+			ErrCodeInternal, localizer.T("errors.profile.listFailed"), "") // fixes #694, #H7
 		return
 	}
 

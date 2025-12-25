@@ -30,7 +30,10 @@
     "language": "Idioma",
     "languageEn": "English",
     "languageEs": "Español",
-    "quickToggle": "Cambio rápido"
+    "quickToggle": "Cambio rápido",
+    "measurementUnits": "Unidades de medida",
+    "unitSae": "SAE (pies)",
+    "unitMetric": "Métrico (metros)"
   },
   "network": {
     "title": "Configuración de red",

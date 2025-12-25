@@ -67,7 +67,8 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 			Action string `json:"action"` // "start" or "stop"
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+			logger.Warn("Invalid request body", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 			return
 		}
 
@@ -106,7 +107,8 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if err := s.rogueDetector.Stop(); err != nil {
-				resp.Error = err.Error()
+				logger.Error("Failed to stop rogue DHCP detector", "error", err)
+				resp.Error = "internal server error"
 				sendJSONResponse(w, logger, http.StatusInternalServerError, resp)
 				return
 			}
@@ -181,7 +183,8 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 			AlertOnDetection *bool    `json:"alertOnDetection,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+			logger.Warn("Invalid request body", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 			return
 		}
 
@@ -205,7 +208,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		// Save config (fixes #782 - return error instead of silent warning)
 		if err := s.config.Save(s.configPath); err != nil {
 			logger.Error("Failed to save config", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), err.Error())
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "") // fixes #H7
 			return
 		}
 
@@ -385,7 +388,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 
 	var req SNMPSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body for SNMP settings", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -412,7 +416,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			// New password provided - encrypt it
 			encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
 			if err != nil {
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptAuth"), err.Error()) // fixes #694
+				logger.Error("Failed to encrypt auth password", "error", err, "credential_name", cred.Name)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptAuth"), "") // fixes #694, #H7
 				return
 			}
 			newCred.AuthPassword = encrypted
@@ -426,7 +431,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			// New password provided - encrypt it
 			encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
 			if err != nil {
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptPriv"), err.Error()) // fixes #694
+				logger.Error("Failed to encrypt priv password", "error", err, "credential_name", cred.Name)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptPriv"), "") // fixes #694, #H7
 				return
 			}
 			newCred.PrivPassword = encrypted
@@ -448,7 +454,7 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	// Save config (passwords are now encrypted) (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), err.Error())
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "") // fixes #H7
 		return
 	}
 

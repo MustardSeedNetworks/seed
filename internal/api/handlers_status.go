@@ -326,8 +326,9 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	// Get system health metrics
 	health, err := system.GetHealth()
 	if err != nil {
+		logger.Error("Failed to get system health", "error", err)
 		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
-			"error": "Failed to get system health: " + err.Error(),
+			"error": "Failed to get system health. Check server logs for details.",
 		})
 		return
 	}
