@@ -861,6 +861,48 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     }
   }, []);
 
+  // Fetch link settings from API (fixes #734)
+  const fetchLinkSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/settings/link`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLinkSettings({
+          autoNegotiation: data.auto_negotiation ?? true,
+          speed: data.speed ?? "auto",
+          duplex: data.duplex ?? "auto",
+          availableModes: data.available_modes ?? [],
+        });
+      }
+    } catch (err) {
+      logger.error(LogComponents.CONFIG, "Failed to fetch link settings", err);
+    }
+  }, []);
+
+  // Fetch cable test settings from API (fixes #740)
+  const fetchCableTestSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/settings/cable`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCableTestSettings({
+          enabled: data.enabled ?? true,
+          autoRunOnLinkDown: data.auto_run_on_link_down ?? false,
+        });
+      }
+    } catch (err) {
+      logger.error(
+        LogComponents.CONFIG,
+        "Failed to fetch cable test settings",
+        err
+      );
+    }
+  }, []);
+
   // Fetch configured subnets from API
   const fetchSubnets = useCallback(async () => {
     try {
@@ -1131,6 +1173,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       fetchNetworkDiscoverySettings();
       fetchSNMPSettings();
       fetchVulnSettings();
+      fetchLinkSettings();
+      fetchCableTestSettings();
       fetchSubnets();
 
       // Mark initial load as done after a short delay
@@ -1155,6 +1199,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     fetchNetworkDiscoverySettings,
     fetchSNMPSettings,
     fetchVulnSettings,
+    fetchLinkSettings,
+    fetchCableTestSettings,
     fetchSubnets,
   ]);
 
@@ -1265,6 +1311,60 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     }
   }, [wifiSettings.interface]);
 
+  // Save link settings to backend (fixes #734)
+  const saveLinkSettings = useCallback(async () => {
+    setLinkStatus("saving");
+    try {
+      const response = await fetch(`${API_BASE}/api/settings/link`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          auto_negotiation: linkSettings.autoNegotiation,
+          speed: linkSettings.speed,
+          duplex: linkSettings.duplex,
+          available_modes: linkSettings.availableModes,
+        }),
+      });
+      if (response.ok) {
+        setLinkStatus("saved");
+        setTimeout(() => setLinkStatus("idle"), 2000);
+      } else {
+        setLinkStatus("error");
+      }
+    } catch {
+      setLinkStatus("error");
+    }
+  }, [linkSettings]);
+
+  // Save cable test settings to backend (fixes #740)
+  const saveCableTestSettings = useCallback(async () => {
+    setCableTestStatus("saving");
+    try {
+      const response = await fetch(`${API_BASE}/api/settings/cable`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          enabled: cableTestSettings.enabled,
+          auto_run_on_link_down: cableTestSettings.autoRunOnLinkDown,
+        }),
+      });
+      if (response.ok) {
+        setCableTestStatus("saved");
+        setTimeout(() => setCableTestStatus("idle"), 2000);
+      } else {
+        setCableTestStatus("error");
+      }
+    } catch {
+      setCableTestStatus("error");
+    }
+  }, [cableTestSettings]);
+
   // Auto-save thresholds with debounce
   useEffect(() => {
     if (thresholdsInitRef.current) return;
@@ -1301,35 +1401,29 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     };
   }, [wifiSettings.interface, saveWifiSettings]);
 
-  // Auto-save link settings with debounce
-  // Note: Backend API for link settings not yet implemented (#734)
+  // Auto-save link settings with debounce (fixes #734)
   useEffect(() => {
     if (linkInitRef.current) return;
     if (linkTimerRef.current) clearTimeout(linkTimerRef.current);
     linkTimerRef.current = setTimeout(() => {
-      // TODO: Implement saveLinkSettings when backend API is ready
-      setLinkStatus("saved");
-      setTimeout(() => setLinkStatus("idle"), 2000);
+      saveLinkSettings();
     }, 800);
     return () => {
       if (linkTimerRef.current) clearTimeout(linkTimerRef.current);
     };
-  }, [linkSettings]);
+  }, [linkSettings, saveLinkSettings]);
 
-  // Auto-save cable test settings with debounce
-  // Note: Backend API for cable test settings not yet implemented (#740)
+  // Auto-save cable test settings with debounce (fixes #740)
   useEffect(() => {
     if (cableTestInitRef.current) return;
     if (cableTestTimerRef.current) clearTimeout(cableTestTimerRef.current);
     cableTestTimerRef.current = setTimeout(() => {
-      // TODO: Implement saveCableTestSettings when backend API is ready
-      setCableTestStatus("saved");
-      setTimeout(() => setCableTestStatus("idle"), 2000);
+      saveCableTestSettings();
     }, 800);
     return () => {
       if (cableTestTimerRef.current) clearTimeout(cableTestTimerRef.current);
     };
-  }, [cableTestSettings]);
+  }, [cableTestSettings, saveCableTestSettings]);
 
   // Display options and iperf settings auto-save is handled by SettingsContext
 
