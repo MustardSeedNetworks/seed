@@ -71,7 +71,8 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 
 	backup, err := backupMgr.CreateBackup()
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToCreateBackup"), err.Error()) // fixes #694
+		logger.Error("Failed to create backup", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToCreateBackup"), "") // fixes #694, #H7
 		return
 	}
 
@@ -100,7 +101,8 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 
 	var req RestoreRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -113,14 +115,16 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 	backupMgr := config.NewBackupManager(s.configPath, backupDir, 10)
 
 	if err := backupMgr.RestoreBackup(req.BackupName); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToRestoreBackup"), err.Error()) // fixes #694
+		logger.Error("Failed to restore backup", "error", err, "backup_name", req.BackupName)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToRestoreBackup"), "") // fixes #694, #H7
 		return
 	}
 
 	// Reload config after restore
 	newCfg, err := config.Load(s.configPath)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToReloadAfterRestore"), err.Error()) // fixes #694
+		logger.Error("Failed to reload config after restore", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToReloadAfterRestore"), "") // fixes #694, #H7
 		return
 	}
 
@@ -170,7 +174,8 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 	backupMgr := config.NewBackupManager(s.configPath, backupDir, 10)
 
 	if err := backupMgr.DeleteBackup(backupName); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToDeleteBackup"), err.Error()) // fixes #694
+		logger.Error("Failed to delete backup", "error", err, "backup_name", backupName)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToDeleteBackup"), "") // fixes #694, #H7
 		return
 	}
 

@@ -895,7 +895,7 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"interface": wlanIface,
 			"available": true,
-			"error":     err.Error(),
+			"error":     "Wi-Fi scan failed. Check permissions and interface availability.",
 			"networks":  []interface{}{},
 		})
 		return
@@ -1014,7 +1014,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
 			"interface": wlanIface,
 			"available": true,
-			"error":     err.Error(),
+			"error":     "Wi-Fi scan failed. Check permissions and interface availability.",
 			"data":      nil,
 		})
 		return

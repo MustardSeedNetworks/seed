@@ -1694,48 +1694,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 <AutoSaveIndicator status={displayStatus} />
               </p>
               <div className="stack-sm">
-                {/* Measurement Units */}
-                <div
-                  className={cn(
-                    "flex items-center justify-between",
-                    spacing.pad.xs,
-                    "bg-surface-base",
-                    radius.md,
-                    "border border-surface-border"
-                  )}
-                >
-                  <div>
-                    <span className="body-small text-text-primary font-medium">
-                      {t("network.measurementSystem")}
-                    </span>
-                    <p className="caption text-text-muted">
-                      {t("network.measurementDescription")}
-                    </p>
-                  </div>
-                  <select
-                    value={displayOptions.unitSystem || "sae"}
-                    onChange={(e) =>
-                      setDisplayOptions((prev) => ({
-                        ...prev,
-                        unitSystem: e.target.value as "sae" | "metric",
-                      }))
-                    }
-                    className={cn(
-                      input.size.sm,
-                      "bg-surface-base border border-surface-border",
-                      radius.md,
-                      "body-small text-text-primary"
-                    )}
-                  >
-                    <option value="sae">
-                      {t("display.unitSae", "SAE (feet)")}
-                    </option>
-                    <option value="metric">
-                      {t("display.unitMetric", "Metric (meters)")}
-                    </option>
-                  </select>
-                </div>
-
                 {/* Show Public IP */}
                 <label
                   className={cn(
@@ -1869,6 +1827,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             theme={theme}
             setTheme={setTheme}
             isDark={isDark}
+            unitSystem={displayOptions.unitSystem || "sae"}
+            setUnitSystem={(unit) =>
+              setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
+            }
           />
 
           {/* Config Backups Section (implements #494) */}

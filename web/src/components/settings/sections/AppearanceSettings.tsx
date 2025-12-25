@@ -42,6 +42,8 @@ interface AppearanceSettingsProps {
   theme: "light" | "dark" | "system";
   setTheme: (theme: "light" | "dark" | "system") => void;
   isDark: boolean;
+  unitSystem: "sae" | "metric";
+  setUnitSystem: (unit: "sae" | "metric") => void;
 }
 
 /**
@@ -52,6 +54,8 @@ export const AppearanceSettings = memo(function AppearanceSettings({
   theme,
   setTheme,
   isDark,
+  unitSystem,
+  setUnitSystem,
 }: AppearanceSettingsProps) {
   const { t } = useTranslation("settings");
   // Normalize language code (e.g., "en-US" -> "en") and validate against supported languages
@@ -135,6 +139,33 @@ export const AppearanceSettings = memo(function AppearanceSettings({
                 {lang.nativeLabel}
               </option>
             ))}
+          </select>
+        </label>
+
+        <label
+          className={cn(
+            layout.flex.between,
+            spacing.pad.sm,
+            "bg-surface-base",
+            radius.default,
+            "border border-surface-border"
+          )}
+        >
+          <span className="body-small text-text-primary">
+            {t("appearance.measurementUnits")}
+          </span>
+          <select
+            value={unitSystem}
+            onChange={(e) => setUnitSystem(e.target.value as "sae" | "metric")}
+            className={cn(
+              "bg-surface-raised border border-surface-border",
+              radius.default,
+              spacing.chip.sm,
+              "body-small text-text-primary"
+            )}
+          >
+            <option value="sae">{t("appearance.unitSae")}</option>
+            <option value="metric">{t("appearance.unitMetric")}</option>
           </select>
         </label>
 

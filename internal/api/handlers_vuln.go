@@ -220,7 +220,8 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 	case http.MethodPut:
 		var settings discovery.VulnerabilityScannerConfig
 		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.vuln.invalidJson"), err.Error()) // fixes #694
+			logger.Warn("Invalid JSON for vulnerability settings", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.vuln.invalidJson"), "") // fixes #694, #H7
 			return
 		}
 
@@ -238,7 +239,8 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 		// Save config
 		if err := s.config.Save(s.configPath); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), err.Error()) // fixes #694
+			logger.Error("Failed to save vulnerability config", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "") // fixes #694, #H7
 			return
 		}
 
@@ -278,7 +280,8 @@ func (s *Server) handleNVDAPIKeyValidate(w http.ResponseWriter, r *http.Request)
 
 	var req NVDAPIKeyValidateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.vuln.invalidJson"), err.Error())
+		logger.Warn("Invalid JSON for NVD API key validation", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.vuln.invalidJson"), "") // fixes #H7
 		return
 	}
 
@@ -299,8 +302,9 @@ func (s *Server) handleNVDAPIKeyValidate(w http.ResponseWriter, r *http.Request)
 	// Validate the API key by making a test request to NVD
 	valid, err := discovery.ValidateNVDAPIKey(r.Context(), req.APIKey)
 	if err != nil {
+		logger.Warn("NVD API key validation failed", "error", err)
 		response.Valid = false
-		response.Message = "Failed to validate API key: " + err.Error()
+		response.Message = "Failed to validate API key. Please check that the key is correct and try again."
 		response.RateLimit = 10
 		sendJSONResponse(w, logger, http.StatusOK, response)
 		return

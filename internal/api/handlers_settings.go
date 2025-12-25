@@ -214,14 +214,9 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Check for validation errors (fixes #784)
 	if len(applyErrors) > 0 {
-		errMsg := "Invalid settings format: "
-		for i, err := range applyErrors {
-			if i > 0 {
-				errMsg += "; "
-			}
-			errMsg += err.Error()
-		}
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, errMsg, "")
+		logger.Warn("Invalid settings format", "errors", applyErrors)
+		errMsg := "Invalid settings format. Check server logs for details."
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, errMsg, "") // fixes #H7
 		return
 	}
 
@@ -326,7 +321,7 @@ func applyThresholdUpdates(updates map[string]interface{}, cfg *config.Config) e
 }
 
 // applyDNSThresholds applies DNS threshold updates.
-// Returns error if dns key exists but has invalid type (fixes #784).
+// Returns error if dns key exists but has invalid type (fixes #784, G3).
 //
 //nolint:dupl // Similar pattern to other threshold functions - intentional for clarity
 func applyDNSThresholds(thresholds map[string]interface{}, cfg *config.Config) error {
@@ -338,17 +333,30 @@ func applyDNSThresholds(thresholds map[string]interface{}, cfg *config.Config) e
 	if !ok {
 		return fmt.Errorf("thresholds.dns must be an object")
 	}
-	if good, ok := dnsThresh["good"].(float64); ok {
+
+	// Validate "good" field if present
+	if goodVal, exists := dnsThresh["good"]; exists {
+		good, ok := goodVal.(float64)
+		if !ok {
+			return fmt.Errorf("thresholds.dns.good must be a number")
+		}
 		cfg.Thresholds.DNS.Warning = time.Duration(good) * time.Millisecond
 	}
-	if warning, ok := dnsThresh["warning"].(float64); ok {
+
+	// Validate "warning" field if present
+	if warningVal, exists := dnsThresh["warning"]; exists {
+		warning, ok := warningVal.(float64)
+		if !ok {
+			return fmt.Errorf("thresholds.dns.warning must be a number")
+		}
 		cfg.Thresholds.DNS.Critical = time.Duration(warning) * time.Millisecond
 	}
+
 	return nil
 }
 
 // applyGatewayThresholds applies gateway ping threshold updates.
-// Returns error if gateway key exists but has invalid type (fixes #784).
+// Returns error if gateway key exists but has invalid type (fixes #784, G3).
 //
 //nolint:dupl // Similar pattern to other threshold functions - intentional for clarity
 func applyGatewayThresholds(thresholds map[string]interface{}, cfg *config.Config) error {
@@ -360,17 +368,30 @@ func applyGatewayThresholds(thresholds map[string]interface{}, cfg *config.Confi
 	if !ok {
 		return fmt.Errorf("thresholds.gateway must be an object")
 	}
-	if good, ok := gwThresh["good"].(float64); ok {
+
+	// Validate "good" field if present
+	if goodVal, exists := gwThresh["good"]; exists {
+		good, ok := goodVal.(float64)
+		if !ok {
+			return fmt.Errorf("thresholds.gateway.good must be a number")
+		}
 		cfg.Thresholds.Ping.Warning = time.Duration(good) * time.Millisecond
 	}
-	if warning, ok := gwThresh["warning"].(float64); ok {
+
+	// Validate "warning" field if present
+	if warningVal, exists := gwThresh["warning"]; exists {
+		warning, ok := warningVal.(float64)
+		if !ok {
+			return fmt.Errorf("thresholds.gateway.warning must be a number")
+		}
 		cfg.Thresholds.Ping.Critical = time.Duration(warning) * time.Millisecond
 	}
+
 	return nil
 }
 
 // applyWiFiThresholds applies WiFi signal threshold updates.
-// Returns error if wifi key exists but has invalid type (fixes #784).
+// Returns error if wifi key exists but has invalid type (fixes #784, G3).
 func applyWiFiThresholds(thresholds map[string]interface{}, cfg *config.Config) error {
 	val, exists := thresholds["wifi"]
 	if !exists {
@@ -380,17 +401,30 @@ func applyWiFiThresholds(thresholds map[string]interface{}, cfg *config.Config) 
 	if !ok {
 		return fmt.Errorf("thresholds.wifi must be an object")
 	}
-	if good, ok := wifi["good"].(float64); ok {
+
+	// Validate "good" field if present
+	if goodVal, exists := wifi["good"]; exists {
+		good, ok := goodVal.(float64)
+		if !ok {
+			return fmt.Errorf("thresholds.wifi.good must be a number")
+		}
 		cfg.Thresholds.WiFi.Signal.Warning = int(good)
 	}
-	if warning, ok := wifi["warning"].(float64); ok {
+
+	// Validate "warning" field if present
+	if warningVal, exists := wifi["warning"]; exists {
+		warning, ok := warningVal.(float64)
+		if !ok {
+			return fmt.Errorf("thresholds.wifi.warning must be a number")
+		}
 		cfg.Thresholds.WiFi.Signal.Critical = int(warning)
 	}
+
 	return nil
 }
 
 // applyCustomTestThresholds applies custom test threshold updates.
-// Returns error if any custom test key exists but has invalid type (fixes #784).
+// Returns error if any custom test key exists but has invalid type (fixes #784, G3).
 func applyCustomTestThresholds(thresholds map[string]interface{}, cfg *config.Config) error {
 	// Custom ping thresholds
 	if val, exists := thresholds["customPing"]; exists {
@@ -398,10 +432,22 @@ func applyCustomTestThresholds(thresholds map[string]interface{}, cfg *config.Co
 		if !ok {
 			return fmt.Errorf("thresholds.customPing must be an object")
 		}
-		if good, ok := customPing["good"].(float64); ok {
+
+		// Validate "good" field if present
+		if goodVal, exists := customPing["good"]; exists {
+			good, ok := goodVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.customPing.good must be a number")
+			}
 			cfg.Thresholds.CustomTests.Ping.Warning = time.Duration(good) * time.Millisecond
 		}
-		if warning, ok := customPing["warning"].(float64); ok {
+
+		// Validate "warning" field if present
+		if warningVal, exists := customPing["warning"]; exists {
+			warning, ok := warningVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.customPing.warning must be a number")
+			}
 			cfg.Thresholds.CustomTests.Ping.Critical = time.Duration(warning) * time.Millisecond
 		}
 	}
@@ -412,10 +458,22 @@ func applyCustomTestThresholds(thresholds map[string]interface{}, cfg *config.Co
 		if !ok {
 			return fmt.Errorf("thresholds.customTcp must be an object")
 		}
-		if good, ok := customTCP["good"].(float64); ok {
+
+		// Validate "good" field if present
+		if goodVal, exists := customTCP["good"]; exists {
+			good, ok := goodVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.customTcp.good must be a number")
+			}
 			cfg.Thresholds.CustomTests.TCP.Warning = time.Duration(good) * time.Millisecond
 		}
-		if warning, ok := customTCP["warning"].(float64); ok {
+
+		// Validate "warning" field if present
+		if warningVal, exists := customTCP["warning"]; exists {
+			warning, ok := warningVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.customTcp.warning must be a number")
+			}
 			cfg.Thresholds.CustomTests.TCP.Critical = time.Duration(warning) * time.Millisecond
 		}
 	}
@@ -426,10 +484,22 @@ func applyCustomTestThresholds(thresholds map[string]interface{}, cfg *config.Co
 		if !ok {
 			return fmt.Errorf("thresholds.customHttp must be an object")
 		}
-		if good, ok := customHTTP["good"].(float64); ok {
+
+		// Validate "good" field if present
+		if goodVal, exists := customHTTP["good"]; exists {
+			good, ok := goodVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.customHttp.good must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTP.Warning = time.Duration(good) * time.Millisecond
 		}
-		if warning, ok := customHTTP["warning"].(float64); ok {
+
+		// Validate "warning" field if present
+		if warningVal, exists := customHTTP["warning"]; exists {
+			warning, ok := warningVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.customHttp.warning must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTP.Critical = time.Duration(warning) * time.Millisecond
 		}
 	}
@@ -437,7 +507,7 @@ func applyCustomTestThresholds(thresholds map[string]interface{}, cfg *config.Co
 }
 
 // applyHTTPTimingThresholds applies HTTP timing threshold updates.
-// Returns error if httpTimings key exists but has invalid type (fixes #784).
+// Returns error if httpTimings key exists but has invalid type (fixes #784, G3).
 func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Config) error {
 	val, exists := thresholds["httpTimings"]
 	if !exists {
@@ -454,10 +524,22 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 		if !ok {
 			return fmt.Errorf("thresholds.httpTimings.dns must be an object")
 		}
-		if good, ok := dnsT["good"].(float64); ok {
+
+		// Validate "good" field if present
+		if goodVal, exists := dnsT["good"]; exists {
+			good, ok := goodVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.httpTimings.dns.good must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(good) * time.Millisecond
 		}
-		if warning, ok := dnsT["warning"].(float64); ok {
+
+		// Validate "warning" field if present
+		if warningVal, exists := dnsT["warning"]; exists {
+			warning, ok := warningVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.httpTimings.dns.warning must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(warning) * time.Millisecond
 		}
 	}
@@ -468,10 +550,22 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 		if !ok {
 			return fmt.Errorf("thresholds.httpTimings.tcp must be an object")
 		}
-		if good, ok := tcpT["good"].(float64); ok {
+
+		// Validate "good" field if present
+		if goodVal, exists := tcpT["good"]; exists {
+			good, ok := goodVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.httpTimings.tcp.good must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(good) * time.Millisecond
 		}
-		if warning, ok := tcpT["warning"].(float64); ok {
+
+		// Validate "warning" field if present
+		if warningVal, exists := tcpT["warning"]; exists {
+			warning, ok := warningVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.httpTimings.tcp.warning must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(warning) * time.Millisecond
 		}
 	}
@@ -482,10 +576,22 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 		if !ok {
 			return fmt.Errorf("thresholds.httpTimings.tls must be an object")
 		}
-		if good, ok := tlsT["good"].(float64); ok {
+
+		// Validate "good" field if present
+		if goodVal, exists := tlsT["good"]; exists {
+			good, ok := goodVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.httpTimings.tls.good must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(good) * time.Millisecond
 		}
-		if warning, ok := tlsT["warning"].(float64); ok {
+
+		// Validate "warning" field if present
+		if warningVal, exists := tlsT["warning"]; exists {
+			warning, ok := warningVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.httpTimings.tls.warning must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(warning) * time.Millisecond
 		}
 	}
@@ -496,10 +602,22 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 		if !ok {
 			return fmt.Errorf("thresholds.httpTimings.ttfb must be an object")
 		}
-		if good, ok := ttfb["good"].(float64); ok {
+
+		// Validate "good" field if present
+		if goodVal, exists := ttfb["good"]; exists {
+			good, ok := goodVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.httpTimings.ttfb.good must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(good) * time.Millisecond
 		}
-		if warning, ok := ttfb["warning"].(float64); ok {
+
+		// Validate "warning" field if present
+		if warningVal, exists := ttfb["warning"]; exists {
+			warning, ok := warningVal.(float64)
+			if !ok {
+				return fmt.Errorf("thresholds.httpTimings.ttfb.warning must be a number")
+			}
 			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(warning) * time.Millisecond
 		}
 	}
@@ -507,7 +625,7 @@ func applyHTTPTimingThresholds(thresholds map[string]interface{}, cfg *config.Co
 }
 
 // applyHealthChecksUpdates applies health check toggle updates.
-// Returns error if healthChecks key exists but has invalid type (fixes #784).
+// Returns error if healthChecks key exists but has invalid type (fixes #784, G3).
 func applyHealthChecksUpdates(updates map[string]interface{}, cfg *config.Config) error {
 	val, exists := updates["healthChecks"]
 	if !exists {
@@ -517,23 +635,44 @@ func applyHealthChecksUpdates(updates map[string]interface{}, cfg *config.Config
 	if !ok {
 		return fmt.Errorf("healthChecks must be an object")
 	}
-	if runPerformance, ok := healthChecks["runPerformance"].(bool); ok {
+
+	if val, exists := healthChecks["runPerformance"]; exists {
+		runPerformance, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("healthChecks.runPerformance must be a boolean")
+		}
 		cfg.HealthChecks.RunPerformance = runPerformance
 	}
-	if runSpeedtest, ok := healthChecks["runSpeedtest"].(bool); ok {
+
+	if val, exists := healthChecks["runSpeedtest"]; exists {
+		runSpeedtest, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("healthChecks.runSpeedtest must be a boolean")
+		}
 		cfg.HealthChecks.RunSpeedtest = runSpeedtest
 	}
-	if runIperf, ok := healthChecks["runIperf"].(bool); ok {
+
+	if val, exists := healthChecks["runIperf"]; exists {
+		runIperf, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("healthChecks.runIperf must be a boolean")
+		}
 		cfg.HealthChecks.RunIperf = runIperf
 	}
-	if runDiscovery, ok := healthChecks["runDiscovery"].(bool); ok {
+
+	if val, exists := healthChecks["runDiscovery"]; exists {
+		runDiscovery, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("healthChecks.runDiscovery must be a boolean")
+		}
 		cfg.HealthChecks.RunDiscovery = runDiscovery
 	}
+
 	return nil
 }
 
 // applySpeedtestUpdates applies speedtest configuration updates.
-// Returns error if speedtest key exists but has invalid type (fixes #784).
+// Returns error if speedtest key exists but has invalid type (fixes #784, G3).
 func applySpeedtestUpdates(updates map[string]interface{}, cfg *config.Config) error {
 	val, exists := updates["speedtest"]
 	if !exists {
@@ -543,17 +682,28 @@ func applySpeedtestUpdates(updates map[string]interface{}, cfg *config.Config) e
 	if !ok {
 		return fmt.Errorf("speedtest must be an object")
 	}
-	if serverID, ok := speedtest["serverId"].(string); ok {
+
+	if val, exists := speedtest["serverId"]; exists {
+		serverID, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("speedtest.serverId must be a string")
+		}
 		cfg.Speedtest.ServerID = serverID
 	}
-	if autoRunOnLink, ok := speedtest["autoRunOnLink"].(bool); ok {
+
+	if val, exists := speedtest["autoRunOnLink"]; exists {
+		autoRunOnLink, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("speedtest.autoRunOnLink must be a boolean")
+		}
 		cfg.Speedtest.AutoRunOnLink = autoRunOnLink
 	}
+
 	return nil
 }
 
 // applyIperfUpdates applies iperf configuration updates.
-// Returns error if iperf key exists but has invalid type (fixes #784).
+// Returns error if iperf key exists but has invalid type (fixes #784, G3).
 func applyIperfUpdates(updates map[string]interface{}, cfg *config.Config) error {
 	val, exists := updates["iperf"]
 	if !exists {
@@ -563,41 +713,82 @@ func applyIperfUpdates(updates map[string]interface{}, cfg *config.Config) error
 	if !ok {
 		return fmt.Errorf("iperf must be an object")
 	}
-	if autoRunOnLink, ok := iperf["autoRunOnLink"].(bool); ok {
+
+	if val, exists := iperf["autoRunOnLink"]; exists {
+		autoRunOnLink, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("iperf.autoRunOnLink must be a boolean")
+		}
 		cfg.Iperf.AutoRunOnLink = autoRunOnLink
 	}
-	if server, ok := iperf["server"].(string); ok {
+
+	if val, exists := iperf["server"]; exists {
+		server, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("iperf.server must be a string")
+		}
 		cfg.Iperf.Server = server
 	}
-	if port, ok := iperf["port"].(float64); ok {
+
+	if val, exists := iperf["port"]; exists {
+		port, ok := val.(float64)
+		if !ok {
+			return fmt.Errorf("iperf.port must be a number")
+		}
 		p := int(port)
 		if validation.ValidatePort(p) == nil {
 			cfg.Iperf.Port = p
 		}
 	}
-	if protocol, ok := iperf["protocol"].(string); ok {
+
+	if val, exists := iperf["protocol"]; exists {
+		protocol, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("iperf.protocol must be a string")
+		}
 		cfg.Iperf.Protocol = protocol
 	}
-	if direction, ok := iperf["direction"].(string); ok {
+
+	if val, exists := iperf["direction"]; exists {
+		direction, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("iperf.direction must be a string")
+		}
 		cfg.Iperf.Direction = direction
 	}
-	if duration, ok := iperf["duration"].(float64); ok {
+
+	if val, exists := iperf["duration"]; exists {
+		duration, ok := val.(float64)
+		if !ok {
+			return fmt.Errorf("iperf.duration must be a number")
+		}
 		cfg.Iperf.Duration = int(duration)
 	}
-	if serverPort, ok := iperf["serverPort"].(float64); ok {
+
+	if val, exists := iperf["serverPort"]; exists {
+		serverPort, ok := val.(float64)
+		if !ok {
+			return fmt.Errorf("iperf.serverPort must be a number")
+		}
 		p := int(serverPort)
 		if validation.ValidatePort(p) == nil {
 			cfg.Iperf.ServerPort = p
 		}
 	}
-	if enableServer, ok := iperf["enableServer"].(bool); ok {
+
+	if val, exists := iperf["enableServer"]; exists {
+		enableServer, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("iperf.enableServer must be a boolean")
+		}
 		cfg.Iperf.EnableServer = enableServer
 	}
+
 	return nil
 }
 
 // applyFABOptionsUpdates applies FAB options updates.
-// Returns error if fabOptions key exists but has invalid type (fixes #784).
+// Returns error if fabOptions key exists but has invalid type (fixes #784, G3).
 func applyFABOptionsUpdates(updates map[string]interface{}, cfg *config.Config) error {
 	val, exists := updates["fabOptions"]
 	if !exists {
@@ -607,47 +798,108 @@ func applyFABOptionsUpdates(updates map[string]interface{}, cfg *config.Config) 
 	if !ok {
 		return fmt.Errorf("fabOptions must be an object")
 	}
-	if runLink, ok := fabOptions["runLink"].(bool); ok {
+
+	if val, exists := fabOptions["runLink"]; exists {
+		runLink, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runLink must be a boolean")
+		}
 		cfg.FABOptions.RunLink = runLink
 	}
-	if runSwitch, ok := fabOptions["runSwitch"].(bool); ok {
+
+	if val, exists := fabOptions["runSwitch"]; exists {
+		runSwitch, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runSwitch must be a boolean")
+		}
 		cfg.FABOptions.RunSwitch = runSwitch
 	}
-	if runVLAN, ok := fabOptions["runVLAN"].(bool); ok {
+
+	if val, exists := fabOptions["runVLAN"]; exists {
+		runVLAN, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runVLAN must be a boolean")
+		}
 		cfg.FABOptions.RunVLAN = runVLAN
 	}
-	if runIPConfig, ok := fabOptions["runIPConfig"].(bool); ok {
+
+	if val, exists := fabOptions["runIPConfig"]; exists {
+		runIPConfig, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runIPConfig must be a boolean")
+		}
 		cfg.FABOptions.RunIPConfig = runIPConfig
 	}
-	if runGateway, ok := fabOptions["runGateway"].(bool); ok {
+
+	if val, exists := fabOptions["runGateway"]; exists {
+		runGateway, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runGateway must be a boolean")
+		}
 		cfg.FABOptions.RunGateway = runGateway
 	}
-	if runDNS, ok := fabOptions["runDNS"].(bool); ok {
+
+	if val, exists := fabOptions["runDNS"]; exists {
+		runDNS, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runDNS must be a boolean")
+		}
 		cfg.FABOptions.RunDNS = runDNS
 	}
-	if runHealthChecks, ok := fabOptions["runHealthChecks"].(bool); ok {
+
+	if val, exists := fabOptions["runHealthChecks"]; exists {
+		runHealthChecks, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runHealthChecks must be a boolean")
+		}
 		cfg.FABOptions.RunHealthChecks = runHealthChecks
 	}
-	if runNetworkDiscovery, ok := fabOptions["runNetworkDiscovery"].(bool); ok {
+
+	if val, exists := fabOptions["runNetworkDiscovery"]; exists {
+		runNetworkDiscovery, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runNetworkDiscovery must be a boolean")
+		}
 		cfg.FABOptions.RunNetworkDiscovery = runNetworkDiscovery
 	}
-	if runSpeedtest, ok := fabOptions["runSpeedtest"].(bool); ok {
+
+	if val, exists := fabOptions["runSpeedtest"]; exists {
+		runSpeedtest, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runSpeedtest must be a boolean")
+		}
 		cfg.FABOptions.RunSpeedtest = runSpeedtest
 	}
-	if runIperf, ok := fabOptions["runIperf"].(bool); ok {
+
+	if val, exists := fabOptions["runIperf"]; exists {
+		runIperf, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runIperf must be a boolean")
+		}
 		cfg.FABOptions.RunIperf = runIperf
 	}
-	if runPerformance, ok := fabOptions["runPerformance"].(bool); ok {
+
+	if val, exists := fabOptions["runPerformance"]; exists {
+		runPerformance, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.runPerformance must be a boolean")
+		}
 		cfg.FABOptions.RunPerformance = runPerformance
 	}
-	if autoScanOnLink, ok := fabOptions["autoScanOnLink"].(bool); ok {
+
+	if val, exists := fabOptions["autoScanOnLink"]; exists {
+		autoScanOnLink, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("fabOptions.autoScanOnLink must be a boolean")
+		}
 		cfg.FABOptions.AutoScanOnLink = autoScanOnLink
 	}
+
 	return nil
 }
 
 // applyDisplayOptionsUpdates applies display options updates.
-// Returns error if displayOptions key exists but has invalid type (fixes #784).
+// Returns error if displayOptions key exists but has invalid type (fixes #784, G3).
 func applyDisplayOptionsUpdates(updates map[string]interface{}, cfg *config.Config) error {
 	val, exists := updates["displayOptions"]
 	if !exists {
@@ -657,14 +909,25 @@ func applyDisplayOptionsUpdates(updates map[string]interface{}, cfg *config.Conf
 	if !ok {
 		return fmt.Errorf("displayOptions must be an object")
 	}
-	if showPublicIP, ok := displayOptions["showPublicIP"].(bool); ok {
+
+	if val, exists := displayOptions["showPublicIP"]; exists {
+		showPublicIP, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("displayOptions.showPublicIP must be a boolean")
+		}
 		cfg.DisplayOptions.ShowPublicIP = showPublicIP
 	}
-	if unitSystem, ok := displayOptions["unitSystem"].(string); ok {
+
+	if val, exists := displayOptions["unitSystem"]; exists {
+		unitSystem, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("displayOptions.unitSystem must be a string")
+		}
 		// Validate unit system (only "sae" or "metric" allowed)
 		if unitSystem == "sae" || unitSystem == "metric" {
 			cfg.DisplayOptions.UnitSystem = unitSystem
 		}
 	}
+
 	return nil
 }

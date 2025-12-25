@@ -203,8 +203,9 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 		// Trigger a security scan
 		var req DNSSecurityScanRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logger.Warn("Invalid request body for DNS security scan", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error())
+				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #H7
 			return
 		}
 
@@ -235,8 +236,9 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 		// Run concurrent scans
 		results, err := s.dnsSecurityScanner.ScanServers(r.Context(), req.Servers, 5)
 		if err != nil {
+			logger.Error("DNS security scan failed", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, localizer.T("errors.health.scanFailed"), err.Error())
+				ErrCodeInternal, localizer.T("errors.health.scanFailed"), "") // fixes #H7
 			return
 		}
 
@@ -274,8 +276,9 @@ func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Reques
 	case http.MethodPut:
 		var newConfig dns.SecurityScanConfig
 		if err := json.NewDecoder(r.Body).Decode(&newConfig); err != nil {
+			logger.Warn("Invalid request body for DNS security config", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error())
+				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #H7
 			return
 		}
 
@@ -450,7 +453,8 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 
 	var req TestsSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -554,7 +558,8 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	// Save config to file (no longer holding lock) - fixes #735
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), err.Error())
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "") // fixes #H7
 		return
 	}
 
@@ -650,7 +655,7 @@ func (s *Server) runPingTests() []CustomTestResult {
 
 		if err != nil {
 			testResult.Success = false
-			testResult.Error = err.Error()
+			testResult.Error = "Ping test failed"
 			testResult.TestStatus = statusError
 		} else {
 			testResult.Success = pingStats.PacketLoss < 100
@@ -698,7 +703,7 @@ func (s *Server) runTCPTests(ctx context.Context) []CustomTestResult {
 
 		if err != nil {
 			testResult.Success = false
-			testResult.Error = err.Error()
+			testResult.Error = "TCP connection test failed"
 			testResult.TestStatus = statusError
 		} else {
 			testResult.Success = true
@@ -730,7 +735,7 @@ func (s *Server) runUDPTests() []CustomTestResult {
 
 		if err != nil {
 			testResult.Success = false
-			testResult.Error = err.Error()
+			testResult.Error = "UDP connection test failed"
 			testResult.TestStatus = statusError
 		} else {
 			testResult.Success = true
@@ -794,7 +799,7 @@ func (s *Server) runSingleHTTPTest(ctx context.Context, endpoint config.HTTPEndp
 
 	if err != nil {
 		testResult.Success = false
-		testResult.Error = err.Error()
+		testResult.Error = "HTTP request failed"
 		testResult.TestStatus = statusError
 	} else {
 		testResult.Success = true
@@ -1347,8 +1352,9 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	resp := IperfInfoResponse{}
 	iperfVersion, err := iperf.GetVersion()
 	if err != nil {
+		logger.Warn("Failed to get iperf version", "error", err)
 		resp.Installed = false
-		resp.Error = err.Error()
+		resp.Error = "iperf3 not found or not accessible"
 	} else {
 		resp.Installed = true
 		resp.Version = iperfVersion
@@ -1441,12 +1447,14 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 
 	var req IperfClientRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
 	if err := validateIperfClientRequest(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.health.iperfValidationFailed"), err.Error()) // fixes #694
+		logger.Warn("iPerf validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.health.iperfValidationFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -1545,7 +1553,8 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 
 	var req IperfServerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -1556,7 +1565,8 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			port = 5201
 		}
 		if err := s.iperfManager.StartServer(port); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.health.iperfServerStartFailed"), err.Error()) // fixes #694
+			logger.Error("Failed to start iPerf server", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.health.iperfServerStartFailed"), "") // fixes #694, #H7
 			return
 		}
 		sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
@@ -1565,7 +1575,8 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 		})
 	case "stop":
 		if err := s.iperfManager.StopServer(); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.health.iperfServerStopFailed"), err.Error()) // fixes #694
+			logger.Error("Failed to stop iPerf server", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.health.iperfServerStopFailed"), "") // fixes #694, #H7
 			return
 		}
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{

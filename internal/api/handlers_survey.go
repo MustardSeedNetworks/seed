@@ -46,13 +46,15 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 
 	var req CreateSurveyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate survey name (fixes #695)
 	if err := validation.ValidateStringLength(req.Name, "name", 1, 100); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -79,7 +81,8 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 	// Validate interface name if provided (fixes #695)
 	if req.Interface != "" {
 		if err := validation.ValidateInterface(req.Interface); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+			logger.Warn("Survey validation failed", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 			return
 		}
 	} else {
@@ -91,7 +94,8 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 	newSurvey, err := s.surveyManager.CreateSurvey(req.Name, req.Description, req.Interface, survey.Type(req.SurveyType))
 	if err != nil {
 		logger.Error("Failed to create survey", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), err.Error()) // fixes #694
+		logger.Error("Internal error", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), "") // fixes #694, #H7
 		return
 	}
 
@@ -123,7 +127,8 @@ func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
 
 	surveyData, err := s.surveyManager.GetSurvey(id)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
+		logger.Warn("Survey not found", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), "") // fixes #694, #H7
 		return
 	}
 
@@ -141,7 +146,8 @@ func (s *Server) deleteSurvey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.DeleteSurvey(id); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
+		logger.Warn("Survey not found", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), "") // fixes #694, #H7
 		return
 	}
 
@@ -165,14 +171,16 @@ func (s *Server) handleSurveyStateChange(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := action(id); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.startFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to start survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.startFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Return the updated survey so frontend can update its state
 	updatedSurvey, err := s.surveyManager.GetSurvey(id)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to get survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -221,7 +229,8 @@ func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 
 	var req AddSampleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -269,7 +278,8 @@ func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.AddSample(id, req.X, req.Y, sampleData); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Error("Failed to add sample to survey", "error", err, "survey_id", id)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -311,29 +321,34 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateFloorPlanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate image data URL (fixes #695)
 	if err := validation.ValidateImageDataURL(req.ImageData, int(MaxBodySizeFloorPlan)); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate dimensions (fixes #695)
 	if err := validation.ValidateIntRange(req.Width, "width", 1, 10000); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 	if err := validation.ValidateIntRange(req.Height, "height", 1, 10000); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate scale (fixes #695)
 	if err := validation.ValidateFloatRange(req.ScaleM, "scaleM", 0.01, 1000.0); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -345,14 +360,16 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.UpdateFloorPlan(id, floorPlan); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
+		logger.Warn("Survey not found", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), "") // fixes #694, #H7
 		return
 	}
 
 	// Return the updated survey so the frontend can update its state
 	updatedSurvey, err := s.surveyManager.GetSurvey(id)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to get survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -387,7 +404,8 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateSurveySettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -409,7 +427,8 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 	// Validate iPerf server if provided (fixes #695)
 	if req.IperfServer != "" {
 		if err := validation.ValidateServerAddress(req.IperfServer); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+			logger.Warn("Survey validation failed", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 			return
 		}
 	}
@@ -417,20 +436,23 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 	// Validate test duration (fixes #695)
 	if req.TestDuration != 0 {
 		if err := validation.ValidateIntRange(req.TestDuration, "testDuration", 1, 300); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+			logger.Warn("Survey validation failed", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 			return
 		}
 	}
 
 	if err := s.surveyManager.UpdateSurveySettings(id, surveyType, req.IperfServer, req.TestDuration); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.updateFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to update survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.updateFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Return the updated survey so the frontend can update its state
 	settingsUpdatedSurvey, err := s.surveyManager.GetSurvey(id)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to get survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -462,21 +484,24 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 
 	// Parse multipart form
 	if err := r.ParseMultipartForm(maxFileSize); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.fileTooLarge"), err.Error()) // fixes #694
+		logger.Warn("Survey file too large", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.fileTooLarge"), "") // fixes #694, #H7
 		return
 	}
 
 	// Get the uploaded file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.noFileProvided"), err.Error()) // fixes #694
+		logger.Warn("No file provided for survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.noFileProvided"), "") // fixes #694, #H7
 		return
 	}
 	defer file.Close()
 
 	// Validate filename (fixes #695)
 	if err := validation.ValidateFilename(handler.Filename, "filename"); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -489,21 +514,24 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 	// Read the file contents
 	data, err := io.ReadAll(file)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.readFileFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to read survey file", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.readFileFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Parse the AirMapper file
 	ampFile, err := survey.ParseAirMapperFile(data)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.parseFileFailed"), err.Error()) // fixes #694
+		logger.Warn("Failed to parse survey file", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.parseFileFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Convert to import result
 	result, err := ampFile.ToImportResult()
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.processFileFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to process survey file", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.processFileFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -551,7 +579,8 @@ func (s *Server) getSurveyDeadZones(w http.ResponseWriter, r *http.Request) {
 			"survey_id", id,
 			"threshold", threshold,
 			"error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.deadZonesFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to calculate dead zones", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.deadZonesFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -618,7 +647,8 @@ func (s *Server) getSurveyHeatmap(w http.ResponseWriter, r *http.Request) {
 			"survey_id", id,
 			"type", config.Type,
 			"error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.heatmapFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to generate heatmap", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.heatmapFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -697,7 +727,8 @@ func (s *Server) listFloors(w http.ResponseWriter, r *http.Request) {
 
 	floors, err := s.surveyManager.GetFloors(surveyID)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
+		logger.Warn("Survey not found", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), "") // fixes #694, #H7
 		return
 	}
 
@@ -721,26 +752,30 @@ func (s *Server) addFloor(w http.ResponseWriter, r *http.Request) {
 
 	var req AddFloorRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate floor name
 	if err := validation.ValidateStringLength(req.Name, "name", 1, 50); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate floor level
 	if err := validation.ValidateIntRange(req.Level, "level", -10, 200); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	floor, err := s.surveyManager.AddFloor(surveyID, req.Name, req.Level)
 	if err != nil {
 		logger.Error("Failed to add floor", "survey_id", surveyID, "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), err.Error()) // fixes #694
+		logger.Error("Internal error", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), "") // fixes #694, #H7
 		return
 	}
 
@@ -767,7 +802,8 @@ func (s *Server) getFloor(w http.ResponseWriter, r *http.Request) {
 
 	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
+		logger.Warn("Survey not found", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), "") // fixes #694, #H7
 		return
 	}
 
@@ -803,32 +839,37 @@ func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateFloorRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate floor name
 	if err := validation.ValidateStringLength(req.Name, "name", 1, 50); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate floor level
 	if err := validation.ValidateIntRange(req.Level, "level", -10, 200); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	if err := s.surveyManager.UpdateFloor(surveyID, floorID, req.Name, req.Level); err != nil {
 		logger.Error("Failed to update floor", "survey_id", surveyID, "floor_id", floorID, "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.updateFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to update survey metadata", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.updateFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Return updated floor
 	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to get survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -855,7 +896,8 @@ func (s *Server) deleteFloor(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.surveyManager.DeleteFloor(surveyID, floorID); err != nil {
 		logger.Error("Failed to delete floor", "survey_id", surveyID, "floor_id", floorID, "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.deleteFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to delete survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.deleteFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -885,7 +927,8 @@ func (s *Server) setActiveFloor(w http.ResponseWriter, r *http.Request) {
 
 	var req SetActiveFloorRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -896,14 +939,16 @@ func (s *Server) setActiveFloor(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.surveyManager.SetActiveFloor(surveyID, req.FloorID); err != nil {
 		logger.Error("Failed to set active floor", "survey_id", surveyID, "floor_id", req.FloorID, "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.updateFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to update survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.updateFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Return the updated survey
 	updatedSurvey, err := s.surveyManager.GetSurvey(surveyID)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to get survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -940,29 +985,34 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateFloorPlanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate image data URL
 	if err := validation.ValidateImageDataURL(req.ImageData, int(MaxBodySizeFloorPlan)); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate dimensions
 	if err := validation.ValidateIntRange(req.Width, "width", 1, 10000); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 	if err := validation.ValidateIntRange(req.Height, "height", 1, 10000); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
 	// Validate scale
 	if err := validation.ValidateFloatRange(req.ScaleM, "scaleM", 0.01, 1000.0); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), err.Error()) // fixes #694
+		logger.Warn("Survey validation failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -974,14 +1024,16 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.UpdateFloorPlanByFloorID(surveyID, floorID, floorPlan); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), err.Error()) // fixes #694
+		logger.Warn("Survey not found", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.survey.notFound"), "") // fixes #694, #H7
 		return
 	}
 
 	// Return updated floor
 	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to get survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.getSurveyFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -1018,7 +1070,8 @@ func (s *Server) addFloorSample(w http.ResponseWriter, r *http.Request) {
 
 	var req AddFloorSampleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -1046,7 +1099,8 @@ func (s *Server) addFloorSample(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.AddSampleToFloor(surveyID, floorID, req.X, req.Y, sampleData); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+		logger.Error("Failed to add sample to floor", "error", err, "survey_id", surveyID, "floor_id", floorID)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
 	}
 
@@ -1090,7 +1144,8 @@ func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
 	var req GenerateReportRequest
 	if r.ContentLength > 0 {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), err.Error()) // fixes #694
+			logger.Warn("Invalid request body for report generation", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 			return
 		}
 	}
@@ -1121,7 +1176,8 @@ func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
 		logger.Error("Failed to generate report",
 			"survey_id", surveyID,
 			"error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.exportFailed"), err.Error()) // fixes #694
+		logger.Error("Failed to export survey", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.exportFailed"), "") // fixes #694, #H7
 		return
 	}
 
