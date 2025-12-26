@@ -88,6 +88,7 @@ type Server struct {
 	redirectServerErr   chan error          // Error channel for redirect server
 	trustedProxies      *TrustedProxies     // Trusted proxy IPs for X-Forwarded-For handling (#H4)
 	pipeline            *discovery.Pipeline // Phased discovery pipeline orchestrator
+	acmeChallengeServer *http.Server        // HTTP-01 challenge server for ACME (fixes #837)
 }
 
 // getClientIP extracts the client IP from a request, considering trusted proxies.
@@ -870,16 +871,15 @@ func (s *Server) startHTTPSWithACME() error {
 
 	// Start HTTP-01 challenge handler on port 80
 	// This is required for Let's Encrypt domain validation
+	// Store reference so it can be shut down properly (fixes #837)
+	s.acmeChallengeServer = &http.Server{
+		Addr:              ":80",
+		Handler:           manager.HTTPHandler(nil),
+		ReadHeaderTimeout: 10 * time.Second,
+	}
 	go func() {
-		h := manager.HTTPHandler(nil)
 		slog.Info("Starting HTTP-01 challenge handler", "addr", ":80")
-		// HTTP-01 handler only serves ACME challenges, timeouts not critical
-		challengeServer := &http.Server{
-			Addr:              ":80",
-			Handler:           h,
-			ReadHeaderTimeout: 10 * time.Second,
-		}
-		if err := challengeServer.ListenAndServe(); err != nil {
+		if err := s.acmeChallengeServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("HTTP-01 handler error", "error", err)
 		}
 	}()
@@ -968,6 +968,14 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		slog.Info("Shutting down HTTP redirect server...")
 		if err := s.redirectServer.Shutdown(ctx); err != nil {
 			slog.Error("Error shutting down redirect server", "error", err)
+		}
+	}
+
+	// Shutdown ACME HTTP-01 challenge server if running (fixes #837)
+	if s.acmeChallengeServer != nil {
+		slog.Info("Shutting down ACME challenge server...")
+		if err := s.acmeChallengeServer.Shutdown(ctx); err != nil {
+			slog.Error("Error shutting down ACME challenge server", "error", err)
 		}
 	}
 

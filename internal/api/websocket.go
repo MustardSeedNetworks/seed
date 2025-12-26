@@ -684,14 +684,19 @@ func (s *Server) sendInitialState(client *Client) {
 // close safely closes the client connection exactly once.
 func (c *Client) close() {
 	c.closeOnce.Do(func() {
-		// Use non-blocking send with timeout to prevent deadlock (fixes #686)
+		// Close connection first to force writePump to exit via conn.Close() (fixes #835)
+		// This ensures the writePump goroutine doesn't block forever on c.send
+		c.conn.Close()
+
+		// Then try to unregister - if this times out, the client is already
+		// disconnected so it won't receive messages anyway (fixes #686)
 		select {
 		case c.hub.unregister <- c:
 			// Successfully sent unregister request
 		case <-time.After(100 * time.Millisecond):
-			// Channel full or hub not responding, proceed with close anyway
+			// Channel full or hub not responding, client already disconnected
+			slog.Debug("Client unregister timeout, connection already closed")
 		}
-		c.conn.Close()
 	})
 }
 

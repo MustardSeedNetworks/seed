@@ -334,6 +334,32 @@ func (rd *RogueDetector) ClearDetectedServers() {
 	rd.detectedServers = make(map[string]*RogueServer)
 }
 
+// SetInterface changes the monitored network interface.
+// If the detector is running, it will be stopped and restarted on the new interface.
+// This ensures rogue DHCP detection continues on the correct network segment. (fixes #838)
+func (rd *RogueDetector) SetInterface(iface string) error {
+	rd.mu.Lock()
+	wasRunning := rd.running
+	rd.mu.Unlock()
+
+	if wasRunning {
+		if err := rd.Stop(); err != nil {
+			return fmt.Errorf("failed to stop before interface change: %w", err)
+		}
+	}
+
+	rd.mu.Lock()
+	rd.config.Interface = iface
+	rd.mu.Unlock()
+
+	if wasRunning {
+		if err := rd.Start(); err != nil {
+			return fmt.Errorf("failed to restart on new interface: %w", err)
+		}
+	}
+	return nil
+}
+
 // GetConfig returns the current detector configuration.
 func (rd *RogueDetector) GetConfig() *RogueDetectorConfig {
 	rd.mu.RLock()

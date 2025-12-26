@@ -6,7 +6,9 @@ package discovery
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net"
 	"sync"
 	"time"
 )
@@ -120,8 +122,9 @@ type DeviceDiscovery struct {
 	devices         map[string]*DiscoveredDevice // Key by MAC
 	lastScan        time.Time
 	scanning        bool
-	nameResolution  bool          // Enable NetBIOS/mDNS name resolution
-	deviceTTL       time.Duration // How long to keep stale devices (fixes #829)
+	nameResolution  bool           // Enable NetBIOS/mDNS name resolution
+	deviceTTL       time.Duration  // How long to keep stale devices (fixes #829)
+	nameResWg       sync.WaitGroup // Track name resolution goroutines (fixes #836)
 }
 
 // NewDeviceDiscovery creates a new device discovery aggregator.
@@ -208,6 +211,9 @@ func (d *DeviceDiscovery) Start() error {
 
 // Stop stops all discovery.
 func (d *DeviceDiscovery) Stop() {
+	// Wait for name resolution goroutines to complete (fixes #836)
+	d.nameResWg.Wait()
+
 	_ = d.ndpScanner.Stop()  //nolint:errcheck // Best-effort cleanup
 	_ = d.arpScanner.Close() // Close ICMP pinger (fixes #818)
 	d.mdnsListener.Stop()
@@ -215,12 +221,24 @@ func (d *DeviceDiscovery) Stop() {
 }
 
 // SetInterface updates the interface for all discovery methods.
+// Validates the interface exists before updating. (fixes #840)
 func (d *DeviceDiscovery) SetInterface(name string) error {
+	// Validate interface exists before updating any components (fixes #840)
+	if _, err := net.InterfaceByName(name); err != nil {
+		return fmt.Errorf("invalid interface %s: %w", name, err)
+	}
+
 	d.mu.Lock()
 	d.interfaceName = name
 	d.mu.Unlock()
 
+	// Update all sub-components that can accept interface changes (fixes #840)
 	d.arpScanner.SetInterface(name)
+
+	// Note: NDPScanner, MDNSResolver, MDNSListener, and NetBIOSResolver
+	// don't have SetInterface methods - they're bound to the original interface.
+	// For a complete interface change, Stop() and recreate the DeviceDiscovery.
+
 	return d.protoManager.SetInterface(name)
 }
 
@@ -260,9 +278,17 @@ func (d *DeviceDiscovery) Scan(ctx context.Context) error {
 	d.aggregateResults()
 
 	// Trigger name resolution in background (NetBIOS for Windows, mDNS for Apple/Linux)
+	// Track with WaitGroup so Stop() can wait for completion (fixes #836)
 	if d.nameResolution {
-		go d.ResolveNetBIOSNames(ctx)
-		go d.ResolveMDNSNames(ctx)
+		d.nameResWg.Add(2)
+		go func() {
+			defer d.nameResWg.Done()
+			d.ResolveNetBIOSNames(ctx)
+		}()
+		go func() {
+			defer d.nameResWg.Done()
+			d.ResolveMDNSNames(ctx)
+		}()
 	}
 
 	return nil

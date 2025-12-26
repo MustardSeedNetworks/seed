@@ -180,9 +180,16 @@ func (s *ARPScanner) getSubnet() (*net.IPNet, net.IP, error) {
 }
 
 // incrementIP adds n to an IP address.
+// n must be non-negative and at most 0xFFFFFF (max hosts in /8 subnet).
+// Returns nil if n is out of bounds or ip is not IPv4. (fixes #839)
 func incrementIP(ip net.IP, n int) net.IP {
 	ip = ip.To4()
 	if ip == nil {
+		return nil
+	}
+	// Validate n is within reasonable bounds for IP increment (fixes #839)
+	// Max reasonable increment for a /8 subnet is 16777214 (2^24 - 2)
+	if n < 0 || n > 0xFFFFFF {
 		return nil
 	}
 	result := make(net.IP, 4)
