@@ -305,17 +305,29 @@ func (m *Manager) GetNeighbors() []*Neighbor {
 
 // GetLLDPNeighbors returns only LLDP neighbors.
 func (m *Manager) GetLLDPNeighbors() []*LLDPNeighbor {
-	return m.lldp.GetNeighbors()
+	// Copy capture reference under lock to avoid race with SetInterface (fixes #843)
+	m.mu.RLock()
+	lldp := m.lldp
+	m.mu.RUnlock()
+	return lldp.GetNeighbors()
 }
 
 // GetCDPNeighbors returns only CDP neighbors.
 func (m *Manager) GetCDPNeighbors() []*CDPNeighbor {
-	return m.cdp.GetNeighbors()
+	// Copy capture reference under lock to avoid race with SetInterface (fixes #843)
+	m.mu.RLock()
+	cdp := m.cdp
+	m.mu.RUnlock()
+	return cdp.GetNeighbors()
 }
 
 // GetEDPNeighbors returns only EDP neighbors.
 func (m *Manager) GetEDPNeighbors() []*EDPNeighbor {
-	return m.edp.GetNeighbors()
+	// Copy capture reference under lock to avoid race with SetInterface (fixes #843)
+	m.mu.RLock()
+	edp := m.edp
+	m.mu.RUnlock()
+	return edp.GetNeighbors()
 }
 
 // SetInterface changes the capture interface.

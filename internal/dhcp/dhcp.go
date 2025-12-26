@@ -83,6 +83,7 @@ type Monitor struct {
 	transactions  map[uint32]*Transaction
 	stopChan      chan struct{}
 	handle        *pcap.Handle
+	cleanupDone   chan struct{} // Signals cleanup goroutine exit (fixes #841)
 }
 
 // NewMonitor creates a new DHCP monitor.
@@ -119,10 +120,14 @@ func (m *Monitor) Start() error {
 
 	m.handle = handle
 	m.stopChan = make(chan struct{})
+	m.cleanupDone = make(chan struct{})
 	m.running = true
 
 	// Start capture goroutine
 	go m.capturePackets()
+
+	// Start stale transaction cleanup goroutine (fixes #841)
+	go m.cleanupStaleTransactions()
 
 	return nil
 }
@@ -280,6 +285,36 @@ func (m *Monitor) Stop() {
 	if m.handle != nil {
 		m.handle.Close()
 		m.handle = nil
+	}
+
+	// Wait for cleanup goroutine to exit (fixes #841)
+	if m.cleanupDone != nil {
+		<-m.cleanupDone
+		m.cleanupDone = nil
+	}
+}
+
+// cleanupStaleTransactions periodically removes incomplete transactions older than 2 minutes.
+// This prevents unbounded memory growth from incomplete DHCP transactions (fixes #841).
+func (m *Monitor) cleanupStaleTransactions() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	defer close(m.cleanupDone)
+
+	for {
+		select {
+		case <-m.stopChan:
+			return
+		case <-ticker.C:
+			m.mu.Lock()
+			cutoff := time.Now().Add(-2 * time.Minute)
+			for xid, tx := range m.transactions {
+				if tx.Started.Before(cutoff) && !tx.Complete {
+					delete(m.transactions, xid)
+				}
+			}
+			m.mu.Unlock()
+		}
 	}
 }
 
