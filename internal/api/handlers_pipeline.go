@@ -40,7 +40,7 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 
 	// Update config if provided
 	if req.Config != nil {
-		if err := s.pipeline.UpdateConfig(*req.Config); err != nil {
+		if err := s.pipeline.UpdateConfig(req.Config); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -72,6 +72,18 @@ func (s *Server) handlePipelineCancel(w http.ResponseWriter, _ *http.Request) {
 	sendJSONResponse(w, nil, http.StatusOK, map[string]string{"status": "canceled"})
 }
 
+// handlePipelineConfigRoute routes /api/pipeline/config to GET or PUT handlers.
+func (s *Server) handlePipelineConfigRoute(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.handlePipelineConfig(w, r)
+	case http.MethodPut:
+		s.handlePipelineConfigUpdate(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 // handlePipelineConfig returns the current pipeline configuration (GET /api/pipeline/config).
 func (s *Server) handlePipelineConfig(w http.ResponseWriter, _ *http.Request) {
 	if s.pipeline == nil {
@@ -84,7 +96,7 @@ func (s *Server) handlePipelineConfig(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handlePipelineConfigUpdate updates the pipeline configuration (PUT /api/pipeline/config).
-func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Request) { //nolint:unused // Reserved for future use
+func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	if s.pipeline == nil {
 		http.Error(w, "Pipeline not initialized", http.StatusServiceUnavailable)
 		return
@@ -106,7 +118,7 @@ func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	if err := s.pipeline.UpdateConfig(config); err != nil {
+	if err := s.pipeline.UpdateConfig(&config); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

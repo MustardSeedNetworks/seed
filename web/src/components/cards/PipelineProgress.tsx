@@ -1,0 +1,250 @@
+/**
+ * Pipeline Progress Component
+ *
+ * Displays multi-phase discovery pipeline progress with:
+ * - Phase steps with icons and status indicators
+ * - Progress bar for current phase
+ * - Current target being processed
+ * - Elapsed time and cancel button
+ */
+import { memo } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Search,
+  FileText,
+  Scan,
+  Shield,
+  Check,
+  Loader2,
+  Circle,
+  X,
+} from "lucide-react";
+import {
+  cn,
+  spacing,
+  radius,
+  button,
+  icon as iconTokens,
+} from "../../styles/theme";
+import type { PipelineStatus } from "../../hooks/usePipelineStatus";
+
+interface PipelineProgressProps {
+  status: PipelineStatus;
+  onCancel?: () => void;
+}
+
+// Phase metadata for display
+const PHASE_CONFIG: Record<
+  string,
+  { icon: React.ComponentType<{ className?: string }>; labelKey: string }
+> = {
+  enumeration: { icon: Search, labelKey: "pipeline.phases.enumeration" },
+  resolution: { icon: FileText, labelKey: "pipeline.phases.resolution" },
+  scanning: { icon: Scan, labelKey: "pipeline.phases.scanning" },
+  assessment: { icon: Shield, labelKey: "pipeline.phases.assessment" },
+};
+
+// Map phase name to display name (fallback for missing i18n)
+const PHASE_DISPLAY_NAMES: Record<string, string> = {
+  enumeration: "Enumeration",
+  resolution: "Resolution",
+  scanning: "Scanning",
+  assessment: "Assessment",
+};
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
+export const PipelineProgress = memo(function PipelineProgress({
+  status,
+  onCancel,
+}: PipelineProgressProps) {
+  const { t } = useTranslation("cards");
+
+  const isRunning =
+    status.state === "enumerating" ||
+    status.state === "resolving" ||
+    status.state === "scanning" ||
+    status.state === "assessing";
+
+  const currentPhaseIndex = status.enabledPhases.indexOf(status.currentPhase);
+
+  return (
+    <div className={cn("space-y-3", spacing.pad.sm)}>
+      {/* Current phase header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isRunning && (
+            <Loader2
+              className={cn(
+                iconTokens.size.sm,
+                "text-brand-primary animate-spin"
+              )}
+            />
+          )}
+          <span className="body-small font-medium text-text-primary">
+            {t("pipeline.phaseProgress", {
+              current: status.phaseNumber,
+              total: status.totalPhases,
+              defaultValue: `Phase ${status.phaseNumber} of ${status.totalPhases}`,
+            })}
+            : {PHASE_DISPLAY_NAMES[status.currentPhase] || status.currentPhase}
+          </span>
+        </div>
+        {isRunning && onCancel && (
+          <button
+            onClick={onCancel}
+            className={cn(
+              button.base,
+              button.size.sm,
+              button.variant.secondary,
+              "flex items-center gap-1"
+            )}
+            aria-label={t("pipeline.cancel", { defaultValue: "Cancel" })}
+          >
+            <X className={iconTokens.size.xs} />
+            <span className="hidden sm:inline">
+              {t("pipeline.cancel", { defaultValue: "Cancel" })}
+            </span>
+          </button>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="space-y-1">
+        <div
+          className={cn(
+            "h-2 bg-surface-sunken overflow-hidden",
+            radius.default
+          )}
+        >
+          <div
+            className={cn(
+              "h-full bg-brand-primary transition-all duration-300",
+              radius.default
+            )}
+            style={{ width: `${Math.min(status.percentComplete, 100)}%` }}
+          />
+        </div>
+        <div className="flex justify-between caption text-text-muted">
+          <span>
+            {status.processedCount} / {status.totalCount}{" "}
+            {t("pipeline.devices", { defaultValue: "devices" })}
+          </span>
+          <span>{Math.round(status.percentComplete)}%</span>
+        </div>
+      </div>
+
+      {/* Current target and timing */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 caption text-text-muted">
+        {status.currentTarget && (
+          <span>
+            {t("pipeline.scanning", { defaultValue: "Scanning" })}:{" "}
+            <span className="font-mono text-text-secondary">
+              {status.currentTarget}
+            </span>
+          </span>
+        )}
+        <span>
+          {t("pipeline.elapsed", { defaultValue: "Elapsed" })}:{" "}
+          {formatDuration(status.elapsedMs)}
+        </span>
+        {status.estimatedRemainMs > 0 && (
+          <span>
+            {t("pipeline.remaining", { defaultValue: "Remaining" })}:{" "}
+            {formatDuration(status.estimatedRemainMs)}
+          </span>
+        )}
+      </div>
+
+      {/* Phase stepper */}
+      <div className="flex items-center justify-between gap-1 pt-2 border-t border-surface-border">
+        {status.enabledPhases.map((phase, index) => {
+          const config = PHASE_CONFIG[phase];
+          const Icon = config?.icon || Circle;
+          const isComplete = index < currentPhaseIndex;
+          const isCurrent = index === currentPhaseIndex;
+          const isPending = index > currentPhaseIndex;
+
+          // Get duration if phase is complete
+          const duration = status.phaseDurations[phase];
+
+          return (
+            <div
+              key={phase}
+              className={cn(
+                "flex flex-col items-center gap-1 flex-1",
+                isPending && "opacity-50"
+              )}
+            >
+              {/* Icon with status indicator */}
+              <div
+                className={cn(
+                  "flex items-center justify-center w-8 h-8",
+                  radius.full,
+                  isComplete && "bg-status-success text-text-inverse",
+                  isCurrent && "bg-brand-primary text-text-inverse",
+                  isPending && "bg-surface-sunken text-text-muted"
+                )}
+              >
+                {isComplete ? (
+                  <Check className={iconTokens.size.sm} />
+                ) : isCurrent && isRunning ? (
+                  <Loader2 className={cn(iconTokens.size.sm, "animate-spin")} />
+                ) : (
+                  <Icon className={iconTokens.size.sm} />
+                )}
+              </div>
+
+              {/* Phase name */}
+              <span
+                className={cn(
+                  "caption text-center",
+                  isCurrent
+                    ? "text-text-primary font-medium"
+                    : "text-text-muted"
+                )}
+              >
+                {PHASE_DISPLAY_NAMES[phase] || phase}
+              </span>
+
+              {/* Duration if complete */}
+              {duration !== undefined && (
+                <span className="caption text-text-muted">
+                  {formatDuration(duration)}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Errors if any */}
+      {status.errors.length > 0 && (
+        <div
+          className={cn(
+            "p-2 bg-status-error/10 border border-status-error/30",
+            radius.default
+          )}
+        >
+          <span className="caption text-status-error font-medium">
+            {t("pipeline.errors", { defaultValue: "Errors" })}:
+          </span>
+          <ul className="mt-1 space-y-0.5">
+            {status.errors.map((error, i) => (
+              <li key={i} className="caption text-status-error">
+                {error}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+});

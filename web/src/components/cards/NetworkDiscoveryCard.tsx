@@ -5,6 +5,8 @@ import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Tooltip } from "../ui/Tooltip";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { logger, LogComponents } from "../../lib/logger";
+import { usePipelineStatus } from "../../hooks/usePipelineStatus";
+import { PipelineProgress } from "./PipelineProgress";
 import {
   ScanSearch,
   Terminal,
@@ -414,9 +416,7 @@ function SubnetList({
 
   // ≤5 subnets - inline display
   if (allSubnets.length <= 5) {
-    return (
-      <span className="font-mono">{allSubnets.join(", ")}</span>
-    );
+    return <span className="font-mono">{allSubnets.join(", ")}</span>;
   }
 
   // >5 subnets - collapsible display
@@ -625,13 +625,41 @@ function DiscoverySummary({
   status,
   deviceCount,
   categories,
+  pipelineStatus,
+  onCancelPipeline,
   t,
 }: {
   status: DiscoveryStatus;
   deviceCount: number;
   categories: ReturnType<typeof categorizeDevices>;
+  pipelineStatus?: ReturnType<typeof usePipelineStatus>["status"];
+  onCancelPipeline?: () => void;
   t: ReturnType<typeof useTranslation<"cards">>["t"];
 }) {
+  // Check if pipeline is actively running
+  const isPipelineRunning =
+    pipelineStatus &&
+    pipelineStatus.state !== "idle" &&
+    pipelineStatus.state !== "complete" &&
+    pipelineStatus.state !== "failed" &&
+    pipelineStatus.state !== "canceled";
+
+  // Show pipeline progress when running
+  if (isPipelineRunning && pipelineStatus) {
+    return (
+      <div
+        className={cn(
+          "bg-surface-hover",
+          radius.md,
+          spacing.pad.sm,
+          "stack-sm"
+        )}
+      >
+        <PipelineProgress status={pipelineStatus} onCancel={onCancelPipeline} />
+      </div>
+    );
+  }
+
   // Build stat items with non-zero counts
   // Using theme tokens for device category colors (dark mode aware)
   const stats = [
@@ -927,8 +955,9 @@ function DeviceRow({
               {device.discoveryMethod.map((method) => (
                 <MethodBadge key={method} method={method} />
               ))}
-              {device.vendor && device.vendor !== "Unknown" && (
-                device.vendor === "LAA" ? (
+              {device.vendor &&
+                device.vendor !== "Unknown" &&
+                (device.vendor === "LAA" ? (
                   <Tooltip
                     content="Locally Administered Address - A MAC address that was locally assigned rather than by the manufacturer. Common in virtual machines, containers, and devices with MAC randomization enabled for privacy."
                     position="bottom"
@@ -944,8 +973,7 @@ function DeviceRow({
                   >
                     {device.vendor}
                   </span>
-                )
-              )}
+                ))}
             </div>
           </div>
           <div
@@ -1372,12 +1400,27 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
+  // Pipeline status hook for multi-phase progress display
+  const {
+    status: pipelineStatus,
+    startPipeline,
+    cancelPipeline,
+  } = usePipelineStatus();
+
+  // Check if pipeline is actively running
+  const isPipelineRunning =
+    pipelineStatus.state !== "idle" &&
+    pipelineStatus.state !== "complete" &&
+    pipelineStatus.state !== "failed" &&
+    pipelineStatus.state !== "canceled";
+
   // Settings for auto-scan behavior - fetched from API
-  const [autoScanSettings, setAutoScanSettings] = useState<DiscoverySettingsForAutoScan>({
-    portScanEnabled: false,
-    vulnScanEnabled: false,
-    vulnAutoScan: false,
-  });
+  const [autoScanSettings, setAutoScanSettings] =
+    useState<DiscoverySettingsForAutoScan>({
+      portScanEnabled: false,
+      vulnScanEnabled: false,
+      vulnAutoScan: false,
+    });
 
   // Vulnerability modal state
   const [selectedDeviceForVuln, setSelectedDeviceForVuln] = useState<
@@ -1390,18 +1433,25 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       const apiBase = import.meta.env.VITE_API_BASE || "";
       try {
         // Fetch discovery options from correct endpoint
-        const discoveryResponse = await fetch(`${apiBase}/api/discovery/options`, {
-          credentials: "include",
-        });
+        const discoveryResponse = await fetch(
+          `${apiBase}/api/discovery/options`,
+          {
+            credentials: "include",
+          }
+        );
         if (discoveryResponse.ok) {
           const discoveryData = await discoveryResponse.json();
           // Backend returns { options: { PortScan: { Enabled: true, ... } } }
-          const portScanEnabled = discoveryData?.options?.PortScan?.Enabled ?? false;
+          const portScanEnabled =
+            discoveryData?.options?.PortScan?.Enabled ?? false;
 
           // Fetch vulnerability settings from correct endpoint
-          const vulnResponse = await fetch(`${apiBase}/api/vulnerabilities/settings`, {
-            credentials: "include",
-          });
+          const vulnResponse = await fetch(
+            `${apiBase}/api/vulnerabilities/settings`,
+            {
+              credentials: "include",
+            }
+          );
           let vulnEnabled = false;
           let vulnAutoScan = false;
           if (vulnResponse.ok) {
@@ -1418,7 +1468,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           });
         }
       } catch (error) {
-        logger.debug(LogComponents.DISCOVERY, "Failed to fetch auto-scan settings", error);
+        logger.debug(
+          LogComponents.DISCOVERY,
+          "Failed to fetch auto-scan settings",
+          error
+        );
       }
     };
 
@@ -1457,142 +1511,161 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   };
 
   // Trigger vulnerability scan for a device based on any good info we have
-  const triggerVulnScan = useCallback(async (ip: string, device?: DiscoveredDevice, services?: ServiceInfo[]) => {
-    if (!autoScanSettings.vulnScanEnabled || !autoScanSettings.vulnAutoScan) {
-      return;
-    }
-
-    // Check if we have any good info to run vuln scan against:
-    // - Port scan results with services/banners/versions
-    // - Device OS guess
-    // - SNMP info (system description, software version)
-    // - LLDP/CDP info (capabilities, software version)
-    // - Device profile with open ports
-
-    let hasGoodInfo = false;
-    const reasons: string[] = [];
-
-    // Check port scan services
-    if (services && services.length > 0) {
-      const openServices = services.filter(
-        (s) => s.state === "open" && (s.banner || s.version || s.service !== "unknown")
-      );
-      if (openServices.length > 0) {
-        hasGoodInfo = true;
-        reasons.push(`${openServices.length} services`);
-      }
-    }
-
-    // Check device info if provided
-    if (device) {
-      // OS guess
-      if (device.osGuess) {
-        hasGoodInfo = true;
-        reasons.push("OS guess");
+  const triggerVulnScan = useCallback(
+    async (ip: string, device?: DiscoveredDevice, services?: ServiceInfo[]) => {
+      if (!autoScanSettings.vulnScanEnabled || !autoScanSettings.vulnAutoScan) {
+        return;
       }
 
-      // LLDP info
-      if (device.lldpInfo?.systemDescription) {
-        hasGoodInfo = true;
-        reasons.push("LLDP system info");
-      }
+      // Check if we have any good info to run vuln scan against:
+      // - Port scan results with services/banners/versions
+      // - Device OS guess
+      // - SNMP info (system description, software version)
+      // - LLDP/CDP info (capabilities, software version)
+      // - Device profile with open ports
 
-      // CDP info
-      if (device.cdpInfo?.platform || device.cdpInfo?.softwareVersion) {
-        hasGoodInfo = true;
-        reasons.push("CDP info");
-      }
+      let hasGoodInfo = false;
+      const reasons: string[] = [];
 
-      // Device profile with open ports
-      if (device.profile?.openPorts && device.profile.openPorts.some((p) => p.isOpen)) {
-        hasGoodInfo = true;
-        reasons.push("profile ports");
-      }
-
-      // HTTP info from profile
-      if (device.profile?.httpInfo?.server) {
-        hasGoodInfo = true;
-        reasons.push("HTTP server");
-      }
-    }
-
-    if (!hasGoodInfo) return;
-
-    try {
-      const apiBase = import.meta.env.VITE_API_BASE || "";
-      logger.info(LogComponents.DISCOVERY, "Triggering auto vulnerability scan", {
-        ip,
-        reasons: reasons.join(", "),
-      });
-      await fetch(`${apiBase}/api/vulnerabilities/scan`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          targets: [ip],
-        }),
-      });
-    } catch (error) {
-      logger.debug(LogComponents.DISCOVERY, "Failed to trigger vulnerability scan", error);
-    }
-  }, [autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan]);
-
-  const handleDeepScan = useCallback(async (ip: string) => {
-    setScanningDevices((prev) => new Set(prev).add(ip));
-
-    try {
-      const apiBase = import.meta.env.VITE_API_BASE || "";
-      const response = await fetch(`${apiBase}/api/discovery/portscan`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          target: ip,
-          ports: COMMON_PORTS,
-          timeout: 2000,
-        }),
-      });
-
-      if (response.ok) {
-        const apiResponse = (await response.json()) as PortScanAPIResponse;
-        // Transform backend response to frontend format
-        const results: PortScanResult[] = apiResponse.services.map((svc) => ({
-          port: svc.port,
-          state: svc.state,
-          service: svc.service,
-          banner: svc.banner,
-          version: svc.version,
-          rtt: 0, // Backend doesn't return individual RTT per port
-        }));
-        setScanResults((prev) => {
-          const next = new Map(prev);
-          next.set(ip, {
-            target: apiResponse.ip,
-            results: results,
-            scannedAt: new Date(),
-          });
-          return next;
-        });
-
-        // If vulnerability scanning is enabled with auto-scan, trigger vuln scan
-        // Find the device from data to pass additional info
-        const device = data?.devices.find((d) => d.ip === ip);
-        if (apiResponse.services && apiResponse.services.length > 0) {
-          triggerVulnScan(ip, device, apiResponse.services);
+      // Check port scan services
+      if (services && services.length > 0) {
+        const openServices = services.filter(
+          (s) =>
+            s.state === "open" &&
+            (s.banner || s.version || s.service !== "unknown")
+        );
+        if (openServices.length > 0) {
+          hasGoodInfo = true;
+          reasons.push(`${openServices.length} services`);
         }
       }
-    } catch (error) {
-      logger.error(LogComponents.DISCOVERY, "Deep scan failed", error);
-    } finally {
-      setScanningDevices((prev) => {
-        const next = new Set(prev);
-        next.delete(ip);
-        return next;
-      });
-    }
-  }, [triggerVulnScan, data?.devices]);
+
+      // Check device info if provided
+      if (device) {
+        // OS guess
+        if (device.osGuess) {
+          hasGoodInfo = true;
+          reasons.push("OS guess");
+        }
+
+        // LLDP info
+        if (device.lldpInfo?.systemDescription) {
+          hasGoodInfo = true;
+          reasons.push("LLDP system info");
+        }
+
+        // CDP info
+        if (device.cdpInfo?.platform || device.cdpInfo?.softwareVersion) {
+          hasGoodInfo = true;
+          reasons.push("CDP info");
+        }
+
+        // Device profile with open ports
+        if (
+          device.profile?.openPorts &&
+          device.profile.openPorts.some((p) => p.isOpen)
+        ) {
+          hasGoodInfo = true;
+          reasons.push("profile ports");
+        }
+
+        // HTTP info from profile
+        if (device.profile?.httpInfo?.server) {
+          hasGoodInfo = true;
+          reasons.push("HTTP server");
+        }
+      }
+
+      if (!hasGoodInfo) return;
+
+      try {
+        const apiBase = import.meta.env.VITE_API_BASE || "";
+        logger.info(
+          LogComponents.DISCOVERY,
+          "Triggering auto vulnerability scan",
+          {
+            ip,
+            reasons: reasons.join(", "),
+          }
+        );
+        await fetch(`${apiBase}/api/vulnerabilities/scan`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            targets: [ip],
+          }),
+        });
+      } catch (error) {
+        logger.debug(
+          LogComponents.DISCOVERY,
+          "Failed to trigger vulnerability scan",
+          error
+        );
+      }
+    },
+    [autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan]
+  );
+
+  const handleDeepScan = useCallback(
+    async (ip: string) => {
+      setScanningDevices((prev) => new Set(prev).add(ip));
+
+      try {
+        const apiBase = import.meta.env.VITE_API_BASE || "";
+        const response = await fetch(`${apiBase}/api/discovery/portscan`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            target: ip,
+            ports: COMMON_PORTS,
+            timeout: 2000,
+          }),
+        });
+
+        if (response.ok) {
+          const apiResponse = (await response.json()) as PortScanAPIResponse;
+          // Transform backend response to frontend format
+          const results: PortScanResult[] = apiResponse.services.map((svc) => ({
+            port: svc.port,
+            state: svc.state,
+            service: svc.service,
+            banner: svc.banner,
+            version: svc.version,
+            rtt: 0, // Backend doesn't return individual RTT per port
+          }));
+          setScanResults((prev) => {
+            const next = new Map(prev);
+            next.set(ip, {
+              target: apiResponse.ip,
+              results: results,
+              scannedAt: new Date(),
+            });
+            return next;
+          });
+
+          // If vulnerability scanning is enabled with auto-scan, trigger vuln scan
+          // Find the device from data to pass additional info
+          const device = data?.devices.find((d) => d.ip === ip);
+          if (apiResponse.services && apiResponse.services.length > 0) {
+            triggerVulnScan(ip, device, apiResponse.services);
+          }
+        }
+      } catch (error) {
+        logger.error(LogComponents.DISCOVERY, "Deep scan failed", error);
+      } finally {
+        setScanningDevices((prev) => {
+          const next = new Set(prev);
+          next.delete(ip);
+          return next;
+        });
+      }
+    },
+    [triggerVulnScan, data?.devices]
+  );
 
   // Track devices we've already auto-scanned to avoid duplicates
   const autoScannedDevices = useRef<Set<string>>(new Set());
@@ -1624,10 +1697,14 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       autoScannedDevices.current.add(device.ip);
     });
 
-    logger.info(LogComponents.DISCOVERY, "Auto-scanning devices for open ports", {
-      count: devicesToScan.length,
-      portScanEnabled: autoScanSettings.portScanEnabled,
-    });
+    logger.info(
+      LogComponents.DISCOVERY,
+      "Auto-scanning devices for open ports",
+      {
+        count: devicesToScan.length,
+        portScanEnabled: autoScanSettings.portScanEnabled,
+      }
+    );
 
     // Scan devices with a small delay between each to avoid overwhelming the network
     // Limit concurrent scans to 3 at a time
@@ -1635,7 +1712,10 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     let scanIndex = 0;
 
     const scanNextBatch = () => {
-      const batch = devicesToScan.slice(scanIndex, scanIndex + MAX_CONCURRENT_SCANS);
+      const batch = devicesToScan.slice(
+        scanIndex,
+        scanIndex + MAX_CONCURRENT_SCANS
+      );
       if (batch.length === 0) return;
 
       batch.forEach((device) => {
@@ -1654,7 +1734,14 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     const timeoutId = setTimeout(scanNextBatch, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [data?.status?.scanning, data?.devices, handleDeepScan, scanningDevices, scanResults, autoScanSettings.portScanEnabled]);
+  }, [
+    data?.status?.scanning,
+    data?.devices,
+    handleDeepScan,
+    scanningDevices,
+    scanResults,
+    autoScanSettings.portScanEnabled,
+  ]);
 
   // Track devices we've already queued for vuln scan to avoid duplicates
   const vulnScannedDevices = useRef<Set<string>>(new Set());
@@ -1663,7 +1750,8 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   // This runs independently of port scanning - any device with good info gets vuln scanned
   useEffect(() => {
     // Only run if vuln scanning is enabled with auto-scan
-    if (!autoScanSettings.vulnScanEnabled || !autoScanSettings.vulnAutoScan) return;
+    if (!autoScanSettings.vulnScanEnabled || !autoScanSettings.vulnAutoScan)
+      return;
 
     // Don't run while discovery is still in progress
     if (!data?.status || data.status.scanning) return;
@@ -1682,7 +1770,8 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         device.cdpInfo?.platform ||
         device.cdpInfo?.softwareVersion ||
         device.profile?.httpInfo?.server ||
-        (device.profile?.openPorts && device.profile.openPorts.some((p) => p.isOpen));
+        (device.profile?.openPorts &&
+          device.profile.openPorts.some((p) => p.isOpen));
 
       return hasGoodInfo;
     });
@@ -1694,9 +1783,13 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       vulnScannedDevices.current.add(device.ip);
     });
 
-    logger.info(LogComponents.DISCOVERY, "Auto-triggering vulnerability scans for devices with discovery info", {
-      count: devicesToVulnScan.length,
-    });
+    logger.info(
+      LogComponents.DISCOVERY,
+      "Auto-triggering vulnerability scans for devices with discovery info",
+      {
+        count: devicesToVulnScan.length,
+      }
+    );
 
     // Trigger vuln scans with a small delay between each
     let index = 0;
@@ -1712,7 +1805,13 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
     const timeoutId = setTimeout(triggerNext, 300);
     return () => clearTimeout(timeoutId);
-  }, [data?.status?.scanning, data?.devices, autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan, triggerVulnScan]);
+  }, [
+    data?.status?.scanning,
+    data?.devices,
+    autoScanSettings.vulnScanEnabled,
+    autoScanSettings.vulnAutoScan,
+    triggerVulnScan,
+  ]);
 
   // Extract data with safe defaults (must come before any hooks to avoid conditional hook calls)
   const rawDevices = data?.devices;
@@ -1880,7 +1979,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const categories = categorizeDevices(devices);
 
   const getOverallStatus = (): Status => {
-    if (status.scanning) return "loading";
+    if (status.scanning || isPipelineRunning) return "loading";
     if (deviceCount === 0) return "warning";
     return "success";
   };
@@ -1899,11 +1998,16 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       enableLiveRegion={true}
       ariaLabel={`Network discovery - ${deviceCount} devices found`}
       headerAction={
-        onScan && (
+        (onScan || startPipeline) && (
           <button
             type="button"
-            onClick={onScan}
-            disabled={status.scanning}
+            onClick={() => {
+              // Use pipeline start if available, otherwise fall back to onScan
+              startPipeline();
+              // Also call onScan for backwards compatibility
+              onScan?.();
+            }}
+            disabled={status.scanning || isPipelineRunning}
             className={cn(
               spacing.chip.sm,
               "bg-brand-primary text-text-inverse",
@@ -1912,10 +2016,12 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
               spacing.inline.sm
             )}
             aria-label={
-              status.scanning ? "Scanning network" : "Start network scan"
+              status.scanning || isPipelineRunning
+                ? "Scanning network"
+                : "Start network scan"
             }
           >
-            {status.scanning ? (
+            {status.scanning || isPipelineRunning ? (
               <>
                 <RefreshCw
                   className={cn(iconTokens.size.xs, "animate-spin")}
@@ -1935,6 +2041,8 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         status={status}
         deviceCount={deviceCount}
         categories={categories}
+        pipelineStatus={pipelineStatus}
+        onCancelPipeline={cancelPipeline}
         t={t}
       />
 

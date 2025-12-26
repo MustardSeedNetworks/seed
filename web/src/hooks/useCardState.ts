@@ -25,6 +25,25 @@ import type {
   CableData,
   PublicIPData,
 } from "../components/cards";
+import type { PipelineEvent, PipelineEventType } from "./usePipelineStatus";
+
+// Pipeline event types for routing WebSocket messages
+const PIPELINE_EVENT_TYPES: PipelineEventType[] = [
+  "pipeline_started",
+  "phase_started",
+  "phase_progress",
+  "phase_completed",
+  "phase_failed",
+  "device_discovered",
+  "device_updated",
+  "pipeline_completed",
+  "pipeline_failed",
+  "pipeline_canceled",
+];
+
+function isPipelineEvent(type: string): type is PipelineEventType {
+  return PIPELINE_EVENT_TYPES.includes(type as PipelineEventType);
+}
 
 /**
  * Centralized state for all network monitoring cards.
@@ -71,6 +90,9 @@ interface UseCardStateProps {
   userSetWifiModeRef: React.MutableRefObject<boolean>;
 }
 
+/**
+ *
+ */
 export function useCardState({
   setCurrentInterface,
   setIsWifi,
@@ -96,6 +118,55 @@ export function useCardState({
 
   const handleMessage = useCallback(
     (message: Message) => {
+      // Route pipeline events to the pipeline status hook
+      // Backend sends: { type: "pipeline", payload: PipelineEvent }
+      // PipelineEvent has: { Type: "pipeline_started", Timestamp, RunID, Payload }
+      if (message.type === "pipeline") {
+        const rawEvent = message.payload as {
+          Type?: string;
+          Timestamp?: string;
+          RunID?: string;
+          Payload?: unknown;
+        };
+
+        // Validate the nested event structure
+        if (!rawEvent || typeof rawEvent.Type !== "string") {
+          logger.warn(
+            LogComponents.WEBSOCKET,
+            "Invalid pipeline event structure",
+            { payload: message.payload }
+          );
+          return;
+        }
+
+        // Check if it's a valid pipeline event type
+        if (!isPipelineEvent(rawEvent.Type)) {
+          logger.warn(LogComponents.WEBSOCKET, "Unknown pipeline event type", {
+            type: rawEvent.Type,
+          });
+          return;
+        }
+
+        const pipelineEvent: PipelineEvent = {
+          type: rawEvent.Type,
+          timestamp: rawEvent.Timestamp || new Date().toISOString(),
+          runId: rawEvent.RunID || "",
+          payload: rawEvent.Payload,
+        };
+
+        // Dispatch to the pipeline event handler stored on window
+        const handler = (
+          window as unknown as {
+            __pipelineEventHandler?: (event: PipelineEvent) => void;
+          }
+        ).__pipelineEventHandler;
+
+        if (handler) {
+          handler(pipelineEvent);
+        }
+        return;
+      }
+
       if (message.type === "initial_state") {
         setLoading(false);
         if (!isPlainObject(message.payload)) {

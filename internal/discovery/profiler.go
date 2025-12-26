@@ -119,7 +119,7 @@ func DefaultProfilerConfig() *ProfilerConfig {
 }
 
 // NewProfilerConfigFromPipeline creates a ProfilerConfig from pipeline settings.
-func NewProfilerConfigFromPipeline(pipelineConfig PipelineConfig) *ProfilerConfig {
+func NewProfilerConfigFromPipeline(pipelineConfig *PipelineConfig) *ProfilerConfig {
 	cfg := DefaultProfilerConfig()
 	cfg.PortScanIntensity = pipelineConfig.PortScan.Intensity
 	cfg.CustomPorts = pipelineConfig.PortScan.CustomPorts

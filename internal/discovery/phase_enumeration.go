@@ -243,7 +243,7 @@ func (p *EnumerationPhase) runARPScan(ctx context.Context, progress *Enumeration
 }
 
 // runICMPScan performs ICMP ping sweep on additional subnets.
-func (p *EnumerationPhase) runICMPScan(ctx context.Context, progress *EnumerationProgress) error {
+func (p *EnumerationPhase) runICMPScan(_ context.Context, _ *EnumerationProgress) error {
 	if len(p.config.AdditionalSubnets) == 0 {
 		return nil
 	}

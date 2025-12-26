@@ -167,7 +167,9 @@ func (c *PipelineConfig) GetPortScan() (intensity string, customPorts []int, ban
 }
 
 // GetSNMP implements discovery.ConfigPipelineAdapter.
-func (c *PipelineConfig) GetSNMP() (enabled bool, system, interfaces, ipAddresses, routing, bridge, entity, lldp, vlan bool, walkTimeout time.Duration, maxOIDsPerRequest int) {
+//
+//nolint:gocritic // Multiple return values needed to match interface for adapter pattern.
+func (c *PipelineConfig) GetSNMP() (enabled, system, interfaces, ipAddresses, routing, bridge, entity, lldp, vlan bool, walkTimeout time.Duration, maxOIDsPerRequest int) {
 	return c.SNMPCollection.Enabled,
 		c.SNMPCollection.MIBs.System,
 		c.SNMPCollection.MIBs.Interfaces,

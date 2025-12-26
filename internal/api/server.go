@@ -80,13 +80,13 @@ type Server struct {
 	surveyManager       *survey.Manager
 	vulnScanner         *discovery.VulnerabilityScanner
 	publicipChecker     *publicip.Checker
-	oauthManager        *oauth.Manager  // OAuth SSO provider manager
-	db                  *database.DB    // SQLite database for persistence (#755)
-	icmpAvailable       bool            // Whether raw ICMP sockets are available
-	startTime           time.Time       // Application start time for uptime tracking (fixes #540)
-	redirectServer      *http.Server    // HTTP→HTTPS redirect server (fixes #515)
-	redirectServerErr   chan error      // Error channel for redirect server
-	trustedProxies      *TrustedProxies // Trusted proxy IPs for X-Forwarded-For handling (#H4)
+	oauthManager        *oauth.Manager      // OAuth SSO provider manager
+	db                  *database.DB        // SQLite database for persistence (#755)
+	icmpAvailable       bool                // Whether raw ICMP sockets are available
+	startTime           time.Time           // Application start time for uptime tracking (fixes #540)
+	redirectServer      *http.Server        // HTTP→HTTPS redirect server (fixes #515)
+	redirectServerErr   chan error          // Error channel for redirect server
+	trustedProxies      *TrustedProxies     // Trusted proxy IPs for X-Forwarded-For handling (#H4)
 	pipeline            *discovery.Pipeline // Phased discovery pipeline orchestrator
 }
 
@@ -215,7 +215,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 	// Initialize discovery pipeline orchestrator
 	pipelineCfg := discovery.PipelineConfigFromAdapter(&cfg.Pipeline)
 	s.pipeline = discovery.NewPipeline(
-		pipelineCfg,
+		&pipelineCfg,
 		s.deviceDiscovery,
 		discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP),
 		&pipelineBroadcastAdapter{hub: s.wsHub},
@@ -391,7 +391,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/pipeline/status", s.handlePipelineStatus)
 	s.mux.HandleFunc("/api/pipeline/start", s.handlePipelineStart)
 	s.mux.HandleFunc("/api/pipeline/cancel", s.handlePipelineCancel)
-	s.mux.HandleFunc("/api/pipeline/config", s.handlePipelineConfig)
+	s.mux.HandleFunc("/api/pipeline/config", s.handlePipelineConfigRoute)
 	s.mux.HandleFunc("/api/pipeline/port-intensity", s.handlePipelinePortIntensityInfo)
 	s.mux.HandleFunc("/api/pipeline/timing-profiles", s.handlePipelineTimingProfiles)
 	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)

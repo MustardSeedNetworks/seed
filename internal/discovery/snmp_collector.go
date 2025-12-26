@@ -155,6 +155,8 @@ func (c *SNMPCollector) SetMaxOIDsPerRequest(maxOIDs int) {
 }
 
 // Collect gathers all enabled MIB data from a device.
+//
+//nolint:gocyclo // SNMP collection requires checking multiple MIB flags and collecting various data types.
 func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, error) {
 	if c.config == nil {
 		return nil, fmt.Errorf("SNMP config is nil")
@@ -328,7 +330,8 @@ func (c *SNMPCollector) collectInterfaces(ctx context.Context, ip string) ([]SNM
 	}
 
 	result := make([]SNMPInterface, len(interfaces))
-	for i, iface := range interfaces {
+	for i := range interfaces {
+		iface := &interfaces[i]
 		// Convert bps to Mbps, handling negative speeds (which shouldn't occur but be safe)
 		speedMbps := uint64(0)
 		if iface.Speed > 0 {
@@ -388,14 +391,14 @@ func (c *SNMPCollector) collectInventory(_ context.Context, _ string) ([]SNMPEnt
 }
 
 // collectLLDPNeighbors retrieves LLDP neighbor information.
-func (c *SNMPCollector) collectLLDPNeighbors(ctx context.Context, ip string) ([]SNMPLLDPNeighbor, error) {
+func (c *SNMPCollector) collectLLDPNeighbors(_ context.Context, _ string) ([]SNMPLLDPNeighbor, error) {
 	// LLDP-MIB::lldpRemTable OIDs
 	// For now, return empty - can be expanded when needed
 	return []SNMPLLDPNeighbor{}, nil
 }
 
 // collectRoutes retrieves routing table from IP-FORWARD-MIB.
-func (c *SNMPCollector) collectRoutes(ctx context.Context, ip string) ([]SNMPRoute, error) {
+func (c *SNMPCollector) collectRoutes(_ context.Context, _ string) ([]SNMPRoute, error) {
 	// IP-FORWARD-MIB::ipCidrRouteTable OIDs
 	// For now, return empty - can be expanded when needed
 	return []SNMPRoute{}, nil
@@ -409,6 +412,8 @@ type CollectorResult struct {
 }
 
 // CollectBatch collects SNMP data from multiple devices concurrently.
+//
+//nolint:dupl // Similar concurrent batch pattern to mdns.go but uses different collector and result types.
 func (c *SNMPCollector) CollectBatch(ctx context.Context, ips []string, maxConcurrent int) []CollectorResult {
 	if maxConcurrent <= 0 {
 		maxConcurrent = 10

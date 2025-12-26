@@ -102,6 +102,8 @@ func (p *ResolutionPhase) Name() string {
 
 // Run executes the name resolution phase.
 // Devices from Phase 1 are enriched with hostnames.
+//
+//nolint:gocyclo // Multi-protocol resolution requires coordinating DNS, NetBIOS, and mDNS.
 func (p *ResolutionPhase) Run(ctx context.Context, devices []*DiscoveredDevice, progressCh chan<- PhaseProgressPayload) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	slog.Info("Resolution phase starting",
@@ -264,6 +266,8 @@ func (p *ResolutionPhase) resolveDNS(ctx context.Context, ips []string, deviceBy
 }
 
 // resolveNetBIOS performs NetBIOS name resolution for Windows devices.
+//
+//nolint:dupl // Similar to resolveMDNS but uses NetBIOSResolver with NetBIOSResult type.
 func (p *ResolutionPhase) resolveNetBIOS(ctx context.Context, ips []string, deviceByIP map[string]*DiscoveredDevice, progress *ResolutionProgress) {
 	// Filter IPs that don't already have NetBIOS names
 	var toResolve []string
@@ -295,6 +299,8 @@ func (p *ResolutionPhase) resolveNetBIOS(ctx context.Context, ips []string, devi
 }
 
 // resolveMDNS performs mDNS name resolution for Apple/Linux devices.
+//
+//nolint:dupl // Similar to resolveNetBIOS but uses MDNSResolver with MDNSResult type.
 func (p *ResolutionPhase) resolveMDNS(ctx context.Context, ips []string, deviceByIP map[string]*DiscoveredDevice, progress *ResolutionProgress) {
 	// Filter IPs that don't already have mDNS names
 	var toResolve []string

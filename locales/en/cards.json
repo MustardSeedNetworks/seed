@@ -110,6 +110,21 @@
     "filteredCount": "{{filtered}} of {{total}}",
     "clickViewVulnerabilities": "Click to view vulnerability details"
   },
+  "pipeline": {
+    "phaseProgress": "Phase {{current}} of {{total}}",
+    "phases": {
+      "enumeration": "Enumeration",
+      "resolution": "Resolution",
+      "scanning": "Scanning",
+      "assessment": "Assessment"
+    },
+    "devices": "devices",
+    "scanning": "Scanning",
+    "elapsed": "Elapsed",
+    "remaining": "Remaining",
+    "cancel": "Cancel",
+    "errors": "Errors"
+  },
   "gateway": {
     "title": "Gateway",
     "defaultGateway": "Default Gateway",

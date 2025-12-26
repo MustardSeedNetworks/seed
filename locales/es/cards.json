@@ -110,6 +110,21 @@
     "filteredCount": "{{filtered}} de {{total}}",
     "clickViewVulnerabilities": "Haga clic para ver detalles de vulnerabilidades"
   },
+  "pipeline": {
+    "phaseProgress": "Fase {{current}} de {{total}}",
+    "phases": {
+      "enumeration": "Enumeración",
+      "resolution": "Resolución",
+      "scanning": "Escaneo",
+      "assessment": "Evaluación"
+    },
+    "devices": "dispositivos",
+    "scanning": "Escaneando",
+    "elapsed": "Transcurrido",
+    "remaining": "Restante",
+    "cancel": "Cancelar",
+    "errors": "Errores"
+  },
   "gateway": {
     "title": "Puerta de enlace",
     "defaultGateway": "Puerta de enlace predeterminada",

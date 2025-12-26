@@ -375,9 +375,9 @@ type Pipeline struct {
 }
 
 // NewPipeline creates a new discovery pipeline.
-func NewPipeline(config PipelineConfig, deviceDiscovery *DeviceDiscovery, profiler *DeviceProfiler, broadcaster EventBroadcaster) *Pipeline {
+func NewPipeline(config *PipelineConfig, deviceDiscovery *DeviceDiscovery, profiler *DeviceProfiler, broadcaster EventBroadcaster) *Pipeline {
 	p := &Pipeline{
-		config:          config,
+		config:          *config,
 		deviceDiscovery: deviceDiscovery,
 		profiler:        profiler,
 		broadcaster:     broadcaster,
@@ -477,7 +477,7 @@ func (p *Pipeline) GetConfig() PipelineConfig {
 }
 
 // UpdateConfig updates the pipeline configuration.
-func (p *Pipeline) UpdateConfig(config PipelineConfig) error {
+func (p *Pipeline) UpdateConfig(config *PipelineConfig) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -498,7 +498,7 @@ func (p *Pipeline) UpdateConfig(config PipelineConfig) error {
 		}
 	}
 
-	p.config = config
+	p.config = *config
 	return nil
 }
 
@@ -617,7 +617,9 @@ func (p *Pipeline) runEnumerationPhase(ctx context.Context, phaseNumber int) ([]
 }
 
 // runResolutionPhase executes the name resolution phase.
-func (p *Pipeline) runResolutionPhase(ctx context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
+//
+//nolint:unparam // Error return kept for interface consistency with other phase methods.
+func (p *Pipeline) runResolutionPhase(_ context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	totalPhases := p.countEnabledPhases()
 
@@ -658,6 +660,8 @@ func (p *Pipeline) runResolutionPhase(ctx context.Context, devices []*Discovered
 }
 
 // runScanningPhase executes the service discovery phase.
+//
+//nolint:gocyclo // Scanning phase requires polling loop with context cancellation and timeout handling.
 func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	totalPhases := p.countEnabledPhases()
@@ -761,7 +765,9 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 }
 
 // runAssessmentPhase executes the vulnerability assessment phase.
-func (p *Pipeline) runAssessmentPhase(ctx context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
+//
+//nolint:unparam // Error return kept for interface consistency with other phase methods.
+func (p *Pipeline) runAssessmentPhase(_ context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	totalPhases := p.countEnabledPhases()
 
@@ -899,7 +905,7 @@ type ConfigPipelineAdapter interface {
 	GetPhases() (enumeration, nameResolution, serviceDiscovery, vulnAssessment bool)
 	GetTiming() (probeDelay, hostDelay, phaseTimeout time.Duration, maxConcurrentHosts int, profile string)
 	GetPortScan() (intensity string, customPorts []int, bannerGrab bool, connectTimeout time.Duration)
-	GetSNMP() (enabled bool, system, interfaces, ipAddresses, routing, bridge, entity, lldp, vlan bool, walkTimeout time.Duration, maxOIDsPerRequest int)
+	GetSNMP() (enabled, system, interfaces, ipAddresses, routing, bridge, entity, lldp, vlan bool, walkTimeout time.Duration, maxOIDsPerRequest int)
 	GetPersistence() (storeHistory bool, stalenessThreshold, purgeAfter time.Duration)
 }
 
