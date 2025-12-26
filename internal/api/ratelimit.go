@@ -350,6 +350,7 @@ func (erl *EndpointRateLimiter) Stop() {
 
 // Allow checks if a request from an IP should be allowed.
 // Returns true if allowed, false if rate limit exceeded.
+// Fixes #890: Pre-allocate with capacity limit to prevent unbounded memory growth.
 func (erl *EndpointRateLimiter) Allow(ip string) bool {
 	erl.mu.Lock()
 	defer erl.mu.Unlock()
@@ -359,19 +360,22 @@ func (erl *EndpointRateLimiter) Allow(ip string) bool {
 	window, exists := erl.requests[ip]
 	if !exists {
 		window = &requestWindow{
-			timestamps: []time.Time{},
+			// Pre-allocate with maxReqs capacity to avoid repeated allocations
+			timestamps: make([]time.Time, 0, erl.maxReqs),
 		}
 		erl.requests[ip] = window
 	}
 
 	// Remove timestamps outside the window
-	validTimestamps := []time.Time{}
+	// Fixes #890: Reuse slice with bounded capacity instead of creating new slices
+	validIdx := 0
 	for _, ts := range window.timestamps {
 		if now.Sub(ts) <= erl.window {
-			validTimestamps = append(validTimestamps, ts)
+			window.timestamps[validIdx] = ts
+			validIdx++
 		}
 	}
-	window.timestamps = validTimestamps
+	window.timestamps = window.timestamps[:validIdx]
 
 	// Check if we're at the limit
 	if len(window.timestamps) >= erl.maxReqs {

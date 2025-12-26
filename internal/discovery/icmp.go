@@ -111,6 +111,7 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 }
 
 // Close closes the ICMP socket and stops the receiver.
+// Fixes #894: Drain pending pings to prevent goroutines waiting forever.
 func (p *ICMPPinger) Close() error {
 	p.stoppedMu.Lock()
 	if !p.stopped {
@@ -118,6 +119,18 @@ func (p *ICMPPinger) Close() error {
 		close(p.stopCh)
 	}
 	p.stoppedMu.Unlock()
+
+	// Fixes #894: Drain pending pings so waiting goroutines can complete
+	p.pendingMu.Lock()
+	for seq, pp := range p.pending {
+		// Send timeout result to unblock waiting goroutines
+		select {
+		case pp.result <- PingResult{IP: pp.ip, TTL: -1, Error: context.Canceled}:
+		default:
+		}
+		delete(p.pending, seq)
+	}
+	p.pendingMu.Unlock()
 
 	if p.conn != nil {
 		return p.conn.Close()

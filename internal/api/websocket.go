@@ -180,6 +180,10 @@ func isAllowedWSOrigin(origin string) bool {
 	// If explicit origins are configured, use them exclusively
 	if len(origins) > 0 {
 		for _, allowed := range origins {
+			// Skip empty strings to prevent matching all origins (fixes #893)
+			if allowed == "" {
+				continue
+			}
 			// "*" allows all origins
 			if allowed == "*" {
 				return true
