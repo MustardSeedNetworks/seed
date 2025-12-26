@@ -803,6 +803,7 @@ func (c *Client) readPump() {
 }
 
 // writePump pumps messages from the hub to the WebSocket connection.
+// Fixes #869: Ensure writer is closed on all error paths to prevent resource leaks.
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -828,22 +829,29 @@ func (c *Client) writePump() {
 			if err != nil {
 				return
 			}
-			if _, err := w.Write(message); err != nil {
-				return
-			}
 
-			// Add queued messages to the current WebSocket message
-			n := len(c.send)
-			for range n {
-				if _, err := w.Write([]byte{'\n'}); err != nil {
-					return
-				}
-				if _, err := w.Write(<-c.send); err != nil {
-					return
-				}
-			}
+			// Fixes #869: Use a closure to ensure writer is closed on all paths
+			writeErr := func() error {
+				defer w.Close() // Always close writer (fixes #869)
 
-			if err := w.Close(); err != nil {
+				if _, err := w.Write(message); err != nil {
+					return err
+				}
+
+				// Add queued messages to the current WebSocket message
+				n := len(c.send)
+				for range n {
+					if _, err := w.Write([]byte{'\n'}); err != nil {
+						return err
+					}
+					if _, err := w.Write(<-c.send); err != nil {
+						return err
+					}
+				}
+				return nil
+			}()
+
+			if writeErr != nil {
 				return
 			}
 

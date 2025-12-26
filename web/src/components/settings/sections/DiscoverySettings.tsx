@@ -72,6 +72,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
   const [statusLoading, setStatusLoading] = useState(false);
 
   // Fetch service status
+  // Fixes #865: Log fetch errors for debugging instead of silently swallowing them
   const fetchServiceStatus = useCallback(async () => {
     setStatusLoading(true);
     try {
@@ -79,9 +80,15 @@ export const DiscoverySettings = memo(function DiscoverySettings({
       if (response.ok) {
         const data = await response.json();
         setServiceStatus(data);
+      } else {
+        // Log non-OK responses for debugging
+        console.warn(
+          `[DiscoverySettings] Failed to fetch service status: ${response.status}`
+        );
       }
-    } catch {
-      // Silently fail - status display is informational
+    } catch (err) {
+      // Log error for debugging - status display is informational but errors help troubleshoot
+      console.warn("[DiscoverySettings] Error fetching service status:", err);
     } finally {
       setStatusLoading(false);
     }

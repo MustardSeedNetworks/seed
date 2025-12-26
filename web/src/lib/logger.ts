@@ -206,6 +206,7 @@ class Logger {
 
   /**
    * Flush buffered logs to the backend.
+   * Fixes #866: Hard cap buffer at 500 entries to prevent unbounded memory growth.
    */
   async flush(): Promise<void> {
     if (this.buffer.length === 0) return;
@@ -226,14 +227,21 @@ class Logger {
 
       if (!response.ok) {
         // Put entries back in buffer on failure (but don't retry indefinitely)
-        if (entries.length < this.config.batchSize * 2) {
+        // Fixes #866: Hard cap at 500 entries to prevent unbounded growth
+        const maxBufferSize = 500;
+        if (
+          entries.length < this.config.batchSize * 2 &&
+          this.buffer.length + entries.length <= maxBufferSize
+        ) {
           this.buffer.unshift(...entries);
         }
       }
     } catch {
       // Silently fail - don't create infinite log loops
       // Put entries back for next attempt if buffer isn't too full
-      if (this.buffer.length + entries.length <= this.config.batchSize * 3) {
+      // Fixes #866: Hard cap at 500 entries to prevent unbounded growth
+      const maxBufferSize = 500;
+      if (this.buffer.length + entries.length <= maxBufferSize) {
         this.buffer.unshift(...entries);
       }
     }

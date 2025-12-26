@@ -91,14 +91,19 @@ func NewChecker() *Checker {
 }
 
 // GetPublicIP returns the cached public IP or fetches a new one if cache expired.
+// Fixes #863: Uses copy-under-lock pattern to prevent TOCTOU race on cache validity check.
 func (c *Checker) GetPublicIP(ctx context.Context) *Result {
 	c.mu.RLock()
-	if c.cache != nil && time.Since(c.cacheTime) < cacheDuration {
-		result := *c.cache
-		c.mu.RUnlock()
+	cache := c.cache
+	cacheTime := c.cacheTime
+	c.mu.RUnlock()
+
+	// Check cache validity after releasing lock - values were captured atomically
+	if cache != nil && time.Since(cacheTime) < cacheDuration {
+		// Return a copy to prevent mutation of cached data
+		result := *cache
 		return &result
 	}
-	c.mu.RUnlock()
 
 	return c.refresh(ctx)
 }
@@ -175,17 +180,20 @@ func (c *Checker) refresh(ctx context.Context) *Result {
 
 // fetchGeoData fetches geolocation data from ip-api.com with caching.
 // Uses 1-hour cache per IP to respect rate limits (free tier: 45 req/min).
+// Fixes #863: Uses copy-under-lock pattern to prevent TOCTOU race on geo cache.
 func (c *Checker) fetchGeoData(ctx context.Context, ip string) *geoResponse {
 	const geoCacheDuration = 1 * time.Hour
 
+	// Capture cache data under lock to prevent TOCTOU race (fixes #863)
 	c.mu.RLock()
-	if cached, ok := c.geoCache[ip]; ok {
-		if time.Since(c.geoCacheTime[ip]) < geoCacheDuration {
-			c.mu.RUnlock()
-			return cached
-		}
-	}
+	cached, hasCached := c.geoCache[ip]
+	cachedTime := c.geoCacheTime[ip]
 	c.mu.RUnlock()
+
+	// Check cache validity after releasing lock - values were captured atomically
+	if hasCached && time.Since(cachedTime) < geoCacheDuration {
+		return cached
+	}
 
 	// Fetch from ip-api.com (free, no API key required)
 	url := fmt.Sprintf("http://ip-api.com/json/%s?fields=status,message,country,countryCode,region,regionName,city,lat,lon,isp,org,as", ip)
@@ -230,6 +238,7 @@ func (c *Checker) fetchGeoData(ctx context.Context, ip string) *geoResponse {
 
 // updateHistory updates the IP history when IP changes.
 // Must be called with c.mu held.
+// Fixes #867: Use explicit length check before slicing to prevent potential issues.
 func (c *Checker) updateHistory(ipv4 string) {
 	if ipv4 == "" {
 		return
@@ -260,7 +269,11 @@ func (c *Checker) updateHistory(ipv4 string) {
 				entry.City = geo.City
 				entry.Country = geo.Country
 			}
-			c.history = append([]HistoryEntry{entry}, c.history...)
+			// Fixes #867: Create new slice to avoid aliasing issues with append
+			newHistory := make([]HistoryEntry, 0, 11)
+			newHistory = append(newHistory, entry)
+			newHistory = append(newHistory, c.history...)
+			c.history = newHistory
 			// Keep max 10 entries
 			if len(c.history) > 10 {
 				c.history = c.history[:10]

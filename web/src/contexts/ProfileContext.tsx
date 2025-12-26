@@ -539,7 +539,11 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
 
   /**
    * Add or update an ethernet interface and set it as active.
+   * Fixes #868: Use ref to get current activeProfile to avoid stale closure.
    */
+  const activeProfileRef = useRef(activeProfile);
+  activeProfileRef.current = activeProfile;
+
   const setEthernetInterface = useCallback(
     async (name: string, enabled: boolean = true): Promise<boolean> => {
       const result = await updateInterfaceConfig((interfaces) => {
@@ -553,14 +557,15 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         return { ...interfaces, ethernet, active_ethernet: name };
       });
       if (result) {
+        // Use ref to get current value, avoiding stale closure (fixes #868)
         logger.info(LogComponents.PROFILES, "Ethernet interface set as active", {
-          profileId: activeProfile?.id,
+          profileId: activeProfileRef.current?.id,
           interface: name,
         });
       }
       return result;
     },
-    [updateInterfaceConfig, activeProfile]
+    [updateInterfaceConfig]
   );
 
   /**
@@ -579,14 +584,15 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         return { ...interfaces, wifi, active_wifi: name };
       });
       if (result) {
+        // Use ref to get current value, avoiding stale closure (fixes #868)
         logger.info(LogComponents.PROFILES, "WiFi interface set as active", {
-          profileId: activeProfile?.id,
+          profileId: activeProfileRef.current?.id,
           interface: name,
         });
       }
       return result;
     },
-    [updateInterfaceConfig, activeProfile]
+    [updateInterfaceConfig]
   );
 
   /**
@@ -605,14 +611,15 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         return { ...interfaces, ethernet };
       });
       if (result) {
+        // Use ref to get current value, avoiding stale closure (fixes #868)
         logger.info(LogComponents.PROFILES, "Ethernet interface added", {
-          profileId: activeProfile?.id,
+          profileId: activeProfileRef.current?.id,
           interface: name,
         });
       }
       return result;
     },
-    [updateInterfaceConfig, activeProfile]
+    [updateInterfaceConfig]
   );
 
   /**
@@ -631,14 +638,15 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         return { ...interfaces, wifi };
       });
       if (result) {
+        // Use ref to get current value, avoiding stale closure (fixes #868)
         logger.info(LogComponents.PROFILES, "WiFi interface added", {
-          profileId: activeProfile?.id,
+          profileId: activeProfileRef.current?.id,
           interface: name,
         });
       }
       return result;
     },
-    [updateInterfaceConfig, activeProfile]
+    [updateInterfaceConfig]
   );
 
   /**
@@ -655,14 +663,15 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         return { ...interfaces, ethernet, active_ethernet };
       });
       if (result) {
+        // Use ref to get current value, avoiding stale closure (fixes #868)
         logger.info(LogComponents.PROFILES, "Ethernet interface removed", {
-          profileId: activeProfile?.id,
+          profileId: activeProfileRef.current?.id,
           interface: name,
         });
       }
       return result;
     },
-    [updateInterfaceConfig, activeProfile]
+    [updateInterfaceConfig]
   );
 
   /**
@@ -677,14 +686,15 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         return { ...interfaces, wifi, active_wifi };
       });
       if (result) {
+        // Use ref to get current value, avoiding stale closure (fixes #868)
         logger.info(LogComponents.PROFILES, "WiFi interface removed", {
-          profileId: activeProfile?.id,
+          profileId: activeProfileRef.current?.id,
           interface: name,
         });
       }
       return result;
     },
-    [updateInterfaceConfig, activeProfile]
+    [updateInterfaceConfig]
   );
 
   /**
@@ -692,8 +702,9 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
    */
   const setActiveEthernetInterface = useCallback(
     async (name: string): Promise<boolean> => {
-      // Check if the interface exists in the list
-      const exists = (activeProfile?.config?.interfaces?.ethernet ?? []).some(
+      // Check if the interface exists in the list - use ref for current value (fixes #868)
+      const currentProfile = activeProfileRef.current;
+      const exists = (currentProfile?.config?.interfaces?.ethernet ?? []).some(
         (i) => i.name === name
       );
       if (!exists) {
@@ -710,14 +721,15 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         active_ethernet: name,
       }));
       if (result) {
+        // Use ref to get current value, avoiding stale closure (fixes #868)
         logger.info(LogComponents.PROFILES, "Active ethernet interface changed", {
-          profileId: activeProfile?.id,
+          profileId: activeProfileRef.current?.id,
           interface: name,
         });
       }
       return result;
     },
-    [updateInterfaceConfig, activeProfile]
+    [updateInterfaceConfig]
   );
 
   /**
@@ -725,8 +737,9 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
    */
   const setActiveWiFiInterface = useCallback(
     async (name: string): Promise<boolean> => {
-      // Check if the interface exists in the list
-      const exists = (activeProfile?.config?.interfaces?.wifi ?? []).some(
+      // Check if the interface exists in the list - use ref for current value (fixes #868)
+      const currentProfile = activeProfileRef.current;
+      const exists = (currentProfile?.config?.interfaces?.wifi ?? []).some(
         (i) => i.name === name
       );
       if (!exists) {
@@ -743,14 +756,15 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
         active_wifi: name,
       }));
       if (result) {
+        // Use ref to get current value, avoiding stale closure (fixes #868)
         logger.info(LogComponents.PROFILES, "Active WiFi interface changed", {
-          profileId: activeProfile?.id,
+          profileId: activeProfileRef.current?.id,
           interface: name,
         });
       }
       return result;
     },
-    [updateInterfaceConfig, activeProfile]
+    [updateInterfaceConfig]
   );
 
   // ============================================================================

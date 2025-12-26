@@ -707,6 +707,7 @@ func (m *Manager) saveSurvey(survey *Survey) error {
 }
 
 // LoadSurveys loads all surveys from disk and auto-migrates legacy single-floor surveys.
+// Fixes #872: Added timeout protection for file operations (30 second limit).
 func (m *Manager) LoadSurveys() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -722,7 +723,19 @@ func (m *Manager) LoadSurveys() error {
 		return fmt.Errorf("failed to list survey files: %w", err)
 	}
 
+	// Fixes #872: Track start time to prevent hanging on slow filesystem
+	startTime := time.Now()
+	const loadTimeout = 30 * time.Second
+
 	for _, file := range files {
+		// Check timeout to prevent hanging on slow/unresponsive filesystem (fixes #872)
+		if time.Since(startTime) > loadTimeout {
+			slog.Warn("Survey loading timeout reached, some surveys may not be loaded",
+				"loaded_count", len(m.surveys),
+				"elapsed", time.Since(startTime))
+			break
+		}
+
 		// file comes from filepath.Glob with our controlled pattern, not user input
 		data, err := os.ReadFile(file) //nolint:gosec // G304: file path from Glob with controlled pattern
 		if err != nil {

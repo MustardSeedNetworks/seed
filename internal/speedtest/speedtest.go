@@ -277,10 +277,10 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	t.mu.Unlock()
 
 	// Reset to idle after a moment
-	go func() {
-		time.Sleep(2 * time.Second)
+	// Fixes #864: Use time.AfterFunc instead of goroutine to allow GC if Tester is discarded
+	time.AfterFunc(2*time.Second, func() {
 		t.setStatus("idle", 0)
-	}()
+	})
 
 	return result, nil
 }
