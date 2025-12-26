@@ -396,11 +396,11 @@ func (s *ARPScanner) isInLocalSubnet(ipStr string) bool {
 
 // enrichEntries adds OUI lookups, hostname resolution, and TTL-based OS guessing.
 func (s *ARPScanner) enrichEntries(ctx context.Context, entries []*ARPEntry) {
-	// Note: pingResults already populated by pingSweep, no lock needed for reading
-	pingResults := s.pingResults
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Copy pingResults under lock to avoid data race (fixes #819)
+	pingResults := s.pingResults
 
 	// Clear old entries not in current scan
 	newEntries := make(map[string]*ARPEntry)

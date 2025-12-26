@@ -313,7 +313,10 @@ func (m *Manager) GetEDPNeighbors() []*EDPNeighbor {
 
 // SetInterface changes the capture interface.
 func (m *Manager) SetInterface(interfaceName string) error {
+	// Read started under lock to avoid race condition (fixes #816)
+	m.mu.Lock()
 	wasRunning := m.started
+	m.mu.Unlock()
 
 	if wasRunning {
 		m.Stop()
