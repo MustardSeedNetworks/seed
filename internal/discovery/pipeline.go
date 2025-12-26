@@ -856,19 +856,22 @@ func (p *Pipeline) handlePhaseError(phase string, err error) {
 }
 
 // broadcastEvent sends an event to the broadcaster if available.
+// Fixes #862: Capture broadcaster reference under lock to prevent TOCTOU race.
 func (p *Pipeline) broadcastEvent(eventType PipelineEventType, payload any) {
-	if p.broadcaster == nil {
-		return
-	}
-
-	runID := ""
 	p.mu.RLock()
+	broadcaster := p.broadcaster
+	var runID string
 	if p.currentRun != nil {
 		runID = p.currentRun.ID
 	}
 	p.mu.RUnlock()
 
-	p.broadcaster.BroadcastPipelineEvent(PipelineEvent{
+	// Check broadcaster after releasing lock - it was captured while lock was held
+	if broadcaster == nil {
+		return
+	}
+
+	broadcaster.BroadcastPipelineEvent(PipelineEvent{
 		Type:      eventType,
 		Timestamp: time.Now(),
 		RunID:     runID,

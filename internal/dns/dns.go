@@ -140,23 +140,27 @@ func (t *Tester) SetTestHostname(hostname string) {
 }
 
 // SetServer updates the DNS server to use.
+// Fixes #859: Lock held throughout entire resolver update via defer.
 func (t *Tester) SetServer(server string) {
 	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	t.server = server
 	if server != "" {
+		// Capture server in closure to avoid race with later SetServer calls
+		serverAddr := server + ":53"
 		t.resolver = &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
 				d := net.Dialer{
 					Timeout: 5 * time.Second,
 				}
-				return d.DialContext(ctx, "udp", server+":53")
+				return d.DialContext(ctx, "udp", serverAddr)
 			},
 		}
 	} else {
 		t.resolver = net.DefaultResolver
 	}
-	t.mu.Unlock()
 }
 
 // SetConfiguredServers updates the list of user-configured DNS servers.

@@ -515,13 +515,24 @@ func (h *Hub) Shutdown() {
 }
 
 // Broadcast sends a message to all connected clients.
+// Uses non-blocking send with timeout to prevent goroutine hangs if hub stops (fixes #858).
 func (h *Hub) Broadcast(msg Message) {
 	data, err := json.Marshal(msg)
 	if err != nil {
 		slog.Error("Error marshaling message", "error", err)
 		return
 	}
-	h.broadcast <- data
+
+	// Non-blocking send with timeout to prevent indefinite blocking if hub exits (fixes #858)
+	select {
+	case h.broadcast <- data:
+		// Message sent successfully
+	case <-h.shutdown:
+		// Hub is shutting down, drop the message
+		slog.Debug("Broadcast dropped - hub shutting down")
+	case <-time.After(100 * time.Millisecond):
+		slog.Warn("Broadcast timeout - hub may be overloaded or stopped")
+	}
 }
 
 // BroadcastCardUpdate sends a card update to all clients.
