@@ -206,7 +206,8 @@ func (d *DeviceDiscovery) Start() error {
 
 // Stop stops all discovery.
 func (d *DeviceDiscovery) Stop() {
-	_ = d.ndpScanner.Stop() //nolint:errcheck // Best-effort cleanup
+	_ = d.ndpScanner.Stop()  //nolint:errcheck // Best-effort cleanup
+	_ = d.arpScanner.Close() // Close ICMP pinger (fixes #818)
 	d.mdnsListener.Stop()
 	d.protoManager.Stop()
 }

@@ -209,6 +209,10 @@ func (s *Service) Reload() error {
 
 	// Stop current operations
 	if wasRunning {
+		// Close old stopCh to terminate existing rescanLoop goroutine (fixes #817)
+		if s.stopCh != nil {
+			close(s.stopCh)
+		}
 		if s.rescanTicker != nil {
 			s.rescanTicker.Stop()
 			s.rescanTicker = nil
@@ -220,6 +224,9 @@ func (s *Service) Reload() error {
 	slog.Info("Discovery: reloading options", "methods", s.getActiveMethods())
 
 	if wasRunning {
+		// Create new stopCh for the new rescanLoop goroutine
+		s.stopCh = make(chan struct{})
+
 		if err := s.applyOptions(opts); err != nil {
 			return err
 		}
