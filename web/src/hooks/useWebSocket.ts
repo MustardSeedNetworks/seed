@@ -30,6 +30,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logger, LogComponents } from "../lib/logger";
 
+// Fixes #876: Use refs for callbacks to prevent unnecessary WebSocket reconnections
+// when parent components re-render and recreate callback functions.
+
 /** WebSocket connection status states */
 export type ConnectionStatus =
   | "connecting" // Attempting to establish connection
@@ -168,6 +171,20 @@ export function useWebSocket({
   );
   const shouldReconnectRef = useRef(true);
   const connectionIdRef = useRef(0);
+
+  // Fixes #876: Store callbacks in refs to avoid recreating connect() when callbacks change
+  // This prevents unnecessary WebSocket reconnections when parent components re-render
+  const onMessageRef = useRef(onMessage);
+  const onCardUpdateRef = useRef(onCardUpdate);
+
+  // Keep refs up to date with latest callbacks
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
+
+  useEffect(() => {
+    onCardUpdateRef.current = onCardUpdate;
+  }, [onCardUpdate]);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -372,14 +389,15 @@ export function useWebSocket({
                 continue;
               }
 
-              if (onCardUpdate) {
-                onCardUpdate(cardUpdate);
+              // Fixes #876: Use ref to avoid stale closure
+              if (onCardUpdateRef.current) {
+                onCardUpdateRef.current(cardUpdate);
               }
             }
 
-            // Always invoke general message handler
-            if (onMessage) {
-              onMessage(message);
+            // Always invoke general message handler (fixes #876: use ref)
+            if (onMessageRef.current) {
+              onMessageRef.current(message);
             }
           } catch (error) {
             logger.error(
@@ -407,9 +425,8 @@ export function useWebSocket({
   }, [
     url,
     isAuthenticated,
-    // Note: onRefreshToken is deprecated (fix #660) - cookies handle refresh automatically
-    onMessage,
-    onCardUpdate,
+    // Fixes #876: Removed onMessage and onCardUpdate from deps - using refs instead
+    // This prevents reconnecting when parent components re-render and recreate callbacks
     reconnectInterval,
     maxReconnectAttempts,
     clearReconnectTimer,

@@ -331,25 +331,42 @@ func (m *Manager) GetEDPNeighbors() []*EDPNeighbor {
 }
 
 // SetInterface changes the capture interface.
+// Fixes #875: Hold lock throughout stop/recreate/start to prevent race with concurrent calls.
 func (m *Manager) SetInterface(interfaceName string) error {
-	// Read started under lock to avoid race condition (fixes #816)
 	m.mu.Lock()
-	wasRunning := m.started
-	m.mu.Unlock()
+	defer m.mu.Unlock()
 
+	wasRunning := m.started
+
+	// Stop inline without releasing lock to prevent race (fixes #875)
 	if wasRunning {
-		m.Stop()
+		m.lldp.Stop()
+		m.cdp.Stop()
+		m.edp.Stop()
+		m.started = false
 	}
 
-	m.mu.Lock()
+	// Recreate captures for new interface
 	m.interfaceName = interfaceName
 	m.lldp = NewLLDPCapture(interfaceName)
 	m.cdp = NewCDPCapture(interfaceName)
 	m.edp = NewEDPCapture(interfaceName)
-	m.mu.Unlock()
 
+	// Restart if was running
 	if wasRunning {
-		return m.Start()
+		if err := m.lldp.Start(); err != nil {
+			return err
+		}
+		if err := m.cdp.Start(); err != nil {
+			m.lldp.Stop()
+			return err
+		}
+		if err := m.edp.Start(); err != nil {
+			m.lldp.Stop()
+			m.cdp.Stop()
+			return err
+		}
+		m.started = true
 	}
 	return nil
 }

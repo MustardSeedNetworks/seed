@@ -97,7 +97,14 @@ func (s *PortScanner) ScanWithBanners(ctx context.Context, target string, ports 
 	probeResults := s.prober.ScanPorts(ctx, result.IP, ports, workers)
 
 	// For open ports, try to grab banners
+	// Fixes #879: Check context cancellation before processing each probe
 	for _, probe := range probeResults {
+		select {
+		case <-ctx.Done():
+			result.Error = ctx.Err().Error()
+			return result
+		default:
+		}
 		if probe.State != PortOpen {
 			continue
 		}

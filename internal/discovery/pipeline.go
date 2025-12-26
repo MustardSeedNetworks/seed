@@ -435,19 +435,25 @@ func (p *Pipeline) Start(ctx context.Context, trigger string) (*PipelineRun, err
 }
 
 // Cancel cancels the current pipeline run.
+// Fixes #877: Capture runID before modifying state to prevent race with new Start() calls.
 func (p *Pipeline) Cancel() error {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 
 	if p.currentRun == nil || p.cancelFunc == nil {
+		p.mu.Unlock()
 		return fmt.Errorf("no pipeline running")
 	}
+
+	// Capture run ID before cancellation for the run() goroutine to check
+	runID := p.currentRun.ID
 
 	p.cancelFunc()
 	p.currentRun.Status = PipelineStateCanceled
 	now := time.Now()
 	p.currentRun.CompletedAt = &now
+	p.mu.Unlock()
 
+	slog.Info("Pipeline cancelled", "runId", runID)
 	p.broadcastEvent(EventPipelineCanceled, nil)
 
 	return nil
@@ -725,9 +731,15 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 			case <-waitCtx.Done():
 				break waitLoop
 			case <-ticker.C:
-				// Check if all devices are profiled
+				// Fixes #878: Check context in device iteration to exit promptly on cancellation
 				allDone := true
 				for _, device := range devices {
+					// Check for cancellation during iteration (fixes #878)
+					select {
+					case <-waitCtx.Done():
+						break waitLoop
+					default:
+					}
 					if device.IP != "" && p.profiler.IsProfiling(device.IP) {
 						allDone = false
 						break
@@ -831,7 +843,11 @@ func (p *Pipeline) updateState(state PipelineState, phase string) {
 	p.currentRun.CurrentPhase = phase
 }
 
+// maxPipelineErrors limits error accumulation to prevent unbounded memory growth (fixes #880).
+const maxPipelineErrors = 100
+
 // handlePhaseError handles errors during phase execution.
+// Fixes #880: Limit error array to maxPipelineErrors to prevent unbounded growth.
 func (p *Pipeline) handlePhaseError(phase string, err error) {
 	slog.Error("Pipeline phase failed",
 		"phase", phase,
@@ -840,6 +856,10 @@ func (p *Pipeline) handlePhaseError(phase string, err error) {
 	p.mu.Lock()
 	p.currentRun.Status = PipelineStateFailed
 	p.currentRun.Errors = append(p.currentRun.Errors, fmt.Sprintf("%s: %v", phase, err))
+	// Fixes #880: Cap errors to prevent unbounded memory growth
+	if len(p.currentRun.Errors) > maxPipelineErrors {
+		p.currentRun.Errors = p.currentRun.Errors[len(p.currentRun.Errors)-maxPipelineErrors:]
+	}
 	now := time.Now()
 	p.currentRun.CompletedAt = &now
 	p.mu.Unlock()

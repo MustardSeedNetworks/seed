@@ -516,7 +516,16 @@ func (h *Hub) Shutdown() {
 
 // Broadcast sends a message to all connected clients.
 // Uses non-blocking send with timeout to prevent goroutine hangs if hub stops (fixes #858).
+// Fixes #881: Check shutdown first to avoid creating timers during shutdown.
 func (h *Hub) Broadcast(msg Message) {
+	// Fixes #881: Check shutdown first to avoid timer allocation during shutdown
+	select {
+	case <-h.shutdown:
+		slog.Debug("Broadcast dropped - hub already shut down")
+		return
+	default:
+	}
+
 	data, err := json.Marshal(msg)
 	if err != nil {
 		slog.Error("Error marshaling message", "error", err)
