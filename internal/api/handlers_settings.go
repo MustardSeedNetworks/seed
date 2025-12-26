@@ -750,9 +750,10 @@ func applyIperfUpdates(updates map[string]interface{}, cfg *config.Config) error
 			return fmt.Errorf("iperf.port must be a number")
 		}
 		p := int(port)
-		if validation.ValidatePort(p) == nil {
-			cfg.Iperf.Port = p
+		if err := validation.ValidatePort(p); err != nil {
+			return fmt.Errorf("iperf.port: %w", err)
 		}
+		cfg.Iperf.Port = p
 	}
 
 	if val, exists := iperf["protocol"]; exists {

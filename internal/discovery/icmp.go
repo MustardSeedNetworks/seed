@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -97,6 +98,14 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 
 	// Start the receiver goroutine
 	go p.receiver()
+
+	// Set finalizer to ensure cleanup if Close() is not called.
+	// This prevents goroutine leaks if the pinger is abandoned.
+	runtime.SetFinalizer(p, func(pinger *ICMPPinger) {
+		if err := pinger.Close(); err != nil {
+			slog.Debug("ICMPPinger finalizer close error", "error", err)
+		}
+	})
 
 	return p, nil
 }

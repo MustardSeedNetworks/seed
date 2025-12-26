@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -259,12 +258,13 @@ func (p *EnumerationPhase) runICMPScan(_ context.Context, _ *EnumerationProgress
 }
 
 // EnumerationProgress tracks progress during enumeration.
+// All fields are protected by mu for consistent synchronization.
 type EnumerationProgress struct {
 	mu            sync.RWMutex
 	startTime     time.Time
 	currentPhase  string
 	currentTarget string
-	devicesFound  int64
+	devicesFound  int
 	errors        []EnumerationError
 	completed     map[string]bool
 }
@@ -307,12 +307,16 @@ func (p *EnumerationProgress) CurrentTarget() string {
 
 // IncrementDevices adds to the device count.
 func (p *EnumerationProgress) IncrementDevices() {
-	atomic.AddInt64(&p.devicesFound, 1)
+	p.mu.Lock()
+	p.devicesFound++
+	p.mu.Unlock()
 }
 
 // DevicesFound returns the number of devices discovered.
-func (p *EnumerationProgress) DevicesFound() int64 {
-	return atomic.LoadInt64(&p.devicesFound)
+func (p *EnumerationProgress) DevicesFound() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.devicesFound
 }
 
 // EstimatedTotal returns estimated total devices (for progress calculation).
@@ -532,11 +536,23 @@ func (e *EnhancedEnumerator) Close() error {
 // generateHostIPs returns all host IPs in a subnet (excluding network and broadcast).
 func generateHostIPs(subnet *net.IPNet) []net.IP {
 	ones, bits := subnet.Mask.Size()
-	numHosts := 1<<(bits-ones) - 2
 
-	// Limit to reasonable size
-	if numHosts > 65534 {
-		numHosts = 65534
+	// Prevent integer overflow: limit host bits to avoid shift overflow
+	// For subnets larger than /16 (65534 hosts), cap at 65534
+	hostBits := bits - ones
+	if hostBits <= 0 {
+		return nil // /32 or invalid subnet
+	}
+
+	// Cap at 16 host bits (65534 hosts) to prevent overflow and limit scan size
+	const maxHostBits = 16
+	if hostBits > maxHostBits {
+		hostBits = maxHostBits
+	}
+
+	numHosts := (1 << hostBits) - 2
+	if numHosts <= 0 {
+		return nil // /31 or smaller
 	}
 
 	baseIP := subnet.IP.Mask(subnet.Mask).To4()

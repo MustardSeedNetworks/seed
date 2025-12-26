@@ -626,8 +626,18 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 // getInterfaceFromRequest extracts the interface name from request query params.
 // Falls back to the netManager's current interface if not specified.
+// Validates the interface name to prevent injection attacks.
 func (s *Server) getInterfaceFromRequest(r *http.Request) string {
 	if iface := r.URL.Query().Get("interface"); iface != "" {
+		// Validate interface name to prevent path traversal/injection
+		if err := validation.ValidateInterface(iface); err != nil {
+			slog.Warn("Invalid interface name in request", "interface", iface, "error", err)
+			// Fall back to current interface instead of returning invalid input
+			if s.netManager != nil {
+				return s.netManager.GetCurrentInterface()
+			}
+			return ""
+		}
 		return iface
 	}
 	if s.netManager != nil {

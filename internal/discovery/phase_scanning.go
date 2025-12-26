@@ -267,12 +267,21 @@ func (p *ScanningPhase) scanPorts(ctx context.Context, ip string) *DeviceProfile
 		go func(port int) {
 			defer wg.Done()
 
-			sem <- struct{}{}
+			// Check for cancellation before acquiring semaphore
+			select {
+			case <-ctx.Done():
+				return
+			case sem <- struct{}{}:
+			}
 			defer func() { <-sem }()
 
-			// Apply probe delay
+			// Check for cancellation before sleeping
 			if p.pipelineConfig.Timing.ProbeDelay > 0 {
-				time.Sleep(p.pipelineConfig.Timing.ProbeDelay)
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(p.pipelineConfig.Timing.ProbeDelay):
+				}
 			}
 
 			result := p.profiler.checkPortWithConfig(ctx, ip, port)

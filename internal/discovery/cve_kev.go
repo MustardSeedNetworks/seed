@@ -330,7 +330,14 @@ func (kev *KEVProvider) saveCache(data []byte) error {
 
 // entryToVulnerability converts a KEV entry to our Vulnerability format.
 func (kev *KEVProvider) entryToVulnerability(entry *KEVEntry) Vulnerability {
-	dateAdded, _ := time.Parse("2006-01-02", entry.DateAdded) //nolint:errcheck // Zero time acceptable
+	dateAdded, err := time.Parse("2006-01-02", entry.DateAdded)
+	if err != nil {
+		// Log warning for format changes but continue with zero time
+		slog.Warn("Failed to parse KEV date, using zero time",
+			"cve", entry.CVEID,
+			"dateAdded", entry.DateAdded,
+			"error", err)
+	}
 
 	return Vulnerability{
 		CVEID:             entry.CVEID,
