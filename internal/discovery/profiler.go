@@ -156,6 +156,7 @@ type DeviceProfiler struct {
 	config     *ProfilerConfig
 	snmpConfig *config.SNMPConfig
 	httpClient *http.Client
+	transport  *http.Transport // Store transport for cleanup (fixes #825)
 	mu         sync.RWMutex
 	profiles   map[string]*DeviceProfile // key by IP
 	profiling  map[string]bool           // track in-progress profiles
@@ -180,6 +181,7 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 	return &DeviceProfiler{
 		config:     cfg,
 		snmpConfig: snmpCfg,
+		transport:  transport, // Store for cleanup (fixes #825)
 		httpClient: &http.Client{
 			Timeout:   cfg.Timeout,
 			Transport: transport,
@@ -226,6 +228,12 @@ func (p *DeviceProfiler) Stop() {
 	p.mu.Unlock()
 
 	p.wg.Wait()
+
+	// Close idle connections to prevent resource leak (fixes #825)
+	if p.transport != nil {
+		p.transport.CloseIdleConnections()
+	}
+
 	slog.Info("Device profiler stopped")
 }
 

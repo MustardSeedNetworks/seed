@@ -316,18 +316,22 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 		}
 	}
 
-	// Initialize pinger if needed
+	// Initialize pinger if needed (fixes #822 - check under lock)
+	s.mu.Lock()
 	if s.pinger == nil {
 		pinger, err := NewICMPPinger(time.Second)
 		if err != nil {
+			s.mu.Unlock()
 			slog.Warn("Failed to create ICMP pinger", "error", err)
 			return err
 		}
 		s.pinger = pinger
 	}
+	pinger := s.pinger // Copy reference under lock
+	s.mu.Unlock()
 
 	// Perform ping sweep using raw ICMP sockets (50 workers)
-	results := s.pinger.PingSweep(ctx, ips, 50)
+	results := pinger.PingSweep(ctx, ips, 50)
 
 	// Store results and track responders
 	s.mu.Lock()
@@ -397,7 +401,6 @@ func (s *ARPScanner) isInLocalSubnet(ipStr string) bool {
 // enrichEntries adds OUI lookups, hostname resolution, and TTL-based OS guessing.
 func (s *ARPScanner) enrichEntries(ctx context.Context, entries []*ARPEntry) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	// Copy pingResults under lock to avoid data race (fixes #819)
 	pingResults := s.pingResults
@@ -415,8 +418,26 @@ func (s *ARPScanner) enrichEntries(ctx context.Context, entries []*ARPEntry) {
 			}
 		}
 
-		// Hostname resolution (with timeout)
+		// Use TTL from cached ping results (already collected during ping sweep)
+		if pr, ok := pingResults[entry.IP]; ok && pr.Reachable && pr.TTL > 0 {
+			entry.TTL = pr.TTL
+			entry.OSGuess = guessOSFromTTL(pr.TTL)
+			entry.ResponseTime = pr.RTT.Milliseconds()
+		}
+
+		newEntries[entry.IP] = entry
+	}
+
+	s.entries = newEntries
+	s.mu.Unlock()
+
+	// Hostname resolution with WaitGroup to prevent goroutine leak (fixes #823)
+	var wg sync.WaitGroup
+	for _, entry := range entries {
+		wg.Add(1)
 		go func(e *ARPEntry) {
+			defer wg.Done()
+
 			resolveCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 			defer cancel()
 
@@ -429,18 +450,8 @@ func (s *ARPScanner) enrichEntries(ctx context.Context, entries []*ARPEntry) {
 				s.mu.Unlock()
 			}
 		}(entry)
-
-		// Use TTL from cached ping results (already collected during ping sweep)
-		if pr, ok := pingResults[entry.IP]; ok && pr.Reachable && pr.TTL > 0 {
-			entry.TTL = pr.TTL
-			entry.OSGuess = guessOSFromTTL(pr.TTL)
-			entry.ResponseTime = pr.RTT.Milliseconds()
-		}
-
-		newEntries[entry.IP] = entry
 	}
-
-	s.entries = newEntries
+	wg.Wait()
 }
 
 // guessOSFromTTL makes a rough OS guess based on default TTL values.

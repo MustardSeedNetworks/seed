@@ -515,14 +515,21 @@ func (p *Pipeline) run(ctx context.Context) {
 		if p.currentRun.Status != PipelineStateCanceled && p.currentRun.Status != PipelineStateFailed {
 			p.currentRun.Status = PipelineStateComplete
 		}
+		// Copy values under lock to avoid race after unlock (fixes #824)
+		status := p.currentRun.Status
+		startedAt := p.currentRun.StartedAt
+		phaseDurations := make(map[string]time.Duration, len(p.currentRun.PhaseDurations))
+		for k, v := range p.currentRun.PhaseDurations {
+			phaseDurations[k] = v
+		}
 		p.mu.Unlock()
 
-		// Broadcast completion
-		if p.currentRun.Status == PipelineStateComplete {
+		// Broadcast completion using copied values
+		if status == PipelineStateComplete {
 			p.broadcastEvent(EventPipelineCompleted, PipelineCompletedPayload{
 				TotalDevices:   len(devices),
-				TotalDuration:  time.Since(p.currentRun.StartedAt),
-				PhaseDurations: p.currentRun.PhaseDurations,
+				TotalDuration:  time.Since(startedAt),
+				PhaseDurations: phaseDurations,
 			})
 		}
 	}()
@@ -724,11 +731,16 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 						processed++
 					}
 				}
+				// Prevent division by zero (fixes #821)
+				percentComplete := float64(100)
+				if len(devices) > 0 {
+					percentComplete = float64(processed) / float64(len(devices)) * 100
+				}
 				p.broadcastEvent(EventPhaseProgress, PhaseProgressPayload{
 					Phase:           "scanning",
 					ProcessedCount:  processed,
 					TotalCount:      len(devices),
-					PercentComplete: float64(processed) / float64(len(devices)) * 100,
+					PercentComplete: percentComplete,
 					ElapsedMs:       time.Since(start).Milliseconds(),
 				})
 			}
