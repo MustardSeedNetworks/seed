@@ -464,8 +464,18 @@ func (p *Pipeline) GetStatus() *PipelineRun {
 		}
 	}
 
-	// Return a copy
+	// Return a deep copy including the map to prevent external mutation (fixes #845)
 	run := *p.currentRun
+	if p.currentRun.PhaseDurations != nil {
+		run.PhaseDurations = make(map[string]time.Duration, len(p.currentRun.PhaseDurations))
+		for k, v := range p.currentRun.PhaseDurations {
+			run.PhaseDurations[k] = v
+		}
+	}
+	if p.currentRun.Errors != nil {
+		run.Errors = make([]string, len(p.currentRun.Errors))
+		copy(run.Errors, p.currentRun.Errors)
+	}
 	return &run
 }
 

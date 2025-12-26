@@ -626,19 +626,37 @@ export function usePipelineStatus(
   );
 
   // Expose handlePipelineEvent for external WebSocket integration
+  // Uses a Set of handlers to support multiple components mounting this hook (fixes #842)
   useEffect(() => {
-    // Store handler on window for WebSocket to call
-    (
-      window as unknown as {
-        __pipelineEventHandler?: typeof handlePipelineEvent;
-      }
-    ).__pipelineEventHandler = handlePipelineEvent;
+    type WindowWithHandlers = Window &
+      typeof globalThis & {
+        __pipelineEventHandlers?: Set<typeof handlePipelineEvent>;
+        __pipelineEventHandler?: (event: PipelineEvent) => void;
+      };
+    const win = window as WindowWithHandlers;
+
+    // Initialize handlers set if needed
+    if (!win.__pipelineEventHandlers) {
+      win.__pipelineEventHandlers = new Set();
+    }
+
+    // Add this component's handler
+    win.__pipelineEventHandlers.add(handlePipelineEvent);
+
+    // Create dispatcher that calls all registered handlers
+    win.__pipelineEventHandler = (event: PipelineEvent) => {
+      win.__pipelineEventHandlers?.forEach((h) => h(event));
+    };
+
     return () => {
-      delete (
-        window as unknown as {
-          __pipelineEventHandler?: typeof handlePipelineEvent;
-        }
-      ).__pipelineEventHandler;
+      // Remove this component's handler
+      win.__pipelineEventHandlers?.delete(handlePipelineEvent);
+
+      // Only delete the dispatcher if no handlers remain
+      if (win.__pipelineEventHandlers?.size === 0) {
+        delete win.__pipelineEventHandler;
+        delete win.__pipelineEventHandlers;
+      }
     };
   }, [handlePipelineEvent]);
 

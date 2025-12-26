@@ -110,8 +110,16 @@ func (rl *RateLimiter) doCleanup() {
 }
 
 // Stop stops the rate limiter cleanup goroutine.
+// Safe to call multiple times (fixes #844).
 func (rl *RateLimiter) Stop() {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	if rl.stopCh == nil {
+		return // Already stopped
+	}
 	close(rl.stopCh)
+	rl.stopCh = nil
 }
 
 // IsBlocked checks if an IP is currently blocked.
@@ -328,8 +336,16 @@ func (erl *EndpointRateLimiter) doCleanup() {
 }
 
 // Stop stops the rate limiter cleanup goroutine.
+// Safe to call multiple times (fixes #844).
 func (erl *EndpointRateLimiter) Stop() {
+	erl.mu.Lock()
+	defer erl.mu.Unlock()
+
+	if erl.stopCh == nil {
+		return // Already stopped
+	}
 	close(erl.stopCh)
+	erl.stopCh = nil
 }
 
 // Allow checks if a request from an IP should be allowed.

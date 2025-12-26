@@ -442,11 +442,11 @@ export function useWebSocket({
     }
   }, []);
 
-  const reconnect = useCallback(() => {
+  const reconnect = useCallback(async () => {
     reconnectAttempts.current = 0;
     disconnect();
     shouldReconnectRef.current = true;
-    connect();
+    await connect(); // Properly await async connect (fixes #846)
   }, [connect, disconnect]);
 
   useEffect(() => {
