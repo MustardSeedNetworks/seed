@@ -146,8 +146,12 @@ export function FloorPlanCanvas({
     canvas.height = dimensions.height;
 
     // Draw floor plan image
+    // Track Image object for cleanup on unmount/re-render (fixes #853)
+    let isMounted = true;
     const img = new Image();
     img.onload = () => {
+      // Skip render if component unmounted or effect re-ran (fixes #853)
+      if (!isMounted) return;
       ctx.drawImage(img, 0, 0, dimensions.width, dimensions.height);
 
       // Calculate scale factor
@@ -341,6 +345,13 @@ export function FloorPlanCanvas({
     };
 
     img.src = floorPlan.imageData;
+
+    // Cleanup: cancel pending image load and prevent stale renders (fixes #853)
+    return () => {
+      isMounted = false;
+      img.onload = null; // Prevent callback from firing after cleanup
+      img.src = ""; // Cancel pending load
+    };
   }, [
     floorPlan,
     samples,

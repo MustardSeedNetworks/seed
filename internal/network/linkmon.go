@@ -60,18 +60,22 @@ type LinkMonitor struct {
 	history    []LinkEvent
 	maxHistory int
 	startTime  time.Time
+	// Rate limiting for callback goroutines (fixes #857)
+	lastCallbackTime time.Time
+	minCallbackGap   time.Duration // Minimum time between callback bursts
 }
 
 // NewLinkMonitor creates a new link state monitor.
 func NewLinkMonitor(interfaceName string) *LinkMonitor {
 	return &LinkMonitor{
-		interfaceName: interfaceName,
-		callbacks:     make([]LinkStateCallback, 0),
-		lastState:     LinkStateUnknown,
-		pollInterval:  500 * time.Millisecond, // Check every 500ms
-		history:       make([]LinkEvent, 0),
-		maxHistory:    100, // Keep last 100 events
-		startTime:     time.Now(),
+		interfaceName:  interfaceName,
+		callbacks:      make([]LinkStateCallback, 0),
+		lastState:      LinkStateUnknown,
+		pollInterval:   500 * time.Millisecond, // Check every 500ms
+		history:        make([]LinkEvent, 0),
+		maxHistory:     100, // Keep last 100 events
+		startTime:      time.Now(),
+		minCallbackGap: 100 * time.Millisecond, // Rate limit callbacks (fixes #857)
 	}
 }
 
@@ -165,7 +169,22 @@ func (m *LinkMonitor) pollLoop() {
 
 				callbacks := make([]LinkStateCallback, len(m.callbacks))
 				copy(callbacks, m.callbacks)
+
+				// Rate limit callback goroutines to prevent explosion on rapid link flap (fixes #857)
+				now := time.Now()
+				shouldNotify := now.Sub(m.lastCallbackTime) >= m.minCallbackGap
+				if shouldNotify {
+					m.lastCallbackTime = now
+				}
 				m.mu.Unlock()
+
+				// Skip callback notification if rate limited
+				if !shouldNotify {
+					slog.Debug("Link state change rate limited",
+						"interface", event.Interface,
+						"state", event.State.String())
+					continue
+				}
 
 				// Notify callbacks with panic recovery (fixes #790 - log panic details)
 				for _, cb := range callbacks {

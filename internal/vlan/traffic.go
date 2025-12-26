@@ -86,20 +86,27 @@ func (m *TrafficMonitor) Stop() {
 }
 
 // SetInterface updates the interface to monitor.
+// Fixes #852: Keep lock held throughout operation to prevent TOCTOU race condition.
 func (m *TrafficMonitor) SetInterface(name string) error {
 	m.mu.Lock()
 	wasRunning := m.started
-	m.mu.Unlock()
 
+	// Stop capture if running (while holding lock)
 	if wasRunning {
-		m.Stop()
+		m.cancel()
+		if m.handle != nil {
+			m.handle.Close()
+			m.handle = nil
+		}
+		m.started = false
 	}
 
-	m.mu.Lock()
+	// Update interface and reset context
 	m.interfaceName = name
 	m.ctx, m.cancel = context.WithCancel(context.Background())
 	m.mu.Unlock()
 
+	// Restart if was previously running
 	if wasRunning {
 		return m.Start()
 	}

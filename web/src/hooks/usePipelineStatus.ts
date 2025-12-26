@@ -603,13 +603,18 @@ export function usePipelineStatus(
         case "pipeline_failed":
         case "phase_failed": {
           const payload = event.payload as { error?: string; phase?: string };
-          setStatus((prev) => ({
-            ...prev,
-            state: "failed",
-            errors: payload.error
-              ? [...prev.errors, payload.error]
-              : prev.errors,
-          }));
+          setStatus((prev) => {
+            // Limit errors array to last 100 entries to prevent unbounded growth (fixes #855)
+            const maxErrors = 100;
+            const newErrors = payload.error
+              ? [...prev.errors, payload.error].slice(-maxErrors)
+              : prev.errors;
+            return {
+              ...prev,
+              state: "failed",
+              errors: newErrors,
+            };
+          });
           break;
         }
 

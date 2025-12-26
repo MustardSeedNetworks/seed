@@ -331,9 +331,11 @@ export function useCardState({
 
   // Cleanup timeouts on unmount (fixes #851)
   useEffect(() => {
+    // Copy ref value for cleanup function (fixes react-hooks/exhaustive-deps warning)
+    const timeoutIds = timeoutIdsRef.current;
     return () => {
-      timeoutIdsRef.current.forEach((id) => clearTimeout(id));
-      timeoutIdsRef.current.clear();
+      timeoutIds.forEach((id) => clearTimeout(id));
+      timeoutIds.clear();
     };
   }, []);
 

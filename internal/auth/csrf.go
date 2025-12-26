@@ -90,6 +90,7 @@ func (m *CSRFManager) GenerateToken(sessionID string) (string, error) {
 
 // ValidateToken checks if the provided token is valid for the given session.
 // Uses constant-time comparison to prevent timing attacks.
+// Fixes #856: Re-validates under write lock before deletion to prevent TOCTOU race.
 func (m *CSRFManager) ValidateToken(sessionID, token string) error {
 	if token == "" {
 		return ErrCSRFTokenMissing
@@ -104,10 +105,15 @@ func (m *CSRFManager) ValidateToken(sessionID, token string) error {
 	}
 
 	// Check expiry
-	if time.Now().After(storedToken.ExpiresAt) {
-		// Clean up expired token
+	now := time.Now()
+	if now.After(storedToken.ExpiresAt) {
+		// Clean up expired token - re-check under write lock to prevent TOCTOU race
 		m.mu.Lock()
-		delete(m.tokens, sessionID)
+		// Re-validate the token is still the same one we checked (fixes #856)
+		currentToken, stillExists := m.tokens[sessionID]
+		if stillExists && currentToken == storedToken {
+			delete(m.tokens, sessionID)
+		}
 		m.mu.Unlock()
 		return ErrCSRFTokenExpired
 	}

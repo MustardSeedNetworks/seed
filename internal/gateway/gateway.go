@@ -78,6 +78,7 @@ type Tester struct {
 	mu          sync.RWMutex
 	stopCh      chan struct{}
 	running     bool
+	stopOnce    sync.Once             // Prevents double-close panic on stopCh (fixes #854)
 	pinger      *discovery.ICMPPinger // Raw ICMP pinger (nil if unavailable)
 }
 
@@ -312,6 +313,7 @@ func (t *Tester) StartContinuous(interval time.Duration, callback func(*PingStat
 	}
 	t.running = true
 	t.stopCh = make(chan struct{})
+	t.stopOnce = sync.Once{} // Reset Once for new channel (fixes #854)
 	t.mu.Unlock()
 
 	go func() {
@@ -339,12 +341,15 @@ func (t *Tester) StartContinuous(interval time.Duration, callback func(*PingStat
 }
 
 // StopContinuous stops continuous ping testing.
+// Uses sync.Once to prevent double-close panic (fixes #854).
 func (t *Tester) StopContinuous() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	if t.running {
-		close(t.stopCh)
+		t.stopOnce.Do(func() {
+			close(t.stopCh)
+		})
 		t.running = false
 	}
 }
