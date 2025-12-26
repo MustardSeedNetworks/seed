@@ -308,6 +308,10 @@ export function usePipelineStatus(
   const elapsedIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null
   );
+  // Stable handler reference to avoid memory leaks from handler accumulation (fixes #849)
+  const handlePipelineEventRef = useRef<((event: PipelineEvent) => void) | null>(
+    null
+  );
 
   // Fetch pipeline status from API
   const fetchStatus = useCallback(async () => {
@@ -625,23 +629,33 @@ export function usePipelineStatus(
     [onMessage]
   );
 
+  // Keep ref in sync with latest handler (fixes #849)
+  useEffect(() => {
+    handlePipelineEventRef.current = handlePipelineEvent;
+  }, [handlePipelineEvent]);
+
   // Expose handlePipelineEvent for external WebSocket integration
-  // Uses a Set of handlers to support multiple components mounting this hook (fixes #842)
+  // Uses a Set of handlers with stable references to support multiple components (fixes #842, #849)
   useEffect(() => {
     type WindowWithHandlers = Window &
       typeof globalThis & {
-        __pipelineEventHandlers?: Set<typeof handlePipelineEvent>;
+        __pipelineEventHandlers?: Set<(event: PipelineEvent) => void>;
         __pipelineEventHandler?: (event: PipelineEvent) => void;
       };
     const win = window as WindowWithHandlers;
+
+    // Create stable wrapper that delegates to ref (fixes #849)
+    const stableHandler = (event: PipelineEvent) => {
+      handlePipelineEventRef.current?.(event);
+    };
 
     // Initialize handlers set if needed
     if (!win.__pipelineEventHandlers) {
       win.__pipelineEventHandlers = new Set();
     }
 
-    // Add this component's handler
-    win.__pipelineEventHandlers.add(handlePipelineEvent);
+    // Add this component's stable handler
+    win.__pipelineEventHandlers.add(stableHandler);
 
     // Create dispatcher that calls all registered handlers
     win.__pipelineEventHandler = (event: PipelineEvent) => {
@@ -650,7 +664,7 @@ export function usePipelineStatus(
 
     return () => {
       // Remove this component's handler
-      win.__pipelineEventHandlers?.delete(handlePipelineEvent);
+      win.__pipelineEventHandlers?.delete(stableHandler);
 
       // Only delete the dispatcher if no handlers remain
       if (win.__pipelineEventHandlers?.size === 0) {
@@ -658,7 +672,7 @@ export function usePipelineStatus(
         delete win.__pipelineEventHandlers;
       }
     };
-  }, [handlePipelineEvent]);
+  }, []); // Empty deps - stableHandler reference is stable
 
   // Update elapsed time while running
   useEffect(() => {

@@ -11,7 +11,7 @@
  * - Link-up detection for auto-run tests
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { logger, LogComponents } from "../lib/logger";
 import type { Message, CardUpdate } from "./useWebSocket";
 import type {
@@ -115,6 +115,8 @@ export function useCardState({
   const prevLinkUpRef = useRef<boolean | null>(null);
   // Track if we've triggered initial auto-run on page load
   const initialAutoRunDoneRef = useRef(false);
+  // Track setTimeout IDs for cleanup on unmount (fixes #851)
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   const handleMessage = useCallback(
     (message: Message) => {
@@ -221,9 +223,12 @@ export function useCardState({
                       LogComponents.NETWORK,
                       "Link up on initial load, triggering auto-run tests"
                     );
-                    setTimeout(() => {
+                    // Track timeout for cleanup on unmount (fixes #851)
+                    const timeoutId = setTimeout(() => {
+                      timeoutIdsRef.current.delete(timeoutId);
                       window.dispatchEvent(new CustomEvent("runAllTests"));
                     }, 2000);
+                    timeoutIdsRef.current.add(timeoutId);
                   }
                 }
                 break;
@@ -309,9 +314,12 @@ export function useCardState({
           "Link up detected, triggering auto-run tests"
         );
         // Small delay to let link stabilize before running tests
-        setTimeout(() => {
+        // Track timeout for cleanup on unmount (fixes #851)
+        const timeoutId = setTimeout(() => {
+          timeoutIdsRef.current.delete(timeoutId);
           window.dispatchEvent(new CustomEvent("runAllTests"));
         }, 1500);
+        timeoutIdsRef.current.add(timeoutId);
       }
     }
 
@@ -319,6 +327,14 @@ export function useCardState({
       ...prev,
       [cardId]: data as CardState[typeof cardId],
     }));
+  }, []);
+
+  // Cleanup timeouts on unmount (fixes #851)
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach((id) => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
   }, []);
 
   return {

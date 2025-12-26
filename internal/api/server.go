@@ -89,6 +89,7 @@ type Server struct {
 	trustedProxies      *TrustedProxies     // Trusted proxy IPs for X-Forwarded-For handling (#H4)
 	pipeline            *discovery.Pipeline // Phased discovery pipeline orchestrator
 	acmeChallengeServer *http.Server        // HTTP-01 challenge server for ACME (fixes #837)
+	retentionStopCh     chan struct{}       // Signals data retention goroutine to stop (fixes #848)
 }
 
 // getClientIP extracts the client IP from a request, considering trusted proxies.
@@ -197,8 +198,9 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		s.db = db
 		slog.Info("Database initialized", "path", dbPath)
 
-		// Start data retention cleanup in background
+		// Start data retention cleanup in background (fixes #848)
 		if cfg.Database.RetentionDays > 0 {
+			s.retentionStopCh = make(chan struct{})
 			go s.startDataRetention(cfg.Database.RetentionDays)
 		}
 	}
@@ -999,6 +1001,13 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.loginRateLimiter.Stop()
 	s.endpointRateLimiter.Stop()
 
+	// Stop data retention goroutine (fixes #848)
+	if s.retentionStopCh != nil {
+		slog.Info("Stopping data retention goroutine...")
+		close(s.retentionStopCh)
+		s.retentionStopCh = nil
+	}
+
 	// Close database connection (#755)
 	if s.db != nil {
 		slog.Info("Closing database connection...")
@@ -1023,6 +1032,7 @@ func (s *Server) DB() *database.DB {
 }
 
 // startDataRetention runs periodic data cleanup based on retention policy (#755).
+// The goroutine respects shutdown signals to avoid leaks (fixes #848).
 func (s *Server) startDataRetention(retentionDays int) {
 	// Run cleanup every hour
 	ticker := time.NewTicker(time.Hour)
@@ -1038,29 +1048,35 @@ func (s *Server) startDataRetention(retentionDays int) {
 		InactiveDeviceDays: retentionDays * 4, // Keep inactive device records longer
 	}
 
-	for range ticker.C {
-		if s.db == nil {
+	for {
+		select {
+		case <-s.retentionStopCh:
+			slog.Debug("Data retention goroutine shutting down")
 			return
-		}
-		result, err := s.db.RunCleanup(context.Background(), policy)
-		if err != nil {
-			slog.Error("Data retention cleanup failed", "error", err)
-			continue
-		}
-		totalDeleted := result.MetricsDeleted + result.AlertsDeleted +
-			result.SpeedTestsDeleted + result.DNSResultsDeleted +
-			result.GatewayResultsDeleted + result.AuditLogsDeleted +
-			result.DevicesDeleted
-		if totalDeleted > 0 {
-			slog.Info("Data retention cleanup completed",
-				"metrics_deleted", result.MetricsDeleted,
-				"alerts_deleted", result.AlertsDeleted,
-				"devices_deleted", result.DevicesDeleted,
-				"speedtests_deleted", result.SpeedTestsDeleted,
-				"dns_deleted", result.DNSResultsDeleted,
-				"gateway_deleted", result.GatewayResultsDeleted,
-				"audit_deleted", result.AuditLogsDeleted,
-				"duration", result.Duration)
+		case <-ticker.C:
+			if s.db == nil {
+				return
+			}
+			result, err := s.db.RunCleanup(context.Background(), policy)
+			if err != nil {
+				slog.Error("Data retention cleanup failed", "error", err)
+				continue
+			}
+			totalDeleted := result.MetricsDeleted + result.AlertsDeleted +
+				result.SpeedTestsDeleted + result.DNSResultsDeleted +
+				result.GatewayResultsDeleted + result.AuditLogsDeleted +
+				result.DevicesDeleted
+			if totalDeleted > 0 {
+				slog.Info("Data retention cleanup completed",
+					"metrics_deleted", result.MetricsDeleted,
+					"alerts_deleted", result.AlertsDeleted,
+					"devices_deleted", result.DevicesDeleted,
+					"speedtests_deleted", result.SpeedTestsDeleted,
+					"dns_deleted", result.DNSResultsDeleted,
+					"gateway_deleted", result.GatewayResultsDeleted,
+					"audit_deleted", result.AuditLogsDeleted,
+					"duration", result.Duration)
+			}
 		}
 	}
 }

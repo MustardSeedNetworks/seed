@@ -97,7 +97,10 @@ const (
 //   - Contains specific origins: Match exactly against Origin header (case-sensitive)
 //
 // Origins should include protocol and port: "https://192.168.1.100:8443"
-var configuredOrigins []string
+var (
+	configuredOrigins   []string
+	configuredOriginsMu sync.RWMutex // Protects configuredOrigins (fixes #847)
+)
 
 // SetAllowedOrigins configures the allowed WebSocket/CORS origins from application config.
 //
@@ -108,9 +111,10 @@ var configuredOrigins []string
 // Parameters:
 //   - origins: List of allowed origin strings, or ["*"] to allow all
 //
-// Thread-safety: Should only be called during server initialization before
-// accepting WebSocket connections. Not protected by mutex.
+// Thread-safety: Protected by mutex for safe concurrent access (fixes #847).
 func SetAllowedOrigins(origins []string) {
+	configuredOriginsMu.Lock()
+	defer configuredOriginsMu.Unlock()
 	configuredOrigins = origins
 }
 
@@ -167,9 +171,15 @@ var upgrader = websocket.Upgrader{
 //   - true if the origin is allowed to establish a WebSocket connection
 //   - false if the origin should be rejected (connection will fail with 403)
 func isAllowedWSOrigin(origin string) bool {
+	// Copy origins under lock to avoid race condition (fixes #847)
+	configuredOriginsMu.RLock()
+	origins := make([]string, len(configuredOrigins))
+	copy(origins, configuredOrigins)
+	configuredOriginsMu.RUnlock()
+
 	// If explicit origins are configured, use them exclusively
-	if len(configuredOrigins) > 0 {
-		for _, allowed := range configuredOrigins {
+	if len(origins) > 0 {
+		for _, allowed := range origins {
 			// "*" allows all origins
 			if allowed == "*" {
 				return true
@@ -188,6 +198,16 @@ func isAllowedWSOrigin(origin string) bool {
 
 	// Default: Allow localhost and RFC 1918 private networks
 	return isRFC1918Origin(origin)
+}
+
+// getConfiguredOrigins returns a copy of the configured origins for CORS middleware.
+// Thread-safe for concurrent access (fixes #847).
+func getConfiguredOrigins() []string {
+	configuredOriginsMu.RLock()
+	defer configuredOriginsMu.RUnlock()
+	origins := make([]string, len(configuredOrigins))
+	copy(origins, configuredOrigins)
+	return origins
 }
 
 // isRFC1918Origin checks if the origin is localhost or an RFC 1918 private network address.
