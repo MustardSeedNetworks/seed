@@ -159,6 +159,9 @@ func (p *AssessmentPhase) Run(ctx context.Context, devices []*DiscoveredDevice, 
 			select {
 			case <-done:
 				return
+			// Fixes #920: Also check context cancellation to prevent goroutine leak
+			case <-ctx.Done():
+				return
 			case <-ticker.C:
 				if progressCh != nil {
 					progressCh <- PhaseProgressPayload{

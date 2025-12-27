@@ -1240,6 +1240,22 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     };
   }, [vulnSettings, saveVulnSettings]);
 
+  // Fixes #917: Master cleanup effect for all timer refs on unmount
+  // Individual useEffects clean up on re-render, but this ensures cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (thresholdsTimerRef.current) clearTimeout(thresholdsTimerRef.current);
+      if (testsTimerRef.current) clearTimeout(testsTimerRef.current);
+      if (wifiTimerRef.current) clearTimeout(wifiTimerRef.current);
+      if (linkTimerRef.current) clearTimeout(linkTimerRef.current);
+      if (cableTestTimerRef.current) clearTimeout(cableTestTimerRef.current);
+      if (networkDiscoveryTimerRef.current)
+        clearTimeout(networkDiscoveryTimerRef.current);
+      if (snmpTimerRef.current) clearTimeout(snmpTimerRef.current);
+      if (vulnTimerRef.current) clearTimeout(vulnTimerRef.current);
+    };
+  }, []);
+
   // Validate IP address format
   const isValidIP = (ip: string): boolean => {
     if (!ip) return true; // Empty is OK for optional fields
@@ -1267,9 +1283,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     document.addEventListener("keydown", handleKeyDown);
 
     // Focus the close button when drawer opens
-    setTimeout(() => closeButtonRef.current?.focus(), 100);
+    // Fixes #918: Track timeout for cleanup to prevent stale closure
+    const focusTimeout = setTimeout(() => closeButtonRef.current?.focus(), 100);
 
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      clearTimeout(focusTimeout);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
