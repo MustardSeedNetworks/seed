@@ -803,10 +803,12 @@ func (d *DeviceDiscovery) ResolveNetBIOSNames(ctx context.Context) {
 	results := d.netbiosResolver.ResolveBatch(ctx, ips)
 
 	// Update devices with resolved names
+	// Fixes #987: Re-check device existence under write lock to handle concurrent removal
 	d.mu.Lock()
 	for _, result := range results {
 		if result.Err == nil && result.Name != "" {
-			if device, ok := deviceMap[result.IP]; ok {
+			// Re-lookup device in d.devices instead of using stale deviceMap pointer
+			if device, ok := d.devices[result.IP]; ok {
 				device.NetBIOSName = result.Name
 				device.DisplayName = device.ComputeDisplayName()
 				slog.Debug("NetBIOS: resolved name", "ip", result.IP, "name", result.Name)
@@ -845,10 +847,12 @@ func (d *DeviceDiscovery) ResolveMDNSNames(ctx context.Context) {
 	results := d.mdnsResolver.ResolveBatch(ctx, ips)
 
 	// Update devices with resolved names
+	// Fixes #987: Re-check device existence under write lock to handle concurrent removal
 	d.mu.Lock()
 	for _, result := range results {
 		if result.Err == nil && result.Name != "" {
-			if device, ok := deviceMap[result.IP]; ok {
+			// Re-lookup device in d.devices instead of using stale deviceMap pointer
+			if device, ok := d.devices[result.IP]; ok {
 				device.MDNSName = result.Name
 				device.DisplayName = device.ComputeDisplayName()
 				if !containsMethod(device.DiscoveryMethod, MethodMDNS) {
