@@ -193,8 +193,18 @@ func isAllowedWSOrigin(origin string) bool {
 				return true
 			}
 			// Prefix match for patterns like "http://192.168."
+			// Fixes #929: Ensure prefix match ends at a valid boundary (port, path, or exact)
 			if len(origin) >= len(allowed) && origin[:len(allowed)] == allowed {
-				return true
+				// Check remainder to prevent partial domain match
+				// e.g., allowed "http://192.168." should not match "http://192.168.evil.com"
+				remainder := origin[len(allowed):]
+				if remainder == "" || remainder[0] == ':' || remainder[0] == '/' {
+					return true
+				}
+				// For IP prefixes ending in '.', allow digits for next octet
+				if allowed[len(allowed)-1] == '.' && len(remainder) > 0 && remainder[0] >= '0' && remainder[0] <= '9' {
+					return true
+				}
 			}
 		}
 		return false

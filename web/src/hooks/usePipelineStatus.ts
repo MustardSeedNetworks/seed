@@ -701,16 +701,20 @@ export function usePipelineStatus(
   }, [status.state]);
 
   // Initial fetch
+  // Fixes #931: Use try/finally to ensure loading state is always cleared
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
-      await Promise.all([
-        fetchStatus(),
-        fetchConfig(),
-        fetchPortIntensityInfo(),
-        fetchTimingProfiles(),
-      ]);
-      setIsLoading(false);
+      try {
+        await Promise.all([
+          fetchStatus(),
+          fetchConfig(),
+          fetchPortIntensityInfo(),
+          fetchTimingProfiles(),
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     init();
   }, [fetchStatus, fetchConfig, fetchPortIntensityInfo, fetchTimingProfiles]);

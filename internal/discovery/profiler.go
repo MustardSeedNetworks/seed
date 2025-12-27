@@ -262,6 +262,7 @@ func (p *DeviceProfiler) worker() {
 
 // QueueProfile adds an IP to the profiling queue.
 // Fixes #888: Returns error to distinguish between skip reasons.
+// Fixes #930: Check if profiler is started before accepting queue items.
 func (p *DeviceProfiler) QueueProfile(ip string) error {
 	if !p.config.Enabled {
 		slog.Debug("QueueProfile skipped - profiler disabled", "ip", ip)
@@ -272,6 +273,12 @@ func (p *DeviceProfiler) QueueProfile(ip string) error {
 	}
 
 	p.mu.Lock()
+	// Fixes #930: Check if profiler is started
+	if p.stopCh == nil {
+		p.mu.Unlock()
+		slog.Debug("QueueProfile skipped - profiler not started", "ip", ip)
+		return fmt.Errorf("profiler not started")
+	}
 	// Skip if already profiled or in progress
 	if _, exists := p.profiles[ip]; exists {
 		p.mu.Unlock()

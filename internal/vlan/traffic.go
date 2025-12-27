@@ -109,9 +109,9 @@ func (m *TrafficMonitor) SetInterface(name string) error {
 		m.started = false
 	}
 
-	// Update interface and reset context
+	// Fixes #933: Don't create context here - Start() will create its own.
+	// Creating context here and in Start() causes the one here to be orphaned.
 	m.interfaceName = name
-	m.ctx, m.cancel = context.WithCancel(context.Background())
 	m.mu.Unlock()
 
 	// Restart if was previously running

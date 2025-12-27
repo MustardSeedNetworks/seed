@@ -1827,19 +1827,24 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     );
 
     // Trigger vuln scans with a small delay between each
+    // Fixes #928: Track ALL timeout IDs to prevent orphaned recursive timeouts
+    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
     let index = 0;
+
     const triggerNext = () => {
       if (index >= devicesToVulnScan.length) return;
       const device = devicesToVulnScan[index];
       triggerVulnScan(device.ip, device);
       index++;
       if (index < devicesToVulnScan.length) {
-        setTimeout(triggerNext, 200);
+        const tid = setTimeout(triggerNext, 200);
+        timeoutIds.push(tid);
       }
     };
 
-    const timeoutId = setTimeout(triggerNext, 300);
-    return () => clearTimeout(timeoutId);
+    const initialId = setTimeout(triggerNext, 300);
+    timeoutIds.push(initialId);
+    return () => timeoutIds.forEach(clearTimeout);
   }, [
     data?.status?.scanning,
     data?.devices,

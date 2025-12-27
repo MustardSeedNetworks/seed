@@ -157,13 +157,14 @@ export function useCardState({
         };
 
         // Dispatch to the pipeline event handler stored on window
+        // Fixes #934: Validate handler is a function before calling
         const handler = (
           window as unknown as {
             __pipelineEventHandler?: (event: PipelineEvent) => void;
           }
         ).__pipelineEventHandler;
 
-        if (handler) {
+        if (typeof handler === "function") {
           handler(pipelineEvent);
         }
         return;
