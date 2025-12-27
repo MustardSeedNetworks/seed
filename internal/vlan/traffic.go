@@ -12,6 +12,9 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
+// Fixes #915: Maximum number of tracked VLANs (802.1Q max is 4094).
+const maxTrackedVLANs = 4096
+
 // Traffic represents per-VLAN traffic statistics.
 type Traffic struct {
 	ID       int       `json:"id"`
@@ -32,13 +35,11 @@ type TrafficMonitor struct {
 }
 
 // NewTrafficMonitor creates a new VLAN traffic monitor.
+// Fixes #916: Context is created in Start() to prevent leaks if Start() is never called.
 func NewTrafficMonitor(interfaceName string) *TrafficMonitor {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &TrafficMonitor{
 		interfaceName: interfaceName,
 		stats:         make(map[int]*Traffic),
-		ctx:           ctx,
-		cancel:        cancel,
 	}
 }
 
@@ -66,6 +67,8 @@ func (m *TrafficMonitor) Start() error {
 
 	m.handle = handle
 	m.started = true
+	// Fixes #916: Create context here instead of in constructor
+	m.ctx, m.cancel = context.WithCancel(context.Background())
 	m.mu.Unlock()
 
 	go m.captureLoop()
@@ -74,9 +77,14 @@ func (m *TrafficMonitor) Start() error {
 
 // Stop stops capturing VLAN traffic.
 func (m *TrafficMonitor) Stop() {
-	m.cancel()
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	// Fixes #916: Check cancel is not nil (Start() may not have been called)
+	if m.cancel != nil {
+		m.cancel()
+		m.cancel = nil
+	}
 
 	if m.handle != nil {
 		m.handle.Close()
@@ -171,6 +179,11 @@ func (m *TrafficMonitor) processPacket(packet gopacket.Packet) {
 		stats.Bytes += packetLen
 		stats.LastSeen = time.Now()
 	} else {
+		// Fixes #915: Limit tracked VLANs to prevent unbounded memory growth
+		if len(m.stats) >= maxTrackedVLANs {
+			m.mu.Unlock()
+			return
+		}
 		m.stats[vlanID] = &Traffic{
 			ID:       vlanID,
 			Packets:  1,

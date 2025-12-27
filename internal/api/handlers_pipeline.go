@@ -27,6 +27,9 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fixes #925: Limit request body size to prevent memory exhaustion
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB limit
+
 	// Parse optional config override from request body
 	var req struct {
 		Config *discovery.PipelineConfig `json:"config,omitempty"`
@@ -106,6 +109,9 @@ func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Pipeline not initialized", http.StatusServiceUnavailable)
 		return
 	}
+
+	// Fixes #925: Limit request body size to prevent memory exhaustion
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB limit
 
 	var config discovery.PipelineConfig
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {

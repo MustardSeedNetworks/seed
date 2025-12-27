@@ -240,8 +240,9 @@ export const PipelineProgress = memo(function PipelineProgress({
             {t("pipeline.errors", { defaultValue: "Errors" })}:
           </span>
           <ul className="mt-1 space-y-0.5">
+            {/* Fixes #926: Use error content hash for stable keys instead of index */}
             {status.errors.map((error, i) => (
-              <li key={i} className="caption text-status-error">
+              <li key={`${i}-${error.slice(0, 50)}`} className="caption text-status-error">
                 {error}
               </li>
             ))}

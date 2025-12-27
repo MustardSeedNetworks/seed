@@ -221,8 +221,9 @@ func (m *Monitor) processPacket(packet gopacket.Packet) {
 	}
 
 	timestamp := time.Now()
-	if packet.Metadata() != nil && !packet.Metadata().Timestamp.IsZero() {
-		timestamp = packet.Metadata().Timestamp
+	// Fixes #924: Store metadata in variable to prevent multiple calls
+	if meta := packet.Metadata(); meta != nil && !meta.Timestamp.IsZero() {
+		timestamp = meta.Timestamp
 	}
 
 	slog.Debug("DHCP captured", "phase", phase, "xid", fmt.Sprintf("0x%08x", xid))

@@ -396,14 +396,12 @@ func NewPipeline(config *PipelineConfig, deviceDiscovery *DeviceDiscovery, profi
 }
 
 // Start begins a new pipeline run.
+// Fixes #919: Use isRunningState helper for cleaner state check.
 func (p *Pipeline) Start(ctx context.Context, trigger string) (*PipelineRun, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if p.currentRun != nil && p.currentRun.Status == PipelineStateEnumerating ||
-		p.currentRun != nil && p.currentRun.Status == PipelineStateResolving ||
-		p.currentRun != nil && p.currentRun.Status == PipelineStateScanning ||
-		p.currentRun != nil && p.currentRun.Status == PipelineStateAssessing {
+	if p.currentRun != nil && isRunningState(p.currentRun.Status) {
 		return nil, fmt.Errorf("pipeline already running")
 	}
 
@@ -841,6 +839,15 @@ func (p *Pipeline) updateState(state PipelineState, phase string) {
 	defer p.mu.Unlock()
 	p.currentRun.Status = state
 	p.currentRun.CurrentPhase = phase
+}
+
+// isRunningState returns true if the state represents an active pipeline run.
+// Fixes #919: Centralized helper for state checking to avoid redundant conditions.
+func isRunningState(state PipelineState) bool {
+	return state == PipelineStateEnumerating ||
+		state == PipelineStateResolving ||
+		state == PipelineStateScanning ||
+		state == PipelineStateAssessing
 }
 
 // maxPipelineErrors limits error accumulation to prevent unbounded memory growth (fixes #880).
