@@ -233,8 +233,9 @@ func (c *Config) Clone() *Config {
 // cloneFields creates a Config with all fields copied from the receiver (fixes #691).
 // This uses a struct literal, ensuring compile-time checking that no fields are missed.
 // The mutex is NOT copied - returns a new Config with a fresh mutex.
+// Fixes #958: Deep copy slices to prevent shared references.
 func (c *Config) cloneFields() *Config {
-	return &Config{
+	clone := &Config{
 		Version:          c.Version,
 		Server:           c.Server,
 		Interface:        c.Interface,
@@ -258,6 +259,22 @@ func (c *Config) cloneFields() *Config {
 		Database:         c.Database,
 		Pipeline:         c.Pipeline,
 	}
+
+	// Deep copy slices to prevent shared references (fixes #958)
+	if len(c.Security.AllowedOrigins) > 0 {
+		clone.Security.AllowedOrigins = make([]string, len(c.Security.AllowedOrigins))
+		copy(clone.Security.AllowedOrigins, c.Security.AllowedOrigins)
+	}
+	if len(c.SNMP.Communities) > 0 {
+		clone.SNMP.Communities = make([]string, len(c.SNMP.Communities))
+		copy(clone.SNMP.Communities, c.SNMP.Communities)
+	}
+	if len(c.SNMP.V3Credentials) > 0 {
+		clone.SNMP.V3Credentials = make([]SNMPv3Credential, len(c.SNMP.V3Credentials))
+		copy(clone.SNMP.V3Credentials, c.SNMP.V3Credentials)
+	}
+
+	return clone
 }
 
 // CopyFieldsFrom copies all fields from src to the receiver (fixes #691).

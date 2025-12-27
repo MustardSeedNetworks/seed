@@ -1864,8 +1864,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const deviceCount = devices.length;
 
   // Helper function for IP to numeric conversion
+  // Fixes #953: Handle malformed IPs that would produce NaN
   const ipToNum = useCallback((ip: string) => {
-    const parts = ip.split(".").map(Number);
+    const parts = ip.split(".").map((s) => parseInt(s, 10) || 0);
     return parts[0] * 16777216 + parts[1] * 65536 + parts[2] * 256 + parts[3];
   }, []);
 
