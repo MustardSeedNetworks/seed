@@ -1644,6 +1644,19 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
               results: results,
               scannedAt: new Date(),
             });
+            // Fixes #904: Limit stored scan results to prevent unbounded memory growth
+            const MAX_SCAN_RESULTS = 100;
+            if (next.size > MAX_SCAN_RESULTS) {
+              // Remove oldest entries
+              const entries = [...next.entries()].sort(
+                (a, b) =>
+                  a[1].scannedAt.getTime() - b[1].scannedAt.getTime()
+              );
+              while (next.size > MAX_SCAN_RESULTS && entries.length > 0) {
+                const oldest = entries.shift();
+                if (oldest) next.delete(oldest[0]);
+              }
+            }
             return next;
           });
 
@@ -1669,6 +1682,13 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
   // Track devices we've already auto-scanned to avoid duplicates
   const autoScannedDevices = useRef<Set<string>>(new Set());
+
+  // Fixes #905: Clear auto-scanned tracking when a new scan cycle starts
+  useEffect(() => {
+    if (data?.status?.scanning) {
+      autoScannedDevices.current.clear();
+    }
+  }, [data?.status?.scanning]);
 
   // Auto-scan devices after discovery completes (only if port scanning is enabled)
   // Triggers when new devices appear and discovery is not actively scanning
@@ -1706,6 +1726,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       }
     );
 
+    // Fixes #906: Track all timeout IDs for proper cleanup
+    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
+
     // Scan devices with a small delay between each to avoid overwhelming the network
     // Limit concurrent scans to 3 at a time
     const MAX_CONCURRENT_SCANS = 3;
@@ -1726,14 +1749,19 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
       // Schedule next batch after a delay
       if (scanIndex < devicesToScan.length) {
-        setTimeout(scanNextBatch, 1000);
+        const tid = setTimeout(scanNextBatch, 1000);
+        timeoutIds.push(tid);
       }
     };
 
     // Start scanning with a small initial delay
-    const timeoutId = setTimeout(scanNextBatch, 500);
+    const initialTimeoutId = setTimeout(scanNextBatch, 500);
+    timeoutIds.push(initialTimeoutId);
 
-    return () => clearTimeout(timeoutId);
+    // Fixes #906: Clean up all scheduled timeouts on unmount/re-render
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+    };
   }, [
     data?.status?.scanning,
     data?.devices,
@@ -1745,6 +1773,13 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
   // Track devices we've already queued for vuln scan to avoid duplicates
   const vulnScannedDevices = useRef<Set<string>>(new Set());
+
+  // Fixes #905: Clear vuln-scanned tracking when a new scan cycle starts
+  useEffect(() => {
+    if (data?.status?.scanning) {
+      vulnScannedDevices.current.clear();
+    }
+  }, [data?.status?.scanning]);
 
   // Auto-trigger vulnerability scans based on device discovery info
   // This runs independently of port scanning - any device with good info gets vuln scanned

@@ -73,7 +73,10 @@ export const PipelineProgress = memo(function PipelineProgress({
     status.state === "scanning" ||
     status.state === "assessing";
 
-  const currentPhaseIndex = status.enabledPhases.indexOf(status.currentPhase);
+  // Fixes #913: Handle case where currentPhase is not in enabledPhases (returns -1)
+  // Default to 0 to show first phase as current instead of all phases as complete
+  const rawPhaseIndex = status.enabledPhases.indexOf(status.currentPhase);
+  const currentPhaseIndex = rawPhaseIndex >= 0 ? rawPhaseIndex : 0;
 
   return (
     <div className={cn("space-y-3", spacing.pad.sm)}>

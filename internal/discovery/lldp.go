@@ -42,13 +42,11 @@ type LLDPCapture struct {
 }
 
 // NewLLDPCapture creates a new LLDP capture instance.
+// Fixes #903: Context is created in Start() to prevent leaks if Start() is never called.
 func NewLLDPCapture(interfaceName string) *LLDPCapture {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &LLDPCapture{
 		interfaceName: interfaceName,
 		neighbors:     make(map[string]*LLDPNeighbor),
-		ctx:           ctx,
-		cancel:        cancel,
 	}
 }
 
@@ -78,6 +76,8 @@ func (c *LLDPCapture) Start() error {
 
 	c.handle = handle
 	c.started = true
+	// Fixes #903: Create context here instead of in NewLLDPCapture
+	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.mu.Unlock()
 
 	go c.captureLoop()
@@ -86,9 +86,14 @@ func (c *LLDPCapture) Start() error {
 
 // Stop stops capturing LLDP frames.
 func (c *LLDPCapture) Stop() {
-	c.cancel()
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	// Fixes #903: Check cancel is not nil (Start() may not have been called)
+	if c.cancel != nil {
+		c.cancel()
+		c.cancel = nil
+	}
 
 	if c.handle != nil {
 		c.handle.Close()

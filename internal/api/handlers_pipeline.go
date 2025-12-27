@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -46,7 +47,10 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	run, err := s.pipeline.Start(r.Context(), "api")
+	// Fixes #908: Use background context - pipeline should outlive the HTTP request.
+	// The request context is cancelled when the HTTP response is sent, but the
+	// pipeline runs asynchronously and should continue until complete or cancelled.
+	run, err := s.pipeline.Start(context.Background(), "api")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
