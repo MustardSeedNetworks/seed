@@ -1222,14 +1222,19 @@ func (c *Config) validateIPConfig() []string {
 		errs = append(errs, fmt.Sprintf("ip.mode must be 'dhcp' or 'static', got '%s'", c.IP.Mode))
 	}
 	if c.IP.Mode == ipModeStatic {
-		if c.IP.Static.Address == "" {
-			errs = append(errs, "ip.static.address is required when ip.mode is 'static'")
-		}
-		if c.IP.Static.Netmask == "" {
-			errs = append(errs, "ip.static.netmask is required when ip.mode is 'static'")
-		}
-		if c.IP.Static.Gateway == "" {
-			errs = append(errs, "ip.static.gateway is required when ip.mode is 'static'")
+		// Fixes #896: Check for nil Static config before accessing fields
+		if c.IP.Static == nil {
+			errs = append(errs, "ip.static is required when ip.mode is 'static'")
+		} else {
+			if c.IP.Static.Address == "" {
+				errs = append(errs, "ip.static.address is required when ip.mode is 'static'")
+			}
+			if c.IP.Static.Netmask == "" {
+				errs = append(errs, "ip.static.netmask is required when ip.mode is 'static'")
+			}
+			if c.IP.Static.Gateway == "" {
+				errs = append(errs, "ip.static.gateway is required when ip.mode is 'static'")
+			}
 		}
 	}
 	return errs

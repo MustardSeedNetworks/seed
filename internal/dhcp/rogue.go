@@ -71,7 +71,11 @@ func NewRogueDetector(config *RogueDetectorConfig) *RogueDetector {
 func (rd *RogueDetector) Start() error {
 	rd.mu.Lock()
 	defer rd.mu.Unlock()
+	return rd.startLocked()
+}
 
+// startLocked starts the detector. Caller must hold rd.mu.Lock().
+func (rd *RogueDetector) startLocked() error {
 	if rd.running {
 		return fmt.Errorf("rogue detector already running")
 	}
@@ -112,7 +116,11 @@ func (rd *RogueDetector) Start() error {
 func (rd *RogueDetector) Stop() error {
 	rd.mu.Lock()
 	defer rd.mu.Unlock()
+	return rd.stopLocked()
+}
 
+// stopLocked stops the detector. Caller must hold rd.mu.Lock().
+func (rd *RogueDetector) stopLocked() error {
 	if !rd.running {
 		return nil
 	}
@@ -337,23 +345,23 @@ func (rd *RogueDetector) ClearDetectedServers() {
 // SetInterface changes the monitored network interface.
 // If the detector is running, it will be stopped and restarted on the new interface.
 // This ensures rogue DHCP detection continues on the correct network segment. (fixes #838)
+// Fixes #898: Hold lock through entire stop/update/restart to prevent race condition.
 func (rd *RogueDetector) SetInterface(iface string) error {
 	rd.mu.Lock()
+	defer rd.mu.Unlock()
+
 	wasRunning := rd.running
-	rd.mu.Unlock()
 
 	if wasRunning {
-		if err := rd.Stop(); err != nil {
+		if err := rd.stopLocked(); err != nil {
 			return fmt.Errorf("failed to stop before interface change: %w", err)
 		}
 	}
 
-	rd.mu.Lock()
 	rd.config.Interface = iface
-	rd.mu.Unlock()
 
 	if wasRunning {
-		if err := rd.Start(); err != nil {
+		if err := rd.startLocked(); err != nil {
 			return fmt.Errorf("failed to restart on new interface: %w", err)
 		}
 	}

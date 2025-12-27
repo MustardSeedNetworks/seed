@@ -452,6 +452,12 @@ func (p *DeviceProfiler) checkPortWithConfig(ctx context.Context, ip string, por
 
 	// Only grab banner if enabled in config
 	if p.config.BannerGrab {
+		// Fixes #902: Check context before attempting banner read to avoid blocking on cancelled context
+		select {
+		case <-ctx.Done():
+			return result
+		default:
+		}
 		// Try to grab banner for certain ports that typically send banners
 		if port == 22 || port == 21 || port == 23 || port == 25 || port == 110 || port == 143 ||
 			port == 3306 || port == 5432 || port == 6379 || port == 27017 {

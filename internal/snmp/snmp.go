@@ -188,7 +188,12 @@ func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, c
 
 	results := make(map[string]string)
 	for _, variable := range result.Variables {
-		results[variable.Name[1:]] = formatSNMPValue(variable) // Remove leading dot
+		// Fixes #897: Check bounds before removing leading dot to prevent panic
+		name := variable.Name
+		if len(name) > 0 && name[0] == '.' {
+			name = name[1:]
+		}
+		results[name] = formatSNMPValue(variable)
 	}
 
 	return results, nil
@@ -329,7 +334,12 @@ func queryMultipleWithV3(ctx context.Context, ip string, oids []string, cred *co
 
 	results := make(map[string]string)
 	for _, variable := range result.Variables {
-		results[variable.Name[1:]] = formatSNMPValue(variable) // Remove leading dot
+		// Fixes #897: Check bounds before removing leading dot to prevent panic
+		name := variable.Name
+		if len(name) > 0 && name[0] == '.' {
+			name = name[1:]
+		}
+		results[name] = formatSNMPValue(variable)
 	}
 
 	return results, nil
