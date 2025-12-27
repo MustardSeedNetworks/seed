@@ -94,9 +94,10 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
   const { thresholds } = useSettings();
   // Map context ThresholdPair (good/warning) to card format (warning/critical)
   // For WiFi: good = -50 dBm, warning = -70 dBm (higher is better, so critical = warning)
+  // Use defaults if thresholds not yet loaded
   const th = {
-    warning: thresholds.wifi.good,
-    critical: thresholds.wifi.warning,
+    warning: thresholds?.wifi?.good ?? -50,
+    critical: thresholds?.wifi?.warning ?? -70,
   };
 
   // Don't render if not on WiFi

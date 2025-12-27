@@ -73,9 +73,10 @@ export const GatewayCard = memo(function GatewayCard({
   const { t: tr } = useTranslation("cards");
   const { thresholds } = useSettings();
   // Map context ThresholdPair (good/warning) to card format (warning/critical)
+  // Use defaults if thresholds not yet loaded
   const th = {
-    warning: thresholds.gateway.good,
-    critical: thresholds.gateway.warning,
+    warning: thresholds?.gateway?.good ?? 20,
+    critical: thresholds?.gateway?.warning ?? 50,
   };
 
   if (loading) {

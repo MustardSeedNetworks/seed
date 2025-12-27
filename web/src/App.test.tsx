@@ -126,12 +126,86 @@ describe("App", () => {
     global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
     MockWebSocket.instances = [];
 
-    // Default API mocks
+    // Default API mocks - includes profile endpoints for ProfileContext
     mockFetch.mockImplementation((url: string) => {
       if (url.includes("/api/setup/status")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
+        });
+      }
+      // Profile endpoints (required for ProfileContext)
+      if (url.includes("/api/profiles/active")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: "default",
+              name: "Default",
+              description: "Default profile",
+              is_default: true,
+              config: {
+                settings: {
+                  thresholds: {
+                    dns: { good: 50, warning: 100 },
+                    gateway: { good: 20, warning: 50 },
+                    wifi: { good: -50, warning: -70 },
+                    customPing: { good: 50, warning: 100 },
+                    customTcp: { good: 100, warning: 200 },
+                    customHttp: { good: 500, warning: 1000 },
+                    httpTimings: {
+                      dns: { good: 50, warning: 100 },
+                      tcp: { good: 50, warning: 100 },
+                      tls: { good: 100, warning: 200 },
+                      ttfb: { good: 200, warning: 500 },
+                    },
+                  },
+                },
+              },
+              created_at: "2025-01-01T00:00:00Z",
+              updated_at: "2025-01-01T00:00:00Z",
+            }),
+        });
+      }
+      if (url.includes("/api/profiles") && !url.includes("/active")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              profiles: [
+                {
+                  id: "default",
+                  name: "Default",
+                  description: "Default profile",
+                  is_default: true,
+                  config: {},
+                  created_at: "2025-01-01T00:00:00Z",
+                  updated_at: "2025-01-01T00:00:00Z",
+                },
+              ],
+            }),
+        });
+      }
+      if (url.includes("/api/settings/defaults")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              thresholds: {
+                dns: { good: 50, warning: 100 },
+                gateway: { good: 20, warning: 50 },
+                wifi: { good: -50, warning: -70 },
+                customPing: { good: 50, warning: 100 },
+                customTcp: { good: 100, warning: 200 },
+                customHttp: { good: 500, warning: 1000 },
+                httpTimings: {
+                  dns: { good: 50, warning: 100 },
+                  tcp: { good: 50, warning: 100 },
+                  tls: { good: 100, warning: 200 },
+                  ttfb: { good: 200, warning: 500 },
+                },
+              },
+            }),
         });
       }
       if (url.includes("/api/settings")) {
@@ -391,7 +465,15 @@ describe("App", () => {
         if (url.includes("/api/settings")) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ thresholds: {} }),
+            json: () =>
+              Promise.resolve({
+                thresholds: {
+                  dns: { good: 50, warning: 100 },
+                  gateway: { good: 20, warning: 50 },
+                  link: { good: 1000, warning: 100 },
+                  wifi: { good: -50, warning: -70 },
+                },
+              }),
           });
         }
         if (url.includes("/api/interfaces")) {
@@ -424,6 +506,21 @@ describe("App", () => {
 
     it("renders interface selector", async () => {
       mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/api/setup/status")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({ needsSetup: false, username: "admin" }),
+          });
+        }
+        if (url.includes("/api/status")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              Promise.resolve({ version: "test", authenticated: true }),
+          });
+        }
         if (url.includes("/api/interfaces")) {
           return Promise.resolve({
             ok: true,
@@ -437,7 +534,15 @@ describe("App", () => {
         if (url.includes("/api/settings")) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ thresholds: {} }),
+            json: () =>
+              Promise.resolve({
+                thresholds: {
+                  dns: { good: 50, warning: 100 },
+                  gateway: { good: 20, warning: 50 },
+                  link: { good: 1000, warning: 100 },
+                  wifi: { good: -50, warning: -70 },
+                },
+              }),
           });
         }
         return Promise.resolve({

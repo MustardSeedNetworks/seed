@@ -10,6 +10,7 @@ set -e
 SERVICE_USER="seed"
 SERVICE_GROUP="seed"
 BINARY_PATH="/usr/bin/seed"
+CONFIG_DIR="/etc/seed"
 DATA_DIR="/var/lib/seed"
 LOG_DIR="/var/log/seed"
 
@@ -30,6 +31,13 @@ if ! getent passwd "$SERVICE_USER" > /dev/null 2>&1; then
         --comment "The Seed Network Diagnostic Tool" \
         "$SERVICE_USER"
 fi
+
+# Create config directory
+if [ ! -d "$CONFIG_DIR" ]; then
+    mkdir -p "$CONFIG_DIR"
+fi
+chown "$SERVICE_USER:$SERVICE_GROUP" "$CONFIG_DIR"
+chmod 750 "$CONFIG_DIR"
 
 # Create data directory
 if [ ! -d "$DATA_DIR" ]; then
@@ -78,7 +86,7 @@ echo "=========================================="
 echo "  The Seed installed successfully!"
 echo "=========================================="
 echo ""
-echo "Web interface: http://localhost:8080"
+echo "Web interface: https://localhost:8443"
 echo ""
 echo "Commands:"
 echo "  View logs:      journalctl -u seed -f"

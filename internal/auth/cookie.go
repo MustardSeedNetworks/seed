@@ -4,6 +4,7 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -126,6 +127,7 @@ func GetRefreshTokenFromCookie(r *http.Request) (string, error) {
 // GetTokenFromRequest tries to extract token from request in order of preference:
 // 1. Cookie (most secure).
 // 2. Authorization header (Bearer token - fallback for API clients).
+// 3. Sec-WebSocket-Protocol header (for WebSocket connections).
 // Query parameter authentication is disabled for security (fixes #706).
 func GetTokenFromRequest(r *http.Request) (token, source string) {
 	// Try cookie first (most secure)
@@ -141,8 +143,18 @@ func GetTokenFromRequest(r *http.Request) (token, source string) {
 		}
 	}
 
-	// Query parameter authentication removed for security (fixes #706)
-	// Use Sec-WebSocket-Protocol header for WebSocket authentication instead
+	// Try Sec-WebSocket-Protocol header for WebSocket auth (fixes #706 alternative)
+	// Format: "access_token, <token>" where browser sends protocols as comma-separated
+	if wsProtocol := r.Header.Get("Sec-WebSocket-Protocol"); wsProtocol != "" {
+		protocols := strings.Split(wsProtocol, ",")
+		for i, p := range protocols {
+			p = strings.TrimSpace(p)
+			// Look for token after "access_token" marker
+			if p == "access_token" && i+1 < len(protocols) {
+				return strings.TrimSpace(protocols[i+1]), "subprotocol"
+			}
+		}
+	}
 
 	return "", "none"
 }
