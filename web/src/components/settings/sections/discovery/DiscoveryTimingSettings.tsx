@@ -152,35 +152,7 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
         </p>
       </div>
 
-      {/* OUI File Path */}
-      <div className={spacing.margin.top.content}>
-        <label className="caption text-text-muted" htmlFor="discovery-oui-path">
-          {t("discovery.ouiFilePath")}
-        </label>
-        <input
-          id="discovery-oui-path"
-          type="text"
-          value={settings.ouiFilePath}
-          onChange={(e) =>
-            onSettingsChange((prev) => ({
-              ...prev,
-              ouiFilePath: e.target.value,
-            }))
-          }
-          placeholder="data/oui.txt"
-          className={cn(
-            "w-full",
-            spacing.margin.top.tight,
-            spacing.chip.lg,
-            "bg-surface-base border border-surface-border",
-            radius.default,
-            "body-small text-text-primary"
-          )}
-        />
-        <p className={cn("caption text-text-muted", spacing.margin.top.tight)}>
-          {t("discovery.ouiFileDesc")}
-        </p>
-      </div>
+      {/* OUI database is baked into binary at build time - no runtime path needed */}
     </div>
   );
 });

@@ -19,7 +19,7 @@
  * - fetchNetworkDiscovery: Network device discovery
  */
 
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { logger, LogComponents } from "../lib/logger";
 import type {
   LinkData,

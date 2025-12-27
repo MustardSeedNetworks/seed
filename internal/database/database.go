@@ -150,6 +150,12 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
+	// Seed default profile if database is empty
+	if err := db.seedDefaultProfile(); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("failed to seed default profile: %w", err)
+	}
+
 	return db, nil
 }
 

@@ -21,13 +21,19 @@ export interface PerformanceCardDefaults extends CardOptionDefaults {
 
 export interface CardSettingsDefaults {
   link: CardOptionDefaults;
+  cable: CardOptionDefaults;
   switch: CardOptionDefaults;
   vlan: CardOptionDefaults;
   network: CardOptionDefaults;
   gateway: CardOptionDefaults;
   dns: CardOptionDefaults;
+  publicIP: CardOptionDefaults;
+  wifi: CardOptionDefaults;
+  wifiSurvey: CardOptionDefaults;
   healthChecks: CardOptionDefaults;
   networkDiscovery: CardOptionDefaults;
+  pathDiscovery: CardOptionDefaults;
+  systemHealth: CardOptionDefaults;
   performance: PerformanceCardDefaults;
 }
 
@@ -177,7 +183,6 @@ export interface NetworkDiscoveryDefaults {
   scanTimeoutMs: number;
   autoScan: boolean;
   scanIntervalMs: number;
-  ouiFilePath: string;
   ipv6Enabled: boolean;
   options: DiscoveryOptionsDefaults;
   timing: DiscoveryTimingDefaults;
@@ -201,9 +206,9 @@ export interface SNMPDefaults {
 // ============================================================================
 
 export interface LinkDefaults {
-  autoNegotiation: boolean;
-  speed: string;
-  duplex: string;
+  /** Combined speed/duplex mode (e.g., "100/full", "1000/full") or "auto" for auto-negotiation */
+  mode: string;
+  /** Available modes from the interface */
   availableModes: string[];
 }
 
@@ -212,8 +217,8 @@ export interface LinkDefaults {
 // ============================================================================
 
 export interface CableTestDefaults {
+  /** Whether cable testing is enabled (requires PHY TDR support) */
   enabled: boolean;
-  autoRunOnLinkDown: boolean;
 }
 
 // ============================================================================

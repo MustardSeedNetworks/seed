@@ -21,56 +21,43 @@ Features:
 - SNMP device discovery
 - DHCP rogue detection
 - Cable diagnostics (TDR)
+- Vulnerability scanning (CVE/CISA KEV)
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/usr/local/bin
-mkdir -p %{buildroot}/etc/seed
-mkdir -p %{buildroot}/lib/systemd/system
-mkdir -p %{buildroot}/usr/share/seed
-mkdir -p %{buildroot}/usr/local/seed/configs
-mkdir -p %{buildroot}/usr/local/seed/logs
+mkdir -p %{buildroot}/usr/bin
+mkdir -p %{buildroot}/usr/lib/systemd/system
+mkdir -p %{buildroot}/var/lib/seed
+mkdir -p %{buildroot}/var/log/seed
 
-# Copy binaries
-install -m 755 %{_repo_root}/dist/seed-linux-__ARCHITECTURE__ %{buildroot}/usr/local/bin/seed
-install -m 755 %{_repo_root}/bin/iperf3-linux-__ARCHITECTURE__ %{buildroot}/usr/local/bin/iperf3
-
-# Copy config files
-cp -r %{_repo_root}/configs/* %{buildroot}/etc/seed/
-
-# Copy web assets
-cp -r %{_repo_root}/web/dist %{buildroot}/usr/share/seed/web
+# Copy binary (single binary with embedded assets)
+install -m 755 %{_repo_root}/dist/seed-linux-__ARCHITECTURE__ %{buildroot}/usr/bin/seed
 
 # Copy systemd service file
-install -m 644 %{_repo_root}/packaging/seed.service %{buildroot}/lib/systemd/system/seed.service
+install -m 644 %{_repo_root}/packaging/seed.service %{buildroot}/usr/lib/systemd/system/seed.service
 
 %files
-/usr/local/bin/seed
-/usr/local/bin/iperf3
-/etc/seed
-/lib/systemd/system/seed.service
-/usr/share/seed/web
-%dir /usr/local/seed
-%dir /usr/local/seed/configs
-%dir /usr/local/seed/logs
+%attr(755, root, root) /usr/bin/seed
+%attr(644, root, root) /usr/lib/systemd/system/seed.service
+%dir %attr(750, seed, seed) /var/lib/seed
+%dir %attr(750, seed, seed) /var/log/seed
 
 %pre
 # Create service user and group
 getent group seed >/dev/null || groupadd -r seed
-getent passwd seed >/dev/null || useradd -r -g seed -d /usr/local/seed -s /sbin/nologin -c "The Seed Service" seed
+getent passwd seed >/dev/null || \
+    useradd -r -g seed -d /var/lib/seed -s /sbin/nologin \
+    -c "The Seed Network Diagnostic Tool" seed
+exit 0
 
 %post
 # Set ownership of directories
-chown -R seed:seed /usr/local/seed
-
-# Copy default config if not exists
-if [ ! -f /usr/local/seed/configs/seed.yaml ] && [ -f /etc/seed/seed.yaml ]; then
-    cp /etc/seed/seed.yaml /usr/local/seed/configs/
-    chown seed:seed /usr/local/seed/configs/seed.yaml
-fi
+chown -R seed:seed /var/lib/seed /var/log/seed
 
 # Set capabilities for raw socket access
-setcap cap_net_raw,cap_net_admin=+ep /usr/local/bin/seed || true
+# - CAP_NET_RAW: Required for ICMP ping, ARP scanning, packet capture
+# - CAP_NET_ADMIN: Required for ethtool link configuration, interface control
+/usr/sbin/setcap 'cap_net_raw,cap_net_admin=+ep' /usr/bin/seed || true
 
 %systemd_post seed.service
 
@@ -79,3 +66,17 @@ setcap cap_net_raw,cap_net_admin=+ep /usr/local/bin/seed || true
 
 %postun
 %systemd_postun_with_restart seed.service
+
+# On complete removal (not upgrade), optionally remove user/group
+if [ $1 -eq 0 ]; then
+    # Full removal
+    userdel seed 2>/dev/null || true
+    groupdel seed 2>/dev/null || true
+fi
+
+%changelog
+* Fri Dec 27 2024 Kris Armstrong <kris@mustardseednetworks.com>
+- Streamlined packaging with FHS-compliant paths
+- Single binary with embedded frontend assets
+- Added default profile seeding on fresh database
+- Updated systemd service with security hardening

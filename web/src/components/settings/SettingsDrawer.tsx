@@ -38,7 +38,6 @@ import {
   radius,
   layout,
   button,
-  input,
   spacing,
   cn,
 } from "../../styles/theme";
@@ -304,7 +303,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       scanTimeoutMs: 30000,
       autoScan: false,
       scanIntervalMs: 0,
-      ouiFilePath: "data/oui.txt",
       ipv6Enabled: true,
       options: {
         passiveProtocols: {
@@ -563,7 +561,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           scanTimeoutMs: data.scanTimeoutMs ?? 30000,
           autoScan: data.autoScan ?? false,
           scanIntervalMs: data.scanIntervalMs ?? 0,
-          ouiFilePath: data.ouiFilePath ?? "data/oui.txt",
           ipv6Enabled: data.ipv6Enabled ?? true,
           options: data.options ?? {
             passiveProtocols: {
@@ -644,10 +641,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       });
       if (response.ok) {
         const data = await response.json();
+        // Backend may send separate speed/duplex or combined mode
+        const mode = data.mode ?? (data.auto_negotiation ? "auto" : `${data.speed}/${data.duplex}`);
         setLinkSettings({
-          autoNegotiation: data.auto_negotiation ?? true,
-          speed: data.speed ?? "auto",
-          duplex: data.duplex ?? "auto",
+          mode: mode,
           availableModes: data.available_modes ?? [],
         });
       }
@@ -666,7 +663,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         const data = await response.json();
         setCableTestSettings({
           enabled: data.enabled ?? true,
-          autoRunOnLinkDown: data.auto_run_on_link_down ?? false,
         });
       }
     } catch (err) {
@@ -1097,9 +1093,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         },
         credentials: "include",
         body: JSON.stringify({
-          auto_negotiation: linkSettings.autoNegotiation,
-          speed: linkSettings.speed,
-          duplex: linkSettings.duplex,
+          mode: linkSettings.mode,
           available_modes: linkSettings.availableModes,
         }),
       });
@@ -1126,7 +1120,6 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         credentials: "include",
         body: JSON.stringify({
           enabled: cableTestSettings.enabled,
-          auto_run_on_link_down: cableTestSettings.autoRunOnLinkDown,
         }),
       });
       if (response.ok) {

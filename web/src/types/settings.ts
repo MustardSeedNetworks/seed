@@ -247,16 +247,16 @@ export interface DiscoveryServiceStatus {
 
 /** Full network discovery settings - matches API response */
 export interface NetworkDiscoverySettings {
-  // Legacy fields (backward compatibility)
+  // Core settings
   enabled: boolean;
   arpScanWorkers: number;
   pingTimeoutMs: number;
   scanTimeoutMs: number;
   autoScan: boolean;
   scanIntervalMs: number;
-  ouiFilePath: string;
+  // Note: OUI database is baked into binary at build time - no runtime path needed
 
-  // Direct options configuration (no profile abstraction)
+  // Configuration objects
   options: DiscoveryOptions;
   timing: DiscoveryTimingConfig;
   profiler: DeviceProfilerConfig;
@@ -437,16 +437,15 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
-  // Legacy fields
+  // Core settings
   enabled: true,
   arpScanWorkers: 50,
   pingTimeoutMs: 500,
   scanTimeoutMs: 30000,
   autoScan: true,
   scanIntervalMs: 600000, // 10 minutes
-  ouiFilePath: "",
 
-  // Direct options configuration (no profile abstraction)
+  // Configuration objects
   ipv6Enabled: true,
   options: {
     passiveProtocols: {
@@ -519,13 +518,9 @@ export type LinkSpeed =
 export type DuplexMode = "auto" | "full" | "half";
 
 export interface LinkSettings {
-  /** Whether to use auto-negotiation */
-  autoNegotiation: boolean;
-  /** Fixed speed when auto-negotiation is disabled (Mbps) */
-  speed: LinkSpeed;
-  /** Duplex mode when auto-negotiation is disabled */
-  duplex: DuplexMode;
-  /** Available speed/duplex modes for the interface */
+  /** Combined speed/duplex mode (e.g., "100/full", "1000/full") or "auto" for auto-negotiation */
+  mode: string;
+  /** Available speed/duplex modes for the interface (e.g., ["10/half", "100/full", "1000/full"]) */
   availableModes: string[];
 }
 
@@ -534,24 +529,19 @@ export interface LinkSettings {
 // ============================================================================
 
 export interface CableTestSettings {
-  /** Whether the cable test card is enabled */
+  /** Whether the cable test card is enabled (requires PHY TDR support) */
   enabled: boolean;
-  /** Automatically run cable test when link is down */
-  autoRunOnLinkDown: boolean;
 }
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_LINK_SETTINGS: LinkSettings = {
-  autoNegotiation: true,
-  speed: "auto",
-  duplex: "auto",
+  mode: "auto",
   availableModes: [],
 };
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
   enabled: true,
-  autoRunOnLinkDown: false,
 };
 
 // ============================================================================

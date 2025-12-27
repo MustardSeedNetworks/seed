@@ -59,7 +59,7 @@ export interface DeviceDiscoverySettings {
   scanTimeoutMs: number;
   autoScan: boolean;
   scanIntervalMs: number;
-  ouiFilePath: string;
+  // Note: OUI database is baked into binary at build time
 }
 
 /** Subnet configuration for scanning */

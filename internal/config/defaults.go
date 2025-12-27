@@ -209,6 +209,7 @@ type FingerprintingDefaults struct {
 }
 
 // NetworkDiscoveryDefaults contains all network discovery defaults.
+// Note: OUI database is baked into binary at build time - no runtime path needed.
 type NetworkDiscoveryDefaults struct {
 	Enabled        bool                     `json:"enabled"`
 	ARPScanWorkers int                      `json:"arpScanWorkers"`
@@ -216,7 +217,6 @@ type NetworkDiscoveryDefaults struct {
 	ScanTimeoutMs  int64                    `json:"scanTimeoutMs"`
 	AutoScan       bool                     `json:"autoScan"`
 	ScanIntervalMs int64                    `json:"scanIntervalMs"`
-	OUIFilePath    string                   `json:"ouiFilePath"`
 	IPv6Enabled    bool                     `json:"ipv6Enabled"`
 	Options        DiscoveryOptionsDefaults `json:"options"`
 	Timing         DiscoveryTimingDefaults  `json:"timing"`
@@ -233,17 +233,20 @@ type SNMPDefaults struct {
 }
 
 // LinkDefaults contains default link settings.
+// Uses combined mode format (e.g., "10/half", "100/full", "1000/full") matching ethtool output.
 type LinkDefaults struct {
-	AutoNegotiation bool     `json:"autoNegotiation"`
-	Speed           string   `json:"speed"`
-	Duplex          string   `json:"duplex"`
-	AvailableModes  []string `json:"availableModes"`
+	// Mode is the combined speed/duplex (e.g., "100/full", "1000/full") or "auto" for auto-negotiation
+	Mode string `json:"mode"`
+	// AvailableModes lists available modes from the interface
+	AvailableModes []string `json:"availableModes"`
 }
 
 // CableTestDefaults contains default cable test settings.
+// Note: Cable test auto-runs automatically when link is down AND PHY supports TDR.
+// No user toggle needed - it's either possible or not based on hardware capability.
 type CableTestDefaults struct {
-	Enabled           bool `json:"enabled"`
-	AutoRunOnLinkDown bool `json:"autoRunOnLinkDown"`
+	// Enabled controls whether cable testing is available (requires PHY TDR support)
+	Enabled bool `json:"enabled"`
 }
 
 // VulnerabilityDefaults contains default vulnerability scan settings.
@@ -347,7 +350,6 @@ func GetDefaultSettings() *DefaultSettings {
 			ScanTimeoutMs:  cfg.NetworkDiscovery.ScanTimeout.Milliseconds(),
 			AutoScan:       cfg.NetworkDiscovery.AutoScan,
 			ScanIntervalMs: cfg.NetworkDiscovery.ScanInterval.Milliseconds(),
-			OUIFilePath:    cfg.NetworkDiscovery.OUIFilePath,
 			IPv6Enabled:    cfg.NetworkDiscovery.IPv6Enabled,
 			Options: DiscoveryOptionsDefaults{
 				PassiveProtocols: PassiveProtocolDefaults{
@@ -396,14 +398,11 @@ func GetDefaultSettings() *DefaultSettings {
 			Port:        cfg.SNMP.Port,
 		},
 		Link: LinkDefaults{
-			AutoNegotiation: true,
-			Speed:           "auto",
-			Duplex:          "auto",
-			AvailableModes:  []string{},
+			Mode:           "auto",
+			AvailableModes: []string{},
 		},
 		CableTest: CableTestDefaults{
-			Enabled:           true,
-			AutoRunOnLinkDown: false,
+			Enabled: true,
 		},
 		Vulnerability: VulnerabilityDefaults{
 			Enabled:           cfg.Security.VulnerabilityScanning.Enabled,

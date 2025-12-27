@@ -227,26 +227,20 @@ type ProfileFingerprintingConfig struct {
 }
 
 // ProfileLinkSettings contains interface speed/duplex configuration.
-// These settings control how the network interface negotiates link parameters.
+// Uses combined mode format (e.g., "10/half", "100/full", "1000/full") matching ethtool output.
 type ProfileLinkSettings struct {
-	// AutoNegotiation enables automatic speed/duplex negotiation (default: true)
-	AutoNegotiation bool `json:"auto_negotiation"`
-	// Speed is the fixed link speed in Mbps when auto-negotiation is disabled
-	// Valid values: "auto", "10", "100", "1000", "2500", "5000", "10000"
-	Speed string `json:"speed,omitempty"`
-	// Duplex is the duplex mode when auto-negotiation is disabled
-	// Valid values: "auto", "full", "half"
-	Duplex string `json:"duplex,omitempty"`
+	// Mode is the combined speed/duplex (e.g., "100/full", "1000/full") or "auto" for auto-negotiation
+	Mode string `json:"mode,omitempty"`
 	// AvailableModes lists the speed/duplex combinations supported by the interface
 	AvailableModes []string `json:"available_modes,omitempty"`
 }
 
 // ProfileCableTestSettings contains TDR cable diagnostic settings.
+// Note: Cable test auto-runs automatically when link is down AND PHY supports TDR.
+// No user toggle needed - it's either possible or not based on hardware capability.
 type ProfileCableTestSettings struct {
-	// Enabled controls whether the cable test card is shown
+	// Enabled controls whether the cable test card is shown (requires PHY TDR support)
 	Enabled bool `json:"enabled"`
-	// AutoRunOnLinkDown triggers cable test automatically when link goes down
-	AutoRunOnLinkDown bool `json:"auto_run_on_link_down"`
 }
 
 // ProfileInterfaceConfigs stores the selected interfaces for a profile.

@@ -32,6 +32,7 @@ import {
   formatLogTimestamp,
 } from "../../hooks/useLogs";
 import { cn, spacing, button, radius, layout, input } from "../../styles/theme";
+import { LogViewerModal } from "./LogViewerModal";
 
 // Filter badge component
 interface FilterBadgeProps {
@@ -100,7 +101,7 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
             colors.badge,
             spacing.chip.sm,
             radius.default,
-            "font-mono font-bold min-w-[50px] text-center text-xs"
+            "font-mono font-bold min-w-12 text-center text-xs"
           )}
         >
           {entry.level}
@@ -177,7 +178,7 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
       {expanded && (
         <div className={cn(spacing.margin.top.inline, "space-y-2")}>
           {/* Full message */}
-          <div className="text-sm text-text-primary break-words whitespace-pre-wrap">
+          <div className="text-sm text-text-primary wrap-break-word whitespace-pre-wrap">
             {entry.message}
           </div>
 
@@ -187,7 +188,7 @@ function LogEntryRow({ entry, expanded, onToggle }: LogEntryRowProps) {
               className={cn(
                 spacing.pad.xs,
                 radius.default,
-                "text-xs bg-surface-sunken overflow-x-auto font-mono whitespace-pre-wrap break-words"
+                "text-xs bg-surface-sunken overflow-x-auto font-mono whitespace-pre-wrap wrap-break-word"
               )}
             >
               {JSON.stringify(entry.metadata, null, 2)}
@@ -488,6 +489,7 @@ export function LogViewerCard({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [autoScroll, setAutoScroll] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const logContainerRef = useRef<HTMLDivElement>(null);
 
   // Get unique components from logs
@@ -606,6 +608,32 @@ export function LogViewerCard({
           </p>
         </div>
         <div className={cn(layout.inline.default, "flex-wrap")}>
+          {/* Primary action: Open Full Screen - prominent styling */}
+          <button
+            type="button"
+            className={cn(
+              button.size.sm,
+              radius.default,
+              "bg-brand-primary text-text-inverse hover:brightness-90",
+              "flex items-center gap-1.5 font-medium"
+            )}
+            onClick={() => setIsModalOpen(true)}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+              />
+            </svg>
+            {t("logs.fullScreen", "Full Screen")}
+          </button>
           <button
             type="button"
             className={cn(
@@ -776,6 +804,12 @@ export function LogViewerCard({
           )}
         </>
       )}
+
+      {/* Full Screen Modal */}
+      <LogViewerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

@@ -38,90 +38,31 @@ interface LinkSettingsProps {
   linkStatus: SaveStatus;
 }
 
-// Combined speed/duplex preset options
+// Combined speed/duplex mode options matching ethtool output format
+// Format: "speed/duplex" (e.g., "10/half", "100/full", "1000/full")
 // Note: Half duplex only available at 10/100 Mbps per IEEE standards
-const LINK_PRESETS: {
-  value: string;
-  label: string;
-  speed: string;
-  duplex: string;
-}[] = [
-  { value: "auto", label: "Auto-Negotiate", speed: "auto", duplex: "auto" },
+const LINK_MODE_OPTIONS: { value: string; label: string }[] = [
+  { value: "auto", label: "Auto-Negotiate" },
   // 10 Mbps - supports half and full duplex
-  {
-    value: "10-half",
-    label: "10 Mbps Half Duplex",
-    speed: "10",
-    duplex: "half",
-  },
-  {
-    value: "10-full",
-    label: "10 Mbps Full Duplex",
-    speed: "10",
-    duplex: "full",
-  },
+  { value: "10/half", label: "10 Mbps Half Duplex" },
+  { value: "10/full", label: "10 Mbps Full Duplex" },
   // 100 Mbps - supports half and full duplex
-  {
-    value: "100-half",
-    label: "100 Mbps Half Duplex",
-    speed: "100",
-    duplex: "half",
-  },
-  {
-    value: "100-full",
-    label: "100 Mbps Full Duplex",
-    speed: "100",
-    duplex: "full",
-  },
+  { value: "100/half", label: "100 Mbps Half Duplex" },
+  { value: "100/full", label: "100 Mbps Full Duplex" },
   // 1 Gbps+ - full duplex only (IEEE 802.3)
-  {
-    value: "1000-full",
-    label: "1 Gbps Full Duplex",
-    speed: "1000",
-    duplex: "full",
-  },
-  {
-    value: "2500-full",
-    label: "2.5 Gbps Full Duplex",
-    speed: "2500",
-    duplex: "full",
-  },
-  {
-    value: "5000-full",
-    label: "5 Gbps Full Duplex",
-    speed: "5000",
-    duplex: "full",
-  },
-  {
-    value: "10000-full",
-    label: "10 Gbps Full Duplex",
-    speed: "10000",
-    duplex: "full",
-  },
+  { value: "1000/full", label: "1 Gbps Full Duplex" },
+  { value: "2500/full", label: "2.5 Gbps Full Duplex" },
+  { value: "5000/full", label: "5 Gbps Full Duplex" },
+  { value: "10000/full", label: "10 Gbps Full Duplex" },
   // Fiber speeds
-  {
-    value: "25000-full",
-    label: "25 Gbps Full Duplex",
-    speed: "25000",
-    duplex: "full",
-  },
-  {
-    value: "40000-full",
-    label: "40 Gbps Full Duplex",
-    speed: "40000",
-    duplex: "full",
-  },
-  {
-    value: "100000-full",
-    label: "100 Gbps Full Duplex",
-    speed: "100000",
-    duplex: "full",
-  },
+  { value: "25000/full", label: "25 Gbps Full Duplex" },
+  { value: "40000/full", label: "40 Gbps Full Duplex" },
+  { value: "100000/full", label: "100 Gbps Full Duplex" },
 ];
 
 /**
  * Settings section for link speed and duplex configuration.
- * Uses a single dropdown with preset speed/duplex combinations.
+ * Uses a single dropdown with combined speed/duplex modes.
  */
 export const LinkSettings = memo(function LinkSettings({
   linkSettings,
@@ -130,26 +71,16 @@ export const LinkSettings = memo(function LinkSettings({
 }: LinkSettingsProps) {
   const { t } = useTranslation("settings");
 
-  // Get current preset value from speed/duplex
-  const getCurrentPreset = (): string => {
-    if (linkSettings.autoNegotiation || linkSettings.speed === "auto") {
-      return "auto";
-    }
-    return `${linkSettings.speed}-${linkSettings.duplex}`;
-  };
-
-  // Handle preset change
-  const handlePresetChange = (presetValue: string) => {
-    const preset = LINK_PRESETS.find((p) => p.value === presetValue);
-    if (!preset) return;
-
+  // Handle mode change
+  const handleModeChange = (mode: string) => {
     setLinkSettings((prev) => ({
       ...prev,
-      autoNegotiation: presetValue === "auto",
-      speed: preset.speed as LinkSettingsType["speed"],
-      duplex: preset.duplex as LinkSettingsType["duplex"],
+      mode,
     }));
   };
+
+  // Check if current mode is manual (not auto)
+  const isManualMode = linkSettings.mode !== "auto";
 
   return (
     <CollapsibleSection
@@ -167,14 +98,14 @@ export const LinkSettings = memo(function LinkSettings({
         <div>
           <label
             className="caption text-text-muted font-medium"
-            htmlFor="link-preset"
+            htmlFor="link-mode"
           >
             {t("link.speedDuplex", "Speed / Duplex")}
           </label>
           <select
-            id="link-preset"
-            value={getCurrentPreset()}
-            onChange={(e) => handlePresetChange(e.target.value)}
+            id="link-mode"
+            value={linkSettings.mode}
+            onChange={(e) => handleModeChange(e.target.value)}
             className={cn(
               "w-full",
               spacing.margin.top.tight,
@@ -184,16 +115,16 @@ export const LinkSettings = memo(function LinkSettings({
               "body-small text-text-primary"
             )}
           >
-            {LINK_PRESETS.map((preset) => (
-              <option key={preset.value} value={preset.value}>
-                {preset.label}
+            {LINK_MODE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
         </div>
 
         {/* Warning for manual settings */}
-        {!linkSettings.autoNegotiation && (
+        {isManualMode && (
           <p
             className={cn(
               "caption text-status-warning",

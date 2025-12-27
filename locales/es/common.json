@@ -113,6 +113,7 @@
     "errors": "errores",
     "warnings": "advertencias",
     "lastHour": "última hora",
+    "errorsLastHour": "errores en la última hora",
     "streaming": "En vivo",
     "paused": "Pausado",
     "collapse": "Contraer",
@@ -126,7 +127,9 @@
     "loading": "Cargando registros...",
     "noMatchingLogs": "No hay registros que coincidan con los filtros",
     "noLogs": "Aún no hay registros",
-    "scrollToBottom": "Ir al último"
+    "scrollToBottom": "Ir al último",
+    "fullScreen": "Pantalla Completa",
+    "close": "Cerrar visor de registros"
   },
   "login": {
     "defaultCredentials": "Predeterminado: admin / seed"
