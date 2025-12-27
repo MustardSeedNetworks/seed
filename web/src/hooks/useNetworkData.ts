@@ -308,12 +308,19 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
     }, []);
 
   // Set up auto-refresh interval
+  // Fixes #971: Check mounted state before setting interval after initial refresh
   useEffect(() => {
+    let isMounted = true;
+
     if (autoRefresh && refreshInterval > 0) {
-      refresh(); // Initial fetch
-      intervalRef.current = setInterval(refresh, refreshInterval);
+      refresh().finally(() => {
+        if (isMounted) {
+          intervalRef.current = setInterval(refresh, refreshInterval);
+        }
+      });
 
       return () => {
+        isMounted = false;
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
         }

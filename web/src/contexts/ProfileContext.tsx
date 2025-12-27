@@ -775,8 +775,17 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     isMountedRef.current = true;
 
     // Load profiles and active profile on mount
+    // Fixes #977: Add error handling for initial load
     const loadInitialData = async () => {
-      await Promise.all([refreshProfiles(), refreshActiveProfile()]);
+      try {
+        await Promise.all([refreshProfiles(), refreshActiveProfile()]);
+      } catch (err) {
+        logger.error(
+          LogComponents.PROFILES,
+          "Failed to load initial profile data",
+          err
+        );
+      }
     };
 
     loadInitialData();

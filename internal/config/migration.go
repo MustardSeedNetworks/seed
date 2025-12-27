@@ -78,6 +78,7 @@ func (m *MigrationManager) Migrate(data []byte, fromVersion, toVersion int) ([]b
 }
 
 // GetMigrationPath returns the sequence of migrations needed to go from one version to another.
+// Fixes #974: Added guard to prevent infinite loop if migration.ToVersion == migration.FromVersion.
 func (m *MigrationManager) GetMigrationPath(fromVersion, toVersion int) []Migration {
 	var path []Migration
 
@@ -85,7 +86,8 @@ func (m *MigrationManager) GetMigrationPath(fromVersion, toVersion int) []Migrat
 	for currentVersion < toVersion {
 		found := false
 		for _, migration := range m.migrations {
-			if migration.FromVersion == currentVersion {
+			// Guard: migration must advance version to prevent infinite loop
+			if migration.FromVersion == currentVersion && migration.ToVersion > currentVersion {
 				path = append(path, migration)
 				currentVersion = migration.ToVersion
 				found = true
