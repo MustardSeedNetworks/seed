@@ -201,9 +201,22 @@ func isAllowedWSOrigin(origin string) bool {
 				if remainder == "" || remainder[0] == ':' || remainder[0] == '/' {
 					return true
 				}
-				// For IP prefixes ending in '.', allow digits for next octet
+				// Fixes #940: For IP prefixes ending in '.', validate octet format
+				// Ensure remainder starts with a valid octet (1-3 digits) followed by valid boundary
 				if allowed[len(allowed)-1] == '.' && len(remainder) > 0 && remainder[0] >= '0' && remainder[0] <= '9' {
-					return true
+					// Find end of potential octet (first non-digit)
+					octetEnd := 0
+					for ; octetEnd < len(remainder) && octetEnd < 3; octetEnd++ {
+						if remainder[octetEnd] < '0' || remainder[octetEnd] > '9' {
+							break
+						}
+					}
+					// Valid octet is 1-3 digits; next char must be valid boundary (. : / or end)
+					if octetEnd > 0 && octetEnd <= 3 {
+						if octetEnd == len(remainder) || remainder[octetEnd] == '.' || remainder[octetEnd] == ':' || remainder[octetEnd] == '/' {
+							return true
+						}
+					}
 				}
 			}
 		}

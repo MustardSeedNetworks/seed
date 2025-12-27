@@ -654,18 +654,18 @@ export function usePipelineStatus(
       handlePipelineEventRef.current?.(event);
     };
 
-    // Initialize handlers set if needed
+    // Fixes #937: Only create dispatcher once when Set is first created
+    // This prevents stale dispatcher references when components mount/unmount
     if (!win.__pipelineEventHandlers) {
       win.__pipelineEventHandlers = new Set();
+      // Create dispatcher only once at initialization
+      win.__pipelineEventHandler = (event: PipelineEvent) => {
+        win.__pipelineEventHandlers?.forEach((h) => h(event));
+      };
     }
 
     // Add this component's stable handler
     win.__pipelineEventHandlers.add(stableHandler);
-
-    // Create dispatcher that calls all registered handlers
-    win.__pipelineEventHandler = (event: PipelineEvent) => {
-      win.__pipelineEventHandlers?.forEach((h) => h(event));
-    };
 
     return () => {
       // Remove this component's handler

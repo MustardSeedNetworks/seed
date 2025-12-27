@@ -727,6 +727,12 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 		for {
 			select {
 			case <-waitCtx.Done():
+				// Fixes #938: Distinguish between timeout and intentional cancellation
+				if ctx.Err() != nil {
+					slog.Info("Scanning phase cancelled", "reason", ctx.Err())
+				} else if waitCtx.Err() == context.DeadlineExceeded {
+					slog.Warn("Scanning phase timed out", "timeout", timeout)
+				}
 				break waitLoop
 			case <-ticker.C:
 				// Fixes #878: Check context in device iteration to exit promptly on cancellation

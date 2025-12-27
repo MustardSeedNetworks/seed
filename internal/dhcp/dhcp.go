@@ -268,13 +268,18 @@ func findDHCPMessageType(options []byte) byte {
 // Stop stops monitoring and releases resources.
 func (m *Monitor) Stop() {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	if !m.running {
+		m.mu.Unlock()
 		return
 	}
 
 	m.running = false
+
+	// Fixes #942: Capture cleanupDone reference before releasing lock
+	// to prevent deadlock (cleanup goroutine acquires lock in ticker loop)
+	cleanupDone := m.cleanupDone
+	m.cleanupDone = nil
 
 	// Signal capture goroutine to stop
 	if m.stopChan != nil {
@@ -288,10 +293,11 @@ func (m *Monitor) Stop() {
 		m.handle = nil
 	}
 
-	// Wait for cleanup goroutine to exit (fixes #841)
-	if m.cleanupDone != nil {
-		<-m.cleanupDone
-		m.cleanupDone = nil
+	m.mu.Unlock()
+
+	// Wait for cleanup goroutine to exit OUTSIDE the lock (fixes #841, #942)
+	if cleanupDone != nil {
+		<-cleanupDone
 	}
 }
 
@@ -327,10 +333,45 @@ func (m *Monitor) IsRunning() bool {
 }
 
 // SetInterface changes the monitored interface.
+// Fixes #935: Restarts monitoring if it was previously running (like vlan/traffic.go).
 func (m *Monitor) SetInterface(name string) error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
+	wasRunning := m.running
+
+	// Stop inline if running (while holding lock to prevent TOCTOU)
+	if wasRunning {
+		m.running = false
+		cleanupDone := m.cleanupDone
+		m.cleanupDone = nil
+
+		if m.stopChan != nil {
+			close(m.stopChan)
+			m.stopChan = nil
+		}
+		if m.handle != nil {
+			m.handle.Close()
+			m.handle = nil
+		}
+
+		m.mu.Unlock()
+
+		// Wait for cleanup goroutine outside lock
+		if cleanupDone != nil {
+			<-cleanupDone
+		}
+	} else {
+		m.mu.Unlock()
+	}
+
+	// Update interface (no lock needed for this atomic update)
+	m.mu.Lock()
 	m.interfaceName = name
+	m.mu.Unlock()
+
+	// Restart if was previously running
+	if wasRunning {
+		return m.Start()
+	}
 	return nil
 }
 

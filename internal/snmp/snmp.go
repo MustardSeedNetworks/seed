@@ -123,6 +123,13 @@ func GetSystemInfo(ctx context.Context, ip string, cfg *config.SNMPConfig) (*Sys
 
 // queryWithCommunity performs SNMP v1/v2c query with community string.
 func queryWithCommunity(ctx context.Context, ip, oid, community string, cfg *config.SNMPConfig) (string, error) {
+	// Fixes #936: Check context cancellation before establishing connection
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+	}
+
 	params := &gosnmp.GoSNMP{
 		Target:    ip,
 		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -138,13 +145,6 @@ func queryWithCommunity(ctx context.Context, ip, oid, community string, cfg *con
 	}
 	defer params.Conn.Close()
 
-	// Check context cancellation
-	select {
-	case <-ctx.Done():
-		return "", ctx.Err()
-	default:
-	}
-
 	result, err := params.Get([]string{oid})
 	if err != nil {
 		return "", fmt.Errorf("SNMP GET failed: %w", err)
@@ -159,6 +159,13 @@ func queryWithCommunity(ctx context.Context, ip, oid, community string, cfg *con
 
 // queryMultipleWithCommunity performs multiple SNMP queries with community string.
 func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, community string, cfg *config.SNMPConfig) (map[string]string, error) {
+	// Fixes #936: Check context cancellation before establishing connection
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	params := &gosnmp.GoSNMP{
 		Target:    ip,
 		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -173,13 +180,6 @@ func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, c
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
 	defer params.Conn.Close()
-
-	// Check context cancellation
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
 
 	result, err := params.Get(oids)
 	if err != nil {

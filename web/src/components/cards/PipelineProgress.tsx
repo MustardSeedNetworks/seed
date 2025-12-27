@@ -61,6 +61,17 @@ function formatDuration(ms: number): string {
   return `${minutes}m ${remainingSeconds}s`;
 }
 
+// Fixes #939: Simple hash for better key uniqueness instead of truncation
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash.toString(36);
+}
+
 export const PipelineProgress = memo(function PipelineProgress({
   status,
   onCancel,
@@ -240,9 +251,9 @@ export const PipelineProgress = memo(function PipelineProgress({
             {t("pipeline.errors", { defaultValue: "Errors" })}:
           </span>
           <ul className="mt-1 space-y-0.5">
-            {/* Fixes #926: Use error content hash for stable keys instead of index */}
+            {/* Fixes #926, #939: Use error content hash for stable keys */}
             {status.errors.map((error, i) => (
-              <li key={`${i}-${error.slice(0, 50)}`} className="caption text-status-error">
+              <li key={`${i}-${simpleHash(error)}`} className="caption text-status-error">
                 {error}
               </li>
             ))}
