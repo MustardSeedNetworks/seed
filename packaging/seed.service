@@ -24,7 +24,7 @@ NoNewPrivileges=yes
 # Filesystem protection
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/var/lib/seed /var/log/seed
+ReadWritePaths=/etc/seed /var/lib/seed /var/log/seed
 PrivateTmp=yes
 
 # Additional hardening
