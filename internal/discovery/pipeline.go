@@ -726,6 +726,9 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 		ticker := time.NewTicker(500 * time.Millisecond)
 		defer ticker.Stop()
 
+		// Fixes #991: Track processed count incrementally using a set instead of O(n) scan each tick
+		processedSet := make(map[string]bool, len(devices))
+
 	waitLoop:
 		for {
 			select {
@@ -747,22 +750,24 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 						break waitLoop
 					default:
 					}
-					if device.IP != "" && p.profiler.IsProfiling(device.IP) {
-						allDone = false
-						break
+					if device.IP == "" {
+						continue
+					}
+					// Fixes #991: Only check profiler state for devices not yet processed
+					if !processedSet[device.IP] {
+						if p.profiler.GetProfile(device.IP) != nil {
+							processedSet[device.IP] = true
+						} else if p.profiler.IsProfiling(device.IP) {
+							allDone = false
+						}
 					}
 				}
 				if allDone {
 					break waitLoop
 				}
 
-				// Broadcast progress
-				processed := 0
-				for _, device := range devices {
-					if device.IP != "" && p.profiler.GetProfile(device.IP) != nil {
-						processed++
-					}
-				}
+				// Broadcast progress using incremental count
+				processed := len(processedSet)
 				// Prevent division by zero (fixes #821)
 				percentComplete := float64(100)
 				if len(devices) > 0 {
