@@ -1,5 +1,5 @@
 [Unit]
-Description=The Seed - Mustard Seed Networks
+Description=The Seed - Network Diagnostic Tool
 Documentation=https://github.com/krisarmstrong/seed
 After=network-online.target
 Wants=network-online.target
@@ -8,25 +8,37 @@ Wants=network-online.target
 Type=simple
 User=seed
 Group=seed
-WorkingDirectory=/usr/local/seed
-ExecStart=/usr/local/bin/seed --config /usr/local/seed/configs/seed.yaml
+WorkingDirectory=/var/lib/seed
+ExecStart=/usr/bin/seed
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
 
 # Security hardening
-# Grant network capabilities for ICMP ping, ARP scanning, and packet capture
+# Grant network capabilities for ICMP ping, ARP scanning, packet capture, and link config
 AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
 CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
 NoNewPrivileges=yes
+
+# Filesystem protection
 ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/usr/local/seed/configs /usr/local/seed/logs
-PrivateTmp=true
+ProtectHome=yes
+ReadWritePaths=/var/lib/seed /var/log/seed
+PrivateTmp=yes
+
+# Additional hardening
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+PrivateDevices=no
+# Note: PrivateDevices=no required for network interface access
 
 # Environment
-Environment=HOME=/usr/local/seed
+Environment=HOME=/var/lib/seed
+Environment=SEED_DATA_DIR=/var/lib/seed
 
 [Install]
 WantedBy=multi-user.target

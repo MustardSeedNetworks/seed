@@ -17,3 +17,6 @@ Description: The Seed - Network Diagnostic Tool by Mustard Seed Networks
   - SNMP device discovery
   - DHCP rogue detection
   - Cable diagnostics (TDR)
+  - Vulnerability scanning (CVE/CISA KEV)
+ .
+ Homepage: https://github.com/krisarmstrong/seed

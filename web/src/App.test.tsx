@@ -26,7 +26,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import App from "./App";
-import { SettingsProvider } from "./contexts/SettingsContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
 import { ReactNode } from "react";
 
@@ -106,14 +105,10 @@ class MockWebSocket {
   }
 }
 
-// Wrapper with SettingsProvider and ProfileProvider
+// Wrapper with ProfileProvider (settings now managed within ProfileContext)
 function createWrapper() {
   return function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <ProfileProvider>
-        <SettingsProvider>{children}</SettingsProvider>
-      </ProfileProvider>
-    );
+    return <ProfileProvider>{children}</ProfileProvider>;
   };
 }
 

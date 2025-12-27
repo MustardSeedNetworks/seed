@@ -12,9 +12,6 @@
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { logger, LogComponents } from "../lib/logger";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 interface NetworkInterface {
   name: string;
@@ -47,9 +44,9 @@ interface UseInterfaceStateProps {
 
 export function useInterfaceState({
   interfaces,
-  activeProfile,
-  setEthernetInterface,
-  setWifiInterface,
+  activeProfile: _activeProfile,
+  setEthernetInterface: _setEthernetInterface,
+  setWifiInterface: _setWifiInterface,
 }: UseInterfaceStateProps) {
   // Dual interface state: track both ethernet and WiFi interfaces separately (#754 enhancement)
   // This allows seamless switching between modes without losing the previously selected interface

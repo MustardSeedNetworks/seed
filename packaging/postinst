@@ -1,59 +1,90 @@
 #!/bin/bash
 # =============================================================================
-# The Seed - Post-installation Script
+# The Seed - Post-installation Script (deb)
 # =============================================================================
-# Creates service user, sets capabilities, and starts the service.
+# Creates service user/group, sets capabilities, configures directories,
+# and enables the systemd service.
 # =============================================================================
 set -e
 
-INSTALL_DIR="/usr/local/seed"
 SERVICE_USER="seed"
 SERVICE_GROUP="seed"
-BINARY_PATH="/usr/local/bin/seed"
+BINARY_PATH="/usr/bin/seed"
+DATA_DIR="/var/lib/seed"
+LOG_DIR="/var/log/seed"
 
-# Create service user and group if they don't exist
+# Create service group if it doesn't exist
 if ! getent group "$SERVICE_GROUP" > /dev/null 2>&1; then
     echo "Creating group: $SERVICE_GROUP"
     groupadd --system "$SERVICE_GROUP"
 fi
 
+# Create service user if it doesn't exist
 if ! getent passwd "$SERVICE_USER" > /dev/null 2>&1; then
     echo "Creating user: $SERVICE_USER"
-    useradd --system --gid "$SERVICE_GROUP" --home-dir "$INSTALL_DIR" --shell /usr/sbin/nologin "$SERVICE_USER"
+    useradd --system \
+        --gid "$SERVICE_GROUP" \
+        --home-dir "$DATA_DIR" \
+        --no-create-home \
+        --shell /usr/sbin/nologin \
+        --comment "The Seed Network Diagnostic Tool" \
+        "$SERVICE_USER"
 fi
 
-# Create directories
-mkdir -p "$INSTALL_DIR/configs"
-mkdir -p "$INSTALL_DIR/logs"
-chown -R "$SERVICE_USER:$SERVICE_GROUP" "$INSTALL_DIR"
-
-# Copy default config if not exists
-if [[ ! -f "$INSTALL_DIR/configs/seed.yaml" ]] && [[ -f "/etc/seed/seed.yaml" ]]; then
-    cp /etc/seed/seed.yaml "$INSTALL_DIR/configs/"
-    chown "$SERVICE_USER:$SERVICE_GROUP" "$INSTALL_DIR/configs/seed.yaml"
+# Create data directory
+if [ ! -d "$DATA_DIR" ]; then
+    mkdir -p "$DATA_DIR"
 fi
+chown "$SERVICE_USER:$SERVICE_GROUP" "$DATA_DIR"
+chmod 750 "$DATA_DIR"
+
+# Create log directory (optional, journald is primary)
+if [ ! -d "$LOG_DIR" ]; then
+    mkdir -p "$LOG_DIR"
+fi
+chown "$SERVICE_USER:$SERVICE_GROUP" "$LOG_DIR"
+chmod 750 "$LOG_DIR"
 
 # Set capabilities for raw socket access (required for network diagnostics)
+# - CAP_NET_RAW: Required for ICMP ping, ARP scanning, packet capture
+# - CAP_NET_ADMIN: Required for ethtool link configuration, interface control
 if command -v setcap &> /dev/null; then
-    setcap cap_net_raw,cap_net_admin=+ep "$BINARY_PATH" || echo "Warning: Could not set capabilities"
+    setcap 'cap_net_raw,cap_net_admin=+ep' "$BINARY_PATH" || {
+        echo "Warning: Could not set capabilities on $BINARY_PATH"
+        echo "The service may need to run as root for full functionality."
+    }
 else
     echo "Warning: setcap not found. Install libcap2-bin for non-root operation."
+    echo "  sudo apt install libcap2-bin"
 fi
 
-# Reload systemd and enable service
+# Reload systemd daemon
 systemctl daemon-reload
+
+# Enable service to start on boot
 systemctl enable seed.service
 
-# Start service
-systemctl start seed.service || true
+# Start the service
+if systemctl is-active --quiet seed.service; then
+    echo "Restarting seed service..."
+    systemctl restart seed.service
+else
+    echo "Starting seed service..."
+    systemctl start seed.service || true
+fi
 
 echo ""
-echo "The Seed installed successfully!"
+echo "=========================================="
+echo "  The Seed installed successfully!"
+echo "=========================================="
+echo ""
+echo "Web interface: http://localhost:8080"
 echo ""
 echo "Commands:"
 echo "  View logs:      journalctl -u seed -f"
-echo "  Restart:        systemctl restart seed"
-echo "  Status:         systemctl status seed"
+echo "  Restart:        sudo systemctl restart seed"
+echo "  Status:         sudo systemctl status seed"
+echo "  Stop:           sudo systemctl stop seed"
 echo ""
 
 exit 0

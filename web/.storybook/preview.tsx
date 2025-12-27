@@ -3,7 +3,7 @@
  *
  * Global decorators that wrap all stories with required providers:
  * - I18nextProvider: For translation support (useTranslation)
- * - SettingsProvider: For settings context (useSettings)
+ * - ProfileProvider: For profile and settings context (useSettings, useProfileContext)
  * - Theme wrapper: For dark/light mode support
  *
  * This ensures all components work correctly in isolation without
@@ -14,7 +14,7 @@ import React, { Suspense, useEffect, type ReactNode } from "react";
 import type { Preview } from "@storybook/react-vite";
 import { I18nextProvider } from "react-i18next";
 import i18n from "../src/i18n";
-import { SettingsProvider } from "../src/contexts/SettingsContext";
+import { ProfileProvider } from "../src/contexts/ProfileContext";
 import "../src/index.css";
 
 /**
@@ -81,13 +81,13 @@ const preview: Preview = {
       return (
         <I18nextProvider i18n={i18n}>
           <Suspense fallback={<LoadingFallback />}>
-            <SettingsProvider>
+            <ProfileProvider>
               <ThemeWrapper dark={isDark}>
                 <div className="p-4">
                   <Story />
                 </div>
               </ThemeWrapper>
-            </SettingsProvider>
+            </ProfileProvider>
           </Suspense>
         </I18nextProvider>
       );

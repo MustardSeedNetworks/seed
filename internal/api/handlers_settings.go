@@ -972,10 +972,8 @@ func (s *Server) getLinkSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Try to get settings from active profile
 	settings := config.ProfileLinkSettings{
-		AutoNegotiation: true,
-		Speed:           "auto",
-		Duplex:          "auto",
-		AvailableModes:  []string{},
+		Mode:           "auto",
+		AvailableModes: []string{},
 	}
 
 	if s.db != nil {
@@ -1003,17 +1001,13 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate speed value
-	validSpeeds := map[string]bool{"auto": true, "10": true, "100": true, "1000": true, "2500": true, "5000": true, "10000": true}
-	if updates.Speed != "" && !validSpeeds[updates.Speed] {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, "Invalid speed value", "")
-		return
+	// Validate mode value (combined speed/duplex format like "100/full" or "auto")
+	validModes := map[string]bool{
+		"auto": true, "10/half": true, "10/full": true, "100/half": true, "100/full": true,
+		"1000/full": true, "2500/full": true, "5000/full": true, "10000/full": true,
 	}
-
-	// Validate duplex value
-	validDuplex := map[string]bool{"auto": true, "full": true, "half": true}
-	if updates.Duplex != "" && !validDuplex[updates.Duplex] {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, "Invalid duplex value", "")
+	if updates.Mode != "" && !validModes[updates.Mode] {
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, "Invalid mode value", "")
 		return
 	}
 
@@ -1067,8 +1061,7 @@ func (s *Server) getCableTestSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Default settings
 	settings := config.ProfileCableTestSettings{
-		Enabled:           true,
-		AutoRunOnLinkDown: false,
+		Enabled: true,
 	}
 
 	if s.db != nil {

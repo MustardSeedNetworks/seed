@@ -71,8 +71,6 @@ import {
   radius,
   layout,
   spacing,
-  button,
-  input,
   section,
   cn,
 } from "./styles/theme";

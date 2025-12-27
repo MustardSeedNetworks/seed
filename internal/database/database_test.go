@@ -206,14 +206,14 @@ func TestProfileRepository(t *testing.T) {
 		t.Errorf("expected updated description, got %q", got.Description)
 	}
 
-	// List
+	// List (includes the seeded default profile + our test profile)
 	profiles, err := repo.List(ctx)
 	if err != nil {
 		t.Fatalf("failed to list profiles: %v", err)
 	}
 
-	if len(profiles) != 1 {
-		t.Errorf("expected 1 profile, got %d", len(profiles))
+	if len(profiles) != 2 {
+		t.Errorf("expected 2 profiles (default + test), got %d", len(profiles))
 	}
 
 	// Set default
@@ -228,14 +228,14 @@ func TestProfileRepository(t *testing.T) {
 		t.Errorf("expected default profile %q, got %q", profile.ID, got.ID)
 	}
 
-	// Count
+	// Count (includes the seeded default profile + our test profile)
 	count, err := repo.Count(ctx)
 	if err != nil {
 		t.Fatalf("failed to count: %v", err)
 	}
 
-	if count != 1 {
-		t.Errorf("expected count 1, got %d", count)
+	if count != 2 {
+		t.Errorf("expected count 2 (default + test), got %d", count)
 	}
 
 	// Delete

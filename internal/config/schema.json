@@ -4,7 +4,7 @@
   "title": "The Seed Configuration",
   "description": "Configuration schema for The Seed network diagnostic tool",
   "type": "object",
-  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "health_checks", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp", "database"],
+  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "health_checks", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp", "database", "pipeline"],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -72,6 +72,9 @@
     },
     "database": {
       "$ref": "#/$defs/DatabaseConfig"
+    },
+    "pipeline": {
+      "$ref": "#/$defs/PipelineConfig"
     }
   },
   "$defs": {
@@ -1519,6 +1522,138 @@
           "minimum": 1,
           "maximum": 100,
           "default": 10
+        }
+      }
+    },
+    "PipelineConfig": {
+      "type": "object",
+      "description": "Discovery pipeline configuration",
+      "properties": {
+        "phases": {
+          "type": "object",
+          "description": "Controls which pipeline phases are enabled",
+          "properties": {
+            "enumeration": {
+              "type": "boolean",
+              "description": "Device enumeration phase (always true)",
+              "default": true
+            },
+            "name_resolution": {
+              "type": "boolean",
+              "description": "Name resolution phase",
+              "default": true
+            },
+            "service_discovery": {
+              "type": "boolean",
+              "description": "Service discovery phase (port scanning)",
+              "default": false
+            },
+            "vuln_assessment": {
+              "type": "boolean",
+              "description": "Vulnerability assessment phase",
+              "default": false
+            }
+          }
+        },
+        "timing": {
+          "type": "object",
+          "description": "Rate limiting and delay settings",
+          "properties": {
+            "probe_delay": {
+              "$ref": "#/$defs/Duration"
+            },
+            "host_delay": {
+              "$ref": "#/$defs/Duration"
+            },
+            "max_concurrent_hosts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "phase_timeout": {
+              "$ref": "#/$defs/Duration"
+            },
+            "profile": {
+              "type": "string",
+              "enum": ["polite", "normal", "aggressive"],
+              "default": "normal"
+            }
+          }
+        },
+        "port_scan": {
+          "type": "object",
+          "description": "Port scanning configuration",
+          "properties": {
+            "intensity": {
+              "type": "string",
+              "enum": ["off", "quick", "standard", "comprehensive", "custom"],
+              "default": "off"
+            },
+            "custom_ports": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              }
+            },
+            "banner_grab": {
+              "type": "boolean",
+              "default": false
+            },
+            "connect_timeout": {
+              "$ref": "#/$defs/Duration"
+            }
+          }
+        },
+        "snmp_collection": {
+          "type": "object",
+          "description": "Extended SNMP MIB collection",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "mibs": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "boolean", "default": true },
+                "interfaces": { "type": "boolean", "default": true },
+                "ip_addresses": { "type": "boolean", "default": true },
+                "routing": { "type": "boolean", "default": false },
+                "bridge": { "type": "boolean", "default": false },
+                "entity": { "type": "boolean", "default": false },
+                "lldp": { "type": "boolean", "default": false },
+                "vlan": { "type": "boolean", "default": false }
+              }
+            },
+            "walk_timeout": {
+              "$ref": "#/$defs/Duration"
+            },
+            "max_oids_per_request": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
+        },
+        "persistence": {
+          "type": "object",
+          "description": "Result storage settings",
+          "properties": {
+            "store_history": {
+              "type": "boolean",
+              "default": true
+            },
+            "staleness_threshold": {
+              "$ref": "#/$defs/Duration"
+            },
+            "purge_after": {
+              "$ref": "#/$defs/Duration"
+            }
+          }
         }
       }
     }

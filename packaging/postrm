@@ -1,0 +1,58 @@
+#!/bin/bash
+# =============================================================================
+# The Seed - Post-removal Script (deb)
+# =============================================================================
+# Cleans up after package removal.
+# On 'purge': removes data, logs, user, and group.
+# On 'remove': keeps data for potential reinstall.
+# =============================================================================
+set -e
+
+SERVICE_USER="seed"
+SERVICE_GROUP="seed"
+DATA_DIR="/var/lib/seed"
+LOG_DIR="/var/log/seed"
+
+case "$1" in
+    purge)
+        # Full removal - delete everything
+        echo "Purging seed data and configuration..."
+
+        # Remove data directory
+        if [ -d "$DATA_DIR" ]; then
+            rm -rf "$DATA_DIR"
+        fi
+
+        # Remove log directory
+        if [ -d "$LOG_DIR" ]; then
+            rm -rf "$LOG_DIR"
+        fi
+
+        # Remove user
+        if getent passwd "$SERVICE_USER" > /dev/null 2>&1; then
+            echo "Removing user: $SERVICE_USER"
+            userdel "$SERVICE_USER" || true
+        fi
+
+        # Remove group (only if no other users are members)
+        if getent group "$SERVICE_GROUP" > /dev/null 2>&1; then
+            echo "Removing group: $SERVICE_GROUP"
+            groupdel "$SERVICE_GROUP" 2>/dev/null || true
+        fi
+        ;;
+
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        # Standard removal - keep data for potential reinstall
+        echo "Seed removed. Data preserved in $DATA_DIR"
+        echo "To completely remove all data, run: sudo apt purge seed"
+        ;;
+
+    *)
+        echo "postrm called with unknown argument: $1" >&2
+        ;;
+esac
+
+# Reload systemd
+systemctl daemon-reload || true
+
+exit 0

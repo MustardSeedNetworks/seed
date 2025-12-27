@@ -1,0 +1,21 @@
+#!/bin/bash
+# =============================================================================
+# The Seed - Pre-removal Script (deb)
+# =============================================================================
+# Stops the service before package removal.
+# =============================================================================
+set -e
+
+# Stop the service if running
+if systemctl is-active --quiet seed.service 2>/dev/null; then
+    echo "Stopping seed service..."
+    systemctl stop seed.service || true
+fi
+
+# Disable the service
+if systemctl is-enabled --quiet seed.service 2>/dev/null; then
+    echo "Disabling seed service..."
+    systemctl disable seed.service || true
+fi
+
+exit 0

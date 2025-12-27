@@ -113,6 +113,7 @@
     "errors": "errors",
     "warnings": "warnings",
     "lastHour": "last hour",
+    "errorsLastHour": "errors last hour",
     "streaming": "Live",
     "paused": "Paused",
     "collapse": "Collapse",
@@ -126,7 +127,9 @@
     "loading": "Loading logs...",
     "noMatchingLogs": "No logs match the current filters",
     "noLogs": "No logs yet",
-    "scrollToBottom": "Scroll to latest"
+    "scrollToBottom": "Scroll to latest",
+    "fullScreen": "Full Screen",
+    "close": "Close log viewer"
   },
   "login": {
     "defaultCredentials": "Default: admin / seed"

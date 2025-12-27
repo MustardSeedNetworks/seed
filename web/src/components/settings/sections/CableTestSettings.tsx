@@ -195,44 +195,11 @@ export const CableTestSettings = memo(function CableTestSettings({
         </label>
 
         {/* Auto-Run on Link Down */}
-        <label
-          className={cn(
-            layout.flex.between,
-            spacing.pad.sm,
-            "bg-surface-base",
-            radius.default,
-            "border border-surface-border"
-          )}
-        >
-          <div>
-            <span className="body-small text-text-primary font-medium">
-              {t("cableTest.autoRunOnLinkDown", "Auto-Test on Link Down")}
-            </span>
-            <p className="caption text-text-muted">
-              {t(
-                "cableTest.autoRunOnLinkDownDesc",
-                "Automatically run cable test when link goes down"
-              )}
-            </p>
-          </div>
-          <input
-            type="checkbox"
-            checked={cableTestSettings.autoRunOnLinkDown}
-            onChange={(e) =>
-              setCableTestSettings((prev) => ({
-                ...prev,
-                autoRunOnLinkDown: e.target.checked,
-              }))
-            }
-            className={iconTokens.size.sm}
-            disabled={!tdrSupport?.supported}
-          />
-        </label>
-
+        {/* Note: Auto-run is automatic when link down + PHY supports TDR - no toggle needed */}
         <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
           {t(
             "cableTest.tdrNote",
-            "TDR cable testing requires compatible network hardware and drivers. Length units are controlled by global Display Options."
+            "TDR cable testing requires compatible network hardware and drivers. Cable test runs automatically when link is down and PHY supports TDR. Length units are controlled by global Display Options."
           )}
         </p>
       </div>
