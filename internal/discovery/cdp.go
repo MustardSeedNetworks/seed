@@ -43,13 +43,11 @@ type CDPCapture struct {
 }
 
 // NewCDPCapture creates a new CDP capture instance.
+// Fixes #903: Context is created in Start() to prevent leaks if Start() is never called.
 func NewCDPCapture(interfaceName string) *CDPCapture {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &CDPCapture{
 		interfaceName: interfaceName,
 		neighbors:     make(map[string]*CDPNeighbor),
-		ctx:           ctx,
-		cancel:        cancel,
 	}
 }
 
@@ -79,6 +77,8 @@ func (c *CDPCapture) Start() error {
 
 	c.handle = handle
 	c.started = true
+	// Fixes #903: Create context here instead of in NewCDPCapture
+	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.mu.Unlock()
 
 	go c.captureLoop()
@@ -87,9 +87,14 @@ func (c *CDPCapture) Start() error {
 
 // Stop stops capturing CDP frames.
 func (c *CDPCapture) Stop() {
-	c.cancel()
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	// Fixes #903: Check cancel is not nil (Start() may not have been called)
+	if c.cancel != nil {
+		c.cancel()
+		c.cancel = nil
+	}
 
 	if c.handle != nil {
 		c.handle.Close()

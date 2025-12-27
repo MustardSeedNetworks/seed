@@ -329,6 +329,13 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         } catch {
           if (!isMountedRef.current || controller.signal.aborted) return;
           setStatus((prev) => ({ ...prev, [key]: "error" as SaveStatus }));
+
+          // Fixes #912: Reset error status after a delay so user can see it
+          const errorResetTimer = setTimeout(() => {
+            if (!isMountedRef.current) return;
+            setStatus((prev) => ({ ...prev, [key]: "idle" as SaveStatus }));
+          }, 5000); // Longer delay for errors
+          statusResetTimers.current.set(key, errorResetTimer);
         } finally {
           const currentController = saveControllers.current.get(key);
           if (currentController === controller) {

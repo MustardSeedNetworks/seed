@@ -55,13 +55,11 @@ type EDPCapture struct {
 }
 
 // NewEDPCapture creates a new EDP capture instance.
+// Fixes #903: Context is created in Start() to prevent leaks if Start() is never called.
 func NewEDPCapture(interfaceName string) *EDPCapture {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &EDPCapture{
 		interfaceName: interfaceName,
 		neighbors:     make(map[string]*EDPNeighbor),
-		ctx:           ctx,
-		cancel:        cancel,
 	}
 }
 
@@ -91,6 +89,8 @@ func (c *EDPCapture) Start() error {
 
 	c.handle = handle
 	c.started = true
+	// Fixes #903: Create context here instead of in NewEDPCapture
+	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.mu.Unlock()
 
 	go c.captureLoop()
@@ -99,9 +99,14 @@ func (c *EDPCapture) Start() error {
 
 // Stop stops capturing EDP frames.
 func (c *EDPCapture) Stop() {
-	c.cancel()
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	// Fixes #903: Check cancel is not nil (Start() may not have been called)
+	if c.cancel != nil {
+		c.cancel()
+		c.cancel = nil
+	}
 
 	if c.handle != nil {
 		c.handle.Close()

@@ -14,6 +14,12 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
+// Fixes #907: Limits for detected servers map to prevent unbounded growth.
+const (
+	maxDetectedServers = 1000           // Maximum number of tracked servers
+	serverExpiry       = 24 * time.Hour // Expire servers not seen in 24 hours
+)
+
 // RogueServer represents a detected rogue DHCP server.
 type RogueServer struct {
 	IP           string    `json:"ip"`
@@ -238,8 +244,23 @@ func (rd *RogueDetector) processPacket(packet gopacket.Packet) {
 	isKnown := rd.knownServerSet[serverIP]
 	now := time.Now()
 
+	// Fixes #907: Prune expired entries if map is getting large
+	if len(rd.detectedServers) > maxDetectedServers/2 {
+		for ip, srv := range rd.detectedServers {
+			if now.Sub(srv.LastSeen) > serverExpiry {
+				delete(rd.detectedServers, ip)
+			}
+		}
+	}
+
 	server, exists := rd.detectedServers[serverIP]
 	if !exists {
+		// Fixes #907: Hard limit - don't add more servers if at capacity
+		if len(rd.detectedServers) >= maxDetectedServers {
+			slog.Warn("Detected servers limit reached, skipping new server", "ip", serverIP)
+			return
+		}
+
 		// New server detected
 		server = &RogueServer{
 			IP:           serverIP,

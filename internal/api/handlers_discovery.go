@@ -103,6 +103,8 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 			Capabilities:      n.Capabilities,
 			ManagementAddress: n.ManagementAddress,
 			TTL:               n.TTL,
+			LastSeen:          n.LastSeen.Format("2006-01-02T15:04:05Z07:00"), // Fixes #909
+			SourceMAC:         n.SourceMAC,                                    // Fixes #909
 		})
 	}
 
