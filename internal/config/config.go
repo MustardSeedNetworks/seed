@@ -163,7 +163,13 @@ func (c *PipelineConfig) GetTiming() (probeDelay, hostDelay, phaseTimeout time.D
 
 // GetPortScan implements discovery.ConfigPipelineAdapter.
 func (c *PipelineConfig) GetPortScan() (intensity string, customPorts []int, bannerGrab bool, connectTimeout time.Duration) {
-	return c.PortScan.Intensity, c.PortScan.CustomPorts, c.PortScan.BannerGrab, c.PortScan.ConnectTimeout
+	// Fixes #959: Deep copy CustomPorts to prevent caller mutation
+	var portsCopy []int
+	if len(c.PortScan.CustomPorts) > 0 {
+		portsCopy = make([]int, len(c.PortScan.CustomPorts))
+		copy(portsCopy, c.PortScan.CustomPorts)
+	}
+	return c.PortScan.Intensity, portsCopy, c.PortScan.BannerGrab, c.PortScan.ConnectTimeout
 }
 
 // GetSNMP implements discovery.ConfigPipelineAdapter.

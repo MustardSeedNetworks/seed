@@ -164,8 +164,17 @@ export function useCardState({
           }
         ).__pipelineEventHandler;
 
+        // Fixes #966: Wrap in try-catch to prevent handler errors from crashing WebSocket
         if (typeof handler === "function") {
-          handler(pipelineEvent);
+          try {
+            handler(pipelineEvent);
+          } catch (err) {
+            logger.error(
+              LogComponents.WEBSOCKET,
+              "Pipeline event handler threw exception",
+              { error: err, eventType: pipelineEvent.type }
+            );
+          }
         }
         return;
       }

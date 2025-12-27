@@ -620,7 +620,10 @@ func (p *Pipeline) runEnumerationPhase(ctx context.Context, phaseNumber int) ([]
 		return nil, fmt.Errorf("enumeration failed: %w", err)
 	}
 
-	devices := p.deviceDiscovery.GetDevices()
+	// Fixes #962: Defensive copy to prevent mutation of internal DeviceDiscovery state
+	deviceRefs := p.deviceDiscovery.GetDevices()
+	devices := make([]*DiscoveredDevice, len(deviceRefs))
+	copy(devices, deviceRefs)
 
 	duration := time.Since(start)
 	p.mu.Lock()

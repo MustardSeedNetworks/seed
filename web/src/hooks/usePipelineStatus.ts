@@ -682,22 +682,30 @@ export function usePipelineStatus(
   }, []); // Empty deps - stableHandler reference is stable
 
   // Update elapsed time while running
+  // Fixes #970: Track interval ID locally for reliable cleanup
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
     if (isRunning(status.state) && startTimeRef.current > 0) {
-      elapsedIntervalRef.current = setInterval(() => {
+      intervalId = setInterval(() => {
         setStatus((prev) => ({
           ...prev,
           elapsedMs: Date.now() - startTimeRef.current,
         }));
       }, 1000);
+      elapsedIntervalRef.current = intervalId;
     } else if (elapsedIntervalRef.current) {
       clearInterval(elapsedIntervalRef.current);
       elapsedIntervalRef.current = null;
     }
 
     return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
       if (elapsedIntervalRef.current) {
         clearInterval(elapsedIntervalRef.current);
+        elapsedIntervalRef.current = null;
       }
     };
   }, [status.state]);
