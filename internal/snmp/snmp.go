@@ -201,6 +201,13 @@ func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, c
 
 // queryWithV3 performs SNMP v3 query with credentials.
 func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) (string, error) {
+	// Fixes #943, #944: Check context cancellation before establishing connection
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+	}
+
 	// Validate credentials to fail fast instead of silently (fixes #832)
 	if cred.Username == "" {
 		return "", fmt.Errorf("SNMPv3 credential '%s' has empty username", cred.Name)
@@ -250,13 +257,6 @@ func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credent
 	}
 	defer params.Conn.Close()
 
-	// Check context cancellation
-	select {
-	case <-ctx.Done():
-		return "", ctx.Err()
-	default:
-	}
-
 	result, err := params.Get([]string{oid})
 	if err != nil {
 		return "", fmt.Errorf("SNMP GET failed: %w", err)
@@ -271,6 +271,13 @@ func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credent
 
 // queryMultipleWithV3 performs multiple SNMP queries with v3 credentials.
 func queryMultipleWithV3(ctx context.Context, ip string, oids []string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) (map[string]string, error) {
+	// Fixes #943, #944: Check context cancellation before establishing connection
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	// Validate credentials to fail fast instead of silently (fixes #832)
 	if cred.Username == "" {
 		return nil, fmt.Errorf("SNMPv3 credential '%s' has empty username", cred.Name)
@@ -319,13 +326,6 @@ func queryMultipleWithV3(ctx context.Context, ip string, oids []string, cred *co
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
 	defer params.Conn.Close()
-
-	// Check context cancellation
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
 
 	result, err := params.Get(oids)
 	if err != nil {

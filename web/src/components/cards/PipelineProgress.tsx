@@ -53,8 +53,10 @@ const PHASE_DISPLAY_NAMES: Record<string, string> = {
 };
 
 function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  const seconds = Math.floor(ms / 1000);
+  // Fixes #957: Handle negative values from clock skew
+  const safeMs = Math.max(0, ms);
+  if (safeMs < 1000) return `${safeMs}ms`;
+  const seconds = Math.floor(safeMs / 1000);
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;

@@ -522,13 +522,15 @@ export function usePipelineStatus(
             phases: string[];
           };
           startTimeRef.current = Date.now();
+          // Fixes #950: Copy array to prevent external mutation
+          const phasesCopy = [...(payload.phases || [])];
           setStatus({
             ...defaultStatus,
             state: "enumerating",
             runId: event.runId,
             totalPhases: payload.totalPhases,
-            enabledPhases: payload.phases,
-            currentPhase: payload.phases[0] || "enumeration",
+            enabledPhases: phasesCopy,
+            currentPhase: phasesCopy[0] || "enumeration",
             phaseNumber: 1,
           });
           break;
