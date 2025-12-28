@@ -111,7 +111,9 @@ func setupLogging(cfg *config.Config) string {
 		Compress:   cfg.Logging.Compress,
 	}
 
-	if err := logging.InitLogger(logCfg); err != nil {
+	// Initialize logger with broadcaster to enable log streaming to frontend (#959)
+	broadcaster := logging.InitBroadcaster(1000) // Buffer 1000 log entries
+	if err := logging.InitLoggerWithBroadcaster(logCfg, broadcaster); err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal: Failed to initialize logger: %v\n", err)
 		os.Exit(1)
 	}
