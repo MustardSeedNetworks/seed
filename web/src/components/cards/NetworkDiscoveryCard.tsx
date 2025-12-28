@@ -1633,8 +1633,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             if (next.size > MAX_SCAN_RESULTS) {
               // Remove oldest entries
               const entries = [...next.entries()].sort(
-                (a, b) =>
-                  a[1].scannedAt.getTime() - b[1].scannedAt.getTime()
+                (a, b) => a[1].scannedAt.getTime() - b[1].scannedAt.getTime()
               );
               while (next.size > MAX_SCAN_RESULTS && entries.length > 0) {
                 const oldest = entries.shift();
@@ -2029,15 +2028,15 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             type="button"
             onClick={() => setIsModalOpen(true)}
             className={cn(
-              spacing.chip.sm,
+              "p-1.5",
               "bg-surface-hover text-text-secondary",
               radius.md,
-              "hover:bg-surface-border hover:text-text-primary transition-colors caption flex items-center gap-1"
+              "hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer"
             )}
             aria-label="Open full screen view"
             title={t("discovery.fullScreen", "Full Screen")}
           >
-            <Maximize2 className={iconTokens.size.xs} aria-hidden="true" />
+            <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
           </button>
 
           {/* Scan button */}
