@@ -122,7 +122,8 @@
     "tablePorts": "Puertos",
     "tableVulns": "CVEs",
     "tableLastSeen": "Última Vez",
-    "tableActions": "Acciones"
+    "tableActions": "Acciones",
+    "viewAllDevices": "Ver Todos los Dispositivos"
   },
   "pipeline": {
     "phaseProgress": "Fase {{current}} de {{total}}",
