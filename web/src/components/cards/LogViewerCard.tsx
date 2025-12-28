@@ -1,10 +1,10 @@
 /**
- * LogViewerCard - Minimal dashboard card for system logs.
+ * LogViewerCard - Dashboard card for system logs.
  *
  * Shows a summary view with:
- * - Live/Paused streaming status toggle
  * - Total logs, error count, warning count
  * - Maximize icon in header to open full-screen modal
+ * - Always live streaming by default
  *
  * Full log viewing, filtering, and searching is done in the LogViewerModal.
  *
@@ -17,9 +17,10 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLogs } from "../../hooks/useLogs";
-import { cn, spacing, radius, layout, icon as iconTokens } from "../../styles/theme";
+import { Card, CardValue, CardRow, CardDivider, Status } from "../ui/Card";
+import { cn, spacing, radius, icon as iconTokens } from "../../styles/theme";
 import { LogViewerModal } from "./LogViewerModal";
-import { Maximize2 } from "../ui/Icons";
+import { Maximize2, FileText, AlertTriangle, AlertCircle } from "../ui/Icons";
 
 /** Props for the LogViewerCard component. */
 export interface LogViewerCardProps {
@@ -28,14 +29,16 @@ export interface LogViewerCardProps {
 }
 
 /**
- * LogViewerCard - Minimal dashboard card for system logs.
+ * LogViewerCard - Dashboard card for system logs.
  * Shows summary stats (total, errors, warnings) and streaming status.
- * Full log viewing is done in the modal (click "View Logs").
+ * Full log viewing is done in the modal (click expand icon).
  */
 export function LogViewerCard({ className = "" }: LogViewerCardProps) {
   const { t } = useTranslation("common");
-  const { stats, isStreaming, setIsStreaming, isLoading, error } = useLogs({
+  // Always start streaming (live) by default
+  const { stats, isStreaming, isLoading, error } = useLogs({
     maxLogs: 1000,
+    autoStart: true,
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,30 +49,64 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
   const warnCount =
     stats?.by_level && "WARN" in stats.by_level ? stats.by_level.WARN : 0;
 
-  return (
-    <div
-      className={cn(
-        "bg-surface-raised",
-        radius.lg,
-        "border border-surface-border overflow-hidden",
-        className
-      )}
-    >
-      {/* Header */}
-      <div
-        className={cn(
-          spacing.pad.md,
-          "border-b border-surface-border",
-          layout.flex.between,
-          "items-center"
-        )}
+  // Determine card status based on errors
+  const getCardStatus = (): Status => {
+    if (isLoading) return "loading";
+    if (error) return "error";
+    if (errorCount > 0) return "warning";
+    return "success";
+  };
+
+  if (isLoading) {
+    return (
+      <Card
+        title={t("logs.title", "System Logs")}
+        icon={<FileText className={iconTokens.size.md} />}
+        status="loading"
+        className={className}
       >
-        <div>
-          <h2 className="heading-3 text-text-primary">
-            {t("logs.title", "System Logs")}
-          </h2>
-        </div>
+        <CardValue value={t("logs.loading", "Loading logs...")} size="md" />
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card
+        title={t("logs.title", "System Logs")}
+        icon={<FileText className={iconTokens.size.md} />}
+        status="error"
+        className={className}
+      >
+        <CardValue value={error} size="md" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      title={t("logs.title", "System Logs")}
+      icon={<FileText className={iconTokens.size.md} />}
+      status={getCardStatus()}
+      className={className}
+      headerAction={
         <div className="flex items-center gap-2">
+          {/* Streaming indicator */}
+          <span
+            className={cn(
+              spacing.chip.sm,
+              radius.md,
+              "text-xs font-medium",
+              isStreaming
+                ? "bg-status-success/20 text-status-success"
+                : "bg-surface-hover text-text-muted"
+            )}
+          >
+            {isStreaming
+              ? t("logs.streaming", "Live")
+              : t("logs.paused", "Paused")}
+          </span>
+
           {/* Full Screen button */}
           <button
             type="button"
@@ -85,76 +122,73 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
           >
             <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
           </button>
-          {/* Streaming toggle */}
-          <button
-            type="button"
-            onClick={() => setIsStreaming(!isStreaming)}
-            className={cn(
-              spacing.chip.sm,
-              radius.md,
-              "text-xs font-medium transition-colors",
-              isStreaming
-                ? "bg-status-success text-text-inverse hover:brightness-90"
-                : "bg-surface-base text-text-primary hover:bg-surface-hover"
-            )}
-          >
-            {isStreaming ? t("logs.streaming", "Live") : t("logs.paused", "Paused")}
-          </button>
         </div>
+      }
+    >
+      {/* Main stat - total logs */}
+      <CardValue value={stats?.total_count ?? 0} size="lg" />
+      <CardRow label={t("logs.totalLogs", "Total logs")} value="" />
+
+      <CardDivider />
+
+      {/* Error count */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <AlertCircle
+            className={cn(iconTokens.size.sm, "text-status-error")}
+          />
+          <span className="text-sm text-text-secondary">
+            {t("logs.errors", "Errors")}
+          </span>
+        </div>
+        <span
+          className={cn(
+            "text-sm font-medium",
+            errorCount > 0 ? "text-status-error" : "text-text-muted"
+          )}
+        >
+          {errorCount}
+        </span>
       </div>
 
-      {/* Minimal stats summary */}
-      <div className={cn(spacing.pad.md, "space-y-3")}>
-        {isLoading ? (
-          <div className="text-text-secondary text-sm">
-            {t("logs.loading", "Loading logs...")}
-          </div>
-        ) : error ? (
-          <div className="text-status-error text-sm">{error}</div>
-        ) : (
-          <>
-            {/* Stats row */}
-            <div
-              className={cn(
-                layout.flex.between,
-                "bg-surface-hover",
-                radius.md,
-                spacing.pad.sm
-              )}
-            >
-              <div className={cn(layout.inline.comfortable, "text-sm")}>
-                <span>
-                  <strong className="text-text-primary">
-                    {stats?.total_count ?? 0}
-                  </strong>{" "}
-                  <span className="text-text-secondary">
-                    {t("logs.totalLogs", "logs")}
-                  </span>
-                </span>
-                <span className="text-status-error">
-                  <strong>{errorCount}</strong> {t("logs.errors", "errors")}
-                </span>
-                <span className="text-status-warning">
-                  <strong>{warnCount}</strong> {t("logs.warnings", "warnings")}
-                </span>
-              </div>
-              {stats?.errors_last_hour && stats.errors_last_hour > 0 && (
-                <span className="text-status-error text-xs">
-                  {stats.errors_last_hour} {t("logs.lastHour", "last hour")}
-                </span>
-              )}
-            </div>
-
-          </>
-        )}
+      {/* Warning count */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <AlertTriangle
+            className={cn(iconTokens.size.sm, "text-status-warning")}
+          />
+          <span className="text-sm text-text-secondary">
+            {t("logs.warnings", "Warnings")}
+          </span>
+        </div>
+        <span
+          className={cn(
+            "text-sm font-medium",
+            warnCount > 0 ? "text-status-warning" : "text-text-muted"
+          )}
+        >
+          {warnCount}
+        </span>
       </div>
+
+      {/* Errors in last hour */}
+      {stats?.errors_last_hour !== undefined && stats.errors_last_hour > 0 && (
+        <>
+          <CardDivider />
+          <CardRow
+            label={t("logs.errorsLastHour", "Errors (last hour)")}
+            value={stats.errors_last_hour}
+            valueClassName="text-status-error"
+          />
+        </>
+      )}
 
       {/* Full Screen Modal */}
       <LogViewerModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
-    </div>
+    </Card>
   );
 }
 
