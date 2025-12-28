@@ -94,7 +94,8 @@ export type DiscoveryMethod =
   | "cdp"
   | "edp"
   | "mdns"
-  | "ping";
+  | "ping"
+  | "snmp";
 
 // Auto-profiling types from backend
 export interface OpenPort {
@@ -121,6 +122,65 @@ export interface DeviceProfile {
   deviceIcons?: string[];
 }
 
+// SNMP-related interfaces for extended device data
+export interface SNMPSystemInfo {
+  sysDescr?: string;
+  sysObjectID?: string;
+  sysName?: string;
+  sysContact?: string;
+  sysLocation?: string;
+  sysUpTime?: number;
+}
+
+export interface SNMPInterface {
+  index: number;
+  name?: string;
+  description?: string;
+  alias?: string;
+  type?: number;
+  mtu?: number;
+  speedMbps?: number;
+  mac?: string;
+  adminStatus?: string;
+  operStatus?: string;
+}
+
+export interface SNMPIPAddress {
+  address: string;
+  prefix?: number;
+  ifIndex: number;
+  type?: string;
+}
+
+export interface SNMPVLAN {
+  id: number;
+  name?: string;
+  status?: string;
+  egressPorts?: number[];
+}
+
+export interface SNMPEntity {
+  index: number;
+  description?: string;
+  class?: string;
+  name?: string;
+  hardwareRev?: string;
+  firmwareRev?: string;
+  softwareRev?: string;
+  serialNum?: string;
+  modelName?: string;
+}
+
+export interface SNMPFullData {
+  collectedAt?: string;
+  system?: SNMPSystemInfo;
+  interfaces?: SNMPInterface[];
+  ipAddresses?: SNMPIPAddress[];
+  vlans?: SNMPVLAN[];
+  inventory?: SNMPEntity[];
+  errors?: string[];
+}
+
 export interface DiscoveredDevice {
   ip: string;
   ipv6?: string;
@@ -139,6 +199,7 @@ export interface DiscoveredDevice {
   edpInfo?: EDPInfo;
   ndpInfo?: NDPInfo;
   profile?: DeviceProfile;
+  snmpData?: SNMPFullData; // Extended SNMP data from Phase 3 scanning
   vulnerabilities?: {
     count: number;
     highestSeverity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
@@ -317,6 +378,22 @@ function DeviceSearchBar({
       </div>
     </div>
   );
+}
+
+// Format SNMP sysUpTime (in hundredths of a second) to human-readable duration
+function formatUptime(ticks: number): string {
+  const seconds = Math.floor(ticks / 100);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
 }
 
 function formatLastSeen(
@@ -1346,6 +1423,188 @@ function DeviceRow({
                     value={device.edpInfo.vlan}
                   />
                 )}
+              </>
+            )}
+
+            {/* SNMP Extended Data */}
+            {device.snmpData && (
+              <>
+                <CardDivider />
+                <p
+                  className={cn(
+                    "font-medium text-text-primary",
+                    spacing.margin.bottom.inline
+                  )}
+                >
+                  {t("discovery.snmpInfo", "SNMP Details")}
+                </p>
+                {/* System Info */}
+                {device.snmpData.system && (
+                  <div className="stack-xs">
+                    {device.snmpData.system.sysName && (
+                      <CardRow
+                        label={t("discovery.sysName", "System Name")}
+                        value={device.snmpData.system.sysName}
+                      />
+                    )}
+                    {device.snmpData.system.sysDescr && (
+                      <CardRow
+                        label={t("discovery.sysDescr", "Description")}
+                        value={
+                          device.snmpData.system.sysDescr.length > 100
+                            ? device.snmpData.system.sysDescr.substring(
+                                0,
+                                100
+                              ) + "..."
+                            : device.snmpData.system.sysDescr
+                        }
+                      />
+                    )}
+                    {device.snmpData.system.sysLocation && (
+                      <CardRow
+                        label={t("discovery.sysLocation", "Location")}
+                        value={device.snmpData.system.sysLocation}
+                      />
+                    )}
+                    {device.snmpData.system.sysContact && (
+                      <CardRow
+                        label={t("discovery.sysContact", "Contact")}
+                        value={device.snmpData.system.sysContact}
+                      />
+                    )}
+                    {device.snmpData.system.sysUpTime != null &&
+                      device.snmpData.system.sysUpTime > 0 && (
+                        <CardRow
+                          label={t("discovery.uptime", "Uptime")}
+                          value={formatUptime(device.snmpData.system.sysUpTime)}
+                        />
+                      )}
+                  </div>
+                )}
+                {/* Interfaces Summary */}
+                {device.snmpData.interfaces &&
+                  device.snmpData.interfaces.length > 0 && (
+                    <div className={cn("stack-xs", spacing.margin.top.inline)}>
+                      <p className="text-text-muted text-[10px] uppercase tracking-wide">
+                        {t("discovery.interfaces", "Interfaces")} (
+                        {device.snmpData.interfaces.length})
+                      </p>
+                      <div className="stack-xs">
+                        {device.snmpData.interfaces.slice(0, 5).map((iface) => (
+                          <div
+                            key={iface.index}
+                            className={cn(
+                              "flex items-center justify-between",
+                              spacing.pad.xs,
+                              "bg-surface-hover",
+                              radius.sm
+                            )}
+                          >
+                            <span className="body-small font-mono">
+                              {iface.name ||
+                                iface.description ||
+                                `if${iface.index}`}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              {iface.speedMbps != null &&
+                                iface.speedMbps > 0 && (
+                                  <span className="caption text-text-muted">
+                                    {iface.speedMbps >= 1000
+                                      ? `${(iface.speedMbps / 1000).toFixed(0)}G`
+                                      : `${iface.speedMbps}M`}
+                                  </span>
+                                )}
+                              <span
+                                className={cn(
+                                  "caption",
+                                  iface.operStatus === "up"
+                                    ? "text-status-success"
+                                    : "text-text-muted"
+                                )}
+                              >
+                                {iface.operStatus || "?"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        {device.snmpData.interfaces.length > 5 && (
+                          <span className="caption text-text-muted">
+                            +{device.snmpData.interfaces.length - 5} more
+                            interfaces
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                {/* VLANs Summary */}
+                {device.snmpData.vlans && device.snmpData.vlans.length > 0 && (
+                  <div className={cn("stack-xs", spacing.margin.top.inline)}>
+                    <p className="text-text-muted text-[10px] uppercase tracking-wide">
+                      {t("discovery.vlans", "VLANs")} (
+                      {device.snmpData.vlans.length})
+                    </p>
+                    <div className={cn("flex flex-wrap", spacing.gap.tight)}>
+                      {device.snmpData.vlans.slice(0, 10).map((vlan) => (
+                        <span
+                          key={vlan.id}
+                          className={cn(
+                            spacing.chip.sm,
+                            radius.md,
+                            "text-[10px] bg-surface-hover text-text-secondary"
+                          )}
+                          title={vlan.name || undefined}
+                        >
+                          {vlan.id}
+                          {vlan.name && `: ${vlan.name}`}
+                        </span>
+                      ))}
+                      {device.snmpData.vlans.length > 10 && (
+                        <span className="caption text-text-muted">
+                          +{device.snmpData.vlans.length - 10}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {/* Inventory Summary */}
+                {device.snmpData.inventory &&
+                  device.snmpData.inventory.length > 0 && (
+                    <div className={cn("stack-xs", spacing.margin.top.inline)}>
+                      <p className="text-text-muted text-[10px] uppercase tracking-wide">
+                        {t("discovery.inventory", "Hardware Inventory")}
+                      </p>
+                      {device.snmpData.inventory
+                        .filter(
+                          (e) =>
+                            e.class === "chassis" ||
+                            e.class === "module" ||
+                            e.serialNum
+                        )
+                        .slice(0, 3)
+                        .map((entity) => (
+                          <div key={entity.index} className="stack-xs">
+                            {entity.modelName && (
+                              <CardRow
+                                label={t("discovery.model", "Model")}
+                                value={entity.modelName}
+                              />
+                            )}
+                            {entity.serialNum && (
+                              <CardRow
+                                label={t("discovery.serial", "Serial")}
+                                value={entity.serialNum}
+                              />
+                            )}
+                            {entity.softwareRev && (
+                              <CardRow
+                                label={t("discovery.firmware", "Firmware")}
+                                value={entity.softwareRev}
+                              />
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
               </>
             )}
           </div>

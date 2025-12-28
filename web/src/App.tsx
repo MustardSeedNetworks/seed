@@ -57,6 +57,7 @@ import {
   NetworkDiscoveryCard,
   NetworkDiscoveryData,
   PathDiscoveryCard,
+  PublicIPCard,
 } from "./components/cards";
 import { PerformanceCard } from "./components/cards/PerformanceCard";
 import { HealthCheckCard } from "./components/cards/HealthCheckCard";
@@ -915,6 +916,8 @@ function App() {
               />
               <GatewayCard data={cards.gateway} loading={loading} />
               <DNSCard data={cards.dns} loading={loading} />
+              {/* Public IP Card - shows geolocation, ISP/ASN, and IP history */}
+              <PublicIPCard data={cards.publicip} loading={loading} />
             </div>
           </section>
 
