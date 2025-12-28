@@ -2303,8 +2303,21 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             <button
               type="button"
               onClick={() => {
-                // Use pipeline start if available, otherwise fall back to onScan
-                startPipeline();
+                // Use pipeline start with port scanning enabled
+                // This enables the serviceDiscovery phase with quick port scan
+                startPipeline({
+                  phases: {
+                    enumeration: true,
+                    nameResolution: true,
+                    serviceDiscovery: true,
+                    vulnAssessment: false,
+                  },
+                  portScan: {
+                    intensity: "quick",
+                    bannerGrab: true,
+                    connectTimeout: 2000,
+                  },
+                });
                 // Also call onScan for backwards compatibility
                 onScan?.();
               }}
@@ -2338,7 +2351,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         </div>
       }
     >
-      {/* Discovery Summary */}
+      {/* Discovery Summary - Minimal view showing status, subnet, device count, and categories */}
       <DiscoverySummary
         status={status}
         deviceCount={deviceCount}
@@ -2348,81 +2361,25 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         t={t}
       />
 
-      {/* Device Search/Sort Bar - show when there are devices */}
+      {/* View All Devices button - opens full screen modal */}
       {deviceCount > 0 && (
-        <DeviceSearchBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
-          deviceCount={deviceCount}
-          filteredCount={filteredCount}
-          t={t}
-        />
-      )}
-
-      {/* Fixes #739: Removed redundant "Network Info" section - subnet is already in summary */}
-
-      {/* Local Devices - Collapsible */}
-      {localDevices.length > 0 && (
-        <CollapsibleSection
-          title={t("discovery.localNetwork")}
-          variant="compact"
-          defaultOpen={true}
-          count={localDevices.length}
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          className={cn(
+            "w-full flex items-center justify-center gap-2",
+            spacing.chip.md,
+            "bg-surface-secondary text-text-primary",
+            radius.md,
+            "hover:bg-surface-hover transition-colors body-small font-medium"
+          )}
         >
-          <div className="stack-sm max-h-96 overflow-y-auto">
-            {localDevices.map((device) => {
-              const deviceKey = device.mac || `ip:${device.ip}`;
-              return (
-                <DeviceRow
-                  key={deviceKey}
-                  device={device}
-                  isExpanded={expandedDevices.has(deviceKey)}
-                  onToggle={() => toggleDevice(deviceKey)}
-                  onDeepScan={handleDeepScan}
-                  isScanning={scanningDevices.has(device.ip)}
-                  scanResult={scanResults.get(device.ip)}
-                  onVulnerabilityClick={setSelectedDeviceForVuln}
-                  t={t}
-                />
-              );
-            })}
-          </div>
-        </CollapsibleSection>
+          <Search className={iconTokens.size.sm} aria-hidden="true" />
+          {t("discovery.viewAllDevices", "View All Devices")}
+        </button>
       )}
 
-      {/* Extended Networks - Collapsible */}
-      {extendedDevices.length > 0 && (
-        <CollapsibleSection
-          title={t("discovery.extendedNetworks")}
-          variant="compact"
-          defaultOpen={false}
-          count={extendedDevices.length}
-        >
-          <div className="stack-sm max-h-96 overflow-y-auto">
-            {extendedDevices.map((device) => {
-              const deviceKey = device.mac || `ip:${device.ip}`;
-              return (
-                <DeviceRow
-                  key={deviceKey}
-                  device={device}
-                  isExpanded={expandedDevices.has(deviceKey)}
-                  onToggle={() => toggleDevice(deviceKey)}
-                  onDeepScan={handleDeepScan}
-                  isScanning={scanningDevices.has(device.ip)}
-                  scanResult={scanResults.get(device.ip)}
-                  onVulnerabilityClick={setSelectedDeviceForVuln}
-                  t={t}
-                />
-              );
-            })}
-          </div>
-        </CollapsibleSection>
-      )}
-
-      {deviceCount === 0 && !status.scanning && (
+      {deviceCount === 0 && !status.scanning && !isPipelineRunning && (
         <p
           className={cn(
             "body-small text-text-muted text-center",

@@ -129,7 +129,8 @@
     "noLogs": "Aún no hay registros",
     "scrollToBottom": "Ir al último",
     "fullScreen": "Pantalla Completa",
-    "close": "Cerrar visor de registros"
+    "close": "Cerrar visor de registros",
+    "viewLogs": "Ver Registros"
   },
   "login": {
     "defaultCredentials": "Predeterminado: admin / seed"
