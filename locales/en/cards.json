@@ -108,7 +108,21 @@
     "unknownSubnet": "Unknown subnet",
     "clearSearch": "Clear search",
     "filteredCount": "{{filtered}} of {{total}}",
-    "clickViewVulnerabilities": "Click to view vulnerability details"
+    "clickViewVulnerabilities": "Click to view vulnerability details",
+    "fullScreen": "Full Screen",
+    "modalSubtitle": "{{total}} devices ({{local}} local)",
+    "rescan": "Rescan",
+    "localOnly": "Local Only",
+    "noResults": "No devices match your filters",
+    "tableIp": "IP Address",
+    "tableHostname": "Hostname",
+    "tableMac": "MAC",
+    "tableVendor": "Vendor",
+    "tableDiscovery": "Discovery",
+    "tablePorts": "Ports",
+    "tableVulns": "CVEs",
+    "tableLastSeen": "Last Seen",
+    "tableActions": "Actions"
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",

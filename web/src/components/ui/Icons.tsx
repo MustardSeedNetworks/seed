@@ -122,6 +122,8 @@ export {
   List,
   Grid3X3,
   Columns3,
+  Maximize2,
+  Minimize2,
   // Settings icons
   SlidersHorizontal,
   Palette,

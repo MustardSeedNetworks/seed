@@ -35,6 +35,8 @@ import {
 } from "../ui/Icons";
 import type { LucideIcon } from "lucide-react";
 import { VulnerabilityDetailsModal } from "./VulnerabilityDetailsModal";
+import { DiscoveryModal } from "./DiscoveryModal";
+import { Maximize2 } from "../ui/Icons";
 import {
   discoveryMethod as discoveryMethodTheme,
   category as categoryTheme,
@@ -1406,6 +1408,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     string | null
   >(null);
 
+  // Full-screen modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // Fetch settings for auto-scan behavior on mount
   useEffect(() => {
     const fetchSettings = async () => {
@@ -2018,42 +2023,61 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       enableLiveRegion={true}
       ariaLabel={`Network discovery - ${deviceCount} devices found`}
       headerAction={
-        (onScan || startPipeline) && (
+        <div className="flex items-center gap-2">
+          {/* Full Screen button */}
           <button
             type="button"
-            onClick={() => {
-              // Use pipeline start if available, otherwise fall back to onScan
-              startPipeline();
-              // Also call onScan for backwards compatibility
-              onScan?.();
-            }}
-            disabled={status.scanning || isPipelineRunning}
+            onClick={() => setIsModalOpen(true)}
             className={cn(
               spacing.chip.sm,
-              "bg-brand-primary text-text-inverse",
+              "bg-surface-hover text-text-secondary",
               radius.md,
-              "hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center",
-              spacing.inline.sm
+              "hover:bg-surface-border hover:text-text-primary transition-colors caption flex items-center gap-1"
             )}
-            aria-label={
-              status.scanning || isPipelineRunning
-                ? "Scanning network"
-                : "Start network scan"
-            }
+            aria-label="Open full screen view"
+            title={t("discovery.fullScreen", "Full Screen")}
           >
-            {status.scanning || isPipelineRunning ? (
-              <>
-                <RefreshCw
-                  className={cn(iconTokens.size.xs, "animate-spin")}
-                  aria-hidden="true"
-                />
-                {t("discovery.scan")}
-              </>
-            ) : (
-              t("discovery.scan")
-            )}
+            <Maximize2 className={iconTokens.size.xs} aria-hidden="true" />
           </button>
-        )
+
+          {/* Scan button */}
+          {(onScan || startPipeline) && (
+            <button
+              type="button"
+              onClick={() => {
+                // Use pipeline start if available, otherwise fall back to onScan
+                startPipeline();
+                // Also call onScan for backwards compatibility
+                onScan?.();
+              }}
+              disabled={status.scanning || isPipelineRunning}
+              className={cn(
+                spacing.chip.sm,
+                "bg-brand-primary text-text-inverse",
+                radius.md,
+                "hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center",
+                spacing.inline.sm
+              )}
+              aria-label={
+                status.scanning || isPipelineRunning
+                  ? "Scanning network"
+                  : "Start network scan"
+              }
+            >
+              {status.scanning || isPipelineRunning ? (
+                <>
+                  <RefreshCw
+                    className={cn(iconTokens.size.xs, "animate-spin")}
+                    aria-hidden="true"
+                  />
+                  {t("discovery.scan")}
+                </>
+              ) : (
+                t("discovery.scan")
+              )}
+            </button>
+          )}
+        </div>
       }
     >
       {/* Discovery Summary */}
@@ -2158,6 +2182,15 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           onClose={() => setSelectedDeviceForVuln(null)}
         />
       )}
+
+      {/* Full Screen Discovery Modal */}
+      <DiscoveryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        data={data}
+        onScan={onScan}
+        onDeepScan={handleDeepScan}
+      />
     </Card>
   );
 });
