@@ -122,7 +122,8 @@
     "tablePorts": "Ports",
     "tableVulns": "CVEs",
     "tableLastSeen": "Last Seen",
-    "tableActions": "Actions"
+    "tableActions": "Actions",
+    "viewAllDevices": "View All Devices"
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",
