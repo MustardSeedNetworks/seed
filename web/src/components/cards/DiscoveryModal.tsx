@@ -23,7 +23,6 @@ import {
 } from "./NetworkDiscoveryCard";
 import {
   cn,
-  spacing,
   button,
   radius,
   modal,
@@ -69,6 +68,22 @@ function MethodBadge({ method }: { method: DiscoveryMethod }) {
       {method}
     </span>
   );
+}
+
+// Format SNMP sysUpTime (in hundredths of a second) to human-readable duration
+function formatUptime(ticks: number): string {
+  const seconds = Math.floor(ticks / 100);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
 }
 
 // Format timestamp for display
@@ -119,8 +134,7 @@ function compareDevices(
       cmp = (a.mac || "").localeCompare(b.mac || "");
       break;
     case "lastSeen":
-      cmp =
-        new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime();
+      cmp = new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime();
       break;
   }
   return direction === "asc" ? cmp : -cmp;
@@ -188,6 +202,7 @@ function DeviceRow({
     device.cdpInfo ||
     device.edpInfo ||
     device.ndpInfo ||
+    device.snmpData ||
     openPorts.length > 0;
 
   const handleScan = async (e: React.MouseEvent) => {
@@ -432,6 +447,191 @@ function DeviceRow({
                 </div>
               )}
 
+              {/* SNMP Data */}
+              {device.snmpData && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-text-secondary">
+                    {t("discovery.snmpInfo", "SNMP Details")}
+                  </h4>
+
+                  {/* System Info */}
+                  {device.snmpData.system && (
+                    <div className="bg-surface-base p-2 rounded-md">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+                        {device.snmpData.system.sysName && (
+                          <div>
+                            <span className="text-text-muted">Name:</span>{" "}
+                            <span className="text-text-primary font-medium">
+                              {device.snmpData.system.sysName}
+                            </span>
+                          </div>
+                        )}
+                        {device.snmpData.system.sysDescr && (
+                          <div className="col-span-2">
+                            <span className="text-text-muted">
+                              Description:
+                            </span>{" "}
+                            <span className="text-text-primary">
+                              {device.snmpData.system.sysDescr.length > 80
+                                ? device.snmpData.system.sysDescr.substring(
+                                    0,
+                                    80
+                                  ) + "..."
+                                : device.snmpData.system.sysDescr}
+                            </span>
+                          </div>
+                        )}
+                        {device.snmpData.system.sysLocation && (
+                          <div>
+                            <span className="text-text-muted">Location:</span>{" "}
+                            <span className="text-text-primary">
+                              {device.snmpData.system.sysLocation}
+                            </span>
+                          </div>
+                        )}
+                        {device.snmpData.system.sysContact && (
+                          <div>
+                            <span className="text-text-muted">Contact:</span>{" "}
+                            <span className="text-text-primary">
+                              {device.snmpData.system.sysContact}
+                            </span>
+                          </div>
+                        )}
+                        {device.snmpData.system.sysUpTime !== undefined &&
+                          device.snmpData.system.sysUpTime > 0 && (
+                            <div>
+                              <span className="text-text-muted">Uptime:</span>{" "}
+                              <span className="text-text-primary">
+                                {formatUptime(device.snmpData.system.sysUpTime)}
+                              </span>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Interfaces Summary */}
+                  {device.snmpData.interfaces &&
+                    device.snmpData.interfaces.length > 0 && (
+                      <div>
+                        <span className="text-xs text-text-muted">
+                          Interfaces ({device.snmpData.interfaces.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {device.snmpData.interfaces
+                            .slice(0, 8)
+                            .map((iface, idx) => (
+                              <span
+                                key={idx}
+                                className={cn(
+                                  "px-1.5 py-0.5 text-xs",
+                                  radius.sm,
+                                  iface.operStatus === "up"
+                                    ? "bg-status-success/20 text-status-success"
+                                    : "bg-surface-hover text-text-muted"
+                                )}
+                                title={`${iface.name} - ${iface.speed ? Math.round(iface.speed / 1000000) + " Mbps" : "N/A"}`}
+                              >
+                                {iface.name}
+                                {iface.speed && iface.speed > 0 && (
+                                  <span className="text-text-muted ml-1">
+                                    {iface.speed >= 1000000000
+                                      ? `${Math.round(iface.speed / 1000000000)}G`
+                                      : `${Math.round(iface.speed / 1000000)}M`}
+                                  </span>
+                                )}
+                              </span>
+                            ))}
+                          {device.snmpData.interfaces.length > 8 && (
+                            <span className="text-xs text-text-muted">
+                              +{device.snmpData.interfaces.length - 8} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* VLANs Summary */}
+                  {device.snmpData.vlans &&
+                    device.snmpData.vlans.length > 0 && (
+                      <div>
+                        <span className="text-xs text-text-muted">
+                          VLANs ({device.snmpData.vlans.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {device.snmpData.vlans
+                            .slice(0, 12)
+                            .map((vlan, idx) => (
+                              <span
+                                key={idx}
+                                className={cn(
+                                  "px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary",
+                                  radius.sm
+                                )}
+                                title={vlan.name || `VLAN ${vlan.id}`}
+                              >
+                                {vlan.id}
+                                {vlan.name &&
+                                  vlan.name !== `VLAN${vlan.id}` && (
+                                    <span className="text-text-muted ml-1">
+                                      {vlan.name.length > 10
+                                        ? vlan.name.substring(0, 10) + "..."
+                                        : vlan.name}
+                                    </span>
+                                  )}
+                              </span>
+                            ))}
+                          {device.snmpData.vlans.length > 12 && (
+                            <span className="text-xs text-text-muted">
+                              +{device.snmpData.vlans.length - 12} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Hardware Inventory */}
+                  {device.snmpData.entities &&
+                    device.snmpData.entities.length > 0 && (
+                      <div>
+                        <span className="text-xs text-text-muted">
+                          Hardware:
+                        </span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 mt-1 text-xs">
+                          {device.snmpData.entities
+                            .filter(
+                              (e) =>
+                                e.physicalClass === "chassis" ||
+                                e.physicalClass === "module" ||
+                                e.physicalClass === "powerSupply"
+                            )
+                            .slice(0, 4)
+                            .map((entity, idx) => (
+                              <div
+                                key={idx}
+                                className="bg-surface-hover px-2 py-1 rounded"
+                              >
+                                <span className="text-text-primary">
+                                  {entity.name || entity.description}
+                                </span>
+                                {entity.serialNum && (
+                                  <span className="text-text-muted ml-2">
+                                    S/N: {entity.serialNum}
+                                  </span>
+                                )}
+                                {entity.modelName && (
+                                  <span className="text-text-muted ml-2">
+                                    Model: {entity.modelName}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              )}
+
               {/* OS Guess */}
               {device.osGuess && (
                 <div>
@@ -540,9 +740,7 @@ export function DiscoveryModal({
 
     // Sort
     if (sortField) {
-      devices.sort((a, b) =>
-        compareDevices(a, b, sortField, sortDirection)
-      );
+      devices.sort((a, b) => compareDevices(a, b, sortField, sortDirection));
     }
 
     return devices;
@@ -643,10 +841,14 @@ export function DiscoveryModal({
               {t("discovery.title", "Network Discovery")}
             </h2>
             <p className="text-sm text-text-muted mt-1">
-              {t("discovery.modalSubtitle", "{{total}} devices ({{local}} local)", {
-                total: deviceCount,
-                local: localCount,
-              })}
+              {t(
+                "discovery.modalSubtitle",
+                "{{total}} devices ({{local}} local)",
+                {
+                  total: deviceCount,
+                  local: localCount,
+                }
+              )}
               {data?.status?.subnet && ` - ${data.status.subnet}`}
             </p>
           </div>
@@ -738,7 +940,10 @@ export function DiscoveryModal({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("discovery.searchPlaceholder", "Search IP, hostname, MAC, vendor...")}
+              placeholder={t(
+                "discovery.searchPlaceholder",
+                "Search IP, hostname, MAC, vendor..."
+              )}
               className={cn(
                 "w-full pl-10 pr-4 py-2",
                 "text-sm bg-surface-base border border-surface-border",

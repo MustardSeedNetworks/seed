@@ -721,14 +721,7 @@ function DiscoverySummary({
   // Show pipeline progress when running
   if (isPipelineRunning && pipelineStatus) {
     return (
-      <div
-        className={cn(
-          "bg-surface-hover",
-          radius.md,
-          spacing.pad.sm,
-          "stack-sm"
-        )}
-      >
+      <div className="stack-sm">
         <PipelineProgress status={pipelineStatus} onCancel={onCancelPipeline} />
       </div>
     );
@@ -776,9 +769,7 @@ function DiscoverySummary({
   ].filter((s) => s.count > 0);
 
   return (
-    <div
-      className={cn("bg-surface-hover", radius.md, spacing.pad.sm, "stack-sm")}
-    >
+    <div className="stack-sm">
       {/* Status row */}
       <div className="flex items-center justify-between body-small">
         <div className={cn("flex items-center", spacing.gap.compact)}>
