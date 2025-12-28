@@ -22,7 +22,7 @@
  * Dependencies: Card UI, DeviceSelector, theme utilities, path discovery API
  */
 
-import { useState, useCallback, memo, useMemo } from "react";
+import { useState, useCallback, memo, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardValue, CardDivider, Status } from "../ui/Card";
 import { Route, ChevronDown, ChevronUp } from "../ui/Icons";
@@ -47,9 +47,20 @@ const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 type Protocol = "icmp" | "udp" | "tcp";
 
+/** WebSocket message for streaming traceroute hops */
+export interface TraceHopMessage {
+  target: string;
+  targetIp: string;
+  protocol: string;
+  hop: TracerouteHop;
+  completed: boolean;
+}
+
 interface PathDiscoveryCardProps {
   gateway?: string;
   dnsServer?: string;
+  /** Optional callback to register for traceHop WebSocket messages */
+  onRegisterTraceHandler?: (handler: (msg: TraceHopMessage) => void) => () => void;
 }
 
 // Format RTT from nanoseconds to readable string
@@ -70,6 +81,7 @@ function getMaxRTT(hops: TracerouteHop[]): number {
 export const PathDiscoveryCard = memo(function PathDiscoveryCard({
   gateway,
   dnsServer,
+  onRegisterTraceHandler,
 }: PathDiscoveryCardProps) {
   const { t } = useTranslation("cards");
 
@@ -81,6 +93,35 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
   const [error, setError] = useState<string | null>(null);
   const [expandedL2Hop, setExpandedL2Hop] = useState<number | null>(null);
 
+  // Streaming hops received via WebSocket (accumulates as trace progresses)
+  const [streamingHops, setStreamingHops] = useState<TracerouteHop[]>([]);
+  const [streamingTarget, setStreamingTarget] = useState<string>("");
+  const activeTraceRef = useRef<string | null>(null);
+
+  // Handle WebSocket trace hop messages for real-time updates
+  const handleTraceHop = useCallback((msg: TraceHopMessage) => {
+    // Only process if this is for our active trace
+    if (activeTraceRef.current !== msg.target) return;
+
+    setStreamingHops(prev => {
+      // Avoid duplicates by checking TTL
+      if (prev.some(h => h.ttl === msg.hop.ttl)) return prev;
+      return [...prev, msg.hop].sort((a, b) => a.ttl - b.ttl);
+    });
+    setStreamingTarget(msg.target);
+
+    if (msg.completed) {
+      // Trace complete - the HTTP response will have the full result
+      activeTraceRef.current = null;
+    }
+  }, []);
+
+  // Register for WebSocket trace hop messages
+  useEffect(() => {
+    if (!onRegisterTraceHandler) return;
+    return onRegisterTraceHandler(handleTraceHop);
+  }, [onRegisterTraceHandler, handleTraceHop]);
+
   // Run path discovery (always L2+L3 combined)
   const runTrace = useCallback(
     async (traceTarget: string) => {
@@ -90,6 +131,9 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
       setError(null);
       setResult(null);
       setExpandedL2Hop(null);
+      setStreamingHops([]); // Clear streaming hops
+      setStreamingTarget(traceTarget.trim());
+      activeTraceRef.current = traceTarget.trim(); // Set active trace target
 
       try {
         const response = await fetch(`${API_BASE}/api/discovery/path`, {
@@ -112,8 +156,11 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
         const data: PathResponse = await response.json();
         setResult(data);
+        setStreamingHops([]); // Clear streaming hops now that we have full result
+        activeTraceRef.current = null;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Path discovery failed");
+        activeTraceRef.current = null;
       } finally {
         setLoading(false);
       }
@@ -371,12 +418,47 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
       <CardDivider />
 
-      {/* Loading State */}
+      {/* Loading State with Streaming Hops */}
       {loading && (
-        <CardValue
-          value={t("pathDiscovery.tracing", "Tracing path...")}
-          size="lg"
-        />
+        <div className="stack-sm">
+          <CardValue
+            value={streamingHops.length > 0
+              ? t("pathDiscovery.tracingHops", "Tracing... {{count}} hops", { count: streamingHops.length })
+              : t("pathDiscovery.tracing", "Tracing path...")}
+            size="lg"
+          />
+          {/* Show streaming hops in real-time */}
+          {streamingHops.length > 0 && (
+            <div className="stack-xs">
+              {streamingHops.map((hop) => (
+                <div
+                  key={hop.ttl}
+                  className={cn(
+                    "flex items-center gap-2 py-1",
+                    hop.state === "timeout" && "opacity-50"
+                  )}
+                >
+                  <span className="w-6 text-xs text-text-muted font-mono">
+                    {hop.ttl}
+                  </span>
+                  <span className="flex-1 text-sm font-mono text-text-primary">
+                    {hop.ip || "*"}
+                  </span>
+                  <span className="text-xs text-text-muted">
+                    {formatRTT(hop.rtt)}
+                  </span>
+                </div>
+              ))}
+              {/* Pulsing indicator for next hop */}
+              <div className="flex items-center gap-2 py-1 animate-pulse">
+                <span className="w-6 text-xs text-text-muted font-mono">
+                  {streamingHops.length + 1}
+                </span>
+                <span className="text-sm text-text-muted">...</span>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Error State */}

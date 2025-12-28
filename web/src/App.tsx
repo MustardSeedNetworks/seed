@@ -210,6 +210,7 @@ function App() {
     handleMessage,
     handleCardUpdate,
     prevLinkUpRef,
+    registerTraceHopHandler,
   } = useCardState({
     setCurrentInterface,
     setIsWifi,
@@ -958,6 +959,7 @@ function App() {
               <PathDiscoveryCard
                 gateway={cards.gateway?.gateway}
                 dnsServer={cards.dns?.servers?.[0]?.address}
+                onRegisterTraceHandler={registerTraceHopHandler}
               />
 
               {/* WiFi-only: WiFi Survey for heatmaps and site surveys */}

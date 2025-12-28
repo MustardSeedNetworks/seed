@@ -26,6 +26,7 @@ import type {
   PublicIPData,
 } from "../components/cards";
 import type { PipelineEvent, PipelineEventType } from "./usePipelineStatus";
+import type { TraceHopMessage } from "../components/cards/PathDiscoveryCard";
 
 // Pipeline event types for routing WebSocket messages
 const PIPELINE_EVENT_TYPES: PipelineEventType[] = [
@@ -173,6 +174,29 @@ export function useCardState({
               LogComponents.WEBSOCKET,
               "Pipeline event handler threw exception",
               { error: err, eventType: pipelineEvent.type }
+            );
+          }
+        }
+        return;
+      }
+
+      // Route traceHop events to the path discovery component
+      if (message.type === "traceHop") {
+        const traceHopMessage = message.payload as TraceHopMessage;
+        const handler = (
+          window as unknown as {
+            __traceHopHandler?: (msg: TraceHopMessage) => void;
+          }
+        ).__traceHopHandler;
+
+        if (typeof handler === "function") {
+          try {
+            handler(traceHopMessage);
+          } catch (err) {
+            logger.error(
+              LogComponents.WEBSOCKET,
+              "TraceHop handler threw exception",
+              { error: err, target: traceHopMessage.target }
             );
           }
         }
@@ -349,6 +373,28 @@ export function useCardState({
     };
   }, []);
 
+  // Register handler for traceHop WebSocket messages
+  const registerTraceHopHandler = useCallback(
+    (handler: (msg: TraceHopMessage) => void): (() => void) => {
+      (
+        window as unknown as {
+          __traceHopHandler?: (msg: TraceHopMessage) => void;
+        }
+      ).__traceHopHandler = handler;
+
+      // Return cleanup function
+      return () => {
+        const win = window as unknown as {
+          __traceHopHandler?: (msg: TraceHopMessage) => void;
+        };
+        if (win.__traceHopHandler === handler) {
+          delete win.__traceHopHandler;
+        }
+      };
+    },
+    []
+  );
+
   return {
     cards,
     loading,
@@ -357,5 +403,6 @@ export function useCardState({
     handleMessage,
     handleCardUpdate,
     prevLinkUpRef,
+    registerTraceHopHandler,
   };
 }

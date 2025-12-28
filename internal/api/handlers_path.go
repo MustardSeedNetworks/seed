@@ -178,19 +178,47 @@ func (s *Server) performPathDiscovery(ctx context.Context, w http.ResponseWriter
 	return response
 }
 
-// performL3Trace performs Layer 3 traceroute.
+// TraceHopMessage is the WebSocket message for streaming traceroute hops.
+type TraceHopMessage struct {
+	Target    string                 `json:"target"`
+	TargetIP  string                 `json:"targetIp"`
+	Protocol  string                 `json:"protocol"`
+	Hop       discovery.TracerouteHop `json:"hop"`
+	Completed bool                   `json:"completed"`
+}
+
+// performL3Trace performs Layer 3 traceroute with streaming WebSocket updates.
 func (s *Server) performL3Trace(ctx context.Context, req PathRequest) *discovery.TracerouteResult {
-	// Create tracer with reasonable defaults
-	tracer := discovery.NewTracer(3*time.Second, 30)
+	// Create tracer with faster settings for responsive UI
+	// 1s per-hop timeout (was 3s), 30 max hops - most traces complete in 10-15 hops
+	tracer := discovery.NewTracer(1*time.Second, 30)
+
+	// Callback to broadcast each hop via WebSocket
+	onHop := func(hop discovery.TracerouteHop, result *discovery.TracerouteResult) bool {
+		if s.wsHub != nil {
+			s.wsHub.Broadcast(Message{
+				Type: "traceHop",
+				Payload: TraceHopMessage{
+					Target:    result.Target,
+					TargetIP:  result.TargetIP,
+					Protocol:  result.Protocol,
+					Hop:       hop,
+					Completed: result.Completed,
+				},
+			})
+		}
+		return true // Continue tracing
+	}
 
 	switch req.Protocol {
 	case "icmp":
-		return tracer.TraceICMP(ctx, req.Destination)
+		return tracer.TraceICMPStreaming(ctx, req.Destination, onHop)
 	case "udp":
 		port := req.Port
 		if port == 0 {
 			port = 33434 // Traditional traceroute port
 		}
+		// UDP and TCP still use non-streaming for now
 		return tracer.TraceUDP(ctx, req.Destination, port)
 	case "tcp":
 		port := req.Port
@@ -199,7 +227,7 @@ func (s *Server) performL3Trace(ctx context.Context, req PathRequest) *discovery
 		}
 		return tracer.TraceTCP(ctx, req.Destination, port)
 	default:
-		return tracer.TraceICMP(ctx, req.Destination) // Fallback to ICMP
+		return tracer.TraceICMPStreaming(ctx, req.Destination, onHop)
 	}
 }
 

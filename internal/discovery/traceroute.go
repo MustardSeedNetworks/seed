@@ -52,10 +52,15 @@ type Tracer struct {
 	resolvePtr bool
 }
 
+// HopCallback is called for each hop discovered during streaming traceroute.
+// The callback receives the hop info and the current result state.
+// Return false to stop the traceroute.
+type HopCallback func(hop TracerouteHop, result *TracerouteResult) bool
+
 // NewTracer creates a new Tracer instance.
 func NewTracer(timeout time.Duration, maxHops int) *Tracer {
 	if timeout == 0 {
-		timeout = 3 * time.Second
+		timeout = 1 * time.Second // Reduced from 3s for faster UI response
 	}
 	if maxHops == 0 {
 		maxHops = 30
@@ -63,9 +68,16 @@ func NewTracer(timeout time.Duration, maxHops int) *Tracer {
 	return &Tracer{
 		timeout:    timeout,
 		maxHops:    maxHops,
-		retries:    2,
-		resolvePtr: true,
+		retries:    1,            // Reduced from 2 - one retry is usually enough
+		resolvePtr: false,        // Disabled by default - PTR lookups can be slow
 	}
+}
+
+// NewTracerWithPTR creates a Tracer with reverse DNS lookups enabled.
+func NewTracerWithPTR(timeout time.Duration, maxHops int) *Tracer {
+	t := NewTracer(timeout, maxHops)
+	t.resolvePtr = true
+	return t
 }
 
 // resolveIPv4 resolves a target hostname to its first IPv4 address.
@@ -236,6 +248,150 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		}
 
 		result.Hops = append(result.Hops, hop)
+
+		// Check if we reached the destination
+		if hop.IP == targetIP.String() {
+			result.Completed = true
+			return result
+		}
+	}
+
+	return result
+}
+
+// TraceICMPStreaming performs an ICMP-based traceroute with per-hop callbacks.
+// This enables real-time UI updates as each hop is discovered.
+func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop HopCallback) *TracerouteResult {
+	result := &TracerouteResult{
+		Target:   target,
+		Protocol: "icmp",
+		Hops:     make([]TracerouteHop, 0, t.maxHops),
+	}
+
+	targetIP, err := resolveIPv4(target)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	result.TargetIP = targetIP.String()
+
+	// Create ICMP connection for sending
+	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
+		return result
+	}
+	defer conn.Close()
+
+	// Get IPv4 packet conn for setting TTL
+	pconn := conn.IPv4PacketConn()
+
+	dst := &net.IPAddr{IP: targetIP}
+	seq := 0
+
+	for ttl := 1; ttl <= t.maxHops; ttl++ {
+		select {
+		case <-ctx.Done():
+			result.Error = errTracerouteCanceled
+			return result
+		default:
+		}
+
+		hop := TracerouteHop{
+			TTL:   ttl,
+			State: hopStateTimeout,
+		}
+
+		// Set TTL using ipv4 package
+		if err := pconn.SetTTL(ttl); err != nil {
+			hop.State = hopStateError
+			result.Hops = append(result.Hops, hop)
+			if onHop != nil && !onHop(hop, result) {
+				return result
+			}
+			continue
+		}
+
+		// Try multiple times for this TTL
+		for retry := range t.retries {
+			_ = retry
+			seq++
+			start := time.Now()
+
+			// Build ICMP echo request
+			msg := &icmp.Message{
+				Type: ipv4.ICMPTypeEcho,
+				Code: 0,
+				Body: &icmp.Echo{
+					ID:   1,
+					Seq:  seq,
+					Data: []byte("SEED"),
+				},
+			}
+			msgBytes, err := msg.Marshal(nil)
+			if err != nil {
+				continue
+			}
+
+			// Send packet
+			if _, err := conn.WriteTo(msgBytes, dst); err != nil {
+				continue
+			}
+
+			// Set read deadline
+			//nolint:errcheck // Best-effort deadline setting
+			conn.SetReadDeadline(time.Now().Add(t.timeout))
+
+			// Read response
+			reply := make([]byte, 1500)
+			n, peer, err := conn.ReadFrom(reply)
+			rtt := time.Since(start)
+
+			if err != nil {
+				continue
+			}
+
+			// Parse the response
+			rm, err := icmp.ParseMessage(1, reply[:n])
+			if err != nil {
+				continue
+			}
+
+			hop.RTT = rtt
+			t.setHopFromPeer(&hop, peer)
+
+			switch rm.Type {
+			case ipv4.ICMPTypeEchoReply:
+				hop.State = hopStateReply
+				result.Hops = append(result.Hops, hop)
+				result.Completed = true
+				if onHop != nil {
+					onHop(hop, result)
+				}
+				return result
+
+			case ipv4.ICMPTypeTimeExceeded:
+				hop.State = hopStateReply
+
+			case ipv4.ICMPTypeDestinationUnreachable:
+				hop.State = "unreachable"
+				result.Hops = append(result.Hops, hop)
+				result.Completed = true
+				if onHop != nil {
+					onHop(hop, result)
+				}
+				return result
+			}
+
+			break
+		}
+
+		result.Hops = append(result.Hops, hop)
+
+		// Call the callback for this hop
+		if onHop != nil && !onHop(hop, result) {
+			return result
+		}
 
 		// Check if we reached the destination
 		if hop.IP == targetIP.String() {
