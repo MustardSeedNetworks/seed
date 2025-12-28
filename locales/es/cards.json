@@ -108,7 +108,21 @@
     "unknownSubnet": "Subred desconocida",
     "clearSearch": "Limpiar búsqueda",
     "filteredCount": "{{filtered}} de {{total}}",
-    "clickViewVulnerabilities": "Haga clic para ver detalles de vulnerabilidades"
+    "clickViewVulnerabilities": "Haga clic para ver detalles de vulnerabilidades",
+    "fullScreen": "Pantalla Completa",
+    "modalSubtitle": "{{total}} dispositivos ({{local}} locales)",
+    "rescan": "Reescanear",
+    "localOnly": "Solo Locales",
+    "noResults": "No hay dispositivos que coincidan con sus filtros",
+    "tableIp": "Dirección IP",
+    "tableHostname": "Nombre de Host",
+    "tableMac": "MAC",
+    "tableVendor": "Fabricante",
+    "tableDiscovery": "Descubrimiento",
+    "tablePorts": "Puertos",
+    "tableVulns": "CVEs",
+    "tableLastSeen": "Última Vez",
+    "tableActions": "Acciones"
   },
   "pipeline": {
     "phaseProgress": "Fase {{current}} de {{total}}",
