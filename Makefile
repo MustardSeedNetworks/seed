@@ -269,9 +269,11 @@ build-frontend: frontend-deps ## Build React frontend
 	@printf "$(GREEN)✓ Frontend build complete$(RESET)\n"
 
 # Frontend build (quiet mode)
+# CRITICAL: Must fail if npm is not available - never use stale frontend with new backend
 build-frontend-quiet: frontend-deps
 	@printf "   Bundling React application...\n"
-	@cd web && npm run build 2>&1 | tail -3
+	@command -v npm >/dev/null 2>&1 || { printf "$(RED)ERROR: npm not found. Frontend build requires npm.$(RESET)\n"; exit 1; }
+	@cd web && npm run build
 	@SIZE=$$(du -sh web/dist 2>/dev/null | cut -f1 || echo "unknown"); \
 	printf "   Output: web/dist ($$SIZE)\n"
 
