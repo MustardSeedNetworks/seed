@@ -424,3 +424,206 @@ func TestChecker_ConcurrentAccess(_ *testing.T) {
 		<-done
 	}
 }
+
+func TestChecker_updateHistory(t *testing.T) {
+	t.Run("empty IP does nothing", func(t *testing.T) {
+		c := NewChecker()
+		c.updateHistory("")
+		if len(c.history) != 0 {
+			t.Errorf("expected empty history, got %d entries", len(c.history))
+		}
+	})
+
+	t.Run("first IP sets lastIPv4", func(t *testing.T) {
+		c := NewChecker()
+		c.updateHistory("192.0.2.1")
+		if c.lastIPv4 != "192.0.2.1" {
+			t.Errorf("expected lastIPv4 = '192.0.2.1', got %q", c.lastIPv4)
+		}
+		// No history yet - history only populated on IP change
+		if len(c.history) != 0 {
+			t.Errorf("expected no history on first IP, got %d entries", len(c.history))
+		}
+	})
+
+	t.Run("same IP does not add to history", func(t *testing.T) {
+		c := NewChecker()
+		c.lastIPv4 = "192.0.2.1"
+		c.updateHistory("192.0.2.1") // Same IP
+		if len(c.history) != 0 {
+			t.Errorf("expected no history for same IP, got %d entries", len(c.history))
+		}
+	})
+
+	t.Run("IP change adds old IP to history", func(t *testing.T) {
+		c := NewChecker()
+		c.lastIPv4 = "192.0.2.1"
+		c.updateHistory("192.0.2.2") // New IP
+
+		if len(c.history) != 1 {
+			t.Fatalf("expected 1 history entry, got %d", len(c.history))
+		}
+		if c.history[0].IP != "192.0.2.1" {
+			t.Errorf("expected old IP in history, got %q", c.history[0].IP)
+		}
+		if c.lastIPv4 != "192.0.2.2" {
+			t.Errorf("expected lastIPv4 = '192.0.2.2', got %q", c.lastIPv4)
+		}
+	})
+
+	t.Run("history capped at 10 entries", func(t *testing.T) {
+		c := NewChecker()
+		c.lastIPv4 = "192.0.2.1"
+
+		// Add more than 10 entries
+		for i := 2; i <= 15; i++ {
+			c.updateHistory("192.0.2." + string(rune('0'+i%10)))
+			c.lastIPv4 = "192.0.2." + string(rune('0'+i%10))
+		}
+
+		if len(c.history) > 10 {
+			t.Errorf("expected max 10 history entries, got %d", len(c.history))
+		}
+	})
+
+	t.Run("IP change with geo cache populates city/country", func(t *testing.T) {
+		c := NewChecker()
+		c.lastIPv4 = "192.0.2.1"
+		c.geoCache = map[string]*geoResponse{
+			"192.0.2.1": {City: "TestCity", Country: "TestCountry"},
+		}
+
+		c.updateHistory("192.0.2.2") // Trigger IP change
+
+		if len(c.history) != 1 {
+			t.Fatalf("expected 1 history entry, got %d", len(c.history))
+		}
+		if c.history[0].City != "TestCity" {
+			t.Errorf("expected city 'TestCity', got %q", c.history[0].City)
+		}
+		if c.history[0].Country != "TestCountry" {
+			t.Errorf("expected country 'TestCountry', got %q", c.history[0].Country)
+		}
+	})
+
+	t.Run("existing IP in history updates LastSeen", func(t *testing.T) {
+		c := NewChecker()
+		oldTime := time.Now().Add(-1 * time.Hour)
+		c.history = []HistoryEntry{
+			{IP: "192.0.2.1", FirstSeen: oldTime, LastSeen: oldTime},
+		}
+		c.lastIPv4 = "192.0.2.1"
+
+		// Change to new IP and back
+		c.updateHistory("192.0.2.2")
+
+		if len(c.history) != 1 {
+			t.Fatalf("expected 1 history entry, got %d", len(c.history))
+		}
+		if c.history[0].LastSeen.Before(time.Now().Add(-1 * time.Minute)) {
+			t.Error("expected LastSeen to be updated to recent time")
+		}
+	})
+}
+
+func TestChecker_getHistoryCopy(t *testing.T) {
+	t.Run("empty history returns nil", func(t *testing.T) {
+		c := NewChecker()
+		hist := c.getHistoryCopy()
+		if hist != nil {
+			t.Errorf("expected nil for empty history, got %v", hist)
+		}
+	})
+
+	t.Run("returns copy not reference", func(t *testing.T) {
+		c := NewChecker()
+		c.history = []HistoryEntry{
+			{IP: "192.0.2.1", FirstSeen: time.Now(), LastSeen: time.Now()},
+			{IP: "192.0.2.2", FirstSeen: time.Now(), LastSeen: time.Now()},
+		}
+
+		hist := c.getHistoryCopy()
+
+		if len(hist) != 2 {
+			t.Fatalf("expected 2 entries, got %d", len(hist))
+		}
+
+		// Modify copy - should not affect original
+		hist[0].IP = "modified"
+		if c.history[0].IP == "modified" {
+			t.Error("getHistoryCopy should return copy, but original was modified")
+		}
+	})
+}
+
+func TestGeoResponse(t *testing.T) {
+	geo := geoResponse{
+		City:       "San Francisco",
+		RegionName: "California",
+		Country:    "US",
+		ISP:        "Test ISP",
+		AS:         "AS12345",
+	}
+
+	if geo.City != "San Francisco" {
+		t.Errorf("expected city 'San Francisco', got %q", geo.City)
+	}
+	if geo.Country != "US" {
+		t.Errorf("expected country 'US', got %q", geo.Country)
+	}
+}
+
+func TestHistoryEntry(t *testing.T) {
+	now := time.Now()
+	entry := HistoryEntry{
+		IP:        "203.0.113.1",
+		FirstSeen: now,
+		LastSeen:  now,
+		City:      "London",
+		Country:   "UK",
+	}
+
+	if entry.IP != "203.0.113.1" {
+		t.Errorf("expected IP '203.0.113.1', got %q", entry.IP)
+	}
+	if entry.City != "London" {
+		t.Errorf("expected city 'London', got %q", entry.City)
+	}
+}
+
+func TestResult_WithGeoFields(t *testing.T) {
+	result := Result{
+		IPv4:        "203.0.113.1",
+		IPv6:        "2001:db8::1",
+		LastChecked: time.Now(),
+		City:        "Paris",
+		Country:     "FR",
+		ISP:         "French ISP",
+	}
+
+	if result.City != "Paris" {
+		t.Errorf("expected city 'Paris', got %q", result.City)
+	}
+	if result.Country != "FR" {
+		t.Errorf("expected country 'FR', got %q", result.Country)
+	}
+	if result.ISP != "French ISP" {
+		t.Errorf("expected ISP 'French ISP', got %q", result.ISP)
+	}
+}
+
+func TestResult_WithHistory(t *testing.T) {
+	now := time.Now()
+	result := Result{
+		IPv4:        "203.0.113.1",
+		LastChecked: now,
+		History: []HistoryEntry{
+			{IP: "192.0.2.1", FirstSeen: now, LastSeen: now},
+			{IP: "192.0.2.2", FirstSeen: now, LastSeen: now},
+		},
+	}
+
+	if len(result.History) != 2 {
+		t.Errorf("expected 2 history entries, got %d", len(result.History))
+	}
+}

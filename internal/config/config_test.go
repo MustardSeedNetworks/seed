@@ -1102,3 +1102,349 @@ func TestRogueDetectionConfig(t *testing.T) {
 		t.Errorf("expected 2 known servers, got %d", len(rogue.KnownServers))
 	}
 }
+
+// ========== Pipeline Config Tests ==========
+
+func TestPipelineConfigGetPhases(t *testing.T) {
+	cfg := DefaultConfig()
+	// Set specific phases
+	cfg.Pipeline.Phases.Enumeration = true
+	cfg.Pipeline.Phases.NameResolution = true
+	cfg.Pipeline.Phases.ServiceDiscovery = false
+	cfg.Pipeline.Phases.VulnAssessment = true
+
+	enum, nameRes, svcDisc, vulnAssess := cfg.Pipeline.GetPhases()
+	if !enum {
+		t.Error("expected enumeration phase enabled")
+	}
+	if !nameRes {
+		t.Error("expected name resolution phase enabled")
+	}
+	if svcDisc {
+		t.Error("expected service discovery phase disabled")
+	}
+	if !vulnAssess {
+		t.Error("expected vulnerability assessment phase enabled")
+	}
+}
+
+func TestPipelineConfigGetTiming(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Pipeline.Timing.ProbeDelay = 50 * time.Millisecond
+	cfg.Pipeline.Timing.HostDelay = 100 * time.Millisecond
+	cfg.Pipeline.Timing.PhaseTimeout = 5 * time.Minute
+	cfg.Pipeline.Timing.MaxConcurrentHosts = 10
+	cfg.Pipeline.Timing.Profile = "polite"
+
+	probeDelay, hostDelay, phaseTimeout, maxHosts, profile := cfg.Pipeline.GetTiming()
+	if probeDelay != 50*time.Millisecond {
+		t.Errorf("expected probe delay 50ms, got %v", probeDelay)
+	}
+	if hostDelay != 100*time.Millisecond {
+		t.Errorf("expected host delay 100ms, got %v", hostDelay)
+	}
+	if phaseTimeout != 5*time.Minute {
+		t.Errorf("expected phase timeout 5m, got %v", phaseTimeout)
+	}
+	if maxHosts != 10 {
+		t.Errorf("expected max hosts 10, got %d", maxHosts)
+	}
+	if profile != "polite" {
+		t.Errorf("expected profile 'polite', got %q", profile)
+	}
+}
+
+func TestPipelineConfigGetPortScan(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Pipeline.PortScan.Intensity = "standard"
+	cfg.Pipeline.PortScan.CustomPorts = []int{22, 80, 443, 8080}
+	cfg.Pipeline.PortScan.BannerGrab = true
+	cfg.Pipeline.PortScan.ConnectTimeout = 3 * time.Second
+
+	intensity, customPorts, bannerGrab, connectTimeout := cfg.Pipeline.GetPortScan()
+	if intensity != "standard" {
+		t.Errorf("expected intensity 'standard', got %q", intensity)
+	}
+	if len(customPorts) != 4 {
+		t.Errorf("expected 4 custom ports, got %d", len(customPorts))
+	}
+	if !bannerGrab {
+		t.Error("expected banner grab enabled")
+	}
+	if connectTimeout != 3*time.Second {
+		t.Errorf("expected connect timeout 3s, got %v", connectTimeout)
+	}
+
+	// Verify deep copy - modifying returned slice shouldn't affect original
+	customPorts[0] = 9999
+	if cfg.Pipeline.PortScan.CustomPorts[0] == 9999 {
+		t.Error("GetPortScan should return deep copy, but original was modified")
+	}
+}
+
+func TestPipelineConfigGetSNMP(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Pipeline.SNMPCollection.Enabled = true
+	cfg.Pipeline.SNMPCollection.MIBs.System = true
+	cfg.Pipeline.SNMPCollection.MIBs.Interfaces = true
+	cfg.Pipeline.SNMPCollection.MIBs.IPAddresses = false
+	cfg.Pipeline.SNMPCollection.MIBs.Routing = true
+	cfg.Pipeline.SNMPCollection.MIBs.Bridge = false
+	cfg.Pipeline.SNMPCollection.MIBs.Entity = true
+	cfg.Pipeline.SNMPCollection.MIBs.LLDP = true
+	cfg.Pipeline.SNMPCollection.MIBs.VLAN = false
+	cfg.Pipeline.SNMPCollection.WalkTimeout = 30 * time.Second
+	cfg.Pipeline.SNMPCollection.MaxOIDsPerRequest = 25
+
+	enabled, system, interfaces, ipAddrs, routing, bridge, entity, lldp, vlan, walkTimeout, maxOIDs := cfg.Pipeline.GetSNMP()
+	if !enabled {
+		t.Error("expected SNMP collection enabled")
+	}
+	if !system {
+		t.Error("expected system MIB enabled")
+	}
+	if !interfaces {
+		t.Error("expected interfaces MIB enabled")
+	}
+	if ipAddrs {
+		t.Error("expected IP addresses MIB disabled")
+	}
+	if !routing {
+		t.Error("expected routing MIB enabled")
+	}
+	if bridge {
+		t.Error("expected bridge MIB disabled")
+	}
+	if !entity {
+		t.Error("expected entity MIB enabled")
+	}
+	if !lldp {
+		t.Error("expected LLDP MIB enabled")
+	}
+	if vlan {
+		t.Error("expected VLAN MIB disabled")
+	}
+	if walkTimeout != 30*time.Second {
+		t.Errorf("expected walk timeout 30s, got %v", walkTimeout)
+	}
+	if maxOIDs != 25 {
+		t.Errorf("expected max OIDs 25, got %d", maxOIDs)
+	}
+}
+
+func TestPipelineConfigGetPersistence(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Pipeline.Persistence.StoreHistory = true
+	cfg.Pipeline.Persistence.StalenessThreshold = 2 * time.Hour
+	cfg.Pipeline.Persistence.PurgeAfter = 7 * 24 * time.Hour
+
+	storeHistory, stalenessThreshold, purgeAfter := cfg.Pipeline.GetPersistence()
+	if !storeHistory {
+		t.Error("expected store history enabled")
+	}
+	if stalenessThreshold != 2*time.Hour {
+		t.Errorf("expected staleness threshold 2h, got %v", stalenessThreshold)
+	}
+	if purgeAfter != 7*24*time.Hour {
+		t.Errorf("expected purge after 7d, got %v", purgeAfter)
+	}
+}
+
+// ========== Clone and CopyFieldsFrom Tests ==========
+
+func TestConfigClone(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Server.Port = 9999
+	cfg.Auth.DefaultUsername = "clonetest"
+	cfg.Security.AllowedOrigins = []string{"https://test.com", "https://dev.com"}
+	cfg.SNMP.Communities = []string{"private", "public"}
+	cfg.SNMP.V3Credentials = []SNMPv3Credential{
+		{Name: "test", Username: "user1", AuthProtocol: "SHA"},
+	}
+
+	clone := cfg.Clone()
+
+	// Verify values are copied
+	if clone.Server.Port != 9999 {
+		t.Errorf("expected port 9999, got %d", clone.Server.Port)
+	}
+	if clone.Auth.DefaultUsername != "clonetest" {
+		t.Errorf("expected username 'clonetest', got %q", clone.Auth.DefaultUsername)
+	}
+
+	// Verify slices are deep copied
+	if len(clone.Security.AllowedOrigins) != 2 {
+		t.Errorf("expected 2 allowed origins, got %d", len(clone.Security.AllowedOrigins))
+	}
+	clone.Security.AllowedOrigins[0] = "modified"
+	if cfg.Security.AllowedOrigins[0] == "modified" {
+		t.Error("Clone should deep copy AllowedOrigins, but original was modified")
+	}
+
+	// Verify SNMP communities deep copied
+	clone.SNMP.Communities[0] = "modified"
+	if cfg.SNMP.Communities[0] == "modified" {
+		t.Error("Clone should deep copy SNMP.Communities, but original was modified")
+	}
+
+	// Verify SNMP v3 credentials deep copied
+	clone.SNMP.V3Credentials[0].Name = "modified"
+	if cfg.SNMP.V3Credentials[0].Name == "modified" {
+		t.Error("Clone should deep copy SNMP.V3Credentials, but original was modified")
+	}
+
+	// Verify changes to clone don't affect original
+	clone.Server.Port = 1234
+	if cfg.Server.Port == 1234 {
+		t.Error("Clone modification affected original config")
+	}
+}
+
+func TestConfigCopyFieldsFrom(t *testing.T) {
+	src := DefaultConfig()
+	src.Server.Port = 7777
+	src.Auth.DefaultUsername = "srcuser"
+	src.VLAN.Enabled = true
+	src.Security.AllowedOrigins = []string{"https://source.com"}
+
+	dst := DefaultConfig()
+	dst.Server.Port = 1111
+	dst.Auth.DefaultUsername = "dstuser"
+
+	// Copy fields from src to dst
+	dst.Lock()
+	dst.CopyFieldsFrom(src)
+	dst.Unlock()
+
+	// Verify values are copied
+	if dst.Server.Port != 7777 {
+		t.Errorf("expected port 7777, got %d", dst.Server.Port)
+	}
+	if dst.Auth.DefaultUsername != "srcuser" {
+		t.Errorf("expected username 'srcuser', got %q", dst.Auth.DefaultUsername)
+	}
+	if !dst.VLAN.Enabled {
+		t.Error("expected VLAN enabled")
+	}
+
+	// Verify slices are deep copied
+	dst.Security.AllowedOrigins[0] = "modified"
+	if src.Security.AllowedOrigins[0] == "modified" {
+		t.Error("CopyFieldsFrom should deep copy slices, but source was modified")
+	}
+}
+
+// ========== GetBackupDir Test ==========
+
+func TestGetBackupDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.yaml")
+	backupDir := filepath.Join(tmpDir, "backups")
+
+	// Create backup manager
+	mgr := NewBackupManager(configPath, backupDir, 5)
+
+	if mgr.GetBackupDir() != backupDir {
+		t.Errorf("expected backup dir %q, got %q", backupDir, mgr.GetBackupDir())
+	}
+}
+
+// ========== SaveWithBackup Test ==========
+
+func TestSaveWithBackup(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.yaml")
+	backupDir := filepath.Join(tmpDir, "backups")
+
+	// Create initial config
+	cfg := DefaultConfig()
+	cfg.Server.Port = 8080
+	cfg.Auth.DefaultPasswordHash = "test-hash"
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("failed to save initial config: %v", err)
+	}
+
+	// Modify and save with backup
+	cfg.Server.Port = 9090
+	backupInfo, err := cfg.SaveWithBackup(configPath, backupDir, 5)
+	if err != nil {
+		t.Fatalf("failed to save with backup: %v", err)
+	}
+
+	// Verify backup was created
+	if backupInfo == nil {
+		t.Fatal("expected backup info, got nil")
+	}
+	if backupInfo.Path == "" {
+		t.Error("expected backup path to be set")
+	}
+
+	// Verify config was saved with new value
+	loaded, err := Load(configPath)
+	if err != nil {
+		t.Fatalf("failed to load config: %v", err)
+	}
+	if loaded.Server.Port != 9090 {
+		t.Errorf("expected port 9090, got %d", loaded.Server.Port)
+	}
+}
+
+// ========== Logging Validation Test ==========
+
+func TestValidateLoggingConfig(t *testing.T) {
+	tests := []struct {
+		name      string
+		modify    func(*Config)
+		wantError bool
+	}{
+		{
+			name:      "valid default",
+			modify:    func(_ *Config) {},
+			wantError: false,
+		},
+		{
+			name: "invalid log level",
+			modify: func(c *Config) {
+				c.Logging.Level = "invalid"
+			},
+			wantError: true,
+		},
+		{
+			name: "negative max size",
+			modify: func(c *Config) {
+				c.Logging.MaxSize = -1
+			},
+			wantError: true,
+		},
+		{
+			name: "negative max backups",
+			modify: func(c *Config) {
+				c.Logging.MaxBackups = -1
+			},
+			wantError: true,
+		},
+		{
+			name: "negative max age",
+			modify: func(c *Config) {
+				c.Logging.MaxAge = -1
+			},
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := DefaultConfig()
+			cfg.Auth.DefaultPasswordHash = "hash"
+			tt.modify(cfg)
+
+			err := cfg.Validate()
+			if tt.wantError && err == nil {
+				t.Error("expected validation error")
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("unexpected validation error: %v", err)
+			}
+		})
+	}
+}

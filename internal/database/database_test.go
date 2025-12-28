@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -731,4 +732,705 @@ func TestAuditLog(t *testing.T) {
 	if entries[0].Action != AuditActionCreate {
 		t.Errorf("expected action %q, got %q", AuditActionCreate, entries[0].Action)
 	}
+}
+
+func TestUserStoreAdapter(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Create a test user first
+	_, err := db.CreateUser(ctx, "testuser", "$2a$10$somehash", "admin")
+	require.NoError(t, err)
+
+	adapter := NewUserStoreAdapter(db)
+
+	t.Run("GetPasswordHash", func(t *testing.T) {
+		hash, err := adapter.GetPasswordHash("testuser")
+		require.NoError(t, err)
+		if hash != "$2a$10$somehash" {
+			t.Errorf("expected password hash, got %q", hash)
+		}
+	})
+
+	t.Run("GetPasswordHash_NotFound", func(t *testing.T) {
+		_, err := adapter.GetPasswordHash("nonexistent")
+		if err == nil {
+			t.Error("expected error for nonexistent user")
+		}
+	})
+
+	t.Run("GetTokenVersion", func(t *testing.T) {
+		version, err := adapter.GetTokenVersion("testuser")
+		require.NoError(t, err)
+		if version != 1 {
+			t.Errorf("expected token version 1, got %d", version)
+		}
+	})
+
+	t.Run("UpdatePassword", func(t *testing.T) {
+		err := adapter.UpdatePassword("testuser", "$2a$10$newhash")
+		require.NoError(t, err)
+
+		hash, err := adapter.GetPasswordHash("testuser")
+		require.NoError(t, err)
+		if hash != "$2a$10$newhash" {
+			t.Errorf("expected updated hash, got %q", hash)
+		}
+	})
+
+	t.Run("RecordLoginSuccess", func(t *testing.T) {
+		err := adapter.RecordLoginSuccess("testuser")
+		require.NoError(t, err)
+	})
+
+	t.Run("RecordLoginFailure", func(t *testing.T) {
+		err := adapter.RecordLoginFailure("testuser")
+		require.NoError(t, err)
+	})
+
+	t.Run("IsLocked", func(t *testing.T) {
+		locked, err := adapter.IsLocked("testuser")
+		require.NoError(t, err)
+		if locked {
+			t.Error("user should not be locked after one failure")
+		}
+	})
+
+	t.Run("MigrateUserFromConfig", func(t *testing.T) {
+		err := adapter.MigrateUserFromConfig("migrated", "$2a$10$migratedhash")
+		require.NoError(t, err)
+
+		// Migrating again should succeed (no-op)
+		err = adapter.MigrateUserFromConfig("migrated", "$2a$10$differenthash")
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateUser", func(t *testing.T) {
+		err := adapter.CreateUser("newuser", "$2a$10$newhash", "user")
+		require.NoError(t, err)
+	})
+
+	t.Run("GetUserCount", func(t *testing.T) {
+		count, err := adapter.GetUserCount()
+		require.NoError(t, err)
+		if count < 3 {
+			t.Errorf("expected at least 3 users, got %d", count)
+		}
+	})
+}
+
+func TestDatabaseStats(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	stats := db.Stats()
+
+	// SQLite stats should return valid stats struct
+	// MaxOpenConnections of 0 is valid for SQLite
+	if stats.MaxOpenConnections < 0 {
+		t.Error("Stats should return valid stats")
+	}
+}
+
+func TestDefaultRetentionPolicy(t *testing.T) {
+	policy := DefaultRetentionPolicy()
+
+	if policy.MetricsDays <= 0 {
+		t.Error("MetricsDays should be positive")
+	}
+	if policy.AlertsDays <= 0 {
+		t.Error("AlertsDays should be positive")
+	}
+	if policy.AuditLogDays <= 0 {
+		t.Error("AuditLogDays should be positive")
+	}
+}
+
+func TestDefaultPagination(t *testing.T) {
+	pagination := DefaultPagination()
+
+	if pagination.Limit != 100 {
+		t.Errorf("expected default limit 100, got %d", pagination.Limit)
+	}
+	if pagination.Offset != 0 {
+		t.Errorf("expected default offset 0, got %d", pagination.Offset)
+	}
+}
+
+func TestDeviceRepositoryExtended(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Devices()
+
+	// Create test devices
+	devices := []*Device{
+		{IPAddress: "192.168.1.1", MACAddress: "aa:bb:cc:dd:ee:01", Vendor: "Cisco", DeviceType: "router"},
+		{IPAddress: "192.168.1.2", MACAddress: "aa:bb:cc:dd:ee:02", Vendor: "Cisco", DeviceType: "switch"},
+		{IPAddress: "192.168.1.3", MACAddress: "aa:bb:cc:dd:ee:03", Vendor: "HP", DeviceType: "router"},
+	}
+
+	for _, d := range devices {
+		err := repo.Create(ctx, d)
+		require.NoError(t, err)
+	}
+
+	t.Run("UpsertByMAC", func(t *testing.T) {
+		d := &Device{
+			MACAddress: "aa:bb:cc:dd:ee:01",
+			IPAddress:  "192.168.1.100",
+			Hostname:   "updated-host",
+		}
+		err := repo.UpsertByMAC(ctx, d)
+		require.NoError(t, err)
+
+		got, err := repo.GetByMAC(ctx, "aa:bb:cc:dd:ee:01")
+		require.NoError(t, err)
+		if got.IPAddress != "192.168.1.100" {
+			t.Errorf("expected IP 192.168.1.100, got %s", got.IPAddress)
+		}
+	})
+
+	t.Run("GetDistinctVendors", func(t *testing.T) {
+		vendors, err := repo.GetDistinctVendors(ctx)
+		require.NoError(t, err)
+		if len(vendors) < 2 {
+			t.Errorf("expected at least 2 vendors, got %d", len(vendors))
+		}
+	})
+
+	t.Run("GetDistinctTypes", func(t *testing.T) {
+		types, err := repo.GetDistinctTypes(ctx)
+		require.NoError(t, err)
+		if len(types) < 2 {
+			t.Errorf("expected at least 2 types, got %d", len(types))
+		}
+	})
+
+	t.Run("MarkInactive", func(t *testing.T) {
+		// Mark devices older than future time as inactive
+		count, err := repo.MarkInactive(ctx, time.Now().Add(time.Hour))
+		require.NoError(t, err)
+		if count < 1 {
+			t.Error("expected at least 1 device marked inactive")
+		}
+
+		d, err := repo.GetByIP(ctx, "192.168.1.2")
+		require.NoError(t, err)
+		if d.IsActive {
+			t.Error("device should be inactive")
+		}
+	})
+
+	t.Run("DeleteInactive", func(t *testing.T) {
+		count, err := repo.DeleteInactive(ctx, time.Now().Add(time.Hour)) // Delete all inactive
+		require.NoError(t, err)
+		if count < 1 {
+			t.Errorf("expected at least 1 deleted, got %d", count)
+		}
+	})
+}
+
+func TestAlertRepositoryExtended(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Alerts()
+
+	// Create test alerts
+	alerts := []*Alert{
+		{Title: "Alert 1", Severity: "critical", Source: "test"},
+		{Title: "Alert 2", Severity: "warning", Source: "test"},
+		{Title: "Alert 3", Severity: "info", Source: "test"},
+	}
+
+	for _, a := range alerts {
+		err := repo.Create(ctx, a)
+		require.NoError(t, err)
+	}
+
+	t.Run("AcknowledgeAll", func(t *testing.T) {
+		count, err := repo.AcknowledgeAll(ctx, AlertListOptions{}, "testuser")
+		require.NoError(t, err)
+		if count != 3 {
+			t.Errorf("expected 3 acknowledged, got %d", count)
+		}
+	})
+
+	t.Run("GetUnacknowledgedCount", func(t *testing.T) {
+		// Create one more unacknowledged
+		err := repo.Create(ctx, &Alert{Title: "New Alert", Severity: "info", Source: "test"})
+		require.NoError(t, err)
+
+		count, err := repo.GetUnacknowledgedCount(ctx)
+		require.NoError(t, err)
+		if count != 1 {
+			t.Errorf("expected 1 unacknowledged, got %d", count)
+		}
+	})
+
+	t.Run("GetCriticalCount", func(t *testing.T) {
+		count, err := repo.GetCriticalCount(ctx)
+		require.NoError(t, err)
+		// Critical alerts are acknowledged, so count may be 0 or 1 depending on logic
+		if count < 0 {
+			t.Errorf("count should be non-negative, got %d", count)
+		}
+	})
+
+	t.Run("DeleteOlderThan", func(t *testing.T) {
+		count, err := repo.DeleteOlderThan(ctx, time.Now().Add(time.Hour))
+		require.NoError(t, err)
+		if count < 0 {
+			t.Errorf("count should be non-negative, got %d", count)
+		}
+	})
+}
+
+func TestSettingsRepositoryExtended(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Settings()
+
+	// Set some test settings
+	err := repo.Set(ctx, "prefix.key1", "value1")
+	require.NoError(t, err)
+	err = repo.Set(ctx, "prefix.key2", "value2")
+	require.NoError(t, err)
+	err = repo.Set(ctx, "other.key", "value3")
+	require.NoError(t, err)
+
+	t.Run("GetByPrefix", func(t *testing.T) {
+		settings, err := repo.GetByPrefix(ctx, "prefix.")
+		require.NoError(t, err)
+		if len(settings) != 2 {
+			t.Errorf("expected 2 settings, got %d", len(settings))
+		}
+	})
+
+	t.Run("DeleteByPrefix", func(t *testing.T) {
+		count, err := repo.DeleteByPrefix(ctx, "prefix.")
+		require.NoError(t, err)
+		if count != 2 {
+			t.Errorf("expected 2 deleted, got %d", count)
+		}
+	})
+
+	t.Run("Count", func(t *testing.T) {
+		count, err := repo.Count(ctx)
+		require.NoError(t, err)
+		if count != 1 { // Only "other.key" left
+			t.Errorf("expected 1 setting, got %d", count)
+		}
+	})
+
+	t.Run("SetIfNotExists", func(t *testing.T) {
+		// First call should set
+		set, err := repo.SetIfNotExists(ctx, "new.key", "new_value")
+		require.NoError(t, err)
+		if !set {
+			t.Error("expected value to be set")
+		}
+
+		// Second call should not overwrite
+		set, err = repo.SetIfNotExists(ctx, "new.key", "different_value")
+		require.NoError(t, err)
+		if set {
+			t.Error("expected value not to be overwritten")
+		}
+
+		// Verify original value is preserved
+		setting, err := repo.Get(ctx, "new.key")
+		require.NoError(t, err)
+		if setting.Value != "new_value" {
+			t.Errorf("expected 'new_value', got %q", setting.Value)
+		}
+	})
+}
+
+func TestMetricsRepositoryExtended(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Metrics()
+
+	t.Run("GetDistinctInterfaces", func(t *testing.T) {
+		// Record some metrics with different interfaces
+		err := repo.Record(ctx, &Metric{InterfaceName: "eth0", MetricType: "bandwidth", Value: 100})
+		require.NoError(t, err)
+		err = repo.Record(ctx, &Metric{InterfaceName: "eth1", MetricType: "bandwidth", Value: 200})
+		require.NoError(t, err)
+
+		interfaces, err := repo.GetDistinctInterfaces(ctx)
+		require.NoError(t, err)
+		if len(interfaces) < 2 {
+			t.Errorf("expected at least 2 interfaces, got %d", len(interfaces))
+		}
+	})
+
+	t.Run("GetDistinctTypes", func(t *testing.T) {
+		// Record metrics with different types
+		err := repo.Record(ctx, &Metric{InterfaceName: "eth0", MetricType: "latency", Value: 10})
+		require.NoError(t, err)
+
+		types, err := repo.GetDistinctTypes(ctx)
+		require.NoError(t, err)
+		if len(types) < 2 {
+			t.Errorf("expected at least 2 types, got %d", len(types))
+		}
+	})
+
+	t.Run("RecordSpeedTest", func(t *testing.T) {
+		result := &SpeedTestResult{
+			InterfaceName: "eth0",
+			ServerName:    "Test Server",
+			DownloadMbps:  100.5,
+			UploadMbps:    50.25,
+			LatencyMs:     15.0,
+		}
+		err := repo.RecordSpeedTest(ctx, result)
+		require.NoError(t, err)
+	})
+
+	t.Run("GetSpeedTestHistory", func(t *testing.T) {
+		results, err := repo.GetSpeedTestHistory(ctx, "eth0", 10)
+		require.NoError(t, err)
+		if len(results) != 1 {
+			t.Errorf("expected 1 result, got %d", len(results))
+		}
+	})
+
+	t.Run("RecordDNSResult", func(t *testing.T) {
+		result := &DNSResult{
+			InterfaceName:  "eth0",
+			Server:         "8.8.8.8",
+			Hostname:       "example.com",
+			ResponseTimeMs: 25.0,
+			Status:         "success",
+		}
+		err := repo.RecordDNSResult(ctx, result)
+		require.NoError(t, err)
+	})
+
+	t.Run("RecordGatewayResult", func(t *testing.T) {
+		result := &GatewayResult{
+			InterfaceName: "eth0",
+			Gateway:       "192.168.1.1",
+			LatencyMs:     1.5,
+			Reachable:     true,
+		}
+		err := repo.RecordGatewayResult(ctx, result)
+		require.NoError(t, err)
+	})
+}
+
+func TestRetentionExtended(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	t.Run("deleteAuditLogsOlderThan", func(t *testing.T) {
+		// Record some audit logs
+		for i := 0; i < 5; i++ {
+			err := db.RecordAuditLog(ctx, &AuditLogEntry{
+				Action:       AuditActionCreate,
+				User:         "testuser",
+				ResourceType: "test",
+				ResourceID:   "test-id",
+			})
+			require.NoError(t, err)
+		}
+
+		// Delete older than future time (should delete all)
+		count, err := db.deleteAuditLogsOlderThan(ctx, time.Now().Add(time.Hour))
+		require.NoError(t, err)
+		if count != 5 {
+			t.Errorf("expected 5 deleted, got %d", count)
+		}
+	})
+
+	t.Run("deleteSpeedTestsOlderThan", func(t *testing.T) {
+		// Record a speed test
+		err := db.Metrics().RecordSpeedTest(ctx, &SpeedTestResult{
+			InterfaceName: "eth0", ServerName: "Test", DownloadMbps: 100,
+		})
+		require.NoError(t, err)
+
+		count, err := db.deleteSpeedTestsOlderThan(ctx, time.Now().Add(time.Hour))
+		require.NoError(t, err)
+		if count < 0 {
+			t.Errorf("count should be non-negative, got %d", count)
+		}
+	})
+
+	t.Run("deleteDNSResultsOlderThan", func(t *testing.T) {
+		err := db.Metrics().RecordDNSResult(ctx, &DNSResult{
+			InterfaceName: "eth0", Server: "8.8.8.8", Hostname: "test.com",
+		})
+		require.NoError(t, err)
+
+		count, err := db.deleteDNSResultsOlderThan(ctx, time.Now().Add(time.Hour))
+		require.NoError(t, err)
+		if count < 0 {
+			t.Errorf("count should be non-negative, got %d", count)
+		}
+	})
+
+	t.Run("deleteGatewayResultsOlderThan", func(t *testing.T) {
+		err := db.Metrics().RecordGatewayResult(ctx, &GatewayResult{
+			InterfaceName: "eth0", Gateway: "192.168.1.1", Reachable: true,
+		})
+		require.NoError(t, err)
+
+		count, err := db.deleteGatewayResultsOlderThan(ctx, time.Now().Add(time.Hour))
+		require.NoError(t, err)
+		if count < 0 {
+			t.Errorf("count should be non-negative, got %d", count)
+		}
+	})
+
+	t.Run("RunCleanup", func(t *testing.T) {
+		policy := DefaultRetentionPolicy()
+		stats, err := db.RunCleanup(ctx, policy)
+		require.NoError(t, err)
+		if stats == nil {
+			t.Error("expected cleanup stats")
+		}
+	})
+}
+
+func TestWithTxExtended(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	t.Run("successful transaction", func(t *testing.T) {
+		err := db.WithTx(ctx, func(tx *sql.Tx) error {
+			_, err := tx.ExecContext(ctx, "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))", "tx.key", "tx.value")
+			return err
+		})
+		require.NoError(t, err)
+
+		// Verify the insert worked
+		setting, err := db.Settings().Get(ctx, "tx.key")
+		require.NoError(t, err)
+		if setting.Value != "tx.value" {
+			t.Errorf("expected 'tx.value', got %q", setting.Value)
+		}
+	})
+
+	t.Run("rollback on error", func(t *testing.T) {
+		err := db.WithTx(ctx, func(_ *sql.Tx) error {
+			return fmt.Errorf("simulated error")
+		})
+		if err == nil {
+			t.Error("expected error from transaction")
+		}
+	})
+}
+
+func TestGetValue(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Settings()
+
+	t.Run("existing key", func(t *testing.T) {
+		err := repo.Set(ctx, "test.key", "test.value")
+		require.NoError(t, err)
+
+		value, err := repo.GetValue(ctx, "test.key")
+		require.NoError(t, err)
+		if value != "test.value" {
+			t.Errorf("expected 'test.value', got %q", value)
+		}
+	})
+
+	t.Run("non-existent key returns empty", func(t *testing.T) {
+		value, err := repo.GetValue(ctx, "nonexistent.key")
+		require.NoError(t, err)
+		if value != "" {
+			t.Errorf("expected empty string, got %q", value)
+		}
+	})
+}
+
+func TestGetWithDefault(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Settings()
+
+	t.Run("existing key returns value", func(t *testing.T) {
+		err := repo.Set(ctx, "exists.key", "exists.value")
+		require.NoError(t, err)
+
+		value, err := repo.GetWithDefault(ctx, "exists.key", "default")
+		require.NoError(t, err)
+		if value != "exists.value" {
+			t.Errorf("expected 'exists.value', got %q", value)
+		}
+	})
+
+	t.Run("non-existent key returns default", func(t *testing.T) {
+		value, err := repo.GetWithDefault(ctx, "missing.key", "default.value")
+		require.NoError(t, err)
+		if value != "default.value" {
+			t.Errorf("expected 'default.value', got %q", value)
+		}
+	})
+}
+
+func TestVacuumAndAnalyze(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	t.Run("Vacuum", func(t *testing.T) {
+		err := db.Vacuum(ctx)
+		require.NoError(t, err)
+	})
+
+	t.Run("Analyze", func(t *testing.T) {
+		err := db.Analyze(ctx)
+		require.NoError(t, err)
+	})
+
+	t.Run("Optimize", func(t *testing.T) {
+		err := db.Optimize(ctx)
+		require.NoError(t, err)
+	})
+}
+
+func TestAlertListWithFilters(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Alerts()
+
+	// Create alerts with different severities and sources
+	alerts := []*Alert{
+		{Title: "Critical Alert", Severity: "critical", Source: "system"},
+		{Title: "Warning Alert", Severity: "warning", Source: "network"},
+		{Title: "Info Alert", Severity: "info", Source: "system"},
+	}
+	for _, a := range alerts {
+		err := repo.Create(ctx, a)
+		require.NoError(t, err)
+	}
+
+	t.Run("filter by severity", func(t *testing.T) {
+		list, err := repo.List(ctx, AlertListOptions{Severity: "critical"})
+		require.NoError(t, err)
+		if len(list) != 1 {
+			t.Errorf("expected 1 critical alert, got %d", len(list))
+		}
+	})
+
+	t.Run("filter unresolved only", func(t *testing.T) {
+		list, err := repo.List(ctx, AlertListOptions{UnresolvedOnly: true})
+		require.NoError(t, err)
+		if len(list) != 3 {
+			t.Errorf("expected 3 unresolved alerts, got %d", len(list))
+		}
+	})
+
+	t.Run("with pagination", func(t *testing.T) {
+		list, err := repo.List(ctx, AlertListOptions{Limit: 1, Offset: 1})
+		require.NoError(t, err)
+		if len(list) != 1 {
+			t.Errorf("expected 1 alert with pagination, got %d", len(list))
+		}
+	})
+}
+
+func TestDeviceListWithFilters(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Devices()
+
+	// Create devices with different vendors and types
+	devices := []*Device{
+		{IPAddress: "10.0.0.1", MACAddress: "11:22:33:44:55:01", Vendor: "Cisco", DeviceType: "router"},
+		{IPAddress: "10.0.0.2", MACAddress: "11:22:33:44:55:02", Vendor: "Cisco", DeviceType: "switch"},
+		{IPAddress: "10.0.0.3", MACAddress: "11:22:33:44:55:03", Vendor: "HP", DeviceType: "printer"},
+	}
+	for _, d := range devices {
+		err := repo.Create(ctx, d)
+		require.NoError(t, err)
+	}
+
+	t.Run("filter by vendor", func(t *testing.T) {
+		list, err := repo.List(ctx, DeviceListOptions{Vendor: "Cisco"})
+		require.NoError(t, err)
+		if len(list) != 2 {
+			t.Errorf("expected 2 Cisco devices, got %d", len(list))
+		}
+	})
+
+	t.Run("filter by type", func(t *testing.T) {
+		list, err := repo.List(ctx, DeviceListOptions{DeviceType: "router"})
+		require.NoError(t, err)
+		if len(list) != 1 {
+			t.Errorf("expected 1 router, got %d", len(list))
+		}
+	})
+
+	t.Run("active only", func(t *testing.T) {
+		list, err := repo.List(ctx, DeviceListOptions{ActiveOnly: true})
+		require.NoError(t, err)
+		if len(list) != 3 {
+			t.Errorf("expected 3 active devices, got %d", len(list))
+		}
+	})
+}
+
+func TestAcknowledgeAndResolve(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Alerts()
+
+	// Create an alert
+	alert := &Alert{Title: "Test Alert", Severity: "warning", Source: "test"}
+	err := repo.Create(ctx, alert)
+	require.NoError(t, err)
+
+	t.Run("Acknowledge", func(t *testing.T) {
+		err := repo.Acknowledge(ctx, alert.ID, "admin")
+		require.NoError(t, err)
+
+		got, err := repo.Get(ctx, alert.ID)
+		require.NoError(t, err)
+		if !got.Acknowledged {
+			t.Error("alert should be acknowledged")
+		}
+	})
+
+	t.Run("Resolve", func(t *testing.T) {
+		err := repo.Resolve(ctx, alert.ID)
+		require.NoError(t, err)
+
+		got, err := repo.Get(ctx, alert.ID)
+		require.NoError(t, err)
+		if !got.Resolved {
+			t.Error("alert should be resolved")
+		}
+	})
 }

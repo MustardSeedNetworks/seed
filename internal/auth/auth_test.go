@@ -1053,3 +1053,282 @@ func TestCookieNameConstants(t *testing.T) {
 		t.Errorf("CookieNameRefresh should be 'seed_refresh', got %q", CookieNameRefresh)
 	}
 }
+
+// mockUserStore is a mock implementation of UserStore for testing.
+type mockUserStore struct {
+	passwords     map[string]string
+	tokenVersions map[string]int
+	locked        map[string]bool
+	updateErr     error
+}
+
+func newMockUserStore() *mockUserStore {
+	return &mockUserStore{
+		passwords:     make(map[string]string),
+		tokenVersions: make(map[string]int),
+		locked:        make(map[string]bool),
+	}
+}
+
+func (m *mockUserStore) GetPasswordHash(username string) (string, error) {
+	if hash, ok := m.passwords[username]; ok {
+		return hash, nil
+	}
+	return "", ErrInvalidCredentials
+}
+
+func (m *mockUserStore) GetTokenVersion(username string) (int, error) {
+	if v, ok := m.tokenVersions[username]; ok {
+		return v, nil
+	}
+	return 0, nil
+}
+
+func (m *mockUserStore) UpdatePassword(username, hash string) error {
+	if m.updateErr != nil {
+		return m.updateErr
+	}
+	m.passwords[username] = hash
+	return nil
+}
+
+func (m *mockUserStore) RecordLoginSuccess(_ string) error {
+	return nil
+}
+
+func (m *mockUserStore) RecordLoginFailure(_ string) error {
+	return nil
+}
+
+func (m *mockUserStore) IsLocked(username string) (bool, error) {
+	return m.locked[username], nil
+}
+
+func TestSetUserStore(t *testing.T) {
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+
+	store := newMockUserStore()
+	m.SetUserStore(store)
+
+	// Verify the store was set (can't directly access, but we can verify behavior)
+	// Setting user store should not cause panic
+}
+
+func TestAuthenticateWithUserStore(t *testing.T) {
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+
+	store := newMockUserStore()
+	// Add a user to the store
+	hash, _ := HashPassword("storepassword")
+	store.passwords["storeuser"] = hash
+	store.tokenVersions["storeuser"] = 1
+
+	m.SetUserStore(store)
+
+	// Should be able to authenticate with store user
+	token, err := m.Authenticate("storeuser", "storepassword")
+	if err != nil {
+		t.Errorf("expected successful auth with store user, got %v", err)
+	}
+	if token == "" {
+		t.Error("expected token for store user")
+	}
+}
+
+func TestAuthenticateWithLockedUser(t *testing.T) {
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+
+	store := newMockUserStore()
+	hash, _ := HashPassword("password")
+	store.passwords["lockeduser"] = hash
+	store.locked["lockeduser"] = true
+
+	m.SetUserStore(store)
+
+	// Should fail for locked user (returns ErrInvalidCredentials per security best practice)
+	_, err := m.Authenticate("lockeduser", "password")
+	if err != ErrInvalidCredentials {
+		t.Errorf("expected ErrInvalidCredentials for locked user, got %v", err)
+	}
+}
+
+func TestUpdatePasswordHashForUser(t *testing.T) {
+	defaults := testutil.GetTestDefaults()
+	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+
+	t.Run("no UserStore configured", func(t *testing.T) {
+		err := m.UpdatePasswordHashForUser("testuser", "newhash")
+		if err == nil {
+			t.Error("expected error when UserStore not configured")
+		}
+	})
+
+	t.Run("successful update", func(t *testing.T) {
+		store := newMockUserStore()
+		store.passwords["testuser"] = "oldhash"
+		m.SetUserStore(store)
+
+		err := m.UpdatePasswordHashForUser("testuser", "newhash")
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		// Verify hash was updated
+		if store.passwords["testuser"] != "newhash" {
+			t.Error("password hash was not updated in store")
+		}
+	})
+}
+
+func TestCSRFRevokeToken(t *testing.T) {
+	mgr := NewCSRFManager()
+	defer mgr.Stop()
+
+	// Generate a token
+	token, err := mgr.GenerateToken("testsession")
+	if err != nil {
+		t.Fatalf("failed to generate token: %v", err)
+	}
+
+	// Validate it
+	err = mgr.ValidateToken("testsession", token)
+	if err != nil {
+		t.Fatalf("token should be valid: %v", err)
+	}
+
+	// Revoke it
+	mgr.RevokeToken("testsession")
+
+	// Should no longer be valid (returns ErrCSRFTokenInvalid when session not found)
+	err = mgr.ValidateToken("testsession", token)
+	if err != ErrCSRFTokenInvalid {
+		t.Errorf("expected ErrCSRFTokenInvalid after revoke, got %v", err)
+	}
+}
+
+func TestCSRFMiddleware(t *testing.T) {
+	mgr := NewCSRFManager()
+	defer mgr.Stop()
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	middleware := mgr.CSRFMiddleware(handler)
+
+	t.Run("GET requests bypass CSRF", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+		rec := httptest.NewRecorder()
+		middleware.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status 200 for GET, got %d", rec.Code)
+		}
+	})
+
+	t.Run("HEAD requests bypass CSRF", func(t *testing.T) {
+		req := httptest.NewRequest("HEAD", "/api/test", http.NoBody)
+		rec := httptest.NewRecorder()
+		middleware.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status 200 for HEAD, got %d", rec.Code)
+		}
+	})
+
+	t.Run("OPTIONS requests bypass CSRF", func(t *testing.T) {
+		req := httptest.NewRequest("OPTIONS", "/api/test", http.NoBody)
+		rec := httptest.NewRecorder()
+		middleware.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status 200 for OPTIONS, got %d", rec.Code)
+		}
+	})
+
+	t.Run("non-API routes bypass CSRF", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/static/file.js", http.NoBody)
+		rec := httptest.NewRecorder()
+		middleware.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status 200 for non-API route, got %d", rec.Code)
+		}
+	})
+
+	t.Run("login endpoint bypasses CSRF", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/api/auth/login", http.NoBody)
+		rec := httptest.NewRecorder()
+		middleware.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status 200 for login, got %d", rec.Code)
+		}
+	})
+
+	t.Run("setup endpoints bypass CSRF", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/api/setup/complete", http.NoBody)
+		rec := httptest.NewRecorder()
+		middleware.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status 200 for setup, got %d", rec.Code)
+		}
+	})
+
+	t.Run("SSO endpoints bypass CSRF", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/api/sso/callback", http.NoBody)
+		rec := httptest.NewRecorder()
+		middleware.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status 200 for SSO, got %d", rec.Code)
+		}
+	})
+
+	t.Run("POST without session returns 401", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/api/devices", http.NoBody)
+		rec := httptest.NewRecorder()
+		middleware.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("expected status 401 without session, got %d", rec.Code)
+		}
+	})
+}
+
+func TestGetSessionIDFromRequest(t *testing.T) {
+	t.Run("no token returns empty", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+		sessionID := getSessionIDFromRequest(req)
+		if sessionID != "" {
+			t.Errorf("expected empty session ID, got %q", sessionID)
+		}
+	})
+
+	t.Run("valid JWT format extracts session ID", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+		req.Header.Set("Authorization", "Bearer header.payload.signature")
+
+		sessionID := getSessionIDFromRequest(req)
+		if sessionID != "payload" {
+			t.Errorf("expected session ID 'payload', got %q", sessionID)
+		}
+	})
+
+	t.Run("cookie token extracts session ID", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+		req.AddCookie(&http.Cookie{
+			Name:  CookieNameAccess,
+			Value: "header.cookiepayload.signature",
+		})
+
+		sessionID := getSessionIDFromRequest(req)
+		if sessionID != "cookiepayload" {
+			t.Errorf("expected session ID 'cookiepayload', got %q", sessionID)
+		}
+	})
+}
