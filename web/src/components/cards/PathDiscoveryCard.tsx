@@ -236,13 +236,14 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
       icon={<Route className={iconTokens.size.md} />}
       status={cardStatus}
     >
-      {/* Target Input Form - Simplified: just enter IP/hostname and trace */}
+      {/* Target Input Form - Responsive layout for various screen sizes */}
       <form
         onSubmit={handleSubmit}
         className={cn("stack-sm", spacing.margin.bottom.content)}
       >
-        {/* Target Input - Can type IP directly or select from discovered devices */}
-        <div className={cn(layout.inline.default, spacing.gap.tight, "items-center")}>
+        {/* Target Input Row - Stack on mobile, inline on larger screens */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          {/* Target input - full width on mobile */}
           <input
             type="text"
             value={target}
@@ -264,100 +265,107 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
             }}
           />
 
-          {/* Protocol selector - compact */}
-          <select
-            value={protocol}
-            onChange={(e) => setProtocol(e.target.value as Protocol)}
-            disabled={loading}
-            className={cn(
-              inputTokens.base,
-              inputTokens.state.default,
-              "px-2 py-1 caption shrink-0"
-            )}
-            title={t("pathDiscovery.protocol", "Traceroute protocol")}
-          >
-            <option value="icmp">ICMP</option>
-            <option value="udp">UDP</option>
-            <option value="tcp">TCP</option>
-          </select>
-
-          {/* Port input (only for TCP/UDP) */}
-          {protocol !== "icmp" && (
-            <input
-              type="number"
-              value={port}
-              onChange={(e) => setPort(parseInt(e.target.value) || 80)}
-              placeholder="Port"
-              min={1}
-              max={65535}
+          {/* Protocol and Trace button group - inline always */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Protocol selector - styled to match design system */}
+            <select
+              value={protocol}
+              onChange={(e) => setProtocol(e.target.value as Protocol)}
               disabled={loading}
               className={cn(
-                "w-16",
                 inputTokens.base,
                 inputTokens.state.default,
-                "px-2 py-1 caption shrink-0"
+                inputTokens.size.sm,
+                "w-20 body-small cursor-pointer"
               )}
-            />
-          )}
+              title={t("pathDiscovery.protocol", "Traceroute protocol")}
+            >
+              <option value="icmp">ICMP</option>
+              <option value="udp">UDP</option>
+              <option value="tcp">TCP</option>
+            </select>
 
-          <button
-            type="submit"
-            disabled={loading || !target.trim()}
-            className={cn(
-              buttonTokens.base,
-              buttonTokens.variant.primary,
-              buttonTokens.size.sm,
-              "shrink-0"
+            {/* Port input (only for TCP/UDP) */}
+            {protocol !== "icmp" && (
+              <input
+                type="number"
+                value={port}
+                onChange={(e) => setPort(parseInt(e.target.value) || 80)}
+                placeholder="Port"
+                min={1}
+                max={65535}
+                disabled={loading}
+                className={cn(
+                  "w-16",
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  "body-small"
+                )}
+              />
             )}
-          >
-            {loading ? "..." : t("pathDiscovery.trace", "Trace")}
-          </button>
+
+            <button
+              type="submit"
+              disabled={loading || !target.trim()}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.primary,
+                buttonTokens.size.sm,
+                "whitespace-nowrap"
+              )}
+            >
+              {loading ? "..." : t("pathDiscovery.trace", "Trace")}
+            </button>
+          </div>
         </div>
 
-        {/* Quick Targets */}
-        <div className={cn(layout.inline.default, spacing.gap.compact)}>
-          <span className="caption text-text-muted">
+        {/* Quick Targets - Wrap on small screens */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="caption text-text-muted shrink-0">
             {t("pathDiscovery.quick", "Quick")}:
           </span>
-          <button
-            type="button"
-            onClick={traceGateway}
-            disabled={loading || !gateway}
-            className={cn(
-              buttonTokens.base,
-              buttonTokens.variant.ghost,
-              buttonTokens.size.xs,
-              "caption"
-            )}
-          >
-            {t("pathDiscovery.gateway", "Gateway")}
-          </button>
-          <button
-            type="button"
-            onClick={traceDNS}
-            disabled={loading}
-            className={cn(
-              buttonTokens.base,
-              buttonTokens.variant.ghost,
-              buttonTokens.size.xs,
-              "caption"
-            )}
-          >
-            {t("pathDiscovery.dns", "DNS")}
-          </button>
-          <button
-            type="button"
-            onClick={traceInternet}
-            disabled={loading}
-            className={cn(
-              buttonTokens.base,
-              buttonTokens.variant.ghost,
-              buttonTokens.size.xs,
-              "caption"
-            )}
-          >
-            {t("pathDiscovery.internet", "Internet")}
-          </button>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={traceGateway}
+              disabled={loading || !gateway}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                "caption whitespace-nowrap"
+              )}
+            >
+              {t("pathDiscovery.gateway", "Gateway")}
+            </button>
+            <button
+              type="button"
+              onClick={traceDNS}
+              disabled={loading}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                "caption whitespace-nowrap"
+              )}
+            >
+              {t("pathDiscovery.dns", "DNS")}
+            </button>
+            <button
+              type="button"
+              onClick={traceInternet}
+              disabled={loading}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                "caption whitespace-nowrap"
+              )}
+            >
+              {t("pathDiscovery.internet", "Internet")}
+            </button>
+          </div>
         </div>
       </form>
 
@@ -459,13 +467,25 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State - improved visual design */}
       {!result && !loading && !error && (
-        <CardValue
-          value={t("pathDiscovery.enterTarget", "Select a target to trace")}
-          size="sm"
-          className="text-text-muted"
-        />
+        <div className={cn(
+          spacing.pad.md,
+          "text-center",
+          "bg-surface-base/50",
+          radius.lg,
+          "border border-dashed border-surface-border"
+        )}>
+          <div className="text-text-muted mb-2">
+            <Route className={cn(iconTokens.size.lg, "mx-auto opacity-40")} />
+          </div>
+          <p className="body-small text-text-muted">
+            {t("pathDiscovery.enterTarget", "Select a target to trace")}
+          </p>
+          <p className="caption text-text-muted mt-1">
+            {t("pathDiscovery.emptyHint", "Enter an IP address or hostname, or use the quick buttons above")}
+          </p>
+        </div>
       )}
     </Card>
   );

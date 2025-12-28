@@ -210,7 +210,7 @@ interface NetworkDiscoveryCardProps {
 type SortField = "ip" | "hostname" | "vendor" | "lastSeen" | null;
 type SortDirection = "asc" | "desc";
 
-// Search bar component
+// Search bar component - Responsive design for various screen widths
 function DeviceSearchBar({
   searchQuery,
   onSearchChange,
@@ -247,8 +247,7 @@ function DeviceSearchBar({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t("discovery.searchPlaceholder")}
           className={cn(
-            "w-full pl-9 pr-8",
-            spacing.chip.sm,
+            "w-full pl-9 pr-8 py-2",
             "body-small bg-surface-base border border-surface-border",
             radius.md,
             "focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted"
@@ -266,16 +265,10 @@ function DeviceSearchBar({
         )}
       </div>
 
-      {/* Sort buttons row */}
-      <div
-        className={cn(
-          "flex items-center justify-between",
-          spacing.gap.compact,
-          "flex-wrap"
-        )}
-      >
-        <div className={cn("flex items-center", spacing.gap.tight)}>
-          <span className="caption text-text-muted">
+      {/* Sort buttons row - wrap on small screens */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="caption text-text-muted shrink-0">
             {t("discovery.sort")}:
           </span>
           {(["ip", "hostname", "vendor", "lastSeen"] as SortField[]).map(
@@ -285,11 +278,10 @@ function DeviceSearchBar({
                 type="button"
                 onClick={() => onSortChange(field)}
                 className={cn(
-                  spacing.chip.sm,
+                  "px-2 py-1",
                   "caption",
                   radius.md,
-                  "transition-colors flex items-center",
-                  spacing.gap.tight,
+                  "transition-colors flex items-center gap-0.5 whitespace-nowrap",
                   sortField === field
                     ? "bg-brand-primary/20 text-brand-primary"
                     : "bg-surface-hover text-text-muted hover:text-text-primary"
@@ -856,32 +848,30 @@ function DeviceRow({
         type="button"
         onClick={onToggle}
         className={cn(
-          "w-full",
-          spacing.pad.xs,
-          `sm:${spacing.pad.sm}`,
+          "w-full p-2 sm:p-3",
           "text-left hover:bg-surface-hover transition-colors focus:outline-none focus:ring-1 focus:ring-brand-primary"
         )}
       >
-        <div
-          className={cn(
-            "flex items-center justify-between",
-            spacing.gap.compact
-          )}
-        >
-          <div className="flex-1 min-w-0">
-            <div
-              className={cn(
-                "flex items-center",
-                spacing.gap.compact,
-                "flex-wrap"
-              )}
-            >
-              <span className="font-mono body-small text-text-primary">
+        {/* Main row - responsive layout */}
+        <div className="flex items-start sm:items-center justify-between gap-2">
+          {/* Device info - stack on mobile, inline on larger screens */}
+          <div className="flex-1 min-w-0 space-y-1">
+            {/* IP and hostname row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-sm font-medium text-text-primary">
                 {device.ip || t("network.noIP")}
               </span>
+              {device.hostname && (
+                <span
+                  className="text-xs text-text-muted truncate max-w-30 sm:max-w-45"
+                  title={device.hostname}
+                >
+                  ({device.hostname})
+                </span>
+              )}
               {device.ipv6 && (
                 <span
-                  className="font-mono caption text-text-accent"
+                  className="font-mono text-xs text-text-accent hidden sm:inline truncate max-w-40"
                   title={device.ipv6}
                 >
                   {device.ipv6.length > 20
@@ -889,25 +879,49 @@ function DeviceRow({
                     : device.ipv6}
                 </span>
               )}
-              {device.hostname && (
-                <span
-                  className="caption text-text-muted truncate max-w-30"
-                  title={device.hostname}
-                >
-                  ({device.hostname})
-                </span>
-              )}
+            </div>
+
+            {/* Badges row - discovery methods, vendor, ports, vulns */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Discovery method badges */}
+              {device.discoveryMethod.map((method) => (
+                <MethodBadge key={method} method={method} />
+              ))}
+
+              {/* Vendor badge */}
+              {device.vendor &&
+                device.vendor !== "Unknown" &&
+                (device.vendor === "LAA" ? (
+                  <Tooltip
+                    content="Locally Administered Address - A MAC address that was locally assigned rather than by the manufacturer. Common in virtual machines, containers, and devices with MAC randomization enabled for privacy."
+                    position="bottom"
+                  >
+                    <span className="text-xs text-text-muted underline decoration-dotted cursor-help">
+                      {device.vendor}
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <span
+                    className="text-xs text-text-muted truncate max-w-25"
+                    title={device.vendor}
+                  >
+                    {device.vendor}
+                  </span>
+                ))}
+
+              {/* Open ports badge */}
               {openPorts.length > 0 && (
                 <span
                   className={cn(
-                    "caption bg-status-success/20 text-status-success",
-                    spacing.chip.sm,
+                    "text-xs px-1.5 py-0.5 bg-status-success/20 text-status-success",
                     radius.md
                   )}
                 >
                   {t("discovery.open", { count: openPorts.length })}
                 </span>
               )}
+
+              {/* Profile icons */}
               {device.profile?.deviceIcons &&
                 device.profile.deviceIcons.length > 0 && (
                   <ProfileIcons
@@ -915,6 +929,8 @@ function DeviceRow({
                     deviceType={device.profile.deviceType}
                   />
                 )}
+
+              {/* Vulnerability badge */}
               {device.vulnerabilities && device.vulnerabilities.count > 0 && (
                 <button
                   type="button"
@@ -923,10 +939,7 @@ function DeviceRow({
                     onVulnerabilityClick?.(device.ip);
                   }}
                   className={cn(
-                    "inline-flex items-center",
-                    spacing.gap.tight,
-                    "caption",
-                    spacing.chip.sm,
+                    "inline-flex items-center gap-1 text-xs px-1.5 py-0.5",
                     radius.md,
                     "cursor-pointer hover:opacity-80 transition-opacity",
                     device.vulnerabilities.highestSeverity === "CRITICAL"
@@ -939,80 +952,46 @@ function DeviceRow({
                   )}
                   title={t("discovery.clickViewVulnerabilities")}
                 >
-                  <AlertTriangle className={iconTokens.size.xs} />
+                  <AlertTriangle className="w-3 h-3" />
                   {device.vulnerabilities.count} CVE
                 </button>
               )}
             </div>
-            <div
-              className={cn(
-                "flex items-center",
-                spacing.inline.sm,
-                spacing.margin.top.inline,
-                "flex-wrap"
-              )}
-            >
-              {device.discoveryMethod.map((method) => (
-                <MethodBadge key={method} method={method} />
-              ))}
-              {device.vendor &&
-                device.vendor !== "Unknown" &&
-                (device.vendor === "LAA" ? (
-                  <Tooltip
-                    content="Locally Administered Address - A MAC address that was locally assigned rather than by the manufacturer. Common in virtual machines, containers, and devices with MAC randomization enabled for privacy."
-                    position="bottom"
-                  >
-                    <span className="caption text-text-muted truncate max-w-25 underline decoration-dotted cursor-help">
-                      {device.vendor}
-                    </span>
-                  </Tooltip>
-                ) : (
-                  <span
-                    className="caption text-text-muted truncate max-w-25"
-                    title={device.vendor}
-                  >
-                    {device.vendor}
-                  </span>
-                ))}
-            </div>
           </div>
-          <div
-            className={cn("flex items-center", spacing.gap.compact, "shrink-0")}
-          >
+
+          {/* Right side - OS guess, scan button, expand indicator */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* OS guess - hidden on mobile */}
             {device.osGuess && (
-              <span className="caption text-text-muted hidden sm:inline">
+              <span className="text-xs text-text-muted hidden md:inline max-w-25 truncate">
                 {device.osGuess}
               </span>
             )}
+
+            {/* Scan button */}
             {onDeepScan && device.ip && (
               <button
                 type="button"
                 onClick={handleDeepScan}
                 disabled={isScanning}
                 className={cn(
-                  spacing.chip.sm,
-                  "caption bg-status-info/20 text-status-info",
+                  "text-xs px-2 py-1 bg-brand-primary/20 text-brand-primary",
                   radius.md,
-                  "hover:bg-status-info/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  "hover:bg-brand-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 )}
                 title={t("discovery.deepScan")}
               >
                 {isScanning ? (
-                  <span className={cn("flex items-center", spacing.gap.tight)}>
-                    <span className="animate-spin">◐</span>
-                  </span>
+                  <span className="animate-spin">◐</span>
                 ) : (
                   t("discovery.scan")
                 )}
               </button>
             )}
-            <span
-              className={cn(
-                "text-lg transition-transform",
-                isExpanded ? "rotate-180" : ""
-              )}
-            >
-              {hasDetails || scanResult ? "▼" : "○"}
+
+            {/* Expand indicator */}
+            <span className="text-sm text-text-muted">
+              {hasDetails || scanResult ? (isExpanded ? "▲" : "▼") : "○"}
             </span>
           </div>
         </div>
@@ -2111,7 +2090,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           defaultOpen={true}
           count={localDevices.length}
         >
-          <div className="stack-sm max-h-60 overflow-y-auto">
+          <div className="stack-sm max-h-96 overflow-y-auto">
             {localDevices.map((device) => {
               const deviceKey = device.mac || `ip:${device.ip}`;
               return (
@@ -2140,7 +2119,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           defaultOpen={false}
           count={extendedDevices.length}
         >
-          <div className="stack-sm max-h-60 overflow-y-auto">
+          <div className="stack-sm max-h-96 overflow-y-auto">
             {extendedDevices.map((device) => {
               const deviceKey = device.mac || `ip:${device.ip}`;
               return (
