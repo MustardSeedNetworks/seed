@@ -250,7 +250,17 @@ func (m *Manager) generateTokenWithType(username, tokenType string, duration tim
 	// Read token version with lock (fixes #520, #525)
 	m.mu.RLock()
 	currentVersion := m.tokenVersion
+	userStore := m.userStore
 	m.mu.RUnlock()
+
+	// If we have a UserStore, get the token version from the database
+	// This ensures tokens are generated with the correct version (fixes #927)
+	if userStore != nil && username != "" {
+		if dbVersion, err := userStore.GetTokenVersion(username); err == nil {
+			currentVersion = dbVersion
+		}
+		// On error, fall back to in-memory version
+	}
 
 	now := time.Now()
 	claims := &Claims{
