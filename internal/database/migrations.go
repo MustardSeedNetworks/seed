@@ -328,6 +328,30 @@ var migrations = []Migration{
 			CREATE UNIQUE INDEX IF NOT EXISTS idx_device_vulns_unique ON device_vulnerabilities(device_id, cve_id);
 		`,
 	},
+	{
+		Version:     13,
+		Description: "Create users table for authentication",
+		Up: `
+			-- Users table for authentication
+			-- Moves password hashes from config.yaml to database for better security
+			CREATE TABLE IF NOT EXISTS users (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				username TEXT NOT NULL UNIQUE,
+				password_hash TEXT NOT NULL,
+				role TEXT NOT NULL DEFAULT 'admin',
+				is_active INTEGER DEFAULT 1,
+				last_login TEXT,
+				failed_attempts INTEGER DEFAULT 0,
+				locked_until TEXT,
+				token_version INTEGER DEFAULT 1,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+			CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);
+		`,
+	},
 }
 
 // migrate runs all pending migrations.

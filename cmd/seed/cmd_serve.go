@@ -77,14 +77,19 @@ func checkICMPCapabilities() bool {
 
 // setupLogging configures structured logging with secure permissions and rotation.
 func setupLogging(cfg *config.Config) string {
-	logPath := filepath.Join("logs", "seed.log")
+	// Use configured log path, or default to logs/seed.log
+	logPath := cfg.Logging.File
+	if logPath == "" {
+		logPath = filepath.Join("logs", "seed.log")
+	}
+
 	if err := os.MkdirAll(filepath.Dir(logPath), 0o750); err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal: Failed to create log directory: %v\n", err)
 		os.Exit(1)
 	}
 
 	if _, err := os.Stat(logPath); os.IsNotExist(err) {
-		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // G304: logPath is constructed from constants
+		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // G304: logPath is from config
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Fatal: Failed to create log file with secure permissions: %v\n", err)
 			os.Exit(1)

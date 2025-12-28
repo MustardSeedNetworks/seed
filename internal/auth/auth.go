@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -48,6 +49,23 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// UserStore provides user lookup and management operations.
+// Implementations can use database, config file, or other storage backends.
+type UserStore interface {
+	// GetPasswordHash returns the password hash for a user.
+	GetPasswordHash(username string) (string, error)
+	// GetTokenVersion returns the current token version for a user.
+	GetTokenVersion(username string) (int, error)
+	// UpdatePassword updates a user's password hash.
+	UpdatePassword(username, hash string) error
+	// RecordLoginSuccess records a successful login.
+	RecordLoginSuccess(username string) error
+	// RecordLoginFailure records a failed login attempt.
+	RecordLoginFailure(username string) error
+	// IsLocked checks if a user account is locked.
+	IsLocked(username string) (bool, error)
+}
+
 // Manager handles authentication operations.
 type Manager struct {
 	mu             sync.RWMutex // Protects passwordHash and username (fixes #520)
@@ -55,7 +73,8 @@ type Manager struct {
 	sessionTimeout time.Duration
 	passwordHash   string
 	username       string
-	tokenVersion   int // Token version for revocation support (fixes #525)
+	tokenVersion   int       // Token version for revocation support (fixes #525)
+	userStore      UserStore // Optional database-backed user store
 }
 
 // NewManager creates a new authentication manager.
@@ -72,6 +91,15 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 		passwordHash:   passwordHash,
 		username:       username,
 	}
+}
+
+// SetUserStore sets the database-backed user store for authentication.
+// When set, the manager will use the database for user lookups instead of in-memory.
+func (m *Manager) SetUserStore(store UserStore) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.userStore = store
+	slog.Info("UserStore set for authentication", "hasStore", store != nil)
 }
 
 // cryptoRandRead attempts to read random bytes with retry logic.
@@ -141,13 +169,49 @@ func GenerateJWTSecret() string {
 
 // Authenticate validates credentials and returns a JWT token.
 // Uses constant-time comparison for username to prevent timing attacks (fixes #513).
+// If a UserStore is set, uses database for authentication; otherwise uses in-memory.
 func (m *Manager) Authenticate(username, password string) (string, error) {
-	// Read credentials with read lock (fixes #520)
+	// Read credentials and userStore with read lock (fixes #520)
 	m.mu.RLock()
 	storedUsername := m.username
 	storedPasswordHash := m.passwordHash
+	userStore := m.userStore
 	m.mu.RUnlock()
 
+	// If we have a UserStore, use it for authentication
+	if userStore != nil {
+		// Check if account is locked
+		locked, err := userStore.IsLocked(username)
+		if err != nil {
+			slog.Warn("Failed to check user lock status", "username", username, "error", err)
+		}
+		if locked {
+			return "", ErrInvalidCredentials
+		}
+
+		// Get password hash from database
+		dbHash, err := userStore.GetPasswordHash(username)
+		if err != nil {
+			// User not found in database - record failure and return error
+			_ = userStore.RecordLoginFailure(username)
+			return "", ErrInvalidCredentials
+		}
+
+		// Password comparison (bcrypt.CompareHashAndPassword is already constant-time)
+		if err := bcrypt.CompareHashAndPassword([]byte(dbHash), []byte(password)); err != nil {
+			_ = userStore.RecordLoginFailure(username)
+			return "", ErrInvalidCredentials
+		}
+
+		// Record successful login
+		if err := userStore.RecordLoginSuccess(username); err != nil {
+			slog.Warn("Failed to record login success", "username", username, "error", err)
+		}
+
+		return m.GenerateToken(username)
+	}
+
+	// Fallback to in-memory authentication (legacy/config-based)
 	// Constant-time username comparison to prevent timing attacks
 	usernameMatch := subtle.ConstantTimeCompare(
 		[]byte(username),
@@ -208,6 +272,7 @@ func (m *Manager) generateTokenWithType(username, tokenType string, duration tim
 
 // ValidateToken validates a JWT token and returns the claims.
 // Checks token version to support revocation (fixes #525).
+// If UserStore is set, queries database for current token version.
 func (m *Manager) ValidateToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -230,7 +295,17 @@ func (m *Manager) ValidateToken(tokenString string) (*Claims, error) {
 	// Check token version for revocation (fixes #525)
 	m.mu.RLock()
 	currentVersion := m.tokenVersion
+	userStore := m.userStore
 	m.mu.RUnlock()
+
+	// If we have a UserStore, get current token version from database
+	if userStore != nil && claims.Username != "" {
+		dbVersion, err := userStore.GetTokenVersion(claims.Username)
+		if err == nil {
+			currentVersion = dbVersion
+		}
+		// On error, fall back to in-memory version
+	}
 
 	if claims.TokenVersion < currentVersion {
 		slog.Info("Token revoked", "version", claims.TokenVersion, "current", currentVersion)
@@ -568,12 +643,44 @@ func GenerateInitialCredentials(username string) (*InitialCredentials, error) {
 // UpdatePasswordHash updates the auth manager's password hash at runtime.
 // This is used when the password is changed via the setup wizard or settings.
 // Also increments token version to invalidate all existing tokens (fixes #520, #525).
+// If a UserStore is set, updates the database as well.
 func (m *Manager) UpdatePasswordHash(hash string) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	m.passwordHash = hash
 	m.tokenVersion++ // Invalidate all existing tokens
+	userStore := m.userStore
+	username := m.username
+	m.mu.Unlock()
+
+	// If we have a UserStore, update the database as well
+	if userStore != nil && username != "" {
+		if err := userStore.UpdatePassword(username, hash); err != nil {
+			slog.Error("Failed to update password in database", "username", username, "error", err)
+		} else {
+			slog.Info("Password hash updated in database", "username", username)
+		}
+	}
+
 	slog.Info("Password hash updated, all existing tokens invalidated", "version", m.tokenVersion)
+}
+
+// UpdatePasswordHashForUser updates the password hash for a specific user.
+// This is used when changing password for a user that may differ from the default.
+func (m *Manager) UpdatePasswordHashForUser(username, hash string) error {
+	m.mu.RLock()
+	userStore := m.userStore
+	m.mu.RUnlock()
+
+	if userStore == nil {
+		return errors.New("no UserStore configured")
+	}
+
+	if err := userStore.UpdatePassword(username, hash); err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	slog.Info("Password hash updated for user", "username", username)
+	return nil
 }
 
 // IsDefaultPasswordHash checks if the given hash matches the default "seed" password.

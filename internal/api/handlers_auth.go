@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -352,9 +353,22 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783, #815)
 	s.config.Lock()
 	s.config.Auth.DefaultPasswordHash = hash
+	username := s.config.Auth.DefaultUsername
 	s.config.Unlock() // Explicit unlock before Save() to prevent deadlock
 
-	// Update auth manager
+	// Create or update user in database if available
+	if s.db != nil {
+		userStore := database.NewUserStoreAdapter(s.db)
+		// Try to create user first (for new setups)
+		if err := userStore.CreateUser(username, hash, "admin"); err != nil {
+			// If user exists, update the password
+			if err := userStore.UpdatePassword(username, hash); err != nil {
+				logger.Error("Failed to update user in database", "error", err)
+			}
+		}
+	}
+
+	// Update auth manager (also updates database via UserStore if set)
 	s.authManager.UpdatePasswordHash(hash)
 
 	// Save config to disk

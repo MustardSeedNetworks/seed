@@ -198,6 +198,20 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		s.db = db
 		slog.Info("Database initialized", "path", dbPath)
 
+		// Set up database-backed user store for authentication
+		userStore := database.NewUserStoreAdapter(db)
+		s.authManager.SetUserStore(userStore)
+
+		// Migrate admin user from config to database if needed
+		// This ensures backward compatibility during the transition
+		if cfg.Auth.DefaultPasswordHash != "" && cfg.Auth.DefaultPasswordHash != auth.SetupModePlaceholder {
+			if err := userStore.MigrateUserFromConfig(cfg.Auth.DefaultUsername, cfg.Auth.DefaultPasswordHash); err != nil {
+				slog.Error("Failed to migrate user from config", "error", err)
+			} else {
+				slog.Info("User migrated from config to database", "username", cfg.Auth.DefaultUsername)
+			}
+		}
+
 		// Start data retention cleanup in background (fixes #848)
 		if cfg.Database.RetentionDays > 0 {
 			s.retentionStopCh = make(chan struct{})

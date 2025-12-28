@@ -46,6 +46,13 @@ fi
 chown "$SERVICE_USER:$SERVICE_GROUP" "$DATA_DIR"
 chmod 750 "$DATA_DIR"
 
+# Create logs subdirectory within data directory (for file-based logging)
+if [ ! -d "$DATA_DIR/logs" ]; then
+    mkdir -p "$DATA_DIR/logs"
+fi
+chown "$SERVICE_USER:$SERVICE_GROUP" "$DATA_DIR/logs"
+chmod 750 "$DATA_DIR/logs"
+
 # Create log directory (optional, journald is primary)
 if [ ! -d "$LOG_DIR" ]; then
     mkdir -p "$LOG_DIR"
