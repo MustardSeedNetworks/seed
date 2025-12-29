@@ -51,7 +51,7 @@ interface WifiSurveyCardProps {
 /**
  * Manages Wifi site surveys for signal mapping with floor plan integration.
  */
-export function WifiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCardProps) {
+export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCardProps) {
   const { t } = useTranslation("cards");
   const {
     surveys,
