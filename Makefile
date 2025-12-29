@@ -247,9 +247,9 @@ build-backend-dev: ## Build Go backend in dev mode (reads frontend from disk)
 # Install frontend dependencies (separate from build for caching)
 # Only runs npm ci if node_modules is missing or package-lock.json changed
 frontend-deps: ## Install frontend dependencies (cached)
-	@if [ ! -d web/node_modules ] || [ web/package-lock.json -nt web/node_modules/.package-lock.json ]; then \
+	@if [ ! -d ui/node_modules ] || [ ui/package-lock.json -nt ui/node_modules/.package-lock.json ]; then \
 		echo "Installing frontend dependencies..."; \
-		cd web && npm ci; \
+		cd ui && npm ci; \
 	else \
 		echo "Frontend dependencies up to date"; \
 	fi
@@ -262,10 +262,10 @@ generate-types: frontend-deps ## Generate TypeScript types from JSON Schema
 	@echo "✅ TypeScript types generated"
 
 # Build React/TypeScript frontend
-# Output goes to web/dist/ which is embedded in the Go binary
+# Output goes to ui/dist/ which is embedded in the Go binary
 build-frontend: frontend-deps ## Build React frontend
 	@printf "$(BOLD)🔨 Building frontend...$(RESET)\n"
-	@cd web && npm run build
+	@cd ui && npm run build
 	@printf "$(GREEN)✓ Frontend build complete$(RESET)\n"
 
 # Frontend build (quiet mode)
@@ -273,9 +273,9 @@ build-frontend: frontend-deps ## Build React frontend
 build-frontend-quiet: frontend-deps
 	@printf "   Bundling React application...\n"
 	@command -v npm >/dev/null 2>&1 || { printf "$(RED)ERROR: npm not found. Frontend build requires npm.$(RESET)\n"; exit 1; }
-	@cd web && npm run build
-	@SIZE=$$(du -sh web/dist 2>/dev/null | cut -f1 || echo "unknown"); \
-	printf "   Output: web/dist ($$SIZE)\n"
+	@cd ui && npm run build
+	@SIZE=$$(du -sh ui/dist 2>/dev/null | cut -f1 || echo "unknown"); \
+	printf "   Output: ui/dist ($$SIZE)\n"
 
 # -----------------------------------------------------------------------------
 # Cross-Compilation for Linux
@@ -706,7 +706,7 @@ test-all: ## Run ALL tests (unit + E2E + Storybook)
 # Excludes packages without test files to avoid covdata tool errors
 test-backend: ## Run Go tests with progress
 	@printf "\n$(BOLD)🧪 Running backend tests...$(RESET)\n"
-	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/web$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
 	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
 	printf "   📦 Testing $$PKG_COUNT packages...\n\n"; \
 	if command -v gotestsum > /dev/null 2>&1; then \
@@ -722,7 +722,7 @@ test-backend: ## Run Go tests with progress
 
 # Go tests (quiet mode for use in pipelines)
 test-backend-quiet:
-	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/web$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
 	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
 	printf "   Testing $$PKG_COUNT packages...\n"; \
 	go test -race -coverprofile=coverage.out $$PKGS 2>&1 | grep -E "^(ok|FAIL|---)" || true
@@ -734,41 +734,41 @@ test-backend-quiet:
 # Frontend unit tests via Vitest (verbose output)
 test-frontend: ## Run frontend tests with progress
 	@printf "\n$(BOLD)🧪 Running frontend tests...$(RESET)\n"
-	@STORY_COUNT=$$(find web/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
+	@STORY_COUNT=$$(find ui/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
 	printf "   📦 Running $$STORY_COUNT test files...\n\n"
-	@cd web && npm test
+	@cd ui && npm test
 	@printf "\n$(GREEN)✓ Frontend tests complete$(RESET)\n"
 
 # Frontend tests (quiet mode for use in pipelines)
 test-frontend-quiet:
-	@STORY_COUNT=$$(find web/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
+	@STORY_COUNT=$$(find ui/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
 	printf "   Running $$STORY_COUNT test files...\n"
-	@cd web && npm test 2>&1 | grep -E "(PASS|FAIL|Tests:)" || true
+	@cd ui && npm test 2>&1 | grep -E "(PASS|FAIL|Tests:)" || true
 
 # Frontend E2E tests via Playwright (closes #482, #309)
 # Requires backend to be running on port 8443
 test-e2e: ## Run frontend E2E tests (requires backend running)
 	@echo ""
 	@echo "🎭 Running E2E tests (Playwright)..."
-	@E2E_COUNT=$$(find web/e2e -name "*.spec.ts" 2>/dev/null | wc -l | tr -d ' '); \
+	@E2E_COUNT=$$(find ui/e2e -name "*.spec.ts" 2>/dev/null | wc -l | tr -d ' '); \
 	echo "   📦 Running $$E2E_COUNT spec files..."
 	@echo ""
-	@cd web && npm run test:e2e
+	@cd ui && npm run test:e2e
 	@echo ""
 	@echo "✅ E2E tests complete"
 
 # Run E2E tests with UI mode for debugging
 test-e2e-ui: ## Run E2E tests with Playwright UI
 	@echo "🎭 Starting Playwright UI mode..."
-	cd web && npm run test:e2e:ui
+	cd ui && npm run test:e2e:ui
 
 # Install Playwright browsers (required before first E2E run)
 test-e2e-install: ## Install Playwright browsers
-	cd web && npx playwright install --with-deps chromium
+	cd ui && npx playwright install --with-deps chromium
 
 # Generate HTML coverage report
 test-coverage: ## Generate coverage report
-	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/web$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
 	go test -race -coverprofile=coverage.out $$PKGS
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
@@ -780,13 +780,13 @@ test-coverage: ## Generate coverage report
 # Run Storybook development server
 storybook: ## Run Storybook development server (port 6006)
 	@echo "📚 Starting Storybook..."
-	cd web && npm run storybook
+	cd ui && npm run storybook
 
 # Build static Storybook for deployment
 build-storybook: ## Build static Storybook
 	@echo "📚 Building Storybook..."
-	@cd web && npm run build-storybook
-	@echo "✅ Storybook built to web/storybook-static/"
+	@cd ui && npm run build-storybook
+	@echo "✅ Storybook built to ui/storybook-static/"
 
 # Test Storybook stories compile (useful in CI)
 test-storybook: build-storybook ## Verify Storybook builds successfully
@@ -862,14 +862,14 @@ lint-backend-quiet:
 # ESLint with TypeScript rules
 lint-frontend: ## Run frontend linter
 	@printf "$(BOLD)🔍 Running frontend linter...$(RESET)\n"
-	@cd web && npm run lint
+	@cd ui && npm run lint
 	@printf "$(GREEN)✓ Frontend lint complete$(RESET)\n"
 
 # Frontend lint (quiet mode for pipelines)
 lint-frontend-quiet:
-	@FILE_COUNT=$$(find web/src -name "*.ts" -o -name "*.tsx" 2>/dev/null | wc -l | tr -d ' '); \
+	@FILE_COUNT=$$(find ui/src -name "*.ts" -o -name "*.tsx" 2>/dev/null | wc -l | tr -d ' '); \
 	printf "   Checking $$FILE_COUNT files...\n"
-	@cd web && npm run lint 2>&1 | tail -5 || true
+	@cd ui && npm run lint 2>&1 | tail -5 || true
 
 # -----------------------------------------------------------------------------
 # Auto-Fix - Automatically fix linting and formatting issues
@@ -912,14 +912,14 @@ fix-backend-quiet:
 # Auto-fix frontend linting issues
 fix-frontend: ## Auto-fix frontend linting issues
 	@printf "$(BOLD)🔧 Auto-fixing frontend code...$(RESET)\n"
-	@cd web && npm run lint:fix
-	@cd web && npx prettier --write .
+	@cd ui && npm run lint:fix
+	@cd ui && npx prettier --write .
 	@printf "$(GREEN)✓ Frontend auto-fix complete$(RESET)\n"
 
 # Frontend fix (quiet mode for pipelines)
 fix-frontend-quiet:
-	@cd web && npm run lint:fix 2>&1 | tail -3 || true
-	@cd web && npx prettier --write . 2>&1 | tail -1 || true
+	@cd ui && npm run lint:fix 2>&1 | tail -3 || true
+	@cd ui && npx prettier --write . 2>&1 | tail -1 || true
 
 # Auto-fix markdown formatting
 fix-md: fmt-md ## Auto-fix markdown formatting
@@ -1110,11 +1110,11 @@ security-trivy: ## Run Trivy vulnerability scan
 clean: ## Clean build artifacts
 	rm -f $(BINARY_NAME) $(BINARY_NAME)-*
 	rm -f coverage.out coverage.html
-	rm -rf web/dist
+	rm -rf ui/dist
 
 # Full clean including dependencies
 clean-all: clean ## Clean everything including dependencies
-	rm -rf web/node_modules
+	rm -rf ui/node_modules
 	rm -rf build/iperf3 bin/iperf3*
 	rm -rf dist/
 

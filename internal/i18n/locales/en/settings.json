@@ -44,11 +44,11 @@
     "dnsServers": "DNS Servers",
     "mtu": "MTU",
     "displayOptions": "Display Options",
-    "showPublicIP": "Show Public IP",
+    "showPublicIp": "Show Public IP",
     "displayInNetworkCard": "Display in Network card",
     "vlanTag": "VLAN Tag (802.1Q)",
     "mtuSetting": "MTU Setting",
-    "applyIPSettings": "Apply IP Settings",
+    "applyIpSettings": "Apply IP Settings",
     "applying": "Applying...",
     "requiresRoot": "Note: Requires root/admin privileges to apply",
     "vlan": {

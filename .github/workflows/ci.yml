@@ -131,7 +131,7 @@ jobs:
         with:
           node-version: "25.2.1"
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -142,11 +142,8 @@ jobs:
       - name: Run TypeScript check
         run: npx tsc --noEmit
 
-      - name: Run ESLint
-        run: npm run lint --if-present
-
-      - name: Run Prettier
-        run: npx prettier --check .
+      - name: Run Biome (lint + format)
+        run: npm run ci
 
       - name: Run unit tests
         run: npm run test
@@ -161,7 +158,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: web/dist/
+          path: ui/dist/
           retention-days: 1
 
   # ===========================================================================
@@ -204,10 +201,10 @@ jobs:
         with:
           node-version: "25.2.1"
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Run npm audit
-        working-directory: web
+        working-directory: ui
         run: |
           npm ci
           npm audit --audit-level=high
@@ -380,7 +377,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check markdown formatting (Prettier)
+      - name: Check markdown formatting (Biome)
         run: npm run format:md:check
 
       - name: Check markdown links
@@ -465,7 +462,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: web/dist/
+          path: ui/dist/
 
       - name: Install libpcap-dev
         run: sudo apt-get update && sudo apt-get install -y libpcap-dev
@@ -519,7 +516,7 @@ jobs:
         with:
           node-version: "25.2.1"
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install libpcap-dev
         run: sudo apt-get update && sudo apt-get install -y libpcap-dev
@@ -528,10 +525,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: web/dist/
+          path: ui/dist/
 
       - name: Install frontend dependencies (for Playwright)
-        working-directory: web
+        working-directory: ui
         run: npm ci
 
       - name: Build backend
@@ -541,7 +538,7 @@ jobs:
             -o seed ./cmd/seed
 
       - name: Install Playwright browsers
-        working-directory: web
+        working-directory: ui
         run: npx playwright install --with-deps chromium
 
       - name: Start backend server
@@ -552,7 +549,7 @@ jobs:
           curl -sf -k https://localhost:8443/api/health || (cat server.log && exit 1)
 
       - name: Run Playwright E2E tests
-        working-directory: web
+        working-directory: ui
         env:
           E2E_BASE_URL: https://localhost:8443
         run: npx playwright test --reporter=html
@@ -562,7 +559,7 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: web/playwright-report/
+          path: ui/playwright-report/
           retention-days: 7
 
       - name: Upload server logs on failure
@@ -597,7 +594,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: web/dist/
+          path: ui/dist/
 
       - name: Build backend
         run: |
@@ -643,19 +640,19 @@ jobs:
         with:
           node-version: "25.2.1"
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install dependencies
-        working-directory: web
+        working-directory: ui
         run: npm ci
 
       - name: Build Storybook
-        working-directory: web
+        working-directory: ui
         run: npm run build-storybook
 
       - name: Upload Storybook build
         uses: actions/upload-artifact@v4
         with:
           name: storybook-static
-          path: web/storybook-static/
+          path: ui/storybook-static/
           retention-days: 7

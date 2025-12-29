@@ -98,17 +98,17 @@ jobs:
         with:
           node-version: "25.2.1"
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install dependencies
-        working-directory: web
+        working-directory: ui
         run: npm ci
 
       - name: Install ts-prune
         run: npm install -g ts-prune
 
       - name: Check for unused exports
-        working-directory: web
+        working-directory: ui
         run: |
           echo "### Frontend Dead Code Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -127,7 +127,7 @@ jobs:
           fi
 
       - name: Check for unused npm dependencies
-        working-directory: web
+        working-directory: ui
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Unused npm Dependencies" >> $GITHUB_STEP_SUMMARY
@@ -176,7 +176,7 @@ jobs:
           # Find TypeScript files not imported anywhere
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "#### TypeScript Files" >> $GITHUB_STEP_SUMMARY
-          cd web/src
+          cd ui/src
           for file in $(find . -name "*.tsx" -o -name "*.ts" | grep -v ".test." | grep -v ".stories." | grep -v ".d.ts"); do
             basename=$(basename "$file" | sed 's/\.[^.]*$//')
             # Check if file is imported

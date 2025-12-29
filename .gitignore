@@ -45,10 +45,10 @@ Thumbs.db
 *.crt
 
 # Frontend
-web/node_modules/
-web/dist/
-web/.vite/
-web/coverage/
+ui/node_modules/
+ui/dist/
+ui/.vite/
+ui/coverage/
 *.log
 npm-debug.log*
 
@@ -75,7 +75,7 @@ temp/
 # Certificates (generated)
 certs/
 !certs/.gitkeep
-web/certs/
+ui/certs/
 
 # Local files
 *.png
@@ -86,8 +86,8 @@ CLAUDE.md
 storybook-static
 
 # Playwright reports
-web/playwright-report/
-web/test-results/
+ui/playwright-report/
+ui/test-results/
 
 # TypeScript build info
 *.tsbuildinfo

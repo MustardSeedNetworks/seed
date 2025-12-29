@@ -1,0 +1,655 @@
+@import "tailwindcss";
+
+/* Tailwind v4 CSS-first configuration */
+@theme {
+  /* ==========================================================================
+     TAILWIND CSS v4 THEME CONFIGURATION
+     ==========================================================================
+     Maps CSS custom properties to Tailwind utility classes.
+     Usage: bg-brand-primary, text-module-roots, etc.
+     ========================================================================== */
+
+  /* Custom font sizes */
+  --font-size-2xs: 0.6875rem;
+  --font-size-2xs--line-height: 1rem;
+
+  /* Custom max-width */
+  --width-8xl: 88rem;
+
+  /* Custom max-height */
+  --max-height-modal: 85vh;
+
+  /* Font families */
+  --font-family-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Brand Colors - Mustard Seed Networks */
+  --color-brand-primary: var(--color-brand-primary);
+  --color-brand-accent: var(--color-brand-accent);
+  --color-brand-gold: var(--color-brand-gold);
+
+  /* Legacy: Soil Brown (commented out - uncomment to restore)
+  --color-brand-secondary: var(--color-brand-secondary);
+  --color-brand-secondary-dark: var(--color-brand-secondary-dark);
+  */
+
+  /* Surface Colors - Elevation system */
+  --color-surface-base: var(--color-surface-base);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-surface-border: var(--color-surface-border);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-surface-sunken: var(--color-surface-sunken);
+
+  /* Text Colors */
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-accent: var(--color-text-accent);
+  --color-text-inverse: var(--color-text-inverse);
+
+  /* Status Colors - INDUSTRY STANDARD (do not change) */
+  --color-status-success: var(--color-status-success);
+  --color-status-warning: var(--color-status-warning);
+  --color-status-error: var(--color-status-error);
+  --color-status-info: var(--color-status-info);
+
+  /* Module Accent Colors - for icons/badges only */
+  --color-module-roots: var(--color-module-roots);
+  --color-module-canopy: var(--color-module-canopy);
+  --color-module-shell: var(--color-module-shell);
+  --color-module-sap: var(--color-module-sap);
+  --color-module-harvest: var(--color-module-harvest);
+}
+
+/* Source detection for Tailwind */
+@source "../index.html";
+@source "./**/*.{js,ts,jsx,tsx}";
+
+/* The Seed Theme - Mustard Seed Networks */
+
+:root {
+  /* ==========================================================================
+     LIGHT MODE - Mustard Seed Networks Brand
+     ==========================================================================
+     Brand Identity: Growth, Network, Reliability
+     Primary: Forest Green (Seed Green) - stable, mature, trustworthy
+     Accent: Mustard Gold - the "mustard seed" highlight
+     ========================================================================== */
+
+  /* Brand Colors */
+  --color-brand-primary: #2d7a3e; /* Seed Green - primary actions, links */
+  --color-brand-accent: #4caf50; /* Lighter Seed Green - hover states */
+  --color-brand-gold: #d4a017; /* Mustard Gold - special highlights, premium features */
+
+  /* Legacy: Soil Brown (commented out - uncomment to restore)
+  --color-brand-secondary: #5c4033;
+  --color-brand-secondary-dark: #4e342e;
+  */
+
+  /* Surface Colors - Clean professional light palette */
+  --color-surface-base: #f8fafc; /* Cool white - page background */
+  --color-surface-raised: #ffffff; /* Pure white - cards, modals */
+  --color-surface-border: #e2e8f0; /* Light slate - borders, dividers */
+  --color-surface-hover: #f1f5f9; /* Subtle blue-gray - hover backgrounds */
+  --color-surface-sunken: #e2e8f0; /* Light slate - inset areas */
+
+  /* Text Colors - Optimized for light backgrounds */
+  --color-text-primary: #0f172a; /* Slate 900 - main text */
+  --color-text-secondary: #475569; /* Slate 600 - secondary text */
+  --color-text-muted: #64748b; /* Slate 500 - subtle text, captions */
+  --color-text-accent: #166534; /* Green 800 - links, highlights */
+  --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
+
+  /* Status Colors - INDUSTRY STANDARD (do not change) */
+  --color-status-success: #28a745; /* Green - positive states */
+  --color-status-warning: #ffc107; /* Amber - caution states */
+  --color-status-error: #dc3545; /* Red - error/danger states */
+  --color-status-info: #17a2b8; /* Cyan - informational states */
+
+  /* Module Accent Colors - for icons/badges only, not backgrounds */
+  --color-module-roots: #b45309; /* Amber/Brown - foundation, path analysis */
+  --color-module-canopy: #2d7a3e; /* Green - coverage, WiFi (matches brand) */
+  --color-module-shell: #ea580c; /* Orange - security, protection */
+  --color-module-sap: #0891b2; /* Cyan - telemetry, data flow */
+  --color-module-harvest: #d4a017; /* Gold - reports, results */
+
+  /* Gauge/Progress Colors (for SVG) */
+  --gauge-amber: #d97706;
+  --gauge-orange: #ea580c;
+}
+
+.dark {
+  /* ==========================================================================
+     DARK MODE - Mustard Seed Networks Brand
+     ==========================================================================
+     Colors are lightened for proper contrast on dark backgrounds.
+     Status colors remain constant (industry standard).
+     ========================================================================== */
+
+  /* Brand Colors - Lightened for dark backgrounds */
+  --color-brand-primary: #81c784; /* Lighter Seed Green */
+  --color-brand-accent: #a5d6a7; /* Even Lighter Seed Green */
+  --color-brand-gold: #fbbf24; /* Lighter Mustard Gold */
+
+  /* Legacy: Soil Brown (commented out - uncomment to restore)
+  --color-brand-secondary: #a1887f;
+  --color-brand-secondary-dark: #8d6e63;
+  */
+
+  /* Surface Colors - Standard elevation pattern (lighter = more elevated) */
+  --color-surface-base: #1a1a1a; /* Midnight - page background */
+  --color-surface-raised: #333333; /* Charcoal - cards, modals */
+  --color-surface-border: #666666; /* Slate - borders, dividers */
+  --color-surface-hover: #666666; /* Slate - hover backgrounds */
+  --color-surface-sunken: #000000; /* Black - inset areas */
+
+  /* Text Colors - Inverted for dark backgrounds */
+  --color-text-primary: #f8f8f8; /* Snow - main text */
+  --color-text-secondary: #e5e5e5; /* Cloud - secondary text */
+  --color-text-muted: #999999; /* Silver - subtle text, captions */
+  --color-text-accent: #81c784; /* Lighter Seed Green - links, highlights */
+  --color-text-inverse: #1a1a1a; /* Midnight - text on colored backgrounds */
+
+  /* Status Colors - INDUSTRY STANDARD (same as light mode) */
+  --color-status-success: #28a745;
+  --color-status-warning: #ffc107;
+  --color-status-error: #dc3545;
+  --color-status-info: #17a2b8;
+
+  /* Module Accent Colors - Lightened for dark backgrounds */
+  --color-module-roots: #fbbf24; /* Lighter Amber - foundation, path analysis */
+  --color-module-canopy: #81c784; /* Lighter Green - coverage, WiFi */
+  --color-module-shell: #fb923c; /* Lighter Orange - security, protection */
+  --color-module-sap: #22d3ee; /* Lighter Cyan - telemetry, data flow */
+  --color-module-harvest: #fbbf24; /* Lighter Gold - reports, results */
+
+  /* Gauge/Progress Colors (for SVG) */
+  --gauge-amber: #fbbf24;
+  --gauge-orange: #fb923c;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Light mode gradient - clean with subtle blue-green tints */
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 35%, #ecfdf5 65%, #f8fafc 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark mode gradient - richer green/teal undertones visible on dark */
+.dark body {
+  background: linear-gradient(135deg, #1a1a1a 0%, #1a2e1c 30%, #1c2823 60%, #1a1a1a 100%);
+}
+
+/* ============================================================================
+   COMPONENT LAYER UTILITIES
+   ============================================================================ */
+
+@layer components {
+  /* ========================================================================
+     TYPOGRAPHY SCALE
+     ========================================================================
+     Based on a 1.25 (Major Third) type scale with Inter font.
+     Each heading includes responsive sizing for mobile-first design.
+
+     Usage:
+       <h1 className="heading-1">Page Title</h1>
+       <h2 className="heading-2">Section Title</h2>
+       <h2 className="section-title">CATEGORY LABEL</h2>
+       <h3 className="heading-3">Card/Modal Title</h3>
+       <p className="body">Regular paragraph</p>
+       <p className="body-small">Secondary text</p>
+       <span className="caption">Metadata</span>
+     ======================================================================== */
+
+  /* Page titles - largest, used sparingly (login, major pages) */
+  .heading-1 {
+    @apply text-2xl sm:text-3xl font-bold text-text-primary leading-tight tracking-tight;
+  }
+
+  /* Section/modal titles - prominent but secondary to h1 */
+  .heading-2 {
+    @apply text-xl sm:text-2xl font-semibold text-text-primary leading-snug;
+  }
+
+  /* Card titles, subsections - most common heading */
+  .heading-3 {
+    @apply text-lg sm:text-xl font-semibold text-text-primary leading-snug;
+  }
+
+  /* Card subtitles, form section headers */
+  .heading-4 {
+    @apply text-base sm:text-lg font-medium text-text-primary leading-snug;
+  }
+
+  /* Section labels - small uppercase labels for grouping (Connectivity, Network, etc.) */
+  .section-title {
+    @apply text-xs font-medium uppercase tracking-wider text-text-muted;
+  }
+
+  /* Body text variants */
+  .body-large {
+    @apply text-lg text-text-primary leading-relaxed;
+  }
+
+  .body {
+    @apply text-base text-text-primary leading-relaxed;
+  }
+
+  .body-small {
+    @apply text-sm text-text-secondary leading-relaxed;
+  }
+
+  /* Smallest text - metadata, timestamps, badges */
+  .caption {
+    @apply text-xs text-text-muted leading-normal;
+  }
+
+  /* Labels for form fields and data */
+  .label {
+    @apply text-sm font-medium text-text-primary;
+  }
+
+  /* Code/monospace text */
+  .code {
+    @apply font-mono text-sm bg-surface-hover px-1.5 py-0.5 rounded;
+  }
+
+  /* ========================================================================
+     SPACING SCALE
+     ========================================================================
+     Standardized spacing utilities to ensure consistency.
+     Based on 4px grid with semantic naming.
+
+     Usage:
+       <div className="stack-sm">...</div>     // 8px vertical gap
+       <div className="stack">...</div>        // 12px vertical gap (default)
+       <div className="stack-lg">...</div>     // 16px vertical gap
+       <div className="section-gap">...</div>  // 24px between sections
+     ======================================================================== */
+
+  /* Vertical stacking (space-y equivalents with semantic names) */
+  .stack-xs {
+    @apply space-y-1; /* 4px */
+  }
+  .stack-sm {
+    @apply space-y-2; /* 8px */
+  }
+  .stack {
+    @apply space-y-3; /* 12px - default */
+  }
+  .stack-lg {
+    @apply space-y-4; /* 16px */
+  }
+  .stack-xl {
+    @apply space-y-6; /* 24px */
+  }
+
+  /* Section separators */
+  .section-gap {
+    @apply space-y-6; /* 24px between major sections */
+  }
+  .section-gap-lg {
+    @apply space-y-8; /* 32px for page-level sections */
+  }
+
+  /* Component gaps (for flex/grid) */
+  .gap-tight {
+    @apply gap-1; /* 4px */
+  }
+  .gap-compact {
+    @apply gap-2; /* 8px */
+  }
+  .gap-default {
+    @apply gap-3; /* 12px */
+  }
+  .gap-comfortable {
+    @apply gap-4; /* 16px */
+  }
+  .gap-spacious {
+    @apply gap-6; /* 24px */
+  }
+
+  /* Card/container padding */
+  .pad-xs {
+    @apply p-2; /* 8px */
+  }
+  .pad-sm {
+    @apply p-3; /* 12px */
+  }
+  .pad {
+    @apply p-4; /* 16px - default card padding */
+  }
+  .pad-lg {
+    @apply p-6; /* 24px - modal/drawer padding */
+  }
+  .pad-xl {
+    @apply p-8; /* 32px - large sections */
+  }
+
+  /* Chip/pill padding (for tags, badges, small buttons) */
+  .chip-pad {
+    @apply px-3 py-1; /* 12px horizontal, 4px vertical */
+  }
+  .chip-pad-md {
+    @apply px-3 py-1.5; /* 12px horizontal, 6px vertical */
+  }
+  .chip-pad-lg {
+    @apply px-3 py-2; /* 12px horizontal, 8px vertical */
+  }
+
+  /* Tab button padding */
+  .tab-pad {
+    @apply py-2.5 px-3; /* Tab-style buttons */
+  }
+
+  /* Inline spacing (horizontal gaps for buttons, badges, etc.) */
+  .inline-gap-xs {
+    @apply gap-1; /* 4px */
+  }
+  .inline-gap-sm {
+    @apply gap-1.5; /* 6px */
+  }
+  .inline-gap {
+    @apply gap-2; /* 8px - default inline */
+  }
+  .inline-gap-lg {
+    @apply gap-3; /* 12px */
+  }
+
+  /* Layout utilities */
+  .content-max {
+    @apply max-w-7xl mx-auto px-4;
+  }
+
+  .content-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  /* Common patterns */
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .flex-between {
+    @apply flex items-center justify-between;
+  }
+
+  /* Focus states */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base;
+  }
+
+  /* ========================================================================
+     MARGIN UTILITIES
+     ========================================================================
+     Semantic margin utilities for consistent spacing.
+     Use these instead of arbitrary mb-*, mt-* values.
+     ======================================================================== */
+
+  /* Bottom margins (for content following sections/headings) */
+  .mb-section {
+    @apply mb-6; /* 24px - between major sections */
+  }
+  .mb-section-lg {
+    @apply mb-8; /* 32px - large section gaps */
+  }
+  .mb-heading {
+    @apply mb-3; /* 12px - after headings */
+  }
+  .mb-content {
+    @apply mb-4; /* 16px - after content blocks */
+  }
+  .mb-tight {
+    @apply mb-1; /* 4px - very tight, for labels */
+  }
+
+  /* Top margins (for content spacing) */
+  .mt-section {
+    @apply mt-8; /* 32px - before major sections */
+  }
+  .mt-content {
+    @apply mt-4; /* 16px - content separation */
+  }
+  .mt-heading {
+    @apply mt-3; /* 12px - after inline elements, before headings */
+  }
+  .mt-inline {
+    @apply mt-2; /* 8px - inline content */
+  }
+  .mt-tight {
+    @apply mt-1; /* 4px - very tight, for form fields */
+  }
+
+  /* Top/bottom padding for dividers/sections */
+  .pt-heading {
+    @apply pt-3; /* 12px - section divider top padding */
+  }
+  .pt-section {
+    @apply pt-4; /* 16px - section divider with more space */
+  }
+  .pt-tight {
+    @apply pt-1; /* 4px - minimal top padding for subtle spacing */
+  }
+  .pb-inline {
+    @apply pb-2; /* 8px - inline bottom padding */
+  }
+  .pb-tight {
+    @apply pb-1; /* 4px - minimal bottom padding */
+  }
+
+  /* Centered content padding (for loading states, empty states) */
+  .py-centered {
+    @apply py-12; /* 48px - centered loading/empty state */
+  }
+
+  /* Left margins (for indentation, icon alignment) */
+  .ml-tight {
+    @apply ml-1; /* 4px - minimal left margin */
+  }
+  .ml-inline {
+    @apply ml-2; /* 8px - inline content left margin */
+  }
+  .ml-content {
+    @apply ml-4; /* 16px - content indentation */
+  }
+  .ml-spacious {
+    @apply ml-6; /* 24px - large indentation (lists) */
+  }
+
+  /* Right padding (for inputs with icons) */
+  .pr-icon {
+    @apply pr-10; /* 40px - space for right-positioned icon */
+  }
+  .pr-tight {
+    @apply pr-8; /* 32px - slightly smaller right padding */
+  }
+
+  /* Compact action button padding */
+  .action-btn-pad {
+    @apply px-1; /* 4px horizontal - compact action buttons like remove/delete */
+  }
+
+  /* Micro spacing (for fine-grained adjustments) */
+  .gap-micro {
+    @apply gap-0.5; /* 2px - very tight badge/icon spacing */
+  }
+  .mt-micro {
+    @apply mt-0.5; /* 2px - minimal top margin for icon alignment */
+  }
+  .pb-micro {
+    @apply pb-0.5; /* 2px - minimal bottom padding */
+  }
+  .pb-compact {
+    @apply pb-1; /* 4px - compact bottom padding */
+  }
+  .pb-compact-md {
+    @apply pb-1.5; /* 6px - medium compact bottom padding */
+  }
+  .mt-compact-md {
+    @apply mt-1.5; /* 6px - medium compact top margin */
+  }
+  .-mt-tight {
+    @apply -mt-1; /* -4px - negative margin for tight visual alignment */
+  }
+
+  /* Badge/status indicator padding */
+  .p-badge-xs {
+    @apply p-0.5; /* 2px - extra small badge padding */
+  }
+  .p-badge-sm {
+    @apply p-1; /* 4px - small badge padding */
+  }
+  .badge-pad-xs {
+    @apply px-2 py-0.5; /* 8px horizontal, 2px vertical - compact status badge */
+  }
+  .kbd-pad {
+    @apply px-1 py-0.5; /* 4px horizontal, 2px vertical - keyboard key styling */
+  }
+
+  /* Left padding for indentation */
+  .pl-indent {
+    @apply pl-5; /* 20px - nested content indentation */
+  }
+
+  /* Compact vertical padding (for list items, table cells) */
+  .py-compact {
+    @apply py-1; /* 4px - compact list item padding */
+  }
+  .py-compact-md {
+    @apply py-1.5; /* 6px - slightly larger compact padding */
+  }
+  .py-row {
+    @apply py-2; /* 8px - table cell/row padding */
+  }
+  .py-row-lg {
+    @apply py-3; /* 12px - larger row padding */
+  }
+
+  /* Compact horizontal padding (for table cells, inline elements) */
+  .px-cell {
+    @apply px-2; /* 8px - table cell horizontal padding */
+  }
+
+  /* Icon button padding */
+  .p-icon-btn {
+    @apply p-1; /* 4px - compact icon button */
+  }
+  .p-icon-btn-md {
+    @apply p-1.5; /* 6px - medium icon button */
+  }
+
+  /* Main content padding (responsive) */
+  .main-padding-y {
+    @apply py-4 sm:py-6; /* Responsive vertical padding */
+  }
+  .content-padding-x {
+    @apply px-4 sm:px-6 lg:px-8; /* Responsive horizontal padding */
+  }
+
+  /* Header padding (responsive) */
+  .header-padding-y {
+    @apply py-2 sm:py-3; /* Responsive header vertical padding */
+  }
+
+  /* Drawer/Panel content padding */
+  .drawer-content-pad {
+    @apply px-4 sm:px-5 pb-10 pt-4; /* Drawer content padding with bottom for scroll */
+  }
+
+  /* Table cell padding */
+  .table-cell-empty {
+    @apply px-2 py-4; /* Empty state table cell padding */
+  }
+
+  /* Custom max-width for main container */
+  .max-w-8xl {
+    max-width: 88rem; /* 1408px */
+  }
+
+  /* ========================================================================
+     RANGE SLIDER STYLING
+     ========================================================================
+     Consistent slider styling for timing/performance controls.
+     Uses theme colors for track and thumb.
+     ======================================================================== */
+
+  /* Range input base styles */
+  input[type="range"] {
+    @apply w-full h-2 bg-surface-border rounded-lg appearance-none cursor-pointer;
+  }
+
+  /* Range input track - WebKit/Blink */
+  input[type="range"]::-webkit-slider-track {
+    @apply h-2 bg-surface-border rounded-lg;
+  }
+
+  /* Range input thumb - WebKit/Blink */
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none w-5 h-5 bg-brand-primary rounded-full cursor-pointer;
+    @apply hover:bg-brand-accent transition-colors;
+    @apply focus:ring-2 focus:ring-brand-primary focus:ring-offset-2;
+  }
+
+  /* Range input track - Firefox */
+  input[type="range"]::-moz-range-track {
+    @apply h-2 bg-surface-border rounded-lg;
+  }
+
+  /* Range input thumb - Firefox */
+  input[type="range"]::-moz-range-thumb {
+    @apply w-5 h-5 bg-brand-primary rounded-full cursor-pointer border-0;
+    @apply hover:bg-brand-accent transition-colors;
+  }
+
+  /* Range input focus state */
+  input[type="range"]:focus {
+    @apply outline-none;
+  }
+
+  input[type="range"]:focus::-webkit-slider-thumb {
+    @apply ring-2 ring-brand-primary ring-offset-2 ring-offset-surface-raised;
+  }
+
+  input[type="range"]:focus::-moz-range-thumb {
+    @apply ring-2 ring-brand-primary ring-offset-2 ring-offset-surface-raised;
+  }
+}
+
+/* Toast animation */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* Focus visible utility */
+.focus-visible-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-brand-primary);
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
+  }
+}

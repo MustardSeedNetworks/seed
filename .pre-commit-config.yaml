@@ -18,9 +18,9 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^web/dist/
+        exclude: ^ui/dist/
       - id: end-of-file-fixer
-        exclude: ^web/dist/
+        exclude: ^ui/dist/
       - id: check-yaml
         args: [--allow-multiple-documents]
       - id: check-json
@@ -78,30 +78,30 @@ repos:
     hooks:
       - id: frontend-lint
         name: ESLint
-        entry: bash -c 'cd web && npm run lint'
+        entry: bash -c 'cd ui && npm run lint'
         language: system
-        files: ^web/.*\.(ts|tsx|js|jsx)$
+        files: ^ui/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
 
       - id: frontend-typecheck
         name: TypeScript check
-        entry: bash -c 'cd web && npx tsc --noEmit'
+        entry: bash -c 'cd ui && npx tsc --noEmit'
         language: system
-        files: ^web/.*\.(ts|tsx)$
+        files: ^ui/.*\.(ts|tsx)$
         pass_filenames: false
 
       - id: frontend-test
         name: Frontend unit tests
-        entry: bash -c 'cd web && npm run test'
+        entry: bash -c 'cd ui && npm run test'
         language: system
-        files: ^web/.*\.(ts|tsx|js|jsx)$
+        files: ^ui/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
 
       - id: prettier-check
         name: Prettier format check
-        entry: bash -c 'cd web && npx prettier --check .'
+        entry: bash -c 'cd ui && npx prettier --check .'
         language: system
-        files: ^web/
+        files: ^ui/
         pass_filenames: false
 
   # ===========================================================================
@@ -112,7 +112,7 @@ repos:
     hooks:
       - id: markdownlint
         args: [--fix]
-        exclude: ^node_modules/|^web/node_modules/
+        exclude: ^node_modules/|^ui/node_modules/
 
   # ===========================================================================
   # Build Verification

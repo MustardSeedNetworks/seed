@@ -142,7 +142,7 @@ jobs:
         with:
           node-version: "25.2.1"
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Set up QEMU for cross-arch testing
         if: matrix.arch == 'arm64'
@@ -178,7 +178,7 @@ jobs:
 
       - name: Build frontend
         run: |
-          cd web
+          cd ui
           npm ci
           npm run build
 
@@ -236,7 +236,7 @@ jobs:
           cp bin/iperf3-linux-${{ matrix.arch }} release/seed-${VERSION}-linux-${{ matrix.arch }}/iperf3
           chmod +x release/seed-${VERSION}-linux-${{ matrix.arch }}/*
           cp -r configs release/seed-${VERSION}-linux-${{ matrix.arch }}/
-          cp -r web/dist release/seed-${VERSION}-linux-${{ matrix.arch }}/web/
+          cp -r ui/dist release/seed-${VERSION}-linux-${{ matrix.arch }}/ui/
           cd release
           tar -czvf seed-${VERSION}-linux-${{ matrix.arch }}.tar.gz seed-${VERSION}-linux-${{ matrix.arch }}
           cd ..
@@ -253,7 +253,7 @@ jobs:
           cp bin/iperf3-linux-${{ matrix.arch }} $DEB_DIR/usr/local/bin/iperf3
           chmod +x $DEB_DIR/usr/local/bin/*
           cp -r configs/* $DEB_DIR/etc/seed/
-          cp -r web/dist $DEB_DIR/usr/share/seed/web
+          cp -r ui/dist $DEB_DIR/usr/share/seed/ui
           cp packaging/seed.service $DEB_DIR/etc/systemd/system/
 
           sed "s/__VERSION__/${PKG_VERSION}/" packaging/control > $DEB_DIR/DEBIAN/control
@@ -328,7 +328,7 @@ jobs:
         with:
           node-version: "25.2.1"
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install libpcap
         run: |
@@ -337,7 +337,7 @@ jobs:
 
       - name: Build frontend
         run: |
-          cd web
+          cd ui
           npm ci
           npm run build
 
@@ -370,7 +370,7 @@ jobs:
           cp dist/seed-darwin-${{ matrix.arch }} release/seed-${VERSION}-darwin-${{ matrix.arch }}/seed
           chmod +x release/seed-${VERSION}-darwin-${{ matrix.arch }}/*
           cp -r configs release/seed-${VERSION}-darwin-${{ matrix.arch }}/
-          cp -r web/dist release/seed-${VERSION}-darwin-${{ matrix.arch }}/web/
+          cp -r ui/dist release/seed-${VERSION}-darwin-${{ matrix.arch }}/ui/
 
           cd release
           tar -czvf seed-${VERSION}-darwin-${{ matrix.arch }}.tar.gz seed-${VERSION}-darwin-${{ matrix.arch }}
@@ -528,12 +528,12 @@ jobs:
             - `seed` - Main application binary
             - `iperf3` - Bundled iperf3 binary
             - `configs/` - Default configuration files
-            - `web/` - Frontend assets
+            - `ui/` - Frontend assets
 
             **macOS packages include:**
             - `seed` - Main application binary
             - `configs/` - Default configuration files
-            - `web/` - Frontend assets
+            - `ui/` - Frontend assets
           files: |
             dist/*.tar.gz
             dist/*.deb

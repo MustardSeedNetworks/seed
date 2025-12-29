@@ -10,10 +10,10 @@
 
 # Stage 1: Build frontend
 FROM node:25.2.1-bookworm AS builder-frontend
-WORKDIR /app/web
-COPY web/package.json web/package-lock.json ./
+WORKDIR /app/ui
+COPY ui/package.json ui/package-lock.json ./
 RUN npm ci
-COPY web/ .
+COPY ui/ .
 RUN npm run build
 
 # Stage 2: Build Go backend with embedded frontend
@@ -26,7 +26,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 # Copy built frontend for embedding
-COPY --from=builder-frontend /app/web/dist ./web/dist
+COPY --from=builder-frontend /app/ui/dist ./ui/dist
 # Build with embedded frontend
 ARG VERSION=dev
 RUN CGO_ENABLED=1 GOOS=linux go build \

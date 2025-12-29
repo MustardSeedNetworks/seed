@@ -11,7 +11,7 @@
 "component: ui":
   - changed-files:
       - any-glob-to-any-file:
-          - "web/**"
+          - "ui/**"
 
 "component: discovery":
   - changed-files:
@@ -60,7 +60,7 @@
       - any-glob-to-any-file:
           - "locales/**"
           - "internal/i18n/**"
-          - "web/src/i18n/**"
+          - "ui/src/i18n/**"
 
 # Area labels
 "area: ci":
@@ -79,17 +79,17 @@
   - changed-files:
       - any-glob-to-any-file:
           - "**/*_test.go"
-          - "web/**/*.test.ts"
-          - "web/**/*.test.tsx"
-          - "web/e2e/**"
+          - "ui/**/*.test.ts"
+          - "ui/**/*.test.tsx"
+          - "ui/e2e/**"
 
 "area: deps":
   - changed-files:
       - any-glob-to-any-file:
           - "go.mod"
           - "go.sum"
-          - "web/package.json"
-          - "web/package-lock.json"
+          - "ui/package.json"
+          - "ui/package-lock.json"
 
 "area: build":
   - changed-files:

@@ -47,8 +47,8 @@
     "coverage/",
     "*.lock",
     "storybook-static/",
-    "web/dist/",
-    "web/coverage/",
-    "web/node_modules/"
+    "ui/dist/",
+    "ui/coverage/",
+    "ui/node_modules/"
   ]
 }

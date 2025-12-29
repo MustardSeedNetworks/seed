@@ -41,7 +41,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/survey"
 	"github.com/krisarmstrong/seed/internal/vlan"
 	"github.com/krisarmstrong/seed/internal/wifi"
-	"github.com/krisarmstrong/seed/web"
+	"github.com/krisarmstrong/seed/ui"
 )
 
 // indexHTMLPath is the path to the SPA entry point.
@@ -481,12 +481,12 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
 
 	// Static files (frontend) - use embedded FS in production, filesystem in dev
-	frontendFS, err := web.GetFS()
+	frontendFS, err := ui.GetFS()
 	if err != nil {
 		slog.Warn("Failed to get embedded frontend FS, falling back to disk", "error", err)
-		s.mux.Handle("/", http.FileServer(http.Dir("web/dist")))
+		s.mux.Handle("/", http.FileServer(http.Dir("ui/dist")))
 	} else {
-		slog.Info("Serving frontend from embedded filesystem", "embedded", web.IsEmbedded())
+		slog.Info("Serving frontend from embedded filesystem", "embedded", ui.IsEmbedded())
 		s.mux.Handle("/", spaHandler(http.FS(frontendFS)))
 	}
 }

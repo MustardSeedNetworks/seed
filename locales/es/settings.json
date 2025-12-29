@@ -49,11 +49,11 @@
     "displayOptions": "Opciones de visualización",
     "measurementSystem": "Sistema de medición",
     "measurementDescription": "Unidades para distancias (encuestas, cables)",
-    "showPublicIP": "Mostrar IP pública",
+    "showPublicIp": "Mostrar IP pública",
     "displayInNetworkCard": "Mostrar en tarjeta de red",
     "vlanTag": "Etiqueta VLAN (802.1Q)",
     "mtuSetting": "Configuración MTU",
-    "applyIPSettings": "Aplicar configuración IP",
+    "applyIpSettings": "Aplicar configuración IP",
     "applying": "Aplicando...",
     "requiresRoot": "Nota: Requiere privilegios de root/admin para aplicar",
     "vlan": {

@@ -1,46 +1,67 @@
 #!/usr/bin/env sh
 
+# ============================================
+# The Seed - Pre-commit Hook
+# ============================================
+# 2025 tooling: Biome, golangci-lint, gosec, gitleaks
+# Test files are treated same as production code
+# ============================================
+
 # Skip hooks in CI
 [ -n "$CI" ] && exit 0
 
-echo "Running pre-commit checks..."
+echo "╔════════════════════════════════════════╗"
+echo "║     The Seed - Pre-commit Checks       ║"
+echo "╚════════════════════════════════════════╝"
+echo ""
 
 # Track if any checks fail
 FAILED=0
 
 # Get staged files
 STAGED_GO_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' || true)
+STAGED_TS_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
 STAGED_WEB_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '^web/' || true)
 STAGED_MD_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.md$' || true)
+ALL_STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM || true)
 
 # ============================================
-# Markdown Formatting Check
+# 1. Secret Detection (ALL FILES)
 # ============================================
-if [ -n "$STAGED_MD_FILES" ]; then
-  echo ""
-  echo "=== Markdown Formatting Check ==="
+echo "┌──────────────────────────────────────┐"
+echo "│ 1/5 Secret Detection                 │"
+echo "└──────────────────────────────────────┘"
 
-  if command -v npx >/dev/null 2>&1 && [ -f "node_modules/.bin/prettier" ]; then
-    echo "Checking markdown formatting..."
-    if ! npx prettier --check $STAGED_MD_FILES 2>/dev/null; then
-      echo "Markdown formatting issues found! Run 'npm run format:md' to fix."
-      FAILED=1
-    else
-      echo "Markdown formatting OK"
-    fi
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "Running gitleaks..."
+  if ! gitleaks protect --staged --no-banner 2>/dev/null; then
+    echo "❌ SECRETS DETECTED! Remove secrets before committing."
+    FAILED=1
   else
-    echo "Prettier not installed, skipping markdown check"
+    echo "✓ No secrets detected"
   fi
+elif command -v trufflehog >/dev/null 2>&1; then
+  echo "Running TruffleHog..."
+  if ! trufflehog git file://. --only-verified --no-update 2>/dev/null; then
+    echo "❌ SECRETS DETECTED! Remove secrets before committing."
+    FAILED=1
+  else
+    echo "✓ No secrets detected"
+  fi
+else
+  echo "⚠ No secret scanner installed (install gitleaks or trufflehog)"
 fi
 
 # ============================================
-# Go Backend Checks
+# 2. Go Backend Checks
 # ============================================
 if [ -n "$STAGED_GO_FILES" ]; then
   echo ""
-  echo "=== Go Backend Checks ==="
+  echo "┌──────────────────────────────────────┐"
+  echo "│ 2/5 Go Backend Checks                │"
+  echo "└──────────────────────────────────────┘"
 
-  # Find golangci-lint (check PATH and common locations)
+  # Find golangci-lint
   GOLANGCI_LINT=""
   if command -v golangci-lint >/dev/null 2>&1; then
     GOLANGCI_LINT="golangci-lint"
@@ -50,71 +71,173 @@ if [ -n "$STAGED_GO_FILES" ]; then
     GOLANGCI_LINT="$(go env GOPATH)/bin/golangci-lint"
   fi
 
-  # Run Go linting (if golangci-lint is found)
-  if [ -n "$GOLANGCI_LINT" ]; then
-    echo "Running Go linter..."
-    if ! $GOLANGCI_LINT run --new-from-rev=HEAD~1 2>/dev/null; then
-      echo "Go linting failed!"
-      FAILED=1
-    fi
+  # Go formatting check
+  echo "Checking go fmt..."
+  GOFMT_OUTPUT=$(gofmt -l $STAGED_GO_FILES 2>/dev/null || true)
+  if [ -n "$GOFMT_OUTPUT" ]; then
+    echo "❌ Go formatting issues:"
+    echo "$GOFMT_OUTPUT"
+    echo "Run: gofmt -w <files>"
+    FAILED=1
   else
-    echo "golangci-lint not installed, skipping Go linting"
-    echo "  Install with: make tools"
+    echo "✓ Go formatting OK"
   fi
 
-  # Run Go tests (short mode for speed)
+  # Go linting
+  if [ -n "$GOLANGCI_LINT" ]; then
+    echo "Running golangci-lint..."
+    if ! $GOLANGCI_LINT run --new-from-rev=HEAD~1 2>/dev/null; then
+      echo "❌ Go linting failed!"
+      FAILED=1
+    else
+      echo "✓ Go linting passed"
+    fi
+  else
+    echo "⚠ golangci-lint not installed, skipping"
+  fi
+
+  # Go security check (gosec)
+  if command -v gosec >/dev/null 2>&1; then
+    echo "Running gosec security scan..."
+    if ! gosec -quiet ./... 2>/dev/null; then
+      echo "❌ Security issues found!"
+      FAILED=1
+    else
+      echo "✓ Security scan passed"
+    fi
+  else
+    echo "⚠ gosec not installed, skipping security scan"
+  fi
+
+  # Go tests (short mode)
   echo "Running Go tests..."
-  if ! go test -short ./... 2>&1 | tail -20; then
-    echo "Go tests failed!"
+  if ! go test -short -race ./... 2>&1 | tail -10; then
+    echo "❌ Go tests failed!"
     FAILED=1
+  else
+    echo "✓ Go tests passed"
   fi
 fi
 
 # ============================================
-# Frontend Checks
+# 3. Frontend Checks (Biome)
 # ============================================
 if [ -n "$STAGED_WEB_FILES" ]; then
   echo ""
-  echo "=== Frontend Checks ==="
+  echo "┌──────────────────────────────────────┐"
+  echo "│ 3/5 Frontend Checks (Biome)          │"
+  echo "└──────────────────────────────────────┘"
 
-  # Check if web/node_modules exists
   if [ ! -d "web/node_modules" ]; then
-    echo "Frontend dependencies not installed. Run: cd web && npm install"
+    echo "❌ Frontend dependencies not installed. Run: cd web && npm ci"
     FAILED=1
   else
-    # Run frontend linting via lint-staged
-    if [ -f "web/node_modules/.bin/lint-staged" ]; then
-      echo "Running frontend linting..."
-      cd web
-      echo "Current directory: $(pwd)"
-      echo "Files in current directory:"
-      ls -l
-      if ! npx lint-staged 2>&1; then
-        echo "Frontend linting failed!"
-        FAILED=1
+    cd web
+
+    # Biome lint and format check
+    if [ -f "node_modules/.bin/biome" ] || command -v biome >/dev/null 2>&1; then
+      echo "Running Biome lint..."
+
+      # Get web-relative paths for staged files
+      WEB_FILES=$(echo "$STAGED_TS_FILES" | grep '^web/' | sed 's|^web/||' || true)
+
+      if [ -n "$WEB_FILES" ]; then
+        if ! npx biome check --no-errors-on-unmatched $WEB_FILES 2>/dev/null; then
+          echo "❌ Biome check failed! Run: npm run lint:fix"
+          FAILED=1
+        else
+          echo "✓ Biome check passed"
+        fi
       fi
-      cd ..
+    else
+      echo "⚠ Biome not installed, skipping lint"
     fi
 
-    # Run frontend tests
-    echo "Running frontend tests..."
-    cd web
-    if ! npm test 2>&1 | tail -15; then
-      echo "Frontend tests failed!"
+    # TypeScript check
+    echo "Running TypeScript check..."
+    if ! npx tsc --noEmit 2>&1 | tail -10; then
+      echo "❌ TypeScript errors!"
       FAILED=1
+    else
+      echo "✓ TypeScript check passed"
     fi
+
+    # Frontend tests
+    echo "Running frontend tests..."
+    if ! npm test -- --passWithNoTests 2>&1 | tail -10; then
+      echo "❌ Frontend tests failed!"
+      FAILED=1
+    else
+      echo "✓ Frontend tests passed"
+    fi
+
     cd ..
   fi
+fi
+
+# ============================================
+# 4. Markdown Formatting
+# ============================================
+if [ -n "$STAGED_MD_FILES" ]; then
+  echo ""
+  echo "┌──────────────────────────────────────┐"
+  echo "│ 4/5 Markdown Check                   │"
+  echo "└──────────────────────────────────────┘"
+
+  # Use markdownlint if available
+  if command -v markdownlint >/dev/null 2>&1; then
+    echo "Running markdownlint..."
+    if ! markdownlint $STAGED_MD_FILES 2>/dev/null; then
+      echo "❌ Markdown issues found!"
+      FAILED=1
+    else
+      echo "✓ Markdown OK"
+    fi
+  else
+    echo "⚠ markdownlint not installed, skipping"
+  fi
+fi
+
+# ============================================
+# 5. Sensitive File Check
+# ============================================
+echo ""
+echo "┌──────────────────────────────────────┐"
+echo "│ 5/5 Sensitive File Check             │"
+echo "└──────────────────────────────────────┘"
+
+# Check for files that should never be committed
+SENSITIVE_PATTERNS=".env .env.local .env.production credentials.json *.pem *.key id_rsa id_ed25519"
+SENSITIVE_FOUND=""
+
+for pattern in $SENSITIVE_PATTERNS; do
+  FOUND=$(echo "$ALL_STAGED_FILES" | grep -E "(^|/)$pattern$" || true)
+  if [ -n "$FOUND" ]; then
+    SENSITIVE_FOUND="$SENSITIVE_FOUND $FOUND"
+  fi
+done
+
+if [ -n "$SENSITIVE_FOUND" ]; then
+  echo "❌ SENSITIVE FILES STAGED:"
+  echo "$SENSITIVE_FOUND"
+  echo "Remove these files from the commit!"
+  FAILED=1
+else
+  echo "✓ No sensitive files detected"
 fi
 
 # ============================================
 # Final Result
 # ============================================
 echo ""
+echo "════════════════════════════════════════"
 if [ $FAILED -ne 0 ]; then
-  echo "Pre-commit checks FAILED. Please fix the issues above."
+  echo "❌ PRE-COMMIT CHECKS FAILED"
+  echo "   Fix the issues above before committing."
+  echo "════════════════════════════════════════"
   exit 1
 fi
 
-echo "All pre-commit checks passed!"
+echo "✓ ALL PRE-COMMIT CHECKS PASSED"
+echo "════════════════════════════════════════"
 exit 0

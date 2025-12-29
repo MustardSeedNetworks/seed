@@ -4,7 +4,30 @@
   "title": "The Seed Configuration",
   "description": "Configuration schema for The Seed network diagnostic tool",
   "type": "object",
-  "required": ["version", "server", "interface", "vlan", "ip", "discovery", "network_discovery", "dns", "health_checks", "speedtest", "iperf", "thresholds", "auth", "security", "dhcp", "snmp", "fab_options", "display_options", "logging", "mcp", "database", "pipeline"],
+  "required": [
+    "version",
+    "server",
+    "interface",
+    "vlan",
+    "ip",
+    "discovery",
+    "network_discovery",
+    "dns",
+    "health_checks",
+    "speedtest",
+    "iperf",
+    "thresholds",
+    "auth",
+    "security",
+    "dhcp",
+    "snmp",
+    "fab_options",
+    "display_options",
+    "logging",
+    "mcp",
+    "database",
+    "pipeline"
+  ],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -341,7 +364,20 @@
     "NetworkDiscoveryConfig": {
       "type": "object",
       "description": "Network device discovery settings",
-      "required": ["options", "timing", "additional_subnets", "enabled", "arp_scan_workers", "ping_timeout", "scan_timeout", "auto_scan", "scan_interval", "oui_file_path", "oui_max_age", "ipv6_enabled"],
+      "required": [
+        "options",
+        "timing",
+        "additional_subnets",
+        "enabled",
+        "arp_scan_workers",
+        "ping_timeout",
+        "scan_timeout",
+        "auto_scan",
+        "scan_interval",
+        "oui_file_path",
+        "oui_max_age",
+        "ipv6_enabled"
+      ],
       "additionalProperties": false,
       "properties": {
         "options": {
@@ -681,7 +717,16 @@
     "HealthChecksConfig": {
       "type": "object",
       "description": "Health check configurations",
-      "required": ["ping_targets", "tcp_ports", "udp_ports", "http_endpoints", "run_performance", "run_speedtest", "run_iperf", "run_discovery"],
+      "required": [
+        "ping_targets",
+        "tcp_ports",
+        "udp_ports",
+        "http_endpoints",
+        "run_performance",
+        "run_speedtest",
+        "run_iperf",
+        "run_discovery"
+      ],
       "additionalProperties": false,
       "properties": {
         "ping_targets": {
@@ -859,7 +904,16 @@
     "IperfConfig": {
       "type": "object",
       "description": "iPerf3 settings",
-      "required": ["auto_run_on_link", "server", "port", "protocol", "direction", "duration", "server_port", "enable_server"],
+      "required": [
+        "auto_run_on_link",
+        "server",
+        "port",
+        "protocol",
+        "direction",
+        "duration",
+        "server_port",
+        "enable_server"
+      ],
       "additionalProperties": false,
       "properties": {
         "auto_run_on_link": {
@@ -910,7 +964,20 @@
     "FABOptionsConfig": {
       "type": "object",
       "description": "Floating Action Button (FAB) settings",
-      "required": ["run_link", "run_switch", "run_vlan", "run_ip_config", "run_gateway", "run_dns", "run_health_checks", "run_network_discovery", "run_speedtest", "run_iperf", "run_performance", "auto_scan_on_link"],
+      "required": [
+        "run_link",
+        "run_switch",
+        "run_vlan",
+        "run_ip_config",
+        "run_gateway",
+        "run_dns",
+        "run_health_checks",
+        "run_network_discovery",
+        "run_speedtest",
+        "run_iperf",
+        "run_performance",
+        "auto_scan_on_link"
+      ],
       "additionalProperties": false,
       "properties": {
         "run_link": {
@@ -1237,7 +1304,15 @@
     "VulnerabilityScanConfig": {
       "type": "object",
       "description": "CVE vulnerability scanning for discovered devices",
-      "required": ["enabled", "cve_database", "nvd_api_key", "update_interval", "severity_threshold", "max_concurrent", "auto_scan"],
+      "required": [
+        "enabled",
+        "cve_database",
+        "nvd_api_key",
+        "update_interval",
+        "severity_threshold",
+        "max_concurrent",
+        "auto_scan"
+      ],
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -1363,7 +1438,16 @@
     "SNMPv3Credential": {
       "type": "object",
       "description": "SNMP v3 authentication credentials",
-      "required": ["name", "username", "auth_protocol", "auth_password", "priv_protocol", "priv_password", "context_name", "security_level"],
+      "required": [
+        "name",
+        "username",
+        "auth_protocol",
+        "auth_password",
+        "priv_protocol",
+        "priv_password",
+        "context_name",
+        "security_level"
+      ],
       "additionalProperties": false,
       "properties": {
         "name": {
@@ -1412,7 +1496,16 @@
     "LoggingConfig": {
       "type": "object",
       "description": "Structured logging settings",
-      "required": ["level", "format", "add_source", "file", "max_size", "max_backups", "max_age", "compress"],
+      "required": [
+        "level",
+        "format",
+        "add_source",
+        "file",
+        "max_size",
+        "max_backups",
+        "max_age",
+        "compress"
+      ],
       "additionalProperties": false,
       "properties": {
         "level": {

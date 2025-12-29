@@ -62,13 +62,13 @@ jobs:
         with:
           node-version: "25.2.1"
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install frontend dependencies
-        run: cd web && npm ci
+        run: cd ui && npm ci
 
       - name: Build frontend
-        run: cd web && npm run build
+        run: cd ui && npm run build
 
       - name: Build binary
         env:
