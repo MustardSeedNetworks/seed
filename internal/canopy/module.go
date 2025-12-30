@@ -8,6 +8,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/iperf"
 )
 
 // Module is the main Canopy module providing WiFi services.
@@ -28,9 +29,18 @@ func New(cfg *config.Config, db *database.DB) *Module {
 		db:  db,
 	}
 
+	// Create WiFi service first - other services depend on its scanner/manager
 	m.wifi = NewWiFiService(cfg)
-	m.survey = NewSurveyService(cfg, db)
-	m.channel = NewChannelService(cfg)
+
+	// Create iperf manager for throughput testing in surveys
+	iperfMgr := iperf.NewManager()
+
+	// Create survey service with WiFi and iperf dependencies
+	m.survey = NewSurveyService(cfg, db, m.wifi.Scanner(), m.wifi.Manager(), iperfMgr)
+
+	// Create channel service with WiFi scanner
+	m.channel = NewChannelService(cfg, m.wifi.Scanner())
+
 	m.ai = NewAIService(cfg)
 
 	return m
