@@ -12,8 +12,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/iperf"
-	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
 // Type indicates the type of survey being conducted.

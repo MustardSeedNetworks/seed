@@ -16,7 +16,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/speedtest"
 	"github.com/krisarmstrong/seed/internal/testutil"
 	"github.com/krisarmstrong/seed/internal/vlan"
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 // NewTestServer creates a minimal server instance for testing.

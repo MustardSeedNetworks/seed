@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/canopy/survey"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/iperf"
-	"github.com/krisarmstrong/seed/internal/survey"
-	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
 // DefaultInterface is the default network interface to use when none is configured.
