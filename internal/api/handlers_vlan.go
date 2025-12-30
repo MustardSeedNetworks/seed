@@ -11,7 +11,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/validation"
-	"github.com/krisarmstrong/seed/internal/vlan"
+	"github.com/krisarmstrong/seed/internal/sap/vlan"
 )
 
 // ============================================================================

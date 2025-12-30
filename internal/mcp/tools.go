@@ -6,11 +6,11 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/dns"
-	"github.com/krisarmstrong/seed/internal/gateway"
+	"github.com/krisarmstrong/seed/internal/sap/dns"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/network"
-	"github.com/krisarmstrong/seed/internal/speedtest"
+	"github.com/krisarmstrong/seed/internal/sap/speedtest"
 )
 
 // WiFiNetwork represents a discovered WiFi network.
