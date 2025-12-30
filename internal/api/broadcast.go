@@ -297,19 +297,16 @@ func (s *Server) collectDNSData() map[string]interface{} {
 	return data
 }
 
-// collectDiscoveryData gathers LLDP/CDP/EDP neighbor data.
+// collectDiscoveryData gathers LLDP/CDP/EDP neighbor data from the unified discovery service.
 // Returns ALL discovered neighbors, not just the first one.
 func (s *Server) collectDiscoveryData() map[string]interface{} {
-	if s.discoveryManager == nil {
+	if s.discoveryService == nil {
 		return nil
 	}
 
-	// Get all protocol neighbors
-	lldpNeighbors := s.discoveryManager.GetLLDPNeighbors()
-	cdpNeighbors := s.discoveryManager.GetCDPNeighbors()
-	edpNeighbors := s.discoveryManager.GetEDPNeighbors()
-
-	totalCount := len(lldpNeighbors) + len(cdpNeighbors) + len(edpNeighbors)
+	// Get all protocol neighbors from unified service
+	neighbors := s.discoveryService.GetNeighbors()
+	totalCount := len(neighbors)
 	if totalCount == 0 {
 		return nil
 	}
@@ -317,44 +314,23 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 	// Build comprehensive neighbor list
 	allNeighbors := make([]map[string]interface{}, 0, totalCount)
 
-	for _, n := range lldpNeighbors {
-		allNeighbors = append(allNeighbors, map[string]interface{}{
-			"protocol":          "LLDP",
+	for _, n := range neighbors {
+		neighborData := map[string]interface{}{
+			"protocol":          string(n.Protocol),
 			"systemName":        n.SystemName,
 			"portId":            n.PortID,
 			"portDescription":   n.PortDescription,
 			"managementIp":      n.ManagementAddress,
 			"systemDescription": n.SystemDescription,
 			"chassisId":         n.ChassisID,
-			"capabilities":      n.SystemCapabilities,
-		})
-	}
-
-	for _, n := range cdpNeighbors {
-		allNeighbors = append(allNeighbors, map[string]interface{}{
-			"protocol":          "CDP",
-			"systemName":        n.DeviceID, // CDP uses DeviceID instead of SystemName
-			"portId":            n.PortID,
-			"portDescription":   "", // CDP doesn't have port description
-			"managementIp":      n.ManagementAddress,
-			"systemDescription": n.SoftwareVersion, // Use software version as description
-			"platform":          n.Platform,
-			"nativeVlan":        n.NativeVLAN,
 			"capabilities":      n.Capabilities,
-		})
-	}
-
-	for _, n := range edpNeighbors {
-		allNeighbors = append(allNeighbors, map[string]interface{}{
-			"protocol":          "EDP",
-			"systemName":        n.DeviceID, // EDP uses DeviceID
-			"portId":            n.PortID,
-			"portDescription":   "", // EDP doesn't have port description
-			"managementIp":      n.ManagementAddress,
-			"systemDescription": n.Platform, // Use platform as description
-			"displayName":       n.DisplayName,
 			"vlan":              n.VLAN,
-		})
+			"nativeVlan":        n.NativeVLAN,
+			"voiceVlan":         n.VoiceVLAN,
+			"lastSeen":          n.LastSeen,
+			"sourceMAC":         n.SourceMAC,
+		}
+		allNeighbors = append(allNeighbors, neighborData)
 	}
 
 	// Also get discovered devices count and status from pipeline/service

@@ -142,10 +142,10 @@ func (s *Server) exportIPConfigCard(iface string, cards map[string]interface{}) 
 }
 
 func (s *Server) exportDiscoveryCard(cards map[string]interface{}) {
-	if s.discoveryManager == nil {
+	if s.discoveryService == nil {
 		return
 	}
-	neighbors := s.discoveryManager.GetNeighbors()
+	neighbors := s.discoveryService.GetNeighbors()
 	neighborList := make([]map[string]interface{}, 0, len(neighbors))
 	for _, n := range neighbors {
 		neighborList = append(neighborList, map[string]interface{}{
@@ -153,7 +153,7 @@ func (s *Server) exportDiscoveryCard(cards map[string]interface{}) {
 			"portDescription": n.PortDescription, "managementAddress": n.ManagementAddress,
 		})
 	}
-	cards["switch"] = map[string]interface{}{"running": s.discoveryManager.IsRunning(), "neighbors": neighborList}
+	cards["switch"] = map[string]interface{}{"running": s.discoveryService.IsRunning(), "neighbors": neighborList}
 }
 
 func (s *Server) exportDNSCard(ctx context.Context, cards map[string]interface{}) {

@@ -69,8 +69,8 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 
 	// Get VLAN info from LLDP/CDP if available
 	var nativeVlan, voiceVlan *int
-	if s.discoveryManager != nil {
-		neighbors := s.discoveryManager.GetNeighbors()
+	if s.discoveryService != nil {
+		neighbors := s.discoveryService.GetNeighbors()
 		// Use first neighbor for VLAN information
 		if len(neighbors) > 0 {
 			n := neighbors[0]

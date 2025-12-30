@@ -237,6 +237,13 @@ func (d *DeviceDiscovery) SetDBWriter(w DBDeviceWriter) {
 	d.dbWriter = w
 }
 
+// GetInterfaceName returns the current interface name.
+func (d *DeviceDiscovery) GetInterfaceName() string {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.interfaceName
+}
+
 // SetInterface updates the interface for all discovery methods.
 // Validates the interface exists before updating. (fixes #840)
 func (d *DeviceDiscovery) SetInterface(name string) error {
@@ -269,12 +276,18 @@ func (d *DeviceDiscovery) GetAdditionalSubnets() []string {
 	return d.arpScanner.GetAdditionalSubnets()
 }
 
+// ErrScanInProgress indicates a scan was requested while one is already running.
+// Callers should check for this specific error to distinguish between "scan completed
+// successfully" and "scan was skipped because one is already in progress".
+var ErrScanInProgress = fmt.Errorf("scan already in progress")
+
 // Scan performs an active network scan and aggregates results.
+// Returns ErrScanInProgress if a scan is already running.
 func (d *DeviceDiscovery) Scan(ctx context.Context) error {
 	d.mu.Lock()
 	if d.scanning {
 		d.mu.Unlock()
-		return nil // Already scanning
+		return ErrScanInProgress
 	}
 	d.scanning = true
 	d.mu.Unlock()
@@ -695,51 +708,61 @@ func containsIPv6(addresses []string, addr string) bool {
 const maxIPv6AddressesPerDevice = 16
 
 // GetDevices returns all discovered devices.
-// Fixes #886: Returns shallow copies to prevent external mutation of internal state.
+// Returns copies to prevent external mutation of internal state.
 func (d *DeviceDiscovery) GetDevices() []*DiscoveredDevice {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	devices := make([]*DiscoveredDevice, 0, len(d.devices))
 	for _, device := range d.devices {
-		// Fixes #886: Return copy to prevent external mutation
-		deviceCopy := *device
-		// Deep copy slices that could be mutated
-		if device.DiscoveryMethod != nil {
-			deviceCopy.DiscoveryMethod = make([]Method, len(device.DiscoveryMethod))
-			copy(deviceCopy.DiscoveryMethod, device.DiscoveryMethod)
-		}
-		if device.IPv6Addresses != nil {
-			deviceCopy.IPv6Addresses = make([]string, len(device.IPv6Addresses))
-			copy(deviceCopy.IPv6Addresses, device.IPv6Addresses)
-		}
-		if device.DuplicateMACs != nil {
-			deviceCopy.DuplicateMACs = make([]string, len(device.DuplicateMACs))
-			copy(deviceCopy.DuplicateMACs, device.DuplicateMACs)
-		}
-		devices = append(devices, &deviceCopy)
+		devices = append(devices, copyDevice(device))
 	}
 	return devices
 }
 
 // GetDevice returns a specific device by MAC.
+// Returns a copy to prevent external mutation of internal state.
 func (d *DeviceDiscovery) GetDevice(mac string) *DiscoveredDevice {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.devices[normalizeMac(mac)]
+	device := d.devices[normalizeMac(mac)]
+	if device == nil {
+		return nil
+	}
+	return copyDevice(device)
 }
 
 // GetDeviceByIP returns a device by IP address.
+// Returns a copy to prevent external mutation of internal state.
 func (d *DeviceDiscovery) GetDeviceByIP(ip string) *DiscoveredDevice {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	for _, device := range d.devices {
 		if device.IP == ip {
-			return device
+			return copyDevice(device)
 		}
 	}
 	return nil
+}
+
+// copyDevice creates a shallow copy with deep-copied slices to prevent mutation.
+func copyDevice(device *DiscoveredDevice) *DiscoveredDevice {
+	deviceCopy := *device
+	// Deep copy slices that could be mutated
+	if device.DiscoveryMethod != nil {
+		deviceCopy.DiscoveryMethod = make([]Method, len(device.DiscoveryMethod))
+		copy(deviceCopy.DiscoveryMethod, device.DiscoveryMethod)
+	}
+	if device.IPv6Addresses != nil {
+		deviceCopy.IPv6Addresses = make([]string, len(device.IPv6Addresses))
+		copy(deviceCopy.IPv6Addresses, device.IPv6Addresses)
+	}
+	if device.DuplicateMACs != nil {
+		deviceCopy.DuplicateMACs = make([]string, len(device.DuplicateMACs))
+		copy(deviceCopy.DuplicateMACs, device.DuplicateMACs)
+	}
+	return &deviceCopy
 }
 
 // Count returns the number of discovered devices.

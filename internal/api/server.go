@@ -62,9 +62,8 @@ type Server struct {
 	mux                 *http.ServeMux
 	netManager          *network.Manager
 	linkMonitor         *network.LinkMonitor
-	discoveryManager    *discovery.Manager         // Legacy: LLDP/CDP/EDP protocol capture
-	deviceDiscovery     *discovery.DeviceDiscovery // Legacy: device aggregation
-	discoveryService    *discovery.Service         // New unified discovery orchestrator
+	deviceDiscovery  *discovery.DeviceDiscovery // Device aggregation (used by Service and Pipeline)
+	discoveryService *discovery.Service         // Unified discovery orchestrator
 	dnsTester           *dns.Tester
 	dnsSecurityScanner  *dns.SecurityScanner
 	dhcpMonitor         *dhcp.Monitor
@@ -121,9 +120,8 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
 		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()), // Rate limit expensive endpoints (fixes #530)
 		setupTokenManager:   NewSetupTokenManager(),                                   // Setup token for secure initial setup (fixes #724, #758)
-		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
-		discoveryManager:    discovery.NewManager(cfg.Interface.Default),
-		deviceDiscovery:     discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
+		linkMonitor:     network.NewLinkMonitor(cfg.Interface.Default),
+		deviceDiscovery: discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
 		// Note: discoveryService is initialized after profiler is created (see below)
 		dnsTester:          dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dnsSecurityScanner: dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
@@ -327,11 +325,10 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 
 	switch event.State {
 	case network.LinkStateUp:
-		// Link came up - restart discovery to catch LLDP/CDP frames
-		slog.Info("Link up - restarting discovery capture")
-		s.discoveryManager.Stop()
-		if err := s.discoveryManager.Start(); err != nil {
-			slog.Warn("Failed to restart discovery", "error", err)
+		// Link came up - reload discovery service to restart protocol capture
+		slog.Info("Link up - reloading discovery service")
+		if err := s.discoveryService.Reload(); err != nil {
+			slog.Warn("Failed to reload discovery service", "error", err)
 		}
 
 		// Notify WebSocket clients with linkState message
@@ -763,13 +760,6 @@ func (s *Server) Start() error {
 			"methods", status.ActiveMethods)
 	}
 
-	// Legacy: Start protocol capture for backward compatibility
-	if err := s.discoveryManager.Start(); err != nil {
-		slog.Warn("Discovery capture failed to start (may require root)", "error", err)
-	} else {
-		slog.Info("Discovery capture started")
-	}
-
 	// Start VLAN traffic monitor (requires root/CAP_NET_RAW)
 	if err := s.vlanTrafficMonitor.Start(); err != nil {
 		slog.Warn("VLAN traffic monitor failed to start (may require root)", "error", err)
@@ -1035,9 +1025,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	slog.Info("Stopping discovery service...")
 	s.discoveryService.Stop()
-
-	slog.Info("Stopping discovery manager...")
-	s.discoveryManager.Stop()
 
 	slog.Info("Stopping VLAN traffic monitor...")
 	s.vlanTrafficMonitor.Stop()

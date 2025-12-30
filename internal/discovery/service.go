@@ -77,10 +77,18 @@ func NewService(cfg *config.Config, interfaceName string, profiler *DeviceProfil
 
 // SetPipeline sets the discovery pipeline reference for coordination.
 // This enables the service to trigger pipeline runs and receive completion callbacks.
+// Automatically wires up the onComplete callback to sync pipeline results.
 func (s *Service) SetPipeline(pipeline *Pipeline) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.pipeline = pipeline
+
+	// Wire up completion callback to sync pipeline results back to Service
+	if pipeline != nil {
+		pipeline.SetOnComplete(func(devices []*DiscoveredDevice) {
+			s.syncPipelineResults(devices)
+		})
+	}
 }
 
 // SetOnPipelineComplete sets a callback that's called when pipeline completes.
@@ -215,6 +223,7 @@ func (s *Service) rescanLoop() {
 }
 
 // Scan performs an active network scan (if enabled in options).
+// Returns ErrScanInProgress if a scan is already running.
 func (s *Service) Scan(ctx context.Context) error {
 	s.mu.RLock()
 	running := s.running
@@ -232,6 +241,11 @@ func (s *Service) Scan(ctx context.Context) error {
 	scanStart := time.Now()
 
 	if err := s.deviceDiscovery.Scan(ctx); err != nil {
+		// ErrScanInProgress is not a failure - just means scan was already running
+		if err == ErrScanInProgress {
+			slog.Debug("Discovery: scan skipped - already in progress")
+			return err // Return error so callers know it was skipped
+		}
 		s.mu.Lock()
 		s.metrics.RecordError("arp") // Record as ARP error (primary scan method)
 		s.mu.Unlock()
@@ -269,7 +283,22 @@ func (s *Service) Scan(ctx context.Context) error {
 }
 
 // queueDevicesForProfiling queues all discovered devices for profiling.
+// Skips queuing if pipeline is running (pipeline handles profiling in Phase 3).
 func (s *Service) queueDevicesForProfiling() {
+	// Skip if pipeline is running - it handles profiling in Phase 3
+	// This eliminates dual orchestration and duplicate profiling work
+	s.mu.RLock()
+	pipeline := s.pipeline
+	s.mu.RUnlock()
+
+	if pipeline != nil {
+		status := pipeline.GetStatus()
+		if isRunningPipelineState(status.Status) {
+			slog.Debug("Skipping device profiling - pipeline is running")
+			return
+		}
+	}
+
 	devices := s.deviceDiscovery.GetDevices()
 	queued := 0
 	for _, device := range devices {
@@ -281,6 +310,14 @@ func (s *Service) queueDevicesForProfiling() {
 	if queued > 0 {
 		slog.Info("Queued devices for profiling after scan", "count", queued)
 	}
+}
+
+// isRunningPipelineState checks if a pipeline state indicates active execution.
+func isRunningPipelineState(state PipelineState) bool {
+	return state == PipelineStateEnumerating ||
+		state == PipelineStateResolving ||
+		state == PipelineStateScanning ||
+		state == PipelineStateAssessing
 }
 
 // Reload reapplies discovery options from config at runtime.
@@ -565,6 +602,52 @@ func (s *Service) IsPipelineRunning() bool {
 		status.Status == PipelineStateResolving ||
 		status.Status == PipelineStateScanning ||
 		status.Status == PipelineStateAssessing
+}
+
+// syncPipelineResults updates the Service's device cache with pipeline results.
+// This is called when the pipeline completes successfully.
+// It ensures Service.GetDevices() returns the fully-enriched device list.
+func (s *Service) syncPipelineResults(devices []*DiscoveredDevice) {
+	if devices == nil || len(devices) == 0 {
+		return
+	}
+
+	var callback func(devices []*DiscoveredDevice)
+
+	s.mu.Lock()
+
+	// Update metrics with pipeline results
+	if s.metrics != nil {
+		s.metrics.UpdateFromDevices(devices)
+	}
+
+	// Compute delta for change tracking
+	if s.previousScan != nil {
+		s.lastDelta = ComputeDelta(s.previousScan, devices)
+		s.lastDeltaTime = time.Now()
+
+		if len(s.lastDelta.NewDevices) > 0 || len(s.lastDelta.RemovedDevices) > 0 {
+			slog.Info("Pipeline completed - synced devices",
+				"total", len(devices),
+				"new", len(s.lastDelta.NewDevices),
+				"updated", len(s.lastDelta.UpdatedDevices),
+				"removed", len(s.lastDelta.RemovedDevices))
+		}
+	}
+
+	// Store copy for next delta computation
+	s.previousScan = make([]*DiscoveredDevice, len(devices))
+	copy(s.previousScan, devices)
+
+	// Capture callback under lock
+	callback = s.onPipelineComplete
+
+	s.mu.Unlock()
+
+	// Call user callback outside of lock to prevent deadlock
+	if callback != nil {
+		callback(devices)
+	}
 }
 
 // DiscoveryError represents a discovery-specific error with categorization.
