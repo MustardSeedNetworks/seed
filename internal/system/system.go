@@ -5,6 +5,7 @@ import (
 	"os"
 	"runtime"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -14,6 +15,105 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/process"
 )
+
+// cpuCache stores the last CPU percentage to avoid blocking calls.
+var (
+	cpuCacheMu      sync.RWMutex
+	cpuCachePercent float64
+	cpuCacheTime    time.Time
+	cpuSamplerOnce  sync.Once
+	cpuSamplerStop  chan struct{}
+)
+
+// startCPUSampler starts a background goroutine that samples CPU every 2 seconds.
+// This avoids the blocking 100ms call in GetHealth().
+func startCPUSampler() {
+	cpuSamplerStop = make(chan struct{})
+	go func() {
+		// Take initial sample immediately
+		if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil && len(pct) > 0 {
+			cpuCacheMu.Lock()
+			cpuCachePercent = pct[0]
+			cpuCacheTime = time.Now()
+			cpuCacheMu.Unlock()
+		}
+
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-cpuSamplerStop:
+				return
+			case <-ticker.C:
+				if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil && len(pct) > 0 {
+					cpuCacheMu.Lock()
+					cpuCachePercent = pct[0]
+					cpuCacheTime = time.Now()
+					cpuCacheMu.Unlock()
+				}
+			}
+		}
+	}()
+}
+
+// getCachedCPUPercent returns the cached CPU percentage (non-blocking).
+func getCachedCPUPercent() float64 {
+	// Ensure sampler is started
+	cpuSamplerOnce.Do(startCPUSampler)
+
+	cpuCacheMu.RLock()
+	defer cpuCacheMu.RUnlock()
+	return cpuCachePercent
+}
+
+// processCacheTTL is how long process info remains valid.
+const processCacheTTL = 5 * time.Second
+
+// processCache stores cached process information to avoid expensive enumeration.
+var (
+	processCacheMu     sync.RWMutex
+	processCacheTop5   []ProcessInfo
+	processCacheMem5   []ProcessInfo
+	processCacheTime   time.Time
+	processUpdateMu    sync.Mutex
+	processUpdateInFly bool
+)
+
+// getCachedProcesses returns cached top processes (non-blocking).
+// Returns cached data immediately, triggers background refresh if stale.
+func getCachedProcesses() (topCPU, topMemory []ProcessInfo) {
+	processCacheMu.RLock()
+	cacheAge := time.Since(processCacheTime)
+	topCPU = processCacheTop5
+	topMemory = processCacheMem5
+	processCacheMu.RUnlock()
+
+	// If cache is stale, trigger background update (non-blocking)
+	if cacheAge > processCacheTTL {
+		processUpdateMu.Lock()
+		if !processUpdateInFly {
+			processUpdateInFly = true
+			go func() {
+				defer func() {
+					processUpdateMu.Lock()
+					processUpdateInFly = false
+					processUpdateMu.Unlock()
+				}()
+
+				cpu, mem := getTopProcessesInternal()
+				processCacheMu.Lock()
+				processCacheTop5 = cpu
+				processCacheMem5 = mem
+				processCacheTime = time.Now()
+				processCacheMu.Unlock()
+			}()
+		}
+		processUpdateMu.Unlock()
+	}
+
+	return topCPU, topMemory
+}
 
 // ProcessInfo contains information about a single process.
 type ProcessInfo struct {
@@ -63,9 +163,10 @@ type Health struct {
 	TopMemoryProcesses []ProcessInfo `json:"topMemoryProcesses,omitempty"`
 }
 
-// getTopProcesses collects information about top resource-consuming processes.
+// getTopProcessesInternal collects information about top resource-consuming processes.
 // Returns top 5 processes by CPU and memory usage.
-func getTopProcesses() (topCPU, topMemory []ProcessInfo) {
+// This is the internal (slow) version - use getCachedProcesses() for non-blocking access.
+func getTopProcessesInternal() (topCPU, topMemory []ProcessInfo) {
 	procs, err := process.Processes()
 	if err != nil {
 		return nil, nil
@@ -141,10 +242,8 @@ func GetHealth() (*Health, error) {
 		h.Hostname = hostname
 	}
 
-	// CPU percentage (average over a short interval)
-	if cpuPercent, err := cpu.Percent(100*time.Millisecond, false); err == nil && len(cpuPercent) > 0 {
-		h.CPUPercent = cpuPercent[0]
-	}
+	// CPU percentage (from background sampler - non-blocking)
+	h.CPUPercent = getCachedCPUPercent()
 
 	// Memory stats
 	if vmStat, err := mem.VirtualMemory(); err == nil {
@@ -178,9 +277,10 @@ func GetHealth() (*Health, error) {
 	h.ProcessMemory = memStats.Alloc
 
 	// Collect top processes only when thresholds exceeded (75%)
+	// Uses cached data for fast response (non-blocking)
 	const warningThreshold = 75.0
 	if h.CPUPercent >= warningThreshold || h.MemoryPercent >= warningThreshold {
-		topCPU, topMemory := getTopProcesses()
+		topCPU, topMemory := getCachedProcesses()
 		if h.CPUPercent >= warningThreshold {
 			h.TopCPUProcesses = topCPU
 		}

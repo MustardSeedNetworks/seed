@@ -2,8 +2,10 @@
 package logging
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
+	"time"
 )
 
 // Broadcaster defines the interface for broadcasting log entries to connected clients.
@@ -12,6 +14,16 @@ import (
 type Broadcaster interface {
 	// BroadcastLogEntry sends a log entry to all subscribed clients.
 	BroadcastLogEntry(entry *LogEntry)
+}
+
+// DBLogWriter defines the interface for persisting logs to a database.
+// This interface allows the logging package to persist logs without depending on
+// the database package (avoiding circular imports).
+type DBLogWriter interface {
+	// WriteLog persists a log entry to the database.
+	WriteLog(ctx context.Context, entry *LogEntry) error
+	// WriteBatch persists multiple log entries in a single transaction.
+	WriteBatch(ctx context.Context, entries []*LogEntry) error
 }
 
 // RingBuffer is a fixed-size circular buffer for storing recent log entries.
@@ -116,16 +128,28 @@ func (rb *RingBuffer) Clear() {
 
 // LogBroadcaster manages broadcasting log entries to WebSocket clients
 // and maintains a buffer of recent logs for new client connections.
+// It also persists logs to a database for durability.
 type LogBroadcaster struct {
 	buffer      *RingBuffer
 	broadcaster Broadcaster // Injected dependency to avoid circular imports
+	dbWriter    DBLogWriter // Database writer for persistence
 	mu          sync.RWMutex
+
+	// Batching for efficient database writes
+	batchBuffer []*LogEntry
+	batchMu     sync.Mutex
+	batchSize   int           // Number of entries to batch before flushing
+	batchTimer  *time.Timer   // Timer to flush batch periodically
+	stopCh      chan struct{} // Signal to stop the flush goroutine
 }
 
 // NewLogBroadcaster creates a new LogBroadcaster with the specified buffer size.
 func NewLogBroadcaster(bufferSize int) *LogBroadcaster {
 	return &LogBroadcaster{
-		buffer: NewRingBuffer(bufferSize),
+		buffer:      NewRingBuffer(bufferSize),
+		batchBuffer: make([]*LogEntry, 0, 50),
+		batchSize:   50, // Flush after 50 entries
+		stopCh:      make(chan struct{}),
 	}
 }
 
@@ -137,18 +161,111 @@ func (lb *LogBroadcaster) SetBroadcaster(b Broadcaster) {
 	lb.broadcaster = b
 }
 
+// SetDBWriter sets the database writer for log persistence.
+// Once set, logs will be batched and periodically flushed to the database.
+func (lb *LogBroadcaster) SetDBWriter(w DBLogWriter) {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+	lb.dbWriter = w
+
+	// Start the periodic flush timer (every 5 seconds)
+	if lb.batchTimer == nil {
+		lb.batchTimer = time.AfterFunc(5*time.Second, lb.flushBatch)
+	}
+}
+
+// flushBatch writes all buffered log entries to the database.
+func (lb *LogBroadcaster) flushBatch() {
+	lb.batchMu.Lock()
+	if len(lb.batchBuffer) == 0 {
+		lb.batchMu.Unlock()
+		// Reset timer
+		lb.mu.RLock()
+		if lb.batchTimer != nil {
+			lb.batchTimer.Reset(5 * time.Second)
+		}
+		lb.mu.RUnlock()
+		return
+	}
+
+	// Copy buffer and reset
+	entries := make([]*LogEntry, len(lb.batchBuffer))
+	copy(entries, lb.batchBuffer)
+	lb.batchBuffer = lb.batchBuffer[:0]
+	lb.batchMu.Unlock()
+
+	// Get database writer
+	lb.mu.RLock()
+	dbWriter := lb.dbWriter
+	lb.mu.RUnlock()
+
+	if dbWriter != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := dbWriter.WriteBatch(ctx, entries); err != nil {
+			// Log error but don't fail - logs are still in memory buffer
+			// We can't use the logging package here to avoid recursion
+			_ = err // Silently ignore - data is still in ring buffer
+		}
+	}
+
+	// Reset timer for next flush
+	lb.mu.RLock()
+	if lb.batchTimer != nil {
+		lb.batchTimer.Reset(5 * time.Second)
+	}
+	lb.mu.RUnlock()
+}
+
+// Stop stops the log broadcaster and flushes any remaining entries.
+func (lb *LogBroadcaster) Stop() {
+	// Signal stop
+	select {
+	case <-lb.stopCh:
+		// Already closed
+	default:
+		close(lb.stopCh)
+	}
+
+	// Stop timer
+	lb.mu.Lock()
+	if lb.batchTimer != nil {
+		lb.batchTimer.Stop()
+	}
+	lb.mu.Unlock()
+
+	// Final flush
+	lb.flushBatch()
+}
+
 // Write adds a log entry to the buffer and broadcasts it to connected clients.
+// If a database writer is configured, entries are batched and persisted.
 func (lb *LogBroadcaster) Write(entry *LogEntry) {
-	// Add to buffer
+	// Add to memory buffer
 	lb.buffer.Add(entry)
 
 	// Broadcast to clients
 	lb.mu.RLock()
 	broadcaster := lb.broadcaster
+	dbWriter := lb.dbWriter
 	lb.mu.RUnlock()
 
 	if broadcaster != nil {
 		broadcaster.BroadcastLogEntry(entry)
+	}
+
+	// Add to batch buffer for database persistence
+	if dbWriter != nil {
+		lb.batchMu.Lock()
+		lb.batchBuffer = append(lb.batchBuffer, entry)
+		shouldFlush := len(lb.batchBuffer) >= lb.batchSize
+		lb.batchMu.Unlock()
+
+		// Flush immediately if batch is full
+		if shouldFlush {
+			go lb.flushBatch()
+		}
 	}
 }
 

@@ -58,7 +58,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
 		discoveryManager:    discovery.NewManager(cfg.Interface.Default),
 		deviceDiscovery:     discovery.NewDeviceDiscovery(cfg.Interface.Default),
-		discoveryService:    discovery.NewService(cfg, cfg.Interface.Default),
+		discoveryService:    discovery.NewService(cfg, cfg.Interface.Default, nil), // nil profiler = use internal
 		dnsTester:           dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dhcpMonitor:         dhcp.NewMonitor(cfg.Interface.Default),
 		gatewayTester:       gateway.NewTester(gateway.DefaultThresholds()),

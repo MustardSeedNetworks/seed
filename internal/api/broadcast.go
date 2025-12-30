@@ -32,6 +32,8 @@ import (
 	"context"
 	"log/slog"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
 const (
@@ -296,26 +298,141 @@ func (s *Server) collectDNSData() map[string]interface{} {
 }
 
 // collectDiscoveryData gathers LLDP/CDP/EDP neighbor data.
+// Returns ALL discovered neighbors, not just the first one.
 func (s *Server) collectDiscoveryData() map[string]interface{} {
 	if s.discoveryManager == nil {
 		return nil
 	}
 
-	neighbors := s.discoveryManager.GetNeighbors()
-	if len(neighbors) == 0 {
+	// Get all protocol neighbors
+	lldpNeighbors := s.discoveryManager.GetLLDPNeighbors()
+	cdpNeighbors := s.discoveryManager.GetCDPNeighbors()
+	edpNeighbors := s.discoveryManager.GetEDPNeighbors()
+
+	totalCount := len(lldpNeighbors) + len(cdpNeighbors) + len(edpNeighbors)
+	if totalCount == 0 {
 		return nil
 	}
 
-	// Return first neighbor as the "nearest switch"
-	neighbor := neighbors[0]
-	return map[string]interface{}{
-		"protocol":          neighbor.Protocol,
-		"switchName":        neighbor.SystemName,
-		"portId":            neighbor.PortID,
-		"portDescription":   neighbor.PortDescription,
-		"managementIp":      neighbor.ManagementAddress,
-		"systemDescription": neighbor.SystemDescription,
+	// Build comprehensive neighbor list
+	allNeighbors := make([]map[string]interface{}, 0, totalCount)
+
+	for _, n := range lldpNeighbors {
+		allNeighbors = append(allNeighbors, map[string]interface{}{
+			"protocol":          "LLDP",
+			"systemName":        n.SystemName,
+			"portId":            n.PortID,
+			"portDescription":   n.PortDescription,
+			"managementIp":      n.ManagementAddress,
+			"systemDescription": n.SystemDescription,
+			"chassisId":         n.ChassisID,
+			"capabilities":      n.SystemCapabilities,
+		})
 	}
+
+	for _, n := range cdpNeighbors {
+		allNeighbors = append(allNeighbors, map[string]interface{}{
+			"protocol":          "CDP",
+			"systemName":        n.DeviceID, // CDP uses DeviceID instead of SystemName
+			"portId":            n.PortID,
+			"portDescription":   "", // CDP doesn't have port description
+			"managementIp":      n.ManagementAddress,
+			"systemDescription": n.SoftwareVersion, // Use software version as description
+			"platform":          n.Platform,
+			"nativeVlan":        n.NativeVLAN,
+			"capabilities":      n.Capabilities,
+		})
+	}
+
+	for _, n := range edpNeighbors {
+		allNeighbors = append(allNeighbors, map[string]interface{}{
+			"protocol":          "EDP",
+			"systemName":        n.DeviceID, // EDP uses DeviceID
+			"portId":            n.PortID,
+			"portDescription":   "", // EDP doesn't have port description
+			"managementIp":      n.ManagementAddress,
+			"systemDescription": n.Platform, // Use platform as description
+			"displayName":       n.DisplayName,
+			"vlan":              n.VLAN,
+		})
+	}
+
+	// Also get discovered devices count and status from pipeline/service
+	var deviceCount int
+	var serviceStatus *discovery.ServiceStatus
+	if s.discoveryService != nil {
+		deviceCount = len(s.discoveryService.GetDevices())
+		serviceStatus = s.discoveryService.GetStatus()
+	}
+
+	// Return first neighbor as "primary" for backwards compatibility,
+	// plus full list for comprehensive display
+	result := map[string]interface{}{
+		"neighbors":   allNeighbors,
+		"totalCount":  totalCount,
+		"deviceCount": deviceCount,
+	}
+
+	// Include first neighbor fields for backward compatibility
+	if len(allNeighbors) > 0 {
+		first := allNeighbors[0]
+		result["protocol"] = first["protocol"]
+		result["switchName"] = first["systemName"]
+		result["portId"] = first["portId"]
+		result["portDescription"] = first["portDescription"]
+		result["managementIp"] = first["managementIp"]
+		result["systemDescription"] = first["systemDescription"]
+	}
+
+	// Include discovery metrics and health status
+	if serviceStatus != nil {
+		result["pipelineStatus"] = serviceStatus.PipelineStatus
+		result["pipelinePhase"] = serviceStatus.PipelinePhase
+		if serviceStatus.ProfilingStatus != nil {
+			result["profilingStatus"] = map[string]interface{}{
+				"inProgress":    serviceStatus.ProfilingStatus.InProgress,
+				"totalProfiled": serviceStatus.ProfilingStatus.TotalProfiled,
+				"queueLength":   serviceStatus.ProfilingStatus.QueueLength,
+				"enabled":       serviceStatus.ProfilingStatus.Enabled,
+				"scanIntensity": serviceStatus.ProfilingStatus.ScanIntensity,
+			}
+		}
+		if serviceStatus.Metrics != nil {
+			result["metrics"] = map[string]interface{}{
+				"totalDiscovered":   serviceStatus.Metrics.TotalDiscovered,
+				"hostsProbed":       serviceStatus.Metrics.HostsProbed,
+				"hostsResponding":   serviceStatus.Metrics.HostsResponding,
+				"coveragePercent":   serviceStatus.Metrics.CoveragePercent,
+				"snmpSuccessful":    serviceStatus.Metrics.SNMPSuccessful,
+				"interfacesFound":   serviceStatus.Metrics.InterfacesFound,
+				"ipAddressesFound":  serviceStatus.Metrics.IPAddressesFound,
+				"entitiesFound":     serviceStatus.Metrics.EntitiesFound,
+				"profilesCompleted": serviceStatus.Metrics.ProfilesCompleted,
+				"profilesFailed":    serviceStatus.Metrics.ProfilesFailed,
+				"openPortsFound":    serviceStatus.Metrics.OpenPortsFound,
+				"lastScanDuration":  serviceStatus.Metrics.LastScanDuration.Milliseconds(),
+			}
+		}
+		if serviceStatus.DegradationStatus != nil {
+			result["health"] = map[string]interface{}{
+				"overall":         serviceStatus.DegradationStatus.OverallHealth,
+				"healthyMethods":  serviceStatus.DegradationStatus.HealthyMethods,
+				"failedMethods":   serviceStatus.DegradationStatus.FailedMethods,
+				"warnings":        serviceStatus.DegradationStatus.Warnings,
+				"recommendations": serviceStatus.DegradationStatus.Recommendations,
+			}
+		}
+		if serviceStatus.LastDelta != nil {
+			result["lastDelta"] = map[string]interface{}{
+				"newDevices":     len(serviceStatus.LastDelta.NewDevices),
+				"updatedDevices": len(serviceStatus.LastDelta.UpdatedDevices),
+				"removedDevices": len(serviceStatus.LastDelta.RemovedDevices),
+				"scanTime":       serviceStatus.LastDelta.ScanTime,
+			}
+		}
+	}
+
+	return result
 }
 
 // collectPublicIPData gathers public IP address information.

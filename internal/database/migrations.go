@@ -352,6 +352,31 @@ var migrations = []Migration{
 			CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);
 		`,
 	},
+	{
+		Version:     14,
+		Description: "Create logs table for persistent log storage",
+		Up: `
+			CREATE TABLE IF NOT EXISTS logs (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				timestamp TEXT NOT NULL,
+				level TEXT NOT NULL,
+				layer TEXT NOT NULL,
+				message TEXT NOT NULL,
+				component TEXT,
+				request_id TEXT,
+				session_id TEXT,
+				duration_ms INTEGER,
+				metadata_json TEXT,
+				stack TEXT
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp);
+			CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level);
+			CREATE INDEX IF NOT EXISTS idx_logs_layer ON logs(layer);
+			CREATE INDEX IF NOT EXISTS idx_logs_component ON logs(component);
+			CREATE INDEX IF NOT EXISTS idx_logs_request_id ON logs(request_id);
+		`,
+	},
 }
 
 // migrate runs all pending migrations.

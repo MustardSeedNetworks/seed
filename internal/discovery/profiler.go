@@ -753,6 +753,61 @@ func (p *DeviceProfiler) IsProfiling(ip string) bool {
 	return p.profiling[ip]
 }
 
+// ProfilingStatus represents the current state of the device profiler.
+type ProfilingStatus struct {
+	TotalProfiled int      `json:"totalProfiled"` // Number of devices successfully profiled
+	InProgress    int      `json:"inProgress"`    // Number of devices currently being profiled
+	QueueLength   int      `json:"queueLength"`   // Number of devices waiting to be profiled
+	ProfilingIPs  []string `json:"profilingIps"`  // IPs currently being profiled
+	Enabled       bool     `json:"enabled"`       // Whether profiling is enabled
+	MaxConcurrent int      `json:"maxConcurrent"` // Maximum concurrent profiling operations
+	PortsToScan   int      `json:"portsToScan"`   // Number of ports being scanned per device
+	ScanIntensity string   `json:"scanIntensity"` // Current port scan intensity level
+}
+
+// GetProfilingStatus returns comprehensive status about profiling operations.
+func (p *DeviceProfiler) GetProfilingStatus() *ProfilingStatus {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	profilingIPs := make([]string, 0, len(p.profiling))
+	for ip := range p.profiling {
+		profilingIPs = append(profilingIPs, ip)
+	}
+
+	// Get port count based on intensity
+	ports := p.config.GetPortsForIntensity()
+	portsCount := len(ports)
+	if ports == nil {
+		portsCount = len(p.config.QuickPorts) // Fallback to quick ports
+	}
+
+	return &ProfilingStatus{
+		TotalProfiled: len(p.profiles),
+		InProgress:    len(p.profiling),
+		QueueLength:   len(p.queue),
+		ProfilingIPs:  profilingIPs,
+		Enabled:       p.config.Enabled,
+		MaxConcurrent: p.config.MaxConcurrent,
+		PortsToScan:   portsCount,
+		ScanIntensity: string(p.config.PortScanIntensity),
+	}
+}
+
+// GetDeviceProfilingState returns the profiling state for a specific device IP.
+func (p *DeviceProfiler) GetDeviceProfilingState(ip string) string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if p.profiling[ip] {
+		return "profiling"
+	}
+	if _, exists := p.profiles[ip]; exists {
+		return "completed"
+	}
+	return "pending"
+}
+
 // portToService maps common ports to service names.
 func portToService(port int) string {
 	services := map[int]string{
