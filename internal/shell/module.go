@@ -30,7 +30,7 @@ func New(cfg *config.Config, db *database.DB) *Module {
 
 	m.discovery = NewDiscoveryService(cfg, db)
 	m.vulnerability = NewVulnerabilityService(cfg, db)
-	m.posture = NewPostureService(cfg, db)
+	m.posture = NewPostureService(cfg, db, m.discovery, m.vulnerability)
 	m.rogue = NewRogueService(cfg)
 
 	return m
