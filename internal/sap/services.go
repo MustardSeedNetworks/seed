@@ -214,19 +214,42 @@ func (s *DHCPService) Test(_ context.Context, iface string) (*DHCPTestResult, er
 	return result, nil
 }
 
-// DNSService provides DNS testing.
+// DNSService provides DNS testing and security scanning.
 type DNSService struct {
-	cfg    *config.Config
-	tester *dns.Tester
+	cfg             *config.Config
+	tester          *dns.Tester
+	securityScanner *dns.SecurityScanner
 }
 
 // NewDNSService creates a new DNS service.
 func NewDNSService(cfg *config.Config) *DNSService {
-	tester := dns.NewTester("", "google.com", dns.DefaultThresholds())
-	return &DNSService{
-		cfg:    cfg,
-		tester: tester,
+	tester := dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	// Configure servers from config
+	configuredServers := make([]dns.ConfiguredServer, 0)
+	for _, srv := range cfg.DNS.Servers {
+		configuredServers = append(configuredServers, dns.ConfiguredServer{
+			Address: srv.Address,
+			Enabled: srv.Enabled,
+		})
 	}
+	tester.SetConfiguredServers(configuredServers)
+
+	return &DNSService{
+		cfg:             cfg,
+		tester:          tester,
+		securityScanner: dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
+	}
+}
+
+// Tester returns the underlying DNS tester for direct access.
+// This allows handlers to use existing patterns during transition.
+func (s *DNSService) Tester() *dns.Tester {
+	return s.tester
+}
+
+// SecurityScanner returns the underlying security scanner for direct access.
+func (s *DNSService) SecurityScanner() *dns.SecurityScanner {
+	return s.securityScanner
 }
 
 // Test performs a DNS query test.
@@ -287,6 +310,11 @@ func NewGatewayService(cfg *config.Config) *GatewayService {
 		cfg:    cfg,
 		tester: tester,
 	}
+}
+
+// Tester returns the underlying gateway tester for direct access.
+func (s *GatewayService) Tester() *gateway.Tester {
+	return s.tester
 }
 
 // Start begins gateway monitoring.
@@ -395,9 +423,19 @@ type PerformanceService struct {
 func NewPerformanceService(cfg *config.Config) *PerformanceService {
 	return &PerformanceService{
 		cfg:       cfg,
-		speedtest: speedtest.NewTester(),
+		speedtest: speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 		iperfMgr:  iperf.NewManager(),
 	}
+}
+
+// SpeedtestTester returns the underlying speedtest tester for direct access.
+func (s *PerformanceService) SpeedtestTester() *speedtest.Tester {
+	return s.speedtest
+}
+
+// IPerfManager returns the underlying iPerf manager for direct access.
+func (s *PerformanceService) IPerfManager() *iperf.Manager {
+	return s.iperfMgr
 }
 
 // Stop halts any running tests.
@@ -473,8 +511,9 @@ func (s *PerformanceService) IPerf(ctx context.Context, host string, options map
 
 // VLANService manages VLAN configuration.
 type VLANService struct {
-	cfg     *config.Config
-	manager *vlan.Manager
+	cfg            *config.Config
+	manager        *vlan.Manager
+	trafficMonitor *vlan.TrafficMonitor
 }
 
 // NewVLANService creates a new VLAN service.
@@ -484,9 +523,20 @@ func NewVLANService(cfg *config.Config) *VLANService {
 		iface = DefaultInterface
 	}
 	return &VLANService{
-		cfg:     cfg,
-		manager: vlan.NewManager(iface),
+		cfg:            cfg,
+		manager:        vlan.NewManager(iface),
+		trafficMonitor: vlan.NewTrafficMonitor(iface),
 	}
+}
+
+// Manager returns the underlying VLAN manager for direct access.
+func (s *VLANService) Manager() *vlan.Manager {
+	return s.manager
+}
+
+// TrafficMonitor returns the underlying traffic monitor for direct access.
+func (s *VLANService) TrafficMonitor() *vlan.TrafficMonitor {
+	return s.trafficMonitor
 }
 
 // Create creates a VLAN subinterface.

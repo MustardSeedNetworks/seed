@@ -359,3 +359,13 @@ func scoreToDescription(score int) string {
 		return "Very poor path quality. Consider using an alternative route."
 	}
 }
+
+// Tracer returns the underlying tracer for dependency injection.
+func (s *TracerouteService) Tracer() *discovery.Tracer {
+	return s.tracer
+}
+
+// Checker returns the underlying public IP checker for dependency injection.
+func (s *EnrichmentService) Checker() *publicip.Checker {
+	return s.checker
+}

@@ -208,6 +208,13 @@ func (a *vulnScannerAdapter) GetAllVulnerabilities() interface{} {
 
 // GetDiscoveryService returns the discovery service adapter.
 func (s *Server) GetDiscoveryService() mcp.DiscoveryService {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Shell != nil && s.modules.Shell.Discovery() != nil {
+		if svc := s.modules.Shell.Discovery().Service(); svc != nil {
+			return &discoveryServiceAdapter{svc: svc}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.discoveryService == nil {
 		return nil
 	}
@@ -216,6 +223,13 @@ func (s *Server) GetDiscoveryService() mcp.DiscoveryService {
 
 // GetDeviceDiscovery returns the device discovery adapter.
 func (s *Server) GetDeviceDiscovery() mcp.DeviceDiscovery {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Shell != nil && s.modules.Shell.Discovery() != nil {
+		if dd := s.modules.Shell.Discovery().DeviceDiscovery(); dd != nil {
+			return &deviceDiscoveryAdapter{dd: dd}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.deviceDiscovery == nil {
 		return nil
 	}
@@ -240,6 +254,13 @@ func (s *Server) GetLinkMonitor() mcp.LinkMonitor {
 
 // GetVLANManager returns the VLAN manager adapter.
 func (s *Server) GetVLANManager() mcp.VLANManager {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Sap != nil && s.modules.Sap.VLAN() != nil {
+		if mgr := s.modules.Sap.VLAN().Manager(); mgr != nil {
+			return &vlanManagerWrapperImpl{mgr: mgr}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.vlanManager == nil {
 		return nil
 	}
@@ -257,6 +278,13 @@ func (w *vlanManagerWrapperImpl) GetInfo() interface{} {
 
 // GetDNSTester returns the DNS tester adapter.
 func (s *Server) GetDNSTester() mcp.DNSTester {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Sap != nil && s.modules.Sap.DNS() != nil {
+		if tester := s.modules.Sap.DNS().Tester(); tester != nil {
+			return &dnsTesterAdapter{tester: tester}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.dnsTester == nil {
 		return nil
 	}
@@ -265,6 +293,13 @@ func (s *Server) GetDNSTester() mcp.DNSTester {
 
 // GetGatewayTester returns the gateway tester adapter.
 func (s *Server) GetGatewayTester() mcp.GatewayTester {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Sap != nil && s.modules.Sap.Gateway() != nil {
+		if tester := s.modules.Sap.Gateway().Tester(); tester != nil {
+			return &gatewayTesterAdapter{tester: tester}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.gatewayTester == nil {
 		return nil
 	}
@@ -273,6 +308,13 @@ func (s *Server) GetGatewayTester() mcp.GatewayTester {
 
 // GetSpeedtestTester returns the speedtest tester adapter.
 func (s *Server) GetSpeedtestTester() mcp.SpeedtestTester {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Sap != nil && s.modules.Sap.Performance() != nil {
+		if tester := s.modules.Sap.Performance().SpeedtestTester(); tester != nil {
+			return &speedtestTesterAdapter{tester: tester}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.speedtestTester == nil {
 		return nil
 	}
@@ -281,6 +323,13 @@ func (s *Server) GetSpeedtestTester() mcp.SpeedtestTester {
 
 // GetIperfManager returns the iPerf manager adapter.
 func (s *Server) GetIperfManager() mcp.IperfManager {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Sap != nil && s.modules.Sap.Performance() != nil {
+		if mgr := s.modules.Sap.Performance().IPerfManager(); mgr != nil {
+			return &iperfManagerAdapter{mgr: mgr}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.iperfManager == nil {
 		return nil
 	}
@@ -289,6 +338,13 @@ func (s *Server) GetIperfManager() mcp.IperfManager {
 
 // GetWiFiScanner returns the WiFi scanner adapter.
 func (s *Server) GetWiFiScanner() mcp.WiFiScanner {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Canopy != nil && s.modules.Canopy.WiFi() != nil {
+		if scanner := s.modules.Canopy.WiFi().Scanner(); scanner != nil {
+			return &wifiScannerAdapter{scanner: scanner}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.wifiScanner == nil {
 		return nil
 	}
@@ -297,6 +353,13 @@ func (s *Server) GetWiFiScanner() mcp.WiFiScanner {
 
 // GetWiFiManager returns the WiFi manager adapter.
 func (s *Server) GetWiFiManager() mcp.WiFiManager {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Canopy != nil && s.modules.Canopy.WiFi() != nil {
+		if mgr := s.modules.Canopy.WiFi().Manager(); mgr != nil {
+			return &wifiManagerAdapter{mgr: mgr}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.wifiManager == nil {
 		return nil
 	}
@@ -305,6 +368,13 @@ func (s *Server) GetWiFiManager() mcp.WiFiManager {
 
 // GetRogueDetector returns the rogue DHCP detector adapter.
 func (s *Server) GetRogueDetector() mcp.RogueDetector {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Shell != nil && s.modules.Shell.Rogue() != nil {
+		if detector := s.modules.Shell.Rogue().Detector(); detector != nil {
+			return &rogueDetectorWrapperImpl{detector: detector}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.rogueDetector == nil {
 		return nil
 	}
@@ -326,6 +396,13 @@ func (w *rogueDetectorWrapperImpl) IsRunning() bool {
 
 // GetVulnScanner returns the vulnerability scanner adapter.
 func (s *Server) GetVulnScanner() mcp.VulnScanner {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Shell != nil && s.modules.Shell.Vulnerability() != nil {
+		if scanner := s.modules.Shell.Vulnerability().Scanner(); scanner != nil {
+			return &vulnScannerAdapter{scanner: scanner}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.vulnScanner == nil {
 		return nil
 	}
@@ -334,6 +411,13 @@ func (s *Server) GetVulnScanner() mcp.VulnScanner {
 
 // GetPublicIPChecker returns the public IP checker adapter.
 func (s *Server) GetPublicIPChecker() mcp.PublicIPChecker {
+	// Use module service accessor (Phase A transition)
+	if s.modules != nil && s.modules.Roots != nil && s.modules.Roots.Enrichment() != nil {
+		if checker := s.modules.Roots.Enrichment().Checker(); checker != nil {
+			return &publicIPCheckerWrapperImpl{checker: checker}
+		}
+	}
+	// Fallback to direct instance for backward compatibility
 	if s.publicipChecker == nil {
 		return nil
 	}

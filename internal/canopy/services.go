@@ -153,6 +153,11 @@ func (s *SurveyService) Stop() {
 	}
 }
 
+// SurveyManager returns the underlying survey manager for direct access.
+func (s *SurveyService) SurveyManager() *survey.Manager {
+	return s.manager
+}
+
 // Create creates a new survey.
 func (s *SurveyService) Create(_ context.Context, name, description string) (*Survey, error) {
 	if s.manager == nil {

@@ -511,3 +511,23 @@ func convertVulnerability(v *discovery.Vulnerability) Vulnerability {
 		Status:      VulnStatusNew,
 	}
 }
+
+// Service returns the underlying discovery.Service for dependency injection.
+func (s *DiscoveryService) Service() *discovery.Service {
+	return s.service
+}
+
+// DeviceDiscovery returns the underlying DeviceDiscovery for dependency injection.
+func (s *DiscoveryService) DeviceDiscovery() *discovery.DeviceDiscovery {
+	return s.deviceDiscovery
+}
+
+// Scanner returns the underlying vulnerability scanner for dependency injection.
+func (s *VulnerabilityService) Scanner() *discovery.VulnerabilityScanner {
+	return s.scanner
+}
+
+// Detector returns the underlying rogue detector for dependency injection.
+func (s *RogueService) Detector() *dhcp.RogueDetector {
+	return s.detector
+}
