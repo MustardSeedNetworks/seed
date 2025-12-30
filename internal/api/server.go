@@ -54,6 +54,7 @@ type Server struct {
 	logPath             string
 	httpServer          *http.Server
 	authManager         *auth.Manager
+	csrfManager         *auth.CSRFManager  // CSRF token manager for state-changing requests (fixes contract review)
 	setupTokenManager   *SetupTokenManager // Setup token manager for secure initial setup (fixes #724, #758)
 	loginRateLimiter    *RateLimiter
 	endpointRateLimiter *EndpointRateLimiter // Rate limiter for expensive endpoints (fixes #530)
@@ -62,8 +63,8 @@ type Server struct {
 	mux                 *http.ServeMux
 	netManager          *network.Manager
 	linkMonitor         *network.LinkMonitor
-	deviceDiscovery  *discovery.DeviceDiscovery // Device aggregation (used by Service and Pipeline)
-	discoveryService *discovery.Service         // Unified discovery orchestrator
+	deviceDiscovery     *discovery.DeviceDiscovery // Device aggregation (used by Service and Pipeline)
+	discoveryService    *discovery.Service         // Unified discovery orchestrator
 	dnsTester           *dns.Tester
 	dnsSecurityScanner  *dns.SecurityScanner
 	dhcpMonitor         *dhcp.Monitor
@@ -117,11 +118,12 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 			cfg.Auth.DefaultUsername,
 			cfg.Auth.DefaultPasswordHash,
 		),
+		csrfManager:         auth.NewCSRFManager(), // CSRF protection for state-changing requests
 		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
 		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()), // Rate limit expensive endpoints (fixes #530)
 		setupTokenManager:   NewSetupTokenManager(),                                   // Setup token for secure initial setup (fixes #724, #758)
-		linkMonitor:     network.NewLinkMonitor(cfg.Interface.Default),
-		deviceDiscovery: discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
+		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
+		deviceDiscovery:     discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
 		// Note: discoveryService is initialized after profiler is created (see below)
 		dnsTester:          dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dnsSecurityScanner: dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
@@ -378,6 +380,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/auth/login", s.handleLogin)
 	s.mux.HandleFunc("/api/auth/logout", s.handleLogout)
 	s.mux.HandleFunc("/api/auth/refresh", s.handleRefreshToken) // Token refresh (fixes #478)
+	s.mux.HandleFunc("/api/auth/csrf", s.handleCSRFToken)       // CSRF token for state-changing requests
 	s.mux.HandleFunc("/api/status", s.handleStatus)
 	s.mux.HandleFunc("/api/settings", s.handleSettings)
 	s.mux.HandleFunc("/api/interfaces", s.handleInterfaces)
@@ -715,12 +718,13 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
-	// Apply middleware stack: panic recovery → request ID → logging → security headers → body limit → CORS → i18n → auth (fixes #519)
+	// Apply middleware stack: panic recovery → request ID → logging → security headers → body limit → CORS → i18n → auth → CSRF (fixes #519)
 	// Panic recovery is outermost to catch all panics
 	// Request ID middleware generates unique IDs for request correlation in logs
 	// Logging middleware logs all HTTP requests with timing, status, and request IDs
 	// Body limit middleware enforces request body size limits
 	// i18n middleware extracts Accept-Language and attaches localizer to context
+	// CSRF middleware validates tokens on state-changing requests (POST, PUT, DELETE)
 	handler := recoverMiddleware(
 		logging.RequestIDMiddleware(
 			logging.LoggingMiddleware(
@@ -728,7 +732,8 @@ func (s *Server) Start() error {
 					bodyLimitMiddleware(
 						corsMiddleware(
 							i18n.Middleware()(
-								s.authManager.Middleware(s.mux))))))))
+								s.authManager.Middleware(
+									s.csrfManager.CSRFMiddleware(s.mux)))))))))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
@@ -1032,6 +1037,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	slog.Info("Stopping rate limiters...")
 	s.loginRateLimiter.Stop()
 	s.endpointRateLimiter.Stop()
+
+	slog.Info("Stopping CSRF manager...")
+	s.csrfManager.Stop()
 
 	// Stop data retention goroutine (fixes #848)
 	if s.retentionStopCh != nil {

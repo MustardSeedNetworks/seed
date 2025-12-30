@@ -507,7 +507,7 @@ export function useNetworkFetchers({
             deviceCount: 0,
             lastScan: "",
             subnet: "",
-            localIp: "",
+            localIP: "",
             interface: requestedInterface,
           },
         });

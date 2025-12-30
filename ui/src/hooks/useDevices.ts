@@ -29,18 +29,112 @@ import { LogComponents, logger } from "../lib/logger";
 /** Network device discovered by the scanner */
 export interface Device {
   ip: string;
+  ipv6?: string;
+  ipv6Addresses?: string[];
   mac: string;
-  hostname: string;
-  vendor: string;
-  discoveryMethod: string;
-  firstSeen: string;
+  hostname?: string;
+  netbiosName?: string;
+  mdnsName?: string;
+  displayName?: string;
+  vendor?: string;
+  osGuess?: string;
+  ttl?: number;
+  discoveryMethod: string[]; // Array of discovery methods (arp, ndp, lldp, cdp, edp, mdns, ping)
   lastSeen: string;
+  isLocal?: boolean;
+  isRouter?: boolean;
+  hasDuplicateIP?: boolean;
+  duplicateMACs?: string[];
+  lldpInfo?: LLDPDeviceInfo;
+  cdpInfo?: CDPDeviceInfo;
+  edpInfo?: EDPDeviceInfo;
+  ndpInfo?: NDPDeviceInfo;
+  profile?: DeviceProfile;
+  snmpData?: SNMPFullData;
+  vulnerabilities?: DeviceVulnerabilities;
+}
+
+/** LLDP-specific device information */
+export interface LLDPDeviceInfo {
+  chassisId: string;
+  portId: string;
+  portDescription?: string;
+  systemName?: string;
+  systemDescription?: string;
+  capabilities?: string[];
+  managementAddress?: string;
+}
+
+/** CDP-specific device information */
+export interface CDPDeviceInfo {
+  deviceId: string;
+  portId: string;
+  platform?: string;
+  capabilities?: string[];
+  softwareVersion?: string;
+  managementAddress?: string;
+}
+
+/** EDP-specific device information */
+export interface EDPDeviceInfo {
+  deviceId: string;
+  slot?: number;
+  port?: number;
+  vlanId?: number;
+}
+
+/** NDP (IPv6 Neighbor Discovery) information */
+export interface NDPDeviceInfo {
+  isRouter: boolean;
+  reachabilityState?: string;
+  linkLayerAddress?: string;
+}
+
+/** Device profile from auto-profiling */
+export interface DeviceProfile {
+  deviceType?: string;
+  manufacturer?: string;
+  model?: string;
+  firmware?: string;
   openPorts?: number[];
-  osInfo?: {
-    name: string;
-    version: string;
-    vendor: string;
+  services?: Record<string, string>;
+  confidence?: number;
+}
+
+/** SNMP data collected from device */
+export interface SNMPFullData {
+  collectedAt: string;
+  system?: {
+    sysName?: string;
+    sysDescr?: string;
+    sysObjectID?: string;
+    sysUpTime?: number;
+    sysContact?: string;
+    sysLocation?: string;
   };
+  interfaces?: Array<{
+    index: number;
+    name?: string;
+    description?: string;
+    speedMbps?: number;
+    mac?: string;
+    adminStatus?: string;
+    operStatus?: string;
+  }>;
+  errors?: string[];
+}
+
+/** Vulnerability assessment results */
+export interface DeviceVulnerabilities {
+  scanTime: string;
+  cveCount?: number;
+  highSeverity?: number;
+  criticalSeverity?: number;
+  vulnerabilities?: Array<{
+    cveId: string;
+    severity: string;
+    description?: string;
+  }>;
 }
 
 /** Status of the device discovery scanner */

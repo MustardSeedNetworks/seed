@@ -172,12 +172,13 @@ func GetAllInterfaces(ctx context.Context, ip string, cfg *config.SNMPConfig) ([
 // walkInterfaces performs a bulk walk of interface table using SNMPv2c.
 func walkInterfaces(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]InterfaceInfo, error) {
 	params := &gosnmp.GoSNMP{
-		Target:    ip,
-		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community: community,
-		Version:   gosnmp.Version2c,
-		Timeout:   cfg.Timeout,
-		Retries:   cfg.Retries,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Community:      community,
+		Version:        gosnmp.Version2c,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
 	}
 
 	err := params.Connect()
@@ -199,13 +200,14 @@ func walkInterfaces(ctx context.Context, ip, community string, cfg *config.SNMPC
 // walkInterfacesV3 performs a bulk walk of interface table using SNMPv3.
 func walkInterfacesV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]InterfaceInfo, error) {
 	params := &gosnmp.GoSNMP{
-		Target:        ip,
-		Port:          uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:       gosnmp.Version3,
-		Timeout:       cfg.Timeout,
-		Retries:       cfg.Retries,
-		SecurityModel: gosnmp.UserSecurityModel,
-		MsgFlags:      gosnmp.AuthPriv,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:        gosnmp.Version3,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
+		SecurityModel:  gosnmp.UserSecurityModel,
+		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
 			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field is expected
@@ -391,12 +393,13 @@ func getMACTableBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) (
 // walkMACTableQBridge walks Q-BRIDGE-MIB MAC table using SNMPv2c.
 func walkMACTableQBridge(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]MACEntry, error) {
 	params := &gosnmp.GoSNMP{
-		Target:    ip,
-		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community: community,
-		Version:   gosnmp.Version2c,
-		Timeout:   cfg.Timeout,
-		Retries:   cfg.Retries,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Community:      community,
+		Version:        gosnmp.Version2c,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
 	}
 
 	err := params.Connect()
@@ -418,13 +421,14 @@ func walkMACTableQBridge(ctx context.Context, ip, community string, cfg *config.
 // walkMACTableQBridgeV3 walks Q-BRIDGE-MIB MAC table using SNMPv3.
 func walkMACTableQBridgeV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]MACEntry, error) {
 	params := &gosnmp.GoSNMP{
-		Target:        ip,
-		Port:          uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:       gosnmp.Version3,
-		Timeout:       cfg.Timeout,
-		Retries:       cfg.Retries,
-		SecurityModel: gosnmp.UserSecurityModel,
-		MsgFlags:      gosnmp.AuthPriv,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:        gosnmp.Version3,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
+		SecurityModel:  gosnmp.UserSecurityModel,
+		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
 			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field is expected
@@ -545,12 +549,13 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 // walkMACTableBridge walks BRIDGE-MIB MAC table using SNMPv2c.
 func walkMACTableBridge(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]MACEntry, error) {
 	params := &gosnmp.GoSNMP{
-		Target:    ip,
-		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community: community,
-		Version:   gosnmp.Version2c,
-		Timeout:   cfg.Timeout,
-		Retries:   cfg.Retries,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Community:      community,
+		Version:        gosnmp.Version2c,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
 	}
 
 	err := params.Connect()
@@ -572,13 +577,14 @@ func walkMACTableBridge(ctx context.Context, ip, community string, cfg *config.S
 // walkMACTableBridgeV3 walks BRIDGE-MIB MAC table using SNMPv3.
 func walkMACTableBridgeV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]MACEntry, error) {
 	params := &gosnmp.GoSNMP{
-		Target:        ip,
-		Port:          uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:       gosnmp.Version3,
-		Timeout:       cfg.Timeout,
-		Retries:       cfg.Retries,
-		SecurityModel: gosnmp.UserSecurityModel,
-		MsgFlags:      gosnmp.AuthPriv,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:        gosnmp.Version3,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
+		SecurityModel:  gosnmp.UserSecurityModel,
+		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
 			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field is expected
@@ -717,12 +723,13 @@ func GetPortVLANs(ctx context.Context, ip string, ifIndex int, cfg *config.SNMPC
 // getPortVLANsWithCommunity retrieves port VLANs using SNMPv2c.
 func getPortVLANsWithCommunity(ctx context.Context, ip string, ifIndex int, community string, cfg *config.SNMPConfig) ([]int, error) {
 	params := &gosnmp.GoSNMP{
-		Target:    ip,
-		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community: community,
-		Version:   gosnmp.Version2c,
-		Timeout:   cfg.Timeout,
-		Retries:   cfg.Retries,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Community:      community,
+		Version:        gosnmp.Version2c,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
 	}
 
 	err := params.Connect()
@@ -744,13 +751,14 @@ func getPortVLANsWithCommunity(ctx context.Context, ip string, ifIndex int, comm
 // getPortVLANsWithV3 retrieves port VLANs using SNMPv3.
 func getPortVLANsWithV3(ctx context.Context, ip string, ifIndex int, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]int, error) {
 	params := &gosnmp.GoSNMP{
-		Target:        ip,
-		Port:          uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:       gosnmp.Version3,
-		Timeout:       cfg.Timeout,
-		Retries:       cfg.Retries,
-		SecurityModel: gosnmp.UserSecurityModel,
-		MsgFlags:      gosnmp.AuthPriv,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:        gosnmp.Version3,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
+		SecurityModel:  gosnmp.UserSecurityModel,
+		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
 			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field is expected

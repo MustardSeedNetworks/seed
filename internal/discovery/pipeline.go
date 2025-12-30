@@ -323,14 +323,14 @@ func DefaultPipelineConfig() PipelineConfig {
 		SNMPCollection: SNMPCollectionConfig{
 			Enabled: true,
 			MIBs: SNMPMIBSelection{
-				System:      true, // Always collect system info
-				Interfaces:  true, // Critical for network devices
-				IPAddresses: true, // Essential for topology
-				Routing:     false,
+				System:      true,  // Always collect system info
+				Interfaces:  true,  // Critical for network devices
+				IPAddresses: true,  // Essential for topology
+				Routing:     true,  // Required for L3 diagrams
 				Bridge:      false, // Can be large on switches
-				Entity:      false,
-				LLDP:        true,
-				VLAN:        false, // Can be large
+				Entity:      false, // Physical inventory
+				LLDP:        true,  // Required for L2 topology
+				VLAN:        true,  // Required for L2 VLAN diagrams
 			},
 			WalkTimeout:       30 * time.Second,
 			MaxOIDsPerRequest: 10,

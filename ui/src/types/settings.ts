@@ -239,10 +239,10 @@ export interface DiscoveryServiceStatus {
   deviceCount: number;
   lastScan: string;
   subnet: string;
-  localIp: string;
+  localIP: string; // Matches backend json:"localIP"
   interface: string;
   activeMethods: string[];
-  rescanInterval: number;
+  rescanInterval: number; // Backend sends time.Duration (nanoseconds)
 }
 
 /** Full network discovery settings - matches API response */

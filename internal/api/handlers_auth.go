@@ -232,6 +232,51 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// CSRFTokenResponse represents the CSRF token response.
+type CSRFTokenResponse struct {
+	Token string `json:"token"`
+}
+
+// handleCSRFToken generates and returns a CSRF token for the authenticated session.
+// The token must be included in X-CSRF-Token header for all state-changing requests.
+func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodGet {
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		return
+	}
+
+	// Get session ID from JWT (set by auth middleware)
+	sessionID := auth.GetSessionIDFromRequest(r)
+	if sessionID == "" {
+		logger.Warn("CSRF token request without valid session")
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, localizer.T("errors.auth.invalidCredentials"), "")
+		return
+	}
+
+	// Generate CSRF token for this session
+	token, err := s.csrfManager.GenerateToken(sessionID)
+	if err != nil {
+		logger.Error("Failed to generate CSRF token", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), "")
+		return
+	}
+
+	// Also set as cookie for convenience (httpOnly=false so JS can read it)
+	http.SetCookie(w, &http.Cookie{
+		Name:     auth.CSRFCookieName,
+		Value:    token,
+		Path:     "/",
+		HttpOnly: false, // Must be accessible to JavaScript
+		Secure:   s.config.Server.HTTPS,
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	sendJSONResponse(w, logger, http.StatusOK, CSRFTokenResponse{Token: token})
+}
+
 // SetupStatusResponse represents the setup status response.
 type SetupStatusResponse struct {
 	NeedsSetup        bool   `json:"needsSetup"`

@@ -35,6 +35,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { clearCSRFToken } from "../lib/api";
 import { LogComponents, logger } from "../lib/logger";
 
 /** Internal authentication state */
@@ -203,6 +204,9 @@ export function useAuth(): UseAuthReturn {
       token: null,
       username: null,
     });
+
+    // Clear cached CSRF token
+    clearCSRFToken();
 
     // Call logout endpoint to clear httpOnly cookies
     fetch(`${API_BASE}/api/auth/logout`, {

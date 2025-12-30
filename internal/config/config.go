@@ -763,6 +763,11 @@ type SNMPConfig struct {
 
 	// Port for SNMP queries (default 161).
 	Port int `yaml:"port"`
+
+	// MaxRepetitions controls how many OID values are returned per GetBulk request.
+	// Lower values reduce memory usage and network load on slow devices.
+	// Default: 10. Range: 1-50.
+	MaxRepetitions uint32 `yaml:"max_repetitions"`
 }
 
 // SNMPv3Credential contains SNMP v3 authentication credentials.

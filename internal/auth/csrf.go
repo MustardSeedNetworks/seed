@@ -190,7 +190,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Extract session ID from request (use username from JWT)
-		sessionID := getSessionIDFromRequest(r)
+		sessionID := GetSessionIDFromRequest(r)
 
 		if sessionID == "" {
 			slog.Warn("CSRF validation failed: no session ID",
@@ -225,8 +225,9 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// getSessionIDFromRequest attempts to extract a session identifier from the request.
-func getSessionIDFromRequest(r *http.Request) string {
+// GetSessionIDFromRequest attempts to extract a session identifier from the request.
+// Exported for use by the CSRF token endpoint handler.
+func GetSessionIDFromRequest(r *http.Request) string {
 	// Extract from JWT token in cookie (verified source)
 	token, _ := GetTokenFromRequest(r)
 	if token != "" {

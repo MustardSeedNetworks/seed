@@ -187,7 +187,7 @@ export interface DiscoveryStatus {
   lastScan: string;
   subnet: string;
   subnets?: string[]; // All subnets being scanned (I3)
-  localIp: string;
+  localIP: string; // Matches backend json:"localIP"
   interface: string;
 }
 

@@ -420,6 +420,19 @@ func getPrivProtocol(protocol string) gosnmp.SnmpV3PrivProtocol {
 	}
 }
 
+// getMaxRepetitions returns the MaxRepetitions value from config, defaulting to 10.
+// This controls how many OID values are returned per GetBulk request.
+// Lower values reduce memory usage and network load on slow devices.
+func getMaxRepetitions(cfg *config.SNMPConfig) uint32 {
+	if cfg == nil || cfg.MaxRepetitions == 0 {
+		return 10 // Default value
+	}
+	if cfg.MaxRepetitions > 50 {
+		return 50 // Cap at 50 to avoid overwhelming slow devices
+	}
+	return cfg.MaxRepetitions
+}
+
 // GetVendorVersion attempts to retrieve vendor-specific version information.
 func GetVendorVersion(ctx context.Context, ip string, cfg *config.SNMPConfig) (string, error) {
 	// Try Cisco

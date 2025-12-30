@@ -39,6 +39,12 @@ let onSessionExpired: SessionExpiredCallback | null = null;
 /** Promise to track ongoing refresh attempts and prevent race conditions */
 let refreshPromise: Promise<boolean> | null = null;
 
+/** CSRF token cache - fetched once after login, used for all state-changing requests */
+let csrfToken: string | null = null;
+
+/** CSRF token header name - must match backend auth.CSRFHeaderName */
+const CSRF_HEADER_NAME = "X-CSRF-Token";
+
 /**
  * Registers a callback to be invoked when the API returns a 401 Unauthorized response
  * and token refresh fails. Typically used to logout the user and redirect to the login page.
@@ -80,6 +86,48 @@ async function refreshAccessToken(): Promise<boolean> {
   const result = await refreshPromise;
   refreshPromise = null;
   return result;
+}
+
+/**
+ * Fetches a CSRF token from the backend.
+ * Called automatically on first state-changing request after login.
+ * Token is cached and reused for subsequent requests.
+ *
+ * @returns Promise resolving to CSRF token or null if fetch fails
+ */
+async function fetchCSRFToken(): Promise<string | null> {
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/csrf`, {
+      method: "GET",
+      credentials: "include", // Send auth cookies
+    });
+    if (response.ok) {
+      const data = (await response.json()) as { token: string };
+      csrfToken = data.token;
+      return csrfToken;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Gets the current CSRF token, fetching if needed.
+ * Returns null if user is not authenticated.
+ */
+async function getCSRFToken(): Promise<string | null> {
+  if (csrfToken) {
+    return csrfToken;
+  }
+  return fetchCSRFToken();
+}
+
+/**
+ * Clears the cached CSRF token. Should be called on logout.
+ */
+export function clearCSRFToken(): void {
+  csrfToken = null;
 }
 
 /**
@@ -155,6 +203,7 @@ export const api = {
 
   /**
    * Performs a POST request with optional JSON body.
+   * Automatically includes CSRF token for authenticated requests.
    *
    * @param endpoint - API endpoint path
    * @param body - Request body (will be JSON serialized)
@@ -164,8 +213,14 @@ export const api = {
    */
   async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
+    // Get CSRF token for non-auth endpoints (state-changing requests)
+    const token = !isAuthEndpoint ? await getCSRFToken() : null;
+
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
+      if (token) {
+        headers.set(CSRF_HEADER_NAME, token);
+      }
       for (const [key, value] of new Headers(init?.headers).entries()) {
         headers.set(key, value);
       }
@@ -185,6 +240,7 @@ export const api = {
 
   /**
    * Performs a PUT request with optional JSON body.
+   * Automatically includes CSRF token for authenticated requests.
    *
    * @param endpoint - API endpoint path
    * @param body - Request body (will be JSON serialized)
@@ -194,8 +250,14 @@ export const api = {
    */
   async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
+    // Get CSRF token for non-auth endpoints (state-changing requests)
+    const token = !isAuthEndpoint ? await getCSRFToken() : null;
+
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
+      if (token) {
+        headers.set(CSRF_HEADER_NAME, token);
+      }
       for (const [key, value] of new Headers(init?.headers).entries()) {
         headers.set(key, value);
       }
@@ -215,6 +277,7 @@ export const api = {
 
   /**
    * Performs a DELETE request to the specified endpoint.
+   * Automatically includes CSRF token for authenticated requests.
    *
    * @param endpoint - API endpoint path
    * @returns Promise resolving to typed response data
@@ -223,13 +286,22 @@ export const api = {
    */
   async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
-    const makeRequest = () =>
-      fetch(`${API_BASE}${endpoint}`, {
+    // Get CSRF token for non-auth endpoints (state-changing requests)
+    const token = !isAuthEndpoint ? await getCSRFToken() : null;
+
+    const makeRequest = () => {
+      const headers = new Headers(init?.headers);
+      if (token) {
+        headers.set(CSRF_HEADER_NAME, token);
+      }
+
+      return fetch(`${API_BASE}${endpoint}`, {
         ...init,
         method: "DELETE",
         credentials: "include", // Send httpOnly cookies
-        headers: new Headers(init?.headers),
+        headers,
       });
+    };
 
     const response = await makeRequest();
     return handleResponse<T>(response, isAuthEndpoint, makeRequest);

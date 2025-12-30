@@ -152,11 +152,14 @@ func (c *SNMPCollector) SetTimeout(timeout time.Duration) {
 }
 
 // SetMaxOIDsPerRequest sets the maximum OIDs per SNMP request.
-// NOTE: This setting is stored but not currently enforced in the underlying
-// SNMP walks. The gosnmp library uses its default MaxRepetitions (50).
-// TODO: Pass maxOIDsReq through to snmp.Get* functions to set MaxRepetitions.
+// This value is passed through to the gosnmp MaxRepetitions field
+// via the SNMPConfig.MaxRepetitions setting when collecting MIB data.
 func (c *SNMPCollector) SetMaxOIDsPerRequest(maxOIDs int) {
 	c.maxOIDsReq = maxOIDs
+	// Update config MaxRepetitions so walks use the new value
+	if c.config != nil && maxOIDs > 0 {
+		c.config.MaxRepetitions = uint32(maxOIDs) // #nosec G115 -- maxOIDs validated to be positive
+	}
 }
 
 // Collect gathers all enabled MIB data from a device.
@@ -398,9 +401,24 @@ func (c *SNMPCollector) collectMACTable(ctx context.Context, ip string) ([]SNMPM
 }
 
 // collectVLANs retrieves VLAN information from Q-BRIDGE-MIB.
-func (c *SNMPCollector) collectVLANs(_ context.Context, _ string) ([]SNMPVLAN, error) {
-	// Q-BRIDGE-MIB::dot1qVlanStaticTable OIDs - can be expanded when needed.
-	return []SNMPVLAN{}, nil
+func (c *SNMPCollector) collectVLANs(ctx context.Context, ip string) ([]SNMPVLAN, error) {
+	vlans, err := snmp.GetVLANs(ctx, ip, c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]SNMPVLAN, len(vlans))
+	for i, vlan := range vlans {
+		result[i] = SNMPVLAN{
+			ID:          vlan.ID,
+			Name:        vlan.Name,
+			Status:      vlan.Status,
+			EgressPorts: vlan.EgressPorts,
+			Type:        vlan.Type,
+		}
+	}
+
+	return result, nil
 }
 
 // collectInventory retrieves physical inventory from ENTITY-MIB.
@@ -434,17 +452,49 @@ func (c *SNMPCollector) collectInventory(ctx context.Context, ip string) ([]SNMP
 }
 
 // collectLLDPNeighbors retrieves LLDP neighbor information.
-func (c *SNMPCollector) collectLLDPNeighbors(_ context.Context, _ string) ([]SNMPLLDPNeighbor, error) {
-	// LLDP-MIB::lldpRemTable OIDs
-	// For now, return empty - can be expanded when needed
-	return []SNMPLLDPNeighbor{}, nil
+func (c *SNMPCollector) collectLLDPNeighbors(ctx context.Context, ip string) ([]SNMPLLDPNeighbor, error) {
+	neighbors, err := snmp.GetLLDPNeighbors(ctx, ip, c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]SNMPLLDPNeighbor, len(neighbors))
+	for i, n := range neighbors {
+		result[i] = SNMPLLDPNeighbor{
+			LocalIfIndex:    n.LocalIfIndex,
+			LocalPortID:     fmt.Sprintf("%d", n.LocalPortNum),
+			RemoteChassisID: n.ChassisID,
+			RemotePortID:    n.PortID,
+			RemoteSysName:   n.SystemName,
+			RemoteSysDescr:  n.SystemDesc,
+			RemoteMgmtAddr:  n.MgmtAddress,
+		}
+	}
+
+	return result, nil
 }
 
 // collectRoutes retrieves routing table from IP-FORWARD-MIB.
-func (c *SNMPCollector) collectRoutes(_ context.Context, _ string) ([]SNMPRoute, error) {
-	// IP-FORWARD-MIB::ipCidrRouteTable OIDs
-	// For now, return empty - can be expanded when needed
-	return []SNMPRoute{}, nil
+func (c *SNMPCollector) collectRoutes(ctx context.Context, ip string) ([]SNMPRoute, error) {
+	routes, err := snmp.GetRoutes(ctx, ip, c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]SNMPRoute, len(routes))
+	for i, route := range routes {
+		result[i] = SNMPRoute{
+			Destination: route.Destination,
+			Prefix:      route.Prefix,
+			NextHop:     route.NextHop,
+			IfIndex:     route.IfIndex,
+			Type:        route.Type,
+			Protocol:    route.Protocol,
+			Metric:      route.Metric,
+		}
+	}
+
+	return result, nil
 }
 
 // CollectorResult contains the result of SNMP collection for a device.

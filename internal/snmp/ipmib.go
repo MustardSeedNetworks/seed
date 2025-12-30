@@ -84,12 +84,13 @@ func getIPAddrTable(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]I
 // walkIPAddrTable walks the legacy ipAddrTable using SNMPv2c.
 func walkIPAddrTable(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
 	params := &gosnmp.GoSNMP{
-		Target:    ip,
-		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community: community,
-		Version:   gosnmp.Version2c,
-		Timeout:   cfg.Timeout,
-		Retries:   cfg.Retries,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Community:      community,
+		Version:        gosnmp.Version2c,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
 	}
 
 	if err := params.Connect(); err != nil {
@@ -109,13 +110,14 @@ func walkIPAddrTable(ctx context.Context, ip, community string, cfg *config.SNMP
 // walkIPAddrTableV3 walks the legacy ipAddrTable using SNMPv3.
 func walkIPAddrTableV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
 	params := &gosnmp.GoSNMP{
-		Target:        ip,
-		Port:          uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:       gosnmp.Version3,
-		Timeout:       cfg.Timeout,
-		Retries:       cfg.Retries,
-		SecurityModel: gosnmp.UserSecurityModel,
-		MsgFlags:      gosnmp.AuthPriv,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:        gosnmp.Version3,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
+		SecurityModel:  gosnmp.UserSecurityModel,
+		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
 			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
@@ -241,12 +243,13 @@ func getIPAddressTable(ctx context.Context, ip string, cfg *config.SNMPConfig) (
 // walkIPAddressTable walks the modern ipAddressTable using SNMPv2c.
 func walkIPAddressTable(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
 	params := &gosnmp.GoSNMP{
-		Target:    ip,
-		Port:      uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community: community,
-		Version:   gosnmp.Version2c,
-		Timeout:   cfg.Timeout,
-		Retries:   cfg.Retries,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Community:      community,
+		Version:        gosnmp.Version2c,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
 	}
 
 	if err := params.Connect(); err != nil {
@@ -266,13 +269,14 @@ func walkIPAddressTable(ctx context.Context, ip, community string, cfg *config.S
 // walkIPAddressTableV3 walks the modern ipAddressTable using SNMPv3.
 func walkIPAddressTableV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
 	params := &gosnmp.GoSNMP{
-		Target:        ip,
-		Port:          uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:       gosnmp.Version3,
-		Timeout:       cfg.Timeout,
-		Retries:       cfg.Retries,
-		SecurityModel: gosnmp.UserSecurityModel,
-		MsgFlags:      gosnmp.AuthPriv,
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:        gosnmp.Version3,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
+		SecurityModel:  gosnmp.UserSecurityModel,
+		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
 			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
