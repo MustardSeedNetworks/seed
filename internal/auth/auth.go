@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -40,6 +41,33 @@ const (
 // This allows the server to start and show the wizard before a real password is set.
 // It is not a valid bcrypt hash and will fail any authentication attempt.
 const SetupModePlaceholder = "$setup$pending$"
+
+// Common error codes for auth middleware JSON responses (matches api.ErrorResponse).
+const (
+	errCodeUnauthorized = "UNAUTHORIZED"
+	errCodeForbidden    = "FORBIDDEN"
+)
+
+// authErrorResponse represents a standardized error response for auth middleware.
+type authErrorResponse struct {
+	Error   string `json:"error"`
+	Code    string `json:"code"`
+	Details string `json:"details,omitempty"`
+}
+
+// sendAuthError sends a JSON error response from auth/CSRF middleware.
+// This ensures consistent error formats matching the API error schema.
+func sendAuthError(w http.ResponseWriter, status int, code, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	resp := authErrorResponse{
+		Error: message,
+		Code:  code,
+	}
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		slog.Error("Failed to encode auth error response", "error", err)
+	}
+}
 
 // Claims represents the JWT claims.
 type Claims struct {
@@ -444,7 +472,7 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 		if tokenString == "" {
 			tokenString, _ = GetTokenFromRequest(r)
 			if tokenString == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Unauthorized")
 				return
 			}
 		}
@@ -452,16 +480,16 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 		claims, err := m.ValidateToken(tokenString)
 		if err != nil {
 			if errors.Is(err, ErrTokenExpired) {
-				http.Error(w, "Token expired", http.StatusUnauthorized)
+				sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Token expired")
 				return
 			}
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Invalid token")
 			return
 		}
 
 		// Validate username claim exists and is not empty (fixes #711)
 		if claims.Username == "" {
-			http.Error(w, "Invalid token: missing username claim", http.StatusUnauthorized)
+			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Invalid token: missing username claim")
 			return
 		}
 

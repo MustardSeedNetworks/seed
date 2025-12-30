@@ -18,9 +18,8 @@
 
 import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "../../../lib/api";
 import { button, cn, input, layout, radius } from "../../../styles/theme";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 export const VlanControl = memo(function VlanControl() {
   const { t } = useTranslation("settings");
@@ -40,24 +39,11 @@ export const VlanControl = memo(function VlanControl() {
     setLoading(true);
     setMessage(null);
     try {
-      const response = await fetch(`${API_BASE}/api/vlan/interface`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ vlanId: id }),
-      });
-      if (response.ok) {
-        setMessage({ text: t("network.vlan.created", { id }), isError: false });
-        setVlanId("");
-      } else {
-        const text = await response.text();
-        setMessage({
-          text: text || t("network.vlan.createFailed"),
-          isError: true,
-        });
-      }
+      await api.post("/api/vlan/interface", { vlanId: id });
+      setMessage({ text: t("network.vlan.created", { id }), isError: false });
+      setVlanId("");
     } catch {
-      setMessage({ text: t("network.vlan.networkError"), isError: true });
+      setMessage({ text: t("network.vlan.createFailed"), isError: true });
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(null), 3000);
@@ -73,24 +59,14 @@ export const VlanControl = memo(function VlanControl() {
     setLoading(true);
     setMessage(null);
     try {
-      const response = await fetch(`${API_BASE}/api/vlan/interface`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      await api.delete("/api/vlan/interface", {
         body: JSON.stringify({ vlanId: id }),
+        headers: { "Content-Type": "application/json" },
       });
-      if (response.ok) {
-        setMessage({ text: t("network.vlan.deleted", { id }), isError: false });
-        setVlanId("");
-      } else {
-        const text = await response.text();
-        setMessage({
-          text: text || t("network.vlan.deleteFailed"),
-          isError: true,
-        });
-      }
+      setMessage({ text: t("network.vlan.deleted", { id }), isError: false });
+      setVlanId("");
     } catch {
-      setMessage({ text: t("network.vlan.networkError"), isError: true });
+      setMessage({ text: t("network.vlan.deleteFailed"), isError: true });
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(null), 3000);

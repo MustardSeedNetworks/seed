@@ -1303,7 +1303,7 @@ func TestCSRFMiddleware(t *testing.T) {
 func TestGetSessionIDFromRequest(t *testing.T) {
 	t.Run("no token returns empty", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
-		sessionID := getSessionIDFromRequest(req)
+		sessionID := GetSessionIDFromRequest(req)
 		if sessionID != "" {
 			t.Errorf("expected empty session ID, got %q", sessionID)
 		}
@@ -1313,7 +1313,7 @@ func TestGetSessionIDFromRequest(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
 		req.Header.Set("Authorization", "Bearer header.payload.signature")
 
-		sessionID := getSessionIDFromRequest(req)
+		sessionID := GetSessionIDFromRequest(req)
 		if sessionID != "payload" {
 			t.Errorf("expected session ID 'payload', got %q", sessionID)
 		}
@@ -1326,7 +1326,7 @@ func TestGetSessionIDFromRequest(t *testing.T) {
 			Value: "header.cookiepayload.signature",
 		})
 
-		sessionID := getSessionIDFromRequest(req)
+		sessionID := GetSessionIDFromRequest(req)
 		if sessionID != "cookiepayload" {
 			t.Errorf("expected session ID 'cookiepayload', got %q", sessionID)
 		}

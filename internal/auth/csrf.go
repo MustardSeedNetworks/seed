@@ -180,8 +180,12 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Skip CSRF for auth endpoints that don't have a session yet, and SSO
+		// Skip CSRF for auth endpoints that don't have a session yet, token refresh,
+		// logout (safe operation), and SSO. Refresh needs exemption because the user
+		// may not have a valid CSRF token when their access token expires.
 		if r.URL.Path == "/api/auth/login" ||
+			r.URL.Path == "/api/auth/refresh" ||
+			r.URL.Path == "/api/auth/logout" ||
 			r.URL.Path == "/api/setup/status" ||
 			r.URL.Path == "/api/setup/complete" ||
 			strings.HasPrefix(r.URL.Path, "/api/sso/") {
@@ -196,7 +200,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 			slog.Warn("CSRF validation failed: no session ID",
 				"path", r.URL.Path,
 				"method", r.Method)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Unauthorized")
 			return
 		}
 
@@ -212,11 +216,11 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 
 			switch {
 			case errors.Is(err, ErrCSRFTokenMissing):
-				http.Error(w, "CSRF token required", http.StatusForbidden)
+				sendAuthError(w, http.StatusForbidden, errCodeForbidden, "CSRF token required")
 			case errors.Is(err, ErrCSRFTokenExpired):
-				http.Error(w, "CSRF token expired", http.StatusForbidden)
+				sendAuthError(w, http.StatusForbidden, errCodeForbidden, "CSRF token expired")
 			default:
-				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+				sendAuthError(w, http.StatusForbidden, errCodeForbidden, "Invalid CSRF token")
 			}
 			return
 		}

@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePipelineStatus } from "../../hooks/usePipelineStatus";
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
+import { api } from "../../lib/api";
 import { LogComponents, logger } from "../../lib/logger";
 import {
   button,
@@ -750,19 +750,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       if (!hasGoodInfo) return;
 
       try {
-        const apiBase = import.meta.env.VITE_API_BASE || "";
         logger.info(LogComponents.Discovery, "Triggering auto vulnerability scan", {
           ip,
           reasons: reasons.join(", "),
         });
-        await fetch(`${apiBase}/api/vulnerabilities/scan`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            targets: [ip],
-          }),
-        });
+        await api.post("/api/vulnerabilities/scan", { targets: [ip] });
       } catch (error) {
         logger.debug(LogComponents.Discovery, "Failed to trigger vulnerability scan", error);
       }
@@ -775,59 +767,48 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       setScanningDevices((prev) => new Set(prev).add(ip));
 
       try {
-        const apiBase = import.meta.env.VITE_API_BASE || "";
-        const response = await fetch(`${apiBase}/api/discovery/portscan`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            target: ip,
-            ports: COMMON_PORTS,
-            timeout: 2000,
-          }),
+        const apiResponse = await api.post<PortScanApiResponse>("/api/discovery/portscan", {
+          target: ip,
+          ports: COMMON_PORTS,
+          timeout: 2000,
         });
 
-        if (response.ok) {
-          const apiResponse = (await response.json()) as PortScanApiResponse;
-          // Transform backend response to frontend format
-          const results: PortScanResult[] = apiResponse.services.map((svc) => ({
-            port: svc.port,
-            state: svc.state,
-            service: svc.service,
-            banner: svc.banner,
-            version: svc.version,
-            rtt: 0, // Backend doesn't return individual RTT per port
-          }));
-          setScanResults((prev) => {
-            const next = new Map(prev);
-            next.set(ip, {
-              target: apiResponse.ip,
-              results: results,
-              scannedAt: new Date(),
-            });
-            // Fixes #904: Limit stored scan results to prevent unbounded memory growth
-            const MaxScanResults = 100;
-            if (next.size > MaxScanResults) {
-              // Remove oldest entries
-              const entries = [...next.entries()].sort(
-                (a, b) => a[1].scannedAt.getTime() - b[1].scannedAt.getTime(),
-              );
-              while (next.size > MaxScanResults && entries.length > 0) {
-                const oldest = entries.shift();
-                if (oldest) next.delete(oldest[0]);
-              }
-            }
-            return next;
+        // Transform backend response to frontend format
+        const results: PortScanResult[] = apiResponse.services.map((svc) => ({
+          port: svc.port,
+          state: svc.state,
+          service: svc.service,
+          banner: svc.banner,
+          version: svc.version,
+          rtt: 0, // Backend doesn't return individual RTT per port
+        }));
+        setScanResults((prev) => {
+          const next = new Map(prev);
+          next.set(ip, {
+            target: apiResponse.ip,
+            results: results,
+            scannedAt: new Date(),
           });
-
-          // If vulnerability scanning is enabled with auto-scan, trigger vuln scan
-          // Find the device from data to pass additional info
-          const device = data?.devices.find((d) => d.ip === ip);
-          if (apiResponse.services && apiResponse.services.length > 0) {
-            triggerVulnScan(ip, device, apiResponse.services);
+          // Fixes #904: Limit stored scan results to prevent unbounded memory growth
+          const MaxScanResults = 100;
+          if (next.size > MaxScanResults) {
+            // Remove oldest entries
+            const entries = [...next.entries()].sort(
+              (a, b) => a[1].scannedAt.getTime() - b[1].scannedAt.getTime(),
+            );
+            while (next.size > MaxScanResults && entries.length > 0) {
+              const oldest = entries.shift();
+              if (oldest) next.delete(oldest[0]);
+            }
           }
+          return next;
+        });
+
+        // If vulnerability scanning is enabled with auto-scan, trigger vuln scan
+        // Find the device from data to pass additional info
+        const device = data?.devices.find((d) => d.ip === ip);
+        if (apiResponse.services && apiResponse.services.length > 0) {
+          triggerVulnScan(ip, device, apiResponse.services);
         }
       } catch (error) {
         logger.error(LogComponents.Discovery, "Deep scan failed", error);
