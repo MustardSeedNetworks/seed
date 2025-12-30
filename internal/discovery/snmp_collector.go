@@ -152,6 +152,9 @@ func (c *SNMPCollector) SetTimeout(timeout time.Duration) {
 }
 
 // SetMaxOIDsPerRequest sets the maximum OIDs per SNMP request.
+// NOTE: This setting is stored but not currently enforced in the underlying
+// SNMP walks. The gosnmp library uses its default MaxRepetitions (50).
+// TODO: Pass maxOIDsReq through to snmp.Get* functions to set MaxRepetitions.
 func (c *SNMPCollector) SetMaxOIDsPerRequest(maxOIDs int) {
 	c.maxOIDsReq = maxOIDs
 }

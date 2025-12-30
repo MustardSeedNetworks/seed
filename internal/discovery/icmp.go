@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"net"
 	"os"
 	"runtime"
@@ -67,6 +68,35 @@ type ICMPPinger struct {
 	stopCh    chan struct{}
 	stopped   bool
 	stoppedMu sync.Mutex
+
+	// Jitter settings for IDS-aware scanning
+	jitterMin time.Duration // Minimum delay between pings per worker
+	jitterMax time.Duration // Maximum delay (actual delay is random between min and max)
+}
+
+// SweepConfig configures ping sweep behavior.
+type SweepConfig struct {
+	Workers   int           // Number of concurrent workers (default: 50)
+	JitterMin time.Duration // Minimum jitter delay between pings (default: 0)
+	JitterMax time.Duration // Maximum jitter delay between pings (default: 0)
+}
+
+// DefaultSweepConfig returns conservative defaults for network scanning.
+func DefaultSweepConfig() *SweepConfig {
+	return &SweepConfig{
+		Workers:   50,
+		JitterMin: 0,
+		JitterMax: 0,
+	}
+}
+
+// PoliteSweepConfig returns IDS-friendly settings with jitter.
+func PoliteSweepConfig() *SweepConfig {
+	return &SweepConfig{
+		Workers:   10,
+		JitterMin: 10 * time.Millisecond,
+		JitterMax: 50 * time.Millisecond,
+	}
 }
 
 // NewICMPPinger creates a new ICMP pinger with raw socket.
@@ -292,9 +322,23 @@ func (p *ICMPPinger) Ping(ctx context.Context, ipStr string) PingResult {
 }
 
 // PingSweep pings multiple hosts concurrently and returns results.
+// For IDS-aware scanning with jitter, use PingSweepWithConfig.
 func (p *ICMPPinger) PingSweep(ctx context.Context, ips []net.IP, workers int) []PingResult {
+	cfg := DefaultSweepConfig()
+	if workers > 0 {
+		cfg.Workers = workers
+	}
+	return p.PingSweepWithConfig(ctx, ips, cfg)
+}
+
+// PingSweepWithConfig pings multiple hosts with configurable jitter for IDS-aware scanning.
+func (p *ICMPPinger) PingSweepWithConfig(ctx context.Context, ips []net.IP, cfg *SweepConfig) []PingResult {
+	if cfg == nil {
+		cfg = DefaultSweepConfig()
+	}
+	workers := cfg.Workers
 	if workers <= 0 {
-		workers = 50 // Default worker count
+		workers = 50
 	}
 
 	results := make([]PingResult, len(ips))
@@ -327,6 +371,19 @@ func (p *ICMPPinger) PingSweep(ctx context.Context, ips []net.IP, workers int) [
 				resultsMu.Lock()
 				results[idx] = result
 				resultsMu.Unlock()
+
+				// Apply jitter delay between pings (IDS-aware pacing)
+				if cfg.JitterMax > 0 {
+					jitter := cfg.JitterMin
+					if cfg.JitterMax > cfg.JitterMin {
+						jitter += time.Duration(rand.Int63n(int64(cfg.JitterMax - cfg.JitterMin))) //nolint:gosec // Not cryptographic
+					}
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(jitter):
+					}
+				}
 			}
 		}()
 	}

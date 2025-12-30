@@ -45,22 +45,23 @@ type SystemInfo struct {
 }
 
 // Query performs a single SNMP GET query.
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func Query(ctx context.Context, ip, oid string, cfg *config.SNMPConfig) (string, error) {
 	if cfg == nil {
 		return "", fmt.Errorf("SNMP config is nil")
 	}
 
-	// Try each community string
-	for _, community := range cfg.Communities {
-		result, err := queryWithCommunity(ctx, ip, oid, community, cfg)
+	// Try SNMPv3 credentials first (more secure)
+	for i := range cfg.V3Credentials {
+		result, err := queryWithV3(ctx, ip, oid, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return result, nil
 		}
 	}
 
-	// Try SNMPv3 credentials
-	for i := range cfg.V3Credentials {
-		result, err := queryWithV3(ctx, ip, oid, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured
+	for _, community := range cfg.Communities {
+		result, err := queryWithCommunity(ctx, ip, oid, community, cfg)
 		if err == nil {
 			return result, nil
 		}
@@ -70,22 +71,23 @@ func Query(ctx context.Context, ip, oid string, cfg *config.SNMPConfig) (string,
 }
 
 // QueryMultiple performs multiple SNMP GET queries in a single request.
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func QueryMultiple(ctx context.Context, ip string, oids []string, cfg *config.SNMPConfig) (map[string]string, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("SNMP config is nil")
 	}
 
-	// Try each community string
-	for _, community := range cfg.Communities {
-		results, err := queryMultipleWithCommunity(ctx, ip, oids, community, cfg)
+	// Try SNMPv3 credentials first (more secure)
+	for i := range cfg.V3Credentials {
+		results, err := queryMultipleWithV3(ctx, ip, oids, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return results, nil
 		}
 	}
 
-	// Try SNMPv3 credentials
-	for i := range cfg.V3Credentials {
-		results, err := queryMultipleWithV3(ctx, ip, oids, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured
+	for _, community := range cfg.Communities {
+		results, err := queryMultipleWithCommunity(ctx, ip, oids, community, cfg)
 		if err == nil {
 			return results, nil
 		}

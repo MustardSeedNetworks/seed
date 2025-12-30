@@ -50,22 +50,23 @@ type PhysicalEntity struct {
 }
 
 // GetPhysicalEntities retrieves all physical entities from ENTITY-MIB.
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func GetPhysicalEntities(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]PhysicalEntity, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("SNMP config is nil")
 	}
 
-	// Try each community string.
-	for _, community := range cfg.Communities {
-		entities, err := walkEntityTable(ctx, ip, community, cfg)
+	// Try SNMPv3 credentials first (more secure).
+	for i := range cfg.V3Credentials {
+		entities, err := walkEntityTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return entities, nil
 		}
 	}
 
-	// Try SNMPv3 credentials.
-	for i := range cfg.V3Credentials {
-		entities, err := walkEntityTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured.
+	for _, community := range cfg.Communities {
+		entities, err := walkEntityTable(ctx, ip, community, cfg)
 		if err == nil {
 			return entities, nil
 		}

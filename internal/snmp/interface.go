@@ -144,22 +144,23 @@ func GetInterfaceInfo(ctx context.Context, ip string, ifIndex int, cfg *config.S
 
 // GetAllInterfaces retrieves information for all interfaces on a device.
 // It performs a bulk walk of the interface table for efficiency.
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func GetAllInterfaces(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]InterfaceInfo, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("SNMP config is nil")
 	}
 
-	// Try each community string.
-	for _, community := range cfg.Communities {
-		interfaces, err := walkInterfaces(ctx, ip, community, cfg)
+	// Try SNMPv3 credentials first (more secure).
+	for i := range cfg.V3Credentials {
+		interfaces, err := walkInterfacesV3(ctx, ip, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return interfaces, nil
 		}
 	}
 
-	// Try SNMPv3 credentials.
-	for i := range cfg.V3Credentials {
-		interfaces, err := walkInterfacesV3(ctx, ip, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured.
+	for _, community := range cfg.Communities {
+		interfaces, err := walkInterfaces(ctx, ip, community, cfg)
 		if err == nil {
 			return interfaces, nil
 		}
@@ -344,18 +345,19 @@ func GetMACTable(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]MACE
 }
 
 // getMACTableQBridge retrieves MAC table using Q-BRIDGE-MIB (VLAN-aware).
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func getMACTableQBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]MACEntry, error) {
-	// Try each community string.
-	for _, community := range cfg.Communities {
-		entries, err := walkMACTableQBridge(ctx, ip, community, cfg)
+	// Try SNMPv3 credentials first (more secure).
+	for i := range cfg.V3Credentials {
+		entries, err := walkMACTableQBridgeV3(ctx, ip, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return entries, nil
 		}
 	}
 
-	// Try SNMPv3 credentials.
-	for i := range cfg.V3Credentials {
-		entries, err := walkMACTableQBridgeV3(ctx, ip, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured.
+	for _, community := range cfg.Communities {
+		entries, err := walkMACTableQBridge(ctx, ip, community, cfg)
 		if err == nil {
 			return entries, nil
 		}
@@ -365,18 +367,19 @@ func getMACTableQBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) 
 }
 
 // getMACTableBridge retrieves MAC table using BRIDGE-MIB (non-VLAN-aware).
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func getMACTableBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]MACEntry, error) {
-	// Try each community string.
-	for _, community := range cfg.Communities {
-		entries, err := walkMACTableBridge(ctx, ip, community, cfg)
+	// Try SNMPv3 credentials first (more secure).
+	for i := range cfg.V3Credentials {
+		entries, err := walkMACTableBridgeV3(ctx, ip, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return entries, nil
 		}
 	}
 
-	// Try SNMPv3 credentials.
-	for i := range cfg.V3Credentials {
-		entries, err := walkMACTableBridgeV3(ctx, ip, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured.
+	for _, community := range cfg.Communities {
+		entries, err := walkMACTableBridge(ctx, ip, community, cfg)
 		if err == nil {
 			return entries, nil
 		}
@@ -686,22 +689,23 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 
 // GetPortVLANs retrieves VLAN membership for a specific port.
 // Returns a list of VLAN IDs that the port is a member of.
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func GetPortVLANs(ctx context.Context, ip string, ifIndex int, cfg *config.SNMPConfig) ([]int, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("SNMP config is nil")
 	}
 
-	// Try each community string.
-	for _, community := range cfg.Communities {
-		vlans, err := getPortVLANsWithCommunity(ctx, ip, ifIndex, community, cfg)
+	// Try SNMPv3 credentials first (more secure).
+	for i := range cfg.V3Credentials {
+		vlans, err := getPortVLANsWithV3(ctx, ip, ifIndex, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return vlans, nil
 		}
 	}
 
-	// Try SNMPv3 credentials.
-	for i := range cfg.V3Credentials {
-		vlans, err := getPortVLANsWithV3(ctx, ip, ifIndex, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured.
+	for _, community := range cfg.Communities {
+		vlans, err := getPortVLANsWithCommunity(ctx, ip, ifIndex, community, cfg)
 		if err == nil {
 			return vlans, nil
 		}

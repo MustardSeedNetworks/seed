@@ -60,18 +60,19 @@ func GetIPAddresses(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]I
 
 // getIPAddrTable retrieves IP addresses from the legacy ipAddrTable (RFC 1213).
 // This is widely supported but only provides IPv4 addresses.
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func getIPAddrTable(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
-	// Try each community string.
-	for _, community := range cfg.Communities {
-		entries, err := walkIPAddrTable(ctx, ip, community, cfg)
+	// Try SNMPv3 credentials first (more secure).
+	for i := range cfg.V3Credentials {
+		entries, err := walkIPAddrTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return entries, nil
 		}
 	}
 
-	// Try SNMPv3 credentials.
-	for i := range cfg.V3Credentials {
-		entries, err := walkIPAddrTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured.
+	for _, community := range cfg.Communities {
+		entries, err := walkIPAddrTable(ctx, ip, community, cfg)
 		if err == nil {
 			return entries, nil
 		}
@@ -216,18 +217,19 @@ func walkLegacyIPTable(params *gosnmp.GoSNMP) ([]IPAddressEntry, error) {
 
 // getIPAddressTable retrieves IP addresses from the modern ipAddressTable (RFC 4293).
 // This table supports both IPv4 and IPv6 addresses.
+// Security: SNMPv3 is preferred over v2c when both are configured.
 func getIPAddressTable(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
-	// Try each community string.
-	for _, community := range cfg.Communities {
-		entries, err := walkIPAddressTable(ctx, ip, community, cfg)
+	// Try SNMPv3 credentials first (more secure).
+	for i := range cfg.V3Credentials {
+		entries, err := walkIPAddressTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
 		if err == nil {
 			return entries, nil
 		}
 	}
 
-	// Try SNMPv3 credentials.
-	for i := range cfg.V3Credentials {
-		entries, err := walkIPAddressTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
+	// Fall back to v2c community strings if v3 fails or not configured.
+	for _, community := range cfg.Communities {
+		entries, err := walkIPAddressTable(ctx, ip, community, cfg)
 		if err == nil {
 			return entries, nil
 		}
