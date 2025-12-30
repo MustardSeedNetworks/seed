@@ -55,10 +55,9 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		authManager:         auth.NewManager(cfg.Auth.JWTSecret, cfg.Auth.SessionTimeout, cfg.Auth.DefaultUsername, cfg.Auth.DefaultPasswordHash),
 		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
 		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()),
-		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
-		discoveryManager:    discovery.NewManager(cfg.Interface.Default),
-		deviceDiscovery:     discovery.NewDeviceDiscovery(cfg.Interface.Default),
-		discoveryService:    discovery.NewService(cfg, cfg.Interface.Default, nil), // nil profiler = use internal
+		linkMonitor:      network.NewLinkMonitor(cfg.Interface.Default),
+		deviceDiscovery:  discovery.NewDeviceDiscovery(cfg.Interface.Default),
+		discoveryService: discovery.NewService(cfg, cfg.Interface.Default, nil), // nil profiler = use internal
 		dnsTester:           dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dhcpMonitor:         dhcp.NewMonitor(cfg.Interface.Default),
 		gatewayTester:       gateway.NewTester(gateway.DefaultThresholds()),

@@ -389,6 +389,17 @@ type ScanDelta struct {
 }
 
 // ComputeDelta computes changes between previous and current device lists.
+//
+// NOTE: Delta tracking uses MAC address as the unique device identifier.
+// Devices discovered via ICMP-only (no ARP response = no MAC) are excluded
+// from delta computation because they lack a stable identifier.
+// This is intentional: ICMP-only devices typically indicate:
+//   - Remote hosts beyond local subnet (L3 routing)
+//   - Hosts with firewall rules blocking ARP
+//   - Temporary/transient connections
+//
+// IP addresses alone are not used for tracking because they can be
+// reassigned via DHCP, causing false positives in new/removed counts.
 func ComputeDelta(previous, current []*DiscoveredDevice) *ScanDelta {
 	delta := &ScanDelta{
 		NewDevices:     make([]*DiscoveredDevice, 0),
@@ -398,6 +409,7 @@ func ComputeDelta(previous, current []*DiscoveredDevice) *ScanDelta {
 	}
 
 	// Build maps for quick lookup by MAC.
+	// Devices without MAC (ICMP-only) are excluded from delta tracking.
 	prevMap := make(map[string]*DiscoveredDevice)
 	for _, d := range previous {
 		if d.MAC != "" {

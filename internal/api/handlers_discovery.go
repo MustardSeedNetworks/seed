@@ -77,7 +77,7 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.discoveryManager == nil {
+	if s.discoveryService == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.discovery.managerUnavailable"), "") // fixes #694
 		return
 	}
@@ -85,10 +85,10 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	// Get interface from query param or use current
 	currentIface := s.getInterfaceFromRequest(r)
 
-	neighbors := s.discoveryManager.GetNeighbors()
+	neighbors := s.discoveryService.GetNeighbors()
 	resp := DiscoveryResponse{
 		Interface: currentIface,
-		Running:   s.discoveryManager.IsRunning(),
+		Running:   s.discoveryService.IsRunning(),
 		Neighbors: make([]DiscoveryNeighborInfo, 0, len(neighbors)),
 	}
 

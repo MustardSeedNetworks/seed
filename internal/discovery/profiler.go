@@ -195,6 +195,18 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 	}
 }
 
+// UpdateScanConfig updates the port scanning configuration.
+// This allows Pipeline to set the scan intensity without recreating the profiler.
+// Thread-safe: can be called while profiler is running.
+func (p *DeviceProfiler) UpdateScanConfig(intensity PortScanIntensity, customPorts []int, timing ScanTimingProfile) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.config.PortScanIntensity = intensity
+	p.config.CustomPorts = customPorts
+	p.config.TimingProfile = timing
+	slog.Info("Updated profiler scan config", "intensity", intensity, "timing", timing)
+}
+
 // Start begins the profiler worker pool.
 func (p *DeviceProfiler) Start() {
 	p.mu.Lock()

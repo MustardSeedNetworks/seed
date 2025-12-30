@@ -80,6 +80,10 @@ type ARPEntry struct {
 	IsLocal      bool      `json:"isLocal"`                // true if on local subnet, false for additional subnets
 }
 
+// DefaultMaxHostsPerSubnet is the default limit for hosts scanned per subnet.
+// This can be increased via SetMaxHostsPerSubnet for larger networks at the cost of longer scan times.
+const DefaultMaxHostsPerSubnet = 254
+
 // ARPScanner performs active network discovery via ARP.
 type ARPScanner struct {
 	interfaceName     string
@@ -94,15 +98,41 @@ type ARPScanner struct {
 	pinger            *ICMPPinger           // Raw socket ICMP pinger
 	scanning          bool
 	lastScan          time.Time
+	maxHostsPerSubnet int                   // Configurable limit (0 = use default)
 }
 
 // NewARPScanner creates a new ARP scanner for the given interface.
 func NewARPScanner(interfaceName string, oui *OUIDatabase) *ARPScanner {
 	return &ARPScanner{
-		interfaceName: interfaceName,
-		oui:           oui,
-		entries:       make(map[string]*ARPEntry),
+		interfaceName:     interfaceName,
+		oui:               oui,
+		entries:           make(map[string]*ARPEntry),
+		maxHostsPerSubnet: DefaultMaxHostsPerSubnet,
 	}
+}
+
+// SetMaxHostsPerSubnet configures the maximum hosts to scan per subnet.
+// Set to 0 to use DefaultMaxHostsPerSubnet (254).
+// For larger subnets like /22 or /16, increase this at the cost of longer scan times.
+// Example: /22 = 1022 hosts, /16 = 65534 hosts
+func (s *ARPScanner) SetMaxHostsPerSubnet(max int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if max <= 0 {
+		s.maxHostsPerSubnet = DefaultMaxHostsPerSubnet
+	} else {
+		s.maxHostsPerSubnet = max
+	}
+}
+
+// GetMaxHostsPerSubnet returns the current host limit per subnet.
+func (s *ARPScanner) GetMaxHostsPerSubnet() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.maxHostsPerSubnet <= 0 {
+		return DefaultMaxHostsPerSubnet
+	}
+	return s.maxHostsPerSubnet
 }
 
 // SetInterface updates the interface to scan.
@@ -313,15 +343,93 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	return nil
 }
 
+// splitSubnetIntoChunks splits a large subnet into /24 chunks for manageable scanning.
+// Returns the original subnet in a slice if it's already /24 or smaller.
+func splitSubnetIntoChunks(subnet *net.IPNet) []*net.IPNet {
+	ones, bits := subnet.Mask.Size()
+	if bits != 32 {
+		// IPv6 or invalid - return as-is
+		return []*net.IPNet{subnet}
+	}
+
+	// /24 or smaller - no need to chunk
+	if ones >= 24 {
+		return []*net.IPNet{subnet}
+	}
+
+	// Calculate number of /24 chunks needed
+	numChunks := 1 << (24 - ones) // e.g., /22 = 4 chunks, /16 = 256 chunks
+
+	chunks := make([]*net.IPNet, 0, numChunks)
+	baseIP := subnet.IP.Mask(subnet.Mask).To4()
+	if baseIP == nil {
+		return []*net.IPNet{subnet}
+	}
+
+	for i := 0; i < numChunks; i++ {
+		// Calculate the starting IP for this /24 chunk
+		// Convert base IP to uint32 for proper arithmetic
+		baseUint := uint32(baseIP[0])<<24 | uint32(baseIP[1])<<16 | uint32(baseIP[2])<<8 | uint32(baseIP[3])
+		chunkUint := baseUint + uint32(i*256) // Move to next /24 block
+
+		chunkIP := net.IP{
+			byte(chunkUint >> 24),
+			byte(chunkUint >> 16),
+			byte(chunkUint >> 8),
+			0, // Start of /24 block
+		}
+
+		chunk := &net.IPNet{
+			IP:   chunkIP,
+			Mask: net.CIDRMask(24, 32),
+		}
+		chunks = append(chunks, chunk)
+	}
+
+	return chunks
+}
+
 // pingSweep sends ICMP echo requests to all hosts in the subnet using raw sockets.
+// For subnets larger than /24, automatically splits into /24 chunks and scans sequentially.
 func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 	ones, bits := subnet.Mask.Size()
-	numHosts := 1<<(bits-ones) - 2 // Exclude network and broadcast
+	totalHosts := 1<<(bits-ones) - 2 // Exclude network and broadcast
 
-	// Limit to reasonable size (/24 = 254 hosts)
-	if numHosts > 254 {
-		numHosts = 254
+	// For large subnets, split into /24 chunks and scan sequentially
+	chunks := splitSubnetIntoChunks(subnet)
+	if len(chunks) > 1 {
+		slog.Info("Large subnet detected - scanning in chunks",
+			"subnet", subnet.String(),
+			"totalHosts", totalHosts,
+			"chunks", len(chunks))
+
+		for i, chunk := range chunks {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+				slog.Debug("Scanning chunk",
+					"chunk", fmt.Sprintf("%d/%d", i+1, len(chunks)),
+					"subnet", chunk.String())
+
+				if err := s.pingSweepChunk(ctx, chunk); err != nil {
+					slog.Warn("Chunk scan failed - continuing with remaining chunks",
+						"chunk", chunk.String(),
+						"error", err)
+				}
+			}
+		}
+		return nil
 	}
+
+	// Small subnet - scan directly
+	return s.pingSweepChunk(ctx, subnet)
+}
+
+// pingSweepChunk scans a single /24 or smaller subnet chunk.
+func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) error {
+	ones, bits := subnet.Mask.Size()
+	numHosts := 1<<(bits-ones) - 2 // Exclude network and broadcast
 
 	// Generate host IPs
 	baseIP := subnet.IP.Mask(subnet.Mask).To4()

@@ -200,8 +200,23 @@ type PipelineConfig struct {
 	// SNMPCollection controls extended SNMP MIB collection.
 	SNMPCollection SNMPCollectionConfig `yaml:"snmp_collection" json:"snmpCollection"`
 
+	// Resolution controls name resolution methods.
+	Resolution PipelineResolutionConfig `yaml:"resolution" json:"resolution"`
+
 	// Persistence controls how results are stored.
 	Persistence PipelinePersistenceConfig `yaml:"persistence" json:"persistence"`
+}
+
+// PipelineResolutionConfig controls Phase 2 name resolution methods.
+type PipelineResolutionConfig struct {
+	// DNS enables reverse DNS (PTR) lookups.
+	DNS bool `yaml:"dns" json:"dns"`
+
+	// NetBIOS enables NetBIOS name resolution for Windows devices.
+	NetBIOS bool `yaml:"netbios" json:"netbios"`
+
+	// MDNS enables mDNS name resolution for Apple/Linux devices.
+	MDNS bool `yaml:"mdns" json:"mdns"`
 }
 
 // PipelinePhaseConfig controls which phases are executed.
@@ -320,6 +335,11 @@ func DefaultPipelineConfig() PipelineConfig {
 			WalkTimeout:       30 * time.Second,
 			MaxOIDsPerRequest: 10,
 		},
+		Resolution: PipelineResolutionConfig{
+			DNS:     true,  // Enabled by default
+			NetBIOS: true,  // Enabled by default for Windows devices
+			MDNS:    true,  // Enabled by default for Apple/Linux devices
+		},
 		Persistence: PipelinePersistenceConfig{
 			StoreHistory:       true,
 			StalenessThreshold: 24 * time.Hour,
@@ -372,15 +392,41 @@ type Pipeline struct {
 	deviceDiscovery *DeviceDiscovery
 	profiler        *DeviceProfiler
 	broadcaster     EventBroadcaster
+	resolutionPhase *ResolutionPhase // Phase 2: Active name resolution
+
+	// Callbacks
+	onComplete func(devices []*DiscoveredDevice) // Called when pipeline completes successfully
 }
 
 // NewPipeline creates a new discovery pipeline.
 func NewPipeline(config *PipelineConfig, deviceDiscovery *DeviceDiscovery, profiler *DeviceProfiler, broadcaster EventBroadcaster) *Pipeline {
+	// Create resolution config from pipeline settings
+	resConfig := &ResolutionConfig{
+		DNS:     config.Resolution.DNS,
+		NetBIOS: config.Resolution.NetBIOS,
+		MDNS:    config.Resolution.MDNS,
+		Timing: ResolutionTiming{
+			DNSTimeout:           500 * time.Millisecond,
+			NetBIOSTimeout:       500 * time.Millisecond,
+			MDNSTimeout:          2 * time.Second,
+			PhaseTimeout:         config.Timing.PhaseTimeout,
+			MaxConcurrentDNS:     50,
+			MaxConcurrentNetBIOS: 20,
+			MaxConcurrentMDNS:    10,
+		},
+	}
+
+	interfaceName := ""
+	if deviceDiscovery != nil {
+		interfaceName = deviceDiscovery.GetInterfaceName()
+	}
+
 	p := &Pipeline{
 		config:          *config,
 		deviceDiscovery: deviceDiscovery,
 		profiler:        profiler,
 		broadcaster:     broadcaster,
+		resolutionPhase: NewResolutionPhase(interfaceName, resConfig, broadcaster),
 	}
 
 	// Apply timing profile if set
@@ -393,6 +439,15 @@ func NewPipeline(config *PipelineConfig, deviceDiscovery *DeviceDiscovery, profi
 	}
 
 	return p
+}
+
+// SetOnComplete sets a callback that is invoked when the pipeline completes successfully.
+// The callback receives the final list of discovered devices with all phases applied.
+// This allows the Service to sync pipeline results back to its device cache.
+func (p *Pipeline) SetOnComplete(callback func(devices []*DiscoveredDevice)) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.onComplete = callback
 }
 
 // Start begins a new pipeline run.
@@ -536,6 +591,7 @@ func (p *Pipeline) run(ctx context.Context) {
 		for k, v := range p.currentRun.PhaseDurations {
 			phaseDurations[k] = v
 		}
+		onComplete := p.onComplete // Capture callback under lock
 		p.mu.Unlock()
 
 		// Broadcast completion using copied values
@@ -545,6 +601,11 @@ func (p *Pipeline) run(ctx context.Context) {
 				TotalDuration:  time.Since(startedAt),
 				PhaseDurations: phaseDurations,
 			})
+
+			// Notify Service of completion so it can sync devices
+			if onComplete != nil {
+				onComplete(devices)
+			}
 		}
 	}()
 
@@ -617,7 +678,13 @@ func (p *Pipeline) runEnumerationPhase(ctx context.Context, phaseNumber int) ([]
 
 	// Use existing device discovery
 	if err := p.deviceDiscovery.Scan(ctx); err != nil {
-		return nil, fmt.Errorf("enumeration failed: %w", err)
+		// ErrScanInProgress is a soft error - just means another scan was running
+		// Continue with existing device data rather than failing the pipeline
+		if err == ErrScanInProgress {
+			slog.Warn("Pipeline enumeration: scan skipped - using existing device data")
+		} else {
+			return nil, fmt.Errorf("enumeration failed: %w", err)
+		}
 	}
 
 	// Fixes #962: Defensive copy to prevent mutation of internal DeviceDiscovery state
@@ -644,9 +711,8 @@ func (p *Pipeline) runEnumerationPhase(ctx context.Context, phaseNumber int) ([]
 }
 
 // runResolutionPhase executes the name resolution phase.
-//
-//nolint:unparam // Error return kept for interface consistency with other phase methods.
-func (p *Pipeline) runResolutionPhase(_ context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
+// Uses DNS, NetBIOS, and mDNS to resolve device hostnames.
+func (p *Pipeline) runResolutionPhase(ctx context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	totalPhases := p.countEnabledPhases()
 
@@ -657,9 +723,28 @@ func (p *Pipeline) runResolutionPhase(_ context.Context, devices []*DiscoveredDe
 		DeviceCount: len(devices),
 	})
 
-	// Resolution is handled by the existing device discovery
-	// The DeviceDiscovery.Scan already triggers name resolution
-	// This phase is a no-op but maintains the pipeline structure
+	// Create progress channel for resolution updates
+	progressCh := make(chan PhaseProgressPayload, 10)
+	go func() {
+		for progress := range progressCh {
+			p.broadcastEvent(EventPhaseProgress, progress)
+		}
+	}()
+
+	// Run active name resolution (DNS, NetBIOS, mDNS)
+	var resolvedDevices []*DiscoveredDevice
+	var err error
+	if p.resolutionPhase != nil {
+		resolvedDevices, err = p.resolutionPhase.Run(ctx, devices, progressCh)
+	} else {
+		// Fallback: just pass through without resolution
+		resolvedDevices = devices
+	}
+	close(progressCh)
+
+	if err != nil {
+		return devices, err // Return original devices on error
+	}
 
 	duration := time.Since(start)
 	p.mu.Lock()
@@ -667,7 +752,7 @@ func (p *Pipeline) runResolutionPhase(_ context.Context, devices []*DiscoveredDe
 	p.mu.Unlock()
 
 	namesResolved := 0
-	for _, d := range devices {
+	for _, d := range resolvedDevices {
 		if d.DisplayName != "" && d.DisplayName != d.IP {
 			namesResolved++
 		}
@@ -683,7 +768,7 @@ func (p *Pipeline) runResolutionPhase(_ context.Context, devices []*DiscoveredDe
 		"namesResolved", namesResolved,
 		"duration", duration)
 
-	return devices, nil
+	return resolvedDevices, nil
 }
 
 // runScanningPhase executes the service discovery phase.
@@ -699,6 +784,14 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 		TotalPhases: totalPhases,
 		DeviceCount: len(devices),
 	})
+
+	// Sync profiler config with pipeline settings (fixes profiler race condition)
+	// This ensures the shared profiler uses Pipeline's scan intensity during scanning phase
+	p.profiler.UpdateScanConfig(
+		p.config.PortScan.Intensity,
+		p.config.PortScan.CustomPorts,
+		p.config.Timing.Profile,
+	)
 
 	// Get ports based on intensity
 	ports := p.getPortsForIntensity()

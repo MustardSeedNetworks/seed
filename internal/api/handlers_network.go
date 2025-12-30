@@ -225,16 +225,11 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Also update discovery manager to use new interface
-		if err := s.discoveryManager.SetInterface(req.Interface); err != nil {
-			// Log but don't fail - discovery may not work without root
-			slog.Warn("Failed to set discovery interface", "error", err)
-		}
-
-		// Update device discovery (ARP/protocol scans)
-		if s.deviceDiscovery != nil {
-			if err := s.deviceDiscovery.SetInterface(req.Interface); err != nil {
-				slog.Warn("Failed to set device discovery interface", "error", err)
+		// Update unified discovery service to use new interface (handles protocol restarts)
+		if s.discoveryService != nil {
+			if err := s.discoveryService.SetInterface(req.Interface); err != nil {
+				// Log but don't fail - discovery may not work without root
+				slog.Warn("Failed to set discovery interface", "error", err)
 			}
 		}
 

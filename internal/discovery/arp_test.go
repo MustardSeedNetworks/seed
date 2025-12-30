@@ -348,3 +348,124 @@ func TestARPScanner_isInSubnet(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitSubnetIntoChunks(t *testing.T) {
+	tests := []struct {
+		name           string
+		cidr           string
+		expectedChunks int
+		firstChunk     string
+		lastChunk      string
+	}{
+		{
+			name:           "/24 - no chunking needed",
+			cidr:           "192.168.1.0/24",
+			expectedChunks: 1,
+			firstChunk:     "192.168.1.0/24",
+			lastChunk:      "192.168.1.0/24",
+		},
+		{
+			name:           "/25 - smaller than /24",
+			cidr:           "192.168.1.0/25",
+			expectedChunks: 1,
+			firstChunk:     "192.168.1.0/25",
+			lastChunk:      "192.168.1.0/25",
+		},
+		{
+			name:           "/23 - 2 chunks",
+			cidr:           "192.168.0.0/23",
+			expectedChunks: 2,
+			firstChunk:     "192.168.0.0/24",
+			lastChunk:      "192.168.1.0/24",
+		},
+		{
+			name:           "/22 - 4 chunks",
+			cidr:           "10.0.0.0/22",
+			expectedChunks: 4,
+			firstChunk:     "10.0.0.0/24",
+			lastChunk:      "10.0.3.0/24",
+		},
+		{
+			name:           "/20 - 16 chunks",
+			cidr:           "172.16.0.0/20",
+			expectedChunks: 16,
+			firstChunk:     "172.16.0.0/24",
+			lastChunk:      "172.16.15.0/24",
+		},
+		{
+			name:           "/16 - 256 chunks (supernet)",
+			cidr:           "10.0.0.0/16",
+			expectedChunks: 256,
+			firstChunk:     "10.0.0.0/24",
+			lastChunk:      "10.0.255.0/24",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, subnet, err := net.ParseCIDR(tt.cidr)
+			if err != nil {
+				t.Fatalf("Invalid CIDR %s: %v", tt.cidr, err)
+			}
+
+			chunks := splitSubnetIntoChunks(subnet)
+
+			if len(chunks) != tt.expectedChunks {
+				t.Errorf("Expected %d chunks, got %d", tt.expectedChunks, len(chunks))
+			}
+
+			if len(chunks) > 0 {
+				if chunks[0].String() != tt.firstChunk {
+					t.Errorf("First chunk: expected %s, got %s", tt.firstChunk, chunks[0].String())
+				}
+				if chunks[len(chunks)-1].String() != tt.lastChunk {
+					t.Errorf("Last chunk: expected %s, got %s", tt.lastChunk, chunks[len(chunks)-1].String())
+				}
+			}
+
+			// Verify all chunks are /24 for large subnets
+			if tt.expectedChunks > 1 {
+				for i, chunk := range chunks {
+					ones, _ := chunk.Mask.Size()
+					if ones != 24 {
+						t.Errorf("Chunk %d: expected /24 mask, got /%d", i, ones)
+					}
+				}
+			}
+
+			// Verify chunks are contiguous (no gaps)
+			if tt.expectedChunks > 1 {
+				for i := 1; i < len(chunks); i++ {
+					prevIP := chunks[i-1].IP.To4()
+					currIP := chunks[i].IP.To4()
+					prevUint := uint32(prevIP[0])<<24 | uint32(prevIP[1])<<16 | uint32(prevIP[2])<<8 | uint32(prevIP[3])
+					currUint := uint32(currIP[0])<<24 | uint32(currIP[1])<<16 | uint32(currIP[2])<<8 | uint32(currIP[3])
+					if currUint-prevUint != 256 {
+						t.Errorf("Chunks %d and %d are not contiguous: %s -> %s (gap: %d)",
+							i-1, i, chunks[i-1].IP, chunks[i].IP, currUint-prevUint)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestSplitSubnetIntoChunks_EdgeCases(t *testing.T) {
+	// Test /8 supernet (256 * 256 = 65536 /24 chunks - this is huge!)
+	// We won't actually create all chunks, just verify the count
+	_, subnet, _ := net.ParseCIDR("10.0.0.0/8")
+	chunks := splitSubnetIntoChunks(subnet)
+
+	expectedChunks := 1 << (24 - 8) // 65536 chunks
+	if len(chunks) != expectedChunks {
+		t.Errorf("/8 supernet: expected %d chunks, got %d", expectedChunks, len(chunks))
+	}
+
+	// Verify first and last chunks
+	if chunks[0].String() != "10.0.0.0/24" {
+		t.Errorf("First chunk: expected 10.0.0.0/24, got %s", chunks[0].String())
+	}
+	if chunks[len(chunks)-1].String() != "10.255.255.0/24" {
+		t.Errorf("Last chunk: expected 10.255.255.0/24, got %s", chunks[len(chunks)-1].String())
+	}
+}
