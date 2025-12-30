@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 func TestDefaultHeatmapConfig(t *testing.T) {

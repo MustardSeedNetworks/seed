@@ -17,7 +17,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/publicip"
 	"github.com/krisarmstrong/seed/internal/speedtest"
 	"github.com/krisarmstrong/seed/internal/vlan"
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 // Ensure Server implements mcp.ServiceProvider.

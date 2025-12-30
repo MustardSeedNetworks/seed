@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 func TestDetectDeadZones_NilSurvey(t *testing.T) {

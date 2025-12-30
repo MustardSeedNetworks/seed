@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/iperf"
-	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
 func TestNewManager(t *testing.T) {

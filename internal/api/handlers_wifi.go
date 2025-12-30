@@ -10,7 +10,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 // ============================================================================

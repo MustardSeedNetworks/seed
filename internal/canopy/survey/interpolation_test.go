@@ -5,7 +5,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 func TestNewInterpolator(t *testing.T) {
