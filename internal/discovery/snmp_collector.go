@@ -101,7 +101,9 @@ type SNMPEntity struct {
 	FirmwareRev  string `json:"firmwareRev,omitempty"`  // entPhysicalFirmwareRev
 	SoftwareRev  string `json:"softwareRev,omitempty"`  // entPhysicalSoftwareRev
 	SerialNum    string `json:"serialNum,omitempty"`    // entPhysicalSerialNum
+	MfgName      string `json:"mfgName,omitempty"`      // entPhysicalMfgName
 	ModelName    string `json:"modelName,omitempty"`    // entPhysicalModelName
+	IsFRU        bool   `json:"isFRU,omitempty"`        // entPhysicalIsFRU (Field Replaceable Unit)
 }
 
 // SNMPLLDPNeighbor represents an LLDP neighbor from LLDP-MIB.
@@ -352,10 +354,24 @@ func (c *SNMPCollector) collectInterfaces(ctx context.Context, ip string) ([]SNM
 }
 
 // collectIPAddresses retrieves IP addresses from IP-MIB.
-func (c *SNMPCollector) collectIPAddresses(_ context.Context, _ string) ([]SNMPIPAddress, error) {
-	// IP-MIB::ipAddrTable OIDs - full implementation would walk ipAddrTable.
-	// This can be expanded when needed.
-	return []SNMPIPAddress{}, nil
+func (c *SNMPCollector) collectIPAddresses(ctx context.Context, ip string) ([]SNMPIPAddress, error) {
+	entries, err := snmp.GetIPAddresses(ctx, ip, c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]SNMPIPAddress, len(entries))
+	for i, entry := range entries {
+		result[i] = SNMPIPAddress{
+			Address:   entry.Address,
+			Prefix:    entry.Prefix,
+			IfIndex:   entry.IfIndex,
+			Type:      entry.Type,
+			AddressIP: entry.AddressIP,
+		}
+	}
+
+	return result, nil
 }
 
 // collectMACTable retrieves the MAC address table.
@@ -385,9 +401,33 @@ func (c *SNMPCollector) collectVLANs(_ context.Context, _ string) ([]SNMPVLAN, e
 }
 
 // collectInventory retrieves physical inventory from ENTITY-MIB.
-func (c *SNMPCollector) collectInventory(_ context.Context, _ string) ([]SNMPEntity, error) {
-	// ENTITY-MIB::entPhysicalTable OIDs - can be expanded when needed.
-	return []SNMPEntity{}, nil
+func (c *SNMPCollector) collectInventory(ctx context.Context, ip string) ([]SNMPEntity, error) {
+	entities, err := snmp.GetPhysicalEntities(ctx, ip, c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]SNMPEntity, len(entities))
+	for i, entity := range entities {
+		result[i] = SNMPEntity{
+			Index:        entity.Index,
+			Description:  entity.Description,
+			VendorType:   entity.VendorType,
+			ContainedIn:  entity.ContainedIn,
+			Class:        entity.Class,
+			ParentRelPos: entity.ParentRelPos,
+			Name:         entity.Name,
+			HardwareRev:  entity.HardwareRev,
+			FirmwareRev:  entity.FirmwareRev,
+			SoftwareRev:  entity.SoftwareRev,
+			SerialNum:    entity.SerialNum,
+			MfgName:      entity.MfgName,
+			ModelName:    entity.ModelName,
+			IsFRU:        entity.IsFRU,
+		}
+	}
+
+	return result, nil
 }
 
 // collectLLDPNeighbors retrieves LLDP neighbor information.

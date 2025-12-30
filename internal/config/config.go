@@ -1055,7 +1055,7 @@ func DefaultConfig() *Config {
 			Phases: PipelinePhaseConfig{
 				Enumeration:      true,  // Always enabled
 				NameResolution:   true,  // Enabled by default
-				ServiceDiscovery: false, // Disabled by default (requires opt-in for port scanning)
+				ServiceDiscovery: true,  // Enabled by default for SNMP (port scan is "off" by default)
 				VulnAssessment:   false, // Disabled by default (requires opt-in)
 			},
 			Timing: PipelineTimingConfig{

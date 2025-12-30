@@ -108,6 +108,14 @@ type NDPDeviceInfo struct {
 	LastAdvertisement time.Time `json:"lastAdvertisement,omitempty"` // Last RA received
 }
 
+// DBDeviceWriter defines the interface for persisting devices to a database.
+// This interface allows the discovery package to persist devices without depending on
+// the database package (avoiding circular imports).
+type DBDeviceWriter interface {
+	// PersistDevices persists a batch of discovered devices to the database.
+	PersistDevices(ctx context.Context, devices []*DiscoveredDevice) error
+}
+
 // DeviceDiscovery aggregates device discovery from all sources.
 type DeviceDiscovery struct {
 	interfaceName   string
@@ -125,6 +133,7 @@ type DeviceDiscovery struct {
 	nameResolution  bool           // Enable NetBIOS/mDNS name resolution
 	deviceTTL       time.Duration  // How long to keep stale devices (fixes #829)
 	nameResWg       sync.WaitGroup // Track name resolution goroutines (fixes #836)
+	dbWriter        DBDeviceWriter // Database writer for persistence
 }
 
 // NewDeviceDiscovery creates a new device discovery aggregator.
@@ -220,6 +229,14 @@ func (d *DeviceDiscovery) Stop() {
 	d.protoManager.Stop()
 }
 
+// SetDBWriter sets the database writer for device persistence.
+// Once set, discovered devices will be persisted to the database after each scan.
+func (d *DeviceDiscovery) SetDBWriter(w DBDeviceWriter) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.dbWriter = w
+}
+
 // SetInterface updates the interface for all discovery methods.
 // Validates the interface exists before updating. (fixes #840)
 func (d *DeviceDiscovery) SetInterface(name string) error {
@@ -297,8 +314,6 @@ func (d *DeviceDiscovery) Scan(ctx context.Context) error {
 // aggregateResults combines ARP scan results with protocol discovery.
 func (d *DeviceDiscovery) aggregateResults() {
 	d.mu.Lock()
-	defer d.mu.Unlock()
-
 	d.mergeARPResults()
 	d.mergeLLDPResults()
 	d.mergeCDPResults()
@@ -309,6 +324,26 @@ func (d *DeviceDiscovery) aggregateResults() {
 	d.detectDuplicateIPs()
 	d.ensureVendorInfo()
 	d.computeDisplayNames()
+
+	// Copy devices for persistence (must be done under lock)
+	var deviceList []*DiscoveredDevice
+	dbWriter := d.dbWriter
+	if dbWriter != nil {
+		deviceList = make([]*DiscoveredDevice, 0, len(d.devices))
+		for _, device := range d.devices {
+			deviceList = append(deviceList, device)
+		}
+	}
+	d.mu.Unlock()
+
+	// Persist devices outside of lock to avoid holding it during I/O
+	if dbWriter != nil && len(deviceList) > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := dbWriter.PersistDevices(ctx, deviceList); err != nil {
+			slog.Warn("Failed to persist devices to database", "error", err, "count", len(deviceList))
+		}
+	}
 }
 
 // expireStaleDevices removes devices that haven't been seen within deviceTTL.
