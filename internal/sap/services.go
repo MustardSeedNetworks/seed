@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/cable"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
-	"github.com/krisarmstrong/seed/internal/dns"
-	"github.com/krisarmstrong/seed/internal/gateway"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/network"
+	"github.com/krisarmstrong/seed/internal/sap/cable"
+	"github.com/krisarmstrong/seed/internal/sap/dns"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
+	"github.com/krisarmstrong/seed/internal/sap/speedtest"
+	"github.com/krisarmstrong/seed/internal/sap/vlan"
 	"github.com/krisarmstrong/seed/internal/snmp"
-	"github.com/krisarmstrong/seed/internal/speedtest"
-	"github.com/krisarmstrong/seed/internal/vlan"
 )
 
 // DefaultInterface is the default network interface to use when none is configured.

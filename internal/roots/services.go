@@ -9,7 +9,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/publicip"
+	"github.com/krisarmstrong/seed/internal/roots/publicip"
 )
 
 // TracerouteService handles network path tracing.

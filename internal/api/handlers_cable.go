@@ -6,7 +6,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/krisarmstrong/seed/internal/cable"
+	"github.com/krisarmstrong/seed/internal/sap/cable"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
