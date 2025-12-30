@@ -114,8 +114,20 @@ func (m *Module) Start(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// TODO: Add Sap module config and start services
-	_ = ctx
+	// Start link monitoring
+	if err := m.link.Start(ctx); err != nil {
+		return err
+	}
+
+	// Start gateway monitoring
+	if err := m.gateway.Start(ctx); err != nil {
+		return err
+	}
+
+	// Start telemetry aggregation
+	if err := m.telemetry.Start(ctx); err != nil {
+		return err
+	}
 
 	return nil
 }
