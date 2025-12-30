@@ -28,10 +28,15 @@ func New(cfg *config.Config, db *database.DB) *Module {
 		db:  db,
 	}
 
-	m.generator = NewGeneratorService(cfg, db)
+	// Create services in dependency order:
+	// 1. Templates (no dependencies)
+	// 2. Aggregator (needs db)
+	// 3. Generator (needs templates + aggregator)
+	// 4. Scheduler (needs generator)
 	m.templates = NewTemplateService(cfg)
-	m.scheduler = NewSchedulerService(cfg, db)
 	m.aggregator = NewAggregatorService(cfg, db)
+	m.generator = NewGeneratorService(cfg, db, m.templates, m.aggregator)
+	m.scheduler = NewSchedulerService(cfg, db, m.generator)
 
 	return m
 }
@@ -74,8 +79,10 @@ func (m *Module) Start(ctx context.Context) error {
 		return err
 	}
 
-	// TODO: Add Harvest module config and start scheduler if enabled
-	_ = ctx
+	// Start scheduler for recurring reports
+	if err := m.scheduler.Start(ctx); err != nil {
+		return err
+	}
 
 	return nil
 }

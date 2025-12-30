@@ -377,6 +377,49 @@ var migrations = []Migration{
 			CREATE INDEX IF NOT EXISTS idx_logs_request_id ON logs(request_id);
 		`,
 	},
+	{
+		Version:     15,
+		Description: "Create reports and scheduled_reports tables for Harvest module",
+		Up: `
+			CREATE TABLE IF NOT EXISTS reports (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				type TEXT NOT NULL,
+				format TEXT NOT NULL,
+				template TEXT,
+				status TEXT NOT NULL DEFAULT 'pending',
+				file_path TEXT,
+				file_size INTEGER DEFAULT 0,
+				parameters_json TEXT,
+				error TEXT,
+				created_at TEXT NOT NULL,
+				completed_at TEXT,
+				expires_at TEXT
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+			CREATE INDEX IF NOT EXISTS idx_reports_type ON reports(type);
+			CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at);
+
+			CREATE TABLE IF NOT EXISTS scheduled_reports (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				template TEXT NOT NULL,
+				format TEXT NOT NULL,
+				schedule_json TEXT NOT NULL,
+				parameters_json TEXT,
+				recipients_json TEXT,
+				enabled INTEGER DEFAULT 1,
+				last_run TEXT,
+				next_run TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_scheduled_reports_enabled ON scheduled_reports(enabled);
+			CREATE INDEX IF NOT EXISTS idx_scheduled_reports_next_run ON scheduled_reports(next_run);
+		`,
+	},
 }
 
 // migrate runs all pending migrations.
