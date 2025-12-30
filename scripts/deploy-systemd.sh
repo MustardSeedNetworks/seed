@@ -12,7 +12,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-REMOTE_HOST="${1:-krisarmstrong@192.168.64.7}"
+REMOTE_HOST="${1:-krisarmstrong@10.0.0.163}"
 APP_DIR="/home/krisarmstrong/seed"
 SERVICE_NAME="seed"
 
@@ -22,12 +22,12 @@ echo "================================================"
 echo
 
 echo -e "${YELLOW}Step 1: Building frontend...${NC}"
-cd web && npm run build && cd ..
+cd ui && npm run build && cd ..
 echo -e "${GREEN}✓ Frontend built${NC}"
 echo
 
 echo -e "${YELLOW}Step 2: Syncing files to server...${NC}"
-rsync -avz --exclude 'web/node_modules' --exclude '.git' \
+rsync -avz --exclude 'ui/node_modules' --exclude '.git' \
   ./ "${REMOTE_HOST}:${APP_DIR}/"
 echo -e "${GREEN}✓ Files synced${NC}"
 echo

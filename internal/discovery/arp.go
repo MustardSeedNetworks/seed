@@ -235,21 +235,36 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	s.localIP = localIP
 	s.mu.Unlock()
 
-	// Perform ping sweep on primary subnet
+	// Perform ping sweep on primary subnet with retry logic
 	// Note: ping sweep may fail without CAP_NET_RAW - continue with ARP table
-	if err := s.pingSweep(ctx, subnet); err != nil {
-		slog.Warn("Ping sweep failed (continuing with ARP table only)", "subnet", subnet, "error", err)
+	result := RetryWithBackoff(ctx, NetworkRetryConfig(), func() error {
+		return s.pingSweep(ctx, subnet)
+	})
+	if !result.Successful {
+		slog.Warn("Ping sweep failed after retries (continuing with ARP table only)",
+			"subnet", subnet,
+			"attempts", result.Attempts,
+			"duration", result.TotalTime,
+			"error", result.LastError)
 	}
 
-	// Perform ping sweep on additional subnets
+	// Perform ping sweep on additional subnets with retry logic
 	for _, additionalSubnet := range additionalSubnets {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			// Continue scanning additional subnets even if some fail
-			if err := s.pingSweep(ctx, additionalSubnet); err != nil {
-				slog.Error("ping sweep failed for subnet", "subnet", additionalSubnet, "error", err)
+			// Retry logic for additional subnets - continue even if some fail
+			subnetCopy := additionalSubnet // Capture for closure
+			result := RetryWithBackoff(ctx, NetworkRetryConfig(), func() error {
+				return s.pingSweep(ctx, subnetCopy)
+			})
+			if !result.Successful {
+				slog.Warn("Ping sweep failed for additional subnet after retries",
+					"subnet", additionalSubnet,
+					"attempts", result.Attempts,
+					"duration", result.TotalTime,
+					"error", result.LastError)
 			}
 		}
 	}

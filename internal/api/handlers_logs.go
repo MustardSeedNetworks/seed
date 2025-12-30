@@ -2,12 +2,14 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -175,6 +177,7 @@ func paginateLogs(logs []*logging.LogEntry, offset, limit int) []*logging.LogEnt
 
 // handleLogsQuery returns logs matching the specified filters.
 // GET /api/logs/query?level=ERROR,WARN&layer=backend,api&component=auth&search=failed&limit=100&offset=0 (fixes #703).
+// Reads from database for persistence, falls back to memory buffer.
 func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -184,13 +187,31 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	params := parseLogQueryParams(r)
+
+	// Try database first if available (for persisted logs)
+	if s.db != nil {
+		dbLogs, err := s.queryLogsFromDB(r.Context(), params)
+		if err == nil {
+			sendJSONResponse(w, logger, http.StatusOK, LogQueryResponse{
+				Logs:       dbLogs,
+				TotalCount: len(dbLogs), // TODO: get actual count from DB
+				Offset:     params.offset,
+				Limit:      params.limit,
+			})
+			return
+		}
+		// Fall through to memory buffer on error
+		logger.Warn("Failed to query logs from database, falling back to memory", "error", err)
+	}
+
+	// Fall back to memory buffer
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
 		return
 	}
 
-	params := parseLogQueryParams(r)
 	allLogs := broadcaster.GetAllLogs()
 	filtered := make([]*logging.LogEntry, 0, len(allLogs))
 
@@ -209,6 +230,49 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 		Offset:     params.offset,
 		Limit:      params.limit,
 	})
+}
+
+// queryLogsFromDB queries logs from the database with filters.
+func (s *Server) queryLogsFromDB(ctx context.Context, params logQueryParams) ([]*logging.LogEntry, error) {
+	opts := database.LogListOptions{
+		Search: params.search,
+		Limit:  params.limit,
+		Offset: params.offset,
+	}
+
+	// Use first level/layer/component if specified
+	if len(params.levels) > 0 {
+		opts.Level = params.levels[0]
+	}
+	if len(params.layers) > 0 {
+		opts.Layer = params.layers[0]
+	}
+	if len(params.components) > 0 {
+		opts.Component = params.components[0]
+	}
+
+	dbEntries, err := s.db.Logs().List(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert database entries to logging.LogEntry
+	result := make([]*logging.LogEntry, len(dbEntries))
+	for i, e := range dbEntries {
+		result[i] = &logging.LogEntry{
+			Timestamp:  e.Timestamp,
+			Level:      e.Level,
+			Layer:      e.Layer,
+			Message:    e.Message,
+			Component:  e.Component,
+			RequestID:  e.RequestID,
+			SessionID:  e.SessionID,
+			DurationMs: e.DurationMs,
+			Stack:      e.Stack,
+		}
+	}
+
+	return result, nil
 }
 
 // handleLogsStats returns aggregated log statistics.

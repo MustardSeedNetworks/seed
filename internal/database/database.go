@@ -47,6 +47,7 @@ type DB struct {
 	devices  *DeviceRepository
 	alerts   *AlertRepository
 	settings *SettingsRepository
+	logs     *LogRepository
 }
 
 // Config holds database configuration options.
@@ -254,6 +255,17 @@ func (db *DB) Settings() *SettingsRepository {
 		db.settings = &SettingsRepository{db: db}
 	}
 	return db.settings
+}
+
+// Logs returns the logs repository.
+func (db *DB) Logs() *LogRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.logs == nil {
+		db.logs = &LogRepository{db: db}
+	}
+	return db.logs
 }
 
 // Exec executes a query without returning any rows.

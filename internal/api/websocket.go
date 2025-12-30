@@ -43,6 +43,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -54,6 +55,7 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
@@ -626,6 +628,59 @@ func (a *logBroadcastAdapter) BroadcastLogEntry(entry *logging.LogEntry) {
 	}
 }
 
+// dbLogWriterAdapter implements logging.DBLogWriter interface for database persistence.
+// This adapter connects the logging package to the database package.
+type dbLogWriterAdapter struct {
+	db *database.DB
+}
+
+// WriteLog implements logging.DBLogWriter interface - writes a single log entry.
+func (a *dbLogWriterAdapter) WriteLog(ctx context.Context, entry *logging.LogEntry) error {
+	if a.db == nil {
+		return nil
+	}
+
+	dbEntry := &database.LogEntry{
+		Timestamp:  entry.Timestamp,
+		Level:      entry.Level,
+		Layer:      entry.Layer,
+		Message:    entry.Message,
+		Component:  entry.Component,
+		RequestID:  entry.RequestID,
+		SessionID:  entry.SessionID,
+		DurationMs: entry.DurationMs,
+		Metadata:   database.ConvertMetadataToJSON(entry.Metadata),
+		Stack:      entry.Stack,
+	}
+
+	return a.db.Logs().Create(ctx, dbEntry)
+}
+
+// WriteBatch implements logging.DBLogWriter interface - writes multiple log entries.
+func (a *dbLogWriterAdapter) WriteBatch(ctx context.Context, entries []*logging.LogEntry) error {
+	if a.db == nil || len(entries) == 0 {
+		return nil
+	}
+
+	dbEntries := make([]*database.LogEntry, len(entries))
+	for i, entry := range entries {
+		dbEntries[i] = &database.LogEntry{
+			Timestamp:  entry.Timestamp,
+			Level:      entry.Level,
+			Layer:      entry.Layer,
+			Message:    entry.Message,
+			Component:  entry.Component,
+			RequestID:  entry.RequestID,
+			SessionID:  entry.SessionID,
+			DurationMs: entry.DurationMs,
+			Metadata:   database.ConvertMetadataToJSON(entry.Metadata),
+			Stack:      entry.Stack,
+		}
+	}
+
+	return a.db.Logs().BatchCreate(ctx, dbEntries)
+}
+
 // pipelineBroadcastAdapter implements discovery.EventBroadcaster for pipeline events.
 type pipelineBroadcastAdapter struct {
 	hub *Hub
@@ -639,6 +694,72 @@ func (a *pipelineBroadcastAdapter) BroadcastPipelineEvent(event discovery.Pipeli
 			Payload: event,
 		})
 	}
+}
+
+// dbDeviceWriterAdapter implements discovery.DBDeviceWriter for database persistence.
+type dbDeviceWriterAdapter struct {
+	db *database.DB
+}
+
+// PersistDevices implements discovery.DBDeviceWriter interface.
+func (a *dbDeviceWriterAdapter) PersistDevices(ctx context.Context, devices []*discovery.DiscoveredDevice) error {
+	if a.db == nil || len(devices) == 0 {
+		return nil
+	}
+
+	for _, d := range devices {
+		dbDevice := &database.Device{
+			IPAddress:  d.IP,
+			MACAddress: d.MAC,
+			Hostname:   d.DisplayName,
+			Vendor:     d.Vendor,
+			DeviceType: guessDeviceType(d),
+			OSFamily:   d.OSGuess,
+			LastSeen:   d.LastSeen,
+			IsActive:   true,
+		}
+
+		// Upsert by MAC if available, otherwise by IP
+		if d.MAC != "" {
+			if err := a.db.Devices().UpsertByMAC(ctx, dbDevice); err != nil {
+				// Log but don't fail - continue with other devices
+				continue
+			}
+		} else if d.IP != "" {
+			if err := a.db.Devices().Upsert(ctx, dbDevice); err != nil {
+				continue
+			}
+		}
+	}
+
+	return nil
+}
+
+// guessDeviceType infers a device type from discovery information.
+func guessDeviceType(d *discovery.DiscoveredDevice) string {
+	if d.LLDPInfo != nil {
+		for _, cap := range d.LLDPInfo.Capabilities {
+			switch cap {
+			case "Router":
+				return "router"
+			case "Bridge":
+				return "switch"
+			case "Telephone":
+				return "phone"
+			case "WLAN Access Point":
+				return "access_point"
+			}
+		}
+	}
+	if d.CDPInfo != nil {
+		if d.CDPInfo.Platform != "" {
+			return "network_device"
+		}
+	}
+	if d.IsRouter {
+		return "router"
+	}
+	return "host"
 }
 
 // handleWebSocket handles WebSocket connections.

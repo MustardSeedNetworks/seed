@@ -124,10 +124,10 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
 		discoveryManager:    discovery.NewManager(cfg.Interface.Default),
 		deviceDiscovery:     discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
-		discoveryService:    discovery.NewService(cfg, cfg.Interface.Default),
-		dnsTester:           dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
-		dnsSecurityScanner:  dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
-		dhcpMonitor:         dhcp.NewMonitor(cfg.Interface.Default),
+		// Note: discoveryService is initialized after profiler is created (see below)
+		dnsTester:          dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
+		dnsSecurityScanner: dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
+		dhcpMonitor:        dhcp.NewMonitor(cfg.Interface.Default),
 		rogueDetector: dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
 			Interface:        cfg.Interface.Default,
 			KnownServers:     cfg.DHCP.RogueDetection.KnownServers,
@@ -227,19 +227,50 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 	// Initialize log broadcaster for real-time log streaming
 	s.logBroadcaster = logging.InitBroadcaster(1000) // Buffer last 1000 log entries
 	s.logBroadcaster.SetBroadcaster(&logBroadcastAdapter{hub: s.wsHub})
-	slog.Info("Log broadcaster initialized", "buffer_size", 1000)
 
-	// Initialize discovery pipeline orchestrator
+	// Wire up database persistence for logs if database is available
+	if db != nil {
+		s.logBroadcaster.SetDBWriter(&dbLogWriterAdapter{db: db})
+		slog.Info("Log broadcaster initialized with database persistence", "buffer_size", 1000)
+	} else {
+		slog.Info("Log broadcaster initialized (memory-only, no database)", "buffer_size", 1000)
+	}
+
+	// Wire up database persistence for devices if database is available
+	if db != nil {
+		s.deviceDiscovery.SetDBWriter(&dbDeviceWriterAdapter{db: db})
+		slog.Info("Device discovery initialized with database persistence")
+	}
+
+	// Create SHARED DeviceProfiler - used by both Service and Pipeline
+	// This ensures port scan results and SNMP data are consistent across the system
+	sharedProfiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
+
+	// Initialize discovery service with the shared profiler
+	s.discoveryService = discovery.NewService(cfg, cfg.Interface.Default, sharedProfiler)
+	slog.Info("Discovery service initialized with shared profiler")
+
+	// Initialize discovery pipeline with the SAME shared profiler
 	pipelineCfg := discovery.PipelineConfigFromAdapter(&cfg.Pipeline)
 	s.pipeline = discovery.NewPipeline(
 		&pipelineCfg,
 		s.deviceDiscovery,
-		discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP),
+		sharedProfiler, // Use the same profiler as Service
 		&pipelineBroadcastAdapter{hub: s.wsHub},
 	)
+
+	// Link Service and Pipeline for coordination
+	s.discoveryService.SetPipeline(s.pipeline)
+
+	// Set up pipeline completion callback to sync results back to service
+	s.discoveryService.SetOnPipelineComplete(func(devices []*discovery.DiscoveredDevice) {
+		slog.Info("Pipeline completed, syncing results to discovery service", "device_count", len(devices))
+	})
+
 	slog.Info("Discovery pipeline initialized",
 		"phases_enabled", s.pipeline.GetEnabledPhaseNames(),
-		"port_scan_intensity", cfg.Pipeline.PortScan.Intensity)
+		"port_scan_intensity", cfg.Pipeline.PortScan.Intensity,
+		"shared_profiler", true)
 
 	// Initialize vulnerability scanner if enabled
 	if cfg.Security.VulnerabilityScanning.Enabled {
