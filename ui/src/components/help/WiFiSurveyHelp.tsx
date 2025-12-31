@@ -130,7 +130,7 @@ export const WIFI_SURVEY_HELP: HelpSection[] = [
       {
         question: "Can I export survey data?",
         answer:
-          "Survey export functionality is coming soon. Future versions will support:\n• CSV export of all sample points\n• PDF reports with heatmap images\n• Comparison reports (before/after changes)\n• Integration with professional tools\n\nCurrently, you can:\n• View all measurements in the web interface\n• Take screenshots of heatmaps\n• Access raw data via the API (/api/survey endpoints)",
+          "Survey export functionality is coming soon. Future versions will support:\n• CSV export of all sample points\n• PDF reports with heatmap images\n• Comparison reports (before/after changes)\n• Integration with professional tools\n\nCurrently, you can:\n• View all measurements in the web interface\n• Take screenshots of heatmaps\n• Access raw data via the API (/api/canopy/survey endpoints)",
       },
     ],
   },

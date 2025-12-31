@@ -268,7 +268,7 @@ function App() {
           : null,
       );
 
-      const response = await fetch(`${API_BASE}/api/devices/scan`, {
+      const response = await fetch(`${API_BASE}/api/shell/devices/scan`, {
         method: "POST",
         credentials: "include",
       });
@@ -276,7 +276,7 @@ function App() {
       if (response.ok) {
         // Poll for completion
         scanPollIntervalRef.current = setInterval(async () => {
-          const statusRes = await fetch(`${API_BASE}/api/devices/status`, {
+          const statusRes = await fetch(`${API_BASE}/api/shell/devices/status`, {
             credentials: "include",
           });
           if (statusRes.ok) {

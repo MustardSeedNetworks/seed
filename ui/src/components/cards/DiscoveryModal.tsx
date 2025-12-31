@@ -121,7 +121,9 @@ function compareDevices(
       break;
     }
     case "hostname":
-      cmp = (a.hostname || "").localeCompare(b.hostname || "");
+      cmp = (a.displayName || a.mdnsName || a.netbiosName || a.hostname || "").localeCompare(
+        b.displayName || b.mdnsName || b.netbiosName || b.hostname || "",
+      );
       break;
     case "vendor":
       cmp = (a.vendor || "").localeCompare(b.vendor || "");
@@ -234,13 +236,13 @@ function DeviceRow({
           </div>
         </td>
 
-        {/* Hostname */}
+        {/* Hostname - prefer displayName, fallback to mdnsName, netbiosName, hostname */}
         <td className="px-3 py-2">
           <span
             className="text-sm text-text-secondary truncate block max-w-40"
-            title={device.hostname}
+            title={device.displayName || device.mdnsName || device.netbiosName || device.hostname}
           >
-            {device.hostname || "-"}
+            {device.displayName || device.mdnsName || device.netbiosName || device.hostname || "-"}
           </span>
         </td>
 
@@ -683,6 +685,9 @@ export function DiscoveryModal({ isOpen, onClose, data, onScan, onDeepScan }: Di
         (d) =>
           d.ip?.toLowerCase().includes(q) ||
           d.hostname?.toLowerCase().includes(q) ||
+          d.netbiosName?.toLowerCase().includes(q) ||
+          d.mdnsName?.toLowerCase().includes(q) ||
+          d.displayName?.toLowerCase().includes(q) ||
           d.mac?.toLowerCase().includes(q) ||
           d.vendor?.toLowerCase().includes(q),
       );
@@ -722,7 +727,9 @@ export function DiscoveryModal({ isOpen, onClose, data, onScan, onDeepScan }: Di
     const rows = filteredDevices.map((d) =>
       [
         escapeCsv(d.ip),
-        escapeCsv(d.hostname),
+        escapeCsv(d.displayName || d.mdnsName || d.netbiosName || d.hostname),
+        escapeCsv(d.netbiosName),
+        escapeCsv(d.mdnsName),
         escapeCsv(d.mac),
         escapeCsv(d.vendor),
         escapeCsv(d.discoveryMethod.join(";")),
@@ -732,7 +739,7 @@ export function DiscoveryModal({ isOpen, onClose, data, onScan, onDeepScan }: Di
       ].join(","),
     );
 
-    const header = "ip,hostname,mac,vendor,discovery_methods,last_seen,network,os_guess";
+    const header = "ip,name,netbios_name,mdns_name,mac,vendor,discovery_methods,last_seen,network,os_guess";
     const csv = [header, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);

@@ -59,7 +59,7 @@ export const CableTestSettings = memo(function CableTestSettings({
   const checkTdrSupport = useCallback(async () => {
     setCheckingSupport(true);
     try {
-      const response = await fetch(`${API_BASE}/api/cable/support`, {
+      const response = await fetch(`${API_BASE}/api/sap/cable/support`, {
         credentials: "include",
       });
       if (response.ok) {

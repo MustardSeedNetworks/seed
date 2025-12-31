@@ -369,112 +369,29 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 
 // setupRoutes configures all HTTP routes.
 func (s *Server) setupRoutes() {
-	// API routes
+	// ========================================
+	// ROOT-LEVEL API ROUTES (no module prefix)
+	// ========================================
+
+	// Auth routes
 	s.mux.HandleFunc("/api/auth/login", s.handleLogin)
 	s.mux.HandleFunc("/api/auth/logout", s.handleLogout)
 	s.mux.HandleFunc("/api/auth/refresh", s.handleRefreshToken) // Token refresh (fixes #478)
 	s.mux.HandleFunc("/api/auth/csrf", s.handleCSRFToken)       // CSRF token for state-changing requests
+
+	// Status and settings
 	s.mux.HandleFunc("/api/status", s.handleStatus)
 	s.mux.HandleFunc("/api/settings", s.handleSettings)
-	s.mux.HandleFunc("/api/interfaces", s.handleInterfaces)
-	s.mux.HandleFunc("/api/interface", s.handleInterface)
-	s.mux.HandleFunc("/api/export", s.handleExport)
-	s.mux.HandleFunc("/api/link", s.handleLink)
-	s.mux.HandleFunc("/api/ipconfig", s.handleIPConfig)
-	s.mux.HandleFunc("/api/ipconfig/settings", s.handleIPSettings)
-	s.mux.HandleFunc("/api/network/mtu", s.handleSetMTU)
-	s.mux.HandleFunc("/api/discovery", s.handleDiscovery)
-	s.mux.HandleFunc("/api/discovery/probe", s.handleTCPProbe)
-	s.mux.HandleFunc("/api/discovery/traceroute", s.handleTraceroute)
-	s.mux.HandleFunc("/api/discovery/path", s.handlePath)
-	s.mux.HandleFunc("/api/discovery/portscan", s.handlePortScan)
-	s.mux.HandleFunc("/api/dns", s.handleDNS)
-	s.mux.HandleFunc("/api/dns/security", s.handleDNSSecurity)
-	s.mux.HandleFunc("/api/dns/security/settings", s.handleDNSSecuritySettings)
-	s.mux.HandleFunc("/api/dhcp/rogue", s.handleRogueDHCP)
-	s.mux.HandleFunc("/api/dhcp/rogue/servers", s.handleRogueDHCPServers)
-	s.mux.HandleFunc("/api/dhcp/rogue/config", s.handleRogueDHCPConfig)
-	s.mux.HandleFunc("/api/gateway", s.handleGateway)
-	s.mux.HandleFunc("/api/vlan", s.handleVLAN)
-	s.mux.HandleFunc("/api/vlan/traffic", s.handleVLANTraffic)
-	s.mux.HandleFunc("/api/vlan/interface", s.handleVLANInterface)
-	s.mux.HandleFunc("/api/wifi", s.handleWiFi)
-	s.mux.HandleFunc("/api/wifi/scan", s.handleWiFiScan)
-	s.mux.HandleFunc("/api/wifi/status", s.handleWiFiStatus)
-	s.mux.HandleFunc("/api/wifi/channel-graph", s.handleWiFiChannelGraph)
-	s.mux.HandleFunc("/api/wifi/settings", s.handleWiFiSettings)
-	s.mux.HandleFunc("/api/snmp/settings", s.handleSNMPSettings)
 	s.mux.HandleFunc("/api/settings/defaults", s.handleSettingsDefaults) // Single source of truth for defaults (#E)
 	s.mux.HandleFunc("/api/settings/link", s.handleLinkSettings)         // Link speed/duplex settings (#734)
 	s.mux.HandleFunc("/api/settings/cable", s.handleCableTestSettings)   // Cable test settings (#740)
-	s.mux.HandleFunc("/api/cable", s.handleCable)
-	// Rate-limited expensive endpoints (fixes #530)
-	s.mux.Handle("/api/speedtest", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)))
-	s.mux.HandleFunc("/api/speedtest/status", s.handleSpeedtestStatus)
-	s.mux.HandleFunc("/api/health-checks/settings", s.handleHealthChecksSettings)
-	s.mux.Handle("/api/health-checks/run", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)))
-	s.mux.HandleFunc("/api/iperf/info", s.handleIperfInfo)
-	s.mux.Handle("/api/iperf/client", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)))
-	s.mux.HandleFunc("/api/iperf/client/status", s.handleIperfClientStatus)
-	s.mux.HandleFunc("/api/iperf/server", s.handleIperfServer)
-	s.mux.HandleFunc("/api/iperf/server/status", s.handleIperfServerStatus)
-	s.mux.HandleFunc("/api/iperf/suggestions", s.handleIperfSuggestions)
-	s.mux.HandleFunc("/api/devices", s.handleDevices)
-	s.mux.Handle("/api/devices/scan", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)))
-	s.mux.HandleFunc("/api/devices/status", s.handleDevicesStatus)
-	s.mux.HandleFunc("/api/devices/settings", s.handleDevicesSettings)
-	s.mux.HandleFunc("/api/devices/subnets", s.handleDevicesSubnets)
-	s.mux.HandleFunc("/api/discovery/options", s.handleDiscoveryOptions)
-	s.mux.HandleFunc("/api/discovery/service/status", s.handleDiscoveryServiceStatus)
-	s.mux.HandleFunc("/api/discovery/fingerprint", s.handleAdvancedFingerprint)
 
-	// Pipeline routes - phased discovery orchestration
-	s.mux.HandleFunc("/api/pipeline/status", s.handlePipelineStatus)
-	s.mux.HandleFunc("/api/pipeline/start", s.handlePipelineStart)
-	s.mux.HandleFunc("/api/pipeline/cancel", s.handlePipelineCancel)
-	s.mux.HandleFunc("/api/pipeline/config", s.handlePipelineConfigRoute)
-	s.mux.HandleFunc("/api/pipeline/port-intensity", s.handlePipelinePortIntensityInfo)
-	s.mux.HandleFunc("/api/pipeline/timing-profiles", s.handlePipelineTimingProfiles)
-	s.mux.HandleFunc("/api/publicip", s.handlePublicIP)
-	s.mux.HandleFunc("/api/logs", s.handleLogs)
-	// Enhanced logging API endpoints (comprehensive logging enhancement)
-	s.mux.HandleFunc("/api/logs/client", s.handleClientLogs) // Receive frontend logs
-	s.mux.HandleFunc("/api/logs/query", s.handleLogsQuery)   // Query logs with filters
-	s.mux.HandleFunc("/api/logs/stats", s.handleLogsStats)   // Get log statistics
-	s.mux.HandleFunc("/api/logs/recent", s.handleLogsRecent) // Get recent logs
-	s.mux.HandleFunc("/api/health", s.handleHealth)          // Simple liveness check (fixes #540)
-	s.mux.HandleFunc("/api/system/health", s.handleSystemHealth)
+	// Interface management
+	s.mux.HandleFunc("/api/interfaces", s.handleInterfaces)
+	s.mux.HandleFunc("/api/interface", s.handleInterface)
 
-	// WiFi Survey routes
-	s.mux.HandleFunc("/api/survey/create", s.createSurvey)
-	s.mux.HandleFunc("/api/survey/list", s.listSurveys)
-	s.mux.HandleFunc("/api/survey", s.getSurvey)
-	s.mux.HandleFunc("/api/survey/delete", s.deleteSurvey)
-	s.mux.HandleFunc("/api/survey/start", s.startSurvey)
-	s.mux.HandleFunc("/api/survey/pause", s.pauseSurvey)
-	s.mux.HandleFunc("/api/survey/complete", s.completeSurvey)
-	s.mux.HandleFunc("/api/survey/sample", s.addSurveySample)
-
-	// Vulnerability scanner routes
-	s.mux.HandleFunc("/api/vulnerabilities/scan", s.handleVulnerabilityScan)
-	s.mux.HandleFunc("/api/vulnerabilities/status", s.handleVulnerabilityStatus)
-	s.mux.HandleFunc("/api/vulnerabilities/results", s.handleVulnerabilityResults)
-	s.mux.HandleFunc("/api/vulnerabilities/device", s.handleDeviceVulnerabilities)
-	s.mux.HandleFunc("/api/vulnerabilities/settings", s.handleVulnerabilitySettings)
-	s.mux.HandleFunc("/api/vulnerabilities/validate-api-key", s.handleNVDAPIKeyValidate)
-	s.mux.HandleFunc("/api/survey/floorplan", s.updateSurveyFloorPlan)
-	s.mux.HandleFunc("/api/survey/settings", s.updateSurveySettings)
-	s.mux.HandleFunc("/api/survey/import/airmapper", s.importAirMapper)
-	s.mux.HandleFunc("/api/survey/heatmap", s.getSurveyHeatmap)
-	s.mux.HandleFunc("/api/survey/dead-zones", s.getSurveyDeadZones)
-
-	// Multi-floor survey routes (#654)
-	s.mux.HandleFunc("/api/survey/floors", s.handleSurveyFloors) // GET=list, POST=add
-	s.mux.HandleFunc("/api/survey/floor", s.handleSurveyFloor)   // GET, PUT, DELETE
-	s.mux.HandleFunc("/api/survey/floor/floorplan", s.updateFloorFloorPlan)
-	s.mux.HandleFunc("/api/survey/floor/sample", s.addFloorSample)
-	s.mux.HandleFunc("/api/survey/active-floor", s.setActiveFloor)
-	s.mux.HandleFunc("/api/survey/report", s.generateSurveyReport) // PDF report generation (#653)
+	// Network MTU
+	s.mux.HandleFunc("/api/network/mtu", s.handleSetMTU)
 
 	// Config backup/restore routes (implements #494)
 	s.mux.HandleFunc("/api/config/backups", s.handleConfigBackups)
@@ -501,8 +418,166 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/sso/settings", s.handleSSOSettings)
 	s.mux.HandleFunc("/api/sso/update", s.handleSSOUpdate)
 
-	// WebSocket
+	// Health check (simple liveness)
+	s.mux.HandleFunc("/api/health", s.handleHealth) // Simple liveness check (fixes #540)
+
+	// ========================================
+	// SAP MODULE - Live Telemetry (/api/sap/...)
+	// ========================================
+
+	// Link monitoring
+	s.mux.HandleFunc("/api/sap/link", s.handleLink)
+
+	// Cable testing
+	s.mux.HandleFunc("/api/sap/cable", s.handleCable)
+
+	// DNS testing
+	s.mux.HandleFunc("/api/sap/dns", s.handleDNS)
+	s.mux.HandleFunc("/api/sap/dns/security", s.handleDNSSecurity)
+	s.mux.HandleFunc("/api/sap/dns/security/settings", s.handleDNSSecuritySettings)
+
+	// Gateway testing
+	s.mux.HandleFunc("/api/sap/gateway", s.handleGateway)
+
+	// DHCP rogue detection
+	s.mux.HandleFunc("/api/sap/dhcp/rogue", s.handleRogueDHCP)
+	s.mux.HandleFunc("/api/sap/dhcp/rogue/servers", s.handleRogueDHCPServers)
+	s.mux.HandleFunc("/api/sap/dhcp/rogue/config", s.handleRogueDHCPConfig)
+
+	// VLAN management
+	s.mux.HandleFunc("/api/sap/vlan", s.handleVLAN)
+	s.mux.HandleFunc("/api/sap/vlan/traffic", s.handleVLANTraffic)
+	s.mux.HandleFunc("/api/sap/vlan/interface", s.handleVLANInterface)
+
+	// Speed testing (rate-limited)
+	s.mux.Handle("/api/sap/speedtest", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)))
+	s.mux.HandleFunc("/api/sap/speedtest/status", s.handleSpeedtestStatus)
+
+	// iPerf testing
+	s.mux.HandleFunc("/api/sap/iperf/info", s.handleIperfInfo)
+	s.mux.Handle("/api/sap/iperf/client", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)))
+	s.mux.HandleFunc("/api/sap/iperf/client/status", s.handleIperfClientStatus)
+	s.mux.HandleFunc("/api/sap/iperf/server", s.handleIperfServer)
+	s.mux.HandleFunc("/api/sap/iperf/server/status", s.handleIperfServerStatus)
+	s.mux.HandleFunc("/api/sap/iperf/suggestions", s.handleIperfSuggestions)
+
+	// Health checks
+	s.mux.HandleFunc("/api/sap/health-checks/settings", s.handleHealthChecksSettings)
+	s.mux.Handle("/api/sap/health-checks/run", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)))
+
+	// SNMP settings
+	s.mux.HandleFunc("/api/sap/snmp/settings", s.handleSNMPSettings)
+
+	// System health
+	s.mux.HandleFunc("/api/sap/system/health", s.handleSystemHealth)
+
+	// IP configuration
+	s.mux.HandleFunc("/api/sap/ipconfig", s.handleIPConfig)
+	s.mux.HandleFunc("/api/sap/ipconfig/settings", s.handleIPSettings)
+
+	// Public IP
+	s.mux.HandleFunc("/api/sap/publicip", s.handlePublicIP)
+
+	// ========================================
+	// SHELL MODULE - Security Posture (/api/shell/...)
+	// ========================================
+
+	// Discovery (general network discovery)
+	s.mux.HandleFunc("/api/shell/discovery", s.handleDiscovery)
+	s.mux.HandleFunc("/api/shell/discovery/probe", s.handleTCPProbe)
+	s.mux.HandleFunc("/api/shell/discovery/portscan", s.handlePortScan)
+	s.mux.HandleFunc("/api/shell/discovery/options", s.handleDiscoveryOptions)
+	s.mux.HandleFunc("/api/shell/discovery/service/status", s.handleDiscoveryServiceStatus)
+	s.mux.HandleFunc("/api/shell/discovery/fingerprint", s.handleAdvancedFingerprint)
+
+	// Device management
+	s.mux.HandleFunc("/api/shell/devices", s.handleDevices)
+	s.mux.Handle("/api/shell/devices/scan", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)))
+	s.mux.HandleFunc("/api/shell/devices/status", s.handleDevicesStatus)
+	s.mux.HandleFunc("/api/shell/devices/settings", s.handleDevicesSettings)
+	s.mux.HandleFunc("/api/shell/devices/subnets", s.handleDevicesSubnets)
+
+	// Vulnerability scanner
+	s.mux.HandleFunc("/api/shell/vulnerabilities/scan", s.handleVulnerabilityScan)
+	s.mux.HandleFunc("/api/shell/vulnerabilities/status", s.handleVulnerabilityStatus)
+	s.mux.HandleFunc("/api/shell/vulnerabilities/results", s.handleVulnerabilityResults)
+	s.mux.HandleFunc("/api/shell/vulnerabilities/device", s.handleDeviceVulnerabilities)
+	s.mux.HandleFunc("/api/shell/vulnerabilities/settings", s.handleVulnerabilitySettings)
+	s.mux.HandleFunc("/api/shell/vulnerabilities/validate-api-key", s.handleNVDAPIKeyValidate)
+
+	// Pipeline routes - phased discovery orchestration
+	s.mux.HandleFunc("/api/shell/pipeline/status", s.handlePipelineStatus)
+	s.mux.HandleFunc("/api/shell/pipeline/start", s.handlePipelineStart)
+	s.mux.HandleFunc("/api/shell/pipeline/cancel", s.handlePipelineCancel)
+	s.mux.HandleFunc("/api/shell/pipeline/config", s.handlePipelineConfigRoute)
+	s.mux.HandleFunc("/api/shell/pipeline/port-intensity", s.handlePipelinePortIntensityInfo)
+	s.mux.HandleFunc("/api/shell/pipeline/timing-profiles", s.handlePipelineTimingProfiles)
+
+	// ========================================
+	// ROOTS MODULE - Path Analysis (/api/roots/...)
+	// ========================================
+
+	// Traceroute and path analysis
+	s.mux.HandleFunc("/api/roots/traceroute", s.handleTraceroute)
+	s.mux.HandleFunc("/api/roots/path", s.handlePath)
+
+	// ========================================
+	// CANOPY MODULE - Wi-Fi Planning (/api/canopy/...)
+	// ========================================
+
+	// Wi-Fi management
+	s.mux.HandleFunc("/api/canopy/wifi", s.handleWiFi)
+	s.mux.HandleFunc("/api/canopy/wifi/scan", s.handleWiFiScan)
+	s.mux.HandleFunc("/api/canopy/wifi/status", s.handleWiFiStatus)
+	s.mux.HandleFunc("/api/canopy/wifi/channel-graph", s.handleWiFiChannelGraph)
+	s.mux.HandleFunc("/api/canopy/wifi/settings", s.handleWiFiSettings)
+
+	// WiFi Survey routes
+	s.mux.HandleFunc("/api/canopy/survey/create", s.createSurvey)
+	s.mux.HandleFunc("/api/canopy/survey/list", s.listSurveys)
+	s.mux.HandleFunc("/api/canopy/survey", s.getSurvey)
+	s.mux.HandleFunc("/api/canopy/survey/delete", s.deleteSurvey)
+	s.mux.HandleFunc("/api/canopy/survey/start", s.startSurvey)
+	s.mux.HandleFunc("/api/canopy/survey/pause", s.pauseSurvey)
+	s.mux.HandleFunc("/api/canopy/survey/complete", s.completeSurvey)
+	s.mux.HandleFunc("/api/canopy/survey/sample", s.addSurveySample)
+	s.mux.HandleFunc("/api/canopy/survey/floorplan", s.updateSurveyFloorPlan)
+	s.mux.HandleFunc("/api/canopy/survey/settings", s.updateSurveySettings)
+	s.mux.HandleFunc("/api/canopy/survey/import/airmapper", s.importAirMapper)
+	s.mux.HandleFunc("/api/canopy/survey/heatmap", s.getSurveyHeatmap)
+	s.mux.HandleFunc("/api/canopy/survey/dead-zones", s.getSurveyDeadZones)
+
+	// Multi-floor survey routes (#654)
+	s.mux.HandleFunc("/api/canopy/survey/floors", s.handleSurveyFloors) // GET=list, POST=add
+	s.mux.HandleFunc("/api/canopy/survey/floor", s.handleSurveyFloor)   // GET, PUT, DELETE
+	s.mux.HandleFunc("/api/canopy/survey/floor/floorplan", s.updateFloorFloorPlan)
+	s.mux.HandleFunc("/api/canopy/survey/floor/sample", s.addFloorSample)
+	s.mux.HandleFunc("/api/canopy/survey/active-floor", s.setActiveFloor)
+	s.mux.HandleFunc("/api/canopy/survey/report", s.generateSurveyReport) // PDF report generation (#653)
+
+	// ========================================
+	// HARVEST MODULE - Reporting (/api/harvest/...)
+	// ========================================
+
+	// Export
+	s.mux.HandleFunc("/api/harvest/export", s.handleExport)
+
+	// Logs
+	s.mux.HandleFunc("/api/harvest/logs", s.handleLogs)
+	s.mux.HandleFunc("/api/harvest/logs/client", s.handleClientLogs) // Receive frontend logs
+	s.mux.HandleFunc("/api/harvest/logs/query", s.handleLogsQuery)   // Query logs with filters
+	s.mux.HandleFunc("/api/harvest/logs/stats", s.handleLogsStats)   // Get log statistics
+	s.mux.HandleFunc("/api/harvest/logs/recent", s.handleLogsRecent) // Get recent logs
+
+	// ========================================
+	// WEBSOCKET
+	// ========================================
+
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
+
+	// ========================================
+	// STATIC FILES (FRONTEND)
+	// ========================================
 
 	// Static files (frontend) - use embedded FS in production, filesystem in dev
 	frontendFS, err := ui.GetFS()
