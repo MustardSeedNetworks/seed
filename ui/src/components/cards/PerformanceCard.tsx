@@ -180,7 +180,7 @@ export const PerformanceCard = memo(function PerformanceCard({
   const manageIperfServer = useCallback(async (shouldRun: boolean, port: number) => {
     try {
       const action = shouldRun ? "start" : "stop";
-      const res = await fetch("/api/iperf/server", {
+      const res = await fetch("/api/sap/iperf/server", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -189,7 +189,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         body: JSON.stringify({ action, port }),
       });
       if (res.ok) {
-        const statusRes = await fetch("/api/iperf/server/status", {
+        const statusRes = await fetch("/api/sap/iperf/server/status", {
           credentials: "include",
         });
         if (statusRes.ok) {
@@ -206,7 +206,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     const fetchStatus = async () => {
       try {
         // Fetch speedtest status
-        const speedRes = await fetch("/api/speedtest/status", {
+        const speedRes = await fetch("/api/sap/speedtest/status", {
           credentials: "include",
         });
         if (speedRes.ok) {
@@ -219,7 +219,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         }
 
         // Fetch iperf3 info
-        const iperfInfoRes = await fetch("/api/iperf/info", {
+        const iperfInfoRes = await fetch("/api/sap/iperf/info", {
           credentials: "include",
         });
         if (iperfInfoRes.ok) {
@@ -227,7 +227,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         }
 
         // Fetch iperf3 client status
-        const iperfClientRes = await fetch("/api/iperf/client/status", {
+        const iperfClientRes = await fetch("/api/sap/iperf/client/status", {
           credentials: "include",
         });
         if (iperfClientRes.ok) {
@@ -240,7 +240,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         }
 
         // Fetch iperf3 server status
-        const iperfServerRes = await fetch("/api/iperf/server/status", {
+        const iperfServerRes = await fetch("/api/sap/iperf/server/status", {
           credentials: "include",
         });
         if (iperfServerRes.ok) {
@@ -265,7 +265,7 @@ export const PerformanceCard = memo(function PerformanceCard({
       // Check current server status and sync if needed
       const syncServerState = async () => {
         try {
-          const res = await fetch("/api/iperf/server/status", {
+          const res = await fetch("/api/sap/iperf/server/status", {
             credentials: "include",
           });
           if (res.ok) {
@@ -306,7 +306,7 @@ export const PerformanceCard = memo(function PerformanceCard({
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/speedtest/status", {
+        const res = await fetch("/api/sap/speedtest/status", {
           credentials: "include",
         });
         if (res.ok) {
@@ -339,7 +339,7 @@ export const PerformanceCard = memo(function PerformanceCard({
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/iperf/client/status", {
+        const res = await fetch("/api/sap/iperf/client/status", {
           credentials: "include",
         });
         if (res.ok) {
@@ -377,7 +377,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     setSpeedtestStatus({ running: true, phase: "finding_server", progress: 0 });
 
     try {
-      const res = await fetch("/api/speedtest", {
+      const res = await fetch("/api/sap/speedtest", {
         method: "POST",
         credentials: "include",
       });
@@ -408,7 +408,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     setIperfClientStatus({ running: true, phase: "connecting", progress: 0 });
 
     try {
-      const res = await fetch("/api/iperf/client", {
+      const res = await fetch("/api/sap/iperf/client", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

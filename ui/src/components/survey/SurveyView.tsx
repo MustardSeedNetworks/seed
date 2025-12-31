@@ -69,7 +69,7 @@ interface SurveyViewProps {
  * SurveyView Component
  * Main survey interface with floor plan, sampling controls, and heatmap visualization
  */
-// WiFi adapter status from /api/wifi/status
+// WiFi adapter status from /api/canopy/wifi/status
 interface WiFiStatus {
   status: "unavailable" | "available" | "ready";
   message: string;
@@ -167,7 +167,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
   useEffect(() => {
     const checkWifiStatus = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/wifi/status`, {
+        const res = await fetch(`${API_BASE}/api/canopy/wifi/status`, {
           credentials: "include",
         });
         if (res.ok) {
@@ -187,7 +187,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/survey?id=${survey.id}`, {
+        const res = await fetch(`${API_BASE}/api/canopy/survey?id=${survey.id}`, {
           credentials: "include",
         });
         if (res.ok) {
@@ -249,7 +249,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         };
 
         // Upload to server
-        const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${survey.id}`, {
+        const res = await fetch(`${API_BASE}/api/canopy/survey/floorplan?id=${survey.id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -297,7 +297,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         switch (survey.surveyType) {
           case "passive": {
             // Fetch WiFi scan
-            const scanRes = await fetch(`${API_BASE}/api/wifi/scan`, {
+            const scanRes = await fetch(`${API_BASE}/api/canopy/wifi/scan`, {
               credentials: "include",
             });
             if (!scanRes.ok) throw new Error("WiFi scan failed");
@@ -312,7 +312,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
 
           case "active": {
             // Fetch current WiFi status
-            const wifiRes = await fetch(`${API_BASE}/api/wifi`, {
+            const wifiRes = await fetch(`${API_BASE}/api/canopy/wifi`, {
               credentials: "include",
             });
             if (!wifiRes.ok) throw new Error("WiFi status fetch failed");
@@ -335,7 +335,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
 
           case "throughput": {
             // Fetch WiFi status first
-            const wifiRes2 = await fetch(`${API_BASE}/api/wifi`, {
+            const wifiRes2 = await fetch(`${API_BASE}/api/canopy/wifi`, {
               credentials: "include",
             });
             if (!wifiRes2.ok) throw new Error("WiFi status fetch failed");
@@ -347,7 +347,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
             }
 
             const [host, port] = survey.iperfServer.split(":");
-            const iperfRes = await fetch(`${API_BASE}/api/iperf/client`, {
+            const iperfRes = await fetch(`${API_BASE}/api/sap/iperf/client`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -386,7 +386,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         }
 
         // Submit sample to server
-        const res = await fetch(`${API_BASE}/api/survey/sample?id=${survey.id}`, {
+        const res = await fetch(`${API_BASE}/api/canopy/survey/sample?id=${survey.id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -398,7 +398,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         if (!res.ok) throw new Error("Failed to save sample");
 
         // Refresh survey to get updated samples
-        const refreshRes = await fetch(`${API_BASE}/api/survey?id=${survey.id}`, {
+        const refreshRes = await fetch(`${API_BASE}/api/canopy/survey?id=${survey.id}`, {
           credentials: "include",
         });
         if (refreshRes.ok) {
@@ -457,7 +457,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
 
     try {
       // Update floor plan scale on server
-      const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${survey.id}`, {
+      const res = await fetch(`${API_BASE}/api/canopy/survey/floorplan?id=${survey.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -504,7 +504,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         ...updates,
       };
 
-      const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${survey.id}`, {
+      const res = await fetch(`${API_BASE}/api/canopy/survey/floorplan?id=${survey.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -533,7 +533,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         ...configUpdates,
       };
 
-      const res = await fetch(`${API_BASE}/api/survey/config?id=${survey.id}`, {
+      const res = await fetch(`${API_BASE}/api/canopy/survey/config?id=${survey.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -591,7 +591,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
         };
 
         // Upload floor plan to server
-        const res = await fetch(`${API_BASE}/api/survey/floorplan?id=${survey.id}`, {
+        const res = await fetch(`${API_BASE}/api/canopy/survey/floorplan?id=${survey.id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -628,7 +628,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/survey/settings?id=${survey.id}`, {
+      const res = await fetch(`${API_BASE}/api/canopy/survey/settings?id=${survey.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -659,7 +659,7 @@ export function SurveyView({ survey: initialSurvey, onClose, onUpdate }: SurveyV
   // Handle status changes
   const handleStatusChange = async (action: "start" | "pause" | "complete") => {
     try {
-      const res = await fetch(`${API_BASE}/api/survey/${action}?id=${survey.id}`, {
+      const res = await fetch(`${API_BASE}/api/canopy/survey/${action}?id=${survey.id}`, {
         method: "POST",
         credentials: "include",
       });

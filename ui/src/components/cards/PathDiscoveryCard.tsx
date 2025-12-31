@@ -137,7 +137,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
       activeTraceRef.current = traceTarget.trim(); // Set active trace target
 
       try {
-        const response = await fetch(`${API_BASE}/api/discovery/path`, {
+        const response = await fetch(`${API_BASE}/api/roots/path`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

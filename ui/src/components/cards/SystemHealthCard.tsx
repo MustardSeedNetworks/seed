@@ -220,7 +220,7 @@ export function SystemHealthCard() {
 
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetch("/api/system/health", {
+      const response = await fetch("/api/sap/system/health", {
         credentials: "include",
       });
       if (response.status === 401) {

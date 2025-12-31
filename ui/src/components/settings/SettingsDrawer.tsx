@@ -480,7 +480,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     setIperfSuggestionsStatus("loading");
     setIperfSuggestionsError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/iperf/suggestions`, {
+      const response = await fetch(`${API_BASE}/api/sap/iperf/suggestions`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -500,7 +500,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch WiFi settings
   const fetchWifiSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/wifi/settings`, {
+      const response = await fetch(`${API_BASE}/api/canopy/wifi/settings`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -522,7 +522,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch Network Discovery settings from API
   const fetchNetworkDiscoverySettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/devices/settings`, {
+      const response = await fetch(`${API_BASE}/api/shell/devices/settings`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -642,7 +642,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch configured subnets from API
   const fetchSubnets = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/devices/subnets`, {
+      const response = await fetch(`${API_BASE}/api/shell/devices/subnets`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -660,7 +660,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     setLogLoading(true);
     setLogError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/logs?lines=200`, {
+      const response = await fetch(`${API_BASE}/api/harvest/logs?lines=200`, {
         credentials: "include",
       });
       if (!response.ok) {
@@ -694,7 +694,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     setSubnetsStatus("saving");
 
     try {
-      const response = await fetch(`${API_BASE}/api/devices/subnets`, {
+      const response = await fetch(`${API_BASE}/api/shell/devices/subnets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -735,7 +735,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const toggleSubnet = async (cidr: string, enabled: boolean) => {
     setSubnetsStatus("saving");
     try {
-      const response = await fetch(`${API_BASE}/api/devices/subnets`, {
+      const response = await fetch(`${API_BASE}/api/shell/devices/subnets`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -762,7 +762,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     try {
       // Backend expects CIDR as query parameter, not in body
       const response = await fetch(
-        `${API_BASE}/api/devices/subnets?cidr=${encodeURIComponent(cidr)}`,
+        `${API_BASE}/api/shell/devices/subnets?cidr=${encodeURIComponent(cidr)}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -785,7 +785,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const saveNetworkDiscoverySettings = useCallback(async () => {
     setNetworkDiscoveryStatus("saving");
     try {
-      const response = await fetch(`${API_BASE}/api/devices/settings`, {
+      const response = await fetch(`${API_BASE}/api/shell/devices/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -829,7 +829,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch vulnerability scanner settings from API
   const fetchVulnSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/vulnerabilities/settings`, {
+      const response = await fetch(`${API_BASE}/api/shell/vulnerabilities/settings`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -852,7 +852,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const saveVulnSettings = useCallback(async () => {
     setVulnStatus("saving");
     try {
-      const response = await fetch(`${API_BASE}/api/vulnerabilities/settings`, {
+      const response = await fetch(`${API_BASE}/api/shell/vulnerabilities/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1019,7 +1019,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const saveWifiSettings = useCallback(async () => {
     setWifiStatus("saving");
     try {
-      const response = await fetch(`${API_BASE}/api/wifi/settings`, {
+      const response = await fetch(`${API_BASE}/api/canopy/wifi/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1710,7 +1710,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {t("export.title")}
             </h3>
             <a
-              href={`${API_BASE}/api/export`}
+              href={`${API_BASE}/api/harvest/export`}
               download="seed-export.json"
               className={cn(
                 "w-full",

@@ -211,7 +211,7 @@ class Logger {
     this.buffer = [];
 
     try {
-      const response = await fetch("/api/logs/client", {
+      const response = await fetch("/api/harvest/logs/client", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

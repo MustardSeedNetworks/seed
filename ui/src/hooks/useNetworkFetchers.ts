@@ -98,8 +98,8 @@ export function useNetworkFetchers({
       // Use ref to get current interface without dependency change (#754)
       const iface = currentInterfaceRef.current;
       const url = iface
-        ? `${API_BASE}/api/link?interface=${encodeURIComponent(iface)}`
-        : `${API_BASE}/api/link`;
+        ? `${API_BASE}/api/sap/link?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/sap/link`;
       const response = await fetch(url, {
         credentials: "include",
       });
@@ -150,8 +150,8 @@ export function useNetworkFetchers({
       // Use ref to get current interface without dependency change (#754)
       const iface = currentInterfaceRef.current;
       const url = iface
-        ? `${API_BASE}/api/ipconfig?interface=${encodeURIComponent(iface)}`
-        : `${API_BASE}/api/ipconfig`;
+        ? `${API_BASE}/api/sap/ipconfig?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/sap/ipconfig`;
       const response = await fetch(url, {
         credentials: "include",
       });
@@ -209,7 +209,7 @@ export function useNetworkFetchers({
   // Fetch discovery data (LLDP/CDP/EDP neighbors)
   const fetchDiscoveryData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/discovery`, {
+      const response = await fetch(`${API_BASE}/api/shell/discovery`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -262,7 +262,7 @@ export function useNetworkFetchers({
   // Fetch DNS test data
   const fetchDnsData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/dns`, {
+      const response = await fetch(`${API_BASE}/api/sap/dns`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -324,7 +324,7 @@ export function useNetworkFetchers({
   // Fetch VLAN data
   const fetchVlanData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/vlan`, {
+      const response = await fetch(`${API_BASE}/api/sap/vlan`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -347,7 +347,7 @@ export function useNetworkFetchers({
   // Fetch Gateway ping data
   const fetchGatewayData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/gateway`, {
+      const response = await fetch(`${API_BASE}/api/sap/gateway`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -390,7 +390,7 @@ export function useNetworkFetchers({
   // Fetch Wi-Fi data
   const fetchWifiData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/wifi`, {
+      const response = await fetch(`${API_BASE}/api/canopy/wifi`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -428,7 +428,7 @@ export function useNetworkFetchers({
   // Fetch Cable test data
   const fetchCableData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/cable`, {
+      const response = await fetch(`${API_BASE}/api/sap/cable`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -451,7 +451,7 @@ export function useNetworkFetchers({
   // Fetch Public IP data
   const fetchPublicIp = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/publicip`, {
+      const response = await fetch(`${API_BASE}/api/sap/publicip`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -480,11 +480,11 @@ export function useNetworkFetchers({
       const requestedInterface = currentInterfaceRef.current;
 
       const [devicesRes, statusRes] = await Promise.all([
-        fetch(`${API_BASE}/api/devices`, {
+        fetch(`${API_BASE}/api/shell/devices`, {
           credentials: "include",
           signal: controller.signal,
         }),
-        fetch(`${API_BASE}/api/devices/status`, {
+        fetch(`${API_BASE}/api/shell/devices/status`, {
           credentials: "include",
           signal: controller.signal,
         }),

@@ -194,7 +194,7 @@ export function useDevices() {
   const fetchDevices = useCallback(async (): Promise<Device[]> => {
     try {
       setError(null);
-      const data = await api.get<DevicesResponse>("/api/devices");
+      const data = await api.get<DevicesResponse>("/api/shell/devices");
       setDevices(data.devices || []);
       setStatus(data.status);
       setIsScanning(data.status?.scanning || false);
@@ -203,7 +203,7 @@ export function useDevices() {
       const message = err instanceof Error ? err.message : "Failed to fetch devices";
       setError(message);
       logger.error(LogComponents.Devices, "Failed to fetch devices", err, {
-        endpoint: "/api/devices",
+        endpoint: "/api/shell/devices",
       });
       return [];
     }
@@ -216,7 +216,7 @@ export function useDevices() {
     try {
       setError(null);
       setIsScanning(true);
-      const data = await api.post<ScanResponse>("/api/devices/scan");
+      const data = await api.post<ScanResponse>("/api/shell/devices/scan");
       setIsScanning(Boolean(data.scanning));
       return data.scanning;
     } catch (err) {
@@ -224,7 +224,7 @@ export function useDevices() {
       setError(message);
       setIsScanning(false);
       logger.error(LogComponents.Devices, "Failed to trigger scan", err, {
-        endpoint: "/api/devices/scan",
+        endpoint: "/api/shell/devices/scan",
       });
       return false;
     }
@@ -235,13 +235,13 @@ export function useDevices() {
    */
   const fetchStatus = useCallback(async (): Promise<DeviceDiscoveryStatus | null> => {
     try {
-      const data = await api.get<DeviceDiscoveryStatus>("/api/devices/status");
+      const data = await api.get<DeviceDiscoveryStatus>("/api/shell/devices/status");
       setStatus(data);
       setIsScanning(data.scanning);
       return data;
     } catch (err) {
       logger.error(LogComponents.Devices, "Failed to fetch status", err, {
-        endpoint: "/api/devices/status",
+        endpoint: "/api/shell/devices/status",
       });
       return null;
     }
@@ -252,10 +252,10 @@ export function useDevices() {
    */
   const fetchSettings = useCallback(async (): Promise<DeviceDiscoverySettings | null> => {
     try {
-      return await api.get<DeviceDiscoverySettings>("/api/devices/settings");
+      return await api.get<DeviceDiscoverySettings>("/api/shell/devices/settings");
     } catch (err) {
       logger.error(LogComponents.Devices, "Failed to fetch settings", err, {
-        endpoint: "/api/devices/settings",
+        endpoint: "/api/shell/devices/settings",
       });
       return null;
     }
@@ -267,11 +267,11 @@ export function useDevices() {
   const updateSettings = useCallback(
     async (settings: Partial<DeviceDiscoverySettings>): Promise<boolean> => {
       try {
-        await api.put("/api/devices/settings", settings);
+        await api.put("/api/shell/devices/settings", settings);
         return true;
       } catch (err) {
         logger.error(LogComponents.Devices, "Failed to update settings", err, {
-          endpoint: "/api/devices/settings",
+          endpoint: "/api/shell/devices/settings",
           updates: settings,
         });
         return false;
@@ -285,10 +285,10 @@ export function useDevices() {
    */
   const fetchSubnets = useCallback(async (): Promise<SubnetConfig[]> => {
     try {
-      return await api.get<SubnetConfig[]>("/api/devices/subnets");
+      return await api.get<SubnetConfig[]>("/api/shell/devices/subnets");
     } catch (err) {
       logger.error(LogComponents.Devices, "Failed to fetch subnets", err, {
-        endpoint: "/api/devices/subnets",
+        endpoint: "/api/shell/devices/subnets",
       });
       return [];
     }
@@ -299,11 +299,11 @@ export function useDevices() {
    */
   const addSubnet = useCallback(async (subnet: SubnetConfig): Promise<boolean> => {
     try {
-      await api.post("/api/devices/subnets", subnet);
+      await api.post("/api/shell/devices/subnets", subnet);
       return true;
     } catch (err) {
       logger.error(LogComponents.Devices, "Failed to add subnet", err, {
-        endpoint: "/api/devices/subnets",
+        endpoint: "/api/shell/devices/subnets",
         cidr: subnet.cidr,
       });
       return false;
@@ -315,11 +315,11 @@ export function useDevices() {
    */
   const updateSubnet = useCallback(async (subnet: SubnetConfig): Promise<boolean> => {
     try {
-      await api.put("/api/devices/subnets", subnet);
+      await api.put("/api/shell/devices/subnets", subnet);
       return true;
     } catch (err) {
       logger.error(LogComponents.Devices, "Failed to update subnet", err, {
-        endpoint: "/api/devices/subnets",
+        endpoint: "/api/shell/devices/subnets",
         cidr: subnet.cidr,
       });
       return false;
@@ -331,11 +331,11 @@ export function useDevices() {
    */
   const deleteSubnet = useCallback(async (cidr: string): Promise<boolean> => {
     try {
-      await api.delete(`/api/devices/subnets?cidr=${encodeURIComponent(cidr)}`);
+      await api.delete(`/api/shell/devices/subnets?cidr=${encodeURIComponent(cidr)}`);
       return true;
     } catch (err) {
       logger.error(LogComponents.Devices, "Failed to delete subnet", err, {
-        endpoint: "/api/devices/subnets",
+        endpoint: "/api/shell/devices/subnets",
         cidr,
       });
       return false;

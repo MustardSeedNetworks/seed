@@ -182,14 +182,14 @@ export function useDiscoveredDevices(autoRefresh = false) {
       setError(null);
       // Use /api/devices endpoint which returns discovered network devices
       // (not /api/discovery which returns LLDP/CDP protocol neighbors)
-      const data = await api.get<DiscoveryResponse>("/api/devices");
+      const data = await api.get<DiscoveryResponse>("/api/shell/devices");
       setDevices(data.devices || []);
       setStatus(data.status);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch discovered devices";
       setError(message);
       logger.error(LogComponents.Devices, "Failed to fetch discovered devices", err, {
-        endpoint: "/api/discovery",
+        endpoint: "/api/shell/devices",
       });
     } finally {
       setIsLoading(false);

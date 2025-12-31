@@ -74,7 +74,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
   const fetchServiceStatus = useCallback(async () => {
     setStatusLoading(true);
     try {
-      const response = await fetch("/api/discovery/service/status");
+      const response = await fetch("/api/shell/discovery/service/status");
       if (response.ok) {
         const data = await response.json();
         setServiceStatus(data);
