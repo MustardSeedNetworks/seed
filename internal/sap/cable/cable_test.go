@@ -283,6 +283,8 @@ func TestTesterTestReturnsValidResult(t *testing.T) {
 		StatusOpen:              true,
 		StatusShort:             true,
 		StatusImpedanceMismatch: true,
+		StatusCrosstalk:         true,
+		StatusSplitPair:         true,
 		StatusUnknown:           true,
 	}
 

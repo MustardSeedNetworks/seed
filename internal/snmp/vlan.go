@@ -23,7 +23,7 @@ const (
 	OIDDot1qVlanStaticRowStatus   = "1.3.6.1.2.1.17.7.1.4.3.1.5" // dot1qVlanStaticRowStatus
 
 	// dot1qVlanCurrentTable - current VLAN state.
-	OIDDot1qVlanFdbId = "1.3.6.1.2.1.17.7.1.4.2.1.3" // dot1qVlanFdbId
+	OIDDot1qVlanFdbID = "1.3.6.1.2.1.17.7.1.4.2.1.3" // dot1qVlanFdbId
 
 	// dot1qPvid - port VLAN ID.
 	OIDDot1qPvid = "1.3.6.1.2.1.17.7.1.4.5.1.1" // dot1qPvid

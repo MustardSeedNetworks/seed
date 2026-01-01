@@ -22,17 +22,17 @@ import (
 // LLDP-MIB OIDs.
 const (
 	// lldpRemTable - remote device information.
-	OIDLldpRemChassisIdSubtype = "1.0.8802.1.1.2.1.4.1.1.4"  // lldpRemChassisIdSubtype
-	OIDLldpRemChassisId        = "1.0.8802.1.1.2.1.4.1.1.5"  // lldpRemChassisId
-	OIDLldpRemPortIdSubtype    = "1.0.8802.1.1.2.1.4.1.1.6"  // lldpRemPortIdSubtype
-	OIDLldpRemPortId           = "1.0.8802.1.1.2.1.4.1.1.7"  // lldpRemPortId
+	OIDLldpRemChassisIDSubtype = "1.0.8802.1.1.2.1.4.1.1.4"  // lldpRemChassisIdSubtype
+	OIDLldpRemChassisID        = "1.0.8802.1.1.2.1.4.1.1.5"  // lldpRemChassisId
+	OIDLldpRemPortIDSubtype    = "1.0.8802.1.1.2.1.4.1.1.6"  // lldpRemPortIdSubtype
+	OIDLldpRemPortID           = "1.0.8802.1.1.2.1.4.1.1.7"  // lldpRemPortId
 	OIDLldpRemPortDesc         = "1.0.8802.1.1.2.1.4.1.1.8"  // lldpRemPortDesc
 	OIDLldpRemSysName          = "1.0.8802.1.1.2.1.4.1.1.9"  // lldpRemSysName
 	OIDLldpRemSysDesc          = "1.0.8802.1.1.2.1.4.1.1.10" // lldpRemSysDesc
 
 	// lldpRemManAddrTable - remote management addresses.
 	OIDLldpRemManAddrIfSubtype = "1.0.8802.1.1.2.1.4.2.1.3" // lldpRemManAddrIfSubtype
-	OIDLldpRemManAddrIfId      = "1.0.8802.1.1.2.1.4.2.1.4" // lldpRemManAddrIfId
+	OIDLldpRemManAddrIfID      = "1.0.8802.1.1.2.1.4.2.1.4" // lldpRemManAddrIfId
 )
 
 // LLDPNeighbor contains LLDP neighbor information from LLDP-MIB.
@@ -146,7 +146,7 @@ func walkLLDPTable(params *gosnmp.GoSNMP) ([]LLDPNeighbor, error) {
 	neighbors := make(map[string]*LLDPNeighbor)
 
 	// Walk lldpRemChassisId to discover all neighbors.
-	err := params.BulkWalk(OIDLldpRemChassisId, func(pdu gosnmp.SnmpPDU) error {
+	err := params.BulkWalk(OIDLldpRemChassisID, func(pdu gosnmp.SnmpPDU) error {
 		// OID format: .1.0.8802.1.1.2.1.4.1.1.5.TimeMark.LocalPortNum.RemoteIndex
 		localPort, remoteIdx := extractLLDPIndex(pdu.Name)
 		if localPort <= 0 || remoteIdx <= 0 {
@@ -166,17 +166,17 @@ func walkLLDPTable(params *gosnmp.GoSNMP) ([]LLDPNeighbor, error) {
 	}
 
 	// Walk lldpRemChassisIdSubtype.
-	walkLLDPAttribute(params, OIDLldpRemChassisIdSubtype, neighbors, func(n *LLDPNeighbor, value string) {
+	walkLLDPAttribute(params, OIDLldpRemChassisIDSubtype, neighbors, func(n *LLDPNeighbor, value string) {
 		n.ChassisIDType = parseChassisIDSubtype(value)
 	})
 
 	// Walk lldpRemPortId.
-	walkLLDPAttribute(params, OIDLldpRemPortId, neighbors, func(n *LLDPNeighbor, value string) {
+	walkLLDPAttribute(params, OIDLldpRemPortID, neighbors, func(n *LLDPNeighbor, value string) {
 		n.PortID = value
 	})
 
 	// Walk lldpRemPortIdSubtype.
-	walkLLDPAttribute(params, OIDLldpRemPortIdSubtype, neighbors, func(n *LLDPNeighbor, value string) {
+	walkLLDPAttribute(params, OIDLldpRemPortIDSubtype, neighbors, func(n *LLDPNeighbor, value string) {
 		n.PortIDType = parsePortIDSubtype(value)
 	})
 

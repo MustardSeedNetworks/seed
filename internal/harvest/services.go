@@ -134,7 +134,7 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 		content, err = s.generateCSV(report, data)
 	case FormatJSON:
 		content, err = s.generateJSON(report, data)
-	default:
+	case FormatExcel, FormatMarkdown:
 		err = fmt.Errorf("unsupported format: %s", report.Format)
 	}
 
@@ -673,7 +673,7 @@ func (s *GeneratorService) Export(ctx context.Context, req *ExportRequest) (*Exp
 		}
 	case FormatCSV:
 		content, err = s.dataToCSV(data)
-	default:
+	case FormatPDF, FormatHTML, FormatExcel, FormatMarkdown:
 		err = fmt.Errorf("unsupported export format: %s", req.Format)
 	}
 

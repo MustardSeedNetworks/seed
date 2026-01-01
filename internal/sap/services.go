@@ -653,9 +653,10 @@ func convertCableStatus(status cable.Status) CableStatus {
 		return CableStatusShort
 	case cable.StatusImpedanceMismatch:
 		return CableStatusImpedance
-	default:
+	case cable.StatusCrosstalk, cable.StatusSplitPair, cable.StatusUnknown:
 		return CableStatusUnknown
 	}
+	return CableStatusUnknown
 }
 
 func convertPairResults(pairs []cable.PairResult) []PairResult {
@@ -684,7 +685,8 @@ func convertGatewayStatus(status gateway.Status) HealthStatus {
 		return HealthStatusDegraded
 	case gateway.StatusError:
 		return HealthStatusUnhealthy
-	default:
+	case gateway.StatusUnknown:
 		return HealthStatusUnknown
 	}
+	return HealthStatusUnknown
 }
