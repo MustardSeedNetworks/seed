@@ -28,6 +28,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -179,7 +180,7 @@ func (db *DB) Close() error {
 	defer cancel()
 	if _, err := db.conn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
 		// Log but don't fail - this is a cleanup operation
-		fmt.Printf("warning: failed to checkpoint WAL: %v\n", err)
+		fmt.Fprintf(os.Stderr, "warning: failed to checkpoint WAL: %v\n", err)
 	}
 
 	if err := db.conn.Close(); err != nil {

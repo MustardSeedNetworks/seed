@@ -66,14 +66,14 @@ func runReset(cmd *cobra.Command, _ []string) {
 
 	// Confirm unless --force
 	if !force {
-		fmt.Printf("This will reset the configuration at:\n  %s\n\n", configPath)
+		fmt.Fprintf(os.Stdout, "This will reset the configuration at:\n  %s\n\n", configPath)
 		if preserveAuth {
-			fmt.Println("Authentication credentials WILL be preserved.")
+			fmt.Fprintln(os.Stdout, "Authentication credentials WILL be preserved.")
 		} else {
-			fmt.Println("WARNING: Authentication credentials will be LOST!")
-			fmt.Println("Use --preserve-auth to keep your username and password.")
+			fmt.Fprintln(os.Stdout, "WARNING: Authentication credentials will be LOST!")
+			fmt.Fprintln(os.Stdout, "Use --preserve-auth to keep your username and password.")
 		}
-		fmt.Print("\nContinue? [y/N]: ")
+		fmt.Fprint(os.Stdout, "\nContinue? [y/N]: ")
 
 		reader := bufio.NewReader(os.Stdin)
 		response, readErr := reader.ReadString('\n')
@@ -83,7 +83,7 @@ func runReset(cmd *cobra.Command, _ []string) {
 		}
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
-			fmt.Println("Aborted.")
+			fmt.Fprintln(os.Stdout, "Aborted.")
 			return
 		}
 	}
@@ -95,7 +95,7 @@ func runReset(cmd *cobra.Command, _ []string) {
 		if backupErr != nil {
 			fmt.Fprintf(os.Stderr, "Warning: Failed to create backup: %v\n", backupErr)
 		} else {
-			fmt.Printf("Backup created: %s\n", backupInfo.Path)
+			fmt.Fprintf(os.Stdout, "Backup created: %s\n", backupInfo.Path)
 		}
 	}
 
@@ -125,9 +125,9 @@ func runReset(cmd *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Configuration reset to defaults at: %s\n", configPath)
+	fmt.Fprintf(os.Stdout, "Configuration reset to defaults at: %s\n", configPath)
 	if !preserveAuth {
-		fmt.Println("\nNOTE: You will need to re-run the setup wizard to set your password.")
-		fmt.Println("Start the server and visit the web UI to complete setup.")
+		fmt.Fprintln(os.Stdout, "\nNOTE: You will need to re-run the setup wizard to set your password.")
+		fmt.Fprintln(os.Stdout, "Start the server and visit the web UI to complete setup.")
 	}
 }
