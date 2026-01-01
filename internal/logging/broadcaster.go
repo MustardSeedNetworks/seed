@@ -308,7 +308,7 @@ func GetBroadcaster() *LogBroadcaster {
 
 // BroadcastLog creates and broadcasts a log entry from the given parameters.
 // This is a convenience function for creating and broadcasting logs programmatically.
-func BroadcastLog(level, layer, component, message string, metadata map[string]interface{}) {
+func BroadcastLog(level, layer, component, message string, metadata map[string]any) {
 	entry := NewLogEntry(level, message).
 		WithLayer(layer).
 		WithComponent(component).

@@ -3,6 +3,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -87,8 +88,20 @@ func TestEndpointAuthentication(t *testing.T) {
 		{"Speedtest Status", "GET", "/api/speedtest/status", false, "Speedtest status requires auth"},
 
 		// Health checks
-		{"Health Checks Settings GET", "GET", "/api/health-checks/settings", false, "Health check settings require auth"},
-		{"Health Checks Settings PUT", "PUT", "/api/health-checks/settings", false, "Changing health check settings requires auth"},
+		{
+			"Health Checks Settings GET",
+			"GET",
+			"/api/health-checks/settings",
+			false,
+			"Health check settings require auth",
+		},
+		{
+			"Health Checks Settings PUT",
+			"PUT",
+			"/api/health-checks/settings",
+			false,
+			"Changing health check settings requires auth",
+		},
 		{"Run Health Checks", "GET", "/api/health-checks/run", false, "Running health checks requires auth"},
 
 		// iperf3
@@ -141,7 +154,7 @@ func TestEndpointAuthWithValidToken(t *testing.T) {
 	defer server.cleanup()
 
 	// Generate a valid token
-	token, err := server.server.authManager.GenerateToken("testuser")
+	token, err := server.server.authManager.GenerateToken(context.Background(), "testuser")
 	if err != nil {
 		t.Fatalf("Failed to generate test token: %v", err)
 	}
@@ -189,7 +202,7 @@ func TestEndpointAuthWithInvalidToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", "/api/status", http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, "/api/status", http.NoBody)
 			if tt.tokenValue != "" {
 				req.Header.Set("Authorization", tt.tokenValue)
 			}
@@ -222,7 +235,7 @@ func TestWebSocketAuth(t *testing.T) {
 
 	// Test without token
 	t.Run("WebSocket without token", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ws", http.NoBody)
+		req := httptest.NewRequest(http.MethodGet, "/ws", http.NoBody)
 		// Upgrade headers for WebSocket
 		req.Header.Set("Upgrade", "websocket")
 		req.Header.Set("Connection", "Upgrade")
@@ -241,12 +254,12 @@ func TestWebSocketAuth(t *testing.T) {
 	// Test with token in query (DISABLED for security fix #706)
 	// Query parameter authentication is no longer supported to prevent token leakage via logs/referer
 	t.Run("WebSocket with token in query (disabled #706)", func(t *testing.T) {
-		token, err := server.server.authManager.GenerateToken("testuser")
+		token, err := server.server.authManager.GenerateToken(context.Background(), "testuser")
 		if err != nil {
 			t.Fatalf("Failed to generate token: %v", err)
 		}
 
-		req := httptest.NewRequest("GET", "/ws?token="+token, http.NoBody)
+		req := httptest.NewRequest(http.MethodGet, "/ws?token="+token, http.NoBody)
 		req.Header.Set("Upgrade", "websocket")
 		req.Header.Set("Connection", "Upgrade")
 		req.Header.Set("Sec-WebSocket-Version", "13")
@@ -257,18 +270,21 @@ func TestWebSocketAuth(t *testing.T) {
 
 		// Security fix #706: Query param auth is disabled, should return 401
 		if w.Code != http.StatusUnauthorized {
-			t.Errorf("WebSocket with query param token should return 401 (query auth disabled for security), got %d", w.Code)
+			t.Errorf(
+				"WebSocket with query param token should return 401 (query auth disabled for security), got %d",
+				w.Code,
+			)
 		}
 	})
 
 	// Test with token in Sec-WebSocket-Protocol header (new secure method)
 	t.Run("WebSocket with token in subprotocol", func(t *testing.T) {
-		token, err := server.server.authManager.GenerateToken("testuser")
+		token, err := server.server.authManager.GenerateToken(context.Background(), "testuser")
 		if err != nil {
 			t.Fatalf("Failed to generate token: %v", err)
 		}
 
-		req := httptest.NewRequest("GET", "/ws", http.NoBody)
+		req := httptest.NewRequest(http.MethodGet, "/ws", http.NoBody)
 		req.Header.Set("Upgrade", "websocket")
 		req.Header.Set("Connection", "Upgrade")
 		req.Header.Set("Sec-WebSocket-Version", "13")
@@ -300,7 +316,7 @@ func TestStaticFilesNoAuth(t *testing.T) {
 
 	for _, path := range staticPaths {
 		t.Run(path, func(t *testing.T) {
-			req := httptest.NewRequest("GET", path, http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, path, http.NoBody)
 			w := httptest.NewRecorder()
 			server.handler.ServeHTTP(w, req)
 

@@ -74,8 +74,9 @@ func (s *PortScanner) ScanWithBanners(ctx context.Context, target string, ports 
 
 	// Resolve hostname
 	if ip := net.ParseIP(target); ip == nil {
-		// Target is a hostname, resolve it
-		ips, err := net.LookupIP(target)
+		// Target is a hostname, resolve it with context
+		resolver := &net.Resolver{}
+		ips, err := resolver.LookupIP(ctx, "ip", target)
 		if err != nil {
 			result.Error = fmt.Sprintf("failed to resolve target: %v", err)
 			return result
@@ -137,7 +138,7 @@ func (s *PortScanner) ScanWithBanners(ctx context.Context, target string, ports 
 }
 
 // grabBanner attempts to read a banner from an open port.
-func (s *PortScanner) grabBanner(ctx context.Context, ip string, port int) (banner, version string) {
+func (s *PortScanner) grabBanner(ctx context.Context, ip string, port int) (string, string) {
 	ctx, cancel := context.WithTimeout(ctx, s.bannerTimeout)
 	defer cancel()
 
@@ -146,16 +147,17 @@ func (s *PortScanner) grabBanner(ctx context.Context, ip string, port int) (bann
 	if err != nil {
 		return "", ""
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Set read deadline
-	//nolint:errcheck // Best-effort deadline setting
-	conn.SetReadDeadline(time.Now().Add(s.bannerTimeout))
+	if deadlineErr := conn.SetReadDeadline(time.Now().Add(s.bannerTimeout)); deadlineErr != nil {
+		return "", ""
+	}
 
 	// For HTTP ports, send a request
 	switch {
 	case isHTTPPort(port):
-		fmt.Fprintf(conn, "HEAD / HTTP/1.0\r\nHost: %s\r\n\r\n", ip)
+		_, _ = fmt.Fprintf(conn, "HEAD / HTTP/1.0\r\nHost: %s\r\n\r\n", ip)
 	case port == 25 || port == 587: // SMTP sends banner on connect
 	case port == 22: // SSH sends banner on connect
 	}
@@ -164,8 +166,8 @@ func (s *PortScanner) grabBanner(ctx context.Context, ip string, port int) (bann
 	reader := bufio.NewReader(conn)
 	var sb strings.Builder
 	for sb.Len() < s.maxBannerLen {
-		line, err := reader.ReadString('\n')
-		if err != nil {
+		line, readErr := reader.ReadString('\n')
+		if readErr != nil {
 			break
 		}
 		sb.WriteString(line)
@@ -175,8 +177,8 @@ func (s *PortScanner) grabBanner(ctx context.Context, ip string, port int) (bann
 		}
 	}
 
-	banner = strings.TrimSpace(sb.String())
-	version = extractVersion(banner)
+	banner := strings.TrimSpace(sb.String())
+	version := extractVersion(banner)
 	return banner, version
 }
 

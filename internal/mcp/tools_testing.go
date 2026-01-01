@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -14,8 +15,11 @@ import (
 func (s *Server) registerTestingTools(isAllowed func(string) bool) {
 	// dns_test - Test DNS resolution
 	s.addTool("dns_test", isAllowed,
-		mcp.NewTool("dns_test",
-			mcp.WithDescription("Test DNS resolution by looking up a hostname. Returns resolution time, resolved addresses, and status for configured DNS servers."),
+		mcp.NewTool(
+			"dns_test",
+			mcp.WithDescription(
+				"Test DNS resolution by looking up a hostname. Returns resolution time, resolved addresses, and status for configured DNS servers.",
+			),
 			mcp.WithString("hostname",
 				mcp.Description("Hostname to resolve (default: google.com)"),
 			),
@@ -25,8 +29,11 @@ func (s *Server) registerTestingTools(isAllowed func(string) bool) {
 
 	// gateway_ping - Ping the default gateway
 	s.addTool("gateway_ping", isAllowed,
-		mcp.NewTool("gateway_ping",
-			mcp.WithDescription("Ping the default gateway to check network connectivity. Returns latency statistics and packet loss information."),
+		mcp.NewTool(
+			"gateway_ping",
+			mcp.WithDescription(
+				"Ping the default gateway to check network connectivity. Returns latency statistics and packet loss information.",
+			),
 			mcp.WithNumber("count",
 				mcp.Description("Number of pings to send (default: 5, max: 20)"),
 			),
@@ -36,8 +43,11 @@ func (s *Server) registerTestingTools(isAllowed func(string) bool) {
 
 	// speedtest - Run internet speed test
 	s.addTool("speedtest", isAllowed,
-		mcp.NewTool("speedtest",
-			mcp.WithDescription("Run an internet speed test to measure download speed, upload speed, and latency. Uses speedtest.net infrastructure. Takes 10-30 seconds to complete."),
+		mcp.NewTool(
+			"speedtest",
+			mcp.WithDescription(
+				"Run an internet speed test to measure download speed, upload speed, and latency. Uses speedtest.net infrastructure. Takes 10-30 seconds to complete.",
+			),
 			mcp.WithString("server_id",
 				mcp.Description("Specific speedtest server ID (optional, auto-selects nearest if not specified)"),
 			),
@@ -47,8 +57,11 @@ func (s *Server) registerTestingTools(isAllowed func(string) bool) {
 
 	// iperf_test - Run iPerf3 throughput test
 	s.addTool("iperf_test", isAllowed,
-		mcp.NewTool("iperf_test",
-			mcp.WithDescription("Run an iPerf3 throughput test against a server. Measures actual network bandwidth between this device and an iPerf3 server."),
+		mcp.NewTool(
+			"iperf_test",
+			mcp.WithDescription(
+				"Run an iPerf3 throughput test against a server. Measures actual network bandwidth between this device and an iPerf3 server.",
+			),
 			mcp.WithString("server",
 				mcp.Required(),
 				mcp.Description("iPerf3 server address (hostname or IP)"),
@@ -94,7 +107,9 @@ func (s *Server) handleGatewayPing(_ context.Context, _ mcp.CallToolRequest) (*m
 
 	// Check if ICMP is available
 	if !s.services.IsICMPAvailable() {
-		return mcp.NewToolResultError("Gateway ping requires raw socket capabilities (CAP_NET_RAW). Run with elevated privileges."), nil
+		return mcp.NewToolResultError(
+			"Gateway ping requires raw socket capabilities (CAP_NET_RAW). Run with elevated privileges.",
+		), nil
 	}
 
 	result := tester.Test()
@@ -131,7 +146,7 @@ func (s *Server) handleSpeedtest(ctx context.Context, _ mcp.CallToolRequest) (*m
 }
 
 // parseIperfConfig parses iPerf arguments from the request into a ClientConfig.
-func parseIperfConfig(serverAddr string, args map[string]interface{}) (*iperf.ClientConfig, error) {
+func parseIperfConfig(serverAddr string, args map[string]any) (*iperf.ClientConfig, error) {
 	opts := &iperf.ClientConfig{
 		Server:   serverAddr,
 		Port:     5201,
@@ -152,7 +167,7 @@ func parseIperfConfig(serverAddr string, args map[string]interface{}) (*iperf.Cl
 
 	if protocol, ok := args["protocol"].(string); ok && protocol != "" {
 		if protocol != "tcp" && protocol != "udp" {
-			return nil, fmt.Errorf("protocol must be 'tcp' or 'udp'")
+			return nil, errors.New("protocol must be 'tcp' or 'udp'")
 		}
 		opts.Protocol = protocol
 	}
@@ -162,7 +177,7 @@ func parseIperfConfig(serverAddr string, args map[string]interface{}) (*iperf.Cl
 		case "download", "upload", "bidirectional":
 			opts.Direction = direction
 		default:
-			return nil, fmt.Errorf("direction must be 'download', 'upload', or 'bidirectional'")
+			return nil, errors.New("direction must be 'download', 'upload', or 'bidirectional'")
 		}
 	}
 

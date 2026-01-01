@@ -5,6 +5,7 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -42,8 +43,9 @@ func WriteJSONErrorWithCode(w http.ResponseWriter, status int, message, code str
 		Error: message,
 		Code:  code,
 	}
-	//nolint:errcheck // Response body encode errors are not actionable in HTTP handlers
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		slog.Warn("failed to encode error response", "error", err)
+	}
 }
 
 // WriteValidationError writes a JSON validation error response with field-level errors.
@@ -55,8 +57,9 @@ func WriteValidationError(w http.ResponseWriter, fields []FieldError) {
 		Code:   "VALIDATION_ERROR",
 		Fields: fields,
 	}
-	//nolint:errcheck // Response body encode errors are not actionable in HTTP handlers
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		slog.Warn("failed to encode validation error response", "error", err)
+	}
 }
 
 // LoginRequest represents the expected login payload.
@@ -67,7 +70,7 @@ type LoginRequest struct {
 
 // ValidateLoginRequest validates a login request and returns field-level errors.
 //
-//nolint:dupl // Non-i18n version uses hardcoded strings; i18n version mirrors this with translation keys
+
 func ValidateLoginRequest(req *LoginRequest) []FieldError {
 	var errors []FieldError
 
@@ -163,7 +166,7 @@ type PingTargetRequest struct {
 
 // ValidatePingTarget validates a ping target configuration.
 //
-//nolint:dupl // Non-i18n version uses hardcoded strings; i18n version mirrors this with translation keys
+
 func ValidatePingTarget(pt *PingTargetRequest) []FieldError {
 	var errors []FieldError
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -56,7 +57,7 @@ func runMCP(_ *cobra.Command, _ []string) {
 
 	// Check ICMP capabilities (for network tools)
 	icmpAvailable := false
-	if err := discovery.CheckICMPPrivilegesWithMessage(); err == nil {
+	if icmpErr := discovery.CheckICMPPrivilegesWithMessage(); icmpErr == nil {
 		icmpAvailable = true
 	}
 
@@ -95,7 +96,7 @@ func runMCP(_ *cobra.Command, _ []string) {
 	slog.Info("Starting MCP server over stdio")
 	serveErr := mcpServer.ServeStdioWithContext(ctx)
 	cancel() // Ensure context is canceled
-	if serveErr != nil && serveErr != context.Canceled {
+	if serveErr != nil && !errors.Is(serveErr, context.Canceled) {
 		fmt.Fprintf(os.Stderr, "MCP server error: %v\n", serveErr)
 		os.Exit(1)
 	}

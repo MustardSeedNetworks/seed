@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -68,12 +69,12 @@ func TestCSRFManagerGenerateAndValidate(t *testing.T) {
 	}
 
 	// Validate with wrong session ID
-	if err := manager.ValidateToken("wrong-session", token); err != ErrCSRFTokenInvalid {
+	if err := manager.ValidateToken("wrong-session", token); !errors.Is(err, ErrCSRFTokenInvalid) {
 		t.Errorf("expected ErrCSRFTokenInvalid, got %v", err)
 	}
 
 	// Validate with wrong token
-	if err := manager.ValidateToken(sessionID, "wrong-token"); err != ErrCSRFTokenInvalid {
+	if err := manager.ValidateToken(sessionID, "wrong-token"); !errors.Is(err, ErrCSRFTokenInvalid) {
 		t.Errorf("expected ErrCSRFTokenInvalid, got %v", err)
 	}
 }

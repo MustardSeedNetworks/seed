@@ -1,5 +1,4 @@
 //go:build darwin
-// +build darwin
 
 // Package discovery implements multi-protocol network device discovery.
 // NDP (Neighbor Discovery Protocol) support for macOS is a stub implementation
@@ -7,7 +6,7 @@
 package discovery
 
 import (
-	"fmt"
+	"errors"
 	"time"
 )
 
@@ -36,7 +35,7 @@ func NewNDPScanner(interfaceName string) *NDPScanner {
 
 // Start is a stub on macOS.
 func (ns *NDPScanner) Start() error {
-	return fmt.Errorf("IPv6 NDP scanning not implemented on macOS (production target is Linux)")
+	return errors.New("IPv6 NDP scanning not implemented on macOS (production target is Linux)")
 }
 
 // Stop is a stub on macOS.

@@ -329,9 +329,9 @@ func (t *Tester) StartContinuous(interval time.Duration, callback func(*PingStat
 		for {
 			select {
 			case <-ticker.C:
-				stats := t.Test()
+				tickStats := t.Test()
 				if callback != nil {
-					callback(stats)
+					callback(tickStats)
 				}
 			case <-t.stopCh:
 				return
@@ -360,7 +360,7 @@ func (t *Tester) Close() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.pinger != nil {
-		t.pinger.Close()
+		_ = t.pinger.Close()
 		t.pinger = nil
 	}
 }

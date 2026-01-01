@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +27,7 @@ type refreshTokenTestCase struct {
 func prepareRefreshToken(t *testing.T, server *Server, tc refreshTokenTestCase) string {
 	t.Helper()
 	if tc.setupCookie && tc.cookieValue == "" {
-		token, err := server.authManager.GenerateRefreshToken("admin")
+		token, err := server.authManager.GenerateRefreshToken(context.Background(), "admin")
 		if err != nil {
 			t.Fatalf("Failed to generate refresh token: %v", err)
 		}
@@ -148,7 +149,7 @@ func TestHandleLogout(t *testing.T) {
 	server := NewTestServer()
 
 	// Create authenticated request
-	token, err := server.authManager.GenerateToken("admin")
+	token, err := server.authManager.GenerateToken(context.Background(), "admin")
 	if err != nil {
 		t.Fatalf("Failed to generate token: %v", err)
 	}

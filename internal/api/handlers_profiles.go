@@ -94,7 +94,14 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	case path != "" && r.Method == http.MethodDelete:
 		s.handleDeleteProfile(w, r, path)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -228,8 +235,8 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 	}
 	profile.IsDefault = req.IsDefault
 
-	if err := s.db.Profiles().Update(ctx, profile); err != nil {
-		if errors.Is(err, database.ErrProfileNameExists) {
+	if updateErr := s.db.Profiles().Update(ctx, profile); updateErr != nil {
+		if errors.Is(updateErr, database.ErrProfileNameExists) {
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 			return
@@ -269,14 +276,16 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 	}
 
 	// Check if this is the active profile
-	activeID, _ := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile) //nolint:errcheck // empty string is fine if setting not found
+	activeID, _ := s.db.Settings().
+		GetValue(ctx, database.SettingKeyActiveProfile)
+
 	if activeID == id {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.profile.cannotDeleteActive"), "") // fixes #694
 		return
 	}
 
-	if err := s.db.Profiles().Delete(ctx, id); err != nil {
+	if deleteErr := s.db.Profiles().Delete(ctx, id); deleteErr != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.deleteFailed"), "") // fixes #694, #H7
 		return
@@ -304,7 +313,14 @@ func (s *Server) handleActiveProfile(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost, http.MethodPut:
 		s.handleSetActiveProfile(w, r)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -324,9 +340,9 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 
 	// If no active profile set, return the default profile
 	if activeID == "" {
-		profile, err := s.db.Profiles().GetDefault(ctx)
-		if err != nil {
-			if errors.Is(err, database.ErrProfileNotFound) {
+		profile, defaultErr := s.db.Profiles().GetDefault(ctx)
+		if defaultErr != nil {
+			if errors.Is(defaultErr, database.ErrProfileNotFound) {
 				sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 					ErrCodeNotFound, localizer.T("errors.profile.noActiveOrDefault"), "") // fixes #694
 				return
@@ -351,7 +367,8 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 			// Update setting to use default
-			_ = s.db.Settings().Set(ctx, database.SettingKeyActiveProfile, profile.ID) //nolint:errcheck // best effort, non-critical
+			_ = s.db.Settings().
+				Set(ctx, database.SettingKeyActiveProfile, profile.ID)
 		} else {
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 				ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
@@ -397,7 +414,7 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Set active profile in settings
-	if err := s.db.Settings().Set(ctx, database.SettingKeyActiveProfile, req.ProfileID); err != nil {
+	if setErr := s.db.Settings().Set(ctx, database.SettingKeyActiveProfile, req.ProfileID); setErr != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), "") // fixes #694, #H7
 		return
@@ -405,9 +422,9 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 
 	// Apply profile settings to the active config (fixes #781)
 	if profile.ConfigJSON != "" {
-		profileSettings, err := config.ParseProfileSettings(profile.ConfigJSON)
-		if err != nil {
-			logger.Warn("Failed to parse profile settings, using defaults", "error", err, "profile_id", profile.ID)
+		profileSettings, parseErr := config.ParseProfileSettings(profile.ConfigJSON)
+		if parseErr != nil {
+			logger.Warn("Failed to parse profile settings, using defaults", "error", parseErr, "profile_id", profile.ID)
 		} else {
 			// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 			s.config.Lock()
@@ -429,13 +446,13 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	// Broadcast profile change via WebSocket
 	s.wsHub.Broadcast(Message{
 		Type: "profileChanged",
-		Payload: map[string]interface{}{
+		Payload: map[string]any{
 			"profile_id":   profile.ID,
 			"profile_name": profile.Name,
 		},
 	})
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"message": "Active profile updated",
 		"profile": profileToResponse(profile),
 	})
@@ -453,7 +470,14 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -481,7 +505,7 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 	var req struct {
 		Name string `json:"name"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req) //nolint:errcheck // empty body is valid, name defaults to copy
+	_ = json.NewDecoder(r.Body).Decode(&req)
 
 	newName := req.Name
 	if newName == "" {
@@ -497,11 +521,11 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 		IsDefault:   false, // Duplicates are never default
 	}
 
-	if err := s.db.Profiles().Create(ctx, duplicate); err != nil {
-		if errors.Is(err, database.ErrProfileNameExists) {
+	if createErr := s.db.Profiles().Create(ctx, duplicate); createErr != nil {
+		if errors.Is(createErr, database.ErrProfileNameExists) {
 			// Try with timestamp suffix
 			duplicate.Name = fmt.Sprintf("%s (%s)", source.Name, time.Now().Format("2006-01-02 15:04"))
-			if err := s.db.Profiles().Create(ctx, duplicate); err != nil {
+			if retryErr := s.db.Profiles().Create(ctx, duplicate); retryErr != nil {
 				sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 					ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 				return
@@ -528,7 +552,14 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -553,14 +584,17 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Check if profile with this name exists
-		existing, _ := s.db.Profiles().GetByName(ctx, p.Name) //nolint:errcheck // not found returns nil
+		existing, _ := s.db.Profiles().GetByName(ctx, p.Name)
 		if existing != nil {
 			if req.Overwrite {
 				// Update existing profile
 				existing.Description = p.Description
 				existing.ConfigJSON = string(p.Config)
 				if err := s.db.Profiles().Update(ctx, existing); err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Profile '%s': failed to update - %v", p.Name, err))
+					result.Errors = append(
+						result.Errors,
+						fmt.Sprintf("Profile '%s': failed to update - %v", p.Name, err),
+					)
 					result.Skipped++
 				} else {
 					result.Updated++
@@ -604,7 +638,14 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -629,7 +670,8 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set headers for file download
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=seed-profiles-%s.json", time.Now().Format("2006-01-02")))
+	w.Header().
+		Set("Content-Disposition", fmt.Sprintf("attachment; filename=seed-profiles-%s.json", time.Now().Format("2006-01-02")))
 
 	sendJSONResponse(w, logger, http.StatusOK, response)
 }

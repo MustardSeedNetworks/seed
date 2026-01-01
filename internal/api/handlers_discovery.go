@@ -73,12 +73,26 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if s.discoveryService == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.discovery.managerUnavailable"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.discovery.managerUnavailable"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -122,14 +136,21 @@ func (s *Server) handleDiscoveryOptions(w http.ResponseWriter, r *http.Request) 
 	case http.MethodPut:
 		s.setDiscoveryOptions(w, r)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
 func (s *Server) getDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	opts := s.discoveryService.GetOptions()
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"options": opts,
 	})
 }
@@ -144,7 +165,14 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	var req config.DiscoveryOptions
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
@@ -158,14 +186,28 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	// Apply the options change to the running service
 	if err := s.discoveryService.Reload(); err != nil {
 		logger.Error("Failed to reload discovery options", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.discovery.failedToApplyOptions"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.discovery.failedToApplyOptions"),
+			"",
+		)
 		return
 	}
 
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"),
+			"",
+		)
 		return
 	}
 
@@ -181,7 +223,14 @@ func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Req
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 

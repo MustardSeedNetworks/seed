@@ -1,5 +1,4 @@
 //go:build !dev
-// +build !dev
 
 // Package ui provides the embedded frontend assets for production builds.
 package ui

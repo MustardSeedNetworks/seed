@@ -395,7 +395,14 @@ func (erl *EndpointRateLimiter) RateLimitMiddleware(next http.Handler) http.Hand
 		if !erl.Allow(ip) {
 			logger := logging.FromContext(r.Context())
 			localizer := i18n.FromRequest(r)
-			sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.api.rateLimitExceeded"), "") // fixes #694
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusTooManyRequests,
+				ErrCodeRateLimit,
+				localizer.T("errors.api.rateLimitExceeded"),
+				"",
+			) // fixes #694
 			return
 		}
 

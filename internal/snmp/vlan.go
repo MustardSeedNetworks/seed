@@ -4,6 +4,7 @@ package snmp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -41,7 +42,7 @@ type VLANInfo struct {
 // Security: SNMPv3 is preferred over v2c when both are configured.
 func GetVLANs(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]VLANInfo, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try SNMPv3 credentials first (more secure).
@@ -60,7 +61,7 @@ func GetVLANs(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]VLANInf
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query Q-BRIDGE VLANs with all configured credentials")
+	return nil, errors.New("failed to query Q-BRIDGE VLANs with all configured credentials")
 }
 
 // walkVLANs walks the Q-BRIDGE VLAN tables using SNMPv2c.
@@ -78,7 +79,7 @@ func walkVLANs(ctx context.Context, ip, community string, cfg *config.SNMPConfig
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -86,11 +87,16 @@ func walkVLANs(ctx context.Context, ip, community string, cfg *config.SNMPConfig
 	default:
 	}
 
-	return walkVLANTable(params)
+	return walkVLANTable(params), nil
 }
 
 // walkVLANsV3 walks the Q-BRIDGE VLAN tables using SNMPv3.
-func walkVLANsV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]VLANInfo, error) {
+func walkVLANsV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]VLANInfo, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -102,7 +108,7 @@ func walkVLANsV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, 
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
+			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -112,7 +118,7 @@ func walkVLANsV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, 
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -120,11 +126,12 @@ func walkVLANsV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, 
 	default:
 	}
 
-	return walkVLANTable(params)
+	return walkVLANTable(params), nil
 }
 
 // walkVLANTable walks the Q-BRIDGE VLAN tables.
-func walkVLANTable(params *gosnmp.GoSNMP) ([]VLANInfo, error) {
+// Errors during walks are logged but not returned since we want to collect as much data as possible.
+func walkVLANTable(params *gosnmp.GoSNMP) []VLANInfo {
 	vlans := make(map[int]*VLANInfo)
 
 	// Walk dot1qVlanStaticName to discover all VLANs.
@@ -199,7 +206,7 @@ func walkVLANTable(params *gosnmp.GoSNMP) ([]VLANInfo, error) {
 		result = append(result, *vlan)
 	}
 
-	return result, nil
+	return result
 }
 
 // extractVLANIndex extracts VLAN ID from OID.
@@ -217,7 +224,7 @@ func extractVLANIndex(oid string) int {
 }
 
 // parsePortBitmap parses a port bitmap into a list of port indices.
-func parsePortBitmap(value interface{}) []int {
+func parsePortBitmap(value any) []int {
 	bytes, ok := value.([]byte)
 	if !ok {
 		return nil
@@ -253,6 +260,6 @@ func parseRowStatus(value string) string {
 	case "6":
 		return "destroy"
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }

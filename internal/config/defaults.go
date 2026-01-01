@@ -280,8 +280,14 @@ func GetDefaultSettings() *DefaultSettings {
 			Performance: PerformanceCardDefaults{
 				Enabled:       true,
 				AutoRunOnLink: cfg.FABOptions.RunPerformance,
-				Speedtest:     CardOptionDefaults{Enabled: cfg.HealthChecks.RunSpeedtest, AutoRunOnLink: cfg.Speedtest.AutoRunOnLink},
-				Iperf:         CardOptionDefaults{Enabled: cfg.HealthChecks.RunIperf, AutoRunOnLink: cfg.Iperf.AutoRunOnLink},
+				Speedtest: CardOptionDefaults{
+					Enabled:       cfg.HealthChecks.RunSpeedtest,
+					AutoRunOnLink: cfg.Speedtest.AutoRunOnLink,
+				},
+				Iperf: CardOptionDefaults{
+					Enabled:       cfg.HealthChecks.RunIperf,
+					AutoRunOnLink: cfg.Iperf.AutoRunOnLink,
+				},
 			},
 		},
 		DisplayOptions: DisplayOptionsDefaults{

@@ -6,6 +6,7 @@ package iperf
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -80,18 +81,18 @@ func extractEmbeddedBinary() (string, error) {
 	}
 
 	// Create cache directory.
-	if err := os.MkdirAll(cacheDir, 0o750); err != nil {
-		return "", fmt.Errorf("failed to create cache directory: %w", err)
+	if mkdirErr := os.MkdirAll(cacheDir, 0o750); mkdirErr != nil {
+		return "", fmt.Errorf("failed to create cache directory: %w", mkdirErr)
 	}
 
 	// Write binary.
-	if err := os.WriteFile(destPath, data, 0o750); err != nil { //nolint:gosec // G306: binary needs execute permission
-		return "", fmt.Errorf("failed to extract iperf3 binary: %w", err)
+	if writeErr := os.WriteFile(destPath, data, 0o750); writeErr != nil { //nolint:gosec // G306: binary needs execute permission
+		return "", fmt.Errorf("failed to extract iperf3 binary: %w", writeErr)
 	}
 
 	// Write version marker.
-	if err := os.WriteFile(versionFile, []byte(EmbeddedVersion), 0o600); err != nil {
-		slog.Warn("Failed to write version marker", "error", err)
+	if versionErr := os.WriteFile(versionFile, []byte(EmbeddedVersion), 0o600); versionErr != nil {
+		slog.Warn("Failed to write version marker", "error", versionErr)
 	}
 
 	slog.Info("Extracted embedded iperf3 binary", "path", destPath, "version", EmbeddedVersion)
@@ -107,7 +108,7 @@ func isValidExtractedBinary(binaryPath, versionFile string) bool {
 	}
 
 	// Check version marker.
-	versionData, err := os.ReadFile(versionFile) //nolint:gosec // G304: path is constructed from known cache dir
+	versionData, err := os.ReadFile(versionFile)
 	if err != nil {
 		return false
 	}
@@ -120,7 +121,7 @@ func isValidExtractedBinary(binaryPath, versionFile string) bool {
 func findSystemIperf3() (string, error) {
 	path, err := exec.LookPath("iperf3")
 	if err != nil {
-		return "", fmt.Errorf("iperf3 not found in system PATH")
+		return "", errors.New("iperf3 not found in system PATH")
 	}
 	return path, nil
 }

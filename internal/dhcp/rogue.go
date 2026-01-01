@@ -3,6 +3,7 @@ package dhcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -83,7 +84,7 @@ func (rd *RogueDetector) Start() error {
 // startLocked starts the detector. Caller must hold rd.mu.Lock().
 func (rd *RogueDetector) startLocked() error {
 	if rd.running {
-		return fmt.Errorf("rogue detector already running")
+		return errors.New("rogue detector already running")
 	}
 
 	// Open pcap handle for DHCP traffic (UDP ports 67/68)
@@ -99,9 +100,9 @@ func (rd *RogueDetector) startLocked() error {
 	// Port 67 is DHCP server, port 68 is DHCP client
 	// We want to see OFFER packets (server -> client on port 68)
 	filter := "udp and (port 67 or port 68)"
-	if err := handle.SetBPFFilter(filter); err != nil {
+	if filterErr := handle.SetBPFFilter(filter); filterErr != nil {
 		handle.Close()
-		return fmt.Errorf("failed to set BPF filter: %w", err)
+		return fmt.Errorf("failed to set BPF filter: %w", filterErr)
 	}
 
 	rd.handle = handle
@@ -122,13 +123,14 @@ func (rd *RogueDetector) startLocked() error {
 func (rd *RogueDetector) Stop() error {
 	rd.mu.Lock()
 	defer rd.mu.Unlock()
-	return rd.stopLocked()
+	rd.stopLocked()
+	return nil
 }
 
 // stopLocked stops the detector. Caller must hold rd.mu.Lock().
-func (rd *RogueDetector) stopLocked() error {
+func (rd *RogueDetector) stopLocked() {
 	if !rd.running {
-		return nil
+		return
 	}
 
 	// Cancel the capture goroutine
@@ -146,7 +148,6 @@ func (rd *RogueDetector) stopLocked() error {
 	rd.cancel = nil
 
 	slog.Info("Rogue DHCP detector stopped")
-	return nil
 }
 
 // IsRunning returns whether the detector is currently running.
@@ -218,8 +219,8 @@ func (rd *RogueDetector) processPacket(packet gopacket.Packet) {
 	if serverIP == "" {
 		// Fallback to source IP if server identifier not found
 		if ipLayer := packet.Layer(layers.LayerTypeIPv4); ipLayer != nil {
-			ip, ok := ipLayer.(*layers.IPv4)
-			if !ok {
+			ip, ipOK := ipLayer.(*layers.IPv4)
+			if !ipOK {
 				return
 			}
 			serverIP = ip.SrcIP.String()
@@ -231,8 +232,8 @@ func (rd *RogueDetector) processPacket(packet gopacket.Packet) {
 	// Extract source MAC address
 	serverMAC := ""
 	if ethLayer := packet.Layer(layers.LayerTypeEthernet); ethLayer != nil {
-		eth, ok := ethLayer.(*layers.Ethernet)
-		if ok {
+		eth, ethOK := ethLayer.(*layers.Ethernet)
+		if ethOK {
 			serverMAC = eth.SrcMAC.String()
 		}
 	}
@@ -374,9 +375,7 @@ func (rd *RogueDetector) SetInterface(iface string) error {
 	wasRunning := rd.running
 
 	if wasRunning {
-		if err := rd.stopLocked(); err != nil {
-			return fmt.Errorf("failed to stop before interface change: %w", err)
-		}
+		rd.stopLocked()
 	}
 
 	rd.config.Interface = iface

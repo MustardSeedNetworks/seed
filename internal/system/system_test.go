@@ -26,15 +26,15 @@ func TestGetHealthRuntimeFields(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		got      interface{}
+		got      any
 		wantType string
-		check    func(interface{}) bool
+		check    func(any) bool
 	}{
 		{
 			name:     "Goroutines is positive",
 			got:      health.Goroutines,
 			wantType: "int",
-			check: func(v interface{}) bool {
+			check: func(v any) bool {
 				return v.(int) > 0
 			},
 		},
@@ -42,7 +42,7 @@ func TestGetHealthRuntimeFields(t *testing.T) {
 			name:     "OS is not empty",
 			got:      health.OS,
 			wantType: "string",
-			check: func(v interface{}) bool {
+			check: func(v any) bool {
 				return v.(string) != ""
 			},
 		},
@@ -50,7 +50,7 @@ func TestGetHealthRuntimeFields(t *testing.T) {
 			name:     "Arch is not empty",
 			got:      health.Arch,
 			wantType: "string",
-			check: func(v interface{}) bool {
+			check: func(v any) bool {
 				return v.(string) != ""
 			},
 		},
@@ -58,7 +58,7 @@ func TestGetHealthRuntimeFields(t *testing.T) {
 			name:     "NumCPU is positive",
 			got:      health.NumCPU,
 			wantType: "int",
-			check: func(v interface{}) bool {
+			check: func(v any) bool {
 				return v.(int) > 0
 			},
 		},
@@ -66,7 +66,7 @@ func TestGetHealthRuntimeFields(t *testing.T) {
 			name:     "Hostname is not empty",
 			got:      health.Hostname,
 			wantType: "string",
-			check: func(v interface{}) bool {
+			check: func(v any) bool {
 				return v.(string) != ""
 			},
 		},

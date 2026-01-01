@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math"
@@ -18,9 +19,9 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/sap/dns"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/sap/dns"
 	"github.com/krisarmstrong/seed/internal/validation"
 )
 
@@ -116,7 +117,14 @@ func (s *Server) handleHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	case http.MethodPut:
 		s.updateHealthChecksSettings(w, r)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 	}
 }
 
@@ -198,7 +206,14 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	var req TestsSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
@@ -302,7 +317,14 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	// Save config to file (no longer holding lock)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"),
+			"",
+		)
 		return
 	}
 
@@ -369,7 +391,14 @@ func (s *Server) handleHealthChecks(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
@@ -469,7 +498,7 @@ func runExtendedPing(host string, count int) (*PingStats, error) {
 			latency := time.Since(start).Seconds() * 1000
 			latencies = append(latencies, latency)
 			received++
-			conn.Close()
+			_ = conn.Close()
 		}
 
 		// Small delay between pings
@@ -479,7 +508,7 @@ func runExtendedPing(host string, count int) (*PingStats, error) {
 	}
 
 	if len(latencies) == 0 {
-		return &PingStats{PacketLoss: 100}, fmt.Errorf("host unreachable")
+		return &PingStats{PacketLoss: 100}, errors.New("host unreachable")
 	}
 
 	// Calculate statistics
@@ -563,7 +592,7 @@ func runTCPTest(ctx context.Context, host string, port int) (float64, error) {
 		return 0, err
 	}
 	latency := time.Since(start).Seconds() * 1000
-	conn.Close()
+	_ = conn.Close()
 	return latency, nil
 }
 
@@ -625,11 +654,11 @@ func runUDPTest(host string, port int) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Set deadline for response
-	if err := conn.SetDeadline(time.Now().Add(3 * time.Second)); err != nil {
-		return 0, err
+	if deadlineErr := conn.SetDeadline(time.Now().Add(3 * time.Second)); deadlineErr != nil {
+		return 0, deadlineErr
 	}
 
 	// Send a small probe packet
@@ -648,12 +677,13 @@ func runUDPTest(host string, port int) (float64, error) {
 	// (no ICMP unreachable received)
 	if err != nil {
 		// Check if it's a timeout (which for UDP often means the port is open but not responding)
-		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+		var netErr net.Error
+		if errors.As(err, &netErr) && netErr.Timeout() {
 			// Port is likely open but service didn't respond - still count as success
 			return latency, nil
 		}
 		// Connection refused or other error means port is closed
-		return 0, fmt.Errorf("port closed or filtered")
+		return 0, errors.New("port closed or filtered")
 	}
 
 	return latency, nil
@@ -720,7 +750,8 @@ func (s *Server) runSingleHTTPTest(ctx context.Context, endpoint config.HTTPEndp
 	// Try HTTP fallback if HTTPS failed
 	if err != nil && tryHTTPFallback {
 		httpURL := "http://" + endpoint.URL
-		if httpStatus, httpTimings, httpErr := runHTTPTest(ctx, httpURL, endpoint.ExpectedStatus); httpErr == nil || httpStatus > 0 {
+		if httpStatus, httpTimings, httpErr := runHTTPTest(ctx, httpURL, endpoint.ExpectedStatus); httpErr == nil ||
+			httpStatus > 0 {
 			url = httpURL
 			testResult.URL = httpURL
 			statusCode, timings, err = httpStatus, httpTimings, httpErr
@@ -772,7 +803,8 @@ type httpTimings struct {
 
 // runHTTPTest runs an HTTP test and returns status code and timings in ms.
 // Uses SafeTransport to prevent DNS rebinding SSRF attacks.
-func runHTTPTest(ctx context.Context, url string, expectedStatus int) (status int, timing httpTimings, err error) {
+func runHTTPTest(ctx context.Context, url string, expectedStatus int) (int, httpTimings, error) {
+	var timing httpTimings
 	// Use SafeTransport to block connections to private IPs (prevents DNS rebinding)
 	transport := validation.SafeTransport()
 	client := &http.Client{
@@ -837,24 +869,44 @@ func runHTTPTest(ctx context.Context, url string, expectedStatus int) (status in
 	if err != nil {
 		return 0, timing, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
-	status = resp.StatusCode
-	if expectedStatus > 0 && status != expectedStatus {
-		return status, timing, fmt.Errorf("expected %d, got %d", expectedStatus, status)
+	statusCode := resp.StatusCode
+	if expectedStatus > 0 && statusCode != expectedStatus {
+		return statusCode, timing, fmt.Errorf("expected %d, got %d", expectedStatus, statusCode)
 	}
 
-	return status, timing, nil
+	return statusCode, timing, nil
 }
 
 // evaluateHTTPTimings sets timing statuses and overall test status.
-func (s *Server) evaluateHTTPTimings(result *CustomTestResult, timings httpTimings, thresholds *config.CustomThresholds) {
+func (s *Server) evaluateHTTPTimings(
+	result *CustomTestResult,
+	timings httpTimings,
+	thresholds *config.CustomThresholds,
+) {
 	httpTimingThresholds := thresholds.HTTPTimings
 
-	result.DNSStatus = getTestStatus(timings.DNS, httpTimingThresholds.DNS.Warning.Milliseconds(), httpTimingThresholds.DNS.Critical.Milliseconds())
-	result.TCPStatus = getTestStatus(timings.Connect, httpTimingThresholds.TCP.Warning.Milliseconds(), httpTimingThresholds.TCP.Critical.Milliseconds())
-	result.TLSStatus = getTestStatus(timings.TLS, httpTimingThresholds.TLS.Warning.Milliseconds(), httpTimingThresholds.TLS.Critical.Milliseconds())
-	result.TTFBStatus = getTestStatus(timings.TTFB, httpTimingThresholds.TTFB.Warning.Milliseconds(), httpTimingThresholds.TTFB.Critical.Milliseconds())
+	result.DNSStatus = getTestStatus(
+		timings.DNS,
+		httpTimingThresholds.DNS.Warning.Milliseconds(),
+		httpTimingThresholds.DNS.Critical.Milliseconds(),
+	)
+	result.TCPStatus = getTestStatus(
+		timings.Connect,
+		httpTimingThresholds.TCP.Warning.Milliseconds(),
+		httpTimingThresholds.TCP.Critical.Milliseconds(),
+	)
+	result.TLSStatus = getTestStatus(
+		timings.TLS,
+		httpTimingThresholds.TLS.Warning.Milliseconds(),
+		httpTimingThresholds.TLS.Critical.Milliseconds(),
+	)
+	result.TTFBStatus = getTestStatus(
+		timings.TTFB,
+		httpTimingThresholds.TTFB.Warning.Milliseconds(),
+		httpTimingThresholds.TTFB.Critical.Milliseconds(),
+	)
 
 	switch {
 	case result.DNSStatus == statusError || result.TCPStatus == statusError ||
@@ -864,7 +916,11 @@ func (s *Server) evaluateHTTPTimings(result *CustomTestResult, timings httpTimin
 		result.TLSStatus == statusWarning || result.TTFBStatus == statusWarning:
 		result.TestStatus = statusWarning
 	default:
-		result.TestStatus = getTestStatus(timings.Total, thresholds.HTTP.Warning.Milliseconds(), thresholds.HTTP.Critical.Milliseconds())
+		result.TestStatus = getTestStatus(
+			timings.Total,
+			thresholds.HTTP.Warning.Milliseconds(),
+			thresholds.HTTP.Critical.Milliseconds(),
+		)
 	}
 }
 
@@ -913,19 +969,26 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 		host += ":443"
 	}
 
-	// Connect with TLS
-	conn, err := tls.DialWithDialer(
-		&net.Dialer{Timeout: 5 * time.Second},
-		protoTCP,
-		host,
-		// #nosec G402 - certificate verification intentionally skipped to inspect expiry
-		&tls.Config{InsecureSkipVerify: true}, // We want to check expiry even for self-signed
-	)
+	// Connect with TLS using context-aware dialing
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	dialer := &net.Dialer{Timeout: 5 * time.Second}
+	rawConn, err := dialer.DialContext(ctx, protoTCP, host)
 	if err != nil {
 		info.Status = statusError
 		return info
 	}
-	defer conn.Close()
+
+	// #nosec G402 - certificate verification intentionally skipped to inspect expiry
+	tlsConfig := &tls.Config{InsecureSkipVerify: true} // We want to check expiry even for self-signed
+	conn := tls.Client(rawConn, tlsConfig)
+	if hsErr := conn.HandshakeContext(ctx); hsErr != nil {
+		_ = rawConn.Close()
+		info.Status = statusError
+		return info
+	}
+	defer func() { _ = conn.Close() }()
 
 	// Get connection state for TLS info
 	connState := conn.ConnectionState()

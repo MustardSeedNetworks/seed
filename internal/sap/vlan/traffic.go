@@ -60,14 +60,14 @@ func (m *TrafficMonitor) Start() error {
 	}
 
 	// Set BPF filter for 802.1Q tagged frames (EtherType 0x8100)
-	if err := handle.SetBPFFilter("vlan"); err != nil {
+	if filterErr := handle.SetBPFFilter("vlan"); filterErr != nil {
 		// Fixes #941: Log BPF filter failures for debugging (kernel/interface issues)
 		slog.Error("Failed to set VLAN BPF filter",
 			"interface", m.interfaceName,
-			"error", err)
+			"error", filterErr)
 		handle.Close()
 		m.mu.Unlock()
-		return fmt.Errorf("failed to set BPF filter: %w", err)
+		return fmt.Errorf("failed to set BPF filter: %w", filterErr)
 	}
 
 	m.handle = handle

@@ -3,6 +3,7 @@ package validation
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/i18n"
@@ -44,8 +45,9 @@ func WriteValidationErrorI18n(w http.ResponseWriter, localizer *i18n.Localizer, 
 		Code:   "VALIDATION_ERROR",
 		Fields: translatedErrors,
 	}
-	//nolint:errcheck // Response body encode errors are not actionable in HTTP handlers
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		slog.Warn("failed to encode validation error response", "error", err)
+	}
 }
 
 // WriteJSONErrorI18n writes a localized JSON error response.
@@ -61,24 +63,32 @@ func WriteJSONErrorI18nWithCode(w http.ResponseWriter, localizer *i18n.Localizer
 		Error: localizer.T(messageKey),
 		Code:  code,
 	}
-	//nolint:errcheck // Response body encode errors are not actionable in HTTP handlers
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		slog.Warn("failed to encode i18n error response", "error", err)
+	}
 }
 
 // WriteJSONErrorI18nWithData writes a localized JSON error response with template data.
-func WriteJSONErrorI18nWithData(w http.ResponseWriter, localizer *i18n.Localizer, status int, messageKey string, data map[string]any) {
+func WriteJSONErrorI18nWithData(
+	w http.ResponseWriter,
+	localizer *i18n.Localizer,
+	status int,
+	messageKey string,
+	data map[string]any,
+) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	resp := APIError{
 		Error: localizer.TWithData(messageKey, data),
 	}
-	//nolint:errcheck // Response body encode errors are not actionable in HTTP handlers
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		slog.Warn("failed to encode i18n error response with data", "error", err)
+	}
 }
 
 // ValidateLoginRequestI18n validates a login request and returns field-level errors with i18n keys.
 //
-//nolint:dupl // Intentionally mirrors ValidateLoginRequest with translation keys instead of strings
+
 func ValidateLoginRequestI18n(req *LoginRequest) []FieldErrorWithKey {
 	var errors []FieldErrorWithKey
 
@@ -178,7 +188,7 @@ func ValidateHTTPEndpointI18n(ep *HTTPEndpointRequest) []FieldErrorWithKey {
 
 // ValidatePingTargetI18n validates a ping target with i18n support.
 //
-//nolint:dupl // Intentionally mirrors ValidatePingTarget with translation keys instead of strings
+
 func ValidatePingTargetI18n(pt *PingTargetRequest) []FieldErrorWithKey {
 	var errors []FieldErrorWithKey
 

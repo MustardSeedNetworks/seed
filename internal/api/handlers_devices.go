@@ -22,19 +22,33 @@ import (
 func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
 	if s.deviceDiscovery == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Device discovery not available", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"Device discovery not available",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
 	devices := s.deviceDiscovery.GetDevices()
 	status := s.deviceDiscovery.GetStatus()
 
-	resp := map[string]interface{}{
+	resp := map[string]any{
 		"devices": devices,
 		"status":  status,
 	}
@@ -46,18 +60,32 @@ func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
 	if s.deviceDiscovery == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Device discovery not available", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"Device discovery not available",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
 	// Check if scan is already in progress
 	if s.deviceDiscovery.IsScanning() {
-		sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 			"message":  "Scan already in progress",
 			"scanning": true,
 		})
@@ -66,35 +94,35 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 
 	// Start scan in background (fixes #698 - timeout protection)
 	go func(reqCtx context.Context) {
-		logger := logging.FromContext(reqCtx)
+		bgLogger := logging.FromContext(reqCtx)
 		// Add timeout protection for device scan operations (fixes #698)
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		logger.Info("Starting background device scan")
+		bgLogger.Info("Starting background device scan")
 		start := time.Now()
 		defer func() {
-			logger.Info("Background device scan finished", "duration_ms", time.Since(start).Milliseconds())
+			bgLogger.Info("Background device scan finished", "duration_ms", time.Since(start).Milliseconds())
 		}()
 
 		if err := s.deviceDiscovery.Scan(ctx); err != nil {
-			logger.Error("Device scan error", "error", err)
+			bgLogger.Error("Device scan error", "error", err)
 		}
 
 		// Auto-scan for vulnerabilities if enabled
-		s.postScanVulnerabilityCheck(logger)
+		s.postScanVulnerabilityCheck(bgLogger)
 
 		// Notify WebSocket clients when scan completes
 		s.wsHub.Broadcast(Message{
 			Type: "deviceScanComplete",
-			Payload: map[string]interface{}{
+			Payload: map[string]any{
 				"deviceCount": s.deviceDiscovery.Count(),
 				"timestamp":   time.Now().Format(time.RFC3339),
 			},
 		})
 	}(r.Context())
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"message":  "Scan started",
 		"scanning": true,
 	})
@@ -122,7 +150,7 @@ func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
 
 	// Broadcast vulnerability results
 	results := s.vulnScanner.GetAllVulnerabilities()
-	s.wsHub.BroadcastCardUpdate("vulnerabilities", map[string]interface{}{
+	s.wsHub.BroadcastCardUpdate("vulnerabilities", map[string]any{
 		"results": results,
 		"count":   len(results),
 	})
@@ -133,12 +161,26 @@ func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
 func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
 	if s.deviceDiscovery == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Device discovery not available", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"Device discovery not available",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
@@ -229,7 +271,14 @@ func (s *Server) handleDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		s.updateDevicesSettings(w, r)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		) // fixes #694, #699
 	}
 }
 
@@ -292,7 +341,6 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-//nolint:gocyclo // Settings update requires multiple field validations.
 func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -349,12 +397,16 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		s.config.NetworkDiscovery.Options.PortScan.UDPPorts = req.Options.PortScan.UDPPorts
 	}
 	if req.Options.PortScan.BannerTimeoutMs > 0 {
-		s.config.NetworkDiscovery.Options.PortScan.BannerTimeout = time.Duration(req.Options.PortScan.BannerTimeoutMs) * time.Millisecond
+		s.config.NetworkDiscovery.Options.PortScan.BannerTimeout = time.Duration(
+			req.Options.PortScan.BannerTimeoutMs,
+		) * time.Millisecond
 	}
 
 	// Update TCP probe config
 	if req.Options.TCPProbe.TimeoutMs > 0 {
-		s.config.NetworkDiscovery.Options.TCPProbe.Timeout = time.Duration(req.Options.TCPProbe.TimeoutMs) * time.Millisecond
+		s.config.NetworkDiscovery.Options.TCPProbe.Timeout = time.Duration(
+			req.Options.TCPProbe.TimeoutMs,
+		) * time.Millisecond
 	}
 	if req.Options.TCPProbe.Workers > 0 {
 		s.config.NetworkDiscovery.Options.TCPProbe.Workers = req.Options.TCPProbe.Workers
@@ -394,7 +446,14 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"),
+			"",
+		)
 		return
 	}
 
@@ -431,7 +490,14 @@ func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		s.deleteDevicesSubnet(w, r)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		) // fixes #694, #699
 	}
 }
 
@@ -473,7 +539,14 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	// Check for duplicates
 	for _, existing := range s.config.NetworkDiscovery.AdditionalSubnets {
 		if existing.CIDR == req.CIDR {
-			sendErrorResponseWithDetails(w, logger, http.StatusConflict, ErrCodeConflict, "Subnet already exists", "") // fixes #694, #699
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusConflict,
+				ErrCodeConflict,
+				"Subnet already exists",
+				"",
+			) // fixes #694, #699
 			return
 		}
 	}
@@ -493,9 +566,16 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	s.syncDeviceDiscoverySubnets(logger)
 
 	// Save config to file (fixes #735 - return error on save failure)
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
+	if saveErr := s.config.Save(s.configPath); saveErr != nil {
+		logger.Error("Failed to save config", "error", saveErr)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"),
+			"",
+		)
 		return
 	}
 
@@ -537,7 +617,14 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !found {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, "Subnet not found", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+			"Subnet not found",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
@@ -547,7 +634,14 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"),
+			"",
+		)
 		return
 	}
 
@@ -562,7 +656,14 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 	cidr := r.URL.Query().Get("cidr")
 	if cidr == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "CIDR parameter required", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"CIDR parameter required",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
@@ -578,7 +679,14 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !found {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, "Subnet not found", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+			"Subnet not found",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
@@ -590,7 +698,14 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"),
+			"",
+		)
 		return
 	}
 
@@ -623,7 +738,14 @@ func (s *Server) syncDeviceDiscoverySubnets(logger *slog.Logger) {
 func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if s.publicipChecker == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Public IP checker not available", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"Public IP checker not available",
+			"",
+		) // fixes #694, #699
 		return
 	}
 
@@ -639,6 +761,13 @@ func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 		sendJSONResponse(w, logger, http.StatusOK, result)
 
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "") // fixes #694, #699
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		) // fixes #694, #699
 	}
 }

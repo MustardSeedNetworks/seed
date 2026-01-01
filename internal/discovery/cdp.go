@@ -53,7 +53,7 @@ func NewCDPCapture(interfaceName string) *CDPCapture {
 
 // Start begins capturing CDP frames.
 //
-//nolint:dupl // CDP/LLDP/EDP capture Start() methods share structure but have protocol-specific filters
+
 func (c *CDPCapture) Start() error {
 	c.mu.Lock()
 	if c.started {
@@ -69,10 +69,10 @@ func (c *CDPCapture) Start() error {
 	}
 
 	// Set BPF filter for CDP (dst MAC 01:00:0c:cc:cc:cc)
-	if err := handle.SetBPFFilter("ether dst 01:00:0c:cc:cc:cc"); err != nil {
+	if filterErr := handle.SetBPFFilter("ether dst 01:00:0c:cc:cc:cc"); filterErr != nil {
 		handle.Close()
 		c.mu.Unlock()
-		return fmt.Errorf("failed to set BPF filter: %w", err)
+		return fmt.Errorf("failed to set BPF filter: %w", filterErr)
 	}
 
 	c.handle = handle
@@ -155,15 +155,15 @@ func (c *CDPCapture) processPacket(packet gopacket.Packet) {
 
 	// Extract source MAC from ethernet layer
 	ethLayer := packet.Layer(layers.LayerTypeEthernet)
-	if eth, ok := ethLayer.(*layers.Ethernet); ok {
+	if eth, ethOK := ethLayer.(*layers.Ethernet); ethOK {
 		neighbor.SourceMAC = eth.SrcMAC.String()
 	}
 
 	// Parse CDP TLVs from the Info layer
 	cdpInfoLayer := packet.Layer(layers.LayerTypeCiscoDiscoveryInfo)
 	if cdpInfoLayer != nil {
-		cdpInfo, ok := cdpInfoLayer.(*layers.CiscoDiscoveryInfo)
-		if ok {
+		cdpInfo, infoOK := cdpInfoLayer.(*layers.CiscoDiscoveryInfo)
+		if infoOK {
 			neighbor.DeviceID = cdpInfo.DeviceID
 			neighbor.PortID = cdpInfo.PortID
 			neighbor.Platform = cdpInfo.Platform

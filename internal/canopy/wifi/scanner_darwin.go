@@ -19,11 +19,13 @@ package wifi
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // scanPlatform performs a WiFi scan on macOS using the airport utility.
@@ -32,7 +34,9 @@ func scanPlatform(_ string) ([]*ScannedNetwork, error) {
 	// /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport
 	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
 
-	cmd := exec.Command(airportPath, "-s")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, airportPath, "-s")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
@@ -75,8 +79,8 @@ func parseAirportLine(line string) *ScannedNetwork {
 
 	ssid := strings.TrimSpace(matches[1])
 	bssid := matches[2]
-	signal, _ := strconv.Atoi(matches[3])  //nolint:errcheck // Parse failure defaults to 0
-	channel, _ := strconv.Atoi(matches[4]) //nolint:errcheck // Parse failure defaults to 0
+	signal, _ := strconv.Atoi(matches[3])
+	channel, _ := strconv.Atoi(matches[4])
 	htFlag := matches[5]
 	security := matches[6]
 

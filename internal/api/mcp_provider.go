@@ -5,19 +5,20 @@ package api
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/sap/dns"
-	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/mcp"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/roots/publicip"
+	"github.com/krisarmstrong/seed/internal/sap/dns"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/sap/speedtest"
 	"github.com/krisarmstrong/seed/internal/sap/vlan"
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 // Ensure Server implements mcp.ServiceProvider.
@@ -29,7 +30,10 @@ type discoveryServiceAdapter struct {
 }
 
 func (a *discoveryServiceAdapter) Scan(ctx context.Context) error {
-	return a.svc.Scan(ctx)
+	if err := a.svc.Scan(ctx); err != nil {
+		return fmt.Errorf("discovery scan: %w", err)
+	}
+	return nil
 }
 
 func (a *discoveryServiceAdapter) GetDevices() []*discovery.DiscoveredDevice {
@@ -54,11 +58,17 @@ func (a *deviceDiscoveryAdapter) GetDiscoveredDevices() []*discovery.DiscoveredD
 }
 
 func (a *deviceDiscoveryAdapter) Scan(ctx context.Context) error {
-	return a.dd.Scan(ctx)
+	if err := a.dd.Scan(ctx); err != nil {
+		return fmt.Errorf("device discovery scan: %w", err)
+	}
+	return nil
 }
 
 func (a *deviceDiscoveryAdapter) SetAdditionalSubnets(cidrs []string) error {
-	return a.dd.SetAdditionalSubnets(cidrs)
+	if err := a.dd.SetAdditionalSubnets(cidrs); err != nil {
+		return fmt.Errorf("set additional subnets: %w", err)
+	}
+	return nil
 }
 
 // networkManagerAdapter adapts network.Manager to the mcp.NetworkManager interface.
@@ -71,7 +81,11 @@ func (a *networkManagerAdapter) GetInterfaces() []*network.InterfaceInfo {
 }
 
 func (a *networkManagerAdapter) GetInterface(name string) (*network.InterfaceInfo, error) {
-	return a.mgr.GetInterface(name)
+	iface, err := a.mgr.GetInterface(name)
+	if err != nil {
+		return nil, fmt.Errorf("get interface: %w", err)
+	}
+	return iface, nil
 }
 
 func (a *networkManagerAdapter) GetCurrentInterface() string {
@@ -121,7 +135,11 @@ type speedtestTesterAdapter struct {
 }
 
 func (a *speedtestTesterAdapter) Run(ctx context.Context) (*speedtest.Result, error) {
-	return a.tester.RunTest(ctx)
+	result, err := a.tester.RunTest(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("run speedtest: %w", err)
+	}
+	return result, nil
 }
 
 func (a *speedtestTesterAdapter) GetStatus() speedtest.Status {
@@ -134,7 +152,11 @@ type iperfManagerAdapter struct {
 }
 
 func (a *iperfManagerAdapter) RunClient(ctx context.Context, cfg *iperf.ClientConfig) (*iperf.Result, error) {
-	return a.mgr.RunClient(ctx, cfg)
+	result, err := a.mgr.RunClient(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("run iperf client: %w", err)
+	}
+	return result, nil
 }
 
 func (a *iperfManagerAdapter) GetClientStatus() iperf.ClientStatus {
@@ -149,7 +171,7 @@ type wifiScannerAdapter struct {
 func (a *wifiScannerAdapter) Scan(_ context.Context) ([]mcp.WiFiNetwork, error) {
 	networks, err := a.scanner.Scan()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("wifi scan: %w", err)
 	}
 	result := make([]mcp.WiFiNetwork, len(networks))
 	for i, n := range networks {
@@ -198,11 +220,15 @@ type vulnScannerAdapter struct {
 	scanner *discovery.VulnerabilityScanner
 }
 
-func (a *vulnScannerAdapter) ScanDevice(ctx context.Context, device *discovery.DiscoveredDevice) (interface{}, error) {
-	return a.scanner.ScanDevice(ctx, device)
+func (a *vulnScannerAdapter) ScanDevice(ctx context.Context, device *discovery.DiscoveredDevice) (any, error) {
+	result, err := a.scanner.ScanDevice(ctx, device)
+	if err != nil {
+		return nil, fmt.Errorf("scan device vulnerabilities: %w", err)
+	}
+	return result, nil
 }
 
-func (a *vulnScannerAdapter) GetAllVulnerabilities() interface{} {
+func (a *vulnScannerAdapter) GetAllVulnerabilities() any {
 	return a.scanner.GetAllVulnerabilities()
 }
 
@@ -272,7 +298,7 @@ type vlanManagerWrapperImpl struct {
 	mgr *vlan.Manager
 }
 
-func (w *vlanManagerWrapperImpl) GetInfo() interface{} {
+func (w *vlanManagerWrapperImpl) GetInfo() any {
 	return w.mgr.GetInfo()
 }
 
@@ -386,7 +412,7 @@ type rogueDetectorWrapperImpl struct {
 	detector *dhcp.RogueDetector
 }
 
-func (w *rogueDetectorWrapperImpl) GetDetectedServers() interface{} {
+func (w *rogueDetectorWrapperImpl) GetDetectedServers() any {
 	return w.detector.GetDetectedServers()
 }
 
@@ -429,7 +455,7 @@ type publicIPCheckerWrapperImpl struct {
 	checker *publicip.Checker
 }
 
-func (w *publicIPCheckerWrapperImpl) GetPublicIP(ctx context.Context) interface{} {
+func (w *publicIPCheckerWrapperImpl) GetPublicIP(ctx context.Context) any {
 	return w.checker.GetPublicIP(ctx)
 }
 

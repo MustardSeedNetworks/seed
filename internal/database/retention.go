@@ -8,6 +8,17 @@ import (
 	"time"
 )
 
+// SQL query fragment constants.
+const (
+	sqlAndTimestampGte  = " AND timestamp >= ?"
+	sqlAndTimestampLte  = " AND timestamp <= ?"
+	sqlAndType          = " AND type = ?"
+	sqlAndSeverity      = " AND severity = ?"
+	sqlOrderByTimestamp = " ORDER BY timestamp DESC"
+	sqlLimit            = " LIMIT ?"
+	sqlOffset           = " OFFSET ?"
+)
+
 // Error variables for common database errors.
 var errDatabaseClosed = errors.New("database is closed")
 
@@ -177,9 +188,12 @@ func (db *DB) Analyze(ctx context.Context) error {
 // Optimize runs both vacuum and analyze for database maintenance.
 func (db *DB) Optimize(ctx context.Context) error {
 	if err := db.Vacuum(ctx); err != nil {
-		return err
+		return fmt.Errorf("optimize vacuum: %w", err)
 	}
-	return db.Analyze(ctx)
+	if err := db.Analyze(ctx); err != nil {
+		return fmt.Errorf("optimize analyze: %w", err)
+	}
+	return nil
 }
 
 // Helper functions for cleanup
@@ -189,9 +203,13 @@ func (db *DB) deleteAuditLogsOlderThan(ctx context.Context, cutoff time.Time) (i
 		DELETE FROM audit_log WHERE timestamp < ?
 	`, cutoff.UTC().Format(time.RFC3339))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("delete audit logs exec: %w", err)
 	}
-	return result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("delete audit logs rows affected: %w", err)
+	}
+	return rowsAffected, nil
 }
 
 func (db *DB) deleteSpeedTestsOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
@@ -199,9 +217,13 @@ func (db *DB) deleteSpeedTestsOlderThan(ctx context.Context, cutoff time.Time) (
 		DELETE FROM speedtest_results WHERE timestamp < ?
 	`, cutoff.UTC().Format(time.RFC3339))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("delete speed tests exec: %w", err)
 	}
-	return result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("delete speed tests rows affected: %w", err)
+	}
+	return rowsAffected, nil
 }
 
 func (db *DB) deleteDNSResultsOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
@@ -209,9 +231,13 @@ func (db *DB) deleteDNSResultsOlderThan(ctx context.Context, cutoff time.Time) (
 		DELETE FROM dns_results WHERE timestamp < ?
 	`, cutoff.UTC().Format(time.RFC3339))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("delete DNS results exec: %w", err)
 	}
-	return result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("delete DNS results rows affected: %w", err)
+	}
+	return rowsAffected, nil
 }
 
 func (db *DB) deleteGatewayResultsOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
@@ -219,9 +245,13 @@ func (db *DB) deleteGatewayResultsOlderThan(ctx context.Context, cutoff time.Tim
 		DELETE FROM gateway_results WHERE timestamp < ?
 	`, cutoff.UTC().Format(time.RFC3339))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("delete gateway results exec: %w", err)
 	}
-	return result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("delete gateway results rows affected: %w", err)
+	}
+	return rowsAffected, nil
 }
 
 // RecordAuditLog records an audit log entry.
@@ -252,7 +282,7 @@ func (db *DB) RecordAuditLog(ctx context.Context, entry *AuditLogEntry) error {
 
 // GetAuditLogs retrieves audit log entries.
 //
-//nolint:gocritic // opts passed by value for API stability
+
 func (db *DB) GetAuditLogs(ctx context.Context, opts AuditLogOptions) ([]*AuditLogEntry, error) {
 	query := `
 		SELECT id, action, user, resource_type, resource_id, old_value_json,
@@ -283,19 +313,19 @@ func (db *DB) GetAuditLogs(ctx context.Context, opts AuditLogOptions) ([]*AuditL
 	}
 
 	if !opts.Since.IsZero() {
-		query += " AND timestamp >= ?"
+		query += sqlAndTimestampGte
 		args = append(args, opts.Since.UTC().Format(time.RFC3339))
 	}
 
-	query += " ORDER BY timestamp DESC"
+	query += sqlOrderByTimestamp
 
 	if opts.Limit > 0 {
-		query += " LIMIT ?"
+		query += sqlLimit
 		args = append(args, opts.Limit)
 	}
 
 	if opts.Offset > 0 {
-		query += " OFFSET ?"
+		query += sqlOffset
 		args = append(args, opts.Offset)
 	}
 
@@ -303,7 +333,7 @@ func (db *DB) GetAuditLogs(ctx context.Context, opts AuditLogOptions) ([]*AuditL
 	if err != nil {
 		return nil, fmt.Errorf("failed to query audit logs: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var entries []*AuditLogEntry
 	for rows.Next() {
@@ -311,10 +341,10 @@ func (db *DB) GetAuditLogs(ctx context.Context, opts AuditLogOptions) ([]*AuditL
 		var timestamp string
 		var user, resType, resID, oldVal, newVal, ip, ua string
 
-		err := rows.Scan(&e.ID, &e.Action, &user, &resType, &resID, &oldVal, &newVal,
+		scanErr := rows.Scan(&e.ID, &e.Action, &user, &resType, &resID, &oldVal, &newVal,
 			&ip, &ua, &timestamp)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan audit log: %w", err)
+		if scanErr != nil {
+			return nil, fmt.Errorf("failed to scan audit log: %w", scanErr)
 		}
 
 		e.User = user
@@ -331,7 +361,10 @@ func (db *DB) GetAuditLogs(ctx context.Context, opts AuditLogOptions) ([]*AuditL
 		entries = append(entries, &e)
 	}
 
-	return entries, rows.Err()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("audit logs rows iteration: %w", rowsErr)
+	}
+	return entries, nil
 }
 
 // AuditLogOptions specifies criteria for querying audit logs.

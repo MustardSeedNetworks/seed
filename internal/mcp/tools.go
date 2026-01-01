@@ -6,10 +6,10 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/sap/dns"
-	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/network"
+	"github.com/krisarmstrong/seed/internal/sap/dns"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/sap/speedtest"
 )
 
@@ -63,7 +63,7 @@ type LinkMonitor interface {
 
 // VLANManager provides VLAN information.
 type VLANManager interface {
-	GetInfo() interface{}
+	GetInfo() any
 }
 
 // DNSTester provides DNS testing functionality.
@@ -102,19 +102,19 @@ type WiFiManager interface {
 
 // RogueDetector provides rogue DHCP server detection.
 type RogueDetector interface {
-	GetDetectedServers() interface{}
+	GetDetectedServers() any
 	IsRunning() bool
 }
 
 // VulnScanner provides vulnerability scanning.
 type VulnScanner interface {
-	ScanDevice(ctx context.Context, device *discovery.DiscoveredDevice) (interface{}, error)
-	GetAllVulnerabilities() interface{}
+	ScanDevice(ctx context.Context, device *discovery.DiscoveredDevice) (any, error)
+	GetAllVulnerabilities() any
 }
 
 // PublicIPChecker provides public IP detection.
 type PublicIPChecker interface {
-	GetPublicIP(ctx context.Context) interface{}
+	GetPublicIP(ctx context.Context) any
 }
 
 // TracerouteResult represents the result of a traceroute operation.

@@ -50,17 +50,17 @@ func (r *MetricsRepository) RecordBatch(ctx context.Context, metrics []*Metric) 
 		if err != nil {
 			return fmt.Errorf("failed to prepare statement: %w", err)
 		}
-		defer stmt.Close()
+		defer func() { _ = stmt.Close() }()
 
 		now := time.Now().UTC()
 		for _, m := range metrics {
 			if m.Timestamp.IsZero() {
 				m.Timestamp = now
 			}
-			_, err := stmt.ExecContext(ctx, m.InterfaceName, m.MetricType, m.Value, m.Unit,
+			_, execErr := stmt.ExecContext(ctx, m.InterfaceName, m.MetricType, m.Value, m.Unit,
 				m.Timestamp.Format(time.RFC3339), m.Metadata)
-			if err != nil {
-				return fmt.Errorf("failed to insert metric: %w", err)
+			if execErr != nil {
+				return fmt.Errorf("failed to insert metric: %w", execErr)
 			}
 		}
 		return nil
@@ -69,7 +69,7 @@ func (r *MetricsRepository) RecordBatch(ctx context.Context, metrics []*Metric) 
 
 // Query retrieves metrics matching the given criteria.
 //
-//nolint:gocritic // opts passed by value for API stability
+
 func (r *MetricsRepository) Query(ctx context.Context, opts MetricQueryOptions) ([]*Metric, error) {
 	query := `
 		SELECT id, interface_name, metric_type, value, unit, timestamp, metadata_json
@@ -94,7 +94,7 @@ func (r *MetricsRepository) Query(ctx context.Context, opts MetricQueryOptions) 
 	}
 
 	if !opts.TimeRange.End.IsZero() {
-		query += " AND timestamp <= ?"
+		query += sqlAndTimestampLte
 		args = append(args, opts.TimeRange.End.UTC().Format(time.RFC3339))
 	}
 
@@ -114,18 +114,21 @@ func (r *MetricsRepository) Query(ctx context.Context, opts MetricQueryOptions) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to query metrics: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var metrics []*Metric
 	for rows.Next() {
-		m, err := r.scanMetric(rows)
-		if err != nil {
-			return nil, err
+		m, scanErr := r.scanMetric(rows)
+		if scanErr != nil {
+			return nil, scanErr
 		}
 		metrics = append(metrics, m)
 	}
 
-	return metrics, rows.Err()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("rows iteration: %w", rowsErr)
+	}
+	return metrics, nil
 }
 
 // MetricQueryOptions specifies criteria for querying metrics.
@@ -170,7 +173,7 @@ func (r *MetricsRepository) GetLatest(ctx context.Context, interfaceName, metric
 
 // GetAggregates returns aggregated metrics over a time range.
 //
-//nolint:gocritic // opts passed by value for API stability
+
 func (r *MetricsRepository) GetAggregates(ctx context.Context, opts MetricAggregateOptions) (*MetricAggregate, error) {
 	query := `
 		SELECT
@@ -190,7 +193,7 @@ func (r *MetricsRepository) GetAggregates(ctx context.Context, opts MetricAggreg
 	}
 
 	if !opts.TimeRange.End.IsZero() {
-		query += " AND timestamp <= ?"
+		query += sqlAndTimestampLte
 		args = append(args, opts.TimeRange.End.UTC().Format(time.RFC3339))
 	}
 
@@ -237,7 +240,11 @@ func (r *MetricsRepository) DeleteOlderThan(ctx context.Context, cutoff time.Tim
 		return 0, fmt.Errorf("failed to delete old metrics: %w", err)
 	}
 
-	return result.RowsAffected()
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("get rows affected: %w", err)
+	}
+	return affected, nil
 }
 
 // Count returns the total number of metrics.
@@ -256,18 +263,21 @@ func (r *MetricsRepository) GetDistinctInterfaces(ctx context.Context) ([]string
 	if err != nil {
 		return nil, fmt.Errorf("failed to get distinct interfaces: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var interfaces []string
 	for rows.Next() {
 		var name string
-		if err := rows.Scan(&name); err != nil {
-			return nil, err
+		if scanErr := rows.Scan(&name); scanErr != nil {
+			return nil, fmt.Errorf("scan interface name: %w", scanErr)
 		}
 		interfaces = append(interfaces, name)
 	}
 
-	return interfaces, rows.Err()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("rows iteration: %w", rowsErr)
+	}
+	return interfaces, nil
 }
 
 // GetDistinctTypes returns all unique metric types.
@@ -276,18 +286,21 @@ func (r *MetricsRepository) GetDistinctTypes(ctx context.Context) ([]string, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to get distinct types: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var types []string
 	for rows.Next() {
 		var t string
-		if err := rows.Scan(&t); err != nil {
-			return nil, err
+		if scanErr := rows.Scan(&t); scanErr != nil {
+			return nil, fmt.Errorf("scan metric type: %w", scanErr)
 		}
 		types = append(types, t)
 	}
 
-	return types, rows.Err()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("rows iteration: %w", rowsErr)
+	}
+	return types, nil
 }
 
 // scanMetric scans a metric from rows.
@@ -337,7 +350,11 @@ func (r *MetricsRepository) RecordSpeedTest(ctx context.Context, result *SpeedTe
 }
 
 // GetSpeedTestHistory retrieves speed test history for an interface.
-func (r *MetricsRepository) GetSpeedTestHistory(ctx context.Context, interfaceName string, limit int) ([]*SpeedTestResult, error) {
+func (r *MetricsRepository) GetSpeedTestHistory(
+	ctx context.Context,
+	interfaceName string,
+	limit int,
+) ([]*SpeedTestResult, error) {
 	if limit <= 0 {
 		limit = 100
 	}
@@ -353,7 +370,7 @@ func (r *MetricsRepository) GetSpeedTestHistory(ctx context.Context, interfaceNa
 	if err != nil {
 		return nil, fmt.Errorf("failed to query speed tests: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []*SpeedTestResult
 	for rows.Next() {
@@ -362,11 +379,11 @@ func (r *MetricsRepository) GetSpeedTestHistory(ctx context.Context, interfaceNa
 		var serverName, serverLocation, metadata sql.NullString
 		var jitter, packetLoss sql.NullFloat64
 
-		err := rows.Scan(&r.ID, &r.InterfaceName, &serverName, &serverLocation,
+		scanErr := rows.Scan(&r.ID, &r.InterfaceName, &serverName, &serverLocation,
 			&r.DownloadMbps, &r.UploadMbps, &r.LatencyMs, &jitter, &packetLoss,
 			&timestamp, &metadata)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan speed test: %w", err)
+		if scanErr != nil {
+			return nil, fmt.Errorf("failed to scan speed test: %w", scanErr)
 		}
 
 		if t, parseErr := time.Parse(time.RFC3339, timestamp); parseErr == nil {
@@ -381,7 +398,10 @@ func (r *MetricsRepository) GetSpeedTestHistory(ctx context.Context, interfaceNa
 		results = append(results, &r)
 	}
 
-	return results, rows.Err()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("rows iteration: %w", rowsErr)
+	}
+	return results, nil
 }
 
 // RecordDNSResult stores a DNS test result.

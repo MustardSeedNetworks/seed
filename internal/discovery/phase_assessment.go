@@ -120,7 +120,11 @@ func (p *AssessmentPhase) Name() string {
 
 // Run executes the vulnerability assessment phase.
 // Devices from Phase 3 are enriched with CVE data and risk scores.
-func (p *AssessmentPhase) Run(ctx context.Context, devices []*DiscoveredDevice, progressCh chan<- PhaseProgressPayload) ([]*DiscoveredDevice, error) {
+func (p *AssessmentPhase) Run(
+	ctx context.Context,
+	devices []*DiscoveredDevice,
+	progressCh chan<- PhaseProgressPayload,
+) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 
 	slog.Info("Assessment phase starting",
@@ -192,11 +196,9 @@ func (p *AssessmentPhase) Run(ctx context.Context, devices []*DiscoveredDevice, 
 	}
 
 	for range workerCount {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			p.assessWorker(assessCtx, deviceCh, &progress)
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -220,7 +222,11 @@ func (p *AssessmentPhase) Run(ctx context.Context, devices []*DiscoveredDevice, 
 }
 
 // assessWorker processes devices from the channel.
-func (p *AssessmentPhase) assessWorker(ctx context.Context, deviceCh <-chan *DiscoveredDevice, progress *AssessmentProgress) {
+func (p *AssessmentPhase) assessWorker(
+	ctx context.Context,
+	deviceCh <-chan *DiscoveredDevice,
+	progress *AssessmentProgress,
+) {
 	for device := range deviceCh {
 		select {
 		case <-ctx.Done():

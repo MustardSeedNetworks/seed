@@ -739,7 +739,8 @@ export function DiscoveryModal({ isOpen, onClose, data, onScan, onDeepScan }: Di
       ].join(","),
     );
 
-    const header = "ip,name,netbios_name,mdns_name,mac,vendor,discovery_methods,last_seen,network,os_guess";
+    const header =
+      "ip,name,netbios_name,mdns_name,mac,vendor,discovery_methods,last_seen,network,os_guess";
     const csv = [header, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);

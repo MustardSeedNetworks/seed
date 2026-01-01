@@ -46,7 +46,6 @@ func TestNewManager(t *testing.T) {
 	}
 }
 
-//nolint:gocyclo // Test functions require comprehensive scenario coverage
 func TestCreateSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := NewManager(tmpDir, nil, nil, nil)
@@ -617,9 +616,9 @@ func TestAddSample(t *testing.T) {
 		t.Fatalf("StartSurvey() failed: %v", err)
 	}
 
-	passiveData := map[string]interface{}{
-		"networks": []interface{}{
-			map[string]interface{}{
+	passiveData := map[string]any{
+		"networks": []any{
+			map[string]any{
 				"ssid":  "TestNetwork",
 				"bssid": "00:11:22:33:44:55",
 				"rssi":  -50,
@@ -632,7 +631,7 @@ func TestAddSample(t *testing.T) {
 		id         string
 		x          int
 		y          int
-		sampleData map[string]interface{}
+		sampleData map[string]any
 		wantErr    bool
 	}{
 		{
@@ -797,9 +796,9 @@ func TestConcurrentSampleAddition(t *testing.T) {
 	var wg sync.WaitGroup
 	numSamples := 50
 
-	sampleData := map[string]interface{}{
-		"networks": []interface{}{
-			map[string]interface{}{
+	sampleData := map[string]any{
+		"networks": []any{
+			map[string]any{
 				"ssid": "Test",
 				"rssi": -60,
 			},
@@ -884,9 +883,9 @@ func TestSampleCount(t *testing.T) {
 		t.Fatalf("StartSurvey() failed: %v", err)
 	}
 
-	sampleData := map[string]interface{}{
-		"networks": []interface{}{
-			map[string]interface{}{"ssid": "Test", "rssi": -60},
+	sampleData := map[string]any{
+		"networks": []any{
+			map[string]any{"ssid": "Test", "rssi": -60},
 		},
 	}
 

@@ -120,13 +120,13 @@ func TestRedactHeaders(t *testing.T) {
 func TestRedactMap(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    map[string]interface{}
+		input    map[string]any
 		checkKey string
-		expected interface{}
+		expected any
 	}{
 		{
 			name: "password field redacted",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"username": "admin",
 				"password": "secret123",
 			},
@@ -135,7 +135,7 @@ func TestRedactMap(t *testing.T) {
 		},
 		{
 			name: "token field redacted",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"user":  "alice",
 				"token": "eyJhbGci...",
 			},
@@ -144,7 +144,7 @@ func TestRedactMap(t *testing.T) {
 		},
 		{
 			name: "api_key field redacted",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"api_key": "abc123",
 				"status":  "active",
 			},
@@ -153,7 +153,7 @@ func TestRedactMap(t *testing.T) {
 		},
 		{
 			name: "safe fields unchanged",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"username": "admin",
 				"status":   "active",
 			},
@@ -162,7 +162,7 @@ func TestRedactMap(t *testing.T) {
 		},
 		{
 			name: "string with password pattern redacted",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"error": "login failed with password=secret",
 			},
 			checkKey: "error",
@@ -299,7 +299,7 @@ func TestGetClientIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "/test", http.NoBody)
+			req, _ := http.NewRequest(http.MethodGet, "/test", http.NoBody)
 			// Copy headers to request (don't replace the Header map)
 			for k, v := range tt.headers {
 				for _, val := range v {
@@ -328,7 +328,7 @@ func TestLogf(t *testing.T) {
 	})
 
 	t.Run("map argument", func(_ *testing.T) {
-		m := map[string]interface{}{"password": "secret", "user": "admin"}
+		m := map[string]any{"password": "secret", "user": "admin"}
 		Logf("data: %v", m)
 	})
 
@@ -343,7 +343,7 @@ func TestLogf(t *testing.T) {
 
 func TestLogRequest(_ *testing.T) {
 	// Just verify it doesn't panic
-	req, _ := http.NewRequest("POST", "/api/login", http.NoBody)
+	req, _ := http.NewRequest(http.MethodPost, "/api/login", http.NoBody)
 	req.Header.Set("Authorization", "Bearer secret-token")
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "192.168.1.100:54321"
@@ -353,7 +353,7 @@ func TestLogRequest(_ *testing.T) {
 }
 
 func TestRedactMapWithNonStringValues(t *testing.T) {
-	input := map[string]interface{}{
+	input := map[string]any{
 		"count":    42,
 		"enabled":  true,
 		"password": "secret",
@@ -453,7 +453,7 @@ func TestEmptyInputs(t *testing.T) {
 	})
 
 	t.Run("empty map", func(t *testing.T) {
-		result := RedactMap(map[string]interface{}{})
+		result := RedactMap(map[string]any{})
 		if len(result) != 0 {
 			t.Errorf("RedactMap(empty) = %v, want empty map", result)
 		}

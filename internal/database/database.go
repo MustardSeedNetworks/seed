@@ -127,17 +127,20 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 		pragmas[1] = "PRAGMA journal_mode = DELETE"
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	for _, pragma := range pragmas {
-		if _, err := conn.Exec(pragma); err != nil {
-			conn.Close()
-			return nil, fmt.Errorf("failed to set pragma %q: %w", pragma, err)
+		if _, pragmaErr := conn.ExecContext(ctx, pragma); pragmaErr != nil {
+			_ = conn.Close()
+			return nil, fmt.Errorf("failed to set pragma %q: %w", pragma, pragmaErr)
 		}
 	}
 
 	// Verify connection
-	if err := conn.Ping(); err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+	if pingErr := conn.Ping(); pingErr != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
 	}
 
 	db := &DB{
@@ -146,15 +149,15 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 	}
 
 	// Run migrations
-	if err := db.migrate(); err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("failed to run migrations: %w", err)
+	if migrateErr := db.migrate(); migrateErr != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("failed to run migrations: %w", migrateErr)
 	}
 
 	// Seed default profile if database is empty
-	if err := db.seedDefaultProfile(); err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("failed to seed default profile: %w", err)
+	if seedErr := db.seedDefaultProfile(); seedErr != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("failed to seed default profile: %w", seedErr)
 	}
 
 	return db, nil
@@ -172,12 +175,17 @@ func (db *DB) Close() error {
 	db.closed = true
 
 	// Checkpoint WAL before closing for clean shutdown
-	if _, err := db.conn.Exec("PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if _, err := db.conn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
 		// Log but don't fail - this is a cleanup operation
 		fmt.Printf("warning: failed to checkpoint WAL: %v\n", err)
 	}
 
-	return db.conn.Close()
+	if err := db.conn.Close(); err != nil {
+		return fmt.Errorf("closing database connection: %w", err)
+	}
+	return nil
 }
 
 // Ping checks database connectivity.
@@ -189,7 +197,10 @@ func (db *DB) Ping(ctx context.Context) error {
 		return errors.New("database is closed")
 	}
 
-	return db.conn.PingContext(ctx)
+	if err := db.conn.PingContext(ctx); err != nil {
+		return fmt.Errorf("pinging database: %w", err)
+	}
+	return nil
 }
 
 // Path returns the database file path.
@@ -277,7 +288,11 @@ func (db *DB) Exec(ctx context.Context, query string, args ...any) (sql.Result, 
 		return nil, errors.New("database is closed")
 	}
 
-	return db.conn.ExecContext(ctx, query, args...)
+	result, err := db.conn.ExecContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("executing query: %w", err)
+	}
+	return result, nil
 }
 
 // Query executes a query that returns rows.
@@ -291,7 +306,11 @@ func (db *DB) Query(ctx context.Context, query string, args ...any) (*sql.Rows, 
 	}
 
 	//nolint:sqlclosecheck // Caller is responsible for closing rows
-	return db.conn.QueryContext(ctx, query, args...)
+	rows, err := db.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database: %w", err)
+	}
+	return rows, nil
 }
 
 // QueryRow executes a query that returns at most one row.
@@ -311,7 +330,11 @@ func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 		return nil, errors.New("database is closed")
 	}
 
-	return db.conn.BeginTx(ctx, opts)
+	tx, err := db.conn.BeginTx(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("beginning transaction: %w", err)
+	}
+	return tx, nil
 }
 
 // WithTx executes a function within a transaction.
@@ -323,15 +346,15 @@ func (db *DB) WithTx(ctx context.Context, fn func(*sql.Tx) error) error {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	if err := fn(tx); err != nil {
+	if fnErr := fn(tx); fnErr != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf("failed to rollback transaction: %v (original error: %w)", rbErr, err)
+			return fmt.Errorf("failed to rollback transaction: %w (original error: %w)", rbErr, fnErr)
 		}
-		return err
+		return fnErr
 	}
 
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("failed to commit transaction: %w", commitErr)
 	}
 
 	return nil

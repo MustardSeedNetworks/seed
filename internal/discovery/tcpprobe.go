@@ -3,6 +3,7 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -73,15 +74,18 @@ func NewTCPProber(timeout time.Duration) (*TCPProber, error) {
 
 // getLocalIP returns the local IP address used for outbound connections.
 func getLocalIP() (net.IP, error) {
-	conn, err := net.Dial("udp", "8.8.8.8:53")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	dialer := &net.Dialer{}
+	conn, err := dialer.DialContext(ctx, "udp", "8.8.8.8:53")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to dial UDP: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	localAddr, ok := conn.LocalAddr().(*net.UDPAddr)
 	if !ok {
-		return nil, fmt.Errorf("unexpected address type")
+		return nil, errors.New("unexpected address type")
 	}
 	return localAddr.IP, nil
 }
@@ -101,15 +105,17 @@ func (p *TCPProber) Close() error {
 // ProbeTCP sends a TCP SYN packet to the specified IP:port and analyzes the response.
 // analyzeDialError determines port state from a connection error.
 func analyzeDialError(err error, result *TCPProbeResult) {
-	if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
 		result.State = PortFiltered
 		return
 	}
-	opErr, ok := err.(*net.OpError)
-	if !ok {
+	var opErr *net.OpError
+	if !errors.As(err, &opErr) {
 		return
 	}
-	if syscallErr, ok := opErr.Err.(*syscall.Errno); ok {
+	var syscallErr *syscall.Errno
+	if errors.As(opErr.Err, &syscallErr) {
 		//nolint:exhaustive // syscall.Errno has too many cases, default handles the rest
 		switch *syscallErr {
 		case syscall.ECONNREFUSED:
@@ -137,12 +143,14 @@ func extractTTL(conn net.Conn) int {
 		return -1
 	}
 	ttl := -1
-	//nolint:errcheck // Best-effort TTL extraction
-	rawConn.Control(func(fd uintptr) {
-		if v, err := syscall.GetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL); err == nil {
+	err = rawConn.Control(func(fd uintptr) {
+		if v, sockErr := syscall.GetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL); sockErr == nil {
 			ttl = v
 		}
 	})
+	if err != nil {
+		return -1
+	}
 	return ttl
 }
 
@@ -186,7 +194,7 @@ func (p *TCPProber) ProbeTCP(ctx context.Context, ipStr string, port int) TCPPro
 	result.State = PortOpen
 	result.Flags = tcpSYN | tcpACK
 	result.TTL = extractTTL(conn)
-	conn.Close()
+	_ = conn.Close()
 	return result
 }
 
@@ -252,7 +260,12 @@ func (p *TCPProber) ScanPorts(ctx context.Context, ipStr string, ports []int, wo
 }
 
 // ScanPortsOnHosts probes the same ports across multiple hosts.
-func (p *TCPProber) ScanPortsOnHosts(ctx context.Context, ips []string, ports []int, workers int) map[string][]TCPProbeResult {
+func (p *TCPProber) ScanPortsOnHosts(
+	ctx context.Context,
+	ips []string,
+	ports []int,
+	workers int,
+) map[string][]TCPProbeResult {
 	if workers <= 0 {
 		workers = 50
 	}
@@ -356,6 +369,6 @@ func CheckTCPPrivileges() error {
 	if err != nil {
 		return fmt.Errorf("raw TCP socket privileges unavailable: %w", err)
 	}
-	syscall.Close(fd)
+	_ = syscall.Close(fd)
 	return nil
 }

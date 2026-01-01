@@ -57,7 +57,7 @@ func (r *AlertRepository) Get(ctx context.Context, id int64) (*Alert, error) {
 
 // List retrieves alerts matching the criteria.
 //
-//nolint:gocritic // opts passed by value for API stability
+
 func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*Alert, error) {
 	query := `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
@@ -68,12 +68,12 @@ func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*A
 	var args []any
 
 	if opts.Type != "" {
-		query += " AND type = ?"
+		query += sqlAndType
 		args = append(args, opts.Type)
 	}
 
 	if opts.Severity != "" {
-		query += " AND severity = ?"
+		query += sqlAndSeverity
 		args = append(args, opts.Severity)
 	}
 
@@ -98,12 +98,12 @@ func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*A
 	query += " ORDER BY created_at DESC"
 
 	if opts.Limit > 0 {
-		query += " LIMIT ?"
+		query += sqlLimit
 		args = append(args, opts.Limit)
 	}
 
 	if opts.Offset > 0 {
-		query += " OFFSET ?"
+		query += sqlOffset
 		args = append(args, opts.Offset)
 	}
 
@@ -111,13 +111,13 @@ func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*A
 	if err != nil {
 		return nil, fmt.Errorf("failed to list alerts: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var alerts []*Alert
 	for rows.Next() {
-		a, err := r.scanAlertFromRows(rows)
-		if err != nil {
-			return nil, err
+		a, scanErr := r.scanAlertFromRows(rows)
+		if scanErr != nil {
+			return nil, scanErr
 		}
 		alerts = append(alerts, a)
 	}
@@ -163,7 +163,7 @@ func (r *AlertRepository) Acknowledge(ctx context.Context, id int64, by string) 
 
 // AcknowledgeAll marks all matching alerts as acknowledged.
 //
-//nolint:gocritic // opts passed by value for API stability
+
 func (r *AlertRepository) AcknowledgeAll(ctx context.Context, opts AlertListOptions, by string) (int64, error) {
 	now := time.Now().UTC()
 
@@ -174,12 +174,12 @@ func (r *AlertRepository) AcknowledgeAll(ctx context.Context, opts AlertListOpti
 	args := []any{by, now.Format(time.RFC3339)}
 
 	if opts.Type != "" {
-		query += " AND type = ?"
+		query += sqlAndType
 		args = append(args, opts.Type)
 	}
 
 	if opts.Severity != "" {
-		query += " AND severity = ?"
+		query += sqlAndSeverity
 		args = append(args, opts.Severity)
 	}
 
@@ -252,18 +252,18 @@ func (r *AlertRepository) DeleteOlderThan(ctx context.Context, cutoff time.Time)
 
 // Count returns the number of alerts matching the criteria.
 //
-//nolint:gocritic // opts passed by value for API stability
+
 func (r *AlertRepository) Count(ctx context.Context, opts AlertListOptions) (int64, error) {
 	query := "SELECT COUNT(*) FROM alerts WHERE 1=1"
 	var args []any
 
 	if opts.Type != "" {
-		query += " AND type = ?"
+		query += sqlAndType
 		args = append(args, opts.Type)
 	}
 
 	if opts.Severity != "" {
-		query += " AND severity = ?"
+		query += sqlAndSeverity
 		args = append(args, opts.Severity)
 	}
 

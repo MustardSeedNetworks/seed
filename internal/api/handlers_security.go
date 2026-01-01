@@ -9,9 +9,9 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/dhcp"
-	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
 )
 
 // passwordPlaceholder is used to mask sensitive values in API responses.
@@ -68,7 +68,14 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			logger.Warn("Invalid request body", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusBadRequest,
+				ErrCodeBadRequest,
+				localizer.T("errors.api.invalidRequestBody"),
+				"",
+			) // fixes #694, #H7
 			return
 		}
 
@@ -117,11 +124,25 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 			sendJSONResponse(w, logger, http.StatusOK, resp)
 
 		default:
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.security.invalidAction"), "") // fixes #694
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusBadRequest,
+				ErrCodeBadRequest,
+				localizer.T("errors.security.invalidAction"),
+				"",
+			) // fixes #694
 		}
 
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -151,7 +172,14 @@ func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) 
 		})
 
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -184,7 +212,14 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			logger.Warn("Invalid request body", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusBadRequest,
+				ErrCodeBadRequest,
+				localizer.T("errors.api.invalidRequestBody"),
+				"",
+			) // fixes #694, #H7
 			return
 		}
 
@@ -208,7 +243,14 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		// Save config (fixes #782 - return error instead of silent warning)
 		if err := s.config.Save(s.configPath); err != nil {
 			logger.Error("Failed to save config", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "") // fixes #H7
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusInternalServerError,
+				ErrCodeInternal,
+				localizer.T("errors.config.failedToSave"),
+				"",
+			) // fixes #H7
 			return
 		}
 
@@ -223,7 +265,14 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		sendJSONResponse(w, logger, http.StatusOK, resp)
 
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -248,12 +297,26 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if s.gatewayTester == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.security.gatewayTesterUnavailable"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.security.gatewayTesterUnavailable"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -332,7 +395,14 @@ func (s *Server) handleSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		s.updateSNMPSettings(w, r)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -389,7 +459,14 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	var req SNMPSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body for SNMP settings", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		) // fixes #694, #H7
 		return
 	}
 
@@ -417,7 +494,14 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
 			if err != nil {
 				logger.Error("Failed to encrypt auth password", "error", err, "credential_name", cred.Name)
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptAuth"), "") // fixes #694, #H7
+				sendErrorResponseWithDetails(
+					w,
+					logger,
+					http.StatusInternalServerError,
+					ErrCodeInternal,
+					localizer.T("errors.security.failedToEncryptAuth"),
+					"",
+				) // fixes #694, #H7
 				return
 			}
 			newCred.AuthPassword = encrypted
@@ -432,7 +516,14 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 			encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
 			if err != nil {
 				logger.Error("Failed to encrypt priv password", "error", err, "credential_name", cred.Name)
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.failedToEncryptPriv"), "") // fixes #694, #H7
+				sendErrorResponseWithDetails(
+					w,
+					logger,
+					http.StatusInternalServerError,
+					ErrCodeInternal,
+					localizer.T("errors.security.failedToEncryptPriv"),
+					"",
+				) // fixes #694, #H7
 				return
 			}
 			newCred.PrivPassword = encrypted
@@ -454,7 +545,14 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	// Save config (passwords are now encrypted) (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "") // fixes #H7
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.config.failedToSave"),
+			"",
+		) // fixes #H7
 		return
 	}
 

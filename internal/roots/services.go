@@ -2,6 +2,7 @@ package roots
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -31,7 +32,11 @@ func NewTracerouteService(cfg *config.Config) *TracerouteService {
 }
 
 // Trace performs a traceroute to the target with the given options.
-func (s *TracerouteService) Trace(ctx context.Context, target string, opts *TracerouteOptions) (*TracerouteResult, error) {
+func (s *TracerouteService) Trace(
+	ctx context.Context,
+	target string,
+	opts *TracerouteOptions,
+) (*TracerouteResult, error) {
 	if s.tracer == nil {
 		return nil, ErrNotInitialized
 	}
@@ -247,7 +252,7 @@ func NewAnalysisService(cfg *config.Config, db *database.DB) *AnalysisService {
 // AnalyzePath performs quality analysis on a traceroute result.
 func (s *AnalysisService) AnalyzePath(_ context.Context, result *TracerouteResult) (*PathAnalysis, error) {
 	if result == nil {
-		return nil, fmt.Errorf("traceroute result is nil")
+		return nil, errors.New("traceroute result is nil")
 	}
 
 	analysis := &PathAnalysis{
@@ -278,8 +283,13 @@ func (s *AnalysisService) AnalyzePath(_ context.Context, result *TracerouteResul
 }
 
 // analyzeHops processes hops to calculate RTT stats and detect bottlenecks.
-func (s *AnalysisService) analyzeHops(hops []TracerouteHop, bottlenecks *[]PathBottleneck) (totalRTT float64, lostHops int) {
+func (s *AnalysisService) analyzeHops(
+	hops []TracerouteHop,
+	bottlenecks *[]PathBottleneck,
+) (float64, int) {
 	var previousRTT float64
+	var totalRTT float64
+	var lostHops int
 
 	for i, hop := range hops {
 		if hop.Lost {
@@ -302,7 +312,11 @@ func (s *AnalysisService) analyzeHops(hops []TracerouteHop, bottlenecks *[]PathB
 }
 
 // detectBottleneck checks if a hop represents a bottleneck based on RTT increase.
-func (s *AnalysisService) detectBottleneck(hopIndex int, hop TracerouteHop, previousRTT, currentRTT float64) *PathBottleneck {
+func (s *AnalysisService) detectBottleneck(
+	hopIndex int,
+	hop TracerouteHop,
+	previousRTT, currentRTT float64,
+) *PathBottleneck {
 	if hopIndex == 0 || previousRTT <= 0 || currentRTT <= 0 {
 		return nil
 	}

@@ -99,7 +99,7 @@ func (p *Provider) GetAuthURL(state string) string {
 func (p *Provider) Exchange(ctx context.Context, code string) (*oauth2.Token, error) {
 	token, err := p.Config.Exchange(ctx, code)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrTokenExchange, err)
+		return nil, fmt.Errorf("%w: %w", ErrTokenExchange, err)
 	}
 	return token, nil
 }
@@ -113,28 +113,28 @@ func (p *Provider) GetUserInfo(ctx context.Context, token *oauth2.Token) (*UserI
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.UserInfoURL, http.NoBody)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserInfo, err)
+		return nil, fmt.Errorf("%w: %w", ErrUserInfo, err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserInfo, err)
+		return nil, fmt.Errorf("%w: %w", ErrUserInfo, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Best effort read for error message
+		body, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("%w: status %d: %s", ErrUserInfo, resp.StatusCode, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserInfo, err)
+		return nil, fmt.Errorf("%w: %w", ErrUserInfo, err)
 	}
 
 	var userInfo UserInfo
-	if err := json.Unmarshal(body, &userInfo); err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserInfo, err)
+	if unmarshalErr := json.Unmarshal(body, &userInfo); unmarshalErr != nil {
+		return nil, fmt.Errorf("%w: %w", ErrUserInfo, unmarshalErr)
 	}
 
 	userInfo.Provider = p.Name

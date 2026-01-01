@@ -3,6 +3,8 @@
 package auth
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -82,10 +84,11 @@ func TestAuthenticate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			token, err := m.Authenticate(tt.username, tt.password)
+			ctx := context.Background()
+			token, err := m.Authenticate(ctx, tt.username, tt.password)
 
 			if tt.wantErr != nil {
-				if err != tt.wantErr {
+				if !errors.Is(err, tt.wantErr) {
 					t.Errorf("expected error %v, got %v", tt.wantErr, err)
 				}
 				if token != "" {
@@ -106,15 +109,16 @@ func TestAuthenticate(t *testing.T) {
 func TestValidateToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	// Generate valid token
-	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
 
 	// Validate token
-	claims, err := m.ValidateToken(token)
+	claims, err := m.ValidateToken(ctx, token)
 	if err != nil {
 		t.Fatalf("failed to validate token: %v", err)
 	}
@@ -152,9 +156,10 @@ func TestValidateInvalidToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			claims, err := m.ValidateToken(tt.token)
+			ctx := context.Background()
+			claims, err := m.ValidateToken(ctx, tt.token)
 
-			if err != tt.wantErr {
+			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("expected error %v, got %v", tt.wantErr, err)
 			}
 			if claims != nil {
@@ -168,8 +173,9 @@ func TestValidateExpiredToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	// Create manager with very short timeout
 	m := NewManager(defaults.Auth.JWTSecret, time.Millisecond, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
-	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -177,8 +183,8 @@ func TestValidateExpiredToken(t *testing.T) {
 	// Wait for token to expire
 	time.Sleep(10 * time.Millisecond)
 
-	_, err = m.ValidateToken(token)
-	if err != ErrTokenExpired {
+	_, err = m.ValidateToken(ctx, token)
+	if !errors.Is(err, ErrTokenExpired) {
 		t.Errorf("expected ErrTokenExpired, got %v", err)
 	}
 }
@@ -200,9 +206,10 @@ func TestHashPassword(t *testing.T) {
 func TestMiddleware(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	// Get a valid token
-	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -259,7 +266,7 @@ func TestMiddleware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", tt.path, http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, tt.path, http.NoBody)
 			if tt.authHeader != "" {
 				req.Header.Set("Authorization", tt.authHeader)
 			}
@@ -453,26 +460,27 @@ func TestGenerateJWTSecret(t *testing.T) {
 func TestUpdatePasswordHash(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	// Generate a token before password change
-	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
 
 	// Verify token is valid
-	_, err = m.ValidateToken(token)
+	_, err = m.ValidateToken(ctx, token)
 	if err != nil {
 		t.Fatalf("token should be valid before password change: %v", err)
 	}
 
 	// Update password hash
 	newHash, _ := HashPassword("newpassword")
-	m.UpdatePasswordHash(newHash)
+	m.UpdatePasswordHash(ctx, newHash)
 
 	// Old token should now be invalid (token version incremented)
-	_, err = m.ValidateToken(token)
-	if err != ErrInvalidToken {
+	_, err = m.ValidateToken(ctx, token)
+	if !errors.Is(err, ErrInvalidToken) {
 		t.Errorf("expected ErrInvalidToken after password change, got %v", err)
 	}
 }
@@ -480,8 +488,9 @@ func TestUpdatePasswordHash(t *testing.T) {
 func TestGenerateAccessToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
-	token, err := m.GenerateAccessToken(defaults.Auth.Username)
+	token, err := m.GenerateAccessToken(ctx, defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate access token: %v", err)
 	}
@@ -490,7 +499,7 @@ func TestGenerateAccessToken(t *testing.T) {
 		t.Error("expected non-empty access token")
 	}
 
-	claims, err := m.ValidateToken(token)
+	claims, err := m.ValidateToken(ctx, token)
 	if err != nil {
 		t.Fatalf("failed to validate access token: %v", err)
 	}
@@ -503,8 +512,9 @@ func TestGenerateAccessToken(t *testing.T) {
 func TestGenerateRefreshToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
-	token, err := m.GenerateRefreshToken(defaults.Auth.Username)
+	token, err := m.GenerateRefreshToken(ctx, defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate refresh token: %v", err)
 	}
@@ -513,7 +523,7 @@ func TestGenerateRefreshToken(t *testing.T) {
 		t.Error("expected non-empty refresh token")
 	}
 
-	claims, err := m.ValidateToken(token)
+	claims, err := m.ValidateToken(ctx, token)
 	if err != nil {
 		t.Fatalf("failed to validate refresh token: %v", err)
 	}
@@ -526,15 +536,16 @@ func TestGenerateRefreshToken(t *testing.T) {
 func TestValidateRefreshToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	// Generate a refresh token
-	refreshToken, err := m.GenerateRefreshToken(defaults.Auth.Username)
+	refreshToken, err := m.GenerateRefreshToken(ctx, defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate refresh token: %v", err)
 	}
 
 	// Validate as refresh token - should succeed
-	claims, err := m.ValidateRefreshToken(refreshToken)
+	claims, err := m.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("failed to validate refresh token: %v", err)
 	}
@@ -543,13 +554,13 @@ func TestValidateRefreshToken(t *testing.T) {
 	}
 
 	// Try to validate an access token as refresh token - should fail
-	accessToken, err := m.GenerateAccessToken(defaults.Auth.Username)
+	accessToken, err := m.GenerateAccessToken(ctx, defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate access token: %v", err)
 	}
 
-	_, err = m.ValidateRefreshToken(accessToken)
-	if err != ErrInvalidToken {
+	_, err = m.ValidateRefreshToken(ctx, accessToken)
+	if !errors.Is(err, ErrInvalidToken) {
 		t.Errorf("expected ErrInvalidToken for access token, got %v", err)
 	}
 }
@@ -557,21 +568,22 @@ func TestValidateRefreshToken(t *testing.T) {
 func TestRefreshAccessToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	// Generate a refresh token
-	refreshToken, err := m.GenerateRefreshToken(defaults.Auth.Username)
+	refreshToken, err := m.GenerateRefreshToken(ctx, defaults.Auth.Username)
 	if err != nil {
 		t.Fatalf("failed to generate refresh token: %v", err)
 	}
 
 	// Use refresh token to get new access token
-	newAccessToken, err := m.RefreshAccessToken(refreshToken)
+	newAccessToken, err := m.RefreshAccessToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("failed to refresh access token: %v", err)
 	}
 
 	// Validate the new access token
-	claims, err := m.ValidateToken(newAccessToken)
+	claims, err := m.ValidateToken(ctx, newAccessToken)
 	if err != nil {
 		t.Fatalf("failed to validate new access token: %v", err)
 	}
@@ -584,15 +596,15 @@ func TestRefreshAccessToken(t *testing.T) {
 	}
 
 	// Try with invalid refresh token
-	_, err = m.RefreshAccessToken("invalid.token.here")
+	_, err = m.RefreshAccessToken(ctx, "invalid.token.here")
 	if err == nil {
 		t.Error("expected error for invalid refresh token")
 	}
 
 	// Try with access token (not refresh token)
-	accessToken, _ := m.GenerateAccessToken(defaults.Auth.Username)
-	_, err = m.RefreshAccessToken(accessToken)
-	if err != ErrInvalidToken {
+	accessToken, _ := m.GenerateAccessToken(ctx, defaults.Auth.Username)
+	_, err = m.RefreshAccessToken(ctx, accessToken)
+	if !errors.Is(err, ErrInvalidToken) {
 		t.Errorf("expected ErrInvalidToken for access token, got %v", err)
 	}
 }
@@ -648,9 +660,10 @@ func TestExtractTokenFromSubprotocol(t *testing.T) {
 func TestMiddlewareWithCookie(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	// Get a valid token
-	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -665,7 +678,7 @@ func TestMiddlewareWithCookie(t *testing.T) {
 
 	middleware := m.Middleware(handler)
 
-	req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 	req.AddCookie(&http.Cookie{Name: CookieNameAccess, Value: token})
 
 	rec := httptest.NewRecorder()
@@ -695,7 +708,7 @@ func TestMiddlewareSkipSetupEndpoints(t *testing.T) {
 
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
-			req := httptest.NewRequest("GET", path, http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, path, http.NoBody)
 			rec := httptest.NewRecorder()
 			middleware.ServeHTTP(rec, req)
 
@@ -709,8 +722,9 @@ func TestMiddlewareSkipSetupEndpoints(t *testing.T) {
 func TestMiddlewareExpiredToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Millisecond, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
-	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -724,7 +738,7 @@ func TestMiddlewareExpiredToken(t *testing.T) {
 
 	middleware := m.Middleware(handler)
 
-	req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	rec := httptest.NewRecorder()
@@ -742,8 +756,9 @@ func TestMiddlewareExpiredToken(t *testing.T) {
 func TestMiddlewareWebSocketAuth(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
-	token, err := m.Authenticate(defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
 	if err != nil {
 		t.Fatalf("failed to authenticate: %v", err)
 	}
@@ -755,7 +770,7 @@ func TestMiddlewareWebSocketAuth(t *testing.T) {
 	middleware := m.Middleware(handler)
 
 	// Test WebSocket with Sec-WebSocket-Protocol header
-	req := httptest.NewRequest("GET", "/ws/updates", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/ws/updates", http.NoBody)
 	req.Header.Set("Sec-WebSocket-Protocol", "access_token, "+token)
 
 	rec := httptest.NewRecorder()
@@ -907,7 +922,7 @@ func TestClearAuthCookies(t *testing.T) {
 }
 
 func TestGetAccessTokenFromCookie(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	req.AddCookie(&http.Cookie{Name: CookieNameAccess, Value: "access-token-value"})
 
 	token, err := GetAccessTokenFromCookie(req)
@@ -919,7 +934,7 @@ func TestGetAccessTokenFromCookie(t *testing.T) {
 	}
 
 	// Test missing cookie
-	req2 := httptest.NewRequest("GET", "/", http.NoBody)
+	req2 := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	_, err = GetAccessTokenFromCookie(req2)
 	if err == nil {
 		t.Error("expected error for missing cookie")
@@ -927,7 +942,7 @@ func TestGetAccessTokenFromCookie(t *testing.T) {
 }
 
 func TestGetRefreshTokenFromCookie(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	req.AddCookie(&http.Cookie{Name: CookieNameRefresh, Value: "refresh-token-value"})
 
 	token, err := GetRefreshTokenFromCookie(req)
@@ -939,7 +954,7 @@ func TestGetRefreshTokenFromCookie(t *testing.T) {
 	}
 
 	// Test missing cookie
-	req2 := httptest.NewRequest("GET", "/", http.NoBody)
+	req2 := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	_, err = GetRefreshTokenFromCookie(req2)
 	if err == nil {
 		t.Error("expected error for missing cookie")
@@ -956,7 +971,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 		{
 			name: "from cookie",
 			setupRequest: func() *http.Request {
-				req := httptest.NewRequest("GET", "/", http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 				req.AddCookie(&http.Cookie{Name: CookieNameAccess, Value: "cookie-token"})
 				return req
 			},
@@ -966,7 +981,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 		{
 			name: "from Authorization header",
 			setupRequest: func() *http.Request {
-				req := httptest.NewRequest("GET", "/", http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 				req.Header.Set("Authorization", "Bearer header-token")
 				return req
 			},
@@ -976,7 +991,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 		{
 			name: "from query parameter (disabled for security #706)",
 			setupRequest: func() *http.Request {
-				return httptest.NewRequest("GET", "/?token=query-token", http.NoBody)
+				return httptest.NewRequest(http.MethodGet, "/?token=query-token", http.NoBody)
 			},
 			expectedToken:  "",
 			expectedSource: "none",
@@ -984,7 +999,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 		{
 			name: "no token",
 			setupRequest: func() *http.Request {
-				return httptest.NewRequest("GET", "/", http.NoBody)
+				return httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 			},
 			expectedToken:  "",
 			expectedSource: "none",
@@ -992,7 +1007,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 		{
 			name: "cookie takes precedence over header",
 			setupRequest: func() *http.Request {
-				req := httptest.NewRequest("GET", "/", http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 				req.AddCookie(&http.Cookie{Name: CookieNameAccess, Value: "cookie-token"})
 				req.Header.Set("Authorization", "Bearer header-token")
 				return req
@@ -1003,7 +1018,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 		{
 			name: "header takes precedence over query",
 			setupRequest: func() *http.Request {
-				req := httptest.NewRequest("GET", "/?token=query-token", http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, "/?token=query-token", http.NoBody)
 				req.Header.Set("Authorization", "Bearer header-token")
 				return req
 			},
@@ -1013,7 +1028,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 		{
 			name: "invalid Authorization header format (query disabled #706)",
 			setupRequest: func() *http.Request {
-				req := httptest.NewRequest("GET", "/?token=query-token", http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, "/?token=query-token", http.NoBody)
 				req.Header.Set("Authorization", "Basic base64encoded")
 				return req
 			},
@@ -1070,21 +1085,21 @@ func newMockUserStore() *mockUserStore {
 	}
 }
 
-func (m *mockUserStore) GetPasswordHash(username string) (string, error) {
+func (m *mockUserStore) GetPasswordHash(_ context.Context, username string) (string, error) {
 	if hash, ok := m.passwords[username]; ok {
 		return hash, nil
 	}
 	return "", ErrInvalidCredentials
 }
 
-func (m *mockUserStore) GetTokenVersion(username string) (int, error) {
+func (m *mockUserStore) GetTokenVersion(_ context.Context, username string) (int, error) {
 	if v, ok := m.tokenVersions[username]; ok {
 		return v, nil
 	}
 	return 0, nil
 }
 
-func (m *mockUserStore) UpdatePassword(username, hash string) error {
+func (m *mockUserStore) UpdatePassword(_ context.Context, username, hash string) error {
 	if m.updateErr != nil {
 		return m.updateErr
 	}
@@ -1092,19 +1107,19 @@ func (m *mockUserStore) UpdatePassword(username, hash string) error {
 	return nil
 }
 
-func (m *mockUserStore) RecordLoginSuccess(_ string) error {
+func (m *mockUserStore) RecordLoginSuccess(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m *mockUserStore) RecordLoginFailure(_ string) error {
+func (m *mockUserStore) RecordLoginFailure(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m *mockUserStore) IsLocked(username string) (bool, error) {
+func (m *mockUserStore) IsLocked(_ context.Context, username string) (bool, error) {
 	return m.locked[username], nil
 }
 
-func TestSetUserStore(t *testing.T) {
+func TestSetUserStore(_ *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
@@ -1118,6 +1133,7 @@ func TestSetUserStore(t *testing.T) {
 func TestAuthenticateWithUserStore(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	store := newMockUserStore()
 	// Add a user to the store
@@ -1128,7 +1144,7 @@ func TestAuthenticateWithUserStore(t *testing.T) {
 	m.SetUserStore(store)
 
 	// Should be able to authenticate with store user
-	token, err := m.Authenticate("storeuser", "storepassword")
+	token, err := m.Authenticate(ctx, "storeuser", "storepassword")
 	if err != nil {
 		t.Errorf("expected successful auth with store user, got %v", err)
 	}
@@ -1140,6 +1156,7 @@ func TestAuthenticateWithUserStore(t *testing.T) {
 func TestAuthenticateWithLockedUser(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	store := newMockUserStore()
 	hash, _ := HashPassword("password")
@@ -1149,8 +1166,8 @@ func TestAuthenticateWithLockedUser(t *testing.T) {
 	m.SetUserStore(store)
 
 	// Should fail for locked user (returns ErrInvalidCredentials per security best practice)
-	_, err := m.Authenticate("lockeduser", "password")
-	if err != ErrInvalidCredentials {
+	_, err := m.Authenticate(ctx, "lockeduser", "password")
+	if !errors.Is(err, ErrInvalidCredentials) {
 		t.Errorf("expected ErrInvalidCredentials for locked user, got %v", err)
 	}
 }
@@ -1158,9 +1175,10 @@ func TestAuthenticateWithLockedUser(t *testing.T) {
 func TestUpdatePasswordHashForUser(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	ctx := context.Background()
 
 	t.Run("no UserStore configured", func(t *testing.T) {
-		err := m.UpdatePasswordHashForUser("testuser", "newhash")
+		err := m.UpdatePasswordHashForUser(ctx, "testuser", "newhash")
 		if err == nil {
 			t.Error("expected error when UserStore not configured")
 		}
@@ -1171,7 +1189,7 @@ func TestUpdatePasswordHashForUser(t *testing.T) {
 		store.passwords["testuser"] = "oldhash"
 		m.SetUserStore(store)
 
-		err := m.UpdatePasswordHashForUser("testuser", "newhash")
+		err := m.UpdatePasswordHashForUser(ctx, "testuser", "newhash")
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -1204,7 +1222,7 @@ func TestCSRFRevokeToken(t *testing.T) {
 
 	// Should no longer be valid (returns ErrCSRFTokenInvalid when session not found)
 	err = mgr.ValidateToken("testsession", token)
-	if err != ErrCSRFTokenInvalid {
+	if !errors.Is(err, ErrCSRFTokenInvalid) {
 		t.Errorf("expected ErrCSRFTokenInvalid after revoke, got %v", err)
 	}
 }
@@ -1220,7 +1238,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	middleware := mgr.CSRFMiddleware(handler)
 
 	t.Run("GET requests bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		rec := httptest.NewRecorder()
 		middleware.ServeHTTP(rec, req)
 
@@ -1230,7 +1248,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	})
 
 	t.Run("HEAD requests bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest("HEAD", "/api/test", http.NoBody)
+		req := httptest.NewRequest(http.MethodHead, "/api/test", http.NoBody)
 		rec := httptest.NewRecorder()
 		middleware.ServeHTTP(rec, req)
 
@@ -1240,7 +1258,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	})
 
 	t.Run("OPTIONS requests bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest("OPTIONS", "/api/test", http.NoBody)
+		req := httptest.NewRequest(http.MethodOptions, "/api/test", http.NoBody)
 		rec := httptest.NewRecorder()
 		middleware.ServeHTTP(rec, req)
 
@@ -1250,7 +1268,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	})
 
 	t.Run("non-API routes bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/static/file.js", http.NoBody)
+		req := httptest.NewRequest(http.MethodPost, "/static/file.js", http.NoBody)
 		rec := httptest.NewRecorder()
 		middleware.ServeHTTP(rec, req)
 
@@ -1260,7 +1278,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	})
 
 	t.Run("login endpoint bypasses CSRF", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/api/auth/login", http.NoBody)
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/login", http.NoBody)
 		rec := httptest.NewRecorder()
 		middleware.ServeHTTP(rec, req)
 
@@ -1270,7 +1288,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	})
 
 	t.Run("setup endpoints bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/api/setup/complete", http.NoBody)
+		req := httptest.NewRequest(http.MethodPost, "/api/setup/complete", http.NoBody)
 		rec := httptest.NewRecorder()
 		middleware.ServeHTTP(rec, req)
 
@@ -1280,7 +1298,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	})
 
 	t.Run("SSO endpoints bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/api/sso/callback", http.NoBody)
+		req := httptest.NewRequest(http.MethodPost, "/api/sso/callback", http.NoBody)
 		rec := httptest.NewRecorder()
 		middleware.ServeHTTP(rec, req)
 
@@ -1290,7 +1308,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	})
 
 	t.Run("POST without session returns 401", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/api/devices", http.NoBody)
+		req := httptest.NewRequest(http.MethodPost, "/api/devices", http.NoBody)
 		rec := httptest.NewRecorder()
 		middleware.ServeHTTP(rec, req)
 
@@ -1302,7 +1320,7 @@ func TestCSRFMiddleware(t *testing.T) {
 
 func TestGetSessionIDFromRequest(t *testing.T) {
 	t.Run("no token returns empty", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		sessionID := GetSessionIDFromRequest(req)
 		if sessionID != "" {
 			t.Errorf("expected empty session ID, got %q", sessionID)
@@ -1310,7 +1328,7 @@ func TestGetSessionIDFromRequest(t *testing.T) {
 	})
 
 	t.Run("valid JWT format extracts session ID", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.Header.Set("Authorization", "Bearer header.payload.signature")
 
 		sessionID := GetSessionIDFromRequest(req)
@@ -1320,7 +1338,7 @@ func TestGetSessionIDFromRequest(t *testing.T) {
 	})
 
 	t.Run("cookie token extracts session ID", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/api/test", http.NoBody)
+		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.AddCookie(&http.Cookie{
 			Name:  CookieNameAccess,
 			Value: "header.cookiepayload.signature",

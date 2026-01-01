@@ -38,7 +38,7 @@ func runValidate(cmd *cobra.Command, _ []string) {
 		fmt.Fprintf(os.Stderr, "Error getting strict flag: %v\n", err)
 		os.Exit(1)
 	}
-	outputJSON, err := cmd.Flags().GetBool("json")
+	outputAsJSON, err := cmd.Flags().GetBool("json")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting json flag: %v\n", err)
 		os.Exit(1)
@@ -53,32 +53,32 @@ func runValidate(cmd *cobra.Command, _ []string) {
 	}
 
 	// Check file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(configPath); os.IsNotExist(statErr) {
 		result.Valid = false
 		result.Errors = append(result.Errors, fmt.Sprintf("config file not found: %s", configPath))
-		outputResult(result, outputJSON)
+		outputResult(result, outputAsJSON)
 		os.Exit(1)
 	}
 
 	// Load config
-	cfg, err := config.Load(configPath)
-	if err != nil {
+	cfg, loadErr := config.Load(configPath)
+	if loadErr != nil {
 		result.Valid = false
-		result.Errors = append(result.Errors, fmt.Sprintf("failed to parse config: %v", err))
-		outputResult(result, outputJSON)
+		result.Errors = append(result.Errors, fmt.Sprintf("failed to parse config: %v", loadErr))
+		outputResult(result, outputAsJSON)
 		os.Exit(1)
 	}
 
 	// Run validation
-	if err := cfg.Validate(); err != nil {
+	if validateErr := cfg.Validate(); validateErr != nil {
 		result.Valid = false
-		result.Errors = append(result.Errors, err.Error())
+		result.Errors = append(result.Errors, validateErr.Error())
 	}
 
 	// Add warnings for missing optional configs
 	result.Warnings = checkConfigWarnings(cfg)
 
-	outputResult(result, outputJSON)
+	outputResult(result, outputAsJSON)
 
 	if !result.Valid || (strict && len(result.Warnings) > 0) {
 		os.Exit(1)

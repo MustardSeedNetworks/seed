@@ -95,7 +95,7 @@ async function refreshAccessToken(): Promise<boolean> {
  *
  * @returns Promise resolving to CSRF token or null if fetch fails
  */
-async function fetchCSRFToken(): Promise<string | null> {
+async function fetchCsrfToken(): Promise<string | null> {
   try {
     const response = await fetch(`${API_BASE}/api/auth/csrf`, {
       method: "GET",
@@ -116,11 +116,11 @@ async function fetchCSRFToken(): Promise<string | null> {
  * Gets the current CSRF token, fetching if needed.
  * Returns null if user is not authenticated.
  */
-async function getCSRFToken(): Promise<string | null> {
+async function getCsrfToken(): Promise<string | null> {
   if (csrfToken) {
     return csrfToken;
   }
-  return fetchCSRFToken();
+  return fetchCsrfToken();
 }
 
 /**
@@ -214,7 +214,7 @@ export const api = {
   async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = !isAuthEndpoint ? await getCSRFToken() : null;
+    const token = !isAuthEndpoint ? await getCsrfToken() : null;
 
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
@@ -251,7 +251,7 @@ export const api = {
   async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = !isAuthEndpoint ? await getCSRFToken() : null;
+    const token = !isAuthEndpoint ? await getCsrfToken() : null;
 
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
@@ -287,7 +287,7 @@ export const api = {
   async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = !isAuthEndpoint ? await getCSRFToken() : null;
+    const token = !isAuthEndpoint ? await getCsrfToken() : null;
 
     const makeRequest = () => {
       const headers = new Headers(init?.headers);

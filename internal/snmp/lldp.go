@@ -7,6 +7,7 @@ package snmp
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -53,7 +54,7 @@ type LLDPNeighbor struct {
 // Security: SNMPv3 is preferred over v2c when both are configured.
 func GetLLDPNeighbors(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]LLDPNeighbor, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try SNMPv3 credentials first (more secure).
@@ -72,7 +73,7 @@ func GetLLDPNeighbors(ctx context.Context, ip string, cfg *config.SNMPConfig) ([
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query LLDP neighbors with all configured credentials")
+	return nil, errors.New("failed to query LLDP neighbors with all configured credentials")
 }
 
 // walkLLDP walks the LLDP-MIB tables using SNMPv2c.
@@ -90,7 +91,7 @@ func walkLLDP(ctx context.Context, ip, community string, cfg *config.SNMPConfig)
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -102,7 +103,12 @@ func walkLLDP(ctx context.Context, ip, community string, cfg *config.SNMPConfig)
 }
 
 // walkLLDPV3 walks the LLDP-MIB tables using SNMPv3.
-func walkLLDPV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]LLDPNeighbor, error) {
+func walkLLDPV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]LLDPNeighbor, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -114,7 +120,7 @@ func walkLLDPV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, c
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
+			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -124,7 +130,7 @@ func walkLLDPV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, c
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -199,7 +205,12 @@ func walkLLDPTable(params *gosnmp.GoSNMP) ([]LLDPNeighbor, error) {
 }
 
 // walkLLDPAttribute walks an LLDP attribute and applies a function.
-func walkLLDPAttribute(params *gosnmp.GoSNMP, oid string, neighbors map[string]*LLDPNeighbor, updateFunc func(*LLDPNeighbor, string)) {
+func walkLLDPAttribute(
+	params *gosnmp.GoSNMP,
+	oid string,
+	neighbors map[string]*LLDPNeighbor,
+	updateFunc func(*LLDPNeighbor, string),
+) {
 	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
 		localPort, remoteIdx := extractLLDPIndex(pdu.Name)
 		if localPort <= 0 || remoteIdx <= 0 {
@@ -221,8 +232,8 @@ func walkLLDPAttribute(params *gosnmp.GoSNMP, oid string, neighbors map[string]*
 }
 
 // extractLLDPIndex extracts local port and remote index from LLDP OID.
-// OID format: ...TimeMark.LocalPortNum.RemoteIndex
-func extractLLDPIndex(oid string) (localPort, remoteIdx int) {
+// OID format: ...TimeMark.LocalPortNum.RemoteIndex.
+func extractLLDPIndex(oid string) (int, int) {
 	parts := strings.Split(oid, ".")
 	if len(parts) < 3 {
 		return 0, 0
@@ -235,7 +246,7 @@ func extractLLDPIndex(oid string) (localPort, remoteIdx int) {
 	}
 
 	// Second to last is LocalPortNum
-	localPort, err = strconv.Atoi(parts[len(parts)-2])
+	localPort, err := strconv.Atoi(parts[len(parts)-2])
 	if err != nil {
 		return 0, 0
 	}
@@ -244,7 +255,7 @@ func extractLLDPIndex(oid string) (localPort, remoteIdx int) {
 }
 
 // formatChassisID formats chassis ID based on its content.
-func formatChassisID(value interface{}) string {
+func formatChassisID(value any) string {
 	bytes, ok := value.([]byte)
 	if !ok {
 		return fmt.Sprintf("%v", value)
@@ -295,9 +306,9 @@ func parseChassisIDSubtype(value string) string {
 	case "6":
 		return "interfaceName"
 	case "7":
-		return "local"
+		return IDSubtypeLocal
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }
 
@@ -317,8 +328,8 @@ func parsePortIDSubtype(value string) string {
 	case "6":
 		return "agentCircuitId"
 	case "7":
-		return "local"
+		return IDSubtypeLocal
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }

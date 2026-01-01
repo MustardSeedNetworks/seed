@@ -4,19 +4,19 @@ import (
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/sap/cable"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/sap/dns"
-	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/roots/publicip"
+	"github.com/krisarmstrong/seed/internal/sap/cable"
+	"github.com/krisarmstrong/seed/internal/sap/dns"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/sap/speedtest"
-	"github.com/krisarmstrong/seed/internal/testutil"
 	"github.com/krisarmstrong/seed/internal/sap/vlan"
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
+	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 // NewTestServer creates a minimal server instance for testing.
@@ -46,18 +46,23 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 
 	// Create server with all required managers
 	s := &Server{
-		config:              cfg,
-		configPath:          "/tmp/test-config.yaml",
-		logPath:             "/tmp/test.log",
-		mux:                 http.NewServeMux(),
-		netManager:          netMgr,
-		icmpAvailable:       true,
-		authManager:         auth.NewManager(cfg.Auth.JWTSecret, cfg.Auth.SessionTimeout, cfg.Auth.DefaultUsername, cfg.Auth.DefaultPasswordHash),
+		config:        cfg,
+		configPath:    "/tmp/test-config.yaml",
+		logPath:       "/tmp/test.log",
+		mux:           http.NewServeMux(),
+		netManager:    netMgr,
+		icmpAvailable: true,
+		authManager: auth.NewManager(
+			cfg.Auth.JWTSecret,
+			cfg.Auth.SessionTimeout,
+			cfg.Auth.DefaultUsername,
+			cfg.Auth.DefaultPasswordHash,
+		),
 		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
 		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()),
-		linkMonitor:      network.NewLinkMonitor(cfg.Interface.Default),
-		deviceDiscovery:  discovery.NewDeviceDiscovery(cfg.Interface.Default),
-		discoveryService: discovery.NewService(cfg, cfg.Interface.Default, nil), // nil profiler = use internal
+		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
+		deviceDiscovery:     discovery.NewDeviceDiscovery(cfg.Interface.Default),
+		discoveryService:    discovery.NewService(cfg, cfg.Interface.Default, nil), // nil profiler = use internal
 		dnsTester:           dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dhcpMonitor:         dhcp.NewMonitor(cfg.Interface.Default),
 		gatewayTester:       gateway.NewTester(gateway.DefaultThresholds()),

@@ -62,7 +62,7 @@ func (s *testEndpointServer) testStatusEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /api/status failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -84,13 +84,13 @@ func (s *testEndpointServer) testSettingsEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /api/settings failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
 	}
 
-	var settings map[string]interface{}
+	var settings map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&settings); err != nil {
 		t.Errorf("Failed to decode settings response: %v", err)
 	}
@@ -102,13 +102,13 @@ func (s *testEndpointServer) testInterfacesEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /api/interfaces failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
 	}
 
-	var interfaces []interface{}
+	var interfaces []any
 	if err := json.NewDecoder(resp.Body).Decode(&interfaces); err != nil {
 		t.Errorf("Failed to decode interfaces response: %v", err)
 	}
@@ -122,7 +122,7 @@ func (s *testEndpointServer) testSNMPSettingsEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /api/snmp/settings failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -147,7 +147,7 @@ func (s *testEndpointServer) testWiFiSettingsEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /api/wifi/settings failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusServiceUnavailable {
 		t.Errorf("Unexpected status code: %d", resp.StatusCode)
@@ -160,7 +160,7 @@ func (s *testEndpointServer) testIPConfigEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /api/ipconfig failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	validCodes := resp.StatusCode == http.StatusOK ||
 		resp.StatusCode == http.StatusNotFound ||
@@ -183,13 +183,13 @@ func (s *testEndpointServer) testSystemHealthEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /api/system/health failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
 	}
 
-	var health map[string]interface{}
+	var health map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
 		t.Errorf("Failed to decode health response: %v", err)
 	}
@@ -201,7 +201,7 @@ func (s *testEndpointServer) testSystemHealthEndpoint(t *testing.T) {
 		}
 	}
 
-	if systemHealth, ok := health["system"].(map[string]interface{}); ok {
+	if systemHealth, ok := health["system"].(map[string]any); ok {
 		systemFields := []string{"cpuPercent", "memoryPercent"}
 		for _, field := range systemFields {
 			if _, ok := systemHealth[field]; !ok {
@@ -282,7 +282,7 @@ func TestWebSocketHub(t *testing.T) {
 // 	if err != nil {
 // 		t.Fatalf("PUT /api/settings failed: %v", err)
 // 	}
-// 	defer resp.Body.Close()
+// 	defer func() { _ = resp.Body.Close() }()
 //
 // 	if resp.StatusCode != http.StatusOK {
 // 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -312,7 +312,7 @@ func TestDevicesEndpoints(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GET /api/devices failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -324,7 +324,7 @@ func TestDevicesEndpoints(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GET /api/devices/status failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -336,7 +336,7 @@ func TestDevicesEndpoints(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GET /api/devices/settings failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -359,7 +359,7 @@ func TestDevicesEndpoints(t *testing.T) {
 		if err != nil {
 			t.Fatalf("POST /api/devices/scan failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		// Should accept the request (may fail to actually scan without network)
 		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusServiceUnavailable {
@@ -390,7 +390,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GET /api/health-checks/settings failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -419,7 +419,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		if err != nil {
 			t.Fatalf("PUT /api/health-checks/settings failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)

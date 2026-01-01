@@ -11,16 +11,22 @@ import (
 func (s *Server) registerWiFiTools(isAllowed func(string) bool) {
 	// wifi_scan - Scan for WiFi networks
 	s.addTool("wifi_scan", isAllowed,
-		mcp.NewTool("wifi_scan",
-			mcp.WithDescription("Scan for available WiFi networks. Returns a list of networks with SSID, BSSID, signal strength, channel, frequency, and security type. Networks are sorted by signal strength (strongest first)."),
+		mcp.NewTool(
+			"wifi_scan",
+			mcp.WithDescription(
+				"Scan for available WiFi networks. Returns a list of networks with SSID, BSSID, signal strength, channel, frequency, and security type. Networks are sorted by signal strength (strongest first).",
+			),
 		),
 		s.handleWiFiScan,
 	)
 
 	// wifi_info - Get current WiFi connection info
 	s.addTool("wifi_info", isAllowed,
-		mcp.NewTool("wifi_info",
-			mcp.WithDescription("Get information about the current WiFi connection including SSID, BSSID, signal strength, channel, and security type. Returns null if not connected to WiFi."),
+		mcp.NewTool(
+			"wifi_info",
+			mcp.WithDescription(
+				"Get information about the current WiFi connection including SSID, BSSID, signal strength, channel, and security type. Returns null if not connected to WiFi.",
+			),
 		),
 		s.handleWiFiInfo,
 	)

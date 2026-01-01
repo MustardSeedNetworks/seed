@@ -6,6 +6,7 @@
 package gateway
 
 import (
+	"fmt"
 	"net"
 	"syscall"
 
@@ -21,7 +22,7 @@ type RouteInfo struct {
 }
 
 // extractRouteIP extracts IP address and family from a route address.
-func extractRouteIP(addr route.Addr) (ip, family string) {
+func extractRouteIP(addr route.Addr) (string, string) {
 	switch a := addr.(type) {
 	case *route.Inet4Addr:
 		return net.IP(a.IP[:]).String(), "inet"
@@ -62,12 +63,12 @@ func parseRouteMessage(rm *route.RouteMessage) *RouteInfo {
 func GetAllRoutes() ([]RouteInfo, error) {
 	rib, err := route.FetchRIB(syscall.AF_UNSPEC, syscall.NET_RT_DUMP, 0)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch RIB: %w", err)
 	}
 
 	msgs, err := route.ParseRIB(syscall.NET_RT_DUMP, rib)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse RIB: %w", err)
 	}
 
 	var routes []RouteInfo
@@ -87,12 +88,12 @@ func GetAllRoutes() ([]RouteInfo, error) {
 func GetDefaultGatewayInterface() (string, error) {
 	rib, err := route.FetchRIB(syscall.AF_INET, syscall.NET_RT_DUMP, 0)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("fetch RIB: %w", err)
 	}
 
 	msgs, err := route.ParseRIB(syscall.NET_RT_DUMP, rib)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse RIB: %w", err)
 	}
 
 	for _, msg := range msgs {
@@ -102,7 +103,7 @@ func GetDefaultGatewayInterface() (string, error) {
 		}
 
 		if isDefaultRouteMsg(rm, syscall.AF_INET) && rm.Index > 0 {
-			if iface, err := net.InterfaceByIndex(rm.Index); err == nil {
+			if iface, ifaceErr := net.InterfaceByIndex(rm.Index); ifaceErr == nil {
 				return iface.Name, nil
 			}
 		}
@@ -116,12 +117,12 @@ func GetDefaultGatewayInterface() (string, error) {
 func detectGatewayPlatform() (string, error) {
 	rib, err := route.FetchRIB(syscall.AF_INET, syscall.NET_RT_DUMP, 0)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("fetch RIB: %w", err)
 	}
 
 	msgs, err := route.ParseRIB(syscall.NET_RT_DUMP, rib)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse RIB: %w", err)
 	}
 
 	for _, msg := range msgs {
@@ -137,7 +138,7 @@ func detectGatewayPlatform() (string, error) {
 		// Get gateway address
 		if len(rm.Addrs) > syscall.RTAX_GATEWAY {
 			if gw := rm.Addrs[syscall.RTAX_GATEWAY]; gw != nil {
-				if a, ok := gw.(*route.Inet4Addr); ok {
+				if a, addrOK := gw.(*route.Inet4Addr); addrOK {
 					return net.IP(a.IP[:]).String(), nil
 				}
 			}
@@ -172,12 +173,12 @@ func extractIPv6Gateway(rm *route.RouteMessage, skipLinkLocal bool) string {
 func detectGatewayIPv6Platform() (string, error) {
 	rib, err := route.FetchRIB(syscall.AF_INET6, syscall.NET_RT_DUMP, 0)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("fetch IPv6 RIB: %w", err)
 	}
 
 	msgs, err := route.ParseRIB(syscall.NET_RT_DUMP, rib)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse IPv6 RIB: %w", err)
 	}
 
 	// First pass: prefer non-link-local addresses

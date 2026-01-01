@@ -1,5 +1,4 @@
 //go:build dev
-// +build dev
 
 // Package ui provides the frontend assets for development builds.
 // In dev mode, assets are read from disk to support hot-reload.

@@ -25,7 +25,6 @@
  * ```
  */
 
-// biome-ignore lint/style/useNamingConvention: JSZip is a third-party library name
 import JSZip from "jszip";
 
 /** Location point from AirMapper */

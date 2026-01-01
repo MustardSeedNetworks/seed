@@ -463,9 +463,9 @@ func TestExtractThroughputValue_Nil(t *testing.T) {
 }
 
 func TestExtractMapValue(t *testing.T) {
-	data := map[string]interface{}{
-		"networks": []interface{}{
-			map[string]interface{}{
+	data := map[string]any{
+		"networks": []any{
+			map[string]any{
 				"rssi": float64(-55),
 			},
 		},
@@ -495,7 +495,7 @@ func TestExtractMapValue(t *testing.T) {
 }
 
 func TestExtractMapValue_IntValue(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"rssi": int(-60),
 	}
 
@@ -506,7 +506,7 @@ func TestExtractMapValue_IntValue(t *testing.T) {
 }
 
 func TestExtractMapValue_Missing(t *testing.T) {
-	data := map[string]interface{}{}
+	data := map[string]any{}
 
 	result := extractMapValue(data, "rssi")
 	if !math.IsNaN(result) {

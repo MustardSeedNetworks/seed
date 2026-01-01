@@ -4,6 +4,7 @@ package snmp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -45,7 +46,7 @@ type IPAddressEntry struct {
 // It tries the modern ipAddressTable first, then falls back to legacy ipAddrTable.
 func GetIPAddresses(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try modern ipAddressTable first (supports IPv6).
@@ -78,7 +79,7 @@ func getIPAddrTable(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]I
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query ipAddrTable with all configured credentials")
+	return nil, errors.New("failed to query ipAddrTable with all configured credentials")
 }
 
 // walkIPAddrTable walks the legacy ipAddrTable using SNMPv2c.
@@ -96,7 +97,7 @@ func walkIPAddrTable(ctx context.Context, ip, community string, cfg *config.SNMP
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -108,7 +109,12 @@ func walkIPAddrTable(ctx context.Context, ip, community string, cfg *config.SNMP
 }
 
 // walkIPAddrTableV3 walks the legacy ipAddrTable using SNMPv3.
-func walkIPAddrTableV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
+func walkIPAddrTableV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]IPAddressEntry, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -120,7 +126,7 @@ func walkIPAddrTableV3(ctx context.Context, ip string, cred *config.SNMPv3Creden
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
+			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -130,7 +136,7 @@ func walkIPAddrTableV3(ctx context.Context, ip string, cred *config.SNMPv3Creden
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -177,8 +183,8 @@ func walkLegacyIPTable(params *gosnmp.GoSNMP) ([]IPAddressEntry, error) {
 			return nil
 		}
 
-		ifIndex, err := strconv.Atoi(formatSNMPValue(pdu))
-		if err == nil {
+		ifIndex, parseErr := strconv.Atoi(formatSNMPValue(pdu))
+		if parseErr == nil {
 			entry.IfIndex = ifIndex
 		}
 		return nil
@@ -237,7 +243,7 @@ func getIPAddressTable(ctx context.Context, ip string, cfg *config.SNMPConfig) (
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query ipAddressTable with all configured credentials")
+	return nil, errors.New("failed to query ipAddressTable with all configured credentials")
 }
 
 // walkIPAddressTable walks the modern ipAddressTable using SNMPv2c.
@@ -255,7 +261,7 @@ func walkIPAddressTable(ctx context.Context, ip, community string, cfg *config.S
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -267,7 +273,12 @@ func walkIPAddressTable(ctx context.Context, ip, community string, cfg *config.S
 }
 
 // walkIPAddressTableV3 walks the modern ipAddressTable using SNMPv3.
-func walkIPAddressTableV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]IPAddressEntry, error) {
+func walkIPAddressTableV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]IPAddressEntry, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -279,7 +290,7 @@ func walkIPAddressTableV3(ctx context.Context, ip string, cred *config.SNMPv3Cre
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
+			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -289,7 +300,7 @@ func walkIPAddressTableV3(ctx context.Context, ip string, cred *config.SNMPv3Cre
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -353,7 +364,12 @@ func walkModernIPTable(params *gosnmp.GoSNMP) ([]IPAddressEntry, error) {
 }
 
 // walkIPAddressAttribute walks an IP address table attribute and applies a function.
-func walkIPAddressAttribute(params *gosnmp.GoSNMP, oid string, entries map[string]*IPAddressEntry, updateFunc func(*IPAddressEntry, string)) {
+func walkIPAddressAttribute(
+	params *gosnmp.GoSNMP,
+	oid string,
+	entries map[string]*IPAddressEntry,
+	updateFunc func(*IPAddressEntry, string),
+) {
 	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
 		ipAddr, _ := parseIPAddressFromOID(pdu.Name)
 		if ipAddr == "" {
@@ -421,7 +437,7 @@ func formatIPv6FromOctets(octets []string) string {
 
 	// Build IPv6 in standard format.
 	groups := make([]string, 8)
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		high, err1 := strconv.Atoi(octets[i*2])
 		low, err2 := strconv.Atoi(octets[i*2+1])
 		if err1 != nil || err2 != nil {
@@ -466,7 +482,7 @@ func parseIPAddressType(value string) string {
 	case "3":
 		return "broadcast"
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }
 
@@ -474,7 +490,7 @@ func parseIPAddressType(value string) string {
 func parseIPAddressOrigin(value string) string {
 	switch value {
 	case "1":
-		return "other"
+		return MACTypeOther
 	case "2":
 		return "manual"
 	case "4":
@@ -484,7 +500,7 @@ func parseIPAddressOrigin(value string) string {
 	case "6":
 		return "random"
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }
 
@@ -500,7 +516,7 @@ func parseIPAddressStatus(value string) string {
 	case "4":
 		return "inaccessible"
 	case "5":
-		return "unknown"
+		return StatusUnknown
 	case "6":
 		return "tentative"
 	case "7":
@@ -508,6 +524,6 @@ func parseIPAddressStatus(value string) string {
 	case "8":
 		return "optimistic"
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }

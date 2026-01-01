@@ -25,14 +25,14 @@ type ClientLogRequest struct {
 
 // ClientLogEntry represents a single log entry from the frontend.
 type ClientLogEntry struct {
-	Timestamp string                 `json:"timestamp"`
-	Level     string                 `json:"level"`
-	Component string                 `json:"component"`
-	Message   string                 `json:"message"`
-	RequestID string                 `json:"request_id,omitempty"`
-	SessionID string                 `json:"session_id,omitempty"`
-	Metadata  map[string]interface{} `json:"metadata,omitempty"`
-	Stack     string                 `json:"stack,omitempty"`
+	Timestamp string         `json:"timestamp"`
+	Level     string         `json:"level"`
+	Component string         `json:"component"`
+	Message   string         `json:"message"`
+	RequestID string         `json:"request_id,omitempty"`
+	SessionID string         `json:"session_id,omitempty"`
+	Metadata  map[string]any `json:"metadata,omitempty"`
+	Stack     string         `json:"stack,omitempty"`
 }
 
 // LogQueryResponse represents the response for log queries.
@@ -60,7 +60,14 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -70,13 +77,27 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 	var req ClientLogRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.logs.notInitialized"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -103,7 +124,7 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 		broadcaster.Write(logEntry)
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"status":   "accepted",
 		"received": len(req.Entries),
 	})
@@ -168,10 +189,7 @@ func paginateLogs(logs []*logging.LogEntry, offset, limit int) []*logging.LogEnt
 	if offset >= len(logs) {
 		return nil
 	}
-	end := offset + limit
-	if end > len(logs) {
-		end = len(logs)
-	}
+	end := min(offset+limit, len(logs))
 	return logs[offset:end]
 }
 
@@ -183,7 +201,14 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -208,7 +233,14 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	// Fall back to memory buffer
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.logs.notInitialized"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -282,13 +314,27 @@ func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.logs.notInitialized"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -335,13 +381,27 @@ func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.logs.notInitialized"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.logs.notInitialized"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -353,7 +413,7 @@ func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logs := broadcaster.GetRecentLogs(limit)
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"logs":  logs,
 		"count": len(logs),
 	})

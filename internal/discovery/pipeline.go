@@ -6,8 +6,10 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"sync"
 	"time"
 
@@ -221,10 +223,10 @@ type PipelineResolutionConfig struct {
 
 // PipelinePhaseConfig controls which phases are executed.
 type PipelinePhaseConfig struct {
-	Enumeration      bool `yaml:"enumeration" json:"enumeration"`            // Always true - core functionality
-	NameResolution   bool `yaml:"name_resolution" json:"nameResolution"`     // Default: true
+	Enumeration      bool `yaml:"enumeration"       json:"enumeration"`      // Always true - core functionality
+	NameResolution   bool `yaml:"name_resolution"   json:"nameResolution"`   // Default: true
 	ServiceDiscovery bool `yaml:"service_discovery" json:"serviceDiscovery"` // Default: false (passive only)
-	VulnAssessment   bool `yaml:"vuln_assessment" json:"vulnAssessment"`     // Default: false
+	VulnAssessment   bool `yaml:"vuln_assessment"   json:"vulnAssessment"`   // Default: false
 }
 
 // PipelineTiming controls scan rate limiting.
@@ -277,14 +279,14 @@ type SNMPCollectionConfig struct {
 
 // SNMPMIBSelection controls which MIBs are collected.
 type SNMPMIBSelection struct {
-	System      bool `yaml:"system" json:"system"`            // SNMPv2-MIB::system (always on)
-	Interfaces  bool `yaml:"interfaces" json:"interfaces"`    // IF-MIB (ifTable, ifXTable)
+	System      bool `yaml:"system"       json:"system"`      // SNMPv2-MIB::system (always on)
+	Interfaces  bool `yaml:"interfaces"   json:"interfaces"`  // IF-MIB (ifTable, ifXTable)
 	IPAddresses bool `yaml:"ip_addresses" json:"ipAddresses"` // IP-MIB (ipAddrTable)
-	Routing     bool `yaml:"routing" json:"routing"`          // IP-FORWARD-MIB
-	Bridge      bool `yaml:"bridge" json:"bridge"`            // BRIDGE-MIB (MAC table)
-	Entity      bool `yaml:"entity" json:"entity"`            // ENTITY-MIB (physical inventory)
-	LLDP        bool `yaml:"lldp" json:"lldp"`                // LLDP-MIB
-	VLAN        bool `yaml:"vlan" json:"vlan"`                // Q-BRIDGE-MIB
+	Routing     bool `yaml:"routing"      json:"routing"`     // IP-FORWARD-MIB
+	Bridge      bool `yaml:"bridge"       json:"bridge"`      // BRIDGE-MIB (MAC table)
+	Entity      bool `yaml:"entity"       json:"entity"`      // ENTITY-MIB (physical inventory)
+	LLDP        bool `yaml:"lldp"         json:"lldp"`        // LLDP-MIB
+	VLAN        bool `yaml:"vlan"         json:"vlan"`        // Q-BRIDGE-MIB
 }
 
 // PipelinePersistenceConfig controls database storage.
@@ -369,7 +371,11 @@ type Phase interface {
 
 	// Run executes the phase with the given devices from the previous phase.
 	// Returns updated devices and any errors encountered.
-	Run(ctx context.Context, devices []*DiscoveredDevice, progressCh chan<- PhaseProgressPayload) ([]*DiscoveredDevice, error)
+	Run(
+		ctx context.Context,
+		devices []*DiscoveredDevice,
+		progressCh chan<- PhaseProgressPayload,
+	) ([]*DiscoveredDevice, error)
 }
 
 // EventBroadcaster is an interface for broadcasting pipeline events.
@@ -399,7 +405,12 @@ type Pipeline struct {
 }
 
 // NewPipeline creates a new discovery pipeline.
-func NewPipeline(config *PipelineConfig, deviceDiscovery *DeviceDiscovery, profiler *DeviceProfiler, broadcaster EventBroadcaster) *Pipeline {
+func NewPipeline(
+	config *PipelineConfig,
+	deviceDiscovery *DeviceDiscovery,
+	profiler *DeviceProfiler,
+	broadcaster EventBroadcaster,
+) *Pipeline {
 	// Create resolution config from pipeline settings
 	resConfig := &ResolutionConfig{
 		DNS:     config.Resolution.DNS,
@@ -457,7 +468,7 @@ func (p *Pipeline) Start(ctx context.Context, trigger string) (*PipelineRun, err
 	defer p.mu.Unlock()
 
 	if p.currentRun != nil && isRunningState(p.currentRun.Status) {
-		return nil, fmt.Errorf("pipeline already running")
+		return nil, errors.New("pipeline already running")
 	}
 
 	// Create new run
@@ -494,7 +505,7 @@ func (p *Pipeline) Cancel() error {
 
 	if p.currentRun == nil || p.cancelFunc == nil {
 		p.mu.Unlock()
-		return fmt.Errorf("no pipeline running")
+		return errors.New("no pipeline running")
 	}
 
 	// Capture run ID before cancellation for the run() goroutine to check
@@ -527,9 +538,7 @@ func (p *Pipeline) GetStatus() *PipelineRun {
 	run := *p.currentRun
 	if p.currentRun.PhaseDurations != nil {
 		run.PhaseDurations = make(map[string]time.Duration, len(p.currentRun.PhaseDurations))
-		for k, v := range p.currentRun.PhaseDurations {
-			run.PhaseDurations[k] = v
-		}
+		maps.Copy(run.PhaseDurations, p.currentRun.PhaseDurations)
 	}
 	if p.currentRun.Errors != nil {
 		run.Errors = make([]string, len(p.currentRun.Errors))
@@ -555,7 +564,7 @@ func (p *Pipeline) UpdateConfig(config *PipelineConfig) error {
 		p.currentRun.Status == PipelineStateResolving ||
 		p.currentRun.Status == PipelineStateScanning ||
 		p.currentRun.Status == PipelineStateAssessing) {
-		return fmt.Errorf("cannot update config while pipeline is running")
+		return errors.New("cannot update config while pipeline is running")
 	}
 
 	// Apply timing profile if set
@@ -571,7 +580,6 @@ func (p *Pipeline) UpdateConfig(config *PipelineConfig) error {
 	if p.config.Resolution.DNS != config.Resolution.DNS ||
 		p.config.Resolution.NetBIOS != config.Resolution.NetBIOS ||
 		p.config.Resolution.MDNS != config.Resolution.MDNS {
-
 		resConfig := &ResolutionConfig{
 			DNS:     config.Resolution.DNS,
 			NetBIOS: config.Resolution.NetBIOS,
@@ -620,9 +628,7 @@ func (p *Pipeline) run(ctx context.Context) {
 		status := p.currentRun.Status
 		startedAt := p.currentRun.StartedAt
 		phaseDurations := make(map[string]time.Duration, len(p.currentRun.PhaseDurations))
-		for k, v := range p.currentRun.PhaseDurations {
-			phaseDurations[k] = v
-		}
+		maps.Copy(phaseDurations, p.currentRun.PhaseDurations)
 		onComplete := p.onComplete // Capture callback under lock
 		p.mu.Unlock()
 
@@ -712,7 +718,7 @@ func (p *Pipeline) runEnumerationPhase(ctx context.Context, phaseNumber int) ([]
 	if err := p.deviceDiscovery.Scan(ctx); err != nil {
 		// ErrScanInProgress is a soft error - just means another scan was running
 		// Continue with existing device data rather than failing the pipeline
-		if err == ErrScanInProgress {
+		if errors.Is(err, ErrScanInProgress) {
 			slog.Warn("Pipeline enumeration: scan skipped - using existing device data")
 		} else {
 			return nil, fmt.Errorf("enumeration failed: %w", err)
@@ -744,7 +750,11 @@ func (p *Pipeline) runEnumerationPhase(ctx context.Context, phaseNumber int) ([]
 
 // runResolutionPhase executes the name resolution phase.
 // Uses DNS, NetBIOS, and mDNS to resolve device hostnames.
-func (p *Pipeline) runResolutionPhase(ctx context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
+func (p *Pipeline) runResolutionPhase(
+	ctx context.Context,
+	devices []*DiscoveredDevice,
+	phaseNumber int,
+) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	totalPhases := p.countEnabledPhases()
 
@@ -805,8 +815,12 @@ func (p *Pipeline) runResolutionPhase(ctx context.Context, devices []*Discovered
 
 // runScanningPhase executes the service discovery phase.
 //
-//nolint:gocyclo // Scanning phase requires polling loop with context cancellation and timeout handling.
-func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
+
+func (p *Pipeline) runScanningPhase(
+	ctx context.Context,
+	devices []*DiscoveredDevice,
+	phaseNumber int,
+) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	totalPhases := p.countEnabledPhases()
 
@@ -834,7 +848,7 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 		// Queue devices for profiling
 		for _, device := range devices {
 			if device.IP != "" {
-				p.profiler.QueueProfile(device.IP)
+				_ = p.profiler.QueueProfile(device.IP)
 			}
 		}
 
@@ -941,7 +955,11 @@ func (p *Pipeline) runScanningPhase(ctx context.Context, devices []*DiscoveredDe
 // runAssessmentPhase executes the vulnerability assessment phase.
 //
 //nolint:unparam // Error return kept for interface consistency with other phase methods.
-func (p *Pipeline) runAssessmentPhase(_ context.Context, devices []*DiscoveredDevice, phaseNumber int) ([]*DiscoveredDevice, error) {
+func (p *Pipeline) runAssessmentPhase(
+	_ context.Context,
+	devices []*DiscoveredDevice,
+	phaseNumber int,
+) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	totalPhases := p.countEnabledPhases()
 

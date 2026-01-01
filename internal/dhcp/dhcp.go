@@ -113,9 +113,9 @@ func (m *Monitor) Start() error {
 	}
 
 	// Set BPF filter for DHCP traffic (UDP ports 67 and 68)
-	if err := handle.SetBPFFilter("udp and (port 67 or port 68)"); err != nil {
+	if filterErr := handle.SetBPFFilter("udp and (port 67 or port 68)"); filterErr != nil {
 		handle.Close()
-		return err
+		return filterErr
 	}
 
 	m.handle = handle
@@ -520,7 +520,6 @@ func getLeaseInfoDarwin(interfaceName string) (*LeaseInfo, error) {
 
 // parseDarwinLeaseFile parses a macOS DHCP lease file (plist-like format).
 func parseDarwinLeaseFile(path string) *LeaseInfo {
-	//nolint:gosec // G304: path is from known DHCP lease file locations in system directories
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil
@@ -736,7 +735,7 @@ func parseDHClientLeaseLine(line string, info *LeaseInfo) {
 		}
 	case strings.HasPrefix(line, "option domain-name-servers"):
 		val := extractValue(line)
-		for _, dns := range strings.Split(val, ",") {
+		for dns := range strings.SplitSeq(val, ",") {
 			dns = strings.TrimSpace(dns)
 			if dns != "" {
 				info.DNS = append(info.DNS, dns)
@@ -747,12 +746,11 @@ func parseDHClientLeaseLine(line string, info *LeaseInfo) {
 
 // parseDHClientLeaseFile parses a dhclient lease file.
 func parseDHClientLeaseFile(path, _ string) *LeaseInfo {
-	//nolint:gosec // G304: path is from known dhclient lease file locations in system directories
 	file, err := os.Open(path)
 	if err != nil {
 		return nil
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	info := &LeaseInfo{}
 	scanner := bufio.NewScanner(file)
@@ -793,12 +791,11 @@ type leaseFieldMapping struct {
 
 // parseLeaseFileWithMapping parses a lease file using the given field mappings.
 func parseLeaseFileWithMapping(path string, mapping leaseFieldMapping) *LeaseInfo {
-	//nolint:gosec // G304: path is from known DHCP lease file locations in system directories
 	file, err := os.Open(path)
 	if err != nil {
 		return nil
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	info := &LeaseInfo{}
 	scanner := bufio.NewScanner(file)
@@ -806,23 +803,23 @@ func parseLeaseFileWithMapping(path string, mapping leaseFieldMapping) *LeaseInf
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
-		if strings.HasPrefix(line, mapping.serverKey) {
-			info.DHCPServer = strings.TrimPrefix(line, mapping.serverKey)
+		if after, ok := strings.CutPrefix(line, mapping.serverKey); ok {
+			info.DHCPServer = after
 		}
-		if strings.HasPrefix(line, mapping.routerKey) {
-			val := strings.TrimPrefix(line, mapping.routerKey)
+		if after, ok := strings.CutPrefix(line, mapping.routerKey); ok {
+			val := after
 			if parts := strings.Split(val, " "); len(parts) > 0 {
 				info.Gateway = parts[0]
 			}
 		}
-		if strings.HasPrefix(line, mapping.leaseTimeKey) {
-			if lease, err := strconv.Atoi(strings.TrimPrefix(line, mapping.leaseTimeKey)); err == nil {
+		if after, ok := strings.CutPrefix(line, mapping.leaseTimeKey); ok {
+			if lease, parseErr := strconv.Atoi(after); parseErr == nil {
 				info.LeaseTime = lease
 			}
 		}
-		if strings.HasPrefix(line, mapping.dnsKey) {
-			val := strings.TrimPrefix(line, mapping.dnsKey)
-			for _, dns := range strings.Split(val, " ") {
+		if after, ok := strings.CutPrefix(line, mapping.dnsKey); ok {
+			val := after
+			for dns := range strings.SplitSeq(val, " ") {
 				dns = strings.TrimSpace(dns)
 				if dns != "" {
 					info.DNS = append(info.DNS, dns)

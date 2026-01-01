@@ -11,7 +11,7 @@ func TestTCPProber_ProbeTCP(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
-	defer prober.Close()
+	defer func() { _ = prober.Close() }()
 
 	// Test probe to a well-known open port (Google DNS)
 	ctx := context.Background()
@@ -31,7 +31,7 @@ func TestTCPProber_ProbeClosedPort(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
-	defer prober.Close()
+	defer func() { _ = prober.Close() }()
 
 	// Test probe to localhost on unlikely port
 	ctx := context.Background()
@@ -48,7 +48,7 @@ func TestTCPProber_ScanPorts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
-	defer prober.Close()
+	defer func() { _ = prober.Close() }()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

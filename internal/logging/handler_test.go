@@ -22,7 +22,6 @@ func (h *testHandler) Enabled(_ context.Context, _ slog.Level) bool {
 	return true
 }
 
-//nolint:gocritic // hugeParam: slog.Handler interface requires value receiver
 func (h *testHandler) Handle(_ context.Context, r slog.Record) error {
 	h.records = append(h.records, r)
 	return nil
@@ -228,7 +227,7 @@ func TestRedactingHandler_Handle_Maps(t *testing.T) {
 	rh := NewRedactingHandler(inner)
 
 	// Test map[string]interface{}
-	data := map[string]interface{}{
+	data := map[string]any{
 		"username": "john",
 		"password": "secret123",
 		"token":    "abc123",

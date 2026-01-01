@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -337,9 +338,9 @@ func (*Fingerprinter) detectSSHVersion(port int, banner string, sv *ServiceVersi
 		sv.Product = "OpenSSH"
 		sv.Version = match[1]
 		sv.Confidence = 95
-	} else if match := regexp.MustCompile(`ssh-([\d.]+)`).FindStringSubmatch(banner); len(match) > 1 {
+	} else if sshMatch := regexp.MustCompile(`ssh-([\d.]+)`).FindStringSubmatch(banner); len(sshMatch) > 1 {
 		sv.Product = "SSH"
-		sv.Version = match[1]
+		sv.Version = sshMatch[1]
 		sv.Confidence = 80
 	}
 }
@@ -414,17 +415,25 @@ func (*Fingerprinter) detectTelnetVersion(port int, banner string, sv *ServiceVe
 }
 
 // probeTLS probes a port for TLS certificate information.
-func (f *Fingerprinter) probeTLS(_ context.Context, ip string, port int) *TLSInfo {
+func (f *Fingerprinter) probeTLS(ctx context.Context, ip string, port int) *TLSInfo {
 	addr := fmt.Sprintf("%s:%d", ip, port)
 
+	// Use context-aware dialing
 	dialer := &net.Dialer{Timeout: f.timeout}
-	conn, err := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{
-		InsecureSkipVerify: true, // #nosec G402 -- We want to inspect any certificate
-	})
+	rawConn, err := dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
 		return nil
 	}
-	defer conn.Close()
+	// Wrap the raw connection with TLS
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true, // #nosec G402 -- We want to inspect any certificate
+	}
+	conn := tls.Client(rawConn, tlsConfig)
+	if handshakeErr := conn.HandshakeContext(ctx); handshakeErr != nil {
+		_ = rawConn.Close()
+		return nil
+	}
+	defer func() { _ = conn.Close() }()
 
 	state := conn.ConnectionState()
 	if len(state.PeerCertificates) == 0 {
@@ -489,12 +498,7 @@ func tlsVersionString(version uint16) string {
 
 // containsInt checks if an int slice contains a value.
 func containsInt(slice []int, val int) bool {
-	for _, v := range slice {
-		if v == val {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, val)
 }
 
 // quickScan performs a fast port scan to create a minimal DeviceProfile.
@@ -553,17 +557,19 @@ func (f *Fingerprinter) quickScan(ctx context.Context, ip string) *DeviceProfile
 				results <- result
 				return
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 
 			result.open = true
 
 			// Try to grab banner with short timeout
-			_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second)) //nolint:errcheck // Best-effort deadline
+			_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 			buf := make([]byte, 1024)
 
 			// For HTTP ports, send a request first
 			if port == 80 || port == 8080 {
-				_, _ = conn.Write([]byte("HEAD / HTTP/1.0\r\nHost: " + ip + "\r\n\r\n")) //nolint:errcheck // Best-effort request
+				_, _ = conn.Write(
+					[]byte("HEAD / HTTP/1.0\r\nHost: " + ip + "\r\n\r\n"),
+				)
 			}
 
 			n, err := conn.Read(buf)
@@ -618,18 +624,18 @@ func (f *Fingerprinter) getHTTPInfo(ctx context.Context, ip string, port int) *H
 	if err != nil {
 		return nil
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Send HTTP request
 	request := fmt.Sprintf("HEAD / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", ip)
-	_ = conn.SetWriteDeadline(time.Now().Add(f.timeout)) //nolint:errcheck // Best-effort deadline
+	_ = conn.SetWriteDeadline(time.Now().Add(f.timeout))
 	_, err = conn.Write([]byte(request))
 	if err != nil {
 		return nil
 	}
 
 	// Read response
-	_ = conn.SetReadDeadline(time.Now().Add(f.timeout)) //nolint:errcheck // Best-effort deadline
+	_ = conn.SetReadDeadline(time.Now().Add(f.timeout))
 	buf := make([]byte, 2048)
 	n, err := conn.Read(buf)
 	if err != nil || n == 0 {
@@ -642,8 +648,8 @@ func (f *Fingerprinter) getHTTPInfo(ctx context.Context, ip string, port int) *H
 	}
 
 	// Parse headers
-	lines := strings.Split(response, "\r\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(response, "\r\n")
+	for line := range lines {
 		lower := strings.ToLower(line)
 		if strings.HasPrefix(lower, "server:") {
 			info.Server = strings.TrimSpace(line[7:])

@@ -8,8 +8,10 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net"
 	"strings"
 	"sync"
@@ -78,7 +80,7 @@ func (r *MDNSResolver) ResolveIP(ctx context.Context, ip string) (string, error)
 	} else {
 		// IPv6: expand and reverse nibbles + .ip6.arpa
 		// This is more complex, skip for now
-		return "", fmt.Errorf("IPv6 mDNS lookup not implemented")
+		return "", errors.New("IPv6 mDNS lookup not implemented")
 	}
 
 	// Build mDNS query
@@ -158,13 +160,13 @@ func (r *MDNSResolver) sendMDNSQuery(ctx context.Context, query []byte, targetIP
 	if err != nil {
 		return "", fmt.Errorf("dial mDNS: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
-	_ = conn.SetDeadline(time.Now().Add(timeout)) //nolint:errcheck // Best-effort timeout
+	_ = conn.SetDeadline(time.Now().Add(timeout))
 
 	// Send query
-	if _, err := conn.Write(query); err != nil {
-		return "", fmt.Errorf("send query: %w", err)
+	if _, writeErr := conn.Write(query); writeErr != nil {
+		return "", fmt.Errorf("send query: %w", writeErr)
 	}
 
 	// Read response
@@ -196,13 +198,13 @@ func (r *MDNSResolver) sendMDNSQueryForIP(ctx context.Context, query []byte) (st
 	if err != nil {
 		return "", fmt.Errorf("listen mDNS: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
-	_ = conn.SetDeadline(time.Now().Add(timeout)) //nolint:errcheck // Best-effort timeout
+	_ = conn.SetDeadline(time.Now().Add(timeout))
 
 	// Send query to multicast address
-	if _, err := conn.WriteToUDP(query, multicastAddr); err != nil {
-		return "", fmt.Errorf("send query: %w", err)
+	if _, writeErr := conn.WriteToUDP(query, multicastAddr); writeErr != nil {
+		return "", fmt.Errorf("send query: %w", writeErr)
 	}
 
 	// Read responses (devices respond with unicast)
@@ -312,7 +314,11 @@ func buildMDNSQuery(name string, qtype dnsmessage.Type) ([]byte, error) {
 		},
 	}
 
-	return msg.Pack()
+	data, err := msg.Pack()
+	if err != nil {
+		return nil, fmt.Errorf("pack mDNS query: %w", err)
+	}
+	return data, nil
 }
 
 // parseMDNSResponse parses an mDNS response for PTR records.
@@ -347,7 +353,7 @@ func parseMDNSResponse(data []byte) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no PTR record in response")
+	return "", errors.New("no PTR record in response")
 }
 
 // parseMDNSResponseForIP parses an mDNS response for A records.
@@ -379,7 +385,7 @@ func parseMDNSResponseForIP(data []byte) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no A record in response")
+	return "", errors.New("no A record in response")
 }
 
 // MDNSListener passively captures mDNS announcements on the network.
@@ -449,10 +455,10 @@ func (l *MDNSListener) listen() {
 		slog.Error("mDNS: failed to join multicast group", "error", err)
 		return
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Set read buffer
-	_ = conn.SetReadBuffer(65536) //nolint:errcheck // Best-effort buffer sizing
+	_ = conn.SetReadBuffer(65536)
 
 	slog.Info("mDNS listener started", "interface", l.interfaceName)
 
@@ -464,10 +470,11 @@ func (l *MDNSListener) listen() {
 		default:
 		}
 
-		_ = conn.SetReadDeadline(time.Now().Add(time.Second)) //nolint:errcheck // Best-effort timeout
-		n, remoteAddr, err := conn.ReadFromUDP(buf)
-		if err != nil {
-			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+		_ = conn.SetReadDeadline(time.Now().Add(time.Second))
+		n, remoteAddr, readErr := conn.ReadFromUDP(buf)
+		if readErr != nil {
+			var netErr net.Error
+			if errors.As(readErr, &netErr) && netErr.Timeout() {
 				continue
 			}
 			continue
@@ -530,9 +537,7 @@ func (l *MDNSListener) GetNames() map[string]string {
 	defer l.mu.RUnlock()
 
 	result := make(map[string]string, len(l.names))
-	for k, v := range l.names {
-		result[k] = v
-	}
+	maps.Copy(result, l.names)
 	return result
 }
 

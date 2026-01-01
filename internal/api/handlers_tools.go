@@ -45,8 +45,11 @@ func resolveTargetIP(target string) (net.IP, error) {
 	if ip != nil {
 		return ip, nil
 	}
-	// Try to resolve hostname
-	ips, err := net.LookupIP(target)
+	// Try to resolve hostname with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	resolver := &net.Resolver{}
+	ips, err := resolver.LookupIP(ctx, "ip", target)
 	if err != nil || len(ips) == 0 {
 		return nil, errors.New("unable to resolve hostname")
 	}
@@ -81,7 +84,14 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -91,21 +101,42 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	var req TCPProbeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	ip, err := resolveTargetIP(req.Target)
 	if err != nil {
 		logger.Warn("Invalid target", "error", err, "target", req.Target)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.tools.invalidTarget"),
+			"",
+		)
 		return
 	}
 
 	ports, err := validateTCPProbePorts(&req)
 	if err != nil {
 		logger.Warn("Port validation failed", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.portRequired"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.tools.portRequired"),
+			"",
+		)
 		return
 	}
 
@@ -119,10 +150,17 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	prober, err := discovery.NewTCPProber(timeout)
 	if err != nil {
 		logger.Error("Failed to create TCP prober", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.tools.failedToCreateProber"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.tools.failedToCreateProber"),
+			"",
+		)
 		return
 	}
-	defer prober.Close()
+	defer func() { _ = prober.Close() }()
 
 	// Run probes
 	ctx, cancel := context.WithTimeout(r.Context(), timeout*time.Duration(len(ports))+5*time.Second)
@@ -153,7 +191,14 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -163,18 +208,39 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 	var req TracerouteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	if errMsg := validateTracerouteTarget(req.Target); errMsg != "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), errMsg) // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.tools.invalidTarget"),
+			errMsg,
+		) // fixes #694
 		return
 	}
 
 	protocol, maxHops, timeout, port, errMsg := parseTracerouteParams(&req)
 	if errMsg != "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), errMsg) // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.tools.invalidTarget"),
+			errMsg,
+		) // fixes #694
 		return
 	}
 
@@ -207,8 +273,10 @@ func validateTracerouteTarget(target string) string {
 	return ""
 }
 
-func parseTracerouteParams(req *TracerouteRequest) (protocol string, maxHops int, timeout time.Duration, port int, errMsg string) {
-	protocol = req.Protocol
+func parseTracerouteParams(
+	req *TracerouteRequest,
+) (string, int, time.Duration, int, string) {
+	protocol := req.Protocol
 	if protocol == "" {
 		protocol = protoICMP
 	}
@@ -216,17 +284,17 @@ func parseTracerouteParams(req *TracerouteRequest) (protocol string, maxHops int
 		return "", 0, 0, 0, "Protocol must be icmp, udp, or tcp"
 	}
 
-	maxHops = req.MaxHops
+	maxHops := req.MaxHops
 	if maxHops <= 0 || maxHops > 64 {
 		maxHops = 30
 	}
 
-	timeout = time.Duration(req.Timeout) * time.Millisecond
+	timeout := time.Duration(req.Timeout) * time.Millisecond
 	if timeout <= 0 || timeout > 10*time.Second {
 		timeout = 3 * time.Second
 	}
 
-	port = req.Port
+	port := req.Port
 	if port <= 0 {
 		if protocol == protoTCP {
 			port = 80
@@ -253,7 +321,14 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -263,14 +338,28 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 	var req PortScanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	// Validate target
 	if err := validation.ValidateServerAddress(req.Target); err != nil {
 		logger.Warn("Invalid target", "error", err, "target", req.Target)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.tools.invalidTarget"),
+			"",
+		)
 		return
 	}
 
@@ -278,10 +367,17 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 	scanner, err := discovery.NewPortScanner(3 * time.Second)
 	if err != nil {
 		logger.Error("Failed to create port scanner", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.tools.failedToCreateScanner"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.tools.failedToCreateScanner"),
+			"",
+		)
 		return
 	}
-	defer scanner.Close()
+	defer func() { _ = scanner.Close() }()
 
 	// Set timeout for operation
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
@@ -316,7 +412,14 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -328,12 +431,26 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	if req.IP == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.tools.ipRequired"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.tools.ipRequired"),
+			"",
+		) // fixes #694
 		return
 	}
 

@@ -64,9 +64,9 @@ func NewLocalProvider(dbPath string) (*LocalProvider, error) {
 	}
 
 	// Load database if it exists
-	if _, err := os.Stat(dbPath); err == nil {
-		if err := provider.loadDatabase(); err != nil {
-			return nil, fmt.Errorf("failed to load CVE database: %w", err)
+	if _, statErr := os.Stat(dbPath); statErr == nil {
+		if loadErr := provider.loadDatabase(); loadErr != nil {
+			return nil, fmt.Errorf("failed to load CVE database: %w", loadErr)
 		}
 	} else {
 		// Create empty database structure
@@ -84,8 +84,8 @@ func (p *LocalProvider) loadDatabase() error {
 	}
 
 	var db localCVEDatabase
-	if err := json.Unmarshal(data, &db); err != nil {
-		return fmt.Errorf("failed to parse database: %w", err)
+	if unmarshalErr := json.Unmarshal(data, &db); unmarshalErr != nil {
+		return fmt.Errorf("failed to parse database: %w", unmarshalErr)
 	}
 
 	p.mu.Lock()
@@ -96,7 +96,7 @@ func (p *LocalProvider) loadDatabase() error {
 
 	// Parse last updated time
 	if db.LastUpdated != "" {
-		if t, err := time.Parse(time.RFC3339, db.LastUpdated); err == nil {
+		if t, parseErr := time.Parse(time.RFC3339, db.LastUpdated); parseErr == nil {
 			p.lastUpdate = t
 		}
 	}
@@ -114,7 +114,7 @@ func (p *LocalProvider) loadDatabase() error {
 
 		// Parse published date
 		if cve.Published != "" {
-			if t, err := time.Parse(time.RFC3339, cve.Published); err == nil {
+			if t, parseErr := time.Parse(time.RFC3339, cve.Published); parseErr == nil {
 				vuln.Published = t
 			}
 		}
@@ -128,7 +128,12 @@ func (p *LocalProvider) loadDatabase() error {
 		// Also index by vendor:product:version for SearchByProduct
 		if cve.Vendor != "" && cve.Product != "" {
 			for _, ver := range cve.Versions {
-				key := fmt.Sprintf("%s:%s:%s", strings.ToLower(cve.Vendor), strings.ToLower(cve.Product), strings.ToLower(ver))
+				key := fmt.Sprintf(
+					"%s:%s:%s",
+					strings.ToLower(cve.Vendor),
+					strings.ToLower(cve.Product),
+					strings.ToLower(ver),
+				)
 				p.vulnerabilities[key] = append(p.vulnerabilities[key], vuln)
 			}
 			// Also index without version for broader matches
@@ -224,8 +229,8 @@ func (p *LocalProvider) UpdateDatabase(ctx context.Context) error {
 	p.mu.RUnlock()
 
 	if needsReload {
-		if err := p.loadDatabase(); err != nil {
-			return err
+		if loadErr := p.loadDatabase(); loadErr != nil {
+			return loadErr
 		}
 	}
 

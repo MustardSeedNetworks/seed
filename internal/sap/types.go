@@ -130,17 +130,17 @@ const (
 
 // SNMPDevice contains SNMP-collected device information.
 type SNMPDevice struct {
-	IP          string                 `json:"ip"`
-	SysName     string                 `json:"sysName,omitempty"`
-	SysDescr    string                 `json:"sysDescr,omitempty"`
-	SysLocation string                 `json:"sysLocation,omitempty"`
-	SysContact  string                 `json:"sysContact,omitempty"`
-	SysUpTime   time.Duration          `json:"sysUpTime,omitempty"`
-	Interfaces  []SNMPInterface        `json:"interfaces,omitempty"`
-	VLANs       []SNMPVLAN             `json:"vlans,omitempty"`
-	MACTable    []MACTableEntry        `json:"macTable,omitempty"`
-	Custom      map[string]interface{} `json:"custom,omitempty"`
-	CollectedAt time.Time              `json:"collectedAt"`
+	IP          string          `json:"ip"`
+	SysName     string          `json:"sysName,omitempty"`
+	SysDescr    string          `json:"sysDescr,omitempty"`
+	SysLocation string          `json:"sysLocation,omitempty"`
+	SysContact  string          `json:"sysContact,omitempty"`
+	SysUpTime   time.Duration   `json:"sysUpTime,omitempty"`
+	Interfaces  []SNMPInterface `json:"interfaces,omitempty"`
+	VLANs       []SNMPVLAN      `json:"vlans,omitempty"`
+	MACTable    []MACTableEntry `json:"macTable,omitempty"`
+	Custom      map[string]any  `json:"custom,omitempty"`
+	CollectedAt time.Time       `json:"collectedAt"`
 }
 
 // SNMPInterface represents an SNMP-collected interface.

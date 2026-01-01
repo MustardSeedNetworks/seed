@@ -8,8 +8,10 @@ package discovery
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -67,19 +69,20 @@ func (r *NetBIOSResolver) ResolveIP(ctx context.Context, ip string) (string, err
 		}
 	}
 
-	addr := net.JoinHostPort(ip, fmt.Sprintf("%d", netbiosPort))
-	conn, err := net.DialTimeout("udp", addr, timeout)
+	addr := net.JoinHostPort(ip, strconv.Itoa(netbiosPort))
+	dialer := &net.Dialer{Timeout: timeout}
+	conn, err := dialer.DialContext(ctx, "udp", addr)
 	if err != nil {
 		return "", fmt.Errorf("connect to %s: %w", addr, err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Set read/write deadlines
-	_ = conn.SetDeadline(time.Now().Add(timeout)) //nolint:errcheck // Best-effort timeout
+	_ = conn.SetDeadline(time.Now().Add(timeout))
 
 	// Send query
-	if _, err := conn.Write(query); err != nil {
-		return "", fmt.Errorf("send query: %w", err)
+	if _, writeErr := conn.Write(query); writeErr != nil {
+		return "", fmt.Errorf("send query: %w", writeErr)
 	}
 
 	// Read response
@@ -257,19 +260,19 @@ func parseNetBIOSResponse(data []byte) (string, error) {
 
 	offset := 56 // Approximate start of answer data section
 	if offset >= len(data) {
-		return "", fmt.Errorf("no answer section found")
+		return "", errors.New("no answer section found")
 	}
 
 	// Number of names follows the TTL in the answer
 	if offset+1 > len(data) {
-		return "", fmt.Errorf("missing name count")
+		return "", errors.New("missing name count")
 	}
 
 	numNames := int(data[offset])
 	offset++
 
 	if numNames == 0 {
-		return "", fmt.Errorf("no names in response")
+		return "", errors.New("no names in response")
 	}
 
 	// Read names - look for the computer name (suffix 0x00 = Workstation Service)
@@ -291,7 +294,7 @@ func parseNetBIOSResponse(data []byte) (string, error) {
 	}
 
 	if computerName == "" {
-		return "", fmt.Errorf("computer name not found in response")
+		return "", errors.New("computer name not found in response")
 	}
 
 	return computerName, nil

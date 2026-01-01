@@ -4,6 +4,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -444,8 +445,8 @@ func (db *DB) migrate() error {
 			continue
 		}
 
-		if err := db.runMigration(ctx, m); err != nil {
-			return fmt.Errorf("failed to run migration %d (%s): %w", m.Version, m.Description, err)
+		if runErr := db.runMigration(ctx, m); runErr != nil {
+			return fmt.Errorf("failed to run migration %d (%s): %w", m.Version, m.Description, runErr)
 		}
 	}
 
@@ -507,7 +508,7 @@ func (db *DB) MigrationStatus(ctx context.Context) ([]MigrationInfo, error) {
 	defer db.mu.RUnlock()
 
 	if db.closed {
-		return nil, fmt.Errorf("database is closed")
+		return nil, errors.New("database is closed")
 	}
 
 	// Get applied migrations
@@ -517,15 +518,15 @@ func (db *DB) MigrationStatus(ctx context.Context) ([]MigrationInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query migrations: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	applied := make(map[int]time.Time)
 	for rows.Next() {
 		var version int
 		var appliedAt string
 		var desc sql.NullString
-		if err := rows.Scan(&version, &appliedAt, &desc); err != nil {
-			return nil, fmt.Errorf("failed to scan migration row: %w", err)
+		if scanErr := rows.Scan(&version, &appliedAt, &desc); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan migration row: %w", scanErr)
 		}
 		t, parseErr := time.Parse(time.RFC3339, appliedAt)
 		if parseErr != nil {
@@ -535,8 +536,8 @@ func (db *DB) MigrationStatus(ctx context.Context) ([]MigrationInfo, error) {
 		applied[version] = t
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate migration rows: %w", err)
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("failed to iterate migration rows: %w", rowsErr)
 	}
 
 	// Build status list
@@ -571,7 +572,7 @@ func (db *DB) SchemaVersion(ctx context.Context) (int, error) {
 	defer db.mu.RUnlock()
 
 	if db.closed {
-		return 0, fmt.Errorf("database is closed")
+		return 0, errors.New("database is closed")
 	}
 
 	return db.getCurrentVersion(ctx)

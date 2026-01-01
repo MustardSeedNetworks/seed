@@ -5,8 +5,10 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"sync"
 	"time"
 
@@ -164,10 +166,10 @@ func (c *SNMPCollector) SetMaxOIDsPerRequest(maxOIDs int) {
 
 // Collect gathers all enabled MIB data from a device.
 //
-//nolint:gocyclo // SNMP collection requires checking multiple MIB flags and collecting various data types.
+
 func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, error) {
 	if c.config == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	data := &SNMPFullData{
@@ -183,9 +185,7 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 
 	// Always collect system info
 	if c.mibConfig.System {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if sysInfo, err := snmp.GetSystemInfo(collectCtx, ip, c.config); err == nil {
 				mu.Lock()
 				data.System = sysInfo
@@ -196,14 +196,12 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 				data.Errors = append(data.Errors, fmt.Sprintf("system: %v", err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Collect interfaces (IF-MIB)
 	if c.mibConfig.Interfaces {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if interfaces, err := c.collectInterfaces(collectCtx, ip); err == nil {
 				mu.Lock()
 				data.Interfaces = interfaces
@@ -214,14 +212,12 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 				data.Errors = append(data.Errors, fmt.Sprintf("interfaces: %v", err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Collect IP addresses (IP-MIB)
 	if c.mibConfig.IPAddresses {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if ipAddrs, err := c.collectIPAddresses(collectCtx, ip); err == nil {
 				mu.Lock()
 				data.IPAddresses = ipAddrs
@@ -232,14 +228,12 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 				data.Errors = append(data.Errors, fmt.Sprintf("ipAddresses: %v", err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Collect MAC table (BRIDGE-MIB)
 	if c.mibConfig.Bridge {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if macTable, err := c.collectMACTable(collectCtx, ip); err == nil {
 				mu.Lock()
 				data.MACTable = macTable
@@ -250,14 +244,12 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 				data.Errors = append(data.Errors, fmt.Sprintf("macTable: %v", err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Collect VLANs (Q-BRIDGE-MIB)
 	if c.mibConfig.VLAN {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if vlans, err := c.collectVLANs(collectCtx, ip); err == nil {
 				mu.Lock()
 				data.VLANs = vlans
@@ -268,14 +260,12 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 				data.Errors = append(data.Errors, fmt.Sprintf("vlans: %v", err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Collect physical inventory (ENTITY-MIB)
 	if c.mibConfig.Entity {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if entities, err := c.collectInventory(collectCtx, ip); err == nil {
 				mu.Lock()
 				data.Inventory = entities
@@ -286,14 +276,12 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 				data.Errors = append(data.Errors, fmt.Sprintf("inventory: %v", err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Collect LLDP neighbors (LLDP-MIB)
 	if c.mibConfig.LLDP {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if neighbors, err := c.collectLLDPNeighbors(collectCtx, ip); err == nil {
 				mu.Lock()
 				data.LLDPNeighbors = neighbors
@@ -304,14 +292,12 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 				data.Errors = append(data.Errors, fmt.Sprintf("lldp: %v", err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Collect routing table (IP-FORWARD-MIB)
 	if c.mibConfig.Routing {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if routes, err := c.collectRoutes(collectCtx, ip); err == nil {
 				mu.Lock()
 				data.Routing = routes
@@ -322,7 +308,7 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 				data.Errors = append(data.Errors, fmt.Sprintf("routing: %v", err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -334,7 +320,7 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 func (c *SNMPCollector) collectInterfaces(ctx context.Context, ip string) ([]SNMPInterface, error) {
 	interfaces, err := snmp.GetAllInterfaces(ctx, ip, c.config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get interfaces: %w", err)
 	}
 
 	result := make([]SNMPInterface, len(interfaces))
@@ -363,7 +349,7 @@ func (c *SNMPCollector) collectInterfaces(ctx context.Context, ip string) ([]SNM
 func (c *SNMPCollector) collectIPAddresses(ctx context.Context, ip string) ([]SNMPIPAddress, error) {
 	entries, err := snmp.GetIPAddresses(ctx, ip, c.config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get IP addresses: %w", err)
 	}
 
 	result := make([]SNMPIPAddress, len(entries))
@@ -384,7 +370,7 @@ func (c *SNMPCollector) collectIPAddresses(ctx context.Context, ip string) ([]SN
 func (c *SNMPCollector) collectMACTable(ctx context.Context, ip string) ([]SNMPMACEntry, error) {
 	macEntries, err := snmp.GetMACTable(ctx, ip, c.config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get MAC table: %w", err)
 	}
 
 	result := make([]SNMPMACEntry, len(macEntries))
@@ -404,7 +390,7 @@ func (c *SNMPCollector) collectMACTable(ctx context.Context, ip string) ([]SNMPM
 func (c *SNMPCollector) collectVLANs(ctx context.Context, ip string) ([]SNMPVLAN, error) {
 	vlans, err := snmp.GetVLANs(ctx, ip, c.config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get VLANs: %w", err)
 	}
 
 	result := make([]SNMPVLAN, len(vlans))
@@ -425,7 +411,7 @@ func (c *SNMPCollector) collectVLANs(ctx context.Context, ip string) ([]SNMPVLAN
 func (c *SNMPCollector) collectInventory(ctx context.Context, ip string) ([]SNMPEntity, error) {
 	entities, err := snmp.GetPhysicalEntities(ctx, ip, c.config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get physical entities: %w", err)
 	}
 
 	result := make([]SNMPEntity, len(entities))
@@ -455,14 +441,14 @@ func (c *SNMPCollector) collectInventory(ctx context.Context, ip string) ([]SNMP
 func (c *SNMPCollector) collectLLDPNeighbors(ctx context.Context, ip string) ([]SNMPLLDPNeighbor, error) {
 	neighbors, err := snmp.GetLLDPNeighbors(ctx, ip, c.config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get LLDP neighbors: %w", err)
 	}
 
 	result := make([]SNMPLLDPNeighbor, len(neighbors))
 	for i, n := range neighbors {
 		result[i] = SNMPLLDPNeighbor{
 			LocalIfIndex:    n.LocalIfIndex,
-			LocalPortID:     fmt.Sprintf("%d", n.LocalPortNum),
+			LocalPortID:     strconv.Itoa(n.LocalPortNum),
 			RemoteChassisID: n.ChassisID,
 			RemotePortID:    n.PortID,
 			RemoteSysName:   n.SystemName,
@@ -478,7 +464,7 @@ func (c *SNMPCollector) collectLLDPNeighbors(ctx context.Context, ip string) ([]
 func (c *SNMPCollector) collectRoutes(ctx context.Context, ip string) ([]SNMPRoute, error) {
 	routes, err := snmp.GetRoutes(ctx, ip, c.config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get routes: %w", err)
 	}
 
 	result := make([]SNMPRoute, len(routes))
@@ -506,7 +492,7 @@ type CollectorResult struct {
 
 // CollectBatch collects SNMP data from multiple devices concurrently.
 //
-//nolint:dupl // Similar concurrent batch pattern to mdns.go but uses different collector and result types.
+
 func (c *SNMPCollector) CollectBatch(ctx context.Context, ips []string, maxConcurrent int) []CollectorResult {
 	if maxConcurrent <= 0 {
 		maxConcurrent = 10

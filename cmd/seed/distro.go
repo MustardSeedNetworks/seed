@@ -26,7 +26,7 @@ func DetectDistro() *Distro {
 
 func parseOSRelease(content string) *Distro {
 	d := &Distro{}
-	for _, line := range strings.Split(content, "\n") {
+	for line := range strings.SplitSeq(content, "\n") {
 		parts := strings.SplitN(line, "=", 2)
 		if len(parts) != 2 {
 			continue

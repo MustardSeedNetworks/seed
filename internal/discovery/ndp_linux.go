@@ -1,5 +1,4 @@
 //go:build linux
-// +build linux
 
 // Package discovery implements multi-protocol network device discovery.
 // NDP (Neighbor Discovery Protocol) support for Linux enables IPv6 neighbor discovery

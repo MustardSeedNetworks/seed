@@ -173,18 +173,39 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if s.netManager == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Network manager"}), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.network.refreshFailed"),
+			"",
+		)
 		return
 	}
 	// Return only physical interfaces (ethernet and wifi) - excludes loopback, docker, veth, etc.
@@ -199,7 +220,14 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if s.netManager == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Network manager"}), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -215,13 +243,27 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 		var req SetInterfaceRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			logger.Warn("Invalid request body", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusBadRequest,
+				ErrCodeBadRequest,
+				localizer.T("errors.api.invalidRequestBody"),
+				"",
+			)
 			return
 		}
 
 		if err := s.netManager.SetCurrentInterface(req.Interface); err != nil {
 			logger.Warn("Invalid interface", "error", err, "interface", req.Interface)
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.network.invalidInterface"), "")
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusBadRequest,
+				ErrCodeBadRequest,
+				localizer.T("errors.network.invalidInterface"),
+				"",
+			)
 			return
 		}
 
@@ -249,13 +291,20 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			isWireless = s.wifiManager.IsWireless()
 		}
 
-		sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"status":     "ok",
 			"interface":  req.Interface,
 			"isWireless": isWireless,
 		})
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -266,18 +315,39 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if s.netManager == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Network manager"}), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.network.refreshFailed"),
+			"",
+		)
 		return
 	}
 
@@ -287,7 +357,14 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
 	if err != nil {
 		logger.Warn("Interface not found", "error", err, "interface", currentIface)
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+			localizer.T("errors.network.interfaceNotFound"),
+			"",
+		)
 		return
 	}
 
@@ -384,18 +461,39 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if s.netManager == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "Network manager"}), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.network.refreshFailed"),
+			"",
+		)
 		return
 	}
 
@@ -405,7 +503,14 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
 	if err != nil {
 		logger.Warn("Interface not found", "error", err, "interface", currentIface)
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+			localizer.T("errors.network.interfaceNotFound"),
+			"",
+		)
 		return
 	}
 
@@ -455,7 +560,14 @@ func (s *Server) handleIPSettings(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		s.handleIPSettingsPut(w, r, logger, localizer)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -477,20 +589,39 @@ func (s *Server) handleIPSettingsGet(w http.ResponseWriter, _ *http.Request) {
 
 // handleIPSettingsPut updates the IP configuration settings.
 // Accepts optional query parameter: ?interface=eth0.
-func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
+func (s *Server) handleIPSettingsPut(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) {
 	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req IPSettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	// Validate mode
 	if req.Mode != ipModeDHCP && req.Mode != ipModeStatic {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.network.invalidMode"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.network.invalidMode"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -513,7 +644,14 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 		if err := s.netManager.ConfigureStaticIP(currentIface, cfg); err != nil {
 			s.config.Unlock()
 			logger.Error("Failed to configure static IP", "error", err, "interface", currentIface)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.staticConfigFailed"), "")
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusInternalServerError,
+				ErrCodeInternal,
+				localizer.T("errors.network.staticConfigFailed"),
+				"",
+			)
 			return
 		}
 
@@ -545,14 +683,28 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 	// Save config to file (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.config.failedToSave"),
+			"",
+		)
 		return
 	}
 
 	// Refresh interface data
 	if err := s.netManager.RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.network.refreshFailed"),
+			"",
+		)
 		return
 	}
 
@@ -568,7 +720,14 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -578,14 +737,28 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 	var req SetMTURequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	// Validate MTU value
 	if err := validation.ValidateMTU(req.MTU); err != nil {
 		logger.Warn("Invalid MTU value", "error", err, "mtu", req.MTU)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.mtu.invalidRange"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.mtu.invalidRange"),
+			"",
+		)
 		return
 	}
 
@@ -598,7 +771,14 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 	// Set the MTU
 	if err := s.netManager.SetMTU(iface, req.MTU); err != nil {
 		logger.Error("Failed to set MTU", "error", err, "interface", iface, "mtu", req.MTU)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.api.internalError"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.api.internalError"),
+			"",
+		)
 		return
 	}
 
@@ -607,7 +787,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 		slog.Warn("Failed to refresh interfaces after MTU change", "error", err)
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 		"status":    "success",
 		"message":   "MTU updated",
 		"interface": iface,

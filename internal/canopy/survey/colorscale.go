@@ -22,7 +22,7 @@ type ColorStop struct {
 // Predefined color scales for different visualization types.
 // Each scale defines gradient stops for a specific metric range.
 //
-//nolint:dupl // Color scale data definitions are intentionally similar structures.
+
 var (
 	// RSSIColorScale maps signal strength (-100 to -30 dBm) to colors.
 	// Red (weak) -> Yellow (fair) -> Green (strong).
@@ -123,13 +123,13 @@ func interpolateColor(stop1, stop2 ColorStop, value float64) color.RGBA {
 // Accepts both constant values and user-friendly aliases.
 func GetColorScaleByName(name string) *ColorScale {
 	switch name {
-	case string(HeatmapRSSI), "signal":
+	case string(HeatmapRSSI), HeatmapAliasSignal:
 		return &RSSIColorScale
 	case string(HeatmapSNR):
 		return &SNRColorScale
 	case string(HeatmapDensity), "ap_density":
 		return &APDensityColorScale
-	case string(HeatmapInterference), "cochannel":
+	case string(HeatmapInterference), HeatmapAliasCochannel:
 		return &InterferenceColorScale
 	default:
 		return &RSSIColorScale

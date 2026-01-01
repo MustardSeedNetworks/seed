@@ -73,7 +73,14 @@ func (s *Server) handleSSOProviders(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		)
 		return
 	}
 
@@ -89,14 +96,28 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
 	// Get provider from query parameter
 	providerName := r.URL.Query().Get("provider")
 	if providerName == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Missing provider parameter", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"Missing provider parameter",
+			"",
+		)
 		return
 	}
 
@@ -107,7 +128,14 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 			"provider", providerName,
 			"client_ip", s.getClientIP(r),
 			"error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, fmt.Sprintf("Invalid provider: %s", providerName), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			fmt.Sprintf("Invalid provider: %s", providerName),
+			"",
+		)
 		return
 	}
 
@@ -115,7 +143,14 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	state, err := oauth.GenerateState()
 	if err != nil {
 		logger.Error("Failed to generate OAuth state", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to initiate OAuth", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"Failed to initiate OAuth",
+			"",
+		)
 		return
 	}
 
@@ -159,7 +194,14 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	clientIP := s.getClientIP(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
@@ -187,7 +229,7 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Validate state parameter (CSRF protection)
 	stateParam := r.URL.Query().Get("state")
-	if err := oauth.ValidateState(stateCookie.Value, stateParam); err != nil {
+	if validateErr := oauth.ValidateState(stateCookie.Value, stateParam); validateErr != nil {
 		logger.Warn("Invalid OAuth state",
 			"client_ip", clientIP,
 			"event", "auth.sso.invalid_state")
@@ -266,7 +308,7 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 		"event", "auth.sso.success")
 
 	// Generate access and refresh tokens (like login handler does)
-	accessToken, err := s.authManager.GenerateAccessToken(userInfo.Email)
+	accessToken, err := s.authManager.GenerateAccessToken(r.Context(), userInfo.Email)
 	if err != nil {
 		logger.Error("Failed to generate access token",
 			"provider", providerName,
@@ -276,7 +318,7 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refreshToken, err := s.authManager.GenerateRefreshToken(userInfo.Email)
+	refreshToken, err := s.authManager.GenerateRefreshToken(r.Context(), userInfo.Email)
 	if err != nil {
 		logger.Error("Failed to generate refresh token",
 			"provider", providerName,
@@ -353,18 +395,39 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		)
 		return
 	}
 
 	// Security: Require authentication (fixes #757)
 	token, _ := auth.GetTokenFromRequest(r)
 	if token == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusUnauthorized,
+			ErrCodeUnauthorized,
+			"Authentication required",
+			"",
+		)
 		return
 	}
-	if _, err := s.authManager.ValidateToken(token); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Invalid or expired token", "")
+	if _, err := s.authManager.ValidateToken(r.Context(), token); err != nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusUnauthorized,
+			ErrCodeUnauthorized,
+			"Invalid or expired token",
+			"",
+		)
 		return
 	}
 
@@ -376,7 +439,7 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"providers": providers,
 	})
 }
@@ -387,7 +450,14 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	if r.Method != http.MethodPut {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		)
 		return
 	}
 
@@ -398,15 +468,29 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		logger.Warn("Unauthenticated SSO update attempt",
 			"client_ip", clientIP,
 			"event", "auth.sso.blocked")
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusUnauthorized,
+			ErrCodeUnauthorized,
+			"Authentication required",
+			"",
+		)
 		return
 	}
-	if _, err := s.authManager.ValidateToken(token); err != nil {
+	if _, err := s.authManager.ValidateToken(r.Context(), token); err != nil {
 		clientIP := s.getClientIP(r)
 		logger.Warn("Invalid token SSO update attempt",
 			"client_ip", clientIP,
 			"event", "auth.sso.blocked")
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Invalid or expired token", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusUnauthorized,
+			ErrCodeUnauthorized,
+			"Invalid or expired token",
+			"",
+		)
 		return
 	}
 
@@ -459,7 +543,14 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	// Save config
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save SSO config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to save configuration", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"Failed to save configuration",
+			"",
+		)
 		return
 	}
 

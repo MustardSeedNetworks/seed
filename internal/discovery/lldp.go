@@ -52,7 +52,7 @@ func NewLLDPCapture(interfaceName string) *LLDPCapture {
 
 // Start begins capturing LLDP frames.
 //
-//nolint:dupl // CDP/LLDP/EDP capture Start() methods share structure but have protocol-specific filters
+
 func (c *LLDPCapture) Start() error {
 	c.mu.Lock()
 	if c.started {
@@ -68,10 +68,10 @@ func (c *LLDPCapture) Start() error {
 	}
 
 	// Set BPF filter for LLDP (EtherType 0x88cc)
-	if err := handle.SetBPFFilter("ether proto 0x88cc"); err != nil {
+	if filterErr := handle.SetBPFFilter("ether proto 0x88cc"); filterErr != nil {
 		handle.Close()
 		c.mu.Unlock()
-		return fmt.Errorf("failed to set BPF filter: %w", err)
+		return fmt.Errorf("failed to set BPF filter: %w", filterErr)
 	}
 
 	c.handle = handle
@@ -153,7 +153,7 @@ func (c *LLDPCapture) processPacket(packet gopacket.Packet) {
 
 	// Extract source MAC from ethernet layer
 	ethLayer := packet.Layer(layers.LayerTypeEthernet)
-	if eth, ok := ethLayer.(*layers.Ethernet); ok {
+	if eth, ethOK := ethLayer.(*layers.Ethernet); ethOK {
 		neighbor.SourceMAC = eth.SrcMAC.String()
 	}
 
@@ -171,8 +171,8 @@ func (c *LLDPCapture) processPacket(packet gopacket.Packet) {
 	// Parse LLDP Info layer for optional TLVs
 	lldpInfoLayer := packet.Layer(layers.LayerTypeLinkLayerDiscoveryInfo)
 	if lldpInfoLayer != nil {
-		lldpInfo, ok := lldpInfoLayer.(*layers.LinkLayerDiscoveryInfo)
-		if ok {
+		lldpInfo, infoOK := lldpInfoLayer.(*layers.LinkLayerDiscoveryInfo)
+		if infoOK {
 			// Port Description
 			neighbor.PortDescription = lldpInfo.PortDescription
 

@@ -60,7 +60,6 @@ func TestGetTestDefaults(t *testing.T) {
 	})
 }
 
-//nolint:gocyclo // Table-driven test with many cases
 func TestConfigBuilder(t *testing.T) {
 	t.Run("creates valid config with defaults", func(t *testing.T) {
 		cfg := NewConfigBuilder().Build()
@@ -203,7 +202,6 @@ func TestMustBuild(t *testing.T) {
 	})
 }
 
-//nolint:gocyclo // Table-driven test with many fixtures
 func TestFixtures(t *testing.T) {
 	t.Run("MinimalConfig is valid", func(t *testing.T) {
 		cfg := Fixtures.MinimalConfig()
@@ -244,7 +242,8 @@ func TestFixtures(t *testing.T) {
 			t.Fatal("expected non-nil config")
 		}
 
-		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan || !cfg.NetworkDiscovery.Options.PortScan.Enabled {
+		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan ||
+			!cfg.NetworkDiscovery.Options.PortScan.Enabled {
 			t.Error("expected all discovery methods enabled")
 		}
 
@@ -270,7 +269,8 @@ func TestFixtures(t *testing.T) {
 	t.Run("PassiveOnlyConfig has passive only", func(t *testing.T) {
 		cfg := PassiveOnlyConfig()
 
-		if cfg.NetworkDiscovery.Options.ARPScan || cfg.NetworkDiscovery.Options.ICMPScan || cfg.NetworkDiscovery.Options.PortScan.Enabled {
+		if cfg.NetworkDiscovery.Options.ARPScan || cfg.NetworkDiscovery.Options.ICMPScan ||
+			cfg.NetworkDiscovery.Options.PortScan.Enabled {
 			t.Error("expected passive only for passive scan")
 		}
 	})
@@ -278,7 +278,8 @@ func TestFixtures(t *testing.T) {
 	t.Run("StandardScanConfig has ARP and ICMP", func(t *testing.T) {
 		cfg := StandardScanConfig()
 
-		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan || cfg.NetworkDiscovery.Options.PortScan.Enabled {
+		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan ||
+			cfg.NetworkDiscovery.Options.PortScan.Enabled {
 			t.Error("expected ARP + ICMP for standard scan")
 		}
 	})

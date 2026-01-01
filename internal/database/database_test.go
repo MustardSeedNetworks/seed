@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,21 +13,20 @@ import (
 )
 
 // testDB creates a temporary database for testing.
-func testDB(t *testing.T) (db *DB, cleanup func()) {
+func testDB(t *testing.T) (*DB, func()) {
 	t.Helper()
 
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "test.db")
 
-	var err error
-	db, err = Open(dbPath)
+	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
 
-	cleanup = func() {
-		db.Close()
-		os.Remove(dbPath)
+	cleanup := func() {
+		_ = db.Close()
+		_ = os.Remove(dbPath)
 	}
 
 	return db, cleanup
@@ -41,7 +40,7 @@ func TestOpen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Verify file was created
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
@@ -72,7 +71,7 @@ func TestOpenWithConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Verify path
 	if db.Path() != dbPath {
@@ -149,7 +148,6 @@ func TestWithTx(t *testing.T) {
 	}
 }
 
-//nolint:gocyclo // Test functions require comprehensive scenario coverage
 func TestProfileRepository(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()
@@ -246,7 +244,7 @@ func TestProfileRepository(t *testing.T) {
 	}
 
 	_, err = repo.Get(ctx, profile.ID)
-	if err != ErrProfileNotFound {
+	if !errors.Is(err, ErrProfileNotFound) {
 		t.Errorf("expected ErrProfileNotFound, got %v", err)
 	}
 }
@@ -354,7 +352,6 @@ func TestMetricsRepository(t *testing.T) {
 	}
 }
 
-//nolint:gocyclo // Test functions require comprehensive scenario coverage
 func TestDeviceRepository(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()
@@ -461,7 +458,7 @@ func TestDeviceRepository(t *testing.T) {
 	}
 
 	_, err = repo.Get(ctx, device.ID)
-	if err != ErrDeviceNotFound {
+	if !errors.Is(err, ErrDeviceNotFound) {
 		t.Errorf("expected ErrDeviceNotFound, got %v", err)
 	}
 }
@@ -552,7 +549,7 @@ func TestAlertRepository(t *testing.T) {
 	}
 
 	_, err = repo.Get(ctx, alert.ID)
-	if err != ErrAlertNotFound {
+	if !errors.Is(err, ErrAlertNotFound) {
 		t.Errorf("expected ErrAlertNotFound, got %v", err)
 	}
 }
@@ -627,7 +624,7 @@ func TestSettingsRepository(t *testing.T) {
 	}
 
 	_, err = repo.Get(ctx, "test_key")
-	if err != ErrSettingNotFound {
+	if !errors.Is(err, ErrSettingNotFound) {
 		t.Errorf("expected ErrSettingNotFound, got %v", err)
 	}
 }
@@ -747,7 +744,7 @@ func TestUserStoreAdapter(t *testing.T) {
 	adapter := NewUserStoreAdapter(db)
 
 	t.Run("GetPasswordHash", func(t *testing.T) {
-		hash, err := adapter.GetPasswordHash("testuser")
+		hash, err := adapter.GetPasswordHash(ctx, "testuser")
 		require.NoError(t, err)
 		if hash != "$2a$10$somehash" {
 			t.Errorf("expected password hash, got %q", hash)
@@ -755,14 +752,14 @@ func TestUserStoreAdapter(t *testing.T) {
 	})
 
 	t.Run("GetPasswordHash_NotFound", func(t *testing.T) {
-		_, err := adapter.GetPasswordHash("nonexistent")
+		_, err := adapter.GetPasswordHash(ctx, "nonexistent")
 		if err == nil {
 			t.Error("expected error for nonexistent user")
 		}
 	})
 
 	t.Run("GetTokenVersion", func(t *testing.T) {
-		version, err := adapter.GetTokenVersion("testuser")
+		version, err := adapter.GetTokenVersion(ctx, "testuser")
 		require.NoError(t, err)
 		if version != 1 {
 			t.Errorf("expected token version 1, got %d", version)
@@ -770,10 +767,10 @@ func TestUserStoreAdapter(t *testing.T) {
 	})
 
 	t.Run("UpdatePassword", func(t *testing.T) {
-		err := adapter.UpdatePassword("testuser", "$2a$10$newhash")
+		err := adapter.UpdatePassword(ctx, "testuser", "$2a$10$newhash")
 		require.NoError(t, err)
 
-		hash, err := adapter.GetPasswordHash("testuser")
+		hash, err := adapter.GetPasswordHash(ctx, "testuser")
 		require.NoError(t, err)
 		if hash != "$2a$10$newhash" {
 			t.Errorf("expected updated hash, got %q", hash)
@@ -781,17 +778,17 @@ func TestUserStoreAdapter(t *testing.T) {
 	})
 
 	t.Run("RecordLoginSuccess", func(t *testing.T) {
-		err := adapter.RecordLoginSuccess("testuser")
+		err := adapter.RecordLoginSuccess(ctx, "testuser")
 		require.NoError(t, err)
 	})
 
 	t.Run("RecordLoginFailure", func(t *testing.T) {
-		err := adapter.RecordLoginFailure("testuser")
+		err := adapter.RecordLoginFailure(ctx, "testuser")
 		require.NoError(t, err)
 	})
 
 	t.Run("IsLocked", func(t *testing.T) {
-		locked, err := adapter.IsLocked("testuser")
+		locked, err := adapter.IsLocked(ctx, "testuser")
 		require.NoError(t, err)
 		if locked {
 			t.Error("user should not be locked after one failure")
@@ -799,21 +796,21 @@ func TestUserStoreAdapter(t *testing.T) {
 	})
 
 	t.Run("MigrateUserFromConfig", func(t *testing.T) {
-		err := adapter.MigrateUserFromConfig("migrated", "$2a$10$migratedhash")
+		err := adapter.MigrateUserFromConfig(ctx, "migrated", "$2a$10$migratedhash")
 		require.NoError(t, err)
 
 		// Migrating again should succeed (no-op)
-		err = adapter.MigrateUserFromConfig("migrated", "$2a$10$differenthash")
+		err = adapter.MigrateUserFromConfig(ctx, "migrated", "$2a$10$differenthash")
 		require.NoError(t, err)
 	})
 
 	t.Run("CreateUser", func(t *testing.T) {
-		err := adapter.CreateUser("newuser", "$2a$10$newhash", "user")
+		err := adapter.CreateUser(ctx, "newuser", "$2a$10$newhash", "user")
 		require.NoError(t, err)
 	})
 
 	t.Run("GetUserCount", func(t *testing.T) {
-		count, err := adapter.GetUserCount()
+		count, err := adapter.GetUserCount(ctx)
 		require.NoError(t, err)
 		if count < 3 {
 			t.Errorf("expected at least 3 users, got %d", count)
@@ -1139,7 +1136,7 @@ func TestRetentionExtended(t *testing.T) {
 
 	t.Run("deleteAuditLogsOlderThan", func(t *testing.T) {
 		// Record some audit logs
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			err := db.RecordAuditLog(ctx, &AuditLogEntry{
 				Action:       AuditActionCreate,
 				User:         "testuser",
@@ -1215,7 +1212,12 @@ func TestWithTxExtended(t *testing.T) {
 
 	t.Run("successful transaction", func(t *testing.T) {
 		err := db.WithTx(ctx, func(tx *sql.Tx) error {
-			_, err := tx.ExecContext(ctx, "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))", "tx.key", "tx.value")
+			_, err := tx.ExecContext(
+				ctx,
+				"INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))",
+				"tx.key",
+				"tx.value",
+			)
 			return err
 		})
 		require.NoError(t, err)
@@ -1230,7 +1232,7 @@ func TestWithTxExtended(t *testing.T) {
 
 	t.Run("rollback on error", func(t *testing.T) {
 		err := db.WithTx(ctx, func(_ *sql.Tx) error {
-			return fmt.Errorf("simulated error")
+			return errors.New("simulated error")
 		})
 		if err == nil {
 			t.Error("expected error from transaction")

@@ -6,9 +6,11 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
+	"slices"
 	"sync"
 	"time"
 )
@@ -100,12 +102,12 @@ type EDPDeviceInfo struct {
 
 // NDPDeviceInfo contains IPv6 NDP-specific device information.
 type NDPDeviceInfo struct {
-	LinkLayerAddress  string    `json:"linkLayerAddress"`            // MAC from NDP
-	IsRouter          bool      `json:"isRouter"`                    // From Router Advertisement
-	ReachableTime     uint32    `json:"reachableTime,omitempty"`     // milliseconds
-	RetransTimer      uint32    `json:"retransTimer,omitempty"`      // milliseconds
-	Flags             uint8     `json:"flags,omitempty"`             // NDP flags
-	LastAdvertisement time.Time `json:"lastAdvertisement,omitempty"` // Last RA received
+	LinkLayerAddress  string    `json:"linkLayerAddress"`           // MAC from NDP
+	IsRouter          bool      `json:"isRouter"`                   // From Router Advertisement
+	ReachableTime     uint32    `json:"reachableTime,omitempty"`    // milliseconds
+	RetransTimer      uint32    `json:"retransTimer,omitempty"`     // milliseconds
+	Flags             uint8     `json:"flags,omitempty"`            // NDP flags
+	LastAdvertisement time.Time `json:"lastAdvertisement,omitzero"` // Last RA received
 }
 
 // DBDeviceWriter defines the interface for persisting devices to a database.
@@ -156,8 +158,8 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 		if err := oui.UpdateIfNeeded(ctx, ouiPath, ouiMaxAge); err != nil {
 			slog.Warn("Failed to update OUI database", "error", err)
 			// Try loading from standard locations as fallback
-			if err := oui.TryLoadIEEEFile(); err != nil {
-				slog.Warn("Failed to load IEEE OUI file", "error", err)
+			if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
+				slog.Warn("Failed to load IEEE OUI file", "error", loadErr)
 			}
 		} else {
 			slog.Info("OUI database loaded", "entries", oui.Count())
@@ -166,8 +168,8 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 		// Path provided but no auto-update: just load from file
 		if err := oui.LoadFromIEEEFormat(ouiPath); err != nil {
 			slog.Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
-			if err := oui.TryLoadIEEEFile(); err != nil {
-				slog.Warn("Failed to load IEEE OUI file", "error", err)
+			if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
+				slog.Warn("Failed to load IEEE OUI file", "error", loadErr)
 			}
 		} else {
 			slog.Info("OUI database loaded from file", "path", ouiPath, "entries", oui.Count())
@@ -175,7 +177,7 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 	} else {
 		// No path provided: try standard locations silently
 		// Embedded OUI database has 200+ common vendors as fallback
-		_ = oui.TryLoadIEEEFile() //nolint:errcheck // Embedded data is sufficient fallback
+		_ = oui.TryLoadIEEEFile()
 	}
 
 	return &DeviceDiscovery{
@@ -223,7 +225,7 @@ func (d *DeviceDiscovery) Stop() {
 	// Wait for name resolution goroutines to complete (fixes #836)
 	d.nameResWg.Wait()
 
-	_ = d.ndpScanner.Stop()  //nolint:errcheck // Best-effort cleanup
+	_ = d.ndpScanner.Stop()
 	_ = d.arpScanner.Close() // Close ICMP pinger (fixes #818)
 	d.mdnsListener.Stop()
 	d.protoManager.Stop()
@@ -245,7 +247,7 @@ func (d *DeviceDiscovery) GetInterfaceName() string {
 }
 
 // SetInterface updates the interface for all discovery methods.
-// Validates the interface exists before updating. (fixes #840)
+// Validates the interface exists before updating. (fixes #840).
 func (d *DeviceDiscovery) SetInterface(name string) error {
 	// Validate interface exists before updating any components (fixes #840)
 	if _, err := net.InterfaceByName(name); err != nil {
@@ -279,7 +281,7 @@ func (d *DeviceDiscovery) GetAdditionalSubnets() []string {
 // ErrScanInProgress indicates a scan was requested while one is already running.
 // Callers should check for this specific error to distinguish between "scan completed
 // successfully" and "scan was skipped because one is already in progress".
-var ErrScanInProgress = fmt.Errorf("scan already in progress")
+var ErrScanInProgress = errors.New("scan already in progress")
 
 // Scan performs an active network scan and aggregates results.
 // Returns ErrScanInProgress if a scan is already running.
@@ -361,7 +363,7 @@ func (d *DeviceDiscovery) aggregateResults() {
 
 // expireStaleDevices removes devices that haven't been seen within deviceTTL.
 // This prevents unbounded memory growth when devices leave the network.
-// Must be called with d.mu held. (fixes #829)
+// Must be called with d.mu held. (fixes #829).
 func (d *DeviceDiscovery) expireStaleDevices() {
 	if d.deviceTTL <= 0 {
 		return // TTL disabled
@@ -423,7 +425,7 @@ func (d *DeviceDiscovery) mergeARPResults() {
 
 // mergeLLDPResults merges LLDP neighbor data into devices. Must be called with mu held.
 //
-//nolint:dupl // LLDP/CDP merge loops have similar structure but different protocol-specific fields
+
 func (d *DeviceDiscovery) mergeLLDPResults() {
 	for _, lldp := range d.protoManager.GetLLDPNeighbors() {
 		mac := normalizeMac(lldp.SourceMAC)
@@ -455,7 +457,7 @@ func (d *DeviceDiscovery) mergeLLDPResults() {
 
 // mergeCDPResults merges CDP neighbor data into devices. Must be called with mu held.
 //
-//nolint:dupl // LLDP/CDP merge loops have similar structure but different protocol-specific fields
+
 func (d *DeviceDiscovery) mergeCDPResults() {
 	for _, cdp := range d.protoManager.GetCDPNeighbors() {
 		mac := normalizeMac(cdp.SourceMAC)
@@ -685,22 +687,12 @@ func (d *DeviceDiscovery) getOrCreateDevice(mac string) *DiscoveredDevice {
 
 // containsMethod checks if a method is in the slice.
 func containsMethod(methods []Method, method Method) bool {
-	for _, m := range methods {
-		if m == method {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(methods, method)
 }
 
 // containsIPv6 checks if an IPv6 address is in the slice.
 func containsIPv6(addresses []string, addr string) bool {
-	for _, a := range addresses {
-		if a == addr {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(addresses, addr)
 }
 
 // maxIPv6AddressesPerDevice limits IPv6 address accumulation to prevent
@@ -873,7 +865,7 @@ func (d *DeviceDiscovery) LastScan() time.Time {
 }
 
 // GetSubnetInfo returns network information.
-func (d *DeviceDiscovery) GetSubnetInfo() (subnet, localIP string) {
+func (d *DeviceDiscovery) GetSubnetInfo() (string, string) {
 	return d.arpScanner.GetSubnetInfo()
 }
 

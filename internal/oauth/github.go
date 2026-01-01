@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -82,32 +83,32 @@ func GetGitHubUserInfo(ctx context.Context, config *oauth2.Config, token *oauth2
 	// Get user info
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, GitHubUserInfoURL, http.NoBody)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserInfo, err)
+		return nil, fmt.Errorf("%w: %w", ErrUserInfo, err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserInfo, err)
+		return nil, fmt.Errorf("%w: %w", ErrUserInfo, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Best effort read for error message
+		body, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("%w: status %d: %s", ErrUserInfo, resp.StatusCode, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserInfo, err)
+		return nil, fmt.Errorf("%w: %w", ErrUserInfo, err)
 	}
 
 	var ghUser GitHubUserResponse
-	if err := json.Unmarshal(body, &ghUser); err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUserInfo, err)
+	if unmarshalErr := json.Unmarshal(body, &ghUser); unmarshalErr != nil {
+		return nil, fmt.Errorf("%w: %w", ErrUserInfo, unmarshalErr)
 	}
 
 	userInfo := &UserInfo{
-		ID:            fmt.Sprintf("%d", ghUser.ID),
+		ID:            strconv.FormatInt(ghUser.ID, 10),
 		Name:          ghUser.Name,
 		Email:         ghUser.Email,
 		Picture:       ghUser.AvatarURL,
@@ -117,9 +118,9 @@ func GetGitHubUserInfo(ctx context.Context, config *oauth2.Config, token *oauth2
 
 	// If email is not public, fetch from emails endpoint
 	if userInfo.Email == "" {
-		email, verified, err := getGitHubPrimaryEmail(ctx, client)
-		if err != nil {
-			return nil, err
+		email, verified, emailErr := getGitHubPrimaryEmail(ctx, client)
+		if emailErr != nil {
+			return nil, emailErr
 		}
 		userInfo.Email = email
 		userInfo.EmailVerified = verified
@@ -138,31 +139,31 @@ func GetGitHubUserInfo(ctx context.Context, config *oauth2.Config, token *oauth2
 }
 
 // getGitHubPrimaryEmail fetches the user's primary email from GitHub.
-func getGitHubPrimaryEmail(ctx context.Context, client *http.Client) (email string, verified bool, err error) {
+func getGitHubPrimaryEmail(ctx context.Context, client *http.Client) (string, bool, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, GitHubUserEmailURL, http.NoBody)
 	if err != nil {
-		return "", false, fmt.Errorf("%w: %v", ErrUserInfo, err)
+		return "", false, fmt.Errorf("%w: %w", ErrUserInfo, err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", false, fmt.Errorf("%w: %v", ErrUserInfo, err)
+		return "", false, fmt.Errorf("%w: %w", ErrUserInfo, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Best effort read for error message
+		body, _ := io.ReadAll(resp.Body)
 		return "", false, fmt.Errorf("%w: status %d: %s", ErrUserInfo, resp.StatusCode, string(body))
 	}
 
 	body, readErr := io.ReadAll(resp.Body)
 	if readErr != nil {
-		return "", false, fmt.Errorf("%w: %v", ErrUserInfo, readErr)
+		return "", false, fmt.Errorf("%w: %w", ErrUserInfo, readErr)
 	}
 
 	var emails []GitHubEmailResponse
-	if err := json.Unmarshal(body, &emails); err != nil {
-		return "", false, fmt.Errorf("%w: %v", ErrUserInfo, err)
+	if unmarshalErr := json.Unmarshal(body, &emails); unmarshalErr != nil {
+		return "", false, fmt.Errorf("%w: %w", ErrUserInfo, unmarshalErr)
 	}
 
 	// Find primary verified email

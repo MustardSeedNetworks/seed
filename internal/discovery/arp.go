@@ -48,6 +48,7 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -98,7 +99,7 @@ type ARPScanner struct {
 	pinger            *ICMPPinger           // Raw socket ICMP pinger
 	scanning          bool
 	lastScan          time.Time
-	maxHostsPerSubnet int                   // Configurable limit (0 = use default)
+	maxHostsPerSubnet int // Configurable limit (0 = use default)
 }
 
 // NewARPScanner creates a new ARP scanner for the given interface.
@@ -114,14 +115,14 @@ func NewARPScanner(interfaceName string, oui *OUIDatabase) *ARPScanner {
 // SetMaxHostsPerSubnet configures the maximum hosts to scan per subnet.
 // Set to 0 to use DefaultMaxHostsPerSubnet (254).
 // For larger subnets like /22 or /16, increase this at the cost of longer scan times.
-// Example: /22 = 1022 hosts, /16 = 65534 hosts
-func (s *ARPScanner) SetMaxHostsPerSubnet(max int) {
+// Example: /22 = 1022 hosts, /16 = 65534 hosts.
+func (s *ARPScanner) SetMaxHostsPerSubnet(maxHosts int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if max <= 0 {
+	if maxHosts <= 0 {
 		s.maxHostsPerSubnet = DefaultMaxHostsPerSubnet
 	} else {
-		s.maxHostsPerSubnet = max
+		s.maxHostsPerSubnet = maxHosts
 	}
 }
 
@@ -211,7 +212,7 @@ func (s *ARPScanner) getSubnet() (*net.IPNet, net.IP, error) {
 
 // incrementIP adds n to an IP address.
 // n must be non-negative and at most 0xFFFFFF (max hosts in /8 subnet).
-// Returns nil if n is out of bounds or ip is not IPv4. (fixes #839)
+// Returns nil if n is out of bounds or ip is not IPv4. (fixes #839).
 func incrementIP(ip net.IP, n int) net.IP {
 	ip = ip.To4()
 	if ip == nil {
@@ -240,7 +241,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	s.mu.Lock()
 	if s.scanning {
 		s.mu.Unlock()
-		return fmt.Errorf("scan already in progress")
+		return errors.New("scan already in progress")
 	}
 	s.scanning = true
 	s.pingResponders = nil                   // Clear previous ping responders
@@ -282,19 +283,19 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	for _, additionalSubnet := range additionalSubnets {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return fmt.Errorf("ping sweep cancelled: %w", ctx.Err())
 		default:
 			// Retry logic for additional subnets - continue even if some fail
 			subnetCopy := additionalSubnet // Capture for closure
-			result := RetryWithBackoff(ctx, NetworkRetryConfig(), func() error {
+			subnetResult := RetryWithBackoff(ctx, NetworkRetryConfig(), func() error {
 				return s.pingSweep(ctx, subnetCopy)
 			})
-			if !result.Successful {
+			if !subnetResult.Successful {
 				slog.Warn("Ping sweep failed for additional subnet after retries",
 					"subnet", additionalSubnet,
-					"attempts", result.Attempts,
-					"duration", result.TotalTime,
-					"error", result.LastError)
+					"attempts", subnetResult.Attempts,
+					"duration", subnetResult.TotalTime,
+					"error", subnetResult.LastError)
 			}
 		}
 	}
@@ -386,11 +387,17 @@ func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 		return []*net.IPNet{subnet}
 	}
 
-	for i := 0; i < numChunks; i++ {
+	// Convert base IP to uint32 for proper arithmetic
+	baseUint := uint32(baseIP[0])<<24 | uint32(baseIP[1])<<16 | uint32(baseIP[2])<<8 | uint32(baseIP[3])
+
+	for i := range numChunks {
 		// Calculate the starting IP for this /24 chunk
-		// Convert base IP to uint32 for proper arithmetic
-		baseUint := uint32(baseIP[0])<<24 | uint32(baseIP[1])<<16 | uint32(baseIP[2])<<8 | uint32(baseIP[3])
-		chunkUint := baseUint + uint32(i*256) // Move to next /24 block
+		// Explicit bounds check for safe uint32 conversion (i is bounded by maxChunks ≤ 256)
+		if i < 0 || i > 256 {
+			continue
+		}
+		offset := uint32(i) * 256
+		chunkUint := baseUint + offset
 
 		chunkIP := net.IP{
 			byte(chunkUint >> 24),
@@ -433,7 +440,7 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 		for i, chunk := range chunks {
 			select {
 			case <-ctx.Done():
-				return ctx.Err()
+				return fmt.Errorf("chunk scan cancelled: %w", ctx.Err())
 			default:
 				slog.Debug("Scanning chunk",
 					"chunk", fmt.Sprintf("%d/%d", i+1, len(chunks)),
@@ -461,7 +468,7 @@ func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) erro
 	// Generate host IPs
 	baseIP := subnet.IP.Mask(subnet.Mask).To4()
 	if baseIP == nil {
-		return fmt.Errorf("invalid subnet")
+		return errors.New("invalid subnet")
 	}
 
 	// Build list of IPs to ping
@@ -688,10 +695,11 @@ func (s *ARPScanner) Count() int {
 }
 
 // GetSubnetInfo returns the current subnet and local IP.
-func (s *ARPScanner) GetSubnetInfo() (subnet, localIP string) {
+func (s *ARPScanner) GetSubnetInfo() (string, string) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	var subnet, localIP string
 	if s.subnet != nil {
 		subnet = s.subnet.String()
 	}

@@ -144,9 +144,9 @@ func DetectLegacyConfig() (string, bool) {
 	}
 
 	for _, path := range legacyPaths {
-		if _, err := os.Stat(path); err == nil {
-			abs, err := filepath.Abs(path)
-			if err == nil {
+		if _, statErr := os.Stat(path); statErr == nil {
+			abs, absErr := filepath.Abs(path)
+			if absErr == nil {
 				return abs, true
 			}
 			return path, true

@@ -3,6 +3,7 @@ package survey
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -174,10 +175,10 @@ type ThroughputSample struct {
 
 // SamplePoint represents a measurement at a specific location.
 type SamplePoint struct {
-	X          int         `json:"x"` // Pixel X coordinate on floor plan
-	Y          int         `json:"y"` // Pixel Y coordinate on floor plan
-	Timestamp  time.Time   `json:"timestamp"`
-	SampleData interface{} `json:"sampleData"` // PassiveSample | ActiveSample | ThroughputSample
+	X          int       `json:"x"` // Pixel X coordinate on floor plan
+	Y          int       `json:"y"` // Pixel Y coordinate on floor plan
+	Timestamp  time.Time `json:"timestamp"`
+	SampleData any       `json:"sampleData"` // PassiveSample | ActiveSample | ThroughputSample
 }
 
 // Survey represents a WiFi site survey.
@@ -250,7 +251,12 @@ type Manager struct {
 }
 
 // NewManager creates a new survey manager.
-func NewManager(storagePath string, wifiScanner *wifi.Scanner, wifiManager *wifi.Manager, iperfManager *iperf.Manager) *Manager {
+func NewManager(
+	storagePath string,
+	wifiScanner *wifi.Scanner,
+	wifiManager *wifi.Manager,
+	iperfManager *iperf.Manager,
+) *Manager {
 	return &Manager{
 		surveys:      make(map[string]*Survey),
 		storagePath:  storagePath,
@@ -402,7 +408,7 @@ func (m *Manager) StartSurvey(id string) error {
 	}
 
 	if survey.Status == StatusInProgress {
-		return fmt.Errorf("survey already in progress")
+		return errors.New("survey already in progress")
 	}
 
 	survey.Status = StatusInProgress
@@ -454,7 +460,7 @@ func (m *Manager) UpdateSurveySettings(id string, surveyType Type, iperfServer s
 	}
 
 	if survey.Status != StatusCreated {
-		return fmt.Errorf("cannot update settings after survey has started")
+		return errors.New("cannot update settings after survey has started")
 	}
 
 	// Validate survey type
@@ -480,7 +486,7 @@ func (m *Manager) UpdateSurveySettings(id string, surveyType Type, iperfServer s
 }
 
 // AddSample adds a measurement sample to the active floor of a survey.
-func (m *Manager) AddSample(id string, x, y int, sampleData interface{}) error {
+func (m *Manager) AddSample(id string, x, y int, sampleData any) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -490,7 +496,7 @@ func (m *Manager) AddSample(id string, x, y int, sampleData interface{}) error {
 	}
 
 	if survey.Status != StatusInProgress {
-		return fmt.Errorf("survey not in progress")
+		return errors.New("survey not in progress")
 	}
 
 	floor := survey.GetActiveFloor()
@@ -513,7 +519,7 @@ func (m *Manager) AddSample(id string, x, y int, sampleData interface{}) error {
 }
 
 // AddSampleToFloor adds a measurement sample to a specific floor.
-func (m *Manager) AddSampleToFloor(surveyID, floorID string, x, y int, sampleData interface{}) error {
+func (m *Manager) AddSampleToFloor(surveyID, floorID string, x, y int, sampleData any) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -523,7 +529,7 @@ func (m *Manager) AddSampleToFloor(surveyID, floorID string, x, y int, sampleDat
 	}
 
 	if survey.Status != StatusInProgress {
-		return fmt.Errorf("survey not in progress")
+		return errors.New("survey not in progress")
 	}
 
 	floor := survey.GetFloorByID(floorID)
@@ -610,7 +616,7 @@ func (m *Manager) DeleteFloor(surveyID, floorID string) error {
 
 	// Don't allow deletion of the last floor
 	if len(survey.Floors) <= 1 {
-		return fmt.Errorf("cannot delete the last floor")
+		return errors.New("cannot delete the last floor")
 	}
 
 	// Find and remove the floor
@@ -686,7 +692,7 @@ func (m *Manager) GetFloor(surveyID, floorID string) (*Floor, error) {
 
 // saveSurvey persists a survey to disk.
 //
-//nolint:dupl // Intentionally similar to saveSurveyUnlocked - different lock semantics
+
 func (m *Manager) saveSurvey(survey *Survey) error {
 	// Ensure storage directory exists with restrictive permissions
 	if err := os.MkdirAll(m.storagePath, 0o750); err != nil {
@@ -699,8 +705,8 @@ func (m *Manager) saveSurvey(survey *Survey) error {
 		return fmt.Errorf("failed to marshal survey: %w", err)
 	}
 
-	if err := os.WriteFile(filename, data, 0o600); err != nil {
-		return fmt.Errorf("failed to write survey file: %w", err)
+	if writeErr := os.WriteFile(filename, data, 0o600); writeErr != nil {
+		return fmt.Errorf("failed to write survey file: %w", writeErr)
 	}
 
 	return nil
@@ -737,21 +743,21 @@ func (m *Manager) LoadSurveys() error {
 		}
 
 		// file comes from filepath.Glob with our controlled pattern, not user input
-		data, err := os.ReadFile(file) //nolint:gosec // G304: file path from Glob with controlled pattern
-		if err != nil {
+		data, readErr := os.ReadFile(file)
+		if readErr != nil {
 			continue // Skip files that can't be read
 		}
 
 		var survey Survey
-		if err := json.Unmarshal(data, &survey); err != nil {
+		if unmarshalErr := json.Unmarshal(data, &survey); unmarshalErr != nil {
 			continue // Skip invalid JSON
 		}
 
 		// Auto-migrate legacy single-floor surveys to multi-floor format
 		if MigrateToMultiFloor(&survey) {
 			// Save the migrated survey back to disk
-			if err := m.saveSurveyUnlocked(&survey); err != nil {
-				slog.Warn("Failed to save migrated survey", "survey_id", survey.ID, "error", err)
+			if saveErr := m.saveSurveyUnlocked(&survey); saveErr != nil {
+				slog.Warn("Failed to save migrated survey", "survey_id", survey.ID, "error", saveErr)
 			}
 		}
 
@@ -764,7 +770,7 @@ func (m *Manager) LoadSurveys() error {
 // saveSurveyUnlocked persists a survey to disk without acquiring a lock.
 // This is used internally when the lock is already held.
 //
-//nolint:dupl // Intentionally similar to saveSurvey - different lock semantics
+
 func (m *Manager) saveSurveyUnlocked(survey *Survey) error {
 	// Ensure storage directory exists with restrictive permissions
 	if err := os.MkdirAll(m.storagePath, 0o750); err != nil {
@@ -777,8 +783,8 @@ func (m *Manager) saveSurveyUnlocked(survey *Survey) error {
 		return fmt.Errorf("failed to marshal survey: %w", err)
 	}
 
-	if err := os.WriteFile(filename, data, 0o600); err != nil {
-		return fmt.Errorf("failed to write survey file: %w", err)
+	if writeErr := os.WriteFile(filename, data, 0o600); writeErr != nil {
+		return fmt.Errorf("failed to write survey file: %w", writeErr)
 	}
 
 	return nil

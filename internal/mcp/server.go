@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"slices"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -81,12 +82,7 @@ func (s *Server) registerTools() {
 		if len(s.config.AllowedTools) == 0 {
 			return true // All tools allowed when list is empty
 		}
-		for _, allowed := range s.config.AllowedTools {
-			if allowed == toolName {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(s.config.AllowedTools, toolName)
 	}
 
 	// Register discovery tools
@@ -126,7 +122,7 @@ func (s *Server) ServeStdioWithContext(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		// Context canceled, close stdin to stop the server
-		os.Stdin.Close()
+		_ = os.Stdin.Close()
 		return ctx.Err()
 	case err := <-done:
 		return err
@@ -140,7 +136,7 @@ func (s *Server) GetMCPServer() *server.MCPServer {
 
 // addTool is a helper to add a tool if it's allowed by config.
 //
-//nolint:gocritic // hugeParam: mcp.Tool is passed by value to match library interface
+
 func (s *Server) addTool(name string, isAllowed func(string) bool, tool mcp.Tool, handler server.ToolHandlerFunc) {
 	if !isAllowed(name) {
 		slog.Debug("Tool not in allowed list, skipping", "tool", name)

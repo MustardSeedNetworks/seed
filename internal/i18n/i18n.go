@@ -17,6 +17,9 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"maps"
+	"slices"
 	"strings"
 	"sync"
 
@@ -60,7 +63,7 @@ func GetBundle() *i18n.Bundle {
 
 				// Parse the JSON and add messages with namespaced keys
 				var messages map[string]any
-				if err := json.Unmarshal(data, &messages); err != nil {
+				if unmarshalErr := json.Unmarshal(data, &messages); unmarshalErr != nil {
 					continue
 				}
 
@@ -68,11 +71,12 @@ func GetBundle() *i18n.Bundle {
 				flatMessages := flattenMessages(messages, ns)
 				for key, value := range flatMessages {
 					if strValue, ok := value.(string); ok {
-						//nolint:errcheck // Errors here indicate invalid message format, not runtime issues.
-						bundle.AddMessages(language.Make(lang), &i18n.Message{
+						if addErr := bundle.AddMessages(language.Make(lang), &i18n.Message{
 							ID:    key,
 							Other: strValue,
-						})
+						}); addErr != nil {
+							slog.Warn("failed to add i18n message", "key", key, "lang", lang, "error", addErr)
+						}
 					}
 				}
 			}
@@ -96,9 +100,7 @@ func flattenMessages(messages map[string]any, prefix string) map[string]any {
 		switch v := value.(type) {
 		case map[string]any:
 			// Recursively flatten nested maps
-			for k, val := range flattenMessages(v, fullKey) {
-				result[k] = val
-			}
+			maps.Copy(result, flattenMessages(v, fullKey))
 		case string:
 			result[fullKey] = v
 		}
@@ -110,6 +112,7 @@ func flattenMessages(messages map[string]any, prefix string) map[string]any {
 // Localizer wraps i18n.Localizer with convenience methods.
 type Localizer struct {
 	*i18n.Localizer
+
 	lang string
 }
 
@@ -143,10 +146,8 @@ func normalizeLanguage(lang string) string {
 	lang = strings.ToLower(strings.TrimSpace(lang))
 
 	// Validate supported language
-	for _, supported := range SupportedLanguages {
-		if lang == supported {
-			return lang
-		}
+	if slices.Contains(SupportedLanguages, lang) {
+		return lang
 	}
 
 	return DefaultLanguage
@@ -187,10 +188,5 @@ func (l *Localizer) Language() string {
 // IsSupported checks if a language code is supported.
 func IsSupported(lang string) bool {
 	lang = normalizeLanguage(lang)
-	for _, supported := range SupportedLanguages {
-		if lang == supported {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(SupportedLanguages, lang)
 }

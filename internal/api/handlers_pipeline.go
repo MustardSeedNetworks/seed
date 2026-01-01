@@ -122,7 +122,7 @@ func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Reque
 	// Validate port scan intensity requires acknowledgment for comprehensive
 	if config.PortScan.Intensity == discovery.PortScanComprehensive {
 		// Check for acknowledgment header
-		if r.Header.Get("X-Acknowledge-IDS-Risk") != "true" {
+		if r.Header.Get("X-Acknowledge-Ids-Risk") != "true" {
 			http.Error(w, "Comprehensive port scanning may trigger IDS/IPS alerts. "+
 				"Set X-Acknowledge-IDS-Risk: true header to proceed.", http.StatusPreconditionRequired)
 			return

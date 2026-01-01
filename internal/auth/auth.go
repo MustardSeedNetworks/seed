@@ -2,6 +2,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
@@ -71,27 +72,28 @@ func sendAuthError(w http.ResponseWriter, status int, code, message string) {
 
 // Claims represents the JWT claims.
 type Claims struct {
+	jwt.RegisteredClaims
+
 	Username     string `json:"username"`
 	TokenVersion int    `json:"token_version"` // For token revocation (fixes #525)
 	TokenType    string `json:"token_type"`    // "access" or "refresh"
-	jwt.RegisteredClaims
 }
 
 // UserStore provides user lookup and management operations.
 // Implementations can use database, config file, or other storage backends.
 type UserStore interface {
 	// GetPasswordHash returns the password hash for a user.
-	GetPasswordHash(username string) (string, error)
+	GetPasswordHash(ctx context.Context, username string) (string, error)
 	// GetTokenVersion returns the current token version for a user.
-	GetTokenVersion(username string) (int, error)
+	GetTokenVersion(ctx context.Context, username string) (int, error)
 	// UpdatePassword updates a user's password hash.
-	UpdatePassword(username, hash string) error
+	UpdatePassword(ctx context.Context, username, hash string) error
 	// RecordLoginSuccess records a successful login.
-	RecordLoginSuccess(username string) error
+	RecordLoginSuccess(ctx context.Context, username string) error
 	// RecordLoginFailure records a failed login attempt.
-	RecordLoginFailure(username string) error
+	RecordLoginFailure(ctx context.Context, username string) error
 	// IsLocked checks if a user account is locked.
-	IsLocked(username string) (bool, error)
+	IsLocked(ctx context.Context, username string) (bool, error)
 }
 
 // Manager handles authentication operations.
@@ -166,7 +168,7 @@ func cryptoRandRead(b []byte, operation string) error {
 				"operation", operation,
 				"attempts", maxRetries+1,
 				"error", err)
-			return err
+			return fmt.Errorf("crypto/rand read failed for %s: %w", operation, err)
 		}
 		// Success
 		if attempt > 0 {
@@ -198,7 +200,7 @@ func GenerateJWTSecret() string {
 // Authenticate validates credentials and returns a JWT token.
 // Uses constant-time comparison for username to prevent timing attacks (fixes #513).
 // If a UserStore is set, uses database for authentication; otherwise uses in-memory.
-func (m *Manager) Authenticate(username, password string) (string, error) {
+func (m *Manager) Authenticate(ctx context.Context, username, password string) (string, error) {
 	// Read credentials and userStore with read lock (fixes #520)
 	m.mu.RLock()
 	storedUsername := m.username
@@ -209,7 +211,7 @@ func (m *Manager) Authenticate(username, password string) (string, error) {
 	// If we have a UserStore, use it for authentication
 	if userStore != nil {
 		// Check if account is locked
-		locked, err := userStore.IsLocked(username)
+		locked, err := userStore.IsLocked(ctx, username)
 		if err != nil {
 			slog.Warn("Failed to check user lock status", "username", username, "error", err)
 		}
@@ -218,25 +220,25 @@ func (m *Manager) Authenticate(username, password string) (string, error) {
 		}
 
 		// Get password hash from database
-		dbHash, err := userStore.GetPasswordHash(username)
+		dbHash, err := userStore.GetPasswordHash(ctx, username)
 		if err != nil {
 			// User not found in database - record failure and return error
-			_ = userStore.RecordLoginFailure(username)
+			_ = userStore.RecordLoginFailure(ctx, username)
 			return "", ErrInvalidCredentials
 		}
 
 		// Password comparison (bcrypt.CompareHashAndPassword is already constant-time)
-		if err := bcrypt.CompareHashAndPassword([]byte(dbHash), []byte(password)); err != nil {
-			_ = userStore.RecordLoginFailure(username)
+		if compareErr := bcrypt.CompareHashAndPassword([]byte(dbHash), []byte(password)); compareErr != nil {
+			_ = userStore.RecordLoginFailure(ctx, username)
 			return "", ErrInvalidCredentials
 		}
 
 		// Record successful login
-		if err := userStore.RecordLoginSuccess(username); err != nil {
-			slog.Warn("Failed to record login success", "username", username, "error", err)
+		if successErr := userStore.RecordLoginSuccess(ctx, username); successErr != nil {
+			slog.Warn("Failed to record login success", "username", username, "error", successErr)
 		}
 
-		return m.GenerateToken(username)
+		return m.GenerateToken(ctx, username)
 	}
 
 	// Fallback to in-memory authentication (legacy/config-based)
@@ -254,27 +256,31 @@ func (m *Manager) Authenticate(username, password string) (string, error) {
 		return "", ErrInvalidCredentials
 	}
 
-	return m.GenerateToken(username)
+	return m.GenerateToken(ctx, username)
 }
 
 // GenerateToken creates a new JWT token for the given username.
 // This is primarily used for testing. For production use, use Authenticate().
-func (m *Manager) GenerateToken(username string) (string, error) {
-	return m.generateTokenWithType(username, "access", m.sessionTimeout)
+func (m *Manager) GenerateToken(ctx context.Context, username string) (string, error) {
+	return m.generateTokenWithType(ctx, username, "access", m.sessionTimeout)
 }
 
 // GenerateAccessToken creates a short-lived access token (fixes #478).
-func (m *Manager) GenerateAccessToken(username string) (string, error) {
-	return m.generateTokenWithType(username, "access", AccessTokenDuration)
+func (m *Manager) GenerateAccessToken(ctx context.Context, username string) (string, error) {
+	return m.generateTokenWithType(ctx, username, "access", AccessTokenDuration)
 }
 
 // GenerateRefreshToken creates a long-lived refresh token (fixes #478).
-func (m *Manager) GenerateRefreshToken(username string) (string, error) {
-	return m.generateTokenWithType(username, "refresh", RefreshTokenDuration)
+func (m *Manager) GenerateRefreshToken(ctx context.Context, username string) (string, error) {
+	return m.generateTokenWithType(ctx, username, "refresh", RefreshTokenDuration)
 }
 
 // generateTokenWithType creates a JWT token with specified type and duration.
-func (m *Manager) generateTokenWithType(username, tokenType string, duration time.Duration) (string, error) {
+func (m *Manager) generateTokenWithType(
+	ctx context.Context,
+	username, tokenType string,
+	duration time.Duration,
+) (string, error) {
 	// Read token version with lock (fixes #520, #525)
 	m.mu.RLock()
 	currentVersion := m.tokenVersion
@@ -284,7 +290,7 @@ func (m *Manager) generateTokenWithType(username, tokenType string, duration tim
 	// If we have a UserStore, get the token version from the database
 	// This ensures tokens are generated with the correct version (fixes #927)
 	if userStore != nil && username != "" {
-		if dbVersion, err := userStore.GetTokenVersion(username); err == nil {
+		if dbVersion, err := userStore.GetTokenVersion(ctx, username); err == nil {
 			currentVersion = dbVersion
 		}
 		// On error, fall back to in-memory version
@@ -305,14 +311,18 @@ func (m *Manager) generateTokenWithType(username, tokenType string, duration tim
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(m.jwtSecret)
+	signedToken, err := token.SignedString(m.jwtSecret)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign JWT token: %w", err)
+	}
+	return signedToken, nil
 }
 
 // ValidateToken validates a JWT token and returns the claims.
 // Checks token version to support revocation (fixes #525).
 // If UserStore is set, queries database for current token version.
-func (m *Manager) ValidateToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+func (m *Manager) ValidateToken(ctx context.Context, tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
 		}
@@ -338,8 +348,8 @@ func (m *Manager) ValidateToken(tokenString string) (*Claims, error) {
 
 	// If we have a UserStore, get current token version from database
 	if userStore != nil && claims.Username != "" {
-		dbVersion, err := userStore.GetTokenVersion(claims.Username)
-		if err == nil {
+		dbVersion, versionErr := userStore.GetTokenVersion(ctx, claims.Username)
+		if versionErr == nil {
 			currentVersion = dbVersion
 		}
 		// On error, fall back to in-memory version
@@ -355,8 +365,8 @@ func (m *Manager) ValidateToken(tokenString string) (*Claims, error) {
 
 // ValidateRefreshToken validates a refresh token and returns the claims (fixes #478).
 // Ensures the token is actually a refresh token, not an access token.
-func (m *Manager) ValidateRefreshToken(tokenString string) (*Claims, error) {
-	claims, err := m.ValidateToken(tokenString)
+func (m *Manager) ValidateRefreshToken(ctx context.Context, tokenString string) (*Claims, error) {
+	claims, err := m.ValidateToken(ctx, tokenString)
 	if err != nil {
 		return nil, err
 	}
@@ -372,8 +382,8 @@ func (m *Manager) ValidateRefreshToken(tokenString string) (*Claims, error) {
 // RefreshAccessToken generates a new access token from a valid refresh token (fixes #478).
 // This allows short-lived access tokens with long-lived refresh tokens.
 // Enforces maximum session lifetime to prevent indefinite sessions (fixes #717).
-func (m *Manager) RefreshAccessToken(refreshToken string) (string, error) {
-	claims, err := m.ValidateRefreshToken(refreshToken)
+func (m *Manager) RefreshAccessToken(ctx context.Context, refreshToken string) (string, error) {
+	claims, err := m.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return "", err
 	}
@@ -392,7 +402,7 @@ func (m *Manager) RefreshAccessToken(refreshToken string) (string, error) {
 	}
 
 	// Generate new access token with same username
-	return m.GenerateAccessToken(claims.Username)
+	return m.GenerateAccessToken(ctx, claims.Username)
 }
 
 // HashPassword creates a bcrypt hash of a password.
@@ -402,7 +412,7 @@ func HashPassword(password string) (string, error) {
 	const bcryptCost = 12 // Increased from DefaultCost (10) for better security
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate bcrypt hash: %w", err)
 	}
 	return string(hash), nil
 }
@@ -477,7 +487,7 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		claims, err := m.ValidateToken(tokenString)
+		claims, err := m.ValidateToken(r.Context(), tokenString)
 		if err != nil {
 			if errors.Is(err, ErrTokenExpired) {
 				sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Token expired")
@@ -640,7 +650,8 @@ func GenerateSecurePassword(length int) (string, error) {
 	// Shuffle the password to randomize positions of required characters
 	// Use Fisher-Yates shuffle with unbiased random selection
 	for i := len(password) - 1; i > 0; i-- {
-		j, err := randomInt(i + 1)
+		var j int
+		j, err = randomInt(i + 1)
 		if err != nil {
 			return "", err
 		}
@@ -682,7 +693,7 @@ func GenerateInitialCredentials(username string) (*InitialCredentials, error) {
 // This is used when the password is changed via the setup wizard or settings.
 // Also increments token version to invalidate all existing tokens (fixes #520, #525).
 // If a UserStore is set, updates the database as well.
-func (m *Manager) UpdatePasswordHash(hash string) {
+func (m *Manager) UpdatePasswordHash(ctx context.Context, hash string) {
 	m.mu.Lock()
 	m.passwordHash = hash
 	m.tokenVersion++ // Invalidate all existing tokens
@@ -692,7 +703,7 @@ func (m *Manager) UpdatePasswordHash(hash string) {
 
 	// If we have a UserStore, update the database as well
 	if userStore != nil && username != "" {
-		if err := userStore.UpdatePassword(username, hash); err != nil {
+		if err := userStore.UpdatePassword(ctx, username, hash); err != nil {
 			slog.Error("Failed to update password in database", "username", username, "error", err)
 		} else {
 			slog.Info("Password hash updated in database", "username", username)
@@ -704,7 +715,7 @@ func (m *Manager) UpdatePasswordHash(hash string) {
 
 // UpdatePasswordHashForUser updates the password hash for a specific user.
 // This is used when changing password for a user that may differ from the default.
-func (m *Manager) UpdatePasswordHashForUser(username, hash string) error {
+func (m *Manager) UpdatePasswordHashForUser(ctx context.Context, username, hash string) error {
 	m.mu.RLock()
 	userStore := m.userStore
 	m.mu.RUnlock()
@@ -713,7 +724,7 @@ func (m *Manager) UpdatePasswordHashForUser(username, hash string) error {
 		return errors.New("no UserStore configured")
 	}
 
-	if err := userStore.UpdatePassword(username, hash); err != nil {
+	if err := userStore.UpdatePassword(ctx, username, hash); err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 

@@ -6,9 +6,10 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"os"
 	"runtime"
@@ -70,8 +71,8 @@ type ICMPPinger struct {
 	stoppedMu sync.Mutex
 
 	// Jitter settings for IDS-aware scanning
-	jitterMin time.Duration // Minimum delay between pings per worker
-	jitterMax time.Duration // Maximum delay (actual delay is random between min and max)
+	_ time.Duration // Reserved: jitterMin - Minimum delay between pings per worker
+	_ time.Duration // Reserved: jitterMax - Maximum delay (actual delay is random between min and max)
 }
 
 // SweepConfig configures ping sweep behavior.
@@ -116,14 +117,14 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	// Open privileged raw ICMP socket (requires root/CAP_NET_RAW)
 	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open ICMP socket: %w", err)
 	}
 	p.conn = conn
 
 	// Enable TTL in control messages for OS fingerprinting
-	if err := conn.IPv4PacketConn().SetControlMessage(ipv4.FlagTTL, true); err != nil {
+	if ctrlErr := conn.IPv4PacketConn().SetControlMessage(ipv4.FlagTTL, true); ctrlErr != nil {
 		// Non-fatal - TTL extraction may not work but ping will still function
-		slog.Warn("failed to enable TTL control message", "error", err)
+		slog.Warn("failed to enable TTL control message", "error", ctrlErr)
 	}
 
 	// Start the receiver goroutine
@@ -132,8 +133,8 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	// Set finalizer to ensure cleanup if Close() is not called.
 	// This prevents goroutine leaks if the pinger is abandoned.
 	runtime.SetFinalizer(p, func(pinger *ICMPPinger) {
-		if err := pinger.Close(); err != nil {
-			slog.Debug("ICMPPinger finalizer close error", "error", err)
+		if closeErr := pinger.Close(); closeErr != nil {
+			slog.Debug("ICMPPinger finalizer close error", "error", closeErr)
 		}
 	})
 
@@ -163,7 +164,9 @@ func (p *ICMPPinger) Close() error {
 	p.pendingMu.Unlock()
 
 	if p.conn != nil {
-		return p.conn.Close()
+		if err := p.conn.Close(); err != nil {
+			return fmt.Errorf("failed to close ICMP connection: %w", err)
+		}
 	}
 	return nil
 }
@@ -193,7 +196,8 @@ func (p *ICMPPinger) receiver() {
 		n, cm, _, err := p.conn.IPv4PacketConn().ReadFrom(reply)
 		if err != nil {
 			// Timeout is expected, just continue
-			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Timeout() {
 				continue
 			}
 			// Socket closed
@@ -212,13 +216,13 @@ func (p *ICMPPinger) receiver() {
 				if echo.ID == p.id {
 					// Find the pending ping for this sequence
 					p.pendingMu.Lock()
-					pp, ok := p.pending[echo.Seq]
-					if ok {
+					pp, found := p.pending[echo.Seq]
+					if found {
 						delete(p.pending, echo.Seq)
 					}
 					p.pendingMu.Unlock()
 
-					if ok {
+					if found {
 						result := PingResult{
 							IP:        pp.ip,
 							Reachable: true,
@@ -295,8 +299,8 @@ func (p *ICMPPinger) Ping(ctx context.Context, ipStr string) PingResult {
 	}
 
 	// Send ICMP echo request
-	if _, err := p.conn.WriteTo(msgBytes, dst); err != nil {
-		result.Error = err
+	if _, writeErr := p.conn.WriteTo(msgBytes, dst); writeErr != nil {
+		result.Error = writeErr
 		return result
 	}
 
@@ -376,7 +380,11 @@ func (p *ICMPPinger) PingSweepWithConfig(ctx context.Context, ips []net.IP, cfg 
 				if cfg.JitterMax > 0 {
 					jitter := cfg.JitterMin
 					if cfg.JitterMax > cfg.JitterMin {
-						jitter += time.Duration(rand.Int63n(int64(cfg.JitterMax - cfg.JitterMin))) //nolint:gosec // Not cryptographic
+						jitter += time.Duration(
+							rand.Int64N(
+								int64(cfg.JitterMax - cfg.JitterMin),
+							), // #nosec G404 -- weak RNG acceptable for timing jitter
+						)
 					}
 					select {
 					case <-ctx.Done():
@@ -419,9 +427,9 @@ func (p *ICMPPinger) PingSweepReachable(ctx context.Context, ips []net.IP, worke
 func CheckICMPPrivileges() error {
 	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create ICMP socket: %w", err)
 	}
-	conn.Close()
+	_ = conn.Close()
 	return nil
 }
 
@@ -443,13 +451,13 @@ func TTLToOS(ttl int) string {
 }
 
 // ErrICMPPrivileges is returned when raw ICMP socket privileges are unavailable.
-var ErrICMPPrivileges = fmt.Errorf("raw ICMP socket privileges unavailable")
+var ErrICMPPrivileges = errors.New("raw ICMP socket privileges unavailable")
 
 // CheckICMPPrivilegesWithMessage checks if the current process has privileges to use raw ICMP sockets.
 // Returns nil if privileged, a descriptive error otherwise.
 func CheckICMPPrivilegesWithMessage() error {
 	if err := CheckICMPPrivileges(); err != nil {
-		return fmt.Errorf("%w: %v (run with sudo or grant CAP_NET_RAW capability)", ErrICMPPrivileges, err)
+		return fmt.Errorf("%w: %w (run with sudo or grant CAP_NET_RAW capability)", ErrICMPPrivileges, err)
 	}
 	return nil
 }

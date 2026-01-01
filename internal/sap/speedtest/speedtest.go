@@ -42,6 +42,7 @@ package speedtest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -152,7 +153,7 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	t.mu.RLock()
 	if t.status.Running {
 		t.mu.RUnlock()
-		return nil, fmt.Errorf("test already in progress")
+		return nil, errors.New("test already in progress")
 	}
 	t.mu.RUnlock()
 
@@ -173,7 +174,7 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 
 	if len(serverList) == 0 {
 		t.setStatus("idle", 0)
-		return nil, fmt.Errorf("no servers available")
+		return nil, errors.New("no servers available")
 	}
 
 	// Select server (first one is closest by default)

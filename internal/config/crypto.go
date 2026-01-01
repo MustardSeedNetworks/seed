@@ -55,8 +55,8 @@ func EncryptCredential(plaintext, masterSecret string) (string, error) {
 
 	// Generate random nonce
 	nonce := make([]byte, gcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return "", fmt.Errorf("failed to generate nonce: %w", err)
+	if _, nonceErr := io.ReadFull(rand.Reader, nonce); nonceErr != nil {
+		return "", fmt.Errorf("failed to generate nonce: %w", nonceErr)
 	}
 
 	// Encrypt and authenticate
@@ -85,7 +85,7 @@ func DecryptCredential(encrypted, masterSecret string) (string, error) {
 	// Decode from base64
 	ciphertext, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return "", fmt.Errorf("%w: invalid base64: %v", ErrInvalidCiphertext, err)
+		return "", fmt.Errorf("%w: invalid base64: %w", ErrInvalidCiphertext, err)
 	}
 
 	key := deriveKey(masterSecret)
@@ -111,7 +111,7 @@ func DecryptCredential(encrypted, masterSecret string) (string, error) {
 	// Decrypt and verify
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return "", fmt.Errorf("%w: authentication failed: %v", ErrInvalidCiphertext, err)
+		return "", fmt.Errorf("%w: authentication failed: %w", ErrInvalidCiphertext, err)
 	}
 
 	return string(plaintext), nil

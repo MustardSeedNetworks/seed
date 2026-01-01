@@ -137,7 +137,14 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
@@ -161,7 +168,14 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
@@ -171,13 +185,27 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	var req IperfClientRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	if err := validateIperfClientRequest(&req); err != nil {
 		logger.Warn("iPerf validation failed", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.health.iperfValidationFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.health.iperfValidationFailed"),
+			"",
+		)
 		return
 	}
 
@@ -212,7 +240,14 @@ func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request)
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
@@ -253,7 +288,14 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
@@ -263,7 +305,14 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 	var req IperfServerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
@@ -275,24 +324,45 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := s.iperfManager.StartServer(port); err != nil {
 			logger.Error("Failed to start iPerf server", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.health.iperfServerStartFailed"), "")
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusInternalServerError,
+				ErrCodeInternal,
+				localizer.T("errors.health.iperfServerStartFailed"),
+				"",
+			)
 			return
 		}
-		sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 			"message": fmt.Sprintf("iperf3 server started on port %d", port),
 			"port":    port,
 		})
 	case "stop":
 		if err := s.iperfManager.StopServer(); err != nil {
 			logger.Error("Failed to stop iPerf server", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.health.iperfServerStopFailed"), "")
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusInternalServerError,
+				ErrCodeInternal,
+				localizer.T("errors.health.iperfServerStopFailed"),
+				"",
+			)
 			return
 		}
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 			"message": "iperf3 server stopped",
 		})
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.health.iperfInvalidAction"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.health.iperfInvalidAction"),
+			"",
+		)
 	}
 }
 
@@ -302,7 +372,14 @@ func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request)
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
@@ -316,12 +393,26 @@ func (s *Server) handleIperfSuggestions(w http.ResponseWriter, r *http.Request) 
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
 	if s.deviceDiscovery == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.health.deviceDiscoveryNotAvailable"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.health.deviceDiscoveryNotAvailable"),
+			"",
+		)
 		return
 	}
 

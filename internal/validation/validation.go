@@ -14,7 +14,9 @@ import (
 )
 
 // validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens).
-var validHostnameRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
+var validHostnameRegex = regexp.MustCompile(
+	`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`,
+)
 
 // validInterfaceRegex matches valid network interface names.
 // Linux: eth0, enp0s3, wlan0, docker0, br-xxx, vethXXX, lo.
@@ -48,7 +50,7 @@ func IsValidHostOrIP(s string) bool {
 // ValidateServerAddress validates a server address (IP or hostname).
 func ValidateServerAddress(server string) error {
 	if server == "" {
-		return fmt.Errorf("server address is required")
+		return errors.New("server address is required")
 	}
 
 	if IsValidIP(server) {
@@ -56,11 +58,11 @@ func ValidateServerAddress(server string) error {
 	}
 
 	if len(server) > 253 {
-		return fmt.Errorf("server hostname too long")
+		return errors.New("server hostname too long")
 	}
 
 	if !validHostnameRegex.MatchString(server) {
-		return fmt.Errorf("invalid server address: must be a valid IP or hostname")
+		return errors.New("invalid server address: must be a valid IP or hostname")
 	}
 
 	return nil
@@ -77,13 +79,13 @@ func IsValidInterface(iface string) bool {
 // ValidateInterface validates a network interface name.
 func ValidateInterface(iface string) error {
 	if iface == "" {
-		return fmt.Errorf("interface name is required")
+		return errors.New("interface name is required")
 	}
 	if len(iface) > 16 {
-		return fmt.Errorf("interface name too long (max 16 characters)")
+		return errors.New("interface name too long (max 16 characters)")
 	}
 	if !validInterfaceRegex.MatchString(iface) {
-		return fmt.Errorf("invalid interface name: must contain only alphanumeric characters, hyphens, and underscores")
+		return errors.New("invalid interface name: must contain only alphanumeric characters, hyphens, and underscores")
 	}
 	return nil
 }
@@ -118,7 +120,7 @@ func IsValidURL(s string) bool {
 // It prevents SSRF by blocking private/internal IPs.
 func ValidateURL(rawURL string) error {
 	if rawURL == "" {
-		return fmt.Errorf("URL is required")
+		return errors.New("URL is required")
 	}
 
 	// Add scheme if missing for parsing
@@ -134,7 +136,7 @@ func ValidateURL(rawURL string) error {
 
 	host := u.Hostname()
 	if host == "" {
-		return fmt.Errorf("URL must have a valid host")
+		return errors.New("URL must have a valid host")
 	}
 
 	// Validate host is valid IP or hostname
@@ -145,7 +147,7 @@ func ValidateURL(rawURL string) error {
 	// Check for private/internal IP addresses (SSRF prevention)
 	if ip := net.ParseIP(host); ip != nil {
 		if IsPrivateIP(ip) {
-			return fmt.Errorf("URLs targeting private/internal IP addresses are not allowed")
+			return errors.New("URLs targeting private/internal IP addresses are not allowed")
 		}
 	}
 
@@ -222,7 +224,7 @@ func ValidateMTU(mtu int) error {
 // Only allows valid IPv4/IPv6 addresses, not hostnames, to prevent injection.
 func ValidateDNSAddress(dns string) error {
 	if dns == "" {
-		return fmt.Errorf("DNS server address is required")
+		return errors.New("DNS server address is required")
 	}
 
 	ip := net.ParseIP(dns)
@@ -247,19 +249,19 @@ func ValidateDNSServers(servers []string) error {
 func ValidateNetmask(netmask string) error {
 	ip := net.ParseIP(netmask)
 	if ip == nil {
-		return fmt.Errorf("invalid netmask format")
+		return errors.New("invalid netmask format")
 	}
 
 	ip4 := ip.To4()
 	if ip4 == nil {
-		return fmt.Errorf("netmask must be IPv4")
+		return errors.New("netmask must be IPv4")
 	}
 
 	// Check it's a valid netmask (contiguous 1s followed by 0s)
 	mask := net.IPv4Mask(ip4[0], ip4[1], ip4[2], ip4[3])
 	ones, bits := mask.Size()
 	if bits == 0 || ones == 0 {
-		return fmt.Errorf("invalid netmask: not a valid subnet mask")
+		return errors.New("invalid netmask: not a valid subnet mask")
 	}
 
 	return nil
@@ -357,11 +359,11 @@ func ValidateFilename(filename, fieldName string) error {
 // Survey IDs must be alphanumeric with hyphens/underscores only.
 func ValidateSurveyID(id string) error {
 	if id == "" {
-		return fmt.Errorf("survey ID is required")
+		return errors.New("survey ID is required")
 	}
 
 	if len(id) > 64 {
-		return fmt.Errorf("survey ID too long (max 64 characters)")
+		return errors.New("survey ID too long (max 64 characters)")
 	}
 
 	// Check for valid characters
@@ -371,7 +373,7 @@ func ValidateSurveyID(id string) error {
 			(r >= '0' && r <= '9') ||
 			r == '-' || r == '_'
 		if !isValid {
-			return fmt.Errorf("survey ID contains invalid characters (use only letters, numbers, hyphens, underscores)")
+			return errors.New("survey ID contains invalid characters (use only letters, numbers, hyphens, underscores)")
 		}
 	}
 
@@ -382,18 +384,18 @@ func ValidateSurveyID(id string) error {
 // Ensures it's a valid data URL with an allowed image MIME type.
 func ValidateImageDataURL(dataURL string, maxSizeBytes int) error {
 	if dataURL == "" {
-		return fmt.Errorf("image data is required")
+		return errors.New("image data is required")
 	}
 
 	// Check for data URL prefix
 	if !strings.HasPrefix(dataURL, "data:") {
-		return fmt.Errorf("invalid image data format (must be a data URL)")
+		return errors.New("invalid image data format (must be a data URL)")
 	}
 
 	// Extract MIME type
 	parts := strings.SplitN(dataURL, ",", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("invalid image data format")
+		return errors.New("invalid image data format")
 	}
 
 	// Validate MIME type
@@ -408,7 +410,7 @@ func ValidateImageDataURL(dataURL string, maxSizeBytes int) error {
 	}
 
 	if !validType {
-		return fmt.Errorf("unsupported image type (allowed: PNG, JPEG, GIF, WebP)")
+		return errors.New("unsupported image type (allowed: PNG, JPEG, GIF, WebP)")
 	}
 
 	// Check size (rough estimate: base64 is ~1.33x larger than binary)

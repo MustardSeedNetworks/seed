@@ -3,12 +3,25 @@
 package discovery
 
 import (
+	"maps"
+	"slices"
 	"sync"
 	"time"
 )
 
-// DiscoveryMetrics tracks discovery statistics and coverage.
-type DiscoveryMetrics struct {
+// Discovery method constants.
+const (
+	MethodICMP = "icmp"
+)
+
+// Health status constants.
+const (
+	HealthCritical = "critical"
+	HealthDegraded = "degraded"
+)
+
+// Metrics tracks discovery statistics and coverage.
+type Metrics struct {
 	mu sync.RWMutex
 
 	// Enumeration metrics.
@@ -64,9 +77,9 @@ type DiscoveryMetrics struct {
 	MethodsFailed    []string `json:"methodsFailed"`    // Methods that failed completely
 }
 
-// NewDiscoveryMetrics creates a new metrics instance with initialized maps.
-func NewDiscoveryMetrics() *DiscoveryMetrics {
-	return &DiscoveryMetrics{
+// NewMetrics creates a new metrics instance with initialized maps.
+func NewMetrics() *Metrics {
+	return &Metrics{
 		ByMethod:     make(map[string]int),
 		ByVendor:     make(map[string]int),
 		CommonPorts:  make(map[int]int),
@@ -75,7 +88,7 @@ func NewDiscoveryMetrics() *DiscoveryMetrics {
 }
 
 // Reset clears all metrics for a new scan.
-func (m *DiscoveryMetrics) Reset() {
+func (m *Metrics) Reset() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -114,14 +127,14 @@ func (m *DiscoveryMetrics) Reset() {
 }
 
 // StartScan records the start of a new scan.
-func (m *DiscoveryMetrics) StartScan() {
+func (m *Metrics) StartScan() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.LastScanStart = time.Now()
 }
 
 // EndScan records the end of a scan and updates timing metrics.
-func (m *DiscoveryMetrics) EndScan() {
+func (m *Metrics) EndScan() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -140,7 +153,7 @@ func (m *DiscoveryMetrics) EndScan() {
 }
 
 // RecordDevice records a discovered device.
-func (m *DiscoveryMetrics) RecordDevice(method, vendor string) {
+func (m *Metrics) RecordDevice(method, vendor string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -152,7 +165,7 @@ func (m *DiscoveryMetrics) RecordDevice(method, vendor string) {
 }
 
 // RecordProbe records a host probe attempt and result.
-func (m *DiscoveryMetrics) RecordProbe(responded bool) {
+func (m *Metrics) RecordProbe(responded bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -165,14 +178,14 @@ func (m *DiscoveryMetrics) RecordProbe(responded bool) {
 }
 
 // RecordError records an error by category.
-func (m *DiscoveryMetrics) RecordError(category string) {
+func (m *Metrics) RecordError(category string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	switch category {
 	case "arp":
 		m.ARPErrors++
-	case "icmp":
+	case MethodICMP:
 		m.ICMPErrors++
 	case "dns":
 		m.DNSErrors++
@@ -184,7 +197,7 @@ func (m *DiscoveryMetrics) RecordError(category string) {
 }
 
 // RecordRetry records a retry attempt and whether it succeeded.
-func (m *DiscoveryMetrics) RecordRetry(succeeded bool) {
+func (m *Metrics) RecordRetry(succeeded bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -195,7 +208,7 @@ func (m *DiscoveryMetrics) RecordRetry(succeeded bool) {
 }
 
 // RecordProfile records a profiling operation.
-func (m *DiscoveryMetrics) RecordProfile(succeeded bool, duration time.Duration) {
+func (m *Metrics) RecordProfile(succeeded bool, duration time.Duration) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -213,7 +226,7 @@ func (m *DiscoveryMetrics) RecordProfile(succeeded bool, duration time.Duration)
 }
 
 // RecordOpenPort records an open port found on a device.
-func (m *DiscoveryMetrics) RecordOpenPort(port int, service string) {
+func (m *Metrics) RecordOpenPort(port int, service string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -225,7 +238,7 @@ func (m *DiscoveryMetrics) RecordOpenPort(port int, service string) {
 }
 
 // RecordSNMP records an SNMP collection result.
-func (m *DiscoveryMetrics) RecordSNMP(succeeded bool, version string, interfaces, ipAddrs, entities int) {
+func (m *Metrics) RecordSNMP(succeeded bool, version string, interfaces, ipAddrs, entities int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -245,45 +258,41 @@ func (m *DiscoveryMetrics) RecordSNMP(succeeded bool, version string, interfaces
 }
 
 // RecordSubnetScanned records a subnet scan completion.
-func (m *DiscoveryMetrics) RecordSubnetScanned() {
+func (m *Metrics) RecordSubnetScanned() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.SubnetsScanned++
 }
 
 // RecordMethodAvailable records a working discovery method.
-func (m *DiscoveryMetrics) RecordMethodAvailable(method string) {
+func (m *Metrics) RecordMethodAvailable(method string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	for _, existing := range m.MethodsAvailable {
-		if existing == method {
-			return
-		}
+	if slices.Contains(m.MethodsAvailable, method) {
+		return
 	}
 	m.MethodsAvailable = append(m.MethodsAvailable, method)
 }
 
 // RecordMethodFailed records a failed discovery method.
-func (m *DiscoveryMetrics) RecordMethodFailed(method string) {
+func (m *Metrics) RecordMethodFailed(method string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	for _, existing := range m.MethodsFailed {
-		if existing == method {
-			return
-		}
+	if slices.Contains(m.MethodsFailed, method) {
+		return
 	}
 	m.MethodsFailed = append(m.MethodsFailed, method)
 }
 
 // Clone returns a copy of the current metrics (alias for GetSnapshot).
-func (m *DiscoveryMetrics) Clone() *DiscoveryMetrics {
+func (m *Metrics) Clone() *Metrics {
 	return m.GetSnapshot()
 }
 
 // UpdateFromDevices updates metrics based on discovered devices.
-func (m *DiscoveryMetrics) UpdateFromDevices(devices []*DiscoveredDevice) {
+func (m *Metrics) UpdateFromDevices(devices []*DiscoveredDevice) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -309,30 +318,22 @@ func (m *DiscoveryMetrics) UpdateFromDevices(devices []*DiscoveredDevice) {
 }
 
 // GetSnapshot returns a copy of the current metrics.
-func (m *DiscoveryMetrics) GetSnapshot() *DiscoveryMetrics {
+func (m *Metrics) GetSnapshot() *Metrics {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	// Create deep copy of maps.
 	byMethod := make(map[string]int, len(m.ByMethod))
-	for k, v := range m.ByMethod {
-		byMethod[k] = v
-	}
+	maps.Copy(byMethod, m.ByMethod)
 
 	byVendor := make(map[string]int, len(m.ByVendor))
-	for k, v := range m.ByVendor {
-		byVendor[k] = v
-	}
+	maps.Copy(byVendor, m.ByVendor)
 
 	commonPorts := make(map[int]int, len(m.CommonPorts))
-	for k, v := range m.CommonPorts {
-		commonPorts[k] = v
-	}
+	maps.Copy(commonPorts, m.CommonPorts)
 
 	serviceTypes := make(map[string]int, len(m.ServiceTypes))
-	for k, v := range m.ServiceTypes {
-		serviceTypes[k] = v
-	}
+	maps.Copy(serviceTypes, m.ServiceTypes)
 
 	// Copy slices.
 	methodsAvailable := make([]string, len(m.MethodsAvailable))
@@ -341,7 +342,7 @@ func (m *DiscoveryMetrics) GetSnapshot() *DiscoveryMetrics {
 	methodsFailed := make([]string, len(m.MethodsFailed))
 	copy(methodsFailed, m.MethodsFailed)
 
-	return &DiscoveryMetrics{
+	return &Metrics{
 		TotalDiscovered:    m.TotalDiscovered,
 		ByMethod:           byMethod,
 		ByVendor:           byVendor,
@@ -481,7 +482,7 @@ type DegradationStatus struct {
 }
 
 // GetDegradationStatus analyzes metrics and returns health status.
-func (m *DiscoveryMetrics) GetDegradationStatus() *DegradationStatus {
+func (m *Metrics) GetDegradationStatus() *DegradationStatus {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -504,10 +505,10 @@ func (m *DiscoveryMetrics) GetDegradationStatus() *DegradationStatus {
 	if totalOps > 0 {
 		errorRate := float64(totalErrors) / float64(totalOps) * 100
 		if errorRate > 50 {
-			status.OverallHealth = "critical"
+			status.OverallHealth = HealthCritical
 			status.Warnings = append(status.Warnings, "High error rate detected (>50%)")
 		} else if errorRate > 20 {
-			status.OverallHealth = "degraded"
+			status.OverallHealth = HealthDegraded
 			status.Warnings = append(status.Warnings, "Elevated error rate detected (>20%)")
 		}
 	}
@@ -515,7 +516,7 @@ func (m *DiscoveryMetrics) GetDegradationStatus() *DegradationStatus {
 	// Check coverage.
 	if m.CoveragePercent < 50 && m.HostsProbed > 10 {
 		if status.OverallHealth == "healthy" {
-			status.OverallHealth = "degraded"
+			status.OverallHealth = HealthDegraded
 		}
 		status.Warnings = append(status.Warnings, "Low network coverage (<50% of hosts responding)")
 		status.Recommendations = append(status.Recommendations, "Check firewall rules for ICMP")
@@ -524,10 +525,10 @@ func (m *DiscoveryMetrics) GetDegradationStatus() *DegradationStatus {
 	// Check for method failures.
 	if len(m.MethodsFailed) > 0 {
 		if len(m.MethodsAvailable) == 0 {
-			status.OverallHealth = "critical"
+			status.OverallHealth = HealthCritical
 			status.Warnings = append(status.Warnings, "All discovery methods failed")
 		} else if status.OverallHealth == "healthy" {
-			status.OverallHealth = "degraded"
+			status.OverallHealth = HealthDegraded
 		}
 	}
 
@@ -537,7 +538,7 @@ func (m *DiscoveryMetrics) GetDegradationStatus() *DegradationStatus {
 		case "arp":
 			status.Recommendations = append(status.Recommendations,
 				"ARP scanning requires same broadcast domain - check interface configuration")
-		case "icmp":
+		case MethodICMP:
 			status.Recommendations = append(status.Recommendations,
 				"ICMP requires CAP_NET_RAW - check permissions")
 		case "snmp":

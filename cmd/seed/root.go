@@ -54,9 +54,11 @@ func init() {
 	rootCmd.Version = version.Version
 
 	// Persistent flags are available to all subcommands
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file path (default: XDG config paths or configs/seed.yaml)")
+	rootCmd.PersistentFlags().
+		StringVar(&cfgFile, "config", "", "config file path (default: XDG config paths or configs/seed.yaml)")
 	rootCmd.PersistentFlags().BoolVar(&devMode, "dev", false, "run in development mode (HTTP instead of HTTPS)")
-	rootCmd.PersistentFlags().StringVar(&trustedProxies, "trusted-proxies", "", "comma-separated list of trusted proxy IPs/CIDRs for X-Forwarded-For")
+	rootCmd.PersistentFlags().
+		StringVar(&trustedProxies, "trusted-proxies", "", "comma-separated list of trusted proxy IPs/CIDRs for X-Forwarded-For")
 
 	// Add completion command
 	rootCmd.AddCommand(completionCmd)

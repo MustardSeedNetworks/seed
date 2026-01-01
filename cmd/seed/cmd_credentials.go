@@ -76,7 +76,8 @@ func runCredentials(_ *cobra.Command, _ []string) {
 
 	// Output status
 	if outputJSON {
-		jsonData, err := json.MarshalIndent(status, "", "  ")
+		var jsonData []byte
+		jsonData, err = json.MarshalIndent(status, "", "  ")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Failed to marshal status: %v\n", err)
 			os.Exit(1)

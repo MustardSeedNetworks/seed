@@ -10,8 +10,8 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/validation"
 	"github.com/krisarmstrong/seed/internal/sap/vlan"
+	"github.com/krisarmstrong/seed/internal/validation"
 )
 
 // ============================================================================
@@ -58,12 +58,26 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		)
 		return
 	}
 
 	if s.vlanManager == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "VLAN manager not available", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"VLAN manager not available",
+			"",
+		)
 		return
 	}
 
@@ -106,12 +120,29 @@ func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
 	if s.vlanTrafficMonitor == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]interface{}{"service": "VLAN traffic monitor"}), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.TWithData(
+				"errors.service.notAvailable",
+				map[string]any{"service": "VLAN traffic monitor"},
+			),
+			"",
+		)
 		return
 	}
 
@@ -149,32 +180,58 @@ func (s *Server) handleVLANInterface(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		s.deleteVLANInterface(w, r, logger, localizer)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 	}
 }
 
 // parseVLANRequest parses and validates a VLAN interface request.
 // Returns the validated interface name, VLAN ID, and success boolean.
-func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) (iface string, vlanID int, ok bool) {
+func (s *Server) parseVLANRequest(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) (string, int, bool) {
 	// Limit request body size to prevent DoS attacks
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req VLANInterfaceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return "", 0, false
 	}
 
 	// Validate VLAN ID
 	if err := validation.ValidateVLANID(req.VlanID); err != nil {
 		logger.Warn("Invalid VLAN ID", "error", err, "vlanID", req.VlanID)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vlan.invalidId"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.vlan.invalidId"),
+			"",
+		)
 		return "", 0, false
 	}
 
 	// Use current interface if not specified
-	iface = req.Interface
+	iface := req.Interface
 	if iface == "" {
 		iface = s.netManager.GetCurrentInterface()
 	}
@@ -182,19 +239,29 @@ func (s *Server) parseVLANRequest(w http.ResponseWriter, r *http.Request, logger
 	// Validate interface name
 	if err := validation.ValidateInterface(iface); err != nil {
 		logger.Warn("Invalid interface", "error", err, "interface", iface)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.network.invalidInterface"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.network.invalidInterface"),
+			"",
+		)
 		return "", 0, false
 	}
 
-	vlanID = req.VlanID
-	ok = true
-	return iface, vlanID, ok
+	return iface, req.VlanID, true
 }
 
 // createVLANInterface creates an 802.1Q VLAN subinterface.
 //
-//nolint:dupl // Intentionally similar to deleteVLANInterface - different CRUD operations
-func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
+
+func (s *Server) createVLANInterface(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) {
 	iface, vlanID, ok := s.parseVLANRequest(w, r, logger, localizer)
 	if !ok {
 		return
@@ -202,11 +269,18 @@ func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request, log
 
 	if err := vlan.CreateVlanInterface(iface, vlanID); err != nil {
 		logger.Error("Failed to create VLAN interface", "error", err, "interface", iface, "vlanID", vlanID)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.vlan.failedToCreate"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.vlan.failedToCreate"),
+			"",
+		)
 		return
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 		"status":    "success",
 		"message":   "VLAN interface created",
 		"interface": iface,
@@ -216,8 +290,13 @@ func (s *Server) createVLANInterface(w http.ResponseWriter, r *http.Request, log
 
 // deleteVLANInterface removes an 802.1Q VLAN subinterface.
 //
-//nolint:dupl // Intentionally similar to createVLANInterface - different CRUD operations
-func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
+
+func (s *Server) deleteVLANInterface(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) {
 	iface, vlanID, ok := s.parseVLANRequest(w, r, logger, localizer)
 	if !ok {
 		return
@@ -225,11 +304,18 @@ func (s *Server) deleteVLANInterface(w http.ResponseWriter, r *http.Request, log
 
 	if err := vlan.DeleteVlanInterface(iface, vlanID); err != nil {
 		logger.Error("Failed to delete VLAN interface", "error", err, "interface", iface, "vlanID", vlanID)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.vlan.failedToDelete"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.vlan.failedToDelete"),
+			"",
+		)
 		return
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 		"status":    "success",
 		"message":   "VLAN interface deleted",
 		"interface": iface,
