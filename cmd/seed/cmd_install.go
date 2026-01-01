@@ -146,7 +146,7 @@ func runInstall(cmd *cobra.Command, _ []string) {
 
 	// Detect distro
 	distro := DetectDistro()
-	fmt.Printf("Detected: %s (%s family)\n", distro.Name, distro.Family)
+	fmt.Fprintf(os.Stdout, "Detected: %s (%s family)\n", distro.Name, distro.Family)
 
 	// Resolve paths
 	p := paths.Resolve(mode)
@@ -158,13 +158,13 @@ func runInstall(cmd *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Installation mode: %s\n", modeString(mode))
-	fmt.Printf("Config directory: %s\n", p.ConfigDir)
-	fmt.Printf("Data directory: %s\n", p.DataDir)
-	fmt.Printf("Log directory: %s\n", p.LogDir)
+	fmt.Fprintf(os.Stdout, "Installation mode: %s\n", modeString(mode))
+	fmt.Fprintf(os.Stdout, "Config directory: %s\n", p.ConfigDir)
+	fmt.Fprintf(os.Stdout, "Data directory: %s\n", p.DataDir)
+	fmt.Fprintf(os.Stdout, "Log directory: %s\n", p.LogDir)
 
 	// Create directories
-	fmt.Println("\nCreating directories...")
+	fmt.Fprintln(os.Stdout, "\nCreating directories...")
 	dirs := []string{p.ConfigDir, p.DataDir, p.LogDir, p.CacheDir}
 	for _, dir := range dirs {
 		err = os.MkdirAll(dir, 0o750)
@@ -172,12 +172,12 @@ func runInstall(cmd *cobra.Command, _ []string) {
 			fmt.Fprintf(os.Stderr, "Error creating %s: %v\n", dir, err)
 			os.Exit(1)
 		}
-		fmt.Printf("  Created: %s\n", dir)
+		fmt.Fprintf(os.Stdout, "  Created: %s\n", dir)
 	}
 
 	// System mode: create user/group
 	if mode == paths.ModeSystem {
-		fmt.Println("\nCreating seed user and group...")
+		fmt.Fprintln(os.Stdout, "\nCreating seed user and group...")
 		createSystemUser()
 
 		// Set ownership
@@ -203,10 +203,10 @@ func runInstall(cmd *cobra.Command, _ []string) {
 
 	_, err = os.Stat(destBinary)
 	if err == nil && !force {
-		fmt.Printf("\nBinary already exists at %s\n", destBinary)
-		fmt.Println("Use --force to overwrite")
+		fmt.Fprintf(os.Stdout, "\nBinary already exists at %s\n", destBinary)
+		fmt.Fprintln(os.Stdout, "Use --force to overwrite")
 	} else {
-		fmt.Printf("\nCopying binary to %s...\n", destBinary)
+		fmt.Fprintf(os.Stdout, "\nCopying binary to %s...\n", destBinary)
 		err = copyFile(executable, destBinary)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error copying binary: %v\n", err)
@@ -222,13 +222,13 @@ func runInstall(cmd *cobra.Command, _ []string) {
 
 	// Set capabilities (system mode only)
 	if mode == paths.ModeSystem {
-		fmt.Println("\nSetting capabilities...")
+		fmt.Fprintln(os.Stdout, "\nSetting capabilities...")
 		err = runCommand("setcap", "cap_net_raw,cap_net_admin=+ep", destBinary)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: Failed to set capabilities: %v\n", err)
-			fmt.Println("  ICMP and protocol capture features will require root")
+			fmt.Fprintln(os.Stdout, "  ICMP and protocol capture features will require root")
 		} else {
-			fmt.Println("  Set cap_net_raw,cap_net_admin for raw socket access")
+			fmt.Fprintln(os.Stdout, "  Set cap_net_raw,cap_net_admin for raw socket access")
 		}
 	}
 
@@ -236,7 +236,7 @@ func runInstall(cmd *cobra.Command, _ []string) {
 	configFile := filepath.Join(p.ConfigDir, "seed.yaml")
 	_, err = os.Stat(configFile)
 	if os.IsNotExist(err) {
-		fmt.Printf("\nCreating default config at %s...\n", configFile)
+		fmt.Fprintf(os.Stdout, "\nCreating default config at %s...\n", configFile)
 		cfg := config.DefaultConfig()
 		err = cfg.Save(configFile)
 		if err != nil {
@@ -246,18 +246,18 @@ func runInstall(cmd *cobra.Command, _ []string) {
 
 	// Install systemd service
 	if !noService {
-		fmt.Println("\nInstalling systemd service...")
+		fmt.Fprintln(os.Stdout, "\nInstalling systemd service...")
 		installSystemdService(mode, p, destBinary)
 	}
 
-	fmt.Println("\n✓ Installation complete!")
-	fmt.Printf("\nTo start the service:\n")
+	fmt.Fprintln(os.Stdout, "\n✓ Installation complete!")
+	fmt.Fprintf(os.Stdout, "\nTo start the service:\n")
 	if mode == paths.ModeSystem {
-		fmt.Println("  sudo systemctl start seed")
-		fmt.Println("  sudo systemctl enable seed  # Start on boot")
+		fmt.Fprintln(os.Stdout, "  sudo systemctl start seed")
+		fmt.Fprintln(os.Stdout, "  sudo systemctl enable seed  # Start on boot")
 	} else {
-		fmt.Println("  systemctl --user start seed")
-		fmt.Println("  systemctl --user enable seed  # Start on login")
+		fmt.Fprintln(os.Stdout, "  systemctl --user start seed")
+		fmt.Fprintln(os.Stdout, "  systemctl --user enable seed  # Start on login")
 	}
 }
 
@@ -280,7 +280,7 @@ func createSystemUser() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if exec.CommandContext(ctx, "id", "seed").Run() == nil {
-			fmt.Println("  User 'seed' already exists")
+			fmt.Fprintln(os.Stdout, "  User 'seed' already exists")
 			return
 		}
 	}
@@ -289,7 +289,7 @@ func createSystemUser() {
 	if err := runCommand("useradd", "-r", "-s", "/usr/sbin/nologin", "-d", "/var/lib/seed", "-m", "seed"); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Failed to create user: %v\n", err)
 	} else {
-		fmt.Println("  Created user 'seed'")
+		fmt.Fprintln(os.Stdout, "  Created user 'seed'")
 	}
 }
 
@@ -352,7 +352,7 @@ func installSystemdService(mode paths.Mode, p *paths.Paths, binaryPath string) {
 		return
 	}
 
-	fmt.Printf("  Created: %s\n", servicePath)
+	fmt.Fprintf(os.Stdout, "  Created: %s\n", servicePath)
 
 	// Reload systemd
 	if mode == paths.ModeSystem {

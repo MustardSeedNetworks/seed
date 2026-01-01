@@ -78,7 +78,7 @@ func runExport(cmd *cobra.Command, _ []string) {
 
 	// Write output
 	if output == "-" {
-		fmt.Println(string(data))
+		fmt.Fprintln(os.Stdout, string(data))
 	} else {
 		err = os.WriteFile(output, data, 0o600)
 		if err != nil {
