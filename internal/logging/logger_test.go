@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -272,15 +271,14 @@ func TestFromContext(t *testing.T) {
 }
 
 func TestConvenienceLogFunctions(t *testing.T) {
-	// Capture stderr to verify logging
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Capture output to verify logging
+	var buf bytes.Buffer
 
-	// Initialize logger
+	// Initialize logger with custom writer
 	err := InitLogger(&LoggingConfig{
 		Level:  "debug",
 		Format: "text",
+		Writer: &buf,
 	})
 	if err != nil {
 		t.Fatalf("InitLogger() failed: %v", err)
@@ -292,12 +290,6 @@ func TestConvenienceLogFunctions(t *testing.T) {
 	Warn("warn message", "key", "value")
 	Error("error message", "key", "value")
 
-	// Restore stdout
-	_ = w.Close()
-	os.Stdout = oldStdout
-
-	var buf bytes.Buffer
-	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	// Verify log levels appear
@@ -321,15 +313,14 @@ func TestConvenienceLogFunctions(t *testing.T) {
 }
 
 func TestContextLogFunctions(t *testing.T) {
-	// Capture stderr to verify logging
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Capture output to verify logging
+	var buf bytes.Buffer
 
-	// Initialize logger
+	// Initialize logger with custom writer
 	err := InitLogger(&LoggingConfig{
 		Level:  "debug",
 		Format: "text",
+		Writer: &buf,
 	})
 	if err != nil {
 		t.Fatalf("InitLogger() failed: %v", err)
@@ -343,12 +334,6 @@ func TestContextLogFunctions(t *testing.T) {
 	WarnContext(ctx, "warn with context", "key", "value")
 	ErrorContext(ctx, "error with context", "key", "value")
 
-	// Restore stdout
-	_ = w.Close()
-	os.Stdout = oldStdout
-
-	var buf bytes.Buffer
-	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	// Verify request_id appears in output

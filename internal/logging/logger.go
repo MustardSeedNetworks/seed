@@ -19,14 +19,15 @@ import (
 //
 //nolint:revive // stuttering: keeping name for backward compatibility.
 type LoggingConfig struct {
-	Level      string `yaml:"level"`       // DEBUG, INFO, WARN, ERROR (default: INFO)
-	Format     string `yaml:"format"`      // text or json (default: json)
-	AddSource  bool   `yaml:"add_source"`  // Include file:line in logs
-	File       string `yaml:"file"`        // Log file path (empty = stdout only)
-	MaxSize    int    `yaml:"max_size"`    // Max MB per log file before rotation
-	MaxBackups int    `yaml:"max_backups"` // Number of old files to keep
-	MaxAge     int    `yaml:"max_age"`     // Days to keep old files
-	Compress   bool   `yaml:"compress"`    // Compress rotated files
+	Level      string    `yaml:"level"`       // DEBUG, INFO, WARN, ERROR (default: INFO)
+	Format     string    `yaml:"format"`      // text or json (default: json)
+	AddSource  bool      `yaml:"add_source"`  // Include file:line in logs
+	File       string    `yaml:"file"`        // Log file path (empty = stdout only)
+	MaxSize    int       `yaml:"max_size"`    // Max MB per log file before rotation
+	MaxBackups int       `yaml:"max_backups"` // Number of old files to keep
+	MaxAge     int       `yaml:"max_age"`     // Days to keep old files
+	Compress   bool      `yaml:"compress"`    // Compress rotated files
+	Writer     io.Writer `yaml:"-"`           // Override output writer (for testing, default: os.Stdout)
 }
 
 // DefaultLoggingConfig returns sensible defaults for logging.
@@ -84,7 +85,11 @@ func InitLogger(cfg *LoggingConfig) error {
 
 	// Determine output writers
 	var writers []io.Writer
-	writers = append(writers, os.Stdout)
+	if cfg.Writer != nil {
+		writers = append(writers, cfg.Writer)
+	} else {
+		writers = append(writers, os.Stdout)
+	}
 
 	// Add file writer with rotation if configured (fixes #714)
 	// Log rotation policy:

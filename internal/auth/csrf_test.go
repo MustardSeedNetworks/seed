@@ -69,12 +69,18 @@ func TestCSRFManagerGenerateAndValidate(t *testing.T) {
 	}
 
 	// Validate with wrong session ID
-	if wrongSessionErr := manager.ValidateToken("wrong-session", token); !errors.Is(wrongSessionErr, ErrCSRFTokenInvalid) {
+	if wrongSessionErr := manager.ValidateToken("wrong-session", token); !errors.Is(
+		wrongSessionErr,
+		ErrCSRFTokenInvalid,
+	) {
 		t.Errorf("expected ErrCSRFTokenInvalid, got %v", wrongSessionErr)
 	}
 
 	// Validate with wrong token
-	if wrongTokenErr := manager.ValidateToken(sessionID, "wrong-token"); !errors.Is(wrongTokenErr, ErrCSRFTokenInvalid) {
+	if wrongTokenErr := manager.ValidateToken(sessionID, "wrong-token"); !errors.Is(
+		wrongTokenErr,
+		ErrCSRFTokenInvalid,
+	) {
 		t.Errorf("expected ErrCSRFTokenInvalid, got %v", wrongTokenErr)
 	}
 }
