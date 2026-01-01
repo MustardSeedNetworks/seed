@@ -155,8 +155,8 @@ func TestHandleConfigRestore(t *testing.T) {
 
 	// Modify config
 	cfg.Server.Port = 9999
-	if err := cfg.Save(configPath); err != nil {
-		t.Fatalf("Failed to save modified config: %v", err)
+	if saveErr := cfg.Save(configPath); saveErr != nil {
+		t.Fatalf("Failed to save modified config: %v", saveErr)
 	}
 
 	s := &Server{
@@ -215,7 +215,7 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 	}
 
 	// Verify backup was deleted
-	if _, err := os.Stat(backup.Path); !os.IsNotExist(err) {
+	if _, statErr := os.Stat(backup.Path); !os.IsNotExist(statErr) {
 		t.Error("Backup file should be deleted")
 	}
 }

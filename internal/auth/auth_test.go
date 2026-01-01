@@ -351,8 +351,8 @@ func TestGenerateSecurePassword(t *testing.T) {
 	}
 
 	// Generated password should pass validation
-	if err := ValidatePasswordStrength(password); err != nil {
-		t.Errorf("generated password failed validation: %v", err)
+	if validateErr := ValidatePasswordStrength(password); validateErr != nil {
+		t.Errorf("generated password failed validation: %v", validateErr)
 	}
 
 	// Generate another password and ensure it's different
@@ -402,8 +402,8 @@ func TestGenerateInitialCredentials(t *testing.T) {
 	}
 
 	// Verify the hash matches the password
-	if err := ValidatePasswordStrength(creds.Password); err != nil {
-		t.Errorf("generated password failed validation: %v", err)
+	if validateErr := ValidatePasswordStrength(creds.Password); validateErr != nil {
+		t.Errorf("generated password failed validation: %v", validateErr)
 	}
 }
 
@@ -815,23 +815,23 @@ func TestRandomInt(t *testing.T) {
 
 	// Test with small n
 	for range 100 {
-		result, err := randomInt(10)
-		if err != nil {
-			t.Fatalf("randomInt(10) error: %v", err)
+		smallResult, smallErr := randomInt(10)
+		if smallErr != nil {
+			t.Fatalf("randomInt(10) error: %v", smallErr)
 		}
-		if result < 0 || result >= 10 {
-			t.Errorf("randomInt(10) = %d, out of range [0, 10)", result)
+		if smallResult < 0 || smallResult >= 10 {
+			t.Errorf("randomInt(10) = %d, out of range [0, 10)", smallResult)
 		}
 	}
 
 	// Test with larger n (>256 to hit the multi-byte path)
 	for range 50 {
-		result, err := randomInt(1000)
-		if err != nil {
-			t.Fatalf("randomInt(1000) error: %v", err)
+		largeResult, largeErr := randomInt(1000)
+		if largeErr != nil {
+			t.Fatalf("randomInt(1000) error: %v", largeErr)
 		}
-		if result < 0 || result >= 1000 {
-			t.Errorf("randomInt(1000) = %d, out of range [0, 1000)", result)
+		if largeResult < 0 || largeResult >= 1000 {
+			t.Errorf("randomInt(1000) = %d, out of range [0, 1000)", largeResult)
 		}
 	}
 }

@@ -133,8 +133,8 @@ func TestGenerateSecurePasswordWithRetry(t *testing.T) {
 		}
 
 		// Should pass strength validation
-		if err := ValidatePasswordStrength(password); err != nil {
-			t.Errorf("Generated password failed validation: %v (password: %s)", err, password)
+		if validateErr := ValidatePasswordStrength(password); validateErr != nil {
+			t.Errorf("Generated password failed validation: %v (password: %s)", validateErr, password)
 		}
 	}
 }

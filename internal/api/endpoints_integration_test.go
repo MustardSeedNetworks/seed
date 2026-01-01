@@ -69,8 +69,8 @@ func (s *testEndpointServer) testStatusEndpoint(t *testing.T) {
 	}
 
 	var status StatusResponse
-	if err := json.NewDecoder(resp.Body).Decode(&status); err != nil {
-		t.Errorf("Failed to decode status response: %v", err)
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&status); decodeErr != nil {
+		t.Errorf("Failed to decode status response: %v", decodeErr)
 	}
 
 	if status.Status == "" {
@@ -91,8 +91,8 @@ func (s *testEndpointServer) testSettingsEndpoint(t *testing.T) {
 	}
 
 	var settings map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&settings); err != nil {
-		t.Errorf("Failed to decode settings response: %v", err)
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&settings); decodeErr != nil {
+		t.Errorf("Failed to decode settings response: %v", decodeErr)
 	}
 }
 
@@ -109,8 +109,8 @@ func (s *testEndpointServer) testInterfacesEndpoint(t *testing.T) {
 	}
 
 	var interfaces []any
-	if err := json.NewDecoder(resp.Body).Decode(&interfaces); err != nil {
-		t.Errorf("Failed to decode interfaces response: %v", err)
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&interfaces); decodeErr != nil {
+		t.Errorf("Failed to decode interfaces response: %v", decodeErr)
 	}
 }
 
@@ -129,8 +129,8 @@ func (s *testEndpointServer) testSNMPSettingsEndpoint(t *testing.T) {
 	}
 
 	var settings SNMPSettingsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&settings); err != nil {
-		t.Errorf("Failed to decode SNMP settings: %v", err)
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&settings); decodeErr != nil {
+		t.Errorf("Failed to decode SNMP settings: %v", decodeErr)
 	}
 
 	if settings.Port != 161 {
@@ -171,8 +171,8 @@ func (s *testEndpointServer) testIPConfigEndpoint(t *testing.T) {
 
 	if resp.StatusCode == http.StatusOK {
 		var ipconfig IPConfigResponse
-		if err := json.NewDecoder(resp.Body).Decode(&ipconfig); err != nil {
-			t.Errorf("Failed to decode ipconfig response: %v", err)
+		if decodeErr := json.NewDecoder(resp.Body).Decode(&ipconfig); decodeErr != nil {
+			t.Errorf("Failed to decode ipconfig response: %v", decodeErr)
 		}
 	}
 }
@@ -190,8 +190,8 @@ func (s *testEndpointServer) testSystemHealthEndpoint(t *testing.T) {
 	}
 
 	var health map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
-		t.Errorf("Failed to decode health response: %v", err)
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&health); decodeErr != nil {
+		t.Errorf("Failed to decode health response: %v", decodeErr)
 	}
 
 	requiredFields := []string{"system", "application", "services"}
@@ -201,10 +201,10 @@ func (s *testEndpointServer) testSystemHealthEndpoint(t *testing.T) {
 		}
 	}
 
-	if systemHealth, ok := health["system"].(map[string]any); ok {
+	if systemHealth, sysOK := health["system"].(map[string]any); sysOK {
 		systemFields := []string{"cpuPercent", "memoryPercent"}
 		for _, field := range systemFields {
-			if _, ok := systemHealth[field]; !ok {
+			if _, fieldOK := systemHealth[field]; !fieldOK {
 				t.Errorf("Missing %s field in system health", field)
 			}
 		}
@@ -343,8 +343,8 @@ func TestDevicesEndpoints(t *testing.T) {
 		}
 
 		var settings NetworkDiscoverySettingsResponse
-		if err := json.NewDecoder(resp.Body).Decode(&settings); err != nil {
-			t.Errorf("Failed to decode discovery settings: %v", err)
+		if decodeErr := json.NewDecoder(resp.Body).Decode(&settings); decodeErr != nil {
+			t.Errorf("Failed to decode discovery settings: %v", decodeErr)
 		}
 
 		if !settings.Enabled {
@@ -397,8 +397,8 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		}
 
 		var settings TestsSettingsResponse
-		if err := json.NewDecoder(resp.Body).Decode(&settings); err != nil {
-			t.Errorf("Failed to decode health checks settings: %v", err)
+		if decodeErr := json.NewDecoder(resp.Body).Decode(&settings); decodeErr != nil {
+			t.Errorf("Failed to decode health checks settings: %v", decodeErr)
 		}
 	})
 

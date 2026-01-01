@@ -31,19 +31,19 @@ func TestBackupManager_CreateBackup(t *testing.T) {
 	}
 
 	// Verify backup exists
-	if _, err := os.Stat(backup.Path); os.IsNotExist(err) {
+	if _, statErr := os.Stat(backup.Path); os.IsNotExist(statErr) {
 		t.Errorf("Backup file does not exist: %s", backup.Path)
 	}
 
 	// Verify backup contains correct data
-	data, err := os.ReadFile(backup.Path)
-	if err != nil {
-		t.Fatalf("Failed to read backup: %v", err)
+	data, readErr := os.ReadFile(backup.Path)
+	if readErr != nil {
+		t.Fatalf("Failed to read backup: %v", readErr)
 	}
 
 	var loadedCfg Config
-	if err := yaml.Unmarshal(data, &loadedCfg); err != nil {
-		t.Fatalf("Failed to unmarshal backup: %v", err)
+	if unmarshalErr := yaml.Unmarshal(data, &loadedCfg); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal backup: %v", unmarshalErr)
 	}
 
 	if loadedCfg.Server.Port != 9999 {
@@ -111,13 +111,13 @@ func TestBackupManager_RestoreBackup(t *testing.T) {
 
 	// Modify config
 	cfg.Server.Port = 9999
-	if err := cfg.Save(configPath); err != nil {
-		t.Fatalf("Failed to save modified config: %v", err)
+	if saveErr := cfg.Save(configPath); saveErr != nil {
+		t.Fatalf("Failed to save modified config: %v", saveErr)
 	}
 
 	// Restore from backup
-	if err := backupMgr.RestoreBackup(backup.Name); err != nil {
-		t.Fatalf("RestoreBackup() error = %v", err)
+	if restoreErr := backupMgr.RestoreBackup(backup.Name); restoreErr != nil {
+		t.Fatalf("RestoreBackup() error = %v", restoreErr)
 	}
 
 	// Verify restored config
@@ -182,12 +182,12 @@ func TestBackupManager_DeleteBackup(t *testing.T) {
 	}
 
 	// Delete backup
-	if err := backupMgr.DeleteBackup(backup.Name); err != nil {
-		t.Fatalf("DeleteBackup() error = %v", err)
+	if deleteErr := backupMgr.DeleteBackup(backup.Name); deleteErr != nil {
+		t.Fatalf("DeleteBackup() error = %v", deleteErr)
 	}
 
 	// Verify deleted
-	if _, err := os.Stat(backup.Path); !os.IsNotExist(err) {
+	if _, statErr := os.Stat(backup.Path); !os.IsNotExist(statErr) {
 		t.Errorf("Backup file still exists after delete")
 	}
 }

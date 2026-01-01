@@ -738,8 +738,8 @@ func TestUserStoreAdapter(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a test user first
-	_, err := db.CreateUser(ctx, "testuser", "$2a$10$somehash", "admin")
-	require.NoError(t, err)
+	_, createErr := db.CreateUser(ctx, "testuser", "$2a$10$somehash", "admin")
+	require.NoError(t, createErr)
 
 	adapter := NewUserStoreAdapter(db)
 
@@ -767,11 +767,11 @@ func TestUserStoreAdapter(t *testing.T) {
 	})
 
 	t.Run("UpdatePassword", func(t *testing.T) {
-		err := adapter.UpdatePassword(ctx, "testuser", "$2a$10$newhash")
-		require.NoError(t, err)
+		updateErr := adapter.UpdatePassword(ctx, "testuser", "$2a$10$newhash")
+		require.NoError(t, updateErr)
 
-		hash, err := adapter.GetPasswordHash(ctx, "testuser")
-		require.NoError(t, err)
+		hash, hashErr := adapter.GetPasswordHash(ctx, "testuser")
+		require.NoError(t, hashErr)
 		if hash != "$2a$10$newhash" {
 			t.Errorf("expected updated hash, got %q", hash)
 		}

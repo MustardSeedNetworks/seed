@@ -179,8 +179,8 @@ func TestHandleLogout(t *testing.T) {
 
 	// Verify JSON response
 	var resp map[string]string
-	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
+	if decodeErr := json.NewDecoder(w.Body).Decode(&resp); decodeErr != nil {
+		t.Fatalf("Failed to decode response: %v", decodeErr)
 	}
 
 	if resp["status"] != "logged out" {

@@ -187,17 +187,17 @@ func TestGetSurvey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := mgr.GetSurvey(tt.id)
+			result, getErr := mgr.GetSurvey(tt.id)
 
 			if tt.wantErr {
-				if err == nil {
+				if getErr == nil {
 					t.Error("GetSurvey() error = nil, want error")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Errorf("GetSurvey() error = %v, want nil", err)
+			if getErr != nil {
+				t.Errorf("GetSurvey() error = %v, want nil", getErr)
 				return
 			}
 
@@ -280,22 +280,22 @@ func TestDeleteSurvey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mgr.DeleteSurvey(tt.id)
+			deleteErr := mgr.DeleteSurvey(tt.id)
 
 			if tt.wantErr {
-				if err == nil {
+				if deleteErr == nil {
 					t.Error("DeleteSurvey() error = nil, want error")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Errorf("DeleteSurvey() error = %v, want nil", err)
+			if deleteErr != nil {
+				t.Errorf("DeleteSurvey() error = %v, want nil", deleteErr)
 			}
 
 			// Verify survey is deleted
-			_, err = mgr.GetSurvey(tt.id)
-			if err == nil {
+			_, getErr := mgr.GetSurvey(tt.id)
+			if getErr == nil {
 				t.Error("GetSurvey() after delete succeeded, want error")
 			}
 		})
@@ -333,24 +333,24 @@ func TestStartSurvey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mgr.StartSurvey(tt.id)
+			startErr := mgr.StartSurvey(tt.id)
 
 			if tt.wantErr {
-				if err == nil {
+				if startErr == nil {
 					t.Error("StartSurvey() error = nil, want error")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Errorf("StartSurvey() error = %v, want nil", err)
+			if startErr != nil {
+				t.Errorf("StartSurvey() error = %v, want nil", startErr)
 				return
 			}
 
 			// Verify status changed
-			result, err := mgr.GetSurvey(tt.id)
-			if err != nil {
-				t.Fatalf("GetSurvey() failed: %v", err)
+			result, getErr := mgr.GetSurvey(tt.id)
+			if getErr != nil {
+				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
 			if result.Status != StatusInProgress {
@@ -394,24 +394,24 @@ func TestPauseSurvey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mgr.PauseSurvey(tt.id)
+			pauseErr := mgr.PauseSurvey(tt.id)
 
 			if tt.wantErr {
-				if err == nil {
+				if pauseErr == nil {
 					t.Error("PauseSurvey() error = nil, want error")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Errorf("PauseSurvey() error = %v, want nil", err)
+			if pauseErr != nil {
+				t.Errorf("PauseSurvey() error = %v, want nil", pauseErr)
 				return
 			}
 
 			// Verify status changed
-			result, err := mgr.GetSurvey(tt.id)
-			if err != nil {
-				t.Fatalf("GetSurvey() failed: %v", err)
+			result, getErr := mgr.GetSurvey(tt.id)
+			if getErr != nil {
+				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
 			if result.Status != StatusPaused {
@@ -455,24 +455,24 @@ func TestCompleteSurvey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mgr.CompleteSurvey(tt.id)
+			completeErr := mgr.CompleteSurvey(tt.id)
 
 			if tt.wantErr {
-				if err == nil {
+				if completeErr == nil {
 					t.Error("CompleteSurvey() error = nil, want error")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Errorf("CompleteSurvey() error = %v, want nil", err)
+			if completeErr != nil {
+				t.Errorf("CompleteSurvey() error = %v, want nil", completeErr)
 				return
 			}
 
 			// Verify status changed
-			result, err := mgr.GetSurvey(tt.id)
-			if err != nil {
-				t.Fatalf("GetSurvey() failed: %v", err)
+			result, getErr := mgr.GetSurvey(tt.id)
+			if getErr != nil {
+				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
 			if result.Status != StatusCompleted {
@@ -560,24 +560,24 @@ func TestUpdateFloorPlan(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mgr.UpdateFloorPlan(tt.id, tt.floorPlan)
+			updateErr := mgr.UpdateFloorPlan(tt.id, tt.floorPlan)
 
 			if tt.wantErr {
-				if err == nil {
+				if updateErr == nil {
 					t.Error("UpdateFloorPlan() error = nil, want error")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Errorf("UpdateFloorPlan() error = %v, want nil", err)
+			if updateErr != nil {
+				t.Errorf("UpdateFloorPlan() error = %v, want nil", updateErr)
 				return
 			}
 
 			// Verify floor plan updated (now on the active floor)
-			result, err := mgr.GetSurvey(tt.id)
-			if err != nil {
-				t.Fatalf("GetSurvey() failed: %v", err)
+			result, getErr := mgr.GetSurvey(tt.id)
+			if getErr != nil {
+				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
 			// With multi-floor support, floor plan is on the active floor
@@ -654,24 +654,24 @@ func TestAddSample(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mgr.AddSample(tt.id, tt.x, tt.y, tt.sampleData)
+			addErr := mgr.AddSample(tt.id, tt.x, tt.y, tt.sampleData)
 
 			if tt.wantErr {
-				if err == nil {
+				if addErr == nil {
 					t.Error("AddSample() error = nil, want error")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Errorf("AddSample() error = %v, want nil", err)
+			if addErr != nil {
+				t.Errorf("AddSample() error = %v, want nil", addErr)
 				return
 			}
 
 			// Verify sample was added (now on the active floor)
-			result, err := mgr.GetSurvey(tt.id)
-			if err != nil {
-				t.Fatalf("GetSurvey() failed: %v", err)
+			result, getErr := mgr.GetSurvey(tt.id)
+			if getErr != nil {
+				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
 			// With multi-floor support, samples are on the active floor
@@ -709,7 +709,7 @@ func TestPersistence(t *testing.T) {
 
 	// Verify file was created
 	filePath := filepath.Join(tmpDir, survey.ID+".json")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(filePath); os.IsNotExist(statErr) {
 		t.Errorf("Survey file not created at %s", filePath)
 	}
 
@@ -746,7 +746,7 @@ func TestPersistence(t *testing.T) {
 		t.Errorf("DeleteSurvey() failed: %v", err)
 	}
 
-	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+	if _, statErr := os.Stat(filePath); !os.IsNotExist(statErr) {
 		t.Error("Survey file not deleted")
 	}
 }
