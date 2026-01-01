@@ -138,7 +138,7 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 	}
 
 	// Verify connection
-	if pingErr := conn.Ping(); pingErr != nil {
+	if pingErr := conn.PingContext(ctx); pingErr != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
 	}

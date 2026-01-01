@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -105,18 +106,19 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 
 	// Stop service (fixes #789 - log errors instead of silently ignoring)
 	fmt.Println("\nStopping service...")
+	ctx := context.Background()
 	if mode == paths.ModeSystem {
-		if stopErr := exec.Command("systemctl", "stop", "seed").Run(); stopErr != nil {
+		if stopErr := exec.CommandContext(ctx, "systemctl", "stop", "seed").Run(); stopErr != nil {
 			slog.Warn("Failed to stop seed service", "error", stopErr)
 		}
-		if disableErr := exec.Command("systemctl", "disable", "seed").Run(); disableErr != nil {
+		if disableErr := exec.CommandContext(ctx, "systemctl", "disable", "seed").Run(); disableErr != nil {
 			slog.Warn("Failed to disable seed service", "error", disableErr)
 		}
 	} else {
-		if stopErr := exec.Command("systemctl", "--user", "stop", "seed").Run(); stopErr != nil {
+		if stopErr := exec.CommandContext(ctx, "systemctl", "--user", "stop", "seed").Run(); stopErr != nil {
 			slog.Warn("Failed to stop seed user service", "error", stopErr)
 		}
-		if disableErr := exec.Command("systemctl", "--user", "disable", "seed").Run(); disableErr != nil {
+		if disableErr := exec.CommandContext(ctx, "systemctl", "--user", "disable", "seed").Run(); disableErr != nil {
 			slog.Warn("Failed to disable seed user service", "error", disableErr)
 		}
 	}
@@ -140,11 +142,11 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 
 	// Reload systemd (fixes #789 - log errors instead of silently ignoring)
 	if mode == paths.ModeSystem {
-		if reloadErr := exec.Command("systemctl", "daemon-reload").Run(); reloadErr != nil {
+		if reloadErr := exec.CommandContext(ctx, "systemctl", "daemon-reload").Run(); reloadErr != nil {
 			slog.Warn("Failed to reload systemd", "error", reloadErr)
 		}
 	} else {
-		if reloadErr := exec.Command("systemctl", "--user", "daemon-reload").Run(); reloadErr != nil {
+		if reloadErr := exec.CommandContext(ctx, "systemctl", "--user", "daemon-reload").Run(); reloadErr != nil {
 			slog.Warn("Failed to reload user systemd", "error", reloadErr)
 		}
 	}
@@ -174,7 +176,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 		// Remove user (system mode only) - fixes #789
 		if mode == paths.ModeSystem {
 			fmt.Println("Removing seed user...")
-			if userDelErr := exec.Command("userdel", "seed").Run(); userDelErr != nil {
+			if userDelErr := exec.CommandContext(ctx, "userdel", "seed").Run(); userDelErr != nil {
 				slog.Warn("Failed to remove seed user", "error", userDelErr)
 			}
 		}
