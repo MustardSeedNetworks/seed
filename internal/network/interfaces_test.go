@@ -100,9 +100,9 @@ func TestGetInterfaces(t *testing.T) {
 }
 
 func TestGetInterface(t *testing.T) {
-	mgr, err := NewManager("")
-	if err != nil {
-		t.Fatalf("NewManager() failed: %v", err)
+	mgr, mgrErr := NewManager("")
+	if mgrErr != nil {
+		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
 
 	// Get a known interface (loopback should exist on all systems)
@@ -175,9 +175,9 @@ func TestGetCurrentInterface(t *testing.T) {
 }
 
 func TestSetCurrentInterface(t *testing.T) {
-	mgr, err := NewManager("")
-	if err != nil {
-		t.Fatalf("NewManager() failed: %v", err)
+	mgr, mgrErr := NewManager("")
+	if mgrErr != nil {
+		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
 
 	// Get a valid interface name
@@ -582,9 +582,9 @@ func TestCIDRToNetmask(t *testing.T) {
 }
 
 func TestSetMTU(t *testing.T) {
-	mgr, err := NewManager("")
-	if err != nil {
-		t.Fatalf("NewManager() failed: %v", err)
+	mgr, mgrErr := NewManager("")
+	if mgrErr != nil {
+		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
 
 	tests := []struct {
@@ -646,9 +646,9 @@ func TestSetMTU(t *testing.T) {
 }
 
 func TestGetLinkStatus(t *testing.T) {
-	mgr, err := NewManager("")
-	if err != nil {
-		t.Fatalf("NewManager() failed: %v", err)
+	mgr, mgrErr := NewManager("")
+	if mgrErr != nil {
+		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
 
 	// Get a valid interface

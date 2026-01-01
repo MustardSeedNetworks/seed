@@ -43,14 +43,14 @@ func TestOpen(t *testing.T) {
 	defer func() { _ = db.Close() }()
 
 	// Verify file was created
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(dbPath); os.IsNotExist(statErr) {
 		t.Error("database file was not created")
 	}
 
 	// Verify we can ping it
 	ctx := context.Background()
-	if err := db.Ping(ctx); err != nil {
-		t.Errorf("failed to ping database: %v", err)
+	if pingErr := db.Ping(ctx); pingErr != nil {
+		t.Errorf("failed to ping database: %v", pingErr)
 	}
 }
 
@@ -996,12 +996,12 @@ func TestSettingsRepositoryExtended(t *testing.T) {
 	repo := db.Settings()
 
 	// Set some test settings
-	err := repo.Set(ctx, "prefix.key1", "value1")
-	require.NoError(t, err)
-	err = repo.Set(ctx, "prefix.key2", "value2")
-	require.NoError(t, err)
-	err = repo.Set(ctx, "other.key", "value3")
-	require.NoError(t, err)
+	setupErr := repo.Set(ctx, "prefix.key1", "value1")
+	require.NoError(t, setupErr)
+	setupErr = repo.Set(ctx, "prefix.key2", "value2")
+	require.NoError(t, setupErr)
+	setupErr = repo.Set(ctx, "other.key", "value3")
+	require.NoError(t, setupErr)
 
 	t.Run("GetByPrefix", func(t *testing.T) {
 		settings, err := repo.GetByPrefix(ctx, "prefix.")
@@ -1411,8 +1411,8 @@ func TestAcknowledgeAndResolve(t *testing.T) {
 
 	// Create an alert
 	alert := &Alert{Title: "Test Alert", Severity: "warning", Source: "test"}
-	err := repo.Create(ctx, alert)
-	require.NoError(t, err)
+	createErr := repo.Create(ctx, alert)
+	require.NoError(t, createErr)
 
 	t.Run("Acknowledge", func(t *testing.T) {
 		err := repo.Acknowledge(ctx, alert.ID, "admin")

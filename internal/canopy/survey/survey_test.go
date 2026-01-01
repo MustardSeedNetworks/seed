@@ -810,9 +810,9 @@ func TestConcurrentSampleAddition(t *testing.T) {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			err := mgr.AddSample(survey.ID, n, n, sampleData)
-			if err != nil {
-				t.Errorf("Concurrent AddSample() failed: %v", err)
+			addErr := mgr.AddSample(survey.ID, n, n, sampleData)
+			if addErr != nil {
+				t.Errorf("Concurrent AddSample() failed: %v", addErr)
 			}
 		}(i)
 	}

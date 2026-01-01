@@ -360,9 +360,9 @@ func TestResult_JSONSerialization(t *testing.T) {
 		Error:       "",
 	}
 
-	data, err := json.Marshal(r)
-	if err != nil {
-		t.Fatalf("Marshal failed: %v", err)
+	data, marshalErr := json.Marshal(r)
+	if marshalErr != nil {
+		t.Fatalf("Marshal failed: %v", marshalErr)
 	}
 
 	var decoded Result

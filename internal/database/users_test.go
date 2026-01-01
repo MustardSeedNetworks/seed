@@ -10,17 +10,17 @@ import (
 
 func TestUserCRUD(t *testing.T) {
 	// Create temp database
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
+	tmpFile, tmpErr := os.CreateTemp(t.TempDir(), "seed-test-*.db")
+	if tmpErr != nil {
+		t.Fatalf("Failed to create temp file: %v", tmpErr)
 	}
 	tmpPath := tmpFile.Name()
 	_ = tmpFile.Close()
 	defer func() { _ = os.Remove(tmpPath) }()
 
-	db, err := Open(tmpPath)
-	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
+	db, openErr := Open(tmpPath)
+	if openErr != nil {
+		t.Fatalf("Failed to open database: %v", openErr)
 	}
 	defer func() { _ = db.Close() }()
 
@@ -135,26 +135,26 @@ func TestUserCRUD(t *testing.T) {
 }
 
 func TestLoginTracking(t *testing.T) {
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
+	tmpFile, tmpErr := os.CreateTemp(t.TempDir(), "seed-test-*.db")
+	if tmpErr != nil {
+		t.Fatalf("Failed to create temp file: %v", tmpErr)
 	}
 	tmpPath := tmpFile.Name()
 	_ = tmpFile.Close()
 	defer func() { _ = os.Remove(tmpPath) }()
 
-	db, err := Open(tmpPath)
-	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
+	db, openErr := Open(tmpPath)
+	if openErr != nil {
+		t.Fatalf("Failed to open database: %v", openErr)
 	}
 	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
 	// Create test user
-	_, err = db.CreateUser(ctx, "testuser", "$2a$10$hash", "admin")
-	if err != nil {
-		t.Fatalf("Failed to create user: %v", err)
+	_, createErr := db.CreateUser(ctx, "testuser", "$2a$10$hash", "admin")
+	if createErr != nil {
+		t.Fatalf("Failed to create user: %v", createErr)
 	}
 
 	t.Run("RecordLoginSuccess", func(t *testing.T) {
@@ -243,17 +243,17 @@ func TestLoginTracking(t *testing.T) {
 }
 
 func TestMigrateUserFromConfig(t *testing.T) {
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
+	tmpFile, tmpErr := os.CreateTemp(t.TempDir(), "seed-test-*.db")
+	if tmpErr != nil {
+		t.Fatalf("Failed to create temp file: %v", tmpErr)
 	}
 	tmpPath := tmpFile.Name()
 	_ = tmpFile.Close()
 	defer func() { _ = os.Remove(tmpPath) }()
 
-	db, err := Open(tmpPath)
-	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
+	db, openErr := Open(tmpPath)
+	if openErr != nil {
+		t.Fatalf("Failed to open database: %v", openErr)
 	}
 	defer func() { _ = db.Close() }()
 

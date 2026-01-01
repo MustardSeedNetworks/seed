@@ -382,7 +382,7 @@ func TestEnsureConfigCreatesDirectory(t *testing.T) {
 
 	// Verify directory was created
 	dir := filepath.Dir(configPath)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
+	if _, statErr := os.Stat(dir); os.IsNotExist(statErr) {
 		t.Error("EnsureConfig did not create nested directory")
 	}
 }

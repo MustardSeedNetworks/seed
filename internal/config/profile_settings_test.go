@@ -327,14 +327,14 @@ func TestProfileSettingsJSONRoundTrip(t *testing.T) {
 
 	// Verify JSON is valid
 	var parsed map[string]any
-	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
-		t.Fatalf("Invalid JSON output: %v", err)
+	if unmarshalErr := json.Unmarshal([]byte(jsonStr), &parsed); unmarshalErr != nil {
+		t.Fatalf("Invalid JSON output: %v", unmarshalErr)
 	}
 
 	// Deserialize back
 	restored := NewProfileSettings()
-	if err := restored.FromJSON(jsonStr); err != nil {
-		t.Fatalf("FromJSON failed: %v", err)
+	if fromJSONErr := restored.FromJSON(jsonStr); fromJSONErr != nil {
+		t.Fatalf("FromJSON failed: %v", fromJSONErr)
 	}
 
 	// Verify key fields match

@@ -39,8 +39,8 @@ func TestMigrationManager_Migrate_UnversionedConfig(t *testing.T) {
 	var partial struct {
 		Version int `yaml:"version"`
 	}
-	if err := yaml.Unmarshal(result, &partial); err != nil {
-		t.Fatalf("Failed to unmarshal result: %v", err)
+	if unmarshalErr := yaml.Unmarshal(result, &partial); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal result: %v", unmarshalErr)
 	}
 
 	if partial.Version != 1 {
@@ -63,8 +63,8 @@ func TestMigrationManager_Migrate_UpdateVersionOnly(t *testing.T) {
 	var partial struct {
 		Version int `yaml:"version"`
 	}
-	if err := yaml.Unmarshal(result, &partial); err != nil {
-		t.Fatalf("Failed to unmarshal result: %v", err)
+	if unmarshalErr := yaml.Unmarshal(result, &partial); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal result: %v", unmarshalErr)
 	}
 
 	if partial.Version != 2 {
@@ -237,8 +237,8 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 	}
 
 	var final map[string]any
-	if err := yaml.Unmarshal(result, &final); err != nil {
-		t.Fatalf("Failed to unmarshal result: %v", err)
+	if unmarshalErr := yaml.Unmarshal(result, &final); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal result: %v", unmarshalErr)
 	}
 
 	// Check all fields present
