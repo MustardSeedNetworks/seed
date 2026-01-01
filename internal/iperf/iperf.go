@@ -66,6 +66,7 @@ package iperf
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -73,6 +74,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -105,12 +107,14 @@ const (
 )
 
 // validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens).
-var validHostnameRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
+var validHostnameRegex = regexp.MustCompile(
+	`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`,
+)
 
 // validateServer validates the server address to prevent command injection.
 func validateServer(server string) error {
 	if server == "" {
-		return fmt.Errorf("server address is required")
+		return errors.New("server address is required")
 	}
 
 	// Check if it's a valid IP address
@@ -120,11 +124,11 @@ func validateServer(server string) error {
 
 	// Check if it's a valid hostname
 	if len(server) > 253 {
-		return fmt.Errorf("server hostname too long")
+		return errors.New("server hostname too long")
 	}
 
 	if !validHostnameRegex.MatchString(server) {
-		return fmt.Errorf("invalid server address: must be a valid IP or hostname")
+		return errors.New("invalid server address: must be a valid IP or hostname")
 	}
 
 	return nil
@@ -360,7 +364,6 @@ func GetVersion() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), versionCheckTimeout)
 	defer cancel()
 
-	//nolint:gosec // G204: binaryPath is from findIperf3Binary() which validates the path
 	cmd := exec.CommandContext(ctx, binaryPath, "--version")
 	out, err := cmd.Output()
 	if err != nil {
@@ -414,10 +417,10 @@ func compareVersions(v1, v2 string) int {
 		var n1, n2 int
 
 		if i < len(parts1) {
-			_, _ = fmt.Sscanf(parts1[i], "%d", &n1) //nolint:errcheck // Parse failure defaults to 0
+			_, _ = fmt.Sscanf(parts1[i], "%d", &n1)
 		}
 		if i < len(parts2) {
-			_, _ = fmt.Sscanf(parts2[i], "%d", &n2) //nolint:errcheck // Parse failure defaults to 0
+			_, _ = fmt.Sscanf(parts2[i], "%d", &n2)
 		}
 
 		if n1 < n2 {
@@ -444,7 +447,7 @@ func waitForPortReady(port int, timeout time.Duration) error {
 	for time.Now().Before(deadline) {
 		conn, err := net.DialTimeout("tcp", addr, 100*time.Millisecond)
 		if err == nil {
-			conn.Close()
+			_ = conn.Close()
 			return nil
 		}
 		time.Sleep(100 * time.Millisecond)
@@ -498,21 +501,21 @@ func (m *Manager) StartServer(port int) error {
 	m.serverCancel = cancel
 
 	// Start iperf3 server: iperf3 -s -p <port>
-	//nolint:gosec // G204: binaryPath is from findIperf3Binary() which validates the path
-	cmd := exec.CommandContext(ctx, binaryPath, "-s", "-p", fmt.Sprintf("%d", port))
-	if err := cmd.Start(); err != nil {
+
+	cmd := exec.CommandContext(ctx, binaryPath, "-s", "-p", strconv.Itoa(port))
+	if startErr := cmd.Start(); startErr != nil {
 		cancel()
-		return fmt.Errorf("failed to start iperf3 server: %w", err)
+		return fmt.Errorf("failed to start iperf3 server: %w", startErr)
 	}
 
 	// Wait for port to be ready
-	if err := waitForPortReady(port, portCheckTimeout); err != nil {
+	if portErr := waitForPortReady(port, portCheckTimeout); portErr != nil {
 		// Kill the process if port check fails
 		if cmd.Process != nil {
-			_ = cmd.Process.Kill() //nolint:errcheck // Best-effort cleanup
+			_ = cmd.Process.Kill()
 		}
 		cancel()
-		return fmt.Errorf("iperf3 server failed to start listening: %w", err)
+		return fmt.Errorf("iperf3 server failed to start listening: %w", portErr)
 	}
 
 	m.serverCmd = cmd
@@ -524,11 +527,11 @@ func (m *Manager) StartServer(port int) error {
 
 	// Monitor the server process
 	go func() {
-		err := cmd.Wait()
+		waitErr := cmd.Wait()
 		m.mu.Lock()
 		m.serverStatus.Running = false
-		if err != nil && ctx.Err() == nil {
-			m.serverStatus.Error = err.Error()
+		if waitErr != nil && ctx.Err() == nil {
+			m.serverStatus.Error = waitErr.Error()
 		}
 		m.mu.Unlock()
 	}()
@@ -542,7 +545,7 @@ func (m *Manager) StopServer() error {
 	defer m.mu.Unlock()
 
 	if !m.serverStatus.Running {
-		return fmt.Errorf("server not running")
+		return errors.New("server not running")
 	}
 
 	if m.serverCancel != nil {
@@ -588,7 +591,6 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 
 	m.updateClientProgress("testing", 30)
 
-	//nolint:gosec // G204: binaryPath is from findIperf3Binary() and args are validated
 	cmd := exec.CommandContext(ctx, binaryPath, args...)
 	output, err := cmd.Output()
 	if err != nil {
@@ -602,8 +604,8 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 	m.updateClientProgress("parsing", 80)
 
 	var iperfOut iperfJSON
-	if err := json.Unmarshal(output, &iperfOut); err != nil {
-		return nil, fmt.Errorf("failed to parse iperf3 output: %w", err)
+	if unmarshalErr := json.Unmarshal(output, &iperfOut); unmarshalErr != nil {
+		return nil, fmt.Errorf("failed to parse iperf3 output: %w", unmarshalErr)
 	}
 	if iperfOut.Error != "" {
 		return nil, fmt.Errorf("iperf3 error: %s", iperfOut.Error)
@@ -624,7 +626,7 @@ func (m *Manager) startClientTest() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.clientStatus.Running {
-		return fmt.Errorf("test already in progress")
+		return errors.New("test already in progress")
 	}
 	m.clientStatus = ClientStatus{Running: true, Phase: "connecting", Progress: 10}
 	return nil
@@ -677,9 +679,9 @@ func normalizeDirection(config *ClientConfig) string {
 func buildClientArgs(config *ClientConfig, direction string) []string {
 	args := []string{
 		"-c", config.Server,
-		"-p", fmt.Sprintf("%d", config.Port),
-		"-t", fmt.Sprintf("%d", config.Duration),
-		"-P", fmt.Sprintf("%d", config.Parallel),
+		"-p", strconv.Itoa(config.Port),
+		"-t", strconv.Itoa(config.Duration),
+		"-P", strconv.Itoa(config.Parallel),
 		"-J",
 	}
 	if config.Protocol == "udp" {

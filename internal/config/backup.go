@@ -2,7 +2,9 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -68,8 +70,8 @@ func (m *BackupManager) CreateBackup() (*BackupInfo, error) {
 	backupPath := filepath.Join(m.backupDir, backupName)
 
 	// Write backup file with restricted permissions
-	if err := os.WriteFile(backupPath, data, 0o600); err != nil {
-		return nil, fmt.Errorf("failed to write backup file: %w", err)
+	if writeErr := os.WriteFile(backupPath, data, 0o600); writeErr != nil {
+		return nil, fmt.Errorf("failed to write backup file: %w", writeErr)
 	}
 
 	// Get file info for metadata
@@ -90,9 +92,9 @@ func (m *BackupManager) CreateBackup() (*BackupInfo, error) {
 	}
 
 	// Prune old backups
-	if err := m.PruneOldBackups(); err != nil {
+	if pruneErr := m.PruneOldBackups(); pruneErr != nil {
 		// Log but don't fail - the backup was created successfully
-		fmt.Printf("Warning: failed to prune old backups: %v\n", err)
+		slog.Warn("Failed to prune old backups", "error", pruneErr)
 	}
 
 	return backup, nil
@@ -121,13 +123,13 @@ func (m *BackupManager) ListBackups() ([]BackupInfo, error) {
 		}
 
 		// Check if filename matches backup pattern
-		matched, err := filepath.Match(pattern, entry.Name())
-		if err != nil || !matched {
+		matched, matchErr := filepath.Match(pattern, entry.Name())
+		if matchErr != nil || !matched {
 			continue
 		}
 
-		info, err := entry.Info()
-		if err != nil {
+		info, infoErr := entry.Info()
+		if infoErr != nil {
 			continue
 		}
 
@@ -135,8 +137,8 @@ func (m *BackupManager) ListBackups() ([]BackupInfo, error) {
 
 		// Try to extract version from file
 		version := 0
-		//nolint:gosec // G304: backupPath is constructed from known-safe directory
-		if data, err := os.ReadFile(backupPath); err == nil {
+
+		if data, readErr := os.ReadFile(backupPath); readErr == nil {
 			version = m.extractVersion(data)
 		}
 
@@ -166,7 +168,7 @@ func (m *BackupManager) RestoreBackup(backupName string) error {
 	// Security: ensure the backup is in the expected directory
 	cleanPath := filepath.Clean(backupPath)
 	if !strings.HasPrefix(cleanPath, filepath.Clean(m.backupDir)) {
-		return fmt.Errorf("invalid backup path: must be within backup directory")
+		return errors.New("invalid backup path: must be within backup directory")
 	}
 
 	// Read backup file
@@ -177,20 +179,20 @@ func (m *BackupManager) RestoreBackup(backupName string) error {
 
 	// Validate the backup is valid YAML config
 	cfg := DefaultConfig()
-	if err := yaml.Unmarshal(data, cfg); err != nil {
-		return fmt.Errorf("backup file contains invalid configuration: %w", err)
+	if unmarshalErr := yaml.Unmarshal(data, cfg); unmarshalErr != nil {
+		return fmt.Errorf("backup file contains invalid configuration: %w", unmarshalErr)
 	}
 
 	// Create backup of current config before restoring
-	if _, err := os.Stat(m.configPath); err == nil {
-		if _, err := m.CreateBackup(); err != nil {
-			return fmt.Errorf("failed to backup current config before restore: %w", err)
+	if _, statErr := os.Stat(m.configPath); statErr == nil {
+		if _, backupErr := m.CreateBackup(); backupErr != nil {
+			return fmt.Errorf("failed to backup current config before restore: %w", backupErr)
 		}
 	}
 
 	// Write restored config
-	if err := os.WriteFile(m.configPath, data, 0o600); err != nil {
-		return fmt.Errorf("failed to write restored config: %w", err)
+	if writeErr := os.WriteFile(m.configPath, data, 0o600); writeErr != nil {
+		return fmt.Errorf("failed to write restored config: %w", writeErr)
 	}
 
 	return nil
@@ -204,7 +206,7 @@ func (m *BackupManager) DeleteBackup(backupName string) error {
 	// Security: ensure the backup is in the expected directory
 	cleanPath := filepath.Clean(backupPath)
 	if !strings.HasPrefix(cleanPath, filepath.Clean(m.backupDir)) {
-		return fmt.Errorf("invalid backup path: must be within backup directory")
+		return errors.New("invalid backup path: must be within backup directory")
 	}
 
 	// Verify it's a backup file (not the main config)
@@ -233,9 +235,9 @@ func (m *BackupManager) PruneOldBackups() error {
 	}
 
 	for _, backup := range backups[m.maxBackups:] {
-		if err := os.Remove(backup.Path); err != nil {
+		if removeErr := os.Remove(backup.Path); removeErr != nil {
 			// Continue trying to delete others
-			fmt.Printf("Warning: failed to delete old backup %s: %v\n", backup.Name, err)
+			slog.Warn("Failed to delete old backup", "name", backup.Name, "error", removeErr)
 		}
 	}
 

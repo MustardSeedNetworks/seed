@@ -6,10 +6,13 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // configureStaticIPPlatform applies static IP on macOS using networksetup.
@@ -25,28 +28,31 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 	if net.ParseIP(netmask) == nil {
 		// It's a CIDR prefix, convert to dotted
 		var prefix int
-		if _, err := fmt.Sscanf(netmask, "%d", &prefix); err != nil {
-			return fmt.Errorf("invalid netmask prefix %q: %w", netmask, err)
+		if _, scanErr := fmt.Sscanf(netmask, "%d", &prefix); scanErr != nil {
+			return fmt.Errorf("invalid netmask prefix %q: %w", netmask, scanErr)
 		}
 		netmask = cidrToNetmask(prefix)
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Set manual IP
 	args := []string{"-setmanual", service, cfg.Address, netmask}
 	if cfg.Gateway != "" {
 		args = append(args, cfg.Gateway)
 	}
-	//nolint:gosec // G204: networksetup is a known macOS system binary, args are validated
-	if err := exec.Command("networksetup", args...).Run(); err != nil {
-		return fmt.Errorf("failed to set static IP: %w", err)
+
+	if runErr := exec.CommandContext(ctx, "networksetup", args...).Run(); runErr != nil {
+		return fmt.Errorf("failed to set static IP: %w", runErr)
 	}
 
 	// Configure DNS if provided
 	if len(cfg.DNS) > 0 {
 		dnsArgs := append([]string{"-setdnsservers", service}, cfg.DNS...)
-		//nolint:gosec // G204: networksetup is a known macOS system binary, args are validated
-		if err := exec.Command("networksetup", dnsArgs...).Run(); err != nil {
-			return fmt.Errorf("failed to configure DNS: %w", err)
+
+		if dnsErr := exec.CommandContext(ctx, "networksetup", dnsArgs...).Run(); dnsErr != nil {
+			return fmt.Errorf("failed to configure DNS: %w", dnsErr)
 		}
 	}
 
@@ -60,8 +66,9 @@ func configureDHCPPlatform(iface string) error {
 		return err
 	}
 
-	//nolint:gosec // G204: networksetup is a known macOS system binary, service is from validated iface
-	return exec.Command("networksetup", "-setdhcp", service).Run()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return exec.CommandContext(ctx, "networksetup", "-setdhcp", service).Run()
 }
 
 // getNetworkServiceName gets the macOS network service name for an interface.
@@ -77,7 +84,9 @@ func getNetworkServiceName(iface string) (string, error) {
 	}
 
 	// Try to find the service by listing all
-	output, err := exec.Command("networksetup", "-listnetworkserviceorder").Output()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	output, err := exec.CommandContext(ctx, "networksetup", "-listnetworkserviceorder").Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to list network services: %w", err)
 	}
@@ -107,9 +116,11 @@ func setMTUPlatform(iface string, mtu int) error {
 	}
 
 	// Use ifconfig to set MTU
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	//nolint:gosec // G204: ifconfig is a known macOS system binary, args are validated
-	if err := exec.Command("ifconfig", iface, "mtu", fmt.Sprintf("%d", mtu)).Run(); err != nil {
-		return fmt.Errorf("failed to set MTU: %w", err)
+	if runErr := exec.CommandContext(ctx, "ifconfig", iface, "mtu", strconv.Itoa(mtu)).Run(); runErr != nil {
+		return fmt.Errorf("failed to set MTU: %w", runErr)
 	}
 
 	return nil

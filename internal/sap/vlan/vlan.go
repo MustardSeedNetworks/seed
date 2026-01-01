@@ -2,6 +2,7 @@
 package vlan
 
 import (
+	"slices"
 	"sync"
 )
 
@@ -95,10 +96,5 @@ func DeleteVlanInterface(parentIface string, vlanID int) error {
 
 // contains checks if a slice contains a value.
 func contains(slice []int, val int) bool {
-	for _, item := range slice {
-		if item == val {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, val)
 }

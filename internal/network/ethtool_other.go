@@ -7,6 +7,6 @@ package network
 
 // getEthtoolSettings is a stub for non-Linux platforms.
 // Ethtool functionality is only available on Linux.
-func getEthtoolSettings(_ string) (autoNeg bool, advertised []string) {
+func getEthtoolSettings(_ string) (bool, []string) {
 	return false, nil
 }

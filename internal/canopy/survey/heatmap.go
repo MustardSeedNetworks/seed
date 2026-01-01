@@ -4,6 +4,7 @@ package survey
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -23,6 +24,12 @@ const (
 	HeatmapInterference HeatmapType = "interference" // Co-channel interference.
 	HeatmapDownload     HeatmapType = "download"     // Download speed.
 	HeatmapUpload       HeatmapType = "upload"       // Upload speed.
+)
+
+// Heatmap type alias constants for user-friendly names.
+const (
+	HeatmapAliasSignal    = "signal"    // Alias for RSSI.
+	HeatmapAliasCochannel = "cochannel" // Alias for interference.
 )
 
 // HeatmapConfig contains configuration for heatmap generation.
@@ -66,13 +73,13 @@ func DefaultHeatmapConfig() HeatmapConfig {
 // GenerateHeatmap creates a heatmap from survey samples.
 func GenerateHeatmap(survey *Survey, config HeatmapConfig) (*HeatmapResult, error) {
 	if survey == nil {
-		return nil, fmt.Errorf("survey is nil")
+		return nil, errors.New("survey is nil")
 	}
 
 	// Determine dimensions
 	width, height := getHeatmapDimensions(survey)
 	if width == 0 || height == 0 {
-		return nil, fmt.Errorf("invalid dimensions: floor plan required")
+		return nil, errors.New("invalid dimensions: floor plan required")
 	}
 
 	// Apply defaults
@@ -144,7 +151,7 @@ func GenerateHeatmap(survey *Survey, config HeatmapConfig) (*HeatmapResult, erro
 
 // getHeatmapDimensions returns the dimensions for the heatmap.
 // Uses the active floor's floor plan in multi-floor surveys.
-func getHeatmapDimensions(survey *Survey) (width, height int) {
+func getHeatmapDimensions(survey *Survey) (int, int) {
 	// Check active floor first (multi-floor support)
 	if activeFloor := survey.GetActiveFloor(); activeFloor != nil {
 		if activeFloor.FloorPlan != nil && activeFloor.FloorPlan.Width > 0 && activeFloor.FloorPlan.Height > 0 {
@@ -201,7 +208,7 @@ func getColorScaleForType(ht HeatmapType) *ColorScale {
 	case HeatmapDownload, HeatmapUpload:
 		// Create a throughput scale (0-500 Mbps).
 		// Similar structure to other scales but with throughput-specific values.
-		return &ColorScale{ //nolint:dupl // Intentional color scale data.
+		return &ColorScale{
 			Name:   "throughput",
 			MinVal: 0,
 			MaxVal: 500,
@@ -316,13 +323,13 @@ func (m *Manager) GenerateHeatmap(surveyID string, config HeatmapConfig) (*Heatm
 // Accepts both constant values and user-friendly aliases.
 func ParseHeatmapType(s string) HeatmapType {
 	switch strings.ToLower(s) {
-	case string(HeatmapRSSI), "signal":
+	case string(HeatmapRSSI), HeatmapAliasSignal:
 		return HeatmapRSSI
 	case string(HeatmapSNR):
 		return HeatmapSNR
 	case string(HeatmapDensity), "ap_density":
 		return HeatmapDensity
-	case string(HeatmapInterference), "cochannel":
+	case string(HeatmapInterference), HeatmapAliasCochannel:
 		return HeatmapInterference
 	case string(HeatmapDownload):
 		return HeatmapDownload

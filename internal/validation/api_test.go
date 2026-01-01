@@ -362,7 +362,12 @@ func TestValidateInterfaceSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			errors := ValidateInterfaceSettings(&tt.iface)
 			if len(errors) != tt.wantCount {
-				t.Errorf("ValidateInterfaceSettings() returned %d errors, want %d: %v", len(errors), tt.wantCount, errors)
+				t.Errorf(
+					"ValidateInterfaceSettings() returned %d errors, want %d: %v",
+					len(errors),
+					tt.wantCount,
+					errors,
+				)
 			}
 		})
 	}

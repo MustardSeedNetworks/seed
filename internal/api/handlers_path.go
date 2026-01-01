@@ -4,7 +4,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -85,7 +85,14 @@ func (s *Server) handlePath(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
@@ -95,7 +102,14 @@ func (s *Server) handlePath(w http.ResponseWriter, r *http.Request) {
 	var req PathRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
@@ -117,7 +131,14 @@ func (s *Server) handlePath(w http.ResponseWriter, r *http.Request) {
 
 	// Validate method
 	if req.Method != PathMethodL2 && req.Method != PathMethodL3 && req.Method != PathMethodBoth {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Method must be 'l2', 'l3', or 'both'", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"Method must be 'l2', 'l3', or 'both'",
+			"",
+		)
 		return
 	}
 
@@ -135,7 +156,12 @@ func (s *Server) handlePath(w http.ResponseWriter, r *http.Request) {
 }
 
 // performPathDiscovery executes the path discovery based on the requested method.
-func (s *Server) performPathDiscovery(ctx context.Context, w http.ResponseWriter, req PathRequest, logger *slog.Logger) *PathResponse {
+func (s *Server) performPathDiscovery(
+	ctx context.Context,
+	w http.ResponseWriter,
+	req PathRequest,
+	logger *slog.Logger,
+) *PathResponse {
 	response := &PathResponse{}
 
 	// Perform L3 traceroute if requested
@@ -146,7 +172,14 @@ func (s *Server) performPathDiscovery(ctx context.Context, w http.ResponseWriter
 			// Don't fail the entire request if only L3 fails and L2 was also requested
 			if req.Method == PathMethodL3 {
 				logger.Error("L3 traceroute failed", "error_details", l3Path.Error)
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "L3 traceroute failed", "")
+				sendErrorResponseWithDetails(
+					w,
+					logger,
+					http.StatusInternalServerError,
+					ErrCodeInternal,
+					"L3 traceroute failed",
+					"",
+				)
 				return nil
 			}
 		}
@@ -161,7 +194,14 @@ func (s *Server) performPathDiscovery(ctx context.Context, w http.ResponseWriter
 			// Don't fail the entire request if only L2 fails and L3 was also requested
 			if req.Method == PathMethodL2 {
 				logger.Error("L2 path discovery failed", "error", err)
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "L2 path discovery failed", "")
+				sendErrorResponseWithDetails(
+					w,
+					logger,
+					http.StatusInternalServerError,
+					ErrCodeInternal,
+					"L2 path discovery failed",
+					"",
+				)
 				return nil
 			}
 		} else {
@@ -171,7 +211,14 @@ func (s *Server) performPathDiscovery(ctx context.Context, w http.ResponseWriter
 
 	// Check if we got any results
 	if response.L3Path == nil && response.L2Path == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Path discovery failed for all methods", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"Path discovery failed for all methods",
+			"",
+		)
 		return nil
 	}
 
@@ -180,11 +227,11 @@ func (s *Server) performPathDiscovery(ctx context.Context, w http.ResponseWriter
 
 // TraceHopMessage is the WebSocket message for streaming traceroute hops.
 type TraceHopMessage struct {
-	Target    string                 `json:"target"`
-	TargetIP  string                 `json:"targetIp"`
-	Protocol  string                 `json:"protocol"`
+	Target    string                  `json:"target"`
+	TargetIP  string                  `json:"targetIp"`
+	Protocol  string                  `json:"protocol"`
 	Hop       discovery.TracerouteHop `json:"hop"`
-	Completed bool                   `json:"completed"`
+	Completed bool                    `json:"completed"`
 }
 
 // performL3Trace performs Layer 3 traceroute with streaming WebSocket updates.
@@ -234,7 +281,7 @@ func (s *Server) performL3Trace(ctx context.Context, req PathRequest) *discovery
 // performL2Trace performs Layer 2 path discovery using LLDP/CDP.
 func (s *Server) performL2Trace(ctx context.Context, req PathRequest) (*discovery.L2PathResult, error) {
 	if s.deviceDiscovery == nil {
-		return nil, fmt.Errorf("device discovery not available")
+		return nil, errors.New("device discovery not available")
 	}
 
 	// Resolve "self" to local IP if specified
@@ -242,7 +289,7 @@ func (s *Server) performL2Trace(ctx context.Context, req PathRequest) (*discover
 	if sourceIP == "self" {
 		_, localIP := s.deviceDiscovery.GetSubnetInfo()
 		if localIP == "" {
-			return nil, fmt.Errorf("cannot determine local IP address")
+			return nil, errors.New("cannot determine local IP address")
 		}
 		sourceIP = localIP
 	}

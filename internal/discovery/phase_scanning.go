@@ -28,7 +28,11 @@ type ScanningPhase struct {
 }
 
 // NewScanningPhase creates a new Phase 3 implementation.
-func NewScanningPhase(pipelineConfig *PipelineConfig, snmpConfig *config.SNMPConfig, broadcaster EventBroadcaster) *ScanningPhase {
+func NewScanningPhase(
+	pipelineConfig *PipelineConfig,
+	snmpConfig *config.SNMPConfig,
+	broadcaster EventBroadcaster,
+) *ScanningPhase {
 	// Create profiler config from pipeline config
 	profilerCfg := &ProfilerConfig{
 		Enabled:           pipelineConfig.PortScan.Intensity != PortScanOff,
@@ -70,7 +74,11 @@ func (p *ScanningPhase) Name() string {
 
 // Run executes the service discovery phase.
 // Devices from Phase 2 are enriched with open ports, services, and SNMP data.
-func (p *ScanningPhase) Run(ctx context.Context, devices []*DiscoveredDevice, progressCh chan<- PhaseProgressPayload) ([]*DiscoveredDevice, error) {
+func (p *ScanningPhase) Run(
+	ctx context.Context,
+	devices []*DiscoveredDevice,
+	progressCh chan<- PhaseProgressPayload,
+) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	portScanEnabled := p.pipelineConfig.PortScan.Intensity != PortScanOff
 	snmpEnabled := p.pipelineConfig.SNMPCollection.Enabled && p.snmpCollector != nil
@@ -142,11 +150,9 @@ func (p *ScanningPhase) Run(ctx context.Context, devices []*DiscoveredDevice, pr
 	}
 
 	for range workerCount {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			p.scanWorker(scanCtx, deviceCh, &progress, portScanEnabled, snmpEnabled)
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -168,7 +174,12 @@ func (p *ScanningPhase) Run(ctx context.Context, devices []*DiscoveredDevice, pr
 }
 
 // scanWorker processes devices from the channel.
-func (p *ScanningPhase) scanWorker(ctx context.Context, deviceCh <-chan *DiscoveredDevice, progress *ScanningProgress, portScan, snmpScan bool) {
+func (p *ScanningPhase) scanWorker(
+	ctx context.Context,
+	deviceCh <-chan *DiscoveredDevice,
+	progress *ScanningProgress,
+	portScan, snmpScan bool,
+) {
 	for device := range deviceCh {
 		select {
 		case <-ctx.Done():
@@ -192,9 +203,7 @@ func (p *ScanningPhase) scanWorker(ctx context.Context, deviceCh <-chan *Discove
 
 		// Port scanning (if enabled)
 		if portScan {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				profile := p.scanPorts(ctx, device.IP)
 				if profile != nil {
 					mu.Lock()
@@ -202,14 +211,12 @@ func (p *ScanningPhase) scanWorker(ctx context.Context, deviceCh <-chan *Discove
 					progress.AddPortsFound(len(profile.OpenPorts))
 					mu.Unlock()
 				}
-			}()
+			})
 		}
 
 		// Extended SNMP collection (if enabled)
 		if snmpScan {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				snmpData := p.collectSNMP(ctx, device.IP)
 				if snmpData != nil {
 					mu.Lock()
@@ -219,7 +226,7 @@ func (p *ScanningPhase) scanWorker(ctx context.Context, deviceCh <-chan *Discove
 					}
 					mu.Unlock()
 				}
-			}()
+			})
 		}
 
 		wg.Wait()

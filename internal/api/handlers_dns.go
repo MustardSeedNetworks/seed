@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/krisarmstrong/seed/internal/sap/dns"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/sap/dns"
 )
 
 // ============================================================================
@@ -58,12 +58,26 @@ func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
 	if s.dnsTester == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.health.dnsNotAvailable"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.health.dnsNotAvailable"),
+			"",
+		)
 		return
 	}
 
@@ -204,8 +218,14 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(req.Servers) == 0 {
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-				ErrCodeBadRequest, localizer.T("errors.health.noServersToScan"), "No DNS servers provided or configured")
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusBadRequest,
+				ErrCodeBadRequest,
+				localizer.T("errors.health.noServersToScan"),
+				"No DNS servers provided or configured",
+			)
 			return
 		}
 

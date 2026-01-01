@@ -45,26 +45,11 @@ func TestResolve_UserMode_WithXDG(t *testing.T) {
 	stateHome := filepath.Join(tmpDir, "state")
 	cacheHome := filepath.Join(tmpDir, "cache")
 
-	oldEnv := map[string]string{
-		"XDG_CONFIG_HOME": os.Getenv("XDG_CONFIG_HOME"),
-		"XDG_DATA_HOME":   os.Getenv("XDG_DATA_HOME"),
-		"XDG_STATE_HOME":  os.Getenv("XDG_STATE_HOME"),
-		"XDG_CACHE_HOME":  os.Getenv("XDG_CACHE_HOME"),
-	}
-	defer func() {
-		for k, v := range oldEnv {
-			if v == "" {
-				os.Unsetenv(k)
-			} else {
-				os.Setenv(k, v)
-			}
-		}
-	}()
-
-	os.Setenv("XDG_CONFIG_HOME", configHome)
-	os.Setenv("XDG_DATA_HOME", dataHome)
-	os.Setenv("XDG_STATE_HOME", stateHome)
-	os.Setenv("XDG_CACHE_HOME", cacheHome)
+	// t.Setenv automatically restores the original value when the test completes
+	t.Setenv("XDG_CONFIG_HOME", configHome)
+	t.Setenv("XDG_DATA_HOME", dataHome)
+	t.Setenv("XDG_STATE_HOME", stateHome)
+	t.Setenv("XDG_CACHE_HOME", cacheHome)
 
 	paths := Resolve(ModeUser)
 
@@ -94,27 +79,11 @@ func TestResolve_UserMode_WithXDG(t *testing.T) {
 }
 
 func TestResolve_UserMode_WithoutXDG(t *testing.T) {
-	// Clear XDG environment variables
-	oldEnv := map[string]string{
-		"XDG_CONFIG_HOME": os.Getenv("XDG_CONFIG_HOME"),
-		"XDG_DATA_HOME":   os.Getenv("XDG_DATA_HOME"),
-		"XDG_STATE_HOME":  os.Getenv("XDG_STATE_HOME"),
-		"XDG_CACHE_HOME":  os.Getenv("XDG_CACHE_HOME"),
-	}
-	defer func() {
-		for k, v := range oldEnv {
-			if v == "" {
-				os.Unsetenv(k)
-			} else {
-				os.Setenv(k, v)
-			}
-		}
-	}()
-
-	os.Unsetenv("XDG_CONFIG_HOME")
-	os.Unsetenv("XDG_DATA_HOME")
-	os.Unsetenv("XDG_STATE_HOME")
-	os.Unsetenv("XDG_CACHE_HOME")
+	// Clear XDG environment variables (empty string treated as unset)
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("XDG_DATA_HOME", "")
+	t.Setenv("XDG_STATE_HOME", "")
+	t.Setenv("XDG_CACHE_HOME", "")
 
 	paths := Resolve(ModeUser)
 
@@ -155,31 +124,13 @@ func TestResolve_ModeAuto_AsUser(t *testing.T) {
 		t.Skip("skipping user mode test when running as root")
 	}
 
-	// Clear systemd environment variables
-	oldEnv := map[string]string{
-		"NOTIFY_SOCKET":   os.Getenv("NOTIFY_SOCKET"),
-		"INVOCATION_ID":   os.Getenv("INVOCATION_ID"),
-		"XDG_CONFIG_HOME": os.Getenv("XDG_CONFIG_HOME"),
-		"XDG_DATA_HOME":   os.Getenv("XDG_DATA_HOME"),
-		"XDG_STATE_HOME":  os.Getenv("XDG_STATE_HOME"),
-		"XDG_CACHE_HOME":  os.Getenv("XDG_CACHE_HOME"),
-	}
-	defer func() {
-		for k, v := range oldEnv {
-			if v == "" {
-				os.Unsetenv(k)
-			} else {
-				os.Setenv(k, v)
-			}
-		}
-	}()
-
-	os.Unsetenv("NOTIFY_SOCKET")
-	os.Unsetenv("INVOCATION_ID")
-	os.Unsetenv("XDG_CONFIG_HOME")
-	os.Unsetenv("XDG_DATA_HOME")
-	os.Unsetenv("XDG_STATE_HOME")
-	os.Unsetenv("XDG_CACHE_HOME")
+	// Clear systemd and XDG environment variables
+	t.Setenv("NOTIFY_SOCKET", "")
+	t.Setenv("INVOCATION_ID", "")
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("XDG_DATA_HOME", "")
+	t.Setenv("XDG_STATE_HOME", "")
+	t.Setenv("XDG_CACHE_HOME", "")
 
 	paths := Resolve(ModeAuto)
 
@@ -206,16 +157,7 @@ func TestResolve_ModeAuto_WithSystemd(t *testing.T) {
 	}
 
 	// Set systemd environment variable
-	oldInvocationID := os.Getenv("INVOCATION_ID")
-	defer func() {
-		if oldInvocationID == "" {
-			os.Unsetenv("INVOCATION_ID")
-		} else {
-			os.Setenv("INVOCATION_ID", oldInvocationID)
-		}
-	}()
-
-	os.Setenv("INVOCATION_ID", "test-invocation-id")
+	t.Setenv("INVOCATION_ID", "test-invocation-id")
 
 	paths := Resolve(ModeAuto)
 
@@ -282,20 +224,11 @@ func TestResolveConfigPath_Priority(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Set up environment
-			oldEnv := os.Getenv("SEED_CONFIG_PATH")
-			defer func() {
-				if oldEnv == "" {
-					os.Unsetenv("SEED_CONFIG_PATH")
-				} else {
-					os.Setenv("SEED_CONFIG_PATH", oldEnv)
-				}
-			}()
-
+			// Set up environment - t.Setenv handles cleanup automatically
 			if tt.envValue != "" {
-				os.Setenv("SEED_CONFIG_PATH", tt.envValue)
+				t.Setenv("SEED_CONFIG_PATH", tt.envValue)
 			} else {
-				os.Unsetenv("SEED_CONFIG_PATH")
+				t.Setenv("SEED_CONFIG_PATH", "")
 			}
 
 			got := ResolveConfigPath(tt.explicit, tt.mode)
@@ -344,16 +277,9 @@ func TestDetectLegacyConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temporary directory and change to it
+			// t.Chdir automatically restores the original directory when the test completes
 			tmpDir := t.TempDir()
-			oldWd, err := os.Getwd()
-			if err != nil {
-				t.Fatalf("failed to get working directory: %v", err)
-			}
-			defer os.Chdir(oldWd)
-
-			if err := os.Chdir(tmpDir); err != nil {
-				t.Fatalf("failed to change directory: %v", err)
-			}
+			t.Chdir(tmpDir)
 
 			// Create test file if specified
 			if tt.createFile != "" {
@@ -361,7 +287,7 @@ func TestDetectLegacyConfig(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to create test file: %v", err)
 				}
-				f.Close()
+				_ = f.Close()
 			}
 
 			// Test detection
@@ -428,33 +354,9 @@ func TestIsSystemdService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Save and restore environment
-			oldNotify := os.Getenv("NOTIFY_SOCKET")
-			oldInvocation := os.Getenv("INVOCATION_ID")
-			defer func() {
-				if oldNotify == "" {
-					os.Unsetenv("NOTIFY_SOCKET")
-				} else {
-					os.Setenv("NOTIFY_SOCKET", oldNotify)
-				}
-				if oldInvocation == "" {
-					os.Unsetenv("INVOCATION_ID")
-				} else {
-					os.Setenv("INVOCATION_ID", oldInvocation)
-				}
-			}()
-
-			// Set test environment
-			if tt.notifySocket != "" {
-				os.Setenv("NOTIFY_SOCKET", tt.notifySocket)
-			} else {
-				os.Unsetenv("NOTIFY_SOCKET")
-			}
-			if tt.invocationID != "" {
-				os.Setenv("INVOCATION_ID", tt.invocationID)
-			} else {
-				os.Unsetenv("INVOCATION_ID")
-			}
+			// Set test environment - t.Setenv handles cleanup automatically
+			t.Setenv("NOTIFY_SOCKET", tt.notifySocket)
+			t.Setenv("INVOCATION_ID", tt.invocationID)
 
 			got := isSystemdService()
 

@@ -136,7 +136,13 @@ type SurveyService struct {
 const DefaultSurveyStoragePath = "data/surveys"
 
 // NewSurveyService creates a new survey service.
-func NewSurveyService(cfg *config.Config, db *database.DB, wifiScanner *wifi.Scanner, wifiManager *wifi.Manager, iperfManager *iperf.Manager) *SurveyService {
+func NewSurveyService(
+	cfg *config.Config,
+	db *database.DB,
+	wifiScanner *wifi.Scanner,
+	wifiManager *wifi.Manager,
+	iperfManager *iperf.Manager,
+) *SurveyService {
 	storagePath := DefaultSurveyStoragePath
 
 	return &SurveyService{

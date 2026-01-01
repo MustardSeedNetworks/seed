@@ -5,6 +5,7 @@ package discovery
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net"
 	"sync"
@@ -88,7 +89,11 @@ func DefaultEnumerationConfig() *EnumerationConfig {
 }
 
 // NewEnumerationPhase creates a new Phase 1 implementation.
-func NewEnumerationPhase(deviceDiscovery *DeviceDiscovery, config *EnumerationConfig, broadcaster EventBroadcaster) *EnumerationPhase {
+func NewEnumerationPhase(
+	deviceDiscovery *DeviceDiscovery,
+	config *EnumerationConfig,
+	broadcaster EventBroadcaster,
+) *EnumerationPhase {
 	if config == nil {
 		config = DefaultEnumerationConfig()
 	}
@@ -106,7 +111,11 @@ func (p *EnumerationPhase) Name() string {
 
 // Run executes the enumeration phase.
 // This is the primary device discovery phase that finds all devices.
-func (p *EnumerationPhase) Run(ctx context.Context, _ []*DiscoveredDevice, progressCh chan<- PhaseProgressPayload) ([]*DiscoveredDevice, error) {
+func (p *EnumerationPhase) Run(
+	ctx context.Context,
+	_ []*DiscoveredDevice,
+	progressCh chan<- PhaseProgressPayload,
+) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	slog.Info("Enumeration phase starting",
 		"arp", p.config.ARPScan,
@@ -130,42 +139,36 @@ func (p *EnumerationPhase) Run(ctx context.Context, _ []*DiscoveredDevice, progr
 
 	// 1. ARP scan for local subnet (Layer 2)
 	if p.config.ARPScan {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			progress.SetPhase("arp_scan")
 			if err := p.runARPScan(scanCtx, &progress); err != nil {
 				slog.Warn("ARP scan failed", "error", err)
 				progress.AddError("arp_scan", err)
 			}
 			progress.MarkComplete("arp_scan")
-		}()
+		})
 	}
 
 	// 2. ICMP ping sweep for additional subnets (Layer 3)
 	if p.config.ICMPScan && len(p.config.AdditionalSubnets) > 0 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			progress.SetPhase("icmp_scan")
 			if err := p.runICMPScan(scanCtx, &progress); err != nil {
 				slog.Warn("ICMP scan failed", "error", err)
 				progress.AddError("icmp_scan", err)
 			}
 			progress.MarkComplete("icmp_scan")
-		}()
+		})
 	}
 
 	// 3. NDP scan for IPv6 (if enabled)
 	if p.config.NDPScan {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			progress.SetPhase("ndp_scan")
 			// NDP is handled by the background NDP scanner
 			// Just trigger a quick refresh
 			progress.MarkComplete("ndp_scan")
-		}()
+		})
 	}
 
 	// Progress reporting goroutine
@@ -181,7 +184,7 @@ func (p *EnumerationPhase) Run(ctx context.Context, _ []*DiscoveredDevice, progr
 				if progressCh != nil {
 					progressCh <- PhaseProgressPayload{
 						Phase:           "enumeration",
-						ProcessedCount:  int(progress.DevicesFound()),
+						ProcessedCount:  progress.DevicesFound(),
 						TotalCount:      progress.EstimatedTotal(),
 						PercentComplete: progress.PercentComplete(),
 						CurrentTarget:   progress.CurrentTarget(),
@@ -402,7 +405,10 @@ type EnhancedEnumerationConfig struct {
 }
 
 // NewEnhancedEnumerator creates an enhanced enumerator.
-func NewEnhancedEnumerator(deviceDiscovery *DeviceDiscovery, config *EnhancedEnumerationConfig) (*EnhancedEnumerator, error) {
+func NewEnhancedEnumerator(
+	deviceDiscovery *DeviceDiscovery,
+	config *EnhancedEnumerationConfig,
+) (*EnhancedEnumerator, error) {
 	pinger, err := NewICMPPinger(config.Timing.PingTimeout)
 	if err != nil {
 		// Non-fatal - ICMP may require elevated privileges
@@ -420,7 +426,7 @@ func NewEnhancedEnumerator(deviceDiscovery *DeviceDiscovery, config *EnhancedEnu
 func (e *EnhancedEnumerator) EnumerateSubnet(ctx context.Context, cidr string) ([]*DiscoveredDevice, error) {
 	_, subnet, err := net.ParseCIDR(cidr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing CIDR %s: %w", cidr, err)
 	}
 
 	slog.Info("Enhanced enumeration starting", "subnet", cidr)
@@ -434,7 +440,7 @@ func (e *EnhancedEnumerator) EnumerateSubnet(ctx context.Context, cidr string) (
 		for pass := range e.config.ARPPasses {
 			select {
 			case <-ctx.Done():
-				return nil, ctx.Err()
+				return nil, fmt.Errorf("enumeration cancelled during ARP pass: %w", ctx.Err())
 			default:
 			}
 
@@ -445,18 +451,18 @@ func (e *EnhancedEnumerator) EnumerateSubnet(ctx context.Context, cidr string) (
 				select {
 				case <-time.After(2 * time.Second):
 				case <-ctx.Done():
-					return nil, ctx.Err()
+					return nil, fmt.Errorf("enumeration cancelled during slow scan delay: %w", ctx.Err())
 				}
 			}
 
-			if err := e.deviceDiscovery.Scan(ctx); err != nil {
-				slog.Warn("ARP pass failed", "pass", pass+1, "error", err)
+			if scanErr := e.deviceDiscovery.Scan(ctx); scanErr != nil {
+				slog.Warn("ARP pass failed", "pass", pass+1, "error", scanErr)
 			}
 		}
 	} else {
 		// Single pass
-		if err := e.deviceDiscovery.Scan(ctx); err != nil {
-			return nil, err
+		if scanErr := e.deviceDiscovery.Scan(ctx); scanErr != nil {
+			return nil, scanErr
 		}
 	}
 

@@ -3,6 +3,7 @@ package snmp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -48,7 +49,7 @@ type SystemInfo struct {
 // Security: SNMPv3 is preferred over v2c when both are configured.
 func Query(ctx context.Context, ip, oid string, cfg *config.SNMPConfig) (string, error) {
 	if cfg == nil {
-		return "", fmt.Errorf("SNMP config is nil")
+		return "", errors.New("SNMP config is nil")
 	}
 
 	// Try SNMPv3 credentials first (more secure)
@@ -67,14 +68,14 @@ func Query(ctx context.Context, ip, oid string, cfg *config.SNMPConfig) (string,
 		}
 	}
 
-	return "", fmt.Errorf("SNMP query failed for all configured credentials")
+	return "", errors.New("SNMP query failed for all configured credentials")
 }
 
 // QueryMultiple performs multiple SNMP GET queries in a single request.
 // Security: SNMPv3 is preferred over v2c when both are configured.
 func QueryMultiple(ctx context.Context, ip string, oids []string, cfg *config.SNMPConfig) (map[string]string, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try SNMPv3 credentials first (more secure)
@@ -93,7 +94,7 @@ func QueryMultiple(ctx context.Context, ip string, oids []string, cfg *config.SN
 		}
 	}
 
-	return nil, fmt.Errorf("SNMP query failed for all configured credentials")
+	return nil, errors.New("SNMP query failed for all configured credentials")
 }
 
 // GetSystemInfo retrieves standard SNMP system information.
@@ -145,7 +146,7 @@ func queryWithCommunity(ctx context.Context, ip, oid, community string, cfg *con
 	if err != nil {
 		return "", fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	result, err := params.Get([]string{oid})
 	if err != nil {
@@ -153,14 +154,20 @@ func queryWithCommunity(ctx context.Context, ip, oid, community string, cfg *con
 	}
 
 	if len(result.Variables) == 0 {
-		return "", fmt.Errorf("no variables returned")
+		return "", errors.New("no variables returned")
 	}
 
 	return formatSNMPValue(result.Variables[0]), nil
 }
 
 // queryMultipleWithCommunity performs multiple SNMP queries with community string.
-func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, community string, cfg *config.SNMPConfig) (map[string]string, error) {
+func queryMultipleWithCommunity(
+	ctx context.Context,
+	ip string,
+	oids []string,
+	community string,
+	cfg *config.SNMPConfig,
+) (map[string]string, error) {
 	// Fixes #936: Check context cancellation before establishing connection
 	select {
 	case <-ctx.Done():
@@ -181,7 +188,7 @@ func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, c
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	result, err := params.Get(oids)
 	if err != nil {
@@ -202,7 +209,12 @@ func queryMultipleWithCommunity(ctx context.Context, ip string, oids []string, c
 }
 
 // queryWithV3 performs SNMP v3 query with credentials.
-func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) (string, error) {
+func queryWithV3(
+	ctx context.Context,
+	ip, oid string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) (string, error) {
 	// Fixes #943, #944: Check context cancellation before establishing connection
 	select {
 	case <-ctx.Done():
@@ -229,7 +241,7 @@ func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credent
 
 	// Warn if MD5 authentication is being used.
 	// MD5 is cryptographically broken and will be removed in the next major version.
-	if cred.AuthProtocol == AuthProtocolMD5 { //nolint:staticcheck // Intentionally checking deprecated field to warn users
+	if cred.AuthProtocol == AuthProtocolMD5 {
 		slog.Warn("SNMP MD5 authentication is deprecated and will be removed in the next major version",
 			"target", ip,
 			"credential_name", cred.Name,
@@ -245,8 +257,10 @@ func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credent
 		SecurityModel: gosnmp.UserSecurityModel,
 		MsgFlags:      gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field
+			UserName: cred.Username,
+			AuthenticationProtocol: getAuthProtocol(
+				cred.AuthProtocol,
+			),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -257,7 +271,7 @@ func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credent
 	if err != nil {
 		return "", fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	result, err := params.Get([]string{oid})
 	if err != nil {
@@ -265,14 +279,20 @@ func queryWithV3(ctx context.Context, ip, oid string, cred *config.SNMPv3Credent
 	}
 
 	if len(result.Variables) == 0 {
-		return "", fmt.Errorf("no variables returned")
+		return "", errors.New("no variables returned")
 	}
 
 	return formatSNMPValue(result.Variables[0]), nil
 }
 
 // queryMultipleWithV3 performs multiple SNMP queries with v3 credentials.
-func queryMultipleWithV3(ctx context.Context, ip string, oids []string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) (map[string]string, error) {
+func queryMultipleWithV3(
+	ctx context.Context,
+	ip string,
+	oids []string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) (map[string]string, error) {
 	// Fixes #943, #944: Check context cancellation before establishing connection
 	select {
 	case <-ctx.Done():
@@ -299,7 +319,7 @@ func queryMultipleWithV3(ctx context.Context, ip string, oids []string, cred *co
 
 	// Warn if MD5 authentication is being used.
 	// MD5 is cryptographically broken and will be removed in the next major version.
-	if cred.AuthProtocol == AuthProtocolMD5 { //nolint:staticcheck // Intentionally checking deprecated field to warn users
+	if cred.AuthProtocol == AuthProtocolMD5 {
 		slog.Warn("SNMP MD5 authentication is deprecated and will be removed in the next major version",
 			"target", ip,
 			"credential_name", cred.Name,
@@ -315,8 +335,10 @@ func queryMultipleWithV3(ctx context.Context, ip string, oids []string, cred *co
 		SecurityModel: gosnmp.UserSecurityModel,
 		MsgFlags:      gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field
+			UserName: cred.Username,
+			AuthenticationProtocol: getAuthProtocol(
+				cred.AuthProtocol,
+			),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -327,7 +349,7 @@ func queryMultipleWithV3(ctx context.Context, ip string, oids []string, cred *co
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	result, err := params.Get(oids)
 	if err != nil {
@@ -453,5 +475,5 @@ func GetVendorVersion(ctx context.Context, ip string, cfg *config.SNMPConfig) (s
 		return version, nil
 	}
 
-	return "", fmt.Errorf("no vendor-specific version found")
+	return "", errors.New("no vendor-specific version found")
 }

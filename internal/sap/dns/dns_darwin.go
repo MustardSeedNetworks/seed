@@ -59,12 +59,11 @@ func getSystemDNSPlatform() []string {
 func parseResolvConfDarwin(path string) []string {
 	servers := []string{}
 
-	//nolint:gosec // G304: path is system resolv.conf path from known locations
 	file, err := os.Open(path)
 	if err != nil {
 		return servers
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -102,8 +101,8 @@ func getDNSFromInterfaces() []string {
 			continue
 		}
 
-		addrs, err := iface.Addrs()
-		if err != nil {
+		addrs, addrsErr := iface.Addrs()
+		if addrsErr != nil {
 			continue
 		}
 

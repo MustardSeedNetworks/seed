@@ -2,6 +2,7 @@
 package survey
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
@@ -64,12 +65,12 @@ const ClusterRadius = 50.0
 // Returns an analysis result with dead zones, coverage score, and recommendations.
 func DetectDeadZones(survey *Survey, threshold int) (*DeadZoneAnalysis, error) {
 	if survey == nil {
-		return nil, fmt.Errorf("survey is nil")
+		return nil, errors.New("survey is nil")
 	}
 
 	allSamples := survey.GetAllSamples()
 	if len(allSamples) == 0 {
-		return nil, fmt.Errorf("survey has no samples")
+		return nil, errors.New("survey has no samples")
 	}
 
 	// Apply default threshold if not specified
@@ -80,7 +81,7 @@ func DetectDeadZones(survey *Survey, threshold int) (*DeadZoneAnalysis, error) {
 	// Extract RSSI samples
 	samples := ExtractSamplesFromSurvey(survey, "rssi")
 	if len(samples) == 0 {
-		return nil, fmt.Errorf("no RSSI samples found in survey")
+		return nil, errors.New("no RSSI samples found in survey")
 	}
 
 	// Find weak signal samples (below threshold)
@@ -258,15 +259,30 @@ func generateRecommendations(deadZones []DeadZone, coverageScore float64, totalS
 	// Coverage-based recommendations
 	switch {
 	case coverageScore < 50:
-		recommendations = append(recommendations, "Critical coverage issues detected. Consider a complete WiFi infrastructure redesign with additional access points.")
+		recommendations = append(
+			recommendations,
+			"Critical coverage issues detected. Consider a complete WiFi infrastructure redesign with additional access points.",
+		)
 	case coverageScore < 70:
-		recommendations = append(recommendations, "Poor overall coverage. Add 2-3 additional access points in strategic locations.")
+		recommendations = append(
+			recommendations,
+			"Poor overall coverage. Add 2-3 additional access points in strategic locations.",
+		)
 	case coverageScore < 85:
-		recommendations = append(recommendations, "Moderate coverage. Consider adding 1-2 access points to improve coverage in weak areas.")
+		recommendations = append(
+			recommendations,
+			"Moderate coverage. Consider adding 1-2 access points to improve coverage in weak areas.",
+		)
 	case coverageScore < 95:
-		recommendations = append(recommendations, "Good coverage overall. Minor improvements may be beneficial in identified weak spots.")
+		recommendations = append(
+			recommendations,
+			"Good coverage overall. Minor improvements may be beneficial in identified weak spots.",
+		)
 	default:
-		recommendations = append(recommendations, "Excellent coverage. Maintain current access point placement and configuration.")
+		recommendations = append(
+			recommendations,
+			"Excellent coverage. Maintain current access point placement and configuration.",
+		)
 	}
 
 	// Dead zone-specific recommendations
@@ -286,28 +302,49 @@ func generateRecommendations(deadZones []DeadZone, coverageScore float64, totalS
 	}
 
 	if severeCount > 0 {
-		recommendations = append(recommendations,
-			fmt.Sprintf("Found %d severe dead zone(s) with signal below -85 dBm. Prioritize these areas for immediate AP placement.", severeCount))
+		recommendations = append(
+			recommendations,
+			fmt.Sprintf(
+				"Found %d severe dead zone(s) with signal below -85 dBm. Prioritize these areas for immediate AP placement.",
+				severeCount,
+			),
+		)
 	}
 
 	if moderateCount > 0 {
-		recommendations = append(recommendations,
-			fmt.Sprintf("Found %d moderate dead zone(s) with signal between -80 and -85 dBm. These areas need attention to ensure reliable connectivity.", moderateCount))
+		recommendations = append(
+			recommendations,
+			fmt.Sprintf(
+				"Found %d moderate dead zone(s) with signal between -80 and -85 dBm. These areas need attention to ensure reliable connectivity.",
+				moderateCount,
+			),
+		)
 	}
 
 	if minorCount > 0 {
-		recommendations = append(recommendations,
-			fmt.Sprintf("Found %d minor weak area(s) with signal between -75 and -80 dBm. Monitor these areas during peak usage times.", minorCount))
+		recommendations = append(
+			recommendations,
+			fmt.Sprintf(
+				"Found %d minor weak area(s) with signal between -75 and -80 dBm. Monitor these areas during peak usage times.",
+				minorCount,
+			),
+		)
 	}
 
 	// Sample density recommendations
 	if totalSamples < 20 {
-		recommendations = append(recommendations, "Limited sample data. Collect more samples for accurate analysis, especially in edge areas.")
+		recommendations = append(
+			recommendations,
+			"Limited sample data. Collect more samples for accurate analysis, especially in edge areas.",
+		)
 	}
 
 	// No dead zones found
 	if len(deadZones) == 0 && coverageScore >= 90 {
-		recommendations = append(recommendations, "No significant dead zones detected. WiFi coverage meets quality standards.")
+		recommendations = append(
+			recommendations,
+			"No significant dead zones detected. WiFi coverage meets quality standards.",
+		)
 	}
 
 	return recommendations

@@ -15,7 +15,7 @@ repos:
   # General Checks
   # ===========================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         exclude: ^ui/dist/
@@ -34,7 +34,7 @@ repos:
   # Secret Scanning
   # ===========================================================================
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.0
+    rev: v8.30.0
     hooks:
       - id: gitleaks
 
@@ -72,15 +72,15 @@ repos:
         pass_filenames: false
 
   # ===========================================================================
-  # Frontend Checks
+  # Frontend Checks (Biome for linting and formatting)
   # ===========================================================================
   - repo: local
     hooks:
-      - id: frontend-lint
-        name: ESLint
+      - id: frontend-biome
+        name: Biome lint and format
         entry: bash -c 'cd ui && npm run lint'
         language: system
-        files: ^ui/.*\.(ts|tsx|js|jsx)$
+        files: ^ui/.*\.(ts|tsx|js|jsx|json)$
         pass_filenames: false
 
       - id: frontend-typecheck
@@ -92,23 +92,16 @@ repos:
 
       - id: frontend-test
         name: Frontend unit tests
-        entry: bash -c 'cd ui && npm run test'
+        entry: bash -c 'cd ui && npm run test -- --run'
         language: system
         files: ^ui/.*\.(ts|tsx|js|jsx)$
-        pass_filenames: false
-
-      - id: prettier-check
-        name: Prettier format check
-        entry: bash -c 'cd ui && npx prettier --check .'
-        language: system
-        files: ^ui/
         pass_filenames: false
 
   # ===========================================================================
   # Markdown Checks
   # ===========================================================================
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.45.0
+    rev: v0.47.0
     hooks:
       - id: markdownlint
         args: [--fix]

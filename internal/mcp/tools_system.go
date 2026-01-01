@@ -23,32 +23,44 @@ func (s *Server) registerSystemTools(isAllowed func(string) bool) {
 
 	// get_link_status - Get interface link status
 	s.addTool("get_link_status", isAllowed,
-		mcp.NewTool("get_link_status",
-			mcp.WithDescription("Get the current link status of the active network interface including carrier state, speed, duplex, and auto-negotiation status."),
+		mcp.NewTool(
+			"get_link_status",
+			mcp.WithDescription(
+				"Get the current link status of the active network interface including carrier state, speed, duplex, and auto-negotiation status.",
+			),
 		),
 		s.handleGetLinkStatus,
 	)
 
 	// get_ip_config - Get IP configuration
 	s.addTool("get_ip_config", isAllowed,
-		mcp.NewTool("get_ip_config",
-			mcp.WithDescription("Get the current IP configuration including IPv4/IPv6 addresses, netmask, gateway, and DNS servers."),
+		mcp.NewTool(
+			"get_ip_config",
+			mcp.WithDescription(
+				"Get the current IP configuration including IPv4/IPv6 addresses, netmask, gateway, and DNS servers.",
+			),
 		),
 		s.handleGetIPConfig,
 	)
 
 	// get_public_ip - Get public IP address
 	s.addTool("get_public_ip", isAllowed,
-		mcp.NewTool("get_public_ip",
-			mcp.WithDescription("Get the public IP address as seen from the internet. Useful for determining NAT status and external connectivity."),
+		mcp.NewTool(
+			"get_public_ip",
+			mcp.WithDescription(
+				"Get the public IP address as seen from the internet. Useful for determining NAT status and external connectivity.",
+			),
 		),
 		s.handleGetPublicIP,
 	)
 
 	// get_vlan_info - Get VLAN information
 	s.addTool("get_vlan_info", isAllowed,
-		mcp.NewTool("get_vlan_info",
-			mcp.WithDescription("Get VLAN information for the current interface including tagged and untagged VLANs detected."),
+		mcp.NewTool(
+			"get_vlan_info",
+			mcp.WithDescription(
+				"Get VLAN information for the current interface including tagged and untagged VLANs detected.",
+			),
 		),
 		s.handleGetVLANInfo,
 	)
@@ -63,8 +75,11 @@ func (s *Server) registerSystemTools(isAllowed func(string) bool) {
 
 	// get_discovery_status - Get discovery service status
 	s.addTool("get_discovery_status", isAllowed,
-		mcp.NewTool("get_discovery_status",
-			mcp.WithDescription("Get the current status of the discovery service including active profile, running state, and device count."),
+		mcp.NewTool(
+			"get_discovery_status",
+			mcp.WithDescription(
+				"Get the current status of the discovery service including active profile, running state, and device count.",
+			),
 		),
 		s.handleGetDiscoveryStatus,
 	)
@@ -89,7 +104,7 @@ func (s *Server) handleGetLinkStatus(_ context.Context, _ mcp.CallToolRequest) (
 	}
 
 	state := monitor.GetState()
-	return formatJSONResult(map[string]interface{}{
+	return formatJSONResult(map[string]any{
 		"state": state,
 		"isUp":  monitor.IsUp(),
 	})
@@ -143,14 +158,14 @@ func (s *Server) handleSystemHealth(_ context.Context, _ mcp.CallToolRequest) (*
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
-	health := map[string]interface{}{
+	health := map[string]any{
 		"version":    version.Version,
 		"goVersion":  runtime.Version(),
 		"os":         runtime.GOOS,
 		"arch":       runtime.GOARCH,
 		"numCPU":     runtime.NumCPU(),
 		"goroutines": runtime.NumGoroutine(),
-		"memory": map[string]interface{}{
+		"memory": map[string]any{
 			"allocMB":      float64(memStats.Alloc) / 1024 / 1024,
 			"totalAllocMB": float64(memStats.TotalAlloc) / 1024 / 1024,
 			"sysMB":        float64(memStats.Sys) / 1024 / 1024,

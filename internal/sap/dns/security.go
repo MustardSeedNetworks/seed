@@ -10,6 +10,7 @@ package dns
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"strings"
 	"sync"
@@ -25,13 +26,13 @@ const (
 
 // SecurityScanConfig contains configuration for DNS security scanning.
 type SecurityScanConfig struct {
-	Enabled            bool     `yaml:"enabled" json:"enabled"`
+	Enabled            bool     `yaml:"enabled"             json:"enabled"`
 	CheckOpenResolver  bool     `yaml:"check_open_resolver" json:"checkOpenResolver"`
-	CheckRebinding     bool     `yaml:"check_rebinding" json:"checkRebinding"`
+	CheckRebinding     bool     `yaml:"check_rebinding"     json:"checkRebinding"`
 	CheckAmplification bool     `yaml:"check_amplification" json:"checkAmplification"`
-	CheckDNSSEC        bool     `yaml:"check_dnssec" json:"checkDnssec"`
-	TestDomains        []string `yaml:"test_domains" json:"testDomains"`
-	Timeout            int      `yaml:"timeout_ms" json:"timeoutMs"` // milliseconds
+	CheckDNSSEC        bool     `yaml:"check_dnssec"        json:"checkDnssec"`
+	TestDomains        []string `yaml:"test_domains"        json:"testDomains"`
+	Timeout            int      `yaml:"timeout_ms"          json:"timeoutMs"` // milliseconds
 }
 
 // DefaultSecurityScanConfig returns sensible defaults for security scanning.
@@ -109,9 +110,7 @@ func (s *SecurityScanner) GetResults() map[string]*SecurityScanResult {
 	defer s.mu.RUnlock()
 	// Return a copy to avoid race conditions
 	results := make(map[string]*SecurityScanResult, len(s.results))
-	for k, v := range s.results {
-		results[k] = v
-	}
+	maps.Copy(results, s.results)
 	return results
 }
 
@@ -181,7 +180,12 @@ func (s *SecurityScanner) ScanServer(ctx context.Context, server string) (*Secur
 
 // checkOpenResolver tests if the server responds to queries from external sources.
 // An open resolver can be abused for DNS amplification attacks.
-func (s *SecurityScanner) checkOpenResolver(ctx context.Context, server string, timeout time.Duration, result *SecurityScanResult) {
+func (s *SecurityScanner) checkOpenResolver(
+	ctx context.Context,
+	server string,
+	timeout time.Duration,
+	result *SecurityScanResult,
+) {
 	// Try to resolve an external domain through this server
 	// If successful from a non-local source, it's an open resolver
 	testDomains := s.config.TestDomains
@@ -224,7 +228,12 @@ func (s *SecurityScanner) checkOpenResolver(ctx context.Context, server string, 
 // checkDNSRebinding tests for DNS rebinding vulnerability.
 // DNS rebinding allows attackers to bypass same-origin policy by having
 // a DNS record briefly resolve to an attacker-controlled IP, then to an internal IP.
-func (s *SecurityScanner) checkDNSRebinding(ctx context.Context, server string, timeout time.Duration, result *SecurityScanResult) {
+func (s *SecurityScanner) checkDNSRebinding(
+	ctx context.Context,
+	server string,
+	timeout time.Duration,
+	result *SecurityScanResult,
+) {
 	// Check if the server returns private IP addresses for external domains
 	// This is a simplified check - full rebinding protection requires more complex testing
 
@@ -274,7 +283,12 @@ func (s *SecurityScanner) checkDNSRebinding(ctx context.Context, server string, 
 
 // checkAmplification estimates the DNS amplification factor.
 // DNS amplification attacks exploit servers that return large responses to small queries.
-func (s *SecurityScanner) checkAmplification(ctx context.Context, server string, timeout time.Duration, result *SecurityScanResult) {
+func (s *SecurityScanner) checkAmplification(
+	ctx context.Context,
+	server string,
+	timeout time.Duration,
+	result *SecurityScanResult,
+) {
 	// Amplification factor is typically measured as response_size / query_size
 	// Common amplification vectors:
 	// - ANY queries (now deprecated, should return small responses)
@@ -334,7 +348,12 @@ func (s *SecurityScanner) checkAmplification(ctx context.Context, server string,
 }
 
 // checkDNSSEC tests if the server supports DNSSEC validation.
-func (s *SecurityScanner) checkDNSSEC(ctx context.Context, server string, timeout time.Duration, result *SecurityScanResult) {
+func (s *SecurityScanner) checkDNSSEC(
+	ctx context.Context,
+	server string,
+	timeout time.Duration,
+	result *SecurityScanResult,
+) {
 	// DNSSEC check: Query a known DNSSEC-signed domain and check for AD (Authenticated Data) flag.
 	// This is a simplified check - full DNSSEC validation requires checking DNSKEY and RRSIG records.
 
@@ -411,7 +430,11 @@ func isPrivateIP(ip net.IP) bool {
 }
 
 // ScanServers performs security scans on multiple DNS servers concurrently.
-func (s *SecurityScanner) ScanServers(ctx context.Context, servers []string, maxConcurrent int) ([]*SecurityScanResult, error) {
+func (s *SecurityScanner) ScanServers(
+	ctx context.Context,
+	servers []string,
+	maxConcurrent int,
+) ([]*SecurityScanResult, error) {
 	if maxConcurrent <= 0 {
 		maxConcurrent = 5
 	}

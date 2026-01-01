@@ -102,8 +102,12 @@ func (p *ResolutionPhase) Name() string {
 // Run executes the name resolution phase.
 // Devices from Phase 1 are enriched with hostnames.
 //
-//nolint:gocyclo // Multi-protocol resolution requires coordinating DNS, NetBIOS, and mDNS.
-func (p *ResolutionPhase) Run(ctx context.Context, devices []*DiscoveredDevice, progressCh chan<- PhaseProgressPayload) ([]*DiscoveredDevice, error) {
+
+func (p *ResolutionPhase) Run(
+	ctx context.Context,
+	devices []*DiscoveredDevice,
+	progressCh chan<- PhaseProgressPayload,
+) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 	slog.Info("Resolution phase starting",
 		"devices", len(devices),
@@ -169,29 +173,23 @@ func (p *ResolutionPhase) Run(ctx context.Context, devices []*DiscoveredDevice, 
 
 	// 1. DNS reverse lookup (PTR records)
 	if p.config.DNS {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			p.resolveDNS(resolveCtx, ips, deviceByIP, &deviceMu, &progress)
-		}()
+		})
 	}
 
 	// 2. NetBIOS name resolution (Windows)
 	if p.config.NetBIOS {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			p.resolveNetBIOS(resolveCtx, ips, deviceByIP, &deviceMu, &progress)
-		}()
+		})
 	}
 
 	// 3. mDNS name resolution (Apple/Linux)
 	if p.config.MDNS {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			p.resolveMDNS(resolveCtx, ips, deviceByIP, &deviceMu, &progress)
-		}()
+		})
 	}
 
 	// Wait for all resolution to complete
@@ -220,7 +218,13 @@ func (p *ResolutionPhase) Run(ctx context.Context, devices []*DiscoveredDevice, 
 }
 
 // resolveDNS performs reverse DNS lookups for all devices.
-func (p *ResolutionPhase) resolveDNS(ctx context.Context, ips []string, deviceByIP map[string]*DiscoveredDevice, deviceMu *sync.Mutex, progress *ResolutionProgress) {
+func (p *ResolutionPhase) resolveDNS(
+	ctx context.Context,
+	ips []string,
+	deviceByIP map[string]*DiscoveredDevice,
+	deviceMu *sync.Mutex,
+	progress *ResolutionProgress,
+) {
 	sem := make(chan struct{}, p.config.Timing.MaxConcurrentDNS)
 	var wg sync.WaitGroup
 
@@ -277,7 +281,13 @@ func (p *ResolutionPhase) resolveDNS(ctx context.Context, ips []string, deviceBy
 // resolveNetBIOS performs NetBIOS name resolution for Windows devices.
 //
 //nolint:dupl // Similar to resolveMDNS but uses NetBIOSResolver with NetBIOSResult type.
-func (p *ResolutionPhase) resolveNetBIOS(ctx context.Context, ips []string, deviceByIP map[string]*DiscoveredDevice, deviceMu *sync.Mutex, progress *ResolutionProgress) {
+func (p *ResolutionPhase) resolveNetBIOS(
+	ctx context.Context,
+	ips []string,
+	deviceByIP map[string]*DiscoveredDevice,
+	deviceMu *sync.Mutex,
+	progress *ResolutionProgress,
+) {
 	// Filter IPs that don't already have NetBIOS names (under lock)
 	var toResolve []string
 	deviceMu.Lock()
@@ -316,7 +326,13 @@ func (p *ResolutionPhase) resolveNetBIOS(ctx context.Context, ips []string, devi
 // resolveMDNS performs mDNS name resolution for Apple/Linux devices.
 //
 //nolint:dupl // Similar to resolveNetBIOS but uses MDNSResolver with MDNSResult type.
-func (p *ResolutionPhase) resolveMDNS(ctx context.Context, ips []string, deviceByIP map[string]*DiscoveredDevice, deviceMu *sync.Mutex, progress *ResolutionProgress) {
+func (p *ResolutionPhase) resolveMDNS(
+	ctx context.Context,
+	ips []string,
+	deviceByIP map[string]*DiscoveredDevice,
+	deviceMu *sync.Mutex,
+	progress *ResolutionProgress,
+) {
 	// Filter IPs that don't already have mDNS names (under lock)
 	var toResolve []string
 	deviceMu.Lock()

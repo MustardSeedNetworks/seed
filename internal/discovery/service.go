@@ -5,6 +5,7 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -28,7 +29,7 @@ type Service struct {
 	stopCh       chan struct{}
 
 	// Metrics tracking
-	metrics       *DiscoveryMetrics
+	metrics       *Metrics
 	previousScan  []*DiscoveredDevice // For delta computation
 	lastDelta     *ScanDelta
 	lastDeltaTime time.Time
@@ -54,7 +55,7 @@ type ServiceStatus struct {
 	ProfilingStatus *ProfilingStatus `json:"profilingStatus,omitempty"` // Detailed profiling state
 
 	// Metrics and health
-	Metrics           *DiscoveryMetrics  `json:"metrics,omitempty"`
+	Metrics           *Metrics           `json:"metrics,omitempty"`
 	LastDelta         *ScanDelta         `json:"lastDelta,omitempty"`
 	DegradationStatus *DegradationStatus `json:"degradationStatus,omitempty"`
 }
@@ -67,11 +68,15 @@ func NewService(cfg *config.Config, interfaceName string, profiler *DeviceProfil
 		profiler = NewDeviceProfiler(DefaultProfilerConfig(), &cfg.SNMP)
 	}
 	return &Service{
-		cfg:             cfg,
-		interfaceName:   interfaceName,
-		deviceDiscovery: NewDeviceDiscoveryWithOUI(interfaceName, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
-		profiler:        profiler,
-		metrics:         NewDiscoveryMetrics(),
+		cfg:           cfg,
+		interfaceName: interfaceName,
+		deviceDiscovery: NewDeviceDiscoveryWithOUI(
+			interfaceName,
+			cfg.NetworkDiscovery.OUIFilePath,
+			cfg.NetworkDiscovery.OUIMaxAge,
+		),
+		profiler: profiler,
+		metrics:  NewMetrics(),
 	}
 }
 
@@ -242,7 +247,7 @@ func (s *Service) Scan(ctx context.Context) error {
 
 	if err := s.deviceDiscovery.Scan(ctx); err != nil {
 		// ErrScanInProgress is not a failure - just means scan was already running
-		if err == ErrScanInProgress {
+		if errors.Is(err, ErrScanInProgress) {
 			slog.Debug("Discovery: scan skipped - already in progress")
 			return err // Return error so callers know it was skipped
 		}
@@ -303,7 +308,7 @@ func (s *Service) queueDevicesForProfiling() {
 	queued := 0
 	for _, device := range devices {
 		if device.IP != "" && s.profiler.GetProfile(device.IP) == nil && !s.profiler.IsProfiling(device.IP) {
-			s.profiler.QueueProfile(device.IP)
+			_ = s.profiler.QueueProfile(device.IP)
 			queued++
 		}
 	}
@@ -382,7 +387,7 @@ func (s *Service) GetDevices() []*DiscoveredDevice {
 				device.Profile = profile
 			} else if !s.profiler.IsProfiling(device.IP) {
 				// Queue for profiling
-				s.profiler.QueueProfile(device.IP)
+				_ = s.profiler.QueueProfile(device.IP)
 			}
 		}
 	}
@@ -535,7 +540,7 @@ func (s *Service) StartPipeline(ctx context.Context, trigger string) error {
 	s.mu.RUnlock()
 
 	if pipeline == nil {
-		return &DiscoveryError{
+		return &Error{
 			Phase:   "start",
 			Message: "discovery pipeline not configured",
 			Code:    "PIPELINE_NOT_CONFIGURED",
@@ -548,7 +553,7 @@ func (s *Service) StartPipeline(ctx context.Context, trigger string) error {
 		status.Status == PipelineStateResolving ||
 		status.Status == PipelineStateScanning ||
 		status.Status == PipelineStateAssessing {
-		return &DiscoveryError{
+		return &Error{
 			Phase:   "start",
 			Message: "discovery pipeline already running",
 			Code:    "PIPELINE_ALREADY_RUNNING",
@@ -608,7 +613,7 @@ func (s *Service) IsPipelineRunning() bool {
 // This is called when the pipeline completes successfully.
 // It ensures Service.GetDevices() returns the fully-enriched device list.
 func (s *Service) syncPipelineResults(devices []*DiscoveredDevice) {
-	if devices == nil || len(devices) == 0 {
+	if len(devices) == 0 {
 		return
 	}
 
@@ -650,21 +655,21 @@ func (s *Service) syncPipelineResults(devices []*DiscoveredDevice) {
 	}
 }
 
-// DiscoveryError represents a discovery-specific error with categorization.
-type DiscoveryError struct {
+// Error represents a discovery-specific error with categorization.
+type Error struct {
 	Phase   string // Which phase/operation failed
 	Message string // Human-readable message
 	Code    string // Machine-readable error code
 	Cause   error  // Underlying error
 }
 
-func (e *DiscoveryError) Error() string {
+func (e *Error) Error() string {
 	if e.Cause != nil {
 		return e.Message + ": " + e.Cause.Error()
 	}
 	return e.Message
 }
 
-func (e *DiscoveryError) Unwrap() error {
+func (e *Error) Unwrap() error {
 	return e.Cause
 }

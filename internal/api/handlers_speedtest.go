@@ -49,19 +49,40 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.health.speedtestPostRequired"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.health.speedtestPostRequired"),
+			"",
+		)
 		return
 	}
 
 	if s.speedtestTester == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.health.speedtestNotAvailable"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.health.speedtestNotAvailable"),
+			"",
+		)
 		return
 	}
 
 	// Check if already running
 	status := s.speedtestTester.GetStatus()
 	if status.Running {
-		sendErrorResponseWithDetails(w, logger, http.StatusConflict, ErrCodeConflict, localizer.T("errors.health.speedtestInProgress"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusConflict,
+			ErrCodeConflict,
+			localizer.T("errors.health.speedtestInProgress"),
+			"",
+		)
 		return
 	}
 
@@ -78,7 +99,7 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 	}(logger)
 
 	// Return immediately with "started" status
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"status":  "started",
 		"message": "Speedtest started. Poll /api/speedtest/status for results.",
 	})
@@ -90,12 +111,26 @@ func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
 	if s.speedtestTester == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.health.speedtestNotAvailable"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.health.speedtestNotAvailable"),
+			"",
+		)
 		return
 	}
 

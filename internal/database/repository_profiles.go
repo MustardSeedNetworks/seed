@@ -85,13 +85,13 @@ func (r *ProfileRepository) List(ctx context.Context) ([]*Profile, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list profiles: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var profiles []*Profile
 	for rows.Next() {
-		profile, err := r.scanProfileFromRows(rows)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan profile: %w", err)
+		profile, scanErr := r.scanProfileFromRows(rows)
+		if scanErr != nil {
+			return nil, fmt.Errorf("failed to scan profile: %w", scanErr)
 		}
 		profiles = append(profiles, profile)
 	}

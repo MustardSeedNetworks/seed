@@ -144,15 +144,15 @@ func setupLogging(cfg *config.Config) string {
 		os.Exit(1)
 	}
 
-	if _, err := os.Stat(logPath); os.IsNotExist(err) {
-		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // G304: logPath is from config
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Fatal: Failed to create log file with secure permissions: %v\n", err)
+	if _, statErr := os.Stat(logPath); os.IsNotExist(statErr) {
+		f, openErr := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0o600)
+		if openErr != nil {
+			fmt.Fprintf(os.Stderr, "Fatal: Failed to create log file with secure permissions: %v\n", openErr)
 			os.Exit(1)
 		}
-		f.Close()
-	} else if err := os.Chmod(logPath, 0o600); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to set secure permissions on existing log file: %v\n", err)
+		_ = f.Close()
+	} else if chmodErr := os.Chmod(logPath, 0o600); chmodErr != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to set secure permissions on existing log file: %v\n", chmodErr)
 	}
 
 	// Use logging config from config file if available, otherwise defaults
@@ -206,8 +206,8 @@ func loadAndConfigureConfig(configPath string, devMode bool) *config.Config {
 		fmt.Fprintln(os.Stderr, "Protocol: HTTP (development mode)")
 	}
 
-	if err := cfg.Validate(); err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal: Invalid configuration: %v\n", err)
+	if validateErr := cfg.Validate(); validateErr != nil {
+		fmt.Fprintf(os.Stderr, "Fatal: Invalid configuration: %v\n", validateErr)
 		os.Exit(1)
 	}
 
@@ -250,10 +250,10 @@ func migrateSNMPCredentials(cfg *config.Config, configPath string) {
 	}
 
 	fmt.Fprintln(os.Stderr, "Migrating SNMP credentials to encrypted format...")
-	if err := cfg.EncryptSNMPCredentials(); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to encrypt SNMP credentials: %v\n", err)
-	} else if err := cfg.Save(configPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to persist encrypted SNMP credentials: %v\n", err)
+	if encryptErr := cfg.EncryptSNMPCredentials(); encryptErr != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to encrypt SNMP credentials: %v\n", encryptErr)
+	} else if saveErr := cfg.Save(configPath); saveErr != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to persist encrypted SNMP credentials: %v\n", saveErr)
 	} else {
 		fmt.Fprintln(os.Stderr, "SNMP credentials encrypted and saved securely")
 	}
@@ -288,7 +288,12 @@ func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manag
 	}
 
 	preferred := append([]string{initialInterface}, cfg.Interface.Fallbacks...)
-	activeInterface := findActiveInterface(netMgr, preferred, cfg.Interface.StartupRetries, cfg.Interface.StartupRetryWait)
+	activeInterface := findActiveInterface(
+		netMgr,
+		preferred,
+		cfg.Interface.StartupRetries,
+		cfg.Interface.StartupRetryWait,
+	)
 
 	if activeInterface == "" {
 		logAvailableInterfaces(netMgr)

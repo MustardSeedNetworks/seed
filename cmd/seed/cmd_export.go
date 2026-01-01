@@ -80,7 +80,8 @@ func runExport(cmd *cobra.Command, _ []string) {
 	if output == "-" {
 		fmt.Println(string(data))
 	} else {
-		if err := os.WriteFile(output, data, 0o600); err != nil {
+		err = os.WriteFile(output, data, 0o600)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing file: %v\n", err)
 			os.Exit(1)
 		}

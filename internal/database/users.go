@@ -39,7 +39,7 @@ func (db *DB) GetUser(ctx context.Context, username string) (*User, error) {
 	defer db.mu.RUnlock()
 
 	if db.closed {
-		return nil, fmt.Errorf("database is closed")
+		return nil, errors.New("database is closed")
 	}
 
 	var user User
@@ -86,7 +86,7 @@ func (db *DB) CreateUser(ctx context.Context, username, passwordHash, role strin
 	defer db.mu.Unlock()
 
 	if db.closed {
-		return nil, fmt.Errorf("database is closed")
+		return nil, errors.New("database is closed")
 	}
 
 	now := time.Now().UTC()
@@ -124,7 +124,7 @@ func (db *DB) UpdateUserPassword(ctx context.Context, username, passwordHash str
 	defer db.mu.Unlock()
 
 	if db.closed {
-		return fmt.Errorf("database is closed")
+		return errors.New("database is closed")
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
@@ -152,7 +152,7 @@ func (db *DB) RecordLoginSuccess(ctx context.Context, username string) error {
 	defer db.mu.Unlock()
 
 	if db.closed {
-		return fmt.Errorf("database is closed")
+		return errors.New("database is closed")
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
@@ -168,12 +168,17 @@ func (db *DB) RecordLoginSuccess(ctx context.Context, username string) error {
 
 // RecordLoginFailure records a failed login attempt.
 // Returns true if the account is now locked.
-func (db *DB) RecordLoginFailure(ctx context.Context, username string, maxAttempts int, lockDuration time.Duration) (bool, error) {
+func (db *DB) RecordLoginFailure(
+	ctx context.Context,
+	username string,
+	maxAttempts int,
+	lockDuration time.Duration,
+) (bool, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
 	if db.closed {
-		return false, fmt.Errorf("database is closed")
+		return false, errors.New("database is closed")
 	}
 
 	now := time.Now().UTC()
@@ -218,7 +223,7 @@ func (db *DB) IsUserLocked(ctx context.Context, username string) (bool, error) {
 	defer db.mu.RUnlock()
 
 	if db.closed {
-		return false, fmt.Errorf("database is closed")
+		return false, errors.New("database is closed")
 	}
 
 	var lockedUntil sql.NullString
@@ -251,7 +256,7 @@ func (db *DB) GetUserCount(ctx context.Context) (int, error) {
 	defer db.mu.RUnlock()
 
 	if db.closed {
-		return 0, fmt.Errorf("database is closed")
+		return 0, errors.New("database is closed")
 	}
 
 	var count int
@@ -269,7 +274,7 @@ func (db *DB) GetTokenVersion(ctx context.Context, username string) (int, error)
 	defer db.mu.RUnlock()
 
 	if db.closed {
-		return 0, fmt.Errorf("database is closed")
+		return 0, errors.New("database is closed")
 	}
 
 	var version int
@@ -293,7 +298,7 @@ func (db *DB) IncrementTokenVersion(ctx context.Context, username string) error 
 	defer db.mu.Unlock()
 
 	if db.closed {
-		return fmt.Errorf("database is closed")
+		return errors.New("database is closed")
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)

@@ -129,7 +129,7 @@ func GetRefreshTokenFromCookie(r *http.Request) (string, error) {
 // 2. Authorization header (Bearer token - fallback for API clients).
 // 3. Sec-WebSocket-Protocol header (for WebSocket connections).
 // Query parameter authentication is disabled for security (fixes #706).
-func GetTokenFromRequest(r *http.Request) (token, source string) {
+func GetTokenFromRequest(r *http.Request) (string, string) {
 	// Try cookie first (most secure)
 	if token, err := GetAccessTokenFromCookie(r); err == nil && token != "" {
 		return token, "cookie"

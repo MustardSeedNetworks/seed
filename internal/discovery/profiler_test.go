@@ -2,6 +2,7 @@
 package discovery
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -131,7 +132,7 @@ func TestHTTPInfo_Fields(t *testing.T) {
 	if info.Port != 8080 {
 		t.Errorf("Expected Port 8080, got %d", info.Port)
 	}
-	if info.StatusCode != 301 {
+	if info.StatusCode != http.StatusMovedPermanently {
 		t.Errorf("Expected StatusCode 301, got %d", info.StatusCode)
 	}
 	if info.Title != "Redirect" {
@@ -214,7 +215,7 @@ func TestDeviceProfiler_QueueProfile(t *testing.T) {
 	profiler := NewDeviceProfiler(cfg, snmpCfg)
 
 	// Queue should work even without starting
-	profiler.QueueProfile("192.0.2.1") // TEST-NET-1, non-routable
+	_ = profiler.QueueProfile("192.0.2.1") // TEST-NET-1, non-routable
 
 	// Check not profiled yet (hasn't started)
 	if profiler.IsProfiled("192.0.2.1") {

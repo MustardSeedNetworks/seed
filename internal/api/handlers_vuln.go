@@ -34,12 +34,26 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.vuln.scannerNotEnabled"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.vuln.scannerNotEnabled"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -47,13 +61,20 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 
 	// Validate IP if provided
 	if targetIP != "" && !validation.IsValidIP(targetIP) {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vuln.invalidIp"), targetIP) // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.vuln.invalidIp"),
+			targetIP,
+		) // fixes #694
 		return
 	}
 
 	// Check if scan is already in progress
 	if s.vulnScanner.IsRunning() {
-		sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 			"status":  "scan already in progress",
 			"running": true,
 		})
@@ -62,7 +83,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 
 	// Run scan in background (fixes #698 - timeout protection)
 	go func(reqCtx context.Context) {
-		logger := logging.FromContext(reqCtx)
+		bgLogger := logging.FromContext(reqCtx)
 		// Add timeout protection for vulnerability scan operations (fixes #698)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
@@ -83,13 +104,13 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 		// Scan each device
 		for _, device := range devices {
 			if _, err := s.vulnScanner.ScanDevice(ctx, device); err != nil {
-				logger.Warn("Vulnerability scan failed", "device_ip", device.IP, "error", err)
+				bgLogger.Warn("Vulnerability scan failed", "device_ip", device.IP, "error", err)
 			}
 		}
 
 		// Broadcast results via WebSocket
 		results := s.vulnScanner.GetAllVulnerabilities()
-		s.wsHub.BroadcastCardUpdate("vulnerabilities", map[string]interface{}{
+		s.wsHub.BroadcastCardUpdate("vulnerabilities", map[string]any{
 			"results": results,
 			"count":   len(results),
 		})
@@ -107,12 +128,19 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]interface{}{
+		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]any{
 			"enabled": false,
 		})
 		return
@@ -120,7 +148,7 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 
 	stats := s.vulnScanner.GetStats()
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"enabled":        true,
 		"scanning":       s.vulnScanner.IsRunning(),
 		"stats":          stats,
@@ -135,7 +163,14 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
@@ -162,7 +197,7 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 		results = filtered
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]interface{}{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"results": results,
 		"count":   len(results),
 	})
@@ -175,24 +210,52 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	if s.vulnScanner == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeServiceUnavail, localizer.T("errors.vuln.scannerNotEnabled"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.T("errors.vuln.scannerNotEnabled"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	ip := r.URL.Query().Get("ip")
 	if ip == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vuln.missingIpParam"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.vuln.missingIpParam"),
+			"",
+		) // fixes #694
 		return
 	}
 
 	// Validate IP address
 	if !validation.IsValidIP(ip) {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.vuln.invalidIp"), ip) // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.vuln.invalidIp"),
+			ip,
+		) // fixes #694
 		return
 	}
 
@@ -221,7 +284,14 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 		var settings discovery.VulnerabilityScannerConfig
 		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
 			logger.Warn("Invalid JSON for vulnerability settings", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.vuln.invalidJson"), "") // fixes #694, #H7
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusBadRequest,
+				ErrCodeBadRequest,
+				localizer.T("errors.vuln.invalidJson"),
+				"",
+			) // fixes #694, #H7
 			return
 		}
 
@@ -240,7 +310,14 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 		// Save config
 		if err := s.config.Save(s.configPath); err != nil {
 			logger.Error("Failed to save vulnerability config", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "") // fixes #694, #H7
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusInternalServerError,
+				ErrCodeInternal,
+				localizer.T("errors.config.failedToSave"),
+				"",
+			) // fixes #694, #H7
 			return
 		}
 
@@ -249,7 +326,14 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 		})
 
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		) // fixes #694
 	}
 }
 
@@ -274,14 +358,28 @@ func (s *Server) handleNVDAPIKeyValidate(w http.ResponseWriter, r *http.Request)
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
 		return
 	}
 
 	var req NVDAPIKeyValidateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid JSON for NVD API key validation", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.vuln.invalidJson"), "") // fixes #H7
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.vuln.invalidJson"),
+			"",
+		) // fixes #H7
 		return
 	}
 

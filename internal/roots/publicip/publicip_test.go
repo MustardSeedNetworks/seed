@@ -219,7 +219,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 					t.Errorf("User-Agent = %q, want %q", ua, "The Seed/1.0")
 				}
 				w.WriteHeader(tt.statusCode)
-				w.Write([]byte(tt.body))
+				_, _ = w.Write([]byte(tt.body))
 			}))
 			defer server.Close()
 
@@ -240,7 +240,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 func TestChecker_FetchFromService_ContextCanceled(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		time.Sleep(100 * time.Millisecond)
-		w.Write([]byte("192.0.2.1"))
+		_, _ = w.Write([]byte("192.0.2.1"))
 	}))
 	defer server.Close()
 
@@ -278,12 +278,12 @@ func TestChecker_GetPublicIP_CacheHit(t *testing.T) {
 func TestChecker_GetPublicIP_CacheExpired(t *testing.T) {
 	// Create test servers that return known IPs
 	ipv4Server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		json.NewEncoder(w).Encode(map[string]string{"ip": "203.0.113.10"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"ip": "203.0.113.10"})
 	}))
 	defer ipv4Server.Close()
 
 	ipv6Server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		json.NewEncoder(w).Encode(map[string]string{"ip": "2001:db8::10"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"ip": "2001:db8::10"})
 	}))
 	defer ipv6Server.Close()
 
@@ -331,7 +331,7 @@ func TestChecker_FetchIPv6_ValidatesIPv6(t *testing.T) {
 	// Create a server that returns an IPv4 address for an IPv6 endpoint
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		// Return IPv4 instead of IPv6 - should be rejected
-		json.NewEncoder(w).Encode(map[string]string{"ip": "192.0.2.1"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"ip": "192.0.2.1"})
 	}))
 	defer server.Close()
 

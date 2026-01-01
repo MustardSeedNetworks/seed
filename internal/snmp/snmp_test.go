@@ -518,7 +518,7 @@ func TestV3CredentialFields(t *testing.T) {
 	if cred.Username == "" {
 		t.Error("Username should not be empty")
 	}
-	if cred.AuthProtocol == "" { //nolint:staticcheck // Testing deprecated field
+	if cred.AuthProtocol == "" {
 		t.Error("AuthProtocol should not be empty")
 	}
 	if cred.PrivProtocol == "" {
@@ -526,7 +526,7 @@ func TestV3CredentialFields(t *testing.T) {
 	}
 
 	// Test protocol conversion
-	authProto := getAuthProtocol(cred.AuthProtocol) //nolint:staticcheck // Testing deprecated field
+	authProto := getAuthProtocol(cred.AuthProtocol)
 	if authProto != gosnmp.SHA256 {
 		t.Errorf("Auth protocol = %v, want SHA256", authProto)
 	}

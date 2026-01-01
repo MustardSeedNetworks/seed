@@ -31,10 +31,14 @@ func NewDiscoveryService(cfg *config.Config, db *database.DB) *DiscoveryService 
 	}
 
 	return &DiscoveryService{
-		cfg:             cfg,
-		db:              db,
-		service:         discovery.NewService(cfg, iface, nil),
-		deviceDiscovery: discovery.NewDeviceDiscoveryWithOUI(iface, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
+		cfg:     cfg,
+		db:      db,
+		service: discovery.NewService(cfg, iface, nil),
+		deviceDiscovery: discovery.NewDeviceDiscoveryWithOUI(
+			iface,
+			cfg.NetworkDiscovery.OUIFilePath,
+			cfg.NetworkDiscovery.OUIMaxAge,
+		),
 	}
 }
 
@@ -276,7 +280,12 @@ type PostureService struct {
 }
 
 // NewPostureService creates a new posture service.
-func NewPostureService(cfg *config.Config, db *database.DB, discovery *DiscoveryService, vuln *VulnerabilityService) *PostureService {
+func NewPostureService(
+	cfg *config.Config,
+	db *database.DB,
+	discovery *DiscoveryService,
+	vuln *VulnerabilityService,
+) *PostureService {
 	return &PostureService{
 		cfg:           cfg,
 		db:            db,

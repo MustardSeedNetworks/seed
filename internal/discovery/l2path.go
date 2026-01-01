@@ -4,6 +4,7 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -84,7 +85,7 @@ func (b *L2PathBuilder) BuildPath(ctx context.Context, sourceIP, destIP string) 
 	// Find the first-hop switch from source device's LLDP/CDP neighbors
 	firstHop := b.findFirstHop(sourceDevice)
 	if firstHop == nil {
-		return nil, fmt.Errorf("no first-hop switch found for source device")
+		return nil, errors.New("no first-hop switch found for source device")
 	}
 
 	// Build the path hop by hop
@@ -126,7 +127,7 @@ func (b *L2PathBuilder) BuildPath(ctx context.Context, sourceIP, destIP string) 
 	}
 
 	if len(result.Hops) == 0 {
-		return nil, fmt.Errorf("unable to build L2 path - no hops found")
+		return nil, errors.New("unable to build L2 path - no hops found")
 	}
 
 	return result, nil
@@ -281,7 +282,8 @@ func (b *L2PathBuilder) findNeighborTowardDestination(currentHop *L2Hop, destDev
 // checkDeviceAsNeighbor checks if a device is a neighbor of the current hop.
 func (b *L2PathBuilder) checkDeviceAsNeighbor(device *DiscoveredDevice, currentHop *L2Hop) *L2Hop {
 	// Check LLDP neighbor
-	if device.LLDPInfo != nil && b.deviceMatchesHop(device.LLDPInfo.SystemName, device.LLDPInfo.ManagementAddress, currentHop) {
+	if device.LLDPInfo != nil &&
+		b.deviceMatchesHop(device.LLDPInfo.SystemName, device.LLDPInfo.ManagementAddress, currentHop) {
 		return &L2Hop{
 			Device:   device.LLDPInfo.SystemName,
 			DeviceIP: device.LLDPInfo.ManagementAddress,
@@ -294,7 +296,8 @@ func (b *L2PathBuilder) checkDeviceAsNeighbor(device *DiscoveredDevice, currentH
 	}
 
 	// Check CDP neighbor
-	if device.CDPInfo != nil && b.deviceMatchesHop(device.CDPInfo.DeviceID, device.CDPInfo.ManagementAddress, currentHop) {
+	if device.CDPInfo != nil &&
+		b.deviceMatchesHop(device.CDPInfo.DeviceID, device.CDPInfo.ManagementAddress, currentHop) {
 		hop := &L2Hop{
 			Device:   device.CDPInfo.DeviceID,
 			DeviceIP: device.CDPInfo.ManagementAddress,
@@ -339,7 +342,8 @@ func (b *L2PathBuilder) checkDeviceAsNeighbor(device *DiscoveredDevice, currentH
 // checkDestinationReached checks if the destination device is directly connected to current hop.
 func (b *L2PathBuilder) checkDestinationReached(currentHop *L2Hop, destDevice *DiscoveredDevice) {
 	// Check if destination device has LLDP/CDP pointing to current hop
-	if destDevice.LLDPInfo != nil && b.deviceMatchesHop(destDevice.LLDPInfo.SystemName, destDevice.LLDPInfo.ManagementAddress, currentHop) {
+	if destDevice.LLDPInfo != nil &&
+		b.deviceMatchesHop(destDevice.LLDPInfo.SystemName, destDevice.LLDPInfo.ManagementAddress, currentHop) {
 		currentHop.EgressPort = &PortInfo{
 			Name:        destDevice.LLDPInfo.PortID,
 			ConnectedTo: destDevice.MAC,
@@ -347,7 +351,8 @@ func (b *L2PathBuilder) checkDestinationReached(currentHop *L2Hop, destDevice *D
 		return
 	}
 
-	if destDevice.CDPInfo != nil && b.deviceMatchesHop(destDevice.CDPInfo.DeviceID, destDevice.CDPInfo.ManagementAddress, currentHop) {
+	if destDevice.CDPInfo != nil &&
+		b.deviceMatchesHop(destDevice.CDPInfo.DeviceID, destDevice.CDPInfo.ManagementAddress, currentHop) {
 		currentHop.EgressPort = &PortInfo{
 			Name:        destDevice.CDPInfo.PortID,
 			ConnectedTo: destDevice.MAC,

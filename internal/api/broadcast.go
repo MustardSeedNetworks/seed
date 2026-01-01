@@ -177,7 +177,7 @@ func (s *Server) broadcastAllCards() {
 // Performance: This function refreshes the interface list on each call, which involves
 // system calls. The 5-second broadcast interval is chosen to balance update frequency
 // with this overhead.
-func (s *Server) collectLinkData() map[string]interface{} {
+func (s *Server) collectLinkData() map[string]any {
 	if s.netManager == nil {
 		return nil
 	}
@@ -199,7 +199,7 @@ func (s *Server) collectLinkData() map[string]interface{} {
 		return nil
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"interface": currentIface,
 		"linkUp":    false,
 		"mtu":       ifaceInfo.MTU,
@@ -219,7 +219,7 @@ func (s *Server) collectLinkData() map[string]interface{} {
 }
 
 // collectGatewayData gathers gateway ping data from cached stats.
-func (s *Server) collectGatewayData() map[string]interface{} {
+func (s *Server) collectGatewayData() map[string]any {
 	if s.gatewayTester == nil {
 		return nil
 	}
@@ -229,7 +229,7 @@ func (s *Server) collectGatewayData() map[string]interface{} {
 		return nil
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"gateway":     stats.Gateway,
 		"reachable":   stats.Reachable,
 		"sent":        stats.Sent,
@@ -244,7 +244,7 @@ func (s *Server) collectGatewayData() map[string]interface{} {
 }
 
 // collectDNSData gathers DNS test data.
-func (s *Server) collectDNSData() map[string]interface{} {
+func (s *Server) collectDNSData() map[string]any {
 	if s.dnsTester == nil {
 		return nil
 	}
@@ -258,14 +258,14 @@ func (s *Server) collectDNSData() map[string]interface{} {
 		return nil
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"server":       results.Server,
 		"servers":      results.Servers,
 		"testHostname": results.TestHostname,
 	}
 
 	if results.Forward != nil {
-		data["forward"] = map[string]interface{}{
+		data["forward"] = map[string]any{
 			"result":   results.Forward.Result,
 			"timeMs":   results.Forward.TimeMs,
 			"status":   results.Forward.Status,
@@ -275,7 +275,7 @@ func (s *Server) collectDNSData() map[string]interface{} {
 	}
 
 	if results.ForwardIPv6 != nil {
-		data["forwardIpv6"] = map[string]interface{}{
+		data["forwardIpv6"] = map[string]any{
 			"result":   results.ForwardIPv6.Result,
 			"timeMs":   results.ForwardIPv6.TimeMs,
 			"status":   results.ForwardIPv6.Status,
@@ -285,7 +285,7 @@ func (s *Server) collectDNSData() map[string]interface{} {
 	}
 
 	if results.Reverse != nil {
-		data["reverse"] = map[string]interface{}{
+		data["reverse"] = map[string]any{
 			"result":   results.Reverse.Result,
 			"timeMs":   results.Reverse.TimeMs,
 			"status":   results.Reverse.Status,
@@ -299,7 +299,7 @@ func (s *Server) collectDNSData() map[string]interface{} {
 
 // collectDiscoveryData gathers LLDP/CDP/EDP neighbor data from the unified discovery service.
 // Returns ALL discovered neighbors, not just the first one.
-func (s *Server) collectDiscoveryData() map[string]interface{} {
+func (s *Server) collectDiscoveryData() map[string]any {
 	if s.discoveryService == nil {
 		return nil
 	}
@@ -312,10 +312,10 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 	}
 
 	// Build comprehensive neighbor list
-	allNeighbors := make([]map[string]interface{}, 0, totalCount)
+	allNeighbors := make([]map[string]any, 0, totalCount)
 
 	for _, n := range neighbors {
-		neighborData := map[string]interface{}{
+		neighborData := map[string]any{
 			"protocol":          string(n.Protocol),
 			"systemName":        n.SystemName,
 			"portId":            n.PortID,
@@ -343,7 +343,7 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 
 	// Return first neighbor as "primary" for backwards compatibility,
 	// plus full list for comprehensive display
-	result := map[string]interface{}{
+	result := map[string]any{
 		"neighbors":   allNeighbors,
 		"totalCount":  totalCount,
 		"deviceCount": deviceCount,
@@ -365,7 +365,7 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 		result["pipelineStatus"] = serviceStatus.PipelineStatus
 		result["pipelinePhase"] = serviceStatus.PipelinePhase
 		if serviceStatus.ProfilingStatus != nil {
-			result["profilingStatus"] = map[string]interface{}{
+			result["profilingStatus"] = map[string]any{
 				"inProgress":    serviceStatus.ProfilingStatus.InProgress,
 				"totalProfiled": serviceStatus.ProfilingStatus.TotalProfiled,
 				"queueLength":   serviceStatus.ProfilingStatus.QueueLength,
@@ -374,7 +374,7 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 			}
 		}
 		if serviceStatus.Metrics != nil {
-			result["metrics"] = map[string]interface{}{
+			result["metrics"] = map[string]any{
 				"totalDiscovered":   serviceStatus.Metrics.TotalDiscovered,
 				"hostsProbed":       serviceStatus.Metrics.HostsProbed,
 				"hostsResponding":   serviceStatus.Metrics.HostsResponding,
@@ -390,7 +390,7 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 			}
 		}
 		if serviceStatus.DegradationStatus != nil {
-			result["health"] = map[string]interface{}{
+			result["health"] = map[string]any{
 				"overall":         serviceStatus.DegradationStatus.OverallHealth,
 				"healthyMethods":  serviceStatus.DegradationStatus.HealthyMethods,
 				"failedMethods":   serviceStatus.DegradationStatus.FailedMethods,
@@ -399,7 +399,7 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 			}
 		}
 		if serviceStatus.LastDelta != nil {
-			result["lastDelta"] = map[string]interface{}{
+			result["lastDelta"] = map[string]any{
 				"newDevices":     len(serviceStatus.LastDelta.NewDevices),
 				"updatedDevices": len(serviceStatus.LastDelta.UpdatedDevices),
 				"removedDevices": len(serviceStatus.LastDelta.RemovedDevices),
@@ -412,7 +412,7 @@ func (s *Server) collectDiscoveryData() map[string]interface{} {
 }
 
 // collectPublicIPData gathers public IP address information.
-func (s *Server) collectPublicIPData() map[string]interface{} {
+func (s *Server) collectPublicIPData() map[string]any {
 	if s.publicipChecker == nil {
 		return nil
 	}
@@ -426,7 +426,7 @@ func (s *Server) collectPublicIPData() map[string]interface{} {
 		return nil
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"ipv4":        result.IPv4,
 		"ipv6":        result.IPv6,
 		"lastChecked": result.LastChecked.Format(time.RFC3339),

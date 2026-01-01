@@ -102,7 +102,6 @@ i18n
   .init({
     resources,
     fallbackLng: "en",
-    // biome-ignore lint/style/useNamingConvention: Required by i18next library configuration
     defaultNS: defaultNs,
     ns: namespaces,
 

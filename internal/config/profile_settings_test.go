@@ -16,7 +16,6 @@ func TestNewProfileSettings(t *testing.T) {
 	}
 }
 
-//nolint:gocyclo // Test function requires extensive validation.
 func TestProfileSettingsFromConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
@@ -166,7 +165,6 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	}
 }
 
-//nolint:gocyclo // Test function requires extensive validation.
 func TestProfileSettingsApplyTo(t *testing.T) {
 	// Create profile settings with specific values
 	ps := &ProfileSettings{
@@ -328,7 +326,7 @@ func TestProfileSettingsJSONRoundTrip(t *testing.T) {
 	}
 
 	// Verify JSON is valid
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
 		t.Fatalf("Invalid JSON output: %v", err)
 	}

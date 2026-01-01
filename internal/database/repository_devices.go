@@ -82,7 +82,7 @@ func (r *DeviceRepository) GetByMAC(ctx context.Context, mac string) (*Device, e
 
 // List retrieves all devices matching the criteria.
 //
-//nolint:gocritic // opts passed by value for API stability
+
 func (r *DeviceRepository) List(ctx context.Context, opts DeviceListOptions) ([]*Device, error) {
 	query := `
 		SELECT id, ip_address, mac_address, hostname, vendor, device_type, os_family,
@@ -127,18 +127,22 @@ func (r *DeviceRepository) List(ctx context.Context, opts DeviceListOptions) ([]
 	if err != nil {
 		return nil, fmt.Errorf("failed to list devices: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var devices []*Device
 	for rows.Next() {
-		d, err := r.scanDeviceFromRows(rows)
-		if err != nil {
-			return nil, err
+		d, scanErr := r.scanDeviceFromRows(rows)
+		if scanErr != nil {
+			return nil, scanErr
 		}
 		devices = append(devices, d)
 	}
 
-	return devices, rows.Err()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating devices: %w", rowsErr)
+	}
+
+	return devices, nil
 }
 
 // DeviceListOptions specifies criteria for listing devices.
@@ -248,7 +252,12 @@ func (r *DeviceRepository) MarkInactive(ctx context.Context, since time.Time) (i
 		return 0, fmt.Errorf("failed to mark devices inactive: %w", err)
 	}
 
-	return result.RowsAffected()
+	count, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	return count, nil
 }
 
 // DeleteInactive removes inactive devices older than the given time.
@@ -260,7 +269,12 @@ func (r *DeviceRepository) DeleteInactive(ctx context.Context, olderThan time.Ti
 		return 0, fmt.Errorf("failed to delete inactive devices: %w", err)
 	}
 
-	return result.RowsAffected()
+	count, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	return count, nil
 }
 
 // Count returns the total number of devices.
@@ -286,18 +300,22 @@ func (r *DeviceRepository) GetDistinctVendors(ctx context.Context) ([]string, er
 	if err != nil {
 		return nil, fmt.Errorf("failed to get distinct vendors: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var vendors []string
 	for rows.Next() {
 		var v string
-		if err := rows.Scan(&v); err != nil {
-			return nil, err
+		if scanErr := rows.Scan(&v); scanErr != nil {
+			return nil, fmt.Errorf("scanning vendor: %w", scanErr)
 		}
 		vendors = append(vendors, v)
 	}
 
-	return vendors, rows.Err()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating vendors: %w", rowsErr)
+	}
+
+	return vendors, nil
 }
 
 // GetDistinctTypes returns all unique device types.
@@ -308,18 +326,22 @@ func (r *DeviceRepository) GetDistinctTypes(ctx context.Context) ([]string, erro
 	if err != nil {
 		return nil, fmt.Errorf("failed to get distinct types: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var types []string
 	for rows.Next() {
 		var t string
-		if err := rows.Scan(&t); err != nil {
-			return nil, err
+		if scanErr := rows.Scan(&t); scanErr != nil {
+			return nil, fmt.Errorf("scanning type: %w", scanErr)
 		}
 		types = append(types, t)
 	}
 
-	return types, rows.Err()
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating types: %w", rowsErr)
+	}
+
+	return types, nil
 }
 
 // scanDevice scans a device from a row.

@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -110,17 +111,17 @@ func ParseAirMapperFile(data []byte) (*AirMapperFile, error) {
 
 		switch {
 		case strings.HasSuffix(name, ".serial"):
-			serial, err := parseSerialFile(file)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse .serial file: %w", err)
+			serial, parseErr := parseSerialFile(file)
+			if parseErr != nil {
+				return nil, fmt.Errorf("failed to parse .serial file: %w", parseErr)
 			}
 			result.Serial = serial
 			serialFound = true
 
 		case ext == ".jpg" || ext == ".jpeg" || ext == ".png":
-			imgData, err := readZipFile(file)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read floor plan image: %w", err)
+			imgData, readErr := readZipFile(file)
+			if readErr != nil {
+				return nil, fmt.Errorf("failed to read floor plan image: %w", readErr)
 			}
 			result.FloorPlan = imgData
 			result.FloorPlanFilename = filepath.Base(name)
@@ -132,11 +133,11 @@ func ParseAirMapperFile(data []byte) (*AirMapperFile, error) {
 	}
 
 	if !serialFound {
-		return nil, fmt.Errorf("no .serial file found in archive")
+		return nil, errors.New("no .serial file found in archive")
 	}
 
 	if !floorPlanFound {
-		return nil, fmt.Errorf("no floor plan image found in archive")
+		return nil, errors.New("no floor plan image found in archive")
 	}
 
 	return result, nil
@@ -150,8 +151,8 @@ func parseSerialFile(file *zip.File) (*SerialMetadata, error) {
 	}
 
 	var serial SerialMetadata
-	if err := json.Unmarshal(data, &serial); err != nil {
-		return nil, fmt.Errorf("invalid JSON in .serial file: %w", err)
+	if unmarshalErr := json.Unmarshal(data, &serial); unmarshalErr != nil {
+		return nil, fmt.Errorf("invalid JSON in .serial file: %w", unmarshalErr)
 	}
 
 	return &serial, nil
@@ -163,7 +164,7 @@ func readZipFile(file *zip.File) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	return io.ReadAll(rc)
 }
@@ -171,7 +172,7 @@ func readZipFile(file *zip.File) ([]byte, error) {
 // ToImportResult converts an AirMapperFile to an AirMapperImportResult.
 func (a *AirMapperFile) ToImportResult() (*AirMapperImportResult, error) {
 	if a.Serial == nil {
-		return nil, fmt.Errorf("no serial metadata available")
+		return nil, errors.New("no serial metadata available")
 	}
 
 	result := &AirMapperImportResult{
@@ -213,7 +214,10 @@ func (a *AirMapperFile) ToImportResult() (*AirMapperImportResult, error) {
 			result.Calibration.PropagationM = a.Serial.Propagation
 		default:
 			result.Calibration.PropagationM = a.Serial.Propagation * 0.3048 // Default to feet
-			result.Warnings = append(result.Warnings, fmt.Sprintf("Unknown propagation unit: %s, assuming feet", a.Serial.PropagationUnit))
+			result.Warnings = append(
+				result.Warnings,
+				fmt.Sprintf("Unknown propagation unit: %s, assuming feet", a.Serial.PropagationUnit),
+			)
 		}
 	} else {
 		result.Calibration.PropagationM = 10 // Default 10m

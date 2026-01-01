@@ -3,8 +3,10 @@ package survey
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/go-pdf/fpdf"
@@ -48,7 +50,7 @@ func NewReportGenerator(survey *Survey, options ReportOptions) *ReportGenerator 
 // Generate creates a PDF report and returns the bytes.
 func (g *ReportGenerator) Generate() ([]byte, error) {
 	if g.survey == nil {
-		return nil, fmt.Errorf("survey is nil")
+		return nil, errors.New("survey is nil")
 	}
 
 	// Initialize PDF
@@ -141,7 +143,17 @@ func (g *ReportGenerator) addCoverPage() {
 
 	floorCount := len(g.survey.Floors)
 	sampleCount := len(g.survey.GetAllSamples())
-	g.pdf.CellFormat(0, 7, fmt.Sprintf("Floors: %d | Sample Points: %d", floorCount, sampleCount), "", 1, "C", false, 0, "")
+	g.pdf.CellFormat(
+		0,
+		7,
+		fmt.Sprintf("Floors: %d | Sample Points: %d", floorCount, sampleCount),
+		"",
+		1,
+		"C",
+		false,
+		0,
+		"",
+	)
 }
 
 // addExecutiveSummary adds the executive summary section.
@@ -155,7 +167,11 @@ func (g *ReportGenerator) addExecutiveSummary() {
 
 	// Coverage score card
 	g.pdf.Ln(5)
-	g.addStatCard("Overall Coverage Score", fmt.Sprintf("%.0f%%", stats.CoverageScore), getCoverageGrade(stats.CoverageScore))
+	g.addStatCard(
+		"Overall Coverage Score",
+		fmt.Sprintf("%.0f%%", stats.CoverageScore),
+		getCoverageGrade(stats.CoverageScore),
+	)
 
 	// Key metrics table
 	g.pdf.Ln(10)
@@ -167,12 +183,12 @@ func (g *ReportGenerator) addExecutiveSummary() {
 		label string
 		value string
 	}{
-		{"Total Sample Points", fmt.Sprintf("%d", stats.TotalSamples)},
+		{"Total Sample Points", strconv.Itoa(stats.TotalSamples)},
 		{"Average Signal Strength", fmt.Sprintf("%d dBm", stats.AvgRSSI)},
 		{"Minimum Signal", fmt.Sprintf("%d dBm", stats.MinRSSI)},
 		{"Maximum Signal", fmt.Sprintf("%d dBm", stats.MaxRSSI)},
-		{"Weak Coverage Areas", fmt.Sprintf("%d", stats.WeakAreas)},
-		{"Dead Zones Detected", fmt.Sprintf("%d", stats.DeadZones)},
+		{"Weak Coverage Areas", strconv.Itoa(stats.WeakAreas)},
+		{"Dead Zones Detected", strconv.Itoa(stats.DeadZones)},
 	}
 
 	for _, m := range metrics {
@@ -229,11 +245,31 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 	// Floor info
 	g.pdf.SetFont("Arial", "", 10)
 	g.pdf.SetTextColor(80, 80, 80)
-	g.pdf.CellFormat(0, 6, fmt.Sprintf("Level: %d | Samples: %d", floor.Level, len(floor.Samples)), "", 1, "L", false, 0, "")
+	g.pdf.CellFormat(
+		0,
+		6,
+		fmt.Sprintf("Level: %d | Samples: %d", floor.Level, len(floor.Samples)),
+		"",
+		1,
+		"L",
+		false,
+		0,
+		"",
+	)
 
 	// Floor plan dimensions if available
 	if floor.FloorPlan != nil {
-		g.pdf.CellFormat(0, 6, fmt.Sprintf("Dimensions: %d x %d px", floor.FloorPlan.Width, floor.FloorPlan.Height), "", 1, "L", false, 0, "")
+		g.pdf.CellFormat(
+			0,
+			6,
+			fmt.Sprintf("Dimensions: %d x %d px", floor.FloorPlan.Width, floor.FloorPlan.Height),
+			"",
+			1,
+			"L",
+			false,
+			0,
+			"",
+		)
 		if floor.FloorPlan.ScaleM > 0 {
 			g.pdf.CellFormat(0, 6, fmt.Sprintf("Scale: %.2f m/px", floor.FloorPlan.ScaleM), "", 1, "L", false, 0, "")
 		}
@@ -256,7 +292,7 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 			{"Coverage Score", fmt.Sprintf("%.0f%%", stats.CoverageScore)},
 			{"Average Signal", fmt.Sprintf("%d dBm", stats.AvgRSSI)},
 			{"Signal Range", fmt.Sprintf("%d to %d dBm", stats.MinRSSI, stats.MaxRSSI)},
-			{"Weak Spots", fmt.Sprintf("%d", stats.WeakAreas)},
+			{"Weak Spots", strconv.Itoa(stats.WeakAreas)},
 		}
 
 		for _, m := range floorMetrics {
@@ -272,7 +308,17 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 
 			g.pdf.SetFont("Arial", "", 10)
 			for _, ch := range channels {
-				g.pdf.CellFormat(0, 6, fmt.Sprintf("Channel %d: %d APs", ch.Channel, ch.Count), "", 1, "L", false, 0, "")
+				g.pdf.CellFormat(
+					0,
+					6,
+					fmt.Sprintf("Channel %d: %d APs", ch.Channel, ch.Count),
+					"",
+					1,
+					"L",
+					false,
+					0,
+					"",
+				)
 			}
 		}
 	} else {
@@ -309,7 +355,17 @@ func (g *ReportGenerator) addRecommendations() {
 	if len(recommendations) == 0 {
 		g.pdf.SetFont("Arial", "I", 10)
 		g.pdf.SetTextColor(100, 100, 100)
-		g.pdf.CellFormat(0, 8, "No specific recommendations - WiFi coverage meets quality standards.", "", 1, "L", false, 0, "")
+		g.pdf.CellFormat(
+			0,
+			8,
+			"No specific recommendations - WiFi coverage meets quality standards.",
+			"",
+			1,
+			"L",
+			false,
+			0,
+			"",
+		)
 		return
 	}
 
@@ -394,10 +450,7 @@ func (g *ReportGenerator) addRawDataAppendix() {
 
 	// Table rows (limit to 50 samples per page section)
 	g.pdf.SetFont("Arial", "", 7)
-	maxSamples := 50
-	if len(allSamples) < maxSamples {
-		maxSamples = len(allSamples)
-	}
+	maxSamples := min(len(allSamples), 50)
 
 	for i := range maxSamples {
 		sample := allSamples[i]
@@ -410,15 +463,15 @@ func (g *ReportGenerator) addRawDataAppendix() {
 		ps := getPassiveSampleFromPoint(sample)
 		if ps != nil && len(ps.Networks) > 0 {
 			net := ps.Networks[0]
-			rssi = fmt.Sprintf("%d", net.Signal)
-			snr = fmt.Sprintf("%d", net.SNR)
+			rssi = strconv.Itoa(net.Signal)
+			snr = strconv.Itoa(net.SNR)
 			ssid = truncateString(net.SSID, 15)
-			channel = fmt.Sprintf("%d", net.Channel)
+			channel = strconv.Itoa(net.Channel)
 		}
 
-		g.pdf.CellFormat(8, 6, fmt.Sprintf("%d", i+1), "1", 0, "C", false, 0, "")
-		g.pdf.CellFormat(15, 6, fmt.Sprintf("%d", sample.X), "1", 0, "C", false, 0, "")
-		g.pdf.CellFormat(15, 6, fmt.Sprintf("%d", sample.Y), "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(8, 6, strconv.Itoa(i+1), "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(15, 6, strconv.Itoa(sample.X), "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(15, 6, strconv.Itoa(sample.Y), "1", 0, "C", false, 0, "")
 		g.pdf.CellFormat(20, 6, rssi, "1", 0, "C", false, 0, "")
 		g.pdf.CellFormat(20, 6, snr, "1", 0, "C", false, 0, "")
 		g.pdf.CellFormat(50, 6, ssid, "1", 0, "L", false, 0, "")
@@ -430,7 +483,17 @@ func (g *ReportGenerator) addRawDataAppendix() {
 	if len(allSamples) > maxSamples {
 		g.pdf.Ln(5)
 		g.pdf.SetFont("Arial", "I", 9)
-		g.pdf.CellFormat(0, 6, fmt.Sprintf("... and %d more samples (truncated for readability)", len(allSamples)-maxSamples), "", 1, "L", false, 0, "")
+		g.pdf.CellFormat(
+			0,
+			6,
+			fmt.Sprintf("... and %d more samples (truncated for readability)", len(allSamples)-maxSamples),
+			"",
+			1,
+			"L",
+			false,
+			0,
+			"",
+		)
 	}
 }
 
@@ -659,7 +722,10 @@ func generateSurveyRecommendations(stats *SurveyStats) []Recommendation {
 	// Dead zone recommendations
 	if stats.DeadZones > 0 {
 		recommendations = append(recommendations, Recommendation{
-			Text:     fmt.Sprintf("Found %d dead zone(s) with signal below -85 dBm. Prioritize these areas for immediate AP placement.", stats.DeadZones),
+			Text: fmt.Sprintf(
+				"Found %d dead zone(s) with signal below -85 dBm. Prioritize these areas for immediate AP placement.",
+				stats.DeadZones,
+			),
 			Priority: PriorityHigh,
 		})
 	}
@@ -667,7 +733,10 @@ func generateSurveyRecommendations(stats *SurveyStats) []Recommendation {
 	// Weak area recommendations
 	if stats.WeakAreas > 0 {
 		recommendations = append(recommendations, Recommendation{
-			Text:     fmt.Sprintf("Found %d weak area(s) with poor signal. Consider power adjustments or additional coverage.", stats.WeakAreas),
+			Text: fmt.Sprintf(
+				"Found %d weak area(s) with poor signal. Consider power adjustments or additional coverage.",
+				stats.WeakAreas,
+			),
 			Priority: PriorityMedium,
 		})
 	}

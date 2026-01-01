@@ -15,40 +15,40 @@ type ProfileSettings struct {
 
 	// Interfaces contains per-interface configurations (v2+).
 	// Each profile can select one ethernet and one wifi interface.
-	Interfaces ProfileInterfaceConfigs `json:"interfaces,omitempty"`
+	Interfaces ProfileInterfaceConfigs `json:"interfaces,omitzero"`
 
 	// Thresholds for network tests (profile-level defaults, can be overridden per-interface)
-	Thresholds ProfileThresholds `json:"thresholds,omitempty"`
+	Thresholds ProfileThresholds `json:"thresholds,omitzero"`
 
 	// HealthChecks contains custom test configurations
-	HealthChecks ProfileHealthChecks `json:"health_checks,omitempty"`
+	HealthChecks ProfileHealthChecks `json:"health_checks,omitzero"`
 
 	// Speedtest configuration
-	Speedtest ProfileSpeedtest `json:"speedtest,omitempty"`
+	Speedtest ProfileSpeedtest `json:"speedtest,omitzero"`
 
 	// Iperf configuration
-	Iperf ProfileIperf `json:"iperf,omitempty"`
+	Iperf ProfileIperf `json:"iperf,omitzero"`
 
 	// FABOptions controls what tests run on FAB press
-	FABOptions ProfileFABOptions `json:"fab_options,omitempty"`
+	FABOptions ProfileFABOptions `json:"fab_options,omitzero"`
 
 	// DisplayOptions contains UI preferences
-	DisplayOptions ProfileDisplayOptions `json:"display_options,omitempty"`
+	DisplayOptions ProfileDisplayOptions `json:"display_options,omitzero"`
 
 	// DNS test configuration
-	DNS ProfileDNS `json:"dns,omitempty"`
+	DNS ProfileDNS `json:"dns,omitzero"`
 
 	// SNMP credentials for device interrogation
-	SNMP ProfileSNMP `json:"snmp,omitempty"`
+	SNMP ProfileSNMP `json:"snmp,omitzero"`
 
 	// NetworkDiscovery settings
-	NetworkDiscovery ProfileNetworkDiscovery `json:"network_discovery,omitempty"`
+	NetworkDiscovery ProfileNetworkDiscovery `json:"network_discovery,omitzero"`
 
 	// Link settings for interface speed/duplex configuration
-	Link ProfileLinkSettings `json:"link,omitempty"`
+	Link ProfileLinkSettings `json:"link,omitzero"`
 
 	// CableTest settings for TDR cable diagnostics
-	CableTest ProfileCableTestSettings `json:"cable_test,omitempty"`
+	CableTest ProfileCableTestSettings `json:"cable_test,omitzero"`
 
 	// Notes field for user documentation
 	Notes string `json:"notes,omitempty"`
@@ -56,13 +56,13 @@ type ProfileSettings struct {
 
 // ProfileThresholds contains threshold settings per profile.
 type ProfileThresholds struct {
-	DNS         ThresholdPair               `json:"dns,omitempty"`
-	Gateway     ThresholdPair               `json:"gateway,omitempty"`
-	WiFi        WiFiThresholdPair           `json:"wifi,omitempty"`
-	CustomPing  ThresholdPair               `json:"custom_ping,omitempty"`
-	CustomTCP   ThresholdPair               `json:"custom_tcp,omitempty"`
-	CustomHTTP  ThresholdPair               `json:"custom_http,omitempty"`
-	HTTPTimings ProfileHTTPTimingThresholds `json:"http_timings,omitempty"`
+	DNS         ThresholdPair               `json:"dns,omitzero"`
+	Gateway     ThresholdPair               `json:"gateway,omitzero"`
+	WiFi        WiFiThresholdPair           `json:"wifi,omitzero"`
+	CustomPing  ThresholdPair               `json:"custom_ping,omitzero"`
+	CustomTCP   ThresholdPair               `json:"custom_tcp,omitzero"`
+	CustomHTTP  ThresholdPair               `json:"custom_http,omitzero"`
+	HTTPTimings ProfileHTTPTimingThresholds `json:"http_timings,omitzero"`
 }
 
 // ThresholdPair stores warning/critical thresholds in milliseconds.
@@ -79,10 +79,10 @@ type WiFiThresholdPair struct {
 
 // ProfileHTTPTimingThresholds contains per-phase HTTP thresholds.
 type ProfileHTTPTimingThresholds struct {
-	DNS  ThresholdPair `json:"dns,omitempty"`
-	TCP  ThresholdPair `json:"tcp,omitempty"`
-	TLS  ThresholdPair `json:"tls,omitempty"`
-	TTFB ThresholdPair `json:"ttfb,omitempty"`
+	DNS  ThresholdPair `json:"dns,omitzero"`
+	TCP  ThresholdPair `json:"tcp,omitzero"`
+	TLS  ThresholdPair `json:"tls,omitzero"`
+	TTFB ThresholdPair `json:"ttfb,omitzero"`
 }
 
 // ProfileHealthChecks contains health check test configurations.
@@ -208,7 +208,7 @@ type ProfileNetworkDiscovery struct {
 	AutoScan          bool                        `json:"auto_scan"`
 	ScanIntervalSecs  int64                       `json:"scan_interval_secs,omitempty"`
 	AdditionalSubnets []ProfileSubnet             `json:"additional_subnets,omitempty"`
-	Fingerprinting    ProfileFingerprintingConfig `json:"fingerprinting,omitempty"`
+	Fingerprinting    ProfileFingerprintingConfig `json:"fingerprinting,omitzero"`
 	IPv6Enabled       bool                        `json:"ipv6_enabled"`
 }
 
@@ -452,7 +452,7 @@ func (ps *ProfileSettings) FromConfig(cfg *Config) {
 // ApplyTo applies profile settings to a Config.
 // This modifies the Config in place with the profile's settings.
 //
-//nolint:gocyclo // Complexity is inherent to applying many settings sections.
+
 func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	// Thresholds
 	cfg.Thresholds.DNS.Warning = time.Duration(ps.Thresholds.DNS.Warning) * time.Millisecond
@@ -467,14 +467,30 @@ func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	cfg.Thresholds.CustomTests.TCP.Critical = time.Duration(ps.Thresholds.CustomTCP.Critical) * time.Millisecond
 	cfg.Thresholds.CustomTests.HTTP.Warning = time.Duration(ps.Thresholds.CustomHTTP.Warning) * time.Millisecond
 	cfg.Thresholds.CustomTests.HTTP.Critical = time.Duration(ps.Thresholds.CustomHTTP.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(ps.Thresholds.HTTPTimings.DNS.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(ps.Thresholds.HTTPTimings.DNS.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(ps.Thresholds.HTTPTimings.TCP.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(ps.Thresholds.HTTPTimings.TCP.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(ps.Thresholds.HTTPTimings.TLS.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(ps.Thresholds.HTTPTimings.TLS.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(ps.Thresholds.HTTPTimings.TTFB.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(ps.Thresholds.HTTPTimings.TTFB.Critical) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(
+		ps.Thresholds.HTTPTimings.DNS.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(
+		ps.Thresholds.HTTPTimings.DNS.Critical,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(
+		ps.Thresholds.HTTPTimings.TCP.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(
+		ps.Thresholds.HTTPTimings.TCP.Critical,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(
+		ps.Thresholds.HTTPTimings.TLS.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(
+		ps.Thresholds.HTTPTimings.TLS.Critical,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(
+		ps.Thresholds.HTTPTimings.TTFB.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(
+		ps.Thresholds.HTTPTimings.TTFB.Critical,
+	) * time.Millisecond
 
 	// Health Checks
 	cfg.HealthChecks.RunPerformance = ps.HealthChecks.RunPerformance

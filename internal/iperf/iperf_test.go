@@ -746,7 +746,10 @@ func TestIperf3BinaryRequired(t *testing.T) {
 
 	path, err := findIperf3Binary()
 	if err != nil {
-		t.Fatalf("iperf3 binary not found: %v\n\nTo fix this:\n1. Run scripts/build-iperf3.sh to build bundled binary\n2. Or install system-wide: apt-get install iperf3 (Ubuntu) or brew install iperf3 (macOS)\n3. Or set SKIP_IPERF_TEST=1 to skip this test in CI", err)
+		t.Fatalf(
+			"iperf3 binary not found: %v\n\nTo fix this:\n1. Run scripts/build-iperf3.sh to build bundled binary\n2. Or install system-wide: apt-get install iperf3 (Ubuntu) or brew install iperf3 (macOS)\n3. Or set SKIP_IPERF_TEST=1 to skip this test in CI",
+			err,
+		)
 	}
 
 	t.Logf("Found iperf3 at: %s", path)
@@ -778,7 +781,12 @@ func TestIperf3VersionRequired(t *testing.T) {
 	// Validate minimum version
 	err = ValidateVersion()
 	if err != nil {
-		t.Fatalf("iperf3 version validation failed: %v\n\nRequired version: %s or higher\nFound version: %s", err, minSupportedVersion, version)
+		t.Fatalf(
+			"iperf3 version validation failed: %v\n\nRequired version: %s or higher\nFound version: %s",
+			err,
+			minSupportedVersion,
+			version,
+		)
 	}
 }
 

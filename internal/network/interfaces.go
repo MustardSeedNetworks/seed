@@ -4,6 +4,7 @@
 package network
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -114,8 +115,8 @@ func (m *Manager) RefreshInterfaces() error {
 		}
 
 		// Get IP addresses
-		addrs, err := iface.Addrs()
-		if err == nil {
+		addrs, addrErr := iface.Addrs()
+		if addrErr == nil {
 			for _, addr := range addrs {
 				info.Addresses = append(info.Addresses, addr.String())
 			}
@@ -300,7 +301,7 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 	// Try to read speed from sysfs (Linux only)
 	speedPath := filepath.Join("sys", "class", "net", name, "speed")
 	speedPath = string(os.PathSeparator) + speedPath
-	//nolint:gosec // G304: speedPath is constructed from validated interface name
+
 	if data, err := os.ReadFile(speedPath); err == nil {
 		speed := strings.TrimSpace(string(data))
 		if speed != "" && speed != "-1" {
@@ -311,7 +312,7 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 	// Try to read duplex from sysfs (Linux only)
 	duplexPath := filepath.Join("sys", "class", "net", name, "duplex")
 	duplexPath = string(os.PathSeparator) + duplexPath
-	//nolint:gosec // G304: duplexPath is constructed from validated interface name
+
 	if data, err := os.ReadFile(duplexPath); err == nil {
 		status.Duplex = strings.TrimSpace(string(data))
 	}
@@ -362,7 +363,7 @@ func hasRoutableAddress(addresses []string) bool {
 }
 
 // getLinkInfoFromIfconfig parses ifconfig output on macOS.
-func getLinkInfoFromIfconfig(_ string) (speed, duplex string) {
+func getLinkInfoFromIfconfig(_ string) (string, string) {
 	// This is a placeholder - actual implementation would exec ifconfig
 	// and parse "media: autoselect (1000baseT <full-duplex>)"
 	return "", ""
@@ -460,10 +461,10 @@ func (m *Manager) SetMTU(iface string, mtu int) error {
 // validateIPConfig validates the static IP configuration.
 func validateIPConfig(cfg *StaticIPConfig) error {
 	if cfg.Address == "" {
-		return fmt.Errorf("IP address is required")
+		return errors.New("IP address is required")
 	}
 	if cfg.Netmask == "" {
-		return fmt.Errorf("netmask is required")
+		return errors.New("netmask is required")
 	}
 
 	// Validate IP address

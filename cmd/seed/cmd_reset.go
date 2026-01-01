@@ -32,7 +32,6 @@ func init() {
 	rootCmd.AddCommand(resetCmd)
 }
 
-//nolint:gocyclo // Command handler complexity is acceptable
 func runReset(cmd *cobra.Command, _ []string) {
 	preserveAuth, err := cmd.Flags().GetBool("preserve-auth")
 	if err != nil {
@@ -60,9 +59,9 @@ func runReset(cmd *cobra.Command, _ []string) {
 
 	// Load existing config if it exists (for preservation)
 	var existingCfg *config.Config
-	if _, err := os.Stat(configPath); err == nil {
+	if _, statErr := os.Stat(configPath); statErr == nil {
 		// Errors loading existing config are not fatal during reset
-		existingCfg, _ = config.Load(configPath) //nolint:errcheck // Intentional
+		existingCfg, _ = config.Load(configPath)
 	}
 
 	// Confirm unless --force
@@ -77,9 +76,9 @@ func runReset(cmd *cobra.Command, _ []string) {
 		fmt.Print("\nContinue? [y/N]: ")
 
 		reader := bufio.NewReader(os.Stdin)
-		response, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
+		response, readErr := reader.ReadString('\n')
+		if readErr != nil {
+			fmt.Fprintf(os.Stderr, "Error reading input: %v\n", readErr)
 			os.Exit(1)
 		}
 		response = strings.TrimSpace(strings.ToLower(response))
@@ -92,9 +91,9 @@ func runReset(cmd *cobra.Command, _ []string) {
 	// Create backup
 	if backup && existingCfg != nil {
 		backupMgr := config.NewBackupManager(configPath, "", 10)
-		backupInfo, err := backupMgr.CreateBackup()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to create backup: %v\n", err)
+		backupInfo, backupErr := backupMgr.CreateBackup()
+		if backupErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: Failed to create backup: %v\n", backupErr)
 		} else {
 			fmt.Printf("Backup created: %s\n", backupInfo.Path)
 		}
@@ -114,15 +113,15 @@ func runReset(cmd *cobra.Command, _ []string) {
 
 	// Ensure config directory exists
 	if dir := filepath.Dir(configPath); dir != "" && dir != "." {
-		if err := os.MkdirAll(dir, 0o750); err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating config directory: %v\n", err)
+		if mkdirErr := os.MkdirAll(dir, 0o750); mkdirErr != nil {
+			fmt.Fprintf(os.Stderr, "Error creating config directory: %v\n", mkdirErr)
 			os.Exit(1)
 		}
 	}
 
 	// Save new config
-	if err := newCfg.Save(configPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Error saving config: %v\n", err)
+	if saveErr := newCfg.Save(configPath); saveErr != nil {
+		fmt.Fprintf(os.Stderr, "Error saving config: %v\n", saveErr)
 		os.Exit(1)
 	}
 

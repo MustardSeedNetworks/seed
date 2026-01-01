@@ -3,8 +3,9 @@ package snmp
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -61,6 +62,11 @@ const (
 	MACTypeOther   = "other"
 )
 
+// ID subtype values for LLDP.
+const (
+	IDSubtypeLocal = "local"
+)
+
 // InterfaceInfo contains network interface details from IF-MIB.
 type InterfaceInfo struct {
 	Index       int       // ifIndex
@@ -85,7 +91,7 @@ type MACEntry struct {
 // GetInterfaceInfo retrieves detailed information for a specific interface by ifIndex.
 func GetInterfaceInfo(ctx context.Context, ip string, ifIndex int, cfg *config.SNMPConfig) (*InterfaceInfo, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Build OIDs with the ifIndex appended.
@@ -116,7 +122,7 @@ func GetInterfaceInfo(ctx context.Context, ip string, ifIndex int, cfg *config.S
 		case strings.HasPrefix(oid, OIDIfName):
 			info.Name = value
 		case strings.HasPrefix(oid, OIDIfSpeed):
-			if speed, err := strconv.ParseInt(value, 10, 64); err == nil {
+			if speed, parseErr := strconv.ParseInt(value, 10, 64); parseErr == nil {
 				info.Speed = speed
 			}
 		case strings.HasPrefix(oid, OIDIfAdminStatus):
@@ -147,7 +153,7 @@ func GetInterfaceInfo(ctx context.Context, ip string, ifIndex int, cfg *config.S
 // Security: SNMPv3 is preferred over v2c when both are configured.
 func GetAllInterfaces(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]InterfaceInfo, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try SNMPv3 credentials first (more secure).
@@ -166,7 +172,7 @@ func GetAllInterfaces(ctx context.Context, ip string, cfg *config.SNMPConfig) ([
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query interfaces with all configured credentials")
+	return nil, errors.New("failed to query interfaces with all configured credentials")
 }
 
 // walkInterfaces performs a bulk walk of interface table using SNMPv2c.
@@ -185,12 +191,12 @@ func walkInterfaces(ctx context.Context, ip, community string, cfg *config.SNMPC
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	// Check context cancellation.
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	default:
 	}
 
@@ -198,7 +204,12 @@ func walkInterfaces(ctx context.Context, ip, community string, cfg *config.SNMPC
 }
 
 // walkInterfacesV3 performs a bulk walk of interface table using SNMPv3.
-func walkInterfacesV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]InterfaceInfo, error) {
+func walkInterfacesV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]InterfaceInfo, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -209,8 +220,10 @@ func walkInterfacesV3(ctx context.Context, ip string, cred *config.SNMPv3Credent
 		SecurityModel:  gosnmp.UserSecurityModel,
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field is expected
+			UserName: cred.Username,
+			AuthenticationProtocol: getAuthProtocol(
+				cred.AuthProtocol,
+			),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -221,12 +234,12 @@ func walkInterfacesV3(ctx context.Context, ip string, cred *config.SNMPv3Credent
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	// Check context cancellation.
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	default:
 	}
 
@@ -242,12 +255,12 @@ func walkInterfaceTable(params *gosnmp.GoSNMP) ([]InterfaceInfo, error) {
 		// Extract ifIndex from OID.
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 2 {
-			log.Printf("Invalid OID format: %s", pdu.Name)
+			slog.Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 		ifIndex, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			log.Printf("Failed to parse ifIndex: %v", err)
+			slog.Warn("failed to parse ifIndex", "error", err)
 			return nil
 		}
 
@@ -266,7 +279,7 @@ func walkInterfaceTable(params *gosnmp.GoSNMP) ([]InterfaceInfo, error) {
 		info.Name = value
 	})
 	walkIfAttribute(params, OIDIfSpeed, interfaces, func(info *InterfaceInfo, value string) {
-		if speed, err := strconv.ParseInt(value, 10, 64); err == nil {
+		if speed, parseErr := strconv.ParseInt(value, 10, 64); parseErr == nil {
 			info.Speed = speed
 		}
 	})
@@ -301,17 +314,22 @@ func walkInterfaceTable(params *gosnmp.GoSNMP) ([]InterfaceInfo, error) {
 }
 
 // walkIfAttribute walks an SNMP OID and applies a function to update interface info.
-func walkIfAttribute(params *gosnmp.GoSNMP, oid string, interfaces map[int]*InterfaceInfo, updateFunc func(*InterfaceInfo, string)) {
+func walkIfAttribute(
+	params *gosnmp.GoSNMP,
+	oid string,
+	interfaces map[int]*InterfaceInfo,
+	updateFunc func(*InterfaceInfo, string),
+) {
 	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
 		// Extract ifIndex from OID.
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 2 {
-			log.Printf("Invalid OID format: %s", pdu.Name)
+			slog.Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 		ifIndex, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			log.Printf("Failed to parse ifIndex: %v", err)
+			slog.Warn("failed to parse ifIndex", "error", err)
 			return nil
 		}
 
@@ -325,7 +343,7 @@ func walkIfAttribute(params *gosnmp.GoSNMP, oid string, interfaces map[int]*Inte
 		return nil
 	})
 	if err != nil {
-		log.Printf("Failed to walk OID %s: %v", oid, err)
+		slog.Warn("failed to walk OID", "oid", oid, "error", err)
 	}
 }
 
@@ -333,7 +351,7 @@ func walkIfAttribute(params *gosnmp.GoSNMP, oid string, interfaces map[int]*Inte
 // It tries Q-BRIDGE-MIB first (VLAN-aware), then falls back to BRIDGE-MIB.
 func GetMACTable(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]MACEntry, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try Q-BRIDGE-MIB first (VLAN-aware).
@@ -365,7 +383,7 @@ func getMACTableQBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) 
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query Q-BRIDGE MAC table with all configured credentials")
+	return nil, errors.New("failed to query Q-BRIDGE MAC table with all configured credentials")
 }
 
 // getMACTableBridge retrieves MAC table using BRIDGE-MIB (non-VLAN-aware).
@@ -387,7 +405,7 @@ func getMACTableBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) (
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query BRIDGE MAC table with all configured credentials")
+	return nil, errors.New("failed to query BRIDGE MAC table with all configured credentials")
 }
 
 // walkMACTableQBridge walks Q-BRIDGE-MIB MAC table using SNMPv2c.
@@ -406,12 +424,12 @@ func walkMACTableQBridge(ctx context.Context, ip, community string, cfg *config.
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	// Check context cancellation.
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	default:
 	}
 
@@ -419,7 +437,12 @@ func walkMACTableQBridge(ctx context.Context, ip, community string, cfg *config.
 }
 
 // walkMACTableQBridgeV3 walks Q-BRIDGE-MIB MAC table using SNMPv3.
-func walkMACTableQBridgeV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]MACEntry, error) {
+func walkMACTableQBridgeV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]MACEntry, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -430,8 +453,10 @@ func walkMACTableQBridgeV3(ctx context.Context, ip string, cred *config.SNMPv3Cr
 		SecurityModel:  gosnmp.UserSecurityModel,
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field is expected
+			UserName: cred.Username,
+			AuthenticationProtocol: getAuthProtocol(
+				cred.AuthProtocol,
+			),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -442,12 +467,12 @@ func walkMACTableQBridgeV3(ctx context.Context, ip string, cred *config.SNMPv3Cr
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	// Check context cancellation.
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	default:
 	}
 
@@ -464,7 +489,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		// OID format: .1.3.6.1.2.1.17.7.1.2.2.1.2.VLAN.MAC1.MAC2.MAC3.MAC4.MAC5.MAC6
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 8 {
-			log.Printf("Invalid OID format: %s", pdu.Name)
+			slog.Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
@@ -472,7 +497,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		vlanIdx := len(parts) - 7
 		vlan, err := strconv.Atoi(parts[vlanIdx])
 		if err != nil {
-			log.Printf("Failed to parse VLAN: %v", err)
+			slog.Warn("failed to parse VLAN", "error", err)
 			return nil
 		}
 
@@ -484,7 +509,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		bridgePort := formatSNMPValue(pdu)
 		bridgePortNum, err := strconv.Atoi(bridgePort)
 		if err != nil {
-			log.Printf("Failed to parse bridge port: %v", err)
+			slog.Warn("failed to parse bridge port", "error", err)
 			return nil
 		}
 
@@ -511,7 +536,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 	walkErr := params.BulkWalk(OIDDot1qTpFdbStatus, func(pdu gosnmp.SnmpPDU) error {
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 8 {
-			log.Printf("Invalid OID format: %s", pdu.Name)
+			slog.Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
@@ -531,7 +556,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		return nil
 	})
 	if walkErr != nil {
-		log.Printf("Failed to walk MAC status: %v", walkErr)
+		slog.Warn("failed to walk MAC status", "error", walkErr)
 	}
 
 	// Convert map to slice.
@@ -562,12 +587,12 @@ func walkMACTableBridge(ctx context.Context, ip, community string, cfg *config.S
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	// Check context cancellation.
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	default:
 	}
 
@@ -575,7 +600,12 @@ func walkMACTableBridge(ctx context.Context, ip, community string, cfg *config.S
 }
 
 // walkMACTableBridgeV3 walks BRIDGE-MIB MAC table using SNMPv3.
-func walkMACTableBridgeV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]MACEntry, error) {
+func walkMACTableBridgeV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]MACEntry, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -586,8 +616,10 @@ func walkMACTableBridgeV3(ctx context.Context, ip string, cred *config.SNMPv3Cre
 		SecurityModel:  gosnmp.UserSecurityModel,
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field is expected
+			UserName: cred.Username,
+			AuthenticationProtocol: getAuthProtocol(
+				cred.AuthProtocol,
+			),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -598,12 +630,12 @@ func walkMACTableBridgeV3(ctx context.Context, ip string, cred *config.SNMPv3Cre
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	// Check context cancellation.
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	default:
 	}
 
@@ -620,7 +652,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		// OID format: .1.3.6.1.2.1.17.4.3.1.2.MAC1.MAC2.MAC3.MAC4.MAC5.MAC6
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 7 {
-			log.Printf("Invalid OID format: %s", pdu.Name)
+			slog.Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
@@ -632,7 +664,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		bridgePort := formatSNMPValue(pdu)
 		bridgePortNum, err := strconv.Atoi(bridgePort)
 		if err != nil {
-			log.Printf("Failed to parse bridge port: %v", err)
+			slog.Warn("failed to parse bridge port", "error", err)
 			return nil
 		}
 
@@ -659,7 +691,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 	walkErr := params.BulkWalk(OIDDot1dTpFdbStatus, func(pdu gosnmp.SnmpPDU) error {
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 7 {
-			log.Printf("Invalid OID format: %s", pdu.Name)
+			slog.Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
@@ -678,7 +710,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		return nil
 	})
 	if walkErr != nil {
-		log.Printf("Failed to walk MAC status: %v", walkErr)
+		slog.Warn("failed to walk MAC status", "error", walkErr)
 	}
 
 	// Convert map to slice.
@@ -698,7 +730,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 // Security: SNMPv3 is preferred over v2c when both are configured.
 func GetPortVLANs(ctx context.Context, ip string, ifIndex int, cfg *config.SNMPConfig) ([]int, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try SNMPv3 credentials first (more secure).
@@ -717,11 +749,17 @@ func GetPortVLANs(ctx context.Context, ip string, ifIndex int, cfg *config.SNMPC
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query port VLANs with all configured credentials")
+	return nil, errors.New("failed to query port VLANs with all configured credentials")
 }
 
 // getPortVLANsWithCommunity retrieves port VLANs using SNMPv2c.
-func getPortVLANsWithCommunity(ctx context.Context, ip string, ifIndex int, community string, cfg *config.SNMPConfig) ([]int, error) {
+func getPortVLANsWithCommunity(
+	ctx context.Context,
+	ip string,
+	ifIndex int,
+	community string,
+	cfg *config.SNMPConfig,
+) ([]int, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -736,12 +774,12 @@ func getPortVLANsWithCommunity(ctx context.Context, ip string, ifIndex int, comm
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	// Check context cancellation.
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	default:
 	}
 
@@ -749,7 +787,13 @@ func getPortVLANsWithCommunity(ctx context.Context, ip string, ifIndex int, comm
 }
 
 // getPortVLANsWithV3 retrieves port VLANs using SNMPv3.
-func getPortVLANsWithV3(ctx context.Context, ip string, ifIndex int, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]int, error) {
+func getPortVLANsWithV3(
+	ctx context.Context,
+	ip string,
+	ifIndex int,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]int, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -760,8 +804,10 @@ func getPortVLANsWithV3(ctx context.Context, ip string, ifIndex int, cred *confi
 		SecurityModel:  gosnmp.UserSecurityModel,
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage of deprecated field is expected
+			UserName: cred.Username,
+			AuthenticationProtocol: getAuthProtocol(
+				cred.AuthProtocol,
+			),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -772,12 +818,12 @@ func getPortVLANsWithV3(ctx context.Context, ip string, ifIndex int, cred *confi
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	// Check context cancellation.
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	default:
 	}
 
@@ -793,13 +839,13 @@ func walkPortVLANs(params *gosnmp.GoSNMP, ifIndex int) ([]int, error) {
 		// OID format: .1.3.6.1.2.1.17.7.1.4.2.1.4.VLAN_ID
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 2 {
-			log.Printf("Invalid OID format: %s", pdu.Name)
+			slog.Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
 		vlanID, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			log.Printf("Failed to parse VLAN ID: %v", err)
+			slog.Warn("failed to parse VLAN ID", "error", err)
 			return nil
 		}
 
@@ -826,19 +872,19 @@ func getBridgePortMapping(params *gosnmp.GoSNMP) map[int]int {
 		// OID format: .1.3.6.1.2.1.17.1.4.1.2.BRIDGE_PORT
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 2 {
-			log.Printf("Invalid OID format: %s", pdu.Name)
+			slog.Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
 		bridgePort, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			log.Printf("Failed to parse bridge port: %v", err)
+			slog.Warn("failed to parse bridge port", "error", err)
 			return nil
 		}
 
 		ifIndex, err := strconv.Atoi(formatSNMPValue(pdu))
 		if err != nil {
-			log.Printf("Failed to parse ifIndex: %v", err)
+			slog.Warn("failed to parse ifIndex", "error", err)
 			return nil
 		}
 
@@ -846,7 +892,7 @@ func getBridgePortMapping(params *gosnmp.GoSNMP) map[int]int {
 		return nil
 	})
 	if err != nil {
-		log.Printf("Failed to get bridge port mapping: %v", err)
+		slog.Warn("failed to get bridge port mapping", "error", err)
 	}
 
 	return mapping
@@ -934,7 +980,7 @@ func parseTimeTicks(value string) time.Time {
 
 // portListContainsPort checks if a port list bitmap contains the specified port.
 // Port lists are byte arrays where each bit represents a port.
-func portListContainsPort(portList interface{}, portNum int) bool {
+func portListContainsPort(portList any, portNum int) bool {
 	bytes, ok := portList.([]byte)
 	if !ok {
 		return false

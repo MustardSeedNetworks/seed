@@ -28,7 +28,7 @@ func (h *RedactingHandler) Enabled(ctx context.Context, level slog.Level) bool {
 // Handle processes the log record, redacting sensitive data from the message
 // and all attributes before passing to the inner handler.
 //
-//nolint:gocritic // hugeParam: slog.Handler interface requires value receiver.
+
 func (h *RedactingHandler) Handle(ctx context.Context, r slog.Record) error {
 	// Redact the message
 	r.Message = RedactString(r.Message)
@@ -88,14 +88,14 @@ func (h *RedactingHandler) redactAttr(a slog.Attr) slog.Attr {
 		redacted := RedactHeaders(v)
 		return slog.Any(key, redacted)
 
-	case map[string]interface{}:
+	case map[string]any:
 		// Use existing RedactMap for maps
 		redacted := RedactMap(v)
 		return slog.Any(key, redacted)
 
 	case map[string]string:
 		// Convert and redact string maps
-		m := make(map[string]interface{}, len(v))
+		m := make(map[string]any, len(v))
 		for k, val := range v {
 			m[k] = val
 		}

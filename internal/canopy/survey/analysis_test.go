@@ -42,7 +42,7 @@ func TestDetectDeadZones_NoRSSISamples(t *testing.T) {
 				Y:         100,
 				Timestamp: time.Now(),
 				// Use a sample type that doesn't have RSSI-like data
-				SampleData: map[string]interface{}{
+				SampleData: map[string]any{
 					"someField": "someValue",
 				},
 			},

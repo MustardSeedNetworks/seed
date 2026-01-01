@@ -52,8 +52,8 @@ func (s *LinkService) Start(ctx context.Context) error {
 	}
 
 	s.monitor = network.NewLinkMonitor(iface)
-	if err := s.monitor.Start(); err != nil {
-		return fmt.Errorf("starting link monitor: %w", err)
+	if startErr := s.monitor.Start(); startErr != nil {
+		return fmt.Errorf("starting link monitor: %w", startErr)
 	}
 	return nil
 }

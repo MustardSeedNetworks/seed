@@ -68,8 +68,8 @@ func NewTracer(timeout time.Duration, maxHops int) *Tracer {
 	return &Tracer{
 		timeout:    timeout,
 		maxHops:    maxHops,
-		retries:    1,            // Reduced from 2 - one retry is usually enough
-		resolvePtr: false,        // Disabled by default - PTR lookups can be slow
+		retries:    1,     // Reduced from 2 - one retry is usually enough
+		resolvePtr: false, // Disabled by default - PTR lookups can be slow
 	}
 }
 
@@ -82,12 +82,15 @@ func NewTracerWithPTR(timeout time.Duration, maxHops int) *Tracer {
 
 // resolveIPv4 resolves a target hostname to its first IPv4 address.
 func resolveIPv4(target string) (net.IP, error) {
-	ips, err := net.LookupIP(target)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	resolver := &net.Resolver{}
+	ips, err := resolver.LookupIP(ctx, "ip", target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve target: %w", err)
 	}
 	if len(ips) == 0 {
-		return nil, fmt.Errorf("failed to resolve target: no addresses found")
+		return nil, errors.New("failed to resolve target: no addresses found")
 	}
 	for _, ip := range ips {
 		if ip4 := ip.To4(); ip4 != nil {
@@ -102,7 +105,10 @@ func (t *Tracer) resolveHostname(ip string) string {
 	if !t.resolvePtr {
 		return ""
 	}
-	if names, err := net.LookupAddr(ip); err == nil && len(names) > 0 {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	resolver := &net.Resolver{}
+	if names, err := resolver.LookupAddr(ctx, ip); err == nil && len(names) > 0 {
 		return names[0]
 	}
 	return ""
@@ -118,8 +124,10 @@ func (t *Tracer) setHopFromPeer(hop *TracerouteHop, peer net.Addr) {
 
 // isConnectionRefused checks if an error indicates a TCP connection was refused.
 func (*Tracer) isConnectionRefused(err error) bool {
-	if opErr, ok := err.(*net.OpError); ok {
-		if sysErr, ok := opErr.Err.(*syscall.Errno); ok {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		var sysErr *syscall.Errno
+		if errors.As(opErr.Err, &sysErr) {
 			return *sysErr == syscall.ECONNREFUSED
 		}
 	}
@@ -147,7 +155,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
 		return result
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Get IPv4 packet conn for setting TTL
 	pconn := conn.IPv4PacketConn()
@@ -169,7 +177,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		}
 
 		// Set TTL using ipv4 package
-		if err := pconn.SetTTL(ttl); err != nil {
+		if ttlErr := pconn.SetTTL(ttl); ttlErr != nil {
 			hop.State = hopStateError
 			result.Hops = append(result.Hops, hop)
 			continue
@@ -191,33 +199,34 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 					Data: []byte("SEED"),
 				},
 			}
-			msgBytes, err := msg.Marshal(nil)
-			if err != nil {
+			msgBytes, marshalErr := msg.Marshal(nil)
+			if marshalErr != nil {
 				continue
 			}
 
 			// Send packet
-			if _, err := conn.WriteTo(msgBytes, dst); err != nil {
+			if _, writeErr := conn.WriteTo(msgBytes, dst); writeErr != nil {
 				continue
 			}
 
 			// Set read deadline
-			//nolint:errcheck // Best-effort deadline setting
-			conn.SetReadDeadline(time.Now().Add(t.timeout))
+			if deadlineErr := conn.SetReadDeadline(time.Now().Add(t.timeout)); deadlineErr != nil {
+				continue
+			}
 
 			// Read response
 			reply := make([]byte, 1500)
-			n, peer, err := conn.ReadFrom(reply)
+			n, peer, readErr := conn.ReadFrom(reply)
 			rtt := time.Since(start)
 
-			if err != nil {
+			if readErr != nil {
 				// Timeout or error
 				continue
 			}
 
 			// Parse the response
-			rm, err := icmp.ParseMessage(1, reply[:n]) // 1 = ICMP for IPv4
-			if err != nil {
+			rm, parseErr := icmp.ParseMessage(1, reply[:n]) // 1 = ICMP for IPv4
+			if parseErr != nil {
 				continue
 			}
 
@@ -281,7 +290,7 @@ func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop Ho
 		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
 		return result
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Get IPv4 packet conn for setting TTL
 	pconn := conn.IPv4PacketConn()
@@ -303,7 +312,7 @@ func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop Ho
 		}
 
 		// Set TTL using ipv4 package
-		if err := pconn.SetTTL(ttl); err != nil {
+		if ttlErr := pconn.SetTTL(ttl); ttlErr != nil {
 			hop.State = hopStateError
 			result.Hops = append(result.Hops, hop)
 			if onHop != nil && !onHop(hop, result) {
@@ -328,32 +337,33 @@ func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop Ho
 					Data: []byte("SEED"),
 				},
 			}
-			msgBytes, err := msg.Marshal(nil)
-			if err != nil {
+			msgBytes, marshalErr := msg.Marshal(nil)
+			if marshalErr != nil {
 				continue
 			}
 
 			// Send packet
-			if _, err := conn.WriteTo(msgBytes, dst); err != nil {
+			if _, writeErr := conn.WriteTo(msgBytes, dst); writeErr != nil {
 				continue
 			}
 
 			// Set read deadline
-			//nolint:errcheck // Best-effort deadline setting
-			conn.SetReadDeadline(time.Now().Add(t.timeout))
+			if deadlineErr := conn.SetReadDeadline(time.Now().Add(t.timeout)); deadlineErr != nil {
+				continue
+			}
 
 			// Read response
 			reply := make([]byte, 1500)
-			n, peer, err := conn.ReadFrom(reply)
+			n, peer, readErr := conn.ReadFrom(reply)
 			rtt := time.Since(start)
 
-			if err != nil {
+			if readErr != nil {
 				continue
 			}
 
 			// Parse the response
-			rm, err := icmp.ParseMessage(1, reply[:n])
-			if err != nil {
+			rm, parseErr := icmp.ParseMessage(1, reply[:n])
+			if parseErr != nil {
 				continue
 			}
 
@@ -414,16 +424,18 @@ func createUDPWithTTL(targetIP net.IP, port, ttl int) (*net.UDPConn, error) {
 	}
 	rawConn, err := udpConn.SyscallConn()
 	if err != nil {
-		udpConn.Close()
+		_ = udpConn.Close()
 		return nil, err
 	}
 	var setErr error
-	//nolint:errcheck // Control callback handles its own error
-	rawConn.Control(func(fd uintptr) {
+	if ctrlErr := rawConn.Control(func(fd uintptr) {
 		setErr = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL, ttl)
-	})
+	}); ctrlErr != nil {
+		_ = udpConn.Close()
+		return nil, ctrlErr
+	}
 	if setErr != nil {
-		udpConn.Close()
+		_ = udpConn.Close()
 		return nil, setErr
 	}
 	return udpConn, nil
@@ -454,7 +466,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
 		return result
 	}
-	defer icmpConn.Close()
+	defer func() { _ = icmpConn.Close() }()
 
 	for ttl := 1; ttl <= t.maxHops; ttl++ {
 		select {
@@ -466,8 +478,8 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 
 		hop := TracerouteHop{TTL: ttl, State: hopStateTimeout}
 
-		udpConn, err := createUDPWithTTL(targetIP, port, ttl)
-		if err != nil {
+		udpConn, udpErr := createUDPWithTTL(targetIP, port, ttl)
+		if udpErr != nil {
 			hop.State = hopStateError
 			result.Hops = append(result.Hops, hop)
 			continue
@@ -475,19 +487,20 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 
 		for range t.retries {
 			start := time.Now()
-			if _, err = udpConn.Write([]byte("SEED")); err != nil {
+			if _, writeErr := udpConn.Write([]byte("SEED")); writeErr != nil {
 				continue
 			}
-			//nolint:errcheck // Best-effort deadline setting
-			icmpConn.SetReadDeadline(time.Now().Add(t.timeout))
+			if deadlineErr := icmpConn.SetReadDeadline(time.Now().Add(t.timeout)); deadlineErr != nil {
+				continue
+			}
 			reply := make([]byte, 1500)
-			n, peer, err := icmpConn.ReadFrom(reply)
+			n, peer, readErr := icmpConn.ReadFrom(reply)
 			rtt := time.Since(start)
-			if err != nil {
+			if readErr != nil {
 				continue
 			}
-			rm, err := icmp.ParseMessage(1, reply[:n])
-			if err != nil {
+			rm, parseErr := icmp.ParseMessage(1, reply[:n])
+			if parseErr != nil {
 				continue
 			}
 			hop.RTT = rtt
@@ -497,7 +510,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 				hop.State = hopStateReply
 				result.Hops = append(result.Hops, hop)
 				result.Completed = true
-				udpConn.Close()
+				_ = udpConn.Close()
 				return result
 			}
 			if rm.Type == ipv4.ICMPTypeTimeExceeded {
@@ -506,7 +519,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 			break
 		}
 
-		udpConn.Close()
+		_ = udpConn.Close()
 		result.Hops = append(result.Hops, hop)
 		if hop.IP == targetIP.String() {
 			result.Completed = true
@@ -542,7 +555,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 		result.Error = fmt.Sprintf("failed to create ICMP socket: %v", err)
 		return result
 	}
-	defer icmpConn.Close()
+	defer func() { _ = icmpConn.Close() }()
 
 	for ttl := 1; ttl <= t.maxHops; ttl++ {
 		select {
@@ -565,10 +578,11 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 				Timeout: t.timeout,
 				Control: func(_, _ string, c syscall.RawConn) error {
 					var setErr error
-					//nolint:errcheck // Control callback handles its own error
-					c.Control(func(fd uintptr) {
+					if ctrlErr := c.Control(func(fd uintptr) {
 						setErr = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL, ttl)
-					})
+					}); ctrlErr != nil {
+						return ctrlErr
+					}
 					return setErr
 				},
 			}
@@ -577,24 +591,25 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 			connCh := make(chan net.Conn, 1)
 			errCh := make(chan error, 1)
 			go func() {
-				conn, err := dialer.DialContext(ctx, "tcp4", fmt.Sprintf("%s:%d", targetIP, port))
-				if err != nil {
-					errCh <- err
+				conn, dialErr := dialer.DialContext(ctx, "tcp4", fmt.Sprintf("%s:%d", targetIP, port))
+				if dialErr != nil {
+					errCh <- dialErr
 				} else {
 					connCh <- conn
 				}
 			}()
 
 			// Also listen for ICMP TTL exceeded
-			//nolint:errcheck // Best-effort deadline setting
-			icmpConn.SetReadDeadline(time.Now().Add(t.timeout))
+			if deadlineErr := icmpConn.SetReadDeadline(time.Now().Add(t.timeout)); deadlineErr != nil {
+				continue
+			}
 			icmpReply := make([]byte, 1500)
 
 			// Wait for either TCP response, ICMP response, or timeout
 			select {
 			case conn := <-connCh:
 				// TCP connection succeeded - reached destination
-				conn.Close()
+				_ = conn.Close()
 				hop.RTT = time.Since(start)
 				hop.IP = targetIP.String()
 				hop.Hostname = t.resolveHostname(hop.IP)
@@ -617,10 +632,10 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 				}
 
 				// Check for ICMP response
-				n, peer, err := icmpConn.ReadFrom(icmpReply)
-				if err == nil {
-					rm, err := icmp.ParseMessage(1, icmpReply[:n])
-					if err == nil && rm.Type == ipv4.ICMPTypeTimeExceeded {
+				n, peer, readErr := icmpConn.ReadFrom(icmpReply)
+				if readErr == nil {
+					rm, parseErr := icmp.ParseMessage(1, icmpReply[:n])
+					if parseErr == nil && rm.Type == ipv4.ICMPTypeTimeExceeded {
 						hop.RTT = rtt
 						t.setHopFromPeer(&hop, peer)
 						hop.State = hopStateReply

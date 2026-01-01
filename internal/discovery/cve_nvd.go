@@ -18,6 +18,7 @@ package discovery
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -161,14 +162,14 @@ func (nvd *NVDProvider) GetLastUpdate() time.Time {
 
 // makeRequest makes an HTTP request to the NVD API with proper headers.
 func (nvd *NVDProvider) makeRequest(ctx context.Context, requestURL string) (*nvdCVEResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Add API key if available
 	if nvd.apiKey != "" {
-		req.Header.Set("apiKey", nvd.apiKey)
+		req.Header.Set("Apikey", nvd.apiKey)
 	}
 
 	// Make request
@@ -176,21 +177,21 @@ func (nvd *NVDProvider) makeRequest(ctx context.Context, requestURL string) (*nv
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("NVD API returned status %d (failed to read body: %v)", resp.StatusCode, err)
+		body, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return nil, fmt.Errorf("NVD API returned status %d (failed to read body: %w)", resp.StatusCode, readErr)
 		}
 		return nil, fmt.Errorf("NVD API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	// Parse response
 	var nvdResp nvdCVEResponse
-	if err := json.NewDecoder(resp.Body).Decode(&nvdResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&nvdResp); decodeErr != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", decodeErr)
 	}
 
 	return &nvdResp, nil
@@ -238,8 +239,14 @@ func (nvd *NVDProvider) parseResponse(resp *nvdCVEResponse) ([]Vulnerability, er
 		}
 
 		// Parse timestamps (ignore parse errors, use zero time if invalid)
-		published, _ := time.Parse(time.RFC3339, cve.Published)   //nolint:errcheck // Zero time acceptable for missing/invalid dates
-		modified, _ := time.Parse(time.RFC3339, cve.LastModified) //nolint:errcheck // Zero time acceptable for missing/invalid dates
+		published, _ := time.Parse(
+			time.RFC3339,
+			cve.Published,
+		)
+		modified, _ := time.Parse(
+			time.RFC3339,
+			cve.LastModified,
+		)
 
 		// Extract affected CPE (use first one if available)
 		affectedCPE := ""
@@ -278,20 +285,20 @@ func ValidateNVDAPIKey(ctx context.Context, apiKey string) (bool, error) {
 	// We query for a small result to minimize bandwidth
 	testURL := nvdAPIBaseURL + "?resultsPerPage=1&startIndex=0"
 
-	req, err := http.NewRequestWithContext(ctx, "GET", testURL, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, http.NoBody)
 	if err != nil {
 		return false, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Add API key header
-	req.Header.Set("apiKey", apiKey)
+	req.Header.Set("Apikey", apiKey)
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return false, fmt.Errorf("failed to make request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Check status code
 	switch resp.StatusCode {
@@ -303,12 +310,12 @@ func ValidateNVDAPIKey(ctx context.Context, apiKey string) (bool, error) {
 		return false, nil
 	case http.StatusTooManyRequests:
 		// Rate limited - key might still be valid, but we can't verify
-		return false, fmt.Errorf("rate limited - try again later")
+		return false, errors.New("rate limited - try again later")
 	default:
 		// Unexpected status
 		body, readErr := io.ReadAll(resp.Body)
 		if readErr != nil {
-			return false, fmt.Errorf("unexpected status %d (failed to read body: %v)", resp.StatusCode, readErr)
+			return false, fmt.Errorf("unexpected status %d (failed to read body: %w)", resp.StatusCode, readErr)
 		}
 		return false, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
 	}

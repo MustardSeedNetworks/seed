@@ -5,11 +5,14 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -47,7 +50,12 @@ type GeneratorService struct {
 }
 
 // NewGeneratorService creates a new generator service.
-func NewGeneratorService(cfg *config.Config, db *database.DB, templates *TemplateService, aggregator *AggregatorService) *GeneratorService {
+func NewGeneratorService(
+	cfg *config.Config,
+	db *database.DB,
+	templates *TemplateService,
+	aggregator *AggregatorService,
+) *GeneratorService {
 	return &GeneratorService{
 		cfg:         cfg,
 		db:          db,
@@ -58,7 +66,12 @@ func NewGeneratorService(cfg *config.Config, db *database.DB, templates *Templat
 }
 
 // Generate creates a report with the given parameters.
-func (s *GeneratorService) Generate(ctx context.Context, reportType ReportType, format ExportFormat, params *ReportParams) (*Report, error) {
+func (s *GeneratorService) Generate(
+	ctx context.Context,
+	reportType ReportType,
+	format ExportFormat,
+	params *ReportParams,
+) (*Report, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -131,8 +144,8 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 	}
 
 	// Save to file
-	if err := s.saveReportFile(report, content); err != nil {
-		s.failReport(ctx, report, fmt.Sprintf("save failed: %v", err))
+	if saveErr := s.saveReportFile(report, content); saveErr != nil {
+		s.failReport(ctx, report, fmt.Sprintf("save failed: %v", saveErr))
 		return
 	}
 
@@ -168,7 +181,8 @@ func (s *GeneratorService) generatePDF(report *Report, data *AggregatedData) ([]
 	s.addPDFDeviceSection(pdf, data)
 
 	// Vulnerability section (if applicable)
-	if report.Type == ReportTypeVulnerability || report.Type == ReportTypeExecutive || report.Type == ReportTypeDetailed {
+	if report.Type == ReportTypeVulnerability || report.Type == ReportTypeExecutive ||
+		report.Type == ReportTypeDetailed {
 		pdf.AddPage()
 		s.addPDFVulnerabilitySection(pdf, data)
 	}
@@ -199,7 +213,17 @@ func (s *GeneratorService) addPDFCover(pdf *fpdf.Fpdf, report *Report) {
 	pdf.SetFont("Arial", "", 12)
 	pdf.Ln(20)
 	pdf.SetTextColor(100, 100, 100)
-	pdf.CellFormat(0, 8, fmt.Sprintf("Generated: %s", time.Now().Format("January 2, 2006 15:04")), "", 1, "C", false, 0, "")
+	pdf.CellFormat(
+		0,
+		8,
+		fmt.Sprintf("Generated: %s", time.Now().Format("January 2, 2006 15:04")),
+		"",
+		1,
+		"C",
+		false,
+		0,
+		"",
+	)
 	pdf.CellFormat(0, 8, fmt.Sprintf("Type: %s", report.Type), "", 1, "C", false, 0, "")
 }
 
@@ -214,9 +238,9 @@ func (s *GeneratorService) addPDFExecutiveSummary(pdf *fpdf.Fpdf, data *Aggregat
 		value string
 	}{
 		{"Report Period", fmt.Sprintf("%s to %s", data.StartDate.Format("Jan 2"), data.EndDate.Format("Jan 2, 2006"))},
-		{"Total Devices", fmt.Sprintf("%d", data.DeviceCount)},
-		{"Total Vulnerabilities", fmt.Sprintf("%d", data.VulnCount.Total)},
-		{"Critical Issues", fmt.Sprintf("%d", data.VulnCount.Critical)},
+		{"Total Devices", strconv.Itoa(data.DeviceCount)},
+		{"Total Vulnerabilities", strconv.Itoa(data.VulnCount.Total)},
+		{"Critical Issues", strconv.Itoa(data.VulnCount.Critical)},
 		{"Average Latency", fmt.Sprintf("%.1f ms", data.Performance.AvgLatencyMs)},
 		{"Uptime", fmt.Sprintf("%.1f%%", data.Performance.UptimePercent)},
 	}
@@ -260,7 +284,7 @@ func (s *GeneratorService) addPDFVulnerabilitySection(pdf *fpdf.Fpdf, data *Aggr
 		pdf.SetTextColor(sev.color[0], sev.color[1], sev.color[2])
 		pdf.CellFormat(30, 6, sev.label+":", "", 0, "L", false, 0, "")
 		pdf.SetTextColor(0, 0, 0)
-		pdf.CellFormat(0, 6, fmt.Sprintf("%d", sev.count), "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, 6, strconv.Itoa(sev.count), "", 1, "L", false, 0, "")
 	}
 
 	// Top issues
@@ -275,7 +299,17 @@ func (s *GeneratorService) addPDFVulnerabilitySection(pdf *fpdf.Fpdf, data *Aggr
 			if i >= 5 {
 				break
 			}
-			pdf.CellFormat(0, 6, fmt.Sprintf("%d. %s (%d occurrences)", i+1, issue.Description, issue.Count), "", 1, "L", false, 0, "")
+			pdf.CellFormat(
+				0,
+				6,
+				fmt.Sprintf("%d. %s (%d occurrences)", i+1, issue.Description, issue.Count),
+				"",
+				1,
+				"L",
+				false,
+				0,
+				"",
+			)
 		}
 	}
 }
@@ -384,12 +418,12 @@ func (s *GeneratorService) generateCSV(report *Report, data *AggregatedData) ([]
 		{"Generated", time.Now().Format(time.RFC3339)},
 		{"Period Start", data.StartDate.Format(time.RFC3339)},
 		{"Period End", data.EndDate.Format(time.RFC3339)},
-		{"Total Devices", fmt.Sprintf("%d", data.DeviceCount)},
-		{"Total Vulnerabilities", fmt.Sprintf("%d", data.VulnCount.Total)},
-		{"Critical Vulnerabilities", fmt.Sprintf("%d", data.VulnCount.Critical)},
-		{"High Vulnerabilities", fmt.Sprintf("%d", data.VulnCount.High)},
-		{"Medium Vulnerabilities", fmt.Sprintf("%d", data.VulnCount.Medium)},
-		{"Low Vulnerabilities", fmt.Sprintf("%d", data.VulnCount.Low)},
+		{"Total Devices", strconv.Itoa(data.DeviceCount)},
+		{"Total Vulnerabilities", strconv.Itoa(data.VulnCount.Total)},
+		{"Critical Vulnerabilities", strconv.Itoa(data.VulnCount.Critical)},
+		{"High Vulnerabilities", strconv.Itoa(data.VulnCount.High)},
+		{"Medium Vulnerabilities", strconv.Itoa(data.VulnCount.Medium)},
+		{"Low Vulnerabilities", strconv.Itoa(data.VulnCount.Low)},
 		{"Average Latency (ms)", fmt.Sprintf("%.2f", data.Performance.AvgLatencyMs)},
 		{"Packet Loss (%)", fmt.Sprintf("%.2f", data.Performance.AvgPacketLoss)},
 		{"Bandwidth (Mbps)", fmt.Sprintf("%.2f", data.Performance.AvgBandwidthMbps)},
@@ -479,20 +513,19 @@ func (s *GeneratorService) saveReport(ctx context.Context, report *Report) error
 }
 
 // GenerateFromTemplate creates a report using a template.
-func (s *GeneratorService) GenerateFromTemplate(ctx context.Context, templateID string, format ExportFormat, params *ReportParams) (*Report, error) {
+func (s *GeneratorService) GenerateFromTemplate(
+	ctx context.Context,
+	templateID string,
+	format ExportFormat,
+	params *ReportParams,
+) (*Report, error) {
 	tmpl, ok := s.templates.Get(templateID)
 	if !ok {
 		return nil, fmt.Errorf("template not found: %s", templateID)
 	}
 
 	// Validate format is supported by template
-	formatSupported := false
-	for _, f := range tmpl.Formats {
-		if f == format {
-			formatSupported = true
-			break
-		}
-	}
+	formatSupported := slices.Contains(tmpl.Formats, format)
 	if !formatSupported {
 		return nil, fmt.Errorf("format %s not supported by template %s", format, templateID)
 	}
@@ -519,18 +552,18 @@ func (s *GeneratorService) ListReports(ctx context.Context) ([]Report, error) {
 	if err != nil {
 		return nil, fmt.Errorf("querying reports: %w", err)
 	}
-	defer rows.Close() //nolint:errcheck // rows.Close() error is non-critical
+	defer rows.Close()
 
 	var reports []Report
 	for rows.Next() {
-		report, err := s.scanReportFromRows(rows)
-		if err != nil {
-			return nil, err
+		report, scanErr := s.scanReportFromRows(rows)
+		if scanErr != nil {
+			return nil, scanErr
 		}
 		reports = append(reports, *report)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterating reports: %w", err)
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating reports: %w", rowsErr)
 	}
 
 	return reports, nil
@@ -573,7 +606,7 @@ func (s *GeneratorService) DownloadReport(ctx context.Context, id string) (io.Re
 	}
 
 	if report.FilePath == "" {
-		return nil, fmt.Errorf("report has no file")
+		return nil, errors.New("report has no file")
 	}
 
 	file, err := os.Open(report.FilePath)
@@ -606,7 +639,7 @@ func (s *GeneratorService) DeleteReport(ctx context.Context, id string) error {
 // Export exports data in the specified format.
 func (s *GeneratorService) Export(ctx context.Context, req *ExportRequest) (*ExportResult, error) {
 	if req == nil {
-		return nil, fmt.Errorf("export request is nil")
+		return nil, errors.New("export request is nil")
 	}
 
 	// Create export ID
@@ -652,11 +685,11 @@ func (s *GeneratorService) Export(ctx context.Context, req *ExportRequest) (*Exp
 	filename := fmt.Sprintf("export-%s.%s", exportID, req.Format)
 	filepath := filepath.Join(s.reportsPath, filename)
 
-	if err := os.MkdirAll(s.reportsPath, 0o750); err != nil {
-		return nil, fmt.Errorf("creating export directory: %w", err)
+	if mkdirErr := os.MkdirAll(s.reportsPath, 0o750); mkdirErr != nil {
+		return nil, fmt.Errorf("creating export directory: %w", mkdirErr)
 	}
-	if err := os.WriteFile(filepath, content, 0o600); err != nil {
-		return nil, fmt.Errorf("writing export file: %w", err)
+	if writeErr := os.WriteFile(filepath, content, 0o600); writeErr != nil {
+		return nil, fmt.Errorf("writing export file: %w", writeErr)
 	}
 
 	return &ExportResult{
@@ -678,12 +711,12 @@ func (s *GeneratorService) exportDevices(ctx context.Context, _ *ExportRequest) 
 	if err != nil {
 		return nil, 0, fmt.Errorf("querying devices: %w", err)
 	}
-	defer rows.Close() //nolint:errcheck // rows.Close() error is non-critical
+	defer rows.Close()
 
 	var devices []map[string]any
 	for rows.Next() {
 		var id, ip, mac, hostname, vendor, deviceType, firstSeen, lastSeen string
-		if err := rows.Scan(&id, &ip, &mac, &hostname, &vendor, &deviceType, &firstSeen, &lastSeen); err != nil {
+		if scanErr := rows.Scan(&id, &ip, &mac, &hostname, &vendor, &deviceType, &firstSeen, &lastSeen); scanErr != nil {
 			continue
 		}
 		devices = append(devices, map[string]any{
@@ -711,14 +744,14 @@ func (s *GeneratorService) exportVulnerabilities(ctx context.Context, _ *ExportR
 	if err != nil {
 		return nil, 0, fmt.Errorf("querying vulnerabilities: %w", err)
 	}
-	defer rows.Close() //nolint:errcheck // rows.Close() error is non-critical
+	defer rows.Close()
 
 	var vulns []map[string]any
 	for rows.Next() {
 		var id int
 		var deviceID, cveID, severity, desc, discoveredAt string
 		var ipAddr *string
-		if err := rows.Scan(&id, &deviceID, &cveID, &severity, &desc, &discoveredAt, &ipAddr); err != nil {
+		if scanErr := rows.Scan(&id, &deviceID, &cveID, &severity, &desc, &discoveredAt, &ipAddr); scanErr != nil {
 			continue
 		}
 		vulns = append(vulns, map[string]any{
@@ -888,7 +921,7 @@ func (s *TemplateService) List() []Template {
 // Create adds a custom template.
 func (s *TemplateService) Create(tmpl *Template) error {
 	if tmpl == nil {
-		return fmt.Errorf("template is nil")
+		return errors.New("template is nil")
 	}
 	if tmpl.ID == "" {
 		tmpl.ID = uuid.New().String()
@@ -912,7 +945,7 @@ func (s *TemplateService) Create(tmpl *Template) error {
 // Update modifies a custom template.
 func (s *TemplateService) Update(tmpl *Template) error {
 	if tmpl == nil {
-		return fmt.Errorf("template is nil")
+		return errors.New("template is nil")
 	}
 
 	s.mu.Lock()
@@ -923,7 +956,7 @@ func (s *TemplateService) Update(tmpl *Template) error {
 		return fmt.Errorf("template not found: %s", tmpl.ID)
 	}
 	if existing.IsBuiltIn {
-		return fmt.Errorf("cannot modify built-in template")
+		return errors.New("cannot modify built-in template")
 	}
 
 	tmpl.UpdatedAt = time.Now()
@@ -942,7 +975,7 @@ func (s *TemplateService) Delete(id string) error {
 		return fmt.Errorf("template not found: %s", id)
 	}
 	if tmpl.IsBuiltIn {
-		return fmt.Errorf("cannot delete built-in template")
+		return errors.New("cannot delete built-in template")
 	}
 
 	delete(s.templates, id)
@@ -992,7 +1025,7 @@ func (s *SchedulerService) loadSchedules(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("querying scheduled reports: %w", err)
 	}
-	defer rows.Close() //nolint:errcheck // rows.Close() error is non-critical
+	defer rows.Close()
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -1002,8 +1035,21 @@ func (s *SchedulerService) loadSchedules(ctx context.Context) error {
 		var scheduleJSON, paramsJSON, recipientsJSON string
 		var lastRun, nextRun *string
 
-		err := rows.Scan(&sr.ID, &sr.Name, &sr.Template, &sr.Format, &scheduleJSON, &paramsJSON, &recipientsJSON, &sr.Enabled, &lastRun, &nextRun, &sr.CreatedAt, &sr.UpdatedAt)
-		if err != nil {
+		scanErr := rows.Scan(
+			&sr.ID,
+			&sr.Name,
+			&sr.Template,
+			&sr.Format,
+			&scheduleJSON,
+			&paramsJSON,
+			&recipientsJSON,
+			&sr.Enabled,
+			&lastRun,
+			&nextRun,
+			&sr.CreatedAt,
+			&sr.UpdatedAt,
+		)
+		if scanErr != nil {
 			continue
 		}
 
@@ -1022,8 +1068,8 @@ func (s *SchedulerService) loadSchedules(ctx context.Context) error {
 
 		s.schedules[sr.ID] = &sr
 	}
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("iterating scheduled reports: %w", err)
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return fmt.Errorf("iterating scheduled reports: %w", rowsErr)
 	}
 
 	return nil
@@ -1117,7 +1163,7 @@ func (s *SchedulerService) Stop() {
 // Create adds a scheduled report.
 func (s *SchedulerService) Create(ctx context.Context, sr *ScheduledReport) error {
 	if sr == nil {
-		return fmt.Errorf("scheduled report is nil")
+		return errors.New("scheduled report is nil")
 	}
 	if sr.ID == "" {
 		sr.ID = uuid.New().String()
@@ -1192,7 +1238,7 @@ func (s *SchedulerService) List(_ context.Context) ([]ScheduledReport, error) {
 // Update modifies a scheduled report.
 func (s *SchedulerService) Update(ctx context.Context, sr *ScheduledReport) error {
 	if sr == nil {
-		return fmt.Errorf("scheduled report is nil")
+		return errors.New("scheduled report is nil")
 	}
 
 	s.mu.Lock()
@@ -1289,12 +1335,12 @@ func (s *AggregatorService) aggregateVulnerabilities(ctx context.Context, data *
 	if err != nil {
 		return
 	}
-	defer rows.Close() //nolint:errcheck // rows.Close() error is non-critical
+	defer rows.Close()
 
 	for rows.Next() {
 		var severity string
 		var count int
-		if err := rows.Scan(&severity, &count); err != nil {
+		if scanErr := rows.Scan(&severity, &count); scanErr != nil {
 			continue
 		}
 
@@ -1378,11 +1424,11 @@ func (s *AggregatorService) aggregateTopIssues(ctx context.Context, data *Aggreg
 	if err != nil {
 		return
 	}
-	defer rows.Close() //nolint:errcheck // rows.Close() error is non-critical
+	defer rows.Close()
 
 	for rows.Next() {
 		var issue IssueSummary
-		if err := rows.Scan(&issue.Severity, &issue.Description, &issue.Count); err != nil {
+		if scanErr := rows.Scan(&issue.Severity, &issue.Description, &issue.Count); scanErr != nil {
 			continue
 		}
 		issue.Category = "vulnerability"
@@ -1446,13 +1492,13 @@ func (s *AggregatorService) GetTrends(ctx context.Context, metric, period string
 	if err != nil {
 		return nil, fmt.Errorf("querying trends: %w", err)
 	}
-	defer rows.Close() //nolint:errcheck // rows.Close() error is non-critical
+	defer rows.Close()
 
 	var points []DataPoint
 	for rows.Next() {
 		var periodStr string
 		var value float64
-		if err := rows.Scan(&periodStr, &value); err != nil {
+		if scanErr := rows.Scan(&periodStr, &value); scanErr != nil {
 			continue
 		}
 
@@ -1462,8 +1508,8 @@ func (s *AggregatorService) GetTrends(ctx context.Context, metric, period string
 			Value:     value,
 		})
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterating trend data: %w", err)
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating trend data: %w", rowsErr)
 	}
 
 	return points, nil

@@ -5,6 +5,7 @@ package dns
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -642,13 +643,7 @@ func TestTestWithConfiguredServers(t *testing.T) {
 	}
 
 	// Check that enabled configured server is in the list
-	found := false
-	for _, s := range result.Servers {
-		if s == "8.8.4.4" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(result.Servers, "8.8.4.4")
 	if !found {
 		t.Error("expected enabled configured server '8.8.4.4' to be in servers list")
 	}

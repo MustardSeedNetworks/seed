@@ -4,6 +4,7 @@ package snmp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -53,7 +54,7 @@ type PhysicalEntity struct {
 // Security: SNMPv3 is preferred over v2c when both are configured.
 func GetPhysicalEntities(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]PhysicalEntity, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try SNMPv3 credentials first (more secure).
@@ -72,7 +73,7 @@ func GetPhysicalEntities(ctx context.Context, ip string, cfg *config.SNMPConfig)
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query ENTITY-MIB with all configured credentials")
+	return nil, errors.New("failed to query ENTITY-MIB with all configured credentials")
 }
 
 // walkEntityTable walks the entPhysicalTable using SNMPv2c.
@@ -90,7 +91,7 @@ func walkEntityTable(ctx context.Context, ip, community string, cfg *config.SNMP
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -102,7 +103,12 @@ func walkEntityTable(ctx context.Context, ip, community string, cfg *config.SNMP
 }
 
 // walkEntityTableV3 walks the entPhysicalTable using SNMPv3.
-func walkEntityTableV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]PhysicalEntity, error) {
+func walkEntityTableV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]PhysicalEntity, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -114,7 +120,7 @@ func walkEntityTableV3(ctx context.Context, ip string, cred *config.SNMPv3Creden
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
+			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -124,7 +130,7 @@ func walkEntityTableV3(ctx context.Context, ip string, cred *config.SNMPv3Creden
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -162,7 +168,7 @@ func walkPhysicalEntities(params *gosnmp.GoSNMP) ([]PhysicalEntity, error) {
 		e.VendorType = v
 	})
 	walkEntityAttribute(params, OIDEntPhysicalContainedIn, entities, func(e *PhysicalEntity, v string) {
-		if idx, err := strconv.Atoi(v); err == nil {
+		if idx, parseErr := strconv.Atoi(v); parseErr == nil {
 			e.ContainedIn = idx
 		}
 	})
@@ -170,7 +176,7 @@ func walkPhysicalEntities(params *gosnmp.GoSNMP) ([]PhysicalEntity, error) {
 		e.Class = parseEntityClass(v)
 	})
 	walkEntityAttribute(params, OIDEntPhysicalParentRelPos, entities, func(e *PhysicalEntity, v string) {
-		if pos, err := strconv.Atoi(v); err == nil {
+		if pos, parseErr := strconv.Atoi(v); parseErr == nil {
 			e.ParentRelPos = pos
 		}
 	})
@@ -209,7 +215,12 @@ func walkPhysicalEntities(params *gosnmp.GoSNMP) ([]PhysicalEntity, error) {
 }
 
 // walkEntityAttribute walks an entity attribute and applies a function.
-func walkEntityAttribute(params *gosnmp.GoSNMP, oid string, entities map[int]*PhysicalEntity, updateFunc func(*PhysicalEntity, string)) {
+func walkEntityAttribute(
+	params *gosnmp.GoSNMP,
+	oid string,
+	entities map[int]*PhysicalEntity,
+	updateFunc func(*PhysicalEntity, string),
+) {
 	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
 		idx := extractEntityIndex(pdu.Name)
 		if idx <= 0 {
@@ -247,9 +258,9 @@ func extractEntityIndex(oid string) int {
 func parseEntityClass(value string) string {
 	switch value {
 	case "1":
-		return "other"
+		return MACTypeOther
 	case "2":
-		return "unknown"
+		return StatusUnknown
 	case "3":
 		return "chassis"
 	case "4":
@@ -277,7 +288,7 @@ func parseEntityClass(value string) string {
 	case "15":
 		return "storageDrive"
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }
 
@@ -300,7 +311,7 @@ func GetChassisInfo(ctx context.Context, ip string, cfg *config.SNMPConfig) (*Ph
 		return &entities[0], nil
 	}
 
-	return nil, fmt.Errorf("no physical entities found")
+	return nil, errors.New("no physical entities found")
 }
 
 // GetModules retrieves all module entities (class=module).

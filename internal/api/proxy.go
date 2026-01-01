@@ -56,7 +56,7 @@ func NewTrustedProxies(proxies string) *TrustedProxies {
 		return tp
 	}
 
-	for _, entry := range strings.Split(proxies, ",") {
+	for entry := range strings.SplitSeq(proxies, ",") {
 		entry = strings.TrimSpace(entry)
 		if entry == "" {
 			continue

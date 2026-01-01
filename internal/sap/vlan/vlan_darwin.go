@@ -52,18 +52,18 @@ func detectVlanSubinterfacesPlatform(iface string) []int {
 }
 
 // getVlanInfo retrieves VLAN parent interface and tag for a VLAN interface.
-func getVlanInfo(ifname string) (parent string, vlanID int) {
+func getVlanInfo(ifname string) (string, int) {
 	fd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, 0)
 	if err != nil {
 		return "", 0
 	}
-	defer syscall.Close(fd)
+	defer func() { _ = syscall.Close(fd) }()
 
 	var req vlanreq
 	copy(req.name[:], ifname)
 
 	// Perform ioctl to get VLAN info
-	//nolint:gosec // G103: unsafe.Pointer is required for syscall ioctl
+
 	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
 		uintptr(fd),
@@ -74,9 +74,9 @@ func getVlanInfo(ifname string) (parent string, vlanID int) {
 	if errno != 0 {
 		// If ioctl fails, try to parse from interface name
 		// Some VLANs might be named like "vlan100" where 100 is the VLAN ID
-		if strings.HasPrefix(ifname, "vlan") {
-			suffix := strings.TrimPrefix(ifname, "vlan")
-			if id, err := strconv.Atoi(suffix); err == nil {
+		if after, ok := strings.CutPrefix(ifname, "vlan"); ok {
+			suffix := after
+			if id, parseErr := strconv.Atoi(suffix); parseErr == nil {
 				return "", id
 			}
 		}
@@ -92,7 +92,7 @@ func getVlanInfo(ifname string) (parent string, vlanID int) {
 			break
 		}
 	}
-	parent = string(parentBytes[:parentEnd])
+	parent := string(parentBytes[:parentEnd])
 
 	return parent, int(req.vlanTag)
 }

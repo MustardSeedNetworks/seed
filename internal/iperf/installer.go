@@ -7,6 +7,7 @@ package iperf
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -179,11 +180,11 @@ func detectWindowsPackageManager() *PackageManagerInfo {
 }
 
 // GetLatestGitHubRelease fetches the latest iperf3 release info from GitHub.
-func GetLatestGitHubRelease() (version, tarballURL string, err error) {
+func GetLatestGitHubRelease() (string, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", iperfReleasesAPI, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, iperfReleasesAPI, http.NoBody)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to create request: %w", err)
 	}
@@ -194,7 +195,7 @@ func GetLatestGitHubRelease() (version, tarballURL string, err error) {
 	if err != nil {
 		return "", "", fmt.Errorf("failed to fetch releases: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", "", fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
@@ -204,8 +205,8 @@ func GetLatestGitHubRelease() (version, tarballURL string, err error) {
 		TagName    string `json:"tag_name"`
 		TarballURL string `json:"tarball_url"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
-		return "", "", fmt.Errorf("failed to parse release info: %w", err)
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&release); decodeErr != nil {
+		return "", "", fmt.Errorf("failed to parse release info: %w", decodeErr)
 	}
 
 	return strings.TrimPrefix(release.TagName, "v"), release.TarballURL, nil
@@ -217,7 +218,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 	if pm == nil || !pm.Available {
 		return &InstallResult{
 			Success: false,
-			Error:   fmt.Errorf("no package manager detected"),
+			Error:   errors.New("no package manager detected"),
 			Method:  InstallMethodPackageManager,
 		}
 	}
@@ -266,7 +267,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 		if strings.Contains(err.Error(), "permission") || strings.Contains(err.Error(), "EACCES") {
 			return &InstallResult{
 				Success:     false,
-				Error:       fmt.Errorf("permission denied - try with sudo"),
+				Error:       errors.New("permission denied - try with sudo"),
 				Method:      InstallMethodPackageManager,
 				NeedsSudo:   true,
 				SudoCommand: "sudo " + strings.Join(pm.InstallCommand, " "),
@@ -284,7 +285,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 	if err != nil {
 		return &InstallResult{
 			Success: false,
-			Error:   fmt.Errorf("installation succeeded but iperf3 not found in PATH"),
+			Error:   errors.New("installation succeeded but iperf3 not found in PATH"),
 			Method:  InstallMethodPackageManager,
 		}
 	}
@@ -332,25 +333,34 @@ func InstallFromGitHub(opts InstallOptions) *InstallResult {
 			Method:  InstallMethodGitHub,
 		}
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Download tarball
 	tarballPath := filepath.Join(tempDir, "iperf3.tar.gz")
-	if err := downloadFile(tarballURL, tarballPath); err != nil {
+	if downloadErr := downloadFile(tarballURL, tarballPath); downloadErr != nil {
 		return &InstallResult{
 			Success: false,
-			Error:   fmt.Errorf("failed to download: %w", err),
+			Error:   fmt.Errorf("failed to download: %w", downloadErr),
 			Method:  InstallMethodGitHub,
 		}
 	}
 
 	// Extract tarball.
 	slog.Info("Extracting source...")
-	extractCmd := exec.Command("tar", "-xzf", tarballPath, "-C", tempDir) //nolint:gosec // G204: paths are from controlled sources
-	if err := extractCmd.Run(); err != nil {
+	extractCtx, extractCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer extractCancel()
+	extractCmd := exec.CommandContext(
+		extractCtx,
+		"tar",
+		"-xzf",
+		tarballPath,
+		"-C",
+		tempDir,
+	)
+	if extractErr := extractCmd.Run(); extractErr != nil {
 		return &InstallResult{
 			Success: false,
-			Error:   fmt.Errorf("failed to extract: %w", err),
+			Error:   fmt.Errorf("failed to extract: %w", extractErr),
 			Method:  InstallMethodGitHub,
 		}
 	}
@@ -375,7 +385,7 @@ func InstallFromGitHub(opts InstallOptions) *InstallResult {
 	if sourceDir == "" {
 		return &InstallResult{
 			Success: false,
-			Error:   fmt.Errorf("could not find extracted source directory"),
+			Error:   errors.New("could not find extracted source directory"),
 			Method:  InstallMethodGitHub,
 		}
 	}
@@ -397,22 +407,22 @@ func buildIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 	defer cancel()
 
 	// Run autoreconf if needed
-	if _, err := os.Stat(filepath.Join(sourceDir, "configure")); os.IsNotExist(err) {
+	if _, statErr := os.Stat(filepath.Join(sourceDir, "configure")); os.IsNotExist(statErr) {
 		slog.Debug("Running autoreconf...")
 		autoreconfCmd := exec.CommandContext(ctx, "autoreconf", "-i")
 		autoreconfCmd.Dir = sourceDir
 		autoreconfCmd.Stdout = os.Stdout
 		autoreconfCmd.Stderr = os.Stderr
-		if err := autoreconfCmd.Run(); err != nil {
+		if autoErr := autoreconfCmd.Run(); autoErr != nil {
 			// Try bootstrap.sh as fallback
 			bootstrapCmd := exec.CommandContext(ctx, "./bootstrap.sh")
 			bootstrapCmd.Dir = sourceDir
 			bootstrapCmd.Stdout = os.Stdout
 			bootstrapCmd.Stderr = os.Stderr
-			if err := bootstrapCmd.Run(); err != nil {
+			if bootstrapErr := bootstrapCmd.Run(); bootstrapErr != nil {
 				return &InstallResult{
 					Success: false,
-					Error:   fmt.Errorf("failed to run autoreconf/bootstrap: %w", err),
+					Error:   fmt.Errorf("failed to run autoreconf/bootstrap: %w", bootstrapErr),
 					Method:  InstallMethodGitHub,
 				}
 			}
@@ -423,7 +433,25 @@ func buildIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 	slog.Debug("Running configure...")
 	var configureCmd *exec.Cmd
 	if opts.InstallDir != "" {
-		configureCmd = exec.CommandContext(ctx, "./configure", "--prefix="+opts.InstallDir) //nolint:gosec // G204: build tool invocation
+		// Sanitize install directory - filepath.Clean normalizes path
+		// Also validate it's an absolute path to prevent path traversal
+		cleanDir := filepath.Clean(opts.InstallDir)
+		if !filepath.IsAbs(cleanDir) {
+			absDir, err := filepath.Abs(cleanDir)
+			if err != nil {
+				return &InstallResult{
+					Success: false,
+					Error:   fmt.Errorf("invalid install directory: %w", err),
+				}
+			}
+			cleanDir = absDir
+		}
+		// #nosec G204 -- cleanDir is sanitized via filepath.Clean/Abs, configure is a trusted script
+		configureCmd = exec.CommandContext(
+			ctx,
+			"./configure",
+			"--prefix="+cleanDir,
+		)
 	} else {
 		configureCmd = exec.CommandContext(ctx, "./configure")
 	}
@@ -474,7 +502,7 @@ func installIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 		if strings.Contains(err.Error(), "permission") {
 			return &InstallResult{
 				Success:     false,
-				Error:       fmt.Errorf("permission denied - try with sudo"),
+				Error:       errors.New("permission denied - try with sudo"),
 				Method:      InstallMethodGitHub,
 				NeedsSudo:   true,
 				SudoCommand: fmt.Sprintf("cd %s && sudo make install", sourceDir),
@@ -493,14 +521,14 @@ func installIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 		// Check if installed to custom prefix
 		if opts.InstallDir != "" {
 			customPath := filepath.Join(opts.InstallDir, "bin", "iperf3")
-			if _, err := os.Stat(customPath); err == nil {
+			if _, statErr := os.Stat(customPath); statErr == nil {
 				path = customPath
 			}
 		}
 		if path == "" {
 			return &InstallResult{
 				Success: false,
-				Error:   fmt.Errorf("installation succeeded but iperf3 not found"),
+				Error:   errors.New("installation succeeded but iperf3 not found"),
 				Method:  InstallMethodGitHub,
 			}
 		}
@@ -523,7 +551,7 @@ func downloadFile(url, destPath string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), downloadTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return err
 	}
@@ -533,17 +561,17 @@ func downloadFile(url, destPath string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("download failed with status %d", resp.StatusCode)
 	}
 
-	out, err := os.Create(destPath) //nolint:gosec // G304: destPath is from controlled sources
+	out, err := os.Create(destPath)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	_, err = io.Copy(out, resp.Body)
 	return err

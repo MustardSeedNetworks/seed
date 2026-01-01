@@ -14,7 +14,7 @@ type Report struct {
 	Status      ReportStatus `json:"status"`
 	FilePath    string       `json:"filePath,omitempty"`
 	FileSize    int64        `json:"fileSize,omitempty"`
-	Parameters  ReportParams `json:"parameters,omitempty"`
+	Parameters  ReportParams `json:"parameters,omitzero"`
 	CreatedAt   time.Time    `json:"createdAt"`
 	CompletedAt *time.Time   `json:"completedAt,omitempty"`
 	ExpiresAt   *time.Time   `json:"expiresAt,omitempty"`
@@ -105,7 +105,7 @@ type ScheduledReport struct {
 	Template   string       `json:"template"`
 	Format     ExportFormat `json:"format"`
 	Schedule   Schedule     `json:"schedule"`
-	Parameters ReportParams `json:"parameters,omitempty"`
+	Parameters ReportParams `json:"parameters,omitzero"`
 	Recipients []Recipient  `json:"recipients,omitempty"`
 	Enabled    bool         `json:"enabled"`
 	LastRun    *time.Time   `json:"lastRun,omitempty"`

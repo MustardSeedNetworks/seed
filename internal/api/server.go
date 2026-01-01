@@ -9,14 +9,18 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"math/big"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,23 +28,23 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/sap/cable"
+	"github.com/krisarmstrong/seed/internal/canopy/survey"
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/sap/dns"
-	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/roots/publicip"
+	"github.com/krisarmstrong/seed/internal/sap/cable"
+	"github.com/krisarmstrong/seed/internal/sap/dns"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
 	"github.com/krisarmstrong/seed/internal/sap/speedtest"
-	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/sap/vlan"
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/ui"
 )
 
@@ -102,8 +106,16 @@ func (s *Server) getClientIP(r *http.Request) string {
 
 // NewServer creates a new server instance.
 //
-//nolint:gocyclo // Server initialization requires many configuration steps
-func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.Manager, icmpAvailable bool, trustedProxies *TrustedProxies, db *database.DB, modules *Modules) *Server {
+
+func NewServer(
+	cfg *config.Config,
+	configPath, logPath string,
+	netMgr *network.Manager,
+	icmpAvailable bool,
+	trustedProxies *TrustedProxies,
+	db *database.DB,
+	modules *Modules,
+) *Server {
 	s := &Server{
 		config:         cfg,
 		configPath:     configPath,
@@ -121,12 +133,18 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 			cfg.Auth.DefaultUsername,
 			cfg.Auth.DefaultPasswordHash,
 		),
-		csrfManager:         auth.NewCSRFManager(), // CSRF protection for state-changing requests
-		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
-		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()), // Rate limit expensive endpoints (fixes #530)
-		setupTokenManager:   NewSetupTokenManager(),                                   // Setup token for secure initial setup (fixes #724, #758)
-		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
-		deviceDiscovery:     discovery.NewDeviceDiscoveryWithOUI(cfg.Interface.Default, cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge),
+		csrfManager:      auth.NewCSRFManager(), // CSRF protection for state-changing requests
+		loginRateLimiter: NewRateLimiter(DefaultRateLimitConfig()),
+		endpointRateLimiter: NewEndpointRateLimiter(
+			DefaultEndpointRateLimitConfig(),
+		), // Rate limit expensive endpoints (fixes #530)
+		setupTokenManager: NewSetupTokenManager(), // Setup token for secure initial setup (fixes #724, #758)
+		linkMonitor:       network.NewLinkMonitor(cfg.Interface.Default),
+		deviceDiscovery: discovery.NewDeviceDiscoveryWithOUI(
+			cfg.Interface.Default,
+			cfg.NetworkDiscovery.OUIFilePath,
+			cfg.NetworkDiscovery.OUIMaxAge,
+		),
 		// Note: discoveryService is initialized after profiler is created (see below)
 		dnsTester:          dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
 		dnsSecurityScanner: dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
@@ -198,7 +216,7 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 		// Migrate admin user from config to database if needed
 		// This ensures backward compatibility during the transition
 		if cfg.Auth.DefaultPasswordHash != "" && cfg.Auth.DefaultPasswordHash != auth.SetupModePlaceholder {
-			if err := userStore.MigrateUserFromConfig(cfg.Auth.DefaultUsername, cfg.Auth.DefaultPasswordHash); err != nil {
+			if err := userStore.MigrateUserFromConfig(context.Background(), cfg.Auth.DefaultUsername, cfg.Auth.DefaultPasswordHash); err != nil {
 				slog.Error("Failed to migrate user from config", "error", err)
 			} else {
 				slog.Info("User migrated from config to database", "username", cfg.Auth.DefaultUsername)
@@ -291,16 +309,16 @@ func NewServer(cfg *config.Config, configPath, logPath string, netMgr *network.M
 	if len(cfg.Security.AllowedOrigins) > 0 {
 		// Check for wildcard origin in production mode (fixes #715)
 		// Production mode is inferred from HTTPS being enabled
-		for _, origin := range cfg.Security.AllowedOrigins {
-			if origin == "*" {
-				if cfg.Server.HTTPS {
-					slog.Warn("SECURITY WARNING: Wildcard origin (*) allows all origins in production mode with HTTPS enabled",
-						"recommendation", "Configure explicit allowed origins in Security.AllowedOrigins for production deployments")
-				} else {
-					slog.Info("Wildcard origin (*) configured - allows all origins (development mode)",
-						"warning", "Not recommended for production use")
-				}
-				break
+		if slices.Contains(cfg.Security.AllowedOrigins, "*") {
+			if cfg.Server.HTTPS {
+				slog.Warn(
+					"SECURITY WARNING: Wildcard origin (*) allows all origins in production mode with HTTPS enabled",
+					"recommendation",
+					"Configure explicit allowed origins in Security.AllowedOrigins for production deployments",
+				)
+			} else {
+				slog.Info("Wildcard origin (*) configured - allows all origins (development mode)",
+					"warning", "Not recommended for production use")
 			}
 		}
 		slog.Info("Configured explicit allowed origins for CORS/WebSocket", "count", len(cfg.Security.AllowedOrigins))
@@ -329,7 +347,7 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 		// Notify WebSocket clients with linkState message
 		s.wsHub.Broadcast(Message{
 			Type: "linkState",
-			Payload: map[string]interface{}{
+			Payload: map[string]any{
 				"interface": event.Interface,
 				"state":     "up",
 				"timestamp": event.Timestamp.Format(time.RFC3339),
@@ -348,7 +366,7 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 		slog.Info("Link down - notifying clients")
 		s.wsHub.Broadcast(Message{
 			Type: "linkState",
-			Payload: map[string]interface{}{
+			Payload: map[string]any{
 				"interface": event.Interface,
 				"state":     "down",
 				"timestamp": event.Timestamp.Format(time.RFC3339),
@@ -455,7 +473,10 @@ func (s *Server) setupRoutes() {
 
 	// iPerf testing
 	s.mux.HandleFunc("/api/sap/iperf/info", s.handleIperfInfo)
-	s.mux.Handle("/api/sap/iperf/client", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)))
+	s.mux.Handle(
+		"/api/sap/iperf/client",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)),
+	)
 	s.mux.HandleFunc("/api/sap/iperf/client/status", s.handleIperfClientStatus)
 	s.mux.HandleFunc("/api/sap/iperf/server", s.handleIperfServer)
 	s.mux.HandleFunc("/api/sap/iperf/server/status", s.handleIperfServerStatus)
@@ -463,7 +484,10 @@ func (s *Server) setupRoutes() {
 
 	// Health checks
 	s.mux.HandleFunc("/api/sap/health-checks/settings", s.handleHealthChecksSettings)
-	s.mux.Handle("/api/sap/health-checks/run", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)))
+	s.mux.Handle(
+		"/api/sap/health-checks/run",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)),
+	)
 
 	// SNMP settings
 	s.mux.HandleFunc("/api/sap/snmp/settings", s.handleSNMPSettings)
@@ -492,7 +516,10 @@ func (s *Server) setupRoutes() {
 
 	// Device management
 	s.mux.HandleFunc("/api/shell/devices", s.handleDevices)
-	s.mux.Handle("/api/shell/devices/scan", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)))
+	s.mux.Handle(
+		"/api/shell/devices/scan",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)),
+	)
 	s.mux.HandleFunc("/api/shell/devices/status", s.handleDevicesStatus)
 	s.mux.HandleFunc("/api/shell/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc("/api/shell/devices/subnets", s.handleDevicesSubnets)
@@ -612,7 +639,8 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 
 		// Content Security Policy - strict policy without unsafe-inline (fixes #532)
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
+		w.Header().
+			Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
 
 		next.ServeHTTP(w, r)
 	})
@@ -626,7 +654,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		// Reject null Origin header to prevent CORS bypass attacks (fixes #709)
 		// Null origins can occur in sandboxed iframes or redirected requests
 		if origin == "null" {
-			if r.Method == "OPTIONS" {
+			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusForbidden)
 			} else {
 				logger := logging.FromContext(r.Context())
@@ -649,7 +677,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Max-Age", "86400")
 		}
 
-		if r.Method == "OPTIONS" {
+		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
@@ -710,7 +738,14 @@ func recoverMiddleware(next http.Handler) http.Handler {
 					"stack", string(debug.Stack()))
 				logger := logging.FromContext(r.Context())
 				localizer := i18n.FromRequest(r)
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.security.panicRecovered"), "") // fixes #694
+				sendErrorResponseWithDetails(
+					w,
+					logger,
+					http.StatusInternalServerError,
+					ErrCodeInternal,
+					localizer.T("errors.security.panicRecovered"),
+					"",
+				) // fixes #694
 			}
 		}()
 		next.ServeHTTP(w, r)
@@ -742,7 +777,7 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 				return
 			}
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 
 		// Check if it's a directory - serve index.html from it
 		stat, err := f.Stat()
@@ -753,17 +788,17 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 		if stat.IsDir() {
 			// Try to serve index.html from the directory
 			indexPath := strings.TrimSuffix(path, "/") + indexHTMLPath
-			f2, err := fsys.Open(indexPath)
-			if err != nil {
+			f2, indexErr := fsys.Open(indexPath)
+			if indexErr != nil {
 				// No index.html in directory - serve root index.html
 				path = indexHTMLPath
-				f2, err = fsys.Open(path)
-				if err != nil {
+				f2, indexErr = fsys.Open(path)
+				if indexErr != nil {
 					http.NotFound(w, r)
 					return
 				}
 			}
-			f.Close()
+			_ = f.Close()
 			f = f2
 			stat, err = f.Stat()
 			if err != nil {
@@ -853,7 +888,10 @@ func (s *Server) Start() error {
 // startHTTP starts the server in HTTP mode.
 func (s *Server) startHTTP() error {
 	slog.Info("Starting HTTP server", "addr", s.httpServer.Addr)
-	return s.httpServer.ListenAndServe()
+	if err := s.httpServer.ListenAndServe(); err != nil {
+		return fmt.Errorf("http server: %w", err)
+	}
+	return nil
 }
 
 // startHTTPRedirect starts an HTTP server that redirects all requests to HTTPS (fixes #515).
@@ -873,7 +911,7 @@ func (s *Server) startHTTPRedirect(port int) {
 		if httpsPort == 443 {
 			httpsURL = fmt.Sprintf("https://%s%s", host, r.RequestURI)
 		} else {
-			httpsURL = fmt.Sprintf("https://%s:%d%s", host, httpsPort, r.RequestURI)
+			httpsURL = "https://" + net.JoinHostPort(host, strconv.Itoa(httpsPort)) + r.RequestURI
 		}
 
 		http.Redirect(w, r, httpsURL, http.StatusMovedPermanently)
@@ -908,7 +946,7 @@ func (s *Server) startHTTPS() error {
 	// Priority 1: ACME/Let's Encrypt automatic certificates
 	if s.config.Server.ACME.Enabled {
 		if s.config.Server.ACME.Domain == "" {
-			return fmt.Errorf("ACME enabled but no domain specified")
+			return errors.New("ACME enabled but no domain specified")
 		}
 		return s.startHTTPSWithACME()
 	}
@@ -939,7 +977,10 @@ func (s *Server) startHTTPS() error {
 	s.httpServer.TLSConfig = tlsConfig
 
 	slog.Info("Starting HTTPS server", "addr", s.httpServer.Addr, "tls_version", "1.3")
-	return s.httpServer.ListenAndServeTLS(certFile, keyFile)
+	if err := s.httpServer.ListenAndServeTLS(certFile, keyFile); err != nil {
+		return fmt.Errorf("https server: %w", err)
+	}
+	return nil
 }
 
 // startHTTPSWithACME starts the server with automatic Let's Encrypt certificates.
@@ -995,31 +1036,34 @@ func (s *Server) startHTTPSWithACME() error {
 	}()
 
 	// ListenAndServeTLS with empty cert/key paths uses GetCertificate from TLSConfig
-	return s.httpServer.ListenAndServeTLS("", "")
+	if err := s.httpServer.ListenAndServeTLS("", ""); err != nil {
+		return fmt.Errorf("https server with ACME: %w", err)
+	}
+	return nil
 }
 
 // ensureSelfSignedCert generates a self-signed certificate if needed.
-func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
+func (s *Server) ensureSelfSignedCert() (string, string, error) {
 	certsDir := "certs"
-	certFile = filepath.Join(certsDir, "server.crt")
-	keyFile = filepath.Join(certsDir, "server.key")
+	certFile := filepath.Join(certsDir, "server.crt")
+	keyFile := filepath.Join(certsDir, "server.key")
 
 	// Check if certs already exist
-	if _, err := os.Stat(certFile); err == nil {
-		if _, err := os.Stat(keyFile); err == nil {
+	if _, certErr := os.Stat(certFile); certErr == nil {
+		if _, keyErr := os.Stat(keyFile); keyErr == nil {
 			return certFile, keyFile, nil
 		}
 	}
 
 	// Ensure certs directory exists
 	if err := os.MkdirAll(certsDir, 0o700); err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("create certs directory: %w", err)
 	}
 
 	// Generate private key with 4096-bit RSA (fixes #533)
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("generate RSA key: %w", err)
 	}
 
 	// Create certificate template
@@ -1040,29 +1084,29 @@ func (s *Server) ensureSelfSignedCert() (certFile, keyFile string, err error) {
 	// Create certificate
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("create certificate: %w", err)
 	}
 
 	// Write certificate
-	//nolint:gosec // G304: certFile is from config for TLS certificate location
+
 	certOut, err := os.Create(certFile)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("create cert file: %w", err)
 	}
-	defer certOut.Close()
-	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: certDER}); err != nil {
-		return "", "", err
+	defer func() { _ = certOut.Close() }()
+	if encodeErr := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: certDER}); encodeErr != nil {
+		return "", "", fmt.Errorf("encode certificate PEM: %w", encodeErr)
 	}
 
 	// Write private key
-	//nolint:gosec // G304: keyFile is from config for TLS private key location
+
 	keyOut, err := os.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("create key file: %w", err)
 	}
-	defer keyOut.Close()
-	if err := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}); err != nil {
-		return "", "", err
+	defer func() { _ = keyOut.Close() }()
+	if keyEncodeErr := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}); keyEncodeErr != nil {
+		return "", "", fmt.Errorf("encode private key PEM: %w", keyEncodeErr)
 	}
 
 	slog.Info("Generated self-signed certificate", "cert_file", certFile)
@@ -1126,7 +1170,10 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	// Shutdown main HTTP server
 	slog.Info("Shutting down main HTTP server...")
-	return s.httpServer.Shutdown(ctx)
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		return fmt.Errorf("shutdown main server: %w", err)
+	}
+	return nil
 }
 
 // Hub returns the WebSocket hub.

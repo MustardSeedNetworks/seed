@@ -21,6 +21,7 @@ package discovery
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -223,12 +224,11 @@ func NewOUIDatabase() *OUIDatabase {
 // LoadFromFile loads additional OUI entries from a file.
 // File format: AA:BB:CC<tab>Vendor Name.
 func (db *OUIDatabase) LoadFromFile(path string) error {
-	//nolint:gosec // G304: Path is user-provided configuration for OUI database
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("open OUI file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	db.mu.Lock()
 	defer db.mu.Unlock()
@@ -252,7 +252,10 @@ func (db *OUIDatabase) LoadFromFile(path string) error {
 			db.vendors[prefix[:8]] = vendor
 		}
 	}
-	return scanner.Err()
+	if scanErr := scanner.Err(); scanErr != nil {
+		return fmt.Errorf("scan OUI file: %w", scanErr)
+	}
+	return nil
 }
 
 // Lookup returns the manufacturer for a MAC address.
@@ -305,7 +308,7 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 			return db.LoadFromFile(loc)
 		}
 	}
-	return fmt.Errorf("no IEEE OUI file found")
+	return errors.New("no IEEE OUI file found")
 }
 
 // IEEE OUI database URLs.
@@ -338,7 +341,7 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 	if err != nil {
 		return fmt.Errorf("failed to download OUI database: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -346,8 +349,8 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 
 	// Ensure destination directory exists
 	destDir := filepath.Dir(destPath)
-	if err := os.MkdirAll(destDir, 0o750); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+	if mkdirErr := os.MkdirAll(destDir, 0o750); mkdirErr != nil {
+		return fmt.Errorf("failed to create directory: %w", mkdirErr)
 	}
 
 	// Create temporary file for atomic write
@@ -357,8 +360,8 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 	}
 	tmpPath := tmpFile.Name()
 	defer func() {
-		tmpFile.Close()
-		os.Remove(tmpPath) // Clean up temp file on error
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath) // Clean up temp file on error
 	}()
 
 	// Copy response body to temp file
@@ -367,18 +370,18 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 		return fmt.Errorf("failed to write OUI database: %w", err)
 	}
 
-	if err := tmpFile.Close(); err != nil {
-		return fmt.Errorf("failed to close temp file: %w", err)
+	if closeErr := tmpFile.Close(); closeErr != nil {
+		return fmt.Errorf("failed to close temp file: %w", closeErr)
 	}
 
 	// Atomic rename
-	if err := os.Rename(tmpPath, destPath); err != nil {
-		return fmt.Errorf("failed to move OUI database: %w", err)
+	if renameErr := os.Rename(tmpPath, destPath); renameErr != nil {
+		return fmt.Errorf("failed to move OUI database: %w", renameErr)
 	}
 
 	// Parse and load the downloaded file
-	if err := db.LoadFromIEEEFormat(destPath); err != nil {
-		return fmt.Errorf("failed to parse OUI database: %w", err)
+	if loadErr := db.LoadFromIEEEFormat(destPath); loadErr != nil {
+		return fmt.Errorf("failed to parse OUI database: %w", loadErr)
 	}
 
 	slog.Info("Downloaded OUI database", "bytes", written, "entries", db.Count())
@@ -388,12 +391,11 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 // LoadFromIEEEFormat loads OUI entries from the IEEE oui.txt format
 // Format: "AA-BB-CC   (hex)\t\tVendor Name".
 func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
-	//nolint:gosec // G304: Path is user-provided configuration for OUI database
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("open IEEE OUI file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	db.mu.Lock()
 	defer db.mu.Unlock()
@@ -431,7 +433,10 @@ func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
 		}
 	}
 
-	return scanner.Err()
+	if scanErr := scanner.Err(); scanErr != nil {
+		return fmt.Errorf("scan IEEE OUI file: %w", scanErr)
+	}
+	return nil
 }
 
 // NeedsUpdate checks if the OUI database file needs updating.

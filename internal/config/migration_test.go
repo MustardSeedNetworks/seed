@@ -205,7 +205,7 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 		ToVersion:   2,
 		Description: "Add field_a",
 		Migrate: func(data []byte) ([]byte, error) {
-			var raw map[string]interface{}
+			var raw map[string]any
 			if err := yaml.Unmarshal(data, &raw); err != nil {
 				return nil, err
 			}
@@ -219,7 +219,7 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 		ToVersion:   3,
 		Description: "Add field_b",
 		Migrate: func(data []byte) ([]byte, error) {
-			var raw map[string]interface{}
+			var raw map[string]any
 			if err := yaml.Unmarshal(data, &raw); err != nil {
 				return nil, err
 			}
@@ -236,7 +236,7 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 		t.Fatalf("Migrate() error = %v", err)
 	}
 
-	var final map[string]interface{}
+	var final map[string]any
 	if err := yaml.Unmarshal(result, &final); err != nil {
 		t.Fatalf("Failed to unmarshal result: %v", err)
 	}

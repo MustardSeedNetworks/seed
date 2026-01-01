@@ -59,15 +59,15 @@ func (r *LogRepository) BatchCreate(ctx context.Context, entries []*LogEntry) er
 		if err != nil {
 			return fmt.Errorf("failed to prepare statement: %w", err)
 		}
-		defer stmt.Close()
+		defer func() { _ = stmt.Close() }()
 
 		for _, entry := range entries {
-			_, err := stmt.ExecContext(ctx,
+			_, execErr := stmt.ExecContext(ctx,
 				entry.Timestamp.Format(time.RFC3339Nano), entry.Level, entry.Layer, entry.Message,
 				nullString(entry.Component), nullString(entry.RequestID), nullString(entry.SessionID),
 				entry.DurationMs, nullString(entry.Metadata), nullString(entry.Stack))
-			if err != nil {
-				return fmt.Errorf("failed to insert log entry: %w", err)
+			if execErr != nil {
+				return fmt.Errorf("failed to insert log entry: %w", execErr)
 			}
 		}
 		return nil
@@ -89,7 +89,7 @@ type LogListOptions struct {
 
 // List retrieves log entries matching the criteria.
 //
-//nolint:gocritic // opts passed by value for API stability
+
 func (r *LogRepository) List(ctx context.Context, opts LogListOptions) ([]*LogEntry, error) {
 	query := `
 		SELECT id, timestamp, level, layer, message, component, request_id, session_id, duration_ms, metadata_json, stack
@@ -119,12 +119,12 @@ func (r *LogRepository) List(ctx context.Context, opts LogListOptions) ([]*LogEn
 	}
 
 	if !opts.Since.IsZero() {
-		query += " AND timestamp >= ?"
+		query += sqlAndTimestampGte
 		args = append(args, opts.Since.Format(time.RFC3339Nano))
 	}
 
 	if !opts.Until.IsZero() {
-		query += " AND timestamp <= ?"
+		query += sqlAndTimestampLte
 		args = append(args, opts.Until.Format(time.RFC3339Nano))
 	}
 
@@ -136,14 +136,14 @@ func (r *LogRepository) List(ctx context.Context, opts LogListOptions) ([]*LogEn
 	query += " ORDER BY timestamp DESC"
 
 	if opts.Limit > 0 {
-		query += " LIMIT ?"
+		query += sqlLimit
 		args = append(args, opts.Limit)
 	} else {
 		query += " LIMIT 1000" // Default limit
 	}
 
 	if opts.Offset > 0 {
-		query += " OFFSET ?"
+		query += sqlOffset
 		args = append(args, opts.Offset)
 	}
 
@@ -151,13 +151,13 @@ func (r *LogRepository) List(ctx context.Context, opts LogListOptions) ([]*LogEn
 	if err != nil {
 		return nil, fmt.Errorf("failed to list logs: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var entries []*LogEntry
 	for rows.Next() {
-		entry, err := r.scanLogEntry(rows)
-		if err != nil {
-			return nil, err
+		entry, scanErr := r.scanLogEntry(rows)
+		if scanErr != nil {
+			return nil, scanErr
 		}
 		entries = append(entries, entry)
 	}
@@ -215,10 +215,10 @@ func (r *LogRepository) scanLogEntry(rows *sql.Rows) (*LogEntry, error) {
 	}
 
 	// Parse timestamp
-	if t, parseErr := time.Parse(time.RFC3339Nano, timestamp); parseErr == nil {
-		entry.Timestamp = t
-	} else if t, parseErr := time.Parse(time.RFC3339, timestamp); parseErr == nil {
-		entry.Timestamp = t
+	if tNano, parseNanoErr := time.Parse(time.RFC3339Nano, timestamp); parseNanoErr == nil {
+		entry.Timestamp = tNano
+	} else if tRFC, parseRFCErr := time.Parse(time.RFC3339, timestamp); parseRFCErr == nil {
+		entry.Timestamp = tRFC
 	}
 
 	entry.Component = component.String
@@ -239,8 +239,8 @@ func nullString(s string) any {
 }
 
 // ConvertMetadataToJSON converts a map to JSON string for storage.
-func ConvertMetadataToJSON(metadata map[string]interface{}) string {
-	if metadata == nil || len(metadata) == 0 {
+func ConvertMetadataToJSON(metadata map[string]any) string {
+	if len(metadata) == 0 {
 		return ""
 	}
 	data, err := json.Marshal(metadata)

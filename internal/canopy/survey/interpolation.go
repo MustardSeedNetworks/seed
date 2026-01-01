@@ -223,7 +223,7 @@ func ExtractSamplesFromFloor(floor *Floor, valueType string) []SampleValue {
 }
 
 // extractValue extracts the requested value from sample data.
-func extractValue(sampleData interface{}, valueType string) float64 {
+func extractValue(sampleData any, valueType string) float64 {
 	switch data := sampleData.(type) {
 	case *PassiveSample:
 		return extractPassiveValue(data, valueType)
@@ -237,7 +237,7 @@ func extractValue(sampleData interface{}, valueType string) float64 {
 		return extractThroughputValue(data, valueType)
 	case ThroughputSample:
 		return extractThroughputValue(&data, valueType)
-	case map[string]interface{}:
+	case map[string]any:
 		// Handle JSON-decoded data
 		return extractMapValue(data, valueType)
 	default:
@@ -251,7 +251,7 @@ func extractPassiveValue(data *PassiveSample, valueType string) float64 {
 	}
 
 	switch valueType {
-	case "rssi", "signal":
+	case string(HeatmapRSSI), HeatmapAliasSignal:
 		// Return strongest signal (first network, sorted by signal)
 		return float64(data.Networks[0].Signal)
 	case "snr":
@@ -277,7 +277,7 @@ func extractActiveValue(data *ActiveSample, valueType string) float64 {
 	}
 
 	switch valueType {
-	case "rssi", "signal":
+	case string(HeatmapRSSI), HeatmapAliasSignal:
 		return float64(data.RSSI)
 	case "datarate", "speed":
 		return data.DataRate
@@ -292,7 +292,7 @@ func extractThroughputValue(data *ThroughputSample, valueType string) float64 {
 	}
 
 	switch valueType {
-	case "rssi", "signal":
+	case string(HeatmapRSSI), HeatmapAliasSignal:
 		return float64(data.RSSI)
 	case "download":
 		return data.DownloadMbps
@@ -307,13 +307,13 @@ func extractThroughputValue(data *ThroughputSample, valueType string) float64 {
 	}
 }
 
-func extractMapValue(data map[string]interface{}, valueType string) float64 {
+func extractMapValue(data map[string]any, valueType string) float64 {
 	// Handle networks array for passive samples
-	if networks, ok := data["networks"].([]interface{}); ok && len(networks) > 0 {
-		if first, ok := networks[0].(map[string]interface{}); ok {
+	if networks, networksOK := data["networks"].([]any); networksOK && len(networks) > 0 {
+		if first, firstOK := networks[0].(map[string]any); firstOK {
 			switch valueType {
-			case "rssi", "signal":
-				if rssi, ok := first["rssi"].(float64); ok {
+			case string(HeatmapRSSI), HeatmapAliasSignal:
+				if rssi, rssiOK := first[string(HeatmapRSSI)].(float64); rssiOK {
 					return rssi
 				}
 			}
@@ -323,8 +323,8 @@ func extractMapValue(data map[string]interface{}, valueType string) float64 {
 	// Direct value lookup
 	key := valueType
 	switch valueType {
-	case "signal":
-		key = "rssi"
+	case HeatmapAliasSignal:
+		key = string(HeatmapRSSI)
 	case "density":
 		key = "uniqueBSSIDs"
 	case "interference":

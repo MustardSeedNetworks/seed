@@ -10,16 +10,16 @@ import (
 // and stored for querying. It provides a unified format for logs across all layers
 // (backend, API handlers, frontend).
 type LogEntry struct {
-	Timestamp  time.Time              `json:"timestamp"`             // When the log was created
-	Level      string                 `json:"level"`                 // ERROR, WARN, INFO, DEBUG
-	Layer      string                 `json:"layer"`                 // backend, api, frontend
-	RequestID  string                 `json:"request_id,omitempty"`  // Correlation ID for request tracing
-	SessionID  string                 `json:"session_id,omitempty"`  // User session ID
-	Message    string                 `json:"message"`               // Human-readable log message
-	Component  string                 `json:"component,omitempty"`   // Component that generated the log
-	DurationMs int64                  `json:"duration_ms,omitempty"` // Duration for timed operations
-	Metadata   map[string]interface{} `json:"metadata,omitempty"`    // Additional structured data
-	Stack      string                 `json:"stack,omitempty"`       // Stack trace for errors
+	Timestamp  time.Time      `json:"timestamp"`             // When the log was created
+	Level      string         `json:"level"`                 // ERROR, WARN, INFO, DEBUG
+	Layer      string         `json:"layer"`                 // backend, api, frontend
+	RequestID  string         `json:"request_id,omitempty"`  // Correlation ID for request tracing
+	SessionID  string         `json:"session_id,omitempty"`  // User session ID
+	Message    string         `json:"message"`               // Human-readable log message
+	Component  string         `json:"component,omitempty"`   // Component that generated the log
+	DurationMs int64          `json:"duration_ms,omitempty"` // Duration for timed operations
+	Metadata   map[string]any `json:"metadata,omitempty"`    // Additional structured data
+	Stack      string         `json:"stack,omitempty"`       // Stack trace for errors
 }
 
 // Standard component names for consistent categorization across the codebase.
@@ -120,7 +120,7 @@ func (e *LogEntry) WithDuration(d time.Duration) *LogEntry {
 }
 
 // WithMetadata sets additional metadata on the log entry.
-func (e *LogEntry) WithMetadata(metadata map[string]interface{}) *LogEntry {
+func (e *LogEntry) WithMetadata(metadata map[string]any) *LogEntry {
 	e.Metadata = metadata
 	return e
 }
@@ -132,9 +132,9 @@ func (e *LogEntry) WithStack(stack string) *LogEntry {
 }
 
 // AddMetadata adds a key-value pair to the metadata.
-func (e *LogEntry) AddMetadata(key string, value interface{}) *LogEntry {
+func (e *LogEntry) AddMetadata(key string, value any) *LogEntry {
 	if e.Metadata == nil {
-		e.Metadata = make(map[string]interface{})
+		e.Metadata = make(map[string]any)
 	}
 	e.Metadata[key] = value
 	return e

@@ -4,6 +4,7 @@ package publicip
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -196,8 +197,11 @@ func (c *Checker) fetchGeoData(ctx context.Context, ip string) *geoResponse {
 	}
 
 	// Fetch from ip-api.com (free, no API key required)
-	url := fmt.Sprintf("http://ip-api.com/json/%s?fields=status,message,country,countryCode,region,regionName,city,lat,lon,isp,org,as", ip)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
+	url := fmt.Sprintf(
+		"http://ip-api.com/json/%s?fields=status,message,country,countryCode,region,regionName,city,lat,lon,isp,org,as",
+		ip,
+	)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return nil
 	}
@@ -207,7 +211,7 @@ func (c *Checker) fetchGeoData(ctx context.Context, ip string) *geoResponse {
 	if err != nil {
 		return nil
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil
@@ -219,7 +223,7 @@ func (c *Checker) fetchGeoData(ctx context.Context, ip string) *geoResponse {
 	}
 
 	var geo geoResponse
-	if err := json.Unmarshal(body, &geo); err != nil {
+	if unmarshalErr := json.Unmarshal(body, &geo); unmarshalErr != nil {
 		return nil
 	}
 
@@ -344,8 +348,12 @@ func (c *Checker) fetchIPv6(ctx context.Context) (string, error) {
 	return "", lastErr
 }
 
-func (c *Checker) fetchFromService(ctx context.Context, url string, parser func([]byte) (string, error)) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
+func (c *Checker) fetchFromService(
+	ctx context.Context,
+	url string,
+	parser func([]byte) (string, error),
+) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return "", err
 	}
@@ -355,7 +363,7 @@ func (c *Checker) fetchFromService(ctx context.Context, url string, parser func(
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
@@ -392,7 +400,7 @@ func parseMyIPJSON(body []byte) (string, error) {
 func parseTextIP(body []byte) (string, error) {
 	ip := strings.TrimSpace(string(body))
 	if ip == "" {
-		return "", fmt.Errorf("empty response")
+		return "", errors.New("empty response")
 	}
 	return ip, nil
 }

@@ -6,22 +6,27 @@
 package detection
 
 import (
+	"context"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // getInterfaceSpeed returns the interface speed in bits per second.
 func getInterfaceSpeed(name string) int64 {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	// Try networksetup first
-	out, err := exec.Command("networksetup", "-getmedia", name).Output()
+	out, err := exec.CommandContext(ctx, "networksetup", "-getmedia", name).Output()
 	if err == nil {
 		return parseMediaSpeed(string(out))
 	}
 
 	// Fallback to ifconfig
-	out, err = exec.Command("ifconfig", name).Output()
+	out, err = exec.CommandContext(ctx, "ifconfig", name).Output()
 	if err == nil {
 		return parseIfconfigSpeed(string(out))
 	}
@@ -50,7 +55,6 @@ func parseMediaSpeed(output string) int64 {
 	}
 
 	for _, p := range patterns {
-		//nolint:errcheck // Pattern is hardcoded constant, regex is always valid
 		if matched, _ := regexp.MatchString(p.pattern, output); matched {
 			return p.speed
 		}
@@ -85,8 +89,11 @@ func parseIfconfigSpeed(output string) int64 {
 
 // identifyByPlatform attempts platform-specific chipset identification on macOS.
 func (db *ChipsetDatabase) identifyByPlatform(_ string) *ChipsetInfo {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	// Use system_profiler to get hardware info
-	out, err := exec.Command("system_profiler", "SPNetworkDataType", "-json").Output()
+	out, err := exec.CommandContext(ctx, "system_profiler", "SPNetworkDataType", "-json").Output()
 	if err != nil {
 		return nil
 	}

@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
+	"errors"
 	"log/slog"
 	"net"
 	"net/http"
@@ -126,6 +126,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 // responseWriter wraps http.ResponseWriter to capture the status code.
 type responseWriter struct {
 	http.ResponseWriter
+
 	status      int
 	wroteHeader bool
 }
@@ -158,5 +159,5 @@ func (w *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
 		return h.Hijack()
 	}
-	return nil, nil, fmt.Errorf("underlying ResponseWriter does not implement http.Hijacker")
+	return nil, nil, errors.New("underlying ResponseWriter does not implement http.Hijacker")
 }

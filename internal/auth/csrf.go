@@ -7,6 +7,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -21,7 +22,7 @@ const (
 	// CSRFTokenExpiry is how long a CSRF token remains valid.
 	CSRFTokenExpiry = 24 * time.Hour
 	// CSRFHeaderName is the HTTP header name for CSRF tokens.
-	CSRFHeaderName = "X-CSRF-Token"
+	CSRFHeaderName = "X-Csrf-Token"
 	// CSRFCookieName is the cookie name for CSRF tokens.
 	CSRFCookieName = "csrf_token"
 )
@@ -71,7 +72,7 @@ func (m *CSRFManager) GenerateToken(sessionID string) (string, error) {
 	// Generate cryptographically secure random bytes
 	tokenBytes := make([]byte, CSRFTokenLength)
 	if _, err := rand.Read(tokenBytes); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate CSRF token: %w", err)
 	}
 
 	token := base64.URLEncoding.EncodeToString(tokenBytes)

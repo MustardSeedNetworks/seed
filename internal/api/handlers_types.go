@@ -38,7 +38,12 @@ const (
 
 // sendErrorResponseWithDetails sends a standardized JSON error response with additional details.
 // Use this for all error responses to ensure consistency across the API (fixes #694).
-func sendErrorResponseWithDetails(w http.ResponseWriter, logger *slog.Logger, status int, code, message, details string) {
+func sendErrorResponseWithDetails(
+	w http.ResponseWriter,
+	logger *slog.Logger,
+	status int,
+	code, message, details string,
+) {
 	resp := ErrorResponse{
 		Error:   message,
 		Code:    code,
@@ -57,7 +62,7 @@ func sendErrorResponseWithDetails(w http.ResponseWriter, logger *slog.Logger, st
 
 // sendJSONResponse is a helper to send JSON responses and handle encoding errors.
 // Used across all handler files (fixes #544 - shared utilities).
-func sendJSONResponse(w http.ResponseWriter, logger *slog.Logger, status int, data interface{}) {
+func sendJSONResponse(w http.ResponseWriter, logger *slog.Logger, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -72,12 +77,11 @@ func sendJSONResponse(w http.ResponseWriter, logger *slog.Logger, status int, da
 // readLastLines reads the last N lines from a file, up to maxBytes from the end.
 // Used by handleLogs and other log-reading handlers (fixes #544 - shared utilities).
 func readLastLines(path string, maxBytes int64, maxLines int) ([]string, error) {
-	//nolint:gosec // G304: path is from config for log file location
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	info, err := f.Stat()
 	if err != nil {
@@ -89,8 +93,8 @@ func readLastLines(path string, maxBytes int64, maxLines int) ([]string, error) 
 		start = info.Size() - maxBytes
 	}
 	if start > 0 {
-		if _, err := f.Seek(start, io.SeekStart); err != nil {
-			return nil, err
+		if _, seekErr := f.Seek(start, io.SeekStart); seekErr != nil {
+			return nil, seekErr
 		}
 	}
 
@@ -105,8 +109,8 @@ func readLastLines(path string, maxBytes int64, maxLines int) ([]string, error) 
 			lines = lines[1:]
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	if scanErr := scanner.Err(); scanErr != nil {
+		return nil, scanErr
 	}
 	return lines, nil
 }

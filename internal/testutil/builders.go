@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -107,15 +108,15 @@ func (b *ConfigBuilder) Validate() error {
 	}
 
 	if b.cfg.Auth.JWTSecret == "" {
-		return fmt.Errorf("JWT secret cannot be empty")
+		return errors.New("JWT secret cannot be empty")
 	}
 
 	if b.cfg.NetworkDiscovery.ARPScanWorkers < 1 {
-		return fmt.Errorf("discovery concurrency must be at least 1")
+		return errors.New("discovery concurrency must be at least 1")
 	}
 
 	if b.cfg.Interface.Default == "" {
-		return fmt.Errorf("default interface cannot be empty")
+		return errors.New("default interface cannot be empty")
 	}
 
 	return b.cfg.Validate()

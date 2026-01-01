@@ -18,8 +18,11 @@ import (
 func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 	// network_scan - Scan the local network for devices
 	s.addTool("network_scan", isAllowed,
-		mcp.NewTool("network_scan",
-			mcp.WithDescription("Scan the local network for devices using ARP/ICMP/NDP protocols. Returns a list of discovered devices with their IP, MAC, hostname, and vendor information."),
+		mcp.NewTool(
+			"network_scan",
+			mcp.WithDescription(
+				"Scan the local network for devices using ARP/ICMP/NDP protocols. Returns a list of discovered devices with their IP, MAC, hostname, and vendor information.",
+			),
 			mcp.WithNumber("timeout",
 				mcp.Description("Scan timeout in seconds (default: 30, max: 300)"),
 			),
@@ -29,16 +32,22 @@ func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 
 	// get_devices - List all discovered devices
 	s.addTool("get_devices", isAllowed,
-		mcp.NewTool("get_devices",
-			mcp.WithDescription("Get all previously discovered devices on the network. Returns devices found from previous scans without initiating a new scan."),
+		mcp.NewTool(
+			"get_devices",
+			mcp.WithDescription(
+				"Get all previously discovered devices on the network. Returns devices found from previous scans without initiating a new scan.",
+			),
 		),
 		s.handleGetDevices,
 	)
 
 	// device_fingerprint - Fingerprint a specific device
 	s.addTool("device_fingerprint", isAllowed,
-		mcp.NewTool("device_fingerprint",
-			mcp.WithDescription("Perform OS fingerprinting and service detection on a specific device. Attempts to identify the operating system, open services, and device type."),
+		mcp.NewTool(
+			"device_fingerprint",
+			mcp.WithDescription(
+				"Perform OS fingerprinting and service detection on a specific device. Attempts to identify the operating system, open services, and device type.",
+			),
 			mcp.WithString("ip",
 				mcp.Required(),
 				mcp.Description("IP address of the device to fingerprint"),
@@ -49,8 +58,11 @@ func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 
 	// get_neighbors - Get LLDP/CDP/EDP neighbors
 	s.addTool("get_neighbors", isAllowed,
-		mcp.NewTool("get_neighbors",
-			mcp.WithDescription("Get network neighbors discovered via Layer 2 protocols (LLDP, CDP, EDP). Shows connected switches, routers, and other network devices."),
+		mcp.NewTool(
+			"get_neighbors",
+			mcp.WithDescription(
+				"Get network neighbors discovered via Layer 2 protocols (LLDP, CDP, EDP). Shows connected switches, routers, and other network devices.",
+			),
 			mcp.WithString("protocol",
 				mcp.Description("Filter by protocol: lldp, cdp, edp, or all (default: all)"),
 			),
@@ -60,8 +72,11 @@ func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 
 	// traceroute - Trace route to target
 	s.addTool("traceroute", isAllowed,
-		mcp.NewTool("traceroute",
-			mcp.WithDescription("Trace the network path to a target host, showing each hop along the route with latency information."),
+		mcp.NewTool(
+			"traceroute",
+			mcp.WithDescription(
+				"Trace the network path to a target host, showing each hop along the route with latency information.",
+			),
 			mcp.WithString("target",
 				mcp.Required(),
 				mcp.Description("Target hostname or IP address to trace"),
@@ -78,8 +93,11 @@ func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 
 	// tcp_probe - Probe a TCP port
 	s.addTool("tcp_probe", isAllowed,
-		mcp.NewTool("tcp_probe",
-			mcp.WithDescription("Probe a specific TCP port on a host to check if it's open and measure connection latency."),
+		mcp.NewTool(
+			"tcp_probe",
+			mcp.WithDescription(
+				"Probe a specific TCP port on a host to check if it's open and measure connection latency.",
+			),
 			mcp.WithString("host",
 				mcp.Required(),
 				mcp.Description("Target hostname or IP address"),
@@ -97,14 +115,20 @@ func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 
 	// port_scan - Scan ports on a host
 	s.addTool("port_scan", isAllowed,
-		mcp.NewTool("port_scan",
-			mcp.WithDescription("Scan for open ports on a host with optional service banner detection. Returns a list of open ports with service information."),
+		mcp.NewTool(
+			"port_scan",
+			mcp.WithDescription(
+				"Scan for open ports on a host with optional service banner detection. Returns a list of open ports with service information.",
+			),
 			mcp.WithString("host",
 				mcp.Required(),
 				mcp.Description("Target hostname or IP address"),
 			),
-			mcp.WithString("ports",
-				mcp.Description("Ports to scan: comma-separated list (e.g., '22,80,443') or range (e.g., '1-1024'). Default: common ports"),
+			mcp.WithString(
+				"ports",
+				mcp.Description(
+					"Ports to scan: comma-separated list (e.g., '22,80,443') or range (e.g., '1-1024'). Default: common ports",
+				),
 			),
 			mcp.WithBoolean("banners",
 				mcp.Description("Attempt to grab service banners (default: true)"),
@@ -115,14 +139,14 @@ func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 }
 
 // getArguments safely extracts arguments as a map.
-func getArguments(request mcp.CallToolRequest) map[string]interface{} {
+func getArguments(request mcp.CallToolRequest) map[string]any {
 	if request.Params.Arguments == nil {
-		return make(map[string]interface{})
+		return make(map[string]any)
 	}
-	if args, ok := request.Params.Arguments.(map[string]interface{}); ok {
+	if args, ok := request.Params.Arguments.(map[string]any); ok {
 		return args
 	}
-	return make(map[string]interface{})
+	return make(map[string]any)
 }
 
 // handleNetworkScan handles the network_scan tool.
@@ -149,7 +173,7 @@ func (s *Server) handleNetworkScan(ctx context.Context, request mcp.CallToolRequ
 		// Return current devices instead of an error
 		if errors.Is(err, discovery.ErrScanInProgress) {
 			devices := svc.GetDevices()
-			result := map[string]interface{}{
+			result := map[string]any{
 				"status":  "scan_in_progress",
 				"message": "A network scan is already in progress. Returning cached devices.",
 				"devices": devices,
@@ -176,9 +200,11 @@ func (s *Server) handleGetDevices(_ context.Context, _ mcp.CallToolRequest) (*mc
 
 // handleDeviceFingerprint handles the device_fingerprint tool.
 func (s *Server) handleDeviceFingerprint(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	ip, err := request.RequireString("ip")
-	if err != nil {
-		return mcp.NewToolResultError("ip parameter is required"), nil //nolint:nilerr // MCP returns tool error, not Go error
+	ip, _ := request.RequireString("ip")
+	if ip == "" {
+		return mcp.NewToolResultError(
+			"ip parameter is required",
+		), nil
 	}
 
 	// Find the device in discovered devices
@@ -199,7 +225,9 @@ func (s *Server) handleDeviceFingerprint(_ context.Context, request mcp.CallTool
 		}
 	}
 
-	return mcp.NewToolResultError(fmt.Sprintf("Device %s not found in discovered devices. Run network_scan first.", ip)), nil
+	return mcp.NewToolResultError(
+		fmt.Sprintf("Device %s not found in discovered devices. Run network_scan first.", ip),
+	), nil
 }
 
 // handleGetNeighbors handles the get_neighbors tool.
@@ -245,18 +273,17 @@ func (s *Server) handleGetNeighbors(_ context.Context, request mcp.CallToolReque
 
 // handleTraceroute handles the traceroute tool.
 func (s *Server) handleTraceroute(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	target, err := request.RequireString("target")
-	if err != nil {
-		return mcp.NewToolResultError("target parameter is required"), nil //nolint:nilerr // MCP returns tool error, not Go error
+	target, _ := request.RequireString("target")
+	if target == "" {
+		return mcp.NewToolResultError(
+			"target parameter is required",
+		), nil
 	}
 
 	args := getArguments(request)
 	maxHops := 30
 	if h, ok := args["max_hops"].(float64); ok && h > 0 {
-		maxHops = int(h)
-		if maxHops > 64 {
-			maxHops = 64
-		}
+		maxHops = min(int(h), 64)
 	}
 
 	timeout := 3 * time.Second
@@ -266,7 +293,9 @@ func (s *Server) handleTraceroute(ctx context.Context, request mcp.CallToolReque
 
 	// Check if ICMP is available
 	if !s.services.IsICMPAvailable() {
-		return mcp.NewToolResultError("Traceroute requires raw socket capabilities (CAP_NET_RAW). Run with elevated privileges."), nil
+		return mcp.NewToolResultError(
+			"Traceroute requires raw socket capabilities (CAP_NET_RAW). Run with elevated privileges.",
+		), nil
 	}
 
 	tracer := discovery.NewTracer(timeout, maxHops)
@@ -301,7 +330,7 @@ func (s *Server) handleTCPProbe(ctx context.Context, request mcp.CallToolRequest
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to create TCP prober: %v", err)), nil
 	}
-	defer prober.Close()
+	defer func() { _ = prober.Close() }()
 
 	result := prober.ProbeTCP(ctx, host, int(port))
 	return formatJSONResult(result)
@@ -328,23 +357,23 @@ func (s *Server) handlePortScan(ctx context.Context, request mcp.CallToolRequest
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to create port scanner: %v", err)), nil
 	}
-	defer scanner.Close()
+	defer func() { _ = scanner.Close() }()
 
 	result := scanner.ScanWithBanners(ctx, host, ports, 10)
 	return formatJSONResult(result)
 }
 
 // parsePortRange parses a port range like "1-1024" and returns start, end.
-func parsePortRange(part string) (start, end int, err error) {
+func parsePortRange(part string) (int, int, error) {
 	rangeParts := strings.SplitN(part, "-", 2)
 	if len(rangeParts) != 2 {
 		return 0, 0, fmt.Errorf("invalid range: %s", part)
 	}
-	start, err = strconv.Atoi(strings.TrimSpace(rangeParts[0]))
+	start, err := strconv.Atoi(strings.TrimSpace(rangeParts[0]))
 	if err != nil {
 		return 0, 0, fmt.Errorf("invalid port in range: %s", rangeParts[0])
 	}
-	end, err = strconv.Atoi(strings.TrimSpace(rangeParts[1]))
+	end, err := strconv.Atoi(strings.TrimSpace(rangeParts[1]))
 	if err != nil {
 		return 0, 0, fmt.Errorf("invalid port in range: %s", rangeParts[1])
 	}
@@ -375,8 +404,8 @@ func parsePorts(spec string) ([]int, error) {
 	ports := make([]int, 0)
 	seen := make(map[int]bool)
 
-	parts := strings.Split(spec, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(spec, ",")
+	for part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
@@ -406,14 +435,14 @@ func parsePorts(spec string) ([]int, error) {
 	}
 
 	if len(ports) == 0 {
-		return nil, fmt.Errorf("no valid ports specified")
+		return nil, errors.New("no valid ports specified")
 	}
 
 	return ports, nil
 }
 
 // formatJSONResult formats data as a JSON result.
-func formatJSONResult(data interface{}) (*mcp.CallToolResult, error) {
+func formatJSONResult(data any) (*mcp.CallToolResult, error) {
 	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to serialize result: %v", err)), nil

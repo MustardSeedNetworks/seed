@@ -20,7 +20,6 @@ import (
 var (
 	cpuCacheMu      sync.RWMutex
 	cpuCachePercent float64
-	cpuCacheTime    time.Time
 	cpuSamplerOnce  sync.Once
 	cpuSamplerStop  chan struct{}
 )
@@ -34,7 +33,6 @@ func startCPUSampler() {
 		if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil && len(pct) > 0 {
 			cpuCacheMu.Lock()
 			cpuCachePercent = pct[0]
-			cpuCacheTime = time.Now()
 			cpuCacheMu.Unlock()
 		}
 
@@ -49,7 +47,6 @@ func startCPUSampler() {
 				if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil && len(pct) > 0 {
 					cpuCacheMu.Lock()
 					cpuCachePercent = pct[0]
-					cpuCacheTime = time.Now()
 					cpuCacheMu.Unlock()
 				}
 			}
@@ -82,11 +79,11 @@ var (
 
 // getCachedProcesses returns cached top processes (non-blocking).
 // Returns cached data immediately, triggers background refresh if stale.
-func getCachedProcesses() (topCPU, topMemory []ProcessInfo) {
+func getCachedProcesses() ([]ProcessInfo, []ProcessInfo) {
 	processCacheMu.RLock()
 	cacheAge := time.Since(processCacheTime)
-	topCPU = processCacheTop5
-	topMemory = processCacheMem5
+	topCPU := processCacheTop5
+	topMemory := processCacheMem5
 	processCacheMu.RUnlock()
 
 	// If cache is stale, trigger background update (non-blocking)
@@ -166,7 +163,7 @@ type Health struct {
 // getTopProcessesInternal collects information about top resource-consuming processes.
 // Returns top 5 processes by CPU and memory usage.
 // This is the internal (slow) version - use getCachedProcesses() for non-blocking access.
-func getTopProcessesInternal() (topCPU, topMemory []ProcessInfo) {
+func getTopProcessesInternal() ([]ProcessInfo, []ProcessInfo) {
 	procs, err := process.Processes()
 	if err != nil {
 		return nil, nil
@@ -175,20 +172,20 @@ func getTopProcessesInternal() (topCPU, topMemory []ProcessInfo) {
 	var processes []ProcessInfo
 	for _, p := range procs {
 		// Get process name
-		name, err := p.Name()
-		if err != nil {
+		name, nameErr := p.Name()
+		if nameErr != nil {
 			continue
 		}
 
 		// Get CPU percent (over a short interval)
-		cpuPercent, err := p.CPUPercent()
-		if err != nil {
+		cpuPercent, cpuErr := p.CPUPercent()
+		if cpuErr != nil {
 			cpuPercent = 0
 		}
 
 		// Get memory info
-		memInfo, err := p.MemoryInfo()
-		if err != nil {
+		memInfo, memErr := p.MemoryInfo()
+		if memErr != nil {
 			continue
 		}
 		memoryMB := float64(memInfo.RSS) / (1024 * 1024)
@@ -207,6 +204,7 @@ func getTopProcessesInternal() (topCPU, topMemory []ProcessInfo) {
 	sort.Slice(cpuSorted, func(i, j int) bool {
 		return cpuSorted[i].CPUPercent > cpuSorted[j].CPUPercent
 	})
+	var topCPU []ProcessInfo
 	if len(cpuSorted) > 5 {
 		topCPU = cpuSorted[:5]
 	} else {
@@ -219,6 +217,7 @@ func getTopProcessesInternal() (topCPU, topMemory []ProcessInfo) {
 	sort.Slice(memSorted, func(i, j int) bool {
 		return memSorted[i].MemoryMB > memSorted[j].MemoryMB
 	})
+	var topMemory []ProcessInfo
 	if len(memSorted) > 5 {
 		topMemory = memSorted[:5]
 	} else {

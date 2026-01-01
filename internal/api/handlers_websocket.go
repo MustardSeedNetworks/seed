@@ -215,7 +215,8 @@ func isAllowedWSOrigin(origin string) bool {
 					}
 					// Valid octet is 1-3 digits; next char must be valid boundary (. : / or end)
 					if octetEnd > 0 && octetEnd <= 3 {
-						if octetEnd == len(remainder) || remainder[octetEnd] == '.' || remainder[octetEnd] == ':' || remainder[octetEnd] == '/' {
+						if octetEnd == len(remainder) || remainder[octetEnd] == '.' || remainder[octetEnd] == ':' ||
+							remainder[octetEnd] == '/' {
 							return true
 						}
 					}
@@ -227,16 +228,6 @@ func isAllowedWSOrigin(origin string) bool {
 
 	// Default: Allow localhost and RFC 1918 private networks
 	return isRFC1918Origin(origin)
-}
-
-// getConfiguredOrigins returns a copy of the configured origins for CORS middleware.
-// Thread-safe for concurrent access (fixes #847).
-func getConfiguredOrigins() []string {
-	configuredOriginsMu.RLock()
-	defer configuredOriginsMu.RUnlock()
-	origins := make([]string, len(configuredOrigins))
-	copy(origins, configuredOrigins)
-	return origins
 }
 
 // isRFC1918Origin checks if the origin is localhost or an RFC 1918 private network address.
@@ -263,7 +254,7 @@ func getConfiguredOrigins() []string {
 //   - true if the origin is localhost or a private network address
 //   - false for public IP addresses or non-matching origins
 //
-//nolint:gocyclo,gocritic // Complexity is necessary for proper IP validation security (fixes #710)
+//nolint:gocritic // Complexity is necessary for proper IP validation security (fixes #710)
 func isRFC1918Origin(origin string) bool {
 	// Reject null origin (fixes #709)
 	if origin == "null" {
@@ -404,8 +395,8 @@ func isValidIPOctet(s string) bool {
 //
 // Clients must handle unknown message types gracefully (ignore or log).
 type Message struct {
-	Type    string      `json:"type"`    // Message type identifier
-	Payload interface{} `json:"payload"` // Type-specific data (varies by Type)
+	Type    string `json:"type"`    // Message type identifier
+	Payload any    `json:"payload"` // Type-specific data (varies by Type)
 }
 
 // CardUpdate represents a dashboard card data update for periodic refreshes.
@@ -426,9 +417,9 @@ type Message struct {
 // interface the card data pertains to. Clients can filter updates based on their
 // currently selected interface.
 type CardUpdate struct {
-	CardID    string      `json:"cardId"`              // Unique card identifier (e.g., "link", "dns", "gateway")
-	Data      interface{} `json:"data"`                // Complete card data (structure varies by CardID)
-	Interface string      `json:"interface,omitempty"` // Network interface name (e.g., "eth0", "wlan0")
+	CardID    string `json:"cardId"`              // Unique card identifier (e.g., "link", "dns", "gateway")
+	Data      any    `json:"data"`                // Complete card data (structure varies by CardID)
+	Interface string `json:"interface,omitempty"` // Network interface name (e.g., "eth0", "wlan0")
 }
 
 // Client represents a single WebSocket client connection.
@@ -575,7 +566,7 @@ func (h *Hub) Broadcast(msg Message) {
 
 // BroadcastCardUpdate sends a card update to all clients.
 // For interface-specific updates, use BroadcastCardUpdateForInterface instead.
-func (h *Hub) BroadcastCardUpdate(cardID string, data interface{}) {
+func (h *Hub) BroadcastCardUpdate(cardID string, data any) {
 	h.Broadcast(Message{
 		Type: "card_update",
 		Payload: CardUpdate{
@@ -588,7 +579,7 @@ func (h *Hub) BroadcastCardUpdate(cardID string, data interface{}) {
 // BroadcastCardUpdateForInterface sends a card update scoped to a specific interface.
 // This allows clients to filter updates based on their currently selected interface.
 // Multi-interface support (#754).
-func (h *Hub) BroadcastCardUpdateForInterface(cardID string, data interface{}, iface string) {
+func (h *Hub) BroadcastCardUpdateForInterface(cardID string, data any, iface string) {
 	h.Broadcast(Message{
 		Type: "card_update",
 		Payload: CardUpdate{
@@ -608,7 +599,7 @@ func (h *Hub) ClientCount() int {
 
 // BroadcastLogEntry sends a log entry to all connected clients.
 // This is used by the logging package to stream logs in real-time.
-func (h *Hub) BroadcastLogEntry(entry interface{}) {
+func (h *Hub) BroadcastLogEntry(entry any) {
 	h.Broadcast(Message{
 		Type:    "log_entry",
 		Payload: entry,
@@ -774,16 +765,30 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	if token == "" {
 		logger := logging.FromContext(r.Context())
 		localizer := i18n.FromRequest(r)
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, localizer.T("errors.auth.noToken"), "") // fixes #694
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusUnauthorized,
+			ErrCodeUnauthorized,
+			localizer.T("errors.auth.noToken"),
+			"",
+		) // fixes #694
 		return
 	}
 
-	claims, err := s.authManager.ValidateToken(token)
+	claims, err := s.authManager.ValidateToken(r.Context(), token)
 	if err != nil {
 		slog.Warn("WebSocket auth failed", "error", err, "source", source)
 		logger := logging.FromContext(r.Context())
 		localizer := i18n.FromRequest(r)
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, localizer.T("errors.auth.invalidToken"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusUnauthorized,
+			ErrCodeUnauthorized,
+			localizer.T("errors.auth.invalidToken"),
+			"",
+		)
 		return
 	}
 
@@ -822,7 +827,7 @@ func (s *Server) sendInitialState(client *Client) {
 	}
 
 	// Build initial state with actual card data
-	cards := make(map[string]interface{})
+	cards := make(map[string]any)
 
 	// Collect current card data
 	if linkData := s.collectLinkData(); linkData != nil {
@@ -840,7 +845,7 @@ func (s *Server) sendInitialState(client *Client) {
 
 	msg := Message{
 		Type: "initial_state",
-		Payload: map[string]interface{}{
+		Payload: map[string]any{
 			"status":     "connected",
 			"interface":  s.config.Interface.Default,
 			"isWireless": isWireless,
@@ -874,7 +879,7 @@ func (c *Client) close() {
 	c.closeOnce.Do(func() {
 		// Close connection first to force writePump to exit via conn.Close() (fixes #835)
 		// This ensures the writePump goroutine doesn't block forever on c.send
-		c.conn.Close()
+		_ = c.conn.Close()
 
 		// Then try to unregister - if this times out, the client is already
 		// disconnected so it won't receive messages anyway (fixes #686)
@@ -918,16 +923,16 @@ func (c *Client) readPump() {
 			slog.Warn("WebSocket rate limit exceeded, closing connection")
 			// Send close message with policy violation code (1008)
 			closeMsg := websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "rate limit exceeded")
-			if err := c.conn.WriteControl(websocket.CloseMessage, closeMsg, time.Now().Add(writeWait)); err != nil {
-				slog.Error("Failed to send rate limit close message", "error", err)
+			if writeErr := c.conn.WriteControl(websocket.CloseMessage, closeMsg, time.Now().Add(writeWait)); writeErr != nil {
+				slog.Error("Failed to send rate limit close message", "error", writeErr)
 			}
 			break
 		}
 
 		// Handle incoming messages (e.g., settings updates, test triggers)
 		var msg Message
-		if err := json.Unmarshal(message, &msg); err != nil {
-			slog.Warn("Error parsing message", "error", err)
+		if unmarshalErr := json.Unmarshal(message, &msg); unmarshalErr != nil {
+			slog.Warn("Error parsing message", "error", unmarshalErr)
 			continue
 		}
 
@@ -938,7 +943,7 @@ func (c *Client) readPump() {
 		case "ping":
 			// Respond with pong for client-side keep-alive
 			response := Message{Type: "pong", Payload: time.Now().UnixMilli()}
-			if data, err := json.Marshal(response); err == nil {
+			if data, marshalErr := json.Marshal(response); marshalErr == nil {
 				select {
 				case c.send <- data:
 				default:
@@ -989,20 +994,20 @@ func (c *Client) writePump() {
 
 			// Fixes #869: Use a closure to ensure writer is closed on all paths
 			writeErr := func() error {
-				defer w.Close() // Always close writer (fixes #869)
+				defer func() { _ = w.Close() }() // Always close writer (fixes #869)
 
-				if _, err := w.Write(message); err != nil {
-					return err
+				if _, wErr := w.Write(message); wErr != nil {
+					return wErr
 				}
 
 				// Add queued messages to the current WebSocket message
 				n := len(c.send)
 				for range n {
-					if _, err := w.Write([]byte{'\n'}); err != nil {
-						return err
+					if _, nlErr := w.Write([]byte{'\n'}); nlErr != nil {
+						return nlErr
 					}
-					if _, err := w.Write(<-c.send); err != nil {
-						return err
+					if _, msgErr := w.Write(<-c.send); msgErr != nil {
+						return msgErr
 					}
 				}
 				return nil

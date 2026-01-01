@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -167,7 +168,7 @@ func TestEnsureConfigFirstBoot(t *testing.T) {
 	cfg, result, err := EnsureConfig(configPath, nil)
 
 	// Should return ErrInsecureCredentials because password hash is empty
-	if err != ErrInsecureCredentials {
+	if !errors.Is(err, ErrInsecureCredentials) {
 		t.Errorf("expected ErrInsecureCredentials for first boot, got %v", err)
 	}
 	if cfg == nil {
@@ -200,7 +201,7 @@ func TestEnsureConfigDetectsInsecurePassword(t *testing.T) {
 
 	_, result, err := EnsureConfig(configPath, checkInsecure)
 
-	if err != ErrInsecureCredentials {
+	if !errors.Is(err, ErrInsecureCredentials) {
 		t.Errorf("expected ErrInsecureCredentials for insecure password, got %v", err)
 	}
 	if result == nil {
@@ -375,7 +376,7 @@ func TestEnsureConfigCreatesDirectory(t *testing.T) {
 	// EnsureConfig creates the directory structure
 	_, _, err := EnsureConfig(configPath, nil)
 	// Will return ErrInsecureCredentials because password is empty, but directory should exist
-	if err != nil && err != ErrInsecureCredentials {
+	if err != nil && !errors.Is(err, ErrInsecureCredentials) {
 		t.Fatalf("EnsureConfig failed unexpectedly: %v", err)
 	}
 

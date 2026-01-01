@@ -268,7 +268,11 @@ func TestGetChannelGraphData(t *testing.T) {
 			if tt.connectedBSSID != "" {
 				foundConnected := false
 				// Combine all networks into a single slice
-				allNetworks := make([]ChannelNetwork, 0, len(got.Networks2_4GHz)+len(got.Networks5GHz)+len(got.Networks6GHz))
+				allNetworks := make(
+					[]ChannelNetwork,
+					0,
+					len(got.Networks2_4GHz)+len(got.Networks5GHz)+len(got.Networks6GHz),
+				)
 				allNetworks = append(allNetworks, got.Networks2_4GHz...)
 				allNetworks = append(allNetworks, got.Networks5GHz...)
 				allNetworks = append(allNetworks, got.Networks6GHz...)

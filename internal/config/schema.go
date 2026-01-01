@@ -4,6 +4,7 @@ package config
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -23,7 +24,7 @@ type SchemaValidator struct {
 // It loads the embedded JSON schema and compiles it for validation.
 func NewSchemaValidator() (*SchemaValidator, error) {
 	// Parse the embedded schema
-	var schemaDoc interface{}
+	var schemaDoc any
 	if err := json.Unmarshal(schemaData, &schemaDoc); err != nil {
 		return nil, fmt.Errorf("failed to parse embedded schema: %w", err)
 	}
@@ -59,9 +60,9 @@ func (v *SchemaValidator) ValidateConfig(cfg *Config) []ValidationError {
 
 	// Then unmarshal the YAML as JSON-compatible data
 	// YAML is a superset of JSON, so this works
-	var data interface{}
-	if err := json.Unmarshal(yamlBytes, &data); err != nil {
-		return []ValidationError{{Path: "", Message: fmt.Sprintf("failed to unmarshal config: %v", err)}}
+	var data any
+	if unmarshalErr := json.Unmarshal(yamlBytes, &data); unmarshalErr != nil {
+		return []ValidationError{{Path: "", Message: fmt.Sprintf("failed to unmarshal config: %v", unmarshalErr)}}
 	}
 
 	// Validate
@@ -71,16 +72,17 @@ func (v *SchemaValidator) ValidateConfig(cfg *Config) []ValidationError {
 	}
 
 	// Extract validation errors
-	var errors []ValidationError
+	var validationErrs []ValidationError
 	// Parse the validation error to extract path and message
 	// The jsonschema library returns structured errors
-	if validationErr, ok := err.(*jsonschema.ValidationError); ok {
-		errors = extractValidationErrors(validationErr)
+	var validationErr *jsonschema.ValidationError
+	if errors.As(err, &validationErr) {
+		validationErrs = extractValidationErrors(validationErr)
 	} else {
-		errors = []ValidationError{{Path: "", Message: err.Error()}}
+		validationErrs = []ValidationError{{Path: "", Message: err.Error()}}
 	}
 
-	return errors
+	return validationErrs
 }
 
 // marshalForValidation marshals the config using YAML tags (which are compatible with JSON schema).
@@ -98,9 +100,9 @@ func (cfg *Config) marshalForValidation() ([]byte, error) {
 	}
 
 	// Convert YAML to JSON-compatible map
-	var yamlData interface{}
-	if err := yaml.Unmarshal(yamlBytes, &yamlData); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+	var yamlData any
+	if unmarshalErr := yaml.Unmarshal(yamlBytes, &yamlData); unmarshalErr != nil {
+		return nil, fmt.Errorf("failed to unmarshal YAML: %w", unmarshalErr)
 	}
 
 	// Marshal to JSON (this converts the YAML representation to JSON)
@@ -148,19 +150,19 @@ func extractValidationErrors(err *jsonschema.ValidationError) []ValidationError 
 
 // Global validator (lazy initialized).
 var (
-	globalValidator    *SchemaValidator
-	globalValidatorErr error
+	globalValidator        *SchemaValidator
+	errGlobalValidatorInit error
 )
 
 // ValidateWithSchema validates a Config against the embedded JSON schema.
 // Returns nil if valid, otherwise returns validation errors.
 // This is a convenience function that uses a global validator instance.
 func ValidateWithSchema(cfg *Config) []ValidationError {
-	if globalValidator == nil && globalValidatorErr == nil {
-		globalValidator, globalValidatorErr = NewSchemaValidator()
+	if globalValidator == nil && errGlobalValidatorInit == nil {
+		globalValidator, errGlobalValidatorInit = NewSchemaValidator()
 	}
 
-	if globalValidatorErr != nil {
+	if errGlobalValidatorInit != nil {
 		// Schema validation unavailable, return nil to fall back to struct validation
 		return nil
 	}

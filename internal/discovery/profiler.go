@@ -7,9 +7,11 @@ package discovery
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"net"
 	"net/http"
 	"regexp"
@@ -285,10 +287,10 @@ func (p *DeviceProfiler) worker() {
 func (p *DeviceProfiler) QueueProfile(ip string) error {
 	if !p.config.Enabled {
 		slog.Debug("QueueProfile skipped - profiler disabled", "ip", ip)
-		return fmt.Errorf("profiler disabled")
+		return errors.New("profiler disabled")
 	}
 	if ip == "" {
-		return fmt.Errorf("empty IP address")
+		return errors.New("empty IP address")
 	}
 
 	p.mu.Lock()
@@ -296,7 +298,7 @@ func (p *DeviceProfiler) QueueProfile(ip string) error {
 	if p.stopCh == nil {
 		p.mu.Unlock()
 		slog.Debug("QueueProfile skipped - profiler not started", "ip", ip)
-		return fmt.Errorf("profiler not started")
+		return errors.New("profiler not started")
 	}
 	// Skip if already profiled or in progress
 	if _, exists := p.profiles[ip]; exists {
@@ -322,7 +324,7 @@ func (p *DeviceProfiler) QueueProfile(ip string) error {
 		delete(p.profiling, ip)
 		p.mu.Unlock()
 		slog.Warn("Profile queue full, skipped", "ip", ip)
-		return fmt.Errorf("profile queue full")
+		return errors.New("profile queue full")
 	}
 }
 
@@ -446,7 +448,17 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 	p.profiles[ip] = profile
 	p.mu.Unlock()
 
-	slog.Info("Profiled device", "ip", ip, "open_ports", len(profile.OpenPorts), "type", profile.DeviceType, "icons", profile.DeviceIcons)
+	slog.Info(
+		"Profiled device",
+		"ip",
+		ip,
+		"open_ports",
+		len(profile.OpenPorts),
+		"type",
+		profile.DeviceType,
+		"icons",
+		profile.DeviceIcons,
+	)
 }
 
 // checkPortWithConfig checks if a TCP port is open using configurable settings.
@@ -472,7 +484,7 @@ func (p *DeviceProfiler) checkPortWithConfig(ctx context.Context, ip string, por
 	if err != nil {
 		return result
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	result.IsOpen = true
 
@@ -487,9 +499,9 @@ func (p *DeviceProfiler) checkPortWithConfig(ctx context.Context, ip string, por
 		// Try to grab banner for certain ports that typically send banners
 		if port == 22 || port == 21 || port == 23 || port == 25 || port == 110 || port == 143 ||
 			port == 3306 || port == 5432 || port == 6379 || port == 27017 {
-			_ = conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond)) //nolint:errcheck // Best-effort deadline
+			_ = conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 			banner := make([]byte, 256)
-			n, _ := conn.Read(banner) //nolint:errcheck // Best-effort banner read
+			n, _ := conn.Read(banner)
 			if n > 0 {
 				result.Banner = strings.TrimSpace(string(banner[:n]))
 			}
@@ -507,7 +519,7 @@ func (p *DeviceProfiler) probeHTTP(ctx context.Context, ip string, port int, isH
 	}
 
 	url := fmt.Sprintf("%s://%s:%d/", scheme, ip, port)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return nil
 	}
@@ -517,7 +529,7 @@ func (p *DeviceProfiler) probeHTTP(ctx context.Context, ip string, port int, isH
 	if err != nil {
 		return nil
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	info := &HTTPInfo{
 		Port:       port,
@@ -546,7 +558,15 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		return nil
 	}
 
-	slog.Debug("Attempting SNMP probe", "ip", ip, "communities", len(p.snmpConfig.Communities), "v3creds", len(p.snmpConfig.V3Credentials))
+	slog.Debug(
+		"Attempting SNMP probe",
+		"ip",
+		ip,
+		"communities",
+		len(p.snmpConfig.Communities),
+		"v3creds",
+		len(p.snmpConfig.V3Credentials),
+	)
 
 	// Query system information
 	sysInfo, err := snmp.GetSystemInfo(ctx, ip, p.snmpConfig)
@@ -555,7 +575,15 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		return nil
 	}
 
-	slog.Info("SNMP probe succeeded", "ip", ip, "sysName", sysInfo.SysName, "sysDescr", truncateString(sysInfo.SysDescr, 50))
+	slog.Info(
+		"SNMP probe succeeded",
+		"ip",
+		ip,
+		"sysName",
+		sysInfo.SysName,
+		"sysDescr",
+		truncateString(sysInfo.SysDescr, 50),
+	)
 
 	return &SNMPInfo{
 		SysDescr:    sysInfo.SysDescr,
@@ -708,7 +736,7 @@ var httpDeviceMatchers = []httpDeviceMatch{
 }
 
 // matchHTTPDeviceType matches HTTP title/server against known device patterns.
-func matchHTTPDeviceType(title, server string) (deviceType, icon string) {
+func matchHTTPDeviceType(title, server string) (string, string) {
 	for _, m := range httpDeviceMatchers {
 		for _, p := range m.titlePatterns {
 			if strings.Contains(title, p) {
@@ -737,9 +765,7 @@ func (p *DeviceProfiler) GetAllProfiles() map[string]*DeviceProfile {
 	defer p.mu.RUnlock()
 
 	result := make(map[string]*DeviceProfile, len(p.profiles))
-	for k, v := range p.profiles {
-		result[k] = v
-	}
+	maps.Copy(result, p.profiles)
 	return result
 }
 

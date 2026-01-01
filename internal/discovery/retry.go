@@ -133,7 +133,11 @@ func RetryWithBackoff(ctx context.Context, cfg RetryConfig, operation func() err
 }
 
 // RetryWithBackoffResult is like RetryWithBackoff but for operations that return a value.
-func RetryWithBackoffResult[T any](ctx context.Context, cfg RetryConfig, operation func() (T, error)) (T, *RetryResult) {
+func RetryWithBackoffResult[T any](
+	ctx context.Context,
+	cfg RetryConfig,
+	operation func() (T, error),
+) (T, *RetryResult) {
 	var finalResult T
 	result := &RetryResult{}
 	start := time.Now()
@@ -193,7 +197,7 @@ func RetryWithBackoffResult[T any](ctx context.Context, cfg RetryConfig, operati
 func calculateDelay(cfg RetryConfig, attempt int) time.Duration {
 	// Exponential backoff: delay = initialDelay * (backoffFactor ^ attempt)
 	delay := float64(cfg.InitialDelay)
-	for i := 0; i < attempt; i++ {
+	for range attempt {
 		delay *= cfg.BackoffFactor
 	}
 
@@ -204,7 +208,7 @@ func calculateDelay(cfg RetryConfig, attempt int) time.Duration {
 
 	// Add jitter
 	if cfg.JitterPercent > 0 {
-		jitter := delay * cfg.JitterPercent * (rand.Float64()*2 - 1) // -jitter to +jitter
+		jitter := delay * cfg.JitterPercent * (rand.Float64()*2 - 1) // #nosec G404 -- weak RNG acceptable for timing jitter
 		delay += jitter
 	}
 
@@ -241,7 +245,7 @@ func isRetryableError(err error, retryableErrors []string) bool {
 func containsIgnoreCase(s, substr string) bool {
 	// Simple case-insensitive contains
 	sLower := make([]byte, len(s))
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		c := s[i]
 		if c >= 'A' && c <= 'Z' {
 			sLower[i] = c + 32
@@ -251,7 +255,7 @@ func containsIgnoreCase(s, substr string) bool {
 	}
 
 	substrLower := make([]byte, len(substr))
-	for i := 0; i < len(substr); i++ {
+	for i := range len(substr) {
 		c := substr[i]
 		if c >= 'A' && c <= 'Z' {
 			substrLower[i] = c + 32
@@ -263,7 +267,7 @@ func containsIgnoreCase(s, substr string) bool {
 	// Use simple byte search
 	for i := 0; i <= len(sLower)-len(substrLower); i++ {
 		match := true
-		for j := 0; j < len(substrLower); j++ {
+		for j := range substrLower {
 			if sLower[i+j] != substrLower[j] {
 				match = false
 				break

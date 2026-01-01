@@ -271,7 +271,7 @@ func TestRogueDetector_Start_InvalidInterface(t *testing.T) {
 	err := rd.Start()
 	if err == nil {
 		t.Error("Start should fail with invalid interface")
-		rd.Stop()
+		_ = rd.Stop()
 	}
 }
 

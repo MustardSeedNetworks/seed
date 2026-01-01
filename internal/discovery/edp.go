@@ -65,7 +65,7 @@ func NewEDPCapture(interfaceName string) *EDPCapture {
 
 // Start begins capturing EDP frames.
 //
-//nolint:dupl // CDP/LLDP/EDP capture Start() methods share structure but have protocol-specific filters
+
 func (c *EDPCapture) Start() error {
 	c.mu.Lock()
 	if c.started {
@@ -81,10 +81,10 @@ func (c *EDPCapture) Start() error {
 	}
 
 	// Set BPF filter for EDP (dst MAC 00:E0:2B:00:00:00)
-	if err := handle.SetBPFFilter("ether dst 00:e0:2b:00:00:00"); err != nil {
+	if filterErr := handle.SetBPFFilter("ether dst 00:e0:2b:00:00:00"); filterErr != nil {
 		handle.Close()
 		c.mu.Unlock()
-		return fmt.Errorf("failed to set BPF filter: %w", err)
+		return fmt.Errorf("failed to set BPF filter: %w", filterErr)
 	}
 
 	c.handle = handle

@@ -18,6 +18,7 @@ package discovery
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -93,7 +94,9 @@ func NewKEVProvider(cachePath string) (*KEVProvider, error) {
 
 // SearchByCPE is not applicable for KEV - use IsExploited instead.
 func (kev *KEVProvider) SearchByCPE(_ context.Context, _ string) ([]Vulnerability, error) {
-	return nil, fmt.Errorf("KEV provider does not support CPE search - use IsExploited() to check if a CVE is in the catalog")
+	return nil, errors.New(
+		"KEV provider does not support CPE search - use IsExploited() to check if a CVE is in the catalog",
+	)
 }
 
 // SearchByProduct searches for vulnerabilities by vendor/product.
@@ -103,7 +106,7 @@ func (kev *KEVProvider) SearchByProduct(_ context.Context, vendor, product, _ st
 	defer kev.mu.RUnlock()
 
 	if kev.catalog == nil {
-		return nil, fmt.Errorf("KEV catalog not loaded")
+		return nil, errors.New("KEV catalog not loaded")
 	}
 
 	vendor = strings.ToLower(vendor)
@@ -130,7 +133,7 @@ func (kev *KEVProvider) SearchByProduct(_ context.Context, vendor, product, _ st
 func (kev *KEVProvider) UpdateDatabase(ctx context.Context) error {
 	slog.Info("Downloading CISA KEV catalog...")
 
-	req, err := http.NewRequestWithContext(ctx, "GET", kevCatalogURL, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, kevCatalogURL, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -139,7 +142,7 @@ func (kev *KEVProvider) UpdateDatabase(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to download KEV catalog: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("KEV catalog download failed with status %d", resp.StatusCode)
@@ -151,8 +154,8 @@ func (kev *KEVProvider) UpdateDatabase(ctx context.Context) error {
 	}
 
 	var catalog KEVCatalog
-	if err := json.Unmarshal(body, &catalog); err != nil {
-		return fmt.Errorf("failed to parse KEV catalog: %w", err)
+	if unmarshalErr := json.Unmarshal(body, &catalog); unmarshalErr != nil {
+		return fmt.Errorf("failed to parse KEV catalog: %w", unmarshalErr)
 	}
 
 	// Build index
@@ -171,8 +174,8 @@ func (kev *KEVProvider) UpdateDatabase(ctx context.Context) error {
 
 	// Save cache
 	if kev.cachePath != "" {
-		if err := kev.saveCache(body); err != nil {
-			slog.Warn("Failed to cache KEV catalog", "error", err)
+		if saveErr := kev.saveCache(body); saveErr != nil {
+			slog.Warn("Failed to cache KEV catalog", "error", saveErr)
 		}
 	}
 
@@ -219,12 +222,12 @@ func (kev *KEVProvider) IsRansomwareRelated(cveID string) bool {
 }
 
 // GetCatalogStats returns statistics about the KEV catalog.
-func (kev *KEVProvider) GetCatalogStats() map[string]interface{} {
+func (kev *KEVProvider) GetCatalogStats() map[string]any {
 	kev.mu.RLock()
 	defer kev.mu.RUnlock()
 
 	if kev.catalog == nil {
-		return map[string]interface{}{
+		return map[string]any{
 			"loaded":     false,
 			"lastUpdate": kev.lastUpdate,
 		}
@@ -238,7 +241,7 @@ func (kev *KEVProvider) GetCatalogStats() map[string]interface{} {
 		}
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"loaded":          true,
 		"version":         kev.catalog.CatalogVersion,
 		"dateReleased":    kev.catalog.DateReleased,
@@ -280,22 +283,22 @@ func (kev *KEVProvider) loadCache() error {
 
 	info, err := os.Stat(cacheFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to stat cache file: %w", err)
 	}
 
 	// Check if cache is too old
 	if time.Since(info.ModTime()) > kevMaxAge {
-		return fmt.Errorf("cache expired")
+		return errors.New("cache expired")
 	}
 
 	data, err := os.ReadFile(cacheFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read cache file: %w", err)
 	}
 
 	var catalog KEVCatalog
-	if err := json.Unmarshal(data, &catalog); err != nil {
-		return err
+	if unmarshalErr := json.Unmarshal(data, &catalog); unmarshalErr != nil {
+		return fmt.Errorf("failed to unmarshal cache data: %w", unmarshalErr)
 	}
 
 	// Build index
@@ -321,11 +324,14 @@ func (kev *KEVProvider) loadCache() error {
 // saveCache saves the KEV catalog to the cache file.
 func (kev *KEVProvider) saveCache(data []byte) error {
 	if err := os.MkdirAll(kev.cachePath, kevCacheDirPerms); err != nil {
-		return err
+		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
 	cacheFile := filepath.Join(kev.cachePath, kevCacheFile)
-	return os.WriteFile(cacheFile, data, kevCacheFilePerms)
+	if err := os.WriteFile(cacheFile, data, kevCacheFilePerms); err != nil {
+		return fmt.Errorf("failed to write cache file: %w", err)
+	}
+	return nil
 }
 
 // entryToVulnerability converts a KEV entry to our Vulnerability format.

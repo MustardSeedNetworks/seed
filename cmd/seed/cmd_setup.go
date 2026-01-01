@@ -32,14 +32,13 @@ func init() {
 	rootCmd.AddCommand(setupCmd)
 }
 
-//nolint:gocyclo // Command handler complexity is acceptable
 func runSetup(cmd *cobra.Command, _ []string) {
 	generatePwd, err := cmd.Flags().GetBool("generate-password")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting generate-password flag: %v\n", err)
 		os.Exit(1)
 	}
-	outputJSON, err := cmd.Flags().GetBool("json")
+	outputAsJSON, err := cmd.Flags().GetBool("json")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting json flag: %v\n", err)
 		os.Exit(1)
@@ -62,15 +61,15 @@ func runSetup(cmd *cobra.Command, _ []string) {
 
 	if generatePwd {
 		// Generate new credentials
-		password, err := auth.GenerateSecurePassword(20)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error generating password: %v\n", err)
+		password, genErr := auth.GenerateSecurePassword(20)
+		if genErr != nil {
+			fmt.Fprintf(os.Stderr, "Error generating password: %v\n", genErr)
 			os.Exit(1)
 		}
 
-		passwordHash, err := auth.HashPassword(password)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error hashing password: %v\n", err)
+		passwordHash, hashErr := auth.HashPassword(password)
+		if hashErr != nil {
+			fmt.Fprintf(os.Stderr, "Error hashing password: %v\n", hashErr)
 			os.Exit(1)
 		}
 
@@ -82,15 +81,15 @@ func runSetup(cmd *cobra.Command, _ []string) {
 
 		// Ensure config directory exists
 		if dir := filepath.Dir(configPath); dir != "" && dir != "." {
-			if err := os.MkdirAll(dir, 0o750); err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating config directory: %v\n", err)
+			if mkdirErr := os.MkdirAll(dir, 0o750); mkdirErr != nil {
+				fmt.Fprintf(os.Stderr, "Error creating config directory: %v\n", mkdirErr)
 				os.Exit(1)
 			}
 		}
 
 		// Save config
-		if err := cfg.Save(configPath); err != nil {
-			fmt.Fprintf(os.Stderr, "Error saving config: %v\n", err)
+		if saveErr := cfg.Save(configPath); saveErr != nil {
+			fmt.Fprintf(os.Stderr, "Error saving config: %v\n", saveErr)
 			os.Exit(1)
 		}
 
@@ -105,10 +104,10 @@ func runSetup(cmd *cobra.Command, _ []string) {
 			Config:   configPath,
 		}
 
-		if outputJSON {
-			data, err := json.MarshalIndent(creds, "", "  ")
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshaling credentials: %v\n", err)
+		if outputAsJSON {
+			data, marshalErr := json.MarshalIndent(creds, "", "  ")
+			if marshalErr != nil {
+				fmt.Fprintf(os.Stderr, "Error marshaling credentials: %v\n", marshalErr)
 				os.Exit(1)
 			}
 			fmt.Println(string(data))
@@ -130,8 +129,8 @@ func runSetup(cmd *cobra.Command, _ []string) {
 			cfg.Auth.JWTSecret = ""
 		}
 
-		if err := cfg.Save(configPath); err != nil {
-			fmt.Fprintf(os.Stderr, "Error saving config: %v\n", err)
+		if saveErr := cfg.Save(configPath); saveErr != nil {
+			fmt.Fprintf(os.Stderr, "Error saving config: %v\n", saveErr)
 			os.Exit(1)
 		}
 

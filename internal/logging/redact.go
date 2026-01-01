@@ -139,8 +139,8 @@ func RedactHeaders(headers http.Header) map[string]string {
 }
 
 // RedactMap redacts sensitive fields in a map (useful for JSON logging).
-func RedactMap(data map[string]interface{}) map[string]interface{} {
-	redacted := make(map[string]interface{})
+func RedactMap(data map[string]any) map[string]any {
+	redacted := make(map[string]any)
 	for key, value := range data {
 		lowerKey := strings.ToLower(key)
 		if strings.Contains(lowerKey, "password") ||
@@ -163,16 +163,16 @@ func RedactMap(data map[string]interface{}) map[string]interface{} {
 
 // Logf is a safe logging function that redacts sensitive data.
 // Note: Prefer using slog directly with the RedactingHandler for new code.
-func Logf(format string, args ...interface{}) {
+func Logf(format string, args ...any) {
 	// Convert args to strings and redact
-	redactedArgs := make([]interface{}, len(args))
+	redactedArgs := make([]any, len(args))
 	for i, arg := range args {
 		switch v := arg.(type) {
 		case string:
 			redactedArgs[i] = RedactString(v)
 		case http.Header:
 			redactedArgs[i] = RedactHeaders(v)
-		case map[string]interface{}:
+		case map[string]any:
 			redactedArgs[i] = RedactMap(v)
 		default:
 			redactedArgs[i] = arg

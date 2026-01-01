@@ -293,7 +293,7 @@ func TestConvenienceLogFunctions(t *testing.T) {
 	Error("error message", "key", "value")
 
 	// Restore stdout
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 
 	var buf bytes.Buffer
@@ -344,7 +344,7 @@ func TestContextLogFunctions(t *testing.T) {
 	ErrorContext(ctx, "error with context", "key", "value")
 
 	// Restore stdout
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 
 	var buf bytes.Buffer

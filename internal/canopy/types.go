@@ -85,7 +85,7 @@ type ConnectionStatus struct {
 	Security     SecurityType `json:"security,omitempty"`
 	IPAddress    string       `json:"ipAddress,omitempty"`
 	Gateway      string       `json:"gateway,omitempty"`
-	ConnectedAt  time.Time    `json:"connectedAt,omitempty"`
+	ConnectedAt  time.Time    `json:"connectedAt,omitzero"`
 	ConnectedFor string       `json:"connectedFor,omitempty"`
 }
 

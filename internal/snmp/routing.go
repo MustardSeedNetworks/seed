@@ -5,6 +5,7 @@ package snmp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -50,7 +51,7 @@ type RouteEntry struct {
 // It tries the modern inetCidrRouteTable first, then falls back to legacy ipCidrRouteTable.
 func GetRoutes(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]RouteEntry, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, errors.New("SNMP config is nil")
 	}
 
 	// Try modern inetCidrRouteTable first.
@@ -81,7 +82,7 @@ func getInetCidrRoutes(ctx context.Context, ip string, cfg *config.SNMPConfig) (
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query inetCidrRouteTable with all configured credentials")
+	return nil, errors.New("failed to query inetCidrRouteTable with all configured credentials")
 }
 
 // getIPCidrRoutes retrieves routes from the legacy ipCidrRouteTable.
@@ -102,7 +103,7 @@ func getIPCidrRoutes(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]
 		}
 	}
 
-	return nil, fmt.Errorf("failed to query ipCidrRouteTable with all configured credentials")
+	return nil, errors.New("failed to query ipCidrRouteTable with all configured credentials")
 }
 
 // walkInetCidrRoutes walks the modern inetCidrRouteTable using SNMPv2c.
@@ -120,7 +121,7 @@ func walkInetCidrRoutes(ctx context.Context, ip, community string, cfg *config.S
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -132,7 +133,12 @@ func walkInetCidrRoutes(ctx context.Context, ip, community string, cfg *config.S
 }
 
 // walkInetCidrRoutesV3 walks the modern inetCidrRouteTable using SNMPv3.
-func walkInetCidrRoutesV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]RouteEntry, error) {
+func walkInetCidrRoutesV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]RouteEntry, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -144,7 +150,7 @@ func walkInetCidrRoutesV3(ctx context.Context, ip string, cred *config.SNMPv3Cre
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
+			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -154,7 +160,7 @@ func walkInetCidrRoutesV3(ctx context.Context, ip string, cred *config.SNMPv3Cre
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -230,7 +236,7 @@ func walkIPCidrRoutes(ctx context.Context, ip, community string, cfg *config.SNM
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -242,7 +248,12 @@ func walkIPCidrRoutes(ctx context.Context, ip, community string, cfg *config.SNM
 }
 
 // walkIPCidrRoutesV3 walks the legacy ipCidrRouteTable using SNMPv3.
-func walkIPCidrRoutesV3(ctx context.Context, ip string, cred *config.SNMPv3Credential, cfg *config.SNMPConfig) ([]RouteEntry, error) {
+func walkIPCidrRoutesV3(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) ([]RouteEntry, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
 		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
@@ -254,7 +265,7 @@ func walkIPCidrRoutesV3(ctx context.Context, ip string, cred *config.SNMPv3Crede
 		MsgFlags:       gosnmp.AuthPriv,
 		SecurityParameters: &gosnmp.UsmSecurityParameters{
 			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol), //nolint:staticcheck // Internal usage
+			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
 			AuthenticationPassphrase: cred.AuthPassword,
 			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
 			PrivacyPassphrase:        cred.PrivPassword,
@@ -264,7 +275,7 @@ func walkIPCidrRoutesV3(ctx context.Context, ip string, cred *config.SNMPv3Crede
 	if err := params.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	defer params.Conn.Close()
+	defer func() { _ = params.Conn.Close() }()
 
 	select {
 	case <-ctx.Done():
@@ -330,7 +341,12 @@ func walkIPCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
 }
 
 // walkRouteAttribute walks a routing table attribute (inetCidrRouteTable).
-func walkRouteAttribute(params *gosnmp.GoSNMP, oid string, routes map[string]*RouteEntry, updateFunc func(*RouteEntry, string)) {
+func walkRouteAttribute(
+	params *gosnmp.GoSNMP,
+	oid string,
+	routes map[string]*RouteEntry,
+	updateFunc func(*RouteEntry, string),
+) {
 	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
 		dest, prefix, nextHop := parseInetCidrRouteIndex(pdu.Name)
 		if dest == "" {
@@ -352,7 +368,12 @@ func walkRouteAttribute(params *gosnmp.GoSNMP, oid string, routes map[string]*Ro
 }
 
 // walkIPCidrRouteAttribute walks a routing table attribute (ipCidrRouteTable).
-func walkIPCidrRouteAttribute(params *gosnmp.GoSNMP, oid string, routes map[string]*RouteEntry, updateFunc func(*RouteEntry, string)) {
+func walkIPCidrRouteAttribute(
+	params *gosnmp.GoSNMP,
+	oid string,
+	routes map[string]*RouteEntry,
+	updateFunc func(*RouteEntry, string),
+) {
 	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
 		dest, mask, nextHop := parseIPCidrRouteIndex(pdu.Name)
 		if dest == "" {
@@ -374,8 +395,8 @@ func walkIPCidrRouteAttribute(params *gosnmp.GoSNMP, oid string, routes map[stri
 }
 
 // parseInetCidrRouteIndex extracts destination, prefix, and next hop from OID.
-// OID format: ...destType.destLen.dest.pfxLen.policy.nextHopType.nextHopLen.nextHop
-func parseInetCidrRouteIndex(oid string) (dest string, prefix int, nextHop string) {
+// OID format: ...destType.destLen.dest.pfxLen.policy.nextHopType.nextHopLen.nextHop.
+func parseInetCidrRouteIndex(oid string) (string, int, string) {
 	parts := strings.Split(oid, ".")
 	if len(parts) < 12 {
 		return "", 0, ""
@@ -400,17 +421,17 @@ func parseInetCidrRouteIndex(oid string) (dest string, prefix int, nextHop strin
 		if i-8+4 > len(parts) {
 			continue
 		}
-		dest = strings.Join(parts[i-8:i-4], ".")
+		dest := strings.Join(parts[i-8:i-4], ".")
 
 		// Extract prefix length
 		if i-4 >= len(parts) {
 			continue
 		}
-		prefix, _ = strconv.Atoi(parts[i-4])
+		prefix, _ := strconv.Atoi(parts[i-4])
 
 		// For simplicity, use destination as next hop placeholder
 		// Real implementation would parse the full next hop from OID
-		nextHop = "0.0.0.0"
+		nextHop := "0.0.0.0"
 
 		return dest, prefix, nextHop
 	}
@@ -419,8 +440,8 @@ func parseInetCidrRouteIndex(oid string) (dest string, prefix int, nextHop strin
 }
 
 // parseIPCidrRouteIndex extracts destination, mask, and next hop from OID.
-// OID format: ...Dest.Mask.TOS.NextHop
-func parseIPCidrRouteIndex(oid string) (dest, mask, nextHop string) {
+// OID format: ...Dest.Mask.TOS.NextHop.
+func parseIPCidrRouteIndex(oid string) (string, string, string) {
 	parts := strings.Split(oid, ".")
 	// Need at least: base OID + 4 dest + 4 mask + 1 tos + 4 nexthop = 13 parts after base
 	if len(parts) < 14 {
@@ -429,15 +450,15 @@ func parseIPCidrRouteIndex(oid string) (dest, mask, nextHop string) {
 
 	// Destination is last 13 parts starting at -13 to -10
 	destStart := len(parts) - 13
-	dest = strings.Join(parts[destStart:destStart+4], ".")
+	dest := strings.Join(parts[destStart:destStart+4], ".")
 
 	// Mask is next 4 parts
-	mask = strings.Join(parts[destStart+4:destStart+8], ".")
+	mask := strings.Join(parts[destStart+4:destStart+8], ".")
 
 	// TOS is at destStart+8, skip it
 
 	// NextHop is last 4 parts
-	nextHop = strings.Join(parts[destStart+9:destStart+13], ".")
+	nextHop := strings.Join(parts[destStart+9:destStart+13], ".")
 
 	return dest, mask, nextHop
 }
@@ -446,17 +467,17 @@ func parseIPCidrRouteIndex(oid string) (dest, mask, nextHop string) {
 func parseRouteType(value string) string {
 	switch value {
 	case "1":
-		return "other"
+		return MACTypeOther
 	case "2":
 		return "reject"
 	case "3":
-		return "local"
+		return IDSubtypeLocal
 	case "4":
 		return "remote"
 	case "5":
 		return "blackhole"
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }
 
@@ -464,9 +485,9 @@ func parseRouteType(value string) string {
 func parseRouteProtocol(value string) string {
 	switch value {
 	case "1":
-		return "other"
+		return MACTypeOther
 	case "2":
-		return "local"
+		return IDSubtypeLocal
 	case "3":
 		return "netmgmt" // static
 	case "4":
@@ -496,6 +517,6 @@ func parseRouteProtocol(value string) string {
 	case "16":
 		return "ciscoEigrp"
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }

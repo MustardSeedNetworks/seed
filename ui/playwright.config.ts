@@ -31,12 +31,10 @@ export default defineConfig({
     ["json", { outputFile: "playwright-report/results.json" }],
   ],
   use: {
-    // biome-ignore lint/style/useNamingConvention: Playwright API requires this property name
     baseURL: process.env.E2E_BASE_URL || "http://localhost:5173",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "on-first-retry",
-    // biome-ignore lint/style/useNamingConvention: Playwright API requires this property name
     ignoreHTTPSErrors: true,
   },
   projects: [

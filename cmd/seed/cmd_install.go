@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"text/template"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -165,7 +167,8 @@ func runInstall(cmd *cobra.Command, _ []string) {
 	fmt.Println("\nCreating directories...")
 	dirs := []string{p.ConfigDir, p.DataDir, p.LogDir, p.CacheDir}
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0o750); err != nil {
+		err = os.MkdirAll(dir, 0o750)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating %s: %v\n", dir, err)
 			os.Exit(1)
 		}
@@ -179,7 +182,8 @@ func runInstall(cmd *cobra.Command, _ []string) {
 
 		// Set ownership
 		for _, dir := range dirs {
-			if err := runCommand("chown", "-R", "seed:seed", dir); err != nil {
+			err = runCommand("chown", "-R", "seed:seed", dir)
+			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: Failed to set ownership for %s: %v\n", dir, err)
 			}
 		}
@@ -190,23 +194,27 @@ func runInstall(cmd *cobra.Command, _ []string) {
 	if mode == paths.ModeUser {
 		destBinary = filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
 		//nolint:gosec // G301: User binary directory needs 0755 permissions
-		if err := os.MkdirAll(filepath.Dir(destBinary), 0o755); err != nil {
+		err = os.MkdirAll(filepath.Dir(destBinary), 0o755)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating binary directory: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
-	if _, err := os.Stat(destBinary); err == nil && !force {
+	_, err = os.Stat(destBinary)
+	if err == nil && !force {
 		fmt.Printf("\nBinary already exists at %s\n", destBinary)
 		fmt.Println("Use --force to overwrite")
 	} else {
 		fmt.Printf("\nCopying binary to %s...\n", destBinary)
-		if err := copyFile(executable, destBinary); err != nil {
+		err = copyFile(executable, destBinary)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error copying binary: %v\n", err)
 			os.Exit(1)
 		}
 		//nolint:gosec // G302: Binary file needs execute permission (0755)
-		if err := os.Chmod(destBinary, 0o755); err != nil {
+		err = os.Chmod(destBinary, 0o755)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error setting binary permissions: %v\n", err)
 			os.Exit(1)
 		}
@@ -215,7 +223,8 @@ func runInstall(cmd *cobra.Command, _ []string) {
 	// Set capabilities (system mode only)
 	if mode == paths.ModeSystem {
 		fmt.Println("\nSetting capabilities...")
-		if err := runCommand("setcap", "cap_net_raw,cap_net_admin=+ep", destBinary); err != nil {
+		err = runCommand("setcap", "cap_net_raw,cap_net_admin=+ep", destBinary)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: Failed to set capabilities: %v\n", err)
 			fmt.Println("  ICMP and protocol capture features will require root")
 		} else {
@@ -225,10 +234,12 @@ func runInstall(cmd *cobra.Command, _ []string) {
 
 	// Create default config
 	configFile := filepath.Join(p.ConfigDir, "seed.yaml")
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+	_, err = os.Stat(configFile)
+	if os.IsNotExist(err) {
 		fmt.Printf("\nCreating default config at %s...\n", configFile)
 		cfg := config.DefaultConfig()
-		if err := cfg.Save(configFile); err != nil {
+		err = cfg.Save(configFile)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating config: %v\n", err)
 		}
 	}
@@ -266,7 +277,9 @@ func modeString(mode paths.Mode) string {
 func createSystemUser() {
 	// Check if user exists
 	if _, err := exec.LookPath("id"); err == nil {
-		if exec.Command("id", "seed").Run() == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if exec.CommandContext(ctx, "id", "seed").Run() == nil {
 			fmt.Println("  User 'seed' already exists")
 			return
 		}
@@ -283,6 +296,7 @@ func createSystemUser() {
 func installSystemdService(mode paths.Mode, p *paths.Paths, binaryPath string) {
 	var servicePath, tmpl string
 	var svcCfg serviceConfig
+	var err error
 
 	if mode == paths.ModeSystem {
 		servicePath = "/etc/systemd/system/seed.service"
@@ -297,14 +311,16 @@ func installSystemdService(mode paths.Mode, p *paths.Paths, binaryPath string) {
 			CacheDir:   p.CacheDir,
 		}
 	} else {
-		userConfigDir, err := os.UserConfigDir()
+		var userConfigDir string
+		userConfigDir, err = os.UserConfigDir()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting user config dir: %v\n", err)
 			return
 		}
 		servicePath = filepath.Join(userConfigDir, "systemd", "user", "seed.service")
 		//nolint:gosec // G301: User systemd directory needs 0755 permissions
-		if err := os.MkdirAll(filepath.Dir(servicePath), 0o755); err != nil {
+		err = os.MkdirAll(filepath.Dir(servicePath), 0o755)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating service directory: %v\n", err)
 			return
 		}
@@ -315,21 +331,23 @@ func installSystemdService(mode paths.Mode, p *paths.Paths, binaryPath string) {
 	}
 
 	// Generate service file
-	t, err := template.New("service").Parse(tmpl)
+	var t *template.Template
+	t, err = template.New("service").Parse(tmpl)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing template: %v\n", err)
 		return
 	}
 
-	//nolint:gosec // Service file path is intentionally user-controlled in user mode
-	f, err := os.Create(servicePath)
+	var f *os.File
+	f, err = os.Create(servicePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating service file: %v\n", err)
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
-	if err := t.Execute(f, svcCfg); err != nil {
+	err = t.Execute(f, svcCfg)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing service file: %v\n", err)
 		return
 	}
@@ -338,18 +356,19 @@ func installSystemdService(mode paths.Mode, p *paths.Paths, binaryPath string) {
 
 	// Reload systemd
 	if mode == paths.ModeSystem {
-		if err := runCommand("systemctl", "daemon-reload"); err != nil {
+		err = runCommand("systemctl", "daemon-reload")
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: Failed to reload systemd: %v\n", err)
 		}
 	} else {
-		if err := runCommand("systemctl", "--user", "daemon-reload"); err != nil {
+		err = runCommand("systemctl", "--user", "daemon-reload")
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: Failed to reload systemd: %v\n", err)
 		}
 	}
 }
 
 func copyFile(src, dst string) error {
-	//nolint:gosec // Reading existing binary file
 	data, err := os.ReadFile(src)
 	if err != nil {
 		return err
@@ -359,7 +378,9 @@ func copyFile(src, dst string) error {
 }
 
 func runCommand(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

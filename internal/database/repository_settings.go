@@ -126,15 +126,15 @@ func (r *SettingsRepository) List(ctx context.Context) ([]*Setting, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list settings: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var settings []*Setting
 	for rows.Next() {
 		var s Setting
 		var updatedAt string
 
-		if err := rows.Scan(&s.Key, &s.Value, &updatedAt); err != nil {
-			return nil, fmt.Errorf("failed to scan setting: %w", err)
+		if scanErr := rows.Scan(&s.Key, &s.Value, &updatedAt); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan setting: %w", scanErr)
 		}
 
 		if t, parseErr := time.Parse(time.RFC3339, updatedAt); parseErr == nil {
@@ -154,15 +154,15 @@ func (r *SettingsRepository) GetByPrefix(ctx context.Context, prefix string) ([]
 	if err != nil {
 		return nil, fmt.Errorf("failed to get settings by prefix: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var settings []*Setting
 	for rows.Next() {
 		var s Setting
 		var updatedAt string
 
-		if err := rows.Scan(&s.Key, &s.Value, &updatedAt); err != nil {
-			return nil, fmt.Errorf("failed to scan setting: %w", err)
+		if scanErr := rows.Scan(&s.Key, &s.Value, &updatedAt); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan setting: %w", scanErr)
 		}
 
 		if t, parseErr := time.Parse(time.RFC3339, updatedAt); parseErr == nil {

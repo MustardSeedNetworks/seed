@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -9,19 +10,19 @@ import (
 
 func TestUserCRUD(t *testing.T) {
 	// Create temp database
-	tmpFile, err := os.CreateTemp("", "seed-test-*.db")
+	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-	defer os.Remove(tmpPath)
+	_ = tmpFile.Close()
+	defer func() { _ = os.Remove(tmpPath) }()
 
 	db, err := Open(tmpPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -47,7 +48,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("CreateDuplicateUser", func(t *testing.T) {
 		_, err := db.CreateUser(ctx, "admin", "$2a$10$anotherpassword", "admin")
-		if err != ErrUserExists {
+		if !errors.Is(err, ErrUserExists) {
 			t.Errorf("Expected ErrUserExists, got %v", err)
 		}
 	})
@@ -65,7 +66,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("GetNonexistentUser", func(t *testing.T) {
 		_, err := db.GetUser(ctx, "nonexistent")
-		if err != ErrUserNotFound {
+		if !errors.Is(err, ErrUserNotFound) {
 			t.Errorf("Expected ErrUserNotFound, got %v", err)
 		}
 	})
@@ -92,7 +93,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("UpdateNonexistentUserPassword", func(t *testing.T) {
 		err := db.UpdateUserPassword(ctx, "nonexistent", "$2a$10$hash")
-		if err != ErrUserNotFound {
+		if !errors.Is(err, ErrUserNotFound) {
 			t.Errorf("Expected ErrUserNotFound, got %v", err)
 		}
 	})
@@ -134,19 +135,19 @@ func TestUserCRUD(t *testing.T) {
 }
 
 func TestLoginTracking(t *testing.T) {
-	tmpFile, err := os.CreateTemp("", "seed-test-*.db")
+	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-	defer os.Remove(tmpPath)
+	_ = tmpFile.Close()
+	defer func() { _ = os.Remove(tmpPath) }()
 
 	db, err := Open(tmpPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -177,7 +178,7 @@ func TestLoginTracking(t *testing.T) {
 
 	t.Run("RecordLoginFailure", func(t *testing.T) {
 		// Record 2 failures (below threshold)
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			locked, err := db.RecordLoginFailure(ctx, "testuser", 5, 15*time.Minute)
 			if err != nil {
 				t.Fatalf("Failed to record login failure: %v", err)
@@ -198,7 +199,7 @@ func TestLoginTracking(t *testing.T) {
 
 	t.Run("AccountLockAfterMaxAttempts", func(t *testing.T) {
 		// Record more failures to reach threshold
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			locked, err := db.RecordLoginFailure(ctx, "testuser", 5, 15*time.Minute)
 			if err != nil {
 				t.Fatalf("Failed to record login failure: %v", err)
@@ -242,19 +243,19 @@ func TestLoginTracking(t *testing.T) {
 }
 
 func TestMigrateUserFromConfig(t *testing.T) {
-	tmpFile, err := os.CreateTemp("", "seed-test-*.db")
+	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-	defer os.Remove(tmpPath)
+	_ = tmpFile.Close()
+	defer func() { _ = os.Remove(tmpPath) }()
 
 	db, err := Open(tmpPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -292,13 +293,13 @@ func TestMigrateUserFromConfig(t *testing.T) {
 }
 
 func TestUserDatabaseClosed(t *testing.T) {
-	tmpFile, err := os.CreateTemp("", "seed-test-*.db")
+	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-	defer os.Remove(tmpPath)
+	_ = tmpFile.Close()
+	defer func() { _ = os.Remove(tmpPath) }()
 
 	db, err := Open(tmpPath)
 	if err != nil {
@@ -306,7 +307,7 @@ func TestUserDatabaseClosed(t *testing.T) {
 	}
 
 	// Close the database
-	db.Close()
+	_ = db.Close()
 
 	ctx := context.Background()
 

@@ -6,9 +6,11 @@
 package wifi
 
 import (
+	"context"
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // isWirelessPlatform checks if interface is wireless on macOS.
@@ -16,7 +18,9 @@ import (
 func isWirelessPlatform(iface string) bool {
 	// On macOS, Wi-Fi interface is typically en0 or starts with en
 	// We can use networksetup to check
-	cmd := exec.Command("networksetup", "-listallhardwareports")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "networksetup", "-listallhardwareports")
 	output, err := cmd.Output()
 	if err != nil {
 		return strings.HasPrefix(iface, "en")
@@ -45,16 +49,18 @@ func isWirelessPlatform(iface string) bool {
 func getInfoPlatform(_ string) *Info {
 	// Use airport command for Wi-Fi info
 	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-	cmd := exec.Command(airportPath, "-I")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, airportPath, "-I")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil
 	}
 
 	info := &Info{}
-	lines := strings.Split(string(output), "\n")
+	lines := strings.SplitSeq(string(output), "\n")
 
-	for _, line := range lines {
+	for line := range lines {
 		line = strings.TrimSpace(line)
 		parts := strings.SplitN(line, ":", 2)
 		if len(parts) != 2 {
@@ -70,13 +76,13 @@ func getInfoPlatform(_ string) *Info {
 		case "BSSID":
 			info.BSSID = value
 		case "agrCtlRSSI":
-			if sig, err := strconv.Atoi(value); err == nil {
+			if sig, parseErr := strconv.Atoi(value); parseErr == nil {
 				info.Signal = sig
 			}
 		case "channel":
 			// Format can be "6" or "6,1" (for 80MHz channels)
-			parts := strings.Split(value, ",")
-			if ch, err := strconv.Atoi(parts[0]); err == nil {
+			chParts := strings.Split(value, ",")
+			if ch, chErr := strconv.Atoi(chParts[0]); chErr == nil {
 				info.Channel = ch
 			}
 		case "link auth":
