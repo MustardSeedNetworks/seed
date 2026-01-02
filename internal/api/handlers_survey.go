@@ -561,136 +561,61 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
 		return
 	}
 
-	// Rate limit file uploads (fixes #696)
-	clientIP := s.getClientIP(r)
-	if !s.endpointRateLimiter.Allow(clientIP) {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusTooManyRequests,
-			ErrCodeRateLimit,
-			localizer.T("errors.survey.rateLimitExceeded"),
-			"",
-		) // fixes #694
+	if !s.endpointRateLimiter.Allow(s.getClientIP(r)) {
+		sendErrorResponseWithDetails(w, logger, http.StatusTooManyRequests, ErrCodeRateLimit, localizer.T("errors.survey.rateLimitExceeded"), "")
 		return
 	}
 
-	// Limit file size to 50MB (fixes #701 - reviewed and kept at 50MB for large surveys)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeAirMapper)
-
-	// Parse multipart form
 	if err := r.ParseMultipartForm(MaxBodySizeAirMapper); err != nil {
 		logger.Warn("Survey file too large", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.survey.fileTooLarge"),
-			"",
-		) // fixes #694, #H7
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.fileTooLarge"), "")
 		return
 	}
 
-	// Get the uploaded file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		logger.Warn("No file provided for survey", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.survey.noFileProvided"),
-			"",
-		) // fixes #694, #H7
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.noFileProvided"), "")
 		return
 	}
 	defer func() { _ = file.Close() }()
 
-	// Validate filename (fixes #695)
 	if validateErr := validation.ValidateFilename(handler.Filename, "filename"); validateErr != nil {
 		logger.Warn("Survey validation failed", "error", validateErr)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeValidation,
-			localizer.T("errors.survey.validationFailed"),
-			"",
-		) // fixes #694, #H7
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.validationFailed"), "")
 		return
 	}
 
-	// Validate file extension
 	if !strings.HasSuffix(strings.ToLower(handler.Filename), ".amp") {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeValidation,
-			localizer.T("errors.survey.invalidFileType"),
-			"",
-		) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.survey.invalidFileType"), "")
 		return
 	}
 
-	// Read the file contents
 	data, err := io.ReadAll(file)
 	if err != nil {
 		logger.Error("Failed to read survey file", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.survey.readFileFailed"),
-			"",
-		) // fixes #694, #H7
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.readFileFailed"), "")
 		return
 	}
 
-	// Parse the AirMapper file
 	ampFile, err := survey.ParseAirMapperFile(data)
 	if err != nil {
 		logger.Warn("Failed to parse survey file", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.survey.parseFileFailed"),
-			"",
-		) // fixes #694, #H7
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.survey.parseFileFailed"), "")
 		return
 	}
 
-	// Convert to import result
 	result, err := ampFile.ToImportResult()
 	if err != nil {
 		logger.Error("Failed to process survey file", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.survey.processFileFailed"),
-			"",
-		) // fixes #694, #H7
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.survey.processFileFailed"), "")
 		return
 	}
-
 	sendJSONResponse(w, logger, http.StatusOK, result)
 }
 
