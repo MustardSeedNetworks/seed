@@ -147,6 +147,109 @@ func (t *Tester) setCurrentSpeeds(download, upload float64) {
 	t.status.CurrentUpload = upload
 }
 
+// findTestServer discovers and selects the best speedtest server.
+func (t *Tester) findTestServer() (*speedtest.Server, error) {
+	speedtestClient := speedtest.New()
+	serverList, err := speedtestClient.FetchServers()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch servers: %w", err)
+	}
+
+	if len(serverList) == 0 {
+		return nil, errors.New("no servers available")
+	}
+
+	// Select server (first one is closest by default)
+	targets, err := serverList.FindServer([]int{})
+	if err != nil || len(targets) == 0 {
+		return nil, fmt.Errorf("failed to find server: %w", err)
+	}
+
+	return targets[0], nil
+}
+
+// runDownloadTest performs the download test with live speed updates.
+func (t *Tester) runDownloadTest(server *speedtest.Server) error {
+	t.setStatus("testing_download", 40)
+	t.setCurrentSpeeds(0, 0)
+
+	// Start polling goroutine for live download speed from Context
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				// GetEWMADownloadRate returns bytes/sec, convert to Mbps
+				rate := server.Context.GetEWMADownloadRate()
+				mbps := rate / 125000.0
+				t.setCurrentSpeeds(mbps, 0)
+			}
+		}
+	}()
+
+	err := server.DownloadTest()
+	close(done)
+	if err != nil {
+		t.setCurrentSpeeds(0, 0)
+		return fmt.Errorf("download test failed: %w", err)
+	}
+
+	// Capture final download speed
+	t.setCurrentSpeeds(server.DLSpeed.Mbps(), 0)
+	return nil
+}
+
+// runUploadTest performs the upload test with live speed updates.
+func (t *Tester) runUploadTest(server *speedtest.Server, finalDownload float64) error {
+	t.setStatus("testing_upload", 70)
+
+	// Start polling goroutine for live upload speed from Context
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				// GetEWMAUploadRate returns bytes/sec, convert to Mbps
+				rate := server.Context.GetEWMAUploadRate()
+				mbps := rate / 125000.0
+				t.setCurrentSpeeds(finalDownload, mbps)
+			}
+		}
+	}()
+
+	err := server.UploadTest()
+	close(done)
+	if err != nil {
+		t.setCurrentSpeeds(0, 0)
+		return fmt.Errorf("upload test failed: %w", err)
+	}
+
+	return nil
+}
+
+// buildTestResult constructs the Result from server data.
+func (t *Tester) buildTestResult(server *speedtest.Server, startTime time.Time) *Result {
+	return &Result{
+		Download:     server.DLSpeed.Mbps(),
+		Upload:       server.ULSpeed.Mbps(),
+		Latency:      float64(server.Latency.Milliseconds()),
+		Server:       server.Name,
+		Location:     fmt.Sprintf("%s, %s", server.Sponsor, server.Country),
+		Host:         server.Host,
+		Distance:     server.Distance,
+		Timestamp:    time.Now(),
+		TestDuration: time.Since(startTime).Seconds(),
+	}
+}
+
 // RunTest performs a complete speedtest.
 func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	// Check if already running
@@ -164,27 +267,11 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 
 	// Find servers
 	t.setStatus("finding_server", 10)
-
-	speedtestClient := speedtest.New()
-	serverList, err := speedtestClient.FetchServers()
+	server, err := t.findTestServer()
 	if err != nil {
 		t.setStatus("idle", 0)
-		return nil, fmt.Errorf("failed to fetch servers: %w", err)
+		return nil, err
 	}
-
-	if len(serverList) == 0 {
-		t.setStatus("idle", 0)
-		return nil, errors.New("no servers available")
-	}
-
-	// Select server (first one is closest by default)
-	targets, err := serverList.FindServer([]int{})
-	if err != nil || len(targets) == 0 {
-		t.setStatus("idle", 0)
-		return nil, fmt.Errorf("failed to find server: %w", err)
-	}
-
-	server := targets[0]
 
 	// Test latency
 	t.setStatus("testing_latency", 20)
@@ -195,84 +282,26 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	}
 
 	// Test download with live speed updates
-	t.setStatus("testing_download", 40)
-	t.setCurrentSpeeds(0, 0)
-
-	// Start polling goroutine for live download speed from Context
-	downloadDone := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-downloadDone:
-				return
-			case <-ticker.C:
-				// GetEWMADownloadRate returns bytes/sec, convert to Mbps
-				rate := server.Context.GetEWMADownloadRate()
-				mbps := rate / 125000.0
-				t.setCurrentSpeeds(mbps, 0)
-			}
-		}
-	}()
-
-	err = server.DownloadTest()
-	close(downloadDone)
+	err = t.runDownloadTest(server)
 	if err != nil {
 		t.setStatus("idle", 0)
-		t.setCurrentSpeeds(0, 0)
-		return nil, fmt.Errorf("download test failed: %w", err)
+		return nil, err
 	}
 
-	// Capture final download speed
+	// Capture final download speed for upload phase display
 	finalDownload := server.DLSpeed.Mbps()
-	t.setCurrentSpeeds(finalDownload, 0)
 
 	// Test upload with live speed updates
-	t.setStatus("testing_upload", 70)
-
-	// Start polling goroutine for live upload speed from Context
-	uploadDone := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-uploadDone:
-				return
-			case <-ticker.C:
-				// GetEWMAUploadRate returns bytes/sec, convert to Mbps
-				rate := server.Context.GetEWMAUploadRate()
-				mbps := rate / 125000.0
-				t.setCurrentSpeeds(finalDownload, mbps)
-			}
-		}
-	}()
-
-	err = server.UploadTest()
-	close(uploadDone)
+	err = t.runUploadTest(server, finalDownload)
 	if err != nil {
 		t.setStatus("idle", 0)
-		t.setCurrentSpeeds(0, 0)
-		return nil, fmt.Errorf("upload test failed: %w", err)
+		return nil, err
 	}
 
-	// Build result
+	// Build and store result
 	t.setStatus("complete", 100)
+	result := t.buildTestResult(server, startTime)
 
-	result := &Result{
-		Download:     server.DLSpeed.Mbps(),
-		Upload:       server.ULSpeed.Mbps(),
-		Latency:      float64(server.Latency.Milliseconds()),
-		Server:       server.Name,
-		Location:     fmt.Sprintf("%s, %s", server.Sponsor, server.Country),
-		Host:         server.Host,
-		Distance:     server.Distance,
-		Timestamp:    time.Now(),
-		TestDuration: time.Since(startTime).Seconds(),
-	}
-
-	// Store result
 	t.mu.Lock()
 	t.lastResult = result
 	t.mu.Unlock()
