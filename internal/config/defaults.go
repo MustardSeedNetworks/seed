@@ -264,132 +264,89 @@ type VulnerabilityDefaults struct {
 // This eliminates the need for duplicated DEFAULT_* constants in the frontend.
 func GetDefaultSettings() *DefaultSettings {
 	cfg := DefaultConfig()
-
-	// Extract threshold milliseconds using helper
 	t := ExtractThresholdMs(cfg)
-
 	return &DefaultSettings{
-		CardSettings: CardSettingsDefaults{
-			Link:             CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunLink},
-			Switch:           CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunSwitch},
-			VLAN:             CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunVLAN},
-			Network:          CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunIPConfig},
-			Gateway:          CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunGateway},
-			DNS:              CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunDNS},
-			HealthChecks:     CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunHealthChecks},
-			NetworkDiscovery: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunNetworkDiscovery},
-			Performance: PerformanceCardDefaults{
-				Enabled:       true,
-				AutoRunOnLink: cfg.FABOptions.RunPerformance,
-				Speedtest: CardOptionDefaults{
-					Enabled:       cfg.HealthChecks.RunSpeedtest,
-					AutoRunOnLink: cfg.Speedtest.AutoRunOnLink,
-				},
-				Iperf: CardOptionDefaults{
-					Enabled:       cfg.HealthChecks.RunIperf,
-					AutoRunOnLink: cfg.Iperf.AutoRunOnLink,
-				},
+		CardSettings:     buildCardSettingsDefaults(cfg),
+		DisplayOptions:   DisplayOptionsDefaults{ShowPublicIP: cfg.DisplayOptions.ShowPublicIP, UnitSystem: cfg.DisplayOptions.UnitSystem},
+		Thresholds:       buildThresholdDefaults(&t),
+		Iperf:            IperfDefaults{Server: cfg.Iperf.Server, Port: cfg.Iperf.Port, Protocol: cfg.Iperf.Protocol, Direction: cfg.Iperf.Direction, Duration: cfg.Iperf.Duration, ServerPort: cfg.Iperf.ServerPort, EnableServer: cfg.Iperf.EnableServer, AutoRunOnLink: cfg.Iperf.AutoRunOnLink},
+		Tests:            buildTestsDefaults(cfg),
+		NetworkDiscovery: buildNetworkDiscoveryDefaults(cfg),
+		SNMP:             SNMPDefaults{Communities: cfg.SNMP.Communities, TimeoutMs: cfg.SNMP.Timeout.Milliseconds(), Retries: cfg.SNMP.Retries, Port: cfg.SNMP.Port},
+		Link:             LinkDefaults{Mode: "auto", AvailableModes: []string{}},
+		CableTest:        CableTestDefaults{Enabled: true},
+		Vulnerability:    VulnerabilityDefaults{Enabled: cfg.Security.VulnerabilityScanning.Enabled, CVEDatabase: cfg.Security.VulnerabilityScanning.CVEDatabase, NVDAPIKey: "", UpdateInterval: cfg.Security.VulnerabilityScanning.UpdateInterval, SeverityThreshold: cfg.Security.VulnerabilityScanning.SeverityThreshold, MaxConcurrent: cfg.Security.VulnerabilityScanning.MaxConcurrent, AutoScan: cfg.Security.VulnerabilityScanning.AutoScan},
+	}
+}
+
+// buildCardSettingsDefaults constructs card settings defaults from config.
+func buildCardSettingsDefaults(cfg *Config) CardSettingsDefaults {
+	return CardSettingsDefaults{
+		Link: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunLink},
+		Switch: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunSwitch},
+		VLAN: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunVLAN},
+		Network: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunIPConfig},
+		Gateway: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunGateway},
+		DNS: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunDNS},
+		HealthChecks: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunHealthChecks},
+		NetworkDiscovery: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunNetworkDiscovery},
+		Performance: PerformanceCardDefaults{
+			Enabled: true, AutoRunOnLink: cfg.FABOptions.RunPerformance,
+			Speedtest: CardOptionDefaults{Enabled: cfg.HealthChecks.RunSpeedtest, AutoRunOnLink: cfg.Speedtest.AutoRunOnLink},
+			Iperf:     CardOptionDefaults{Enabled: cfg.HealthChecks.RunIperf, AutoRunOnLink: cfg.Iperf.AutoRunOnLink},
+		},
+	}
+}
+
+// buildThresholdDefaults constructs threshold defaults from extracted milliseconds.
+func buildThresholdDefaults(t *ThresholdMsValues) ThresholdDefaults {
+	return ThresholdDefaults{
+		DNS: ThresholdPairDefaults{Good: t.DNSWarning, Warning: t.DNSCritical},
+		Gateway: ThresholdPairDefaults{Good: t.GatewayWarning, Warning: t.GatewayCritical},
+		WiFi: ThresholdPairIntDefaults{Good: t.WiFiWarning, Warning: t.WiFiCritical},
+		CustomPing: ThresholdPairDefaults{Good: t.PingWarning, Warning: t.PingCritical},
+		CustomTCP: ThresholdPairDefaults{Good: t.TCPWarning, Warning: t.TCPCritical},
+		CustomHTTP: ThresholdPairDefaults{Good: t.HTTPWarning, Warning: t.HTTPCritical},
+		HTTPTimings: HTTPTimingThresholdDefaults{
+			DNS: ThresholdPairDefaults{Good: t.TimingDNSWarn, Warning: t.TimingDNSCrit},
+			TCP: ThresholdPairDefaults{Good: t.TimingTCPWarn, Warning: t.TimingTCPCrit},
+			TLS: ThresholdPairDefaults{Good: t.TimingTLSWarn, Warning: t.TimingTLSCrit},
+			TTFB: ThresholdPairDefaults{Good: t.TimingTTFBWarn, Warning: t.TimingTTFBCrit},
+		},
+	}
+}
+
+// buildNetworkDiscoveryDefaults constructs network discovery defaults from config.
+func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
+	return NetworkDiscoveryDefaults{
+		Enabled: cfg.NetworkDiscovery.Enabled, ARPScanWorkers: cfg.NetworkDiscovery.ARPScanWorkers,
+		PingTimeoutMs: cfg.NetworkDiscovery.PingTimeout.Milliseconds(), ScanTimeoutMs: cfg.NetworkDiscovery.ScanTimeout.Milliseconds(),
+		AutoScan: cfg.NetworkDiscovery.AutoScan, ScanIntervalMs: cfg.NetworkDiscovery.ScanInterval.Milliseconds(), IPv6Enabled: cfg.NetworkDiscovery.IPv6Enabled,
+		Options: DiscoveryOptionsDefaults{
+			PassiveProtocols: PassiveProtocolDefaults{
+				LLDP: cfg.NetworkDiscovery.Options.PassiveProtocols.LLDP, CDP: cfg.NetworkDiscovery.Options.PassiveProtocols.CDP,
+				EDP: cfg.NetworkDiscovery.Options.PassiveProtocols.EDP, NDP: cfg.NetworkDiscovery.Options.PassiveProtocols.NDP,
 			},
-		},
-		DisplayOptions: DisplayOptionsDefaults{
-			ShowPublicIP: cfg.DisplayOptions.ShowPublicIP,
-			UnitSystem:   cfg.DisplayOptions.UnitSystem,
-		},
-		// Thresholds (Good/Warning semantic mapping for defaults API)
-		Thresholds: ThresholdDefaults{
-			DNS:        ThresholdPairDefaults{Good: t.DNSWarning, Warning: t.DNSCritical},
-			Gateway:    ThresholdPairDefaults{Good: t.GatewayWarning, Warning: t.GatewayCritical},
-			WiFi:       ThresholdPairIntDefaults{Good: t.WiFiWarning, Warning: t.WiFiCritical},
-			CustomPing: ThresholdPairDefaults{Good: t.PingWarning, Warning: t.PingCritical},
-			CustomTCP:  ThresholdPairDefaults{Good: t.TCPWarning, Warning: t.TCPCritical},
-			CustomHTTP: ThresholdPairDefaults{Good: t.HTTPWarning, Warning: t.HTTPCritical},
-			HTTPTimings: HTTPTimingThresholdDefaults{
-				DNS:  ThresholdPairDefaults{Good: t.TimingDNSWarn, Warning: t.TimingDNSCrit},
-				TCP:  ThresholdPairDefaults{Good: t.TimingTCPWarn, Warning: t.TimingTCPCrit},
-				TLS:  ThresholdPairDefaults{Good: t.TimingTLSWarn, Warning: t.TimingTLSCrit},
-				TTFB: ThresholdPairDefaults{Good: t.TimingTTFBWarn, Warning: t.TimingTTFBCrit},
+			ARPScan: cfg.NetworkDiscovery.Options.ARPScan, ICMPScan: cfg.NetworkDiscovery.Options.ICMPScan,
+			PortScan: PortScanDefaults{
+				Enabled: cfg.NetworkDiscovery.Options.PortScan.Enabled, Preset: string(cfg.NetworkDiscovery.Options.PortScan.Preset),
+				TCPPorts: cfg.NetworkDiscovery.Options.PortScan.TCPPorts, UDPPorts: cfg.NetworkDiscovery.Options.PortScan.UDPPorts,
+				BannerTimeoutMs: cfg.NetworkDiscovery.Options.PortScan.BannerTimeout.Milliseconds(),
 			},
+			TCPProbe:   TCPProbeDefaults{TimeoutMs: cfg.NetworkDiscovery.Options.TCPProbe.Timeout.Milliseconds(), Workers: cfg.NetworkDiscovery.Options.TCPProbe.Workers},
+			Traceroute: cfg.NetworkDiscovery.Options.Traceroute, SNMPQuery: cfg.NetworkDiscovery.Options.SNMPQuery,
 		},
-		Iperf: IperfDefaults{
-			Server:        cfg.Iperf.Server,
-			Port:          cfg.Iperf.Port,
-			Protocol:      cfg.Iperf.Protocol,
-			Direction:     cfg.Iperf.Direction,
-			Duration:      cfg.Iperf.Duration,
-			ServerPort:    cfg.Iperf.ServerPort,
-			EnableServer:  cfg.Iperf.EnableServer,
-			AutoRunOnLink: cfg.Iperf.AutoRunOnLink,
+		Timing: DiscoveryTimingDefaults{
+			ProbeIntervalMs: cfg.NetworkDiscovery.Timing.ProbeInterval.Milliseconds(), RescanIntervalMs: cfg.NetworkDiscovery.Timing.RescanInterval.Milliseconds(),
+			Workers: cfg.NetworkDiscovery.Timing.Workers,
 		},
-		Tests: buildTestsDefaults(cfg),
-		NetworkDiscovery: NetworkDiscoveryDefaults{
-			Enabled:        cfg.NetworkDiscovery.Enabled,
-			ARPScanWorkers: cfg.NetworkDiscovery.ARPScanWorkers,
-			PingTimeoutMs:  cfg.NetworkDiscovery.PingTimeout.Milliseconds(),
-			ScanTimeoutMs:  cfg.NetworkDiscovery.ScanTimeout.Milliseconds(),
-			AutoScan:       cfg.NetworkDiscovery.AutoScan,
-			ScanIntervalMs: cfg.NetworkDiscovery.ScanInterval.Milliseconds(),
-			IPv6Enabled:    cfg.NetworkDiscovery.IPv6Enabled,
-			Options: DiscoveryOptionsDefaults{
-				PassiveProtocols: PassiveProtocolDefaults{
-					LLDP: cfg.NetworkDiscovery.Options.PassiveProtocols.LLDP,
-					CDP:  cfg.NetworkDiscovery.Options.PassiveProtocols.CDP,
-					EDP:  cfg.NetworkDiscovery.Options.PassiveProtocols.EDP,
-					NDP:  cfg.NetworkDiscovery.Options.PassiveProtocols.NDP,
-				},
-				ARPScan:  cfg.NetworkDiscovery.Options.ARPScan,
-				ICMPScan: cfg.NetworkDiscovery.Options.ICMPScan,
-				PortScan: PortScanDefaults{
-					Enabled:         cfg.NetworkDiscovery.Options.PortScan.Enabled,
-					Preset:          string(cfg.NetworkDiscovery.Options.PortScan.Preset),
-					TCPPorts:        cfg.NetworkDiscovery.Options.PortScan.TCPPorts,
-					UDPPorts:        cfg.NetworkDiscovery.Options.PortScan.UDPPorts,
-					BannerTimeoutMs: cfg.NetworkDiscovery.Options.PortScan.BannerTimeout.Milliseconds(),
-				},
-				TCPProbe: TCPProbeDefaults{
-					TimeoutMs: cfg.NetworkDiscovery.Options.TCPProbe.Timeout.Milliseconds(),
-					Workers:   cfg.NetworkDiscovery.Options.TCPProbe.Workers,
-				},
-				Traceroute: cfg.NetworkDiscovery.Options.Traceroute,
-				SNMPQuery:  cfg.NetworkDiscovery.Options.SNMPQuery,
-			},
-			Timing: DiscoveryTimingDefaults{
-				ProbeIntervalMs:  cfg.NetworkDiscovery.Timing.ProbeInterval.Milliseconds(),
-				RescanIntervalMs: cfg.NetworkDiscovery.Timing.RescanInterval.Milliseconds(),
-				Workers:          cfg.NetworkDiscovery.Timing.Workers,
-			},
-			Profiler: DeviceProfilerDefaults{
-				Enabled:       cfg.NetworkDiscovery.Profiler.Enabled,
-				TimeoutMs:     cfg.NetworkDiscovery.Profiler.Timeout.Milliseconds(),
-				MaxConcurrent: cfg.NetworkDiscovery.Profiler.MaxConcurrent,
-				QuickPorts:    cfg.NetworkDiscovery.Profiler.QuickPorts,
-			},
-			Fingerprinting: FingerprintingDefaults{
-				Enabled:       cfg.NetworkDiscovery.Fingerprinting.Enabled,
-				OSDetection:   cfg.NetworkDiscovery.Fingerprinting.OSDetection,
-				ServiceProbes: cfg.NetworkDiscovery.Fingerprinting.ServiceProbes,
-			},
+		Profiler: DeviceProfilerDefaults{
+			Enabled: cfg.NetworkDiscovery.Profiler.Enabled, TimeoutMs: cfg.NetworkDiscovery.Profiler.Timeout.Milliseconds(),
+			MaxConcurrent: cfg.NetworkDiscovery.Profiler.MaxConcurrent, QuickPorts: cfg.NetworkDiscovery.Profiler.QuickPorts,
 		},
-		SNMP: SNMPDefaults{
-			Communities: cfg.SNMP.Communities,
-			TimeoutMs:   cfg.SNMP.Timeout.Milliseconds(),
-			Retries:     cfg.SNMP.Retries,
-			Port:        cfg.SNMP.Port,
-		},
-		Link: LinkDefaults{
-			Mode:           "auto",
-			AvailableModes: []string{},
-		},
-		CableTest: CableTestDefaults{
-			Enabled: true,
-		},
-		Vulnerability: VulnerabilityDefaults{
-			Enabled:           cfg.Security.VulnerabilityScanning.Enabled,
-			CVEDatabase:       cfg.Security.VulnerabilityScanning.CVEDatabase,
-			NVDAPIKey:         "", // Never expose API key in defaults
-			UpdateInterval:    cfg.Security.VulnerabilityScanning.UpdateInterval,
-			SeverityThreshold: cfg.Security.VulnerabilityScanning.SeverityThreshold,
-			MaxConcurrent:     cfg.Security.VulnerabilityScanning.MaxConcurrent,
-			AutoScan:          cfg.Security.VulnerabilityScanning.AutoScan,
+		Fingerprinting: FingerprintingDefaults{
+			Enabled: cfg.NetworkDiscovery.Fingerprinting.Enabled, OSDetection: cfg.NetworkDiscovery.Fingerprinting.OSDetection,
+			ServiceProbes: cfg.NetworkDiscovery.Fingerprinting.ServiceProbes,
 		},
 	}
 }
