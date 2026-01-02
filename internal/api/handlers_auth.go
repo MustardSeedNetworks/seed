@@ -3,6 +3,8 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -24,152 +26,125 @@ type LoginResponse struct {
 	Expires int64  `json:"expires"`
 }
 
-// handleLogin handles user login (fixes #544 - split from handlers.go).
-func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694, #699
-		return
+// handleLoginRateLimited checks and handles rate limiting, returns true if blocked.
+func (s *Server) handleLoginRateLimited(
+	w http.ResponseWriter,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+	clientIP string,
+) bool {
+	if !s.loginRateLimiter.IsBlocked(clientIP) {
+		return false
 	}
+	logger.Warn("Login blocked due to rate limiting", "client_ip", clientIP, "event", "auth.login.blocked")
+	w.Header().Set("Retry-After", "900")
+	sendJSONResponse(w, logger, http.StatusTooManyRequests, map[string]any{
+		"error":              localizer.T("errors.auth.tooManyAttempts"),
+		"retry_after":        900,
+		"remaining_attempts": s.loginRateLimiter.RemainingAttempts(clientIP),
+	})
+	return true
+}
 
-	// Get client IP for rate limiting (fixes #716, #H4)
-	// Each IP is tracked independently, providing protection against distributed attacks
-	// Uses trusted proxy support if configured
-	clientIP := s.getClientIP(r)
+// handleLoginFailure handles a failed login attempt including rate limiting.
+func (s *Server) handleLoginFailure(
+	w http.ResponseWriter,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+	username, clientIP string,
+) {
+	logger.Warn("Login failed", "username", username, "client_ip", clientIP,
+		"event", "auth.login.failed", "error", "invalid credentials")
 
-	// Check if IP is rate limited
-	if s.loginRateLimiter.IsBlocked(clientIP) {
-		// Security audit log: blocked login attempt (fixes #697)
-		logger.Warn("Login blocked due to rate limiting",
-			"client_ip", clientIP,
-			"event", "auth.login.blocked")
-		w.Header().Set("Retry-After", "900") // 15 minutes
-		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
+	blocked := s.loginRateLimiter.RecordAttempt(clientIP, false)
+	remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
+
+	if blocked {
+		logger.Warn("Account locked due to too many failed attempts",
+			"username", username, "client_ip", clientIP, "event", "auth.account.locked")
+		w.Header().Set("Retry-After", "900")
 		sendJSONResponse(w, logger, http.StatusTooManyRequests, map[string]any{
-			"error":              localizer.T("errors.auth.tooManyAttempts"),
-			"retry_after":        900,
-			"remaining_attempts": remaining,
+			"error": localizer.T("errors.auth.accountLocked"), "retry_after": 900, "remaining_attempts": 0,
 		})
 		return
 	}
 
-	// Limit request body size to prevent memory exhaustion (1KB is plenty for login)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeAuth)
+	sendJSONResponse(w, logger, http.StatusUnauthorized, map[string]any{
+		"error": localizer.T("errors.auth.invalidCredentials"), "remaining_attempts": remaining,
+	})
+}
 
-	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		// Log error without exposing credentials
-		logger.Warn("Login decode error", "client_ip", clientIP, "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		) // fixes #694, #699
-		return
-	}
-
-	// Authenticate user (validates credentials)
-	_, err := s.authManager.Authenticate(r.Context(), req.Username, req.Password)
+// generateAndSetLoginTokens generates tokens and sets cookies, returns access token or error.
+func (s *Server) generateAndSetLoginTokens(
+	w http.ResponseWriter,
+	r *http.Request,
+	username string,
+) (string, error) {
+	accessToken, err := s.authManager.GenerateAccessToken(r.Context(), username)
 	if err != nil {
-		// Security audit log: failed login attempt (fixes #697)
-		logger.Warn("Login failed",
-			"username", req.Username,
-			"client_ip", clientIP,
-			"event", "auth.login.failed",
-			"error", "invalid credentials")
-
-		// Record failed attempt
-		blocked := s.loginRateLimiter.RecordAttempt(clientIP, false)
-		remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
-
-		if blocked {
-			// Security audit log: account locked (fixes #697)
-			logger.Warn("Account locked due to too many failed attempts",
-				"username", req.Username,
-				"client_ip", clientIP,
-				"event", "auth.account.locked")
-			w.Header().Set("Retry-After", "900")
-			sendJSONResponse(w, logger, http.StatusTooManyRequests, map[string]any{
-				"error":              localizer.T("errors.auth.accountLocked"),
-				"retry_after":        900,
-				"remaining_attempts": 0,
-			})
-			return
-		}
-
-		sendJSONResponse(w, logger, http.StatusUnauthorized, map[string]any{
-			"error":              localizer.T("errors.auth.invalidCredentials"),
-			"remaining_attempts": remaining,
-		})
-		return
+		return "", fmt.Errorf("access token: %w", err)
 	}
 
-	// Security audit log: successful login (fixes #697)
-	logger.Info("Login successful",
-		"username", req.Username,
-		"client_ip", clientIP,
-		"event", "auth.login.success")
-
-	// Record successful attempt (clears previous failures)
-	s.loginRateLimiter.RecordAttempt(clientIP, true)
-
-	// Generate access and refresh tokens (fixes #478)
-	accessToken, err := s.authManager.GenerateAccessToken(r.Context(), req.Username)
+	refreshToken, err := s.authManager.GenerateRefreshToken(r.Context(), username)
 	if err != nil {
-		logger.Error("Failed to generate access token", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.api.internalError"),
-			"",
-		) // fixes #694, #699
-		return
+		return "", fmt.Errorf("refresh token: %w", err)
 	}
 
-	refreshToken, err := s.authManager.GenerateRefreshToken(r.Context(), req.Username)
-	if err != nil {
-		logger.Error("Failed to generate refresh token", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.api.internalError"),
-			"",
-		) // fixes #694, #699
-		return
-	}
-
-	// Set httpOnly cookies (fixes #478)
 	cookieConfig := auth.DefaultCookieConfig()
-	// Allow insecure cookies in development mode (HTTPS disabled)
 	if !s.config.Server.HTTPS {
 		cookieConfig.Secure = false
 	}
 	auth.SetAccessTokenCookie(w, accessToken, cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, cookieConfig)
 
-	// Also return access token in response for backwards compatibility (API clients)
-	resp := LoginResponse{
-		Token:   accessToken,
-		Expires: time.Now().Add(auth.AccessTokenDuration).Unix(),
+	return accessToken, nil
+}
+
+// handleLogin handles user login (fixes #544 - split from handlers.go).
+func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodPost {
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+	clientIP := s.getClientIP(r)
+	if s.handleLoginRateLimited(w, logger, localizer, clientIP) {
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeAuth)
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn("Login decode error", "client_ip", clientIP, "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		return
+	}
+
+	if _, err := s.authManager.Authenticate(r.Context(), req.Username, req.Password); err != nil {
+		s.handleLoginFailure(w, logger, localizer, req.Username, clientIP)
+		return
+	}
+
+	logger.Info("Login successful", "username", req.Username, "client_ip", clientIP, "event", "auth.login.success")
+	s.loginRateLimiter.RecordAttempt(clientIP, true)
+
+	accessToken, err := s.generateAndSetLoginTokens(w, r, req.Username)
+	if err != nil {
+		logger.Error("Failed to generate tokens", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, LoginResponse{
+		Token:   accessToken,
+		Expires: time.Now().Add(auth.AccessTokenDuration).Unix(),
+	})
 }
 
 // handleLogout handles user logout (fixes #544 - split from handlers.go).
