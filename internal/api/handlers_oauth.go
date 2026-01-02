@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -187,24 +188,20 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
-// handleSSOCallback handles the OAuth callback from the provider.
-func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-	clientIP := s.getClientIP(r)
+// oauthCallbackParams holds validated OAuth callback parameters.
+type oauthCallbackParams struct {
+	provider     *oauth.Provider
+	providerName string
+	code         string
+}
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
+// validateOAuthCallback validates the OAuth callback request and returns the provider and code.
+func (s *Server) validateOAuthCallback(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	clientIP string,
+) (*oauthCallbackParams, bool) {
 	// Check for OAuth error response from provider
 	if errParam := r.URL.Query().Get("error"); errParam != "" {
 		errDesc := r.URL.Query().Get("error_description")
@@ -214,37 +211,30 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 			"client_ip", clientIP,
 			"event", "auth.sso.provider_error")
 		s.redirectWithError(w, r, fmt.Sprintf("OAuth error: %s", errDesc))
-		return
+		return nil, false
 	}
 
-	// Get state from cookie
+	// Get and validate state from cookie
 	stateCookie, err := r.Cookie(oauthStateCookie)
 	if err != nil {
-		logger.Warn("Missing OAuth state cookie",
-			"client_ip", clientIP,
-			"event", "auth.sso.missing_state")
+		logger.Warn("Missing OAuth state cookie", "client_ip", clientIP, "event", "auth.sso.missing_state")
 		s.redirectWithError(w, r, "OAuth session expired. Please try again.")
-		return
+		return nil, false
 	}
 
-	// Validate state parameter (CSRF protection)
 	stateParam := r.URL.Query().Get("state")
 	if validateErr := oauth.ValidateState(stateCookie.Value, stateParam); validateErr != nil {
-		logger.Warn("Invalid OAuth state",
-			"client_ip", clientIP,
-			"event", "auth.sso.invalid_state")
+		logger.Warn("Invalid OAuth state", "client_ip", clientIP, "event", "auth.sso.invalid_state")
 		s.redirectWithError(w, r, "Invalid OAuth state. Please try again.")
-		return
+		return nil, false
 	}
 
 	// Get provider from cookie
 	providerCookie, err := r.Cookie("oauth_provider")
 	if err != nil {
-		logger.Warn("Missing OAuth provider cookie",
-			"client_ip", clientIP,
-			"event", "auth.sso.missing_provider")
+		logger.Warn("Missing OAuth provider cookie", "client_ip", clientIP, "event", "auth.sso.missing_provider")
 		s.redirectWithError(w, r, "OAuth session expired. Please try again.")
-		return
+		return nil, false
 	}
 
 	providerName := providerCookie.Value
@@ -252,7 +242,7 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("Invalid provider in callback", "provider", providerName, "error", err)
 		s.redirectWithError(w, r, "Invalid OAuth provider.")
-		return
+		return nil, false
 	}
 
 	// Get authorization code
@@ -263,51 +253,56 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 			"client_ip", clientIP,
 			"event", "auth.sso.missing_code")
 		s.redirectWithError(w, r, "Missing authorization code.")
-		return
+		return nil, false
 	}
 
-	// Exchange code for token
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-	defer cancel()
+	return &oauthCallbackParams{provider: provider, providerName: providerName, code: code}, true
+}
 
-	token, err := provider.Exchange(ctx, code)
+// exchangeCodeForUserInfo exchanges the OAuth code for a token and retrieves user info.
+func (s *Server) exchangeCodeForUserInfo(
+	ctx context.Context,
+	params *oauthCallbackParams,
+	logger *slog.Logger,
+	clientIP string,
+) (*oauth.UserInfo, error) {
+	token, err := params.provider.Exchange(ctx, params.code)
 	if err != nil {
 		logger.Error("Failed to exchange OAuth code",
-			"provider", providerName,
+			"provider", params.providerName,
 			"client_ip", clientIP,
 			"event", "auth.sso.exchange_failed",
 			"error", err)
-		s.redirectWithError(w, r, "Failed to authenticate. Please try again.")
-		return
+		return nil, fmt.Errorf("failed to authenticate")
 	}
 
-	// Get user info from provider
 	var userInfo *oauth.UserInfo
-	if providerName == "github" {
-		// GitHub requires special handling for emails
-		userInfo, err = oauth.GetGitHubUserInfo(ctx, provider.Config, token)
+	if params.providerName == "github" {
+		userInfo, err = oauth.GetGitHubUserInfo(ctx, params.provider.Config, token)
 	} else {
-		userInfo, err = provider.GetUserInfo(ctx, token)
+		userInfo, err = params.provider.GetUserInfo(ctx, token)
 	}
 
 	if err != nil {
 		logger.Error("Failed to get user info",
-			"provider", providerName,
+			"provider", params.providerName,
 			"client_ip", clientIP,
 			"event", "auth.sso.userinfo_failed",
 			"error", err)
-		s.redirectWithError(w, r, "Failed to get user information.")
-		return
+		return nil, fmt.Errorf("failed to get user information")
 	}
 
-	// Security audit log: successful SSO authentication
-	logger.Info("SSO authentication successful",
-		"provider", providerName,
-		"email", userInfo.Email,
-		"client_ip", clientIP,
-		"event", "auth.sso.success")
+	return userInfo, nil
+}
 
-	// Generate access and refresh tokens (like login handler does)
+// completeOAuthLogin generates tokens, sets cookies, and redirects.
+func (s *Server) completeOAuthLogin(
+	w http.ResponseWriter,
+	r *http.Request,
+	userInfo *oauth.UserInfo,
+	providerName string,
+	logger *slog.Logger,
+) bool {
 	accessToken, err := s.authManager.GenerateAccessToken(r.Context(), userInfo.Email)
 	if err != nil {
 		logger.Error("Failed to generate access token",
@@ -315,7 +310,7 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 			"email", userInfo.Email,
 			"error", err)
 		s.redirectWithError(w, r, "Failed to create session.")
-		return
+		return false
 	}
 
 	refreshToken, err := s.authManager.GenerateRefreshToken(r.Context(), userInfo.Email)
@@ -325,13 +320,11 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 			"email", userInfo.Email,
 			"error", err)
 		s.redirectWithError(w, r, "Failed to create session.")
-		return
+		return false
 	}
 
-	// Clear OAuth state cookies
 	s.clearOAuthCookies(w, r)
 
-	// Set httpOnly auth cookies (same as login handler)
 	cookieConfig := auth.DefaultCookieConfig()
 	if !s.config.Server.HTTPS {
 		cookieConfig.Secure = false
@@ -339,7 +332,52 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	auth.SetAccessTokenCookie(w, accessToken, cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, cookieConfig)
 
-	// Redirect to frontend - auth cookies are set, frontend will detect authenticated state
+	return true
+}
+
+// handleSSOCallback handles the OAuth callback from the provider.
+func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+	clientIP := s.getClientIP(r)
+
+	if r.Method != http.MethodGet {
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "",
+		)
+		return
+	}
+
+	// Validate callback and get OAuth parameters
+	params, ok := s.validateOAuthCallback(w, r, logger, clientIP)
+	if !ok {
+		return
+	}
+
+	// Exchange code for token and get user info
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	userInfo, err := s.exchangeCodeForUserInfo(ctx, params, logger, clientIP)
+	if err != nil {
+		s.redirectWithError(w, r, err.Error())
+		return
+	}
+
+	// Security audit log: successful SSO authentication
+	logger.Info("SSO authentication successful",
+		"provider", params.providerName,
+		"email", userInfo.Email,
+		"client_ip", clientIP,
+		"event", "auth.sso.success")
+
+	// Generate tokens and set cookies
+	if !s.completeOAuthLogin(w, r, userInfo, params.providerName, logger) {
+		return
+	}
+
+	// Redirect to frontend
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
