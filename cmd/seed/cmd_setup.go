@@ -110,17 +110,17 @@ func runSetup(cmd *cobra.Command, _ []string) {
 				fmt.Fprintf(os.Stderr, "Error marshaling credentials: %v\n", marshalErr)
 				os.Exit(1)
 			}
-			fmt.Println(string(data))
+			fmt.Fprintln(os.Stdout, string(data))
 		} else {
-			fmt.Println("╔══════════════════════════════════════════════════════════════════╗")
-			fmt.Println("║              THE SEED - CREDENTIALS GENERATED                    ║")
-			fmt.Println("╠══════════════════════════════════════════════════════════════════╣")
-			fmt.Printf("║  Username: %-53s ║\n", creds.Username)
-			fmt.Printf("║  Password: %-53s ║\n", creds.Password)
-			fmt.Println("║                                                                  ║")
-			fmt.Println("║  IMPORTANT: Save this password securely!                         ║")
-			fmt.Println("║  It will not be shown again.                                     ║")
-			fmt.Println("╚══════════════════════════════════════════════════════════════════╝")
+			fmt.Fprintln(os.Stdout, "╔══════════════════════════════════════════════════════════════════╗")
+			fmt.Fprintln(os.Stdout, "║              THE SEED - CREDENTIALS GENERATED                    ║")
+			fmt.Fprintln(os.Stdout, "╠══════════════════════════════════════════════════════════════════╣")
+			fmt.Fprintf(os.Stdout, "║  Username: %-53s ║\n", creds.Username)
+			fmt.Fprintf(os.Stdout, "║  Password: %-53s ║\n", creds.Password)
+			fmt.Fprintln(os.Stdout, "║                                                                  ║")
+			fmt.Fprintln(os.Stdout, "║  IMPORTANT: Save this password securely!                         ║")
+			fmt.Fprintln(os.Stdout, "║  It will not be shown again.                                     ║")
+			fmt.Fprintln(os.Stdout, "╚══════════════════════════════════════════════════════════════════╝")
 		}
 	} else {
 		// Clear password to trigger web wizard
@@ -134,8 +134,8 @@ func runSetup(cmd *cobra.Command, _ []string) {
 			os.Exit(1)
 		}
 
-		fmt.Println("Setup wizard has been reset.")
-		fmt.Println("Start the server and visit the web UI to set your password.")
-		fmt.Printf("\nConfig: %s\n", configPath)
+		fmt.Fprintln(os.Stdout, "Setup wizard has been reset.")
+		fmt.Fprintln(os.Stdout, "Start the server and visit the web UI to set your password.")
+		fmt.Fprintf(os.Stdout, "\nConfig: %s\n", configPath)
 	}
 }

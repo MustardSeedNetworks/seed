@@ -108,22 +108,22 @@ func outputResult(result ValidationResult, asJSON bool) {
 			fmt.Fprintf(os.Stderr, "Error marshaling result: %v\n", err)
 			return
 		}
-		fmt.Println(string(data))
+		fmt.Fprintln(os.Stdout, string(data))
 		return
 	}
 
 	// Human-readable output
-	fmt.Printf("Config: %s\n", result.Path)
+	fmt.Fprintf(os.Stdout, "Config: %s\n", result.Path)
 	if result.Valid {
-		fmt.Println("Status: VALID")
+		fmt.Fprintln(os.Stdout, "Status: VALID")
 	} else {
-		fmt.Println("Status: INVALID")
+		fmt.Fprintln(os.Stdout, "Status: INVALID")
 	}
 
 	for _, e := range result.Errors {
-		fmt.Printf("  ERROR: %s\n", e)
+		fmt.Fprintf(os.Stdout, "  ERROR: %s\n", e)
 	}
 	for _, w := range result.Warnings {
-		fmt.Printf("  WARNING: %s\n", w)
+		fmt.Fprintf(os.Stdout, "  WARNING: %s\n", w)
 	}
 }

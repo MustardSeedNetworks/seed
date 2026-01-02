@@ -79,17 +79,17 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 
 	// Confirm
 	if !force {
-		fmt.Println("This will uninstall Seed:")
-		fmt.Printf("  - Stop and disable the systemd service\n")
-		fmt.Printf("  - Remove the binary\n")
+		fmt.Fprintln(os.Stdout, "This will uninstall Seed:")
+		fmt.Fprintf(os.Stdout, "  - Stop and disable the systemd service\n")
+		fmt.Fprintf(os.Stdout, "  - Remove the binary\n")
 		if purge {
-			fmt.Printf("  - Remove all configuration in %s\n", p.ConfigDir)
-			fmt.Printf("  - Remove all data in %s\n", p.DataDir)
-			fmt.Printf("  - Remove all logs in %s\n", p.LogDir)
+			fmt.Fprintf(os.Stdout, "  - Remove all configuration in %s\n", p.ConfigDir)
+			fmt.Fprintf(os.Stdout, "  - Remove all data in %s\n", p.DataDir)
+			fmt.Fprintf(os.Stdout, "  - Remove all logs in %s\n", p.LogDir)
 		} else {
-			fmt.Printf("  - Keep configuration and data (use --purge to remove)\n")
+			fmt.Fprintf(os.Stdout, "  - Keep configuration and data (use --purge to remove)\n")
 		}
-		fmt.Print("\nContinue? [y/N]: ")
+		fmt.Fprint(os.Stdout, "\nContinue? [y/N]: ")
 
 		reader := bufio.NewReader(os.Stdin)
 		response, readErr := reader.ReadString('\n')
@@ -99,13 +99,13 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 		}
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
-			fmt.Println("Aborted.")
+			fmt.Fprintln(os.Stdout, "Aborted.")
 			return
 		}
 	}
 
 	// Stop service (fixes #789 - log errors instead of silently ignoring)
-	fmt.Println("\nStopping service...")
+	fmt.Fprintln(os.Stdout, "\nStopping service...")
 	ctx := context.Background()
 	if mode == paths.ModeSystem {
 		if stopErr := exec.CommandContext(ctx, "systemctl", "stop", "seed").Run(); stopErr != nil {
@@ -124,7 +124,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 	}
 
 	// Remove service file
-	fmt.Println("Removing service file...")
+	fmt.Fprintln(os.Stdout, "Removing service file...")
 	var servicePath string
 	if mode == paths.ModeSystem {
 		servicePath = "/etc/systemd/system/seed.service"
@@ -152,7 +152,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 	}
 
 	// Remove binary
-	fmt.Println("Removing binary...")
+	fmt.Fprintln(os.Stdout, "Removing binary...")
 	binaryPath := filepath.Join(p.BinaryDir, "seed")
 	if mode == paths.ModeUser {
 		binaryPath = filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
@@ -163,28 +163,28 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 
 	// Purge data
 	if purge {
-		fmt.Println("Removing data...")
+		fmt.Fprintln(os.Stdout, "Removing data...")
 		dirs := []string{p.ConfigDir, p.DataDir, p.LogDir, p.CacheDir}
 		for _, dir := range dirs {
 			if rmErr := os.RemoveAll(dir); rmErr != nil {
 				slog.Warn("Failed to remove directory", "path", dir, "error", rmErr)
 			} else {
-				fmt.Printf("  Removed: %s\n", dir)
+				fmt.Fprintf(os.Stdout, "  Removed: %s\n", dir)
 			}
 		}
 
 		// Remove user (system mode only) - fixes #789
 		if mode == paths.ModeSystem {
-			fmt.Println("Removing seed user...")
+			fmt.Fprintln(os.Stdout, "Removing seed user...")
 			if userDelErr := exec.CommandContext(ctx, "userdel", "seed").Run(); userDelErr != nil {
 				slog.Warn("Failed to remove seed user", "error", userDelErr)
 			}
 		}
 	}
 
-	fmt.Println("\n✓ Uninstall complete!")
+	fmt.Fprintln(os.Stdout, "\n✓ Uninstall complete!")
 	if !purge {
-		fmt.Printf("\nConfiguration preserved at: %s\n", p.ConfigDir)
-		fmt.Println("Use --purge to remove all data.")
+		fmt.Fprintf(os.Stdout, "\nConfiguration preserved at: %s\n", p.ConfigDir)
+		fmt.Fprintln(os.Stdout, "Use --purge to remove all data.")
 	}
 }
