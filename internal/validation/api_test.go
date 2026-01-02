@@ -1,17 +1,18 @@
-// Package validation provides input validation utilities and standardized API error responses.
-// Test suite validates JSON error responses, status codes, and error formatting.
-package validation
+// Package validation_test tests the validation package API error responses and request validators.
+package validation_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/validation"
 )
 
 func TestWriteJSONError(t *testing.T) {
 	w := httptest.NewRecorder()
-	WriteJSONError(w, http.StatusBadRequest, "test error")
+	validation.WriteJSONError(w, http.StatusBadRequest, "test error")
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
@@ -24,7 +25,7 @@ func TestWriteJSONError(t *testing.T) {
 
 func TestWriteJSONErrorWithCode(t *testing.T) {
 	w := httptest.NewRecorder()
-	WriteJSONErrorWithCode(w, http.StatusUnauthorized, "unauthorized", "AUTH_ERROR")
+	validation.WriteJSONErrorWithCode(w, http.StatusUnauthorized, "unauthorized", "AUTH_ERROR")
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
@@ -33,11 +34,11 @@ func TestWriteJSONErrorWithCode(t *testing.T) {
 
 func TestWriteValidationError(t *testing.T) {
 	w := httptest.NewRecorder()
-	fields := []FieldError{
+	fields := []validation.FieldError{
 		{Field: "username", Message: "required"},
 		{Field: "password", Message: "too short"},
 	}
-	WriteValidationError(w, fields)
+	validation.WriteValidationError(w, fields)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
@@ -47,44 +48,44 @@ func TestWriteValidationError(t *testing.T) {
 func TestValidateLoginRequest(t *testing.T) {
 	tests := []struct {
 		name      string
-		req       LoginRequest
+		req       validation.LoginRequest
 		wantCount int
 	}{
 		{
 			name:      "valid request",
-			req:       LoginRequest{Username: "admin", Password: "password123"},
+			req:       validation.LoginRequest{Username: "admin", Password: "password123"},
 			wantCount: 0,
 		},
 		{
 			name:      "empty username",
-			req:       LoginRequest{Username: "", Password: "password123"},
+			req:       validation.LoginRequest{Username: "", Password: "password123"},
 			wantCount: 1,
 		},
 		{
 			name:      "empty password",
-			req:       LoginRequest{Username: "admin", Password: ""},
+			req:       validation.LoginRequest{Username: "admin", Password: ""},
 			wantCount: 1,
 		},
 		{
 			name:      "both empty",
-			req:       LoginRequest{Username: "", Password: ""},
+			req:       validation.LoginRequest{Username: "", Password: ""},
 			wantCount: 2,
 		},
 		{
 			name:      "username too long",
-			req:       LoginRequest{Username: string(make([]byte, 65)), Password: "password"},
+			req:       validation.LoginRequest{Username: string(make([]byte, 65)), Password: "password"},
 			wantCount: 1,
 		},
 		{
 			name:      "password too long",
-			req:       LoginRequest{Username: "admin", Password: string(make([]byte, 129))},
+			req:       validation.LoginRequest{Username: "admin", Password: string(make([]byte, 129))},
 			wantCount: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors := ValidateLoginRequest(&tt.req)
+			errors := validation.ValidateLoginRequest(&tt.req)
 			if len(errors) != tt.wantCount {
 				t.Errorf("ValidateLoginRequest() returned %d errors, want %d", len(errors), tt.wantCount)
 			}
@@ -139,7 +140,7 @@ func TestValidateThreshold(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors := ValidateThreshold("test", tt.warning, tt.critical)
+			errors := validation.ValidateThreshold("test", tt.warning, tt.critical)
 			if len(errors) != tt.wantCount {
 				t.Errorf("ValidateThreshold() returned %d errors, want %d: %v", len(errors), tt.wantCount, errors)
 			}
@@ -150,12 +151,12 @@ func TestValidateThreshold(t *testing.T) {
 func TestValidateHTTPEndpoint(t *testing.T) {
 	tests := []struct {
 		name      string
-		endpoint  HTTPEndpointRequest
+		endpoint  validation.HTTPEndpointRequest
 		wantCount int
 	}{
 		{
 			name: "valid endpoint",
-			endpoint: HTTPEndpointRequest{
+			endpoint: validation.HTTPEndpointRequest{
 				Name:           "Test",
 				URL:            "https://example.com",
 				ExpectedStatus: 200,
@@ -165,7 +166,7 @@ func TestValidateHTTPEndpoint(t *testing.T) {
 		},
 		{
 			name: "empty name",
-			endpoint: HTTPEndpointRequest{
+			endpoint: validation.HTTPEndpointRequest{
 				Name:           "",
 				URL:            "https://example.com",
 				ExpectedStatus: 200,
@@ -174,7 +175,7 @@ func TestValidateHTTPEndpoint(t *testing.T) {
 		},
 		{
 			name: "empty URL",
-			endpoint: HTTPEndpointRequest{
+			endpoint: validation.HTTPEndpointRequest{
 				Name:           "Test",
 				URL:            "",
 				ExpectedStatus: 200,
@@ -183,7 +184,7 @@ func TestValidateHTTPEndpoint(t *testing.T) {
 		},
 		{
 			name: "invalid status code",
-			endpoint: HTTPEndpointRequest{
+			endpoint: validation.HTTPEndpointRequest{
 				Name:           "Test",
 				URL:            "https://example.com",
 				ExpectedStatus: 999,
@@ -192,7 +193,7 @@ func TestValidateHTTPEndpoint(t *testing.T) {
 		},
 		{
 			name: "private IP URL",
-			endpoint: HTTPEndpointRequest{
+			endpoint: validation.HTTPEndpointRequest{
 				Name:           "Test",
 				URL:            "http://192.168.1.1",
 				ExpectedStatus: 200,
@@ -203,7 +204,7 @@ func TestValidateHTTPEndpoint(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors := ValidateHTTPEndpoint(&tt.endpoint)
+			errors := validation.ValidateHTTPEndpoint(&tt.endpoint)
 			if len(errors) != tt.wantCount {
 				t.Errorf("ValidateHTTPEndpoint() returned %d errors, want %d: %v", len(errors), tt.wantCount, errors)
 			}
@@ -214,39 +215,39 @@ func TestValidateHTTPEndpoint(t *testing.T) {
 func TestValidatePingTarget(t *testing.T) {
 	tests := []struct {
 		name      string
-		target    PingTargetRequest
+		target    validation.PingTargetRequest
 		wantCount int
 	}{
 		{
 			name:      "valid hostname",
-			target:    PingTargetRequest{Name: "Google DNS", Host: "8.8.8.8"},
+			target:    validation.PingTargetRequest{Name: "Google DNS", Host: "8.8.8.8"},
 			wantCount: 0,
 		},
 		{
 			name:      "valid domain",
-			target:    PingTargetRequest{Name: "Example", Host: "example.com"},
+			target:    validation.PingTargetRequest{Name: "Example", Host: "example.com"},
 			wantCount: 0,
 		},
 		{
 			name:      "empty name",
-			target:    PingTargetRequest{Name: "", Host: "8.8.8.8"},
+			target:    validation.PingTargetRequest{Name: "", Host: "8.8.8.8"},
 			wantCount: 1,
 		},
 		{
 			name:      "empty host",
-			target:    PingTargetRequest{Name: "Test", Host: ""},
+			target:    validation.PingTargetRequest{Name: "Test", Host: ""},
 			wantCount: 1,
 		},
 		{
 			name:      "invalid host",
-			target:    PingTargetRequest{Name: "Test", Host: "not a valid host!"},
+			target:    validation.PingTargetRequest{Name: "Test", Host: "not a valid host!"},
 			wantCount: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors := ValidatePingTarget(&tt.target)
+			errors := validation.ValidatePingTarget(&tt.target)
 			if len(errors) != tt.wantCount {
 				t.Errorf("ValidatePingTarget() returned %d errors, want %d: %v", len(errors), tt.wantCount, errors)
 			}
@@ -257,34 +258,34 @@ func TestValidatePingTarget(t *testing.T) {
 func TestValidateTCPPort(t *testing.T) {
 	tests := []struct {
 		name      string
-		target    TCPPortRequest
+		target    validation.TCPPortRequest
 		wantCount int
 	}{
 		{
 			name:      "valid",
-			target:    TCPPortRequest{Name: "HTTP", Host: "example.com", Port: 80},
+			target:    validation.TCPPortRequest{Name: "HTTP", Host: "example.com", Port: 80},
 			wantCount: 0,
 		},
 		{
 			name:      "invalid port low",
-			target:    TCPPortRequest{Name: "Test", Host: "example.com", Port: 0},
+			target:    validation.TCPPortRequest{Name: "Test", Host: "example.com", Port: 0},
 			wantCount: 1,
 		},
 		{
 			name:      "invalid port high",
-			target:    TCPPortRequest{Name: "Test", Host: "example.com", Port: 70000},
+			target:    validation.TCPPortRequest{Name: "Test", Host: "example.com", Port: 70000},
 			wantCount: 1,
 		},
 		{
 			name:      "invalid host",
-			target:    TCPPortRequest{Name: "Test", Host: "invalid host!", Port: 80},
+			target:    validation.TCPPortRequest{Name: "Test", Host: "invalid host!", Port: 80},
 			wantCount: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors := ValidateTCPPort(&tt.target)
+			errors := validation.ValidateTCPPort(&tt.target)
 			if len(errors) != tt.wantCount {
 				t.Errorf("ValidateTCPPort() returned %d errors, want %d: %v", len(errors), tt.wantCount, errors)
 			}
@@ -295,34 +296,34 @@ func TestValidateTCPPort(t *testing.T) {
 func TestValidateDNSServer(t *testing.T) {
 	tests := []struct {
 		name      string
-		server    DNSServerRequest
+		server    validation.DNSServerRequest
 		wantCount int
 	}{
 		{
 			name:      "valid IPv4",
-			server:    DNSServerRequest{Address: "8.8.8.8"},
+			server:    validation.DNSServerRequest{Address: "8.8.8.8"},
 			wantCount: 0,
 		},
 		{
 			name:      "valid IPv6",
-			server:    DNSServerRequest{Address: "2001:4860:4860::8888"},
+			server:    validation.DNSServerRequest{Address: "2001:4860:4860::8888"},
 			wantCount: 0,
 		},
 		{
 			name:      "empty address",
-			server:    DNSServerRequest{Address: ""},
+			server:    validation.DNSServerRequest{Address: ""},
 			wantCount: 1,
 		},
 		{
 			name:      "hostname not allowed",
-			server:    DNSServerRequest{Address: "dns.google.com"},
+			server:    validation.DNSServerRequest{Address: "dns.google.com"},
 			wantCount: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors := ValidateDNSServer(&tt.server)
+			errors := validation.ValidateDNSServer(&tt.server)
 			if len(errors) != tt.wantCount {
 				t.Errorf("ValidateDNSServer() returned %d errors, want %d: %v", len(errors), tt.wantCount, errors)
 			}
@@ -333,34 +334,34 @@ func TestValidateDNSServer(t *testing.T) {
 func TestValidateInterfaceSettings(t *testing.T) {
 	tests := []struct {
 		name      string
-		iface     InterfaceRequest
+		iface     validation.InterfaceRequest
 		wantCount int
 	}{
 		{
 			name:      "valid",
-			iface:     InterfaceRequest{Default: "eth0", Fallbacks: []string{"enp0s3", "wlan0"}},
+			iface:     validation.InterfaceRequest{Default: "eth0", Fallbacks: []string{"enp0s3", "wlan0"}},
 			wantCount: 0,
 		},
 		{
 			name:      "empty default",
-			iface:     InterfaceRequest{Default: ""},
+			iface:     validation.InterfaceRequest{Default: ""},
 			wantCount: 1,
 		},
 		{
 			name:      "invalid default",
-			iface:     InterfaceRequest{Default: "invalid interface name!"},
+			iface:     validation.InterfaceRequest{Default: "invalid interface name!"},
 			wantCount: 1,
 		},
 		{
 			name:      "invalid fallback",
-			iface:     InterfaceRequest{Default: "eth0", Fallbacks: []string{"valid0", "inv@lid!"}},
+			iface:     validation.InterfaceRequest{Default: "eth0", Fallbacks: []string{"valid0", "inv@lid!"}},
 			wantCount: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors := ValidateInterfaceSettings(&tt.iface)
+			errors := validation.ValidateInterfaceSettings(&tt.iface)
 			if len(errors) != tt.wantCount {
 				t.Errorf(
 					"ValidateInterfaceSettings() returned %d errors, want %d: %v",
