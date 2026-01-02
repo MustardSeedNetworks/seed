@@ -1,13 +1,15 @@
-// Package api provides the HTTP/WebSocket server.
+// Package api_test tests the HTTP/WebSocket server handlers.
 // Test suite validates handler helpers, CIDR splitting, JSON error responses,
 // and HTTP request parsing utilities.
-package api
+package api_test
 
 import (
 	"context"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/api"
 )
 
 func TestSplitCIDR(t *testing.T) {
@@ -24,9 +26,9 @@ func TestSplitCIDR(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := splitCIDR(tt.input)
+			result := api.SplitCIDR(tt.input)
 			if result != tt.expected {
-				t.Errorf("splitCIDR(%q) = %v, want %v", tt.input, result, tt.expected)
+				t.Errorf("SplitCIDR(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -47,9 +49,9 @@ func TestIsIPv4Address(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.addr, func(t *testing.T) {
-			result := isIPv4Address(tt.addr)
+			result := api.IsIPv4Address(tt.addr)
 			if result != tt.expected {
-				t.Errorf("isIPv4Address(%q) = %v, want %v", tt.addr, result, tt.expected)
+				t.Errorf("IsIPv4Address(%q) = %v, want %v", tt.addr, result, tt.expected)
 			}
 		})
 	}
@@ -70,9 +72,9 @@ func TestParsePrefix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := parsePrefix(tt.input)
+			result := api.ParsePrefix(tt.input)
 			if result != tt.expected {
-				t.Errorf("parsePrefix(%q) = %d, want %d", tt.input, result, tt.expected)
+				t.Errorf("ParsePrefix(%q) = %d, want %d", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -94,9 +96,9 @@ func TestIsLinkLocal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.addr, func(t *testing.T) {
-			result := isLinkLocal(tt.addr)
+			result := api.IsLinkLocal(tt.addr)
 			if result != tt.expected {
-				t.Errorf("isLinkLocal(%q) = %v, want %v", tt.addr, result, tt.expected)
+				t.Errorf("IsLinkLocal(%q) = %v, want %v", tt.addr, result, tt.expected)
 			}
 		})
 	}
@@ -120,9 +122,9 @@ func TestIsUniqueLocal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.addr, func(t *testing.T) {
-			result := isUniqueLocal(tt.addr)
+			result := api.IsUniqueLocal(tt.addr)
 			if result != tt.expected {
-				t.Errorf("isUniqueLocal(%q) = %v, want %v", tt.addr, result, tt.expected)
+				t.Errorf("IsUniqueLocal(%q) = %v, want %v", tt.addr, result, tt.expected)
 			}
 		})
 	}
@@ -145,15 +147,15 @@ func TestParseIPAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := parseIPAddress(tt.addr)
-			if result.isIPv4 != tt.isIPv4 {
-				t.Errorf("parseIPAddress(%q).isIPv4 = %v, want %v", tt.addr, result.isIPv4, tt.isIPv4)
+			result := api.ParseIPAddress(tt.addr)
+			if result.IsIPv4 != tt.isIPv4 {
+				t.Errorf("ParseIPAddress(%q).IsIPv4 = %v, want %v", tt.addr, result.IsIPv4, tt.isIPv4)
 			}
-			if !tt.isIPv4 && result.prefix != tt.prefix {
-				t.Errorf("parseIPAddress(%q).prefix = %d, want %d", tt.addr, result.prefix, tt.prefix)
+			if !tt.isIPv4 && result.Prefix != tt.prefix {
+				t.Errorf("ParseIPAddress(%q).Prefix = %d, want %d", tt.addr, result.Prefix, tt.prefix)
 			}
-			if !tt.isIPv4 && result.scope != tt.scope {
-				t.Errorf("parseIPAddress(%q).scope = %q, want %q", tt.addr, result.scope, tt.scope)
+			if !tt.isIPv4 && result.Scope != tt.scope {
+				t.Errorf("ParseIPAddress(%q).Scope = %q, want %q", tt.addr, result.Scope, tt.scope)
 			}
 		})
 	}
@@ -176,9 +178,9 @@ func TestGetTestStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := getTestStatus(tt.latencyMs, tt.warningMs, tt.criticalMs)
+			result := api.GetTestStatus(tt.latencyMs, tt.warningMs, tt.criticalMs)
 			if result != tt.expected {
-				t.Errorf("getTestStatus(%v, %d, %d) = %q, want %q",
+				t.Errorf("GetTestStatus(%v, %d, %d) = %q, want %q",
 					tt.latencyMs, tt.warningMs, tt.criticalMs, result, tt.expected)
 			}
 		})
@@ -200,9 +202,9 @@ func TestGetTLSVersionString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			result := getTLSVersionString(tt.version)
+			result := api.GetTLSVersionString(tt.version)
 			if result != tt.expected {
-				t.Errorf("getTLSVersionString(0x%04X) = %q, want %q", tt.version, result, tt.expected)
+				t.Errorf("GetTLSVersionString(0x%04X) = %q, want %q", tt.version, result, tt.expected)
 			}
 		})
 	}
@@ -214,7 +216,7 @@ func TestRunTCPTest(t *testing.T) {
 	}
 
 	// Test against a known-working port
-	latency, err := runTCPTest(context.Background(), "google.com", 80)
+	latency, err := api.RunTCPTest(context.Background(), "google.com", 80)
 	if err != nil {
 		t.Skipf("network test failed (may be offline): %v", err)
 	}
@@ -228,7 +230,7 @@ func TestRunTCPTestInvalidHost(t *testing.T) {
 		t.Skip("skipping network test in short mode")
 	}
 
-	_, err := runTCPTest(context.Background(), "invalid.invalid.invalid", 80)
+	_, err := api.RunTCPTest(context.Background(), "invalid.invalid.invalid", 80)
 	if err == nil {
 		t.Error("expected error for invalid host")
 	}
@@ -239,7 +241,7 @@ func TestRunExtendedPing(t *testing.T) {
 		t.Skip("skipping network test in short mode")
 	}
 
-	stats, err := runExtendedPing("google.com", 3)
+	stats, err := api.RunExtendedPing("google.com", 3)
 	if err != nil {
 		t.Skipf("network test failed (may be offline): %v", err)
 	}
@@ -257,14 +259,14 @@ func TestRunExtendedPingInvalidHost(t *testing.T) {
 		t.Skip("skipping network test in short mode")
 	}
 
-	stats, err := runExtendedPing("invalid.invalid.invalid", 2)
+	stats, err := api.RunExtendedPing("invalid.invalid.invalid", 2)
 	if err == nil && stats.PacketLoss != 100 {
 		t.Error("expected 100% packet loss for invalid host")
 	}
 }
 
 func TestLoginRequestValidation(t *testing.T) {
-	req := LoginRequest{
+	req := api.LoginRequest{
 		Username: "admin",
 		Password: "secret",
 	}
@@ -278,7 +280,7 @@ func TestLoginRequestValidation(t *testing.T) {
 }
 
 func TestStatusResponseFields(t *testing.T) {
-	resp := StatusResponse{
+	resp := api.StatusResponse{
 		Status:     "ok",
 		Version:    "0.7.3",
 		Uptime:     3600,
@@ -306,17 +308,17 @@ func TestStatusResponseFields(t *testing.T) {
 func TestIPSettingsRequestValidation(t *testing.T) {
 	tests := []struct {
 		name    string
-		req     IPSettingsRequest
+		req     api.IPSettingsRequest
 		isValid bool
 	}{
 		{
 			name:    "valid dhcp",
-			req:     IPSettingsRequest{Mode: "dhcp"},
+			req:     api.IPSettingsRequest{Mode: "dhcp"},
 			isValid: true,
 		},
 		{
 			name: "valid static",
-			req: IPSettingsRequest{
+			req: api.IPSettingsRequest{
 				Mode:    "static",
 				Address: "192.168.1.100",
 				Netmask: "255.255.255.0",
@@ -339,7 +341,7 @@ func TestIPSettingsRequestValidation(t *testing.T) {
 }
 
 func TestDHCPTimingInfo(t *testing.T) {
-	timing := DHCPTimingInfo{
+	timing := api.DHCPTimingInfo{
 		Discover: 10,
 		Offer:    20,
 		Request:  15,
@@ -356,7 +358,7 @@ func TestDHCPTimingInfo(t *testing.T) {
 }
 
 func TestLinkResponse(t *testing.T) {
-	resp := LinkResponse{
+	resp := api.LinkResponse{
 		Interface: "eth0",
 		LinkUp:    true,
 		Speed:     "1000baseT",
@@ -386,7 +388,7 @@ func TestLinkResponse(t *testing.T) {
 }
 
 func TestCustomTestResult(t *testing.T) {
-	result := CustomTestResult{
+	result := api.CustomTestResult{
 		Name:       "Test Server",
 		Host:       "example.com",
 		Port:       80,
@@ -420,7 +422,7 @@ func TestCustomTestResult(t *testing.T) {
 }
 
 func TestSpeedtestResponse(t *testing.T) {
-	resp := SpeedtestResponse{
+	resp := api.SpeedtestResponse{
 		Download:     100.5,
 		Upload:       50.2,
 		Latency:      15.3,
@@ -458,7 +460,7 @@ func TestSpeedtestResponse(t *testing.T) {
 }
 
 func TestIperfClientRequest(t *testing.T) {
-	req := IperfClientRequest{
+	req := api.IperfClientRequest{
 		Server:   "192.168.1.1",
 		Port:     5201,
 		Protocol: "tcp",
@@ -489,7 +491,7 @@ func TestIperfClientRequest(t *testing.T) {
 
 func TestVLANResponse(t *testing.T) {
 	nativeVlan := 10
-	resp := VLANResponse{
+	resp := api.VLANResponse{
 		NativeVlan:  &nativeVlan,
 		TaggedVlans: []int{20, 30, 40},
 	}
@@ -505,7 +507,7 @@ func TestVLANResponse(t *testing.T) {
 }
 
 func TestWiFiResponse(t *testing.T) {
-	resp := WiFiResponse{
+	resp := api.WiFiResponse{
 		SSID:      "TestNetwork",
 		BSSID:     "00:11:22:33:44:55",
 		Signal:    -65,
@@ -536,7 +538,7 @@ func TestWiFiResponse(t *testing.T) {
 
 func TestCableResponse(t *testing.T) {
 	length := 25.5
-	resp := CableResponse{
+	resp := api.CableResponse{
 		Supported: true,
 		Length:    &length,
 		Status:    "ok",
@@ -558,7 +560,7 @@ func TestCableResponse(t *testing.T) {
 }
 
 func TestDiscoveryNeighborInfo(t *testing.T) {
-	info := DiscoveryNeighborInfo{
+	info := api.DiscoveryNeighborInfo{
 		Protocol:          "LLDP",
 		ChassisID:         "00:11:22:33:44:55",
 		PortID:            "Gi0/1",
@@ -592,7 +594,7 @@ func TestDiscoveryNeighborInfo(t *testing.T) {
 }
 
 func TestDNSLookupResult(t *testing.T) {
-	result := DNSLookupResult{
+	result := api.DNSLookupResult{
 		Result:   "93.184.216.34",
 		Time:     15,
 		TimeMs:   15,
@@ -615,7 +617,7 @@ func TestDNSLookupResult(t *testing.T) {
 }
 
 func TestGatewayResponse(t *testing.T) {
-	resp := GatewayResponse{
+	resp := api.GatewayResponse{
 		Gateway:     "192.168.1.1",
 		Reachable:   true,
 		Sent:        5,
@@ -652,31 +654,31 @@ func TestGatewayResponse(t *testing.T) {
 func TestGetInterfaceFromRequest(t *testing.T) {
 	// Test with query parameter provided (should use query param regardless of netManager).
 	t.Run("query param provided", func(t *testing.T) {
-		server := &Server{netManager: nil} // nil netManager
+		server := &api.Server{} // nil netManager
 		req, _ := http.NewRequest(http.MethodGet, "/api/link?interface=eth0", http.NoBody)
-		result := server.getInterfaceFromRequest(req)
+		result := server.GetInterfaceFromRequest(req)
 		if result != "eth0" {
-			t.Errorf("getInterfaceFromRequest() = %q, want %q", result, "eth0")
+			t.Errorf("GetInterfaceFromRequest() = %q, want %q", result, "eth0")
 		}
 	})
 
 	// Test with no query parameter and nil netManager (should return empty).
 	t.Run("no query param, nil netManager", func(t *testing.T) {
-		server := &Server{netManager: nil}
+		server := &api.Server{}
 		req, _ := http.NewRequest(http.MethodGet, "/api/link", http.NoBody)
-		result := server.getInterfaceFromRequest(req)
+		result := server.GetInterfaceFromRequest(req)
 		if result != "" {
-			t.Errorf("getInterfaceFromRequest() = %q, want empty string", result)
+			t.Errorf("GetInterfaceFromRequest() = %q, want empty string", result)
 		}
 	})
 
 	// Test with special interface name.
 	t.Run("special interface name", func(t *testing.T) {
-		server := &Server{netManager: nil}
+		server := &api.Server{}
 		req, _ := http.NewRequest(http.MethodGet, "/api/link?interface=enp0s3", http.NoBody)
-		result := server.getInterfaceFromRequest(req)
+		result := server.GetInterfaceFromRequest(req)
 		if result != "enp0s3" {
-			t.Errorf("getInterfaceFromRequest() = %q, want %q", result, "enp0s3")
+			t.Errorf("GetInterfaceFromRequest() = %q, want %q", result, "enp0s3")
 		}
 	})
 }
