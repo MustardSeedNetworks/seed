@@ -547,131 +547,84 @@ func (s *Server) handleIPSettingsGet(w http.ResponseWriter, _ *http.Request) {
 	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
+// applyStaticIPConfig applies static IP configuration, returns error message on failure.
+func (s *Server) applyStaticIPConfig(iface string, req *IPSettingsRequest, logger *slog.Logger) error {
+	cfg := &network.StaticIPConfig{
+		Address: req.Address, Netmask: req.Netmask, Gateway: req.Gateway, DNS: req.DNS,
+	}
+	if err := s.netManager.ConfigureStaticIP(iface, cfg); err != nil {
+		logger.Error("Failed to configure static IP", "error", err, "interface", iface)
+		return err
+	}
+	s.config.IP.Mode = ipModeStatic
+	s.config.IP.Static = &config.StaticIP{
+		Address: req.Address, Netmask: req.Netmask, Gateway: req.Gateway, DNS: req.DNS,
+	}
+	return nil
+}
+
+// applyDHCPConfig applies DHCP configuration, returns error on failure.
+func (s *Server) applyDHCPConfig(iface string, logger *slog.Logger) error {
+	if err := s.netManager.ConfigureDHCP(iface); err != nil {
+		logger.Error("Failed to configure DHCP", "error", err, "interface", iface)
+		return err
+	}
+	s.config.IP.Mode = ipModeDHCP
+	s.config.IP.Static = nil
+	return nil
+}
+
 // handleIPSettingsPut updates the IP configuration settings.
 // Accepts optional query parameter: ?interface=eth0.
-func (s *Server) handleIPSettingsPut(
-	w http.ResponseWriter,
-	r *http.Request,
-	logger *slog.Logger,
-	localizer *i18n.Localizer,
-) {
-	// Limit request body size to prevent DoS attacks (fixes #693)
+func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req IPSettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
-	// Validate mode
 	if req.Mode != ipModeDHCP && req.Mode != ipModeStatic {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeValidation,
-			localizer.T("errors.network.invalidMode"),
-			"",
-		) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.network.invalidMode"), "")
 		return
 	}
 
-	// Lock config for write access
-	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
-
-	// Get interface from query param or fallback to current.
 	currentIface := s.getInterfaceFromRequest(r)
 
+	var configErr error
 	if req.Mode == ipModeStatic {
-		// Apply static IP configuration
-		cfg := &network.StaticIPConfig{
-			Address: req.Address,
-			Netmask: req.Netmask,
-			Gateway: req.Gateway,
-			DNS:     req.DNS,
-		}
-
-		if err := s.netManager.ConfigureStaticIP(currentIface, cfg); err != nil {
-			s.config.Unlock()
-			logger.Error("Failed to configure static IP", "error", err, "interface", currentIface)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusInternalServerError,
-				ErrCodeInternal,
-				localizer.T("errors.network.staticConfigFailed"),
-				"",
-			)
-			return
-		}
-
-		// Update config
-		s.config.IP.Mode = ipModeStatic
-		s.config.IP.Static = &config.StaticIP{
-			Address: req.Address,
-			Netmask: req.Netmask,
-			Gateway: req.Gateway,
-			DNS:     req.DNS,
-		}
+		configErr = s.applyStaticIPConfig(currentIface, &req, logger)
 	} else {
-		// Switch to DHCP
-		if err := s.netManager.ConfigureDHCP(currentIface); err != nil {
-			s.config.Unlock()
-			logger.Error("Failed to configure DHCP", "error", err, "interface", currentIface)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.dhcpConfigFailed"), "")
-			return
-		}
-
-		// Update config
-		s.config.IP.Mode = ipModeDHCP
-		s.config.IP.Static = nil
+		configErr = s.applyDHCPConfig(currentIface, logger)
 	}
 
-	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
 	s.config.Unlock()
 
-	// Save config to file (fixes #782 - return error instead of silent warning)
+	if configErr != nil {
+		errMsg := localizer.T("errors.network.staticConfigFailed")
+		if req.Mode == ipModeDHCP {
+			errMsg = localizer.T("errors.network.dhcpConfigFailed")
+		}
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, errMsg, "")
+		return
+	}
+
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.config.failedToSave"),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
 		return
 	}
 
-	// Refresh interface data
 	if err := s.netManager.RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.network.refreshFailed"),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
-		"message": "IP configuration updated",
-	})
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "success", "message": "IP configuration updated"})
 }
 
 // handleSetMTU handles POST requests to set interface MTU.
