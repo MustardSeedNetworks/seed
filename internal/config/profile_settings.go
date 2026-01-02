@@ -296,49 +296,22 @@ func NewProfileSettings() *ProfileSettings {
 func (ps *ProfileSettings) FromConfig(cfg *Config) {
 	ps.Version = ProfileSettingsVersion
 
-	// Thresholds
+	// Extract threshold milliseconds using helper
+	t := ExtractThresholdMs(cfg)
+
+	// Thresholds (Warning/Critical semantic mapping)
 	ps.Thresholds = ProfileThresholds{
-		DNS: ThresholdPair{
-			Warning:  cfg.Thresholds.DNS.Warning.Milliseconds(),
-			Critical: cfg.Thresholds.DNS.Critical.Milliseconds(),
-		},
-		Gateway: ThresholdPair{
-			Warning:  cfg.Thresholds.Ping.Warning.Milliseconds(),
-			Critical: cfg.Thresholds.Ping.Critical.Milliseconds(),
-		},
-		WiFi: WiFiThresholdPair{
-			Warning:  cfg.Thresholds.WiFi.Signal.Warning,
-			Critical: cfg.Thresholds.WiFi.Signal.Critical,
-		},
-		CustomPing: ThresholdPair{
-			Warning:  cfg.Thresholds.CustomTests.Ping.Warning.Milliseconds(),
-			Critical: cfg.Thresholds.CustomTests.Ping.Critical.Milliseconds(),
-		},
-		CustomTCP: ThresholdPair{
-			Warning:  cfg.Thresholds.CustomTests.TCP.Warning.Milliseconds(),
-			Critical: cfg.Thresholds.CustomTests.TCP.Critical.Milliseconds(),
-		},
-		CustomHTTP: ThresholdPair{
-			Warning:  cfg.Thresholds.CustomTests.HTTP.Warning.Milliseconds(),
-			Critical: cfg.Thresholds.CustomTests.HTTP.Critical.Milliseconds(),
-		},
+		DNS:        ThresholdPair{Warning: t.DNSWarning, Critical: t.DNSCritical},
+		Gateway:    ThresholdPair{Warning: t.GatewayWarning, Critical: t.GatewayCritical},
+		WiFi:       WiFiThresholdPair{Warning: t.WiFiWarning, Critical: t.WiFiCritical},
+		CustomPing: ThresholdPair{Warning: t.PingWarning, Critical: t.PingCritical},
+		CustomTCP:  ThresholdPair{Warning: t.TCPWarning, Critical: t.TCPCritical},
+		CustomHTTP: ThresholdPair{Warning: t.HTTPWarning, Critical: t.HTTPCritical},
 		HTTPTimings: ProfileHTTPTimingThresholds{
-			DNS: ThresholdPair{
-				Warning:  cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning.Milliseconds(),
-				Critical: cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical.Milliseconds(),
-			},
-			TCP: ThresholdPair{
-				Warning:  cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning.Milliseconds(),
-				Critical: cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical.Milliseconds(),
-			},
-			TLS: ThresholdPair{
-				Warning:  cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning.Milliseconds(),
-				Critical: cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical.Milliseconds(),
-			},
-			TTFB: ThresholdPair{
-				Warning:  cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning.Milliseconds(),
-				Critical: cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical.Milliseconds(),
-			},
+			DNS:  ThresholdPair{Warning: t.TimingDNSWarn, Critical: t.TimingDNSCrit},
+			TCP:  ThresholdPair{Warning: t.TimingTCPWarn, Critical: t.TimingTCPCrit},
+			TLS:  ThresholdPair{Warning: t.TimingTLSWarn, Critical: t.TimingTLSCrit},
+			TTFB: ThresholdPair{Warning: t.TimingTTFBWarn, Critical: t.TimingTTFBCrit},
 		},
 	}
 

@@ -262,10 +262,11 @@ type VulnerabilityDefaults struct {
 
 // GetDefaultSettings returns all default settings as the single source of truth.
 // This eliminates the need for duplicated DEFAULT_* constants in the frontend.
-//
-//nolint:dupl // Similar structure to ProfileSettings.FromConfig but different types and semantics (Good/Warning vs Warning/Critical)
 func GetDefaultSettings() *DefaultSettings {
 	cfg := DefaultConfig()
+
+	// Extract threshold milliseconds using helper
+	t := ExtractThresholdMs(cfg)
 
 	return &DefaultSettings{
 		CardSettings: CardSettingsDefaults{
@@ -294,48 +295,19 @@ func GetDefaultSettings() *DefaultSettings {
 			ShowPublicIP: cfg.DisplayOptions.ShowPublicIP,
 			UnitSystem:   cfg.DisplayOptions.UnitSystem,
 		},
+		// Thresholds (Good/Warning semantic mapping for defaults API)
 		Thresholds: ThresholdDefaults{
-			DNS: ThresholdPairDefaults{
-				Good:    cfg.Thresholds.DNS.Warning.Milliseconds(),
-				Warning: cfg.Thresholds.DNS.Critical.Milliseconds(),
-			},
-			Gateway: ThresholdPairDefaults{
-				Good:    cfg.Thresholds.Ping.Warning.Milliseconds(),
-				Warning: cfg.Thresholds.Ping.Critical.Milliseconds(),
-			},
-			WiFi: ThresholdPairIntDefaults{
-				Good:    cfg.Thresholds.WiFi.Signal.Warning,
-				Warning: cfg.Thresholds.WiFi.Signal.Critical,
-			},
-			CustomPing: ThresholdPairDefaults{
-				Good:    cfg.Thresholds.CustomTests.Ping.Warning.Milliseconds(),
-				Warning: cfg.Thresholds.CustomTests.Ping.Critical.Milliseconds(),
-			},
-			CustomTCP: ThresholdPairDefaults{
-				Good:    cfg.Thresholds.CustomTests.TCP.Warning.Milliseconds(),
-				Warning: cfg.Thresholds.CustomTests.TCP.Critical.Milliseconds(),
-			},
-			CustomHTTP: ThresholdPairDefaults{
-				Good:    cfg.Thresholds.CustomTests.HTTP.Warning.Milliseconds(),
-				Warning: cfg.Thresholds.CustomTests.HTTP.Critical.Milliseconds(),
-			},
+			DNS:        ThresholdPairDefaults{Good: t.DNSWarning, Warning: t.DNSCritical},
+			Gateway:    ThresholdPairDefaults{Good: t.GatewayWarning, Warning: t.GatewayCritical},
+			WiFi:       ThresholdPairIntDefaults{Good: t.WiFiWarning, Warning: t.WiFiCritical},
+			CustomPing: ThresholdPairDefaults{Good: t.PingWarning, Warning: t.PingCritical},
+			CustomTCP:  ThresholdPairDefaults{Good: t.TCPWarning, Warning: t.TCPCritical},
+			CustomHTTP: ThresholdPairDefaults{Good: t.HTTPWarning, Warning: t.HTTPCritical},
 			HTTPTimings: HTTPTimingThresholdDefaults{
-				DNS: ThresholdPairDefaults{
-					Good:    cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning.Milliseconds(),
-					Warning: cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical.Milliseconds(),
-				},
-				TCP: ThresholdPairDefaults{
-					Good:    cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning.Milliseconds(),
-					Warning: cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical.Milliseconds(),
-				},
-				TLS: ThresholdPairDefaults{
-					Good:    cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning.Milliseconds(),
-					Warning: cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical.Milliseconds(),
-				},
-				TTFB: ThresholdPairDefaults{
-					Good:    cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning.Milliseconds(),
-					Warning: cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical.Milliseconds(),
-				},
+				DNS:  ThresholdPairDefaults{Good: t.TimingDNSWarn, Warning: t.TimingDNSCrit},
+				TCP:  ThresholdPairDefaults{Good: t.TimingTCPWarn, Warning: t.TimingTCPCrit},
+				TLS:  ThresholdPairDefaults{Good: t.TimingTLSWarn, Warning: t.TimingTLSCrit},
+				TTFB: ThresholdPairDefaults{Good: t.TimingTTFBWarn, Warning: t.TimingTTFBCrit},
 			},
 		},
 		Iperf: IperfDefaults{
