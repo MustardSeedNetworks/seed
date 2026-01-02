@@ -196,142 +196,94 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	// Limit request body size to prevent DoS attacks
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
-	var req TestsSettingsResponse
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
-		return
-	}
-
-	// Lock config for write access
-	// NOTE: Must unlock before Save() - Save() acquires RLock internally
-	s.config.Lock()
-
-	// Update DNS hostname
+// applyDNSSettings applies DNS configuration from request.
+func (s *Server) applyDNSSettings(req *TestsSettingsResponse) {
 	if req.DNSHostname != "" {
 		s.config.DNS.TestHostname = req.DNSHostname
-		// Update the DNS tester with the new hostname
 		if s.dnsTester != nil {
 			s.dnsTester.SetTestHostname(req.DNSHostname)
 		}
 	}
 
-	// Update DNS servers
 	s.config.DNS.Servers = make([]config.DNSServer, 0, len(req.DNSServers))
 	for _, d := range req.DNSServers {
-		s.config.DNS.Servers = append(s.config.DNS.Servers, config.DNSServer{
-			Address: d.Address,
-			Enabled: d.Enabled,
-		})
+		s.config.DNS.Servers = append(s.config.DNS.Servers, config.DNSServer{Address: d.Address, Enabled: d.Enabled})
 	}
-	// Update the DNS tester with the configured servers
 	if s.dnsTester != nil {
 		configuredServers := make([]dns.ConfiguredServer, 0, len(s.config.DNS.Servers))
 		for _, d := range s.config.DNS.Servers {
-			configuredServers = append(configuredServers, dns.ConfiguredServer{
-				Address: d.Address,
-				Enabled: d.Enabled,
-			})
+			configuredServers = append(configuredServers, dns.ConfiguredServer{Address: d.Address, Enabled: d.Enabled})
 		}
 		s.dnsTester.SetConfiguredServers(configuredServers)
 	}
+}
 
-	// Update ping targets
+// applyTestTargets applies test target configuration from request.
+func (s *Server) applyTestTargets(req *TestsSettingsResponse) {
 	s.config.HealthChecks.PingTargets = make([]config.PingTarget, 0, len(req.PingTargets))
 	for _, p := range req.PingTargets {
-		s.config.HealthChecks.PingTargets = append(s.config.HealthChecks.PingTargets, config.PingTarget{
-			Name:    p.Name,
-			Host:    p.Host,
-			Enabled: p.Enabled,
-		})
+		s.config.HealthChecks.PingTargets = append(s.config.HealthChecks.PingTargets, config.PingTarget{Name: p.Name, Host: p.Host, Enabled: p.Enabled})
 	}
 
-	// Update TCP ports
 	s.config.HealthChecks.TCPPorts = make([]config.TCPPortTest, 0, len(req.TCPPorts))
 	for _, t := range req.TCPPorts {
-		s.config.HealthChecks.TCPPorts = append(s.config.HealthChecks.TCPPorts, config.TCPPortTest{
-			Name:    t.Name,
-			Host:    t.Host,
-			Port:    t.Port,
-			Enabled: t.Enabled,
-		})
+		s.config.HealthChecks.TCPPorts = append(s.config.HealthChecks.TCPPorts, config.TCPPortTest{Name: t.Name, Host: t.Host, Port: t.Port, Enabled: t.Enabled})
 	}
 
-	// Update UDP ports
 	s.config.HealthChecks.UDPPorts = make([]config.UDPPortTest, 0, len(req.UDPPorts))
 	for _, u := range req.UDPPorts {
-		s.config.HealthChecks.UDPPorts = append(s.config.HealthChecks.UDPPorts, config.UDPPortTest{
-			Name:    u.Name,
-			Host:    u.Host,
-			Port:    u.Port,
-			Enabled: u.Enabled,
-		})
+		s.config.HealthChecks.UDPPorts = append(s.config.HealthChecks.UDPPorts, config.UDPPortTest{Name: u.Name, Host: u.Host, Port: u.Port, Enabled: u.Enabled})
 	}
 
-	// Update HTTP endpoints
-	// Store URL as-is to preserve user intent - scheme-less URLs enable HTTPS->HTTP fallback at test time
 	s.config.HealthChecks.HTTPEndpoints = make([]config.HTTPEndpoint, 0, len(req.HTTPEndpoints))
 	for _, h := range req.HTTPEndpoints {
-		s.config.HealthChecks.HTTPEndpoints = append(s.config.HealthChecks.HTTPEndpoints, config.HTTPEndpoint{
-			Name:           h.Name,
-			URL:            h.URL,
-			ExpectedStatus: h.ExpectedStatus,
-			Enabled:        h.Enabled,
-		})
+		s.config.HealthChecks.HTTPEndpoints = append(s.config.HealthChecks.HTTPEndpoints, config.HTTPEndpoint{Name: h.Name, URL: h.URL, ExpectedStatus: h.ExpectedStatus, Enabled: h.Enabled})
 	}
+}
 
-	// Update performance toggle
+// applyPerformanceSettings applies performance test configuration from request.
+func (s *Server) applyPerformanceSettings(req *TestsSettingsResponse) {
 	s.config.HealthChecks.RunPerformance = req.RunPerformance
 	s.config.HealthChecks.RunSpeedtest = req.RunSpeedtest
 	s.config.HealthChecks.RunIperf = req.RunIperf
 	s.config.HealthChecks.RunDiscovery = req.RunDiscovery
 
-	// Update speedtest settings
 	s.config.Speedtest.ServerID = req.Speedtest.ServerID
 	s.config.Speedtest.AutoRunOnLink = req.Speedtest.AutoRunOnLink
 	if s.speedtestTester != nil {
 		s.speedtestTester.SetServerID(req.Speedtest.ServerID)
 	}
 
-	// Update iperf settings
 	s.config.Iperf.AutoRunOnLink = req.Iperf.AutoRunOnLink
+}
 
-	// Explicitly unlock before Save to avoid deadlock
-	// (Save acquires RLock which deadlocks if Lock is held)
-	s.config.Unlock()
+func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 
-	// Save config to file (no longer holding lock)
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"),
-			"",
-		)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req TestsSettingsResponse
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
-		"message": "Health checks settings updated",
-	})
+	// Lock config for write access (unlock before Save to avoid deadlock)
+	s.config.Lock()
+	s.applyDNSSettings(&req)
+	s.applyTestTargets(&req)
+	s.applyPerformanceSettings(&req)
+	s.config.Unlock()
+
+	if err := s.config.Save(s.configPath); err != nil {
+		logger.Error("Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "success", "message": "Health checks settings updated"})
 }
 
 // ============================================================================
