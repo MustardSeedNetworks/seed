@@ -1,11 +1,12 @@
-// Package validation provides input validation utilities.
-// Test suite validates IP checks, CIDR validation, URL validation, and request parsing helpers.
-package validation
+// Package validation_test tests the validation package.
+package validation_test
 
 import (
 	"errors"
 	"net"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/validation"
 )
 
 func TestIsPrivateIP(t *testing.T) {
@@ -41,7 +42,7 @@ func TestIsPrivateIP(t *testing.T) {
 			if ip == nil {
 				t.Fatalf("failed to parse IP: %s", tt.ip)
 			}
-			got := IsPrivateIP(ip)
+			got := validation.IsPrivateIP(ip)
 			if got != tt.expected {
 				t.Errorf("IsPrivateIP(%s) = %v, want %v", tt.ip, got, tt.expected)
 			}
@@ -75,7 +76,7 @@ func TestValidateURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateURL(tt.url)
+			err := validation.ValidateURL(tt.url)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateURL(%q) error = %v, wantErr %v", tt.url, err, tt.wantErr)
 			}
@@ -85,7 +86,7 @@ func TestValidateURL(t *testing.T) {
 
 func TestSafeTransport(t *testing.T) {
 	// Test that SafeTransport can be created
-	transport := SafeTransport()
+	transport := validation.SafeTransport()
 	if transport == nil {
 		t.Fatal("SafeTransport() returned nil")
 	}
@@ -101,7 +102,7 @@ func TestSafeTransport(t *testing.T) {
 
 func TestSafeHTTPClient(t *testing.T) {
 	// Test that SafeHTTPClient can be created
-	client := SafeHTTPClient(10)
+	client := validation.SafeHTTPClient(10)
 	if client == nil {
 		t.Fatal("SafeHTTPClient() returned nil")
 	}
@@ -113,13 +114,13 @@ func TestSafeHTTPClient(t *testing.T) {
 
 func TestErrPrivateIPBlocked(t *testing.T) {
 	// Test that the error sentinel is defined correctly
-	if ErrPrivateIPBlocked == nil {
+	if validation.ErrPrivateIPBlocked == nil {
 		t.Fatal("ErrPrivateIPBlocked should not be nil")
 	}
 
 	// Test that it can be used with errors.Is
-	wrappedErr := errors.New("wrapped: " + ErrPrivateIPBlocked.Error())
-	if errors.Is(wrappedErr, ErrPrivateIPBlocked) {
+	wrappedErr := errors.New("wrapped: " + validation.ErrPrivateIPBlocked.Error())
+	if errors.Is(wrappedErr, validation.ErrPrivateIPBlocked) {
 		t.Error("non-wrapped error should not match")
 	}
 }
@@ -138,7 +139,7 @@ func TestIsValidIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IsValidIP(tt.ip)
+			got := validation.IsValidIP(tt.ip)
 			if got != tt.expected {
 				t.Errorf("IsValidIP(%q) = %v, want %v", tt.ip, got, tt.expected)
 			}
@@ -163,7 +164,7 @@ func TestIsValidHostname(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IsValidHostname(tt.hostname)
+			got := validation.IsValidHostname(tt.hostname)
 			if got != tt.expected {
 				t.Errorf("IsValidHostname(%q) = %v, want %v", tt.hostname, got, tt.expected)
 			}
@@ -188,7 +189,7 @@ func TestIsValidIPv4(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IsValidIPv4(tt.ip)
+			got := validation.IsValidIPv4(tt.ip)
 			if got != tt.expected {
 				t.Errorf("IsValidIPv4(%q) = %v, want %v", tt.ip, got, tt.expected)
 			}
@@ -211,7 +212,7 @@ func TestIsValidHostOrIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IsValidHostOrIP(tt.input)
+			got := validation.IsValidHostOrIP(tt.input)
 			if got != tt.expected {
 				t.Errorf("IsValidHostOrIP(%q) = %v, want %v", tt.input, got, tt.expected)
 			}
@@ -234,7 +235,7 @@ func TestValidateServerAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateServerAddress(tt.server)
+			err := validation.ValidateServerAddress(tt.server)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateServerAddress(%q) error = %v, wantErr %v", tt.server, err, tt.wantErr)
 			}
@@ -260,7 +261,7 @@ func TestIsValidInterface(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IsValidInterface(tt.iface)
+			got := validation.IsValidInterface(tt.iface)
 			if got != tt.expected {
 				t.Errorf("IsValidInterface(%q) = %v, want %v", tt.iface, got, tt.expected)
 			}
@@ -283,7 +284,7 @@ func TestValidateInterface(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateInterface(tt.iface)
+			err := validation.ValidateInterface(tt.iface)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateInterface(%q) error = %v, wantErr %v", tt.iface, err, tt.wantErr)
 			}
@@ -309,7 +310,7 @@ func TestIsValidURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IsValidURL(tt.url)
+			got := validation.IsValidURL(tt.url)
 			if got != tt.expected {
 				t.Errorf("IsValidURL(%q) = %v, want %v", tt.url, got, tt.expected)
 			}
@@ -334,7 +335,7 @@ func TestValidatePort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidatePort(tt.port)
+			err := validation.ValidatePort(tt.port)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidatePort(%d) error = %v, wantErr %v", tt.port, err, tt.wantErr)
 			}
@@ -357,7 +358,7 @@ func TestValidateNetmask(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateNetmask(tt.netmask)
+			err := validation.ValidateNetmask(tt.netmask)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateNetmask(%q) error = %v, wantErr %v", tt.netmask, err, tt.wantErr)
 			}
@@ -383,7 +384,7 @@ func TestIsPrivateIPLinkLocal(t *testing.T) {
 			if ip == nil {
 				t.Fatalf("failed to parse IP: %s", tt.ip)
 			}
-			got := IsPrivateIP(ip)
+			got := validation.IsPrivateIP(ip)
 			if got != tt.expected {
 				t.Errorf("IsPrivateIP(%s) = %v, want %v", tt.ip, got, tt.expected)
 			}
