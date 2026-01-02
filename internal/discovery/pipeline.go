@@ -689,16 +689,20 @@ func (p *Pipeline) run(ctx context.Context) {
 		}
 	}
 
+	p.logPipelineCompletion(len(devices))
+}
+
+// logPipelineCompletion records final device count and logs completion.
+func (p *Pipeline) logPipelineCompletion(deviceCount int) {
 	p.mu.Lock()
-	p.currentRun.DevicesFound = len(devices)
-	// Copy values under lock to avoid race after unlock (fixes #827)
+	p.currentRun.DevicesFound = deviceCount
 	runID := p.currentRun.ID
 	startedAt := p.currentRun.StartedAt
 	p.mu.Unlock()
 
 	slog.Info("Pipeline completed",
 		"runId", runID,
-		"devicesFound", len(devices),
+		"devicesFound", deviceCount,
 		"duration", time.Since(startedAt))
 }
 

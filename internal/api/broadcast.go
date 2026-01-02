@@ -361,54 +361,65 @@ func (s *Server) collectDiscoveryData() map[string]any {
 	}
 
 	// Include discovery metrics and health status
-	if serviceStatus != nil {
-		result["pipelineStatus"] = serviceStatus.PipelineStatus
-		result["pipelinePhase"] = serviceStatus.PipelinePhase
-		if serviceStatus.ProfilingStatus != nil {
-			result["profilingStatus"] = map[string]any{
-				"inProgress":    serviceStatus.ProfilingStatus.InProgress,
-				"totalProfiled": serviceStatus.ProfilingStatus.TotalProfiled,
-				"queueLength":   serviceStatus.ProfilingStatus.QueueLength,
-				"enabled":       serviceStatus.ProfilingStatus.Enabled,
-				"scanIntensity": serviceStatus.ProfilingStatus.ScanIntensity,
-			}
-		}
-		if serviceStatus.Metrics != nil {
-			result["metrics"] = map[string]any{
-				"totalDiscovered":   serviceStatus.Metrics.TotalDiscovered,
-				"hostsProbed":       serviceStatus.Metrics.HostsProbed,
-				"hostsResponding":   serviceStatus.Metrics.HostsResponding,
-				"coveragePercent":   serviceStatus.Metrics.CoveragePercent,
-				"snmpSuccessful":    serviceStatus.Metrics.SNMPSuccessful,
-				"interfacesFound":   serviceStatus.Metrics.InterfacesFound,
-				"ipAddressesFound":  serviceStatus.Metrics.IPAddressesFound,
-				"entitiesFound":     serviceStatus.Metrics.EntitiesFound,
-				"profilesCompleted": serviceStatus.Metrics.ProfilesCompleted,
-				"profilesFailed":    serviceStatus.Metrics.ProfilesFailed,
-				"openPortsFound":    serviceStatus.Metrics.OpenPortsFound,
-				"lastScanDuration":  serviceStatus.Metrics.LastScanDuration.Milliseconds(),
-			}
-		}
-		if serviceStatus.DegradationStatus != nil {
-			result["health"] = map[string]any{
-				"overall":         serviceStatus.DegradationStatus.OverallHealth,
-				"healthyMethods":  serviceStatus.DegradationStatus.HealthyMethods,
-				"failedMethods":   serviceStatus.DegradationStatus.FailedMethods,
-				"warnings":        serviceStatus.DegradationStatus.Warnings,
-				"recommendations": serviceStatus.DegradationStatus.Recommendations,
-			}
-		}
-		if serviceStatus.LastDelta != nil {
-			result["lastDelta"] = map[string]any{
-				"newDevices":     len(serviceStatus.LastDelta.NewDevices),
-				"updatedDevices": len(serviceStatus.LastDelta.UpdatedDevices),
-				"removedDevices": len(serviceStatus.LastDelta.RemovedDevices),
-				"scanTime":       serviceStatus.LastDelta.ScanTime,
-			}
+	addServiceStatusToResult(result, serviceStatus)
+
+	return result
+}
+
+// addServiceStatusToResult adds discovery service status fields to the result map.
+func addServiceStatusToResult(result map[string]any, status *discovery.ServiceStatus) {
+	if status == nil {
+		return
+	}
+
+	result["pipelineStatus"] = status.PipelineStatus
+	result["pipelinePhase"] = status.PipelinePhase
+
+	if status.ProfilingStatus != nil {
+		result["profilingStatus"] = map[string]any{
+			"inProgress":    status.ProfilingStatus.InProgress,
+			"totalProfiled": status.ProfilingStatus.TotalProfiled,
+			"queueLength":   status.ProfilingStatus.QueueLength,
+			"enabled":       status.ProfilingStatus.Enabled,
+			"scanIntensity": status.ProfilingStatus.ScanIntensity,
 		}
 	}
 
-	return result
+	if status.Metrics != nil {
+		result["metrics"] = map[string]any{
+			"totalDiscovered":   status.Metrics.TotalDiscovered,
+			"hostsProbed":       status.Metrics.HostsProbed,
+			"hostsResponding":   status.Metrics.HostsResponding,
+			"coveragePercent":   status.Metrics.CoveragePercent,
+			"snmpSuccessful":    status.Metrics.SNMPSuccessful,
+			"interfacesFound":   status.Metrics.InterfacesFound,
+			"ipAddressesFound":  status.Metrics.IPAddressesFound,
+			"entitiesFound":     status.Metrics.EntitiesFound,
+			"profilesCompleted": status.Metrics.ProfilesCompleted,
+			"profilesFailed":    status.Metrics.ProfilesFailed,
+			"openPortsFound":    status.Metrics.OpenPortsFound,
+			"lastScanDuration":  status.Metrics.LastScanDuration.Milliseconds(),
+		}
+	}
+
+	if status.DegradationStatus != nil {
+		result["health"] = map[string]any{
+			"overall":         status.DegradationStatus.OverallHealth,
+			"healthyMethods":  status.DegradationStatus.HealthyMethods,
+			"failedMethods":   status.DegradationStatus.FailedMethods,
+			"warnings":        status.DegradationStatus.Warnings,
+			"recommendations": status.DegradationStatus.Recommendations,
+		}
+	}
+
+	if status.LastDelta != nil {
+		result["lastDelta"] = map[string]any{
+			"newDevices":     len(status.LastDelta.NewDevices),
+			"updatedDevices": len(status.LastDelta.UpdatedDevices),
+			"removedDevices": len(status.LastDelta.RemovedDevices),
+			"scanTime":       status.LastDelta.ScanTime,
+		}
+	}
 }
 
 // collectPublicIPData gathers public IP address information.
