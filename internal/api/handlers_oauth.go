@@ -482,80 +482,39 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// handleSSOUpdate updates SSO provider configuration.
-// Security fix #757, #760: Require authentication and add body limit + config locking.
-func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
+// ssoUpdateRequest represents the SSO provider update request.
+type ssoUpdateRequest struct {
+	Provider     string   `json:"provider"`
+	Enabled      bool     `json:"enabled"`
+	ClientID     string   `json:"client_id"`
+	ClientSecret string   `json:"client_secret"`
+	RedirectURL  string   `json:"redirect_url"`
+	TenantID     string   `json:"tenant_id,omitempty"`
+	Scopes       []string `json:"scopes,omitempty"`
+}
 
-	if r.Method != http.MethodPut {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		)
-		return
-	}
-
-	// Security: Require authentication (fixes #757)
+// requireSSOAuth validates authentication for SSO update operations.
+// Returns true if authentication is valid, false otherwise (response already sent).
+func (s *Server) requireSSOAuth(w http.ResponseWriter, r *http.Request, logger *slog.Logger) bool {
 	token, _ := auth.GetTokenFromRequest(r)
 	if token == "" {
 		clientIP := s.getClientIP(r)
-		logger.Warn("Unauthenticated SSO update attempt",
-			"client_ip", clientIP,
-			"event", "auth.sso.blocked")
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusUnauthorized,
-			ErrCodeUnauthorized,
-			"Authentication required",
-			"",
-		)
-		return
+		logger.Warn("Unauthenticated SSO update attempt", "client_ip", clientIP, "event", "auth.sso.blocked")
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required", "")
+		return false
 	}
 	if _, err := s.authManager.ValidateToken(r.Context(), token); err != nil {
 		clientIP := s.getClientIP(r)
-		logger.Warn("Invalid token SSO update attempt",
-			"client_ip", clientIP,
-			"event", "auth.sso.blocked")
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusUnauthorized,
-			ErrCodeUnauthorized,
-			"Invalid or expired token",
-			"",
-		)
-		return
+		logger.Warn("Invalid token SSO update attempt", "client_ip", clientIP, "event", "auth.sso.blocked")
+		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Invalid or expired token", "")
+		return false
 	}
+	return true
+}
 
-	// Limit request body size (fixes #760)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
-	var req struct {
-		Provider     string   `json:"provider"`
-		Enabled      bool     `json:"enabled"`
-		ClientID     string   `json:"client_id"`
-		ClientSecret string   `json:"client_secret"`
-		RedirectURL  string   `json:"redirect_url"`
-		TenantID     string   `json:"tenant_id,omitempty"`
-		Scopes       []string `json:"scopes,omitempty"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
-		return
-	}
-
-	// Lock config during update (fixes #760)
-	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
-	s.config.Lock()
-
-	// Find and update the provider config
-	found := false
+// updateProviderConfig updates the provider configuration in the config.
+// Returns true if the provider was found and updated.
+func (s *Server) updateProviderConfig(req *ssoUpdateRequest) bool {
 	for i := range s.config.Auth.SSO.Providers {
 		if !strings.EqualFold(s.config.Auth.SSO.Providers[i].Name, req.Provider) {
 			continue
@@ -566,11 +525,38 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		s.config.Auth.SSO.Providers[i].RedirectURL = req.RedirectURL
 		s.config.Auth.SSO.Providers[i].TenantID = req.TenantID
 		s.config.Auth.SSO.Providers[i].Scopes = req.Scopes
-		found = true
-		break
+		return true
+	}
+	return false
+}
+
+// handleSSOUpdate updates SSO provider configuration.
+// Security fix #757, #760: Require authentication and add body limit + config locking.
+func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+
+	if r.Method != http.MethodPut {
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
+		return
 	}
 
-	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
+	// Security: Require authentication (fixes #757)
+	if !s.requireSSOAuth(w, r, logger) {
+		return
+	}
+
+	// Limit request body size (fixes #760)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req ssoUpdateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
+		return
+	}
+
+	// Lock config during update, unlock before Save() to avoid deadlock (fixes #760, #783)
+	s.config.Lock()
+	found := s.updateProviderConfig(&req)
 	s.config.Unlock()
 
 	if !found {
@@ -578,29 +564,13 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save config
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save SSO config", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Failed to save configuration",
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to save configuration", "")
 		return
 	}
 
-	// Reinitialize OAuth manager with new config
 	s.initOAuthManager()
-
-	logger.Info("SSO provider updated",
-		"provider", req.Provider,
-		"enabled", req.Enabled,
-		"event", "config.sso.updated")
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status": "updated",
-	})
+	logger.Info("SSO provider updated", "provider", req.Provider, "enabled", req.Enabled, "event", "config.sso.updated")
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
 }
