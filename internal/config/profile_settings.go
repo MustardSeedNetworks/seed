@@ -295,11 +295,15 @@ func NewProfileSettings() *ProfileSettings {
 // FromConfig extracts profile-specific settings from a Config.
 func (ps *ProfileSettings) FromConfig(cfg *Config) {
 	ps.Version = ProfileSettingsVersion
+	ps.extractThresholdsFrom(cfg)
+	ps.extractHealthChecksFrom(cfg)
+	ps.extractTestOptionsFrom(cfg)
+	ps.extractNetworkSettingsFrom(cfg)
+}
 
-	// Extract threshold milliseconds using helper
+// extractThresholdsFrom extracts threshold settings from config.
+func (ps *ProfileSettings) extractThresholdsFrom(cfg *Config) {
 	t := ExtractThresholdMs(cfg)
-
-	// Thresholds (Warning/Critical semantic mapping)
 	ps.Thresholds = ProfileThresholds{
 		DNS:        ThresholdPair{Warning: t.DNSWarning, Critical: t.DNSCritical},
 		Gateway:    ThresholdPair{Warning: t.GatewayWarning, Critical: t.GatewayCritical},
@@ -314,8 +318,10 @@ func (ps *ProfileSettings) FromConfig(cfg *Config) {
 			TTFB: ThresholdPair{Warning: t.TimingTTFBWarn, Critical: t.TimingTTFBCrit},
 		},
 	}
+}
 
-	// Health Checks
+// extractHealthChecksFrom extracts health check settings from config.
+func (ps *ProfileSettings) extractHealthChecksFrom(cfg *Config) {
 	ps.HealthChecks = ProfileHealthChecks{
 		RunPerformance: cfg.HealthChecks.RunPerformance,
 		RunSpeedtest:   cfg.HealthChecks.RunSpeedtest,
@@ -334,86 +340,45 @@ func (ps *ProfileSettings) FromConfig(cfg *Config) {
 	for _, he := range cfg.HealthChecks.HTTPEndpoints {
 		ps.HealthChecks.HTTPEndpoints = append(ps.HealthChecks.HTTPEndpoints, ProfileHTTPEndpoint(he))
 	}
+}
 
-	// Speedtest
-	ps.Speedtest = ProfileSpeedtest{
-		ServerID:      cfg.Speedtest.ServerID,
-		AutoRunOnLink: cfg.Speedtest.AutoRunOnLink,
-	}
-
-	// Iperf
+// extractTestOptionsFrom extracts speedtest, iperf, FAB, and display options from config.
+func (ps *ProfileSettings) extractTestOptionsFrom(cfg *Config) {
+	ps.Speedtest = ProfileSpeedtest{ServerID: cfg.Speedtest.ServerID, AutoRunOnLink: cfg.Speedtest.AutoRunOnLink}
 	ps.Iperf = ProfileIperf{
-		AutoRunOnLink: cfg.Iperf.AutoRunOnLink,
-		Server:        cfg.Iperf.Server,
-		Port:          cfg.Iperf.Port,
-		Protocol:      cfg.Iperf.Protocol,
-		Direction:     cfg.Iperf.Direction,
-		Duration:      cfg.Iperf.Duration,
-		ServerPort:    cfg.Iperf.ServerPort,
-		EnableServer:  cfg.Iperf.EnableServer,
+		AutoRunOnLink: cfg.Iperf.AutoRunOnLink, Server: cfg.Iperf.Server, Port: cfg.Iperf.Port,
+		Protocol: cfg.Iperf.Protocol, Direction: cfg.Iperf.Direction, Duration: cfg.Iperf.Duration,
+		ServerPort: cfg.Iperf.ServerPort, EnableServer: cfg.Iperf.EnableServer,
 	}
-
-	// FAB Options
 	ps.FABOptions = ProfileFABOptions{
-		RunLink:             cfg.FABOptions.RunLink,
-		RunSwitch:           cfg.FABOptions.RunSwitch,
-		RunVLAN:             cfg.FABOptions.RunVLAN,
-		RunIPConfig:         cfg.FABOptions.RunIPConfig,
-		RunGateway:          cfg.FABOptions.RunGateway,
-		RunDNS:              cfg.FABOptions.RunDNS,
-		RunHealthChecks:     cfg.FABOptions.RunHealthChecks,
-		RunNetworkDiscovery: cfg.FABOptions.RunNetworkDiscovery,
-		RunSpeedtest:        cfg.FABOptions.RunSpeedtest,
-		RunIperf:            cfg.FABOptions.RunIperf,
-		RunPerformance:      cfg.FABOptions.RunPerformance,
-		AutoScanOnLink:      cfg.FABOptions.AutoScanOnLink,
+		RunLink: cfg.FABOptions.RunLink, RunSwitch: cfg.FABOptions.RunSwitch, RunVLAN: cfg.FABOptions.RunVLAN,
+		RunIPConfig: cfg.FABOptions.RunIPConfig, RunGateway: cfg.FABOptions.RunGateway, RunDNS: cfg.FABOptions.RunDNS,
+		RunHealthChecks: cfg.FABOptions.RunHealthChecks, RunNetworkDiscovery: cfg.FABOptions.RunNetworkDiscovery,
+		RunSpeedtest: cfg.FABOptions.RunSpeedtest, RunIperf: cfg.FABOptions.RunIperf,
+		RunPerformance: cfg.FABOptions.RunPerformance, AutoScanOnLink: cfg.FABOptions.AutoScanOnLink,
 	}
+	ps.DisplayOptions = ProfileDisplayOptions{ShowPublicIP: cfg.DisplayOptions.ShowPublicIP, UnitSystem: cfg.DisplayOptions.UnitSystem}
+}
 
-	// Display Options
-	ps.DisplayOptions = ProfileDisplayOptions{
-		ShowPublicIP: cfg.DisplayOptions.ShowPublicIP,
-		UnitSystem:   cfg.DisplayOptions.UnitSystem,
-	}
-
-	// DNS
-	ps.DNS = ProfileDNS{
-		TestHostname: cfg.DNS.TestHostname,
-		Timeout:      cfg.DNS.Timeout.Milliseconds(),
-	}
+// extractNetworkSettingsFrom extracts DNS, SNMP, and network discovery settings from config.
+func (ps *ProfileSettings) extractNetworkSettingsFrom(cfg *Config) {
+	ps.DNS = ProfileDNS{TestHostname: cfg.DNS.TestHostname, Timeout: cfg.DNS.Timeout.Milliseconds()}
 	for _, ds := range cfg.DNS.Servers {
 		ps.DNS.Servers = append(ps.DNS.Servers, ProfileDNSServer(ds))
 	}
-
-	// SNMP
-	ps.SNMP = ProfileSNMP{
-		Communities: cfg.SNMP.Communities,
-		Timeout:     cfg.SNMP.Timeout.Milliseconds(),
-		Retries:     cfg.SNMP.Retries,
-		Port:        cfg.SNMP.Port,
-	}
+	ps.SNMP = ProfileSNMP{Communities: cfg.SNMP.Communities, Timeout: cfg.SNMP.Timeout.Milliseconds(), Retries: cfg.SNMP.Retries, Port: cfg.SNMP.Port}
 	for i := range cfg.SNMP.V3Credentials {
 		v3 := &cfg.SNMP.V3Credentials[i]
 		ps.SNMP.V3Credentials = append(ps.SNMP.V3Credentials, ProfileSNMPv3Credential{
-			Name:          v3.Name,
-			Username:      v3.Username,
-			AuthProtocol:  v3.AuthProtocol,
-			AuthPassword:  v3.AuthPassword,
-			PrivProtocol:  v3.PrivProtocol,
-			PrivPassword:  v3.PrivPassword,
-			ContextName:   v3.ContextName,
-			SecurityLevel: v3.SecurityLevel,
+			Name: v3.Name, Username: v3.Username, AuthProtocol: v3.AuthProtocol, AuthPassword: v3.AuthPassword,
+			PrivProtocol: v3.PrivProtocol, PrivPassword: v3.PrivPassword, ContextName: v3.ContextName, SecurityLevel: v3.SecurityLevel,
 		})
 	}
-
-	// Network Discovery
 	ps.NetworkDiscovery = ProfileNetworkDiscovery{
-		Enabled:          cfg.NetworkDiscovery.Enabled,
-		AutoScan:         cfg.NetworkDiscovery.AutoScan,
-		ScanIntervalSecs: int64(cfg.NetworkDiscovery.ScanInterval.Seconds()),
-		IPv6Enabled:      cfg.NetworkDiscovery.IPv6Enabled,
+		Enabled: cfg.NetworkDiscovery.Enabled, AutoScan: cfg.NetworkDiscovery.AutoScan,
+		ScanIntervalSecs: int64(cfg.NetworkDiscovery.ScanInterval.Seconds()), IPv6Enabled: cfg.NetworkDiscovery.IPv6Enabled,
 		Fingerprinting: ProfileFingerprintingConfig{
-			Enabled:       cfg.NetworkDiscovery.Fingerprinting.Enabled,
-			OSDetection:   cfg.NetworkDiscovery.Fingerprinting.OSDetection,
+			Enabled: cfg.NetworkDiscovery.Fingerprinting.Enabled, OSDetection: cfg.NetworkDiscovery.Fingerprinting.OSDetection,
 			ServiceProbes: cfg.NetworkDiscovery.Fingerprinting.ServiceProbes,
 		},
 	}
