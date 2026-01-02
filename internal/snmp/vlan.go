@@ -5,7 +5,6 @@ package snmp
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -66,26 +65,11 @@ func GetVLANs(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]VLANInf
 
 // walkVLANs walks the Q-BRIDGE VLAN tables using SNMPv2c.
 func walkVLANs(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]VLANInfo, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community:      community,
-		Version:        gosnmp.Version2c,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-	}
-
-	if err := params.Connect(); err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+	params, err := newV2cWalkClient(ctx, ip, community, cfg)
+	if err != nil {
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
 
 	return walkVLANTable(params), nil
 }
@@ -97,34 +81,11 @@ func walkVLANsV3(
 	cred *config.SNMPv3Credential,
 	cfg *config.SNMPConfig,
 ) ([]VLANInfo, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:        gosnmp.Version3,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-		SecurityModel:  gosnmp.UserSecurityModel,
-		MsgFlags:       gosnmp.AuthPriv,
-		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
-			AuthenticationPassphrase: cred.AuthPassword,
-			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
-			PrivacyPassphrase:        cred.PrivPassword,
-		},
-	}
-
-	if err := params.Connect(); err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+	params, err := newV3WalkClient(ctx, ip, cred, cfg)
+	if err != nil {
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
 
 	return walkVLANTable(params), nil
 }

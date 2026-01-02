@@ -455,6 +455,75 @@ func getMaxRepetitions(cfg *config.SNMPConfig) uint32 {
 	return cfg.MaxRepetitions
 }
 
+// newV3WalkClient creates and connects an SNMPv3 client configured for walk operations.
+// The caller is responsible for closing the connection: defer func() { _ = client.Conn.Close() }()
+func newV3WalkClient(
+	ctx context.Context,
+	ip string,
+	cred *config.SNMPv3Credential,
+	cfg *config.SNMPConfig,
+) (*gosnmp.GoSNMP, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
+	params := &gosnmp.GoSNMP{
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:        gosnmp.Version3,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
+		SecurityModel:  gosnmp.UserSecurityModel,
+		MsgFlags:       gosnmp.AuthPriv,
+		SecurityParameters: &gosnmp.UsmSecurityParameters{
+			UserName:                 cred.Username,
+			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
+			AuthenticationPassphrase: cred.AuthPassword,
+			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
+			PrivacyPassphrase:        cred.PrivPassword,
+		},
+	}
+
+	if err := params.Connect(); err != nil {
+		return nil, fmt.Errorf("failed to connect: %w", err)
+	}
+
+	return params, nil
+}
+
+// newV2cWalkClient creates and connects an SNMPv2c client configured for walk operations.
+// The caller is responsible for closing the connection: defer func() { _ = client.Conn.Close() }()
+func newV2cWalkClient(
+	ctx context.Context,
+	ip, community string,
+	cfg *config.SNMPConfig,
+) (*gosnmp.GoSNMP, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
+	params := &gosnmp.GoSNMP{
+		Target:         ip,
+		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Community:      community,
+		Version:        gosnmp.Version2c,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxRepetitions: getMaxRepetitions(cfg),
+	}
+
+	if err := params.Connect(); err != nil {
+		return nil, fmt.Errorf("failed to connect: %w", err)
+	}
+
+	return params, nil
+}
+
 // GetVendorVersion attempts to retrieve vendor-specific version information.
 func GetVendorVersion(ctx context.Context, ip string, cfg *config.SNMPConfig) (string, error) {
 	// Try Cisco

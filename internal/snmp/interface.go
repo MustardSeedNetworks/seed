@@ -177,28 +177,11 @@ func GetAllInterfaces(ctx context.Context, ip string, cfg *config.SNMPConfig) ([
 
 // walkInterfaces performs a bulk walk of interface table using SNMPv2c.
 func walkInterfaces(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]InterfaceInfo, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community:      community,
-		Version:        gosnmp.Version2c,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-	}
-
-	err := params.Connect()
+	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	// Check context cancellation.
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-	default:
-	}
 
 	return walkInterfaceTable(params)
 }
@@ -210,38 +193,11 @@ func walkInterfacesV3(
 	cred *config.SNMPv3Credential,
 	cfg *config.SNMPConfig,
 ) ([]InterfaceInfo, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:        gosnmp.Version3,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-		SecurityModel:  gosnmp.UserSecurityModel,
-		MsgFlags:       gosnmp.AuthPriv,
-		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName: cred.Username,
-			AuthenticationProtocol: getAuthProtocol(
-				cred.AuthProtocol,
-			),
-			AuthenticationPassphrase: cred.AuthPassword,
-			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
-			PrivacyPassphrase:        cred.PrivPassword,
-		},
-	}
-
-	err := params.Connect()
+	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	// Check context cancellation.
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-	default:
-	}
 
 	return walkInterfaceTable(params)
 }
@@ -410,28 +366,11 @@ func getMACTableBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) (
 
 // walkMACTableQBridge walks Q-BRIDGE-MIB MAC table using SNMPv2c.
 func walkMACTableQBridge(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]MACEntry, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community:      community,
-		Version:        gosnmp.Version2c,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-	}
-
-	err := params.Connect()
+	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	// Check context cancellation.
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-	default:
-	}
 
 	return walkQBridgeMACTable(params)
 }
@@ -443,38 +382,11 @@ func walkMACTableQBridgeV3(
 	cred *config.SNMPv3Credential,
 	cfg *config.SNMPConfig,
 ) ([]MACEntry, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:        gosnmp.Version3,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-		SecurityModel:  gosnmp.UserSecurityModel,
-		MsgFlags:       gosnmp.AuthPriv,
-		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName: cred.Username,
-			AuthenticationProtocol: getAuthProtocol(
-				cred.AuthProtocol,
-			),
-			AuthenticationPassphrase: cred.AuthPassword,
-			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
-			PrivacyPassphrase:        cred.PrivPassword,
-		},
-	}
-
-	err := params.Connect()
+	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	// Check context cancellation.
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-	default:
-	}
 
 	return walkQBridgeMACTable(params)
 }
@@ -573,28 +485,11 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 
 // walkMACTableBridge walks BRIDGE-MIB MAC table using SNMPv2c.
 func walkMACTableBridge(ctx context.Context, ip, community string, cfg *config.SNMPConfig) ([]MACEntry, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community:      community,
-		Version:        gosnmp.Version2c,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-	}
-
-	err := params.Connect()
+	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	// Check context cancellation.
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-	default:
-	}
 
 	return walkBridgeMACTable(params)
 }
@@ -606,38 +501,11 @@ func walkMACTableBridgeV3(
 	cred *config.SNMPv3Credential,
 	cfg *config.SNMPConfig,
 ) ([]MACEntry, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:        gosnmp.Version3,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-		SecurityModel:  gosnmp.UserSecurityModel,
-		MsgFlags:       gosnmp.AuthPriv,
-		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName: cred.Username,
-			AuthenticationProtocol: getAuthProtocol(
-				cred.AuthProtocol,
-			),
-			AuthenticationPassphrase: cred.AuthPassword,
-			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
-			PrivacyPassphrase:        cred.PrivPassword,
-		},
-	}
-
-	err := params.Connect()
+	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	// Check context cancellation.
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-	default:
-	}
 
 	return walkBridgeMACTable(params)
 }
@@ -760,28 +628,11 @@ func getPortVLANsWithCommunity(
 	community string,
 	cfg *config.SNMPConfig,
 ) ([]int, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Community:      community,
-		Version:        gosnmp.Version2c,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-	}
-
-	err := params.Connect()
+	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	// Check context cancellation.
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-	default:
-	}
 
 	return walkPortVLANs(params, ifIndex)
 }
@@ -794,38 +645,11 @@ func getPortVLANsWithV3(
 	cred *config.SNMPv3Credential,
 	cfg *config.SNMPConfig,
 ) ([]int, error) {
-	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:        gosnmp.Version3,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-		SecurityModel:  gosnmp.UserSecurityModel,
-		MsgFlags:       gosnmp.AuthPriv,
-		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName: cred.Username,
-			AuthenticationProtocol: getAuthProtocol(
-				cred.AuthProtocol,
-			),
-			AuthenticationPassphrase: cred.AuthPassword,
-			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
-			PrivacyPassphrase:        cred.PrivPassword,
-		},
-	}
-
-	err := params.Connect()
+	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, err
 	}
 	defer func() { _ = params.Conn.Close() }()
-
-	// Check context cancellation.
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-	default:
-	}
 
 	return walkPortVLANs(params, ifIndex)
 }
