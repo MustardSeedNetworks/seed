@@ -341,24 +341,8 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-	// Limit request body size to prevent DoS attacks (fixes #693)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
-	var req NetworkDiscoverySettingsResponse
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
-		return
-	}
-
-	// Lock config for write access (fixes #759 - race condition)
-	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
-	s.config.Lock()
-
-	// Update legacy config fields (backward compatibility)
+// applyLegacyDiscoveryConfig applies legacy/backward-compatible discovery settings.
+func (s *Server) applyLegacyDiscoveryConfig(req *NetworkDiscoverySettingsResponse) {
 	s.config.NetworkDiscovery.Enabled = req.Enabled
 	if req.ARPScanWorkers > 0 {
 		s.config.NetworkDiscovery.ARPScanWorkers = req.ARPScanWorkers
@@ -374,45 +358,45 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	if req.OUIFilePath != "" {
 		s.config.NetworkDiscovery.OUIFilePath = req.OUIFilePath
 	}
-
-	// Update IPv6 setting
 	s.config.NetworkDiscovery.IPv6Enabled = req.IPv6Enabled
+}
 
-	// Update discovery options
-	s.config.NetworkDiscovery.Options.PassiveProtocols.LLDP = req.Options.PassiveProtocols.LLDP
-	s.config.NetworkDiscovery.Options.PassiveProtocols.CDP = req.Options.PassiveProtocols.CDP
-	s.config.NetworkDiscovery.Options.PassiveProtocols.EDP = req.Options.PassiveProtocols.EDP
-	s.config.NetworkDiscovery.Options.PassiveProtocols.NDP = req.Options.PassiveProtocols.NDP
-	s.config.NetworkDiscovery.Options.ARPScan = req.Options.ARPScan
-	s.config.NetworkDiscovery.Options.ICMPScan = req.Options.ICMPScan
-	s.config.NetworkDiscovery.Options.Traceroute = req.Options.Traceroute
-	s.config.NetworkDiscovery.Options.SNMPQuery = req.Options.SNMPQuery
+// applyDiscoveryOptions applies discovery options including protocols, port scan, and TCP probe.
+func (s *Server) applyDiscoveryOptions(req *NetworkDiscoverySettingsResponse) {
+	opts := &s.config.NetworkDiscovery.Options
+	opts.PassiveProtocols.LLDP = req.Options.PassiveProtocols.LLDP
+	opts.PassiveProtocols.CDP = req.Options.PassiveProtocols.CDP
+	opts.PassiveProtocols.EDP = req.Options.PassiveProtocols.EDP
+	opts.PassiveProtocols.NDP = req.Options.PassiveProtocols.NDP
+	opts.ARPScan = req.Options.ARPScan
+	opts.ICMPScan = req.Options.ICMPScan
+	opts.Traceroute = req.Options.Traceroute
+	opts.SNMPQuery = req.Options.SNMPQuery
 
-	// Update port scan config
-	s.config.NetworkDiscovery.Options.PortScan.Enabled = req.Options.PortScan.Enabled
+	// Port scan config
+	opts.PortScan.Enabled = req.Options.PortScan.Enabled
 	if req.Options.PortScan.TCPPorts != "" {
-		s.config.NetworkDiscovery.Options.PortScan.TCPPorts = req.Options.PortScan.TCPPorts
+		opts.PortScan.TCPPorts = req.Options.PortScan.TCPPorts
 	}
 	if req.Options.PortScan.UDPPorts != "" {
-		s.config.NetworkDiscovery.Options.PortScan.UDPPorts = req.Options.PortScan.UDPPorts
+		opts.PortScan.UDPPorts = req.Options.PortScan.UDPPorts
 	}
 	if req.Options.PortScan.BannerTimeoutMs > 0 {
-		s.config.NetworkDiscovery.Options.PortScan.BannerTimeout = time.Duration(
-			req.Options.PortScan.BannerTimeoutMs,
-		) * time.Millisecond
+		opts.PortScan.BannerTimeout = time.Duration(req.Options.PortScan.BannerTimeoutMs) * time.Millisecond
 	}
 
-	// Update TCP probe config
+	// TCP probe config
 	if req.Options.TCPProbe.TimeoutMs > 0 {
-		s.config.NetworkDiscovery.Options.TCPProbe.Timeout = time.Duration(
-			req.Options.TCPProbe.TimeoutMs,
-		) * time.Millisecond
+		opts.TCPProbe.Timeout = time.Duration(req.Options.TCPProbe.TimeoutMs) * time.Millisecond
 	}
 	if req.Options.TCPProbe.Workers > 0 {
-		s.config.NetworkDiscovery.Options.TCPProbe.Workers = req.Options.TCPProbe.Workers
+		opts.TCPProbe.Workers = req.Options.TCPProbe.Workers
 	}
+}
 
-	// Update timing config
+// applyAdvancedDiscoverySettings applies timing, profiler, and fingerprinting settings.
+func (s *Server) applyAdvancedDiscoverySettings(req *NetworkDiscoverySettingsResponse) {
+	// Timing config
 	if req.Timing.ProbeIntervalMs > 0 {
 		s.config.NetworkDiscovery.Timing.ProbeInterval = time.Duration(req.Timing.ProbeIntervalMs) * time.Millisecond
 	}
@@ -423,7 +407,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		s.config.NetworkDiscovery.Timing.Workers = req.Timing.Workers
 	}
 
-	// Update profiler config
+	// Profiler config
 	s.config.NetworkDiscovery.Profiler.Enabled = req.Profiler.Enabled
 	if req.Profiler.TimeoutMs > 0 {
 		s.config.NetworkDiscovery.Profiler.Timeout = time.Duration(req.Profiler.TimeoutMs) * time.Millisecond
@@ -435,24 +419,38 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		s.config.NetworkDiscovery.Profiler.QuickPorts = req.Profiler.QuickPorts
 	}
 
-	// Update fingerprinting config
+	// Fingerprinting config
 	s.config.NetworkDiscovery.Fingerprinting.Enabled = req.Fingerprinting.Enabled
 	s.config.NetworkDiscovery.Fingerprinting.OSDetection = req.Fingerprinting.OSDetection
 	s.config.NetworkDiscovery.Fingerprinting.ServiceProbes = req.Fingerprinting.ServiceProbes
+}
 
-	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
+func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req NetworkDiscoverySettingsResponse
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
+		return
+	}
+
+	// Lock config for write access (fixes #759 - race condition)
+	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
+	s.config.Lock()
+	s.applyLegacyDiscoveryConfig(&req)
+	s.applyDiscoveryOptions(&req)
+	s.applyAdvancedDiscoverySettings(&req)
 	s.config.Unlock()
 
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"),
-			"",
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"), "",
 		)
 		return
 	}
