@@ -43,13 +43,16 @@ The Seed runs as a web server with a modern React-based UI.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	initCommands()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func init() {
+// initCommands initializes all subcommands and their flags.
+// This replaces init() functions to satisfy gochecknoinits linter.
+func initCommands() {
 	// Set version for --version flag and help output
 	rootCmd.Version = version.Version
 
@@ -62,6 +65,18 @@ func init() {
 
 	// Add completion command
 	rootCmd.AddCommand(completionCmd)
+
+	// Initialize all subcommands
+	initCredentialsCmd()
+	initExportCmd()
+	initInstallCmd()
+	initMCPCmd()
+	initResetCmd()
+	initServeCmd()
+	initSetupCmd()
+	initUninstallCmd()
+	initValidateCmd()
+	initVersionCmd()
 }
 
 // completionCmd represents the completion command.

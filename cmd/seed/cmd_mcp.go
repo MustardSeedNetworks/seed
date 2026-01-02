@@ -40,7 +40,7 @@ Example usage in .claude/mcp.json:
 	Run: runMCP,
 }
 
-func init() {
+func initMCPCmd() {
 	rootCmd.AddCommand(mcpCmd)
 }
 

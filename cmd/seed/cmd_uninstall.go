@@ -26,7 +26,7 @@ Use --purge to remove all files including configuration.`,
 	Run: runUninstall,
 }
 
-func init() {
+func initUninstallCmd() {
 	uninstallCmd.Flags().Bool("purge", false, "Remove all data and configuration")
 	uninstallCmd.Flags().BoolP("force", "f", false, "Skip confirmation prompt")
 	uninstallCmd.Flags().Bool("system", false, "Uninstall system service")

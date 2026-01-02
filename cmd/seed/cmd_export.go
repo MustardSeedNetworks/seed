@@ -21,7 +21,7 @@ var exportCmd = &cobra.Command{
 
 const redactedValue = "[REDACTED]"
 
-func init() {
+func initExportCmd() {
 	exportCmd.Flags().StringP("output", "o", "-", "Output file (- for stdout)")
 	exportCmd.Flags().StringP("format", "f", "yaml", "Output format (yaml or json)")
 	exportCmd.Flags().Bool("no-redact", false, "Do not redact secrets (DANGEROUS)")

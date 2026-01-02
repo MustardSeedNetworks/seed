@@ -33,7 +33,7 @@ Use the --json flag to output the status in machine-readable JSON format.`,
 	Run: runCredentials,
 }
 
-func init() {
+func initCredentialsCmd() {
 	credentialsCmd.Flags().BoolVar(&outputJSON, "json", false, "output status as JSON")
 	rootCmd.AddCommand(credentialsCmd)
 }

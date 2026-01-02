@@ -31,7 +31,7 @@ This command will:
 	Run: runInstall,
 }
 
-func init() {
+func initInstallCmd() {
 	installCmd.Flags().Bool("system", false, "Install as system service (requires root)")
 	installCmd.Flags().Bool("user", false, "Install as user service (systemd --user)")
 	installCmd.Flags().Bool("no-service", false, "Skip systemd service installation")

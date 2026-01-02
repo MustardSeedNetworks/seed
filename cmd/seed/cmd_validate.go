@@ -18,7 +18,7 @@ var validateCmd = &cobra.Command{
 	Run:   runValidate,
 }
 
-func init() {
+func initValidateCmd() {
 	validateCmd.Flags().Bool("strict", false, "Treat warnings as errors")
 	validateCmd.Flags().Bool("json", false, "Output results as JSON")
 	rootCmd.AddCommand(validateCmd)

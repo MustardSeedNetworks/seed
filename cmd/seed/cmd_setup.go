@@ -25,7 +25,7 @@ interactive setup.`,
 	Run: runSetup,
 }
 
-func init() {
+func initSetupCmd() {
 	setupCmd.Flags().Bool("generate-password", false, "Auto-generate a secure password")
 	setupCmd.Flags().Bool("json", false, "Output credentials as JSON")
 	setupCmd.Flags().Bool("reset-jwt", false, "Also regenerate the JWT secret")

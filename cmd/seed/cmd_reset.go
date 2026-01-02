@@ -24,7 +24,7 @@ be preserved.`,
 	Run: runReset,
 }
 
-func init() {
+func initResetCmd() {
 	resetCmd.Flags().Bool("preserve-auth", false, "Preserve authentication credentials")
 	resetCmd.Flags().Bool("preserve-jwt", false, "Preserve JWT secret")
 	resetCmd.Flags().Bool("backup", true, "Create backup before reset")

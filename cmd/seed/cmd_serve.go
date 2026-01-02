@@ -41,7 +41,7 @@ Use the --dev flag to run in development mode (HTTP on port 8080).`,
 	Run: runServe,
 }
 
-func init() {
+func initServeCmd() {
 	rootCmd.AddCommand(serveCmd)
 }
 
