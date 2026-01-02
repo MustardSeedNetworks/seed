@@ -1,4 +1,5 @@
-package snmp
+// Package snmp_test tests the snmp package.
+package snmp_test
 
 import (
 	"context"
@@ -8,6 +9,7 @@ import (
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/snmp"
 )
 
 func TestQuery(t *testing.T) {
@@ -23,14 +25,14 @@ func TestQuery(t *testing.T) {
 		{
 			name:    "nil config",
 			ip:      "192.168.1.1",
-			oid:     OIDSysDescr,
+			oid:     snmp.OIDSysDescr,
 			cfg:     nil,
 			wantErr: true,
 		},
 		{
 			name: "empty communities",
 			ip:   "192.168.1.1",
-			oid:  OIDSysDescr,
+			oid:  snmp.OIDSysDescr,
 			cfg: &config.SNMPConfig{
 				Communities:   []string{},
 				V3Credentials: []config.SNMPv3Credential{},
@@ -43,7 +45,7 @@ func TestQuery(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1", // TEST-NET-1 (RFC 5737)
-			oid:  OIDSysDescr,
+			oid:  snmp.OIDSysDescr,
 			cfg: &config.SNMPConfig{
 				Communities: []string{"public"},
 				Port:        161,
@@ -56,7 +58,7 @@ func TestQuery(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := Query(ctx, tt.ip, tt.oid, tt.cfg)
+			_, err := snmp.Query(ctx, tt.ip, tt.oid, tt.cfg)
 
 			if tt.wantErr {
 				if err == nil {
@@ -84,7 +86,7 @@ func TestQueryMultiple(t *testing.T) {
 		{
 			name:    "nil config",
 			ip:      "192.168.1.1",
-			oids:    []string{OIDSysDescr, OIDSysName},
+			oids:    []string{snmp.OIDSysDescr, snmp.OIDSysName},
 			cfg:     nil,
 			wantErr: true,
 		},
@@ -103,7 +105,7 @@ func TestQueryMultiple(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			oids: []string{OIDSysDescr, OIDSysName},
+			oids: []string{snmp.OIDSysDescr, snmp.OIDSysName},
 			cfg: &config.SNMPConfig{
 				Communities: []string{"public"},
 				Port:        161,
@@ -116,7 +118,7 @@ func TestQueryMultiple(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := QueryMultiple(ctx, tt.ip, tt.oids, tt.cfg)
+			_, err := snmp.QueryMultiple(ctx, tt.ip, tt.oids, tt.cfg)
 
 			if tt.wantErr {
 				if err == nil {
@@ -161,7 +163,7 @@ func TestGetSystemInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetSystemInfo(ctx, tt.ip, tt.cfg)
+			_, err := snmp.GetSystemInfo(ctx, tt.ip, tt.cfg)
 
 			if tt.wantErr {
 				if err == nil {
@@ -200,7 +202,7 @@ func TestGetVendorVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetVendorVersion(ctx, tt.ip, tt.cfg)
+			_, err := snmp.GetVendorVersion(ctx, tt.ip, tt.cfg)
 
 			if tt.wantErr {
 				if err == nil {
@@ -261,9 +263,9 @@ func TestFormatSNMPValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := formatSNMPValue(tt.variable)
+			got := snmp.FormatSNMPValue(tt.variable)
 			if got != tt.want {
-				t.Errorf("formatSNMPValue() = %v, want %v", got, tt.want)
+				t.Errorf("FormatSNMPValue() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -287,9 +289,9 @@ func TestGetAuthProtocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := getAuthProtocol(tt.protocol)
+			got := snmp.GetAuthProtocol(tt.protocol)
 			if got != tt.want {
-				t.Errorf("getAuthProtocol(%v) = %v, want %v", tt.protocol, got, tt.want)
+				t.Errorf("GetAuthProtocol(%v) = %v, want %v", tt.protocol, got, tt.want)
 			}
 		})
 	}
@@ -313,9 +315,9 @@ func TestGetPrivProtocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := getPrivProtocol(tt.protocol)
+			got := snmp.GetPrivProtocol(tt.protocol)
 			if got != tt.want {
-				t.Errorf("getPrivProtocol(%v) = %v, want %v", tt.protocol, got, tt.want)
+				t.Errorf("GetPrivProtocol(%v) = %v, want %v", tt.protocol, got, tt.want)
 			}
 		})
 	}
@@ -324,15 +326,15 @@ func TestGetPrivProtocol(t *testing.T) {
 func TestOIDConstants(t *testing.T) {
 	// Verify OID constants are correctly defined
 	oids := map[string]string{
-		"OIDSysDescr":       OIDSysDescr,
-		"OIDSysObjectID":    OIDSysObjectID,
-		"OIDSysUpTime":      OIDSysUpTime,
-		"OIDSysContact":     OIDSysContact,
-		"OIDSysName":        OIDSysName,
-		"OIDSysLocation":    OIDSysLocation,
-		"OIDCiscoVersion":   OIDCiscoVersion,
-		"OIDHPVersion":      OIDHPVersion,
-		"OIDJuniperVersion": OIDJuniperVersion,
+		"OIDSysDescr":       snmp.OIDSysDescr,
+		"OIDSysObjectID":    snmp.OIDSysObjectID,
+		"OIDSysUpTime":      snmp.OIDSysUpTime,
+		"OIDSysContact":     snmp.OIDSysContact,
+		"OIDSysName":        snmp.OIDSysName,
+		"OIDSysLocation":    snmp.OIDSysLocation,
+		"OIDCiscoVersion":   snmp.OIDCiscoVersion,
+		"OIDHPVersion":      snmp.OIDHPVersion,
+		"OIDJuniperVersion": snmp.OIDJuniperVersion,
 	}
 
 	for name, oid := range oids {
@@ -347,12 +349,12 @@ func TestOIDConstants(t *testing.T) {
 
 	// Verify standard OIDs are under the system MIB tree (1.3.6.1.2.1.1)
 	standardOIDs := []string{
-		OIDSysDescr,
-		OIDSysObjectID,
-		OIDSysUpTime,
-		OIDSysContact,
-		OIDSysName,
-		OIDSysLocation,
+		snmp.OIDSysDescr,
+		snmp.OIDSysObjectID,
+		snmp.OIDSysUpTime,
+		snmp.OIDSysContact,
+		snmp.OIDSysName,
+		snmp.OIDSysLocation,
 	}
 
 	for _, oid := range standardOIDs {
@@ -375,7 +377,7 @@ func TestContextCancellation(t *testing.T) {
 	}
 
 	// Query should fail due to canceled context
-	_, err := Query(ctx, "192.168.1.1", OIDSysDescr, cfg)
+	_, err := snmp.Query(ctx, "192.168.1.1", snmp.OIDSysDescr, cfg)
 	if err == nil {
 		t.Error("Query() with canceled context should return error")
 	}
@@ -383,7 +385,7 @@ func TestContextCancellation(t *testing.T) {
 
 func TestSystemInfo(t *testing.T) {
 	// Test SystemInfo structure
-	info := &SystemInfo{
+	info := &snmp.SystemInfo{
 		SysDescr:    "Test Device Description",
 		SysObjectID: "1.3.6.1.4.1.9",
 		SysName:     "test-device",
@@ -468,7 +470,7 @@ func TestSNMPConfigValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			_, err := Query(ctx, "192.0.2.1", OIDSysDescr, tt.cfg)
+			_, err := snmp.Query(ctx, "192.0.2.1", snmp.OIDSysDescr, tt.cfg)
 
 			if tt.valid && tt.cfg != nil {
 				// Should fail due to unreachable host, not config validation
@@ -496,7 +498,7 @@ func TestMultipleCommunities(t *testing.T) {
 		Retries:     1,
 	}
 
-	_, err := Query(ctx, "192.0.2.1", OIDSysDescr, cfg)
+	_, err := snmp.Query(ctx, "192.0.2.1", snmp.OIDSysDescr, cfg)
 
 	// Should fail after trying all communities
 	if err == nil {
@@ -547,12 +549,12 @@ func TestV3CredentialFields(t *testing.T) {
 	}
 
 	// Test protocol conversion
-	authProto := getAuthProtocol(cred.AuthProtocol)
+	authProto := snmp.GetAuthProtocol(cred.AuthProtocol)
 	if authProto != gosnmp.SHA256 {
 		t.Errorf("Auth protocol = %v, want SHA256", authProto)
 	}
 
-	privProto := getPrivProtocol(cred.PrivProtocol)
+	privProto := snmp.GetPrivProtocol(cred.PrivProtocol)
 	if privProto != gosnmp.AES256 {
 		t.Errorf("Priv protocol = %v, want AES256", privProto)
 	}
