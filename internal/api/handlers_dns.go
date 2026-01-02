@@ -52,123 +52,66 @@ type DNSResponse struct {
 // DNS Testing Handlers
 // ============================================================================
 
+// convertDNSLookup converts dns.LookupResult to DNSLookupResult API type.
+func convertDNSLookup(src *dns.LookupResult) *DNSLookupResult {
+	if src == nil {
+		return nil
+	}
+	return &DNSLookupResult{
+		Result:   src.Result,
+		Time:     src.TimeMs,
+		TimeMs:   src.TimeMs,
+		Status:   string(src.Status),
+		Error:    src.Error,
+		Resolved: src.Resolved,
+	}
+}
+
+// buildDNSResponse builds the DNSResponse from dns.TestResult.
+func buildDNSResponse(result *dns.TestResult, iface string) DNSResponse {
+	resp := DNSResponse{
+		Interface:    iface,
+		Server:       result.Server,
+		Servers:      result.Servers,
+		TestHostname: result.TestHostname,
+		Forward:      convertDNSLookup(result.Forward),
+		ForwardIpv6:  convertDNSLookup(result.ForwardIPv6),
+		Reverse:      convertDNSLookup(result.Reverse),
+		ReverseIpv6:  convertDNSLookup(result.ReverseIPv6),
+	}
+
+	for _, sr := range result.PerServerResults {
+		resp.PerServerResults = append(resp.PerServerResults, &DNSServerTestResult{
+			Server:      sr.Server,
+			Status:      string(sr.Status),
+			AvgTimeMs:   sr.AvgTimeMs,
+			Forward:     convertDNSLookup(sr.Forward),
+			ForwardIpv6: convertDNSLookup(sr.ForwardIPv6),
+		})
+	}
+	return resp
+}
+
 // handleDNS performs DNS testing and returns results.
 func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
 		return
 	}
 
 	if s.dnsTester == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			localizer.T("errors.health.dnsNotAvailable"),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, localizer.T("errors.health.dnsNotAvailable"), "")
 		return
 	}
 
-	// Get interface from query param or use current
 	currentIface := s.getInterfaceFromRequest(r)
-
-	// Perform DNS test
 	result := s.dnsTester.Test(r.Context())
-
-	resp := DNSResponse{
-		Interface:    currentIface,
-		Server:       result.Server,
-		Servers:      result.Servers,
-		TestHostname: result.TestHostname,
-	}
-
-	if result.Forward != nil {
-		resp.Forward = &DNSLookupResult{
-			Result:   result.Forward.Result,
-			Time:     result.Forward.TimeMs,
-			TimeMs:   result.Forward.TimeMs,
-			Status:   string(result.Forward.Status),
-			Error:    result.Forward.Error,
-			Resolved: result.Forward.Resolved,
-		}
-	}
-
-	if result.ForwardIPv6 != nil {
-		resp.ForwardIpv6 = &DNSLookupResult{
-			Result:   result.ForwardIPv6.Result,
-			Time:     result.ForwardIPv6.TimeMs,
-			TimeMs:   result.ForwardIPv6.TimeMs,
-			Status:   string(result.ForwardIPv6.Status),
-			Error:    result.ForwardIPv6.Error,
-			Resolved: result.ForwardIPv6.Resolved,
-		}
-	}
-
-	if result.Reverse != nil {
-		resp.Reverse = &DNSLookupResult{
-			Result:   result.Reverse.Result,
-			Time:     result.Reverse.TimeMs,
-			TimeMs:   result.Reverse.TimeMs,
-			Status:   string(result.Reverse.Status),
-			Error:    result.Reverse.Error,
-			Resolved: result.Reverse.Resolved,
-		}
-	}
-
-	if result.ReverseIPv6 != nil {
-		resp.ReverseIpv6 = &DNSLookupResult{
-			Result:   result.ReverseIPv6.Result,
-			Time:     result.ReverseIPv6.TimeMs,
-			TimeMs:   result.ReverseIPv6.TimeMs,
-			Status:   string(result.ReverseIPv6.Status),
-			Error:    result.ReverseIPv6.Error,
-			Resolved: result.ReverseIPv6.Resolved,
-		}
-	}
-
-	// Map per-server results
-	if len(result.PerServerResults) > 0 {
-		for _, serverResult := range result.PerServerResults {
-			apiResult := &DNSServerTestResult{
-				Server:    serverResult.Server,
-				Status:    string(serverResult.Status),
-				AvgTimeMs: serverResult.AvgTimeMs,
-			}
-			if serverResult.Forward != nil {
-				apiResult.Forward = &DNSLookupResult{
-					Result:   serverResult.Forward.Result,
-					Time:     serverResult.Forward.TimeMs,
-					TimeMs:   serverResult.Forward.TimeMs,
-					Status:   string(serverResult.Forward.Status),
-					Error:    serverResult.Forward.Error,
-					Resolved: serverResult.Forward.Resolved,
-				}
-			}
-			if serverResult.ForwardIPv6 != nil {
-				apiResult.ForwardIpv6 = &DNSLookupResult{
-					Result:   serverResult.ForwardIPv6.Result,
-					Time:     serverResult.ForwardIPv6.TimeMs,
-					TimeMs:   serverResult.ForwardIPv6.TimeMs,
-					Status:   string(serverResult.ForwardIPv6.Status),
-					Error:    serverResult.ForwardIPv6.Error,
-					Resolved: serverResult.ForwardIPv6.Resolved,
-				}
-			}
-			resp.PerServerResults = append(resp.PerServerResults, apiResult)
-		}
-	}
+	resp := buildDNSResponse(result, currentIface)
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
