@@ -1,7 +1,11 @@
-// Package version provides build-time version information.
-package version
+// Package version_test tests the version package.
+package version_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/krisarmstrong/seed/internal/version"
+)
 
 func TestInfo(t *testing.T) {
 	tests := []struct {
@@ -16,7 +20,7 @@ func TestInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			info := Info()
+			info := version.Info()
 
 			// Verify all expected keys are present
 			for _, key := range tt.wantKeys {
@@ -34,7 +38,7 @@ func TestInfo(t *testing.T) {
 }
 
 func TestInfoDefaultValues(t *testing.T) {
-	info := Info()
+	info := version.Info()
 
 	// Test default values (when not set via ldflags)
 	if info["version"] == "" {
@@ -51,7 +55,7 @@ func TestInfoDefaultValues(t *testing.T) {
 }
 
 func TestInfoMapStructure(t *testing.T) {
-	info := Info()
+	info := version.Info()
 
 	// Verify it returns a non-nil map
 	if info == nil {
@@ -74,17 +78,17 @@ func TestVersionVariables(t *testing.T) {
 	}{
 		{
 			name:     "Version variable exists",
-			variable: &Version,
+			variable: &version.Version,
 			notEmpty: true,
 		},
 		{
 			name:     "Commit variable exists",
-			variable: &Commit,
+			variable: &version.Commit,
 			notEmpty: true,
 		},
 		{
 			name:     "BuildTime variable exists",
-			variable: &BuildTime,
+			variable: &version.BuildTime,
 			notEmpty: true,
 		},
 	}
