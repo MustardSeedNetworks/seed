@@ -422,12 +422,8 @@ func (ps *ProfileSettings) FromConfig(cfg *Config) {
 	}
 }
 
-// ApplyTo applies profile settings to a Config.
-// This modifies the Config in place with the profile's settings.
-//
-
-func (ps *ProfileSettings) ApplyTo(cfg *Config) {
-	// Thresholds
+// applyThresholdsTo applies threshold settings from profile to config.
+func (ps *ProfileSettings) applyThresholdsTo(cfg *Config) {
 	cfg.Thresholds.DNS.Warning = time.Duration(ps.Thresholds.DNS.Warning) * time.Millisecond
 	cfg.Thresholds.DNS.Critical = time.Duration(ps.Thresholds.DNS.Critical) * time.Millisecond
 	cfg.Thresholds.Ping.Warning = time.Duration(ps.Thresholds.Gateway.Warning) * time.Millisecond
@@ -440,32 +436,20 @@ func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	cfg.Thresholds.CustomTests.TCP.Critical = time.Duration(ps.Thresholds.CustomTCP.Critical) * time.Millisecond
 	cfg.Thresholds.CustomTests.HTTP.Warning = time.Duration(ps.Thresholds.CustomHTTP.Warning) * time.Millisecond
 	cfg.Thresholds.CustomTests.HTTP.Critical = time.Duration(ps.Thresholds.CustomHTTP.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(
-		ps.Thresholds.HTTPTimings.DNS.Warning,
-	) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(
-		ps.Thresholds.HTTPTimings.DNS.Critical,
-	) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(
-		ps.Thresholds.HTTPTimings.TCP.Warning,
-	) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(
-		ps.Thresholds.HTTPTimings.TCP.Critical,
-	) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(
-		ps.Thresholds.HTTPTimings.TLS.Warning,
-	) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(
-		ps.Thresholds.HTTPTimings.TLS.Critical,
-	) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(
-		ps.Thresholds.HTTPTimings.TTFB.Warning,
-	) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(
-		ps.Thresholds.HTTPTimings.TTFB.Critical,
-	) * time.Millisecond
 
-	// Health Checks
+	// HTTP Timings
+	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(ps.Thresholds.HTTPTimings.DNS.Warning) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(ps.Thresholds.HTTPTimings.DNS.Critical) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(ps.Thresholds.HTTPTimings.TCP.Warning) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(ps.Thresholds.HTTPTimings.TCP.Critical) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(ps.Thresholds.HTTPTimings.TLS.Warning) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(ps.Thresholds.HTTPTimings.TLS.Critical) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(ps.Thresholds.HTTPTimings.TTFB.Warning) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(ps.Thresholds.HTTPTimings.TTFB.Critical) * time.Millisecond
+}
+
+// applyHealthChecksTo applies health check settings from profile to config.
+func (ps *ProfileSettings) applyHealthChecksTo(cfg *Config) {
 	cfg.HealthChecks.RunPerformance = ps.HealthChecks.RunPerformance
 	cfg.HealthChecks.RunSpeedtest = ps.HealthChecks.RunSpeedtest
 	cfg.HealthChecks.RunIperf = ps.HealthChecks.RunIperf
@@ -490,7 +474,10 @@ func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	for _, he := range ps.HealthChecks.HTTPEndpoints {
 		cfg.HealthChecks.HTTPEndpoints = append(cfg.HealthChecks.HTTPEndpoints, HTTPEndpoint(he))
 	}
+}
 
+// applyTestOptionsTo applies speedtest, iperf, FAB, and display options.
+func (ps *ProfileSettings) applyTestOptionsTo(cfg *Config) {
 	// Speedtest
 	cfg.Speedtest.ServerID = ps.Speedtest.ServerID
 	cfg.Speedtest.AutoRunOnLink = ps.Speedtest.AutoRunOnLink
@@ -498,6 +485,7 @@ func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	// Iperf
 	cfg.Iperf.AutoRunOnLink = ps.Iperf.AutoRunOnLink
 	cfg.Iperf.Server = ps.Iperf.Server
+	cfg.Iperf.EnableServer = ps.Iperf.EnableServer
 	if ps.Iperf.Port > 0 {
 		cfg.Iperf.Port = ps.Iperf.Port
 	}
@@ -513,7 +501,6 @@ func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	if ps.Iperf.ServerPort > 0 {
 		cfg.Iperf.ServerPort = ps.Iperf.ServerPort
 	}
-	cfg.Iperf.EnableServer = ps.Iperf.EnableServer
 
 	// FAB Options
 	cfg.FABOptions.RunLink = ps.FABOptions.RunLink
@@ -534,7 +521,10 @@ func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	if ps.DisplayOptions.UnitSystem != "" {
 		cfg.DisplayOptions.UnitSystem = ps.DisplayOptions.UnitSystem
 	}
+}
 
+// applyNetworkSettingsTo applies DNS, SNMP, and network discovery settings.
+func (ps *ProfileSettings) applyNetworkSettingsTo(cfg *Config) {
 	// DNS
 	if ps.DNS.TestHostname != "" {
 		cfg.DNS.TestHostname = ps.DNS.TestHostname
@@ -590,6 +580,15 @@ func (ps *ProfileSettings) ApplyTo(cfg *Config) {
 	for _, sn := range ps.NetworkDiscovery.AdditionalSubnets {
 		cfg.NetworkDiscovery.AdditionalSubnets = append(cfg.NetworkDiscovery.AdditionalSubnets, SubnetConfig(sn))
 	}
+}
+
+// ApplyTo applies profile settings to a Config.
+// This modifies the Config in place with the profile's settings.
+func (ps *ProfileSettings) ApplyTo(cfg *Config) {
+	ps.applyThresholdsTo(cfg)
+	ps.applyHealthChecksTo(cfg)
+	ps.applyTestOptionsTo(cfg)
+	ps.applyNetworkSettingsTo(cfg)
 }
 
 // ToJSON serializes ProfileSettings to JSON.
