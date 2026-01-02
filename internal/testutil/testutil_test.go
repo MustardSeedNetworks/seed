@@ -1,15 +1,17 @@
-package testutil
+// Package testutil_test tests the testutil package.
+package testutil_test
 
 import (
 	"testing"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 func TestGetTestDefaults(t *testing.T) {
 	t.Run("returns consistent values", func(t *testing.T) {
-		defaults1 := GetTestDefaults()
-		defaults2 := GetTestDefaults()
+		defaults1 := testutil.GetTestDefaults()
+		defaults2 := testutil.GetTestDefaults()
 
 		if defaults1 != defaults2 {
 			t.Error("GetTestDefaults should return same instance")
@@ -41,7 +43,7 @@ func TestGetTestDefaults(t *testing.T) {
 	})
 
 	t.Run("derives from DefaultConfig", func(t *testing.T) {
-		defaults := GetTestDefaults()
+		defaults := testutil.GetTestDefaults()
 		cfg := config.DefaultConfig()
 
 		// Should match production defaults for non-test-specific values
@@ -62,7 +64,7 @@ func TestGetTestDefaults(t *testing.T) {
 
 func TestConfigBuilder(t *testing.T) {
 	t.Run("creates valid config with defaults", func(t *testing.T) {
-		cfg := NewConfigBuilder().Build()
+		cfg := testutil.NewConfigBuilder().Build()
 
 		if cfg == nil {
 			t.Fatal("expected non-nil config")
@@ -76,14 +78,14 @@ func TestConfigBuilder(t *testing.T) {
 			t.Errorf("expected loopback interface, got %q", cfg.Interface.Default)
 		}
 
-		defaults := GetTestDefaults()
+		defaults := testutil.GetTestDefaults()
 		if cfg.Auth.DefaultPasswordHash != defaults.Auth.PasswordHash {
 			t.Error("expected test password hash")
 		}
 	})
 
 	t.Run("fluent API modifies config", func(t *testing.T) {
-		cfg := NewConfigBuilder().
+		cfg := testutil.NewConfigBuilder().
 			WithPort(9090).
 			WithInterface("eth0").
 			WithHTTPS(true).
@@ -114,7 +116,7 @@ func TestConfigBuilder(t *testing.T) {
 	})
 
 	t.Run("WithAuth sets credentials", func(t *testing.T) {
-		cfg := NewConfigBuilder().
+		cfg := testutil.NewConfigBuilder().
 			WithAuth("testuser", "testhash").
 			Build()
 
@@ -128,7 +130,7 @@ func TestConfigBuilder(t *testing.T) {
 	})
 
 	t.Run("WithDiscoveryMethods configures methods", func(t *testing.T) {
-		cfg := NewConfigBuilder().
+		cfg := testutil.NewConfigBuilder().
 			WithDiscoveryMethods(true, false, true).
 			Build()
 
@@ -147,7 +149,7 @@ func TestConfigBuilder(t *testing.T) {
 
 	t.Run("WithTCPPorts sets ports", func(t *testing.T) {
 		ports := "22,80,443"
-		cfg := NewConfigBuilder().
+		cfg := testutil.NewConfigBuilder().
 			WithTCPPorts(ports).
 			Build()
 
@@ -159,7 +161,7 @@ func TestConfigBuilder(t *testing.T) {
 
 func TestMustBuild(t *testing.T) {
 	t.Run("succeeds with valid config", func(t *testing.T) {
-		cfg := NewConfigBuilder().MustBuild(t)
+		cfg := testutil.NewConfigBuilder().MustBuild(t)
 
 		if cfg == nil {
 			t.Fatal("expected non-nil config")
@@ -168,7 +170,7 @@ func TestMustBuild(t *testing.T) {
 
 	t.Run("validates config", func(t *testing.T) {
 		// This would fail validation due to invalid port
-		builder := NewConfigBuilder().WithPort(999999)
+		builder := testutil.NewConfigBuilder().WithPort(999999)
 
 		// We can't directly test MustBuild failing because it calls t.Fatalf
 		// Instead, test the Validate method
@@ -178,7 +180,7 @@ func TestMustBuild(t *testing.T) {
 	})
 
 	t.Run("rejects empty JWT secret", func(t *testing.T) {
-		builder := NewConfigBuilder().WithJWTSecret("")
+		builder := testutil.NewConfigBuilder().WithJWTSecret("")
 
 		if err := builder.Validate(); err == nil {
 			t.Error("expected validation error for empty JWT secret")
@@ -186,7 +188,7 @@ func TestMustBuild(t *testing.T) {
 	})
 
 	t.Run("rejects invalid concurrency", func(t *testing.T) {
-		builder := NewConfigBuilder().WithDiscoveryConcurrency(0)
+		builder := testutil.NewConfigBuilder().WithDiscoveryConcurrency(0)
 
 		if err := builder.Validate(); err == nil {
 			t.Error("expected validation error for zero concurrency")
@@ -194,7 +196,7 @@ func TestMustBuild(t *testing.T) {
 	})
 
 	t.Run("rejects empty interface", func(t *testing.T) {
-		builder := NewConfigBuilder().WithInterface("")
+		builder := testutil.NewConfigBuilder().WithInterface("")
 
 		if err := builder.Validate(); err == nil {
 			t.Error("expected validation error for empty interface")
@@ -204,7 +206,7 @@ func TestMustBuild(t *testing.T) {
 
 func TestFixtures(t *testing.T) {
 	t.Run("MinimalConfig is valid", func(t *testing.T) {
-		cfg := Fixtures.MinimalConfig()
+		cfg := testutil.Fixtures.MinimalConfig()
 
 		if cfg == nil {
 			t.Fatal("expected non-nil config")
@@ -224,7 +226,7 @@ func TestFixtures(t *testing.T) {
 	})
 
 	t.Run("InsecureConfig has empty password", func(t *testing.T) {
-		cfg := Fixtures.InsecureConfig()
+		cfg := testutil.Fixtures.InsecureConfig()
 
 		if cfg == nil {
 			t.Fatal("expected non-nil config")
@@ -236,7 +238,7 @@ func TestFixtures(t *testing.T) {
 	})
 
 	t.Run("FullConfig has all features", func(t *testing.T) {
-		cfg := Fixtures.FullConfig()
+		cfg := testutil.Fixtures.FullConfig()
 
 		if cfg == nil {
 			t.Fatal("expected non-nil config")
@@ -253,21 +255,21 @@ func TestFixtures(t *testing.T) {
 	})
 
 	t.Run("helper functions return same as fixtures", func(t *testing.T) {
-		if MinimalValidConfig() == nil {
+		if testutil.MinimalValidConfig() == nil {
 			t.Error("MinimalValidConfig should not be nil")
 		}
 
-		if InsecureConfig() == nil {
+		if testutil.InsecureConfig() == nil {
 			t.Error("InsecureConfig should not be nil")
 		}
 
-		if FullScanConfig() == nil {
+		if testutil.FullScanConfig() == nil {
 			t.Error("FullScanConfig should not be nil")
 		}
 	})
 
 	t.Run("PassiveOnlyConfig has passive only", func(t *testing.T) {
-		cfg := PassiveOnlyConfig()
+		cfg := testutil.PassiveOnlyConfig()
 
 		if cfg.NetworkDiscovery.Options.ARPScan || cfg.NetworkDiscovery.Options.ICMPScan ||
 			cfg.NetworkDiscovery.Options.PortScan.Enabled {
@@ -276,7 +278,7 @@ func TestFixtures(t *testing.T) {
 	})
 
 	t.Run("StandardScanConfig has ARP and ICMP", func(t *testing.T) {
-		cfg := StandardScanConfig()
+		cfg := testutil.StandardScanConfig()
 
 		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan ||
 			cfg.NetworkDiscovery.Options.PortScan.Enabled {
