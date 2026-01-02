@@ -308,6 +308,56 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// addLinkHistory adds link flap history from monitor to response.
+func (s *Server) addLinkHistory(resp *LinkResponse) {
+	if s.linkMonitor == nil {
+		return
+	}
+	resp.FlapCount24h = s.linkMonitor.GetFlapCount24h()
+	resp.UptimeMs = s.linkMonitor.GetUptime().Milliseconds()
+
+	history := s.linkMonitor.GetHistory()
+	if len(history) > 0 {
+		resp.History = make([]LinkHistoryEvent, len(history))
+		for i, event := range history {
+			resp.History[i] = LinkHistoryEvent{
+				State:     event.State.String(),
+				Timestamp: event.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
+			}
+		}
+	}
+}
+
+// addPhyInfo adds PoE and SFP/DDM info to response.
+func addPhyInfo(resp *LinkResponse, iface string) {
+	phyDetector := phy.NewDetector(iface)
+
+	if poeStatus := phyDetector.GetPoEStatus(); poeStatus != nil && poeStatus.Detected {
+		resp.PoE = &PoEInfo{
+			Detected: poeStatus.Detected, Standard: poeStatus.Standard,
+			Class: poeStatus.Class, PowerMw: poeStatus.PowerMw, Voltage: poeStatus.Voltage,
+		}
+	}
+
+	sfpInfo := phyDetector.GetSFPInfo()
+	if sfpInfo == nil || !sfpInfo.Present {
+		return
+	}
+	resp.SFP = &SFPInfo{
+		Present: sfpInfo.Present, Vendor: sfpInfo.Vendor, PartNumber: sfpInfo.PartNumber,
+		Serial: sfpInfo.Serial, Type: sfpInfo.Type, Wavelength: sfpInfo.Wavelength,
+		Distance: sfpInfo.Distance, Connector: sfpInfo.Connector, DDMSupport: sfpInfo.DDMSupport,
+	}
+	if sfpInfo.DDM != nil {
+		resp.SFP.DDM = &SFPDDMInfo{
+			Temperature: sfpInfo.DDM.Temperature, Voltage: sfpInfo.DDM.Voltage,
+			TxPowerDbm: sfpInfo.DDM.TxPowerDbm, TxPowerMw: sfpInfo.DDM.TxPowerMw,
+			RxPowerDbm: sfpInfo.DDM.RxPowerDbm, RxPowerMw: sfpInfo.DDM.RxPowerMw,
+			LaserBiasMa: sfpInfo.DDM.LaserBiasMa, Alarms: sfpInfo.DDM.Alarms, Warnings: sfpInfo.DDM.Warnings,
+		}
+	}
+}
+
 // handleLink returns link status for the specified or current interface.
 // Accepts optional query parameter: ?interface=eth0.
 func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
@@ -315,56 +365,30 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
 		return
 	}
 
 	if s.netManager == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}),
-			"",
-		) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}), "")
 		return
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.network.refreshFailed"),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
 		return
 	}
 
-	// Get interface from query param or fallback to current.
 	currentIface := s.getInterfaceFromRequest(r)
-
 	ifaceInfo, err := s.netManager.GetInterface(currentIface)
 	if err != nil {
 		logger.Warn("Interface not found", "error", err, "interface", currentIface)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusNotFound,
-			ErrCodeNotFound,
-			localizer.T("errors.network.interfaceNotFound"),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+			ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), "")
 		return
 	}
 
@@ -373,12 +397,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		slog.Warn("Failed to get link status", "interface", currentIface, "error", err)
 	}
 
-	resp := LinkResponse{
-		Interface: currentIface,
-		LinkUp:    false,
-		MTU:       ifaceInfo.MTU,
-	}
-
+	resp := LinkResponse{Interface: currentIface, LinkUp: false, MTU: ifaceInfo.MTU}
 	if linkStatus != nil {
 		resp.LinkUp = linkStatus.LinkUp
 		resp.Carrier = linkStatus.Carrier
@@ -389,67 +408,8 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		resp.AutoNeg = linkStatus.AutoNeg
 	}
 
-	// Add link flap history from monitor
-	if s.linkMonitor != nil {
-		resp.FlapCount24h = s.linkMonitor.GetFlapCount24h()
-		resp.UptimeMs = s.linkMonitor.GetUptime().Milliseconds()
-
-		// Convert history events to API format
-		history := s.linkMonitor.GetHistory()
-		if len(history) > 0 {
-			resp.History = make([]LinkHistoryEvent, len(history))
-			for i, event := range history {
-				resp.History[i] = LinkHistoryEvent{
-					State:     event.State.String(),
-					Timestamp: event.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
-				}
-			}
-		}
-	}
-
-	// Detect PoE and SFP/DDM status
-	phyDetector := phy.NewDetector(currentIface)
-
-	// Add PoE info if detected
-	poeStatus := phyDetector.GetPoEStatus()
-	if poeStatus != nil && poeStatus.Detected {
-		resp.PoE = &PoEInfo{
-			Detected: poeStatus.Detected,
-			Standard: poeStatus.Standard,
-			Class:    poeStatus.Class,
-			PowerMw:  poeStatus.PowerMw,
-			Voltage:  poeStatus.Voltage,
-		}
-	}
-
-	// Add SFP/DDM info if present
-	sfpInfo := phyDetector.GetSFPInfo()
-	if sfpInfo != nil && sfpInfo.Present {
-		resp.SFP = &SFPInfo{
-			Present:    sfpInfo.Present,
-			Vendor:     sfpInfo.Vendor,
-			PartNumber: sfpInfo.PartNumber,
-			Serial:     sfpInfo.Serial,
-			Type:       sfpInfo.Type,
-			Wavelength: sfpInfo.Wavelength,
-			Distance:   sfpInfo.Distance,
-			Connector:  sfpInfo.Connector,
-			DDMSupport: sfpInfo.DDMSupport,
-		}
-		if sfpInfo.DDM != nil {
-			resp.SFP.DDM = &SFPDDMInfo{
-				Temperature: sfpInfo.DDM.Temperature,
-				Voltage:     sfpInfo.DDM.Voltage,
-				TxPowerDbm:  sfpInfo.DDM.TxPowerDbm,
-				TxPowerMw:   sfpInfo.DDM.TxPowerMw,
-				RxPowerDbm:  sfpInfo.DDM.RxPowerDbm,
-				RxPowerMw:   sfpInfo.DDM.RxPowerMw,
-				LaserBiasMa: sfpInfo.DDM.LaserBiasMa,
-				Alarms:      sfpInfo.DDM.Alarms,
-				Warnings:    sfpInfo.DDM.Warnings,
-			}
-		}
-	}
+	s.addLinkHistory(&resp)
+	addPhyInfo(&resp, currentIface)
 
 	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
