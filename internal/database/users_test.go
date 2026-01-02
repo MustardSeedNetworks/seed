@@ -1,4 +1,4 @@
-package database
+package database_test
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/database"
 )
 
 func TestUserCRUD(t *testing.T) {
@@ -18,7 +20,7 @@ func TestUserCRUD(t *testing.T) {
 	_ = tmpFile.Close()
 	defer func() { _ = os.Remove(tmpPath) }()
 
-	db, openErr := Open(tmpPath)
+	db, openErr := database.Open(tmpPath)
 	if openErr != nil {
 		t.Fatalf("Failed to open database: %v", openErr)
 	}
@@ -48,7 +50,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("CreateDuplicateUser", func(t *testing.T) {
 		_, err := db.CreateUser(ctx, "admin", "$2a$10$anotherpassword", "admin")
-		if !errors.Is(err, ErrUserExists) {
+		if !errors.Is(err, database.ErrUserExists) {
 			t.Errorf("Expected ErrUserExists, got %v", err)
 		}
 	})
@@ -66,7 +68,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("GetNonexistentUser", func(t *testing.T) {
 		_, err := db.GetUser(ctx, "nonexistent")
-		if !errors.Is(err, ErrUserNotFound) {
+		if !errors.Is(err, database.ErrUserNotFound) {
 			t.Errorf("Expected ErrUserNotFound, got %v", err)
 		}
 	})
@@ -93,7 +95,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("UpdateNonexistentUserPassword", func(t *testing.T) {
 		err := db.UpdateUserPassword(ctx, "nonexistent", "$2a$10$hash")
-		if !errors.Is(err, ErrUserNotFound) {
+		if !errors.Is(err, database.ErrUserNotFound) {
 			t.Errorf("Expected ErrUserNotFound, got %v", err)
 		}
 	})
@@ -143,7 +145,7 @@ func TestLoginTracking(t *testing.T) {
 	_ = tmpFile.Close()
 	defer func() { _ = os.Remove(tmpPath) }()
 
-	db, openErr := Open(tmpPath)
+	db, openErr := database.Open(tmpPath)
 	if openErr != nil {
 		t.Fatalf("Failed to open database: %v", openErr)
 	}
@@ -251,7 +253,7 @@ func TestMigrateUserFromConfig(t *testing.T) {
 	_ = tmpFile.Close()
 	defer func() { _ = os.Remove(tmpPath) }()
 
-	db, openErr := Open(tmpPath)
+	db, openErr := database.Open(tmpPath)
 	if openErr != nil {
 		t.Fatalf("Failed to open database: %v", openErr)
 	}
@@ -301,7 +303,7 @@ func TestUserDatabaseClosed(t *testing.T) {
 	_ = tmpFile.Close()
 	defer func() { _ = os.Remove(tmpPath) }()
 
-	db, err := Open(tmpPath)
+	db, err := database.Open(tmpPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}

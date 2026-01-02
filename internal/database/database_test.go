@@ -1,4 +1,5 @@
-package database
+// Package database_test tests the database package.
+package database_test
 
 import (
 	"context"
@@ -9,17 +10,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/stretchr/testify/require"
 )
 
 // testDB creates a temporary database for testing.
-func testDB(t *testing.T) (*DB, func()) {
+func testDB(t *testing.T) (*database.DB, func()) {
 	t.Helper()
 
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "test.db")
 
-	db, err := Open(dbPath)
+	db, err := database.Open(dbPath)
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
@@ -36,7 +38,7 @@ func TestOpen(t *testing.T) {
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "test.db")
 
-	db, err := Open(dbPath)
+	db, err := database.Open(dbPath)
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
@@ -58,7 +60,7 @@ func TestOpenWithConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "test.db")
 
-	cfg := Config{
+	cfg := database.Config{
 		Path:            dbPath,
 		MaxOpenConns:    5,
 		MaxIdleConns:    2,
@@ -67,7 +69,7 @@ func TestOpenWithConfig(t *testing.T) {
 		BusyTimeout:     1000,
 	}
 
-	db, err := OpenWithConfig(cfg)
+	db, err := database.OpenWithConfig(cfg)
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
@@ -91,8 +93,9 @@ func TestMigrations(t *testing.T) {
 		t.Fatalf("failed to get schema version: %v", err)
 	}
 
-	if version != len(migrations) {
-		t.Errorf("expected schema version %d, got %d", len(migrations), version)
+	migrationsCount := database.MigrationsCount()
+	if version != migrationsCount {
+		t.Errorf("expected schema version %d, got %d", migrationsCount, version)
 	}
 
 	// Check migration status
@@ -101,8 +104,8 @@ func TestMigrations(t *testing.T) {
 		t.Fatalf("failed to get migration status: %v", err)
 	}
 
-	if len(status) != len(migrations) {
-		t.Errorf("expected %d migrations, got %d", len(migrations), len(status))
+	if len(status) != migrationsCount {
+		t.Errorf("expected %d migrations, got %d", migrationsCount, len(status))
 	}
 
 	for _, m := range status {
@@ -156,7 +159,7 @@ func TestProfileRepository(t *testing.T) {
 	repo := db.Profiles()
 
 	// Create
-	profile := &Profile{
+	profile := &database.Profile{
 		Name:        "test-profile",
 		Description: "Test profile",
 		ConfigJSON:  `{"key": "value"}`,
@@ -244,7 +247,7 @@ func TestProfileRepository(t *testing.T) {
 	}
 
 	_, err = repo.Get(ctx, profile.ID)
-	if !errors.Is(err, ErrProfileNotFound) {
+	if !errors.Is(err, database.ErrProfileNotFound) {
 		t.Errorf("expected ErrProfileNotFound, got %v", err)
 	}
 }
@@ -257,9 +260,9 @@ func TestMetricsRepository(t *testing.T) {
 	repo := db.Metrics()
 
 	// Record
-	metric := &Metric{
+	metric := &database.Metric{
 		InterfaceName: "eth0",
-		MetricType:    MetricTypeLatency,
+		MetricType:    database.MetricTypeLatency,
 		Value:         42.5,
 		Unit:          "ms",
 	}
@@ -274,9 +277,9 @@ func TestMetricsRepository(t *testing.T) {
 	}
 
 	// Query
-	metrics, err := repo.Query(ctx, MetricQueryOptions{
+	metrics, err := repo.Query(ctx, database.MetricQueryOptions{
 		InterfaceName: "eth0",
-		MetricType:    MetricTypeLatency,
+		MetricType:    database.MetricTypeLatency,
 		Limit:         10,
 	})
 	if err != nil {
@@ -288,7 +291,7 @@ func TestMetricsRepository(t *testing.T) {
 	}
 
 	// GetLatest
-	latest, err := repo.GetLatest(ctx, "eth0", MetricTypeLatency)
+	latest, err := repo.GetLatest(ctx, "eth0", database.MetricTypeLatency)
 	if err != nil {
 		t.Fatalf("failed to get latest: %v", err)
 	}
@@ -302,9 +305,9 @@ func TestMetricsRepository(t *testing.T) {
 	}
 
 	// GetAggregates
-	agg, err := repo.GetAggregates(ctx, MetricAggregateOptions{
+	agg, err := repo.GetAggregates(ctx, database.MetricAggregateOptions{
 		InterfaceName: "eth0",
-		MetricType:    MetricTypeLatency,
+		MetricType:    database.MetricTypeLatency,
 	})
 	if err != nil {
 		t.Fatalf("failed to get aggregates: %v", err)
@@ -315,10 +318,10 @@ func TestMetricsRepository(t *testing.T) {
 	}
 
 	// Record batch
-	batch := []*Metric{
-		{InterfaceName: "eth0", MetricType: MetricTypeLatency, Value: 10},
-		{InterfaceName: "eth0", MetricType: MetricTypeLatency, Value: 20},
-		{InterfaceName: "eth0", MetricType: MetricTypeLatency, Value: 30},
+	batch := []*database.Metric{
+		{InterfaceName: "eth0", MetricType: database.MetricTypeLatency, Value: 10},
+		{InterfaceName: "eth0", MetricType: database.MetricTypeLatency, Value: 20},
+		{InterfaceName: "eth0", MetricType: database.MetricTypeLatency, Value: 30},
 	}
 
 	err = repo.RecordBatch(ctx, batch)
@@ -360,7 +363,7 @@ func TestDeviceRepository(t *testing.T) {
 	repo := db.Devices()
 
 	// Create
-	device := &Device{
+	device := &database.Device{
 		IPAddress:  "192.168.1.100",
 		MACAddress: "aa:bb:cc:dd:ee:ff",
 		Hostname:   "test-device",
@@ -415,7 +418,7 @@ func TestDeviceRepository(t *testing.T) {
 	}
 
 	// List
-	devices, err := repo.List(ctx, DeviceListOptions{})
+	devices, err := repo.List(ctx, database.DeviceListOptions{})
 	if err != nil {
 		t.Fatalf("failed to list devices: %v", err)
 	}
@@ -425,7 +428,7 @@ func TestDeviceRepository(t *testing.T) {
 	}
 
 	// Upsert
-	upsertDevice := &Device{
+	upsertDevice := &database.Device{
 		IPAddress: "192.168.1.100",
 		Hostname:  "upserted-device",
 	}
@@ -458,7 +461,7 @@ func TestDeviceRepository(t *testing.T) {
 	}
 
 	_, err = repo.Get(ctx, device.ID)
-	if !errors.Is(err, ErrDeviceNotFound) {
+	if !errors.Is(err, database.ErrDeviceNotFound) {
 		t.Errorf("expected ErrDeviceNotFound, got %v", err)
 	}
 }
@@ -471,9 +474,9 @@ func TestAlertRepository(t *testing.T) {
 	repo := db.Alerts()
 
 	// Create
-	alert := &Alert{
-		Type:     AlertTypeSecurity,
-		Severity: AlertSeverityWarning,
+	alert := &database.Alert{
+		Type:     database.AlertTypeSecurity,
+		Severity: database.AlertSeverityWarning,
 		Title:    "Test Alert",
 		Message:  "This is a test alert",
 		Source:   "test",
@@ -499,7 +502,7 @@ func TestAlertRepository(t *testing.T) {
 	}
 
 	// List
-	alerts, err := repo.List(ctx, AlertListOptions{})
+	alerts, err := repo.List(ctx, database.AlertListOptions{})
 	if err != nil {
 		t.Fatalf("failed to list alerts: %v", err)
 	}
@@ -533,7 +536,7 @@ func TestAlertRepository(t *testing.T) {
 	}
 
 	// Count
-	count, err := repo.Count(ctx, AlertListOptions{})
+	count, err := repo.Count(ctx, database.AlertListOptions{})
 	if err != nil {
 		t.Fatalf("failed to count: %v", err)
 	}
@@ -549,7 +552,7 @@ func TestAlertRepository(t *testing.T) {
 	}
 
 	_, err = repo.Get(ctx, alert.ID)
-	if !errors.Is(err, ErrAlertNotFound) {
+	if !errors.Is(err, database.ErrAlertNotFound) {
 		t.Errorf("expected ErrAlertNotFound, got %v", err)
 	}
 }
@@ -624,7 +627,7 @@ func TestSettingsRepository(t *testing.T) {
 	}
 
 	_, err = repo.Get(ctx, "test_key")
-	if !errors.Is(err, ErrSettingNotFound) {
+	if !errors.Is(err, database.ErrSettingNotFound) {
 		t.Errorf("expected ErrSettingNotFound, got %v", err)
 	}
 }
@@ -637,9 +640,9 @@ func TestRetention(t *testing.T) {
 
 	// Add some test data
 	for i := range 5 {
-		metric := &Metric{
+		metric := &database.Metric{
 			InterfaceName: "eth0",
-			MetricType:    MetricTypeLatency,
+			MetricType:    database.MetricTypeLatency,
 			Value:         float64(i * 10),
 		}
 		err := db.Metrics().Record(ctx, metric)
@@ -647,7 +650,7 @@ func TestRetention(t *testing.T) {
 	}
 
 	// Run cleanup with all data retention set to delete everything
-	policy := RetentionPolicy{
+	policy := database.RetentionPolicy{
 		MetricsDays: 1, // Will delete all since they're from today
 	}
 
@@ -696,8 +699,8 @@ func TestAuditLog(t *testing.T) {
 	ctx := context.Background()
 
 	// Record audit entry
-	entry := &AuditLogEntry{
-		Action:       AuditActionCreate,
+	entry := &database.AuditLogEntry{
+		Action:       database.AuditActionCreate,
 		User:         "testuser",
 		ResourceType: "profile",
 		ResourceID:   "profile-123",
@@ -714,7 +717,7 @@ func TestAuditLog(t *testing.T) {
 	}
 
 	// Get audit logs
-	entries, err := db.GetAuditLogs(ctx, AuditLogOptions{
+	entries, err := db.GetAuditLogs(ctx, database.AuditLogOptions{
 		User:  "testuser",
 		Limit: 10,
 	})
@@ -726,8 +729,8 @@ func TestAuditLog(t *testing.T) {
 		t.Errorf("expected 1 entry, got %d", len(entries))
 	}
 
-	if entries[0].Action != AuditActionCreate {
-		t.Errorf("expected action %q, got %q", AuditActionCreate, entries[0].Action)
+	if entries[0].Action != database.AuditActionCreate {
+		t.Errorf("expected action %q, got %q", database.AuditActionCreate, entries[0].Action)
 	}
 }
 
@@ -741,7 +744,7 @@ func TestUserStoreAdapter(t *testing.T) {
 	_, createErr := db.CreateUser(ctx, "testuser", "$2a$10$somehash", "admin")
 	require.NoError(t, createErr)
 
-	adapter := NewUserStoreAdapter(db)
+	adapter := database.NewUserStoreAdapter(db)
 
 	t.Run("GetPasswordHash", func(t *testing.T) {
 		hash, err := adapter.GetPasswordHash(ctx, "testuser")
@@ -832,7 +835,7 @@ func TestDatabaseStats(t *testing.T) {
 }
 
 func TestDefaultRetentionPolicy(t *testing.T) {
-	policy := DefaultRetentionPolicy()
+	policy := database.DefaultRetentionPolicy()
 
 	if policy.MetricsDays <= 0 {
 		t.Error("MetricsDays should be positive")
@@ -846,7 +849,7 @@ func TestDefaultRetentionPolicy(t *testing.T) {
 }
 
 func TestDefaultPagination(t *testing.T) {
-	pagination := DefaultPagination()
+	pagination := database.DefaultPagination()
 
 	if pagination.Limit != 100 {
 		t.Errorf("expected default limit 100, got %d", pagination.Limit)
@@ -864,7 +867,7 @@ func TestDeviceRepositoryExtended(t *testing.T) {
 	repo := db.Devices()
 
 	// Create test devices
-	devices := []*Device{
+	devices := []*database.Device{
 		{IPAddress: "192.168.1.1", MACAddress: "aa:bb:cc:dd:ee:01", Vendor: "Cisco", DeviceType: "router"},
 		{IPAddress: "192.168.1.2", MACAddress: "aa:bb:cc:dd:ee:02", Vendor: "Cisco", DeviceType: "switch"},
 		{IPAddress: "192.168.1.3", MACAddress: "aa:bb:cc:dd:ee:03", Vendor: "HP", DeviceType: "router"},
@@ -876,7 +879,7 @@ func TestDeviceRepositoryExtended(t *testing.T) {
 	}
 
 	t.Run("UpsertByMAC", func(t *testing.T) {
-		d := &Device{
+		d := &database.Device{
 			MACAddress: "aa:bb:cc:dd:ee:01",
 			IPAddress:  "192.168.1.100",
 			Hostname:   "updated-host",
@@ -939,7 +942,7 @@ func TestAlertRepositoryExtended(t *testing.T) {
 	repo := db.Alerts()
 
 	// Create test alerts
-	alerts := []*Alert{
+	alerts := []*database.Alert{
 		{Title: "Alert 1", Severity: "critical", Source: "test"},
 		{Title: "Alert 2", Severity: "warning", Source: "test"},
 		{Title: "Alert 3", Severity: "info", Source: "test"},
@@ -951,7 +954,7 @@ func TestAlertRepositoryExtended(t *testing.T) {
 	}
 
 	t.Run("AcknowledgeAll", func(t *testing.T) {
-		count, err := repo.AcknowledgeAll(ctx, AlertListOptions{}, "testuser")
+		count, err := repo.AcknowledgeAll(ctx, database.AlertListOptions{}, "testuser")
 		require.NoError(t, err)
 		if count != 3 {
 			t.Errorf("expected 3 acknowledged, got %d", count)
@@ -960,7 +963,7 @@ func TestAlertRepositoryExtended(t *testing.T) {
 
 	t.Run("GetUnacknowledgedCount", func(t *testing.T) {
 		// Create one more unacknowledged
-		err := repo.Create(ctx, &Alert{Title: "New Alert", Severity: "info", Source: "test"})
+		err := repo.Create(ctx, &database.Alert{Title: "New Alert", Severity: "info", Source: "test"})
 		require.NoError(t, err)
 
 		count, err := repo.GetUnacknowledgedCount(ctx)
@@ -1060,9 +1063,9 @@ func TestMetricsRepositoryExtended(t *testing.T) {
 
 	t.Run("GetDistinctInterfaces", func(t *testing.T) {
 		// Record some metrics with different interfaces
-		err := repo.Record(ctx, &Metric{InterfaceName: "eth0", MetricType: "bandwidth", Value: 100})
+		err := repo.Record(ctx, &database.Metric{InterfaceName: "eth0", MetricType: "bandwidth", Value: 100})
 		require.NoError(t, err)
-		err = repo.Record(ctx, &Metric{InterfaceName: "eth1", MetricType: "bandwidth", Value: 200})
+		err = repo.Record(ctx, &database.Metric{InterfaceName: "eth1", MetricType: "bandwidth", Value: 200})
 		require.NoError(t, err)
 
 		interfaces, err := repo.GetDistinctInterfaces(ctx)
@@ -1074,7 +1077,7 @@ func TestMetricsRepositoryExtended(t *testing.T) {
 
 	t.Run("GetDistinctTypes", func(t *testing.T) {
 		// Record metrics with different types
-		err := repo.Record(ctx, &Metric{InterfaceName: "eth0", MetricType: "latency", Value: 10})
+		err := repo.Record(ctx, &database.Metric{InterfaceName: "eth0", MetricType: "latency", Value: 10})
 		require.NoError(t, err)
 
 		types, err := repo.GetDistinctTypes(ctx)
@@ -1085,7 +1088,7 @@ func TestMetricsRepositoryExtended(t *testing.T) {
 	})
 
 	t.Run("RecordSpeedTest", func(t *testing.T) {
-		result := &SpeedTestResult{
+		result := &database.SpeedTestResult{
 			InterfaceName: "eth0",
 			ServerName:    "Test Server",
 			DownloadMbps:  100.5,
@@ -1105,7 +1108,7 @@ func TestMetricsRepositoryExtended(t *testing.T) {
 	})
 
 	t.Run("RecordDNSResult", func(t *testing.T) {
-		result := &DNSResult{
+		result := &database.DNSResult{
 			InterfaceName:  "eth0",
 			Server:         "8.8.8.8",
 			Hostname:       "example.com",
@@ -1117,7 +1120,7 @@ func TestMetricsRepositoryExtended(t *testing.T) {
 	})
 
 	t.Run("RecordGatewayResult", func(t *testing.T) {
-		result := &GatewayResult{
+		result := &database.GatewayResult{
 			InterfaceName: "eth0",
 			Gateway:       "192.168.1.1",
 			LatencyMs:     1.5,
@@ -1134,11 +1137,11 @@ func TestRetentionExtended(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("deleteAuditLogsOlderThan", func(t *testing.T) {
+	t.Run("DeleteAuditLogsOlderThan", func(t *testing.T) {
 		// Record some audit logs
 		for range 5 {
-			err := db.RecordAuditLog(ctx, &AuditLogEntry{
-				Action:       AuditActionCreate,
+			err := db.RecordAuditLog(ctx, &database.AuditLogEntry{
+				Action:       database.AuditActionCreate,
 				User:         "testuser",
 				ResourceType: "test",
 				ResourceID:   "test-id",
@@ -1147,47 +1150,47 @@ func TestRetentionExtended(t *testing.T) {
 		}
 
 		// Delete older than future time (should delete all)
-		count, err := db.deleteAuditLogsOlderThan(ctx, time.Now().Add(time.Hour))
+		count, err := db.DeleteAuditLogsOlderThan(ctx, time.Now().Add(time.Hour))
 		require.NoError(t, err)
 		if count != 5 {
 			t.Errorf("expected 5 deleted, got %d", count)
 		}
 	})
 
-	t.Run("deleteSpeedTestsOlderThan", func(t *testing.T) {
+	t.Run("DeleteSpeedTestsOlderThan", func(t *testing.T) {
 		// Record a speed test
-		err := db.Metrics().RecordSpeedTest(ctx, &SpeedTestResult{
+		err := db.Metrics().RecordSpeedTest(ctx, &database.SpeedTestResult{
 			InterfaceName: "eth0", ServerName: "Test", DownloadMbps: 100,
 		})
 		require.NoError(t, err)
 
-		count, err := db.deleteSpeedTestsOlderThan(ctx, time.Now().Add(time.Hour))
+		count, err := db.DeleteSpeedTestsOlderThan(ctx, time.Now().Add(time.Hour))
 		require.NoError(t, err)
 		if count < 0 {
 			t.Errorf("count should be non-negative, got %d", count)
 		}
 	})
 
-	t.Run("deleteDNSResultsOlderThan", func(t *testing.T) {
-		err := db.Metrics().RecordDNSResult(ctx, &DNSResult{
+	t.Run("DeleteDNSResultsOlderThan", func(t *testing.T) {
+		err := db.Metrics().RecordDNSResult(ctx, &database.DNSResult{
 			InterfaceName: "eth0", Server: "8.8.8.8", Hostname: "test.com",
 		})
 		require.NoError(t, err)
 
-		count, err := db.deleteDNSResultsOlderThan(ctx, time.Now().Add(time.Hour))
+		count, err := db.DeleteDNSResultsOlderThan(ctx, time.Now().Add(time.Hour))
 		require.NoError(t, err)
 		if count < 0 {
 			t.Errorf("count should be non-negative, got %d", count)
 		}
 	})
 
-	t.Run("deleteGatewayResultsOlderThan", func(t *testing.T) {
-		err := db.Metrics().RecordGatewayResult(ctx, &GatewayResult{
+	t.Run("DeleteGatewayResultsOlderThan", func(t *testing.T) {
+		err := db.Metrics().RecordGatewayResult(ctx, &database.GatewayResult{
 			InterfaceName: "eth0", Gateway: "192.168.1.1", Reachable: true,
 		})
 		require.NoError(t, err)
 
-		count, err := db.deleteGatewayResultsOlderThan(ctx, time.Now().Add(time.Hour))
+		count, err := db.DeleteGatewayResultsOlderThan(ctx, time.Now().Add(time.Hour))
 		require.NoError(t, err)
 		if count < 0 {
 			t.Errorf("count should be non-negative, got %d", count)
@@ -1195,7 +1198,7 @@ func TestRetentionExtended(t *testing.T) {
 	})
 
 	t.Run("RunCleanup", func(t *testing.T) {
-		policy := DefaultRetentionPolicy()
+		policy := database.DefaultRetentionPolicy()
 		stats, err := db.RunCleanup(ctx, policy)
 		require.NoError(t, err)
 		if stats == nil {
@@ -1324,7 +1327,7 @@ func TestAlertListWithFilters(t *testing.T) {
 	repo := db.Alerts()
 
 	// Create alerts with different severities and sources
-	alerts := []*Alert{
+	alerts := []*database.Alert{
 		{Title: "Critical Alert", Severity: "critical", Source: "system"},
 		{Title: "Warning Alert", Severity: "warning", Source: "network"},
 		{Title: "Info Alert", Severity: "info", Source: "system"},
@@ -1335,7 +1338,7 @@ func TestAlertListWithFilters(t *testing.T) {
 	}
 
 	t.Run("filter by severity", func(t *testing.T) {
-		list, err := repo.List(ctx, AlertListOptions{Severity: "critical"})
+		list, err := repo.List(ctx, database.AlertListOptions{Severity: "critical"})
 		require.NoError(t, err)
 		if len(list) != 1 {
 			t.Errorf("expected 1 critical alert, got %d", len(list))
@@ -1343,7 +1346,7 @@ func TestAlertListWithFilters(t *testing.T) {
 	})
 
 	t.Run("filter unresolved only", func(t *testing.T) {
-		list, err := repo.List(ctx, AlertListOptions{UnresolvedOnly: true})
+		list, err := repo.List(ctx, database.AlertListOptions{UnresolvedOnly: true})
 		require.NoError(t, err)
 		if len(list) != 3 {
 			t.Errorf("expected 3 unresolved alerts, got %d", len(list))
@@ -1351,7 +1354,7 @@ func TestAlertListWithFilters(t *testing.T) {
 	})
 
 	t.Run("with pagination", func(t *testing.T) {
-		list, err := repo.List(ctx, AlertListOptions{Limit: 1, Offset: 1})
+		list, err := repo.List(ctx, database.AlertListOptions{Limit: 1, Offset: 1})
 		require.NoError(t, err)
 		if len(list) != 1 {
 			t.Errorf("expected 1 alert with pagination, got %d", len(list))
@@ -1367,7 +1370,7 @@ func TestDeviceListWithFilters(t *testing.T) {
 	repo := db.Devices()
 
 	// Create devices with different vendors and types
-	devices := []*Device{
+	devices := []*database.Device{
 		{IPAddress: "10.0.0.1", MACAddress: "11:22:33:44:55:01", Vendor: "Cisco", DeviceType: "router"},
 		{IPAddress: "10.0.0.2", MACAddress: "11:22:33:44:55:02", Vendor: "Cisco", DeviceType: "switch"},
 		{IPAddress: "10.0.0.3", MACAddress: "11:22:33:44:55:03", Vendor: "HP", DeviceType: "printer"},
@@ -1378,7 +1381,7 @@ func TestDeviceListWithFilters(t *testing.T) {
 	}
 
 	t.Run("filter by vendor", func(t *testing.T) {
-		list, err := repo.List(ctx, DeviceListOptions{Vendor: "Cisco"})
+		list, err := repo.List(ctx, database.DeviceListOptions{Vendor: "Cisco"})
 		require.NoError(t, err)
 		if len(list) != 2 {
 			t.Errorf("expected 2 Cisco devices, got %d", len(list))
@@ -1386,7 +1389,7 @@ func TestDeviceListWithFilters(t *testing.T) {
 	})
 
 	t.Run("filter by type", func(t *testing.T) {
-		list, err := repo.List(ctx, DeviceListOptions{DeviceType: "router"})
+		list, err := repo.List(ctx, database.DeviceListOptions{DeviceType: "router"})
 		require.NoError(t, err)
 		if len(list) != 1 {
 			t.Errorf("expected 1 router, got %d", len(list))
@@ -1394,7 +1397,7 @@ func TestDeviceListWithFilters(t *testing.T) {
 	})
 
 	t.Run("active only", func(t *testing.T) {
-		list, err := repo.List(ctx, DeviceListOptions{ActiveOnly: true})
+		list, err := repo.List(ctx, database.DeviceListOptions{ActiveOnly: true})
 		require.NoError(t, err)
 		if len(list) != 3 {
 			t.Errorf("expected 3 active devices, got %d", len(list))
@@ -1410,7 +1413,7 @@ func TestAcknowledgeAndResolve(t *testing.T) {
 	repo := db.Alerts()
 
 	// Create an alert
-	alert := &Alert{Title: "Test Alert", Severity: "warning", Source: "test"}
+	alert := &database.Alert{Title: "Test Alert", Severity: "warning", Source: "test"}
 	createErr := repo.Create(ctx, alert)
 	require.NoError(t, createErr)
 
