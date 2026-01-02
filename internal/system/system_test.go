@@ -1,14 +1,15 @@
-// Package system provides system health metrics collection.
-// Test suite validates CPU, memory, disk, and uptime metrics collection.
-package system
+// Package system_test tests the system package for health metrics collection.
+package system_test
 
 import (
 	"runtime"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/system"
 )
 
 func TestGetHealth(t *testing.T) {
-	health, err := GetHealth()
+	health, err := system.GetHealth()
 	if err != nil {
 		t.Fatalf("GetHealth() returned error: %v", err)
 	}
@@ -19,7 +20,7 @@ func TestGetHealth(t *testing.T) {
 }
 
 func TestGetHealthRuntimeFields(t *testing.T) {
-	health, err := GetHealth()
+	health, err := system.GetHealth()
 	if err != nil {
 		t.Fatalf("GetHealth() returned error: %v", err)
 	}
@@ -82,7 +83,7 @@ func TestGetHealthRuntimeFields(t *testing.T) {
 }
 
 func TestGetHealthRuntimeValuesMatchGo(t *testing.T) {
-	health, err := GetHealth()
+	health, err := system.GetHealth()
 	if err != nil {
 		t.Fatalf("GetHealth() returned error: %v", err)
 	}
@@ -107,7 +108,7 @@ func TestGetHealthRuntimeValuesMatchGo(t *testing.T) {
 }
 
 func TestGetHealthMetricsInRange(t *testing.T) {
-	health, err := GetHealth()
+	health, err := system.GetHealth()
 	if err != nil {
 		t.Fatalf("GetHealth() returned error: %v", err)
 	}
@@ -133,7 +134,7 @@ func TestGetHealthMetricsInRange(t *testing.T) {
 }
 
 func TestGetHealthMemoryStats(t *testing.T) {
-	health, err := GetHealth()
+	health, err := system.GetHealth()
 	if err != nil {
 		t.Fatalf("GetHealth() returned error: %v", err)
 	}
@@ -156,7 +157,7 @@ func TestGetHealthMemoryStats(t *testing.T) {
 }
 
 func TestGetHealthDiskStats(t *testing.T) {
-	health, err := GetHealth()
+	health, err := system.GetHealth()
 	if err != nil {
 		t.Fatalf("GetHealth() returned error: %v", err)
 	}
@@ -173,7 +174,7 @@ func TestGetHealthDiskStats(t *testing.T) {
 }
 
 func TestGetHealthLoadAverages(t *testing.T) {
-	health, err := GetHealth()
+	health, err := system.GetHealth()
 	if err != nil {
 		t.Fatalf("GetHealth() returned error: %v", err)
 	}
@@ -193,7 +194,7 @@ func TestGetHealthLoadAverages(t *testing.T) {
 }
 
 func TestGetHealthUptime(t *testing.T) {
-	health, err := GetHealth()
+	health, err := system.GetHealth()
 	if err != nil {
 		t.Fatalf("GetHealth() returned error: %v", err)
 	}
@@ -207,7 +208,7 @@ func TestGetHealthUptime(t *testing.T) {
 func TestGetHealthMultipleCalls(t *testing.T) {
 	// Test that multiple calls don't panic or error
 	for i := range 5 {
-		health, err := GetHealth()
+		health, err := system.GetHealth()
 		if err != nil {
 			t.Fatalf("GetHealth() call %d returned error: %v", i+1, err)
 		}
@@ -220,7 +221,7 @@ func TestGetHealthMultipleCalls(t *testing.T) {
 
 func TestHealthStructFields(_ *testing.T) {
 	// Test that the Health struct has all expected fields
-	health := &Health{
+	health := &system.Health{
 		CPUPercent:    50.0,
 		MemoryPercent: 60.0,
 		MemoryUsed:    1000,
