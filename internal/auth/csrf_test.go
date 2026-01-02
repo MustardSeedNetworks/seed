@@ -1,27 +1,22 @@
-package auth
+// Package auth_test tests the CSRF manager.
+package auth_test
 
 import (
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/auth"
 )
 
 func TestNewCSRFManager(t *testing.T) {
-	manager := NewCSRFManager()
+	manager := auth.NewCSRFManager()
 	if manager == nil {
 		t.Fatal("NewCSRFManager returned nil")
 	}
 
-	if manager.tokens == nil {
+	if manager.CSRFManagerTokens() == nil {
 		t.Fatal("tokens map not initialized")
-	}
-
-	if manager.ctx == nil {
-		t.Fatal("context not initialized")
-	}
-
-	if manager.cancel == nil {
-		t.Fatal("cancel function not initialized")
 	}
 
 	// Clean up
@@ -29,7 +24,7 @@ func TestNewCSRFManager(t *testing.T) {
 }
 
 func TestCSRFManagerCleanupStopsOnContextCancel(t *testing.T) {
-	manager := NewCSRFManager()
+	manager := auth.NewCSRFManager()
 
 	// Generate a token to ensure the manager is working
 	token, err := manager.GenerateToken("test-session")
@@ -52,7 +47,7 @@ func TestCSRFManagerCleanupStopsOnContextCancel(t *testing.T) {
 }
 
 func TestCSRFManagerGenerateAndValidate(t *testing.T) {
-	manager := NewCSRFManager()
+	manager := auth.NewCSRFManager()
 	defer manager.Stop()
 
 	sessionID := "test-session"
@@ -71,7 +66,7 @@ func TestCSRFManagerGenerateAndValidate(t *testing.T) {
 	// Validate with wrong session ID
 	if wrongSessionErr := manager.ValidateToken("wrong-session", token); !errors.Is(
 		wrongSessionErr,
-		ErrCSRFTokenInvalid,
+		auth.ErrCSRFTokenInvalid,
 	) {
 		t.Errorf("expected ErrCSRFTokenInvalid, got %v", wrongSessionErr)
 	}
@@ -79,14 +74,14 @@ func TestCSRFManagerGenerateAndValidate(t *testing.T) {
 	// Validate with wrong token
 	if wrongTokenErr := manager.ValidateToken(sessionID, "wrong-token"); !errors.Is(
 		wrongTokenErr,
-		ErrCSRFTokenInvalid,
+		auth.ErrCSRFTokenInvalid,
 	) {
 		t.Errorf("expected ErrCSRFTokenInvalid, got %v", wrongTokenErr)
 	}
 }
 
 func TestCSRFManagerStop(t *testing.T) {
-	manager := NewCSRFManager()
+	manager := auth.NewCSRFManager()
 
 	// Generate some tokens
 	_, err := manager.GenerateToken("session1")
@@ -96,7 +91,7 @@ func TestCSRFManagerStop(t *testing.T) {
 
 	// Verify context is not canceled initially
 	select {
-	case <-manager.ctx.Done():
+	case <-manager.CSRFManagerCtxDone():
 		t.Fatal("context should not be canceled initially")
 	default:
 		// Expected - context is still active
@@ -110,7 +105,7 @@ func TestCSRFManagerStop(t *testing.T) {
 
 	// Verify context is canceled
 	select {
-	case <-manager.ctx.Done():
+	case <-manager.CSRFManagerCtxDone():
 		// Expected - context is canceled
 	default:
 		t.Fatal("context should be canceled after Stop()")

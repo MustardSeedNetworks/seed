@@ -1,6 +1,6 @@
-// Package auth handles JWT authentication.
+// Package auth_test tests the auth package for JWT authentication.
 // Test suite validates password hashing, JWT issuance/verification, and middleware behavior.
-package auth
+package auth_test
 
 import (
 	"context"
@@ -10,39 +10,40 @@ import (
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 func TestNewManager(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	if m == nil {
 		t.Fatal("NewManager returned nil")
 	}
 
-	if m.username != defaults.Auth.Username {
-		t.Errorf("expected username %s, got %s", defaults.Auth.Username, m.username)
+	if m.ManagerUsername() != defaults.Auth.Username {
+		t.Errorf("expected username %s, got %s", defaults.Auth.Username, m.ManagerUsername())
 	}
-	if m.sessionTimeout != time.Hour {
-		t.Errorf("expected timeout 1h, got %v", m.sessionTimeout)
+	if m.ManagerSessionTimeout() != time.Hour {
+		t.Errorf("expected timeout 1h, got %v", m.ManagerSessionTimeout())
 	}
 }
 
 func TestNewManagerWithEmptySecret(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager("", time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager("", time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	if m == nil {
 		t.Fatal("NewManager returned nil")
 	}
 
-	if len(m.jwtSecret) == 0 {
+	if len(m.ManagerJWTSecret()) == 0 {
 		t.Error("expected generated JWT secret, got empty")
 	}
 }
 
 func TestAuthenticate(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	tests := []struct {
 		name     string
@@ -60,25 +61,25 @@ func TestAuthenticate(t *testing.T) {
 			name:     "wrong username",
 			username: "wronguser",
 			password: defaults.Auth.Password,
-			wantErr:  ErrInvalidCredentials,
+			wantErr:  auth.ErrInvalidCredentials,
 		},
 		{
 			name:     "wrong password",
 			username: defaults.Auth.Username,
 			password: "wrongpassword",
-			wantErr:  ErrInvalidCredentials,
+			wantErr:  auth.ErrInvalidCredentials,
 		},
 		{
 			name:     "empty username",
 			username: "",
 			password: defaults.Auth.Password,
-			wantErr:  ErrInvalidCredentials,
+			wantErr:  auth.ErrInvalidCredentials,
 		},
 		{
 			name:     "empty password",
 			username: defaults.Auth.Username,
 			password: "",
-			wantErr:  ErrInvalidCredentials,
+			wantErr:  auth.ErrInvalidCredentials,
 		},
 	}
 
@@ -108,7 +109,7 @@ func TestAuthenticate(t *testing.T) {
 
 func TestValidateToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	// Generate valid token
@@ -130,7 +131,7 @@ func TestValidateToken(t *testing.T) {
 
 func TestValidateInvalidToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	tests := []struct {
 		name    string
@@ -140,17 +141,17 @@ func TestValidateInvalidToken(t *testing.T) {
 		{
 			name:    "empty token",
 			token:   "",
-			wantErr: ErrInvalidToken,
+			wantErr: auth.ErrInvalidToken,
 		},
 		{
 			name:    "malformed token",
 			token:   "not.a.valid.token",
-			wantErr: ErrInvalidToken,
+			wantErr: auth.ErrInvalidToken,
 		},
 		{
 			name:    "wrong secret token",
 			token:   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxOTk5OTk5OTk5fQ.invalid",
-			wantErr: ErrInvalidToken,
+			wantErr: auth.ErrInvalidToken,
 		},
 	}
 
@@ -172,7 +173,7 @@ func TestValidateInvalidToken(t *testing.T) {
 func TestValidateExpiredToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	// Create manager with very short timeout
-	m := NewManager(defaults.Auth.JWTSecret, time.Millisecond, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Millisecond, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
@@ -184,13 +185,13 @@ func TestValidateExpiredToken(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	_, err = m.ValidateToken(ctx, token)
-	if !errors.Is(err, ErrTokenExpired) {
+	if !errors.Is(err, auth.ErrTokenExpired) {
 		t.Errorf("expected ErrTokenExpired, got %v", err)
 	}
 }
 
 func TestHashPassword(t *testing.T) {
-	hash, err := HashPassword("testpassword")
+	hash, err := auth.HashPassword("testpassword")
 	if err != nil {
 		t.Fatalf("failed to hash password: %v", err)
 	}
@@ -205,7 +206,7 @@ func TestHashPassword(t *testing.T) {
 
 func TestMiddleware(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	// Get a valid token
@@ -331,7 +332,7 @@ func TestValidatePasswordStrength(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidatePasswordStrength(tt.password)
+			err := auth.ValidatePasswordStrength(tt.password)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidatePasswordStrength(%q) error = %v, wantErr %v", tt.password, err, tt.wantErr)
 			}
@@ -341,7 +342,7 @@ func TestValidatePasswordStrength(t *testing.T) {
 
 func TestGenerateSecurePassword(t *testing.T) {
 	// Test password generation
-	password, err := GenerateSecurePassword(16)
+	password, err := auth.GenerateSecurePassword(16)
 	if err != nil {
 		t.Fatalf("failed to generate password: %v", err)
 	}
@@ -351,12 +352,12 @@ func TestGenerateSecurePassword(t *testing.T) {
 	}
 
 	// Generated password should pass validation
-	if validateErr := ValidatePasswordStrength(password); validateErr != nil {
+	if validateErr := auth.ValidatePasswordStrength(password); validateErr != nil {
 		t.Errorf("generated password failed validation: %v", validateErr)
 	}
 
 	// Generate another password and ensure it's different
-	password2, err := GenerateSecurePassword(16)
+	password2, err := auth.GenerateSecurePassword(16)
 	if err != nil {
 		t.Fatalf("failed to generate second password: %v", err)
 	}
@@ -368,19 +369,19 @@ func TestGenerateSecurePassword(t *testing.T) {
 
 func TestGenerateSecurePasswordMinLength(t *testing.T) {
 	// Request a password shorter than minimum
-	password, err := GenerateSecurePassword(4)
+	password, err := auth.GenerateSecurePassword(4)
 	if err != nil {
 		t.Fatalf("failed to generate password: %v", err)
 	}
 
 	// Should be at least MinPasswordLength
-	if len(password) < MinPasswordLength {
-		t.Errorf("expected minimum password length %d, got %d", MinPasswordLength, len(password))
+	if len(password) < auth.MinPasswordLength {
+		t.Errorf("expected minimum password length %d, got %d", auth.MinPasswordLength, len(password))
 	}
 }
 
 func TestGenerateInitialCredentials(t *testing.T) {
-	creds, err := GenerateInitialCredentials("admin")
+	creds, err := auth.GenerateInitialCredentials("admin")
 	if err != nil {
 		t.Fatalf("failed to generate initial credentials: %v", err)
 	}
@@ -402,46 +403,46 @@ func TestGenerateInitialCredentials(t *testing.T) {
 	}
 
 	// Verify the hash matches the password
-	if validateErr := ValidatePasswordStrength(creds.Password); validateErr != nil {
+	if validateErr := auth.ValidatePasswordStrength(creds.Password); validateErr != nil {
 		t.Errorf("generated password failed validation: %v", validateErr)
 	}
 }
 
 func TestIsDefaultPasswordHash(t *testing.T) {
 	// Generate a hash for "seed" - should be detected as default
-	seedHash, err := HashPassword("seed")
+	seedHash, err := auth.HashPassword("seed")
 	if err != nil {
 		t.Fatalf("failed to hash password: %v", err)
 	}
 
-	if !IsDefaultPasswordHash(seedHash) {
+	if !auth.IsDefaultPasswordHash(seedHash) {
 		t.Error("expected hash of 'seed' to be detected as default")
 	}
 
 	// Generate a hash for a different password - should NOT be detected
-	secureHash, err := HashPassword("SecurePassword123")
+	secureHash, err := auth.HashPassword("SecurePassword123")
 	if err != nil {
 		t.Fatalf("failed to hash password: %v", err)
 	}
 
-	if IsDefaultPasswordHash(secureHash) {
+	if auth.IsDefaultPasswordHash(secureHash) {
 		t.Error("expected secure password hash to NOT be detected as default")
 	}
 
 	// Empty hash should be detected as default (triggers setup wizard)
-	if !IsDefaultPasswordHash("") {
+	if !auth.IsDefaultPasswordHash("") {
 		t.Error("empty hash should be detected as default (setup required)")
 	}
 
 	// Setup placeholder should be detected as default
-	if !IsDefaultPasswordHash(SetupModePlaceholder) {
+	if !auth.IsDefaultPasswordHash(auth.SetupModePlaceholder) {
 		t.Error("setup placeholder should be detected as default")
 	}
 }
 
 func TestGenerateJWTSecret(t *testing.T) {
-	secret1 := GenerateJWTSecret()
-	secret2 := GenerateJWTSecret()
+	secret1 := auth.GenerateJWTSecret()
+	secret2 := auth.GenerateJWTSecret()
 
 	if secret1 == "" {
 		t.Error("JWT secret should not be empty")
@@ -459,7 +460,7 @@ func TestGenerateJWTSecret(t *testing.T) {
 
 func TestUpdatePasswordHash(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	// Generate a token before password change
@@ -475,19 +476,19 @@ func TestUpdatePasswordHash(t *testing.T) {
 	}
 
 	// Update password hash
-	newHash, _ := HashPassword("newpassword")
+	newHash, _ := auth.HashPassword("newpassword")
 	m.UpdatePasswordHash(ctx, newHash)
 
 	// Old token should now be invalid (token version incremented)
 	_, err = m.ValidateToken(ctx, token)
-	if !errors.Is(err, ErrInvalidToken) {
+	if !errors.Is(err, auth.ErrInvalidToken) {
 		t.Errorf("expected ErrInvalidToken after password change, got %v", err)
 	}
 }
 
 func TestGenerateAccessToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	token, err := m.GenerateAccessToken(ctx, defaults.Auth.Username)
@@ -511,7 +512,7 @@ func TestGenerateAccessToken(t *testing.T) {
 
 func TestGenerateRefreshToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	token, err := m.GenerateRefreshToken(ctx, defaults.Auth.Username)
@@ -535,7 +536,7 @@ func TestGenerateRefreshToken(t *testing.T) {
 
 func TestValidateRefreshToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	// Generate a refresh token
@@ -560,14 +561,14 @@ func TestValidateRefreshToken(t *testing.T) {
 	}
 
 	_, err = m.ValidateRefreshToken(ctx, accessToken)
-	if !errors.Is(err, ErrInvalidToken) {
+	if !errors.Is(err, auth.ErrInvalidToken) {
 		t.Errorf("expected ErrInvalidToken for access token, got %v", err)
 	}
 }
 
 func TestRefreshAccessToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	// Generate a refresh token
@@ -604,7 +605,7 @@ func TestRefreshAccessToken(t *testing.T) {
 	// Try with access token (not refresh token)
 	accessToken, _ := m.GenerateAccessToken(ctx, defaults.Auth.Username)
 	_, err = m.RefreshAccessToken(ctx, accessToken)
-	if !errors.Is(err, ErrInvalidToken) {
+	if !errors.Is(err, auth.ErrInvalidToken) {
 		t.Errorf("expected ErrInvalidToken for access token, got %v", err)
 	}
 }
@@ -649,9 +650,9 @@ func TestExtractTokenFromSubprotocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractTokenFromSubprotocol(tt.protocol)
+			result := auth.ExtractTokenFromSubprotocol(tt.protocol)
 			if result != tt.expected {
-				t.Errorf("extractTokenFromSubprotocol(%q) = %q, want %q", tt.protocol, result, tt.expected)
+				t.Errorf("ExtractTokenFromSubprotocol(%q) = %q, want %q", tt.protocol, result, tt.expected)
 			}
 		})
 	}
@@ -659,7 +660,7 @@ func TestExtractTokenFromSubprotocol(t *testing.T) {
 
 func TestMiddlewareWithCookie(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	// Get a valid token
@@ -679,7 +680,7 @@ func TestMiddlewareWithCookie(t *testing.T) {
 	middleware := m.Middleware(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
-	req.AddCookie(&http.Cookie{Name: CookieNameAccess, Value: token})
+	req.AddCookie(&http.Cookie{Name: auth.CookieNameAccess, Value: token})
 
 	rec := httptest.NewRecorder()
 	middleware.ServeHTTP(rec, req)
@@ -691,7 +692,7 @@ func TestMiddlewareWithCookie(t *testing.T) {
 
 func TestMiddlewareSkipSetupEndpoints(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -721,7 +722,7 @@ func TestMiddlewareSkipSetupEndpoints(t *testing.T) {
 
 func TestMiddlewareExpiredToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Millisecond, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Millisecond, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
@@ -755,7 +756,7 @@ func TestMiddlewareExpiredToken(t *testing.T) {
 
 func TestMiddlewareWebSocketAuth(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
@@ -787,12 +788,12 @@ func TestRandomChar(t *testing.T) {
 	// Generate many characters and ensure they're all in the charset
 	seen := make(map[byte]bool)
 	for range 100 {
-		c, err := randomChar(chars)
+		c, err := auth.RandomChar(chars)
 		if err != nil {
-			t.Fatalf("randomChar failed: %v", err)
+			t.Fatalf("RandomChar failed: %v", err)
 		}
 		if c != 'a' && c != 'b' && c != 'c' {
-			t.Errorf("randomChar returned %c, which is not in charset %q", c, chars)
+			t.Errorf("RandomChar returned %c, which is not in charset %q", c, chars)
 		}
 		seen[c] = true
 	}
@@ -805,33 +806,33 @@ func TestRandomChar(t *testing.T) {
 
 func TestRandomInt(t *testing.T) {
 	// Test with n=0
-	result, err := randomInt(0)
+	result, err := auth.RandomInt(0)
 	if err != nil {
-		t.Errorf("randomInt(0) error: %v", err)
+		t.Errorf("RandomInt(0) error: %v", err)
 	}
 	if result != 0 {
-		t.Errorf("randomInt(0) = %d, want 0", result)
+		t.Errorf("RandomInt(0) = %d, want 0", result)
 	}
 
 	// Test with small n
 	for range 100 {
-		smallResult, smallErr := randomInt(10)
+		smallResult, smallErr := auth.RandomInt(10)
 		if smallErr != nil {
-			t.Fatalf("randomInt(10) error: %v", smallErr)
+			t.Fatalf("RandomInt(10) error: %v", smallErr)
 		}
 		if smallResult < 0 || smallResult >= 10 {
-			t.Errorf("randomInt(10) = %d, out of range [0, 10)", smallResult)
+			t.Errorf("RandomInt(10) = %d, out of range [0, 10)", smallResult)
 		}
 	}
 
 	// Test with larger n (>256 to hit the multi-byte path)
 	for range 50 {
-		largeResult, largeErr := randomInt(1000)
+		largeResult, largeErr := auth.RandomInt(1000)
 		if largeErr != nil {
-			t.Fatalf("randomInt(1000) error: %v", largeErr)
+			t.Fatalf("RandomInt(1000) error: %v", largeErr)
 		}
 		if largeResult < 0 || largeResult >= 1000 {
-			t.Errorf("randomInt(1000) = %d, out of range [0, 1000)", largeResult)
+			t.Errorf("RandomInt(1000) = %d, out of range [0, 1000)", largeResult)
 		}
 	}
 }
@@ -839,7 +840,7 @@ func TestRandomInt(t *testing.T) {
 // Cookie tests
 
 func TestDefaultCookieConfig(t *testing.T) {
-	config := DefaultCookieConfig()
+	config := auth.DefaultCookieConfig()
 
 	if !config.Secure {
 		t.Error("Secure should be true by default")
@@ -857,10 +858,10 @@ func TestDefaultCookieConfig(t *testing.T) {
 
 func TestSetAccessTokenCookie(t *testing.T) {
 	rec := httptest.NewRecorder()
-	config := DefaultCookieConfig()
+	config := auth.DefaultCookieConfig()
 	config.Secure = false // For testing without HTTPS
 
-	SetAccessTokenCookie(rec, "test-token", config)
+	auth.SetAccessTokenCookie(rec, "test-token", config)
 
 	cookies := rec.Result().Cookies()
 	if len(cookies) != 1 {
@@ -868,8 +869,8 @@ func TestSetAccessTokenCookie(t *testing.T) {
 	}
 
 	cookie := cookies[0]
-	if cookie.Name != CookieNameAccess {
-		t.Errorf("expected cookie name %q, got %q", CookieNameAccess, cookie.Name)
+	if cookie.Name != auth.CookieNameAccess {
+		t.Errorf("expected cookie name %q, got %q", auth.CookieNameAccess, cookie.Name)
 	}
 	if cookie.Value != "test-token" {
 		t.Errorf("expected cookie value 'test-token', got %q", cookie.Value)
@@ -881,10 +882,10 @@ func TestSetAccessTokenCookie(t *testing.T) {
 
 func TestSetRefreshTokenCookie(t *testing.T) {
 	rec := httptest.NewRecorder()
-	config := DefaultCookieConfig()
+	config := auth.DefaultCookieConfig()
 	config.Secure = false
 
-	SetRefreshTokenCookie(rec, "refresh-token", config)
+	auth.SetRefreshTokenCookie(rec, "refresh-token", config)
 
 	cookies := rec.Result().Cookies()
 	if len(cookies) != 1 {
@@ -892,8 +893,8 @@ func TestSetRefreshTokenCookie(t *testing.T) {
 	}
 
 	cookie := cookies[0]
-	if cookie.Name != CookieNameRefresh {
-		t.Errorf("expected cookie name %q, got %q", CookieNameRefresh, cookie.Name)
+	if cookie.Name != auth.CookieNameRefresh {
+		t.Errorf("expected cookie name %q, got %q", auth.CookieNameRefresh, cookie.Name)
 	}
 	if cookie.Value != "refresh-token" {
 		t.Errorf("expected cookie value 'refresh-token', got %q", cookie.Value)
@@ -905,9 +906,9 @@ func TestSetRefreshTokenCookie(t *testing.T) {
 
 func TestClearAuthCookies(t *testing.T) {
 	rec := httptest.NewRecorder()
-	config := DefaultCookieConfig()
+	config := auth.DefaultCookieConfig()
 
-	ClearAuthCookies(rec, config)
+	auth.ClearAuthCookies(rec, config)
 
 	cookies := rec.Result().Cookies()
 	if len(cookies) != 2 {
@@ -923,9 +924,9 @@ func TestClearAuthCookies(t *testing.T) {
 
 func TestGetAccessTokenFromCookie(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	req.AddCookie(&http.Cookie{Name: CookieNameAccess, Value: "access-token-value"})
+	req.AddCookie(&http.Cookie{Name: auth.CookieNameAccess, Value: "access-token-value"})
 
-	token, err := GetAccessTokenFromCookie(req)
+	token, err := auth.GetAccessTokenFromCookie(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -935,7 +936,7 @@ func TestGetAccessTokenFromCookie(t *testing.T) {
 
 	// Test missing cookie
 	req2 := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	_, err = GetAccessTokenFromCookie(req2)
+	_, err = auth.GetAccessTokenFromCookie(req2)
 	if err == nil {
 		t.Error("expected error for missing cookie")
 	}
@@ -943,9 +944,9 @@ func TestGetAccessTokenFromCookie(t *testing.T) {
 
 func TestGetRefreshTokenFromCookie(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	req.AddCookie(&http.Cookie{Name: CookieNameRefresh, Value: "refresh-token-value"})
+	req.AddCookie(&http.Cookie{Name: auth.CookieNameRefresh, Value: "refresh-token-value"})
 
-	token, err := GetRefreshTokenFromCookie(req)
+	token, err := auth.GetRefreshTokenFromCookie(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -955,7 +956,7 @@ func TestGetRefreshTokenFromCookie(t *testing.T) {
 
 	// Test missing cookie
 	req2 := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	_, err = GetRefreshTokenFromCookie(req2)
+	_, err = auth.GetRefreshTokenFromCookie(req2)
 	if err == nil {
 		t.Error("expected error for missing cookie")
 	}
@@ -972,7 +973,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 			name: "from cookie",
 			setupRequest: func() *http.Request {
 				req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-				req.AddCookie(&http.Cookie{Name: CookieNameAccess, Value: "cookie-token"})
+				req.AddCookie(&http.Cookie{Name: auth.CookieNameAccess, Value: "cookie-token"})
 				return req
 			},
 			expectedToken:  "cookie-token",
@@ -1008,7 +1009,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 			name: "cookie takes precedence over header",
 			setupRequest: func() *http.Request {
 				req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-				req.AddCookie(&http.Cookie{Name: CookieNameAccess, Value: "cookie-token"})
+				req.AddCookie(&http.Cookie{Name: auth.CookieNameAccess, Value: "cookie-token"})
 				req.Header.Set("Authorization", "Bearer header-token")
 				return req
 			},
@@ -1040,7 +1041,7 @@ func TestGetTokenFromRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := tt.setupRequest()
-			token, source := GetTokenFromRequest(req)
+			token, source := auth.GetTokenFromRequest(req)
 			if token != tt.expectedToken {
 				t.Errorf("expected token %q, got %q", tt.expectedToken, token)
 			}
@@ -1052,20 +1053,20 @@ func TestGetTokenFromRequest(t *testing.T) {
 }
 
 func TestTokenDurationConstants(t *testing.T) {
-	if AccessTokenDuration != 15*time.Minute {
-		t.Errorf("AccessTokenDuration should be 15 minutes, got %v", AccessTokenDuration)
+	if auth.AccessTokenDuration != 15*time.Minute {
+		t.Errorf("AccessTokenDuration should be 15 minutes, got %v", auth.AccessTokenDuration)
 	}
-	if RefreshTokenDuration != 7*24*time.Hour {
-		t.Errorf("RefreshTokenDuration should be 7 days, got %v", RefreshTokenDuration)
+	if auth.RefreshTokenDuration != 7*24*time.Hour {
+		t.Errorf("RefreshTokenDuration should be 7 days, got %v", auth.RefreshTokenDuration)
 	}
 }
 
 func TestCookieNameConstants(t *testing.T) {
-	if CookieNameAccess != "seed_access" {
-		t.Errorf("CookieNameAccess should be 'seed_access', got %q", CookieNameAccess)
+	if auth.CookieNameAccess != "seed_access" {
+		t.Errorf("CookieNameAccess should be 'seed_access', got %q", auth.CookieNameAccess)
 	}
-	if CookieNameRefresh != "seed_refresh" {
-		t.Errorf("CookieNameRefresh should be 'seed_refresh', got %q", CookieNameRefresh)
+	if auth.CookieNameRefresh != "seed_refresh" {
+		t.Errorf("CookieNameRefresh should be 'seed_refresh', got %q", auth.CookieNameRefresh)
 	}
 }
 
@@ -1089,7 +1090,7 @@ func (m *mockUserStore) GetPasswordHash(_ context.Context, username string) (str
 	if hash, ok := m.passwords[username]; ok {
 		return hash, nil
 	}
-	return "", ErrInvalidCredentials
+	return "", auth.ErrInvalidCredentials
 }
 
 func (m *mockUserStore) GetTokenVersion(_ context.Context, username string) (int, error) {
@@ -1121,7 +1122,7 @@ func (m *mockUserStore) IsLocked(_ context.Context, username string) (bool, erro
 
 func TestSetUserStore(_ *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 
 	store := newMockUserStore()
 	m.SetUserStore(store)
@@ -1132,12 +1133,12 @@ func TestSetUserStore(_ *testing.T) {
 
 func TestAuthenticateWithUserStore(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	store := newMockUserStore()
 	// Add a user to the store
-	hash, _ := HashPassword("storepassword")
+	hash, _ := auth.HashPassword("storepassword")
 	store.passwords["storeuser"] = hash
 	store.tokenVersions["storeuser"] = 1
 
@@ -1155,11 +1156,11 @@ func TestAuthenticateWithUserStore(t *testing.T) {
 
 func TestAuthenticateWithLockedUser(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	store := newMockUserStore()
-	hash, _ := HashPassword("password")
+	hash, _ := auth.HashPassword("password")
 	store.passwords["lockeduser"] = hash
 	store.locked["lockeduser"] = true
 
@@ -1167,14 +1168,14 @@ func TestAuthenticateWithLockedUser(t *testing.T) {
 
 	// Should fail for locked user (returns ErrInvalidCredentials per security best practice)
 	_, err := m.Authenticate(ctx, "lockeduser", "password")
-	if !errors.Is(err, ErrInvalidCredentials) {
+	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("expected ErrInvalidCredentials for locked user, got %v", err)
 	}
 }
 
 func TestUpdatePasswordHashForUser(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager(defaults.Auth.JWTSecret, time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	t.Run("no UserStore configured", func(t *testing.T) {
@@ -1202,7 +1203,7 @@ func TestUpdatePasswordHashForUser(t *testing.T) {
 }
 
 func TestCSRFRevokeToken(t *testing.T) {
-	mgr := NewCSRFManager()
+	mgr := auth.NewCSRFManager()
 	defer mgr.Stop()
 
 	// Generate a token
@@ -1222,13 +1223,13 @@ func TestCSRFRevokeToken(t *testing.T) {
 
 	// Should no longer be valid (returns ErrCSRFTokenInvalid when session not found)
 	err = mgr.ValidateToken("testsession", token)
-	if !errors.Is(err, ErrCSRFTokenInvalid) {
+	if !errors.Is(err, auth.ErrCSRFTokenInvalid) {
 		t.Errorf("expected ErrCSRFTokenInvalid after revoke, got %v", err)
 	}
 }
 
 func TestCSRFMiddleware(t *testing.T) {
-	mgr := NewCSRFManager()
+	mgr := auth.NewCSRFManager()
 	defer mgr.Stop()
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -1321,7 +1322,7 @@ func TestCSRFMiddleware(t *testing.T) {
 func TestGetSessionIDFromRequest(t *testing.T) {
 	t.Run("no token returns empty", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
-		sessionID := GetSessionIDFromRequest(req)
+		sessionID := auth.GetSessionIDFromRequest(req)
 		if sessionID != "" {
 			t.Errorf("expected empty session ID, got %q", sessionID)
 		}
@@ -1331,7 +1332,7 @@ func TestGetSessionIDFromRequest(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.Header.Set("Authorization", "Bearer header.payload.signature")
 
-		sessionID := GetSessionIDFromRequest(req)
+		sessionID := auth.GetSessionIDFromRequest(req)
 		if sessionID != "payload" {
 			t.Errorf("expected session ID 'payload', got %q", sessionID)
 		}
@@ -1340,11 +1341,11 @@ func TestGetSessionIDFromRequest(t *testing.T) {
 	t.Run("cookie token extracts session ID", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.AddCookie(&http.Cookie{
-			Name:  CookieNameAccess,
+			Name:  auth.CookieNameAccess,
 			Value: "header.cookiepayload.signature",
 		})
 
-		sessionID := GetSessionIDFromRequest(req)
+		sessionID := auth.GetSessionIDFromRequest(req)
 		if sessionID != "cookiepayload" {
 			t.Errorf("expected session ID 'cookiepayload', got %q", sessionID)
 		}

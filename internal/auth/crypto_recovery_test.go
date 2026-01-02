@@ -1,20 +1,22 @@
-// Package auth handles JWT authentication.
+// Package auth_test tests the auth package.
 // This file tests the crypto/rand retry logic for Plan G7.
-package auth
+package auth_test
 
 import (
 	"bytes"
 	"log/slog"
 	"strings"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/auth"
 )
 
 // TestCryptoRandReadSuccess verifies normal operation succeeds.
 func TestCryptoRandReadSuccess(t *testing.T) {
 	b := make([]byte, 32)
-	err := cryptoRandRead(b, "test_operation")
+	err := auth.CryptoRandRead(b, "test_operation")
 	if err != nil {
-		t.Fatalf("cryptoRandRead failed on normal operation: %v", err)
+		t.Fatalf("CryptoRandRead failed on normal operation: %v", err)
 	}
 
 	// Verify bytes were actually filled (not all zeros)
@@ -26,7 +28,7 @@ func TestCryptoRandReadSuccess(t *testing.T) {
 		}
 	}
 	if allZeros {
-		t.Error("cryptoRandRead returned all zeros, expected random data")
+		t.Error("CryptoRandRead returned all zeros, expected random data")
 	}
 }
 
@@ -44,9 +46,9 @@ func TestCryptoRandReadLogging(t *testing.T) {
 
 	// Normal operation should not log warnings
 	b := make([]byte, 16)
-	err := cryptoRandRead(b, "test_normal")
+	err := auth.CryptoRandRead(b, "test_normal")
 	if err != nil {
-		t.Fatalf("cryptoRandRead failed: %v", err)
+		t.Fatalf("CryptoRandRead failed: %v", err)
 	}
 
 	output := buf.String()
@@ -59,7 +61,7 @@ func TestCryptoRandReadLogging(t *testing.T) {
 // TestGenerateJWTSecretWithRetry verifies that GenerateJWTSecret works correctly.
 func TestGenerateJWTSecretWithRetry(t *testing.T) {
 	// Should succeed under normal conditions
-	secret := GenerateJWTSecret()
+	secret := auth.GenerateJWTSecret()
 	if secret == "" {
 		t.Error("GenerateJWTSecret returned empty string")
 	}
@@ -70,21 +72,21 @@ func TestGenerateJWTSecretWithRetry(t *testing.T) {
 	}
 
 	// Generate another to ensure they're different
-	secret2 := GenerateJWTSecret()
+	secret2 := auth.GenerateJWTSecret()
 	if secret == secret2 {
 		t.Error("Two JWT secrets should not be identical")
 	}
 }
 
-// TestRandomCharWithRetry verifies randomChar works correctly.
+// TestRandomCharWithRetry verifies RandomChar works correctly.
 func TestRandomCharWithRetry(t *testing.T) {
 	chars := "abcdefghijklmnopqrstuvwxyz"
 
 	// Generate multiple characters
 	for i := range 100 {
-		c, err := randomChar(chars)
+		c, err := auth.RandomChar(chars)
 		if err != nil {
-			t.Fatalf("randomChar failed on iteration %d: %v", i, err)
+			t.Fatalf("RandomChar failed on iteration %d: %v", i, err)
 		}
 
 		// Verify character is from the charset
@@ -96,24 +98,24 @@ func TestRandomCharWithRetry(t *testing.T) {
 			}
 		}
 		if !found {
-			t.Errorf("randomChar returned %c which is not in charset %q", c, chars)
+			t.Errorf("RandomChar returned %c which is not in charset %q", c, chars)
 		}
 	}
 }
 
-// TestRandomIntWithRetry verifies randomInt works correctly.
+// TestRandomIntWithRetry verifies RandomInt works correctly.
 func TestRandomIntWithRetry(t *testing.T) {
 	// Test with various values of n
 	testCases := []int{10, 100, 1000}
 
 	for _, n := range testCases {
 		for i := range 50 {
-			result, err := randomInt(n)
+			result, err := auth.RandomInt(n)
 			if err != nil {
-				t.Fatalf("randomInt(%d) failed on iteration %d: %v", n, i, err)
+				t.Fatalf("RandomInt(%d) failed on iteration %d: %v", n, i, err)
 			}
 			if result < 0 || result >= n {
-				t.Errorf("randomInt(%d) = %d, out of range [0, %d)", n, result, n)
+				t.Errorf("RandomInt(%d) = %d, out of range [0, %d)", n, result, n)
 			}
 		}
 	}
@@ -123,7 +125,7 @@ func TestRandomIntWithRetry(t *testing.T) {
 func TestGenerateSecurePasswordWithRetry(t *testing.T) {
 	// Generate multiple passwords
 	for i := range 10 {
-		password, err := GenerateSecurePassword(16)
+		password, err := auth.GenerateSecurePassword(16)
 		if err != nil {
 			t.Fatalf("GenerateSecurePassword failed on iteration %d: %v", i, err)
 		}
@@ -133,7 +135,7 @@ func TestGenerateSecurePasswordWithRetry(t *testing.T) {
 		}
 
 		// Should pass strength validation
-		if validateErr := ValidatePasswordStrength(password); validateErr != nil {
+		if validateErr := auth.ValidatePasswordStrength(password); validateErr != nil {
 			t.Errorf("Generated password failed validation: %v (password: %s)", validateErr, password)
 		}
 	}
@@ -146,33 +148,33 @@ func TestCryptoRandReadRetryBehavior(t *testing.T) {
 	// and works correctly under normal conditions
 
 	b := make([]byte, 32)
-	err := cryptoRandRead(b, "test_retry_params")
+	err := auth.CryptoRandRead(b, "test_retry_params")
 	if err != nil {
-		t.Fatalf("cryptoRandRead failed: %v", err)
+		t.Fatalf("CryptoRandRead failed: %v", err)
 	}
 
 	// Verify buffer was filled
 	emptyBuffer := make([]byte, 32)
 	if bytes.Equal(b, emptyBuffer) {
-		t.Error("cryptoRandRead did not fill buffer with random data")
+		t.Error("CryptoRandRead did not fill buffer with random data")
 	}
 }
 
 // TestCryptoRandReadSmallBuffer tests with a small buffer.
 func TestCryptoRandReadSmallBuffer(t *testing.T) {
 	b := make([]byte, 1)
-	err := cryptoRandRead(b, "test_small_buffer")
+	err := auth.CryptoRandRead(b, "test_small_buffer")
 	if err != nil {
-		t.Fatalf("cryptoRandRead failed with small buffer: %v", err)
+		t.Fatalf("CryptoRandRead failed with small buffer: %v", err)
 	}
 }
 
 // TestCryptoRandReadLargeBuffer tests with a large buffer.
 func TestCryptoRandReadLargeBuffer(t *testing.T) {
 	b := make([]byte, 4096)
-	err := cryptoRandRead(b, "test_large_buffer")
+	err := auth.CryptoRandRead(b, "test_large_buffer")
 	if err != nil {
-		t.Fatalf("cryptoRandRead failed with large buffer: %v", err)
+		t.Fatalf("CryptoRandRead failed with large buffer: %v", err)
 	}
 
 	// Verify at least some bytes are non-zero
