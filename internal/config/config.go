@@ -820,308 +820,119 @@ type MCPConfig struct {
 // DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
 	return &Config{
-		Version: ConfigVersion,
-		Server: ServerConfig{
-			Port:  8443,
-			HTTPS: true,
+		Version:          ConfigVersion,
+		Server:           ServerConfig{Port: 8443, HTTPS: true},
+		Interface:        InterfaceConfig{Default: "", Fallbacks: []string{}, StartupRetries: 3, StartupRetryWait: 5 * time.Second},
+		VLAN:             VLANConfig{Enabled: false, ID: 0},
+		IP:               IPConfig{Mode: ipModeDHCP},
+		Discovery:        DiscoveryConfig{Protocol: "auto", Timeout: 30 * time.Second},
+		NetworkDiscovery: defaultNetworkDiscoveryConfig(),
+		SNMP:             SNMPConfig{Communities: []string{"public"}, Timeout: 5 * time.Second, Retries: 2, Port: 161},
+		DNS:              DNSConfig{TestHostname: "google.com", Timeout: 5 * time.Second},
+		HealthChecks:     defaultHealthChecksConfig(),
+		Speedtest:        SpeedtestConfig{ServerID: "", AutoRunOnLink: true},
+		Thresholds:       defaultThresholdsConfig(),
+		Auth:             defaultAuthConfig(),
+		Security:         defaultSecurityConfig(),
+		Iperf:            IperfConfig{AutoRunOnLink: false, Server: "", Port: 5201, Protocol: "tcp", Direction: "download", Duration: 10, ServerPort: 5201, EnableServer: true},
+		FABOptions:       FABOptionsConfig{RunLink: true, RunSwitch: true, RunVLAN: true, RunIPConfig: true, RunGateway: true, RunDNS: true, RunHealthChecks: true, RunNetworkDiscovery: true, RunSpeedtest: true, RunIperf: false, RunPerformance: true, AutoScanOnLink: true},
+		DisplayOptions:   DisplayOptionsConfig{ShowPublicIP: true, UnitSystem: "sae"},
+		Logging:          LoggingConfig{Level: "info", Format: "text", AddSource: false, File: "", MaxSize: 100, MaxBackups: 5, MaxAge: 30, Compress: true},
+		MCP:              MCPConfig{Enabled: false, RequireAuth: true, RateLimitPerMinute: 60, AllowedTools: nil},
+		Database:         DatabaseConfig{Path: "data/seed.db", RetentionDays: 90, EnableWAL: true, MaxConnections: 10},
+		Pipeline:         defaultPipelineConfig(),
+	}
+}
+
+// defaultNetworkDiscoveryConfig returns the default network discovery configuration.
+func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
+	return NetworkDiscoveryConfig{
+		Options: DiscoveryOptions{
+			PassiveProtocols: PassiveProtocolConfig{LLDP: true, CDP: true, EDP: true, NDP: true},
+			ARPScan: true, ICMPScan: true,
+			PortScan: PortScanConfig{Enabled: false, Preset: PortPresetCommon, TCPPorts: "", UDPPorts: "", BannerTimeout: 2 * time.Second},
+			TCPProbe: TCPProbeConfig{Timeout: 2 * time.Second, Workers: 20}, Traceroute: false, SNMPQuery: false,
 		},
-		Interface: InterfaceConfig{
-			Default:          "",              // Auto-detect by default (#572)
-			Fallbacks:        []string{},      // No hardcoded fallbacks - use auto-detection
-			StartupRetries:   3,               // Retry 3 times when finding interface at startup (fixes #528)
-			StartupRetryWait: 5 * time.Second, // Wait 5 seconds between retries (fixes #528)
+		Profiler:       DeviceProfilerConfig{Enabled: true, Timeout: 2 * time.Second, MaxConcurrent: 5, QuickPorts: []int{22, 80, 443, 8080}},
+		Timing:         DiscoveryTiming{ProbeInterval: 75 * time.Millisecond, RescanInterval: 10 * time.Minute, Workers: 50},
+		Fingerprinting: FingerprintingConfig{Enabled: false, OSDetection: false, ServiceProbes: false},
+		IPv6Enabled: true, Enabled: true, ARPScanWorkers: 50, PingTimeout: 500 * time.Millisecond, ScanTimeout: 30 * time.Second,
+		AutoScan: true, ScanInterval: 0, OUIFilePath: "data/oui.txt", OUIMaxAge: 30 * 24 * time.Hour, AdditionalSubnets: []SubnetConfig{},
+	}
+}
+
+// defaultHealthChecksConfig returns the default health checks configuration.
+func defaultHealthChecksConfig() HealthChecksConfig {
+	return HealthChecksConfig{
+		PingTargets: []PingTarget{{Name: "Google DNS", Host: "8.8.8.8", Enabled: true}, {Name: "Cloudflare", Host: "1.1.1.1", Enabled: true}},
+		TCPPorts: []TCPPortTest{
+			{Name: "HTTPS", Host: "www.google.com", Port: 443, Enabled: true}, {Name: "DICOM", Host: "dicomserver.co.uk", Port: 104, Enabled: true},
+			{Name: "FTP", Host: "ftp.debian.org", Port: 21, Enabled: true}, {Name: "SMB", Host: "files.example.com", Port: 445, Enabled: false},
+			{Name: "RTSP", Host: "wowzaec2demo.streamlock.net", Port: 554, Enabled: true}, {Name: "PostgreSQL", Host: "db.example.com", Port: 5432, Enabled: false},
+			{Name: "SFTP", Host: "sftp.example.com", Port: 22, Enabled: false},
 		},
-		VLAN: VLANConfig{
-			Enabled: false,
-			ID:      0,
+		UDPPorts: []UDPPortTest{{Name: "DNS", Host: "8.8.8.8", Port: 53, Enabled: true}, {Name: "NTP", Host: "time.google.com", Port: 123, Enabled: true}},
+		HTTPEndpoints: []HTTPEndpoint{
+			{Name: "Google HTTPS", URL: "https://www.google.com", ExpectedStatus: 200, Enabled: true},
+			{Name: "Cloudflare", URL: "https://www.cloudflare.com", ExpectedStatus: 200, Enabled: true},
+			{Name: "Example HTTP", URL: "http://example.com", ExpectedStatus: 200, Enabled: true},
 		},
-		IP: IPConfig{
-			Mode: ipModeDHCP,
-		},
-		Discovery: DiscoveryConfig{
-			Protocol: "auto",
-			Timeout:  30 * time.Second,
-		},
-		NetworkDiscovery: NetworkDiscoveryConfig{
-			// Direct options configuration (no profile system)
-			Options: DiscoveryOptions{
-				PassiveProtocols: PassiveProtocolConfig{
-					LLDP: true, // IEEE 802.1AB
-					CDP:  true, // Cisco Discovery Protocol
-					EDP:  true, // Extreme Discovery Protocol
-					NDP:  true, // IPv6 Neighbor Discovery
-				},
-				ARPScan:  true, // ARP scan local subnet
-				ICMPScan: true, // ICMP ping sweep
-				PortScan: PortScanConfig{
-					Enabled:       false,
-					Preset:        PortPresetCommon, // Default to common service ports
-					TCPPorts:      "",               // Custom ports (used when preset is "custom")
-					UDPPorts:      "",               // Custom ports (used when preset is "custom")
-					BannerTimeout: 2 * time.Second,
-				},
-				TCPProbe: TCPProbeConfig{
-					Timeout: 2 * time.Second,
-					Workers: 20, // Concurrent TCP probe workers
-				},
-				Traceroute: false,
-				SNMPQuery:  false, // Requires SNMP config
+		RunPerformance: true, RunSpeedtest: true, RunIperf: true, RunDiscovery: true,
+	}
+}
+
+// defaultThresholdsConfig returns the default thresholds configuration.
+func defaultThresholdsConfig() ThresholdsConfig {
+	return ThresholdsConfig{
+		DHCP: DHCPThresholds{Total: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second}, PerPhase: Threshold{Warning: 200 * time.Millisecond, Critical: 1 * time.Second}},
+		DNS: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+		Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 200 * time.Millisecond},
+		WiFi: WiFiThresholds{Signal: SignalThreshold{Warning: -70, Critical: -80}},
+		Link: LinkThresholds{FlapCount24h: IntThreshold{Warning: 3, Critical: 5}},
+		CustomTests: CustomThresholds{
+			Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 100 * time.Millisecond},
+			TCP: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+			UDP: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+			HTTP: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
+			HTTPTimings: HTTPTimingThresholds{
+				DNS: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+				TCP: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+				TLS: Threshold{Warning: 150 * time.Millisecond, Critical: 500 * time.Millisecond},
+				TTFB: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
 			},
-			Profiler: DeviceProfilerConfig{
-				Enabled:       true,
-				Timeout:       2 * time.Second,
-				MaxConcurrent: 5,
-				QuickPorts:    []int{22, 80, 443, 8080},
-			},
-			Timing: DiscoveryTiming{
-				ProbeInterval:  75 * time.Millisecond, // Time between probes
-				RescanInterval: 10 * time.Minute,      // Full rescan interval
-				Workers:        50,                    // Concurrent workers
-			},
-			Fingerprinting: FingerprintingConfig{
-				Enabled:       false, // Disabled by default
-				OSDetection:   false,
-				ServiceProbes: false,
-			},
-			IPv6Enabled: true, // Enable IPv6 NDP scanning by default
-			// Legacy fields (for backward compatibility)
-			Enabled:           true,
-			ARPScanWorkers:    50,
-			PingTimeout:       500 * time.Millisecond,
-			ScanTimeout:       30 * time.Second,
-			AutoScan:          true,                // Auto-scan on startup by default
-			ScanInterval:      0,                   // Disabled by default
-			OUIFilePath:       "data/oui.txt",      // IEEE OUI file (download from https://standards-oui.ieee.org/oui/oui.txt)
-			OUIMaxAge:         30 * 24 * time.Hour, // Auto-update OUI database monthly
-			AdditionalSubnets: []SubnetConfig{},    // No additional subnets by default
+			CertExpiry: CertExpiryThreshold{Warning: 30, Critical: 7},
 		},
-		SNMP: SNMPConfig{
-			Communities: []string{"public"}, // Default read-only community
-			Timeout:     5 * time.Second,
-			Retries:     2,
-			Port:        161,
+	}
+}
+
+// defaultAuthConfig returns the default authentication configuration.
+func defaultAuthConfig() AuthConfig {
+	return AuthConfig{
+		DefaultUsername: "admin", DefaultPasswordHash: "", SessionTimeout: 24 * time.Hour, JWTSecret: "",
+		SSO: SSOConfig{Providers: []SSOProviderConfig{{Name: "google", Enabled: false}, {Name: "microsoft", Enabled: false}, {Name: "github", Enabled: false}}},
+	}
+}
+
+// defaultSecurityConfig returns the default security configuration.
+func defaultSecurityConfig() SecurityConfig {
+	return SecurityConfig{
+		AllowedOrigins: []string{},
+		VulnerabilityScanning: VulnerabilityScanConfig{Enabled: true, CVEDatabase: "nvd", NVDAPIKey: "", UpdateInterval: 86400, SeverityThreshold: "medium", MaxConcurrent: 5, AutoScan: true},
+	}
+}
+
+// defaultPipelineConfig returns the default pipeline configuration.
+func defaultPipelineConfig() PipelineConfig {
+	return PipelineConfig{
+		Phases: PipelinePhaseConfig{Enumeration: true, NameResolution: true, ServiceDiscovery: true, VulnAssessment: false},
+		Timing: PipelineTimingConfig{ProbeDelay: 50 * time.Millisecond, HostDelay: 20 * time.Millisecond, MaxConcurrentHosts: 20, PhaseTimeout: 10 * time.Minute, Profile: "normal"},
+		PortScan: PipelinePortScanConfig{Intensity: "off", BannerGrab: true, ConnectTimeout: 2 * time.Second},
+		SNMPCollection: PipelineSNMPConfig{
+			Enabled: true,
+			MIBs: PipelineSNMPMIBs{System: true, Interfaces: true, IPAddresses: true, Routing: false, Bridge: false, Entity: false, LLDP: true, VLAN: false},
+			WalkTimeout: 30 * time.Second, MaxOIDsPerRequest: 10,
 		},
-		DNS: DNSConfig{
-			TestHostname: "google.com",
-			Timeout:      5 * time.Second,
-		},
-		HealthChecks: HealthChecksConfig{
-			// Fixes #730: Add default health check tests so the card and timing graph have data on first boot
-			PingTargets: []PingTarget{
-				{Name: "Google DNS", Host: "8.8.8.8", Enabled: true},
-				{Name: "Cloudflare", Host: "1.1.1.1", Enabled: true},
-			},
-			TCPPorts: []TCPPortTest{
-				{Name: "HTTPS", Host: "www.google.com", Port: 443, Enabled: true},
-				// Public C-ECHO test server (dicomserver.co.uk)
-				{Name: "DICOM", Host: "dicomserver.co.uk", Port: 104, Enabled: true},
-				// FTP smoke test (public, no auth required)
-				{Name: "FTP", Host: "ftp.debian.org", Port: 21, Enabled: true},
-				// SMB/Windows file sharing reachability (requires site-specific host)
-				{Name: "SMB", Host: "files.example.com", Port: 445, Enabled: false},
-				// RTSP demo stream (Wowza public stream)
-				{Name: "RTSP", Host: "wowzaec2demo.streamlock.net", Port: 554, Enabled: true},
-				// Database (PostgreSQL) connectivity/latency
-				{Name: "PostgreSQL", Host: "db.example.com", Port: 5432, Enabled: false},
-				// SFTP/SSH file transfer
-				{Name: "SFTP", Host: "sftp.example.com", Port: 22, Enabled: false},
-			},
-			UDPPorts: []UDPPortTest{
-				{Name: "DNS", Host: "8.8.8.8", Port: 53, Enabled: true},
-				{Name: "NTP", Host: "time.google.com", Port: 123, Enabled: true},
-			},
-			HTTPEndpoints: []HTTPEndpoint{
-				{
-					Name:           "Google HTTPS",
-					URL:            "https://www.google.com",
-					ExpectedStatus: 200,
-					Enabled:        true,
-				},
-				{
-					Name:           "Cloudflare",
-					URL:            "https://www.cloudflare.com",
-					ExpectedStatus: 200,
-					Enabled:        true,
-				},
-				{
-					Name:           "Example HTTP",
-					URL:            "http://example.com",
-					ExpectedStatus: 200,
-					Enabled:        true,
-				},
-			},
-			RunPerformance: true,
-			RunSpeedtest:   true,
-			RunIperf:       true,
-			RunDiscovery:   true,
-		},
-		Speedtest: SpeedtestConfig{
-			ServerID:      "",   // Auto-select closest
-			AutoRunOnLink: true, // Fixes #728: Enable by default
-		},
-		Thresholds: ThresholdsConfig{
-			DHCP: DHCPThresholds{
-				Total:    Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
-				PerPhase: Threshold{Warning: 200 * time.Millisecond, Critical: 1 * time.Second},
-			},
-			DNS:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-			Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 200 * time.Millisecond},
-			WiFi: WiFiThresholds{
-				Signal: SignalThreshold{Warning: -70, Critical: -80},
-			},
-			Link: LinkThresholds{
-				FlapCount24h: IntThreshold{
-					Warning:  3,
-					Critical: 5,
-				}, // 3+ flaps = warning, 5+ = critical
-			},
-			CustomTests: CustomThresholds{
-				Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 100 * time.Millisecond},
-				TCP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-				UDP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-				HTTP: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
-				HTTPTimings: HTTPTimingThresholds{
-					DNS: Threshold{
-						Warning:  100 * time.Millisecond,
-						Critical: 500 * time.Millisecond,
-					},
-					TCP: Threshold{
-						Warning:  100 * time.Millisecond,
-						Critical: 500 * time.Millisecond,
-					},
-					TLS: Threshold{
-						Warning:  150 * time.Millisecond,
-						Critical: 500 * time.Millisecond,
-					},
-					TTFB: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
-				},
-				CertExpiry: CertExpiryThreshold{Warning: 30, Critical: 7}, // Days
-			},
-		},
-		Auth: AuthConfig{
-			DefaultUsername:     "admin",
-			DefaultPasswordHash: "", // Empty = requires first-boot setup
-			SessionTimeout:      24 * time.Hour,
-			JWTSecret:           "", // Empty = will be generated and persisted
-			SSO: SSOConfig{
-				Providers: []SSOProviderConfig{
-					{
-						Name:    "google",
-						Enabled: false,
-					},
-					{
-						Name:    "microsoft",
-						Enabled: false,
-					},
-					{
-						Name:    "github",
-						Enabled: false,
-					},
-				},
-			},
-		},
-		Security: SecurityConfig{
-			AllowedOrigins: []string{}, // Empty = use RFC 1918 defaults
-			VulnerabilityScanning: VulnerabilityScanConfig{
-				Enabled:           true,  // Enable by default for security visibility
-				CVEDatabase:       "nvd", // NVD works without API key (rate limited)
-				NVDAPIKey:         "",
-				UpdateInterval:    86400, // 24 hours
-				SeverityThreshold: "medium",
-				MaxConcurrent:     5,
-				AutoScan:          true, // Auto-scan after device discovery
-			},
-		},
-		Iperf: IperfConfig{
-			AutoRunOnLink: false,
-			Server:        "",
-			Port:          5201,
-			Protocol:      "tcp",
-			Direction:     "download",
-			Duration:      10,
-			ServerPort:    5201,
-			EnableServer:  true,
-		},
-		FABOptions: FABOptionsConfig{
-			RunLink:             true,
-			RunSwitch:           true,
-			RunVLAN:             true,
-			RunIPConfig:         true,
-			RunGateway:          true,
-			RunDNS:              true,
-			RunHealthChecks:     true,
-			RunNetworkDiscovery: true, // Enable by default (fixes Network Discovery card visibility)
-			RunSpeedtest:        true, // Enable by default (fixes Performance card visibility)
-			RunIperf:            false,
-			RunPerformance:      true, // Enable by default (fixes Performance card visibility)
-			AutoScanOnLink:      true,
-		},
-		DisplayOptions: DisplayOptionsConfig{
-			ShowPublicIP: true,
-			UnitSystem:   "sae", // Default to SAE (feet) for US users
-		},
-		Logging: LoggingConfig{
-			Level:      "info",
-			Format:     "text",
-			AddSource:  false,
-			File:       "",
-			MaxSize:    100,
-			MaxBackups: 5,
-			MaxAge:     30,
-			Compress:   true,
-		},
-		MCP: MCPConfig{
-			Enabled:            false, // Disabled by default, enable explicitly
-			RequireAuth:        true,  // Require authentication by default for security
-			RateLimitPerMinute: 60,    // 60 requests per minute default
-			AllowedTools:       nil,   // All tools available when empty
-		},
-		Database: DatabaseConfig{
-			Path:           "data/seed.db",
-			RetentionDays:  90,   // 3 months of historical data
-			EnableWAL:      true, // Better concurrency
-			MaxConnections: 10,
-		},
-		Pipeline: PipelineConfig{
-			Phases: PipelinePhaseConfig{
-				Enumeration:      true,  // Always enabled
-				NameResolution:   true,  // Enabled by default
-				ServiceDiscovery: true,  // Enabled by default for SNMP (port scan is "off" by default)
-				VulnAssessment:   false, // Disabled by default (requires opt-in)
-			},
-			Timing: PipelineTimingConfig{
-				ProbeDelay:         50 * time.Millisecond,
-				HostDelay:          20 * time.Millisecond,
-				MaxConcurrentHosts: 20,
-				PhaseTimeout:       10 * time.Minute,
-				Profile:            "normal", // polite, normal, aggressive
-			},
-			PortScan: PipelinePortScanConfig{
-				Intensity:      "off", // OFF by default - security conscious
-				BannerGrab:     true,
-				ConnectTimeout: 2 * time.Second,
-			},
-			SNMPCollection: PipelineSNMPConfig{
-				Enabled: true,
-				MIBs: PipelineSNMPMIBs{
-					System:      true, // Always collect system info
-					Interfaces:  true, // Critical for network devices
-					IPAddresses: true, // Essential for topology
-					Routing:     false,
-					Bridge:      false, // Can be large on switches
-					Entity:      false,
-					LLDP:        true,
-					VLAN:        false, // Can be large
-				},
-				WalkTimeout:       30 * time.Second,
-				MaxOIDsPerRequest: 10,
-			},
-			Persistence: PipelinePersistenceConfig{
-				StoreHistory:       true,
-				StalenessThreshold: 24 * time.Hour,
-				PurgeAfter:         30 * 24 * time.Hour,
-			},
-		},
+		Persistence: PipelinePersistenceConfig{StoreHistory: true, StalenessThreshold: 24 * time.Hour, PurgeAfter: 30 * 24 * time.Hour},
 	}
 }
 
