@@ -1048,7 +1048,7 @@ func TestDefaultIperfConfig(t *testing.T) {
 // ========== ACME Configuration Tests ==========
 
 func TestACMEConfig(t *testing.T) {
-	acme := ACMEConfig{
+	acme := config.ACMEConfig{
 		Enabled:  true,
 		Domain:   "example.com",
 		Email:    "admin@example.com",
@@ -1128,7 +1128,7 @@ func TestDefaultDisplayOptions(t *testing.T) {
 // ========== Rogue Detection Tests ==========
 
 func TestRogueDetectionConfig(t *testing.T) {
-	rogue := RogueDetectionConfig{
+	rogue := config.RogueDetectionConfig{
 		Enabled:          true,
 		KnownServers:     []string{"192.168.1.1", "192.168.1.2"},
 		AlertOnDetection: true,
@@ -1300,7 +1300,7 @@ func TestConfigClone(t *testing.T) {
 	cfg.Auth.DefaultUsername = "clonetest"
 	cfg.Security.AllowedOrigins = []string{"https://test.com", "https://dev.com"}
 	cfg.SNMP.Communities = []string{"private", "public"}
-	cfg.SNMP.V3Credentials = []SNMPv3Credential{
+	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
 		{Name: "test", Username: "user1", AuthProtocol: "SHA"},
 	}
 
@@ -1384,7 +1384,7 @@ func TestGetBackupDir(t *testing.T) {
 	backupDir := filepath.Join(tmpDir, "backups")
 
 	// Create backup manager
-	mgr := NewBackupManager(configPath, backupDir, 5)
+	mgr := config.NewBackupManager(configPath, backupDir, 5)
 
 	if mgr.GetBackupDir() != backupDir {
 		t.Errorf("expected backup dir %q, got %q", backupDir, mgr.GetBackupDir())
@@ -1436,38 +1436,38 @@ func TestSaveWithBackup(t *testing.T) {
 func TestValidateLoggingConfig(t *testing.T) {
 	tests := []struct {
 		name      string
-		modify    func(*Config)
+		modify    func(*config.Config)
 		wantError bool
 	}{
 		{
 			name:      "valid default",
-			modify:    func(_ *Config) {},
+			modify:    func(_ *config.Config) {},
 			wantError: false,
 		},
 		{
 			name: "invalid log level",
-			modify: func(c *Config) {
+			modify: func(c *config.Config) {
 				c.Logging.Level = "invalid"
 			},
 			wantError: true,
 		},
 		{
 			name: "negative max size",
-			modify: func(c *Config) {
+			modify: func(c *config.Config) {
 				c.Logging.MaxSize = -1
 			},
 			wantError: true,
 		},
 		{
 			name: "negative max backups",
-			modify: func(c *Config) {
+			modify: func(c *config.Config) {
 				c.Logging.MaxBackups = -1
 			},
 			wantError: true,
 		},
 		{
 			name: "negative max age",
-			modify: func(c *Config) {
+			modify: func(c *config.Config) {
 				c.Logging.MaxAge = -1
 			},
 			wantError: true,

@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewSchemaValidator(t *testing.T) {
-	validator, err := config.config.NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create schema validator: %v", err)
 	}
@@ -21,13 +21,13 @@ func TestNewSchemaValidator(t *testing.T) {
 }
 
 func TestValidateConfig_ValidDefault(t *testing.T) {
-	validator, err := config.config.NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
 
 	// Default config should be valid
-	cfg := config.config.DefaultConfig()
+	cfg := config.DefaultConfig()
 	errors := validator.ValidateConfig(cfg)
 	if errors != nil {
 		t.Errorf("default config should be valid, got errors: %+v", errors)
@@ -38,7 +38,7 @@ func TestValidateConfig_ValidDefault(t *testing.T) {
 }
 
 func TestValidateConfig_InvalidServerPort(t *testing.T) {
-	validator, err := config.config.NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestValidateConfig_InvalidServerPort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := config.config.DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Server.Port = tt.port
 			errors := validator.ValidateConfig(cfg)
 
@@ -170,7 +170,7 @@ func TestValidateConfig_PortPreset(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		preset PortPreset
+		preset config.PortPreset
 		want   bool // true = should have errors
 	}{
 		{"common preset", config.PortPresetCommon, false},
