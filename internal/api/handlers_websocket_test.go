@@ -1,13 +1,15 @@
-package api
+package api_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/api"
 )
 
 // TestHubClientCount tests the ClientCount method.
 func TestHubClientCount(t *testing.T) {
-	hub := NewHub()
+	hub := api.NewHub()
 
 	if count := hub.ClientCount(); count != 0 {
 		t.Errorf("Expected 0 clients, got %d", count)
@@ -16,9 +18,9 @@ func TestHubClientCount(t *testing.T) {
 
 // TestHubBroadcast tests the Broadcast method.
 func TestHubBroadcast(_ *testing.T) {
-	hub := NewHub()
+	hub := api.NewHub()
 
-	msg := Message{
+	msg := api.Message{
 		Type:    "test",
 		Payload: map[string]string{"key": "value"},
 	}
@@ -29,7 +31,7 @@ func TestHubBroadcast(_ *testing.T) {
 
 // TestHubBroadcastCardUpdate tests the BroadcastCardUpdate method.
 func TestHubBroadcastCardUpdate(_ *testing.T) {
-	hub := NewHub()
+	hub := api.NewHub()
 
 	// Should not panic with no clients
 	hub.BroadcastCardUpdate("testCard", map[string]string{"status": "ok"})
@@ -37,7 +39,7 @@ func TestHubBroadcastCardUpdate(_ *testing.T) {
 
 // TestHubShutdown tests graceful shutdown.
 func TestHubShutdown(_ *testing.T) {
-	hub := NewHub()
+	hub := api.NewHub()
 
 	// Start the hub
 	go hub.Run()
@@ -54,7 +56,7 @@ func TestHubShutdown(_ *testing.T) {
 
 // TestNewHub tests hub creation.
 func TestNewHub(t *testing.T) {
-	hub := NewHub()
+	hub := api.NewHub()
 
 	if hub == nil {
 		t.Fatal("NewHub returned nil")

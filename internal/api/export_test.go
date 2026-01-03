@@ -89,3 +89,16 @@ var IsValidIPOctet = isValidIPOctet
 
 // LogQueryParams is a type alias for logQueryParams for testing.
 type LogQueryParams = logQueryParams
+
+// BodyLimitMiddleware exports bodyLimitMiddleware for testing.
+var BodyLimitMiddleware = bodyLimitMiddleware
+
+// HandleStatus exports handleStatus for testing.
+func (s *Server) HandleStatus(w http.ResponseWriter, r *http.Request) {
+	s.handleStatus(w, r)
+}
+
+// HandleExport exports handleExport for testing.
+func (s *Server) HandleExport(w http.ResponseWriter, r *http.Request) {
+	s.handleExport(w, r)
+}

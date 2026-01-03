@@ -1,20 +1,22 @@
-package api
+package api_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/api"
 )
 
 // TestHandleStatus tests the status endpoint.
 func TestHandleStatus(t *testing.T) {
-	server := NewTestServer()
+	server := api.NewTestServer()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/status", http.NoBody)
 	w := httptest.NewRecorder()
 
-	server.handleStatus(w, req)
+	server.HandleStatus(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
@@ -32,7 +34,7 @@ func TestHandleStatus(t *testing.T) {
 
 // TestHandleStatusMethodNotAllowed tests non-GET methods for status endpoint.
 func TestHandleStatusMethodNotAllowed(t *testing.T) {
-	server := NewTestServer()
+	server := api.NewTestServer()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -40,7 +42,7 @@ func TestHandleStatusMethodNotAllowed(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/status", http.NoBody)
 			w := httptest.NewRecorder()
 
-			server.handleStatus(w, req)
+			server.HandleStatus(w, req)
 
 			if w.Code != http.StatusMethodNotAllowed {
 				t.Errorf("Expected status %d for %s, got %d",
@@ -52,7 +54,7 @@ func TestHandleStatusMethodNotAllowed(t *testing.T) {
 
 // TestHandleExportMethodNotAllowed tests non-GET methods for export endpoint.
 func TestHandleExportMethodNotAllowed(t *testing.T) {
-	server := NewTestServer()
+	server := api.NewTestServer()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -60,7 +62,7 @@ func TestHandleExportMethodNotAllowed(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/export", http.NoBody)
 			w := httptest.NewRecorder()
 
-			server.handleExport(w, req)
+			server.HandleExport(w, req)
 
 			if w.Code != http.StatusMethodNotAllowed {
 				t.Errorf("Expected status %d for %s, got %d",

@@ -1,4 +1,4 @@
-package api
+package api_test
 
 import (
 	"bytes"
@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/api"
 )
 
-// Verifies bodyLimitMiddleware applies to GET requests (regression for #766).
+// Verifies BodyLimitMiddleware applies to GET requests (regression for #766).
 func TestBodyLimitMiddleware_GETEnforced(t *testing.T) {
 	// Handler that reads the entire body and surfaces the read error
-	handler := bodyLimitMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := api.BodyLimitMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusRequestEntityTooLarge)
