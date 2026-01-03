@@ -456,7 +456,7 @@ func getMaxRepetitions(cfg *config.SNMPConfig) uint32 {
 }
 
 // newV3WalkClient creates and connects an SNMPv3 client configured for walk operations.
-// The caller is responsible for closing the connection: defer func() { _ = client.Conn.Close() }()
+// The caller is responsible for closing the connection: defer func() { _ = client.Conn.Close() }().
 func newV3WalkClient(
 	ctx context.Context,
 	ip string,
@@ -495,7 +495,7 @@ func newV3WalkClient(
 }
 
 // newV2cWalkClient creates and connects an SNMPv2c client configured for walk operations.
-// The caller is responsible for closing the connection: defer func() { _ = client.Conn.Close() }()
+// The caller is responsible for closing the connection: defer func() { _ = client.Conn.Close() }().
 func newV2cWalkClient(
 	ctx context.Context,
 	ip, community string,
