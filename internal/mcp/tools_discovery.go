@@ -24,36 +24,68 @@ func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 // registerNetworkScanTools registers network scanning tools.
 func (s *Server) registerNetworkScanTools(isAllowed func(string) bool) {
 	s.addTool("network_scan", isAllowed,
-		mcp.NewTool("network_scan",
-			mcp.WithDescription("Scan the local network for devices using ARP/ICMP/NDP protocols. Returns a list of discovered devices with their IP, MAC, hostname, and vendor information."),
-			mcp.WithNumber("timeout", mcp.Description("Scan timeout in seconds (default: 30, max: 300)")),
+		mcp.NewTool(
+			"network_scan",
+			mcp.WithDescription(
+				"Scan the local network for devices using ARP/ICMP/NDP protocols. Returns a list of discovered devices with their IP, MAC, hostname, and vendor information.",
+			),
+			mcp.WithNumber(
+				"timeout",
+				mcp.Description("Scan timeout in seconds (default: 30, max: 300)"),
+			),
 		), s.handleNetworkScan)
 
 	s.addTool("get_devices", isAllowed,
-		mcp.NewTool("get_devices",
-			mcp.WithDescription("Get all previously discovered devices on the network. Returns devices found from previous scans without initiating a new scan."),
+		mcp.NewTool(
+			"get_devices",
+			mcp.WithDescription(
+				"Get all previously discovered devices on the network. Returns devices found from previous scans without initiating a new scan.",
+			),
 		), s.handleGetDevices)
 }
 
 // registerDeviceTools registers device fingerprinting and neighbor tools.
 func (s *Server) registerDeviceTools(isAllowed func(string) bool) {
 	s.addTool("device_fingerprint", isAllowed,
-		mcp.NewTool("device_fingerprint",
-			mcp.WithDescription("Perform OS fingerprinting and service detection on a specific device. Attempts to identify the operating system, open services, and device type."),
-			mcp.WithString("ip", mcp.Required(), mcp.Description("IP address of the device to fingerprint")),
+		mcp.NewTool(
+			"device_fingerprint",
+			mcp.WithDescription(
+				"Perform OS fingerprinting and service detection on a specific device. Attempts to identify the operating system, open services, and device type.",
+			),
+			mcp.WithString(
+				"ip",
+				mcp.Required(),
+				mcp.Description("IP address of the device to fingerprint"),
+			),
 		), s.handleDeviceFingerprint)
 
 	s.addTool("get_neighbors", isAllowed,
-		mcp.NewTool("get_neighbors",
-			mcp.WithDescription("Get network neighbors discovered via Layer 2 protocols (LLDP, CDP, EDP). Shows connected switches, routers, and other network devices."),
-			mcp.WithString("protocol", mcp.Description("Filter by protocol: lldp, cdp, edp, or all (default: all)")),
+		mcp.NewTool(
+			"get_neighbors",
+			mcp.WithDescription(
+				"Get network neighbors discovered via Layer 2 protocols (LLDP, CDP, EDP). Shows connected switches, routers, and other network devices.",
+			),
+			mcp.WithString(
+				"protocol",
+				mcp.Description("Filter by protocol: lldp, cdp, edp, or all (default: all)"),
+			),
 		), s.handleGetNeighbors)
 
 	s.addTool("traceroute", isAllowed,
-		mcp.NewTool("traceroute",
-			mcp.WithDescription("Trace the network path to a target host, showing each hop along the route with latency information."),
-			mcp.WithString("target", mcp.Required(), mcp.Description("Target hostname or IP address to trace")),
-			mcp.WithNumber("max_hops", mcp.Description("Maximum number of hops (default: 30, max: 64)")),
+		mcp.NewTool(
+			"traceroute",
+			mcp.WithDescription(
+				"Trace the network path to a target host, showing each hop along the route with latency information.",
+			),
+			mcp.WithString(
+				"target",
+				mcp.Required(),
+				mcp.Description("Target hostname or IP address to trace"),
+			),
+			mcp.WithNumber(
+				"max_hops",
+				mcp.Description("Maximum number of hops (default: 30, max: 64)"),
+			),
 			mcp.WithNumber("timeout", mcp.Description("Timeout per hop in seconds (default: 3)")),
 		), s.handleTraceroute)
 }
@@ -61,19 +93,48 @@ func (s *Server) registerDeviceTools(isAllowed func(string) bool) {
 // registerProbeTools registers TCP probe and port scan tools.
 func (s *Server) registerProbeTools(isAllowed func(string) bool) {
 	s.addTool("tcp_probe", isAllowed,
-		mcp.NewTool("tcp_probe",
-			mcp.WithDescription("Probe a specific TCP port on a host to check if it's open and measure connection latency."),
-			mcp.WithString("host", mcp.Required(), mcp.Description("Target hostname or IP address")),
-			mcp.WithNumber("port", mcp.Required(), mcp.Description("TCP port number to probe (1-65535)")),
-			mcp.WithNumber("timeout", mcp.Description("Connection timeout in seconds (default: 5)")),
+		mcp.NewTool(
+			"tcp_probe",
+			mcp.WithDescription(
+				"Probe a specific TCP port on a host to check if it's open and measure connection latency.",
+			),
+			mcp.WithString(
+				"host",
+				mcp.Required(),
+				mcp.Description("Target hostname or IP address"),
+			),
+			mcp.WithNumber(
+				"port",
+				mcp.Required(),
+				mcp.Description("TCP port number to probe (1-65535)"),
+			),
+			mcp.WithNumber(
+				"timeout",
+				mcp.Description("Connection timeout in seconds (default: 5)"),
+			),
 		), s.handleTCPProbe)
 
 	s.addTool("port_scan", isAllowed,
-		mcp.NewTool("port_scan",
-			mcp.WithDescription("Scan for open ports on a host with optional service banner detection. Returns a list of open ports with service information."),
-			mcp.WithString("host", mcp.Required(), mcp.Description("Target hostname or IP address")),
-			mcp.WithString("ports", mcp.Description("Ports to scan: comma-separated list (e.g., '22,80,443') or range (e.g., '1-1024'). Default: common ports")),
-			mcp.WithBoolean("banners", mcp.Description("Attempt to grab service banners (default: true)")),
+		mcp.NewTool(
+			"port_scan",
+			mcp.WithDescription(
+				"Scan for open ports on a host with optional service banner detection. Returns a list of open ports with service information.",
+			),
+			mcp.WithString(
+				"host",
+				mcp.Required(),
+				mcp.Description("Target hostname or IP address"),
+			),
+			mcp.WithString(
+				"ports",
+				mcp.Description(
+					"Ports to scan: comma-separated list (e.g., '22,80,443') or range (e.g., '1-1024'). Default: common ports",
+				),
+			),
+			mcp.WithBoolean(
+				"banners",
+				mcp.Description("Attempt to grab service banners (default: true)"),
+			),
 		), s.handlePortScan)
 }
 
@@ -89,7 +150,10 @@ func getArguments(request mcp.CallToolRequest) map[string]any {
 }
 
 // handleNetworkScan handles the network_scan tool.
-func (s *Server) handleNetworkScan(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (s *Server) handleNetworkScan(
+	ctx context.Context,
+	request mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
 	args := getArguments(request)
 	timeout := 30 * time.Second
 	if t, ok := args["timeout"].(float64); ok && t > 0 {
@@ -127,7 +191,10 @@ func (s *Server) handleNetworkScan(ctx context.Context, request mcp.CallToolRequ
 }
 
 // handleGetDevices handles the get_devices tool.
-func (s *Server) handleGetDevices(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (s *Server) handleGetDevices(
+	_ context.Context,
+	_ mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
 	svc := s.services.GetDiscoveryService()
 	if svc == nil {
 		return mcp.NewToolResultError("Discovery service not available"), nil
@@ -138,7 +205,10 @@ func (s *Server) handleGetDevices(_ context.Context, _ mcp.CallToolRequest) (*mc
 }
 
 // handleDeviceFingerprint handles the device_fingerprint tool.
-func (s *Server) handleDeviceFingerprint(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (s *Server) handleDeviceFingerprint(
+	_ context.Context,
+	request mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
 	ip, _ := request.RequireString("ip")
 	if ip == "" {
 		return mcp.NewToolResultError(
@@ -170,7 +240,10 @@ func (s *Server) handleDeviceFingerprint(_ context.Context, request mcp.CallTool
 }
 
 // handleGetNeighbors handles the get_neighbors tool.
-func (s *Server) handleGetNeighbors(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (s *Server) handleGetNeighbors(
+	_ context.Context,
+	request mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
 	args := getArguments(request)
 	protocol := "all"
 	if p, ok := args["protocol"].(string); ok && p != "" {
@@ -211,7 +284,10 @@ func (s *Server) handleGetNeighbors(_ context.Context, request mcp.CallToolReque
 }
 
 // handleTraceroute handles the traceroute tool.
-func (s *Server) handleTraceroute(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (s *Server) handleTraceroute(
+	ctx context.Context,
+	request mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
 	target, _ := request.RequireString("target")
 	if target == "" {
 		return mcp.NewToolResultError(
@@ -244,7 +320,10 @@ func (s *Server) handleTraceroute(ctx context.Context, request mcp.CallToolReque
 }
 
 // handleTCPProbe handles the tcp_probe tool.
-func (s *Server) handleTCPProbe(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (s *Server) handleTCPProbe(
+	ctx context.Context,
+	request mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
 	host, err := request.RequireString("host")
 	if err != nil {
 		return mcp.NewToolResultError("host parameter is required"), nil
@@ -276,7 +355,10 @@ func (s *Server) handleTCPProbe(ctx context.Context, request mcp.CallToolRequest
 }
 
 // handlePortScan handles the port_scan tool.
-func (s *Server) handlePortScan(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (s *Server) handlePortScan(
+	ctx context.Context,
+	request mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
 	host, err := request.RequireString("host")
 	if err != nil {
 		return mcp.NewToolResultError("host parameter is required"), nil

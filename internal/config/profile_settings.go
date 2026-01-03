@@ -338,13 +338,19 @@ func (ps *ProfileSettings) extractHealthChecksFrom(cfg *Config) {
 		ps.HealthChecks.UDPPorts = append(ps.HealthChecks.UDPPorts, ProfileUDPPort(up))
 	}
 	for _, he := range cfg.HealthChecks.HTTPEndpoints {
-		ps.HealthChecks.HTTPEndpoints = append(ps.HealthChecks.HTTPEndpoints, ProfileHTTPEndpoint(he))
+		ps.HealthChecks.HTTPEndpoints = append(
+			ps.HealthChecks.HTTPEndpoints,
+			ProfileHTTPEndpoint(he),
+		)
 	}
 }
 
 // extractTestOptionsFrom extracts speedtest, iperf, FAB, and display options from config.
 func (ps *ProfileSettings) extractTestOptionsFrom(cfg *Config) {
-	ps.Speedtest = ProfileSpeedtest{ServerID: cfg.Speedtest.ServerID, AutoRunOnLink: cfg.Speedtest.AutoRunOnLink}
+	ps.Speedtest = ProfileSpeedtest{
+		ServerID:      cfg.Speedtest.ServerID,
+		AutoRunOnLink: cfg.Speedtest.AutoRunOnLink,
+	}
 	ps.Iperf = ProfileIperf{
 		AutoRunOnLink: cfg.Iperf.AutoRunOnLink, Server: cfg.Iperf.Server, Port: cfg.Iperf.Port,
 		Protocol: cfg.Iperf.Protocol, Direction: cfg.Iperf.Direction, Duration: cfg.Iperf.Duration,
@@ -357,7 +363,10 @@ func (ps *ProfileSettings) extractTestOptionsFrom(cfg *Config) {
 		RunSpeedtest: cfg.FABOptions.RunSpeedtest, RunIperf: cfg.FABOptions.RunIperf,
 		RunPerformance: cfg.FABOptions.RunPerformance, AutoScanOnLink: cfg.FABOptions.AutoScanOnLink,
 	}
-	ps.DisplayOptions = ProfileDisplayOptions{ShowPublicIP: cfg.DisplayOptions.ShowPublicIP, UnitSystem: cfg.DisplayOptions.UnitSystem}
+	ps.DisplayOptions = ProfileDisplayOptions{
+		ShowPublicIP: cfg.DisplayOptions.ShowPublicIP,
+		UnitSystem:   cfg.DisplayOptions.UnitSystem,
+	}
 }
 
 // extractNetworkSettingsFrom extracts DNS, SNMP, and network discovery settings from config.
@@ -366,7 +375,12 @@ func (ps *ProfileSettings) extractNetworkSettingsFrom(cfg *Config) {
 	for _, ds := range cfg.DNS.Servers {
 		ps.DNS.Servers = append(ps.DNS.Servers, ProfileDNSServer(ds))
 	}
-	ps.SNMP = ProfileSNMP{Communities: cfg.SNMP.Communities, Timeout: cfg.SNMP.Timeout.Milliseconds(), Retries: cfg.SNMP.Retries, Port: cfg.SNMP.Port}
+	ps.SNMP = ProfileSNMP{
+		Communities: cfg.SNMP.Communities,
+		Timeout:     cfg.SNMP.Timeout.Milliseconds(),
+		Retries:     cfg.SNMP.Retries,
+		Port:        cfg.SNMP.Port,
+	}
 	for i := range cfg.SNMP.V3Credentials {
 		v3 := &cfg.SNMP.V3Credentials[i]
 		ps.SNMP.V3Credentials = append(ps.SNMP.V3Credentials, ProfileSNMPv3Credential{
@@ -376,14 +390,19 @@ func (ps *ProfileSettings) extractNetworkSettingsFrom(cfg *Config) {
 	}
 	ps.NetworkDiscovery = ProfileNetworkDiscovery{
 		Enabled: cfg.NetworkDiscovery.Enabled, AutoScan: cfg.NetworkDiscovery.AutoScan,
-		ScanIntervalSecs: int64(cfg.NetworkDiscovery.ScanInterval.Seconds()), IPv6Enabled: cfg.NetworkDiscovery.IPv6Enabled,
+		ScanIntervalSecs: int64(
+			cfg.NetworkDiscovery.ScanInterval.Seconds(),
+		), IPv6Enabled: cfg.NetworkDiscovery.IPv6Enabled,
 		Fingerprinting: ProfileFingerprintingConfig{
 			Enabled: cfg.NetworkDiscovery.Fingerprinting.Enabled, OSDetection: cfg.NetworkDiscovery.Fingerprinting.OSDetection,
 			ServiceProbes: cfg.NetworkDiscovery.Fingerprinting.ServiceProbes,
 		},
 	}
 	for _, sn := range cfg.NetworkDiscovery.AdditionalSubnets {
-		ps.NetworkDiscovery.AdditionalSubnets = append(ps.NetworkDiscovery.AdditionalSubnets, ProfileSubnet(sn))
+		ps.NetworkDiscovery.AdditionalSubnets = append(
+			ps.NetworkDiscovery.AdditionalSubnets,
+			ProfileSubnet(sn),
+		)
 	}
 }
 
@@ -395,22 +414,50 @@ func (ps *ProfileSettings) applyThresholdsTo(cfg *Config) {
 	cfg.Thresholds.Ping.Critical = time.Duration(ps.Thresholds.Gateway.Critical) * time.Millisecond
 	cfg.Thresholds.WiFi.Signal.Warning = ps.Thresholds.WiFi.Warning
 	cfg.Thresholds.WiFi.Signal.Critical = ps.Thresholds.WiFi.Critical
-	cfg.Thresholds.CustomTests.Ping.Warning = time.Duration(ps.Thresholds.CustomPing.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.Ping.Critical = time.Duration(ps.Thresholds.CustomPing.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.TCP.Warning = time.Duration(ps.Thresholds.CustomTCP.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.TCP.Critical = time.Duration(ps.Thresholds.CustomTCP.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTP.Warning = time.Duration(ps.Thresholds.CustomHTTP.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTP.Critical = time.Duration(ps.Thresholds.CustomHTTP.Critical) * time.Millisecond
+	cfg.Thresholds.CustomTests.Ping.Warning = time.Duration(
+		ps.Thresholds.CustomPing.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.Ping.Critical = time.Duration(
+		ps.Thresholds.CustomPing.Critical,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.TCP.Warning = time.Duration(
+		ps.Thresholds.CustomTCP.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.TCP.Critical = time.Duration(
+		ps.Thresholds.CustomTCP.Critical,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTP.Warning = time.Duration(
+		ps.Thresholds.CustomHTTP.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTP.Critical = time.Duration(
+		ps.Thresholds.CustomHTTP.Critical,
+	) * time.Millisecond
 
 	// HTTP Timings
-	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(ps.Thresholds.HTTPTimings.DNS.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(ps.Thresholds.HTTPTimings.DNS.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(ps.Thresholds.HTTPTimings.TCP.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(ps.Thresholds.HTTPTimings.TCP.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(ps.Thresholds.HTTPTimings.TLS.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(ps.Thresholds.HTTPTimings.TLS.Critical) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(ps.Thresholds.HTTPTimings.TTFB.Warning) * time.Millisecond
-	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(ps.Thresholds.HTTPTimings.TTFB.Critical) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(
+		ps.Thresholds.HTTPTimings.DNS.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(
+		ps.Thresholds.HTTPTimings.DNS.Critical,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(
+		ps.Thresholds.HTTPTimings.TCP.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(
+		ps.Thresholds.HTTPTimings.TCP.Critical,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(
+		ps.Thresholds.HTTPTimings.TLS.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(
+		ps.Thresholds.HTTPTimings.TLS.Critical,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(
+		ps.Thresholds.HTTPTimings.TTFB.Warning,
+	) * time.Millisecond
+	cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(
+		ps.Thresholds.HTTPTimings.TTFB.Critical,
+	) * time.Millisecond
 }
 
 // applyHealthChecksTo applies health check settings from profile to config.
@@ -534,16 +581,25 @@ func (ps *ProfileSettings) applyNetworkSettingsTo(cfg *Config) {
 	cfg.NetworkDiscovery.Enabled = ps.NetworkDiscovery.Enabled
 	cfg.NetworkDiscovery.AutoScan = ps.NetworkDiscovery.AutoScan
 	if ps.NetworkDiscovery.ScanIntervalSecs > 0 {
-		cfg.NetworkDiscovery.ScanInterval = time.Duration(ps.NetworkDiscovery.ScanIntervalSecs) * time.Second
+		cfg.NetworkDiscovery.ScanInterval = time.Duration(
+			ps.NetworkDiscovery.ScanIntervalSecs,
+		) * time.Second
 	}
 	cfg.NetworkDiscovery.IPv6Enabled = ps.NetworkDiscovery.IPv6Enabled
 	cfg.NetworkDiscovery.Fingerprinting.Enabled = ps.NetworkDiscovery.Fingerprinting.Enabled
 	cfg.NetworkDiscovery.Fingerprinting.OSDetection = ps.NetworkDiscovery.Fingerprinting.OSDetection
 	cfg.NetworkDiscovery.Fingerprinting.ServiceProbes = ps.NetworkDiscovery.Fingerprinting.ServiceProbes
 
-	cfg.NetworkDiscovery.AdditionalSubnets = make([]SubnetConfig, 0, len(ps.NetworkDiscovery.AdditionalSubnets))
+	cfg.NetworkDiscovery.AdditionalSubnets = make(
+		[]SubnetConfig,
+		0,
+		len(ps.NetworkDiscovery.AdditionalSubnets),
+	)
 	for _, sn := range ps.NetworkDiscovery.AdditionalSubnets {
-		cfg.NetworkDiscovery.AdditionalSubnets = append(cfg.NetworkDiscovery.AdditionalSubnets, SubnetConfig(sn))
+		cfg.NetworkDiscovery.AdditionalSubnets = append(
+			cfg.NetworkDiscovery.AdditionalSubnets,
+			SubnetConfig(sn),
+		)
 	}
 }
 
@@ -624,7 +680,9 @@ func (ps *ProfileSettings) AddWiFiInterface(name string, enabled bool) {
 func (ps *ProfileSettings) RemoveEthernetInterface(name string) {
 	for i, iface := range ps.Interfaces.Ethernet {
 		if iface.Name == name {
-			ps.Interfaces.Ethernet = append(ps.Interfaces.Ethernet[:i], ps.Interfaces.Ethernet[i+1:]...)
+			ps.Interfaces.Ethernet = append(
+				ps.Interfaces.Ethernet[:i],
+				ps.Interfaces.Ethernet[i+1:]...)
 			// Clear active if we removed the active interface
 			if ps.Interfaces.ActiveEthernet == name {
 				ps.Interfaces.ActiveEthernet = ""

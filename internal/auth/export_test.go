@@ -19,7 +19,7 @@ func (m *Manager) ManagerUsername() string {
 }
 
 // ManagerSessionTimeout returns the sessionTimeout from a Manager for testing.
-func (m *Manager) ManagerSessionTimeout() interface{} {
+func (m *Manager) ManagerSessionTimeout() any {
 	return m.sessionTimeout
 }
 

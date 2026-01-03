@@ -207,12 +207,18 @@ func (s *Server) applyDNSSettings(req *TestsSettingsResponse) {
 
 	s.config.DNS.Servers = make([]config.DNSServer, 0, len(req.DNSServers))
 	for _, d := range req.DNSServers {
-		s.config.DNS.Servers = append(s.config.DNS.Servers, config.DNSServer{Address: d.Address, Enabled: d.Enabled})
+		s.config.DNS.Servers = append(
+			s.config.DNS.Servers,
+			config.DNSServer{Address: d.Address, Enabled: d.Enabled},
+		)
 	}
 	if s.dnsTester != nil {
 		configuredServers := make([]dns.ConfiguredServer, 0, len(s.config.DNS.Servers))
 		for _, d := range s.config.DNS.Servers {
-			configuredServers = append(configuredServers, dns.ConfiguredServer{Address: d.Address, Enabled: d.Enabled})
+			configuredServers = append(
+				configuredServers,
+				dns.ConfiguredServer{Address: d.Address, Enabled: d.Enabled},
+			)
 		}
 		s.dnsTester.SetConfiguredServers(configuredServers)
 	}
@@ -222,22 +228,39 @@ func (s *Server) applyDNSSettings(req *TestsSettingsResponse) {
 func (s *Server) applyTestTargets(req *TestsSettingsResponse) {
 	s.config.HealthChecks.PingTargets = make([]config.PingTarget, 0, len(req.PingTargets))
 	for _, p := range req.PingTargets {
-		s.config.HealthChecks.PingTargets = append(s.config.HealthChecks.PingTargets, config.PingTarget{Name: p.Name, Host: p.Host, Enabled: p.Enabled})
+		s.config.HealthChecks.PingTargets = append(
+			s.config.HealthChecks.PingTargets,
+			config.PingTarget{Name: p.Name, Host: p.Host, Enabled: p.Enabled},
+		)
 	}
 
 	s.config.HealthChecks.TCPPorts = make([]config.TCPPortTest, 0, len(req.TCPPorts))
 	for _, t := range req.TCPPorts {
-		s.config.HealthChecks.TCPPorts = append(s.config.HealthChecks.TCPPorts, config.TCPPortTest{Name: t.Name, Host: t.Host, Port: t.Port, Enabled: t.Enabled})
+		s.config.HealthChecks.TCPPorts = append(
+			s.config.HealthChecks.TCPPorts,
+			config.TCPPortTest{Name: t.Name, Host: t.Host, Port: t.Port, Enabled: t.Enabled},
+		)
 	}
 
 	s.config.HealthChecks.UDPPorts = make([]config.UDPPortTest, 0, len(req.UDPPorts))
 	for _, u := range req.UDPPorts {
-		s.config.HealthChecks.UDPPorts = append(s.config.HealthChecks.UDPPorts, config.UDPPortTest{Name: u.Name, Host: u.Host, Port: u.Port, Enabled: u.Enabled})
+		s.config.HealthChecks.UDPPorts = append(
+			s.config.HealthChecks.UDPPorts,
+			config.UDPPortTest{Name: u.Name, Host: u.Host, Port: u.Port, Enabled: u.Enabled},
+		)
 	}
 
 	s.config.HealthChecks.HTTPEndpoints = make([]config.HTTPEndpoint, 0, len(req.HTTPEndpoints))
 	for _, h := range req.HTTPEndpoints {
-		s.config.HealthChecks.HTTPEndpoints = append(s.config.HealthChecks.HTTPEndpoints, config.HTTPEndpoint{Name: h.Name, URL: h.URL, ExpectedStatus: h.ExpectedStatus, Enabled: h.Enabled})
+		s.config.HealthChecks.HTTPEndpoints = append(
+			s.config.HealthChecks.HTTPEndpoints,
+			config.HTTPEndpoint{
+				Name:           h.Name,
+				URL:            h.URL,
+				ExpectedStatus: h.ExpectedStatus,
+				Enabled:        h.Enabled,
+			},
+		)
 	}
 }
 
@@ -266,7 +289,14 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	var req TestsSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
@@ -279,11 +309,23 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.settings.saveFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"),
+			"",
+		)
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "success", "message": "Health checks settings updated"})
+	sendJSONResponse(
+		w,
+		logger,
+		http.StatusOK,
+		map[string]string{"status": "success", "message": "Health checks settings updated"},
+	)
 }
 
 // ============================================================================
@@ -361,8 +403,10 @@ func (s *Server) handleHealthChecks(w http.ResponseWriter, r *http.Request) {
 		HTTPResults: s.runHTTPTests(r.Context(), logger),
 	}
 
-	result.HasTests = len(s.config.HealthChecks.PingTargets) > 0 || len(s.config.HealthChecks.TCPPorts) > 0 ||
-		len(s.config.HealthChecks.UDPPorts) > 0 || len(s.config.HealthChecks.HTTPEndpoints) > 0
+	result.HasTests = len(s.config.HealthChecks.PingTargets) > 0 ||
+		len(s.config.HealthChecks.TCPPorts) > 0 ||
+		len(s.config.HealthChecks.UDPPorts) > 0 ||
+		len(s.config.HealthChecks.HTTPEndpoints) > 0
 
 	sendJSONResponse(w, logger, http.StatusOK, result)
 }
@@ -415,7 +459,11 @@ func (s *Server) evaluatePingStatus(stats *PingStats, threshold config.Threshold
 	case stats.PacketLoss > 10:
 		return statusWarning
 	default:
-		return getTestStatus(stats.AvgLatency, threshold.Warning.Milliseconds(), threshold.Critical.Milliseconds())
+		return getTestStatus(
+			stats.AvgLatency,
+			threshold.Warning.Milliseconds(),
+			threshold.Critical.Milliseconds(),
+		)
 	}
 }
 
@@ -687,7 +735,10 @@ func (s *Server) runHTTPTests(ctx context.Context, logger *slog.Logger) []Custom
 }
 
 // runSingleHTTPTest runs a single HTTP endpoint test.
-func (s *Server) runSingleHTTPTest(ctx context.Context, endpoint config.HTTPEndpoint) CustomTestResult {
+func (s *Server) runSingleHTTPTest(
+	ctx context.Context,
+	endpoint config.HTTPEndpoint,
+) CustomTestResult {
 	thresholds := s.config.Thresholds.CustomTests
 
 	url, tryHTTPFallback := normalizeHTTPURL(endpoint.URL)
@@ -891,7 +942,11 @@ type CertInfo struct {
 }
 
 // evaluateCertExpiry checks certificate expiry and updates test result.
-func (s *Server) evaluateCertExpiry(result *CustomTestResult, url string, threshold config.CertExpiryThreshold) {
+func (s *Server) evaluateCertExpiry(
+	result *CustomTestResult,
+	url string,
+	threshold config.CertExpiryThreshold,
+) {
 	certInfo := checkCertExpiry(url, threshold.Warning, threshold.Critical)
 	result.CertDaysLeft = certInfo.DaysLeft
 	result.CertStatus = certInfo.Status
@@ -933,7 +988,9 @@ func checkCertExpiry(url string, warningDays, criticalDays int) CertInfo {
 	}
 
 	// #nosec G402 - certificate verification intentionally skipped to inspect expiry
-	tlsConfig := &tls.Config{InsecureSkipVerify: true} // We want to check expiry even for self-signed
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	} // We want to check expiry even for self-signed
 	conn := tls.Client(rawConn, tlsConfig)
 	if hsErr := conn.HandshakeContext(ctx); hsErr != nil {
 		_ = rawConn.Close()

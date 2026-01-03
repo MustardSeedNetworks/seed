@@ -14,18 +14,20 @@ import (
 
 func TestRequestIDMiddleware(t *testing.T) {
 	t.Run("generates request ID when not provided", func(t *testing.T) {
-		handler := logging.RequestIDMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Verify request ID is in context
-			requestID := logging.RequestIDFromContext(r.Context())
-			if requestID == "" {
-				t.Error("RequestIDMiddleware did not add request ID to context")
-			}
-			// Verify it's a valid hex string (16 chars)
-			if len(requestID) != 16 {
-				t.Errorf("Request ID has wrong length: got %d, want 16", len(requestID))
-			}
-			w.WriteHeader(http.StatusOK)
-		}))
+		handler := logging.RequestIDMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Verify request ID is in context
+				requestID := logging.RequestIDFromContext(r.Context())
+				if requestID == "" {
+					t.Error("RequestIDMiddleware did not add request ID to context")
+				}
+				// Verify it's a valid hex string (16 chars)
+				if len(requestID) != 16 {
+					t.Errorf("Request ID has wrong length: got %d, want 16", len(requestID))
+				}
+				w.WriteHeader(http.StatusOK)
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 		rr := httptest.NewRecorder()
@@ -43,10 +45,12 @@ func TestRequestIDMiddleware(t *testing.T) {
 		expectedID := "client-provided-id"
 		var contextID string
 
-		handler := logging.RequestIDMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			contextID = logging.RequestIDFromContext(r.Context())
-			w.WriteHeader(http.StatusOK)
-		}))
+		handler := logging.RequestIDMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				contextID = logging.RequestIDFromContext(r.Context())
+				w.WriteHeader(http.StatusOK)
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 		req.Header.Set(logging.RequestIDHeader, expectedID)
@@ -70,10 +74,12 @@ func TestRequestIDMiddleware(t *testing.T) {
 		badID := strings.Repeat("a", 70) + "@"
 		var contextID string
 
-		handler := logging.RequestIDMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			contextID = logging.RequestIDFromContext(r.Context())
-			w.WriteHeader(http.StatusOK)
-		}))
+		handler := logging.RequestIDMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				contextID = logging.RequestIDFromContext(r.Context())
+				w.WriteHeader(http.StatusOK)
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 		req.Header.Set(logging.RequestIDHeader, badID)
@@ -85,14 +91,19 @@ func TestRequestIDMiddleware(t *testing.T) {
 			t.Errorf("Expected invalid request ID to be replaced, still got %q", contextID)
 		}
 		if rr.Header().Get(logging.RequestIDHeader) == badID {
-			t.Errorf("Response header should not echo invalid ID, got %q", rr.Header().Get(logging.RequestIDHeader))
+			t.Errorf(
+				"Response header should not echo invalid ID, got %q",
+				rr.Header().Get(logging.RequestIDHeader),
+			)
 		}
 	})
 
 	t.Run("sets response header", func(t *testing.T) {
-		handler := logging.RequestIDMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		}))
+		handler := logging.RequestIDMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 		rr := httptest.NewRecorder()
@@ -152,10 +163,12 @@ func TestLoggingMiddleware(t *testing.T) {
 	t.Run("logs request details", func(t *testing.T) {
 		buf.Reset()
 
-		handler := logging.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte("OK"))
-		}))
+		handler := logging.LoggingMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("OK"))
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.Header.Set("User-Agent", "test-agent")
@@ -186,9 +199,11 @@ func TestLoggingMiddleware(t *testing.T) {
 	t.Run("skips health check endpoints", func(t *testing.T) {
 		buf.Reset()
 
-		handler := logging.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		}))
+		handler := logging.LoggingMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}),
+		)
 
 		// Test /api/health
 		req := httptest.NewRequest(http.MethodGet, "/api/health", http.NoBody)
@@ -214,9 +229,11 @@ func TestLoggingMiddleware(t *testing.T) {
 	t.Run("captures correct status code", func(t *testing.T) {
 		buf.Reset()
 
-		handler := logging.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
-		}))
+		handler := logging.LoggingMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/notfound", http.NoBody)
 		rr := httptest.NewRecorder()
@@ -230,10 +247,12 @@ func TestLoggingMiddleware(t *testing.T) {
 	t.Run("handles Write without WriteHeader", func(t *testing.T) {
 		buf.Reset()
 
-		handler := logging.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			// Write without explicitly calling WriteHeader
-			_, _ = w.Write([]byte("OK"))
-		}))
+		handler := logging.LoggingMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				// Write without explicitly calling WriteHeader
+				_, _ = w.Write([]byte("OK"))
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		rr := httptest.NewRecorder()
@@ -249,9 +268,13 @@ func TestLoggingMiddleware(t *testing.T) {
 		buf.Reset()
 
 		// Wrap with RequestIDMiddleware first
-		handler := logging.RequestIDMiddleware(logging.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})))
+		handler := logging.RequestIDMiddleware(
+			logging.LoggingMiddleware(
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}),
+			),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.Header.Set(logging.RequestIDHeader, "test-request-123")
@@ -348,9 +371,11 @@ func TestLoggingMiddleware_ClientIP(t *testing.T) {
 	t.Run("logs X-Forwarded-For IP", func(t *testing.T) {
 		buf.Reset()
 
-		handler := logging.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		}))
+		handler := logging.LoggingMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.Header.Set("X-Forwarded-For", "203.0.113.195, 70.41.3.18, 150.172.238.178")
@@ -368,9 +393,11 @@ func TestLoggingMiddleware_ClientIP(t *testing.T) {
 	t.Run("logs X-Real-IP", func(t *testing.T) {
 		buf.Reset()
 
-		handler := logging.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		}))
+		handler := logging.LoggingMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}),
+		)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.Header.Set("X-Real-IP", "192.168.1.100")

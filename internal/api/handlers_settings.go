@@ -64,17 +64,47 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 func (s *Server) buildThresholdSettings() map[string]any {
 	t := &s.config.Thresholds
 	return map[string]any{
-		"dns":        map[string]int64{"good": t.DNS.Warning.Milliseconds(), "warning": t.DNS.Critical.Milliseconds()},
-		"gateway":    map[string]int64{"good": t.Ping.Warning.Milliseconds(), "warning": t.Ping.Critical.Milliseconds()},
-		"wifi":       map[string]int{"good": t.WiFi.Signal.Warning, "warning": t.WiFi.Signal.Critical},
-		"customPing": map[string]int64{"good": t.CustomTests.Ping.Warning.Milliseconds(), "warning": t.CustomTests.Ping.Critical.Milliseconds()},
-		"customTcp":  map[string]int64{"good": t.CustomTests.TCP.Warning.Milliseconds(), "warning": t.CustomTests.TCP.Critical.Milliseconds()},
-		"customHttp": map[string]int64{"good": t.CustomTests.HTTP.Warning.Milliseconds(), "warning": t.CustomTests.HTTP.Critical.Milliseconds()},
+		"dns": map[string]int64{
+			"good":    t.DNS.Warning.Milliseconds(),
+			"warning": t.DNS.Critical.Milliseconds(),
+		},
+		"gateway": map[string]int64{
+			"good":    t.Ping.Warning.Milliseconds(),
+			"warning": t.Ping.Critical.Milliseconds(),
+		},
+		"wifi": map[string]int{
+			"good":    t.WiFi.Signal.Warning,
+			"warning": t.WiFi.Signal.Critical,
+		},
+		"customPing": map[string]int64{
+			"good":    t.CustomTests.Ping.Warning.Milliseconds(),
+			"warning": t.CustomTests.Ping.Critical.Milliseconds(),
+		},
+		"customTcp": map[string]int64{
+			"good":    t.CustomTests.TCP.Warning.Milliseconds(),
+			"warning": t.CustomTests.TCP.Critical.Milliseconds(),
+		},
+		"customHttp": map[string]int64{
+			"good":    t.CustomTests.HTTP.Warning.Milliseconds(),
+			"warning": t.CustomTests.HTTP.Critical.Milliseconds(),
+		},
 		"httpTimings": map[string]map[string]int64{
-			"dns":  {"good": t.CustomTests.HTTPTimings.DNS.Warning.Milliseconds(), "warning": t.CustomTests.HTTPTimings.DNS.Critical.Milliseconds()},
-			"tcp":  {"good": t.CustomTests.HTTPTimings.TCP.Warning.Milliseconds(), "warning": t.CustomTests.HTTPTimings.TCP.Critical.Milliseconds()},
-			"tls":  {"good": t.CustomTests.HTTPTimings.TLS.Warning.Milliseconds(), "warning": t.CustomTests.HTTPTimings.TLS.Critical.Milliseconds()},
-			"ttfb": {"good": t.CustomTests.HTTPTimings.TTFB.Warning.Milliseconds(), "warning": t.CustomTests.HTTPTimings.TTFB.Critical.Milliseconds()},
+			"dns": {
+				"good":    t.CustomTests.HTTPTimings.DNS.Warning.Milliseconds(),
+				"warning": t.CustomTests.HTTPTimings.DNS.Critical.Milliseconds(),
+			},
+			"tcp": {
+				"good":    t.CustomTests.HTTPTimings.TCP.Warning.Milliseconds(),
+				"warning": t.CustomTests.HTTPTimings.TCP.Critical.Milliseconds(),
+			},
+			"tls": {
+				"good":    t.CustomTests.HTTPTimings.TLS.Warning.Milliseconds(),
+				"warning": t.CustomTests.HTTPTimings.TLS.Critical.Milliseconds(),
+			},
+			"ttfb": {
+				"good":    t.CustomTests.HTTPTimings.TTFB.Warning.Milliseconds(),
+				"warning": t.CustomTests.HTTPTimings.TTFB.Critical.Milliseconds(),
+			},
 		},
 	}
 }
@@ -100,20 +130,34 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 	defer s.config.RUnlock()
 
 	settings := map[string]any{
-		"interface":    map[string]any{"current": s.config.Interface.Default, "available": []string{}},
-		"vlan":         map[string]any{"enabled": s.config.VLAN.Enabled, "id": s.config.VLAN.ID},
-		"ip":           map[string]any{"mode": s.config.IP.Mode},
-		"thresholds":   s.buildThresholdSettings(),
-		"healthChecks": map[string]any{"runPerformance": true, "runSpeedtest": true, "runIperf": false, "runDiscovery": true},
-		"speedtest":    map[string]any{"serverId": s.config.Speedtest.ServerID, "autoRunOnLink": true},
+		"interface": map[string]any{
+			"current":   s.config.Interface.Default,
+			"available": []string{},
+		},
+		"vlan":       map[string]any{"enabled": s.config.VLAN.Enabled, "id": s.config.VLAN.ID},
+		"ip":         map[string]any{"mode": s.config.IP.Mode},
+		"thresholds": s.buildThresholdSettings(),
+		"healthChecks": map[string]any{
+			"runPerformance": true,
+			"runSpeedtest":   true,
+			"runIperf":       false,
+			"runDiscovery":   true,
+		},
+		"speedtest": map[string]any{
+			"serverId":      s.config.Speedtest.ServerID,
+			"autoRunOnLink": true,
+		},
 		"iperf": map[string]any{
 			"autoRunOnLink": s.config.Iperf.AutoRunOnLink, "server": s.config.Iperf.Server,
 			"port": s.config.Iperf.Port, "protocol": s.config.Iperf.Protocol,
 			"direction": s.config.Iperf.Direction, "duration": s.config.Iperf.Duration,
 			"serverPort": s.config.Iperf.ServerPort, "enableServer": s.config.Iperf.EnableServer,
 		},
-		"cardSettings":   buildCardSettings(),
-		"displayOptions": map[string]any{"showPublicIP": s.config.DisplayOptions.ShowPublicIP, "unitSystem": s.config.DisplayOptions.UnitSystem},
+		"cardSettings": buildCardSettings(),
+		"displayOptions": map[string]any{
+			"showPublicIP": s.config.DisplayOptions.ShowPublicIP,
+			"unitSystem":   s.config.DisplayOptions.UnitSystem,
+		},
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, settings)
@@ -129,7 +173,14 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var updates map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"Invalid request body",
+			"",
+		)
 		return
 	}
 
@@ -165,7 +216,14 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if len(applyErrors) > 0 {
 		logger.Warn("Invalid settings format", "errors", applyErrors)
 		errMsg := "Invalid settings format. Check server logs for details."
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, errMsg, "") // fixes #H7
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			errMsg,
+			"",
+		) // fixes #H7
 		return
 	}
 
@@ -206,7 +264,11 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 		defaultProfile, getDefaultErr := s.db.Profiles().GetDefault(ctx)
 		if getDefaultErr != nil {
 			// No profile exists - this is not an error, just nothing to save to
-			logger.Debug("No active or default profile to save settings to", "reason", getDefaultErr.Error())
+			logger.Debug(
+				"No active or default profile to save settings to",
+				"reason",
+				getDefaultErr.Error(),
+			)
 			return nil
 		}
 		activeID = defaultProfile.ID
@@ -215,7 +277,13 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 	// Get the profile
 	profile, err := s.db.Profiles().Get(ctx, activeID)
 	if err != nil {
-		logger.Warn("Failed to get active profile for settings save", "error", err, "profile_id", activeID)
+		logger.Warn(
+			"Failed to get active profile for settings save",
+			"error",
+			err,
+			"profile_id",
+			activeID,
+		)
 		return nil
 	}
 
@@ -241,11 +309,23 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 	// Update profile
 	profile.ConfigJSON = configJSON
 	if updateErr := s.db.Profiles().Update(ctx, profile); updateErr != nil {
-		logger.Error("Failed to save settings to profile", "error", updateErr, "profile_id", profile.ID)
+		logger.Error(
+			"Failed to save settings to profile",
+			"error",
+			updateErr,
+			"profile_id",
+			profile.ID,
+		)
 		return updateErr
 	}
 
-	logger.Debug("Saved settings to active profile", "profile_id", profile.ID, "profile_name", profile.Name)
+	logger.Debug(
+		"Saved settings to active profile",
+		"profile_id",
+		profile.ID,
+		"profile_name",
+		profile.Name,
+	)
 	return nil
 }
 
@@ -487,7 +567,9 @@ func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) er
 			if !goodOK {
 				return errors.New("thresholds.httpTimings.dns.good must be a number")
 			}
-			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(good) * time.Millisecond
+			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Warning = time.Duration(
+				good,
+			) * time.Millisecond
 		}
 
 		// Validate "warning" field if present
@@ -496,7 +578,9 @@ func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) er
 			if !warnOK {
 				return errors.New("thresholds.httpTimings.dns.warning must be a number")
 			}
-			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(warning) * time.Millisecond
+			cfg.Thresholds.CustomTests.HTTPTimings.DNS.Critical = time.Duration(
+				warning,
+			) * time.Millisecond
 		}
 	}
 
@@ -513,7 +597,9 @@ func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) er
 			if !goodOK {
 				return errors.New("thresholds.httpTimings.tcp.good must be a number")
 			}
-			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(good) * time.Millisecond
+			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Warning = time.Duration(
+				good,
+			) * time.Millisecond
 		}
 
 		// Validate "warning" field if present
@@ -522,7 +608,9 @@ func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) er
 			if !warnOK {
 				return errors.New("thresholds.httpTimings.tcp.warning must be a number")
 			}
-			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(warning) * time.Millisecond
+			cfg.Thresholds.CustomTests.HTTPTimings.TCP.Critical = time.Duration(
+				warning,
+			) * time.Millisecond
 		}
 	}
 
@@ -539,7 +627,9 @@ func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) er
 			if !goodOK {
 				return errors.New("thresholds.httpTimings.tls.good must be a number")
 			}
-			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(good) * time.Millisecond
+			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Warning = time.Duration(
+				good,
+			) * time.Millisecond
 		}
 
 		// Validate "warning" field if present
@@ -548,7 +638,9 @@ func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) er
 			if !warnOK {
 				return errors.New("thresholds.httpTimings.tls.warning must be a number")
 			}
-			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(warning) * time.Millisecond
+			cfg.Thresholds.CustomTests.HTTPTimings.TLS.Critical = time.Duration(
+				warning,
+			) * time.Millisecond
 		}
 	}
 
@@ -565,7 +657,9 @@ func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) er
 			if !goodOK {
 				return errors.New("thresholds.httpTimings.ttfb.good must be a number")
 			}
-			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(good) * time.Millisecond
+			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Warning = time.Duration(
+				good,
+			) * time.Millisecond
 		}
 
 		// Validate "warning" field if present
@@ -574,7 +668,9 @@ func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) er
 			if !warnOK {
 				return errors.New("thresholds.httpTimings.ttfb.warning must be a number")
 			}
-			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(warning) * time.Millisecond
+			cfg.Thresholds.CustomTests.HTTPTimings.TTFB.Critical = time.Duration(
+				warning,
+			) * time.Millisecond
 		}
 	}
 	return nil
@@ -946,7 +1042,14 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 	var updates config.ProfileLinkSettings
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		logger.Warn("Invalid link settings request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"Invalid request body",
+			"",
+		)
 		return
 	}
 
@@ -956,7 +1059,14 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 		"1000/full": true, "2500/full": true, "5000/full": true, "10000/full": true,
 	}
 	if updates.Mode != "" && !validModes[updates.Mode] {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, "Invalid mode value", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			"Invalid mode value",
+			"",
+		)
 		return
 	}
 
@@ -1052,7 +1162,14 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 	var updates config.ProfileCableTestSettings
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		logger.Warn("Invalid cable test settings request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"Invalid request body",
+			"",
+		)
 		return
 	}
 
@@ -1135,7 +1252,11 @@ func (s *Server) saveActiveProfileSettings(
 		// Try to get default profile
 		defaultProfile, getErr := s.db.Profiles().GetDefault(ctx)
 		if getErr != nil {
-			logger.Debug("No active or default profile to save settings to", "reason", getErr.Error())
+			logger.Debug(
+				"No active or default profile to save settings to",
+				"reason",
+				getErr.Error(),
+			)
 			return nil
 		}
 		activeID = defaultProfile.ID
@@ -1156,10 +1277,22 @@ func (s *Server) saveActiveProfileSettings(
 	// Update profile
 	profile.ConfigJSON = configJSON
 	if updateErr := s.db.Profiles().Update(ctx, profile); updateErr != nil {
-		logger.Error("Failed to save settings to profile", "error", updateErr, "profile_id", profile.ID)
+		logger.Error(
+			"Failed to save settings to profile",
+			"error",
+			updateErr,
+			"profile_id",
+			profile.ID,
+		)
 		return updateErr
 	}
 
-	logger.Debug("Saved settings to active profile", "profile_id", profile.ID, "profile_name", profile.Name)
+	logger.Debug(
+		"Saved settings to active profile",
+		"profile_id",
+		profile.ID,
+		"profile_name",
+		profile.Name,
+	)
 	return nil
 }
