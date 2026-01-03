@@ -1,4 +1,4 @@
-package config
+package config_test
 
 import (
 	"errors"
@@ -6,10 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 func TestDefaultConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	if cfg == nil {
 		t.Fatal("DefaultConfig returned nil")
 	}
@@ -60,7 +62,7 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestLoadNonExistentFile(t *testing.T) {
-	cfg, err := Load("/nonexistent/path/config.yaml")
+	cfg, err := config.Load("/nonexistent/path/config.yaml")
 	if err != nil {
 		t.Fatalf("expected no error for non-existent file, got %v", err)
 	}
@@ -79,7 +81,7 @@ func TestLoadAndSave(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "test-config.yaml")
 
 	// Create and save config
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Server.Port = 9999
 	cfg.Interface.Default = "test0"
 	cfg.Auth.DefaultUsername = "testuser"
@@ -94,7 +96,7 @@ func TestLoadAndSave(t *testing.T) {
 	}
 
 	// Load config and verify values
-	loaded, err := Load(configPath)
+	loaded, err := config.Load(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -119,14 +121,14 @@ func TestLoadInvalidYAML(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	_, err := Load(configPath)
+	_, err := config.Load(configPath)
 	if err == nil {
 		t.Error("expected error for invalid YAML")
 	}
 }
 
 func TestThresholdDefaults(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	// DHCP thresholds
 	if cfg.Thresholds.DHCP.Total.Warning != 500*time.Millisecond {
@@ -165,11 +167,11 @@ func TestEnsureConfigFirstBoot(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "new-config.yaml")
 
 	// First boot - no existing config file
-	cfg, result, err := EnsureConfig(configPath, nil)
+	cfg, result, err := config.EnsureConfig(configPath, nil)
 
-	// Should return ErrInsecureCredentials because password hash is empty
-	if !errors.Is(err, ErrInsecureCredentials) {
-		t.Errorf("expected ErrInsecureCredentials for first boot, got %v", err)
+	// Should return config.ErrInsecureCredentials because password hash is empty
+	if !errors.Is(err, config.ErrInsecureCredentials) {
+		t.Errorf("expected config.ErrInsecureCredentials for first boot, got %v", err)
 	}
 	if cfg == nil {
 		t.Fatal("expected config even with error")
@@ -190,7 +192,7 @@ func TestEnsureConfigDetectsInsecurePassword(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "insecure-config.yaml")
 
 	// Create config with a known insecure password hash
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "$2a$10$InsecureHashThatWillBeDetected"
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("failed to save initial config: %v", err)
@@ -199,10 +201,10 @@ func TestEnsureConfigDetectsInsecurePassword(t *testing.T) {
 	// checkDefaultPassword function that always returns true (simulates insecure)
 	checkInsecure := func(_ string) bool { return true }
 
-	_, result, err := EnsureConfig(configPath, checkInsecure)
+	_, result, err := config.EnsureConfig(configPath, checkInsecure)
 
-	if !errors.Is(err, ErrInsecureCredentials) {
-		t.Errorf("expected ErrInsecureCredentials for insecure password, got %v", err)
+	if !errors.Is(err, config.ErrInsecureCredentials) {
+		t.Errorf("expected config.ErrInsecureCredentials for insecure password, got %v", err)
 	}
 	if result == nil {
 		t.Fatal("expected result")
@@ -220,7 +222,7 @@ func TestEnsureConfigSecurePassword(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "secure-config.yaml")
 
 	// Create config with a secure password hash
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "$2a$10$SecureHashThatIsNotDefault"
 	cfg.Auth.JWTSecret = "existing-secure-secret"
 	if err := cfg.Save(configPath); err != nil {
@@ -230,7 +232,7 @@ func TestEnsureConfigSecurePassword(t *testing.T) {
 	// checkDefaultPassword function that returns false (not insecure)
 	checkSecure := func(_ string) bool { return false }
 
-	loadedCfg, result, err := EnsureConfig(configPath, checkSecure)
+	loadedCfg, result, err := config.EnsureConfig(configPath, checkSecure)
 	if err != nil {
 		t.Errorf("expected no error for secure config, got %v", err)
 	}
@@ -250,7 +252,7 @@ func TestEnsureConfigEmptyJWTSecret(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "empty-jwt-config.yaml")
 
 	// Create config with secure password but empty JWT secret
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "$2a$10$SecureHashThatIsNotDefault"
 	cfg.Auth.JWTSecret = "" // Empty - needs generation
 	if err := cfg.Save(configPath); err != nil {
@@ -259,7 +261,7 @@ func TestEnsureConfigEmptyJWTSecret(t *testing.T) {
 
 	checkSecure := func(_ string) bool { return false }
 
-	_, result, err := EnsureConfig(configPath, checkSecure)
+	_, result, err := config.EnsureConfig(configPath, checkSecure)
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
@@ -274,7 +276,7 @@ func TestEnsureConfigEmptyJWTSecret(t *testing.T) {
 // ========== UpdateCredentials Tests ==========
 
 func TestUpdateCredentials(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	// Update credentials
 	cfg.UpdateCredentials("newuser", "newhash123", "newsecret456")
@@ -291,7 +293,7 @@ func TestUpdateCredentials(t *testing.T) {
 }
 
 func TestUpdateCredentialsEmptyJWT(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.JWTSecret = "originalsecret"
 
 	// Update with empty JWT secret - should preserve original
@@ -303,7 +305,7 @@ func TestUpdateCredentialsEmptyJWT(t *testing.T) {
 }
 
 func TestUpdateJWTSecret(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.JWTSecret = "oldsecret"
 
 	cfg.UpdateJWTSecret("brandnewsecret")
@@ -320,7 +322,7 @@ func TestCredentialsPersistence(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "persist-test.yaml")
 
 	// Create and save config with credentials
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.UpdateCredentials("persistuser", "persisted-hash", "persisted-jwt-secret")
 
 	if err := cfg.Save(configPath); err != nil {
@@ -328,7 +330,7 @@ func TestCredentialsPersistence(t *testing.T) {
 	}
 
 	// Load config and verify credentials persisted
-	loaded, err := Load(configPath)
+	loaded, err := config.Load(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -350,7 +352,7 @@ func TestConfigSavePermissions(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "perms-test.yaml")
 
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("failed to save config: %v", err)
 	}
@@ -374,9 +376,9 @@ func TestEnsureConfigCreatesDirectory(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "nested", "deep", "config.yaml")
 
 	// EnsureConfig creates the directory structure
-	_, _, err := EnsureConfig(configPath, nil)
-	// Will return ErrInsecureCredentials because password is empty, but directory should exist
-	if err != nil && !errors.Is(err, ErrInsecureCredentials) {
+	_, _, err := config.EnsureConfig(configPath, nil)
+	// Will return config.ErrInsecureCredentials because password is empty, but directory should exist
+	if err != nil && !errors.Is(err, config.ErrInsecureCredentials) {
 		t.Fatalf("EnsureConfig failed unexpectedly: %v", err)
 	}
 
@@ -390,7 +392,7 @@ func TestEnsureConfigCreatesDirectory(t *testing.T) {
 // ========== Config Locking Tests ==========
 
 func TestConfigLocking(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	// Test write lock
 	cfg.Lock()
@@ -403,7 +405,7 @@ func TestConfigLocking(t *testing.T) {
 }
 
 func TestConfigReadLocking(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Server.Port = 8080
 
 	// Test read lock
@@ -419,7 +421,7 @@ func TestConfigReadLocking(t *testing.T) {
 // ========== Validation Tests ==========
 
 func TestValidateConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "somehash" // Required for validation
 
 	err := cfg.Validate()
@@ -441,7 +443,7 @@ func TestValidateInvalidPort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Auth.DefaultPasswordHash = "hash"
 			cfg.Server.Port = tt.port
 
@@ -454,7 +456,7 @@ func TestValidateInvalidPort(t *testing.T) {
 }
 
 func TestValidateInvalidHTTPRedirectPort(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.Server.HTTPRedirectPort = -1
 
@@ -465,7 +467,7 @@ func TestValidateInvalidHTTPRedirectPort(t *testing.T) {
 }
 
 func TestValidateSamePortAndRedirectPort(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.Server.Port = 8080
 	cfg.Server.HTTPRedirectPort = 8080 // Same as main port
@@ -478,7 +480,7 @@ func TestValidateSamePortAndRedirectPort(t *testing.T) {
 
 func TestValidateEmptyInterface(t *testing.T) {
 	// Empty interface is now valid - triggers auto-detection (#572)
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.Interface.Default = ""
 
@@ -489,7 +491,7 @@ func TestValidateEmptyInterface(t *testing.T) {
 }
 
 func TestValidateNegativeStartupRetries(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.Interface.StartupRetries = -1
 
@@ -500,7 +502,7 @@ func TestValidateNegativeStartupRetries(t *testing.T) {
 }
 
 func TestValidateNegativeStartupRetryWait(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.Interface.StartupRetryWait = -1 * time.Second
 
@@ -523,7 +525,7 @@ func TestValidateInvalidVLAN(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Auth.DefaultPasswordHash = "hash"
 			cfg.VLAN.Enabled = true
 			cfg.VLAN.ID = tt.vlanID
@@ -537,7 +539,7 @@ func TestValidateInvalidVLAN(t *testing.T) {
 }
 
 func TestValidateInvalidIPMode(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.IP.Mode = "invalid"
 
@@ -548,10 +550,10 @@ func TestValidateInvalidIPMode(t *testing.T) {
 }
 
 func TestValidateStaticIPMissingAddress(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.IP.Mode = "static"
-	cfg.IP.Static = &StaticIP{
+	cfg.IP.Static = &config.StaticIP{
 		Address: "",
 		Netmask: "255.255.255.0",
 		Gateway: "192.168.1.1",
@@ -564,10 +566,10 @@ func TestValidateStaticIPMissingAddress(t *testing.T) {
 }
 
 func TestValidateStaticIPMissingNetmask(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.IP.Mode = "static"
-	cfg.IP.Static = &StaticIP{
+	cfg.IP.Static = &config.StaticIP{
 		Address: "192.168.1.100",
 		Netmask: "",
 		Gateway: "192.168.1.1",
@@ -580,10 +582,10 @@ func TestValidateStaticIPMissingNetmask(t *testing.T) {
 }
 
 func TestValidateStaticIPMissingGateway(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.IP.Mode = "static"
-	cfg.IP.Static = &StaticIP{
+	cfg.IP.Static = &config.StaticIP{
 		Address: "192.168.1.100",
 		Netmask: "255.255.255.0",
 		Gateway: "",
@@ -598,18 +600,18 @@ func TestValidateStaticIPMissingGateway(t *testing.T) {
 func TestValidateZeroTimeout(t *testing.T) {
 	tests := []struct {
 		name   string
-		modify func(*Config)
+		modify func(*config.Config)
 	}{
-		{"discovery timeout", func(c *Config) { c.Discovery.Timeout = 0 }},
-		{"ping timeout", func(c *Config) { c.NetworkDiscovery.PingTimeout = 0 }},
-		{"scan timeout", func(c *Config) { c.NetworkDiscovery.ScanTimeout = 0 }},
-		{"DNS timeout", func(c *Config) { c.DNS.Timeout = 0 }},
-		{"SNMP timeout", func(c *Config) { c.SNMP.Timeout = 0 }},
+		{"discovery timeout", func(c *config.Config) { c.Discovery.Timeout = 0 }},
+		{"ping timeout", func(c *config.Config) { c.NetworkDiscovery.PingTimeout = 0 }},
+		{"scan timeout", func(c *config.Config) { c.NetworkDiscovery.ScanTimeout = 0 }},
+		{"DNS timeout", func(c *config.Config) { c.DNS.Timeout = 0 }},
+		{"SNMP timeout", func(c *config.Config) { c.SNMP.Timeout = 0 }},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Auth.DefaultPasswordHash = "hash"
 			tt.modify(cfg)
 
@@ -634,7 +636,7 @@ func TestValidateInvalidARPScanWorkers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Auth.DefaultPasswordHash = "hash"
 			cfg.NetworkDiscovery.ARPScanWorkers = tt.workers
 
@@ -647,7 +649,7 @@ func TestValidateInvalidARPScanWorkers(t *testing.T) {
 }
 
 func TestValidateInvalidSessionTimeout(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.Auth.SessionTimeout = 0
 
@@ -658,7 +660,7 @@ func TestValidateInvalidSessionTimeout(t *testing.T) {
 }
 
 func TestValidateEmptyUsername(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = "hash"
 	cfg.Auth.DefaultUsername = ""
 
@@ -669,7 +671,7 @@ func TestValidateEmptyUsername(t *testing.T) {
 }
 
 func TestValidateEmptyPasswordHash(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = ""
 
 	err := cfg.Validate()
@@ -690,7 +692,7 @@ func TestValidateInvalidSNMPPort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Auth.DefaultPasswordHash = "hash"
 			cfg.SNMP.Port = tt.port
 
@@ -714,7 +716,7 @@ func TestValidateInvalidSNMPRetries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Auth.DefaultPasswordHash = "hash"
 			cfg.SNMP.Retries = tt.retries
 
@@ -729,12 +731,12 @@ func TestValidateInvalidSNMPRetries(t *testing.T) {
 func TestWarnDeprecatedSNMPSettings(t *testing.T) {
 	tests := []struct {
 		name        string
-		credentials []SNMPv3Credential
+		credentials []config.SNMPv3Credential
 		expectWarn  bool
 	}{
 		{
 			name: "MD5 auth protocol triggers warning",
-			credentials: []SNMPv3Credential{
+			credentials: []config.SNMPv3Credential{
 				{
 					Name:         "test-md5",
 					Username:     "snmpuser",
@@ -746,7 +748,7 @@ func TestWarnDeprecatedSNMPSettings(t *testing.T) {
 		},
 		{
 			name: "SHA256 does not trigger warning",
-			credentials: []SNMPv3Credential{
+			credentials: []config.SNMPv3Credential{
 				{
 					Name:         "test-sha256",
 					Username:     "snmpuser",
@@ -758,7 +760,7 @@ func TestWarnDeprecatedSNMPSettings(t *testing.T) {
 		},
 		{
 			name: "SHA512 does not trigger warning",
-			credentials: []SNMPv3Credential{
+			credentials: []config.SNMPv3Credential{
 				{
 					Name:         "test-sha512",
 					Username:     "snmpuser",
@@ -770,7 +772,7 @@ func TestWarnDeprecatedSNMPSettings(t *testing.T) {
 		},
 		{
 			name: "SHA does not trigger warning",
-			credentials: []SNMPv3Credential{
+			credentials: []config.SNMPv3Credential{
 				{
 					Name:         "test-sha",
 					Username:     "snmpuser",
@@ -782,7 +784,7 @@ func TestWarnDeprecatedSNMPSettings(t *testing.T) {
 		},
 		{
 			name: "multiple credentials with one MD5",
-			credentials: []SNMPv3Credential{
+			credentials: []config.SNMPv3Credential{
 				{
 					Name:         "test-sha256",
 					Username:     "user1",
@@ -802,7 +804,7 @@ func TestWarnDeprecatedSNMPSettings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(_ *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.SNMP.V3Credentials = tt.credentials
 
 			// WarnDeprecatedSNMPSettings logs warnings but doesn't return errors.
@@ -815,42 +817,42 @@ func TestWarnDeprecatedSNMPSettings(t *testing.T) {
 // ========== Port Preset Tests ==========
 
 func TestPortPresetConstants(t *testing.T) {
-	if PortPresetCommon != "common" {
-		t.Errorf("PortPresetCommon should be 'common', got %q", PortPresetCommon)
+	if config.PortPresetCommon != "common" {
+		t.Errorf("config.PortPresetCommon should be 'common', got %q", config.PortPresetCommon)
 	}
-	if PortPresetSecure != "secure" {
-		t.Errorf("PortPresetSecure should be 'secure', got %q", PortPresetSecure)
+	if config.PortPresetSecure != "secure" {
+		t.Errorf("config.PortPresetSecure should be 'secure', got %q", config.PortPresetSecure)
 	}
-	if PortPresetInsecure != "insecure" {
-		t.Errorf("PortPresetInsecure should be 'insecure', got %q", PortPresetInsecure)
+	if config.PortPresetInsecure != "insecure" {
+		t.Errorf("config.PortPresetInsecure should be 'insecure', got %q", config.PortPresetInsecure)
 	}
-	if PortPresetCustom != "custom" {
-		t.Errorf("PortPresetCustom should be 'custom', got %q", PortPresetCustom)
+	if config.PortPresetCustom != "custom" {
+		t.Errorf("config.PortPresetCustom should be 'custom', got %q", config.PortPresetCustom)
 	}
 }
 
 func TestDefaultPortScanConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
-	if cfg.NetworkDiscovery.Options.PortScan.Preset != PortPresetCommon {
+	if cfg.NetworkDiscovery.Options.PortScan.Preset != config.PortPresetCommon {
 		t.Errorf("expected default port preset 'common', got %q", cfg.NetworkDiscovery.Options.PortScan.Preset)
 	}
 }
 
 func TestGetEffectivePorts(t *testing.T) {
 	tests := []struct {
-		preset     PortPreset
+		preset     config.PortPreset
 		wantTCPLen int
 		wantUDPLen int
 	}{
-		{PortPresetCommon, len(PortsCommonTCP), len(PortsCommonUDP)},
-		{PortPresetSecure, len(PortsSecureTCP), len(PortsSecureUDP)},
-		{PortPresetInsecure, len(PortsInsecureTCP), len(PortsInsecureUDP)},
+		{config.PortPresetCommon, len(config.PortsCommonTCP), len(config.PortsCommonUDP)},
+		{config.PortPresetSecure, len(config.PortsSecureTCP), len(config.PortsSecureUDP)},
+		{config.PortPresetInsecure, len(config.PortsInsecureTCP), len(config.PortsInsecureUDP)},
 	}
 
 	for _, tt := range tests {
 		t.Run(string(tt.preset), func(t *testing.T) {
-			cfg := PortScanConfig{Preset: tt.preset}
+			cfg := config.PortScanConfig{Preset: tt.preset}
 			tcp, udp := cfg.GetEffectivePorts()
 			if len(tcp) != tt.wantTCPLen {
 				t.Errorf("preset %s: expected TCP ports length %d, got %d", tt.preset, tt.wantTCPLen, len(tcp))
@@ -863,7 +865,7 @@ func TestGetEffectivePorts(t *testing.T) {
 
 	// Test custom preset
 	t.Run("custom", func(t *testing.T) {
-		cfg := PortScanConfig{Preset: PortPresetCustom, TCPPorts: "22,80", UDPPorts: "53"}
+		cfg := config.PortScanConfig{Preset: config.PortPresetCustom, TCPPorts: "22,80", UDPPorts: "53"}
 		tcp, udp := cfg.GetEffectivePorts()
 		if tcp != "22,80" {
 			t.Errorf("expected custom TCP ports '22,80', got %q", tcp)
@@ -877,7 +879,7 @@ func TestGetEffectivePorts(t *testing.T) {
 // ========== SubnetConfig Tests ==========
 
 func TestSubnetConfig(t *testing.T) {
-	subnet := SubnetConfig{
+	subnet := config.SubnetConfig{
 		CIDR:    "192.168.1.0/24",
 		Name:    "Test VLAN",
 		Enabled: true,
@@ -897,7 +899,7 @@ func TestSubnetConfig(t *testing.T) {
 // ========== DNSServer Tests ==========
 
 func TestDNSServerConfig(t *testing.T) {
-	server := DNSServer{
+	server := config.DNSServer{
 		Address: "8.8.8.8",
 		Enabled: true,
 	}
@@ -913,7 +915,7 @@ func TestDNSServerConfig(t *testing.T) {
 // ========== Test Configuration Types ==========
 
 func TestPingTargetConfig(t *testing.T) {
-	target := PingTarget{
+	target := config.PingTarget{
 		Name:    "Google DNS",
 		Host:    "8.8.8.8",
 		Enabled: true,
@@ -931,7 +933,7 @@ func TestPingTargetConfig(t *testing.T) {
 }
 
 func TestTCPPortTestConfig(t *testing.T) {
-	test := TCPPortTest{
+	test := config.TCPPortTest{
 		Name:    "SSH",
 		Host:    "server.local",
 		Port:    22,
@@ -953,7 +955,7 @@ func TestTCPPortTestConfig(t *testing.T) {
 }
 
 func TestHTTPEndpointConfig(t *testing.T) {
-	endpoint := HTTPEndpoint{
+	endpoint := config.HTTPEndpoint{
 		Name:           "API Health",
 		URL:            "https://api.example.com/health",
 		ExpectedStatus: 200,
@@ -977,7 +979,7 @@ func TestHTTPEndpointConfig(t *testing.T) {
 // ========== SNMP Configuration Tests ==========
 
 func TestSNMPv3CredentialConfig(t *testing.T) {
-	cred := SNMPv3Credential{
+	cred := config.SNMPv3Credential{
 		Name:          "Admin",
 		Username:      "snmpv3admin",
 		AuthProtocol:  "SHA",
@@ -1011,7 +1013,7 @@ func TestSNMPv3CredentialConfig(t *testing.T) {
 }
 
 func TestDefaultSNMPConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if len(cfg.SNMP.Communities) != 1 || cfg.SNMP.Communities[0] != "public" {
 		t.Errorf("expected default community ['public'], got %v", cfg.SNMP.Communities)
@@ -1027,7 +1029,7 @@ func TestDefaultSNMPConfig(t *testing.T) {
 // ========== Iperf Configuration Tests ==========
 
 func TestDefaultIperfConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if cfg.Iperf.Port != 5201 {
 		t.Errorf("expected iperf port 5201, got %d", cfg.Iperf.Port)
@@ -1074,7 +1076,7 @@ func TestACMEConfig(t *testing.T) {
 // ========== Vulnerability Scanning Tests ==========
 
 func TestVulnerabilityScanConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	// Vulnerability scanning is enabled by default for security visibility
 	if !cfg.Security.VulnerabilityScanning.Enabled {
@@ -1091,7 +1093,7 @@ func TestVulnerabilityScanConfig(t *testing.T) {
 // ========== FAB Options Tests ==========
 
 func TestDefaultFABOptions(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if !cfg.FABOptions.RunLink {
 		t.Error("expected RunLink enabled by default")
@@ -1113,7 +1115,7 @@ func TestDefaultFABOptions(t *testing.T) {
 // ========== Display Options Tests ==========
 
 func TestDefaultDisplayOptions(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if !cfg.DisplayOptions.ShowPublicIP {
 		t.Error("expected ShowPublicIP enabled by default")
@@ -1146,7 +1148,7 @@ func TestRogueDetectionConfig(t *testing.T) {
 // ========== Pipeline Config Tests ==========
 
 func TestPipelineConfigGetPhases(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	// Set specific phases
 	cfg.Pipeline.Phases.Enumeration = true
 	cfg.Pipeline.Phases.NameResolution = true
@@ -1169,7 +1171,7 @@ func TestPipelineConfigGetPhases(t *testing.T) {
 }
 
 func TestPipelineConfigGetTiming(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Pipeline.Timing.ProbeDelay = 50 * time.Millisecond
 	cfg.Pipeline.Timing.HostDelay = 100 * time.Millisecond
 	cfg.Pipeline.Timing.PhaseTimeout = 5 * time.Minute
@@ -1195,7 +1197,7 @@ func TestPipelineConfigGetTiming(t *testing.T) {
 }
 
 func TestPipelineConfigGetPortScan(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Pipeline.PortScan.Intensity = "standard"
 	cfg.Pipeline.PortScan.CustomPorts = []int{22, 80, 443, 8080}
 	cfg.Pipeline.PortScan.BannerGrab = true
@@ -1223,7 +1225,7 @@ func TestPipelineConfigGetPortScan(t *testing.T) {
 }
 
 func TestPipelineConfigGetSNMP(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Pipeline.SNMPCollection.Enabled = true
 	cfg.Pipeline.SNMPCollection.MIBs.System = true
 	cfg.Pipeline.SNMPCollection.MIBs.Interfaces = true
@@ -1273,7 +1275,7 @@ func TestPipelineConfigGetSNMP(t *testing.T) {
 }
 
 func TestPipelineConfigGetPersistence(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Pipeline.Persistence.StoreHistory = true
 	cfg.Pipeline.Persistence.StalenessThreshold = 2 * time.Hour
 	cfg.Pipeline.Persistence.PurgeAfter = 7 * 24 * time.Hour
@@ -1293,7 +1295,7 @@ func TestPipelineConfigGetPersistence(t *testing.T) {
 // ========== Clone and CopyFieldsFrom Tests ==========
 
 func TestConfigClone(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Server.Port = 9999
 	cfg.Auth.DefaultUsername = "clonetest"
 	cfg.Security.AllowedOrigins = []string{"https://test.com", "https://dev.com"}
@@ -1341,13 +1343,13 @@ func TestConfigClone(t *testing.T) {
 }
 
 func TestConfigCopyFieldsFrom(t *testing.T) {
-	src := DefaultConfig()
+	src := config.DefaultConfig()
 	src.Server.Port = 7777
 	src.Auth.DefaultUsername = "srcuser"
 	src.VLAN.Enabled = true
 	src.Security.AllowedOrigins = []string{"https://source.com"}
 
-	dst := DefaultConfig()
+	dst := config.DefaultConfig()
 	dst.Server.Port = 1111
 	dst.Auth.DefaultUsername = "dstuser"
 
@@ -1397,7 +1399,7 @@ func TestSaveWithBackup(t *testing.T) {
 	backupDir := filepath.Join(tmpDir, "backups")
 
 	// Create initial config
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Server.Port = 8080
 	cfg.Auth.DefaultPasswordHash = "test-hash"
 	if err := cfg.Save(configPath); err != nil {
@@ -1420,7 +1422,7 @@ func TestSaveWithBackup(t *testing.T) {
 	}
 
 	// Verify config was saved with new value
-	loaded, err := Load(configPath)
+	loaded, err := config.Load(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -1474,7 +1476,7 @@ func TestValidateLoggingConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Auth.DefaultPasswordHash = "hash"
 			tt.modify(cfg)
 

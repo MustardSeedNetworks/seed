@@ -1,8 +1,10 @@
-package config
+package config_test
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 func TestEncryptDecryptCredential(t *testing.T) {
@@ -10,7 +12,7 @@ func TestEncryptDecryptCredential(t *testing.T) {
 	plaintext := "mySecretPassword123!"
 
 	// Test encryption
-	encrypted, err := EncryptCredential(plaintext, masterSecret)
+	encrypted, err := config.EncryptCredential(plaintext, masterSecret)
 	if err != nil {
 		t.Fatalf("EncryptCredential failed: %v", err)
 	}
@@ -21,12 +23,12 @@ func TestEncryptDecryptCredential(t *testing.T) {
 	}
 
 	// Verify encrypted value has prefix
-	if !strings.HasPrefix(encrypted, encryptedPrefix) {
-		t.Errorf("Encrypted value should have prefix %q, got %q", encryptedPrefix, encrypted)
+	if !strings.HasPrefix(encrypted, config.EncryptedPrefix) {
+		t.Errorf("Encrypted value should have prefix %q, got %q", config.EncryptedPrefix, encrypted)
 	}
 
 	// Test decryption
-	decrypted, err := DecryptCredential(encrypted, masterSecret)
+	decrypted, err := config.DecryptCredential(encrypted, masterSecret)
 	if err != nil {
 		t.Fatalf("DecryptCredential failed: %v", err)
 	}
@@ -40,7 +42,7 @@ func TestEncryptDecryptCredential(t *testing.T) {
 func TestEncryptDecryptEmptyString(t *testing.T) {
 	masterSecret := "test-secret-key"
 
-	encrypted, err := EncryptCredential("", masterSecret)
+	encrypted, err := config.EncryptCredential("", masterSecret)
 	if err != nil {
 		t.Fatalf("EncryptCredential with empty string failed: %v", err)
 	}
@@ -49,7 +51,7 @@ func TestEncryptDecryptEmptyString(t *testing.T) {
 		t.Errorf("Empty string should encrypt to empty string, got %q", encrypted)
 	}
 
-	decrypted, err := DecryptCredential("", masterSecret)
+	decrypted, err := config.DecryptCredential("", masterSecret)
 	if err != nil {
 		t.Fatalf("DecryptCredential with empty string failed: %v", err)
 	}
@@ -64,7 +66,7 @@ func TestDecryptPlaintextBackwardCompatibility(t *testing.T) {
 	plaintext := "oldPlaintextPassword"
 
 	// Decrypting plaintext (no prefix) should return it as-is
-	decrypted, err := DecryptCredential(plaintext, masterSecret)
+	decrypted, err := config.DecryptCredential(plaintext, masterSecret)
 	if err != nil {
 		t.Fatalf("DecryptCredential with plaintext failed: %v", err)
 	}
@@ -79,13 +81,13 @@ func TestEncryptAlreadyEncrypted(t *testing.T) {
 	plaintext := "password"
 
 	// First encryption
-	encrypted1, err := EncryptCredential(plaintext, masterSecret)
+	encrypted1, err := config.EncryptCredential(plaintext, masterSecret)
 	if err != nil {
 		t.Fatalf("First encryption failed: %v", err)
 	}
 
 	// Second encryption of already encrypted value
-	encrypted2, err := EncryptCredential(encrypted1, masterSecret)
+	encrypted2, err := config.EncryptCredential(encrypted1, masterSecret)
 	if err != nil {
 		t.Fatalf("Second encryption failed: %v", err)
 	}
@@ -103,14 +105,14 @@ func TestDecryptInvalidCiphertext(t *testing.T) {
 		name       string
 		ciphertext string
 	}{
-		{"invalid base64", encryptedPrefix + "not-valid-base64!!!"},
-		{"too short", encryptedPrefix + "YWJj"},                            // "abc" in base64, too short for nonce
-		{"tampered", encryptedPrefix + "dGFtcGVyZWRkYXRhdGFtcGVyZWRkYXRh"}, // valid base64 but invalid ciphertext
+		{"invalid base64", config.EncryptedPrefix + "not-valid-base64!!!"},
+		{"too short", config.EncryptedPrefix + "YWJj"},                            // "abc" in base64, too short for nonce
+		{"tampered", config.EncryptedPrefix + "dGFtcGVyZWRkYXRhdGFtcGVyZWRkYXRh"}, // valid base64 but invalid ciphertext
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := DecryptCredential(tc.ciphertext, masterSecret)
+			_, err := config.DecryptCredential(tc.ciphertext, masterSecret)
 			if err == nil {
 				t.Error("Expected error for invalid ciphertext, got nil")
 			}
@@ -124,13 +126,13 @@ func TestEncryptDecryptWithDifferentSecrets(t *testing.T) {
 	secret2 := "secret2"
 
 	// Encrypt with secret1
-	encrypted, err := EncryptCredential(plaintext, secret1)
+	encrypted, err := config.EncryptCredential(plaintext, secret1)
 	if err != nil {
 		t.Fatalf("Encryption failed: %v", err)
 	}
 
 	// Try to decrypt with secret2 (should fail)
-	_, err = DecryptCredential(encrypted, secret2)
+	_, err = config.DecryptCredential(encrypted, secret2)
 	if err == nil {
 		t.Error("Expected error when decrypting with wrong secret, got nil")
 	}
@@ -150,7 +152,7 @@ func TestIsEncrypted(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.value, func(t *testing.T) {
-			result := IsEncrypted(tc.value)
+			result := config.IsEncrypted(tc.value)
 			if result != tc.expected {
 				t.Errorf("IsEncrypted(%q) = %v, want %v", tc.value, result, tc.expected)
 			}
@@ -159,12 +161,12 @@ func TestIsEncrypted(t *testing.T) {
 }
 
 func TestEncryptSNMPCredentials(t *testing.T) {
-	cfg := &Config{
-		Auth: AuthConfig{
+	cfg := &config.Config{
+		Auth: config.AuthConfig{
 			JWTSecret: "test-jwt-secret-for-encryption",
 		},
-		SNMP: SNMPConfig{
-			V3Credentials: []SNMPv3Credential{
+		SNMP: config.SNMPConfig{
+			V3Credentials: []config.SNMPv3Credential{
 				{
 					Name:         "test-cred",
 					AuthPassword: "authPass123",
@@ -182,10 +184,10 @@ func TestEncryptSNMPCredentials(t *testing.T) {
 
 	// Verify passwords are encrypted
 	cred := cfg.SNMP.V3Credentials[0]
-	if !IsEncrypted(cred.AuthPassword) {
+	if !config.IsEncrypted(cred.AuthPassword) {
 		t.Error("AuthPassword should be encrypted")
 	}
-	if !IsEncrypted(cred.PrivPassword) {
+	if !config.IsEncrypted(cred.PrivPassword) {
 		t.Error("PrivPassword should be encrypted")
 	}
 
@@ -216,12 +218,12 @@ func TestEncryptSNMPCredentials(t *testing.T) {
 }
 
 func TestEncryptSNMPCredentialsIdempotent(t *testing.T) {
-	cfg := &Config{
-		Auth: AuthConfig{
+	cfg := &config.Config{
+		Auth: config.AuthConfig{
 			JWTSecret: "test-jwt-secret",
 		},
-		SNMP: SNMPConfig{
-			V3Credentials: []SNMPv3Credential{
+		SNMP: config.SNMPConfig{
+			V3Credentials: []config.SNMPv3Credential{
 				{
 					Name:         "test",
 					AuthPassword: "password",

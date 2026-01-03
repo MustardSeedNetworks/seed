@@ -1,31 +1,33 @@
-package config
+package config_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 func TestNewSchemaValidator(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create schema validator: %v", err)
 	}
 	if validator == nil {
 		t.Fatal("validator is nil")
 	}
-	if validator.schema == nil {
-		t.Fatal("validator.schema is nil")
+	if validator.Schema() == nil {
+		t.Fatal("validator.Schema() is nil")
 	}
 }
 
 func TestValidateConfig_ValidDefault(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
 
 	// Default config should be valid
-	cfg := DefaultConfig()
+	cfg := config.config.DefaultConfig()
 	errors := validator.ValidateConfig(cfg)
 	if errors != nil {
 		t.Errorf("default config should be valid, got errors: %+v", errors)
@@ -36,7 +38,7 @@ func TestValidateConfig_ValidDefault(t *testing.T) {
 }
 
 func TestValidateConfig_InvalidServerPort(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -56,7 +58,7 @@ func TestValidateConfig_InvalidServerPort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.config.DefaultConfig()
 			cfg.Server.Port = tt.port
 			errors := validator.ValidateConfig(cfg)
 
@@ -76,7 +78,7 @@ func TestValidateConfig_InvalidServerPort(t *testing.T) {
 }
 
 func TestValidateConfig_InvalidVLANID(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -102,7 +104,7 @@ func TestValidateConfig_InvalidVLANID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.VLAN.Enabled = tt.enabled
 			cfg.VLAN.ID = tt.id
 			errors := validator.ValidateConfig(cfg)
@@ -123,7 +125,7 @@ func TestValidateConfig_InvalidVLANID(t *testing.T) {
 }
 
 func TestValidateConfig_InvalidIPMode(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -141,7 +143,7 @@ func TestValidateConfig_InvalidIPMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.IP.Mode = tt.mode
 			errors := validator.ValidateConfig(cfg)
 
@@ -161,7 +163,7 @@ func TestValidateConfig_InvalidIPMode(t *testing.T) {
 }
 
 func TestValidateConfig_PortPreset(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -171,16 +173,16 @@ func TestValidateConfig_PortPreset(t *testing.T) {
 		preset PortPreset
 		want   bool // true = should have errors
 	}{
-		{"common preset", PortPresetCommon, false},
-		{"secure preset", PortPresetSecure, false},
-		{"insecure preset", PortPresetInsecure, false},
-		{"custom preset", PortPresetCustom, false},
-		{"invalid preset", PortPreset("invalid"), true},
+		{"common preset", config.PortPresetCommon, false},
+		{"secure preset", config.PortPresetSecure, false},
+		{"insecure preset", config.PortPresetInsecure, false},
+		{"custom preset", config.PortPresetCustom, false},
+		{"invalid preset", config.PortPreset("invalid"), true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.NetworkDiscovery.Options.PortScan.Preset = tt.preset
 			errors := validator.ValidateConfig(cfg)
 
@@ -200,7 +202,7 @@ func TestValidateConfig_PortPreset(t *testing.T) {
 }
 
 func TestValidateConfig_DiscoveryProtocol(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -220,7 +222,7 @@ func TestValidateConfig_DiscoveryProtocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Discovery.Protocol = tt.protocol
 			errors := validator.ValidateConfig(cfg)
 
@@ -240,7 +242,7 @@ func TestValidateConfig_DiscoveryProtocol(t *testing.T) {
 }
 
 func TestValidateConfig_IperfProtocol(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -257,7 +259,7 @@ func TestValidateConfig_IperfProtocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Iperf.Protocol = tt.protocol
 			errors := validator.ValidateConfig(cfg)
 
@@ -277,7 +279,7 @@ func TestValidateConfig_IperfProtocol(t *testing.T) {
 }
 
 func TestValidateConfig_IperfDirection(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -295,7 +297,7 @@ func TestValidateConfig_IperfDirection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Iperf.Direction = tt.direction
 			errors := validator.ValidateConfig(cfg)
 
@@ -315,7 +317,7 @@ func TestValidateConfig_IperfDirection(t *testing.T) {
 }
 
 func TestValidateConfig_LogLevel(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -336,7 +338,7 @@ func TestValidateConfig_LogLevel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Logging.Level = tt.level
 			errors := validator.ValidateConfig(cfg)
 
@@ -356,7 +358,7 @@ func TestValidateConfig_LogLevel(t *testing.T) {
 }
 
 func TestValidateConfig_LogFormat(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -373,7 +375,7 @@ func TestValidateConfig_LogFormat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Logging.Format = tt.format
 			errors := validator.ValidateConfig(cfg)
 
@@ -393,7 +395,7 @@ func TestValidateConfig_LogFormat(t *testing.T) {
 }
 
 func TestValidateConfig_SignalThreshold(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -415,7 +417,7 @@ func TestValidateConfig_SignalThreshold(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Thresholds.WiFi.Signal.Warning = tt.warning
 			cfg.Thresholds.WiFi.Signal.Critical = tt.critical
 			errors := validator.ValidateConfig(cfg)
@@ -436,7 +438,7 @@ func TestValidateConfig_SignalThreshold(t *testing.T) {
 }
 
 func TestValidateConfig_SNMPPort(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -454,7 +456,7 @@ func TestValidateConfig_SNMPPort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.SNMP.Port = tt.port
 			errors := validator.ValidateConfig(cfg)
 
@@ -474,7 +476,7 @@ func TestValidateConfig_SNMPPort(t *testing.T) {
 }
 
 func TestValidateConfig_SNMPRetries(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -493,7 +495,7 @@ func TestValidateConfig_SNMPRetries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.SNMP.Retries = tt.retries
 			errors := validator.ValidateConfig(cfg)
 
@@ -513,7 +515,7 @@ func TestValidateConfig_SNMPRetries(t *testing.T) {
 }
 
 func TestValidateConfig_VulnerabilitySeverity(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -532,7 +534,7 @@ func TestValidateConfig_VulnerabilitySeverity(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Security.VulnerabilityScanning.SeverityThreshold = tt.severity
 			errors := validator.ValidateConfig(cfg)
 
@@ -552,7 +554,7 @@ func TestValidateConfig_VulnerabilitySeverity(t *testing.T) {
 }
 
 func TestValidateConfig_DurationFormat(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -574,7 +576,7 @@ func TestValidateConfig_DurationFormat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.DNS.Timeout = tt.duration
 			errors := validator.ValidateConfig(cfg)
 
@@ -594,7 +596,7 @@ func TestValidateConfig_DurationFormat(t *testing.T) {
 }
 
 func TestValidateConfig_HTTPExpectedStatus(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -614,8 +616,8 @@ func TestValidateConfig_HTTPExpectedStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
-			cfg.HealthChecks.HTTPEndpoints = []HTTPEndpoint{
+			cfg := config.DefaultConfig()
+			cfg.HealthChecks.HTTPEndpoints = []config.HTTPEndpoint{
 				{
 					Name:           "test",
 					URL:            "http://example.com",
@@ -642,8 +644,8 @@ func TestValidateConfig_HTTPExpectedStatus(t *testing.T) {
 
 func TestValidateWithSchema(t *testing.T) {
 	// Test the convenience function
-	cfg := DefaultConfig()
-	errors := ValidateWithSchema(cfg)
+	cfg := config.DefaultConfig()
+	errors := config.ValidateWithSchema(cfg)
 	if errors != nil {
 		t.Errorf("default config should be valid, got errors: %+v", errors)
 		for _, e := range errors {
@@ -653,16 +655,16 @@ func TestValidateWithSchema(t *testing.T) {
 }
 
 func TestValidateWithSchema_InvalidConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Server.Port = 99999 // Invalid port
-	errors := ValidateWithSchema(cfg)
+	errors := config.ValidateWithSchema(cfg)
 	if len(errors) == 0 {
 		t.Error("expected validation errors for invalid port, got none")
 	}
 }
 
 func TestValidateConfig_WorkerLimits(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -682,7 +684,7 @@ func TestValidateConfig_WorkerLimits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.NetworkDiscovery.ARPScanWorkers = tt.workers
 			errors := validator.ValidateConfig(cfg)
 
@@ -702,7 +704,7 @@ func TestValidateConfig_WorkerLimits(t *testing.T) {
 }
 
 func TestValidateConfig_StartupRetries(t *testing.T) {
-	validator, err := NewSchemaValidator()
+	validator, err := config.NewSchemaValidator()
 	if err != nil {
 		t.Fatalf("failed to create validator: %v", err)
 	}
@@ -720,7 +722,7 @@ func TestValidateConfig_StartupRetries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := DefaultConfig()
+			cfg := config.DefaultConfig()
 			cfg.Interface.StartupRetries = tt.retries
 			errors := validator.ValidateConfig(cfg)
 

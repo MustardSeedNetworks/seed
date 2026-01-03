@@ -1,4 +1,4 @@
-package config
+package config_test
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,14 +16,14 @@ func TestBackupManager_CreateBackup(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
 	// Create initial config file
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Server.Port = 9999
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save initial config: %v", err)
 	}
 
 	// Create backup manager
-	backupMgr := NewBackupManager(configPath, "", 10)
+	backupMgr := config.NewBackupManager(configPath, "", 10)
 
 	// Create backup
 	backup, err := backupMgr.CreateBackup()
@@ -41,7 +42,7 @@ func TestBackupManager_CreateBackup(t *testing.T) {
 		t.Fatalf("Failed to read backup: %v", readErr)
 	}
 
-	var loadedCfg Config
+	var loadedCfg config.Config
 	if unmarshalErr := yaml.Unmarshal(data, &loadedCfg); unmarshalErr != nil {
 		t.Fatalf("Failed to unmarshal backup: %v", unmarshalErr)
 	}
@@ -56,12 +57,12 @@ func TestBackupManager_ListBackups(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
 	// Create config file
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
 
-	backupMgr := NewBackupManager(configPath, "", 10)
+	backupMgr := config.NewBackupManager(configPath, "", 10)
 
 	// Create multiple backups with small delay
 	for range 3 {
@@ -95,13 +96,13 @@ func TestBackupManager_RestoreBackup(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
 	// Create and save original config
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Server.Port = 8080
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
 
-	backupMgr := NewBackupManager(configPath, "", 10)
+	backupMgr := config.NewBackupManager(configPath, "", 10)
 
 	// Create backup
 	backup, err := backupMgr.CreateBackup()
@@ -121,7 +122,7 @@ func TestBackupManager_RestoreBackup(t *testing.T) {
 	}
 
 	// Verify restored config
-	restored, err := Load(configPath)
+	restored, err := config.Load(configPath)
 	if err != nil {
 		t.Fatalf("Failed to load restored config: %v", err)
 	}
@@ -136,13 +137,13 @@ func TestBackupManager_PruneOldBackups(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
 	// Create config file
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
 
 	// Create manager with max 3 backups
-	backupMgr := NewBackupManager(configPath, "", 3)
+	backupMgr := config.NewBackupManager(configPath, "", 3)
 
 	// Create 5 backups
 	for range 5 {
@@ -168,12 +169,12 @@ func TestBackupManager_DeleteBackup(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
 	// Create config file
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
 
-	backupMgr := NewBackupManager(configPath, "", 10)
+	backupMgr := config.NewBackupManager(configPath, "", 10)
 
 	// Create backup
 	backup, err := backupMgr.CreateBackup()
@@ -197,12 +198,12 @@ func TestBackupManager_DeleteBackup_InvalidPath(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
 	// Create config file
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
 
-	backupMgr := NewBackupManager(configPath, "", 10)
+	backupMgr := config.NewBackupManager(configPath, "", 10)
 
 	// Try to delete with path traversal
 	err := backupMgr.DeleteBackup("../../../etc/passwd")
@@ -221,12 +222,12 @@ func TestBackupManager_RestoreBackup_InvalidPath(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	if err := cfg.Save(configPath); err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
 
-	backupMgr := NewBackupManager(configPath, "", 10)
+	backupMgr := config.NewBackupManager(configPath, "", 10)
 
 	// Try to restore with path traversal
 	err := backupMgr.RestoreBackup("../../../etc/passwd")
@@ -239,7 +240,7 @@ func TestBackupManager_CreateBackup_NoConfigFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "nonexistent.yaml")
 
-	backupMgr := NewBackupManager(configPath, "", 10)
+	backupMgr := config.NewBackupManager(configPath, "", 10)
 
 	_, err := backupMgr.CreateBackup()
 	if err == nil {
@@ -251,7 +252,7 @@ func TestBackupManager_ExtractVersion(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
-	backupMgr := NewBackupManager(configPath, "", 10)
+	backupMgr := config.NewBackupManager(configPath, "", 10)
 
 	tests := []struct {
 		name string
@@ -277,9 +278,9 @@ func TestBackupManager_ExtractVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := backupMgr.extractVersion([]byte(tt.data))
+			got := backupMgr.ExtractVersion([]byte(tt.data))
 			if got != tt.want {
-				t.Errorf("extractVersion() = %d, want %d", got, tt.want)
+				t.Errorf("ExtractVersion() = %d, want %d", got, tt.want)
 			}
 		})
 	}

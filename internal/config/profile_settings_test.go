@@ -1,9 +1,11 @@
-package config
+package config_test
 
 import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 func TestNewProfileSettings(t *testing.T) {

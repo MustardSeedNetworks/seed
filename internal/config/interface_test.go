@@ -1,30 +1,32 @@
-package config
+package config_test
 
 import (
 	"net"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 func TestHasIPv4Address(t *testing.T) {
 	// Test with loopback (should exist on all systems)
-	if !hasIPv4Address("lo") && !hasIPv4Address("lo0") {
+	if !config.HasIPv4Address("lo") && !config.HasIPv4Address("lo0") {
 		// Some systems might not have loopback configured the same way
 		t.Log("Loopback interface test skipped - no lo or lo0 found")
 	}
 
 	// Test with non-existent interface
-	if hasIPv4Address("nonexistent123456") {
-		t.Error("hasIPv4Address should return false for non-existent interface")
+	if config.HasIPv4Address("nonexistent123456") {
+		t.Error("HasIPv4Address should return false for non-existent interface")
 	}
 
 	// Test with empty name
-	if hasIPv4Address("") {
-		t.Error("hasIPv4Address should return false for empty interface name")
+	if config.HasIPv4Address("") {
+		t.Error("HasIPv4Address should return false for empty interface name")
 	}
 }
 
 func TestDetectActiveInterface(t *testing.T) {
-	detected := detectActiveInterface()
+	detected := config.DetectActiveInterface()
 
 	// Should detect at least one interface on any system with networking
 	if detected == "" {
@@ -33,8 +35,8 @@ func TestDetectActiveInterface(t *testing.T) {
 	}
 
 	// Verify the detected interface actually has an IPv4 address
-	if !hasIPv4Address(detected) {
-		t.Errorf("detectActiveInterface returned %q but it has no IPv4 address", detected)
+	if !config.HasIPv4Address(detected) {
+		t.Errorf("DetectActiveInterface returned %q but it has no IPv4 address", detected)
 	}
 
 	// Verify the detected interface is not a virtual/bridge interface
@@ -46,12 +48,12 @@ func TestDetectActiveInterface(t *testing.T) {
 
 	// Should not be loopback
 	if iface.Flags&net.FlagLoopback != 0 {
-		t.Errorf("detectActiveInterface should not return loopback interface, got %q", detected)
+		t.Errorf("DetectActiveInterface should not return loopback interface, got %q", detected)
 	}
 
 	// Should be up
 	if iface.Flags&net.FlagUp == 0 {
-		t.Errorf("detectActiveInterface should only return UP interfaces, got %q", detected)
+		t.Errorf("DetectActiveInterface should only return UP interfaces, got %q", detected)
 	}
 
 	t.Logf("Detected interface: %s", detected)
@@ -60,12 +62,12 @@ func TestDetectActiveInterface(t *testing.T) {
 func TestGetActiveInterface(t *testing.T) {
 	tests := []struct {
 		name           string
-		config         InterfaceConfig
+		ifaceConfig    config.InterfaceConfig
 		expectFallback bool
 	}{
 		{
 			name: "non-existent default interface",
-			config: InterfaceConfig{
+			ifaceConfig: config.InterfaceConfig{
 				Default:   "nonexistent123456",
 				Fallbacks: []string{},
 			},
@@ -73,7 +75,7 @@ func TestGetActiveInterface(t *testing.T) {
 		},
 		{
 			name: "empty config",
-			config: InterfaceConfig{
+			ifaceConfig: config.InterfaceConfig{
 				Default:   "",
 				Fallbacks: []string{},
 			},
@@ -83,8 +85,8 @@ func TestGetActiveInterface(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &Config{
-				Interface: tt.config,
+			cfg := &config.Config{
+				Interface: tt.ifaceConfig,
 			}
 
 			iface, usedFallback := cfg.GetActiveInterface()
@@ -104,13 +106,13 @@ func TestGetActiveInterface(t *testing.T) {
 
 func TestGetActiveInterfaceWithValidDefault(t *testing.T) {
 	// Find a valid interface on this system
-	validIface := detectActiveInterface()
+	validIface := config.DetectActiveInterface()
 	if validIface == "" {
 		t.Skip("No active interface available for testing")
 	}
 
-	cfg := &Config{
-		Interface: InterfaceConfig{
+	cfg := &config.Config{
+		Interface: config.InterfaceConfig{
 			Default:   validIface,
 			Fallbacks: []string{},
 		},
@@ -129,13 +131,13 @@ func TestGetActiveInterfaceWithValidDefault(t *testing.T) {
 
 func TestGetActiveInterfaceWithFallback(t *testing.T) {
 	// Find a valid interface on this system
-	validIface := detectActiveInterface()
+	validIface := config.DetectActiveInterface()
 	if validIface == "" {
 		t.Skip("No active interface available for testing")
 	}
 
-	cfg := &Config{
-		Interface: InterfaceConfig{
+	cfg := &config.Config{
+		Interface: config.InterfaceConfig{
 			Default:   "nonexistent123456",
 			Fallbacks: []string{"also_nonexistent", validIface},
 		},

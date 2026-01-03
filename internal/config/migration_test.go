@@ -1,10 +1,11 @@
-package config
+package config_test
 
 import (
 	"bytes"
 	"os"
 	"testing"
 
+	"github.com/krisarmstrong/seed/internal/config"
 	"gopkg.in/yaml.v3"
 )
 
