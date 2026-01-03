@@ -10,7 +10,7 @@ import (
 )
 
 func TestMigrationManager_Migrate_NoMigrationsNeeded(t *testing.T) {
-	mgr := NewMigrationManager()
+	mgr := config.NewMigrationManager()
 
 	data := []byte("version: 1\nserver:\n  port: 8080\n")
 
@@ -26,7 +26,7 @@ func TestMigrationManager_Migrate_NoMigrationsNeeded(t *testing.T) {
 }
 
 func TestMigrationManager_Migrate_UnversionedConfig(t *testing.T) {
-	mgr := NewMigrationManager()
+	mgr := config.NewMigrationManager()
 
 	data := []byte("version: 0\nserver:\n  port: 8080\n")
 
@@ -50,7 +50,7 @@ func TestMigrationManager_Migrate_UnversionedConfig(t *testing.T) {
 }
 
 func TestMigrationManager_Migrate_UpdateVersionOnly(t *testing.T) {
-	mgr := NewMigrationManager()
+	mgr := config.NewMigrationManager()
 
 	data := []byte("version: 1\nserver:\n  port: 8080\n")
 
@@ -74,22 +74,22 @@ func TestMigrationManager_Migrate_UpdateVersionOnly(t *testing.T) {
 }
 
 func TestMigrationManager_RegisterMigration(t *testing.T) {
-	mgr := &MigrationManager{}
+	mgr := &config.MigrationManager{}
 
 	// Register migrations out of order
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 3,
 		ToVersion:   4,
 		Description: "Migration 3->4",
 		Migrate:     func(data []byte) ([]byte, error) { return data, nil },
 	})
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 1,
 		ToVersion:   2,
 		Description: "Migration 1->2",
 		Migrate:     func(data []byte) ([]byte, error) { return data, nil },
 	})
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 2,
 		ToVersion:   3,
 		Description: "Migration 2->3",
@@ -112,21 +112,21 @@ func TestMigrationManager_RegisterMigration(t *testing.T) {
 }
 
 func TestMigrationManager_GetMigrationPath(t *testing.T) {
-	mgr := &MigrationManager{}
+	mgr := &config.MigrationManager{}
 
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 1,
 		ToVersion:   2,
 		Description: "Migration 1->2",
 		Migrate:     func(data []byte) ([]byte, error) { return data, nil },
 	})
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 2,
 		ToVersion:   3,
 		Description: "Migration 2->3",
 		Migrate:     func(data []byte) ([]byte, error) { return data, nil },
 	})
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 3,
 		ToVersion:   4,
 		Description: "Migration 3->4",
@@ -198,10 +198,10 @@ func TestMigrationManager_GetMigrationPath(t *testing.T) {
 }
 
 func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
-	mgr := &MigrationManager{}
+	mgr := &config.MigrationManager{}
 
 	// Register migrations that modify data
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 1,
 		ToVersion:   2,
 		Description: "Add field_a",
@@ -215,7 +215,7 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 			return yaml.Marshal(raw)
 		},
 	})
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 2,
 		ToVersion:   3,
 		Description: "Add field_b",
@@ -258,13 +258,13 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 }
 
 func TestMigrationManager_HasMigrations(t *testing.T) {
-	mgr := &MigrationManager{}
+	mgr := &config.MigrationManager{}
 
 	if mgr.HasMigrations() {
 		t.Error("Empty manager should not have migrations")
 	}
 
-	mgr.RegisterMigration(Migration{
+	mgr.RegisterMigration(config.Migration{
 		FromVersion: 1,
 		ToVersion:   2,
 		Migrate:     func(data []byte) ([]byte, error) { return data, nil },
@@ -285,9 +285,9 @@ func TestLoadWithMigration(t *testing.T) {
 		t.Fatalf("Failed to write config: %v", err)
 	}
 
-	mgr := NewMigrationManager()
+	mgr := config.NewMigrationManager()
 
-	cfg, migrated, err := LoadWithMigration(configPath, mgr)
+	cfg, migrated, err := config.LoadWithMigration(configPath, mgr)
 	if err != nil {
 		t.Fatalf("LoadWithMigration() error = %v", err)
 	}
@@ -296,8 +296,8 @@ func TestLoadWithMigration(t *testing.T) {
 		t.Error("LoadWithMigration() should report migration for unversioned config")
 	}
 
-	if cfg.Version != ConfigVersion {
-		t.Errorf("Config version = %d, want %d", cfg.Version, ConfigVersion)
+	if cfg.Version != config.ConfigVersion {
+		t.Errorf("Config version = %d, want %d", cfg.Version, config.ConfigVersion)
 	}
 
 	if cfg.Server.Port != 9999 {

@@ -9,17 +9,17 @@ import (
 )
 
 func TestNewProfileSettings(t *testing.T) {
-	ps := NewProfileSettings()
+	ps := config.NewProfileSettings()
 	if ps == nil {
 		t.Fatal("NewProfileSettings returned nil")
 	}
-	if ps.Version != ProfileSettingsVersion {
-		t.Errorf("expected version %d, got %d", ProfileSettingsVersion, ps.Version)
+	if ps.Version != config.ProfileSettingsVersion {
+		t.Errorf("expected version %d, got %d", config.ProfileSettingsVersion, ps.Version)
 	}
 }
 
 func TestProfileSettingsFromConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	// Set some non-default values to verify extraction
 	cfg.Thresholds.DNS.Warning = 50 * time.Millisecond
@@ -32,20 +32,20 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	cfg.HealthChecks.RunPerformance = true
 	cfg.HealthChecks.RunSpeedtest = false
 	cfg.HealthChecks.RunIperf = true
-	cfg.HealthChecks.PingTargets = []PingTarget{
+	cfg.HealthChecks.PingTargets = []config.PingTarget{
 		{Name: "Google", Host: "8.8.8.8", Enabled: true},
 		{Name: "Cloudflare", Host: "1.1.1.1", Enabled: false},
 	}
-	cfg.HealthChecks.TCPPorts = []TCPPortTest{
+	cfg.HealthChecks.TCPPorts = []config.TCPPortTest{
 		{Name: "HTTP", Host: "example.com", Port: 80, Enabled: true},
 	}
-	cfg.HealthChecks.HTTPEndpoints = []HTTPEndpoint{
+	cfg.HealthChecks.HTTPEndpoints = []config.HTTPEndpoint{
 		{Name: "API", URL: "https://api.example.com", ExpectedStatus: 200, Enabled: true},
 	}
 
 	cfg.DNS.TestHostname = "example.org"
 	cfg.DNS.Timeout = 5 * time.Second
-	cfg.DNS.Servers = []DNSServer{
+	cfg.DNS.Servers = []config.DNSServer{
 		{Address: "8.8.8.8", Enabled: true},
 		{Address: "1.1.1.1", Enabled: false},
 	}
@@ -56,7 +56,7 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 
 	cfg.NetworkDiscovery.Enabled = true
 	cfg.NetworkDiscovery.AutoScan = true
-	cfg.NetworkDiscovery.AdditionalSubnets = []SubnetConfig{
+	cfg.NetworkDiscovery.AdditionalSubnets = []config.SubnetConfig{
 		{CIDR: "10.0.0.0/24", Name: "LAN", Enabled: true},
 	}
 
@@ -68,7 +68,7 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	cfg.DisplayOptions.UnitSystem = "metric"
 
 	// Extract settings from config
-	ps := NewProfileSettings()
+	ps := config.NewProfileSettings()
 	ps.FromConfig(cfg)
 
 	// Verify thresholds
@@ -169,59 +169,59 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 
 func TestProfileSettingsApplyTo(t *testing.T) {
 	// Create profile settings with specific values
-	ps := &ProfileSettings{
-		Version: ProfileSettingsVersion,
-		Thresholds: ProfileThresholds{
-			DNS:        ThresholdPair{Warning: 100, Critical: 200},
-			Gateway:    ThresholdPair{Warning: 50, Critical: 150},
-			WiFi:       WiFiThresholdPair{Warning: -65, Critical: -75},
-			CustomPing: ThresholdPair{Warning: 30, Critical: 60},
+	ps := &config.ProfileSettings{
+		Version: config.ProfileSettingsVersion,
+		Thresholds: config.ProfileThresholds{
+			DNS:        config.ThresholdPair{Warning: 100, Critical: 200},
+			Gateway:    config.ThresholdPair{Warning: 50, Critical: 150},
+			WiFi:       config.WiFiThresholdPair{Warning: -65, Critical: -75},
+			CustomPing: config.ThresholdPair{Warning: 30, Critical: 60},
 		},
-		HealthChecks: ProfileHealthChecks{
+		HealthChecks: config.ProfileHealthChecks{
 			RunPerformance: true,
 			RunSpeedtest:   true,
 			RunIperf:       false,
 			RunDiscovery:   true,
-			PingTargets: []ProfilePingTarget{
+			PingTargets: []config.ProfilePingTarget{
 				{Name: "Router", Host: "192.168.1.1", Enabled: true},
 			},
-			TCPPorts: []ProfileTCPPort{
+			TCPPorts: []config.ProfileTCPPort{
 				{Name: "SSH", Host: "server.local", Port: 22, Enabled: true},
 			},
 		},
-		DNS: ProfileDNS{
+		DNS: config.ProfileDNS{
 			TestHostname: "test.example.com",
 			Timeout:      3000,
-			Servers: []ProfileDNSServer{
+			Servers: []config.ProfileDNSServer{
 				{Address: "10.0.0.1", Enabled: true},
 			},
 		},
-		SNMP: ProfileSNMP{
+		SNMP: config.ProfileSNMP{
 			Communities: []string{"community1"},
 			Timeout:     5000,
 			Port:        1161,
 			Retries:     3,
 		},
-		NetworkDiscovery: ProfileNetworkDiscovery{
+		NetworkDiscovery: config.ProfileNetworkDiscovery{
 			Enabled:  true,
 			AutoScan: false,
-			AdditionalSubnets: []ProfileSubnet{
+			AdditionalSubnets: []config.ProfileSubnet{
 				{CIDR: "172.16.0.0/16", Name: "Corp", Enabled: true},
 			},
 		},
-		FABOptions: ProfileFABOptions{
+		FABOptions: config.ProfileFABOptions{
 			RunLink:        false,
 			RunSpeedtest:   true,
 			AutoScanOnLink: false,
 		},
-		DisplayOptions: ProfileDisplayOptions{
+		DisplayOptions: config.ProfileDisplayOptions{
 			ShowPublicIP: false,
 			UnitSystem:   "imperial",
 		},
 	}
 
 	// Apply to a default config
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	ps.ApplyTo(cfg)
 
 	// Verify thresholds were applied
@@ -301,20 +301,20 @@ func TestProfileSettingsApplyTo(t *testing.T) {
 
 func TestProfileSettingsJSONRoundTrip(t *testing.T) {
 	// Create profile settings with various values
-	original := &ProfileSettings{
-		Version: ProfileSettingsVersion,
-		Thresholds: ProfileThresholds{
-			DNS:     ThresholdPair{Warning: 50, Critical: 100},
-			Gateway: ThresholdPair{Warning: 25, Critical: 75},
-			WiFi:    WiFiThresholdPair{Warning: -70, Critical: -80},
+	original := &config.ProfileSettings{
+		Version: config.ProfileSettingsVersion,
+		Thresholds: config.ProfileThresholds{
+			DNS:     config.ThresholdPair{Warning: 50, Critical: 100},
+			Gateway: config.ThresholdPair{Warning: 25, Critical: 75},
+			WiFi:    config.WiFiThresholdPair{Warning: -70, Critical: -80},
 		},
-		HealthChecks: ProfileHealthChecks{
+		HealthChecks: config.ProfileHealthChecks{
 			RunPerformance: true,
-			PingTargets: []ProfilePingTarget{
+			PingTargets: []config.ProfilePingTarget{
 				{Name: "Test", Host: "1.2.3.4", Enabled: true},
 			},
 		},
-		DNS: ProfileDNS{
+		DNS: config.ProfileDNS{
 			TestHostname: "roundtrip.test",
 			Timeout:      2000,
 		},
@@ -334,7 +334,7 @@ func TestProfileSettingsJSONRoundTrip(t *testing.T) {
 	}
 
 	// Deserialize back
-	restored := NewProfileSettings()
+	restored := config.NewProfileSettings()
 	if fromJSONErr := restored.FromJSON(jsonStr); fromJSONErr != nil {
 		t.Fatalf("FromJSON failed: %v", fromJSONErr)
 	}
@@ -374,14 +374,14 @@ func TestParseProfileSettings(t *testing.T) {
 		"notes": "Parsed from JSON string"
 	}`
 
-	ps, err := ParseProfileSettings(jsonStr)
+	ps, err := config.ParseProfileSettings(jsonStr)
 	if err != nil {
 		t.Fatalf("ParseProfileSettings failed: %v", err)
 	}
 
 	// After parsing, v1 profiles are migrated to current version.
-	if ps.Version != ProfileSettingsVersion {
-		t.Errorf("expected version %d (migrated from v1), got %d", ProfileSettingsVersion, ps.Version)
+	if ps.Version != config.ProfileSettingsVersion {
+		t.Errorf("expected version %d (migrated from v1), got %d", config.ProfileSettingsVersion, ps.Version)
 	}
 	if ps.Thresholds.DNS.Warning != 60 {
 		t.Errorf("expected DNS warning 60, got %d", ps.Thresholds.DNS.Warning)
@@ -395,17 +395,17 @@ func TestParseProfileSettings(t *testing.T) {
 }
 
 func TestParseProfileSettingsEmptyString(t *testing.T) {
-	ps, err := ParseProfileSettings("")
+	ps, err := config.ParseProfileSettings("")
 	if err != nil {
 		t.Fatalf("ParseProfileSettings with empty string should not error: %v", err)
 	}
-	if ps.Version != ProfileSettingsVersion {
-		t.Errorf("expected version %d for empty string, got %d", ProfileSettingsVersion, ps.Version)
+	if ps.Version != config.ProfileSettingsVersion {
+		t.Errorf("expected version %d for empty string, got %d", config.ProfileSettingsVersion, ps.Version)
 	}
 }
 
 func TestParseProfileSettingsInvalidJSON(t *testing.T) {
-	_, err := ParseProfileSettings("{invalid json}")
+	_, err := config.ParseProfileSettings("{invalid json}")
 	if err == nil {
 		t.Error("expected error for invalid JSON")
 	}
@@ -414,13 +414,13 @@ func TestParseProfileSettingsInvalidJSON(t *testing.T) {
 func TestProfileSettingsMigration(t *testing.T) {
 	// V1 profile should be migrated to V2.
 	v1JSON := `{"version": 1, "notes": "v1 profile"}`
-	ps, err := ParseProfileSettings(v1JSON)
+	ps, err := config.ParseProfileSettings(v1JSON)
 	if err != nil {
 		t.Fatalf("ParseProfileSettings failed: %v", err)
 	}
 
-	if ps.Version != ProfileSettingsVersion {
-		t.Errorf("expected version %d after migration, got %d", ProfileSettingsVersion, ps.Version)
+	if ps.Version != config.ProfileSettingsVersion {
+		t.Errorf("expected version %d after migration, got %d", config.ProfileSettingsVersion, ps.Version)
 	}
 
 	// Notes should be preserved after migration.
@@ -438,7 +438,7 @@ func TestProfileSettingsMigration(t *testing.T) {
 }
 
 func TestProfileSettingsInterfaceSelection(t *testing.T) {
-	ps := NewProfileSettings()
+	ps := config.NewProfileSettings()
 
 	// Set ethernet interface.
 	ps.SetEthernetInterface("eth0", true)
@@ -463,7 +463,7 @@ func TestProfileSettingsInterfaceSelection(t *testing.T) {
 	}
 
 	// Test empty interface names.
-	ps2 := NewProfileSettings()
+	ps2 := config.NewProfileSettings()
 	if ps2.GetEthernetInterfaceName() != "" {
 		t.Error("expected empty ethernet interface name for new profile")
 	}
@@ -473,7 +473,7 @@ func TestProfileSettingsInterfaceSelection(t *testing.T) {
 }
 
 func TestProfileSettingsInterfaceJSON(t *testing.T) {
-	ps := NewProfileSettings()
+	ps := config.NewProfileSettings()
 	ps.SetEthernetInterface("enp0s1", true)
 	ps.SetWiFiInterface("wlp2s0", false)
 
@@ -484,7 +484,7 @@ func TestProfileSettingsInterfaceJSON(t *testing.T) {
 	}
 
 	// Parse back.
-	ps2, err := ParseProfileSettings(jsonStr)
+	ps2, err := config.ParseProfileSettings(jsonStr)
 	if err != nil {
 		t.Fatalf("ParseProfileSettings failed: %v", err)
 	}
@@ -510,15 +510,15 @@ func TestProfileSettingsInterfaceJSON(t *testing.T) {
 
 func TestProfileSettingsRoundTripThroughConfig(t *testing.T) {
 	// Create a config with specific settings
-	originalCfg := DefaultConfig()
+	originalCfg := config.DefaultConfig()
 	originalCfg.Thresholds.DNS.Warning = 75 * time.Millisecond
 	originalCfg.Thresholds.DNS.Critical = 150 * time.Millisecond
 	originalCfg.DNS.TestHostname = "roundtrip.example.com"
-	originalCfg.DNS.Servers = []DNSServer{
+	originalCfg.DNS.Servers = []config.DNSServer{
 		{Address: "4.4.4.4", Enabled: true},
 		{Address: "5.5.5.5", Enabled: false},
 	}
-	originalCfg.HealthChecks.PingTargets = []PingTarget{
+	originalCfg.HealthChecks.PingTargets = []config.PingTarget{
 		{Name: "Target1", Host: "10.0.0.1", Enabled: true},
 		{Name: "Target2", Host: "10.0.0.2", Enabled: false},
 	}
@@ -526,7 +526,7 @@ func TestProfileSettingsRoundTripThroughConfig(t *testing.T) {
 	originalCfg.FABOptions.RunIperf = false
 
 	// Extract settings from config
-	ps := NewProfileSettings()
+	ps := config.NewProfileSettings()
 	ps.FromConfig(originalCfg)
 	ps.Notes = "Test notes for round trip"
 
@@ -537,13 +537,13 @@ func TestProfileSettingsRoundTripThroughConfig(t *testing.T) {
 	}
 
 	// Parse from JSON (simulates database retrieval)
-	restoredPS, err := ParseProfileSettings(jsonStr)
+	restoredPS, err := config.ParseProfileSettings(jsonStr)
 	if err != nil {
 		t.Fatalf("ParseProfileSettings failed: %v", err)
 	}
 
 	// Apply to a fresh config
-	newCfg := DefaultConfig()
+	newCfg := config.DefaultConfig()
 	restoredPS.ApplyTo(newCfg)
 
 	// Verify settings match original config
@@ -575,34 +575,34 @@ func TestProfileSettingsRoundTripThroughConfig(t *testing.T) {
 
 func TestMultipleProfilesWithDifferentSettings(t *testing.T) {
 	// Simulate two different profiles with different settings
-	profile1Settings := &ProfileSettings{
-		Version: ProfileSettingsVersion,
-		Thresholds: ProfileThresholds{
-			DNS:     ThresholdPair{Warning: 50, Critical: 100},
-			Gateway: ThresholdPair{Warning: 20, Critical: 50},
+	profile1Settings := &config.ProfileSettings{
+		Version: config.ProfileSettingsVersion,
+		Thresholds: config.ProfileThresholds{
+			DNS:     config.ThresholdPair{Warning: 50, Critical: 100},
+			Gateway: config.ThresholdPair{Warning: 20, Critical: 50},
 		},
-		DNS: ProfileDNS{
+		DNS: config.ProfileDNS{
 			TestHostname: "profile1.test",
 			Timeout:      2000,
 		},
-		FABOptions: ProfileFABOptions{
+		FABOptions: config.ProfileFABOptions{
 			RunSpeedtest: true,
 			RunIperf:     false,
 		},
 		Notes: "Profile 1 - Fast network",
 	}
 
-	profile2Settings := &ProfileSettings{
-		Version: ProfileSettingsVersion,
-		Thresholds: ProfileThresholds{
-			DNS:     ThresholdPair{Warning: 200, Critical: 500},
-			Gateway: ThresholdPair{Warning: 100, Critical: 300},
+	profile2Settings := &config.ProfileSettings{
+		Version: config.ProfileSettingsVersion,
+		Thresholds: config.ProfileThresholds{
+			DNS:     config.ThresholdPair{Warning: 200, Critical: 500},
+			Gateway: config.ThresholdPair{Warning: 100, Critical: 300},
 		},
-		DNS: ProfileDNS{
+		DNS: config.ProfileDNS{
 			TestHostname: "profile2.test",
 			Timeout:      10000,
 		},
-		FABOptions: ProfileFABOptions{
+		FABOptions: config.ProfileFABOptions{
 			RunSpeedtest: false,
 			RunIperf:     true,
 		},
@@ -614,8 +614,8 @@ func TestMultipleProfilesWithDifferentSettings(t *testing.T) {
 	json2, _ := profile2Settings.ToJSON()
 
 	// Apply profile 1
-	cfg := DefaultConfig()
-	ps1, _ := ParseProfileSettings(json1)
+	cfg := config.DefaultConfig()
+	ps1, _ := config.ParseProfileSettings(json1)
 	ps1.ApplyTo(cfg)
 
 	if cfg.Thresholds.DNS.Warning != 50*time.Millisecond {
@@ -629,7 +629,7 @@ func TestMultipleProfilesWithDifferentSettings(t *testing.T) {
 	}
 
 	// Switch to profile 2
-	ps2, _ := ParseProfileSettings(json2)
+	ps2, _ := config.ParseProfileSettings(json2)
 	ps2.ApplyTo(cfg)
 
 	if cfg.Thresholds.DNS.Warning != 200*time.Millisecond {
@@ -646,7 +646,7 @@ func TestMultipleProfilesWithDifferentSettings(t *testing.T) {
 	}
 
 	// Switch back to profile 1 to verify settings restore correctly
-	ps1Again, _ := ParseProfileSettings(json1)
+	ps1Again, _ := config.ParseProfileSettings(json1)
 	ps1Again.ApplyTo(cfg)
 
 	if cfg.Thresholds.DNS.Warning != 50*time.Millisecond {
@@ -659,12 +659,12 @@ func TestMultipleProfilesWithDifferentSettings(t *testing.T) {
 
 func TestProfileSettingsPreservesNotes(t *testing.T) {
 	// Create settings with notes
-	ps1 := NewProfileSettings()
+	ps1 := config.NewProfileSettings()
 	ps1.Notes = "Important client notes"
 
 	// Extract from config (should not have notes)
-	cfg := DefaultConfig()
-	ps2 := NewProfileSettings()
+	cfg := config.DefaultConfig()
+	ps2 := config.NewProfileSettings()
 	ps2.FromConfig(cfg)
 
 	// Verify notes are empty after FromConfig
@@ -679,15 +679,15 @@ func TestProfileSettingsPreservesNotes(t *testing.T) {
 
 	// Serialize and restore with notes
 	jsonData, _ := ps1.ToJSON()
-	restored, _ := ParseProfileSettings(jsonData)
+	restored, _ := config.ParseProfileSettings(jsonData)
 	if restored.Notes != "Important client notes" {
 		t.Errorf("notes not preserved through JSON round trip, got %s", restored.Notes)
 	}
 }
 
 func TestSNMPv3CredentialsRoundTrip(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.SNMP.V3Credentials = []SNMPv3Credential{
+	cfg := config.DefaultConfig()
+	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
 		{
 			Name:          "Device1",
 			Username:      "admin",
@@ -707,7 +707,7 @@ func TestSNMPv3CredentialsRoundTrip(t *testing.T) {
 	}
 
 	// Extract settings
-	ps := NewProfileSettings()
+	ps := config.NewProfileSettings()
 	ps.FromConfig(cfg)
 
 	// Verify extraction
@@ -723,10 +723,10 @@ func TestSNMPv3CredentialsRoundTrip(t *testing.T) {
 
 	// JSON round trip
 	jsonStr, _ := ps.ToJSON()
-	restored, _ := ParseProfileSettings(jsonStr)
+	restored, _ := config.ParseProfileSettings(jsonStr)
 
 	// Apply to new config
-	newCfg := DefaultConfig()
+	newCfg := config.DefaultConfig()
 	restored.ApplyTo(newCfg)
 
 	// Verify restoration
