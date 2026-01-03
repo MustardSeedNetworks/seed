@@ -102,3 +102,8 @@ func (s *Server) HandleStatus(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleExport(w http.ResponseWriter, r *http.Request) {
 	s.handleExport(w, r)
 }
+
+// Limit returns the rate limiter's limit for testing.
+func (rl *RateLimiter) Limit() int {
+	return rl.limit
+}

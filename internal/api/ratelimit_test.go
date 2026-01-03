@@ -1,29 +1,31 @@
-// Package api provides the HTTP/WebSocket server.
+// Package api_test tests the HTTP/WebSocket server.
 // Test suite validates rate limiter configuration, token bucket behavior, and HTTP middleware.
-package api
+package api_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/api"
 )
 
 func TestNewRateLimiter(t *testing.T) {
-	cfg := DefaultRateLimitConfig()
-	rl := NewRateLimiter(cfg)
+	cfg := api.DefaultRateLimitConfig()
+	rl := api.NewRateLimiter(cfg)
 	defer rl.Stop()
 
 	if rl == nil {
 		t.Fatal("NewRateLimiter returned nil")
 	}
-	if rl.limit != cfg.MaxAttempts {
-		t.Errorf("expected limit %d, got %d", cfg.MaxAttempts, rl.limit)
+	if rl.Limit() != cfg.MaxAttempts {
+		t.Errorf("expected limit %d, got %d", cfg.MaxAttempts, rl.Limit())
 	}
 }
 
 func TestRateLimiterNotBlockedInitially(t *testing.T) {
-	rl := NewRateLimiter(DefaultRateLimitConfig())
+	rl := api.NewRateLimiter(api.DefaultRateLimitConfig())
 	defer rl.Stop()
 
 	if rl.IsBlocked("192.168.1.1") {
@@ -32,12 +34,12 @@ func TestRateLimiterNotBlockedInitially(t *testing.T) {
 }
 
 func TestRateLimiterRemainingAttempts(t *testing.T) {
-	cfg := RateLimitConfig{
+	cfg := api.RateLimitConfig{
 		MaxAttempts: 5,
 		Window:      15 * time.Minute,
 		BlockTime:   15 * time.Minute,
 	}
-	rl := NewRateLimiter(cfg)
+	rl := api.NewRateLimiter(cfg)
 	defer rl.Stop()
 
 	ip := "192.168.1.100"
@@ -55,12 +57,12 @@ func TestRateLimiterRemainingAttempts(t *testing.T) {
 }
 
 func TestRateLimiterBlocksAfterMaxAttempts(t *testing.T) {
-	cfg := RateLimitConfig{
+	cfg := api.RateLimitConfig{
 		MaxAttempts: 3,
 		Window:      15 * time.Minute,
 		BlockTime:   15 * time.Minute,
 	}
-	rl := NewRateLimiter(cfg)
+	rl := api.NewRateLimiter(cfg)
 	defer rl.Stop()
 
 	ip := "10.0.0.1"
@@ -86,12 +88,12 @@ func TestRateLimiterBlocksAfterMaxAttempts(t *testing.T) {
 }
 
 func TestRateLimiterSuccessfulLoginClearsAttempts(t *testing.T) {
-	cfg := RateLimitConfig{
+	cfg := api.RateLimitConfig{
 		MaxAttempts: 5,
 		Window:      15 * time.Minute,
 		BlockTime:   15 * time.Minute,
 	}
-	rl := NewRateLimiter(cfg)
+	rl := api.NewRateLimiter(cfg)
 	defer rl.Stop()
 
 	ip := "172.16.0.50"
@@ -111,12 +113,12 @@ func TestRateLimiterSuccessfulLoginClearsAttempts(t *testing.T) {
 }
 
 func TestRateLimiterDifferentIPsAreIndependent(t *testing.T) {
-	cfg := RateLimitConfig{
+	cfg := api.RateLimitConfig{
 		MaxAttempts: 3,
 		Window:      15 * time.Minute,
 		BlockTime:   15 * time.Minute,
 	}
-	rl := NewRateLimiter(cfg)
+	rl := api.NewRateLimiter(cfg)
 	defer rl.Stop()
 
 	ip1 := "192.168.1.1"
@@ -196,7 +198,7 @@ func TestGetClientIP(t *testing.T) {
 				req.Header.Set(k, v)
 			}
 
-			got := GetClientIP(req)
+			got := api.GetClientIP(req)
 			if got != tt.expected {
 				t.Errorf("GetClientIP() = %q, want %q", got, tt.expected)
 			}
@@ -205,7 +207,7 @@ func TestGetClientIP(t *testing.T) {
 }
 
 func TestRateLimiterStop(_ *testing.T) {
-	rl := NewRateLimiter(DefaultRateLimitConfig())
+	rl := api.NewRateLimiter(api.DefaultRateLimitConfig())
 
 	// Record some attempts
 	rl.RecordAttempt("1.2.3.4", false)
@@ -215,7 +217,7 @@ func TestRateLimiterStop(_ *testing.T) {
 }
 
 func TestDefaultRateLimitConfig(t *testing.T) {
-	cfg := DefaultRateLimitConfig()
+	cfg := api.DefaultRateLimitConfig()
 
 	if cfg.MaxAttempts != 5 {
 		t.Errorf("expected MaxAttempts 5, got %d", cfg.MaxAttempts)
