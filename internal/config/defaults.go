@@ -282,13 +282,13 @@ func GetDefaultSettings() *DefaultSettings {
 // buildCardSettingsDefaults constructs card settings defaults from config.
 func buildCardSettingsDefaults(cfg *Config) CardSettingsDefaults {
 	return CardSettingsDefaults{
-		Link: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunLink},
-		Switch: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunSwitch},
-		VLAN: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunVLAN},
-		Network: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunIPConfig},
-		Gateway: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunGateway},
-		DNS: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunDNS},
-		HealthChecks: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunHealthChecks},
+		Link:             CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunLink},
+		Switch:           CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunSwitch},
+		VLAN:             CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunVLAN},
+		Network:          CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunIPConfig},
+		Gateway:          CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunGateway},
+		DNS:              CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunDNS},
+		HealthChecks:     CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunHealthChecks},
 		NetworkDiscovery: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunNetworkDiscovery},
 		Performance: PerformanceCardDefaults{
 			Enabled: true, AutoRunOnLink: cfg.FABOptions.RunPerformance,
@@ -301,16 +301,16 @@ func buildCardSettingsDefaults(cfg *Config) CardSettingsDefaults {
 // buildThresholdDefaults constructs threshold defaults from extracted milliseconds.
 func buildThresholdDefaults(t *ThresholdMsValues) ThresholdDefaults {
 	return ThresholdDefaults{
-		DNS: ThresholdPairDefaults{Good: t.DNSWarning, Warning: t.DNSCritical},
-		Gateway: ThresholdPairDefaults{Good: t.GatewayWarning, Warning: t.GatewayCritical},
-		WiFi: ThresholdPairIntDefaults{Good: t.WiFiWarning, Warning: t.WiFiCritical},
+		DNS:        ThresholdPairDefaults{Good: t.DNSWarning, Warning: t.DNSCritical},
+		Gateway:    ThresholdPairDefaults{Good: t.GatewayWarning, Warning: t.GatewayCritical},
+		WiFi:       ThresholdPairIntDefaults{Good: t.WiFiWarning, Warning: t.WiFiCritical},
 		CustomPing: ThresholdPairDefaults{Good: t.PingWarning, Warning: t.PingCritical},
-		CustomTCP: ThresholdPairDefaults{Good: t.TCPWarning, Warning: t.TCPCritical},
+		CustomTCP:  ThresholdPairDefaults{Good: t.TCPWarning, Warning: t.TCPCritical},
 		CustomHTTP: ThresholdPairDefaults{Good: t.HTTPWarning, Warning: t.HTTPCritical},
 		HTTPTimings: HTTPTimingThresholdDefaults{
-			DNS: ThresholdPairDefaults{Good: t.TimingDNSWarn, Warning: t.TimingDNSCrit},
-			TCP: ThresholdPairDefaults{Good: t.TimingTCPWarn, Warning: t.TimingTCPCrit},
-			TLS: ThresholdPairDefaults{Good: t.TimingTLSWarn, Warning: t.TimingTLSCrit},
+			DNS:  ThresholdPairDefaults{Good: t.TimingDNSWarn, Warning: t.TimingDNSCrit},
+			TCP:  ThresholdPairDefaults{Good: t.TimingTCPWarn, Warning: t.TimingTCPCrit},
+			TLS:  ThresholdPairDefaults{Good: t.TimingTLSWarn, Warning: t.TimingTLSCrit},
 			TTFB: ThresholdPairDefaults{Good: t.TimingTTFBWarn, Warning: t.TimingTTFBCrit},
 		},
 	}
