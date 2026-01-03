@@ -4,6 +4,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -217,7 +218,13 @@ func (s *Server) validateOAuthCallback(
 	// Get and validate state from cookie
 	stateCookie, err := r.Cookie(oauthStateCookie)
 	if err != nil {
-		logger.Warn("Missing OAuth state cookie", "client_ip", clientIP, "event", "auth.sso.missing_state")
+		logger.Warn(
+			"Missing OAuth state cookie",
+			"client_ip",
+			clientIP,
+			"event",
+			"auth.sso.missing_state",
+		)
 		s.redirectWithError(w, r, "OAuth session expired. Please try again.")
 		return nil, false
 	}
@@ -232,7 +239,13 @@ func (s *Server) validateOAuthCallback(
 	// Get provider from cookie
 	providerCookie, err := r.Cookie("oauth_provider")
 	if err != nil {
-		logger.Warn("Missing OAuth provider cookie", "client_ip", clientIP, "event", "auth.sso.missing_provider")
+		logger.Warn(
+			"Missing OAuth provider cookie",
+			"client_ip",
+			clientIP,
+			"event",
+			"auth.sso.missing_provider",
+		)
 		s.redirectWithError(w, r, "OAuth session expired. Please try again.")
 		return nil, false
 	}
@@ -273,7 +286,7 @@ func (s *Server) exchangeCodeForUserInfo(
 			"client_ip", clientIP,
 			"event", "auth.sso.exchange_failed",
 			"error", err)
-		return nil, fmt.Errorf("failed to authenticate")
+		return nil, errors.New("failed to authenticate")
 	}
 
 	var userInfo *oauth.UserInfo
@@ -289,7 +302,7 @@ func (s *Server) exchangeCodeForUserInfo(
 			"client_ip", clientIP,
 			"event", "auth.sso.userinfo_failed",
 			"error", err)
-		return nil, fmt.Errorf("failed to get user information")
+		return nil, errors.New("failed to get user information")
 	}
 
 	return userInfo, nil
@@ -499,14 +512,40 @@ func (s *Server) requireSSOAuth(w http.ResponseWriter, r *http.Request, logger *
 	token, _ := auth.GetTokenFromRequest(r)
 	if token == "" {
 		clientIP := s.getClientIP(r)
-		logger.Warn("Unauthenticated SSO update attempt", "client_ip", clientIP, "event", "auth.sso.blocked")
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required", "")
+		logger.Warn(
+			"Unauthenticated SSO update attempt",
+			"client_ip",
+			clientIP,
+			"event",
+			"auth.sso.blocked",
+		)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusUnauthorized,
+			ErrCodeUnauthorized,
+			"Authentication required",
+			"",
+		)
 		return false
 	}
 	if _, err := s.authManager.ValidateToken(r.Context(), token); err != nil {
 		clientIP := s.getClientIP(r)
-		logger.Warn("Invalid token SSO update attempt", "client_ip", clientIP, "event", "auth.sso.blocked")
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized, "Invalid or expired token", "")
+		logger.Warn(
+			"Invalid token SSO update attempt",
+			"client_ip",
+			clientIP,
+			"event",
+			"auth.sso.blocked",
+		)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusUnauthorized,
+			ErrCodeUnauthorized,
+			"Invalid or expired token",
+			"",
+		)
 		return false
 	}
 	return true
@@ -536,7 +575,14 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	if r.Method != http.MethodPut {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			"Method not allowed",
+			"",
+		)
 		return
 	}
 
@@ -550,7 +596,14 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 
 	var req ssoUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid request body", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"Invalid request body",
+			"",
+		)
 		return
 	}
 
@@ -560,17 +613,39 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	s.config.Unlock()
 
 	if !found {
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound, ErrCodeNotFound, "Provider not found", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+			"Provider not found",
+			"",
+		)
 		return
 	}
 
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save SSO config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, "Failed to save configuration", "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"Failed to save configuration",
+			"",
+		)
 		return
 	}
 
 	s.initOAuthManager()
-	logger.Info("SSO provider updated", "provider", req.Provider, "enabled", req.Enabled, "event", "config.sso.updated")
+	logger.Info(
+		"SSO provider updated",
+		"provider",
+		req.Provider,
+		"enabled",
+		req.Enabled,
+		"event",
+		"config.sso.updated",
+	)
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
 }

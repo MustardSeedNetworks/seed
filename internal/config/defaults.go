@@ -266,34 +266,80 @@ func GetDefaultSettings() *DefaultSettings {
 	cfg := DefaultConfig()
 	t := ExtractThresholdMs(cfg)
 	return &DefaultSettings{
-		CardSettings:     buildCardSettingsDefaults(cfg),
-		DisplayOptions:   DisplayOptionsDefaults{ShowPublicIP: cfg.DisplayOptions.ShowPublicIP, UnitSystem: cfg.DisplayOptions.UnitSystem},
-		Thresholds:       buildThresholdDefaults(&t),
-		Iperf:            IperfDefaults{Server: cfg.Iperf.Server, Port: cfg.Iperf.Port, Protocol: cfg.Iperf.Protocol, Direction: cfg.Iperf.Direction, Duration: cfg.Iperf.Duration, ServerPort: cfg.Iperf.ServerPort, EnableServer: cfg.Iperf.EnableServer, AutoRunOnLink: cfg.Iperf.AutoRunOnLink},
+		CardSettings: buildCardSettingsDefaults(cfg),
+		DisplayOptions: DisplayOptionsDefaults{
+			ShowPublicIP: cfg.DisplayOptions.ShowPublicIP,
+			UnitSystem:   cfg.DisplayOptions.UnitSystem,
+		},
+		Thresholds: buildThresholdDefaults(&t),
+		Iperf: IperfDefaults{
+			Server:        cfg.Iperf.Server,
+			Port:          cfg.Iperf.Port,
+			Protocol:      cfg.Iperf.Protocol,
+			Direction:     cfg.Iperf.Direction,
+			Duration:      cfg.Iperf.Duration,
+			ServerPort:    cfg.Iperf.ServerPort,
+			EnableServer:  cfg.Iperf.EnableServer,
+			AutoRunOnLink: cfg.Iperf.AutoRunOnLink,
+		},
 		Tests:            buildTestsDefaults(cfg),
 		NetworkDiscovery: buildNetworkDiscoveryDefaults(cfg),
-		SNMP:             SNMPDefaults{Communities: cfg.SNMP.Communities, TimeoutMs: cfg.SNMP.Timeout.Milliseconds(), Retries: cfg.SNMP.Retries, Port: cfg.SNMP.Port},
-		Link:             LinkDefaults{Mode: "auto", AvailableModes: []string{}},
-		CableTest:        CableTestDefaults{Enabled: true},
-		Vulnerability:    VulnerabilityDefaults{Enabled: cfg.Security.VulnerabilityScanning.Enabled, CVEDatabase: cfg.Security.VulnerabilityScanning.CVEDatabase, NVDAPIKey: "", UpdateInterval: cfg.Security.VulnerabilityScanning.UpdateInterval, SeverityThreshold: cfg.Security.VulnerabilityScanning.SeverityThreshold, MaxConcurrent: cfg.Security.VulnerabilityScanning.MaxConcurrent, AutoScan: cfg.Security.VulnerabilityScanning.AutoScan},
+		SNMP: SNMPDefaults{
+			Communities: cfg.SNMP.Communities,
+			TimeoutMs:   cfg.SNMP.Timeout.Milliseconds(),
+			Retries:     cfg.SNMP.Retries,
+			Port:        cfg.SNMP.Port,
+		},
+		Link:      LinkDefaults{Mode: "auto", AvailableModes: []string{}},
+		CableTest: CableTestDefaults{Enabled: true},
+		Vulnerability: VulnerabilityDefaults{
+			Enabled:           cfg.Security.VulnerabilityScanning.Enabled,
+			CVEDatabase:       cfg.Security.VulnerabilityScanning.CVEDatabase,
+			NVDAPIKey:         "",
+			UpdateInterval:    cfg.Security.VulnerabilityScanning.UpdateInterval,
+			SeverityThreshold: cfg.Security.VulnerabilityScanning.SeverityThreshold,
+			MaxConcurrent:     cfg.Security.VulnerabilityScanning.MaxConcurrent,
+			AutoScan:          cfg.Security.VulnerabilityScanning.AutoScan,
+		},
 	}
 }
 
 // buildCardSettingsDefaults constructs card settings defaults from config.
 func buildCardSettingsDefaults(cfg *Config) CardSettingsDefaults {
 	return CardSettingsDefaults{
-		Link:             CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunLink},
-		Switch:           CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunSwitch},
-		VLAN:             CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunVLAN},
-		Network:          CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunIPConfig},
-		Gateway:          CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunGateway},
-		DNS:              CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunDNS},
-		HealthChecks:     CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunHealthChecks},
-		NetworkDiscovery: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunNetworkDiscovery},
+		Link: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunLink},
+		Switch: CardOptionDefaults{
+			Enabled:       true,
+			AutoRunOnLink: cfg.FABOptions.RunSwitch,
+		},
+		VLAN: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunVLAN},
+		Network: CardOptionDefaults{
+			Enabled:       true,
+			AutoRunOnLink: cfg.FABOptions.RunIPConfig,
+		},
+		Gateway: CardOptionDefaults{
+			Enabled:       true,
+			AutoRunOnLink: cfg.FABOptions.RunGateway,
+		},
+		DNS: CardOptionDefaults{Enabled: true, AutoRunOnLink: cfg.FABOptions.RunDNS},
+		HealthChecks: CardOptionDefaults{
+			Enabled:       true,
+			AutoRunOnLink: cfg.FABOptions.RunHealthChecks,
+		},
+		NetworkDiscovery: CardOptionDefaults{
+			Enabled:       true,
+			AutoRunOnLink: cfg.FABOptions.RunNetworkDiscovery,
+		},
 		Performance: PerformanceCardDefaults{
 			Enabled: true, AutoRunOnLink: cfg.FABOptions.RunPerformance,
-			Speedtest: CardOptionDefaults{Enabled: cfg.HealthChecks.RunSpeedtest, AutoRunOnLink: cfg.Speedtest.AutoRunOnLink},
-			Iperf:     CardOptionDefaults{Enabled: cfg.HealthChecks.RunIperf, AutoRunOnLink: cfg.Iperf.AutoRunOnLink},
+			Speedtest: CardOptionDefaults{
+				Enabled:       cfg.HealthChecks.RunSpeedtest,
+				AutoRunOnLink: cfg.Speedtest.AutoRunOnLink,
+			},
+			Iperf: CardOptionDefaults{
+				Enabled:       cfg.HealthChecks.RunIperf,
+				AutoRunOnLink: cfg.Iperf.AutoRunOnLink,
+			},
 		},
 	}
 }
@@ -333,7 +379,10 @@ func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
 				TCPPorts: cfg.NetworkDiscovery.Options.PortScan.TCPPorts, UDPPorts: cfg.NetworkDiscovery.Options.PortScan.UDPPorts,
 				BannerTimeoutMs: cfg.NetworkDiscovery.Options.PortScan.BannerTimeout.Milliseconds(),
 			},
-			TCPProbe:   TCPProbeDefaults{TimeoutMs: cfg.NetworkDiscovery.Options.TCPProbe.Timeout.Milliseconds(), Workers: cfg.NetworkDiscovery.Options.TCPProbe.Workers},
+			TCPProbe: TCPProbeDefaults{
+				TimeoutMs: cfg.NetworkDiscovery.Options.TCPProbe.Timeout.Milliseconds(),
+				Workers:   cfg.NetworkDiscovery.Options.TCPProbe.Workers,
+			},
 			Traceroute: cfg.NetworkDiscovery.Options.Traceroute, SNMPQuery: cfg.NetworkDiscovery.Options.SNMPQuery,
 		},
 		Timing: DiscoveryTimingDefaults{

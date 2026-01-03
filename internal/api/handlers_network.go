@@ -190,7 +190,10 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 			logger,
 			http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail,
-			localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}),
+			localizer.TWithData(
+				"errors.service.notAvailable",
+				map[string]any{"service": "Network manager"},
+			),
 			"",
 		) // fixes #694
 		return
@@ -225,7 +228,10 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			logger,
 			http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail,
-			localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}),
+			localizer.TWithData(
+				"errors.service.notAvailable",
+				map[string]any{"service": "Network manager"},
+			),
 			"",
 		) // fixes #694
 		return
@@ -371,8 +377,17 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if s.netManager == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			localizer.TWithData(
+				"errors.service.notAvailable",
+				map[string]any{"service": "Network manager"},
+			),
+			"",
+		)
 		return
 	}
 
@@ -438,7 +453,10 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 			logger,
 			http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail,
-			localizer.TWithData("errors.service.notAvailable", map[string]any{"service": "Network manager"}),
+			localizer.TWithData(
+				"errors.service.notAvailable",
+				map[string]any{"service": "Network manager"},
+			),
 			"",
 		) // fixes #694
 		return
@@ -548,7 +566,11 @@ func (s *Server) handleIPSettingsGet(w http.ResponseWriter, _ *http.Request) {
 }
 
 // applyStaticIPConfig applies static IP configuration, returns error message on failure.
-func (s *Server) applyStaticIPConfig(iface string, req *IPSettingsRequest, logger *slog.Logger) error {
+func (s *Server) applyStaticIPConfig(
+	iface string,
+	req *IPSettingsRequest,
+	logger *slog.Logger,
+) error {
 	cfg := &network.StaticIPConfig{
 		Address: req.Address, Netmask: req.Netmask, Gateway: req.Gateway, DNS: req.DNS,
 	}
@@ -576,18 +598,37 @@ func (s *Server) applyDHCPConfig(iface string, logger *slog.Logger) error {
 
 // handleIPSettingsPut updates the IP configuration settings.
 // Accepts optional query parameter: ?interface=eth0.
-func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, logger *slog.Logger, localizer *i18n.Localizer) {
+func (s *Server) handleIPSettingsPut(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req IPSettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
 		return
 	}
 
 	if req.Mode != ipModeDHCP && req.Mode != ipModeStatic {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation, localizer.T("errors.network.invalidMode"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeValidation,
+			localizer.T("errors.network.invalidMode"),
+			"",
+		)
 		return
 	}
 
@@ -608,23 +649,49 @@ func (s *Server) handleIPSettingsPut(w http.ResponseWriter, r *http.Request, log
 		if req.Mode == ipModeDHCP {
 			errMsg = localizer.T("errors.network.dhcpConfigFailed")
 		}
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, errMsg, "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			errMsg,
+			"",
+		)
 		return
 	}
 
 	if err := s.config.Save(s.configPath); err != nil {
 		logger.Error("Failed to save config", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.config.failedToSave"),
+			"",
+		)
 		return
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			localizer.T("errors.network.refreshFailed"),
+			"",
+		)
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "success", "message": "IP configuration updated"})
+	sendJSONResponse(
+		w,
+		logger,
+		http.StatusOK,
+		map[string]string{"status": "success", "message": "IP configuration updated"},
+	)
 }
 
 // handleSetMTU handles POST requests to set interface MTU.

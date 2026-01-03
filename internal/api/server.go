@@ -199,7 +199,12 @@ func NewServer(
 
 	// Initialize survey manager
 	surveyStoragePath := "data/surveys"
-	s.surveyManager = survey.NewManager(surveyStoragePath, s.wifiScanner, s.wifiManager, s.iperfManager)
+	s.surveyManager = survey.NewManager(
+		surveyStoragePath,
+		s.wifiScanner,
+		s.wifiManager,
+		s.iperfManager,
+	)
 	if err := s.surveyManager.LoadSurveys(); err != nil {
 		slog.Warn("Failed to load surveys", "error", err)
 	}
@@ -215,7 +220,8 @@ func NewServer(
 
 		// Migrate admin user from config to database if needed
 		// This ensures backward compatibility during the transition
-		if cfg.Auth.DefaultPasswordHash != "" && cfg.Auth.DefaultPasswordHash != auth.SetupModePlaceholder {
+		if cfg.Auth.DefaultPasswordHash != "" &&
+			cfg.Auth.DefaultPasswordHash != auth.SetupModePlaceholder {
 			if err := userStore.MigrateUserFromConfig(context.Background(), cfg.Auth.DefaultUsername, cfg.Auth.DefaultPasswordHash); err != nil {
 				slog.Error("Failed to migrate user from config", "error", err)
 			} else {
@@ -275,7 +281,11 @@ func NewServer(
 
 	// Set up pipeline completion callback to sync results back to service
 	s.discoveryService.SetOnPipelineComplete(func(devices []*discovery.DiscoveredDevice) {
-		slog.Info("Pipeline completed, syncing results to discovery service", "device_count", len(devices))
+		slog.Info(
+			"Pipeline completed, syncing results to discovery service",
+			"device_count",
+			len(devices),
+		)
 	})
 
 	slog.Info("Discovery pipeline initialized",
@@ -321,7 +331,11 @@ func NewServer(
 					"warning", "Not recommended for production use")
 			}
 		}
-		slog.Info("Configured explicit allowed origins for CORS/WebSocket", "count", len(cfg.Security.AllowedOrigins))
+		slog.Info(
+			"Configured explicit allowed origins for CORS/WebSocket",
+			"count",
+			len(cfg.Security.AllowedOrigins),
+		)
 	} else {
 		slog.Info("Using default RFC 1918 private network origins for CORS/WebSocket")
 	}
@@ -444,16 +458,25 @@ func (s *Server) setupSAPRoutes() {
 	s.mux.HandleFunc("/api/sap/vlan", s.handleVLAN)
 	s.mux.HandleFunc("/api/sap/vlan/traffic", s.handleVLANTraffic)
 	s.mux.HandleFunc("/api/sap/vlan/interface", s.handleVLANInterface)
-	s.mux.Handle("/api/sap/speedtest", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)))
+	s.mux.Handle(
+		"/api/sap/speedtest",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)),
+	)
 	s.mux.HandleFunc("/api/sap/speedtest/status", s.handleSpeedtestStatus)
 	s.mux.HandleFunc("/api/sap/iperf/info", s.handleIperfInfo)
-	s.mux.Handle("/api/sap/iperf/client", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)))
+	s.mux.Handle(
+		"/api/sap/iperf/client",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)),
+	)
 	s.mux.HandleFunc("/api/sap/iperf/client/status", s.handleIperfClientStatus)
 	s.mux.HandleFunc("/api/sap/iperf/server", s.handleIperfServer)
 	s.mux.HandleFunc("/api/sap/iperf/server/status", s.handleIperfServerStatus)
 	s.mux.HandleFunc("/api/sap/iperf/suggestions", s.handleIperfSuggestions)
 	s.mux.HandleFunc("/api/sap/health-checks/settings", s.handleHealthChecksSettings)
-	s.mux.Handle("/api/sap/health-checks/run", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)))
+	s.mux.Handle(
+		"/api/sap/health-checks/run",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)),
+	)
 	s.mux.HandleFunc("/api/sap/snmp/settings", s.handleSNMPSettings)
 	s.mux.HandleFunc("/api/sap/system/health", s.handleSystemHealth)
 	s.mux.HandleFunc("/api/sap/ipconfig", s.handleIPConfig)
@@ -470,7 +493,10 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc("/api/shell/discovery/service/status", s.handleDiscoveryServiceStatus)
 	s.mux.HandleFunc("/api/shell/discovery/fingerprint", s.handleAdvancedFingerprint)
 	s.mux.HandleFunc("/api/shell/devices", s.handleDevices)
-	s.mux.Handle("/api/shell/devices/scan", s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)))
+	s.mux.Handle(
+		"/api/shell/devices/scan",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)),
+	)
 	s.mux.HandleFunc("/api/shell/devices/status", s.handleDevicesStatus)
 	s.mux.HandleFunc("/api/shell/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc("/api/shell/devices/subnets", s.handleDevicesSubnets)
@@ -599,7 +625,8 @@ func corsMiddleware(next http.Handler) http.Handler {
 				w.Header().Set("Vary", "Origin")
 			}
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token")
+			w.Header().
+				Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			// Cache preflight requests for 24 hours to reduce overhead (fixes #531)
 			w.Header().Set("Access-Control-Max-Age", "86400")
@@ -958,7 +985,8 @@ func (s *Server) startHTTPSWithACME() error {
 	}
 	go func() {
 		slog.Info("Starting HTTP-01 challenge handler", "addr", ":80")
-		if err := s.acmeChallengeServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.acmeChallengeServer.ListenAndServe(); err != nil &&
+			err != http.ErrServerClosed {
 			slog.Error("HTTP-01 handler error", "error", err)
 		}
 	}()
@@ -1010,7 +1038,13 @@ func (s *Server) ensureSelfSignedCert() (string, string, error) {
 	}
 
 	// Create certificate
-	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	certDER, err := x509.CreateCertificate(
+		rand.Reader,
+		&template,
+		&template,
+		&privateKey.PublicKey,
+		privateKey,
+	)
 	if err != nil {
 		return "", "", fmt.Errorf("create certificate: %w", err)
 	}
