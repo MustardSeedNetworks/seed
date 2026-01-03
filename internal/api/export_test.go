@@ -4,6 +4,8 @@ package api
 import (
 	"context"
 	"net/http"
+
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 // SplitCIDR exports splitCIDR for testing.
@@ -106,4 +108,44 @@ func (s *Server) HandleExport(w http.ResponseWriter, r *http.Request) {
 // Limit returns the rate limiter's limit for testing.
 func (rl *RateLimiter) Limit() int {
 	return rl.limit
+}
+
+// SetConfig sets the server config for testing.
+func (s *Server) SetConfig(cfg *config.Config) {
+	s.config = cfg
+}
+
+// SetConfigPath sets the server config path for testing.
+func (s *Server) SetConfigPath(path string) {
+	s.configPath = path
+}
+
+// GetConfig returns the server config for testing.
+func (s *Server) GetConfig() *config.Config {
+	return s.config
+}
+
+// HandleConfigVersion exports handleConfigVersion for testing.
+func (s *Server) HandleConfigVersion(w http.ResponseWriter, r *http.Request) {
+	s.handleConfigVersion(w, r)
+}
+
+// HandleConfigBackups exports handleConfigBackups for testing.
+func (s *Server) HandleConfigBackups(w http.ResponseWriter, r *http.Request) {
+	s.handleConfigBackups(w, r)
+}
+
+// HandleConfigBackupCreate exports handleConfigBackupCreate for testing.
+func (s *Server) HandleConfigBackupCreate(w http.ResponseWriter, r *http.Request) {
+	s.handleConfigBackupCreate(w, r)
+}
+
+// HandleConfigRestore exports handleConfigRestore for testing.
+func (s *Server) HandleConfigRestore(w http.ResponseWriter, r *http.Request) {
+	s.handleConfigRestore(w, r)
+}
+
+// HandleConfigBackupDelete exports handleConfigBackupDelete for testing.
+func (s *Server) HandleConfigBackupDelete(w http.ResponseWriter, r *http.Request) {
+	s.handleConfigBackupDelete(w, r)
 }

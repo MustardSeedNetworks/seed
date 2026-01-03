@@ -1,4 +1,4 @@
-package api
+package api_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/krisarmstrong/seed/internal/api"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/testutil"
 )
@@ -24,21 +25,20 @@ func TestHandleConfigVersion(t *testing.T) {
 	}
 
 	// Create server with minimal setup
-	s := &Server{
-		config:     cfg,
-		configPath: configPath,
-	}
+	s := &api.Server{}
+	s.SetConfig(cfg)
+	s.SetConfigPath(configPath)
 
 	// Test GET /api/config/version
 	req := httptest.NewRequest(http.MethodGet, "/api/config/version", http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleConfigVersion(w, req)
+	s.HandleConfigVersion(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("handleConfigVersion() status = %d, want %d", w.Code, http.StatusOK)
+		t.Errorf("HandleConfigVersion() status = %d, want %d", w.Code, http.StatusOK)
 	}
 
-	var resp ConfigVersionResponse
+	var resp api.ConfigVersionResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
@@ -70,21 +70,20 @@ func TestHandleConfigBackups(t *testing.T) {
 		t.Fatalf("Failed to create backup: %v", err)
 	}
 
-	s := &Server{
-		config:     cfg,
-		configPath: configPath,
-	}
+	s := &api.Server{}
+	s.SetConfig(cfg)
+	s.SetConfigPath(configPath)
 
 	// Test GET /api/config/backups
 	req := httptest.NewRequest(http.MethodGet, "/api/config/backups", http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleConfigBackups(w, req)
+	s.HandleConfigBackups(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("handleConfigBackups() status = %d, want %d", w.Code, http.StatusOK)
+		t.Errorf("HandleConfigBackups() status = %d, want %d", w.Code, http.StatusOK)
 	}
 
-	var resp BackupListResponse
+	var resp api.BackupListResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
@@ -104,18 +103,17 @@ func TestHandleConfigBackupCreate(t *testing.T) {
 		t.Fatalf("Failed to save config: %v", err)
 	}
 
-	s := &Server{
-		config:     cfg,
-		configPath: configPath,
-	}
+	s := &api.Server{}
+	s.SetConfig(cfg)
+	s.SetConfigPath(configPath)
 
 	// Test POST /api/config/backup
 	req := httptest.NewRequest(http.MethodPost, "/api/config/backup", http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleConfigBackupCreate(w, req)
+	s.HandleConfigBackupCreate(w, req)
 
 	if w.Code != http.StatusCreated {
-		t.Errorf("handleConfigBackupCreate() status = %d, want %d; body: %s",
+		t.Errorf("HandleConfigBackupCreate() status = %d, want %d; body: %s",
 			w.Code, http.StatusCreated, w.Body.String())
 	}
 
@@ -159,26 +157,25 @@ func TestHandleConfigRestore(t *testing.T) {
 		t.Fatalf("Failed to save modified config: %v", saveErr)
 	}
 
-	s := &Server{
-		config:     cfg,
-		configPath: configPath,
-	}
+	s := &api.Server{}
+	s.SetConfig(cfg)
+	s.SetConfigPath(configPath)
 
 	// Test POST /api/config/restore
-	reqBody := RestoreRequest{BackupName: backup.Name}
+	reqBody := api.RestoreRequest{BackupName: backup.Name}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/api/config/restore", bytes.NewReader(body))
 	w := httptest.NewRecorder()
-	s.handleConfigRestore(w, req)
+	s.HandleConfigRestore(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("handleConfigRestore() status = %d, want %d; body: %s",
+		t.Errorf("HandleConfigRestore() status = %d, want %d; body: %s",
 			w.Code, http.StatusOK, w.Body.String())
 	}
 
 	// Verify config was restored
-	if s.config.Server.Port != 8080 {
-		t.Errorf("Config port = %d, want 8080 (restored value)", s.config.Server.Port)
+	if s.GetConfig().Server.Port != 8080 {
+		t.Errorf("Config port = %d, want 8080 (restored value)", s.GetConfig().Server.Port)
 	}
 }
 
@@ -199,18 +196,17 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 		t.Fatalf("Failed to create backup: %v", err)
 	}
 
-	s := &Server{
-		config:     cfg,
-		configPath: configPath,
-	}
+	s := &api.Server{}
+	s.SetConfig(cfg)
+	s.SetConfigPath(configPath)
 
 	// Test DELETE /api/config/backup/delete?name=...
 	req := httptest.NewRequest(http.MethodDelete, "/api/config/backup/delete?name="+backup.Name, http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleConfigBackupDelete(w, req)
+	s.HandleConfigBackupDelete(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("handleConfigBackupDelete() status = %d, want %d; body: %s",
+		t.Errorf("HandleConfigBackupDelete() status = %d, want %d; body: %s",
 			w.Code, http.StatusOK, w.Body.String())
 	}
 
@@ -222,33 +218,31 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 
 func TestHandleConfigVersion_MethodNotAllowed(t *testing.T) {
 	// Use testutil for consistent test configuration
-	s := &Server{
-		config:     testutil.NewConfigBuilder().Build(),
-		configPath: "/tmp/config.yaml",
-	}
+	s := &api.Server{}
+	s.SetConfig(testutil.NewConfigBuilder().Build())
+	s.SetConfigPath("/tmp/config.yaml")
 
 	req := httptest.NewRequest(http.MethodPost, "/api/config/version", http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleConfigVersion(w, req)
+	s.HandleConfigVersion(w, req)
 
 	if w.Code != http.StatusMethodNotAllowed {
-		t.Errorf("handleConfigVersion(POST) status = %d, want %d", w.Code, http.StatusMethodNotAllowed)
+		t.Errorf("HandleConfigVersion(POST) status = %d, want %d", w.Code, http.StatusMethodNotAllowed)
 	}
 }
 
 func TestHandleConfigRestore_MissingBackupName(t *testing.T) {
 	// Use testutil for consistent test configuration
-	s := &Server{
-		config:     testutil.NewConfigBuilder().Build(),
-		configPath: "/tmp/config.yaml",
-	}
+	s := &api.Server{}
+	s.SetConfig(testutil.NewConfigBuilder().Build())
+	s.SetConfigPath("/tmp/config.yaml")
 
-	body, _ := json.Marshal(RestoreRequest{BackupName: ""})
+	body, _ := json.Marshal(api.RestoreRequest{BackupName: ""})
 	req := httptest.NewRequest(http.MethodPost, "/api/config/restore", bytes.NewReader(body))
 	w := httptest.NewRecorder()
-	s.handleConfigRestore(w, req)
+	s.HandleConfigRestore(w, req)
 
 	if w.Code != http.StatusBadRequest {
-		t.Errorf("handleConfigRestore() status = %d, want %d", w.Code, http.StatusBadRequest)
+		t.Errorf("HandleConfigRestore() status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
 }
