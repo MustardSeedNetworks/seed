@@ -1,4 +1,4 @@
-package logging
+package logging_test
 
 import (
 	"bytes"
@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // testHandler is a simple handler that captures log records for testing.
@@ -46,20 +48,20 @@ func (h *testHandler) WithGroup(name string) slog.Handler {
 
 func TestNewRedactingHandler(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	if rh == nil {
 		t.Fatal("NewRedactingHandler() returned nil")
 	}
 
-	if rh.inner != inner {
+	if rh.Inner() != inner {
 		t.Error("NewRedactingHandler() did not set inner handler correctly")
 	}
 }
 
 func TestRedactingHandler_Enabled(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	// Should delegate to inner handler
 	if !rh.Enabled(context.Background(), slog.LevelInfo) {
@@ -117,7 +119,7 @@ func TestRedactingHandler_Handle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			inner := &testHandler{}
-			rh := NewRedactingHandler(inner)
+			rh := logging.NewRedactingHandler(inner)
 
 			record := slog.NewRecord(time.Now(), slog.LevelInfo, tt.message, 0)
 			for _, attr := range tt.attrs {
@@ -147,7 +149,7 @@ func TestRedactingHandler_Handle(t *testing.T) {
 
 func TestRedactingHandler_Handle_Errors(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	// Test with error containing sensitive data
 	testErr := errors.New("connection failed: password=secret123")
@@ -183,7 +185,7 @@ func TestRedactingHandler_Handle_Errors(t *testing.T) {
 
 func TestRedactingHandler_Handle_HTTPHeaders(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	headers := http.Header{
 		"Content-Type":  []string{"application/json"},
@@ -224,7 +226,7 @@ func TestRedactingHandler_Handle_HTTPHeaders(t *testing.T) {
 
 func TestRedactingHandler_Handle_Maps(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	// Test map[string]interface{}
 	data := map[string]any{
@@ -243,7 +245,7 @@ func TestRedactingHandler_Handle_Maps(t *testing.T) {
 
 	// Test map[string]string
 	inner2 := &testHandler{}
-	rh2 := NewRedactingHandler(inner2)
+	rh2 := logging.NewRedactingHandler(inner2)
 
 	stringData := map[string]string{
 		"username": "john",
@@ -261,7 +263,7 @@ func TestRedactingHandler_Handle_Maps(t *testing.T) {
 
 func TestRedactingHandler_WithAttrs(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	attrs := []slog.Attr{
 		slog.String("password", "secret123"),
@@ -276,14 +278,14 @@ func TestRedactingHandler_WithAttrs(t *testing.T) {
 	}
 
 	// Verify it's a RedactingHandler
-	_, ok := newHandler.(*RedactingHandler)
+	_, ok := newHandler.(*logging.RedactingHandler)
 	if !ok {
 		t.Error("WithAttrs() did not return a RedactingHandler")
 	}
 
 	// Verify attributes were redacted
-	rhNew := newHandler.(*RedactingHandler)
-	innerNew := rhNew.inner.(*testHandler)
+	rhNew := newHandler.(*logging.RedactingHandler)
+	innerNew := rhNew.Inner().(*testHandler)
 
 	var passwordRedacted bool
 	for _, attr := range innerNew.attrs {
@@ -299,7 +301,7 @@ func TestRedactingHandler_WithAttrs(t *testing.T) {
 
 func TestRedactingHandler_WithGroup(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	newHandler := rh.WithGroup("request")
 
@@ -309,13 +311,13 @@ func TestRedactingHandler_WithGroup(t *testing.T) {
 	}
 
 	// Verify it's a RedactingHandler
-	rhNew, ok := newHandler.(*RedactingHandler)
+	rhNew, ok := newHandler.(*logging.RedactingHandler)
 	if !ok {
 		t.Error("WithGroup() did not return a RedactingHandler")
 	}
 
 	// Verify group was added to inner handler
-	innerNew := rhNew.inner.(*testHandler)
+	innerNew := rhNew.Inner().(*testHandler)
 	if len(innerNew.groups) == 0 || innerNew.groups[0] != "request" {
 		t.Error("WithGroup() did not add group to inner handler")
 	}
@@ -353,7 +355,7 @@ func TestIsSensitiveKey(t *testing.T) {
 
 	for _, key := range sensitiveKeys {
 		t.Run(key, func(t *testing.T) {
-			if !isSensitiveKey(key) {
+			if !logging.IsSensitiveKey(key) {
 				t.Errorf("isSensitiveKey(%q) = false, want true", key)
 			}
 		})
@@ -374,7 +376,7 @@ func TestIsSensitiveKey(t *testing.T) {
 
 	for _, key := range nonSensitiveKeys {
 		t.Run(key, func(t *testing.T) {
-			if isSensitiveKey(key) {
+			if logging.IsSensitiveKey(key) {
 				t.Errorf("isSensitiveKey(%q) = true, want false", key)
 			}
 		})
@@ -397,7 +399,7 @@ func TestToLower(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := toLower(tt.input)
+			result := logging.ToLower(tt.input)
 			if result != tt.expected {
 				t.Errorf("toLower(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -425,7 +427,7 @@ func TestContains(t *testing.T) {
 	for _, tt := range tests {
 		name := tt.s + "_" + tt.substr
 		t.Run(name, func(t *testing.T) {
-			result := contains(tt.s, tt.substr)
+			result := logging.Contains(tt.s, tt.substr)
 			if result != tt.expected {
 				t.Errorf("contains(%q, %q) = %v, want %v", tt.s, tt.substr, result, tt.expected)
 			}
@@ -439,7 +441,7 @@ func TestRedactingHandler_Integration(t *testing.T) {
 	baseHandler := slog.NewTextHandler(&buf, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
-	rh := NewRedactingHandler(baseHandler)
+	rh := logging.NewRedactingHandler(baseHandler)
 	logger := slog.New(rh)
 
 	// Log with sensitive data
@@ -469,11 +471,11 @@ func TestRedactingHandler_Integration(t *testing.T) {
 
 func TestRedactAttr_NilError(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	// Test with nil error
 	attr := slog.Any("error", error(nil))
-	result := rh.redactAttr(attr)
+	result := rh.RedactAttr(attr)
 
 	// Should return original attribute for nil error
 	if result.Key != "error" {
@@ -483,7 +485,7 @@ func TestRedactAttr_NilError(t *testing.T) {
 
 func TestRedactAttr_NumericValues(t *testing.T) {
 	inner := &testHandler{}
-	rh := NewRedactingHandler(inner)
+	rh := logging.NewRedactingHandler(inner)
 
 	tests := []struct {
 		name string
@@ -499,7 +501,7 @@ func TestRedactAttr_NumericValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := rh.redactAttr(tt.attr)
+			result := rh.RedactAttr(tt.attr)
 			// Numeric and other non-string types should pass through unchanged
 			if result.Key != tt.attr.Key {
 				t.Errorf("redactAttr changed key: got %q, want %q", result.Key, tt.attr.Key)

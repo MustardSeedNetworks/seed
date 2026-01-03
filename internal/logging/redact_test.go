@@ -1,8 +1,10 @@
-package logging
+package logging_test
 
 import (
 	"net/http"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 func TestRedactString(t *testing.T) {
@@ -45,7 +47,7 @@ func TestRedactString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := RedactString(tt.input)
+			result := logging.RedactString(tt.input)
 			if result != tt.expected {
 				t.Errorf("RedactString() = %q, want %q", result, tt.expected)
 			}
@@ -107,7 +109,7 @@ func TestRedactHeaders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := RedactHeaders(tt.headers)
+			result := logging.RedactHeaders(tt.headers)
 			for key, expectedVal := range tt.expected {
 				if result[key] != expectedVal {
 					t.Errorf("RedactHeaders()[%q] = %q, want %q", key, result[key], expectedVal)
@@ -172,7 +174,7 @@ func TestRedactMap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := RedactMap(tt.input)
+			result := logging.RedactMap(tt.input)
 			if result[tt.checkKey] != tt.expected {
 				t.Errorf("RedactMap()[%q] = %v, want %v", tt.checkKey, result[tt.checkKey], tt.expected)
 			}
@@ -206,7 +208,7 @@ func TestSafeError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := SafeError(tt.err, tt.context)
+			result := logging.SafeError(tt.err, tt.context)
 			if tt.err == nil {
 				if result != nil {
 					t.Errorf("SafeError(nil) = %v, want nil", result)
@@ -308,7 +310,7 @@ func TestGetClientIP(t *testing.T) {
 			}
 			req.RemoteAddr = tt.remoteAddr
 
-			result := GetClientIP(req)
+			result := logging.GetClientIP(req)
 			if result != tt.expected {
 				t.Errorf("GetClientIP() = %q, want %q", result, tt.expected)
 			}
@@ -319,25 +321,25 @@ func TestGetClientIP(t *testing.T) {
 func TestLogf(t *testing.T) {
 	// Test that Logf doesn't panic with various argument types
 	t.Run("string argument", func(_ *testing.T) {
-		Logf("test message: %s", "password=secret")
+		logging.Logf("test message: %s", "password=secret")
 	})
 
 	t.Run("http.Header argument", func(_ *testing.T) {
 		h := http.Header{"Authorization": []string{"Bearer token"}}
-		Logf("headers: %v", h)
+		logging.Logf("headers: %v", h)
 	})
 
 	t.Run("map argument", func(_ *testing.T) {
 		m := map[string]any{"password": "secret", "user": "admin"}
-		Logf("data: %v", m)
+		logging.Logf("data: %v", m)
 	})
 
 	t.Run("int argument", func(_ *testing.T) {
-		Logf("count: %d", 42)
+		logging.Logf("count: %d", 42)
 	})
 
 	t.Run("mixed arguments", func(_ *testing.T) {
-		Logf("user=%s count=%d", "admin", 10)
+		logging.Logf("user=%s count=%d", "admin", 10)
 	})
 }
 
@@ -349,7 +351,7 @@ func TestLogRequest(_ *testing.T) {
 	req.RemoteAddr = "192.168.1.100:54321"
 
 	// This should log but not panic
-	LogRequest(req, "test request")
+	logging.LogRequest(req, "test request")
 }
 
 func TestRedactMapWithNonStringValues(t *testing.T) {
@@ -361,7 +363,7 @@ func TestRedactMapWithNonStringValues(t *testing.T) {
 		"nested":   map[string]string{"key": "value"},
 	}
 
-	result := RedactMap(input)
+	result := logging.RedactMap(input)
 
 	// Non-string values should be preserved (except sensitive keys)
 	if result["count"] != 42 {
@@ -403,7 +405,7 @@ func TestSensitivePatterns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := RedactString(tt.input)
+			result := logging.RedactString(tt.input)
 			hasRedacted := result != tt.input
 			if hasRedacted != tt.shouldRedact {
 				t.Errorf("RedactString(%q) redacted=%v, want %v (result=%q)",
@@ -429,7 +431,7 @@ func TestSensitiveHeaders(t *testing.T) {
 	for _, headerName := range sensitiveHeaderNames {
 		t.Run(headerName, func(t *testing.T) {
 			headers := http.Header{headerName: []string{"secret-value"}}
-			result := RedactHeaders(headers)
+			result := logging.RedactHeaders(headers)
 			if result[headerName] != "[REDACTED]" {
 				t.Errorf("RedactHeaders()[%q] = %q, want [REDACTED]", headerName, result[headerName])
 			}
@@ -439,21 +441,21 @@ func TestSensitiveHeaders(t *testing.T) {
 
 func TestEmptyInputs(t *testing.T) {
 	t.Run("empty string", func(t *testing.T) {
-		result := RedactString("")
+		result := logging.RedactString("")
 		if result != "" {
 			t.Errorf("RedactString(\"\") = %q, want \"\"", result)
 		}
 	})
 
 	t.Run("empty headers", func(t *testing.T) {
-		result := RedactHeaders(http.Header{})
+		result := logging.RedactHeaders(http.Header{})
 		if len(result) != 0 {
 			t.Errorf("RedactHeaders(empty) = %v, want empty map", result)
 		}
 	})
 
 	t.Run("empty map", func(t *testing.T) {
-		result := RedactMap(map[string]any{})
+		result := logging.RedactMap(map[string]any{})
 		if len(result) != 0 {
 			t.Errorf("RedactMap(empty) = %v, want empty map", result)
 		}

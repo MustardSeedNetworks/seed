@@ -1,4 +1,4 @@
-package logging
+package logging_test
 
 import (
 	"bytes"
@@ -7,10 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 func TestDefaultLoggingConfig(t *testing.T) {
-	cfg := DefaultLoggingConfig()
+	cfg := logging.DefaultLoggingConfig()
 
 	if cfg.Level != "info" {
 		t.Errorf("expected level 'info', got %q", cfg.Level)
@@ -61,9 +63,9 @@ func TestParseLevel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := parseLevel(tt.input)
+			result := logging.ParseLevel(tt.input)
 			if result != tt.expected {
-				t.Errorf("parseLevel(%q) = %v, want %v", tt.input, result, tt.expected)
+				t.Errorf("ParseLevel(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -71,41 +73,37 @@ func TestParseLevel(t *testing.T) {
 
 func TestInitLogger(t *testing.T) {
 	// Reset global logger after test
-	defer func() {
-		loggerMu.Lock()
-		globalLogger = nil
-		loggerMu.Unlock()
-	}()
+	defer logging.ClearGlobalLogger()
 
 	t.Run("nil config uses defaults", func(t *testing.T) {
-		err := InitLogger(nil)
+		err := logging.InitLogger(nil)
 		if err != nil {
 			t.Errorf("InitLogger(nil) returned error: %v", err)
 		}
 
-		logger := GetLogger()
+		logger := logging.GetLogger()
 		if logger == nil {
 			t.Error("GetLogger() returned nil after InitLogger(nil)")
 		}
 	})
 
 	t.Run("text format", func(t *testing.T) {
-		cfg := &LoggingConfig{
+		cfg := &logging.LoggingConfig{
 			Level:  "debug",
 			Format: "text",
 		}
-		err := InitLogger(cfg)
+		err := logging.InitLogger(cfg)
 		if err != nil {
 			t.Errorf("InitLogger() returned error: %v", err)
 		}
 	})
 
 	t.Run("json format", func(t *testing.T) {
-		cfg := &LoggingConfig{
+		cfg := &logging.LoggingConfig{
 			Level:  "info",
 			Format: "json",
 		}
-		err := InitLogger(cfg)
+		err := logging.InitLogger(cfg)
 		if err != nil {
 			t.Errorf("InitLogger() returned error: %v", err)
 		}
@@ -115,7 +113,7 @@ func TestInitLogger(t *testing.T) {
 		tmpDir := t.TempDir()
 		logFile := filepath.Join(tmpDir, "test.log")
 
-		cfg := &LoggingConfig{
+		cfg := &logging.LoggingConfig{
 			Level:      "info",
 			Format:     "text",
 			File:       logFile,
@@ -124,25 +122,25 @@ func TestInitLogger(t *testing.T) {
 			MaxAge:     1,
 			Compress:   false,
 		}
-		err := InitLogger(cfg)
+		err := logging.InitLogger(cfg)
 		if err != nil {
 			t.Errorf("InitLogger() returned error: %v", err)
 		}
 
 		// Write a log message
-		Info("test log message")
+		logging.Info("test log message")
 
 		// Verify file exists (may take a moment for buffer to flush)
 		// Note: We can't reliably verify file contents in unit tests due to buffering
 	})
 
 	t.Run("with AddSource", func(t *testing.T) {
-		cfg := &LoggingConfig{
+		cfg := &logging.LoggingConfig{
 			Level:     "debug",
 			Format:    "text",
 			AddSource: true,
 		}
-		err := InitLogger(cfg)
+		err := logging.InitLogger(cfg)
 		if err != nil {
 			t.Errorf("InitLogger() returned error: %v", err)
 		}
@@ -151,12 +149,10 @@ func TestInitLogger(t *testing.T) {
 
 func TestGetLogger(t *testing.T) {
 	// Reset global logger
-	loggerMu.Lock()
-	globalLogger = nil
-	loggerMu.Unlock()
+	logging.ClearGlobalLogger()
 
 	t.Run("returns default when not initialized", func(t *testing.T) {
-		logger := GetLogger()
+		logger := logging.GetLogger()
 		if logger == nil {
 			t.Error("GetLogger() returned nil when not initialized")
 		}
@@ -164,21 +160,19 @@ func TestGetLogger(t *testing.T) {
 	})
 
 	t.Run("returns global logger after init", func(t *testing.T) {
-		err := InitLogger(nil)
+		err := logging.InitLogger(nil)
 		if err != nil {
 			t.Fatalf("InitLogger() failed: %v", err)
 		}
 
-		logger := GetLogger()
+		logger := logging.GetLogger()
 		if logger == nil {
 			t.Error("GetLogger() returned nil after InitLogger()")
 		}
 	})
 
 	// Reset global logger after test
-	loggerMu.Lock()
-	globalLogger = nil
-	loggerMu.Unlock()
+	logging.ClearGlobalLogger()
 }
 
 func TestWithRequestID(t *testing.T) {
@@ -195,7 +189,7 @@ func TestWithRequestID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			newCtx := WithRequestID(ctx, tt.requestID)
+			newCtx := logging.WithRequestID(ctx, tt.requestID)
 
 			// Verify the context is different
 			if tt.requestID != "" && ctx == newCtx {
@@ -203,7 +197,7 @@ func TestWithRequestID(t *testing.T) {
 			}
 
 			// Verify the request ID can be retrieved
-			result := RequestIDFromContext(newCtx)
+			result := logging.RequestIDFromContext(newCtx)
 			if result != tt.requestID {
 				t.Errorf("RequestIDFromContext() = %q, want %q", result, tt.requestID)
 			}
@@ -214,7 +208,7 @@ func TestWithRequestID(t *testing.T) {
 func TestRequestIDFromContext(t *testing.T) {
 	t.Run("returns empty string for background context", func(t *testing.T) {
 		ctx := context.Background()
-		result := RequestIDFromContext(ctx)
+		result := logging.RequestIDFromContext(ctx)
 		if result != "" {
 			t.Errorf("RequestIDFromContext(background) = %q, want empty string", result)
 		}
@@ -222,8 +216,8 @@ func TestRequestIDFromContext(t *testing.T) {
 
 	t.Run("returns empty string for context with wrong type", func(t *testing.T) {
 		// Create context with wrong value type
-		ctx := context.WithValue(context.Background(), requestIDKey, 12345)
-		result := RequestIDFromContext(ctx)
+		ctx := context.WithValue(context.Background(), logging.RequestIDKeyValue, 12345)
+		result := logging.RequestIDFromContext(ctx)
 		if result != "" {
 			t.Errorf("RequestIDFromContext(wrong type) = %q, want empty string", result)
 		}
@@ -231,8 +225,8 @@ func TestRequestIDFromContext(t *testing.T) {
 
 	t.Run("returns request ID from context", func(t *testing.T) {
 		expectedID := "test-request-id"
-		ctx := WithRequestID(context.Background(), expectedID)
-		result := RequestIDFromContext(ctx)
+		ctx := logging.WithRequestID(context.Background(), expectedID)
+		result := logging.RequestIDFromContext(ctx)
 		if result != expectedID {
 			t.Errorf("RequestIDFromContext() = %q, want %q", result, expectedID)
 		}
@@ -241,22 +235,22 @@ func TestRequestIDFromContext(t *testing.T) {
 
 func TestFromContext(t *testing.T) {
 	// Initialize logger for tests
-	err := InitLogger(nil)
+	err := logging.InitLogger(nil)
 	if err != nil {
 		t.Fatalf("InitLogger() failed: %v", err)
 	}
 
 	t.Run("returns logger without request_id when not in context", func(t *testing.T) {
 		ctx := context.Background()
-		logger := FromContext(ctx)
+		logger := logging.FromContext(ctx)
 		if logger == nil {
 			t.Error("FromContext() returned nil")
 		}
 	})
 
 	t.Run("returns logger with request_id when in context", func(t *testing.T) {
-		ctx := WithRequestID(context.Background(), "test-123")
-		logger := FromContext(ctx)
+		ctx := logging.WithRequestID(context.Background(), "test-123")
+		logger := logging.FromContext(ctx)
 		if logger == nil {
 			t.Error("FromContext() returned nil")
 		}
@@ -265,9 +259,7 @@ func TestFromContext(t *testing.T) {
 	})
 
 	// Reset global logger after test
-	loggerMu.Lock()
-	globalLogger = nil
-	loggerMu.Unlock()
+	logging.ClearGlobalLogger()
 }
 
 func TestConvenienceLogFunctions(t *testing.T) {
@@ -275,7 +267,7 @@ func TestConvenienceLogFunctions(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Initialize logger with custom writer
-	err := InitLogger(&LoggingConfig{
+	err := logging.InitLogger(&logging.LoggingConfig{
 		Level:  "debug",
 		Format: "text",
 		Writer: &buf,
@@ -285,10 +277,10 @@ func TestConvenienceLogFunctions(t *testing.T) {
 	}
 
 	// Test all convenience functions
-	Debug("debug message", "key", "value")
-	Info("info message", "key", "value")
-	Warn("warn message", "key", "value")
-	Error("error message", "key", "value")
+	logging.Debug("debug message", "key", "value")
+	logging.Info("info message", "key", "value")
+	logging.Warn("warn message", "key", "value")
+	logging.Error("error message", "key", "value")
 
 	output := buf.String()
 
@@ -307,9 +299,7 @@ func TestConvenienceLogFunctions(t *testing.T) {
 	}
 
 	// Reset global logger
-	loggerMu.Lock()
-	globalLogger = nil
-	loggerMu.Unlock()
+	logging.ClearGlobalLogger()
 }
 
 func TestContextLogFunctions(t *testing.T) {
@@ -317,7 +307,7 @@ func TestContextLogFunctions(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Initialize logger with custom writer
-	err := InitLogger(&LoggingConfig{
+	err := logging.InitLogger(&logging.LoggingConfig{
 		Level:  "debug",
 		Format: "text",
 		Writer: &buf,
@@ -326,13 +316,13 @@ func TestContextLogFunctions(t *testing.T) {
 		t.Fatalf("InitLogger() failed: %v", err)
 	}
 
-	ctx := WithRequestID(context.Background(), "ctx-test-123")
+	ctx := logging.WithRequestID(context.Background(), "ctx-test-123")
 
 	// Test all context convenience functions
-	DebugContext(ctx, "debug with context", "key", "value")
-	InfoContext(ctx, "info with context", "key", "value")
-	WarnContext(ctx, "warn with context", "key", "value")
-	ErrorContext(ctx, "error with context", "key", "value")
+	logging.DebugContext(ctx, "debug with context", "key", "value")
+	logging.InfoContext(ctx, "info with context", "key", "value")
+	logging.WarnContext(ctx, "warn with context", "key", "value")
+	logging.ErrorContext(ctx, "error with context", "key", "value")
 
 	output := buf.String()
 
@@ -342,18 +332,14 @@ func TestContextLogFunctions(t *testing.T) {
 	}
 
 	// Reset global logger
-	loggerMu.Lock()
-	globalLogger = nil
-	loggerMu.Unlock()
+	logging.ClearGlobalLogger()
 }
 
 func TestConcurrentLoggerAccess(t *testing.T) {
 	// Reset and initialize logger
-	loggerMu.Lock()
-	globalLogger = nil
-	loggerMu.Unlock()
+	logging.ClearGlobalLogger()
 
-	err := InitLogger(nil)
+	err := logging.InitLogger(nil)
 	if err != nil {
 		t.Fatalf("InitLogger() failed: %v", err)
 	}
@@ -362,7 +348,7 @@ func TestConcurrentLoggerAccess(t *testing.T) {
 	done := make(chan bool, 10)
 	for range 10 {
 		go func() {
-			logger := GetLogger()
+			logger := logging.GetLogger()
 			if logger == nil {
 				t.Error("GetLogger() returned nil during concurrent access")
 			}
@@ -376,7 +362,5 @@ func TestConcurrentLoggerAccess(t *testing.T) {
 	}
 
 	// Reset global logger
-	loggerMu.Lock()
-	globalLogger = nil
-	loggerMu.Unlock()
+	logging.ClearGlobalLogger()
 }
