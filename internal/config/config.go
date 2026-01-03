@@ -849,14 +849,14 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 	return NetworkDiscoveryConfig{
 		Options: DiscoveryOptions{
 			PassiveProtocols: PassiveProtocolConfig{LLDP: true, CDP: true, EDP: true, NDP: true},
-			ARPScan: true, ICMPScan: true,
+			ARPScan:          true, ICMPScan: true,
 			PortScan: PortScanConfig{Enabled: false, Preset: PortPresetCommon, TCPPorts: "", UDPPorts: "", BannerTimeout: 2 * time.Second},
 			TCPProbe: TCPProbeConfig{Timeout: 2 * time.Second, Workers: 20}, Traceroute: false, SNMPQuery: false,
 		},
 		Profiler:       DeviceProfilerConfig{Enabled: true, Timeout: 2 * time.Second, MaxConcurrent: 5, QuickPorts: []int{22, 80, 443, 8080}},
 		Timing:         DiscoveryTiming{ProbeInterval: 75 * time.Millisecond, RescanInterval: 10 * time.Minute, Workers: 50},
 		Fingerprinting: FingerprintingConfig{Enabled: false, OSDetection: false, ServiceProbes: false},
-		IPv6Enabled: true, Enabled: true, ARPScanWorkers: 50, PingTimeout: 500 * time.Millisecond, ScanTimeout: 30 * time.Second,
+		IPv6Enabled:    true, Enabled: true, ARPScanWorkers: 50, PingTimeout: 500 * time.Millisecond, ScanTimeout: 30 * time.Second,
 		AutoScan: true, ScanInterval: 0, OUIFilePath: "data/oui.txt", OUIMaxAge: 30 * 24 * time.Hour, AdditionalSubnets: []SubnetConfig{},
 	}
 }
@@ -885,19 +885,19 @@ func defaultHealthChecksConfig() HealthChecksConfig {
 func defaultThresholdsConfig() ThresholdsConfig {
 	return ThresholdsConfig{
 		DHCP: DHCPThresholds{Total: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second}, PerPhase: Threshold{Warning: 200 * time.Millisecond, Critical: 1 * time.Second}},
-		DNS: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+		DNS:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
 		Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 200 * time.Millisecond},
 		WiFi: WiFiThresholds{Signal: SignalThreshold{Warning: -70, Critical: -80}},
 		Link: LinkThresholds{FlapCount24h: IntThreshold{Warning: 3, Critical: 5}},
 		CustomTests: CustomThresholds{
 			Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 100 * time.Millisecond},
-			TCP: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-			UDP: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+			TCP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+			UDP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
 			HTTP: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
 			HTTPTimings: HTTPTimingThresholds{
-				DNS: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-				TCP: Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-				TLS: Threshold{Warning: 150 * time.Millisecond, Critical: 500 * time.Millisecond},
+				DNS:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+				TCP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
+				TLS:  Threshold{Warning: 150 * time.Millisecond, Critical: 500 * time.Millisecond},
 				TTFB: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
 			},
 			CertExpiry: CertExpiryThreshold{Warning: 30, Critical: 7},
@@ -916,7 +916,7 @@ func defaultAuthConfig() AuthConfig {
 // defaultSecurityConfig returns the default security configuration.
 func defaultSecurityConfig() SecurityConfig {
 	return SecurityConfig{
-		AllowedOrigins: []string{},
+		AllowedOrigins:        []string{},
 		VulnerabilityScanning: VulnerabilityScanConfig{Enabled: true, CVEDatabase: "nvd", NVDAPIKey: "", UpdateInterval: 86400, SeverityThreshold: "medium", MaxConcurrent: 5, AutoScan: true},
 	}
 }
@@ -924,12 +924,12 @@ func defaultSecurityConfig() SecurityConfig {
 // defaultPipelineConfig returns the default pipeline configuration.
 func defaultPipelineConfig() PipelineConfig {
 	return PipelineConfig{
-		Phases: PipelinePhaseConfig{Enumeration: true, NameResolution: true, ServiceDiscovery: true, VulnAssessment: false},
-		Timing: PipelineTimingConfig{ProbeDelay: 50 * time.Millisecond, HostDelay: 20 * time.Millisecond, MaxConcurrentHosts: 20, PhaseTimeout: 10 * time.Minute, Profile: "normal"},
+		Phases:   PipelinePhaseConfig{Enumeration: true, NameResolution: true, ServiceDiscovery: true, VulnAssessment: false},
+		Timing:   PipelineTimingConfig{ProbeDelay: 50 * time.Millisecond, HostDelay: 20 * time.Millisecond, MaxConcurrentHosts: 20, PhaseTimeout: 10 * time.Minute, Profile: "normal"},
 		PortScan: PipelinePortScanConfig{Intensity: "off", BannerGrab: true, ConnectTimeout: 2 * time.Second},
 		SNMPCollection: PipelineSNMPConfig{
-			Enabled: true,
-			MIBs: PipelineSNMPMIBs{System: true, Interfaces: true, IPAddresses: true, Routing: false, Bridge: false, Entity: false, LLDP: true, VLAN: false},
+			Enabled:     true,
+			MIBs:        PipelineSNMPMIBs{System: true, Interfaces: true, IPAddresses: true, Routing: false, Bridge: false, Entity: false, LLDP: true, VLAN: false},
 			WalkTimeout: 30 * time.Second, MaxOIDsPerRequest: 10,
 		},
 		Persistence: PipelinePersistenceConfig{StoreHistory: true, StalenessThreshold: 24 * time.Hour, PurgeAfter: 30 * 24 * time.Hour},
