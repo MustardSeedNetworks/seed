@@ -231,10 +231,10 @@ func LogWithContext(ctx context.Context, level slog.Level, msg string, args ...a
 func TimedOperation(ctx context.Context, operation, component string) func() {
 	start := time.Now()
 	logger := FromContext(ctx).With("component", component)
-	logger.Info(operation + " started")
+	logger.InfoContext(ctx, operation+" started")
 
 	return func() {
 		duration := time.Since(start)
-		logger.Info(operation+" completed", "duration_ms", duration.Milliseconds())
+		logger.InfoContext(ctx, operation+" completed", "duration_ms", duration.Milliseconds())
 	}
 }

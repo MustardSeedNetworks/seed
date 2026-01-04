@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"log/slog"
 	"net"
 	"net/http"
 	"time"
@@ -56,7 +55,7 @@ func generateRequestID() string {
 	b := make([]byte, 8)
 	if _, err := rand.Read(b); err != nil {
 		// Crypto failure is unrecoverable - log critical and let service restart
-		slog.Error("crypto/rand failed - system is in insecure state", "error", err)
+		GetLogger().Error("crypto/rand failed - system is in insecure state", "error", err)
 		panic("crypto/rand failed: " + err.Error())
 	}
 	return hex.EncodeToString(b)

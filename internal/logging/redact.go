@@ -30,7 +30,6 @@ package logging
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
@@ -178,7 +177,7 @@ func Logf(format string, args ...any) {
 			redactedArgs[i] = arg
 		}
 	}
-	slog.Info(fmt.Sprintf(format, redactedArgs...))
+	GetLogger().Info(fmt.Sprintf(format, redactedArgs...))
 }
 
 // SafeError creates a safe error message with redacted content.
@@ -193,7 +192,7 @@ func SafeError(err error, context string) error {
 // LogRequest logs an HTTP request with sensitive data redacted.
 // Note: Prefer using LoggingMiddleware for request logging in new code.
 func LogRequest(r *http.Request, message string) {
-	slog.Info(message,
+	GetLogger().Info(message,
 		"method", r.Method,
 		"path", r.URL.Path,
 		"client_ip", GetClientIP(r),
@@ -237,7 +236,7 @@ func GetClientIP(r *http.Request) string {
 		if len(parts) > 0 {
 			clientIP := strings.TrimSpace(parts[0])
 			// Log when XFF is present to indicate the IP may be untrusted
-			slog.Debug("Request includes X-Forwarded-For header (UNTRUSTED)",
+			GetLogger().Debug("Request includes X-Forwarded-For header (UNTRUSTED)",
 				"xff_value", xff,
 				"parsed_ip", clientIP,
 				"remote_addr", r.RemoteAddr,
@@ -249,7 +248,7 @@ func GetClientIP(r *http.Request) string {
 	// Check X-Real-IP header (UNTRUSTED - can be spoofed by clients)
 	// Similar trust issues as X-Forwarded-For
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		slog.Debug("Request includes X-Real-IP header (UNTRUSTED)",
+		GetLogger().Debug("Request includes X-Real-IP header (UNTRUSTED)",
 			"xri_value", xri,
 			"remote_addr", r.RemoteAddr,
 			"security_note", "X-Real-IP can be spoofed - only use for logging, not security decisions")

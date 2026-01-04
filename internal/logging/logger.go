@@ -215,20 +215,20 @@ func Error(msg string, args ...any) {
 
 // DebugContext logs a debug message with context (includes request_id if present).
 func DebugContext(ctx context.Context, msg string, args ...any) {
-	FromContext(ctx).Debug(msg, args...)
+	FromContext(ctx).DebugContext(ctx, msg, args...)
 }
 
 // InfoContext logs an info message with context (includes request_id if present).
 func InfoContext(ctx context.Context, msg string, args ...any) {
-	FromContext(ctx).Info(msg, args...)
+	FromContext(ctx).InfoContext(ctx, msg, args...)
 }
 
 // WarnContext logs a warning message with context (includes request_id if present).
 func WarnContext(ctx context.Context, msg string, args ...any) {
-	FromContext(ctx).Warn(msg, args...)
+	FromContext(ctx).WarnContext(ctx, msg, args...)
 }
 
 // ErrorContext logs an error message with context (includes request_id if present).
 func ErrorContext(ctx context.Context, msg string, args ...any) {
-	FromContext(ctx).Error(msg, args...)
+	FromContext(ctx).ErrorContext(ctx, msg, args...)
 }
