@@ -103,7 +103,7 @@ func RetryWithBackoff(ctx context.Context, cfg RetryConfig, operation func() err
 
 		// Check if error is retryable
 		if !isRetryableError(err, cfg.RetryableErrors) {
-			logging.GetLogger().Debug("Error not retryable, stopping",
+			logging.GetLogger().DebugContext(ctx, "Error not retryable, stopping",
 				"error", err,
 				"attempt", attempt+1)
 			break
@@ -112,7 +112,7 @@ func RetryWithBackoff(ctx context.Context, cfg RetryConfig, operation func() err
 		// Calculate delay with exponential backoff
 		delay := calculateDelay(cfg, attempt)
 
-		logging.GetLogger().Debug("Retrying operation",
+		logging.GetLogger().DebugContext(ctx, "Retrying operation",
 			"attempt", attempt+1,
 			"maxRetries", cfg.MaxRetries,
 			"delay", delay,

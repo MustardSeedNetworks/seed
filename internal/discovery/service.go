@@ -242,7 +242,7 @@ func (s *Service) Scan(ctx context.Context) error {
 	}
 
 	if !s.shouldDoActiveScan() {
-		logging.GetLogger().Debug("Discovery: active scanning disabled in options")
+		logging.GetLogger().DebugContext(ctx, "Discovery: active scanning disabled in options")
 		return nil
 	}
 
@@ -251,7 +251,7 @@ func (s *Service) Scan(ctx context.Context) error {
 	if err := s.deviceDiscovery.Scan(ctx); err != nil {
 		// ErrScanInProgress is not a failure - just means scan was already running
 		if errors.Is(err, ErrScanInProgress) {
-			logging.GetLogger().Debug("Discovery: scan skipped - already in progress")
+			logging.GetLogger().DebugContext(ctx, "Discovery: scan skipped - already in progress")
 			return err // Return error so callers know it was skipped
 		}
 		s.mu.Lock()
@@ -273,7 +273,7 @@ func (s *Service) Scan(ctx context.Context) error {
 		s.lastDeltaTime = time.Now()
 
 		if len(s.lastDelta.NewDevices) > 0 || len(s.lastDelta.RemovedDevices) > 0 {
-			logging.GetLogger().Info("Discovery scan delta",
+			logging.GetLogger().InfoContext(ctx, "Discovery scan delta",
 				"new", len(s.lastDelta.NewDevices),
 				"updated", len(s.lastDelta.UpdatedDevices),
 				"removed", len(s.lastDelta.RemovedDevices))
@@ -574,7 +574,7 @@ func (s *Service) StartPipeline(ctx context.Context, trigger string) error {
 		return err
 	}
 
-	logging.GetLogger().Info("Discovery pipeline started from service",
+	logging.GetLogger().InfoContext(ctx, "Discovery pipeline started from service",
 		"run_id", run.ID,
 		"trigger", trigger,
 		"phases", len(run.PhaseDurations))
