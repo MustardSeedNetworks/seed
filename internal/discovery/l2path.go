@@ -82,7 +82,7 @@ func (b *L2PathBuilder) BuildPath(
 		return nil, fmt.Errorf("destination device not found: %s", destIP)
 	}
 
-	logging.GetLogger().Debug("Building L2 path",
+	logging.GetLogger().DebugContext(ctx, "Building L2 path",
 		"source_ip", sourceIP,
 		"source_mac", sourceDevice.MAC,
 		"dest_ip", destIP,
@@ -114,7 +114,7 @@ func (b *L2PathBuilder) BuildPath(
 		// Mark this hop as visited
 		hopKey := currentHop.DeviceIP
 		if visited[hopKey] {
-			logging.GetLogger().Warn("Loop detected in L2 path", "device", currentHop.Device)
+			logging.GetLogger().WarnContext(ctx, "Loop detected in L2 path", "device", currentHop.Device)
 			break
 		}
 		visited[hopKey] = true
@@ -124,7 +124,7 @@ func (b *L2PathBuilder) BuildPath(
 
 		// Check if we reached the destination
 		if b.isDestinationReached(currentHop, destDevice) {
-			logging.GetLogger().Debug("Destination reached", "hops", len(result.Hops))
+			logging.GetLogger().DebugContext(ctx, "Destination reached", "hops", len(result.Hops))
 			break
 		}
 
@@ -244,7 +244,7 @@ func (b *L2PathBuilder) enrichHopWithSNMP(ctx context.Context, hop *L2Hop) {
 	systemInfo, err := snmp.GetSystemInfo(ctx, hop.DeviceIP, b.snmpConfig)
 	if err != nil {
 		logging.GetLogger().
-			Debug("Failed to get SNMP system info", "device", hop.DeviceIP, "error", err)
+			DebugContext(ctx, "Failed to get SNMP system info", "device", hop.DeviceIP, "error", err)
 		return
 	}
 
@@ -253,7 +253,7 @@ func (b *L2PathBuilder) enrichHopWithSNMP(ctx context.Context, hop *L2Hop) {
 		hop.Device = systemInfo.SysName
 	}
 
-	logging.GetLogger().Debug("Enriched hop with SNMP data",
+	logging.GetLogger().DebugContext(ctx, "Enriched hop with SNMP data",
 		"device", hop.Device,
 		"sysname", systemInfo.SysName)
 }

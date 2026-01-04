@@ -385,7 +385,7 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 		return fmt.Errorf("failed to parse OUI database: %w", loadErr)
 	}
 
-	logging.GetLogger().Info("Downloaded OUI database", "bytes", written, "entries", db.Count())
+	logging.GetLogger().InfoContext(ctx, "Downloaded OUI database", "bytes", written, "entries", db.Count())
 	return nil
 }
 

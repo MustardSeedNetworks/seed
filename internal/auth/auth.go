@@ -220,7 +220,7 @@ func (m *Manager) Authenticate(ctx context.Context, username, password string) (
 		locked, err := userStore.IsLocked(ctx, username)
 		if err != nil {
 			logging.GetLogger().
-				Warn("Failed to check user lock status", "username", username, "error", err)
+				WarnContext(ctx, "Failed to check user lock status", "username", username, "error", err)
 		}
 		if locked {
 			return "", ErrInvalidCredentials
@@ -243,7 +243,7 @@ func (m *Manager) Authenticate(ctx context.Context, username, password string) (
 		// Record successful login
 		if successErr := userStore.RecordLoginSuccess(ctx, username); successErr != nil {
 			logging.GetLogger().
-				Warn("Failed to record login success", "username", username, "error", successErr)
+				WarnContext(ctx, "Failed to record login success", "username", username, "error", successErr)
 		}
 
 		return m.GenerateToken(ctx, username)
@@ -368,7 +368,7 @@ func (m *Manager) ValidateToken(ctx context.Context, tokenString string) (*Claim
 
 	if claims.TokenVersion < currentVersion {
 		logging.GetLogger().
-			Info("Token revoked", "version", claims.TokenVersion, "current", currentVersion)
+			InfoContext(ctx, "Token revoked", "version", claims.TokenVersion, "current", currentVersion)
 		return nil, ErrInvalidToken
 	}
 
@@ -405,7 +405,7 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, refreshToken string) (
 	if claims.IssuedAt != nil {
 		sessionAge := time.Since(claims.IssuedAt.Time)
 		if sessionAge > MaxSessionLifetime {
-			logging.GetLogger().Info("Session exceeded maximum lifetime",
+			logging.GetLogger().InfoContext(ctx, "Session exceeded maximum lifetime",
 				"age", sessionAge,
 				"max", MaxSessionLifetime,
 				"username", claims.Username)
@@ -722,14 +722,14 @@ func (m *Manager) UpdatePasswordHash(ctx context.Context, hash string) {
 	if userStore != nil && username != "" {
 		if err := userStore.UpdatePassword(ctx, username, hash); err != nil {
 			logging.GetLogger().
-				Error("Failed to update password in database", "username", username, "error", err)
+				ErrorContext(ctx, "Failed to update password in database", "username", username, "error", err)
 		} else {
-			logging.GetLogger().Info("Password hash updated in database", "username", username)
+			logging.GetLogger().InfoContext(ctx, "Password hash updated in database", "username", username)
 		}
 	}
 
 	logging.GetLogger().
-		Info("Password hash updated, all existing tokens invalidated", "version", m.tokenVersion)
+		InfoContext(ctx, "Password hash updated, all existing tokens invalidated", "version", m.tokenVersion)
 }
 
 // UpdatePasswordHashForUser updates the password hash for a specific user.
@@ -747,7 +747,7 @@ func (m *Manager) UpdatePasswordHashForUser(ctx context.Context, username, hash 
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 
-	logging.GetLogger().Info("Password hash updated for user", "username", username)
+	logging.GetLogger().InfoContext(ctx, "Password hash updated for user", "username", username)
 	return nil
 }
 

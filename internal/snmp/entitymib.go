@@ -117,111 +117,66 @@ func walkPhysicalEntities(params *gosnmp.GoSNMP) ([]PhysicalEntity, error) {
 
 	// Walk entPhysicalDescr to discover all physical entities.
 	err := params.BulkWalk(OIDEntPhysicalDescr, func(pdu gosnmp.SnmpPDU) error {
-		// OID format: .1.3.6.1.2.1.47.1.1.1.1.2.INDEX
 		idx := extractEntityIndex(pdu.Name)
 		if idx <= 0 {
 			return nil
 		}
-
-		entities[idx] = &PhysicalEntity{
-			Index:       idx,
-			Description: formatSNMPValue(pdu),
-		}
+		entities[idx] = &PhysicalEntity{Index: idx, Description: formatSNMPValue(pdu)}
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to walk entPhysicalDescr: %w", err)
 	}
 
-	// Walk other attributes.
-	walkEntityAttribute(
-		params,
-		OIDEntPhysicalVendorType,
-		entities,
-		func(e *PhysicalEntity, v string) {
-			e.VendorType = v
-		},
-	)
-	walkEntityAttribute(
-		params,
-		OIDEntPhysicalContainedIn,
-		entities,
-		func(e *PhysicalEntity, v string) {
-			if idx, parseErr := strconv.Atoi(v); parseErr == nil {
-				e.ContainedIn = idx
-			}
-		},
-	)
-	walkEntityAttribute(params, OIDEntPhysicalClass, entities, func(e *PhysicalEntity, v string) {
-		e.Class = parseEntityClass(v)
-	})
-	walkEntityAttribute(
-		params,
-		OIDEntPhysicalParentRelPos,
-		entities,
-		func(e *PhysicalEntity, v string) {
-			if pos, parseErr := strconv.Atoi(v); parseErr == nil {
-				e.ParentRelPos = pos
-			}
-		},
-	)
-	walkEntityAttribute(params, OIDEntPhysicalName, entities, func(e *PhysicalEntity, v string) {
-		e.Name = v
-	})
-	walkEntityAttribute(
-		params,
-		OIDEntPhysicalHardwareRev,
-		entities,
-		func(e *PhysicalEntity, v string) {
-			e.HardwareRev = v
-		},
-	)
-	walkEntityAttribute(
-		params,
-		OIDEntPhysicalFirmwareRev,
-		entities,
-		func(e *PhysicalEntity, v string) {
-			e.FirmwareRev = v
-		},
-	)
-	walkEntityAttribute(
-		params,
-		OIDEntPhysicalSoftwareRev,
-		entities,
-		func(e *PhysicalEntity, v string) {
-			e.SoftwareRev = v
-		},
-	)
-	walkEntityAttribute(
-		params,
-		OIDEntPhysicalSerialNum,
-		entities,
-		func(e *PhysicalEntity, v string) {
-			e.SerialNum = v
-		},
-	)
-	walkEntityAttribute(params, OIDEntPhysicalMfgName, entities, func(e *PhysicalEntity, v string) {
-		e.MfgName = v
-	})
-	walkEntityAttribute(
-		params,
-		OIDEntPhysicalModelName,
-		entities,
-		func(e *PhysicalEntity, v string) {
-			e.ModelName = v
-		},
-	)
-	walkEntityAttribute(params, OIDEntPhysicalIsFRU, entities, func(e *PhysicalEntity, v string) {
-		e.IsFRU = (v == "1" || v == "true")
-	})
+	// Walk all entity attributes.
+	walkAllEntityAttributes(params, entities)
 
-	// Convert map to slice, sorted by index.
+	// Convert map to slice.
 	result := make([]PhysicalEntity, 0, len(entities))
 	for _, entity := range entities {
 		result = append(result, *entity)
 	}
-
 	return result, nil
+}
+
+// walkAllEntityAttributes walks all entity attributes for the discovered entities.
+func walkAllEntityAttributes(params *gosnmp.GoSNMP, entities map[int]*PhysicalEntity) {
+	walkEntityAttribute(params, OIDEntPhysicalVendorType, entities, func(e *PhysicalEntity, v string) {
+		e.VendorType = v
+	})
+	walkEntityAttribute(params, OIDEntPhysicalContainedIn, entities, func(e *PhysicalEntity, v string) {
+		if idx, parseErr := strconv.Atoi(v); parseErr == nil {
+			e.ContainedIn = idx
+		}
+	})
+	walkEntityAttribute(params, OIDEntPhysicalClass, entities, func(e *PhysicalEntity, v string) {
+		e.Class = parseEntityClass(v)
+	})
+	walkEntityAttribute(params, OIDEntPhysicalParentRelPos, entities, func(e *PhysicalEntity, v string) {
+		if pos, parseErr := strconv.Atoi(v); parseErr == nil {
+			e.ParentRelPos = pos
+		}
+	})
+	walkEntityAttribute(params, OIDEntPhysicalName, entities, func(e *PhysicalEntity, v string) { e.Name = v })
+	walkEntityAttribute(params, OIDEntPhysicalHardwareRev, entities, func(e *PhysicalEntity, v string) {
+		e.HardwareRev = v
+	})
+	walkEntityAttribute(params, OIDEntPhysicalFirmwareRev, entities, func(e *PhysicalEntity, v string) {
+		e.FirmwareRev = v
+	})
+	walkEntityAttribute(params, OIDEntPhysicalSoftwareRev, entities, func(e *PhysicalEntity, v string) {
+		e.SoftwareRev = v
+	})
+	walkEntityAttribute(params, OIDEntPhysicalSerialNum, entities, func(e *PhysicalEntity, v string) {
+		e.SerialNum = v
+	})
+	walkEntityAttribute(params, OIDEntPhysicalMfgName, entities, func(e *PhysicalEntity, v string) { e.MfgName = v })
+	walkEntityAttribute(params, OIDEntPhysicalModelName, entities, func(e *PhysicalEntity, v string) {
+		e.ModelName = v
+	})
+	walkEntityAttribute(params, OIDEntPhysicalIsFRU, entities, func(e *PhysicalEntity, v string) {
+		e.IsFRU = (v == "1" || v == "true")
+	})
 }
 
 // walkEntityAttribute walks an entity attribute and applies a function.

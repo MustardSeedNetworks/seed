@@ -3,6 +3,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -459,6 +460,49 @@ func (s *Server) getSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// convertSNMPv3Credential converts an API credential request to config format.
+// It handles password encryption and preserves existing passwords for placeholders.
+func (s *Server) convertSNMPv3Credential(
+	cred *SNMPv3CredentialResponse,
+	existingCred *config.SNMPv3Credential,
+	logger *slog.Logger,
+) (*config.SNMPv3Credential, error) {
+	newCred := &config.SNMPv3Credential{
+		Name:          cred.Name,
+		Username:      cred.Username,
+		AuthProtocol:  cred.AuthProtocol,
+		PrivProtocol:  cred.PrivProtocol,
+		ContextName:   cred.ContextName,
+		SecurityLevel: cred.SecurityLevel,
+	}
+
+	// Handle AuthPassword
+	if cred.AuthPassword != "" && cred.AuthPassword != passwordPlaceholder {
+		encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
+		if err != nil {
+			logger.Error("Failed to encrypt auth password", "error", err, "credential_name", cred.Name)
+			return nil, fmt.Errorf("encrypt auth password: %w", err)
+		}
+		newCred.AuthPassword = encrypted
+	} else if existingCred != nil {
+		newCred.AuthPassword = existingCred.AuthPassword
+	}
+
+	// Handle PrivPassword
+	if cred.PrivPassword != "" && cred.PrivPassword != passwordPlaceholder {
+		encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
+		if err != nil {
+			logger.Error("Failed to encrypt priv password", "error", err, "credential_name", cred.Name)
+			return nil, fmt.Errorf("encrypt priv password: %w", err)
+		}
+		newCred.PrivPassword = encrypted
+	} else if existingCred != nil {
+		newCred.PrivPassword = existingCred.PrivPassword
+	}
+
+	return newCred, nil
+}
+
 func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -469,14 +513,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	var req SNMPSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn("Invalid request body for SNMP settings", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		) // fixes #694, #H7
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"), "")
 		return
 	}
 
@@ -488,73 +526,20 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	// Convert request v3 credentials to config format (fixes #518)
 	v3Creds := make([]config.SNMPv3Credential, len(req.V3Credentials))
 	for i := range req.V3Credentials {
-		cred := &req.V3Credentials[i]
-		newCred := config.SNMPv3Credential{
-			Name:          cred.Name,
-			Username:      cred.Username,
-			AuthProtocol:  cred.AuthProtocol,
-			PrivProtocol:  cred.PrivProtocol,
-			ContextName:   cred.ContextName,
-			SecurityLevel: cred.SecurityLevel,
+		var existingCred *config.SNMPv3Credential
+		if i < len(s.config.SNMP.V3Credentials) {
+			existingCred = &s.config.SNMP.V3Credentials[i]
 		}
-
-		// Handle AuthPassword: If placeholder, keep existing; otherwise encrypt new value
-		if cred.AuthPassword != "" && cred.AuthPassword != passwordPlaceholder {
-			// New password provided - encrypt it
-			encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
-			if err != nil {
-				logger.Error(
-					"Failed to encrypt auth password",
-					"error",
-					err,
-					"credential_name",
-					cred.Name,
-				)
-				sendErrorResponseWithDetails(
-					w,
-					logger,
-					http.StatusInternalServerError,
-					ErrCodeInternal,
-					localizer.T("errors.security.failedToEncryptAuth"),
-					"",
-				) // fixes #694, #H7
-				return
+		newCred, err := s.convertSNMPv3Credential(&req.V3Credentials[i], existingCred, logger)
+		if err != nil {
+			errMsg := localizer.T("errors.security.failedToEncryptAuth")
+			if strings.Contains(err.Error(), "priv") {
+				errMsg = localizer.T("errors.security.failedToEncryptPriv")
 			}
-			newCred.AuthPassword = encrypted
-		} else if i < len(s.config.SNMP.V3Credentials) {
-			// Keep existing password if placeholder or empty
-			newCred.AuthPassword = s.config.SNMP.V3Credentials[i].AuthPassword
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, errMsg, "")
+			return
 		}
-
-		// Handle PrivPassword: If placeholder, keep existing; otherwise encrypt new value
-		if cred.PrivPassword != "" && cred.PrivPassword != passwordPlaceholder {
-			// New password provided - encrypt it
-			encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
-			if err != nil {
-				logger.Error(
-					"Failed to encrypt priv password",
-					"error",
-					err,
-					"credential_name",
-					cred.Name,
-				)
-				sendErrorResponseWithDetails(
-					w,
-					logger,
-					http.StatusInternalServerError,
-					ErrCodeInternal,
-					localizer.T("errors.security.failedToEncryptPriv"),
-					"",
-				) // fixes #694, #H7
-				return
-			}
-			newCred.PrivPassword = encrypted
-		} else if i < len(s.config.SNMP.V3Credentials) {
-			// Keep existing password if placeholder or empty
-			newCred.PrivPassword = s.config.SNMP.V3Credentials[i].PrivPassword
-		}
-
-		v3Creds[i] = newCred
+		v3Creds[i] = *newCred
 	}
 
 	// Update SNMP settings
