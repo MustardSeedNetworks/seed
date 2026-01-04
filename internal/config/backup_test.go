@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
 	"gopkg.in/yaml.v3"
+
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 func TestBackupManager_CreateBackup(t *testing.T) {

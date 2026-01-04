@@ -5,8 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/config"
 	"gopkg.in/yaml.v3"
+
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 func TestMigrationManager_Migrate_NoMigrationsNeeded(t *testing.T) {
