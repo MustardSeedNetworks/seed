@@ -70,38 +70,35 @@ func TestInfoMapStructure(t *testing.T) {
 	}
 }
 
-func TestVersionVariables(t *testing.T) {
+func TestGetterFunctions(t *testing.T) {
 	tests := []struct {
 		name     string
-		variable *string
+		getter   func() string
 		notEmpty bool
 	}{
 		{
-			name:     "Version variable exists",
-			variable: &version.Version,
+			name:     "GetVersion returns value",
+			getter:   version.GetVersion,
 			notEmpty: true,
 		},
 		{
-			name:     "Commit variable exists",
-			variable: &version.Commit,
+			name:     "GetCommit returns value",
+			getter:   version.GetCommit,
 			notEmpty: true,
 		},
 		{
-			name:     "BuildTime variable exists",
-			variable: &version.BuildTime,
+			name:     "GetBuildTime returns value",
+			getter:   version.GetBuildTime,
 			notEmpty: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.variable == nil {
-				t.Error("variable is nil")
-				return
-			}
+			value := tt.getter()
 
-			if tt.notEmpty && *tt.variable == "" {
-				t.Error("variable should not be empty")
+			if tt.notEmpty && value == "" {
+				t.Error("getter should not return empty string")
 			}
 		})
 	}
