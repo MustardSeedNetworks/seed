@@ -83,7 +83,7 @@ func (p *ScanningPhase) Run(
 	portScanEnabled := p.pipelineConfig.PortScan.Intensity != PortScanOff
 	snmpEnabled := p.pipelineConfig.SNMPCollection.Enabled && p.snmpCollector != nil
 
-	logging.GetLogger().Info("Scanning phase starting",
+	logging.GetLogger().InfoContext(ctx, "Scanning phase starting",
 		"devices", len(devices),
 		"portScan", portScanEnabled,
 		"portIntensity", p.pipelineConfig.PortScan.Intensity,
@@ -163,7 +163,7 @@ func (p *ScanningPhase) Run(
 	portsFound := progress.PortsFound()
 	snmpSuccess := progress.SNMPSuccess()
 
-	logging.GetLogger().Info("Scanning phase completed",
+	logging.GetLogger().InfoContext(ctx, "Scanning phase completed",
 		"scanned", scanned,
 		"total", len(devices),
 		"portsFound", portsFound,
@@ -326,7 +326,7 @@ func (p *ScanningPhase) scanPorts(ctx context.Context, ip string) *DeviceProfile
 	// Infer device type and icons
 	p.profiler.inferDeviceType(profile)
 
-	logging.GetLogger().Debug("Port scan completed",
+	logging.GetLogger().DebugContext(ctx, "Port scan completed",
 		"ip", ip,
 		"openPorts", len(profile.OpenPorts),
 		"deviceType", profile.DeviceType)
@@ -356,7 +356,7 @@ func (p *ScanningPhase) collectSNMP(ctx context.Context, ip string) *SNMPFullDat
 	lldpCount := len(data.LLDPNeighbors)
 
 	if ifCount > 0 || macCount > 0 {
-		logging.GetLogger().Debug("SNMP collection completed",
+		logging.GetLogger().DebugContext(ctx, "SNMP collection completed",
 			"ip", ip,
 			"interfaces", ifCount,
 			"macs", macCount,

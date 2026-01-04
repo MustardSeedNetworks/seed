@@ -114,7 +114,7 @@ func (p *ResolutionPhase) Run(
 	progressCh chan<- PhaseProgressPayload,
 ) ([]*DiscoveredDevice, error) {
 	start := time.Now()
-	logging.GetLogger().Info("Resolution phase starting",
+	logging.GetLogger().InfoContext(ctx, "Resolution phase starting",
 		"devices", len(devices),
 		"dns", p.config.DNS,
 		"netbios", p.config.NetBIOS,
@@ -214,7 +214,7 @@ func (p *ResolutionPhase) Run(
 		}
 	}
 
-	logging.GetLogger().Info("Resolution phase completed",
+	logging.GetLogger().InfoContext(ctx, "Resolution phase completed",
 		"resolved", resolved,
 		"total", len(devices),
 		"duration", time.Since(start))
