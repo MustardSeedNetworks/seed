@@ -101,7 +101,7 @@ func (s *Server) handlePath(w http.ResponseWriter, r *http.Request) {
 
 	var req PathRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -182,10 +182,10 @@ func (s *Server) performPathDiscovery(
 	if req.Method == PathMethodL3 || req.Method == PathMethodBoth {
 		l3Path := s.performL3Trace(ctx, req)
 		if l3Path.Error != "" {
-			logger.Warn("L3 traceroute failed", "error", l3Path.Error)
+			logger.WarnContext(ctx, "L3 traceroute failed", "error", l3Path.Error)
 			// Don't fail the entire request if only L3 fails and L2 was also requested
 			if req.Method == PathMethodL3 {
-				logger.Error("L3 traceroute failed", "error_details", l3Path.Error)
+				logger.ErrorContext(ctx, "L3 traceroute failed", "error_details", l3Path.Error)
 				sendErrorResponseWithDetails(
 					w,
 					logger,
@@ -204,10 +204,10 @@ func (s *Server) performPathDiscovery(
 	if req.Method == PathMethodL2 || req.Method == PathMethodBoth {
 		l2Path, err := s.performL2Trace(ctx, req)
 		if err != nil {
-			logger.Warn("L2 path discovery failed", "error", err)
+			logger.WarnContext(ctx, "L2 path discovery failed", "error", err)
 			// Don't fail the entire request if only L2 fails and L3 was also requested
 			if req.Method == PathMethodL2 {
-				logger.Error("L2 path discovery failed", "error", err)
+				logger.ErrorContext(ctx, "L2 path discovery failed", "error", err)
 				sendErrorResponseWithDetails(
 					w,
 					logger,

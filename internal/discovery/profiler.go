@@ -471,7 +471,7 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 	// so we can't detect it via TCP port scanning. Just try to query.
 	if info := p.probeSNMP(ctx, ip); info != nil {
 		profile.SNMPInfo = info
-		logging.GetLogger().Debug("Got SNMP info from device", "ip", ip, "sysName", info.SysName)
+		logging.GetLogger().DebugContext(ctx, "Got SNMP info from device", "ip", ip, "sysName", info.SysName)
 	}
 
 	// Infer device type and icons from profile
@@ -481,7 +481,7 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 	p.profiles[ip] = profile
 	p.mu.Unlock()
 
-	logging.GetLogger().Info(
+	logging.GetLogger().InfoContext(ctx, 
 		"Profiled device",
 		"ip",
 		ip,
@@ -588,15 +588,15 @@ func (p *DeviceProfiler) probeHTTP(
 // probeSNMP attempts to retrieve SNMP information from the device.
 func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 	if p.snmpConfig == nil {
-		logging.GetLogger().Debug("SNMP probe skipped - no SNMP config", "ip", ip)
+		logging.GetLogger().DebugContext(ctx, "SNMP probe skipped - no SNMP config", "ip", ip)
 		return nil
 	}
 	if len(p.snmpConfig.Communities) == 0 && len(p.snmpConfig.V3Credentials) == 0 {
-		logging.GetLogger().Debug("SNMP probe skipped - no communities or v3 credentials configured", "ip", ip)
+		logging.GetLogger().DebugContext(ctx, "SNMP probe skipped - no communities or v3 credentials configured", "ip", ip)
 		return nil
 	}
 
-	logging.GetLogger().Debug(
+	logging.GetLogger().DebugContext(ctx, 
 		"Attempting SNMP probe",
 		"ip",
 		ip,
@@ -609,11 +609,11 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 	// Query system information
 	sysInfo, err := snmp.GetSystemInfo(ctx, ip, p.snmpConfig)
 	if err != nil {
-		logging.GetLogger().Debug("SNMP probe failed", "ip", ip, "error", err)
+		logging.GetLogger().DebugContext(ctx, "SNMP probe failed", "ip", ip, "error", err)
 		return nil
 	}
 
-	logging.GetLogger().Info(
+	logging.GetLogger().InfoContext(ctx, 
 		"SNMP probe succeeded",
 		"ip",
 		ip,
