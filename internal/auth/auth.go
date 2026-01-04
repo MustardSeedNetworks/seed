@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -66,7 +65,7 @@ func sendAuthError(w http.ResponseWriter, status int, code, message string) {
 		Code:  code,
 	}
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		slog.Error("Failed to encode auth error response", "error", err)
+		logging.GetLogger().Error("Failed to encode auth error response", "error", err)
 	}
 }
 
@@ -129,7 +128,7 @@ func (m *Manager) SetUserStore(store UserStore) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.userStore = store
-	slog.Info("UserStore set for authentication", "hasStore", store != nil)
+	logging.GetLogger().Info("UserStore set for authentication", "hasStore", store != nil)
 }
 
 // cryptoRandRead attempts to read random bytes with retry logic.
@@ -149,7 +148,7 @@ func cryptoRandRead(b []byte, operation string) error {
 		if _, err := rand.Read(b); err != nil {
 			lastErr = err
 			if attempt < maxRetries {
-				slog.Warn("crypto/rand failed, retrying",
+				logging.GetLogger().Warn("crypto/rand failed, retrying",
 					"operation", operation,
 					"attempt", attempt+1,
 					"max_attempts", maxRetries+1,
@@ -164,7 +163,7 @@ func cryptoRandRead(b []byte, operation string) error {
 				continue
 			}
 			// All retries exhausted
-			slog.Error("crypto/rand failed after all retries - system is in insecure state",
+			logging.GetLogger().Error("crypto/rand failed after all retries - system is in insecure state",
 				"operation", operation,
 				"attempts", maxRetries+1,
 				"error", err)
@@ -172,7 +171,7 @@ func cryptoRandRead(b []byte, operation string) error {
 		}
 		// Success
 		if attempt > 0 {
-			slog.Info("crypto/rand recovered after retry",
+			logging.GetLogger().Info("crypto/rand recovered after retry",
 				"operation", operation,
 				"attempts", attempt+1)
 		}
@@ -213,7 +212,7 @@ func (m *Manager) Authenticate(ctx context.Context, username, password string) (
 		// Check if account is locked
 		locked, err := userStore.IsLocked(ctx, username)
 		if err != nil {
-			slog.Warn("Failed to check user lock status", "username", username, "error", err)
+			logging.GetLogger().Warn("Failed to check user lock status", "username", username, "error", err)
 		}
 		if locked {
 			return "", ErrInvalidCredentials
@@ -235,7 +234,7 @@ func (m *Manager) Authenticate(ctx context.Context, username, password string) (
 
 		// Record successful login
 		if successErr := userStore.RecordLoginSuccess(ctx, username); successErr != nil {
-			slog.Warn("Failed to record login success", "username", username, "error", successErr)
+			logging.GetLogger().Warn("Failed to record login success", "username", username, "error", successErr)
 		}
 
 		return m.GenerateToken(ctx, username)
@@ -356,7 +355,7 @@ func (m *Manager) ValidateToken(ctx context.Context, tokenString string) (*Claim
 	}
 
 	if claims.TokenVersion < currentVersion {
-		slog.Info("Token revoked", "version", claims.TokenVersion, "current", currentVersion)
+		logging.GetLogger().Info("Token revoked", "version", claims.TokenVersion, "current", currentVersion)
 		return nil, ErrInvalidToken
 	}
 
@@ -393,7 +392,7 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, refreshToken string) (
 	if claims.IssuedAt != nil {
 		sessionAge := time.Since(claims.IssuedAt.Time)
 		if sessionAge > MaxSessionLifetime {
-			slog.Info("Session exceeded maximum lifetime",
+			logging.GetLogger().Info("Session exceeded maximum lifetime",
 				"age", sessionAge,
 				"max", MaxSessionLifetime,
 				"username", claims.Username)
@@ -704,13 +703,13 @@ func (m *Manager) UpdatePasswordHash(ctx context.Context, hash string) {
 	// If we have a UserStore, update the database as well
 	if userStore != nil && username != "" {
 		if err := userStore.UpdatePassword(ctx, username, hash); err != nil {
-			slog.Error("Failed to update password in database", "username", username, "error", err)
+			logging.GetLogger().Error("Failed to update password in database", "username", username, "error", err)
 		} else {
-			slog.Info("Password hash updated in database", "username", username)
+			logging.GetLogger().Info("Password hash updated in database", "username", username)
 		}
 	}
 
-	slog.Info("Password hash updated, all existing tokens invalidated", "version", m.tokenVersion)
+	logging.GetLogger().Info("Password hash updated, all existing tokens invalidated", "version", m.tokenVersion)
 }
 
 // UpdatePasswordHashForUser updates the password hash for a specific user.
@@ -728,7 +727,7 @@ func (m *Manager) UpdatePasswordHashForUser(ctx context.Context, username, hash 
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 
-	slog.Info("Password hash updated for user", "username", username)
+	logging.GetLogger().Info("Password hash updated for user", "username", username)
 	return nil
 }
 

@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math/rand/v2"
 	"net"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/logging"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
@@ -124,7 +124,7 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	// Enable TTL in control messages for OS fingerprinting
 	if ctrlErr := conn.IPv4PacketConn().SetControlMessage(ipv4.FlagTTL, true); ctrlErr != nil {
 		// Non-fatal - TTL extraction may not work but ping will still function
-		slog.Warn("failed to enable TTL control message", "error", ctrlErr)
+		logging.GetLogger().Warn("failed to enable TTL control message", "error", ctrlErr)
 	}
 
 	// Start the receiver goroutine
@@ -134,7 +134,7 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	// This prevents goroutine leaks if the pinger is abandoned.
 	runtime.SetFinalizer(p, func(pinger *ICMPPinger) {
 		if closeErr := pinger.Close(); closeErr != nil {
-			slog.Debug("ICMPPinger finalizer close error", "error", closeErr)
+			logging.GetLogger().Debug("ICMPPinger finalizer close error", "error", closeErr)
 		}
 	})
 
@@ -189,7 +189,7 @@ func (p *ICMPPinger) receiver() {
 
 		// Set a short read deadline so we can check stopCh periodically
 		if err := p.conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond)); err != nil {
-			slog.Error("failed to set ICMP read deadline", "error", err)
+			logging.GetLogger().Error("failed to set ICMP read deadline", "error", err)
 			continue
 		}
 
@@ -405,7 +405,7 @@ func (p *ICMPPinger) PingSweepWithConfig(ctx context.Context, ips []net.IP, cfg 
 			reachable++
 		}
 	}
-	slog.Info("Ping sweep complete", "reachable", reachable, "total", len(ips))
+	logging.GetLogger().Info("Ping sweep complete", "reachable", reachable, "total", len(ips))
 
 	return results
 }

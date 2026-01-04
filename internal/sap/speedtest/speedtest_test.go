@@ -1,14 +1,16 @@
-// Package speedtest provides network bandwidth testing using speedtest.net infrastructure.
+// Package speedtest_test provides network bandwidth testing using speedtest.net infrastructure.
 // Test suite validates speedtest phases, progress tracking, and throughput measurement.
-package speedtest
+package speedtest_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/sap/speedtest"
 )
 
 func TestNewTester(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
 	if tester == nil {
 		t.Fatal("expected non-nil tester")
@@ -27,13 +29,13 @@ func TestNewTester(t *testing.T) {
 }
 
 func TestNewTesterWithConfig(t *testing.T) {
-	tester := NewTesterWithConfig("12345")
+	tester := speedtest.NewTesterWithConfig("12345")
 	if tester == nil {
 		t.Fatal("expected non-nil tester")
 	}
 
-	if tester.serverID != "12345" {
-		t.Errorf("expected serverID '12345', got %q", tester.serverID)
+	if tester.TesterServerID() != "12345" {
+		t.Errorf("expected serverID '12345', got %q", tester.TesterServerID())
 	}
 
 	status := tester.GetStatus()
@@ -43,7 +45,7 @@ func TestNewTesterWithConfig(t *testing.T) {
 }
 
 func TestTesterGetStatus(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
 	status := tester.GetStatus()
 	if status.Running {
@@ -58,7 +60,7 @@ func TestTesterGetStatus(t *testing.T) {
 }
 
 func TestTesterGetLastResult(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
 	result := tester.GetLastResult()
 	if result != nil {
@@ -67,22 +69,22 @@ func TestTesterGetLastResult(t *testing.T) {
 }
 
 func TestTesterSetServerID(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	if tester.serverID != "" {
-		t.Errorf("expected empty serverID initially, got %q", tester.serverID)
+	if tester.TesterServerID() != "" {
+		t.Errorf("expected empty serverID initially, got %q", tester.TesterServerID())
 	}
 
 	tester.SetServerID("67890")
-	if tester.serverID != "67890" {
-		t.Errorf("expected serverID '67890', got %q", tester.serverID)
+	if tester.TesterServerID() != "67890" {
+		t.Errorf("expected serverID '67890', got %q", tester.TesterServerID())
 	}
 }
 
 func TestTesterSetStatus(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	tester.setStatus("testing_download", 50.0)
+	tester.SetStatus("testing_download", 50.0)
 
 	status := tester.GetStatus()
 	if status.Phase != "testing_download" {
@@ -94,24 +96,24 @@ func TestTesterSetStatus(t *testing.T) {
 }
 
 func TestTesterSetRunning(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	tester.setRunning(true)
+	tester.SetRunning(true)
 	status := tester.GetStatus()
 	if !status.Running {
-		t.Error("expected Running to be true after setRunning(true)")
+		t.Error("expected Running to be true after SetRunning(true)")
 	}
 
-	tester.setRunning(false)
+	tester.SetRunning(false)
 	status = tester.GetStatus()
 	if status.Running {
-		t.Error("expected Running to be false after setRunning(false)")
+		t.Error("expected Running to be false after SetRunning(false)")
 	}
 }
 
 func TestResultFields(t *testing.T) {
 	now := time.Now()
-	result := Result{
+	result := speedtest.Result{
 		Download:     100.5,
 		Upload:       50.2,
 		Latency:      15.3,
@@ -153,7 +155,7 @@ func TestResultFields(t *testing.T) {
 }
 
 func TestStatusFields(t *testing.T) {
-	status := Status{
+	status := speedtest.Status{
 		Running:  true,
 		Phase:    "testing_upload",
 		Progress: 75.0,
@@ -180,10 +182,10 @@ func TestStatusPhases(t *testing.T) {
 		"complete",
 	}
 
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
 	for _, phase := range validPhases {
-		tester.setStatus(phase, 0)
+		tester.SetStatus(phase, 0)
 		status := tester.GetStatus()
 		if status.Phase != phase {
 			t.Errorf("expected Phase %q, got %q", phase, status.Phase)
@@ -192,9 +194,9 @@ func TestStatusPhases(t *testing.T) {
 }
 
 func TestConcurrentStatusAccess(_ *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	// Test concurrent reads don't cause race conditions
+	// Test concurrent reads don't cause race conditions.
 	done := make(chan bool)
 	for range 10 {
 		go func() {
@@ -206,19 +208,19 @@ func TestConcurrentStatusAccess(_ *testing.T) {
 		}()
 	}
 
-	// Wait for all goroutines
+	// Wait for all goroutines.
 	for range 10 {
 		<-done
 	}
 }
 
 func TestProgressRange(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	// Test various progress values
+	// Test various progress values.
 	progressValues := []float64{0, 10, 25, 50, 75, 100}
 	for _, progress := range progressValues {
-		tester.setStatus("testing", progress)
+		tester.SetStatus("testing", progress)
 		status := tester.GetStatus()
 		if status.Progress != progress {
 			t.Errorf("expected Progress %v, got %v", progress, status.Progress)
@@ -227,15 +229,15 @@ func TestProgressRange(t *testing.T) {
 }
 
 func TestTesterMuLocking(_ *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	// Test concurrent writes don't cause race conditions
+	// Test concurrent writes don't cause race conditions.
 	done := make(chan bool)
 	for i := range 5 {
 		go func(id int) {
 			for j := range 50 {
-				tester.setStatus("phase"+string(rune('0'+id)), float64(j))
-				tester.setRunning(j%2 == 0)
+				tester.SetStatus("phase"+string(rune('0'+id)), float64(j))
+				tester.SetRunning(j%2 == 0)
 				tester.SetServerID("server" + string(rune('0'+id)))
 			}
 			done <- true
@@ -248,7 +250,7 @@ func TestTesterMuLocking(_ *testing.T) {
 }
 
 func TestResultZeroValues(t *testing.T) {
-	result := Result{}
+	result := speedtest.Result{}
 
 	if result.Download != 0 {
 		t.Error("expected zero Download")
@@ -271,7 +273,7 @@ func TestResultZeroValues(t *testing.T) {
 }
 
 func TestStatusZeroValues(t *testing.T) {
-	status := Status{}
+	status := speedtest.Status{}
 
 	if status.Running {
 		t.Error("expected Running false by default")
@@ -285,21 +287,21 @@ func TestStatusZeroValues(t *testing.T) {
 }
 
 func TestTesterSetServerIDMultiple(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
 	serverIDs := []string{"server1", "server2", "server3", ""}
 	for _, id := range serverIDs {
 		tester.SetServerID(id)
-		if tester.serverID != id {
-			t.Errorf("expected serverID %q, got %q", id, tester.serverID)
+		if tester.TesterServerID() != id {
+			t.Errorf("expected serverID %q, got %q", id, tester.TesterServerID())
 		}
 	}
 }
 
 func TestTesterStatusTransitions(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	// Simulate a test workflow
+	// Simulate a test workflow.
 	transitions := []struct {
 		phase    string
 		progress float64
@@ -315,8 +317,8 @@ func TestTesterStatusTransitions(t *testing.T) {
 	}
 
 	for _, tr := range transitions {
-		tester.setStatus(tr.phase, tr.progress)
-		tester.setRunning(tr.running)
+		tester.SetStatus(tr.phase, tr.progress)
+		tester.SetRunning(tr.running)
 
 		status := tester.GetStatus()
 		if status.Phase != tr.phase {
@@ -332,9 +334,9 @@ func TestTesterStatusTransitions(t *testing.T) {
 }
 
 func TestTesterGetLastResultNil(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	// Should be nil on new tester
+	// Should be nil on new tester.
 	result := tester.GetLastResult()
 	if result != nil {
 		t.Error("expected nil result on new tester")
@@ -342,9 +344,9 @@ func TestTesterGetLastResultNil(t *testing.T) {
 }
 
 func TestTesterMultipleGetStatus(t *testing.T) {
-	tester := NewTester()
+	tester := speedtest.NewTester()
 
-	// Get status multiple times
+	// Get status multiple times.
 	for range 100 {
 		status := tester.GetStatus()
 		if status.Phase != "idle" {

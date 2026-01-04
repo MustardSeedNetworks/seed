@@ -68,7 +68,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 	"os/exec"
@@ -79,6 +78,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/validation"
 )
 
@@ -264,13 +264,13 @@ func findIperf3Binary() (string, error) {
 			// Validate the extracted binary works
 			if validateBinary(path) {
 				iperfBinaryPath = path
-				slog.Info("Using embedded iperf3 binary", "path", path, "version", EmbeddedVersion)
+				logging.GetLogger().Info("Using embedded iperf3 binary", "path", path, "version", EmbeddedVersion)
 				return path, nil
 			}
-			slog.Warn("Extracted iperf3 binary failed validation", "path", path)
+			logging.GetLogger().Warn("Extracted iperf3 binary failed validation", "path", path)
 		} else {
 			embeddedErr = err
-			slog.Debug("Failed to extract embedded iperf3", "error", err)
+			logging.GetLogger().Debug("Failed to extract embedded iperf3", "error", err)
 		}
 	}
 
@@ -279,10 +279,10 @@ func findIperf3Binary() (string, error) {
 	if path, err := findSystemIperf3(); err == nil {
 		if validateBinary(path) {
 			iperfBinaryPath = path
-			slog.Info("Using system iperf3 binary", "path", path)
+			logging.GetLogger().Info("Using system iperf3 binary", "path", path)
 			return path, nil
 		}
-		slog.Warn("System iperf3 binary failed validation", "path", path)
+		logging.GetLogger().Warn("System iperf3 binary failed validation", "path", path)
 	} else {
 		systemErr = err
 	}
@@ -295,7 +295,7 @@ func findIperf3Binary() (string, error) {
 		if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
 			if validateBinary(path) {
 				iperfBinaryPath = path
-				slog.Info("Using iperf3 from legacy path", "path", path)
+				logging.GetLogger().Info("Using iperf3 from legacy path", "path", path)
 				return path, nil
 			}
 		}
@@ -556,7 +556,7 @@ func (m *Manager) StopServer() error {
 		if err := m.serverCmd.Process.Kill(); err != nil {
 			// Log the error, but don't fail, as we are trying to stop the server
 			// and it might already be dead or unreachable.
-			slog.Warn("Error killing iperf3 server process", "pid", m.serverCmd.Process.Pid, "error", err)
+			logging.GetLogger().Warn("Error killing iperf3 server process", "pid", m.serverCmd.Process.Pid, "error", err)
 		}
 	}
 

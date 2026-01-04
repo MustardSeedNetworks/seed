@@ -6,13 +6,13 @@ package network
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network/detection"
 )
 
@@ -92,7 +92,7 @@ func (m *Manager) RefreshInterfaces() error {
 	// Get enriched detection data for all interfaces
 	detectedScores, err := m.detector.DetectAll()
 	if err != nil {
-		slog.Warn("interface detection failed", "error", err)
+		logging.GetLogger().Warn("interface detection failed", "error", err)
 		// Continue with empty detection - graceful degradation
 	}
 	scoreMap := make(map[string]*detection.InterfaceScore)

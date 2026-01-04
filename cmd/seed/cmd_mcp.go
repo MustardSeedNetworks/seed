@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,6 +13,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/api"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mcp"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/paths"
@@ -68,7 +68,7 @@ func runMCP(_ *cobra.Command, _ []string) {
 		var netErr error
 		netMgr, netErr = network.NewManager(activeIface)
 		if netErr != nil {
-			slog.Warn("Failed to initialize network manager", "error", netErr)
+			logging.GetLogger().Warn("Failed to initialize network manager", "error", netErr)
 		}
 	}
 
@@ -88,12 +88,12 @@ func runMCP(_ *cobra.Command, _ []string) {
 
 	go func() {
 		<-sigCh
-		slog.Info("Received shutdown signal")
+		logging.GetLogger().Info("Received shutdown signal")
 		cancel()
 	}()
 
 	// Run MCP server over stdio
-	slog.Info("Starting MCP server over stdio")
+	logging.GetLogger().Info("Starting MCP server over stdio")
 	serveErr := mcpServer.ServeStdioWithContext(ctx)
 	cancel() // Ensure context is canceled
 	if serveErr != nil && !errors.Is(serveErr, context.Canceled) {

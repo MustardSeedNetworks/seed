@@ -4,10 +4,11 @@
 package detection
 
 import (
-	"log/slog"
 	"net"
 	"sort"
 	"strings"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Interface type constants.
@@ -104,7 +105,7 @@ func (d *Detector) ScoreInterface(iface net.Interface) InterfaceScore {
 	score.LinkStatus = iface.Flags&net.FlagRunning != 0
 	addrs, err := iface.Addrs()
 	if err != nil {
-		slog.Warn("failed to get addresses for interface", "interface", iface.Name, "error", err)
+		logging.GetLogger().Warn("failed to get addresses for interface", "interface", iface.Name, "error", err)
 	}
 	for _, addr := range addrs {
 		score.Addresses = append(score.Addresses, addr.String())

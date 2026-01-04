@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -61,7 +60,7 @@ func runServe(_ *cobra.Command, _ []string) {
 	// Create trusted proxies configuration
 	proxies := api.NewTrustedProxies(trustedProxies)
 	if !proxies.IsEmpty() {
-		slog.Info("Trusted proxies configured", "count", proxies.Count())
+		logging.GetLogger().Info("Trusted proxies configured", "count", proxies.Count())
 	}
 
 	// Initialize database
@@ -83,11 +82,11 @@ func initializeDatabase(cfg *config.Config) *database.DB {
 
 	db, err := database.Open(dbPath)
 	if err != nil {
-		slog.Error("Failed to open database", "path", dbPath, "error", err)
+		logging.GetLogger().Error("Failed to open database", "path", dbPath, "error", err)
 		return nil
 	}
 
-	slog.Info("Database initialized", "path", dbPath)
+	logging.GetLogger().Info("Database initialized", "path", dbPath)
 	return db
 }
 
@@ -97,23 +96,23 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 
 	// Sap: Live telemetry (gateway, DNS, speedtest, iperf monitoring)
 	modules.Sap = sap.New(cfg, db)
-	slog.Info("Sap module initialized")
+	logging.GetLogger().Info("Sap module initialized")
 
 	// Shell: Security posture (DHCP monitoring, vulnerability scanning)
 	modules.Shell = shell.New(cfg, db)
-	slog.Info("Shell module initialized")
+	logging.GetLogger().Info("Shell module initialized")
 
 	// Canopy: Wi-Fi planning (surveys, site planning)
 	modules.Canopy = canopy.New(cfg, db)
-	slog.Info("Canopy module initialized")
+	logging.GetLogger().Info("Canopy module initialized")
 
 	// Roots: Path analysis (traceroute, topology, IP enrichment)
 	modules.Roots = roots.New(cfg, db)
-	slog.Info("Roots module initialized")
+	logging.GetLogger().Info("Roots module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)
 	modules.Harvest = harvest.New(cfg, db)
-	slog.Info("Harvest module initialized")
+	logging.GetLogger().Info("Harvest module initialized")
 
 	return modules
 }
@@ -174,7 +173,7 @@ func setupLogging(cfg *config.Config) string {
 		os.Exit(1)
 	}
 
-	slog.Info("The Seed starting", "version", version.Version, "log_path", logPath)
+	logging.GetLogger().Info("The Seed starting", "version", version.Version, "log_path", logPath)
 
 	return logPath
 }
@@ -269,7 +268,7 @@ func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manag
 		detected, usedFallback := cfg.GetActiveInterface()
 		if detected != "" {
 			if usedFallback {
-				slog.Info("Auto-detected active interface", "interface", detected)
+				logging.GetLogger().Info("Auto-detected active interface", "interface", detected)
 			}
 			initialInterface = detected
 		}
@@ -277,13 +276,13 @@ func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manag
 
 	// Still require at least some interface to start with
 	if initialInterface == "" {
-		slog.Error("No network interface found - please ensure at least one interface is up with an IP address")
+		logging.GetLogger().Error("No network interface found - please ensure at least one interface is up with an IP address")
 		os.Exit(1)
 	}
 
 	netMgr, err := network.NewManager(initialInterface)
 	if err != nil {
-		slog.Error("Failed to initialize network manager", "error", err)
+		logging.GetLogger().Error("Failed to initialize network manager", "error", err)
 		os.Exit(1)
 	}
 
@@ -308,7 +307,7 @@ func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manag
 func findActiveInterface(netMgr *network.Manager, preferred []string, maxRetries int, retryWait time.Duration) string {
 	activeInterface := netMgr.FindFirstAvailable(preferred)
 	for retryCount := 0; activeInterface == "" && retryCount < maxRetries; retryCount++ {
-		slog.Warn("No active network interface found, retrying", "retry_wait", retryWait)
+		logging.GetLogger().Warn("No active network interface found, retrying", "retry_wait", retryWait)
 		time.Sleep(retryWait)
 		activeInterface = netMgr.FindFirstAvailable(preferred)
 	}
@@ -317,8 +316,8 @@ func findActiveInterface(netMgr *network.Manager, preferred []string, maxRetries
 
 // logAvailableInterfaces logs available interfaces grouped by type and status.
 func logAvailableInterfaces(netMgr *network.Manager) {
-	slog.Error("No active network interface found after multiple attempts")
-	slog.Info("Please check your network configuration and ensure at least one interface is up")
+	logging.GetLogger().Error("No active network interface found after multiple attempts")
+	logging.GetLogger().Info("Please check your network configuration and ensure at least one interface is up")
 
 	type ifaceGroup struct{ Type, Status string }
 	grouped := make(map[ifaceGroup][]string)
@@ -331,24 +330,24 @@ func logAvailableInterfaces(netMgr *network.Manager) {
 		grouped[key] = append(grouped[key], iface.Name)
 	}
 	for group, names := range grouped {
-		slog.Info("Available interfaces", "type", group.Type, "status", group.Status, "names", names)
+		logging.GetLogger().Info("Available interfaces", "type", group.Type, "status", group.Status, "names", names)
 	}
 }
 
 // applyActiveInterface sets the active interface as the default.
 func applyActiveInterface(cfg *config.Config, netMgr *network.Manager, activeInterface, configPath string) {
 	if activeInterface != cfg.Interface.Default {
-		slog.Info("Using detected active interface instead of configured default",
+		logging.GetLogger().Info("Using detected active interface instead of configured default",
 			"active", activeInterface, "configured", cfg.Interface.Default)
 		cfg.Interface.Default = activeInterface
 		if err := cfg.Save(configPath); err != nil {
-			slog.Warn("Failed to save updated interface to config", "error", err)
+			logging.GetLogger().Warn("Failed to save updated interface to config", "error", err)
 		} else {
-			slog.Info("Updated config with active interface", "interface", activeInterface)
+			logging.GetLogger().Info("Updated config with active interface", "interface", activeInterface)
 		}
 	}
 	if err := netMgr.SetCurrentInterface(activeInterface); err != nil {
-		slog.Warn("Failed to set active interface", "interface", activeInterface, "error", err)
+		logging.GetLogger().Warn("Failed to set active interface", "interface", activeInterface, "error", err)
 	}
 }
 
@@ -358,15 +357,15 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, modules *api.
 	ctx := context.Background()
 	if modules != nil {
 		if err := modules.Start(ctx); err != nil {
-			slog.Error("Failed to start modules", "error", err)
+			logging.GetLogger().Error("Failed to start modules", "error", err)
 			os.Exit(1)
 		}
-		slog.Info("All modules started successfully")
+		logging.GetLogger().Info("All modules started successfully")
 	}
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		slog.Info("Starting server", "port", cfg.Server.Port, "https", cfg.Server.HTTPS)
+		logging.GetLogger().Info("Starting server", "port", cfg.Server.Port, "https", cfg.Server.HTTPS)
 		serverErrors <- server.Start()
 	}()
 
@@ -376,15 +375,15 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, modules *api.
 	select {
 	case err := <-serverErrors:
 		if err != nil {
-			slog.Error("Server error", "error", err)
+			logging.GetLogger().Error("Server error", "error", err)
 			os.Exit(1)
 		}
 	case sig := <-sigChan:
-		slog.Info("Received signal, shutting down gracefully (press Ctrl+C again to force)", "signal", sig)
+		logging.GetLogger().Info("Received signal, shutting down gracefully (press Ctrl+C again to force)", "signal", sig)
 
 		go func() {
 			<-sigChan
-			slog.Info("Force quitting...")
+			logging.GetLogger().Info("Force quitting...")
 			os.Exit(1)
 		}()
 
@@ -393,18 +392,18 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, modules *api.
 
 		// Stop modules first
 		if modules != nil {
-			slog.Info("Stopping modules...")
+			logging.GetLogger().Info("Stopping modules...")
 			if err := modules.Stop(); err != nil {
-				slog.Error("Error stopping modules", "error", err)
+				logging.GetLogger().Error("Error stopping modules", "error", err)
 			}
 		}
 
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			slog.Error("Error during shutdown", "error", err)
+			logging.GetLogger().Error("Error during shutdown", "error", err)
 		}
 	}
 
-	slog.Info("The Seed stopped")
+	logging.GetLogger().Info("The Seed stopped")
 }
 
 // printSetupBanner displays a message directing users to the web UI for setup.

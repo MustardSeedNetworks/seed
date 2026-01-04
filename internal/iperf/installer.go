@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -18,6 +17,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 const (
@@ -223,7 +224,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 		}
 	}
 
-	slog.Info("Installing iperf3 via package manager", "manager", pm.Name)
+	logging.GetLogger().Info("Installing iperf3 via package manager", "manager", pm.Name)
 
 	// Run update first if available
 	if pm.UpdateCommand != nil {
@@ -231,7 +232,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 		if opts.UseSudo && needsSudo(pm.Name) {
 			updateCmd = append([]string{"sudo"}, updateCmd...)
 		}
-		slog.Debug("Running package manager update", "command", strings.Join(updateCmd, " "))
+		logging.GetLogger().Debug("Running package manager update", "command", strings.Join(updateCmd, " "))
 
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		//nolint:gosec // G204: commands are from controlled sources
@@ -240,7 +241,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			cancel()
-			slog.Warn("Package manager update failed", "error", err)
+			logging.GetLogger().Warn("Package manager update failed", "error", err)
 			// Continue anyway - update failure shouldn't block install
 		}
 		cancel()
@@ -252,7 +253,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 		installCmd = append([]string{"sudo"}, installCmd...)
 	}
 
-	slog.Info("Running install command", "command", strings.Join(installCmd, " "))
+	logging.GetLogger().Info("Running install command", "command", strings.Join(installCmd, " "))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -305,7 +306,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 
 // InstallFromGitHub downloads and builds iperf3 from GitHub source.
 func InstallFromGitHub(opts InstallOptions) *InstallResult {
-	slog.Info("Installing iperf3 from GitHub source")
+	logging.GetLogger().Info("Installing iperf3 from GitHub source")
 
 	// Get latest release info
 	version, tarballURL, err := GetLatestGitHubRelease()
@@ -322,7 +323,7 @@ func InstallFromGitHub(opts InstallOptions) *InstallResult {
 		tarballURL = fmt.Sprintf("https://github.com/esnet/iperf/archive/refs/tags/%s.tar.gz", version)
 	}
 
-	slog.Info("Downloading iperf3", "version", version, "url", tarballURL)
+	logging.GetLogger().Info("Downloading iperf3", "version", version, "url", tarballURL)
 
 	// Create temp directory for build
 	tempDir, err := os.MkdirTemp("", "iperf3-build-*")
@@ -346,7 +347,7 @@ func InstallFromGitHub(opts InstallOptions) *InstallResult {
 	}
 
 	// Extract tarball.
-	slog.Info("Extracting source...")
+	logging.GetLogger().Info("Extracting source...")
 	extractCtx, extractCancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer extractCancel()
 	extractCmd := exec.CommandContext(
@@ -391,14 +392,14 @@ func InstallFromGitHub(opts InstallOptions) *InstallResult {
 	}
 
 	// Build
-	slog.Info("Building iperf3...", "sourceDir", sourceDir)
+	logging.GetLogger().Info("Building iperf3...", "sourceDir", sourceDir)
 	result := buildIperf3(sourceDir, opts)
 	if result != nil {
 		return result
 	}
 
 	// Install
-	slog.Info("Installing iperf3...")
+	logging.GetLogger().Info("Installing iperf3...")
 	return installIperf3(sourceDir, opts)
 }
 
@@ -408,7 +409,7 @@ func buildIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 
 	// Run autoreconf if needed
 	if _, statErr := os.Stat(filepath.Join(sourceDir, "configure")); os.IsNotExist(statErr) {
-		slog.Debug("Running autoreconf...")
+		logging.GetLogger().Debug("Running autoreconf...")
 		autoreconfCmd := exec.CommandContext(ctx, "autoreconf", "-i")
 		autoreconfCmd.Dir = sourceDir
 		autoreconfCmd.Stdout = os.Stdout
@@ -430,7 +431,7 @@ func buildIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 	}
 
 	// Configure.
-	slog.Debug("Running configure...")
+	logging.GetLogger().Debug("Running configure...")
 	var configureCmd *exec.Cmd
 	if opts.InstallDir != "" {
 		// Sanitize install directory - filepath.Clean normalizes path
@@ -467,7 +468,7 @@ func buildIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 	}
 
 	// Make
-	slog.Debug("Running make...")
+	logging.GetLogger().Debug("Running make...")
 	makeCmd := exec.CommandContext(ctx, "make", "-j4")
 	makeCmd.Dir = sourceDir
 	makeCmd.Stdout = os.Stdout
@@ -600,12 +601,12 @@ func AutoInstall(useSudo, verbose bool) *InstallResult {
 	// Try package manager first (faster and more reliable)
 	pm := DetectPackageManager()
 	if pm != nil && pm.Available {
-		slog.Info("Attempting installation via package manager", "manager", pm.Name)
+		logging.GetLogger().Info("Attempting installation via package manager", "manager", pm.Name)
 		result := InstallViaPackageManager(opts)
 		if result.Success {
 			return result
 		}
-		slog.Warn("Package manager installation failed, trying GitHub", "error", result.Error)
+		logging.GetLogger().Warn("Package manager installation failed, trying GitHub", "error", result.Error)
 	}
 
 	// Fall back to GitHub

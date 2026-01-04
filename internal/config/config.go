@@ -4,7 +4,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/logging"
 	"gopkg.in/yaml.v3"
 )
 
@@ -1105,7 +1105,7 @@ func Load(path string) (*Config, error) {
 	// Handle unversioned configs (version 0 means unversioned)
 	if cfg.Version == 0 {
 		cfg.Version = ConfigVersion
-		slog.Info("Upgraded unversioned config to current version", "version", ConfigVersion)
+		logging.GetLogger().Info("Upgraded unversioned config to current version", "version", ConfigVersion)
 	}
 
 	return cfg, nil
@@ -1137,7 +1137,7 @@ func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, 
 		// Create backup before migration
 		backupMgr := NewBackupManager(path, "", 10)
 		if _, backupErr := backupMgr.CreateBackup(); backupErr != nil {
-			slog.Warn("Failed to create backup before migration", "error", backupErr)
+			logging.GetLogger().Warn("Failed to create backup before migration", "error", backupErr)
 		}
 
 		// Apply migrations
@@ -1148,7 +1148,7 @@ func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, 
 		}
 		data = migratedData
 		migrated = true
-		slog.Info("Migrated config", "from_version", partial.Version, "to_version", ConfigVersion)
+		logging.GetLogger().Info("Migrated config", "from_version", partial.Version, "to_version", ConfigVersion)
 	}
 
 	if unmarshalErr := yaml.Unmarshal(data, cfg); unmarshalErr != nil {
@@ -1164,7 +1164,7 @@ func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, 
 	// Save migrated config
 	if migrated {
 		if saveErr := cfg.Save(path); saveErr != nil {
-			slog.Warn("Failed to save migrated config", "error", saveErr)
+			logging.GetLogger().Warn("Failed to save migrated config", "error", saveErr)
 		}
 	}
 
@@ -1350,7 +1350,7 @@ func (c *Config) WarnDeprecatedSNMPSettings() {
 	for i := range c.SNMP.V3Credentials {
 		cred := &c.SNMP.V3Credentials[i]
 		if cred.AuthProtocol == "MD5" {
-			slog.Warn(
+			logging.GetLogger().Warn(
 				"SNMP MD5 authentication is deprecated and will be removed in the next major version",
 				"credential_name",
 				cred.Name,
@@ -1542,7 +1542,7 @@ func (c *Config) GetActiveInterface() (string, bool) {
 		if hasIPv4Address(c.Interface.Default) {
 			return c.Interface.Default, false
 		}
-		slog.Warn(
+		logging.GetLogger().Warn(
 			"Configured interface has no IPv4 address or doesn't exist",
 			"interface",
 			c.Interface.Default,
@@ -1552,7 +1552,7 @@ func (c *Config) GetActiveInterface() (string, bool) {
 	// Try fallback interfaces
 	for _, iface := range c.Interface.Fallbacks {
 		if hasIPv4Address(iface) {
-			slog.Info("Using fallback interface", "interface", iface)
+			logging.GetLogger().Info("Using fallback interface", "interface", iface)
 			return iface, true
 		}
 	}
@@ -1560,13 +1560,13 @@ func (c *Config) GetActiveInterface() (string, bool) {
 	// Auto-detect: scan all interfaces for one with an IPv4 address
 	detected := detectActiveInterface()
 	if detected != "" {
-		slog.Info("Auto-detected active interface", "interface", detected)
+		logging.GetLogger().Info("Auto-detected active interface", "interface", detected)
 		return detected, true
 	}
 
 	// Last resort: return the configured default even if it might not work
 	if c.Interface.Default != "" {
-		slog.Warn(
+		logging.GetLogger().Warn(
 			"No active interface found, using configured default",
 			"interface",
 			c.Interface.Default,
@@ -1575,7 +1575,7 @@ func (c *Config) GetActiveInterface() (string, bool) {
 	}
 
 	// No hardcoded fallback - return empty to signal no interface found (#572)
-	slog.Error("No active network interface found")
+	logging.GetLogger().Error("No active network interface found")
 	return "", false
 }
 

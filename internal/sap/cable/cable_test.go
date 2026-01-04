@@ -1,65 +1,67 @@
-// Package cable provides TDR cable testing functionality.
+// Package cable_test provides TDR cable testing functionality.
 // Test suite validates cable test status constants and result interpretation.
-package cable
+package cable_test
 
 import (
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/sap/cable"
 )
 
 func TestStatusConstants(t *testing.T) {
-	if StatusOK != "ok" {
-		t.Errorf("expected StatusOK = 'ok', got %q", StatusOK)
+	if cable.StatusOK != "ok" {
+		t.Errorf("expected StatusOK = 'ok', got %q", cable.StatusOK)
 	}
-	if StatusOpen != "open" {
-		t.Errorf("expected StatusOpen = 'open', got %q", StatusOpen)
+	if cable.StatusOpen != "open" {
+		t.Errorf("expected StatusOpen = 'open', got %q", cable.StatusOpen)
 	}
-	if StatusShort != "short" {
-		t.Errorf("expected StatusShort = 'short', got %q", StatusShort)
+	if cable.StatusShort != "short" {
+		t.Errorf("expected StatusShort = 'short', got %q", cable.StatusShort)
 	}
-	if StatusImpedanceMismatch != "impedance_mismatch" {
-		t.Errorf("expected StatusImpedanceMismatch = 'impedance_mismatch', got %q", StatusImpedanceMismatch)
+	if cable.StatusImpedanceMismatch != "impedance_mismatch" {
+		t.Errorf("expected StatusImpedanceMismatch = 'impedance_mismatch', got %q", cable.StatusImpedanceMismatch)
 	}
-	if StatusUnknown != "unknown" {
-		t.Errorf("expected StatusUnknown = 'unknown', got %q", StatusUnknown)
+	if cable.StatusUnknown != "unknown" {
+		t.Errorf("expected StatusUnknown = 'unknown', got %q", cable.StatusUnknown)
 	}
 }
 
 func TestNewTester(t *testing.T) {
-	tester := NewTester("eth0")
+	tester := cable.NewTester("eth0")
 	if tester == nil {
 		t.Fatal("expected non-nil tester")
 	}
 
-	if tester.interfaceName != "eth0" {
-		t.Errorf("expected interfaceName 'eth0', got %q", tester.interfaceName)
+	if tester.TesterInterfaceName() != "eth0" {
+		t.Errorf("expected interfaceName 'eth0', got %q", tester.TesterInterfaceName())
 	}
 }
 
 func TestTesterSetInterface(t *testing.T) {
-	tester := NewTester("eth0")
+	tester := cable.NewTester("eth0")
 
 	tester.SetInterface("en0")
-	if tester.interfaceName != "en0" {
-		t.Errorf("expected interfaceName 'en0', got %q", tester.interfaceName)
+	if tester.TesterInterfaceName() != "en0" {
+		t.Errorf("expected interfaceName 'en0', got %q", tester.TesterInterfaceName())
 	}
 
 	tester.SetInterface("bond0")
-	if tester.interfaceName != "bond0" {
-		t.Errorf("expected interfaceName 'bond0', got %q", tester.interfaceName)
+	if tester.TesterInterfaceName() != "bond0" {
+		t.Errorf("expected interfaceName 'bond0', got %q", tester.TesterInterfaceName())
 	}
 }
 
 func TestTesterIsSupported(_ *testing.T) {
-	tester := NewTester("eth0")
+	tester := cable.NewTester("eth0")
 
-	// This will return false on non-Linux systems or without ethtool
+	// This will return false on non-Linux systems or without ethtool.
 	supported := tester.IsSupported()
-	// Just verify it doesn't panic
+	// Just verify it doesn't panic.
 	_ = supported
 }
 
 func TestTesterTest(t *testing.T) {
-	tester := NewTester("eth0")
+	tester := cable.NewTester("eth0")
 
 	result := tester.Test()
 	if result == nil {
@@ -69,11 +71,11 @@ func TestTesterTest(t *testing.T) {
 	if result.Faults == nil {
 		t.Error("expected non-nil Faults slice")
 	}
-	// On non-Linux systems, should return unsupported
+	// On non-Linux systems, should return unsupported.
 }
 
 func TestTesterGetLastResult(t *testing.T) {
-	tester := NewTester("eth0")
+	tester := cable.NewTester("eth0")
 
 	result := tester.GetLastResult()
 	if result == nil {
@@ -83,10 +85,10 @@ func TestTesterGetLastResult(t *testing.T) {
 
 func TestTestResultFields(t *testing.T) {
 	length := 25.5
-	result := TestResult{
+	result := cable.TestResult{
 		Supported: true,
 		Length:    &length,
-		Status:    StatusOK,
+		Status:    cable.StatusOK,
 		Faults:    []string{"fault1", "fault2"},
 	}
 
@@ -96,7 +98,7 @@ func TestTestResultFields(t *testing.T) {
 	if result.Length == nil || *result.Length != 25.5 {
 		t.Error("expected Length 25.5")
 	}
-	if result.Status != StatusOK {
+	if result.Status != cable.StatusOK {
 		t.Errorf("expected Status StatusOK, got %v", result.Status)
 	}
 	if len(result.Faults) != 2 {
@@ -105,10 +107,10 @@ func TestTestResultFields(t *testing.T) {
 }
 
 func TestTestResultNoLength(t *testing.T) {
-	result := TestResult{
+	result := cable.TestResult{
 		Supported: false,
 		Length:    nil,
-		Status:    StatusUnknown,
+		Status:    cable.StatusUnknown,
 		Faults:    []string{},
 	}
 
@@ -118,7 +120,7 @@ func TestTestResultNoLength(t *testing.T) {
 	if result.Length != nil {
 		t.Error("expected nil Length")
 	}
-	if result.Status != StatusUnknown {
+	if result.Status != cable.StatusUnknown {
 		t.Errorf("expected Status StatusUnknown, got %v", result.Status)
 	}
 	if len(result.Faults) != 0 {
@@ -127,7 +129,7 @@ func TestTestResultNoLength(t *testing.T) {
 }
 
 func TestConcurrentTesterAccess(_ *testing.T) {
-	tester := NewTester("eth0")
+	tester := cable.NewTester("eth0")
 
 	done := make(chan bool)
 	for i := range 10 {
@@ -146,33 +148,33 @@ func TestConcurrentTesterAccess(_ *testing.T) {
 }
 
 func TestIsSupportedPlatform(_ *testing.T) {
-	// Test the platform-specific function
-	result := isSupportedPlatform("eth0")
-	// Just verify it doesn't panic - result depends on system
+	// Test the platform-specific function.
+	result := cable.IsSupportedPlatform("eth0")
+	// Just verify it doesn't panic - result depends on system.
 	_ = result
 }
 
 func TestTestPlatform(t *testing.T) {
-	// Test the platform-specific function
-	result := testPlatform("eth0")
+	// Test the platform-specific function.
+	result := cable.TestPlatform("eth0")
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
 
-	// On non-Linux, should not be supported
+	// On non-Linux, should not be supported.
 	if result.Faults == nil {
 		t.Error("expected non-nil Faults slice")
 	}
 }
 
 func TestGetLastResultCallsTest(t *testing.T) {
-	tester := NewTester("eth0")
+	tester := cable.NewTester("eth0")
 
 	result := tester.GetLastResult()
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
-	// Currently GetLastResult just runs a new test
+	// Currently GetLastResult just runs a new test.
 	if result.Faults == nil {
 		t.Error("expected non-nil Faults slice")
 	}
@@ -180,10 +182,10 @@ func TestGetLastResultCallsTest(t *testing.T) {
 
 func TestTestResultWithAllFields(t *testing.T) {
 	length := 50.0
-	result := TestResult{
+	result := cable.TestResult{
 		Supported: true,
 		Length:    &length,
-		Status:    StatusOK,
+		Status:    cable.StatusOK,
 		Faults:    []string{"minor issue"},
 	}
 
@@ -193,7 +195,7 @@ func TestTestResultWithAllFields(t *testing.T) {
 	if result.Length == nil || *result.Length != 50.0 {
 		t.Error("expected Length 50.0")
 	}
-	if result.Status != StatusOK {
+	if result.Status != cable.StatusOK {
 		t.Errorf("expected Status OK, got %v", result.Status)
 	}
 	if len(result.Faults) != 1 || result.Faults[0] != "minor issue" {
@@ -202,12 +204,12 @@ func TestTestResultWithAllFields(t *testing.T) {
 }
 
 func TestStatusValues(t *testing.T) {
-	statuses := []Status{
-		StatusOK,
-		StatusOpen,
-		StatusShort,
-		StatusImpedanceMismatch,
-		StatusUnknown,
+	statuses := []cable.Status{
+		cable.StatusOK,
+		cable.StatusOpen,
+		cable.StatusShort,
+		cable.StatusImpedanceMismatch,
+		cable.StatusUnknown,
 	}
 
 	expectedStrings := []string{
@@ -229,12 +231,12 @@ func TestTesterWithDifferentInterfaces(t *testing.T) {
 	interfaces := []string{"eth0", "en0", "wlan0", "bond0", "lo0"}
 
 	for _, iface := range interfaces {
-		tester := NewTester(iface)
-		if tester.interfaceName != iface {
-			t.Errorf("expected interfaceName %q, got %q", iface, tester.interfaceName)
+		tester := cable.NewTester(iface)
+		if tester.TesterInterfaceName() != iface {
+			t.Errorf("expected interfaceName %q, got %q", iface, tester.TesterInterfaceName())
 		}
 
-		// Just verify no panics
+		// Just verify no panics.
 		_ = tester.IsSupported()
 		result := tester.Test()
 		if result == nil {
@@ -244,23 +246,23 @@ func TestTesterWithDifferentInterfaces(t *testing.T) {
 }
 
 func TestTestResultEmptyFaults(t *testing.T) {
-	result := TestResult{
+	result := cable.TestResult{
 		Supported: true,
-		Status:    StatusOK,
+		Status:    cable.StatusOK,
 		Faults:    make([]string, 0),
 	}
 
 	if !result.Supported {
 		t.Error("expected Supported to be true")
 	}
-	if result.Status != StatusOK {
-		t.Errorf("expected Status %v, got %v", StatusOK, result.Status)
+	if result.Status != cable.StatusOK {
+		t.Errorf("expected Status %v, got %v", cable.StatusOK, result.Status)
 	}
 	if len(result.Faults) != 0 {
 		t.Error("expected empty faults slice")
 	}
 
-	// Verify we can append to it
+	// Verify we can append to it.
 	result.Faults = append(result.Faults, "new fault")
 	if len(result.Faults) != 1 {
 		t.Error("expected one fault after append")
@@ -268,24 +270,24 @@ func TestTestResultEmptyFaults(t *testing.T) {
 }
 
 func TestTesterTestReturnsValidResult(t *testing.T) {
-	tester := NewTester("lo0")
+	tester := cable.NewTester("lo0")
 
 	result := tester.Test()
 
-	// Verify all fields are initialized
+	// Verify all fields are initialized.
 	if result.Faults == nil {
 		t.Error("Faults should not be nil")
 	}
 
-	// Status should be set (even if unknown)
-	validStatuses := map[Status]bool{
-		StatusOK:                true,
-		StatusOpen:              true,
-		StatusShort:             true,
-		StatusImpedanceMismatch: true,
-		StatusCrosstalk:         true,
-		StatusSplitPair:         true,
-		StatusUnknown:           true,
+	// Status should be set (even if unknown).
+	validStatuses := map[cable.Status]bool{
+		cable.StatusOK:                true,
+		cable.StatusOpen:              true,
+		cable.StatusShort:             true,
+		cable.StatusImpedanceMismatch: true,
+		cable.StatusCrosstalk:         true,
+		cable.StatusSplitPair:         true,
+		cable.StatusUnknown:           true,
 	}
 
 	if !validStatuses[result.Status] {

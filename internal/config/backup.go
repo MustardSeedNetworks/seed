@@ -4,13 +4,13 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/logging"
 	"gopkg.in/yaml.v3"
 )
 
@@ -94,7 +94,7 @@ func (m *BackupManager) CreateBackup() (*BackupInfo, error) {
 	// Prune old backups
 	if pruneErr := m.PruneOldBackups(); pruneErr != nil {
 		// Log but don't fail - the backup was created successfully
-		slog.Warn("Failed to prune old backups", "error", pruneErr)
+		logging.GetLogger().Warn("Failed to prune old backups", "error", pruneErr)
 	}
 
 	return backup, nil
@@ -237,7 +237,7 @@ func (m *BackupManager) PruneOldBackups() error {
 	for _, backup := range backups[m.maxBackups:] {
 		if removeErr := os.Remove(backup.Path); removeErr != nil {
 			// Continue trying to delete others
-			slog.Warn("Failed to delete old backup", "name", backup.Name, "error", removeErr)
+			logging.GetLogger().Warn("Failed to delete old backup", "name", backup.Name, "error", removeErr)
 		}
 	}
 

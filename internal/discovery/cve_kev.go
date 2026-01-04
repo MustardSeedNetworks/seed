@@ -21,13 +21,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 const (
@@ -85,7 +86,7 @@ func NewKEVProvider(cachePath string) (*KEVProvider, error) {
 	// Try to load cached catalog
 	if cachePath != "" {
 		if err := provider.loadCache(); err != nil {
-			slog.Debug("KEV cache not available, will download fresh", "error", err)
+			logging.GetLogger().Debug("KEV cache not available, will download fresh", "error", err)
 		}
 	}
 
@@ -131,7 +132,7 @@ func (kev *KEVProvider) SearchByProduct(_ context.Context, vendor, product, _ st
 
 // UpdateDatabase downloads and caches the KEV catalog.
 func (kev *KEVProvider) UpdateDatabase(ctx context.Context) error {
-	slog.Info("Downloading CISA KEV catalog...")
+	logging.GetLogger().Info("Downloading CISA KEV catalog...")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, kevCatalogURL, http.NoBody)
 	if err != nil {
@@ -175,11 +176,11 @@ func (kev *KEVProvider) UpdateDatabase(ctx context.Context) error {
 	// Save cache
 	if kev.cachePath != "" {
 		if saveErr := kev.saveCache(body); saveErr != nil {
-			slog.Warn("Failed to cache KEV catalog", "error", saveErr)
+			logging.GetLogger().Warn("Failed to cache KEV catalog", "error", saveErr)
 		}
 	}
 
-	slog.Info("CISA KEV catalog updated",
+	logging.GetLogger().Info("CISA KEV catalog updated",
 		"version", catalog.CatalogVersion,
 		"count", catalog.Count,
 		"date", catalog.DateReleased)
@@ -314,7 +315,7 @@ func (kev *KEVProvider) loadCache() error {
 	kev.lastUpdate = info.ModTime()
 	kev.mu.Unlock()
 
-	slog.Info("Loaded KEV catalog from cache",
+	logging.GetLogger().Info("Loaded KEV catalog from cache",
 		"version", catalog.CatalogVersion,
 		"count", catalog.Count)
 
@@ -339,7 +340,7 @@ func (kev *KEVProvider) entryToVulnerability(entry *KEVEntry) Vulnerability {
 	dateAdded, err := time.Parse("2006-01-02", entry.DateAdded)
 	if err != nil {
 		// Log warning for format changes but continue with zero time
-		slog.Warn("Failed to parse KEV date, using zero time",
+		logging.GetLogger().Warn("Failed to parse KEV date, using zero time",
 			"cve", entry.CVEID,
 			"dateAdded", entry.DateAdded,
 			"error", err)

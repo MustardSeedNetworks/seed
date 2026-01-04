@@ -50,11 +50,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // ARPEntry represents a discovered device from ARP or ICMP scanning.
@@ -272,7 +273,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		return s.pingSweep(ctx, subnet)
 	})
 	if !result.Successful {
-		slog.Warn("Ping sweep failed after retries (continuing with ARP table only)",
+		logging.GetLogger().Warn("Ping sweep failed after retries (continuing with ARP table only)",
 			"subnet", subnet,
 			"attempts", result.Attempts,
 			"duration", result.TotalTime,
@@ -291,7 +292,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 				return s.pingSweep(ctx, subnetCopy)
 			})
 			if !subnetResult.Successful {
-				slog.Warn("Ping sweep failed for additional subnet after retries",
+				logging.GetLogger().Warn("Ping sweep failed for additional subnet after retries",
 					"subnet", additionalSubnet,
 					"attempts", subnetResult.Attempts,
 					"duration", subnetResult.TotalTime,
@@ -373,7 +374,7 @@ func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 		maxChunks = MaxChunksDefault
 	}
 	if numChunks > maxChunks {
-		slog.Warn("Subnet too large - capping chunk count",
+		logging.GetLogger().Warn("Subnet too large - capping chunk count",
 			"subnet", subnet.String(),
 			"totalChunks", numChunks,
 			"maxChunks", maxChunks,
@@ -431,7 +432,7 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 	// For large subnets, split into /24 chunks and scan sequentially
 	chunks := splitSubnetIntoChunks(subnet, maxChunks)
 	if len(chunks) > 1 {
-		slog.Info("Large subnet detected - scanning in chunks",
+		logging.GetLogger().Info("Large subnet detected - scanning in chunks",
 			"subnet", subnet.String(),
 			"totalHosts", totalHosts,
 			"chunks", len(chunks),
@@ -442,12 +443,12 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 			case <-ctx.Done():
 				return fmt.Errorf("chunk scan cancelled: %w", ctx.Err())
 			default:
-				slog.Debug("Scanning chunk",
+				logging.GetLogger().Debug("Scanning chunk",
 					"chunk", fmt.Sprintf("%d/%d", i+1, len(chunks)),
 					"subnet", chunk.String())
 
 				if err := s.pingSweepChunk(ctx, chunk); err != nil {
-					slog.Warn("Chunk scan failed - continuing with remaining chunks",
+					logging.GetLogger().Warn("Chunk scan failed - continuing with remaining chunks",
 						"chunk", chunk.String(),
 						"error", err)
 				}
@@ -486,7 +487,7 @@ func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) erro
 		pinger, err := NewICMPPinger(time.Second)
 		if err != nil {
 			s.mu.Unlock()
-			slog.Warn("Failed to create ICMP pinger", "error", err)
+			logging.GetLogger().Warn("Failed to create ICMP pinger", "error", err)
 			return err
 		}
 		s.pinger = pinger

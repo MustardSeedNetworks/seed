@@ -8,11 +8,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Method indicates how a device was discovered.
@@ -156,23 +157,23 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		if err := oui.UpdateIfNeeded(ctx, ouiPath, ouiMaxAge); err != nil {
-			slog.Warn("Failed to update OUI database", "error", err)
+			logging.GetLogger().Warn("Failed to update OUI database", "error", err)
 			// Try loading from standard locations as fallback
 			if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
-				slog.Warn("Failed to load IEEE OUI file", "error", loadErr)
+				logging.GetLogger().Warn("Failed to load IEEE OUI file", "error", loadErr)
 			}
 		} else {
-			slog.Info("OUI database loaded", "entries", oui.Count())
+			logging.GetLogger().Info("OUI database loaded", "entries", oui.Count())
 		}
 	} else if ouiPath != "" {
 		// Path provided but no auto-update: just load from file
 		if err := oui.LoadFromIEEEFormat(ouiPath); err != nil {
-			slog.Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
+			logging.GetLogger().Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
 			if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
-				slog.Warn("Failed to load IEEE OUI file", "error", loadErr)
+				logging.GetLogger().Warn("Failed to load IEEE OUI file", "error", loadErr)
 			}
 		} else {
-			slog.Info("OUI database loaded from file", "path", ouiPath, "entries", oui.Count())
+			logging.GetLogger().Info("OUI database loaded from file", "path", ouiPath, "entries", oui.Count())
 		}
 	} else {
 		// No path provided: try standard locations silently
@@ -199,21 +200,21 @@ func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, ouiMaxAge time.Dur
 func (d *DeviceDiscovery) Start() error {
 	// Start NDP scanner for IPv6 discovery
 	if err := d.ndpScanner.Start(); err != nil {
-		slog.Warn("Failed to start NDP scanner", "error", err)
+		logging.GetLogger().Warn("Failed to start NDP scanner", "error", err)
 		// Continue even if NDP fails (may be on macOS or no IPv6)
 	}
 
 	// Start mDNS listener for passive name discovery
 	if d.nameResolution {
 		if err := d.mdnsListener.Start(); err != nil {
-			slog.Warn("Failed to start mDNS listener", "error", err)
+			logging.GetLogger().Warn("Failed to start mDNS listener", "error", err)
 		}
 	}
 
 	// Start protocol manager (LLDP/CDP/EDP captures)
 	// This may fail without root/CAP_NET_RAW, but we continue with other features
 	if err := d.protoManager.Start(); err != nil {
-		slog.Warn("Failed to start protocol manager (passive discovery disabled)", "error", err)
+		logging.GetLogger().Warn("Failed to start protocol manager (passive discovery disabled)", "error", err)
 		// Return nil to allow ARP scanning, port scanning, and profiling to continue
 	}
 
@@ -356,7 +357,7 @@ func (d *DeviceDiscovery) aggregateResults() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := dbWriter.PersistDevices(ctx, deviceList); err != nil {
-			slog.Warn("Failed to persist devices to database", "error", err, "count", len(deviceList))
+			logging.GetLogger().Warn("Failed to persist devices to database", "error", err, "count", len(deviceList))
 		}
 	}
 }
@@ -378,7 +379,7 @@ func (d *DeviceDiscovery) expireStaleDevices() {
 		}
 	}
 	if expired > 0 {
-		slog.Info("Expired stale devices", "count", expired, "ttl", d.deviceTTL)
+		logging.GetLogger().Info("Expired stale devices", "count", expired, "ttl", d.deviceTTL)
 	}
 }
 
@@ -618,7 +619,7 @@ func isLocallyAdministeredMAC(mac string) bool {
 // ensureVendorInfo populates vendor information for devices missing it. Must be called with mu held.
 func (d *DeviceDiscovery) ensureVendorInfo() {
 	if d.oui == nil {
-		slog.Warn("OUI database not available for vendor lookup")
+		logging.GetLogger().Warn("OUI database not available for vendor lookup")
 		return
 	}
 
@@ -639,7 +640,7 @@ func (d *DeviceDiscovery) ensureVendorInfo() {
 			}
 		}
 	}
-	slog.Info("Vendor info populated",
+	logging.GetLogger().Info("Vendor info populated",
 		"total_devices", len(d.devices),
 		"vendors_found", vendorCount,
 		"private_macs", laaCount,
@@ -933,7 +934,7 @@ func (d *DeviceDiscovery) ResolveNetBIOSNames(ctx context.Context) {
 		return
 	}
 
-	slog.Debug("NetBIOS: resolving names", "count", len(ips))
+	logging.GetLogger().Debug("NetBIOS: resolving names", "count", len(ips))
 
 	// Resolve in batch
 	results := d.netbiosResolver.ResolveBatch(ctx, ips)
@@ -947,7 +948,7 @@ func (d *DeviceDiscovery) ResolveNetBIOSNames(ctx context.Context) {
 			if device, ok := d.devices[result.IP]; ok {
 				device.NetBIOSName = result.Name
 				device.DisplayName = device.ComputeDisplayName()
-				slog.Debug("NetBIOS: resolved name", "ip", result.IP, "name", result.Name)
+				logging.GetLogger().Debug("NetBIOS: resolved name", "ip", result.IP, "name", result.Name)
 			}
 		}
 	}
@@ -977,7 +978,7 @@ func (d *DeviceDiscovery) ResolveMDNSNames(ctx context.Context) {
 		return
 	}
 
-	slog.Debug("mDNS: resolving names", "count", len(ips))
+	logging.GetLogger().Debug("mDNS: resolving names", "count", len(ips))
 
 	// Resolve in batch
 	results := d.mdnsResolver.ResolveBatch(ctx, ips)
@@ -994,7 +995,7 @@ func (d *DeviceDiscovery) ResolveMDNSNames(ctx context.Context) {
 				if !containsMethod(device.DiscoveryMethod, MethodMDNS) {
 					device.DiscoveryMethod = append(device.DiscoveryMethod, MethodMDNS)
 				}
-				slog.Debug("mDNS: resolved name", "ip", result.IP, "name", result.Name)
+				logging.GetLogger().Debug("mDNS: resolved name", "ip", result.IP, "name", result.Name)
 			}
 		}
 	}

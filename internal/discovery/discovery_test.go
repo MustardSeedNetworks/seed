@@ -1,19 +1,20 @@
-// Package discovery implements multi-protocol network device discovery.
+// Package discovery_test implements multi-protocol network device discovery tests.
 // Test suite validates device discovery functionality across all discovery methods,
 // settings configurations, and state management operations. Ensures device aggregation,
 // protocol-specific information, and discovery timing work correctly.
-package discovery
+package discovery_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
 func TestDeviceDiscovery(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 	if dd == nil {
 		t.Fatal("NewDeviceDiscovery returned nil")
 	}
@@ -35,7 +36,7 @@ func TestDeviceDiscovery(t *testing.T) {
 }
 
 func TestGetDevice(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	// Test GetDevice for non-existent device
 	device := dd.GetDevice("00:11:22:33:44:55")
@@ -45,7 +46,7 @@ func TestGetDevice(t *testing.T) {
 }
 
 func TestGetDeviceByIP(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	// Test GetDeviceByIP for non-existent device
 	device := dd.GetDeviceByIP("192.168.1.10")
@@ -55,7 +56,7 @@ func TestGetDeviceByIP(t *testing.T) {
 }
 
 func TestClearDevices(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	// Clear should work even with no devices
 	dd.ClearDevices()
@@ -67,7 +68,7 @@ func TestClearDevices(t *testing.T) {
 }
 
 func TestSetInterface(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	err := dd.SetInterface("eth0")
 	if err != nil {
@@ -81,7 +82,7 @@ func TestSetInterface(t *testing.T) {
 
 func TestDeviceProfiler(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	profiler := NewDeviceProfiler(DefaultProfilerConfig(), &cfg.SNMP)
+	profiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
 
 	if profiler == nil {
 		t.Fatal("NewDeviceProfiler returned nil")
@@ -109,7 +110,7 @@ func TestDeviceProfiler(t *testing.T) {
 }
 
 func TestProfilerConfig(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 
 	if cfg.MaxConcurrent <= 0 {
 		t.Error("Expected positive number of workers")
@@ -123,7 +124,7 @@ func TestProfilerConfig(t *testing.T) {
 }
 
 func TestNeighborInfo(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	// Start protocol manager
 	if err := dd.Start(); err != nil {
@@ -136,7 +137,13 @@ func TestNeighborInfo(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Test GetNeighbors (likely empty on test system)
-	neighbors := dd.protoManager.GetNeighbors()
+	accessor := &discovery.DeviceDiscoveryTestAccessor{Discovery: dd}
+	protoManager := accessor.GetProtoManager()
+	if protoManager == nil {
+		t.Log("Protocol manager not initialized (expected on test system)")
+		return
+	}
+	neighbors := protoManager.GetNeighbors()
 	if neighbors == nil {
 		t.Error("GetNeighbors returned nil")
 	}
@@ -147,7 +154,7 @@ func TestDiscoveryService(t *testing.T) {
 		WithInterface("lo").
 		Build()
 
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 	if service == nil {
 		t.Fatal("NewService returned nil")
 	}
@@ -191,7 +198,7 @@ func TestDiscoveryService(t *testing.T) {
 
 func TestReload(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 
 	// Test Reload without starting
 	err := service.Reload()
@@ -217,7 +224,7 @@ func TestReload(t *testing.T) {
 func TestScanWithContext(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
 	cfg.NetworkDiscovery.ScanTimeout = 1 * time.Second
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
@@ -238,7 +245,7 @@ func TestScanWithContext(t *testing.T) {
 
 func TestClearDevicesService(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 
 	// Clear (should work even with no devices)
 	service.ClearDevices()
@@ -267,7 +274,7 @@ func TestDiscoveryOptions(t *testing.T) {
 			cfg := testutil.NewConfigBuilder().
 				WithDiscoveryMethods(tt.arpScan, tt.icmpScan, tt.portScan).
 				Build()
-			service := NewService(cfg, "lo", nil)
+			service := discovery.NewService(cfg, "lo", nil)
 
 			if err := service.Start(); err != nil {
 				t.Logf("Start failed for %s: %v", tt.name, err)
@@ -283,7 +290,7 @@ func TestDiscoveryOptions(t *testing.T) {
 }
 
 func TestDeviceCount(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	count := dd.Count()
 	if count != 0 {
@@ -292,7 +299,7 @@ func TestDeviceCount(t *testing.T) {
 }
 
 func TestIsScanning(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	if dd.IsScanning() {
 		t.Error("Expected IsScanning to be false initially")
@@ -300,7 +307,7 @@ func TestIsScanning(t *testing.T) {
 }
 
 func TestLastScan(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	lastScan := dd.LastScan()
 	if !lastScan.IsZero() {
@@ -309,14 +316,14 @@ func TestLastScan(t *testing.T) {
 }
 
 func TestGetSubnetInfo(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	subnet, localIP := dd.GetSubnetInfo()
 	t.Logf("Subnet: %s, LocalIP: %s", subnet, localIP)
 }
 
 func TestSetAdditionalSubnets(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	// Test setting additional subnets
 	err := dd.SetAdditionalSubnets([]string{"192.168.1.0/24"})
@@ -332,7 +339,7 @@ func TestSetAdditionalSubnets(t *testing.T) {
 }
 
 func TestDeviceDiscoveryStartStop(t *testing.T) {
-	dd := NewDeviceDiscovery("lo")
+	dd := discovery.NewDeviceDiscovery("lo")
 
 	// Test Start
 	err := dd.Start()
@@ -349,7 +356,7 @@ func TestDeviceDiscoveryStartStop(t *testing.T) {
 
 func TestServiceInterface(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 
 	// Test SetInterface
 	err := service.SetInterface("eth0")
@@ -360,7 +367,7 @@ func TestServiceInterface(t *testing.T) {
 
 func TestServiceGetDevice(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 
 	// Test GetDevice for non-existent device
 	device := service.GetDevice("00:11:22:33:44:55")
@@ -371,7 +378,7 @@ func TestServiceGetDevice(t *testing.T) {
 
 func TestGetDeviceByIPService(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 
 	// Test GetDeviceByIP for non-existent device
 	device := service.GetDeviceByIP("192.168.1.10")
@@ -382,7 +389,7 @@ func TestGetDeviceByIPService(t *testing.T) {
 
 func TestGetNeighbors(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 
 	if err := service.Start(); err != nil {
 		t.Logf("Start failed: %v", err)
@@ -398,7 +405,7 @@ func TestGetNeighbors(t *testing.T) {
 
 func TestDeviceDiscoveryAccess(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := NewService(cfg, "lo", nil)
+	service := discovery.NewService(cfg, "lo", nil)
 
 	// Test DeviceDiscovery accessor
 	dd := service.DeviceDiscovery()

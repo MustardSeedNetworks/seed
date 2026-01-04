@@ -1,6 +1,6 @@
-// Package publicip provides public IP address detection with caching.
+// Package publicip_test provides public IP address detection with caching.
 // Test suite validates provider selection, caching behavior, and error handling.
-package publicip
+package publicip_test
 
 import (
 	"context"
@@ -10,20 +10,22 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/roots/publicip"
 )
 
 func TestNewChecker(t *testing.T) {
-	c := NewChecker()
+	c := publicip.NewChecker()
 	if c == nil {
 		t.Fatal("NewChecker() returned nil")
 	}
 
-	if c.httpClient == nil {
+	if c.CheckerHTTPClient() == nil {
 		t.Fatal("httpClient should not be nil")
 	}
 
-	if c.httpClient.Timeout != requestTimeout {
-		t.Errorf("httpClient.Timeout = %v, want %v", c.httpClient.Timeout, requestTimeout)
+	if c.CheckerHTTPClient().Timeout != publicip.RequestTimeout {
+		t.Errorf("httpClient.Timeout = %v, want %v", c.CheckerHTTPClient().Timeout, publicip.RequestTimeout)
 	}
 }
 
@@ -68,13 +70,13 @@ func TestParseIpifyJSON(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseIpifyJSON(tt.input)
+			got, err := publicip.ParseIpifyJSON(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseIpifyJSON() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseIpifyJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("parseIpifyJSON() = %v, want %v", got, tt.want)
+				t.Errorf("ParseIpifyJSON() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -103,13 +105,13 @@ func TestParseMyIPJSON(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseMyIPJSON(tt.input)
+			got, err := publicip.ParseMyIPJSON(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseMyIPJSON() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseMyIPJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("parseMyIPJSON() = %v, want %v", got, tt.want)
+				t.Errorf("ParseMyIPJSON() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -156,13 +158,13 @@ func TestParseTextIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseTextIP(tt.input)
+			got, err := publicip.ParseTextIP(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseTextIP() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseTextIP() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("parseTextIP() = %v, want %v", got, tt.want)
+				t.Errorf("ParseTextIP() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -181,7 +183,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			name:       "successful JSON response",
 			statusCode: http.StatusOK,
 			body:       `{"ip":"198.51.100.1"}`,
-			parser:     parseIpifyJSON,
+			parser:     publicip.ParseIpifyJSON,
 			wantIP:     "198.51.100.1",
 			wantErr:    false,
 		},
@@ -189,7 +191,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			name:       "successful text response",
 			statusCode: http.StatusOK,
 			body:       "198.51.100.2\n",
-			parser:     parseTextIP,
+			parser:     publicip.ParseTextIP,
 			wantIP:     "198.51.100.2",
 			wantErr:    false,
 		},
@@ -197,7 +199,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			name:       "HTTP 500 error",
 			statusCode: http.StatusInternalServerError,
 			body:       "Internal Server Error",
-			parser:     parseTextIP,
+			parser:     publicip.ParseTextIP,
 			wantIP:     "",
 			wantErr:    true,
 		},
@@ -205,7 +207,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			name:       "HTTP 404 error",
 			statusCode: http.StatusNotFound,
 			body:       "Not Found",
-			parser:     parseTextIP,
+			parser:     publicip.ParseTextIP,
 			wantIP:     "",
 			wantErr:    true,
 		},
@@ -214,7 +216,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Verify User-Agent header
+				// Verify User-Agent header.
 				if ua := r.Header.Get("User-Agent"); ua != "The Seed/1.0" {
 					t.Errorf("User-Agent = %q, want %q", ua, "The Seed/1.0")
 				}
@@ -223,8 +225,8 @@ func TestChecker_FetchFromService(t *testing.T) {
 			}))
 			defer server.Close()
 
-			c := NewChecker()
-			got, err := c.fetchFromService(context.Background(), server.URL, tt.parser)
+			c := publicip.NewChecker()
+			got, err := publicip.FetchFromService(c, context.Background(), server.URL, tt.parser)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("fetchFromService() error = %v, wantErr %v", err, tt.wantErr)
@@ -244,26 +246,25 @@ func TestChecker_FetchFromService_ContextCanceled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := NewChecker()
+	c := publicip.NewChecker()
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel() // Cancel immediately
+	cancel() // Cancel immediately.
 
-	_, err := c.fetchFromService(ctx, server.URL, parseTextIP)
+	_, err := publicip.FetchFromService(c, ctx, server.URL, publicip.ParseTextIP)
 	if err == nil {
 		t.Error("expected error for canceled context")
 	}
 }
 
 func TestChecker_GetPublicIP_CacheHit(t *testing.T) {
-	c := NewChecker()
+	c := publicip.NewChecker()
 
-	// Pre-populate cache
-	c.cache = &Result{
+	// Pre-populate cache.
+	c.CheckerSetCache(&publicip.Result{
 		IPv4:        "192.0.2.100",
 		IPv6:        "2001:db8::100",
 		LastChecked: time.Now(),
-	}
-	c.cacheTime = time.Now()
+	}, time.Now())
 
 	result := c.GetPublicIP(context.Background())
 
@@ -276,7 +277,7 @@ func TestChecker_GetPublicIP_CacheHit(t *testing.T) {
 }
 
 func TestChecker_GetPublicIP_CacheExpired(t *testing.T) {
-	// Create test servers that return known IPs
+	// Create test servers that return known IPs.
 	ipv4Server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"ip": "203.0.113.10"})
 	}))
@@ -287,37 +288,35 @@ func TestChecker_GetPublicIP_CacheExpired(t *testing.T) {
 	}))
 	defer ipv6Server.Close()
 
-	c := NewChecker()
+	c := publicip.NewChecker()
 
-	// Pre-populate cache with expired data
-	c.cache = &Result{
+	// Pre-populate cache with expired data.
+	c.CheckerSetCache(&publicip.Result{
 		IPv4:        "192.0.2.1",
 		IPv6:        "2001:db8::1",
-		LastChecked: time.Now().Add(-10 * time.Minute), // Expired
-	}
-	c.cacheTime = time.Now().Add(-10 * time.Minute)
+		LastChecked: time.Now().Add(-10 * time.Minute), // Expired.
+	}, time.Now().Add(-10*time.Minute))
 
-	// Since we can't override the service URLs, we test that cache is refreshed
+	// Since we can't override the service URLs, we test that cache is refreshed.
 	result := c.GetPublicIP(context.Background())
 
-	// Should have attempted to refresh (may fail due to real network calls)
+	// Should have attempted to refresh (may fail due to real network calls).
 	if result.LastChecked.Before(time.Now().Add(-1 * time.Minute)) {
 		t.Error("expected LastChecked to be recent after cache expiry")
 	}
 }
 
 func TestChecker_Refresh(t *testing.T) {
-	c := NewChecker()
+	c := publicip.NewChecker()
 
-	// Pre-populate cache
-	c.cache = &Result{
+	// Pre-populate cache.
+	c.CheckerSetCache(&publicip.Result{
 		IPv4:        "192.0.2.1",
 		LastChecked: time.Now(),
-	}
-	c.cacheTime = time.Now()
+	}, time.Now())
 
-	// Force refresh should update LastChecked even if cache is fresh
-	oldTime := c.cache.LastChecked
+	// Force refresh should update LastChecked even if cache is fresh.
+	oldTime := c.CheckerCache().LastChecked
 	time.Sleep(10 * time.Millisecond)
 
 	result := c.Refresh(context.Background())
@@ -328,24 +327,22 @@ func TestChecker_Refresh(t *testing.T) {
 }
 
 func TestChecker_FetchIPv6_ValidatesIPv6(t *testing.T) {
-	// Create a server that returns an IPv4 address for an IPv6 endpoint
+	// Create a server that returns an IPv4 address for an IPv6 endpoint.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		// Return IPv4 instead of IPv6 - should be rejected
+		// Return IPv4 instead of IPv6 - should be rejected.
 		_ = json.NewEncoder(w).Encode(map[string]string{"ip": "192.0.2.1"})
 	}))
 	defer server.Close()
 
-	c := &Checker{
-		httpClient: &http.Client{Timeout: 5 * time.Second},
-	}
+	c := publicip.NewChecker()
 
 	// Direct call to fetchIPv6 would need the real services, but we can test
-	// that the validation logic exists by checking the code path
-	// This is a behavioral test - fetchIPv6 checks for ":" in the result
+	// that the validation logic exists by checking the code path.
+	// This is a behavioral test - fetchIPv6 checks for ":" in the result.
 	ctx := context.Background()
-	ip, _ := c.fetchFromService(ctx, server.URL, parseIpifyJSON)
+	ip, _ := publicip.FetchFromService(c, ctx, server.URL, publicip.ParseIpifyJSON)
 
-	// The service returns an IPv4, which shouldn't contain ":"
+	// The service returns an IPv4, which shouldn't contain ":".
 	if strings.Contains(ip, ":") {
 		t.Error("expected IPv4 address from test server")
 	}
@@ -353,7 +350,7 @@ func TestChecker_FetchIPv6_ValidatesIPv6(t *testing.T) {
 
 func TestResult_JSONSerialization(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
-	r := Result{
+	r := publicip.Result{
 		IPv4:        "203.0.113.1",
 		IPv6:        "2001:db8::1",
 		LastChecked: now,
@@ -365,7 +362,7 @@ func TestResult_JSONSerialization(t *testing.T) {
 		t.Fatalf("Marshal failed: %v", marshalErr)
 	}
 
-	var decoded Result
+	var decoded publicip.Result
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
@@ -379,7 +376,7 @@ func TestResult_JSONSerialization(t *testing.T) {
 }
 
 func TestResult_OmitEmpty(t *testing.T) {
-	r := Result{
+	r := publicip.Result{
 		LastChecked: time.Now(),
 	}
 
@@ -388,7 +385,7 @@ func TestResult_OmitEmpty(t *testing.T) {
 		t.Fatalf("Marshal failed: %v", err)
 	}
 
-	// Should not contain ipv4, ipv6, or error fields when empty
+	// Should not contain ipv4, ipv6, or error fields when empty.
 	if strings.Contains(string(data), `"ipv4"`) {
 		t.Error("empty IPv4 should be omitted")
 	}
@@ -401,16 +398,15 @@ func TestResult_OmitEmpty(t *testing.T) {
 }
 
 func TestChecker_ConcurrentAccess(_ *testing.T) {
-	c := NewChecker()
+	c := publicip.NewChecker()
 
-	// Pre-populate cache
-	c.cache = &Result{
+	// Pre-populate cache.
+	c.CheckerSetCache(&publicip.Result{
 		IPv4:        "192.0.2.1",
 		LastChecked: time.Now(),
-	}
-	c.cacheTime = time.Now()
+	}, time.Now())
 
-	// Access cache concurrently
+	// Access cache concurrently.
 	done := make(chan bool, 10)
 	for range 10 {
 		go func() {
@@ -419,7 +415,7 @@ func TestChecker_ConcurrentAccess(_ *testing.T) {
 		}()
 	}
 
-	// Wait for all goroutines
+	// Wait for all goroutines.
 	for range 10 {
 		<-done
 	}
@@ -427,100 +423,100 @@ func TestChecker_ConcurrentAccess(_ *testing.T) {
 
 func TestChecker_updateHistory(t *testing.T) {
 	t.Run("empty IP does nothing", func(t *testing.T) {
-		c := NewChecker()
-		c.updateHistory("")
-		if len(c.history) != 0 {
-			t.Errorf("expected empty history, got %d entries", len(c.history))
+		c := publicip.NewChecker()
+		c.UpdateHistory("")
+		if len(c.CheckerHistory()) != 0 {
+			t.Errorf("expected empty history, got %d entries", len(c.CheckerHistory()))
 		}
 	})
 
 	t.Run("first IP sets lastIPv4", func(t *testing.T) {
-		c := NewChecker()
-		c.updateHistory("192.0.2.1")
-		if c.lastIPv4 != "192.0.2.1" {
-			t.Errorf("expected lastIPv4 = '192.0.2.1', got %q", c.lastIPv4)
+		c := publicip.NewChecker()
+		c.UpdateHistory("192.0.2.1")
+		if c.CheckerLastIPv4() != "192.0.2.1" {
+			t.Errorf("expected lastIPv4 = '192.0.2.1', got %q", c.CheckerLastIPv4())
 		}
-		// No history yet - history only populated on IP change
-		if len(c.history) != 0 {
-			t.Errorf("expected no history on first IP, got %d entries", len(c.history))
+		// No history yet - history only populated on IP change.
+		if len(c.CheckerHistory()) != 0 {
+			t.Errorf("expected no history on first IP, got %d entries", len(c.CheckerHistory()))
 		}
 	})
 
 	t.Run("same IP does not add to history", func(t *testing.T) {
-		c := NewChecker()
-		c.lastIPv4 = "192.0.2.1"
-		c.updateHistory("192.0.2.1") // Same IP
-		if len(c.history) != 0 {
-			t.Errorf("expected no history for same IP, got %d entries", len(c.history))
+		c := publicip.NewChecker()
+		c.CheckerSetLastIPv4("192.0.2.1")
+		c.UpdateHistory("192.0.2.1") // Same IP.
+		if len(c.CheckerHistory()) != 0 {
+			t.Errorf("expected no history for same IP, got %d entries", len(c.CheckerHistory()))
 		}
 	})
 
 	t.Run("IP change adds old IP to history", func(t *testing.T) {
-		c := NewChecker()
-		c.lastIPv4 = "192.0.2.1"
-		c.updateHistory("192.0.2.2") // New IP
+		c := publicip.NewChecker()
+		c.CheckerSetLastIPv4("192.0.2.1")
+		c.UpdateHistory("192.0.2.2") // New IP.
 
-		if len(c.history) != 1 {
-			t.Fatalf("expected 1 history entry, got %d", len(c.history))
+		if len(c.CheckerHistory()) != 1 {
+			t.Fatalf("expected 1 history entry, got %d", len(c.CheckerHistory()))
 		}
-		if c.history[0].IP != "192.0.2.1" {
-			t.Errorf("expected old IP in history, got %q", c.history[0].IP)
+		if c.CheckerHistory()[0].IP != "192.0.2.1" {
+			t.Errorf("expected old IP in history, got %q", c.CheckerHistory()[0].IP)
 		}
-		if c.lastIPv4 != "192.0.2.2" {
-			t.Errorf("expected lastIPv4 = '192.0.2.2', got %q", c.lastIPv4)
+		if c.CheckerLastIPv4() != "192.0.2.2" {
+			t.Errorf("expected lastIPv4 = '192.0.2.2', got %q", c.CheckerLastIPv4())
 		}
 	})
 
 	t.Run("history capped at 10 entries", func(t *testing.T) {
-		c := NewChecker()
-		c.lastIPv4 = "192.0.2.1"
+		c := publicip.NewChecker()
+		c.CheckerSetLastIPv4("192.0.2.1")
 
-		// Add more than 10 entries
+		// Add more than 10 entries.
 		for i := 2; i <= 15; i++ {
-			c.updateHistory("192.0.2." + string(rune('0'+i%10)))
-			c.lastIPv4 = "192.0.2." + string(rune('0'+i%10))
+			c.UpdateHistory("192.0.2." + string(rune('0'+i%10)))
+			c.CheckerSetLastIPv4("192.0.2." + string(rune('0'+i%10)))
 		}
 
-		if len(c.history) > 10 {
-			t.Errorf("expected max 10 history entries, got %d", len(c.history))
+		if len(c.CheckerHistory()) > 10 {
+			t.Errorf("expected max 10 history entries, got %d", len(c.CheckerHistory()))
 		}
 	})
 
 	t.Run("IP change with geo cache populates city/country", func(t *testing.T) {
-		c := NewChecker()
-		c.lastIPv4 = "192.0.2.1"
-		c.geoCache = map[string]*geoResponse{
+		c := publicip.NewChecker()
+		c.CheckerSetLastIPv4("192.0.2.1")
+		c.CheckerSetGeoCache(map[string]*publicip.GeoResponse{
 			"192.0.2.1": {City: "TestCity", Country: "TestCountry"},
-		}
+		})
 
-		c.updateHistory("192.0.2.2") // Trigger IP change
+		c.UpdateHistory("192.0.2.2") // Trigger IP change.
 
-		if len(c.history) != 1 {
-			t.Fatalf("expected 1 history entry, got %d", len(c.history))
+		if len(c.CheckerHistory()) != 1 {
+			t.Fatalf("expected 1 history entry, got %d", len(c.CheckerHistory()))
 		}
-		if c.history[0].City != "TestCity" {
-			t.Errorf("expected city 'TestCity', got %q", c.history[0].City)
+		if c.CheckerHistory()[0].City != "TestCity" {
+			t.Errorf("expected city 'TestCity', got %q", c.CheckerHistory()[0].City)
 		}
-		if c.history[0].Country != "TestCountry" {
-			t.Errorf("expected country 'TestCountry', got %q", c.history[0].Country)
+		if c.CheckerHistory()[0].Country != "TestCountry" {
+			t.Errorf("expected country 'TestCountry', got %q", c.CheckerHistory()[0].Country)
 		}
 	})
 
 	t.Run("existing IP in history updates LastSeen", func(t *testing.T) {
-		c := NewChecker()
+		c := publicip.NewChecker()
 		oldTime := time.Now().Add(-1 * time.Hour)
-		c.history = []HistoryEntry{
+		c.CheckerSetHistory([]publicip.HistoryEntry{
 			{IP: "192.0.2.1", FirstSeen: oldTime, LastSeen: oldTime},
-		}
-		c.lastIPv4 = "192.0.2.1"
+		})
+		c.CheckerSetLastIPv4("192.0.2.1")
 
-		// Change to new IP and back
-		c.updateHistory("192.0.2.2")
+		// Change to new IP and back.
+		c.UpdateHistory("192.0.2.2")
 
-		if len(c.history) != 1 {
-			t.Fatalf("expected 1 history entry, got %d", len(c.history))
+		if len(c.CheckerHistory()) != 1 {
+			t.Fatalf("expected 1 history entry, got %d", len(c.CheckerHistory()))
 		}
-		if c.history[0].LastSeen.Before(time.Now().Add(-1 * time.Minute)) {
+		if c.CheckerHistory()[0].LastSeen.Before(time.Now().Add(-1 * time.Minute)) {
 			t.Error("expected LastSeen to be updated to recent time")
 		}
 	})
@@ -528,36 +524,36 @@ func TestChecker_updateHistory(t *testing.T) {
 
 func TestChecker_getHistoryCopy(t *testing.T) {
 	t.Run("empty history returns nil", func(t *testing.T) {
-		c := NewChecker()
-		hist := c.getHistoryCopy()
+		c := publicip.NewChecker()
+		hist := c.GetHistoryCopy()
 		if hist != nil {
 			t.Errorf("expected nil for empty history, got %v", hist)
 		}
 	})
 
 	t.Run("returns copy not reference", func(t *testing.T) {
-		c := NewChecker()
-		c.history = []HistoryEntry{
+		c := publicip.NewChecker()
+		c.CheckerSetHistory([]publicip.HistoryEntry{
 			{IP: "192.0.2.1", FirstSeen: time.Now(), LastSeen: time.Now()},
 			{IP: "192.0.2.2", FirstSeen: time.Now(), LastSeen: time.Now()},
-		}
+		})
 
-		hist := c.getHistoryCopy()
+		hist := c.GetHistoryCopy()
 
 		if len(hist) != 2 {
 			t.Fatalf("expected 2 entries, got %d", len(hist))
 		}
 
-		// Modify copy - should not affect original
+		// Modify copy - should not affect original.
 		hist[0].IP = "modified"
-		if c.history[0].IP == "modified" {
-			t.Error("getHistoryCopy should return copy, but original was modified")
+		if c.CheckerHistory()[0].IP == "modified" {
+			t.Error("GetHistoryCopy should return copy, but original was modified")
 		}
 	})
 }
 
 func TestGeoResponse(t *testing.T) {
-	geo := geoResponse{
+	geo := publicip.GeoResponse{
 		City:       "San Francisco",
 		RegionName: "California",
 		Country:    "US",
@@ -584,7 +580,7 @@ func TestGeoResponse(t *testing.T) {
 
 func TestHistoryEntry(t *testing.T) {
 	now := time.Now()
-	entry := HistoryEntry{
+	entry := publicip.HistoryEntry{
 		IP:        "203.0.113.1",
 		FirstSeen: now,
 		LastSeen:  now,
@@ -611,7 +607,7 @@ func TestHistoryEntry(t *testing.T) {
 
 func TestResult_WithGeoFields(t *testing.T) {
 	now := time.Now()
-	result := Result{
+	result := publicip.Result{
 		IPv4:        "203.0.113.1",
 		IPv6:        "2001:db8::1",
 		LastChecked: now,
@@ -642,10 +638,10 @@ func TestResult_WithGeoFields(t *testing.T) {
 
 func TestResult_WithHistory(t *testing.T) {
 	now := time.Now()
-	result := Result{
+	result := publicip.Result{
 		IPv4:        "203.0.113.1",
 		LastChecked: now,
-		History: []HistoryEntry{
+		History: []publicip.HistoryEntry{
 			{IP: "192.0.2.1", FirstSeen: now, LastSeen: now},
 			{IP: "192.0.2.2", FirstSeen: now, LastSeen: now},
 		},

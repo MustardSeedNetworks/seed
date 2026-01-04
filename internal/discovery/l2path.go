@@ -6,10 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strings"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/snmp"
 )
 
@@ -76,7 +76,7 @@ func (b *L2PathBuilder) BuildPath(ctx context.Context, sourceIP, destIP string) 
 		return nil, fmt.Errorf("destination device not found: %s", destIP)
 	}
 
-	slog.Debug("Building L2 path",
+	logging.GetLogger().Debug("Building L2 path",
 		"source_ip", sourceIP,
 		"source_mac", sourceDevice.MAC,
 		"dest_ip", destIP,
@@ -108,7 +108,7 @@ func (b *L2PathBuilder) BuildPath(ctx context.Context, sourceIP, destIP string) 
 		// Mark this hop as visited
 		hopKey := currentHop.DeviceIP
 		if visited[hopKey] {
-			slog.Warn("Loop detected in L2 path", "device", currentHop.Device)
+			logging.GetLogger().Warn("Loop detected in L2 path", "device", currentHop.Device)
 			break
 		}
 		visited[hopKey] = true
@@ -118,7 +118,7 @@ func (b *L2PathBuilder) BuildPath(ctx context.Context, sourceIP, destIP string) 
 
 		// Check if we reached the destination
 		if b.isDestinationReached(currentHop, destDevice) {
-			slog.Debug("Destination reached", "hops", len(result.Hops))
+			logging.GetLogger().Debug("Destination reached", "hops", len(result.Hops))
 			break
 		}
 
@@ -232,7 +232,7 @@ func (b *L2PathBuilder) enrichHopWithSNMP(ctx context.Context, hop *L2Hop) {
 	// Try to get system info to confirm device identity
 	systemInfo, err := snmp.GetSystemInfo(ctx, hop.DeviceIP, b.snmpConfig)
 	if err != nil {
-		slog.Debug("Failed to get SNMP system info", "device", hop.DeviceIP, "error", err)
+		logging.GetLogger().Debug("Failed to get SNMP system info", "device", hop.DeviceIP, "error", err)
 		return
 	}
 
@@ -241,7 +241,7 @@ func (b *L2PathBuilder) enrichHopWithSNMP(ctx context.Context, hop *L2Hop) {
 		hop.Device = systemInfo.SysName
 	}
 
-	slog.Debug("Enriched hop with SNMP data",
+	logging.GetLogger().Debug("Enriched hop with SNMP data",
 		"device", hop.Device,
 		"sysname", systemInfo.SysName)
 }

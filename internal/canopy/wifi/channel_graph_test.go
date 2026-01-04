@@ -1,8 +1,10 @@
-package wifi
+package wifi_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 func TestGetBand(t *testing.T) {
@@ -25,9 +27,9 @@ func TestGetBand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := getBand(tt.freq)
+			got := wifi.GetBand(tt.freq)
 			if got != tt.want {
-				t.Errorf("getBand(%d) = %q, want %q", tt.freq, got, tt.want)
+				t.Errorf("GetBand(%d) = %q, want %q", tt.freq, got, tt.want)
 			}
 		})
 	}
@@ -59,9 +61,9 @@ func TestDetectChannelWidth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := detectChannelWidth(tt.freq, tt.htMode)
+			got := wifi.DetectChannelWidth(tt.freq, tt.htMode)
 			if got != tt.want {
-				t.Errorf("detectChannelWidth(%d, %q) = %d, want %d", tt.freq, tt.htMode, got, tt.want)
+				t.Errorf("DetectChannelWidth(%d, %q) = %d, want %d", tt.freq, tt.htMode, got, tt.want)
 			}
 		})
 	}
@@ -72,7 +74,7 @@ func TestGetChannelGraphData(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		networks       []*ScannedNetwork
+		networks       []*wifi.ScannedNetwork
 		connectedBSSID string
 		wantNum2_4     int
 		wantNum5       int
@@ -81,7 +83,7 @@ func TestGetChannelGraphData(t *testing.T) {
 	}{
 		{
 			name:           "Empty networks",
-			networks:       []*ScannedNetwork{},
+			networks:       []*wifi.ScannedNetwork{},
 			connectedBSSID: "",
 			wantNum2_4:     0,
 			wantNum5:       0,
@@ -99,7 +101,7 @@ func TestGetChannelGraphData(t *testing.T) {
 		},
 		{
 			name: "Single 2.4 GHz network",
-			networks: []*ScannedNetwork{
+			networks: []*wifi.ScannedNetwork{
 				{
 					SSID:         "TestNet24",
 					BSSID:        "00:11:22:33:44:55",
@@ -119,7 +121,7 @@ func TestGetChannelGraphData(t *testing.T) {
 		},
 		{
 			name: "Single 5 GHz network",
-			networks: []*ScannedNetwork{
+			networks: []*wifi.ScannedNetwork{
 				{
 					SSID:         "TestNet5",
 					BSSID:        "AA:BB:CC:DD:EE:FF",
@@ -139,7 +141,7 @@ func TestGetChannelGraphData(t *testing.T) {
 		},
 		{
 			name: "Single 6 GHz network",
-			networks: []*ScannedNetwork{
+			networks: []*wifi.ScannedNetwork{
 				{
 					SSID:         "TestNet6",
 					BSSID:        "11:22:33:44:55:66",
@@ -159,7 +161,7 @@ func TestGetChannelGraphData(t *testing.T) {
 		},
 		{
 			name: "Mixed band networks with connected",
-			networks: []*ScannedNetwork{
+			networks: []*wifi.ScannedNetwork{
 				{
 					SSID:         "Home24",
 					BSSID:        "00:11:22:33:44:55",
@@ -199,7 +201,7 @@ func TestGetChannelGraphData(t *testing.T) {
 		},
 		{
 			name: "Network with zero channel width (auto-detect)",
-			networks: []*ScannedNetwork{
+			networks: []*wifi.ScannedNetwork{
 				{
 					SSID:         "AutoWidth",
 					BSSID:        "AA:BB:CC:DD:EE:FF",
@@ -219,7 +221,7 @@ func TestGetChannelGraphData(t *testing.T) {
 		},
 		{
 			name: "Network with unknown frequency (skipped)",
-			networks: []*ScannedNetwork{
+			networks: []*wifi.ScannedNetwork{
 				{
 					SSID:         "Unknown",
 					BSSID:        "00:00:00:00:00:00",
@@ -241,7 +243,7 @@ func TestGetChannelGraphData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := GetChannelGraphData(tt.networks, tt.connectedBSSID)
+			got := wifi.GetChannelGraphData(tt.networks, tt.connectedBSSID)
 
 			// Check counts
 			if len(got.Networks2_4GHz) != tt.wantNum2_4 {
@@ -269,7 +271,7 @@ func TestGetChannelGraphData(t *testing.T) {
 				foundConnected := false
 				// Combine all networks into a single slice
 				allNetworks := make(
-					[]ChannelNetwork,
+					[]wifi.ChannelNetwork,
 					0,
 					len(got.Networks2_4GHz)+len(got.Networks5GHz)+len(got.Networks6GHz),
 				)
@@ -297,7 +299,7 @@ func TestGetChannelGraphData(t *testing.T) {
 
 func TestGetChannelGraphDataFieldMapping(t *testing.T) {
 	// Test that fields are correctly mapped from ScannedNetwork to ChannelNetwork
-	network := &ScannedNetwork{
+	network := &wifi.ScannedNetwork{
 		SSID:         "TestSSID",
 		BSSID:        "AA:BB:CC:DD:EE:FF",
 		Signal:       -55,
@@ -308,7 +310,7 @@ func TestGetChannelGraphDataFieldMapping(t *testing.T) {
 		LastSeen:     time.Now(),
 	}
 
-	data := GetChannelGraphData([]*ScannedNetwork{network}, "AA:BB:CC:DD:EE:FF")
+	data := wifi.GetChannelGraphData([]*wifi.ScannedNetwork{network}, "AA:BB:CC:DD:EE:FF")
 
 	if len(data.Networks2_4GHz) != 1 {
 		t.Fatalf("Expected 1 network in 2.4GHz band, got %d", len(data.Networks2_4GHz))

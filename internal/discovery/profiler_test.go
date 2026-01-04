@@ -1,5 +1,5 @@
-// Package discovery provides profiler tests.
-package discovery
+// Package discovery_test provides profiler tests.
+package discovery_test
 
 import (
 	"net/http"
@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
 func TestDefaultProfilerConfig(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 
 	if cfg == nil {
 		t.Fatal("DefaultProfilerConfig returned nil")
@@ -45,26 +46,26 @@ func TestDefaultProfilerConfig(t *testing.T) {
 }
 
 func TestDeviceProfile_Fields(t *testing.T) {
-	profile := DeviceProfile{
+	profile := discovery.DeviceProfile{
 		ProfiledAt: time.Now(),
-		OpenPorts: []OpenPort{
+		OpenPorts: []discovery.OpenPort{
 			{Port: 22, Protocol: "tcp", Service: "ssh", IsOpen: true},
 			{Port: 80, Protocol: "tcp", Service: "http", IsOpen: true},
 		},
-		HTTPInfo: &HTTPInfo{
+		HTTPInfo: &discovery.HTTPInfo{
 			Port:       80,
 			StatusCode: 200,
 			Title:      "Test Server",
 			Server:     "nginx",
 			IsHTTPS:    false,
 		},
-		SNMPInfo: &SNMPInfo{
+		SNMPInfo: &discovery.SNMPInfo{
 			SysDescr:    "Test Device",
 			SysName:     "test-device",
 			SysContact:  "admin@test.com",
 			SysLocation: "Server Room",
 		},
-		MDNSServices: []MDNSService{
+		MDNSServices: []discovery.MDNSService{
 			{Name: "Test", Type: "_http._tcp", Port: 80},
 		},
 		DeviceType:  "server",
@@ -95,7 +96,7 @@ func TestDeviceProfile_Fields(t *testing.T) {
 }
 
 func TestOpenPort_Fields(t *testing.T) {
-	port := OpenPort{
+	port := discovery.OpenPort{
 		Port:     443,
 		Protocol: "tcp",
 		Service:  "https",
@@ -121,7 +122,7 @@ func TestOpenPort_Fields(t *testing.T) {
 }
 
 func TestHTTPInfo_Fields(t *testing.T) {
-	info := HTTPInfo{
+	info := discovery.HTTPInfo{
 		Port:       8080,
 		StatusCode: 301,
 		Title:      "Redirect",
@@ -147,7 +148,7 @@ func TestHTTPInfo_Fields(t *testing.T) {
 }
 
 func TestSNMPInfo_Fields(t *testing.T) {
-	info := SNMPInfo{
+	info := discovery.SNMPInfo{
 		SysDescr:    "Cisco IOS",
 		SysName:     "router01",
 		SysContact:  "noc@company.com",
@@ -169,7 +170,7 @@ func TestSNMPInfo_Fields(t *testing.T) {
 }
 
 func TestMDNSService_Fields(t *testing.T) {
-	svc := MDNSService{
+	svc := discovery.MDNSService{
 		Name: "My Printer",
 		Type: "_ipp._tcp",
 		Port: 631,
@@ -191,13 +192,13 @@ func TestMDNSService_Fields(t *testing.T) {
 }
 
 func TestNewDeviceProfiler(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{
 		Communities: []string{"public"},
 		Timeout:     5 * time.Second,
 	}
 
-	profiler := NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
 	if profiler == nil {
 		t.Fatal("NewDeviceProfiler returned nil")
@@ -205,14 +206,14 @@ func TestNewDeviceProfiler(t *testing.T) {
 }
 
 func TestDeviceProfiler_QueueProfile(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 	cfg.Timeout = 100 * time.Millisecond // Short timeout for test
 	snmpCfg := &config.SNMPConfig{
 		Communities: []string{"public"},
 		Timeout:     100 * time.Millisecond,
 	}
 
-	profiler := NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
 	// Queue should work even without starting
 	_ = profiler.QueueProfile("192.0.2.1") // TEST-NET-1, non-routable
@@ -224,10 +225,10 @@ func TestDeviceProfiler_QueueProfile(t *testing.T) {
 }
 
 func TestDeviceProfiler_IsProfiled(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
 	// Not profiled initially
 	if profiler.IsProfiled("10.0.0.1") {
@@ -236,10 +237,10 @@ func TestDeviceProfiler_IsProfiled(t *testing.T) {
 }
 
 func TestDeviceProfiler_IsProfiling(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
 	// Not profiling initially
 	if profiler.IsProfiling("10.0.0.1") {
@@ -248,10 +249,10 @@ func TestDeviceProfiler_IsProfiling(t *testing.T) {
 }
 
 func TestDeviceProfiler_GetAllProfiles(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
 	profiles := profiler.GetAllProfiles()
 	if len(profiles) != 0 {
@@ -260,10 +261,10 @@ func TestDeviceProfiler_GetAllProfiles(t *testing.T) {
 }
 
 func TestDeviceProfiler_ClearProfiles(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
 	// Clear should work even when empty
 	profiler.ClearProfiles()
@@ -275,10 +276,10 @@ func TestDeviceProfiler_ClearProfiles(t *testing.T) {
 }
 
 func TestDeviceProfiler_StartStop(_ *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
 	// Start profiler
 	profiler.Start()
@@ -291,10 +292,10 @@ func TestDeviceProfiler_StartStop(_ *testing.T) {
 }
 
 func TestDeviceProfiler_GetProfile_NonExistent(t *testing.T) {
-	cfg := DefaultProfilerConfig()
+	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
 	profile := profiler.GetProfile("10.255.255.1")
 	if profile != nil {
@@ -303,7 +304,7 @@ func TestDeviceProfiler_GetProfile_NonExistent(t *testing.T) {
 }
 
 func TestDeviceProfiler_ProfilerConfig(t *testing.T) {
-	cfg := &ProfilerConfig{
+	cfg := &discovery.ProfilerConfig{
 		Enabled:       false,
 		Timeout:       5 * time.Second,
 		MaxConcurrent: 20,
