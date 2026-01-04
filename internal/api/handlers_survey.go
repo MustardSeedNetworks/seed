@@ -48,27 +48,62 @@ type surveyHandlerContext struct {
 
 // sendValidationError sends a validation error response.
 func (c *surveyHandlerContext) sendValidationError(msgKey string) {
-	sendErrorResponseWithDetails(c.w, c.logger, http.StatusBadRequest, ErrCodeValidation, c.localizer.T(msgKey), "")
+	sendErrorResponseWithDetails(
+		c.w,
+		c.logger,
+		http.StatusBadRequest,
+		ErrCodeValidation,
+		c.localizer.T(msgKey),
+		"",
+	)
 }
 
 // sendBadRequestError sends a bad request error response.
 func (c *surveyHandlerContext) sendBadRequestError(msgKey string) {
-	sendErrorResponseWithDetails(c.w, c.logger, http.StatusBadRequest, ErrCodeBadRequest, c.localizer.T(msgKey), "")
+	sendErrorResponseWithDetails(
+		c.w,
+		c.logger,
+		http.StatusBadRequest,
+		ErrCodeBadRequest,
+		c.localizer.T(msgKey),
+		"",
+	)
 }
 
 // sendInternalError sends an internal server error response.
 func (c *surveyHandlerContext) sendInternalError(msgKey string) {
-	sendErrorResponseWithDetails(c.w, c.logger, http.StatusInternalServerError, ErrCodeInternal, c.localizer.T(msgKey), "")
+	sendErrorResponseWithDetails(
+		c.w,
+		c.logger,
+		http.StatusInternalServerError,
+		ErrCodeInternal,
+		c.localizer.T(msgKey),
+		"",
+	)
 }
 
 // sendMethodNotAllowed sends a method not allowed error response.
 func (c *surveyHandlerContext) sendMethodNotAllowed() {
-	sendErrorResponseWithDetails(c.w, c.logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, c.localizer.T("errors.api.methodNotAllowed"), "")
+	sendErrorResponseWithDetails(
+		c.w,
+		c.logger,
+		http.StatusMethodNotAllowed,
+		ErrCodeMethodNotAllowed,
+		c.localizer.T("errors.api.methodNotAllowed"),
+		"",
+	)
 }
 
 // sendRateLimitError sends a rate limit error response and returns true.
 func (c *surveyHandlerContext) sendRateLimitError() bool {
-	sendErrorResponseWithDetails(c.w, c.logger, http.StatusTooManyRequests, ErrCodeRateLimit, c.localizer.T("errors.survey.rateLimitExceeded"), "")
+	sendErrorResponseWithDetails(
+		c.w,
+		c.logger,
+		http.StatusTooManyRequests,
+		ErrCodeRateLimit,
+		c.localizer.T("errors.survey.rateLimitExceeded"),
+		"",
+	)
 	return true
 }
 
@@ -605,7 +640,8 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 		ctx.sendValidationError("errors.survey.validationFailed")
 		return
 	}
-	if req.TestDuration != 0 && validation.ValidateIntRange(req.TestDuration, "testDuration", 1, 300) != nil {
+	if req.TestDuration != 0 &&
+		validation.ValidateIntRange(req.TestDuration, "testDuration", 1, 300) != nil {
 		logger.Warn("Survey validation failed: invalid test duration")
 		ctx.sendValidationError("errors.survey.validationFailed")
 		return
@@ -1139,7 +1175,15 @@ func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.surveyManager.UpdateFloor(surveyID, floorID, req.Name, req.Level); err != nil {
-		logger.Error("Failed to update floor", "survey_id", surveyID, "floor_id", floorID, "error", err)
+		logger.Error(
+			"Failed to update floor",
+			"survey_id",
+			surveyID,
+			"floor_id",
+			floorID,
+			"error",
+			err,
+		)
 		ctx.sendInternalError("errors.survey.updateFailed")
 		return
 	}

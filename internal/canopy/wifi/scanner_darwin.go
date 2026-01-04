@@ -28,6 +28,13 @@ import (
 	"time"
 )
 
+// Security protocol constants.
+const (
+	securityWPA  = "WPA"
+	securityWPA2 = "WPA2"
+	securityWPA3 = "WPA3"
+)
+
 // scanPlatform performs a WiFi scan on macOS using the airport utility.
 func scanPlatform(_ string) ([]*ScannedNetwork, error) {
 	// Use airport utility for scanning
@@ -86,12 +93,12 @@ func parseAirportLine(line string) *ScannedNetwork {
 
 	// Extract just the main security type
 	//nolint:gocritic // ifElseChain: order matters for security type detection (WPA3 before WPA2 before WPA)
-	if strings.Contains(security, "WPA3") {
-		security = "WPA3"
-	} else if strings.Contains(security, "WPA2") {
-		security = "WPA2"
-	} else if strings.Contains(security, "WPA") {
-		security = "WPA"
+	if strings.Contains(security, securityWPA3) {
+		security = securityWPA3
+	} else if strings.Contains(security, securityWPA2) {
+		security = securityWPA2
+	} else if strings.Contains(security, securityWPA) {
+		security = securityWPA
 	}
 
 	// Determine channel width and HT mode from HT flag
