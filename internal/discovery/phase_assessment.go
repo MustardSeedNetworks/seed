@@ -131,14 +131,14 @@ func (p *AssessmentPhase) Run(
 ) ([]*DiscoveredDevice, error) {
 	start := time.Now()
 
-	logging.GetLogger().Info("Assessment phase starting",
+	logging.GetLogger().InfoContext(ctx, "Assessment phase starting",
 		"devices", len(devices),
 		"enabled", p.config.Enabled,
 		"cveDatabase", p.config.CVEDatabase,
 		"severityThreshold", p.config.SeverityThreshold)
 
 	if !p.config.Enabled || p.scanner == nil {
-		logging.GetLogger().Info("Assessment phase skipped - vulnerability scanning disabled")
+		logging.GetLogger().InfoContext(ctx, "Assessment phase skipped - vulnerability scanning disabled")
 		return devices, nil
 	}
 
@@ -214,7 +214,7 @@ func (p *AssessmentPhase) Run(
 	criticalCount := progress.CriticalCount()
 	highCount := progress.HighCount()
 
-	logging.GetLogger().Info("Assessment phase completed",
+	logging.GetLogger().InfoContext(ctx, "Assessment phase completed",
 		"assessed", assessed,
 		"total", len(devices),
 		"vulnsFound", vulnsFound,
@@ -252,7 +252,7 @@ func (p *AssessmentPhase) assessWorker(
 		// Perform vulnerability assessment
 		result, err := p.scanner.ScanDevice(ctx, device)
 		if err != nil {
-			logging.GetLogger().Debug("Vulnerability scan failed", "ip", device.IP, "error", err)
+			logging.GetLogger().DebugContext(ctx, "Vulnerability scan failed", "ip", device.IP, "error", err)
 		}
 
 		if result != nil && len(result.Vulnerabilities) > 0 {
@@ -264,7 +264,7 @@ func (p *AssessmentPhase) assessWorker(
 				progress.AddVulnerability(result.Vulnerabilities[i].Severity)
 			}
 
-			logging.GetLogger().Debug("Vulnerabilities found",
+			logging.GetLogger().DebugContext(ctx, "Vulnerabilities found",
 				"ip", device.IP,
 				"count", len(result.Vulnerabilities),
 				"product", result.Product,

@@ -264,7 +264,7 @@ func (p *ResolutionPhase) resolveDNS(
 
 			names, err := net.DefaultResolver.LookupAddr(lookupCtx, ipAddr)
 			if err != nil {
-				logging.GetLogger().Debug("DNS lookup failed", "ip", ipAddr, "error", err)
+				logging.GetLogger().DebugContext(ctx, "DNS lookup failed", "ip", ipAddr, "error", err)
 				return
 			}
 
@@ -275,7 +275,7 @@ func (p *ResolutionPhase) resolveDNS(
 				device.Hostname = hostname
 				deviceMu.Unlock()
 				progress.MarkResolved(ipAddr)
-				logging.GetLogger().Debug("DNS resolved", "ip", ipAddr, "hostname", hostname)
+				logging.GetLogger().DebugContext(ctx, "DNS resolved", "ip", ipAddr, "hostname", hostname)
 			}
 		}(ip)
 	}
@@ -308,7 +308,7 @@ func (p *ResolutionPhase) resolveNetBIOS(
 		return
 	}
 
-	logging.GetLogger().Debug("NetBIOS: resolving names", "count", len(toResolve))
+	logging.GetLogger().DebugContext(ctx, "NetBIOS: resolving names", "count", len(toResolve))
 
 	// Use batch resolution
 	results := p.netbiosResolver.ResolveBatch(ctx, toResolve)
@@ -320,7 +320,7 @@ func (p *ResolutionPhase) resolveNetBIOS(
 				device.NetBIOSName = result.Name
 				deviceMu.Unlock()
 				progress.MarkResolved(result.IP)
-				logging.GetLogger().Debug("NetBIOS resolved", "ip", result.IP, "name", result.Name)
+				logging.GetLogger().DebugContext(ctx, "NetBIOS resolved", "ip", result.IP, "name", result.Name)
 			} else {
 				deviceMu.Unlock()
 			}
@@ -353,7 +353,7 @@ func (p *ResolutionPhase) resolveMDNS(
 		return
 	}
 
-	logging.GetLogger().Debug("mDNS: resolving names", "count", len(toResolve))
+	logging.GetLogger().DebugContext(ctx, "mDNS: resolving names", "count", len(toResolve))
 
 	// Use batch resolution
 	results := p.mdnsResolver.ResolveBatch(ctx, toResolve)
@@ -365,7 +365,7 @@ func (p *ResolutionPhase) resolveMDNS(
 				device.MDNSName = result.Name
 				deviceMu.Unlock()
 				progress.MarkResolved(result.IP)
-				logging.GetLogger().Debug("mDNS resolved", "ip", result.IP, "name", result.Name)
+				logging.GetLogger().DebugContext(ctx, "mDNS resolved", "ip", result.IP, "name", result.Name)
 			} else {
 				deviceMu.Unlock()
 			}

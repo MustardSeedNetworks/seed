@@ -118,7 +118,7 @@ func (p *EnumerationPhase) Run(
 	progressCh chan<- PhaseProgressPayload,
 ) ([]*DiscoveredDevice, error) {
 	start := time.Now()
-	logging.GetLogger().Info("Enumeration phase starting",
+	logging.GetLogger().InfoContext(ctx, "Enumeration phase starting",
 		"arp", p.config.ARPScan,
 		"icmp", p.config.ICMPScan,
 		"ndp", p.config.NDPScan)
@@ -143,7 +143,7 @@ func (p *EnumerationPhase) Run(
 		wg.Go(func() {
 			progress.SetPhase("arp_scan")
 			if err := p.runARPScan(scanCtx, &progress); err != nil {
-				logging.GetLogger().Warn("ARP scan failed", "error", err)
+				logging.GetLogger().WarnContext(ctx, "ARP scan failed", "error", err)
 				progress.AddError("arp_scan", err)
 			}
 			progress.MarkComplete("arp_scan")
@@ -155,7 +155,7 @@ func (p *EnumerationPhase) Run(
 		wg.Go(func() {
 			progress.SetPhase("icmp_scan")
 			if err := p.runICMPScan(scanCtx, &progress); err != nil {
-				logging.GetLogger().Warn("ICMP scan failed", "error", err)
+				logging.GetLogger().WarnContext(ctx, "ICMP scan failed", "error", err)
 				progress.AddError("icmp_scan", err)
 			}
 			progress.MarkComplete("icmp_scan")
@@ -433,11 +433,11 @@ func (e *EnhancedEnumerator) EnumerateSubnet(
 		return nil, fmt.Errorf("parsing CIDR %s: %w", cidr, err)
 	}
 
-	logging.GetLogger().Info("Enhanced enumeration starting", "subnet", cidr)
+	logging.GetLogger().InfoContext(ctx, "Enhanced enumeration starting", "subnet", cidr)
 
 	// Generate all host IPs in subnet
 	hosts := generateHostIPs(subnet)
-	logging.GetLogger().Debug("Host IPs generated", "count", len(hosts))
+	logging.GetLogger().DebugContext(ctx, "Host IPs generated", "count", len(hosts))
 
 	// Multi-pass ARP if enabled
 	if e.config.MultiPassARP && e.config.ARPPasses > 1 {
@@ -448,7 +448,7 @@ func (e *EnhancedEnumerator) EnumerateSubnet(
 			default:
 			}
 
-			logging.GetLogger().Debug("ARP pass", "pass", pass+1, "total", e.config.ARPPasses)
+			logging.GetLogger().DebugContext(ctx, "ARP pass", "pass", pass+1, "total", e.config.ARPPasses)
 
 			// Add delay between passes for IDS-friendly scanning
 			if e.config.SlowScan && pass > 0 {
@@ -463,7 +463,7 @@ func (e *EnhancedEnumerator) EnumerateSubnet(
 			}
 
 			if scanErr := e.deviceDiscovery.Scan(ctx); scanErr != nil {
-				logging.GetLogger().Warn("ARP pass failed", "pass", pass+1, "error", scanErr)
+				logging.GetLogger().WarnContext(ctx, "ARP pass failed", "pass", pass+1, "error", scanErr)
 			}
 		}
 	} else {
