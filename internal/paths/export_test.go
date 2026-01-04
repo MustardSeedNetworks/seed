@@ -1,5 +1,7 @@
 // Package paths exports internal functions for testing.
 package paths
 
-// IsSystemdService exports isSystemdService for testing.
-var IsSystemdService = isSystemdService
+// ExportIsSystemdService exports isSystemdService for testing.
+func ExportIsSystemdService() bool {
+	return isSystemdService()
+}

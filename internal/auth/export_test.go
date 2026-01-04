@@ -1,17 +1,25 @@
 // Package auth exports internal functions for testing.
 package auth
 
-// RandomChar exports randomChar for testing.
-var RandomChar = randomChar
+// ExportRandomChar exports randomChar for testing.
+func ExportRandomChar(chars string) (byte, error) {
+	return randomChar(chars)
+}
 
-// RandomInt exports randomInt for testing.
-var RandomInt = randomInt
+// ExportRandomInt exports randomInt for testing.
+func ExportRandomInt(n int) (int, error) {
+	return randomInt(n)
+}
 
-// CryptoRandRead exports cryptoRandRead for testing.
-var CryptoRandRead = cryptoRandRead
+// ExportCryptoRandRead exports cryptoRandRead for testing.
+func ExportCryptoRandRead(b []byte, operation string) error {
+	return cryptoRandRead(b, operation)
+}
 
-// ExtractTokenFromSubprotocol exports extractTokenFromSubprotocol for testing.
-var ExtractTokenFromSubprotocol = extractTokenFromSubprotocol
+// ExportExtractTokenFromSubprotocol exports extractTokenFromSubprotocol for testing.
+func ExportExtractTokenFromSubprotocol(protocols string) string {
+	return extractTokenFromSubprotocol(protocols)
+}
 
 // ManagerUsername returns the username from a Manager for testing.
 func (m *Manager) ManagerUsername() string {

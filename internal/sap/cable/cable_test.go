@@ -152,14 +152,14 @@ func TestConcurrentTesterAccess(_ *testing.T) {
 
 func TestIsSupportedPlatform(_ *testing.T) {
 	// Test the platform-specific function.
-	result := cable.IsSupportedPlatform("eth0")
+	result := cable.ExportIsSupportedPlatform("eth0")
 	// Just verify it doesn't panic - result depends on system.
 	_ = result
 }
 
 func TestTestPlatform(t *testing.T) {
 	// Test the platform-specific function.
-	result := cable.TestPlatform("eth0")
+	result := cable.ExportTestPlatform("eth0")
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}

@@ -361,7 +361,7 @@ func TestIsSystemdService(t *testing.T) {
 			t.Setenv("NOTIFY_SOCKET", tt.notifySocket)
 			t.Setenv("INVOCATION_ID", tt.invocationID)
 
-			got := paths.IsSystemdService()
+			got := paths.ExportIsSystemdService()
 
 			expected := tt.expectedOther
 			if runtime.GOOS == "linux" {

@@ -44,5 +44,7 @@ func (t *Tester) GetStatus(duration time.Duration, hasError bool) Status {
 	return t.getStatus(duration, hasError)
 }
 
-// GetSystemDNSPlatform is exported for testing.
-var GetSystemDNSPlatform = getSystemDNSPlatform
+// ExportGetSystemDNSPlatform is exported for testing.
+func ExportGetSystemDNSPlatform() []string {
+	return getSystemDNSPlatform()
+}

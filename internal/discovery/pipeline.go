@@ -134,13 +134,14 @@ const (
 	ScanProfileAggressive ScanTimingProfile = "aggressive"
 )
 
-// Port lists for different intensity levels.
-var (
-	// QuickPorts - minimal set for device type identification (6 ports).
-	QuickPorts = []int{22, 23, 80, 443, 8080, 8443}
+// GetQuickPorts returns minimal set for device type identification (6 ports).
+func GetQuickPorts() []int {
+	return []int{22, 23, 80, 443, 8080, 8443}
+}
 
-	// StandardPorts - common enterprise services (~50 ports).
-	StandardPorts = []int{
+// GetStandardPorts returns common enterprise services (~50 ports).
+func GetStandardPorts() []int {
+	return []int{
 		// Remote access
 		22, 23, 3389, 5900,
 		// Web
@@ -162,10 +163,12 @@ var (
 		// Monitoring
 		10050, 10051, 5666,
 	}
+}
 
-	// ComprehensivePorts - top 1000 most common ports (abbreviated here, full list in implementation).
-	ComprehensivePorts = generateComprehensivePorts()
-)
+// GetComprehensivePorts returns top 1000 most common ports.
+func GetComprehensivePorts() []int {
+	return generateComprehensivePorts()
+}
 
 // ScanTimingPresets maps profiles to timing configurations.
 var ScanTimingPresets = map[ScanTimingProfile]PipelineTiming{
@@ -1108,11 +1111,11 @@ func (p *Pipeline) getPortsForIntensity() []int {
 	case PortScanOff:
 		return nil
 	case PortScanQuick:
-		return QuickPorts
+		return GetQuickPorts()
 	case PortScanStandard:
-		return StandardPorts
+		return GetStandardPorts()
 	case PortScanComprehensive:
-		return ComprehensivePorts
+		return GetComprehensivePorts()
 	case PortScanCustom:
 		return p.config.PortScan.CustomPorts
 	default:
