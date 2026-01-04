@@ -46,28 +46,24 @@ type surveyHandlerContext struct {
 	localizer *i18n.Localizer
 }
 
-// sendValidationError sends a validation error response and returns true.
-func (c *surveyHandlerContext) sendValidationError(msgKey string) bool {
+// sendValidationError sends a validation error response.
+func (c *surveyHandlerContext) sendValidationError(msgKey string) {
 	sendErrorResponseWithDetails(c.w, c.logger, http.StatusBadRequest, ErrCodeValidation, c.localizer.T(msgKey), "")
-	return true
 }
 
-// sendBadRequestError sends a bad request error response and returns true.
-func (c *surveyHandlerContext) sendBadRequestError(msgKey string) bool {
+// sendBadRequestError sends a bad request error response.
+func (c *surveyHandlerContext) sendBadRequestError(msgKey string) {
 	sendErrorResponseWithDetails(c.w, c.logger, http.StatusBadRequest, ErrCodeBadRequest, c.localizer.T(msgKey), "")
-	return true
 }
 
-// sendInternalError sends an internal server error response and returns true.
-func (c *surveyHandlerContext) sendInternalError(msgKey string) bool {
+// sendInternalError sends an internal server error response.
+func (c *surveyHandlerContext) sendInternalError(msgKey string) {
 	sendErrorResponseWithDetails(c.w, c.logger, http.StatusInternalServerError, ErrCodeInternal, c.localizer.T(msgKey), "")
-	return true
 }
 
-// sendMethodNotAllowed sends a method not allowed error response and returns true.
-func (c *surveyHandlerContext) sendMethodNotAllowed() bool {
+// sendMethodNotAllowed sends a method not allowed error response.
+func (c *surveyHandlerContext) sendMethodNotAllowed() {
 	sendErrorResponseWithDetails(c.w, c.logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, c.localizer.T("errors.api.methodNotAllowed"), "")
-	return true
 }
 
 // sendRateLimitError sends a rate limit error response and returns true.
