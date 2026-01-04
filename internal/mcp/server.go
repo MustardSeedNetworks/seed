@@ -110,7 +110,7 @@ func (s *Server) ServeStdio() error {
 
 // ServeStdioWithContext runs the MCP server over stdin/stdout with context.
 func (s *Server) ServeStdioWithContext(ctx context.Context) error {
-	logging.GetLogger().Info("Starting MCP server over stdio with context")
+	logging.GetLogger().InfoContext(ctx, "Starting MCP server over stdio with context")
 
 	// Create a channel to signal completion
 	done := make(chan error, 1)

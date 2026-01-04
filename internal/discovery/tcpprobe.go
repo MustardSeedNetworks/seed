@@ -260,7 +260,7 @@ func (p *TCPProber) ScanPorts(
 			filtered++
 		}
 	}
-	logging.GetLogger().Info(
+	logging.GetLogger().InfoContext(ctx,
 		"Port scan complete",
 		"ip",
 		ipStr,

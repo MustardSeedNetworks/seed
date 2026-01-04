@@ -965,7 +965,7 @@ func (p *Pipeline) runScanningPhase(
 //
 //nolint:unparam // Error return kept for interface consistency with other phase methods.
 func (p *Pipeline) runAssessmentPhase(
-	_ context.Context,
+	ctx context.Context,
 	devices []*DiscoveredDevice,
 	phaseNumber int,
 ) ([]*DiscoveredDevice, error) {
@@ -993,7 +993,7 @@ func (p *Pipeline) runAssessmentPhase(
 		Duration:   duration,
 	})
 
-	logging.GetLogger().Info("Assessment phase completed",
+	logging.GetLogger().InfoContext(ctx, "Assessment phase completed",
 		"duration", duration)
 
 	return devices, nil
