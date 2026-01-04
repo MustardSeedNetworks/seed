@@ -126,7 +126,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	// Get the OAuth provider
 	provider, err := s.oauthManager.GetProvider(providerName)
 	if err != nil {
-		logger.Warn("Invalid SSO provider requested",
+		logger.WarnContext(r.Context(), "Invalid SSO provider requested",
 			"provider", providerName,
 			"client_ip", s.getClientIP(r),
 			"error", err)
@@ -144,7 +144,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	// Generate CSRF state token
 	state, err := oauth.GenerateState()
 	if err != nil {
-		logger.Error("Failed to generate OAuth state", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to generate OAuth state", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -179,7 +179,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// Security audit log
-	logger.Info("SSO login initiated",
+	logger.InfoContext(r.Context(), "SSO login initiated",
 		"provider", providerName,
 		"client_ip", s.getClientIP(r),
 		"event", "auth.sso.initiated")
@@ -206,7 +206,7 @@ func (s *Server) validateOAuthCallback(
 	// Check for OAuth error response from provider
 	if errParam := r.URL.Query().Get("error"); errParam != "" {
 		errDesc := r.URL.Query().Get("error_description")
-		logger.Warn("OAuth provider returned error",
+		logger.WarnContext(r.Context(), "OAuth provider returned error",
 			"error", errParam,
 			"description", errDesc,
 			"client_ip", clientIP,
@@ -218,7 +218,7 @@ func (s *Server) validateOAuthCallback(
 	// Get and validate state from cookie
 	stateCookie, err := r.Cookie(oauthStateCookie)
 	if err != nil {
-		logger.Warn(
+		logger.WarnContext(r.Context(), 
 			"Missing OAuth state cookie",
 			"client_ip",
 			clientIP,
@@ -231,7 +231,7 @@ func (s *Server) validateOAuthCallback(
 
 	stateParam := r.URL.Query().Get("state")
 	if validateErr := oauth.ValidateState(stateCookie.Value, stateParam); validateErr != nil {
-		logger.Warn("Invalid OAuth state", "client_ip", clientIP, "event", "auth.sso.invalid_state")
+		logger.WarnContext(r.Context(), "Invalid OAuth state", "client_ip", clientIP, "event", "auth.sso.invalid_state")
 		s.redirectWithError(w, r, "Invalid OAuth state. Please try again.")
 		return nil, false
 	}
@@ -239,7 +239,7 @@ func (s *Server) validateOAuthCallback(
 	// Get provider from cookie
 	providerCookie, err := r.Cookie("oauth_provider")
 	if err != nil {
-		logger.Warn(
+		logger.WarnContext(r.Context(), 
 			"Missing OAuth provider cookie",
 			"client_ip",
 			clientIP,
@@ -253,7 +253,7 @@ func (s *Server) validateOAuthCallback(
 	providerName := providerCookie.Value
 	provider, err := s.oauthManager.GetProvider(providerName)
 	if err != nil {
-		logger.Error("Invalid provider in callback", "provider", providerName, "error", err)
+		logger.ErrorContext(r.Context(), "Invalid provider in callback", "provider", providerName, "error", err)
 		s.redirectWithError(w, r, "Invalid OAuth provider.")
 		return nil, false
 	}
@@ -261,7 +261,7 @@ func (s *Server) validateOAuthCallback(
 	// Get authorization code
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		logger.Warn("Missing authorization code",
+		logger.WarnContext(r.Context(), "Missing authorization code",
 			"provider", providerName,
 			"client_ip", clientIP,
 			"event", "auth.sso.missing_code")
@@ -281,7 +281,7 @@ func (s *Server) exchangeCodeForUserInfo(
 ) (*oauth.UserInfo, error) {
 	token, err := params.provider.Exchange(ctx, params.code)
 	if err != nil {
-		logger.Error("Failed to exchange OAuth code",
+		logger.ErrorContext(ctx, "Failed to exchange OAuth code",
 			"provider", params.providerName,
 			"client_ip", clientIP,
 			"event", "auth.sso.exchange_failed",
@@ -297,7 +297,7 @@ func (s *Server) exchangeCodeForUserInfo(
 	}
 
 	if err != nil {
-		logger.Error("Failed to get user info",
+		logger.ErrorContext(ctx, "Failed to get user info",
 			"provider", params.providerName,
 			"client_ip", clientIP,
 			"event", "auth.sso.userinfo_failed",
@@ -318,7 +318,7 @@ func (s *Server) completeOAuthLogin(
 ) bool {
 	accessToken, err := s.authManager.GenerateAccessToken(r.Context(), userInfo.Email)
 	if err != nil {
-		logger.Error("Failed to generate access token",
+		logger.ErrorContext(r.Context(), "Failed to generate access token",
 			"provider", providerName,
 			"email", userInfo.Email,
 			"error", err)
@@ -328,7 +328,7 @@ func (s *Server) completeOAuthLogin(
 
 	refreshToken, err := s.authManager.GenerateRefreshToken(r.Context(), userInfo.Email)
 	if err != nil {
-		logger.Error("Failed to generate refresh token",
+		logger.ErrorContext(r.Context(), "Failed to generate refresh token",
 			"provider", providerName,
 			"email", userInfo.Email,
 			"error", err)
@@ -379,7 +379,7 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Security audit log: successful SSO authentication
-	logger.Info("SSO authentication successful",
+	logger.InfoContext(r.Context(), "SSO authentication successful",
 		"provider", params.providerName,
 		"email", userInfo.Email,
 		"client_ip", clientIP,
@@ -512,7 +512,7 @@ func (s *Server) requireSSOAuth(w http.ResponseWriter, r *http.Request, logger *
 	token, _ := auth.GetTokenFromRequest(r)
 	if token == "" {
 		clientIP := s.getClientIP(r)
-		logger.Warn(
+		logger.WarnContext(r.Context(), 
 			"Unauthenticated SSO update attempt",
 			"client_ip",
 			clientIP,
@@ -531,7 +531,7 @@ func (s *Server) requireSSOAuth(w http.ResponseWriter, r *http.Request, logger *
 	}
 	if _, err := s.authManager.ValidateToken(r.Context(), token); err != nil {
 		clientIP := s.getClientIP(r)
-		logger.Warn(
+		logger.WarnContext(r.Context(), 
 			"Invalid token SSO update attempt",
 			"client_ip",
 			clientIP,
@@ -625,7 +625,7 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save SSO config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save SSO config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -638,7 +638,7 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.initOAuthManager()
-	logger.Info(
+	logger.InfoContext(r.Context(), 
 		"SSO provider updated",
 		"provider",
 		req.Provider,

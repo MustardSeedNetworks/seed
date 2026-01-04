@@ -288,7 +288,7 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 
 	var req TestsSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -308,7 +308,7 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	s.config.Unlock()
 
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -724,7 +724,7 @@ func (s *Server) runHTTPTests(ctx context.Context, logger *slog.Logger) []Custom
 		}
 
 		if err := validation.ValidateURL(endpoint.URL); err != nil {
-			logger.Warn("Skipping invalid HTTP endpoint URL", "url", endpoint.URL, "error", err)
+			logger.WarnContext(ctx, "Skipping invalid HTTP endpoint URL", "url", endpoint.URL, "error", err)
 			continue
 		}
 

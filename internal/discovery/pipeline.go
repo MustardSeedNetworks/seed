@@ -728,7 +728,7 @@ func (p *Pipeline) runEnumerationPhase(
 		// ErrScanInProgress is a soft error - just means another scan was running
 		// Continue with existing device data rather than failing the pipeline
 		if errors.Is(err, ErrScanInProgress) {
-			logging.GetLogger().Warn("Pipeline enumeration: scan skipped - using existing device data")
+			logging.GetLogger().WarnContext(ctx, "Pipeline enumeration: scan skipped - using existing device data")
 		} else {
 			return nil, fmt.Errorf("enumeration failed: %w", err)
 		}
@@ -750,7 +750,7 @@ func (p *Pipeline) runEnumerationPhase(
 		Duration:     duration,
 	})
 
-	logging.GetLogger().Info("Enumeration phase completed",
+	logging.GetLogger().InfoContext(ctx, "Enumeration phase completed",
 		"devices", len(devices),
 		"duration", duration)
 
@@ -815,7 +815,7 @@ func (p *Pipeline) runResolutionPhase(
 		Duration:      duration,
 	})
 
-	logging.GetLogger().Info("Resolution phase completed",
+	logging.GetLogger().InfoContext(ctx, "Resolution phase completed",
 		"namesResolved", namesResolved,
 		"duration", duration)
 
@@ -852,7 +852,7 @@ func (p *Pipeline) runScanningPhase(
 	ports := p.getPortsForIntensity()
 
 	if len(ports) == 0 {
-		logging.GetLogger().Info("Port scanning disabled, skipping service discovery")
+		logging.GetLogger().InfoContext(ctx, "Port scanning disabled, skipping service discovery")
 	} else {
 		// Queue devices for profiling
 		for _, device := range devices {
@@ -883,9 +883,9 @@ func (p *Pipeline) runScanningPhase(
 			case <-waitCtx.Done():
 				// Fixes #938: Distinguish between timeout and intentional cancellation
 				if ctx.Err() != nil {
-					logging.GetLogger().Info("Scanning phase cancelled", "reason", ctx.Err())
+					logging.GetLogger().InfoContext(ctx, "Scanning phase cancelled", "reason", ctx.Err())
 				} else if waitCtx.Err() == context.DeadlineExceeded {
-					logging.GetLogger().Warn("Scanning phase timed out", "timeout", timeout)
+					logging.GetLogger().WarnContext(ctx, "Scanning phase timed out", "timeout", timeout)
 				}
 				break waitLoop
 			case <-ticker.C:
@@ -954,7 +954,7 @@ func (p *Pipeline) runScanningPhase(
 		Duration:  duration,
 	})
 
-	logging.GetLogger().Info("Scanning phase completed",
+	logging.GetLogger().InfoContext(ctx, "Scanning phase completed",
 		"openPorts", openPorts,
 		"duration", duration)
 
