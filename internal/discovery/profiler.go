@@ -94,6 +94,12 @@ type ProfilerConfig struct {
 	ProbeDelay        time.Duration     // Delay between probes to same host
 	HostDelay         time.Duration     // Delay between starting different hosts
 	ConnectTimeout    time.Duration     // Timeout for TCP connections
+
+	// TLS configuration for HTTPS probing
+	// SkipTLSVerify allows connecting to devices with self-signed certificates.
+	// This is common for network devices, printers, and other internal infrastructure.
+	// Default: true (required for profiling internal network devices)
+	SkipTLSVerify bool
 }
 
 // DefaultProfilerConfig returns sensible defaults.
@@ -117,6 +123,7 @@ func DefaultProfilerConfig() *ProfilerConfig {
 		ProbeDelay:        50 * time.Millisecond,
 		HostDelay:         20 * time.Millisecond,
 		ConnectTimeout:    2 * time.Second,
+		SkipTLSVerify:     true, // Required for internal network devices with self-signed certs
 	}
 }
 
@@ -175,8 +182,9 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		}, // #nosec G402 -- Profiling internal network devices
+			MinVersion:         tls.VersionTLS12,
+			InsecureSkipVerify: cfg.SkipTLSVerify,
+		},
 		DialContext: (&net.Dialer{
 			Timeout: cfg.Timeout,
 		}).DialContext,
