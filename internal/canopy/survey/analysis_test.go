@@ -1,15 +1,17 @@
-// Package survey provides WiFi site survey functionality.
-package survey
+// Package survey_test tests the survey package.
+package survey_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 func TestDetectDeadZones_NilSurvey(t *testing.T) {
-	_, err := DetectDeadZones(nil, DefaultThreshold)
+	_, err := survey.DetectDeadZones(nil, survey.DefaultThreshold)
 	if err == nil {
 		t.Fatal("Expected error for nil survey, got nil")
 	}
@@ -19,12 +21,12 @@ func TestDetectDeadZones_NilSurvey(t *testing.T) {
 }
 
 func TestDetectDeadZones_NoSamples(t *testing.T) {
-	survey := &Survey{
+	s := &survey.Survey{
 		ID:      "test-survey",
-		Samples: []*SamplePoint{},
+		Samples: []*survey.SamplePoint{},
 	}
 
-	_, err := DetectDeadZones(survey, DefaultThreshold)
+	_, err := survey.DetectDeadZones(s, survey.DefaultThreshold)
 	if err == nil {
 		t.Fatal("Expected error for survey with no samples, got nil")
 	}
@@ -34,9 +36,9 @@ func TestDetectDeadZones_NoSamples(t *testing.T) {
 }
 
 func TestDetectDeadZones_NoRSSISamples(t *testing.T) {
-	survey := &Survey{
+	s := &survey.Survey{
 		ID: "test-survey",
-		Samples: []*SamplePoint{
+		Samples: []*survey.SamplePoint{
 			{
 				X:         100,
 				Y:         100,
@@ -49,20 +51,20 @@ func TestDetectDeadZones_NoRSSISamples(t *testing.T) {
 		},
 	}
 
-	_, err := DetectDeadZones(survey, DefaultThreshold)
+	_, err := survey.DetectDeadZones(s, survey.DefaultThreshold)
 	if err == nil {
 		t.Fatal("Expected error for survey with no RSSI samples, got nil")
 	}
 }
 
 func TestDetectDeadZones_AllGoodSignals(t *testing.T) {
-	survey := createTestSurveyWithSamples([]*SamplePoint{
+	s := createTestSurveyWithSamples([]*survey.SamplePoint{
 		createPassiveSamplePoint(100, 100, -55),
 		createPassiveSamplePoint(200, 200, -60),
 		createPassiveSamplePoint(300, 300, -65),
 	})
 
-	analysis, err := detectDeadZonesHelper(t, survey, DefaultThreshold)
+	analysis, err := detectDeadZonesHelper(t, s, survey.DefaultThreshold)
 	if err != nil {
 		return
 	}
@@ -75,23 +77,23 @@ func TestDetectDeadZones_AllGoodSignals(t *testing.T) {
 		t.Errorf("Expected coverage score 100.0, got %.2f", analysis.CoverageScore)
 	}
 
-	if analysis.SurveyID != survey.ID {
-		t.Errorf("Expected survey ID %s, got %s", survey.ID, analysis.SurveyID)
+	if analysis.SurveyID != s.ID {
+		t.Errorf("Expected survey ID %s, got %s", s.ID, analysis.SurveyID)
 	}
 
-	if analysis.ThresholdDBm != DefaultThreshold {
-		t.Errorf("Expected threshold %d, got %d", DefaultThreshold, analysis.ThresholdDBm)
+	if analysis.ThresholdDBm != survey.DefaultThreshold {
+		t.Errorf("Expected threshold %d, got %d", survey.DefaultThreshold, analysis.ThresholdDBm)
 	}
 }
 
 func TestDetectDeadZones_SingleDeadZone(t *testing.T) {
-	survey := createTestSurveyWithSamples([]*SamplePoint{
+	s := createTestSurveyWithSamples([]*survey.SamplePoint{
 		createPassiveSamplePoint(100, 100, -88), // Severe
 		createPassiveSamplePoint(110, 110, -86), // Severe
 		createPassiveSamplePoint(120, 120, -87), // Severe
 	})
 
-	analysis, err := detectDeadZonesHelper(t, survey, DefaultThreshold)
+	analysis, err := detectDeadZonesHelper(t, s, survey.DefaultThreshold)
 	if err != nil {
 		return
 	}
@@ -119,7 +121,7 @@ func TestDetectDeadZones_SingleDeadZone(t *testing.T) {
 }
 
 func TestDetectDeadZones_MultipleDeadZones(t *testing.T) {
-	survey := createTestSurveyWithSamples([]*SamplePoint{
+	s := createTestSurveyWithSamples([]*survey.SamplePoint{
 		// Zone 1: Severe (clustered)
 		createPassiveSamplePoint(100, 100, -90),
 		createPassiveSamplePoint(110, 110, -88),
@@ -132,7 +134,7 @@ func TestDetectDeadZones_MultipleDeadZones(t *testing.T) {
 		createPassiveSamplePoint(300, 300, -60),
 	})
 
-	analysis, err := detectDeadZonesHelper(t, survey, DefaultThreshold)
+	analysis, err := detectDeadZonesHelper(t, s, survey.DefaultThreshold)
 	if err != nil {
 		return
 	}
@@ -164,11 +166,11 @@ func TestDetectDeadZones_SeverityClassification(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			survey := createTestSurveyWithSamples([]*SamplePoint{
+			s := createTestSurveyWithSamples([]*survey.SamplePoint{
 				createPassiveSamplePoint(100, 100, tt.rssi),
 			})
 
-			analysis, err := detectDeadZonesHelper(t, survey, DefaultThreshold)
+			analysis, err := detectDeadZonesHelper(t, s, survey.DefaultThreshold)
 			if err != nil {
 				return
 			}
@@ -186,13 +188,13 @@ func TestDetectDeadZones_SeverityClassification(t *testing.T) {
 }
 
 func TestDetectDeadZones_CustomThreshold(t *testing.T) {
-	survey := createTestSurveyWithSamples([]*SamplePoint{
+	s := createTestSurveyWithSamples([]*survey.SamplePoint{
 		createPassiveSamplePoint(100, 100, -68), // Above -75, below -65
 		createPassiveSamplePoint(200, 200, -60), // Good signal
 	})
 
 	// With default threshold (-75), first sample is good
-	analysis1, err := detectDeadZonesHelper(t, survey, DefaultThreshold)
+	analysis1, err := detectDeadZonesHelper(t, s, survey.DefaultThreshold)
 	if err != nil {
 		return
 	}
@@ -202,7 +204,7 @@ func TestDetectDeadZones_CustomThreshold(t *testing.T) {
 	}
 
 	// With threshold -65, first sample is weak
-	analysis2, err := detectDeadZonesHelper(t, survey, -65)
+	analysis2, err := detectDeadZonesHelper(t, s, -65)
 	if err != nil {
 		return
 	}
@@ -213,19 +215,19 @@ func TestDetectDeadZones_CustomThreshold(t *testing.T) {
 }
 
 func TestDetectDeadZones_FloorPlanScaling(t *testing.T) {
-	floorPlan := &FloorPlan{
+	floorPlan := &survey.FloorPlan{
 		Width:  1000,
 		Height: 1000,
 		ScaleM: 0.1, // 1 pixel = 0.1 meters
 	}
 
-	survey := createTestSurveyWithSamples([]*SamplePoint{
+	s := createTestSurveyWithSamples([]*survey.SamplePoint{
 		createPassiveSamplePoint(100, 100, -88),
 		createPassiveSamplePoint(120, 120, -86), // ~28 pixels away diagonally, within ClusterRadius
 	})
-	survey.FloorPlan = floorPlan
+	s.FloorPlan = floorPlan
 
-	analysis, err := detectDeadZonesHelper(t, survey, DefaultThreshold)
+	analysis, err := detectDeadZonesHelper(t, s, survey.DefaultThreshold)
 	if err != nil {
 		return
 	}
@@ -251,12 +253,12 @@ func TestDetectDeadZones_FloorPlanScaling(t *testing.T) {
 func TestDetectDeadZones_Recommendations(t *testing.T) {
 	tests := []struct {
 		name            string
-		samples         []*SamplePoint
+		samples         []*survey.SamplePoint
 		expectedKeyword string
 	}{
 		{
 			name: "Excellent coverage",
-			samples: []*SamplePoint{
+			samples: []*survey.SamplePoint{
 				createPassiveSamplePoint(100, 100, -55),
 				createPassiveSamplePoint(200, 200, -60),
 			},
@@ -264,7 +266,7 @@ func TestDetectDeadZones_Recommendations(t *testing.T) {
 		},
 		{
 			name: "Severe dead zones",
-			samples: []*SamplePoint{
+			samples: []*survey.SamplePoint{
 				createPassiveSamplePoint(100, 100, -90),
 				createPassiveSamplePoint(110, 110, -88),
 			},
@@ -272,7 +274,7 @@ func TestDetectDeadZones_Recommendations(t *testing.T) {
 		},
 		{
 			name: "Limited samples",
-			samples: []*SamplePoint{
+			samples: []*survey.SamplePoint{
 				createPassiveSamplePoint(100, 100, -70),
 			},
 			expectedKeyword: "Limited sample",
@@ -281,8 +283,8 @@ func TestDetectDeadZones_Recommendations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			survey := createTestSurveyWithSamples(tt.samples)
-			analysis, err := detectDeadZonesHelper(t, survey, DefaultThreshold)
+			s := createTestSurveyWithSamples(tt.samples)
+			analysis, err := detectDeadZonesHelper(t, s, survey.DefaultThreshold)
 			if err != nil {
 				return
 			}
@@ -294,7 +296,7 @@ func TestDetectDeadZones_Recommendations(t *testing.T) {
 
 			found := false
 			for _, rec := range analysis.Recommendations {
-				if containsIgnoreCase(rec, tt.expectedKeyword) {
+				if strings.Contains(strings.ToLower(rec), strings.ToLower(tt.expectedKeyword)) {
 					found = true
 					break
 				}
@@ -310,12 +312,12 @@ func TestDetectDeadZones_Recommendations(t *testing.T) {
 
 func TestDetectDeadZones_ClusteringDistance(t *testing.T) {
 	// Two samples within cluster radius should be one zone
-	survey1 := createTestSurveyWithSamples([]*SamplePoint{
+	survey1 := createTestSurveyWithSamples([]*survey.SamplePoint{
 		createPassiveSamplePoint(100, 100, -88),
 		createPassiveSamplePoint(130, 130, -86), // ~42 pixels away, within ClusterRadius
 	})
 
-	analysis1, err := detectDeadZonesHelper(t, survey1, DefaultThreshold)
+	analysis1, err := detectDeadZonesHelper(t, survey1, survey.DefaultThreshold)
 	if err != nil {
 		return
 	}
@@ -325,12 +327,12 @@ func TestDetectDeadZones_ClusteringDistance(t *testing.T) {
 	}
 
 	// Two samples beyond cluster radius should be two zones
-	survey2 := createTestSurveyWithSamples([]*SamplePoint{
+	survey2 := createTestSurveyWithSamples([]*survey.SamplePoint{
 		createPassiveSamplePoint(100, 100, -88),
 		createPassiveSamplePoint(200, 200, -86), // ~141 pixels away, beyond ClusterRadius
 	})
 
-	analysis2, err := detectDeadZonesHelper(t, survey2, DefaultThreshold)
+	analysis2, err := detectDeadZonesHelper(t, survey2, survey.DefaultThreshold)
 	if err != nil {
 		return
 	}
@@ -341,13 +343,13 @@ func TestDetectDeadZones_ClusteringDistance(t *testing.T) {
 }
 
 func TestDetectDeadZones_MinMaxRSSI(t *testing.T) {
-	survey := createTestSurveyWithSamples([]*SamplePoint{
+	s := createTestSurveyWithSamples([]*survey.SamplePoint{
 		createPassiveSamplePoint(100, 100, -90),
 		createPassiveSamplePoint(110, 110, -80),
 		createPassiveSamplePoint(120, 120, -85),
 	})
 
-	analysis, err := detectDeadZonesHelper(t, survey, DefaultThreshold)
+	analysis, err := detectDeadZonesHelper(t, s, survey.DefaultThreshold)
 	if err != nil {
 		return
 	}
@@ -369,44 +371,44 @@ func TestDetectDeadZones_MinMaxRSSI(t *testing.T) {
 }
 
 func TestManager_DetectDeadZones(t *testing.T) {
-	manager := NewManager(t.TempDir(), nil, nil, nil)
+	manager := survey.NewManager(t.TempDir(), nil, nil, nil)
 
 	// Create a survey
-	survey := createTestSurveyWithSamples([]*SamplePoint{
+	s := createTestSurveyWithSamples([]*survey.SamplePoint{
 		createPassiveSamplePoint(100, 100, -88),
 	})
 
-	manager.surveys[survey.ID] = survey
+	manager.SetSurvey(s)
 
 	// Test through manager
-	analysis, err := manager.DetectDeadZones(survey.ID, DefaultThreshold)
+	analysis, err := manager.DetectDeadZones(s.ID, survey.DefaultThreshold)
 	if err != nil {
 		t.Fatalf("Manager.DetectDeadZones failed: %v", err)
 	}
 
-	if analysis.SurveyID != survey.ID {
-		t.Errorf("Expected survey ID %s, got %s", survey.ID, analysis.SurveyID)
+	if analysis.SurveyID != s.ID {
+		t.Errorf("Expected survey ID %s, got %s", s.ID, analysis.SurveyID)
 	}
 }
 
 func TestManager_DetectDeadZones_NotFound(t *testing.T) {
-	manager := NewManager(t.TempDir(), nil, nil, nil)
+	manager := survey.NewManager(t.TempDir(), nil, nil, nil)
 
-	_, err := manager.DetectDeadZones("nonexistent-id", DefaultThreshold)
+	_, err := manager.DetectDeadZones("nonexistent-id", survey.DefaultThreshold)
 	if err == nil {
 		t.Error("Expected error for nonexistent survey, got nil")
 	}
 }
 
 func TestFilterWeakSamples(t *testing.T) {
-	samples := []SampleValue{
-		{Point: Point2D{X: 100, Y: 100}, Value: -60}, // Good
-		{Point: Point2D{X: 200, Y: 200}, Value: -80}, // Weak
-		{Point: Point2D{X: 300, Y: 300}, Value: -55}, // Good
-		{Point: Point2D{X: 400, Y: 400}, Value: -90}, // Weak
+	samples := []survey.SampleValue{
+		{Point: survey.Point2D{X: 100, Y: 100}, Value: -60}, // Good
+		{Point: survey.Point2D{X: 200, Y: 200}, Value: -80}, // Weak
+		{Point: survey.Point2D{X: 300, Y: 300}, Value: -55}, // Good
+		{Point: survey.Point2D{X: 400, Y: 400}, Value: -90}, // Weak
 	}
 
-	weak := filterWeakSamples(samples, -75)
+	weak := survey.FilterWeakSamples(samples, -75)
 
 	if len(weak) != 2 {
 		t.Errorf("Expected 2 weak samples, got %d", len(weak))
@@ -436,10 +438,10 @@ func TestCalculateCoverageScore(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			allSamples := make([]SampleValue, tt.totalSamples)
-			weakSamples := make([]SampleValue, tt.weakSamples)
+			allSamples := make([]survey.SampleValue, tt.totalSamples)
+			weakSamples := make([]survey.SampleValue, tt.weakSamples)
 
-			score := calculateCoverageScore(allSamples, weakSamples)
+			score := survey.CalculateCoverageScore(allSamples, weakSamples)
 
 			if tt.expectZeroScore {
 				if score != 0.0 {
@@ -469,7 +471,7 @@ func TestDetermineSeverity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result := determineSeverity(tt.rssi)
+		result := survey.DetermineSeverity(tt.rssi)
 		if result != tt.severity {
 			t.Errorf("RSSI %.2f: expected '%s', got '%s'", tt.rssi, tt.severity, result)
 		}
@@ -479,21 +481,21 @@ func TestDetermineSeverity(t *testing.T) {
 func TestGenerateRecommendations(t *testing.T) {
 	tests := []struct {
 		name          string
-		deadZones     []DeadZone
+		deadZones     []survey.DeadZone
 		coverageScore float64
 		totalSamples  int
 		minRecCount   int
 	}{
 		{
 			name:          "Perfect coverage",
-			deadZones:     []DeadZone{},
+			deadZones:     []survey.DeadZone{},
 			coverageScore: 98.0,
 			totalSamples:  100,
 			minRecCount:   2,
 		},
 		{
 			name: "Severe zones",
-			deadZones: []DeadZone{
+			deadZones: []survey.DeadZone{
 				{Severity: "severe"},
 				{Severity: "severe"},
 			},
@@ -503,7 +505,7 @@ func TestGenerateRecommendations(t *testing.T) {
 		},
 		{
 			name:          "Limited samples",
-			deadZones:     []DeadZone{},
+			deadZones:     []survey.DeadZone{},
 			coverageScore: 90.0,
 			totalSamples:  5,
 			minRecCount:   2,
@@ -512,7 +514,7 @@ func TestGenerateRecommendations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			recs := generateRecommendations(tt.deadZones, tt.coverageScore, tt.totalSamples)
+			recs := survey.GenerateRecommendations(tt.deadZones, tt.coverageScore, tt.totalSamples)
 
 			if len(recs) < tt.minRecCount {
 				t.Errorf("Expected at least %d recommendations, got %d", tt.minRecCount, len(recs))
@@ -529,22 +531,22 @@ func TestGenerateRecommendations(t *testing.T) {
 
 // Helper functions
 
-func createTestSurveyWithSamples(samples []*SamplePoint) *Survey {
-	return &Survey{
+func createTestSurveyWithSamples(samples []*survey.SamplePoint) *survey.Survey {
+	return &survey.Survey{
 		ID:         "test-survey-id",
 		Name:       "Test Survey",
-		SurveyType: TypePassive,
-		Status:     StatusCompleted,
+		SurveyType: survey.TypePassive,
+		Status:     survey.StatusCompleted,
 		Samples:    samples,
 	}
 }
 
-func createPassiveSamplePoint(x, y, rssi int) *SamplePoint {
-	return &SamplePoint{
+func createPassiveSamplePoint(x, y, rssi int) *survey.SamplePoint {
+	return &survey.SamplePoint{
 		X:         x,
 		Y:         y,
 		Timestamp: time.Now(),
-		SampleData: &PassiveSample{
+		SampleData: &survey.PassiveSample{
 			Networks: []*wifi.ScannedNetwork{
 				{
 					Signal: rssi,
@@ -554,43 +556,12 @@ func createPassiveSamplePoint(x, y, rssi int) *SamplePoint {
 	}
 }
 
-func detectDeadZonesHelper(t *testing.T, survey *Survey, threshold int) (*DeadZoneAnalysis, error) {
+func detectDeadZonesHelper(t *testing.T, s *survey.Survey, threshold int) (*survey.DeadZoneAnalysis, error) {
 	t.Helper()
-	analysis, err := DetectDeadZones(survey, threshold)
+	analysis, err := survey.DetectDeadZones(s, threshold)
 	if err != nil {
 		t.Errorf("DetectDeadZones failed: %v", err)
 		return nil, err
 	}
 	return analysis, nil
-}
-
-func containsIgnoreCase(s, substr string) bool {
-	s = toLower(s)
-	substr = toLower(substr)
-	return contains(s, substr)
-}
-
-func toLower(s string) string {
-	result := make([]rune, len(s))
-	for i, r := range s {
-		if r >= 'A' && r <= 'Z' {
-			result[i] = r + 32
-		} else {
-			result[i] = r
-		}
-	}
-	return string(result)
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || indexString(s, substr) >= 0)
-}
-
-func indexString(s, substr string) int {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
 }
