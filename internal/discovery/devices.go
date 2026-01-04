@@ -943,7 +943,7 @@ func (d *DeviceDiscovery) ResolveNetBIOSNames(ctx context.Context) {
 		return
 	}
 
-	logging.GetLogger().Debug("NetBIOS: resolving names", "count", len(ips))
+	logging.GetLogger().DebugContext(ctx, "NetBIOS: resolving names", "count", len(ips))
 
 	// Resolve in batch
 	results := d.netbiosResolver.ResolveBatch(ctx, ips)
@@ -958,7 +958,7 @@ func (d *DeviceDiscovery) ResolveNetBIOSNames(ctx context.Context) {
 				device.NetBIOSName = result.Name
 				device.DisplayName = device.ComputeDisplayName()
 				logging.GetLogger().
-					Debug("NetBIOS: resolved name", "ip", result.IP, "name", result.Name)
+					DebugContext(ctx, "NetBIOS: resolved name", "ip", result.IP, "name", result.Name)
 			}
 		}
 	}
@@ -988,7 +988,7 @@ func (d *DeviceDiscovery) ResolveMDNSNames(ctx context.Context) {
 		return
 	}
 
-	logging.GetLogger().Debug("mDNS: resolving names", "count", len(ips))
+	logging.GetLogger().DebugContext(ctx, "mDNS: resolving names", "count", len(ips))
 
 	// Resolve in batch
 	results := d.mdnsResolver.ResolveBatch(ctx, ips)
@@ -1006,7 +1006,7 @@ func (d *DeviceDiscovery) ResolveMDNSNames(ctx context.Context) {
 					device.DiscoveryMethod = append(device.DiscoveryMethod, MethodMDNS)
 				}
 				logging.GetLogger().
-					Debug("mDNS: resolved name", "ip", result.IP, "name", result.Name)
+					DebugContext(ctx, "mDNS: resolved name", "ip", result.IP, "name", result.Name)
 			}
 		}
 	}

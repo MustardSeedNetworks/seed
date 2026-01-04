@@ -273,7 +273,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		return s.pingSweep(ctx, subnet)
 	})
 	if !result.Successful {
-		logging.GetLogger().Warn("Ping sweep failed after retries (continuing with ARP table only)",
+		logging.GetLogger().WarnContext(ctx, "Ping sweep failed after retries (continuing with ARP table only)",
 			"subnet", subnet,
 			"attempts", result.Attempts,
 			"duration", result.TotalTime,
@@ -292,7 +292,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 				return s.pingSweep(ctx, subnetCopy)
 			})
 			if !subnetResult.Successful {
-				logging.GetLogger().Warn("Ping sweep failed for additional subnet after retries",
+				logging.GetLogger().WarnContext(ctx, "Ping sweep failed for additional subnet after retries",
 					"subnet", additionalSubnet,
 					"attempts", subnetResult.Attempts,
 					"duration", subnetResult.TotalTime,
@@ -440,7 +440,7 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 	// For large subnets, split into /24 chunks and scan sequentially
 	chunks := splitSubnetIntoChunks(subnet, maxChunks)
 	if len(chunks) > 1 {
-		logging.GetLogger().Info("Large subnet detected - scanning in chunks",
+		logging.GetLogger().InfoContext(ctx, "Large subnet detected - scanning in chunks",
 			"subnet", subnet.String(),
 			"totalHosts", totalHosts,
 			"chunks", len(chunks),
@@ -451,12 +451,12 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 			case <-ctx.Done():
 				return fmt.Errorf("chunk scan cancelled: %w", ctx.Err())
 			default:
-				logging.GetLogger().Debug("Scanning chunk",
+				logging.GetLogger().DebugContext(ctx, "Scanning chunk",
 					"chunk", fmt.Sprintf("%d/%d", i+1, len(chunks)),
 					"subnet", chunk.String())
 
 				if err := s.pingSweepChunk(ctx, chunk); err != nil {
-					logging.GetLogger().Warn("Chunk scan failed - continuing with remaining chunks",
+					logging.GetLogger().WarnContext(ctx, "Chunk scan failed - continuing with remaining chunks",
 						"chunk", chunk.String(),
 						"error", err)
 				}
@@ -495,7 +495,7 @@ func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) erro
 		pinger, err := NewICMPPinger(time.Second)
 		if err != nil {
 			s.mu.Unlock()
-			logging.GetLogger().Warn("Failed to create ICMP pinger", "error", err)
+			logging.GetLogger().WarnContext(ctx, "Failed to create ICMP pinger", "error", err)
 			return err
 		}
 		s.pinger = pinger

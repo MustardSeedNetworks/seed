@@ -135,7 +135,7 @@ func (kev *KEVProvider) SearchByProduct(
 
 // UpdateDatabase downloads and caches the KEV catalog.
 func (kev *KEVProvider) UpdateDatabase(ctx context.Context) error {
-	logging.GetLogger().Info("Downloading CISA KEV catalog...")
+	logging.GetLogger().InfoContext(ctx, "Downloading CISA KEV catalog...")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, kevCatalogURL, http.NoBody)
 	if err != nil {
@@ -179,11 +179,11 @@ func (kev *KEVProvider) UpdateDatabase(ctx context.Context) error {
 	// Save cache
 	if kev.cachePath != "" {
 		if saveErr := kev.saveCache(body); saveErr != nil {
-			logging.GetLogger().Warn("Failed to cache KEV catalog", "error", saveErr)
+			logging.GetLogger().WarnContext(ctx, "Failed to cache KEV catalog", "error", saveErr)
 		}
 	}
 
-	logging.GetLogger().Info("CISA KEV catalog updated",
+	logging.GetLogger().InfoContext(ctx, "CISA KEV catalog updated",
 		"version", catalog.CatalogVersion,
 		"count", catalog.Count,
 		"date", catalog.DateReleased)

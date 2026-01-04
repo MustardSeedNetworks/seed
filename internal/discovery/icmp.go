@@ -410,7 +410,7 @@ func (p *ICMPPinger) PingSweepWithConfig(
 			reachable++
 		}
 	}
-	logging.GetLogger().Info("Ping sweep complete", "reachable", reachable, "total", len(ips))
+	logging.GetLogger().InfoContext(ctx, "Ping sweep complete", "reachable", reachable, "total", len(ips))
 
 	return results
 }
