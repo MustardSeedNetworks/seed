@@ -95,7 +95,7 @@ func (p *ScanningPhase) Run(
 
 	// Check if anything is enabled
 	if !portScanEnabled && !snmpEnabled {
-		logging.GetLogger().Info("Scanning phase skipped - both port scanning and SNMP disabled")
+		logging.GetLogger().InfoContext(ctx, "Scanning phase skipped - both port scanning and SNMP disabled")
 		return devices, nil
 	}
 
@@ -342,7 +342,7 @@ func (p *ScanningPhase) collectSNMP(ctx context.Context, ip string) *SNMPFullDat
 
 	data, err := p.snmpCollector.Collect(ctx, ip)
 	if err != nil {
-		logging.GetLogger().Debug("SNMP collection failed", "ip", ip, "error", err)
+		logging.GetLogger().DebugContext(ctx, "SNMP collection failed", "ip", ip, "error", err)
 		return &SNMPFullData{
 			CollectedAt: time.Now(),
 			Errors:      []string{fmt.Sprintf("collection failed: %v", err)},
