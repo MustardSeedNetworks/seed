@@ -3,22 +3,37 @@ package survey
 
 import (
 	"image"
+	"image/color"
 )
 
-// InterpolateColor exports interpolateColor for testing.
-var InterpolateColor = interpolateColor
+// ExportInterpolateColor exports interpolateColor for testing.
+func ExportInterpolateColor(stop1, stop2 ColorStop, value float64) color.RGBA {
+	return interpolateColor(stop1, stop2, value)
+}
 
-// FilterWeakSamples exports filterWeakSamples for testing.
-var FilterWeakSamples = filterWeakSamples
+// ExportFilterWeakSamples exports filterWeakSamples for testing.
+func ExportFilterWeakSamples(samples []SampleValue, threshold float64) []SampleValue {
+	return filterWeakSamples(samples, threshold)
+}
 
-// CalculateCoverageScore exports calculateCoverageScore for testing.
-var CalculateCoverageScore = calculateCoverageScore
+// ExportCalculateCoverageScore exports calculateCoverageScore for testing.
+func ExportCalculateCoverageScore(allSamples, weakSamples []SampleValue) float64 {
+	return calculateCoverageScore(allSamples, weakSamples)
+}
 
-// DetermineSeverity exports determineSeverity for testing.
-var DetermineSeverity = determineSeverity
+// ExportDetermineSeverity exports determineSeverity for testing.
+func ExportDetermineSeverity(avgRSSI float64) string {
+	return determineSeverity(avgRSSI)
+}
 
-// GenerateRecommendations exports generateRecommendations for testing.
-var GenerateRecommendations = generateRecommendations
+// ExportGenerateRecommendations exports generateRecommendations for testing.
+func ExportGenerateRecommendations(
+	deadZones []DeadZone,
+	coverageScore float64,
+	totalSamples int,
+) []string {
+	return generateRecommendations(deadZones, coverageScore, totalSamples)
+}
 
 // SetSurvey sets a survey in the manager for testing.
 func (m *Manager) SetSurvey(s *Survey) {
@@ -50,41 +65,71 @@ func (m *Manager) GetIperfManager() any {
 	return m.iperfManager
 }
 
-// Distance exports distance for testing.
-var Distance = distance
+// ExportDistance exports distance for testing.
+func ExportDistance(p1, p2 Point2D) float64 {
+	return distance(p1, p2)
+}
 
-// ExtractValue exports extractValue for testing.
-var ExtractValue = extractValue
+// ExportExtractValue exports extractValue for testing.
+func ExportExtractValue(sampleData any, valueType string) float64 {
+	return extractValue(sampleData, valueType)
+}
 
-// ExtractPassiveValue exports extractPassiveValue for testing.
-var ExtractPassiveValue = extractPassiveValue
+// ExportExtractPassiveValue exports extractPassiveValue for testing.
+func ExportExtractPassiveValue(data *PassiveSample, valueType string) float64 {
+	return extractPassiveValue(data, valueType)
+}
 
-// ExtractActiveValue exports extractActiveValue for testing.
-var ExtractActiveValue = extractActiveValue
+// ExportExtractActiveValue exports extractActiveValue for testing.
+func ExportExtractActiveValue(data *ActiveSample, valueType string) float64 {
+	return extractActiveValue(data, valueType)
+}
 
-// ExtractThroughputValue exports extractThroughputValue for testing.
-var ExtractThroughputValue = extractThroughputValue
+// ExportExtractThroughputValue exports extractThroughputValue for testing.
+func ExportExtractThroughputValue(data *ThroughputSample, valueType string) float64 {
+	return extractThroughputValue(data, valueType)
+}
 
-// ExtractMapValue exports extractMapValue for testing.
-var ExtractMapValue = extractMapValue
+// ExportExtractMapValue exports extractMapValue for testing.
+func ExportExtractMapValue(data map[string]any, valueType string) float64 {
+	return extractMapValue(data, valueType)
+}
 
-// GetHeatmapDimensions exports getHeatmapDimensions for testing.
-var GetHeatmapDimensions = getHeatmapDimensions
+// ExportGetHeatmapDimensions exports getHeatmapDimensions for testing.
+func ExportGetHeatmapDimensions(s *Survey) (int, int) {
+	return getHeatmapDimensions(s)
+}
 
-// MapHeatmapTypeToValueType exports mapHeatmapTypeToValueType for testing.
-var MapHeatmapTypeToValueType = mapHeatmapTypeToValueType
+// ExportMapHeatmapTypeToValueType exports mapHeatmapTypeToValueType for testing.
+func ExportMapHeatmapTypeToValueType(ht HeatmapType) string {
+	return mapHeatmapTypeToValueType(ht)
+}
 
-// GetColorScaleForType exports getColorScaleForType for testing.
-var GetColorScaleForType = getColorScaleForType
+// ExportGetColorScaleForType exports getColorScaleForType for testing.
+func ExportGetColorScaleForType(ht HeatmapType) *ColorScale {
+	return getColorScaleForType(ht)
+}
 
-// RenderHeatmapToImage exports renderHeatmapToImage for testing.
-var RenderHeatmapToImage = renderHeatmapToImage
+// ExportRenderHeatmapToImage exports renderHeatmapToImage for testing.
+func ExportRenderHeatmapToImage(
+	img *image.RGBA,
+	grid [][]float64,
+	cellSize int,
+	scale *ColorScale,
+	opacity uint8,
+) {
+	renderHeatmapToImage(img, grid, cellSize, scale, opacity)
+}
 
-// RenderSamplePoints exports renderSamplePoints for testing.
-var RenderSamplePoints = renderSamplePoints
+// ExportRenderSamplePoints exports renderSamplePoints for testing.
+func ExportRenderSamplePoints(img *image.RGBA, samples []SampleValue) {
+	renderSamplePoints(img, samples)
+}
 
-// RenderGrid exports renderGrid for testing.
-var RenderGrid = renderGrid
+// ExportRenderGrid exports renderGrid for testing.
+func ExportRenderGrid(img *image.RGBA, cellSize int) {
+	renderGrid(img, cellSize)
+}
 
 // CreateTestImage creates a test image for testing.
 func CreateTestImage(width, height int) *image.RGBA {

@@ -149,11 +149,11 @@ func (c *ProfilerConfig) GetPortsForIntensity() []int {
 	case PortScanOff:
 		return nil
 	case PortScanQuick:
-		return QuickPorts
+		return GetQuickPorts()
 	case PortScanStandard:
-		return StandardPorts
+		return GetStandardPorts()
 	case PortScanComprehensive:
-		return ComprehensivePorts
+		return GetComprehensivePorts()
 	case PortScanCustom:
 		return c.CustomPorts
 	default:
@@ -481,7 +481,7 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 	p.profiles[ip] = profile
 	p.mu.Unlock()
 
-	logging.GetLogger().InfoContext(ctx, 
+	logging.GetLogger().InfoContext(ctx,
 		"Profiled device",
 		"ip",
 		ip,
@@ -596,7 +596,7 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		return nil
 	}
 
-	logging.GetLogger().DebugContext(ctx, 
+	logging.GetLogger().DebugContext(ctx,
 		"Attempting SNMP probe",
 		"ip",
 		ip,
@@ -613,7 +613,7 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		return nil
 	}
 
-	logging.GetLogger().InfoContext(ctx, 
+	logging.GetLogger().InfoContext(ctx,
 		"SNMP probe succeeded",
 		"ip",
 		ip,

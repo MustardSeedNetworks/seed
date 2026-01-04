@@ -38,7 +38,7 @@ func NewScanningPhase(
 		Enabled:           pipelineConfig.PortScan.Intensity != PortScanOff,
 		Timeout:           pipelineConfig.Timing.PhaseTimeout,
 		MaxConcurrent:     pipelineConfig.Timing.MaxConcurrentHosts,
-		QuickPorts:        QuickPorts,
+		QuickPorts:        GetQuickPorts(),
 		PortScanIntensity: pipelineConfig.PortScan.Intensity,
 		TimingProfile:     pipelineConfig.Timing.Profile,
 		CustomPorts:       pipelineConfig.PortScan.CustomPorts,

@@ -14,7 +14,7 @@ import (
 // TestCryptoRandReadSuccess verifies normal operation succeeds.
 func TestCryptoRandReadSuccess(t *testing.T) {
 	b := make([]byte, 32)
-	err := auth.CryptoRandRead(b, "test_operation")
+	err := auth.ExportCryptoRandRead(b, "test_operation")
 	if err != nil {
 		t.Fatalf("CryptoRandRead failed on normal operation: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestCryptoRandReadLogging(t *testing.T) {
 
 	// Normal operation should not log warnings
 	b := make([]byte, 16)
-	err := auth.CryptoRandRead(b, "test_normal")
+	err := auth.ExportCryptoRandRead(b, "test_normal")
 	if err != nil {
 		t.Fatalf("CryptoRandRead failed: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestRandomCharWithRetry(t *testing.T) {
 
 	// Generate multiple characters
 	for i := range 100 {
-		c, err := auth.RandomChar(chars)
+		c, err := auth.ExportRandomChar(chars)
 		if err != nil {
 			t.Fatalf("RandomChar failed on iteration %d: %v", i, err)
 		}
@@ -110,7 +110,7 @@ func TestRandomIntWithRetry(t *testing.T) {
 
 	for _, n := range testCases {
 		for i := range 50 {
-			result, err := auth.RandomInt(n)
+			result, err := auth.ExportRandomInt(n)
 			if err != nil {
 				t.Fatalf("RandomInt(%d) failed on iteration %d: %v", n, i, err)
 			}
@@ -152,7 +152,7 @@ func TestCryptoRandReadRetryBehavior(t *testing.T) {
 	// and works correctly under normal conditions
 
 	b := make([]byte, 32)
-	err := auth.CryptoRandRead(b, "test_retry_params")
+	err := auth.ExportCryptoRandRead(b, "test_retry_params")
 	if err != nil {
 		t.Fatalf("CryptoRandRead failed: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestCryptoRandReadRetryBehavior(t *testing.T) {
 // TestCryptoRandReadSmallBuffer tests with a small buffer.
 func TestCryptoRandReadSmallBuffer(t *testing.T) {
 	b := make([]byte, 1)
-	err := auth.CryptoRandRead(b, "test_small_buffer")
+	err := auth.ExportCryptoRandRead(b, "test_small_buffer")
 	if err != nil {
 		t.Fatalf("CryptoRandRead failed with small buffer: %v", err)
 	}
@@ -176,7 +176,7 @@ func TestCryptoRandReadSmallBuffer(t *testing.T) {
 // TestCryptoRandReadLargeBuffer tests with a large buffer.
 func TestCryptoRandReadLargeBuffer(t *testing.T) {
 	b := make([]byte, 4096)
-	err := auth.CryptoRandRead(b, "test_large_buffer")
+	err := auth.ExportCryptoRandRead(b, "test_large_buffer")
 	if err != nil {
 		t.Fatalf("CryptoRandRead failed with large buffer: %v", err)
 	}

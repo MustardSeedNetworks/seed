@@ -408,7 +408,7 @@ func TestFilterWeakSamples(t *testing.T) {
 		{Point: survey.Point2D{X: 400, Y: 400}, Value: -90}, // Weak
 	}
 
-	weak := survey.FilterWeakSamples(samples, -75)
+	weak := survey.ExportFilterWeakSamples(samples, -75)
 
 	if len(weak) != 2 {
 		t.Errorf("Expected 2 weak samples, got %d", len(weak))
@@ -441,7 +441,7 @@ func TestCalculateCoverageScore(t *testing.T) {
 			allSamples := make([]survey.SampleValue, tt.totalSamples)
 			weakSamples := make([]survey.SampleValue, tt.weakSamples)
 
-			score := survey.CalculateCoverageScore(allSamples, weakSamples)
+			score := survey.ExportCalculateCoverageScore(allSamples, weakSamples)
 
 			if tt.expectZeroScore {
 				if score != 0.0 {
@@ -471,7 +471,7 @@ func TestDetermineSeverity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result := survey.DetermineSeverity(tt.rssi)
+		result := survey.ExportDetermineSeverity(tt.rssi)
 		if result != tt.severity {
 			t.Errorf("RSSI %.2f: expected '%s', got '%s'", tt.rssi, tt.severity, result)
 		}
@@ -514,7 +514,7 @@ func TestGenerateRecommendations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			recs := survey.GenerateRecommendations(tt.deadZones, tt.coverageScore, tt.totalSamples)
+			recs := survey.ExportGenerateRecommendations(tt.deadZones, tt.coverageScore, tt.totalSamples)
 
 			if len(recs) < tt.minRecCount {
 				t.Errorf("Expected at least %d recommendations, got %d", tt.minRecCount, len(recs))

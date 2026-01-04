@@ -291,7 +291,7 @@ func TestGetColorScaleForType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.heatmapType), func(t *testing.T) {
-			scale := survey.GetColorScaleForType(tt.heatmapType)
+			scale := survey.ExportGetColorScaleForType(tt.heatmapType)
 			if scale.Name != tt.scaleName {
 				t.Errorf("getColorScaleForType(%s) = %s, want %s",
 					tt.heatmapType, scale.Name, tt.scaleName)
@@ -316,7 +316,7 @@ func TestMapHeatmapTypeToValueType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.input), func(t *testing.T) {
-			got := survey.MapHeatmapTypeToValueType(tt.input)
+			got := survey.ExportMapHeatmapTypeToValueType(tt.input)
 			if got != tt.expected {
 				t.Errorf("mapHeatmapTypeToValueType(%s) = %s, want %s",
 					tt.input, got, tt.expected)
@@ -333,7 +333,7 @@ func TestGetHeatmapDimensions_FloorPlan(t *testing.T) {
 		},
 	}
 
-	width, height := survey.GetHeatmapDimensions(s)
+	width, height := survey.ExportGetHeatmapDimensions(s)
 	if width != 500 {
 		t.Errorf("Expected width 500, got %d", width)
 	}
@@ -352,7 +352,7 @@ func TestGetHeatmapDimensions_FromSamples(t *testing.T) {
 		},
 	}
 
-	width, height := survey.GetHeatmapDimensions(s)
+	width, height := survey.ExportGetHeatmapDimensions(s)
 	// Should be max + padding (50).
 	if width != 250 {
 		t.Errorf("Expected width 250 (200+50), got %d", width)
@@ -368,7 +368,7 @@ func TestGetHeatmapDimensions_NoData(t *testing.T) {
 		Samples:   []*survey.SamplePoint{},
 	}
 
-	width, height := survey.GetHeatmapDimensions(s)
+	width, height := survey.ExportGetHeatmapDimensions(s)
 	if width != 0 || height != 0 {
 		t.Errorf("Expected 0x0, got %dx%d", width, height)
 	}
@@ -384,7 +384,7 @@ func TestRenderHeatmapToImage(t *testing.T) {
 	scale := &survey.RSSIColorScale
 
 	// Should not panic.
-	survey.RenderHeatmapToImage(img, grid, 20, scale, 180)
+	survey.ExportRenderHeatmapToImage(img, grid, 20, scale, 180)
 
 	// Verify some pixels were set.
 	c := img.At(5, 5)
@@ -404,7 +404,7 @@ func TestRenderHeatmapToImage_EmptyGrid(t *testing.T) {
 	scale := &survey.RSSIColorScale
 
 	// Should not panic.
-	survey.RenderHeatmapToImage(img, grid, 10, scale, 180)
+	survey.ExportRenderHeatmapToImage(img, grid, 10, scale, 180)
 
 	// Verify image was not modified (still transparent).
 	c := img.At(50, 50).(color.RGBA)
@@ -420,7 +420,7 @@ func TestRenderSamplePoints(t *testing.T) {
 	}
 
 	// Should not panic.
-	survey.RenderSamplePoints(img, samples)
+	survey.ExportRenderSamplePoints(img, samples)
 
 	// Check center is white (marker center).
 	c := img.At(50, 50).(color.RGBA)
@@ -438,7 +438,7 @@ func TestRenderSamplePoints_EdgeCases(t *testing.T) {
 	}
 
 	// Should not panic.
-	survey.RenderSamplePoints(img, samples)
+	survey.ExportRenderSamplePoints(img, samples)
 
 	// Verify corner markers were drawn (white center).
 	c := img.At(0, 0).(color.RGBA)
@@ -451,7 +451,7 @@ func TestRenderGrid(t *testing.T) {
 	img := survey.CreateTestImage(100, 100)
 
 	// Should not panic.
-	survey.RenderGrid(img, 20)
+	survey.ExportRenderGrid(img, 20)
 
 	// Check that vertical line exists at x=0.
 	c := img.At(0, 50).(color.RGBA)

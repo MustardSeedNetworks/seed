@@ -199,7 +199,7 @@ func TestDistance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := survey.Distance(tt.p1, tt.p2)
+			got := survey.ExportDistance(tt.p1, tt.p2)
 			if math.Abs(got-tt.expected) > 0.0001 {
 				t.Errorf("distance(%v, %v) = %f, want %f", tt.p1, tt.p2, got, tt.expected)
 			}
@@ -365,7 +365,7 @@ func TestExtractPassiveValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := survey.ExtractPassiveValue(sample, tt.valueType)
+			got := survey.ExportExtractPassiveValue(sample, tt.valueType)
 			if got != tt.expected {
 				t.Errorf("extractPassiveValue(%q) = %f, want %f", tt.valueType, got, tt.expected)
 			}
@@ -375,14 +375,14 @@ func TestExtractPassiveValue(t *testing.T) {
 
 func TestExtractPassiveValue_Empty(t *testing.T) {
 	// Nil sample.
-	result := survey.ExtractPassiveValue(nil, "rssi")
+	result := survey.ExportExtractPassiveValue(nil, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for nil sample, got %f", result)
 	}
 
 	// Empty networks.
 	sample := &survey.PassiveSample{Networks: []*wifi.ScannedNetwork{}}
-	result = survey.ExtractPassiveValue(sample, "rssi")
+	result = survey.ExportExtractPassiveValue(sample, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for empty networks, got %f", result)
 	}
@@ -408,7 +408,7 @@ func TestExtractActiveValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := survey.ExtractActiveValue(sample, tt.valueType)
+			got := survey.ExportExtractActiveValue(sample, tt.valueType)
 			if got != tt.expected {
 				t.Errorf("extractActiveValue(%q) = %f, want %f", tt.valueType, got, tt.expected)
 			}
@@ -417,7 +417,7 @@ func TestExtractActiveValue(t *testing.T) {
 }
 
 func TestExtractActiveValue_Nil(t *testing.T) {
-	result := survey.ExtractActiveValue(nil, "rssi")
+	result := survey.ExportExtractActiveValue(nil, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for nil sample, got %f", result)
 	}
@@ -448,7 +448,7 @@ func TestExtractThroughputValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := survey.ExtractThroughputValue(sample, tt.valueType)
+			got := survey.ExportExtractThroughputValue(sample, tt.valueType)
 			if got != tt.expected {
 				t.Errorf("extractThroughputValue(%q) = %f, want %f", tt.valueType, got, tt.expected)
 			}
@@ -457,7 +457,7 @@ func TestExtractThroughputValue(t *testing.T) {
 }
 
 func TestExtractThroughputValue_Nil(t *testing.T) {
-	result := survey.ExtractThroughputValue(nil, "rssi")
+	result := survey.ExportExtractThroughputValue(nil, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for nil sample, got %f", result)
 	}
@@ -487,7 +487,7 @@ func TestExtractMapValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := survey.ExtractMapValue(data, tt.valueType)
+			got := survey.ExportExtractMapValue(data, tt.valueType)
 			if got != tt.expected {
 				t.Errorf("extractMapValue(%q) = %f, want %f", tt.valueType, got, tt.expected)
 			}
@@ -500,7 +500,7 @@ func TestExtractMapValue_IntValue(t *testing.T) {
 		"rssi": int(-60),
 	}
 
-	result := survey.ExtractMapValue(data, "rssi")
+	result := survey.ExportExtractMapValue(data, "rssi")
 	if result != -60 {
 		t.Errorf("Expected -60 for int value, got %f", result)
 	}
@@ -509,14 +509,14 @@ func TestExtractMapValue_IntValue(t *testing.T) {
 func TestExtractMapValue_Missing(t *testing.T) {
 	data := map[string]any{}
 
-	result := survey.ExtractMapValue(data, "rssi")
+	result := survey.ExportExtractMapValue(data, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for missing key, got %f", result)
 	}
 }
 
 func TestExtractValue_UnsupportedType(t *testing.T) {
-	result := survey.ExtractValue("string data", "rssi")
+	result := survey.ExportExtractValue("string data", "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for unsupported type, got %f", result)
 	}
@@ -530,7 +530,7 @@ func TestExtractValue_PassiveSampleDirect(t *testing.T) {
 		},
 	}
 
-	result := survey.ExtractValue(sample, "rssi")
+	result := survey.ExportExtractValue(sample, "rssi")
 	if result != -55 {
 		t.Errorf("Expected -55, got %f", result)
 	}
@@ -542,7 +542,7 @@ func TestExtractValue_ActiveSampleDirect(t *testing.T) {
 		RSSI: -60,
 	}
 
-	result := survey.ExtractValue(sample, "rssi")
+	result := survey.ExportExtractValue(sample, "rssi")
 	if result != -60 {
 		t.Errorf("Expected -60, got %f", result)
 	}
@@ -554,7 +554,7 @@ func TestExtractValue_ThroughputSampleDirect(t *testing.T) {
 		RSSI: -65,
 	}
 
-	result := survey.ExtractValue(sample, "rssi")
+	result := survey.ExportExtractValue(sample, "rssi")
 	if result != -65 {
 		t.Errorf("Expected -65, got %f", result)
 	}
