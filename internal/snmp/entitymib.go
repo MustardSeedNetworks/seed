@@ -6,13 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"strings"
 
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // ENTITY-MIB OIDs (RFC 6933).
@@ -198,7 +198,7 @@ func walkEntityAttribute(
 		return nil
 	})
 	if err != nil {
-		slog.Debug("Failed to walk entity attribute", "oid", oid, "error", err)
+		logging.GetLogger().Debug("Failed to walk entity attribute", "oid", oid, "error", err)
 	}
 }
 

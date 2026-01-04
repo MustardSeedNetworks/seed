@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"strconv"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // LLDP-MIB OIDs.
@@ -189,7 +189,7 @@ func walkLLDPAttribute(
 		return nil
 	})
 	if err != nil {
-		slog.Debug("Failed to walk LLDP attribute", "oid", oid, "error", err)
+		logging.GetLogger().Debug("Failed to walk LLDP attribute", "oid", oid, "error", err)
 	}
 }
 

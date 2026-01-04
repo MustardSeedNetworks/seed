@@ -45,7 +45,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -471,7 +470,7 @@ func (h *Hub) Run() {
 			h.mu.Lock()
 			h.clients[client] = true
 			h.mu.Unlock()
-			slog.Debug("WebSocket client connected", "total_clients", len(h.clients))
+			logging.GetLogger().Debug("WebSocket client connected", "total_clients", len(h.clients))
 
 		case client := <-h.unregister:
 			h.mu.Lock()
@@ -480,7 +479,7 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 			h.mu.Unlock()
-			slog.Debug("WebSocket client disconnected", "total_clients", len(h.clients))
+			logging.GetLogger().Debug("WebSocket client disconnected", "total_clients", len(h.clients))
 
 		case message := <-h.broadcast:
 			// Collect slow clients under read lock, then remove them under write lock
@@ -541,14 +540,14 @@ func (h *Hub) Broadcast(msg Message) {
 	// Fixes #881: Check shutdown first to avoid timer allocation during shutdown
 	select {
 	case <-h.shutdown:
-		slog.Debug("Broadcast dropped - hub already shut down")
+		logging.GetLogger().Debug("Broadcast dropped - hub already shut down")
 		return
 	default:
 	}
 
 	data, err := json.Marshal(msg)
 	if err != nil {
-		slog.Error("Error marshaling message", "error", err)
+		logging.GetLogger().Error("Error marshaling message", "error", err)
 		return
 	}
 
@@ -558,9 +557,9 @@ func (h *Hub) Broadcast(msg Message) {
 		// Message sent successfully
 	case <-h.shutdown:
 		// Hub is shutting down, drop the message
-		slog.Debug("Broadcast dropped - hub shutting down")
+		logging.GetLogger().Debug("Broadcast dropped - hub shutting down")
 	case <-time.After(100 * time.Millisecond):
-		slog.Warn("Broadcast timeout - hub may be overloaded or stopped")
+		logging.GetLogger().Warn("Broadcast timeout - hub may be overloaded or stopped")
 	}
 }
 
@@ -778,7 +777,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := s.authManager.ValidateToken(r.Context(), token)
 	if err != nil {
-		slog.Warn("WebSocket auth failed", "error", err, "source", source)
+		logging.GetLogger().Warn("WebSocket auth failed", "error", err, "source", source)
 		logger := logging.FromContext(r.Context())
 		localizer := i18n.FromRequest(r)
 		sendErrorResponseWithDetails(
@@ -792,12 +791,12 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Debug("WebSocket authenticated", "username", claims.Username, "source", source)
+	logging.GetLogger().Debug("WebSocket authenticated", "username", claims.Username, "source", source)
 
 	// No response header needed for cookie auth
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		slog.Error("WebSocket upgrade error", "error", err)
+		logging.GetLogger().Error("WebSocket upgrade error", "error", err)
 		return
 	}
 
@@ -855,7 +854,7 @@ func (s *Server) sendInitialState(client *Client) {
 
 	data, err := json.Marshal(msg)
 	if err != nil {
-		slog.Error("Error marshaling initial state", "error", err)
+		logging.GetLogger().Error("Error marshaling initial state", "error", err)
 		return
 	}
 
@@ -863,13 +862,13 @@ func (s *Server) sendInitialState(client *Client) {
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				slog.Debug("Skipped initial state send (client gone)", "recover", r)
+				logging.GetLogger().Debug("Skipped initial state send (client gone)", "recover", r)
 			}
 		}()
 		select {
 		case client.send <- data:
 		default:
-			slog.Warn("Failed to send initial state to client")
+			logging.GetLogger().Warn("Failed to send initial state to client")
 		}
 	}()
 }
@@ -888,7 +887,7 @@ func (c *Client) close() {
 			// Successfully sent unregister request
 		case <-time.After(100 * time.Millisecond):
 			// Channel full or hub not responding, client already disconnected
-			slog.Debug("Client unregister timeout, connection already closed")
+			logging.GetLogger().Debug("Client unregister timeout, connection already closed")
 		}
 	})
 }
@@ -899,12 +898,12 @@ func (c *Client) readPump() {
 
 	c.conn.SetReadLimit(maxMessageSize)
 	if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-		slog.Error("Failed to set initial read deadline", "error", err)
+		logging.GetLogger().Error("Failed to set initial read deadline", "error", err)
 		return
 	}
 	c.conn.SetPongHandler(func(string) error {
 		if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-			slog.Error("Failed to extend read deadline", "error", err)
+			logging.GetLogger().Error("Failed to extend read deadline", "error", err)
 		}
 		return nil
 	})
@@ -913,18 +912,18 @@ func (c *Client) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				slog.Warn("WebSocket error", "error", err)
+				logging.GetLogger().Warn("WebSocket error", "error", err)
 			}
 			break
 		}
 
 		// Check rate limit before processing message
 		if !c.limiter.Allow() {
-			slog.Warn("WebSocket rate limit exceeded, closing connection")
+			logging.GetLogger().Warn("WebSocket rate limit exceeded, closing connection")
 			// Send close message with policy violation code (1008)
 			closeMsg := websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "rate limit exceeded")
 			if writeErr := c.conn.WriteControl(websocket.CloseMessage, closeMsg, time.Now().Add(writeWait)); writeErr != nil {
-				slog.Error("Failed to send rate limit close message", "error", writeErr)
+				logging.GetLogger().Error("Failed to send rate limit close message", "error", writeErr)
 			}
 			break
 		}
@@ -932,11 +931,11 @@ func (c *Client) readPump() {
 		// Handle incoming messages (e.g., settings updates, test triggers)
 		var msg Message
 		if unmarshalErr := json.Unmarshal(message, &msg); unmarshalErr != nil {
-			slog.Warn("Error parsing message", "error", unmarshalErr)
+			logging.GetLogger().Warn("Error parsing message", "error", unmarshalErr)
 			continue
 		}
 
-		slog.Debug("Received message", "type", msg.Type)
+		logging.GetLogger().Debug("Received message", "type", msg.Type)
 
 		// Handle different message types (issue #608 resolved)
 		switch msg.Type {
@@ -947,19 +946,19 @@ func (c *Client) readPump() {
 				select {
 				case c.send <- data:
 				default:
-					slog.Warn("Client send buffer full, dropping pong")
+					logging.GetLogger().Warn("Client send buffer full, dropping pong")
 				}
 			}
 
 		case "requestCardUpdate":
 			// Client requesting a specific card update
 			if cardID, ok := msg.Payload.(string); ok {
-				slog.Debug("Card update requested", "card_id", cardID)
+				logging.GetLogger().Debug("Card update requested", "card_id", cardID)
 				// The server will send the next scheduled update for this card
 			}
 
 		default:
-			slog.Warn("Unknown message type", "type", msg.Type)
+			logging.GetLogger().Warn("Unknown message type", "type", msg.Type)
 		}
 	}
 }
@@ -977,12 +976,12 @@ func (c *Client) writePump() {
 		select {
 		case message, ok := <-c.send:
 			if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
-				slog.Error("Failed to set write deadline", "error", err)
+				logging.GetLogger().Error("Failed to set write deadline", "error", err)
 				return
 			}
 			if !ok {
 				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
-					slog.Error("Failed to send close message", "error", err)
+					logging.GetLogger().Error("Failed to send close message", "error", err)
 				}
 				return
 			}
@@ -1019,7 +1018,7 @@ func (c *Client) writePump() {
 
 		case <-ticker.C:
 			if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
-				slog.Error("Failed to set ping write deadline", "error", err)
+				logging.GetLogger().Error("Failed to set ping write deadline", "error", err)
 				return
 			}
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {

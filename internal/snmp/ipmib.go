@@ -6,13 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"strings"
 
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // IP-MIB OIDs (RFC 4293).
@@ -152,7 +152,7 @@ func walkLegacyIPTable(params *gosnmp.GoSNMP) ([]IPAddressEntry, error) {
 		return nil
 	})
 	if walkErr != nil {
-		slog.Debug("Failed to walk ipAdEntIfIndex", "error", walkErr)
+		logging.GetLogger().Debug("Failed to walk ipAdEntIfIndex", "error", walkErr)
 	}
 
 	// Walk ipAdEntNetMask to get subnet masks.
@@ -173,7 +173,7 @@ func walkLegacyIPTable(params *gosnmp.GoSNMP) ([]IPAddressEntry, error) {
 		return nil
 	})
 	if walkErr != nil {
-		slog.Debug("Failed to walk ipAdEntNetMask", "error", walkErr)
+		logging.GetLogger().Debug("Failed to walk ipAdEntNetMask", "error", walkErr)
 	}
 
 	// Convert map to slice.
@@ -347,7 +347,7 @@ func walkIPAddressAttribute(
 		return nil
 	})
 	if err != nil {
-		slog.Debug("Failed to walk IP address attribute", "oid", oid, "error", err)
+		logging.GetLogger().Debug("Failed to walk IP address attribute", "oid", oid, "error", err)
 	}
 }
 

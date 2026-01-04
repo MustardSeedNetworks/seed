@@ -5,11 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Standard System MIB OIDs.
@@ -227,13 +227,13 @@ func queryWithV3(
 		return "", fmt.Errorf("SNMPv3 credential '%s' has empty username", cred.Name)
 	}
 	if cred.AuthProtocol != "" && cred.AuthProtocol != "NoAuth" && cred.AuthPassword == "" {
-		slog.Warn("SNMPv3 credential has auth protocol but empty password - authentication will likely fail",
+		logging.GetLogger().Warn("SNMPv3 credential has auth protocol but empty password - authentication will likely fail",
 			"credential_name", cred.Name,
 			"auth_protocol", cred.AuthProtocol,
 			"target", ip)
 	}
 	if cred.PrivProtocol != "" && cred.PrivProtocol != "NoPriv" && cred.PrivPassword == "" {
-		slog.Warn("SNMPv3 credential has privacy protocol but empty password - encryption will likely fail",
+		logging.GetLogger().Warn("SNMPv3 credential has privacy protocol but empty password - encryption will likely fail",
 			"credential_name", cred.Name,
 			"priv_protocol", cred.PrivProtocol,
 			"target", ip)
@@ -242,7 +242,7 @@ func queryWithV3(
 	// Warn if MD5 authentication is being used.
 	// MD5 is cryptographically broken and will be removed in the next major version.
 	if cred.AuthProtocol == AuthProtocolMD5 {
-		slog.Warn("SNMP MD5 authentication is deprecated and will be removed in the next major version",
+		logging.GetLogger().Warn("SNMP MD5 authentication is deprecated and will be removed in the next major version",
 			"target", ip,
 			"credential_name", cred.Name,
 			"recommendation", "Use SHA256 or SHA512 for secure authentication")
@@ -305,13 +305,13 @@ func queryMultipleWithV3(
 		return nil, fmt.Errorf("SNMPv3 credential '%s' has empty username", cred.Name)
 	}
 	if cred.AuthProtocol != "" && cred.AuthProtocol != "NoAuth" && cred.AuthPassword == "" {
-		slog.Warn("SNMPv3 credential has auth protocol but empty password - authentication will likely fail",
+		logging.GetLogger().Warn("SNMPv3 credential has auth protocol but empty password - authentication will likely fail",
 			"credential_name", cred.Name,
 			"auth_protocol", cred.AuthProtocol,
 			"target", ip)
 	}
 	if cred.PrivProtocol != "" && cred.PrivProtocol != "NoPriv" && cred.PrivPassword == "" {
-		slog.Warn("SNMPv3 credential has privacy protocol but empty password - encryption will likely fail",
+		logging.GetLogger().Warn("SNMPv3 credential has privacy protocol but empty password - encryption will likely fail",
 			"credential_name", cred.Name,
 			"priv_protocol", cred.PrivProtocol,
 			"target", ip)
@@ -320,7 +320,7 @@ func queryMultipleWithV3(
 	// Warn if MD5 authentication is being used.
 	// MD5 is cryptographically broken and will be removed in the next major version.
 	if cred.AuthProtocol == AuthProtocolMD5 {
-		slog.Warn("SNMP MD5 authentication is deprecated and will be removed in the next major version",
+		logging.GetLogger().Warn("SNMP MD5 authentication is deprecated and will be removed in the next major version",
 			"target", ip,
 			"credential_name", cred.Name,
 			"recommendation", "Use SHA256 or SHA512 for secure authentication")

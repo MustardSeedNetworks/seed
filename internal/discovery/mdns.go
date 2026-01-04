@@ -10,13 +10,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"maps"
 	"net"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/logging"
 	"golang.org/x/net/dns/dnsmessage"
 )
 
@@ -437,7 +437,7 @@ func (l *MDNSListener) listen() {
 	// Join mDNS multicast group
 	addr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%d", mdnsIPv4Addr, mdnsPort))
 	if err != nil {
-		slog.Error("mDNS: failed to resolve multicast address", "error", err)
+		logging.GetLogger().Error("mDNS: failed to resolve multicast address", "error", err)
 		return
 	}
 
@@ -446,13 +446,13 @@ func (l *MDNSListener) listen() {
 	if l.interfaceName != "" {
 		iface, err = net.InterfaceByName(l.interfaceName)
 		if err != nil {
-			slog.Warn("mDNS: interface not found, using default", "interface", l.interfaceName, "error", err)
+			logging.GetLogger().Warn("mDNS: interface not found, using default", "interface", l.interfaceName, "error", err)
 		}
 	}
 
 	conn, err := net.ListenMulticastUDP("udp4", iface, addr)
 	if err != nil {
-		slog.Error("mDNS: failed to join multicast group", "error", err)
+		logging.GetLogger().Error("mDNS: failed to join multicast group", "error", err)
 		return
 	}
 	defer func() { _ = conn.Close() }()
@@ -460,7 +460,7 @@ func (l *MDNSListener) listen() {
 	// Set read buffer
 	_ = conn.SetReadBuffer(65536)
 
-	slog.Info("mDNS listener started", "interface", l.interfaceName)
+	logging.GetLogger().Info("mDNS listener started", "interface", l.interfaceName)
 
 	buf := make([]byte, 4096)
 	for {
@@ -508,7 +508,7 @@ func (l *MDNSListener) processPacket(data []byte, remoteAddr *net.UDPAddr) {
 					l.mu.Lock()
 					l.names[answerIP] = name
 					l.mu.Unlock()
-					slog.Debug("mDNS: captured name", "ip", answerIP, "name", name)
+					logging.GetLogger().Debug("mDNS: captured name", "ip", answerIP, "name", name)
 				}
 			}
 		}

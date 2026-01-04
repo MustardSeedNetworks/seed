@@ -28,6 +28,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // TrustedProxies manages a list of trusted proxy IP addresses and CIDR ranges.
@@ -151,7 +153,7 @@ func (tp *TrustedProxies) GetClientIPWithProxy(r *http.Request) string {
 		// Not from trusted proxy - use RemoteAddr only
 		// Log at debug level to help troubleshoot misconfiguration
 		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			slog.Debug("Ignoring X-Forwarded-For from untrusted source",
+			logging.GetLogger().Debug("Ignoring X-Forwarded-For from untrusted source",
 				"xff", xff,
 				"remote_addr", r.RemoteAddr)
 		}
@@ -165,7 +167,7 @@ func (tp *TrustedProxies) GetClientIPWithProxy(r *http.Request) string {
 		if xri := r.Header.Get("X-Real-IP"); xri != "" {
 			ip := net.ParseIP(strings.TrimSpace(xri))
 			if ip != nil {
-				slog.Debug("Using X-Real-IP from trusted proxy",
+				logging.GetLogger().Debug("Using X-Real-IP from trusted proxy",
 					"client_ip", ip.String(),
 					"proxy", remoteIP)
 				return ip.String()
@@ -180,7 +182,7 @@ func (tp *TrustedProxies) GetClientIPWithProxy(r *http.Request) string {
 		clientIP := strings.TrimSpace(ips[0])
 		ip := net.ParseIP(clientIP)
 		if ip != nil {
-			slog.Debug("Using X-Forwarded-For from trusted proxy",
+			logging.GetLogger().Debug("Using X-Forwarded-For from trusted proxy",
 				"client_ip", ip.String(),
 				"proxy", remoteIP,
 				"xff_chain", xff)

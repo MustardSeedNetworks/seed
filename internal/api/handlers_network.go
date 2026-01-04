@@ -277,7 +277,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 		if s.discoveryService != nil {
 			if err := s.discoveryService.SetInterface(req.Interface); err != nil {
 				// Log but don't fail - discovery may not work without root
-				slog.Warn("Failed to set discovery interface", "error", err)
+				logging.GetLogger().Warn("Failed to set discovery interface", "error", err)
 			}
 		}
 
@@ -409,7 +409,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 
 	linkStatus, err := s.netManager.GetLinkStatus(currentIface)
 	if err != nil {
-		slog.Warn("Failed to get link status", "interface", currentIface, "error", err)
+		logging.GetLogger().Warn("Failed to get link status", "interface", currentIface, "error", err)
 	}
 
 	resp := LinkResponse{Interface: currentIface, LinkUp: false, MTU: ifaceInfo.MTU}
@@ -764,7 +764,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	// Refresh interface data
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		slog.Warn("Failed to refresh interfaces after MTU change", "error", err)
+		logging.GetLogger().Warn("Failed to refresh interfaces after MTU change", "error", err)
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
@@ -786,7 +786,7 @@ func (s *Server) getInterfaceFromRequest(r *http.Request) string {
 	if iface := r.URL.Query().Get("interface"); iface != "" {
 		// Validate interface name to prevent path traversal/injection
 		if err := validation.ValidateInterface(iface); err != nil {
-			slog.Warn("Invalid interface name in request", "interface", iface, "error", err)
+			logging.GetLogger().Warn("Invalid interface name in request", "interface", iface, "error", err)
 			// Fall back to current interface instead of returning invalid input
 			if s.netManager != nil {
 				return s.netManager.GetCurrentInterface()

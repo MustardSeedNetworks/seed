@@ -5,13 +5,13 @@ package snmp
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"strconv"
 	"strings"
 
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Q-BRIDGE-MIB OIDs (IEEE 802.1Q).
@@ -112,7 +112,7 @@ func walkVLANTable(params *gosnmp.GoSNMP) []VLANInfo {
 	})
 	if err != nil {
 		// If static table fails, try current table
-		slog.Debug("Failed to walk dot1qVlanStaticName, trying current table", "error", err)
+		logging.GetLogger().Debug("Failed to walk dot1qVlanStaticName, trying current table", "error", err)
 	}
 
 	// Walk dot1qVlanStaticEgressPorts to get port membership.
@@ -136,7 +136,7 @@ func walkVLANTable(params *gosnmp.GoSNMP) []VLANInfo {
 		return nil
 	})
 	if walkErr != nil {
-		slog.Debug("Failed to walk dot1qVlanStaticEgressPorts", "error", walkErr)
+		logging.GetLogger().Debug("Failed to walk dot1qVlanStaticEgressPorts", "error", walkErr)
 	}
 
 	// Walk dot1qVlanStaticRowStatus to get VLAN status.
@@ -155,7 +155,7 @@ func walkVLANTable(params *gosnmp.GoSNMP) []VLANInfo {
 		return nil
 	})
 	if walkErr != nil {
-		slog.Debug("Failed to walk dot1qVlanStaticRowStatus", "error", walkErr)
+		logging.GetLogger().Debug("Failed to walk dot1qVlanStaticRowStatus", "error", walkErr)
 	}
 
 	// Convert map to slice.

@@ -6,10 +6,11 @@ package discovery
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // EnumerationPhase implements the Phase interface for device enumeration.
@@ -117,7 +118,7 @@ func (p *EnumerationPhase) Run(
 	progressCh chan<- PhaseProgressPayload,
 ) ([]*DiscoveredDevice, error) {
 	start := time.Now()
-	slog.Info("Enumeration phase starting",
+	logging.GetLogger().Info("Enumeration phase starting",
 		"arp", p.config.ARPScan,
 		"icmp", p.config.ICMPScan,
 		"ndp", p.config.NDPScan)
@@ -142,7 +143,7 @@ func (p *EnumerationPhase) Run(
 		wg.Go(func() {
 			progress.SetPhase("arp_scan")
 			if err := p.runARPScan(scanCtx, &progress); err != nil {
-				slog.Warn("ARP scan failed", "error", err)
+				logging.GetLogger().Warn("ARP scan failed", "error", err)
 				progress.AddError("arp_scan", err)
 			}
 			progress.MarkComplete("arp_scan")
@@ -154,7 +155,7 @@ func (p *EnumerationPhase) Run(
 		wg.Go(func() {
 			progress.SetPhase("icmp_scan")
 			if err := p.runICMPScan(scanCtx, &progress); err != nil {
-				slog.Warn("ICMP scan failed", "error", err)
+				logging.GetLogger().Warn("ICMP scan failed", "error", err)
 				progress.AddError("icmp_scan", err)
 			}
 			progress.MarkComplete("icmp_scan")
@@ -219,7 +220,7 @@ func (p *EnumerationPhase) Run(
 		}
 	}
 
-	slog.Info("Enumeration phase completed",
+	logging.GetLogger().Info("Enumeration phase completed",
 		"devices", len(devices),
 		"duration", time.Since(start))
 
@@ -412,7 +413,7 @@ func NewEnhancedEnumerator(
 	pinger, err := NewICMPPinger(config.Timing.PingTimeout)
 	if err != nil {
 		// Non-fatal - ICMP may require elevated privileges
-		slog.Warn("ICMP pinger unavailable", "error", err)
+		logging.GetLogger().Warn("ICMP pinger unavailable", "error", err)
 	}
 
 	return &EnhancedEnumerator{
@@ -429,11 +430,11 @@ func (e *EnhancedEnumerator) EnumerateSubnet(ctx context.Context, cidr string) (
 		return nil, fmt.Errorf("parsing CIDR %s: %w", cidr, err)
 	}
 
-	slog.Info("Enhanced enumeration starting", "subnet", cidr)
+	logging.GetLogger().Info("Enhanced enumeration starting", "subnet", cidr)
 
 	// Generate all host IPs in subnet
 	hosts := generateHostIPs(subnet)
-	slog.Debug("Host IPs generated", "count", len(hosts))
+	logging.GetLogger().Debug("Host IPs generated", "count", len(hosts))
 
 	// Multi-pass ARP if enabled
 	if e.config.MultiPassARP && e.config.ARPPasses > 1 {
@@ -444,7 +445,7 @@ func (e *EnhancedEnumerator) EnumerateSubnet(ctx context.Context, cidr string) (
 			default:
 			}
 
-			slog.Debug("ARP pass", "pass", pass+1, "total", e.config.ARPPasses)
+			logging.GetLogger().Debug("ARP pass", "pass", pass+1, "total", e.config.ARPPasses)
 
 			// Add delay between passes for IDS-friendly scanning
 			if e.config.SlowScan && pass > 0 {
@@ -456,7 +457,7 @@ func (e *EnhancedEnumerator) EnumerateSubnet(ctx context.Context, cidr string) (
 			}
 
 			if scanErr := e.deviceDiscovery.Scan(ctx); scanErr != nil {
-				slog.Warn("ARP pass failed", "pass", pass+1, "error", scanErr)
+				logging.GetLogger().Warn("ARP pass failed", "pass", pass+1, "error", scanErr)
 			}
 		}
 	} else {
@@ -492,7 +493,7 @@ func (e *EnhancedEnumerator) retryUnresponsive(ctx context.Context, hosts []net.
 		return
 	}
 
-	slog.Debug("Retrying unresponsive hosts",
+	logging.GetLogger().Debug("Retrying unresponsive hosts",
 		"count", len(unresponsive),
 		"retries", e.config.RetryCount)
 

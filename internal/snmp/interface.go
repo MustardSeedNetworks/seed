@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Interface table OIDs (IF-MIB).
@@ -211,12 +211,12 @@ func walkInterfaceTable(params *gosnmp.GoSNMP) ([]InterfaceInfo, error) {
 		// Extract ifIndex from OID.
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 2 {
-			slog.Warn("invalid OID format", "oid", pdu.Name)
+			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 		ifIndex, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			slog.Warn("failed to parse ifIndex", "error", err)
+			logging.GetLogger().Warn("failed to parse ifIndex", "error", err)
 			return nil
 		}
 
@@ -280,12 +280,12 @@ func walkIfAttribute(
 		// Extract ifIndex from OID.
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 2 {
-			slog.Warn("invalid OID format", "oid", pdu.Name)
+			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 		ifIndex, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			slog.Warn("failed to parse ifIndex", "error", err)
+			logging.GetLogger().Warn("failed to parse ifIndex", "error", err)
 			return nil
 		}
 
@@ -299,7 +299,7 @@ func walkIfAttribute(
 		return nil
 	})
 	if err != nil {
-		slog.Warn("failed to walk OID", "oid", oid, "error", err)
+		logging.GetLogger().Warn("failed to walk OID", "oid", oid, "error", err)
 	}
 }
 
@@ -401,7 +401,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		// OID format: .1.3.6.1.2.1.17.7.1.2.2.1.2.VLAN.MAC1.MAC2.MAC3.MAC4.MAC5.MAC6
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 8 {
-			slog.Warn("invalid OID format", "oid", pdu.Name)
+			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
@@ -409,7 +409,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		vlanIdx := len(parts) - 7
 		vlan, err := strconv.Atoi(parts[vlanIdx])
 		if err != nil {
-			slog.Warn("failed to parse VLAN", "error", err)
+			logging.GetLogger().Warn("failed to parse VLAN", "error", err)
 			return nil
 		}
 
@@ -421,7 +421,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		bridgePort := formatSNMPValue(pdu)
 		bridgePortNum, err := strconv.Atoi(bridgePort)
 		if err != nil {
-			slog.Warn("failed to parse bridge port", "error", err)
+			logging.GetLogger().Warn("failed to parse bridge port", "error", err)
 			return nil
 		}
 
@@ -448,7 +448,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 	walkErr := params.BulkWalk(OIDDot1qTpFdbStatus, func(pdu gosnmp.SnmpPDU) error {
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 8 {
-			slog.Warn("invalid OID format", "oid", pdu.Name)
+			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
@@ -468,7 +468,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		return nil
 	})
 	if walkErr != nil {
-		slog.Warn("failed to walk MAC status", "error", walkErr)
+		logging.GetLogger().Warn("failed to walk MAC status", "error", walkErr)
 	}
 
 	// Convert map to slice.
@@ -520,7 +520,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		// OID format: .1.3.6.1.2.1.17.4.3.1.2.MAC1.MAC2.MAC3.MAC4.MAC5.MAC6
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 7 {
-			slog.Warn("invalid OID format", "oid", pdu.Name)
+			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
@@ -532,7 +532,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		bridgePort := formatSNMPValue(pdu)
 		bridgePortNum, err := strconv.Atoi(bridgePort)
 		if err != nil {
-			slog.Warn("failed to parse bridge port", "error", err)
+			logging.GetLogger().Warn("failed to parse bridge port", "error", err)
 			return nil
 		}
 
@@ -559,7 +559,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 	walkErr := params.BulkWalk(OIDDot1dTpFdbStatus, func(pdu gosnmp.SnmpPDU) error {
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 7 {
-			slog.Warn("invalid OID format", "oid", pdu.Name)
+			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
@@ -578,7 +578,7 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		return nil
 	})
 	if walkErr != nil {
-		slog.Warn("failed to walk MAC status", "error", walkErr)
+		logging.GetLogger().Warn("failed to walk MAC status", "error", walkErr)
 	}
 
 	// Convert map to slice.
@@ -663,13 +663,13 @@ func walkPortVLANs(params *gosnmp.GoSNMP, ifIndex int) ([]int, error) {
 		// OID format: .1.3.6.1.2.1.17.7.1.4.2.1.4.VLAN_ID
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 2 {
-			slog.Warn("invalid OID format", "oid", pdu.Name)
+			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
 		vlanID, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			slog.Warn("failed to parse VLAN ID", "error", err)
+			logging.GetLogger().Warn("failed to parse VLAN ID", "error", err)
 			return nil
 		}
 
@@ -696,19 +696,19 @@ func getBridgePortMapping(params *gosnmp.GoSNMP) map[int]int {
 		// OID format: .1.3.6.1.2.1.17.1.4.1.2.BRIDGE_PORT
 		parts := strings.Split(pdu.Name, ".")
 		if len(parts) < 2 {
-			slog.Warn("invalid OID format", "oid", pdu.Name)
+			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
 		bridgePort, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			slog.Warn("failed to parse bridge port", "error", err)
+			logging.GetLogger().Warn("failed to parse bridge port", "error", err)
 			return nil
 		}
 
 		ifIndex, err := strconv.Atoi(formatSNMPValue(pdu))
 		if err != nil {
-			slog.Warn("failed to parse ifIndex", "error", err)
+			logging.GetLogger().Warn("failed to parse ifIndex", "error", err)
 			return nil
 		}
 
@@ -716,7 +716,7 @@ func getBridgePortMapping(params *gosnmp.GoSNMP) map[int]int {
 		return nil
 	})
 	if err != nil {
-		slog.Warn("failed to get bridge port mapping", "error", err)
+		logging.GetLogger().Warn("failed to get bridge port mapping", "error", err)
 	}
 
 	return mapping

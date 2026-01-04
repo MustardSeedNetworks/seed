@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"math/big"
 	"net"
 	"net/http"
@@ -190,9 +189,9 @@ func NewServer(
 		}
 		if len(enabledCIDRs) > 0 {
 			if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
-				slog.Warn("Failed to set additional subnets", "error", err)
+				logging.GetLogger().Warn("Failed to set additional subnets", "error", err)
 			} else {
-				slog.Info("Configured additional subnets for scanning", "count", len(enabledCIDRs))
+				logging.GetLogger().Info("Configured additional subnets for scanning", "count", len(enabledCIDRs))
 			}
 		}
 	}
@@ -206,7 +205,7 @@ func NewServer(
 		s.iperfManager,
 	)
 	if err := s.surveyManager.LoadSurveys(); err != nil {
-		slog.Warn("Failed to load surveys", "error", err)
+		logging.GetLogger().Warn("Failed to load surveys", "error", err)
 	}
 
 	// Initialize OAuth manager for SSO
@@ -223,9 +222,9 @@ func NewServer(
 		if cfg.Auth.DefaultPasswordHash != "" &&
 			cfg.Auth.DefaultPasswordHash != auth.SetupModePlaceholder {
 			if err := userStore.MigrateUserFromConfig(context.Background(), cfg.Auth.DefaultUsername, cfg.Auth.DefaultPasswordHash); err != nil {
-				slog.Error("Failed to migrate user from config", "error", err)
+				logging.GetLogger().Error("Failed to migrate user from config", "error", err)
 			} else {
-				slog.Info("User migrated from config to database", "username", cfg.Auth.DefaultUsername)
+				logging.GetLogger().Info("User migrated from config to database", "username", cfg.Auth.DefaultUsername)
 			}
 		}
 
@@ -248,15 +247,15 @@ func NewServer(
 	// Wire up database persistence for logs if database is available
 	if db != nil {
 		s.logBroadcaster.SetDBWriter(&dbLogWriterAdapter{db: db})
-		slog.Info("Log broadcaster initialized with database persistence", "buffer_size", 1000)
+		logging.GetLogger().Info("Log broadcaster initialized with database persistence", "buffer_size", 1000)
 	} else {
-		slog.Info("Log broadcaster initialized (memory-only, no database)", "buffer_size", 1000)
+		logging.GetLogger().Info("Log broadcaster initialized (memory-only, no database)", "buffer_size", 1000)
 	}
 
 	// Wire up database persistence for devices if database is available
 	if db != nil {
 		s.deviceDiscovery.SetDBWriter(&dbDeviceWriterAdapter{db: db})
-		slog.Info("Device discovery initialized with database persistence")
+		logging.GetLogger().Info("Device discovery initialized with database persistence")
 	}
 
 	// Create SHARED DeviceProfiler - used by both Service and Pipeline
@@ -265,7 +264,7 @@ func NewServer(
 
 	// Initialize discovery service with the shared profiler
 	s.discoveryService = discovery.NewService(cfg, cfg.Interface.Default, sharedProfiler)
-	slog.Info("Discovery service initialized with shared profiler")
+	logging.GetLogger().Info("Discovery service initialized with shared profiler")
 
 	// Initialize discovery pipeline with the SAME shared profiler
 	pipelineCfg := discovery.PipelineConfigFromAdapter(&cfg.Pipeline)
@@ -281,14 +280,14 @@ func NewServer(
 
 	// Set up pipeline completion callback to sync results back to service
 	s.discoveryService.SetOnPipelineComplete(func(devices []*discovery.DiscoveredDevice) {
-		slog.Info(
+		logging.GetLogger().Info(
 			"Pipeline completed, syncing results to discovery service",
 			"device_count",
 			len(devices),
 		)
 	})
 
-	slog.Info("Discovery pipeline initialized",
+	logging.GetLogger().Info("Discovery pipeline initialized",
 		"phases_enabled", s.pipeline.GetEnabledPhaseNames(),
 		"port_scan_intensity", cfg.Pipeline.PortScan.Intensity,
 		"shared_profiler", true)
@@ -306,10 +305,10 @@ func NewServer(
 
 		vulnScanner, err := discovery.NewVulnerabilityScanner(scannerCfg)
 		if err != nil {
-			slog.Warn("Failed to initialize vulnerability scanner", "error", err)
+			logging.GetLogger().Warn("Failed to initialize vulnerability scanner", "error", err)
 		} else {
 			s.vulnScanner = vulnScanner
-			slog.Info("Vulnerability scanner initialized",
+			logging.GetLogger().Info("Vulnerability scanner initialized",
 				"cve_database", scannerCfg.CVEDatabase, "threshold", scannerCfg.SeverityThreshold)
 		}
 	}
@@ -321,23 +320,23 @@ func NewServer(
 		// Production mode is inferred from HTTPS being enabled
 		if slices.Contains(cfg.Security.AllowedOrigins, "*") {
 			if cfg.Server.HTTPS {
-				slog.Warn(
+				logging.GetLogger().Warn(
 					"SECURITY WARNING: Wildcard origin (*) allows all origins in production mode with HTTPS enabled",
 					"recommendation",
 					"Configure explicit allowed origins in Security.AllowedOrigins for production deployments",
 				)
 			} else {
-				slog.Info("Wildcard origin (*) configured - allows all origins (development mode)",
+				logging.GetLogger().Info("Wildcard origin (*) configured - allows all origins (development mode)",
 					"warning", "Not recommended for production use")
 			}
 		}
-		slog.Info(
+		logging.GetLogger().Info(
 			"Configured explicit allowed origins for CORS/WebSocket",
 			"count",
 			len(cfg.Security.AllowedOrigins),
 		)
 	} else {
-		slog.Info("Using default RFC 1918 private network origins for CORS/WebSocket")
+		logging.GetLogger().Info("Using default RFC 1918 private network origins for CORS/WebSocket")
 	}
 
 	// Setup routes (wsHub already initialized and running above)
@@ -348,14 +347,14 @@ func NewServer(
 
 // onLinkStateChange handles link up/down events.
 func (s *Server) onLinkStateChange(event network.LinkEvent) {
-	slog.Info("Link state change", "interface", event.Interface, "state", event.State)
+	logging.GetLogger().Info("Link state change", "interface", event.Interface, "state", event.State)
 
 	switch event.State {
 	case network.LinkStateUp:
 		// Link came up - reload discovery service to restart protocol capture
-		slog.Info("Link up - reloading discovery service")
+		logging.GetLogger().Info("Link up - reloading discovery service")
 		if err := s.discoveryService.Reload(); err != nil {
-			slog.Warn("Failed to reload discovery service", "error", err)
+			logging.GetLogger().Warn("Failed to reload discovery service", "error", err)
 		}
 
 		// Notify WebSocket clients with linkState message
@@ -377,7 +376,7 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 		}
 	case network.LinkStateDown:
 		// Link went down - notify clients
-		slog.Info("Link down - notifying clients")
+		logging.GetLogger().Info("Link down - notifying clients")
 		s.wsHub.Broadcast(Message{
 			Type: "linkState",
 			Payload: map[string]any{
@@ -395,7 +394,7 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 		}
 	case network.LinkStateUnknown:
 		// Unknown state - log but don't take action
-		slog.Warn("Link state unknown", "interface", event.Interface)
+		logging.GetLogger().Warn("Link state unknown", "interface", event.Interface)
 	}
 }
 
@@ -563,10 +562,10 @@ func (s *Server) setupWebSocketAndStatic() {
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
 	frontendFS, err := ui.GetFS()
 	if err != nil {
-		slog.Warn("Failed to get embedded frontend FS, falling back to disk", "error", err)
+		logging.GetLogger().Warn("Failed to get embedded frontend FS, falling back to disk", "error", err)
 		s.mux.Handle("/", http.FileServer(http.Dir("ui/dist")))
 	} else {
-		slog.Info("Serving frontend from embedded filesystem", "embedded", ui.IsEmbedded())
+		logging.GetLogger().Info("Serving frontend from embedded filesystem", "embedded", ui.IsEmbedded())
 		s.mux.Handle("/", spaHandler(http.FS(frontendFS)))
 	}
 }
@@ -686,7 +685,7 @@ func recoverMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				slog.Error("PANIC in handler",
+				logging.GetLogger().Error("PANIC in handler",
 					"method", r.Method,
 					"path", r.URL.Path,
 					"error", err,
@@ -807,27 +806,27 @@ func (s *Server) Start() error {
 
 	// Start link state monitor
 	if err := s.linkMonitor.Start(); err != nil {
-		slog.Warn("Link monitor failed to start", "error", err)
+		logging.GetLogger().Warn("Link monitor failed to start", "error", err)
 	} else {
-		slog.Info("Link monitor started",
+		logging.GetLogger().Info("Link monitor started",
 			"interface", s.config.Interface.Default,
 			"state", s.linkMonitor.GetState())
 	}
 
 	// Start unified discovery service.
 	if err := s.discoveryService.Start(); err != nil {
-		slog.Warn("Discovery service failed to start (may require root)", "error", err)
+		logging.GetLogger().Warn("Discovery service failed to start (may require root)", "error", err)
 	} else {
 		status := s.discoveryService.GetStatus()
-		slog.Info("Discovery service started",
+		logging.GetLogger().Info("Discovery service started",
 			"methods", status.ActiveMethods)
 	}
 
 	// Start VLAN traffic monitor (requires root/CAP_NET_RAW)
 	if err := s.vlanTrafficMonitor.Start(); err != nil {
-		slog.Warn("VLAN traffic monitor failed to start (may require root)", "error", err)
+		logging.GetLogger().Warn("VLAN traffic monitor failed to start (may require root)", "error", err)
 	} else {
-		slog.Info("VLAN traffic monitor started")
+		logging.GetLogger().Info("VLAN traffic monitor started")
 	}
 
 	if s.config.Server.HTTPS {
@@ -842,7 +841,7 @@ func (s *Server) Start() error {
 
 // startHTTP starts the server in HTTP mode.
 func (s *Server) startHTTP() error {
-	slog.Info("Starting HTTP server", "addr", s.httpServer.Addr)
+	logging.GetLogger().Info("Starting HTTP server", "addr", s.httpServer.Addr)
 	if err := s.httpServer.ListenAndServe(); err != nil {
 		return fmt.Errorf("http server: %w", err)
 	}
@@ -873,7 +872,7 @@ func (s *Server) startHTTPRedirect(port int) {
 	})
 
 	addr := fmt.Sprintf(":%d", port)
-	slog.Info("Starting HTTP→HTTPS redirect server", "addr", addr)
+	logging.GetLogger().Info("Starting HTTP→HTTPS redirect server", "addr", addr)
 
 	// Store redirect server for proper shutdown (fixes #515)
 	s.redirectServer = &http.Server{
@@ -891,7 +890,7 @@ func (s *Server) startHTTPRedirect(port int) {
 	// Run server and report errors
 	err := s.redirectServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		slog.Error("HTTP redirect server error", "error", err)
+		logging.GetLogger().Error("HTTP redirect server error", "error", err)
 		s.redirectServerErr <- err
 	}
 }
@@ -931,7 +930,7 @@ func (s *Server) startHTTPS() error {
 	}
 	s.httpServer.TLSConfig = tlsConfig
 
-	slog.Info("Starting HTTPS server", "addr", s.httpServer.Addr, "tls_version", "1.3")
+	logging.GetLogger().Info("Starting HTTPS server", "addr", s.httpServer.Addr, "tls_version", "1.3")
 	if err := s.httpServer.ListenAndServeTLS(certFile, keyFile); err != nil {
 		return fmt.Errorf("https server: %w", err)
 	}
@@ -962,7 +961,7 @@ func (s *Server) startHTTPSWithACME() error {
 		manager.Client = &acme.Client{
 			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
 		}
-		slog.Warn("ACME: Using Let's Encrypt STAGING server (certificates will not be trusted)")
+		logging.GetLogger().Warn("ACME: Using Let's Encrypt STAGING server (certificates will not be trusted)")
 	}
 
 	// Configure TLS with ACME
@@ -971,7 +970,7 @@ func (s *Server) startHTTPSWithACME() error {
 
 	s.httpServer.TLSConfig = tlsConfig
 
-	slog.Info("Starting HTTPS server with ACME",
+	logging.GetLogger().Info("Starting HTTPS server with ACME",
 		"addr", s.httpServer.Addr,
 		"domain", s.config.Server.ACME.Domain)
 
@@ -984,10 +983,10 @@ func (s *Server) startHTTPSWithACME() error {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	go func() {
-		slog.Info("Starting HTTP-01 challenge handler", "addr", ":80")
+		logging.GetLogger().Info("Starting HTTP-01 challenge handler", "addr", ":80")
 		if err := s.acmeChallengeServer.ListenAndServe(); err != nil &&
 			err != http.ErrServerClosed {
-			slog.Error("HTTP-01 handler error", "error", err)
+			logging.GetLogger().Error("HTTP-01 handler error", "error", err)
 		}
 	}()
 
@@ -1071,67 +1070,67 @@ func (s *Server) ensureSelfSignedCert() (string, string, error) {
 		return "", "", fmt.Errorf("encode private key PEM: %w", keyEncodeErr)
 	}
 
-	slog.Info("Generated self-signed certificate", "cert_file", certFile)
+	logging.GetLogger().Info("Generated self-signed certificate", "cert_file", certFile)
 	return certFile, keyFile, nil
 }
 
 // Shutdown gracefully shuts down the server (fixes #515, #524).
 func (s *Server) Shutdown(ctx context.Context) error {
-	slog.Info("Shutting down server...")
+	logging.GetLogger().Info("Shutting down server...")
 
 	// Shutdown HTTP redirect server if running (fixes #515)
 	if s.redirectServer != nil {
-		slog.Info("Shutting down HTTP redirect server...")
+		logging.GetLogger().Info("Shutting down HTTP redirect server...")
 		if err := s.redirectServer.Shutdown(ctx); err != nil {
-			slog.Error("Error shutting down redirect server", "error", err)
+			logging.GetLogger().Error("Error shutting down redirect server", "error", err)
 		}
 	}
 
 	// Shutdown ACME HTTP-01 challenge server if running (fixes #837)
 	if s.acmeChallengeServer != nil {
-		slog.Info("Shutting down ACME challenge server...")
+		logging.GetLogger().Info("Shutting down ACME challenge server...")
 		if err := s.acmeChallengeServer.Shutdown(ctx); err != nil {
-			slog.Error("Error shutting down ACME challenge server", "error", err)
+			logging.GetLogger().Error("Error shutting down ACME challenge server", "error", err)
 		}
 	}
 
 	// Stop all services (fixes #524 - services will complete gracefully)
-	slog.Info("Stopping WebSocket hub...")
+	logging.GetLogger().Info("Stopping WebSocket hub...")
 	s.wsHub.Shutdown()
 
-	slog.Info("Stopping link monitor...")
+	logging.GetLogger().Info("Stopping link monitor...")
 	s.linkMonitor.Stop()
 
-	slog.Info("Stopping discovery service...")
+	logging.GetLogger().Info("Stopping discovery service...")
 	s.discoveryService.Stop()
 
-	slog.Info("Stopping VLAN traffic monitor...")
+	logging.GetLogger().Info("Stopping VLAN traffic monitor...")
 	s.vlanTrafficMonitor.Stop()
 
-	slog.Info("Stopping rate limiters...")
+	logging.GetLogger().Info("Stopping rate limiters...")
 	s.loginRateLimiter.Stop()
 	s.endpointRateLimiter.Stop()
 
-	slog.Info("Stopping CSRF manager...")
+	logging.GetLogger().Info("Stopping CSRF manager...")
 	s.csrfManager.Stop()
 
 	// Stop data retention goroutine (fixes #848)
 	if s.retentionStopCh != nil {
-		slog.Info("Stopping data retention goroutine...")
+		logging.GetLogger().Info("Stopping data retention goroutine...")
 		close(s.retentionStopCh)
 		s.retentionStopCh = nil
 	}
 
 	// Close database connection (#755)
 	if s.db != nil {
-		slog.Info("Closing database connection...")
+		logging.GetLogger().Info("Closing database connection...")
 		if err := s.db.Close(); err != nil {
-			slog.Error("Error closing database", "error", err)
+			logging.GetLogger().Error("Error closing database", "error", err)
 		}
 	}
 
 	// Shutdown main HTTP server
-	slog.Info("Shutting down main HTTP server...")
+	logging.GetLogger().Info("Shutting down main HTTP server...")
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		return fmt.Errorf("shutdown main server: %w", err)
 	}
@@ -1168,7 +1167,7 @@ func (s *Server) startDataRetention(retentionDays int) {
 	for {
 		select {
 		case <-s.retentionStopCh:
-			slog.Debug("Data retention goroutine shutting down")
+			logging.GetLogger().Debug("Data retention goroutine shutting down")
 			return
 		case <-ticker.C:
 			if s.db == nil {
@@ -1176,7 +1175,7 @@ func (s *Server) startDataRetention(retentionDays int) {
 			}
 			result, err := s.db.RunCleanup(context.Background(), policy)
 			if err != nil {
-				slog.Error("Data retention cleanup failed", "error", err)
+				logging.GetLogger().Error("Data retention cleanup failed", "error", err)
 				continue
 			}
 			totalDeleted := result.MetricsDeleted + result.AlertsDeleted +
@@ -1184,7 +1183,7 @@ func (s *Server) startDataRetention(retentionDays int) {
 				result.GatewayResultsDeleted + result.AuditLogsDeleted +
 				result.DevicesDeleted
 			if totalDeleted > 0 {
-				slog.Info("Data retention cleanup completed",
+				logging.GetLogger().Info("Data retention cleanup completed",
 					"metrics_deleted", result.MetricsDeleted,
 					"alerts_deleted", result.AlertsDeleted,
 					"devices_deleted", result.DevicesDeleted,

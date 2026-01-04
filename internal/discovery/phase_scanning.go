@@ -6,12 +6,12 @@ package discovery
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // ScanningPhase implements the Phase interface for service discovery.
@@ -83,7 +83,7 @@ func (p *ScanningPhase) Run(
 	portScanEnabled := p.pipelineConfig.PortScan.Intensity != PortScanOff
 	snmpEnabled := p.pipelineConfig.SNMPCollection.Enabled && p.snmpCollector != nil
 
-	slog.Info("Scanning phase starting",
+	logging.GetLogger().Info("Scanning phase starting",
 		"devices", len(devices),
 		"portScan", portScanEnabled,
 		"portIntensity", p.pipelineConfig.PortScan.Intensity,
@@ -95,7 +95,7 @@ func (p *ScanningPhase) Run(
 
 	// Check if anything is enabled
 	if !portScanEnabled && !snmpEnabled {
-		slog.Info("Scanning phase skipped - both port scanning and SNMP disabled")
+		logging.GetLogger().Info("Scanning phase skipped - both port scanning and SNMP disabled")
 		return devices, nil
 	}
 
@@ -163,7 +163,7 @@ func (p *ScanningPhase) Run(
 	portsFound := progress.PortsFound()
 	snmpSuccess := progress.SNMPSuccess()
 
-	slog.Info("Scanning phase completed",
+	logging.GetLogger().Info("Scanning phase completed",
 		"scanned", scanned,
 		"total", len(devices),
 		"portsFound", portsFound,
@@ -326,7 +326,7 @@ func (p *ScanningPhase) scanPorts(ctx context.Context, ip string) *DeviceProfile
 	// Infer device type and icons
 	p.profiler.inferDeviceType(profile)
 
-	slog.Debug("Port scan completed",
+	logging.GetLogger().Debug("Port scan completed",
 		"ip", ip,
 		"openPorts", len(profile.OpenPorts),
 		"deviceType", profile.DeviceType)
@@ -342,7 +342,7 @@ func (p *ScanningPhase) collectSNMP(ctx context.Context, ip string) *SNMPFullDat
 
 	data, err := p.snmpCollector.Collect(ctx, ip)
 	if err != nil {
-		slog.Debug("SNMP collection failed", "ip", ip, "error", err)
+		logging.GetLogger().Debug("SNMP collection failed", "ip", ip, "error", err)
 		return &SNMPFullData{
 			CollectedAt: time.Now(),
 			Errors:      []string{fmt.Sprintf("collection failed: %v", err)},
@@ -356,7 +356,7 @@ func (p *ScanningPhase) collectSNMP(ctx context.Context, ip string) *SNMPFullDat
 	lldpCount := len(data.LLDPNeighbors)
 
 	if ifCount > 0 || macCount > 0 {
-		slog.Debug("SNMP collection completed",
+		logging.GetLogger().Debug("SNMP collection completed",
 			"ip", ip,
 			"interfaces", ifCount,
 			"macs", macCount,

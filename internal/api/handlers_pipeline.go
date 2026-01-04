@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // handlePipelineStatus returns the current pipeline status (GET /api/pipeline/status).
@@ -37,7 +37,7 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 
 	if r.Body != nil && r.ContentLength > 0 {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			slog.Warn("Failed to parse pipeline start request", "error", err)
+			logging.GetLogger().Warn("Failed to parse pipeline start request", "error", err)
 			// Continue with existing config
 		}
 	}
@@ -59,7 +59,7 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("Pipeline started via API", "runId", run.ID)
+	logging.GetLogger().Info("Pipeline started via API", "runId", run.ID)
 	sendJSONResponse(w, nil, http.StatusOK, run)
 }
 
@@ -75,7 +75,7 @@ func (s *Server) handlePipelineCancel(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	slog.Info("Pipeline canceled via API")
+	logging.GetLogger().Info("Pipeline canceled via API")
 	sendJSONResponse(w, nil, http.StatusOK, map[string]string{"status": "canceled"})
 }
 
@@ -170,7 +170,7 @@ func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Reque
 	s.config.Pipeline.Persistence.PurgeAfter = config.Persistence.PurgeAfter
 	s.config.Unlock()
 
-	slog.Info("Pipeline config updated via API")
+	logging.GetLogger().Info("Pipeline config updated via API")
 	sendJSONResponse(w, nil, http.StatusOK, config)
 }
 

@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,6 +31,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // OUIDatabase provides MAC address manufacturer lookups.
@@ -384,7 +385,7 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 		return fmt.Errorf("failed to parse OUI database: %w", loadErr)
 	}
 
-	slog.Info("Downloaded OUI database", "bytes", written, "entries", db.Count())
+	logging.GetLogger().Info("Downloaded OUI database", "bytes", written, "entries", db.Count())
 	return nil
 }
 

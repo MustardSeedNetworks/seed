@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // ============================================================================
@@ -55,7 +57,7 @@ func sendErrorResponseWithDetails(
 		if logger != nil {
 			logger.Error("Error encoding error response", "error", err)
 		} else {
-			slog.Error("Error encoding error response (no logger context)", "error", err)
+			logging.GetLogger().Error("Error encoding error response (no logger context)", "error", err)
 		}
 	}
 }
@@ -69,7 +71,7 @@ func sendJSONResponse(w http.ResponseWriter, logger *slog.Logger, status int, da
 		if logger != nil {
 			logger.Error("Error encoding JSON response", "error", err)
 		} else {
-			slog.Error("Error encoding JSON response (no logger context)", "error", err)
+			logging.GetLogger().Error("Error encoding JSON response (no logger context)", "error", err)
 		}
 	}
 }

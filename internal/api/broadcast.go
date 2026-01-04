@@ -30,10 +30,10 @@ package api
 
 import (
 	"context"
-	"log/slog"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 const (
@@ -93,7 +93,7 @@ func (s *Server) startBroadcastLoop() {
 			}
 		}
 	}()
-	slog.Info("WebSocket broadcast loop started", "interval", broadcastInterval)
+	logging.GetLogger().Info("WebSocket broadcast loop started", "interval", broadcastInterval)
 }
 
 // broadcastAllCards collects and broadcasts all dashboard card data to connected clients.
@@ -183,7 +183,7 @@ func (s *Server) collectLinkData() map[string]any {
 	}
 
 	if err := s.netManager.RefreshInterfaces(); err != nil {
-		slog.Warn("Failed to refresh interfaces", "error", err)
+		logging.GetLogger().Warn("Failed to refresh interfaces", "error", err)
 		return nil
 	}
 	currentIface := s.netManager.GetCurrentInterface()
@@ -195,7 +195,7 @@ func (s *Server) collectLinkData() map[string]any {
 
 	linkStatus, err := s.netManager.GetLinkStatus(currentIface)
 	if err != nil {
-		slog.Warn("Failed to get link status", "interface", currentIface, "error", err)
+		logging.GetLogger().Warn("Failed to get link status", "interface", currentIface, "error", err)
 		return nil
 	}
 

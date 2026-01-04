@@ -7,13 +7,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"strings"
 
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // IP-FORWARD-MIB OIDs (RFC 4292).
@@ -287,7 +287,7 @@ func walkRouteAttribute(
 		return nil
 	})
 	if err != nil {
-		slog.Debug("Failed to walk route attribute", "oid", oid, "error", err)
+		logging.GetLogger().Debug("Failed to walk route attribute", "oid", oid, "error", err)
 	}
 }
 
@@ -314,7 +314,7 @@ func walkIPCidrRouteAttribute(
 		return nil
 	})
 	if err != nil {
-		slog.Debug("Failed to walk IP CIDR route attribute", "oid", oid, "error", err)
+		logging.GetLogger().Debug("Failed to walk IP CIDR route attribute", "oid", oid, "error", err)
 	}
 }
 

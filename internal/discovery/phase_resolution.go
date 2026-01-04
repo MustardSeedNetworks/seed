@@ -5,11 +5,12 @@ package discovery
 
 import (
 	"context"
-	"log/slog"
 	"net"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // ResolutionPhase implements the Phase interface for name resolution.
@@ -109,7 +110,7 @@ func (p *ResolutionPhase) Run(
 	progressCh chan<- PhaseProgressPayload,
 ) ([]*DiscoveredDevice, error) {
 	start := time.Now()
-	slog.Info("Resolution phase starting",
+	logging.GetLogger().Info("Resolution phase starting",
 		"devices", len(devices),
 		"dns", p.config.DNS,
 		"netbios", p.config.NetBIOS,
@@ -209,7 +210,7 @@ func (p *ResolutionPhase) Run(
 		}
 	}
 
-	slog.Info("Resolution phase completed",
+	logging.GetLogger().Info("Resolution phase completed",
 		"resolved", resolved,
 		"total", len(devices),
 		"duration", time.Since(start))
@@ -259,7 +260,7 @@ func (p *ResolutionPhase) resolveDNS(
 
 			names, err := net.DefaultResolver.LookupAddr(lookupCtx, ipAddr)
 			if err != nil {
-				slog.Debug("DNS lookup failed", "ip", ipAddr, "error", err)
+				logging.GetLogger().Debug("DNS lookup failed", "ip", ipAddr, "error", err)
 				return
 			}
 
@@ -270,7 +271,7 @@ func (p *ResolutionPhase) resolveDNS(
 				device.Hostname = hostname
 				deviceMu.Unlock()
 				progress.MarkResolved(ipAddr)
-				slog.Debug("DNS resolved", "ip", ipAddr, "hostname", hostname)
+				logging.GetLogger().Debug("DNS resolved", "ip", ipAddr, "hostname", hostname)
 			}
 		}(ip)
 	}
@@ -303,7 +304,7 @@ func (p *ResolutionPhase) resolveNetBIOS(
 		return
 	}
 
-	slog.Debug("NetBIOS: resolving names", "count", len(toResolve))
+	logging.GetLogger().Debug("NetBIOS: resolving names", "count", len(toResolve))
 
 	// Use batch resolution
 	results := p.netbiosResolver.ResolveBatch(ctx, toResolve)
@@ -315,7 +316,7 @@ func (p *ResolutionPhase) resolveNetBIOS(
 				device.NetBIOSName = result.Name
 				deviceMu.Unlock()
 				progress.MarkResolved(result.IP)
-				slog.Debug("NetBIOS resolved", "ip", result.IP, "name", result.Name)
+				logging.GetLogger().Debug("NetBIOS resolved", "ip", result.IP, "name", result.Name)
 			} else {
 				deviceMu.Unlock()
 			}
@@ -348,7 +349,7 @@ func (p *ResolutionPhase) resolveMDNS(
 		return
 	}
 
-	slog.Debug("mDNS: resolving names", "count", len(toResolve))
+	logging.GetLogger().Debug("mDNS: resolving names", "count", len(toResolve))
 
 	// Use batch resolution
 	results := p.mdnsResolver.ResolveBatch(ctx, toResolve)
@@ -360,7 +361,7 @@ func (p *ResolutionPhase) resolveMDNS(
 				device.MDNSName = result.Name
 				deviceMu.Unlock()
 				progress.MarkResolved(result.IP)
-				slog.Debug("mDNS resolved", "ip", result.IP, "name", result.Name)
+				logging.GetLogger().Debug("mDNS resolved", "ip", result.IP, "name", result.Name)
 			} else {
 				deviceMu.Unlock()
 			}
