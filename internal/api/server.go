@@ -1076,61 +1076,61 @@ func (s *Server) ensureSelfSignedCert() (string, string, error) {
 
 // Shutdown gracefully shuts down the server (fixes #515, #524).
 func (s *Server) Shutdown(ctx context.Context) error {
-	logging.GetLogger().Info("Shutting down server...")
+	logging.GetLogger().InfoContext(ctx, "Shutting down server...")
 
 	// Shutdown HTTP redirect server if running (fixes #515)
 	if s.redirectServer != nil {
-		logging.GetLogger().Info("Shutting down HTTP redirect server...")
+		logging.GetLogger().InfoContext(ctx, "Shutting down HTTP redirect server...")
 		if err := s.redirectServer.Shutdown(ctx); err != nil {
-			logging.GetLogger().Error("Error shutting down redirect server", "error", err)
+			logging.GetLogger().ErrorContext(ctx, "Error shutting down redirect server", "error", err)
 		}
 	}
 
 	// Shutdown ACME HTTP-01 challenge server if running (fixes #837)
 	if s.acmeChallengeServer != nil {
-		logging.GetLogger().Info("Shutting down ACME challenge server...")
+		logging.GetLogger().InfoContext(ctx, "Shutting down ACME challenge server...")
 		if err := s.acmeChallengeServer.Shutdown(ctx); err != nil {
-			logging.GetLogger().Error("Error shutting down ACME challenge server", "error", err)
+			logging.GetLogger().ErrorContext(ctx, "Error shutting down ACME challenge server", "error", err)
 		}
 	}
 
 	// Stop all services (fixes #524 - services will complete gracefully)
-	logging.GetLogger().Info("Stopping WebSocket hub...")
+	logging.GetLogger().InfoContext(ctx, "Stopping WebSocket hub...")
 	s.wsHub.Shutdown()
 
-	logging.GetLogger().Info("Stopping link monitor...")
+	logging.GetLogger().InfoContext(ctx, "Stopping link monitor...")
 	s.linkMonitor.Stop()
 
-	logging.GetLogger().Info("Stopping discovery service...")
+	logging.GetLogger().InfoContext(ctx, "Stopping discovery service...")
 	s.discoveryService.Stop()
 
-	logging.GetLogger().Info("Stopping VLAN traffic monitor...")
+	logging.GetLogger().InfoContext(ctx, "Stopping VLAN traffic monitor...")
 	s.vlanTrafficMonitor.Stop()
 
-	logging.GetLogger().Info("Stopping rate limiters...")
+	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
 	s.loginRateLimiter.Stop()
 	s.endpointRateLimiter.Stop()
 
-	logging.GetLogger().Info("Stopping CSRF manager...")
+	logging.GetLogger().InfoContext(ctx, "Stopping CSRF manager...")
 	s.csrfManager.Stop()
 
 	// Stop data retention goroutine (fixes #848)
 	if s.retentionStopCh != nil {
-		logging.GetLogger().Info("Stopping data retention goroutine...")
+		logging.GetLogger().InfoContext(ctx, "Stopping data retention goroutine...")
 		close(s.retentionStopCh)
 		s.retentionStopCh = nil
 	}
 
 	// Close database connection (#755)
 	if s.db != nil {
-		logging.GetLogger().Info("Closing database connection...")
+		logging.GetLogger().InfoContext(ctx, "Closing database connection...")
 		if err := s.db.Close(); err != nil {
-			logging.GetLogger().Error("Error closing database", "error", err)
+			logging.GetLogger().ErrorContext(ctx, "Error closing database", "error", err)
 		}
 	}
 
 	// Shutdown main HTTP server
-	logging.GetLogger().Info("Shutting down main HTTP server...")
+	logging.GetLogger().InfoContext(ctx, "Shutting down main HTTP server...")
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		return fmt.Errorf("shutdown main server: %w", err)
 	}
