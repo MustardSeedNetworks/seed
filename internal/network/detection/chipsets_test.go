@@ -1,28 +1,30 @@
-// Package detection provides intelligent network interface auto-detection.
+// Package detection_test provides intelligent network interface auto-detection.
 // Test suite for chipset database and identification.
-package detection
+package detection_test
 
 import (
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/network/detection"
 )
 
 func TestNewChipsetDatabase(t *testing.T) {
-	db := NewChipsetDatabase()
+	db := detection.NewChipsetDatabase()
 	if db == nil {
 		t.Fatal("NewChipsetDatabase() returned nil")
 	}
 
-	if len(db.chipsets) == 0 {
+	if db.ChipsetsCount() == 0 {
 		t.Error("chipsets should not be empty")
 	}
 
-	if len(db.ouiMap) == 0 {
+	if db.OUIMapCount() == 0 {
 		t.Error("ouiMap should not be empty")
 	}
 }
 
 func TestIdentifyByMAC(t *testing.T) {
-	db := NewChipsetDatabase()
+	db := detection.NewChipsetDatabase()
 
 	tests := []struct {
 		name       string
@@ -90,7 +92,7 @@ func TestIdentifyByMAC(t *testing.T) {
 }
 
 func TestIdentifyByKeyword(t *testing.T) {
-	db := NewChipsetDatabase()
+	db := detection.NewChipsetDatabase()
 
 	tests := []struct {
 		name       string
@@ -165,14 +167,14 @@ func TestIdentifyByKeyword(t *testing.T) {
 }
 
 func TestChipsetData(t *testing.T) {
-	db := NewChipsetDatabase()
+	db := detection.NewChipsetDatabase()
 	chipsets := db.GetAll()
 
 	if len(chipsets) == 0 {
 		t.Fatal("GetAll() returned empty slice")
 	}
 
-	// Verify required fields are populated
+	// Verify required fields are populated.
 	for i, chip := range chipsets {
 		if chip.Vendor == "" {
 			t.Errorf("chipset[%d]: Vendor is empty", i)
@@ -189,7 +191,7 @@ func TestChipsetData(t *testing.T) {
 		}
 	}
 
-	// Verify known chipsets exist
+	// Verify known chipsets exist.
 	expectedChipsets := []struct {
 		vendor string
 		model  string
@@ -220,10 +222,10 @@ func TestChipsetData(t *testing.T) {
 }
 
 func TestChipsetTDRFlags(t *testing.T) {
-	db := NewChipsetDatabase()
+	db := detection.NewChipsetDatabase()
 	chipsets := db.GetAll()
 
-	// Intel desktop NICs should have TDR
+	// Intel desktop NICs should have TDR.
 	tdrExpected := map[string]bool{
 		"I210":   true,
 		"I211":   true,
@@ -244,10 +246,10 @@ func TestChipsetTDRFlags(t *testing.T) {
 }
 
 func TestChipsetDOMFlags(t *testing.T) {
-	db := NewChipsetDatabase()
+	db := detection.NewChipsetDatabase()
 	chipsets := db.GetAll()
 
-	// High-speed NICs with SFP+ should have DOM
+	// High-speed NICs with SFP+ should have DOM.
 	domExpected := map[string]bool{
 		"X540":       true,
 		"X550":       true,
@@ -270,10 +272,10 @@ func TestChipsetDOMFlags(t *testing.T) {
 }
 
 func TestQualityRatings(t *testing.T) {
-	db := NewChipsetDatabase()
+	db := detection.NewChipsetDatabase()
 	chipsets := db.GetAll()
 
-	// Intel enterprise NICs should have high quality
+	// Intel enterprise NICs should have high quality.
 	highQuality := []string{"I210", "I350", "E810"}
 	for _, model := range highQuality {
 		for _, chip := range chipsets {
@@ -284,7 +286,7 @@ func TestQualityRatings(t *testing.T) {
 		}
 	}
 
-	// Consumer Realtek should have lower quality
+	// Consumer Realtek should have lower quality.
 	for _, chip := range chipsets {
 		if chip.Vendor == "Realtek" && chip.Quality > 80 {
 			t.Errorf("Realtek %s: Quality %d seems too high",

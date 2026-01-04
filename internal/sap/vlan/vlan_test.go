@@ -1,71 +1,73 @@
-// Package vlan provides VLAN detection and configuration functionality.
+// Package vlan_test provides VLAN detection and configuration functionality.
 // Test suite validates VLAN detection, traffic analysis, and configuration operations.
-package vlan
+package vlan_test
 
 import (
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/sap/vlan"
 )
 
 func TestNewManager(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 	if manager == nil {
 		t.Fatal("expected non-nil manager")
 	}
 
-	if manager.interfaceName != "eth0" {
-		t.Errorf("expected interfaceName 'eth0', got %q", manager.interfaceName)
+	if manager.ManagerInterfaceName() != "eth0" {
+		t.Errorf("expected interfaceName 'eth0', got %q", manager.ManagerInterfaceName())
 	}
-	if manager.enabled {
+	if manager.ManagerEnabled() {
 		t.Error("expected enabled to be false initially")
 	}
-	if manager.configuredID != 0 {
-		t.Errorf("expected configuredID 0, got %d", manager.configuredID)
+	if manager.ManagerConfiguredID() != 0 {
+		t.Errorf("expected configuredID 0, got %d", manager.ManagerConfiguredID())
 	}
 }
 
 func TestManagerSetInterface(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
 	manager.SetInterface("en0")
-	if manager.interfaceName != "en0" {
-		t.Errorf("expected interfaceName 'en0', got %q", manager.interfaceName)
+	if manager.ManagerInterfaceName() != "en0" {
+		t.Errorf("expected interfaceName 'en0', got %q", manager.ManagerInterfaceName())
 	}
 
 	manager.SetInterface("bond0")
-	if manager.interfaceName != "bond0" {
-		t.Errorf("expected interfaceName 'bond0', got %q", manager.interfaceName)
+	if manager.ManagerInterfaceName() != "bond0" {
+		t.Errorf("expected interfaceName 'bond0', got %q", manager.ManagerInterfaceName())
 	}
 }
 
 func TestManagerSetConfigured(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
-	// Initially disabled
-	if manager.enabled {
+	// Initially disabled.
+	if manager.ManagerEnabled() {
 		t.Error("expected enabled to be false initially")
 	}
-	if manager.configuredID != 0 {
-		t.Errorf("expected configuredID 0, got %d", manager.configuredID)
+	if manager.ManagerConfiguredID() != 0 {
+		t.Errorf("expected configuredID 0, got %d", manager.ManagerConfiguredID())
 	}
 
-	// Enable with VLAN 100
+	// Enable with VLAN 100.
 	manager.SetConfigured(true, 100)
-	if !manager.enabled {
+	if !manager.ManagerEnabled() {
 		t.Error("expected enabled to be true")
 	}
-	if manager.configuredID != 100 {
-		t.Errorf("expected configuredID 100, got %d", manager.configuredID)
+	if manager.ManagerConfiguredID() != 100 {
+		t.Errorf("expected configuredID 100, got %d", manager.ManagerConfiguredID())
 	}
 
-	// Disable
+	// Disable.
 	manager.SetConfigured(false, 0)
-	if manager.enabled {
+	if manager.ManagerEnabled() {
 		t.Error("expected enabled to be false")
 	}
 }
 
 func TestManagerGetInfo(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
 	info := manager.GetInfo()
 	if info == nil {
@@ -85,7 +87,7 @@ func TestManagerGetInfo(t *testing.T) {
 }
 
 func TestManagerGetInfoWithConfigured(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 	manager.SetConfigured(true, 200)
 
 	info := manager.GetInfo()
@@ -98,7 +100,7 @@ func TestManagerGetInfoWithConfigured(t *testing.T) {
 }
 
 func TestManagerGetInfoWithLLDP(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
 	nativeVlan := 10
 	voiceVlan := 50
@@ -123,7 +125,7 @@ func TestManagerGetInfoWithLLDP(t *testing.T) {
 }
 
 func TestManagerGetInfoWithLLDPNilValues(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
 	info := manager.GetInfoWithLLDP(nil, nil)
 	if info == nil {
@@ -140,7 +142,7 @@ func TestManagerGetInfoWithLLDPNilValues(t *testing.T) {
 func TestInfoFields(t *testing.T) {
 	nativeVlan := 1
 	voiceVlan := 100
-	info := Info{
+	info := vlan.Info{
 		NativeVlan:  &nativeVlan,
 		TaggedVlans: []int{10, 20, 30},
 		VoiceVlan:   &voiceVlan,
@@ -187,18 +189,18 @@ func TestContains(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := contains(tt.slice, tt.val)
+			result := vlan.Contains(tt.slice, tt.val)
 			if result != tt.expected {
-				t.Errorf("contains(%v, %d) = %v, want %v", tt.slice, tt.val, result, tt.expected)
+				t.Errorf("Contains(%v, %d) = %v, want %v", tt.slice, tt.val, result, tt.expected)
 			}
 		})
 	}
 }
 
 func TestConcurrentManagerAccess(_ *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
-	// Test concurrent access doesn't cause race conditions
+	// Test concurrent access doesn't cause race conditions.
 	done := make(chan bool)
 	for i := range 10 {
 		go func(id int) {
@@ -211,52 +213,52 @@ func TestConcurrentManagerAccess(_ *testing.T) {
 		}(i)
 	}
 
-	// Wait for all goroutines
+	// Wait for all goroutines.
 	for range 10 {
 		<-done
 	}
 }
 
 func TestDetectVlanSubinterfacesPlatform(t *testing.T) {
-	// This will return empty if no VLANs configured
-	vlans := detectVlanSubinterfacesPlatform("eth0")
+	// This will return empty if no VLANs configured.
+	vlans := vlan.DetectVlanSubinterfacesPlatform("eth0")
 	if vlans == nil {
 		t.Error("expected non-nil slice, even if empty")
 	}
 }
 
 func TestCreateVlanInterface(_ *testing.T) {
-	// This requires root privileges, so just verify it doesn't panic
-	err := CreateVlanInterface("eth0", 100)
-	// Error is expected on non-Linux or without root
+	// This requires root privileges, so just verify it doesn't panic.
+	err := vlan.CreateVlanInterface("eth0", 100)
+	// Error is expected on non-Linux or without root.
 	_ = err
 }
 
 func TestCreateVlanInterfacePlatform(_ *testing.T) {
-	// This requires root privileges on Linux
-	err := createVlanInterfacePlatform("eth0", 100)
-	// Error is expected without root or on macOS (returns nil)
+	// This requires root privileges on Linux.
+	err := vlan.CreateVlanInterfacePlatform("eth0", 100)
+	// Error is expected without root or on macOS (returns nil).
 	_ = err
 }
 
 func TestDeleteVlanInterface(_ *testing.T) {
-	// This requires root privileges
-	err := DeleteVlanInterface("eth0", 100)
-	// Error is expected on non-Linux or without root
+	// This requires root privileges.
+	err := vlan.DeleteVlanInterface("eth0", 100)
+	// Error is expected on non-Linux or without root.
 	_ = err
 }
 
 func TestDetectVlanSubinterfaces(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
-	vlans := manager.detectVlanSubinterfaces("eth0")
+	vlans := manager.DetectVlanSubinterfaces("eth0")
 	if vlans == nil {
 		t.Error("expected non-nil slice, even if empty")
 	}
 }
 
 func TestInfoNilPointers(t *testing.T) {
-	info := Info{
+	info := vlan.Info{
 		NativeVlan:  nil,
 		TaggedVlans: []int{},
 		VoiceVlan:   nil,
@@ -274,7 +276,7 @@ func TestInfoNilPointers(t *testing.T) {
 }
 
 func TestInfoConfiguredStruct(t *testing.T) {
-	info := Info{}
+	info := vlan.Info{}
 	info.Configured.Enabled = true
 	info.Configured.ID = 150
 
@@ -287,30 +289,30 @@ func TestInfoConfiguredStruct(t *testing.T) {
 }
 
 func TestContainsEdgeCases(t *testing.T) {
-	// Test with large slice
+	// Test with large slice.
 	largeSlice := make([]int, 1000)
 	for i := range largeSlice {
 		largeSlice[i] = i
 	}
 
-	if !contains(largeSlice, 500) {
+	if !vlan.Contains(largeSlice, 500) {
 		t.Error("expected to find 500 in large slice")
 	}
-	if !contains(largeSlice, 999) {
+	if !vlan.Contains(largeSlice, 999) {
 		t.Error("expected to find 999 in large slice")
 	}
-	if contains(largeSlice, 1000) {
+	if vlan.Contains(largeSlice, 1000) {
 		t.Error("did not expect to find 1000 in slice 0-999")
 	}
 }
 
 func TestManagerGetInfoReturnsNewSlice(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
 	info1 := manager.GetInfo()
 	info2 := manager.GetInfo()
 
-	// Modifying one shouldn't affect the other
+	// Modifying one shouldn't affect the other.
 	info1.TaggedVlans = append(info1.TaggedVlans, 100)
 	if len(info2.TaggedVlans) != 0 {
 		t.Error("expected info2 to have empty TaggedVlans")
@@ -318,17 +320,17 @@ func TestManagerGetInfoReturnsNewSlice(t *testing.T) {
 }
 
 func TestSetConfiguredMultipleTimes(t *testing.T) {
-	manager := NewManager("eth0")
+	manager := vlan.NewManager("eth0")
 
 	manager.SetConfigured(true, 100)
 	manager.SetConfigured(true, 200)
 	manager.SetConfigured(false, 0)
 	manager.SetConfigured(true, 300)
 
-	if !manager.enabled {
+	if !manager.ManagerEnabled() {
 		t.Error("expected enabled true after final SetConfigured")
 	}
-	if manager.configuredID != 300 {
-		t.Errorf("expected configuredID 300, got %d", manager.configuredID)
+	if manager.ManagerConfiguredID() != 300 {
+		t.Errorf("expected configuredID 300, got %d", manager.ManagerConfiguredID())
 	}
 }

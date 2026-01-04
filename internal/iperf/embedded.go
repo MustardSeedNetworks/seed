@@ -8,12 +8,13 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // embeddedBinaries contains pre-built iperf3 binaries for supported platforms.
@@ -70,7 +71,7 @@ func extractEmbeddedBinary() (string, error) {
 
 	// Check if already extracted with correct version
 	if isValidExtractedBinary(destPath, versionFile) {
-		slog.Debug("Using cached iperf3 binary", "path", destPath, "version", EmbeddedVersion)
+		logging.GetLogger().Debug("Using cached iperf3 binary", "path", destPath, "version", EmbeddedVersion)
 		return destPath, nil
 	}
 
@@ -92,10 +93,10 @@ func extractEmbeddedBinary() (string, error) {
 
 	// Write version marker.
 	if versionErr := os.WriteFile(versionFile, []byte(EmbeddedVersion), 0o600); versionErr != nil {
-		slog.Warn("Failed to write version marker", "error", versionErr)
+		logging.GetLogger().Warn("Failed to write version marker", "error", versionErr)
 	}
 
-	slog.Info("Extracted embedded iperf3 binary", "path", destPath, "version", EmbeddedVersion)
+	logging.GetLogger().Info("Extracted embedded iperf3 binary", "path", destPath, "version", EmbeddedVersion)
 	return destPath, nil
 }
 

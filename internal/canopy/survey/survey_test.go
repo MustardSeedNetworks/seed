@@ -1,7 +1,7 @@
-// Package survey provides WiFi site survey functionality.
+// Package survey_test provides WiFi site survey functionality tests.
 // Test suite validates survey persistence, floor plan handling, AP scan parsing,
 // and integration with iperf throughput measurements.
-package survey
+package survey_test
 
 import (
 	"os"
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/iperf"
 )
@@ -20,42 +21,42 @@ func TestNewManager(t *testing.T) {
 	wifiManager := wifi.NewManager("wlan0")
 	iperfManager := iperf.NewManager()
 
-	mgr := NewManager(tmpDir, wifiScanner, wifiManager, iperfManager)
+	mgr := survey.NewManager(tmpDir, wifiScanner, wifiManager, iperfManager)
 	if mgr == nil {
 		t.Fatal("NewManager() returned nil")
 	}
 
-	if mgr.storagePath != tmpDir {
-		t.Errorf("storagePath = %v, want %v", mgr.storagePath, tmpDir)
+	if mgr.GetStoragePath() != tmpDir {
+		t.Errorf("storagePath = %v, want %v", mgr.GetStoragePath(), tmpDir)
 	}
 
-	if mgr.surveys == nil {
+	if mgr.GetSurveys() == nil {
 		t.Error("surveys map is nil")
 	}
 
-	if mgr.wifiScanner == nil {
+	if mgr.GetWifiScanner() == nil {
 		t.Error("wifiScanner is nil")
 	}
 
-	if mgr.wifiManager == nil {
+	if mgr.GetWifiManager() == nil {
 		t.Error("wifiManager is nil")
 	}
 
-	if mgr.iperfManager == nil {
+	if mgr.GetIperfManager() == nil {
 		t.Error("iperfManager is nil")
 	}
 }
 
 func TestCreateSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
 	tests := []struct {
 		name        string
 		surveyName  string
 		description string
 		iface       string
-		surveyType  Type
+		surveyType  survey.Type
 		wantErr     bool
 	}{
 		{
@@ -63,7 +64,7 @@ func TestCreateSurvey(t *testing.T) {
 			surveyName:  "Test Passive",
 			description: "Test passive survey",
 			iface:       "wlan0",
-			surveyType:  TypePassive,
+			surveyType:  survey.TypePassive,
 			wantErr:     false,
 		},
 		{
@@ -71,7 +72,7 @@ func TestCreateSurvey(t *testing.T) {
 			surveyName:  "Test Active",
 			description: "Test active survey",
 			iface:       "wlan0",
-			surveyType:  TypeActive,
+			surveyType:  survey.TypeActive,
 			wantErr:     false,
 		},
 		{
@@ -79,14 +80,14 @@ func TestCreateSurvey(t *testing.T) {
 			surveyName:  "Test Throughput",
 			description: "Test throughput survey",
 			iface:       "wlan0",
-			surveyType:  TypeThroughput,
+			surveyType:  survey.TypeThroughput,
 			wantErr:     false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			survey, err := mgr.CreateSurvey(tt.surveyName, tt.description, tt.iface, tt.surveyType)
+			s, err := mgr.CreateSurvey(tt.surveyName, tt.description, tt.iface, tt.surveyType)
 
 			if tt.wantErr {
 				if err == nil {
@@ -100,40 +101,40 @@ func TestCreateSurvey(t *testing.T) {
 				return
 			}
 
-			if survey == nil {
+			if s == nil {
 				t.Fatal("CreateSurvey() returned nil survey")
 			}
 
-			if survey.ID == "" {
+			if s.ID == "" {
 				t.Error("Survey ID is empty")
 			}
 
-			if survey.Name != tt.surveyName {
-				t.Errorf("Survey Name = %v, want %v", survey.Name, tt.surveyName)
+			if s.Name != tt.surveyName {
+				t.Errorf("Survey Name = %v, want %v", s.Name, tt.surveyName)
 			}
 
-			if survey.Description != tt.description {
-				t.Errorf("Survey Description = %v, want %v", survey.Description, tt.description)
+			if s.Description != tt.description {
+				t.Errorf("Survey Description = %v, want %v", s.Description, tt.description)
 			}
 
-			if survey.Interface != tt.iface {
-				t.Errorf("Survey Interface = %v, want %v", survey.Interface, tt.iface)
+			if s.Interface != tt.iface {
+				t.Errorf("Survey Interface = %v, want %v", s.Interface, tt.iface)
 			}
 
-			if survey.SurveyType != tt.surveyType {
-				t.Errorf("Survey Type = %v, want %v", survey.SurveyType, tt.surveyType)
+			if s.SurveyType != tt.surveyType {
+				t.Errorf("Survey Type = %v, want %v", s.SurveyType, tt.surveyType)
 			}
 
-			if survey.Status != StatusCreated {
-				t.Errorf("Survey Status = %v, want %v", survey.Status, StatusCreated)
+			if s.Status != survey.StatusCreated {
+				t.Errorf("Survey Status = %v, want %v", s.Status, survey.StatusCreated)
 			}
 
-			// With multi-floor support, surveys have floors instead of direct Samples
-			if len(survey.Floors) == 0 {
+			// With multi-floor support, surveys have floors instead of direct Samples.
+			if len(s.Floors) == 0 {
 				t.Error("Survey has no floors")
 			}
 
-			activeFloor := survey.GetActiveFloor()
+			activeFloor := s.GetActiveFloor()
 			if activeFloor == nil {
 				t.Fatal("Survey has no active floor")
 			}
@@ -142,11 +143,11 @@ func TestCreateSurvey(t *testing.T) {
 				t.Error("Active floor Samples is nil")
 			}
 
-			if survey.CreatedAt.IsZero() {
+			if s.CreatedAt.IsZero() {
 				t.Error("Survey CreatedAt is zero")
 			}
 
-			if survey.UpdatedAt.IsZero() {
+			if s.UpdatedAt.IsZero() {
 				t.Error("Survey UpdatedAt is zero")
 			}
 		})
@@ -155,10 +156,10 @@ func TestCreateSurvey(t *testing.T) {
 
 func TestGetSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	// Create a survey first
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	// Create a survey first.
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -170,7 +171,7 @@ func TestGetSurvey(t *testing.T) {
 	}{
 		{
 			name:    "existing survey",
-			id:      survey.ID,
+			id:      s.ID,
 			wantErr: false,
 		},
 		{
@@ -214,37 +215,37 @@ func TestGetSurvey(t *testing.T) {
 
 func TestListSurveys(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	// Initially empty
+	// Initially empty.
 	surveys := mgr.ListSurveys()
 	if len(surveys) != 0 {
 		t.Errorf("ListSurveys() returned %d surveys, want 0", len(surveys))
 	}
 
-	// Create surveys
-	_, err := mgr.CreateSurvey("Survey 1", "Desc 1", "wlan0", TypePassive)
+	// Create surveys.
+	_, err := mgr.CreateSurvey("Survey 1", "Desc 1", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	_, err = mgr.CreateSurvey("Survey 2", "Desc 2", "wlan0", TypeActive)
+	_, err = mgr.CreateSurvey("Survey 2", "Desc 2", "wlan0", survey.TypeActive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	_, err = mgr.CreateSurvey("Survey 3", "Desc 3", "wlan0", TypeThroughput)
+	_, err = mgr.CreateSurvey("Survey 3", "Desc 3", "wlan0", survey.TypeThroughput)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	// Should now have 3 surveys
+	// Should now have 3 surveys.
 	surveys = mgr.ListSurveys()
 	if len(surveys) != 3 {
 		t.Errorf("ListSurveys() returned %d surveys, want 3", len(surveys))
 	}
 
-	// Verify surveys are not nil
+	// Verify surveys are not nil.
 	for i, s := range surveys {
 		if s == nil {
 			t.Errorf("Survey at index %d is nil", i)
@@ -254,9 +255,9 @@ func TestListSurveys(t *testing.T) {
 
 func TestDeleteSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -268,7 +269,7 @@ func TestDeleteSurvey(t *testing.T) {
 	}{
 		{
 			name:    "delete existing survey",
-			id:      survey.ID,
+			id:      s.ID,
 			wantErr: false,
 		},
 		{
@@ -293,7 +294,7 @@ func TestDeleteSurvey(t *testing.T) {
 				t.Errorf("DeleteSurvey() error = %v, want nil", deleteErr)
 			}
 
-			// Verify survey is deleted
+			// Verify survey is deleted.
 			_, getErr := mgr.GetSurvey(tt.id)
 			if getErr == nil {
 				t.Error("GetSurvey() after delete succeeded, want error")
@@ -304,9 +305,9 @@ func TestDeleteSurvey(t *testing.T) {
 
 func TestStartSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
@@ -314,19 +315,19 @@ func TestStartSurvey(t *testing.T) {
 	tests := []struct {
 		name        string
 		id          string
-		setupStatus Status
+		setupStatus survey.Status
 		wantErr     bool
 	}{
 		{
 			name:        "start created survey",
-			id:          survey.ID,
-			setupStatus: StatusCreated,
+			id:          s.ID,
+			setupStatus: survey.StatusCreated,
 			wantErr:     false,
 		},
 		{
 			name:        "start non-existent survey",
 			id:          "non-existent-id",
-			setupStatus: StatusCreated,
+			setupStatus: survey.StatusCreated,
 			wantErr:     true,
 		},
 	}
@@ -347,14 +348,14 @@ func TestStartSurvey(t *testing.T) {
 				return
 			}
 
-			// Verify status changed
+			// Verify status changed.
 			result, getErr := mgr.GetSurvey(tt.id)
 			if getErr != nil {
 				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
-			if result.Status != StatusInProgress {
-				t.Errorf("Survey Status = %v, want %v", result.Status, StatusInProgress)
+			if result.Status != survey.StatusInProgress {
+				t.Errorf("Survey Status = %v, want %v", result.Status, survey.StatusInProgress)
 			}
 		})
 	}
@@ -362,15 +363,15 @@ func TestStartSurvey(t *testing.T) {
 
 func TestPauseSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	// Start survey first
-	err = mgr.StartSurvey(survey.ID)
+	// Start survey first.
+	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("StartSurvey() failed: %v", err)
 	}
@@ -382,7 +383,7 @@ func TestPauseSurvey(t *testing.T) {
 	}{
 		{
 			name:    "pause in-progress survey",
-			id:      survey.ID,
+			id:      s.ID,
 			wantErr: false,
 		},
 		{
@@ -408,14 +409,14 @@ func TestPauseSurvey(t *testing.T) {
 				return
 			}
 
-			// Verify status changed
+			// Verify status changed.
 			result, getErr := mgr.GetSurvey(tt.id)
 			if getErr != nil {
 				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
-			if result.Status != StatusPaused {
-				t.Errorf("Survey Status = %v, want %v", result.Status, StatusPaused)
+			if result.Status != survey.StatusPaused {
+				t.Errorf("Survey Status = %v, want %v", result.Status, survey.StatusPaused)
 			}
 		})
 	}
@@ -423,15 +424,15 @@ func TestPauseSurvey(t *testing.T) {
 
 func TestCompleteSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	// Start survey first
-	err = mgr.StartSurvey(survey.ID)
+	// Start survey first.
+	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("StartSurvey() failed: %v", err)
 	}
@@ -443,7 +444,7 @@ func TestCompleteSurvey(t *testing.T) {
 	}{
 		{
 			name:    "complete in-progress survey",
-			id:      survey.ID,
+			id:      s.ID,
 			wantErr: false,
 		},
 		{
@@ -469,14 +470,14 @@ func TestCompleteSurvey(t *testing.T) {
 				return
 			}
 
-			// Verify status changed
+			// Verify status changed.
 			result, getErr := mgr.GetSurvey(tt.id)
 			if getErr != nil {
 				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
-			if result.Status != StatusCompleted {
-				t.Errorf("Survey Status = %v, want %v", result.Status, StatusCompleted)
+			if result.Status != survey.StatusCompleted {
+				t.Errorf("Survey Status = %v, want %v", result.Status, survey.StatusCompleted)
 			}
 		})
 	}
@@ -484,55 +485,55 @@ func TestCompleteSurvey(t *testing.T) {
 
 func TestStateTransitions(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	// Test valid state transitions
-	// Created -> InProgress
-	err = mgr.StartSurvey(survey.ID)
+	// Test valid state transitions.
+	// Created -> InProgress.
+	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Errorf("Created -> InProgress failed: %v", err)
 	}
 
-	// InProgress -> Paused
-	err = mgr.PauseSurvey(survey.ID)
+	// InProgress -> Paused.
+	err = mgr.PauseSurvey(s.ID)
 	if err != nil {
 		t.Errorf("InProgress -> Paused failed: %v", err)
 	}
 
-	// Paused -> InProgress (resume)
-	err = mgr.StartSurvey(survey.ID)
+	// Paused -> InProgress (resume).
+	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Errorf("Paused -> InProgress failed: %v", err)
 	}
 
-	// InProgress -> Completed
-	err = mgr.CompleteSurvey(survey.ID)
+	// InProgress -> Completed.
+	err = mgr.CompleteSurvey(s.ID)
 	if err != nil {
 		t.Errorf("InProgress -> Completed failed: %v", err)
 	}
 
-	// Verify final state
-	result, _ := mgr.GetSurvey(survey.ID)
-	if result.Status != StatusCompleted {
-		t.Errorf("Final status = %v, want %v", result.Status, StatusCompleted)
+	// Verify final state.
+	result, _ := mgr.GetSurvey(s.ID)
+	if result.Status != survey.StatusCompleted {
+		t.Errorf("Final status = %v, want %v", result.Status, survey.StatusCompleted)
 	}
 }
 
 func TestUpdateFloorPlan(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	floorPlan := &FloorPlan{
+	floorPlan := &survey.FloorPlan{
 		ImageData: "base64encodeddata",
 		Width:     1000,
 		Height:    800,
@@ -541,12 +542,12 @@ func TestUpdateFloorPlan(t *testing.T) {
 	tests := []struct {
 		name      string
 		id        string
-		floorPlan *FloorPlan
+		floorPlan *survey.FloorPlan
 		wantErr   bool
 	}{
 		{
 			name:      "update with valid floor plan",
-			id:        survey.ID,
+			id:        s.ID,
 			floorPlan: floorPlan,
 			wantErr:   false,
 		},
@@ -574,13 +575,13 @@ func TestUpdateFloorPlan(t *testing.T) {
 				return
 			}
 
-			// Verify floor plan updated (now on the active floor)
+			// Verify floor plan updated (now on the active floor).
 			result, getErr := mgr.GetSurvey(tt.id)
 			if getErr != nil {
 				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
-			// With multi-floor support, floor plan is on the active floor
+			// With multi-floor support, floor plan is on the active floor.
 			activeFloor := result.GetActiveFloor()
 			if activeFloor == nil {
 				t.Fatal("No active floor found")
@@ -603,15 +604,15 @@ func TestUpdateFloorPlan(t *testing.T) {
 
 func TestAddSample(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	// Start survey to allow samples
-	err = mgr.StartSurvey(survey.ID)
+	// Start survey to allow samples.
+	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("StartSurvey() failed: %v", err)
 	}
@@ -636,7 +637,7 @@ func TestAddSample(t *testing.T) {
 	}{
 		{
 			name:       "add valid sample",
-			id:         survey.ID,
+			id:         s.ID,
 			x:          100,
 			y:          200,
 			sampleData: passiveData,
@@ -668,13 +669,13 @@ func TestAddSample(t *testing.T) {
 				return
 			}
 
-			// Verify sample was added (now on the active floor)
+			// Verify sample was added (now on the active floor).
 			result, getErr := mgr.GetSurvey(tt.id)
 			if getErr != nil {
 				t.Fatalf("GetSurvey() failed: %v", getErr)
 			}
 
-			// With multi-floor support, samples are on the active floor
+			// With multi-floor support, samples are on the active floor.
 			samples := result.GetAllSamples()
 			if len(samples) == 0 {
 				t.Error("No samples found after AddSample()")
@@ -699,31 +700,31 @@ func TestAddSample(t *testing.T) {
 
 func TestPersistence(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	// Create a survey
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	// Create a survey.
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	// Verify file was created
-	filePath := filepath.Join(tmpDir, survey.ID+".json")
+	// Verify file was created.
+	filePath := filepath.Join(tmpDir, s.ID+".json")
 	if _, statErr := os.Stat(filePath); os.IsNotExist(statErr) {
 		t.Errorf("Survey file not created at %s", filePath)
 	}
 
-	// Create new manager to load surveys
-	mgr2 := NewManager(tmpDir, nil, nil, nil)
+	// Create new manager to load surveys.
+	mgr2 := survey.NewManager(tmpDir, nil, nil, nil)
 
-	// Load surveys from disk
+	// Load surveys from disk.
 	err = mgr2.LoadSurveys()
 	if err != nil {
 		t.Fatalf("LoadSurveys() failed: %v", err)
 	}
 
-	// Verify survey was loaded
-	loaded, err := mgr2.GetSurvey(survey.ID)
+	// Verify survey was loaded.
+	loaded, err := mgr2.GetSurvey(s.ID)
 	if err != nil {
 		t.Errorf("Failed to load survey: %v", err)
 	}
@@ -732,16 +733,16 @@ func TestPersistence(t *testing.T) {
 		t.Fatal("Loaded survey is nil")
 	}
 
-	if loaded.Name != survey.Name {
-		t.Errorf("Loaded survey Name = %v, want %v", loaded.Name, survey.Name)
+	if loaded.Name != s.Name {
+		t.Errorf("Loaded survey Name = %v, want %v", loaded.Name, s.Name)
 	}
 
-	if loaded.Description != survey.Description {
-		t.Errorf("Loaded survey Description = %v, want %v", loaded.Description, survey.Description)
+	if loaded.Description != s.Description {
+		t.Errorf("Loaded survey Description = %v, want %v", loaded.Description, s.Description)
 	}
 
-	// Delete and verify file removed
-	err = mgr2.DeleteSurvey(survey.ID)
+	// Delete and verify file removed.
+	err = mgr2.DeleteSurvey(s.ID)
 	if err != nil {
 		t.Errorf("DeleteSurvey() failed: %v", err)
 	}
@@ -753,17 +754,17 @@ func TestPersistence(t *testing.T) {
 
 func TestConcurrentOperations(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
 	var wg sync.WaitGroup
 	numGoroutines := 10
 
-	// Concurrent creates
+	// Concurrent creates.
 	for i := range numGoroutines {
 		wg.Add(1)
 		go func(_ int) {
 			defer wg.Done()
-			_, err := mgr.CreateSurvey("Survey", "Desc", "wlan0", TypePassive)
+			_, err := mgr.CreateSurvey("Survey", "Desc", "wlan0", survey.TypePassive)
 			if err != nil {
 				t.Errorf("Concurrent CreateSurvey() failed: %v", err)
 			}
@@ -772,7 +773,7 @@ func TestConcurrentOperations(t *testing.T) {
 
 	wg.Wait()
 
-	// Should have created all surveys
+	// Should have created all surveys.
 	surveys := mgr.ListSurveys()
 	if len(surveys) != numGoroutines {
 		t.Errorf("Expected %d surveys, got %d", numGoroutines, len(surveys))
@@ -781,14 +782,14 @@ func TestConcurrentOperations(t *testing.T) {
 
 func TestConcurrentSampleAddition(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	err = mgr.StartSurvey(survey.ID)
+	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("StartSurvey() failed: %v", err)
 	}
@@ -805,12 +806,12 @@ func TestConcurrentSampleAddition(t *testing.T) {
 		},
 	}
 
-	// Concurrent sample additions
+	// Concurrent sample additions.
 	for i := range numSamples {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			addErr := mgr.AddSample(survey.ID, n, n, sampleData)
+			addErr := mgr.AddSample(s.ID, n, n, sampleData)
 			if addErr != nil {
 				t.Errorf("Concurrent AddSample() failed: %v", addErr)
 			}
@@ -819,8 +820,8 @@ func TestConcurrentSampleAddition(t *testing.T) {
 
 	wg.Wait()
 
-	// Verify all samples added (now on the active floor)
-	result, err := mgr.GetSurvey(survey.ID)
+	// Verify all samples added (now on the active floor).
+	result, err := mgr.GetSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("GetSurvey() failed: %v", err)
 	}
@@ -833,52 +834,52 @@ func TestConcurrentSampleAddition(t *testing.T) {
 
 func TestSurveyTimestamps(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
 	beforeCreate := time.Now()
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 	afterCreate := time.Now()
 
-	// Verify CreatedAt is within expected time range
-	if survey.CreatedAt.Before(beforeCreate) || survey.CreatedAt.After(afterCreate) {
+	// Verify CreatedAt is within expected time range.
+	if s.CreatedAt.Before(beforeCreate) || s.CreatedAt.After(afterCreate) {
 		t.Error("CreatedAt timestamp out of expected range")
 	}
 
-	// Verify UpdatedAt is set
-	if survey.UpdatedAt.Before(beforeCreate) || survey.UpdatedAt.After(afterCreate) {
+	// Verify UpdatedAt is set.
+	if s.UpdatedAt.Before(beforeCreate) || s.UpdatedAt.After(afterCreate) {
 		t.Error("UpdatedAt timestamp out of expected range")
 	}
 
-	// Complete survey
-	err = mgr.StartSurvey(survey.ID)
+	// Complete survey.
+	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("StartSurvey() failed: %v", err)
 	}
 
-	err = mgr.CompleteSurvey(survey.ID)
+	err = mgr.CompleteSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("CompleteSurvey() failed: %v", err)
 	}
 
-	result, _ := mgr.GetSurvey(survey.ID)
-	if result.Status != StatusCompleted {
+	result, _ := mgr.GetSurvey(s.ID)
+	if result.Status != survey.StatusCompleted {
 		t.Error("Survey not marked as completed")
 	}
 }
 
 func TestSampleCount(t *testing.T) {
 	tmpDir := t.TempDir()
-	mgr := NewManager(tmpDir, nil, nil, nil)
+	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	survey, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", TypePassive)
+	s, err := mgr.CreateSurvey("Test Survey", "Description", "wlan0", survey.TypePassive)
 	if err != nil {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	err = mgr.StartSurvey(survey.ID)
+	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("StartSurvey() failed: %v", err)
 	}
@@ -889,20 +890,20 @@ func TestSampleCount(t *testing.T) {
 		},
 	}
 
-	// Add multiple samples
+	// Add multiple samples.
 	for i := range 5 {
-		err = mgr.AddSample(survey.ID, i*10, i*10, sampleData)
+		err = mgr.AddSample(s.ID, i*10, i*10, sampleData)
 		if err != nil {
 			t.Errorf("AddSample() failed: %v", err)
 		}
 	}
 
-	result, err := mgr.GetSurvey(survey.ID)
+	result, err := mgr.GetSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("GetSurvey() failed: %v", err)
 	}
 
-	// With multi-floor support, samples are on the active floor
+	// With multi-floor support, samples are on the active floor.
 	samples := result.GetAllSamples()
 	if len(samples) != 5 {
 		t.Errorf("Sample count = %d, want 5", len(samples))
@@ -913,12 +914,12 @@ func TestPassiveSampleAggregations(t *testing.T) {
 	tests := []struct {
 		name     string
 		networks []*wifi.ScannedNetwork
-		want     PassiveSample
+		want     survey.PassiveSample
 	}{
 		{
 			name:     "empty networks",
 			networks: []*wifi.ScannedNetwork{},
-			want: PassiveSample{
+			want: survey.PassiveSample{
 				Networks:      []*wifi.ScannedNetwork{},
 				UniqueSSIDs:   0,
 				UniqueBSSIDs:  0,
@@ -932,7 +933,7 @@ func TestPassiveSampleAggregations(t *testing.T) {
 		{
 			name:     "nil networks",
 			networks: nil,
-			want: PassiveSample{
+			want: survey.PassiveSample{
 				Networks:      nil,
 				UniqueSSIDs:   0,
 				UniqueBSSIDs:  0,
@@ -948,41 +949,41 @@ func TestPassiveSampleAggregations(t *testing.T) {
 			networks: []*wifi.ScannedNetwork{
 				{SSID: "TestNet", BSSID: "00:11:22:33:44:55", Channel: 6, Frequency: 2437, Signal: -50},
 			},
-			want: PassiveSample{
+			want: survey.PassiveSample{
 				UniqueSSIDs:   1,
 				UniqueBSSIDs:  1,
 				APCount2_4:    1,
 				APCount5:      0,
 				APCount6:      0,
-				CoChannelAPs:  1, // Same as strongest (itself)
+				CoChannelAPs:  1, // Same as strongest (itself).
 				AdjChannelAPs: 0,
 			},
 		},
 		{
 			name: "multiple bands and channels",
 			networks: []*wifi.ScannedNetwork{
-				// Strongest AP on channel 36 (5GHz)
+				// Strongest AP on channel 36 (5GHz).
 				{SSID: "Net5G", BSSID: "00:11:22:33:44:55", Channel: 36, Frequency: 5180, Signal: -40},
-				// Co-channel AP
+				// Co-channel AP.
 				{SSID: "Net5G-2", BSSID: "00:11:22:33:44:66", Channel: 36, Frequency: 5180, Signal: -50},
-				// Adjacent channel (±1)
+				// Adjacent channel (+-1).
 				{SSID: "Net5G-3", BSSID: "00:11:22:33:44:77", Channel: 37, Frequency: 5185, Signal: -55},
-				// Adjacent channel (±2)
+				// Adjacent channel (+-2).
 				{SSID: "Net5G-4", BSSID: "00:11:22:33:44:88", Channel: 38, Frequency: 5190, Signal: -60},
-				// 2.4GHz networks
+				// 2.4GHz networks.
 				{SSID: "Net2.4", BSSID: "AA:BB:CC:DD:EE:FF", Channel: 1, Frequency: 2412, Signal: -65},
 				{SSID: "Net2.4-2", BSSID: "AA:BB:CC:DD:EE:AA", Channel: 6, Frequency: 2437, Signal: -70},
-				// 6GHz network
+				// 6GHz network.
 				{SSID: "Net6G", BSSID: "FF:EE:DD:CC:BB:AA", Channel: 1, Frequency: 5955, Signal: -45},
 			},
-			want: PassiveSample{
+			want: survey.PassiveSample{
 				UniqueSSIDs:   7,
 				UniqueBSSIDs:  7,
 				APCount2_4:    2,
 				APCount5:      4,
 				APCount6:      1,
-				CoChannelAPs:  2, // Two APs on channel 36
-				AdjChannelAPs: 2, // Channels 37 and 38
+				CoChannelAPs:  2, // Two APs on channel 36.
+				AdjChannelAPs: 2, // Channels 37 and 38.
 			},
 		},
 		{
@@ -992,13 +993,13 @@ func TestPassiveSampleAggregations(t *testing.T) {
 				{SSID: "SameNet", BSSID: "00:11:22:33:44:66", Channel: 1, Frequency: 2412, Signal: -55},
 				{SSID: "SameNet", BSSID: "00:11:22:33:44:77", Channel: 1, Frequency: 2412, Signal: -60},
 			},
-			want: PassiveSample{
-				UniqueSSIDs:   1, // Only one unique SSID
-				UniqueBSSIDs:  3, // Three different APs
+			want: survey.PassiveSample{
+				UniqueSSIDs:   1, // Only one unique SSID.
+				UniqueBSSIDs:  3, // Three different APs.
 				APCount2_4:    3,
 				APCount5:      0,
 				APCount6:      0,
-				CoChannelAPs:  3, // All on channel 1
+				CoChannelAPs:  3, // All on channel 1.
 				AdjChannelAPs: 0,
 			},
 		},
@@ -1008,9 +1009,9 @@ func TestPassiveSampleAggregations(t *testing.T) {
 				{SSID: "", BSSID: "00:11:22:33:44:55", Channel: 6, Frequency: 2437, Signal: -50},
 				{SSID: "VisibleNet", BSSID: "00:11:22:33:44:66", Channel: 6, Frequency: 2437, Signal: -55},
 			},
-			want: PassiveSample{
-				UniqueSSIDs:   1, // Hidden SSID not counted
-				UniqueBSSIDs:  2, // Both BSSIDs counted
+			want: survey.PassiveSample{
+				UniqueSSIDs:   1, // Hidden SSID not counted.
+				UniqueBSSIDs:  2, // Both BSSIDs counted.
 				APCount2_4:    2,
 				APCount5:      0,
 				APCount6:      0,
@@ -1022,7 +1023,7 @@ func TestPassiveSampleAggregations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sample := PassiveSample{
+			sample := survey.PassiveSample{
 				Networks: tt.networks,
 			}
 			sample.CalculateAggregations()

@@ -8,11 +8,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // CSRF token configuration.
@@ -142,7 +143,7 @@ func (m *CSRFManager) cleanupExpiredTokens() {
 	for {
 		select {
 		case <-m.ctx.Done():
-			slog.Debug("CSRF cleanup goroutine stopping")
+			logging.GetLogger().Debug("CSRF cleanup goroutine stopping")
 			return
 		case <-ticker.C:
 			m.mu.Lock()
@@ -198,7 +199,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 		sessionID := GetSessionIDFromRequest(r)
 
 		if sessionID == "" {
-			slog.Warn("CSRF validation failed: no session ID",
+			logging.GetLogger().Warn("CSRF validation failed: no session ID",
 				"path", r.URL.Path,
 				"method", r.Method)
 			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Unauthorized")
@@ -210,7 +211,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 
 		// Validate the token
 		if err := m.ValidateToken(sessionID, token); err != nil {
-			slog.Warn("CSRF validation failed",
+			logging.GetLogger().Warn("CSRF validation failed",
 				"path", r.URL.Path,
 				"method", r.Method,
 				"error", err)

@@ -1,33 +1,40 @@
-package discovery
+// Package discovery_test provides traceroute tests.
+package discovery_test
 
 import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
 func TestNewTracer(t *testing.T) {
 	// Test with default values
-	tracer := NewTracer(0, 0)
-	if tracer.timeout != 3*time.Second {
-		t.Errorf("expected default timeout 3s, got %v", tracer.timeout)
+	tracer := discovery.NewTracer(0, 0)
+	accessor := &discovery.TracerTestAccessor{Tracer: tracer}
+
+	if accessor.GetTimeout() != 1*time.Second {
+		t.Errorf("expected default timeout 1s, got %v", accessor.GetTimeout())
 	}
-	if tracer.maxHops != 30 {
-		t.Errorf("expected default maxHops 30, got %d", tracer.maxHops)
+	if accessor.GetMaxHops() != 30 {
+		t.Errorf("expected default maxHops 30, got %d", accessor.GetMaxHops())
 	}
 
 	// Test with custom values
-	tracer = NewTracer(5*time.Second, 20)
-	if tracer.timeout != 5*time.Second {
-		t.Errorf("expected timeout 5s, got %v", tracer.timeout)
+	tracer = discovery.NewTracer(5*time.Second, 20)
+	accessor = &discovery.TracerTestAccessor{Tracer: tracer}
+
+	if accessor.GetTimeout() != 5*time.Second {
+		t.Errorf("expected timeout 5s, got %v", accessor.GetTimeout())
 	}
-	if tracer.maxHops != 20 {
-		t.Errorf("expected maxHops 20, got %d", tracer.maxHops)
+	if accessor.GetMaxHops() != 20 {
+		t.Errorf("expected maxHops 20, got %d", accessor.GetMaxHops())
 	}
 }
 
 func TestTracer_TraceICMP_InvalidTarget(t *testing.T) {
-	tracer := NewTracer(1*time.Second, 5)
+	tracer := discovery.NewTracer(1*time.Second, 5)
 	ctx := context.Background()
 
 	// Test with invalid hostname
@@ -41,7 +48,7 @@ func TestTracer_TraceICMP_InvalidTarget(t *testing.T) {
 }
 
 func TestTracer_TraceUDP_InvalidTarget(t *testing.T) {
-	tracer := NewTracer(1*time.Second, 5)
+	tracer := discovery.NewTracer(1*time.Second, 5)
 	ctx := context.Background()
 
 	result := tracer.TraceUDP(ctx, "invalid.hostname.that.does.not.exist.example", 33434)
@@ -51,7 +58,7 @@ func TestTracer_TraceUDP_InvalidTarget(t *testing.T) {
 }
 
 func TestTracer_TraceTCP_InvalidTarget(t *testing.T) {
-	tracer := NewTracer(1*time.Second, 5)
+	tracer := discovery.NewTracer(1*time.Second, 5)
 	ctx := context.Background()
 
 	result := tracer.TraceTCP(ctx, "invalid.hostname.that.does.not.exist.example", 80)
@@ -61,7 +68,7 @@ func TestTracer_TraceTCP_InvalidTarget(t *testing.T) {
 }
 
 func TestTracer_TraceICMP_Localhost(t *testing.T) {
-	tracer := NewTracer(2*time.Second, 5)
+	tracer := discovery.NewTracer(2*time.Second, 5)
 	ctx := context.Background()
 
 	result := tracer.TraceICMP(ctx, "127.0.0.1")
@@ -81,7 +88,7 @@ func TestTracer_TraceICMP_Localhost(t *testing.T) {
 }
 
 func TestTracer_ContextCancellation(t *testing.T) {
-	tracer := NewTracer(5*time.Second, 30)
+	tracer := discovery.NewTracer(5*time.Second, 30)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Cancel immediately
@@ -94,11 +101,11 @@ func TestTracer_ContextCancellation(t *testing.T) {
 }
 
 func TestTracerouteResult_Structure(t *testing.T) {
-	result := &TracerouteResult{
+	result := &discovery.TracerouteResult{
 		Target:    "example.com",
 		TargetIP:  "93.184.216.34",
 		Protocol:  "icmp",
-		Hops:      make([]TracerouteHop, 0),
+		Hops:      make([]discovery.TracerouteHop, 0),
 		Completed: false,
 	}
 
@@ -120,7 +127,7 @@ func TestTracerouteResult_Structure(t *testing.T) {
 }
 
 func TestTracerouteHop_Structure(t *testing.T) {
-	hop := TracerouteHop{
+	hop := discovery.TracerouteHop{
 		TTL:      5,
 		IP:       "192.168.1.1",
 		Hostname: "router.local",

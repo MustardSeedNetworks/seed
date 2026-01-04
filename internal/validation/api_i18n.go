@@ -3,10 +3,10 @@ package validation
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/i18n"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // FieldErrorWithKey represents a validation error with a translation key.
@@ -46,7 +46,7 @@ func WriteValidationErrorI18n(w http.ResponseWriter, localizer *i18n.Localizer, 
 		Fields: translatedErrors,
 	}
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		slog.Warn("failed to encode validation error response", "error", err)
+		logging.GetLogger().Warn("failed to encode validation error response", "error", err)
 	}
 }
 
@@ -64,7 +64,7 @@ func WriteJSONErrorI18nWithCode(w http.ResponseWriter, localizer *i18n.Localizer
 		Code:  code,
 	}
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		slog.Warn("failed to encode i18n error response", "error", err)
+		logging.GetLogger().Warn("failed to encode i18n error response", "error", err)
 	}
 }
 
@@ -82,7 +82,7 @@ func WriteJSONErrorI18nWithData(
 		Error: localizer.TWithData(messageKey, data),
 	}
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		slog.Warn("failed to encode i18n error response with data", "error", err)
+		logging.GetLogger().Warn("failed to encode i18n error response with data", "error", err)
 	}
 }
 

@@ -1,15 +1,17 @@
-// Package gateway provides gateway reachability testing and latency measurement.
+// Package gateway_test provides gateway reachability testing and latency measurement.
 // Test suite validates gateway detection, ping testing, threshold evaluation,
 // and packet loss calculation for gateway health monitoring.
-package gateway
+package gateway_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
 )
 
 func TestDefaultThresholds(t *testing.T) {
-	thresholds := DefaultThresholds()
+	thresholds := gateway.DefaultThresholds()
 
 	if thresholds.Warning != 50*time.Millisecond {
 		t.Errorf("expected Warning threshold 50ms, got %v", thresholds.Warning)
@@ -26,41 +28,41 @@ func TestDefaultThresholds(t *testing.T) {
 }
 
 func TestNewTester(t *testing.T) {
-	thresholds := DefaultThresholds()
-	tester := NewTester(thresholds)
+	thresholds := gateway.DefaultThresholds()
+	tester := gateway.NewTester(thresholds)
 
 	if tester == nil {
 		t.Fatal("expected non-nil tester")
 	}
-	if tester.pingCount != 3 {
-		t.Errorf("expected pingCount 3, got %d", tester.pingCount)
+	if tester.TesterPingCount() != 3 {
+		t.Errorf("expected pingCount 3, got %d", tester.TesterPingCount())
 	}
-	if tester.pingTimeout != 2*time.Second {
-		t.Errorf("expected pingTimeout 2s, got %v", tester.pingTimeout)
+	if tester.TesterPingTimeout() != 2*time.Second {
+		t.Errorf("expected pingTimeout 2s, got %v", tester.TesterPingTimeout())
 	}
-	if tester.stats == nil {
+	if tester.TesterStats() == nil {
 		t.Error("expected non-nil stats")
 	}
-	if tester.stats.Status != StatusUnknown {
-		t.Errorf("expected initial status Unknown, got %v", tester.stats.Status)
+	if tester.TesterStats().Status != gateway.StatusUnknown {
+		t.Errorf("expected initial status Unknown, got %v", tester.TesterStats().Status)
 	}
 }
 
 func TestTesterSetGetGateway(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
-	// Initially empty
+	// Initially empty.
 	if got := tester.GetGateway(); got != "" {
 		t.Errorf("expected empty gateway, got %q", got)
 	}
 
-	// Set gateway
+	// Set gateway.
 	tester.SetGateway("192.168.1.1")
 	if got := tester.GetGateway(); got != "192.168.1.1" {
 		t.Errorf("expected gateway '192.168.1.1', got %q", got)
 	}
 
-	// Update gateway
+	// Update gateway.
 	tester.SetGateway("10.0.0.1")
 	if got := tester.GetGateway(); got != "10.0.0.1" {
 		t.Errorf("expected gateway '10.0.0.1', got %q", got)
@@ -68,17 +70,17 @@ func TestTesterSetGetGateway(t *testing.T) {
 }
 
 func TestTesterGetStats(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
 	stats := tester.GetStats()
 	if stats == nil {
 		t.Fatal("expected non-nil stats")
 	}
-	if stats.Status != StatusUnknown {
+	if stats.Status != gateway.StatusUnknown {
 		t.Errorf("expected initial status Unknown, got %v", stats.Status)
 	}
 
-	// Ensure it returns a copy (modifying returned stats shouldn't affect internal state)
+	// Ensure it returns a copy (modifying returned stats shouldn't affect internal state).
 	stats.Gateway = "modified"
 	internalStats := tester.GetStats()
 	if internalStats.Gateway == "modified" {
@@ -86,11 +88,11 @@ func TestTesterGetStats(t *testing.T) {
 	}
 }
 
-// Note: parsePingRTT tests removed - now using raw ICMP pinger instead of exec.Command ping
+// Note: parsePingRTT tests removed - now using raw ICMP pinger instead of exec.Command ping.
 
 func TestTesterPingNoGateway(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
-	// Don't set a gateway
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	// Don't set a gateway.
 
 	result := tester.Ping()
 	if result.Success {
@@ -102,83 +104,83 @@ func TestTesterPingNoGateway(t *testing.T) {
 }
 
 func TestTesterDetermineStatus(t *testing.T) {
-	thresholds := Thresholds{
+	thresholds := gateway.Thresholds{
 		Warning:  50 * time.Millisecond,
 		Critical: 200 * time.Millisecond,
 		LossWarn: 5.0,
 		LossCrit: 20.0,
 	}
-	tester := NewTester(thresholds)
+	tester := gateway.NewTester(thresholds)
 
 	tests := []struct {
 		name     string
-		stats    *PingStats
-		expected Status
+		stats    *gateway.PingStats
+		expected gateway.Status
 	}{
 		{
 			name:     "unreachable",
-			stats:    &PingStats{Reachable: false, Received: 0},
-			expected: StatusError,
+			stats:    &gateway.PingStats{Reachable: false, Received: 0},
+			expected: gateway.StatusError,
 		},
 		{
 			name:     "no packets received",
-			stats:    &PingStats{Reachable: true, Received: 0},
-			expected: StatusError,
+			stats:    &gateway.PingStats{Reachable: true, Received: 0},
+			expected: gateway.StatusError,
 		},
 		{
 			name:     "critical packet loss",
-			stats:    &PingStats{Reachable: true, Received: 1, LossPercent: 25.0, AvgTime: 10},
-			expected: StatusError,
+			stats:    &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 25.0, AvgTime: 10},
+			expected: gateway.StatusError,
 		},
 		{
 			name:     "warning packet loss",
-			stats:    &PingStats{Reachable: true, Received: 1, LossPercent: 10.0, AvgTime: 10},
-			expected: StatusWarning,
+			stats:    &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 10.0, AvgTime: 10},
+			expected: gateway.StatusWarning,
 		},
 		{
 			name:     "critical latency",
-			stats:    &PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 250},
-			expected: StatusError,
+			stats:    &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 250},
+			expected: gateway.StatusError,
 		},
 		{
 			name:     "warning latency",
-			stats:    &PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 75},
-			expected: StatusWarning,
+			stats:    &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 75},
+			expected: gateway.StatusWarning,
 		},
 		{
 			name:     "success - good latency no loss",
-			stats:    &PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 10},
-			expected: StatusSuccess,
+			stats:    &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 10},
+			expected: gateway.StatusSuccess,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tester.determineStatus(tt.stats)
+			result := tester.DetermineStatus(tt.stats)
 			if result != tt.expected {
-				t.Errorf("determineStatus() = %v, want %v", result, tt.expected)
+				t.Errorf("DetermineStatus() = %v, want %v", result, tt.expected)
 			}
 		})
 	}
 }
 
 func TestStatusConstants(t *testing.T) {
-	if StatusSuccess != "success" {
-		t.Errorf("expected StatusSuccess = 'success', got %q", StatusSuccess)
+	if gateway.StatusSuccess != "success" {
+		t.Errorf("expected StatusSuccess = 'success', got %q", gateway.StatusSuccess)
 	}
-	if StatusWarning != "warning" {
-		t.Errorf("expected StatusWarning = 'warning', got %q", StatusWarning)
+	if gateway.StatusWarning != "warning" {
+		t.Errorf("expected StatusWarning = 'warning', got %q", gateway.StatusWarning)
 	}
-	if StatusError != "error" {
-		t.Errorf("expected StatusError = 'error', got %q", StatusError)
+	if gateway.StatusError != "error" {
+		t.Errorf("expected StatusError = 'error', got %q", gateway.StatusError)
 	}
-	if StatusUnknown != "unknown" {
-		t.Errorf("expected StatusUnknown = 'unknown', got %q", StatusUnknown)
+	if gateway.StatusUnknown != "unknown" {
+		t.Errorf("expected StatusUnknown = 'unknown', got %q", gateway.StatusUnknown)
 	}
 }
 
 func TestPingResultFields(t *testing.T) {
-	result := PingResult{
+	result := gateway.PingResult{
 		Sequence: 1,
 		Time:     50 * time.Millisecond,
 		TimeMs:   50.0,
@@ -205,7 +207,7 @@ func TestPingResultFields(t *testing.T) {
 
 func TestPingStatsFields(t *testing.T) {
 	now := time.Now()
-	stats := PingStats{
+	stats := gateway.PingStats{
 		Gateway:     "192.168.1.1",
 		Sent:        5,
 		Received:    4,
@@ -215,9 +217,9 @@ func TestPingStatsFields(t *testing.T) {
 		MaxTime:     50.3,
 		AvgTime:     25.2,
 		LastTime:    22.1,
-		Status:      StatusSuccess,
+		Status:      gateway.StatusSuccess,
 		Reachable:   true,
-		Results:     []PingResult{},
+		Results:     []gateway.PingResult{},
 		LastUpdated: now,
 	}
 
@@ -248,7 +250,7 @@ func TestPingStatsFields(t *testing.T) {
 	if stats.LastTime != 22.1 {
 		t.Errorf("expected LastTime 22.1, got %v", stats.LastTime)
 	}
-	if stats.Status != StatusSuccess {
+	if stats.Status != gateway.StatusSuccess {
 		t.Errorf("expected StatusSuccess, got %v", stats.Status)
 	}
 	if !stats.Reachable {
@@ -263,7 +265,7 @@ func TestPingStatsFields(t *testing.T) {
 }
 
 func TestTesterIsRunning(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
 	if tester.IsRunning() {
 		t.Error("expected IsRunning() to be false initially")
@@ -271,9 +273,9 @@ func TestTesterIsRunning(t *testing.T) {
 }
 
 func TestTesterStartStopContinuousNotRunning(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
-	// Should not panic when stopping a non-running tester
+	// Should not panic when stopping a non-running tester.
 	tester.StopContinuous()
 
 	if tester.IsRunning() {
@@ -282,29 +284,29 @@ func TestTesterStartStopContinuousNotRunning(t *testing.T) {
 }
 
 func TestDetectGateway(_ *testing.T) {
-	// This may or may not find a gateway depending on system config
-	gateway, err := DetectGateway()
-	// Just verify it doesn't panic
-	_ = gateway
+	// This may or may not find a gateway depending on system config.
+	gw, err := gateway.DetectGateway()
+	// Just verify it doesn't panic.
+	_ = gw
 	_ = err
 }
 
-// Note: Platform-specific gateway detection tests removed - now in platform files
+// Note: Platform-specific gateway detection tests removed - now in platform files.
 
 func TestTesterPingWithGateway(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping ping test in short mode")
 	}
 
-	tester := NewTester(DefaultThresholds())
-	// Use localhost which should always be reachable
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	// Use localhost which should always be reachable.
 	tester.SetGateway("127.0.0.1")
 
 	result := tester.Ping()
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
-	// 127.0.0.1 should be reachable
+	// 127.0.0.1 should be reachable.
 	if !result.Success {
 		t.Logf("ping to localhost failed: %v (may be blocked by firewall)", result.Error)
 	}
@@ -315,7 +317,7 @@ func TestTesterTest(t *testing.T) {
 		t.Skip("skipping test in short mode")
 	}
 
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 	tester.SetGateway("127.0.0.1")
 
 	stats := tester.Test()
@@ -335,14 +337,14 @@ func TestTesterTestWithAutoDetect(t *testing.T) {
 		t.Skip("skipping test in short mode")
 	}
 
-	tester := NewTester(DefaultThresholds())
-	// Don't set gateway - let it auto-detect
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	// Don't set gateway - let it auto-detect.
 
 	stats := tester.Test()
 	if stats == nil {
 		t.Fatal("expected non-nil stats")
 	}
-	// Should have tried to detect or returned error status
+	// Should have tried to detect or returned error status.
 	if stats.Status == "" {
 		t.Error("expected non-empty status")
 	}
@@ -353,36 +355,36 @@ func TestTesterStartStopContinuous(t *testing.T) {
 		t.Skip("skipping continuous test in short mode")
 	}
 
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 	tester.SetGateway("127.0.0.1")
 
 	callbackCh := make(chan struct{}, 10)
-	callback := func(_ *PingStats) {
+	callback := func(_ *gateway.PingStats) {
 		select {
 		case callbackCh <- struct{}{}:
 		default:
 		}
 	}
 
-	// Start continuous testing
+	// Start continuous testing.
 	tester.StartContinuous(100*time.Millisecond, callback)
 
 	if !tester.IsRunning() {
 		t.Error("expected IsRunning() to be true after StartContinuous")
 	}
 
-	// Wait for at least one callback with timeout
+	// Wait for at least one callback with timeout.
 	select {
 	case <-callbackCh:
-		// Got callback
+		// Got callback.
 	case <-time.After(5 * time.Second):
-		// Timeout is okay - test is about start/stop mechanism
+		// Timeout is okay - test is about start/stop mechanism.
 	}
 
-	// Starting again should be no-op
+	// Starting again should be no-op.
 	tester.StartContinuous(100*time.Millisecond, callback)
 
-	// Stop
+	// Stop.
 	tester.StopContinuous()
 
 	if tester.IsRunning() {
@@ -391,7 +393,7 @@ func TestTesterStartStopContinuous(t *testing.T) {
 }
 
 func TestThresholdsFields(t *testing.T) {
-	thresholds := Thresholds{
+	thresholds := gateway.Thresholds{
 		Warning:  75 * time.Millisecond,
 		Critical: 300 * time.Millisecond,
 		LossWarn: 10.0,
@@ -412,48 +414,48 @@ func TestThresholdsFields(t *testing.T) {
 	}
 }
 
-// Note: parsePingRTTMoreCases tests removed - now using raw ICMP pinger
+// Note: parsePingRTTMoreCases tests removed - now using raw ICMP pinger.
 
 func TestDetermineStatusEdgeCases(t *testing.T) {
-	thresholds := Thresholds{
+	thresholds := gateway.Thresholds{
 		Warning:  50 * time.Millisecond,
 		Critical: 200 * time.Millisecond,
 		LossWarn: 5.0,
 		LossCrit: 20.0,
 	}
-	tester := NewTester(thresholds)
+	tester := gateway.NewTester(thresholds)
 
-	// At exactly warning loss threshold
-	stats := &PingStats{Reachable: true, Received: 1, LossPercent: 5.0, AvgTime: 10}
-	status := tester.determineStatus(stats)
-	if status != StatusWarning {
+	// At exactly warning loss threshold.
+	stats := &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 5.0, AvgTime: 10}
+	status := tester.DetermineStatus(stats)
+	if status != gateway.StatusWarning {
 		t.Errorf("expected StatusWarning at loss warning threshold, got %v", status)
 	}
 
-	// At exactly critical loss threshold
-	stats = &PingStats{Reachable: true, Received: 1, LossPercent: 20.0, AvgTime: 10}
-	status = tester.determineStatus(stats)
-	if status != StatusError {
+	// At exactly critical loss threshold.
+	stats = &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 20.0, AvgTime: 10}
+	status = tester.DetermineStatus(stats)
+	if status != gateway.StatusError {
 		t.Errorf("expected StatusError at loss critical threshold, got %v", status)
 	}
 
-	// At exactly warning latency threshold
-	stats = &PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 50}
-	status = tester.determineStatus(stats)
-	if status != StatusWarning {
+	// At exactly warning latency threshold.
+	stats = &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 50}
+	status = tester.DetermineStatus(stats)
+	if status != gateway.StatusWarning {
 		t.Errorf("expected StatusWarning at latency warning threshold, got %v", status)
 	}
 
-	// At exactly critical latency threshold
-	stats = &PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 200}
-	status = tester.determineStatus(stats)
-	if status != StatusError {
+	// At exactly critical latency threshold.
+	stats = &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 200}
+	status = tester.DetermineStatus(stats)
+	if status != gateway.StatusError {
 		t.Errorf("expected StatusError at latency critical threshold, got %v", status)
 	}
 }
 
 func TestConcurrentTesterAccess(_ *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
 	done := make(chan bool)
 	for i := range 10 {
@@ -474,23 +476,23 @@ func TestConcurrentTesterAccess(_ *testing.T) {
 }
 
 func TestGetStatsWithNilStats(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
-	// Force nil stats
-	tester.mu.Lock()
-	tester.stats = nil
-	tester.mu.Unlock()
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	// Force nil stats.
+	tester.TesterMu().Lock()
+	tester.TesterSetStats(nil)
+	tester.TesterMu().Unlock()
 
 	stats := tester.GetStats()
 	if stats == nil {
 		t.Fatal("expected non-nil stats even when internal stats is nil")
 	}
-	if stats.Status != StatusUnknown {
+	if stats.Status != gateway.StatusUnknown {
 		t.Errorf("expected StatusUnknown, got %v", stats.Status)
 	}
 }
 
 func TestPingResultWithError(t *testing.T) {
-	result := PingResult{
+	result := gateway.PingResult{
 		Sequence: 3,
 		Time:     0,
 		TimeMs:   0,
@@ -516,7 +518,7 @@ func TestPingResultWithError(t *testing.T) {
 }
 
 func TestPingStatsZeroValues(t *testing.T) {
-	stats := PingStats{}
+	stats := gateway.PingStats{}
 
 	if stats.Gateway != "" {
 		t.Error("expected empty Gateway")
@@ -542,7 +544,7 @@ func TestPingStatsZeroValues(t *testing.T) {
 }
 
 func TestThresholdsZeroValues(t *testing.T) {
-	thresholds := Thresholds{}
+	thresholds := gateway.Thresholds{}
 
 	if thresholds.Warning != 0 {
 		t.Error("expected Warning 0")
@@ -559,21 +561,21 @@ func TestThresholdsZeroValues(t *testing.T) {
 }
 
 func TestTesterWithZeroThresholds(t *testing.T) {
-	// Test with zero thresholds - any latency/loss should trigger error
-	thresholds := Thresholds{}
-	tester := NewTester(thresholds)
+	// Test with zero thresholds - any latency/loss should trigger error.
+	thresholds := gateway.Thresholds{}
+	tester := gateway.NewTester(thresholds)
 
-	// Zero thresholds mean any latency >= 0 should be critical
-	stats := &PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 1}
-	status := tester.determineStatus(stats)
-	// With zero thresholds, any latency should be >= Critical (0)
-	if status != StatusError {
+	// Zero thresholds mean any latency >= 0 should be critical.
+	stats := &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 0, AvgTime: 1}
+	status := tester.DetermineStatus(stats)
+	// With zero thresholds, any latency should be >= Critical (0).
+	if status != gateway.StatusError {
 		t.Errorf("expected StatusError with zero thresholds, got %v", status)
 	}
 }
 
 func TestMultipleGatewayChanges(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
 	gateways := []string{"192.168.1.1", "10.0.0.1", "172.16.0.1", "8.8.8.8", ""}
 	for _, gw := range gateways {
@@ -586,7 +588,7 @@ func TestMultipleGatewayChanges(t *testing.T) {
 
 func TestPingStatsLastUpdated(t *testing.T) {
 	now := time.Now()
-	stats := PingStats{
+	stats := gateway.PingStats{
 		LastUpdated: now,
 	}
 
@@ -596,13 +598,13 @@ func TestPingStatsLastUpdated(t *testing.T) {
 }
 
 func TestPingStatsWithResults(t *testing.T) {
-	results := []PingResult{
+	results := []gateway.PingResult{
 		{Sequence: 1, TimeMs: 10.5, Success: true},
 		{Sequence: 2, TimeMs: 15.2, Success: true},
 		{Sequence: 3, TimeMs: 0, Success: false, Error: "timeout"},
 	}
 
-	stats := PingStats{
+	stats := gateway.PingStats{
 		Gateway:     "192.168.1.1",
 		Sent:        3,
 		Received:    2,
@@ -638,34 +640,34 @@ func TestPingStatsWithResults(t *testing.T) {
 }
 
 func TestDetermineStatusPriorityOrder(t *testing.T) {
-	// Test that loss thresholds are checked before latency
-	thresholds := Thresholds{
+	// Test that loss thresholds are checked before latency.
+	thresholds := gateway.Thresholds{
 		Warning:  50 * time.Millisecond,
 		Critical: 200 * time.Millisecond,
 		LossWarn: 5.0,
 		LossCrit: 20.0,
 	}
-	tester := NewTester(thresholds)
+	tester := gateway.NewTester(thresholds)
 
-	// High loss + low latency should still be error (loss checked first)
-	stats := &PingStats{Reachable: true, Received: 1, LossPercent: 25.0, AvgTime: 5}
-	status := tester.determineStatus(stats)
-	if status != StatusError {
+	// High loss + low latency should still be error (loss checked first).
+	stats := &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 25.0, AvgTime: 5}
+	status := tester.DetermineStatus(stats)
+	if status != gateway.StatusError {
 		t.Errorf("expected StatusError due to high loss, got %v", status)
 	}
 
-	// Warning loss + success latency should be warning
-	stats = &PingStats{Reachable: true, Received: 1, LossPercent: 10.0, AvgTime: 5}
-	status = tester.determineStatus(stats)
-	if status != StatusWarning {
+	// Warning loss + success latency should be warning.
+	stats = &gateway.PingStats{Reachable: true, Received: 1, LossPercent: 10.0, AvgTime: 5}
+	status = tester.DetermineStatus(stats)
+	if status != gateway.StatusWarning {
 		t.Errorf("expected StatusWarning due to loss, got %v", status)
 	}
 }
 
 func TestStopContinuousMultipleTimes(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
-	// Stopping multiple times should not panic
+	// Stopping multiple times should not panic.
 	tester.StopContinuous()
 	tester.StopContinuous()
 	tester.StopContinuous()
@@ -680,10 +682,10 @@ func TestStartContinuousWithNilCallback(t *testing.T) {
 		t.Skip("skipping in short mode")
 	}
 
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 	tester.SetGateway("127.0.0.1")
 
-	// Start with nil callback - should not panic
+	// Start with nil callback - should not panic.
 	tester.StartContinuous(100*time.Millisecond, nil)
 
 	if !tester.IsRunning() {
@@ -695,14 +697,14 @@ func TestStartContinuousWithNilCallback(t *testing.T) {
 }
 
 func TestTesterCopyStats(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
-	// Get initial stats
+	// Get initial stats.
 	stats1 := tester.GetStats()
 	stats1.Gateway = "modified1"
 	stats1.Sent = 999
 
-	// Get stats again - should be unmodified
+	// Get stats again - should be unmodified.
 	stats2 := tester.GetStats()
 	if stats2.Gateway == "modified1" {
 		t.Error("stats should be a copy, not shared reference")
@@ -712,23 +714,23 @@ func TestTesterCopyStats(t *testing.T) {
 	}
 }
 
-// Note: parsePingRTTEdgeCases tests removed - now using raw ICMP pinger
+// Note: parsePingRTTEdgeCases tests removed - now using raw ICMP pinger.
 
 func TestTesterPingToInvalidHost(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping in short mode")
 	}
 
-	tester := NewTester(DefaultThresholds())
-	// Use an invalid/unreachable IP that will fail quickly
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	// Use an invalid/unreachable IP that will fail quickly.
 	tester.SetGateway("192.0.2.1") // TEST-NET-1, not routable
 
 	result := tester.Ping()
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
-	// This should fail (or timeout quickly)
-	// We just verify the error path doesn't panic
+	// This should fail (or timeout quickly).
+	// We just verify the error path doesn't panic.
 	if result.Success {
 		t.Log("ping unexpectedly succeeded - skip this check")
 	} else if result.Error == "" {
@@ -741,32 +743,32 @@ func TestTesterTestWithFailedPings(t *testing.T) {
 		t.Skip("skipping in short mode")
 	}
 
-	thresholds := DefaultThresholds()
-	tester := NewTester(thresholds)
-	// Use an unreachable IP
+	thresholds := gateway.DefaultThresholds()
+	tester := gateway.NewTester(thresholds)
+	// Use an unreachable IP.
 	tester.SetGateway("192.0.2.1")
-	// Reduce ping count for faster test
-	tester.mu.Lock()
-	tester.pingCount = 2
-	tester.pingTimeout = 1 * time.Second
-	tester.mu.Unlock()
+	// Reduce ping count for faster test.
+	tester.TesterMu().Lock()
+	tester.TesterSetPingCount(2)
+	tester.TesterSetPingTimeout(1 * time.Second)
+	tester.TesterMu().Unlock()
 
 	stats := tester.Test()
 	if stats == nil {
 		t.Fatal("expected non-nil stats")
 	}
-	// Should have attempted pings
+	// Should have attempted pings.
 	if stats.Sent == 0 {
 		t.Error("expected Sent > 0")
 	}
-	// Status should reflect the failure
+	// Status should reflect the failure.
 	if stats.Received == stats.Sent {
 		t.Log("all pings succeeded unexpectedly")
 	}
 }
 
 func TestPingStatsTiming(t *testing.T) {
-	stats := PingStats{
+	stats := gateway.PingStats{
 		MinTime:  5.5,
 		MaxTime:  50.3,
 		AvgTime:  25.2,
@@ -788,7 +790,7 @@ func TestPingStatsTiming(t *testing.T) {
 }
 
 func TestPingResultTimeDuration(t *testing.T) {
-	result := PingResult{
+	result := gateway.PingResult{
 		Time:   125 * time.Millisecond,
 		TimeMs: 125.0,
 	}
@@ -806,27 +808,27 @@ func TestStartContinuousAlreadyRunning(t *testing.T) {
 		t.Skip("skipping in short mode")
 	}
 
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 	tester.SetGateway("127.0.0.1")
 
 	called := 0
-	callback := func(_ *PingStats) {
+	callback := func(_ *gateway.PingStats) {
 		called++
 	}
 
-	// Start once
+	// Start once.
 	tester.StartContinuous(50*time.Millisecond, callback)
 	if !tester.IsRunning() {
 		t.Error("expected IsRunning true after first start")
 	}
 
-	// Start again - should be no-op (already running)
+	// Start again - should be no-op (already running).
 	tester.StartContinuous(50*time.Millisecond, callback)
 	if !tester.IsRunning() {
 		t.Error("expected IsRunning still true after second start")
 	}
 
-	// Stop
+	// Stop.
 	tester.StopContinuous()
 	if tester.IsRunning() {
 		t.Error("expected IsRunning false after stop")
@@ -834,12 +836,12 @@ func TestStartContinuousAlreadyRunning(t *testing.T) {
 }
 
 func TestTesterPingTimeout(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
-	// Verify initial timeout
-	tester.mu.RLock()
-	timeout := tester.pingTimeout
-	tester.mu.RUnlock()
+	// Verify initial timeout.
+	tester.TesterMu().RLock()
+	timeout := tester.TesterPingTimeout()
+	tester.TesterMu().RUnlock()
 
 	if timeout != 2*time.Second {
 		t.Errorf("expected default pingTimeout 2s, got %v", timeout)
@@ -847,12 +849,12 @@ func TestTesterPingTimeout(t *testing.T) {
 }
 
 func TestTesterPingCount(t *testing.T) {
-	tester := NewTester(DefaultThresholds())
+	tester := gateway.NewTester(gateway.DefaultThresholds())
 
-	// Verify initial ping count
-	tester.mu.RLock()
-	count := tester.pingCount
-	tester.mu.RUnlock()
+	// Verify initial ping count.
+	tester.TesterMu().RLock()
+	count := tester.TesterPingCount()
+	tester.TesterMu().RUnlock()
 
 	if count != 3 {
 		t.Errorf("expected default pingCount 3, got %d", count)

@@ -1,47 +1,49 @@
-// Package wifi provides wireless network information functionality.
+// Package wifi_test provides wireless network information functionality tests.
 // Test suite validates WiFi scanning, interface detection, and property extraction.
-package wifi
+package wifi_test
 
 import (
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 func TestNewManager(t *testing.T) {
-	manager := NewManager("en0")
+	manager := wifi.NewManager("en0")
 	if manager == nil {
 		t.Fatal("expected non-nil manager")
 	}
 
-	if manager.interfaceName != "en0" {
-		t.Errorf("expected interfaceName 'en0', got %q", manager.interfaceName)
+	if manager.InterfaceName() != "en0" {
+		t.Errorf("expected InterfaceName 'en0', got %q", manager.InterfaceName())
 	}
 }
 
 func TestManagerSetInterface(t *testing.T) {
-	manager := NewManager("en0")
+	manager := wifi.NewManager("en0")
 
 	manager.SetInterface("wlan0")
-	if manager.interfaceName != "wlan0" {
-		t.Errorf("expected interfaceName 'wlan0', got %q", manager.interfaceName)
+	if manager.InterfaceName() != "wlan0" {
+		t.Errorf("expected InterfaceName 'wlan0', got %q", manager.InterfaceName())
 	}
 }
 
 func TestManagerIsWireless(_ *testing.T) {
-	manager := NewManager("en0")
+	manager := wifi.NewManager("en0")
 
 	// Result depends on system, just verify it doesn't panic
 	_ = manager.IsWireless()
 }
 
 func TestManagerGetInfo(_ *testing.T) {
-	manager := NewManager("en0")
+	manager := wifi.NewManager("en0")
 
 	// Result depends on system, just verify it doesn't panic
 	_ = manager.GetInfo()
 }
 
 func TestInfoFields(t *testing.T) {
-	info := Info{
+	info := wifi.Info{
 		SSID:      "TestNetwork",
 		BSSID:     "00:11:22:33:44:55",
 		Signal:    -65,
@@ -88,9 +90,9 @@ func TestMapSecurityType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := mapSecurityType(tt.input)
+			result := wifi.MapSecurityType(tt.input)
 			if result != tt.expected {
-				t.Errorf("mapSecurityType(%q) = %q, want %q", tt.input, result, tt.expected)
+				t.Errorf("MapSecurityType(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -124,9 +126,9 @@ func TestChannelToFrequency(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			result := channelToFrequency(tt.channel)
+			result := wifi.ChannelToFrequency(tt.channel)
 			if result != tt.expected {
-				t.Errorf("channelToFrequency(%d) = %d, want %d", tt.channel, result, tt.expected)
+				t.Errorf("ChannelToFrequency(%d) = %d, want %d", tt.channel, result, tt.expected)
 			}
 		})
 	}
@@ -160,9 +162,9 @@ func TestFrequencyToChannel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			result := frequencyToChannel(tt.freq)
+			result := wifi.FrequencyToChannel(tt.freq)
 			if result != tt.expected {
-				t.Errorf("frequencyToChannel(%d) = %d, want %d", tt.freq, result, tt.expected)
+				t.Errorf("FrequencyToChannel(%d) = %d, want %d", tt.freq, result, tt.expected)
 			}
 		})
 	}
@@ -173,11 +175,11 @@ func TestChannelFrequencyRoundTrip(t *testing.T) {
 	channels := []int{1, 6, 11, 36, 40, 44, 48, 149, 153, 157, 161, 165}
 
 	for _, ch := range channels {
-		freq := channelToFrequency(ch)
+		freq := wifi.ChannelToFrequency(ch)
 		if freq == 0 {
 			continue
 		}
-		result := frequencyToChannel(freq)
+		result := wifi.FrequencyToChannel(freq)
 		if result != ch {
 			t.Errorf("roundtrip failed: channel %d -> freq %d -> channel %d", ch, freq, result)
 		}
@@ -185,7 +187,7 @@ func TestChannelFrequencyRoundTrip(t *testing.T) {
 }
 
 func TestConcurrentManagerAccess(_ *testing.T) {
-	manager := NewManager("en0")
+	manager := wifi.NewManager("en0")
 
 	done := make(chan bool)
 	for i := range 10 {
@@ -205,23 +207,23 @@ func TestConcurrentManagerAccess(_ *testing.T) {
 
 func TestIsWirelessPlatform(_ *testing.T) {
 	// This will vary by system, just verify it doesn't panic
-	_ = isWirelessPlatform("en0")
+	_ = wifi.IsWirelessPlatform("en0")
 }
 
 func TestGetInfoPlatform(_ *testing.T) {
 	// This will vary by system, just verify it doesn't panic
-	_ = getInfoPlatform("en0")
+	_ = wifi.GetInfoPlatform("en0")
 }
 
 func TestGetInfo(_ *testing.T) {
-	manager := NewManager("en0")
+	manager := wifi.NewManager("en0")
 	info := manager.GetInfo()
 	// Just verify it doesn't panic - result depends on system
 	_ = info
 }
 
 func TestInfoAllFields(t *testing.T) {
-	info := Info{
+	info := wifi.Info{
 		SSID:      "MyNetwork",
 		BSSID:     "00:11:22:33:44:55",
 		Signal:    -50,
@@ -267,9 +269,9 @@ func TestMapSecurityTypeMoreCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := mapSecurityType(tt.input)
+			result := wifi.MapSecurityType(tt.input)
 			if result != tt.expected {
-				t.Errorf("mapSecurityType(%q) = %q, want %q", tt.input, result, tt.expected)
+				t.Errorf("MapSecurityType(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -294,9 +296,9 @@ func TestChannelToFrequency2GHz(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			result := channelToFrequency(tt.channel)
+			result := wifi.ChannelToFrequency(tt.channel)
 			if result != tt.expected {
-				t.Errorf("channelToFrequency(%d) = %d, want %d", tt.channel, result, tt.expected)
+				t.Errorf("ChannelToFrequency(%d) = %d, want %d", tt.channel, result, tt.expected)
 			}
 		})
 	}
@@ -327,9 +329,9 @@ func TestChannelToFrequency5GHz(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			result := channelToFrequency(tt.channel)
+			result := wifi.ChannelToFrequency(tt.channel)
 			if result != tt.expected {
-				t.Errorf("channelToFrequency(%d) = %d, want %d", tt.channel, result, tt.expected)
+				t.Errorf("ChannelToFrequency(%d) = %d, want %d", tt.channel, result, tt.expected)
 			}
 		})
 	}
@@ -353,29 +355,29 @@ func TestFrequencyToChannelEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			result := frequencyToChannel(tt.freq)
+			result := wifi.FrequencyToChannel(tt.freq)
 			if result != tt.expected {
-				t.Errorf("frequencyToChannel(%d) = %d, want %d", tt.freq, result, tt.expected)
+				t.Errorf("FrequencyToChannel(%d) = %d, want %d", tt.freq, result, tt.expected)
 			}
 		})
 	}
 }
 
 func TestManagerInterface(t *testing.T) {
-	manager := NewManager("en0")
+	manager := wifi.NewManager("en0")
 
-	if manager.interfaceName != "en0" {
-		t.Errorf("expected interfaceName 'en0', got %q", manager.interfaceName)
+	if manager.InterfaceName() != "en0" {
+		t.Errorf("expected InterfaceName 'en0', got %q", manager.InterfaceName())
 	}
 
 	manager.SetInterface("wlan0")
-	if manager.interfaceName != "wlan0" {
-		t.Errorf("expected interfaceName 'wlan0', got %q", manager.interfaceName)
+	if manager.InterfaceName() != "wlan0" {
+		t.Errorf("expected InterfaceName 'wlan0', got %q", manager.InterfaceName())
 	}
 }
 
 func TestIsWirelessResult(_ *testing.T) {
-	manager := NewManager("lo0")
+	manager := wifi.NewManager("lo0")
 
 	// Loopback is not wireless
 	result := manager.IsWireless()
@@ -384,7 +386,7 @@ func TestIsWirelessResult(_ *testing.T) {
 }
 
 func TestConcurrentWifiManagerAccess(_ *testing.T) {
-	manager := NewManager("en0")
+	manager := wifi.NewManager("en0")
 
 	done := make(chan bool)
 	for range 5 {

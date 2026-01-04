@@ -1,47 +1,46 @@
-// Package dhcp provides DHCP transaction timing and monitoring.
-// Test suite validates DHCP transaction phases, timing measurements,
-// and protocol state management.
-package dhcp
+package dhcp_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/dhcp"
 )
 
 func TestPhaseConstants(t *testing.T) {
-	if PhaseDiscover != "discover" {
-		t.Errorf("expected PhaseDiscover = 'discover', got %q", PhaseDiscover)
+	if dhcp.PhaseDiscover != "discover" {
+		t.Errorf("expected PhaseDiscover = 'discover', got %q", dhcp.PhaseDiscover)
 	}
-	if PhaseOffer != "offer" {
-		t.Errorf("expected PhaseOffer = 'offer', got %q", PhaseOffer)
+	if dhcp.PhaseOffer != "offer" {
+		t.Errorf("expected PhaseOffer = 'offer', got %q", dhcp.PhaseOffer)
 	}
-	if PhaseRequest != "request" {
-		t.Errorf("expected PhaseRequest = 'request', got %q", PhaseRequest)
+	if dhcp.PhaseRequest != "request" {
+		t.Errorf("expected PhaseRequest = 'request', got %q", dhcp.PhaseRequest)
 	}
-	if PhaseAck != "ack" {
-		t.Errorf("expected PhaseAck = 'ack', got %q", PhaseAck)
+	if dhcp.PhaseAck != "ack" {
+		t.Errorf("expected PhaseAck = 'ack', got %q", dhcp.PhaseAck)
 	}
 }
 
 func TestNewMonitor(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 	if monitor == nil {
 		t.Fatal("expected non-nil monitor")
 	}
 
-	if monitor.interfaceName != "eth0" {
-		t.Errorf("expected interfaceName 'eth0', got %q", monitor.interfaceName)
+	if monitor.MonitorInterfaceName() != "eth0" {
+		t.Errorf("expected interfaceName 'eth0', got %q", monitor.MonitorInterfaceName())
 	}
-	if monitor.running {
+	if monitor.MonitorRunning() {
 		t.Error("expected running to be false initially")
 	}
-	if monitor.transactions == nil {
+	if monitor.MonitorTransactions() == nil {
 		t.Error("expected non-nil transactions map")
 	}
 }
 
 func TestMonitorStartStop(t *testing.T) {
-	monitor := NewMonitor("lo0") // Use loopback interface
+	monitor := dhcp.NewMonitor("lo0") // Use loopback interface
 
 	// Start monitoring - requires root/CAP_NET_RAW for pcap
 	err := monitor.Start()
@@ -67,19 +66,19 @@ func TestMonitorStartStop(t *testing.T) {
 }
 
 func TestMonitorSetInterface(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	err := monitor.SetInterface("en0")
 	if err != nil {
 		t.Errorf("unexpected error setting interface: %v", err)
 	}
-	if monitor.interfaceName != "en0" {
-		t.Errorf("expected interfaceName 'en0', got %q", monitor.interfaceName)
+	if monitor.MonitorInterfaceName() != "en0" {
+		t.Errorf("expected interfaceName 'en0', got %q", monitor.MonitorInterfaceName())
 	}
 }
 
 func TestMonitorGetLastTiming(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	// Initially nil
 	timing := monitor.GetLastTiming()
@@ -89,16 +88,16 @@ func TestMonitorGetLastTiming(t *testing.T) {
 }
 
 func TestMonitorRecordPhase(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	now := time.Now()
 	xid := uint32(12345)
 
 	// Record all phases
-	monitor.RecordPhase(xid, PhaseDiscover, now)
-	monitor.RecordPhase(xid, PhaseOffer, now.Add(50*time.Millisecond))
-	monitor.RecordPhase(xid, PhaseRequest, now.Add(60*time.Millisecond))
-	monitor.RecordPhase(xid, PhaseAck, now.Add(105*time.Millisecond))
+	monitor.RecordPhase(xid, dhcp.PhaseDiscover, now)
+	monitor.RecordPhase(xid, dhcp.PhaseOffer, now.Add(50*time.Millisecond))
+	monitor.RecordPhase(xid, dhcp.PhaseRequest, now.Add(60*time.Millisecond))
+	monitor.RecordPhase(xid, dhcp.PhaseAck, now.Add(105*time.Millisecond))
 
 	// Should have timing now
 	timing := monitor.GetLastTiming()
@@ -114,7 +113,7 @@ func TestMonitorRecordPhase(t *testing.T) {
 }
 
 func TestTimingToMs(t *testing.T) {
-	timing := &Timing{
+	timing := &dhcp.Timing{
 		Discover: 50 * time.Millisecond,
 		Offer:    10 * time.Millisecond,
 		Request:  45 * time.Millisecond,
@@ -138,7 +137,7 @@ func TestTimingToMs(t *testing.T) {
 }
 
 func TestTimingMsFields(t *testing.T) {
-	ms := TimingMs{
+	ms := dhcp.TimingMs{
 		Discover: 50,
 		Offer:    20,
 		Request:  15,
@@ -165,7 +164,7 @@ func TestTimingMsFields(t *testing.T) {
 
 func TestTransactionFields(t *testing.T) {
 	now := time.Now()
-	tx := Transaction{
+	tx := dhcp.Transaction{
 		XID:          12345,
 		Started:      now,
 		DiscoverTime: now,
@@ -199,7 +198,7 @@ func TestTransactionFields(t *testing.T) {
 }
 
 func TestSimulateTiming(t *testing.T) {
-	timing := SimulateTiming()
+	timing := dhcp.SimulateTiming()
 
 	if timing == nil {
 		t.Fatal("expected non-nil timing")
@@ -222,7 +221,7 @@ func TestSimulateTiming(t *testing.T) {
 }
 
 func TestLeaseInfoFields(t *testing.T) {
-	info := LeaseInfo{
+	info := dhcp.LeaseInfo{
 		DHCPServer: "192.168.1.1",
 		Gateway:    "192.168.1.1",
 		LeaseTime:  86400,
@@ -258,9 +257,9 @@ func TestExtractValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractValue(tt.input)
+			result := dhcp.ExtractValue(tt.input)
 			if result != tt.expected {
-				t.Errorf("extractValue(%q) = %q, want %q", tt.input, result, tt.expected)
+				t.Errorf("ExtractValue(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -269,31 +268,31 @@ func TestExtractValue(t *testing.T) {
 func TestGetLeaseInfo(_ *testing.T) {
 	// On different platforms and network configurations, this may return nil or populated LeaseInfo.
 	// The test only verifies that GetLeaseInfo does not panic or crash.
-	info, err := GetLeaseInfo("eth0")
+	info, err := dhcp.GetLeaseInfo("eth0")
 	_ = info
 	_ = err
 }
 
 func TestCalculateTimingIncomplete(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
-	tx := &Transaction{
+	tx := &dhcp.Transaction{
 		XID:      12345,
 		Complete: false,
 	}
 
 	// Should not set lastTiming for incomplete transaction
-	monitor.calculateTiming(tx)
-	if monitor.lastTiming != nil {
+	monitor.CalculateTiming(tx)
+	if monitor.MonitorLastTiming() != nil {
 		t.Error("expected nil lastTiming for incomplete transaction")
 	}
 }
 
 func TestCalculateTimingComplete(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	now := time.Now()
-	tx := &Transaction{
+	tx := &dhcp.Transaction{
 		XID:          12345,
 		Started:      now,
 		DiscoverTime: now,
@@ -303,23 +302,23 @@ func TestCalculateTimingComplete(t *testing.T) {
 		Complete:     true,
 	}
 
-	monitor.transactions[tx.XID] = tx
-	monitor.calculateTiming(tx)
+	monitor.AddTransaction(tx)
+	monitor.CalculateTiming(tx)
 
-	if monitor.lastTiming == nil {
+	if monitor.MonitorLastTiming() == nil {
 		t.Fatal("expected non-nil lastTiming for complete transaction")
 	}
-	if !monitor.lastTiming.Complete {
+	if !monitor.MonitorLastTiming().Complete {
 		t.Error("expected Complete to be true")
 	}
 	// Transaction should be removed after calculation
-	if _, exists := monitor.transactions[tx.XID]; exists {
+	if monitor.TransactionExists(tx.XID) {
 		t.Error("expected transaction to be removed after calculation")
 	}
 }
 
 func TestConcurrentMonitorAccess(_ *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	done := make(chan bool)
 	for i := range 10 {
@@ -327,7 +326,7 @@ func TestConcurrentMonitorAccess(_ *testing.T) {
 			for j := range 100 {
 				_ = monitor.IsRunning()
 				_ = monitor.GetLastTiming()
-				monitor.RecordPhase(uint32(id*100+j), PhaseDiscover, time.Now())
+				monitor.RecordPhase(uint32(id*100+j), dhcp.PhaseDiscover, time.Now())
 			}
 			done <- true
 		}(i)
@@ -340,7 +339,7 @@ func TestConcurrentMonitorAccess(_ *testing.T) {
 
 func TestGetLeaseInfoDarwin(_ *testing.T) {
 	// This test is only meaningful on macOS; skip or ignore on other platforms.
-	info, err := getLeaseInfoDarwin("en0")
+	info, err := dhcp.GetLeaseInfoDarwin("en0")
 	// Just verify it doesn't panic
 	_ = info
 	_ = err
@@ -348,7 +347,7 @@ func TestGetLeaseInfoDarwin(_ *testing.T) {
 
 func TestGetLeaseInfoLinux(_ *testing.T) {
 	// This test is only meaningful on Linux; on other platforms it is effectively skipped.
-	info, err := getLeaseInfoLinux("eth0")
+	info, err := dhcp.GetLeaseInfoLinux("eth0")
 	// Just verify it doesn't panic
 	_ = info
 	_ = err
@@ -356,7 +355,7 @@ func TestGetLeaseInfoLinux(_ *testing.T) {
 
 func TestParseDHClientLeaseFile(t *testing.T) {
 	// Test with a path that doesn't exist
-	result := parseDHClientLeaseFile("/nonexistent/path", "eth0")
+	result := dhcp.ParseDHClientLeaseFile("/nonexistent/path", "eth0")
 	if result != nil {
 		t.Error("expected nil for non-existent file")
 	}
@@ -364,7 +363,7 @@ func TestParseDHClientLeaseFile(t *testing.T) {
 
 func TestParseNMLeaseFile(t *testing.T) {
 	// Test with a path that doesn't exist
-	result := parseNMLeaseFile("/nonexistent/path")
+	result := dhcp.ParseNMLeaseFile("/nonexistent/path")
 	if result != nil {
 		t.Error("expected nil for non-existent file")
 	}
@@ -372,7 +371,7 @@ func TestParseNMLeaseFile(t *testing.T) {
 
 func TestParseNetworkdLeaseFile(t *testing.T) {
 	// Test with a path that doesn't exist
-	result := parseNetworkdLeaseFile("/nonexistent/path")
+	result := dhcp.ParseNetworkdLeaseFile("/nonexistent/path")
 	if result != nil {
 		t.Error("expected nil for non-existent file")
 	}
@@ -394,25 +393,25 @@ func TestExtractValueMoreCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractValue(tt.input)
+			result := dhcp.ExtractValue(tt.input)
 			if result != tt.expected {
-				t.Errorf("extractValue(%q) = %q, want %q", tt.input, result, tt.expected)
+				t.Errorf("ExtractValue(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
 }
 
 func TestCalculateTimingWithZeroTimes(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	// Test with some zero times
-	tx := &Transaction{
+	tx := &dhcp.Transaction{
 		XID:      12345,
 		Complete: true,
 	}
 
-	monitor.transactions[tx.XID] = tx
-	monitor.calculateTiming(tx)
+	monitor.AddTransaction(tx)
+	monitor.CalculateTiming(tx)
 
 	timing := monitor.GetLastTiming()
 	if timing == nil {
@@ -430,19 +429,19 @@ func TestCalculateTimingWithZeroTimes(t *testing.T) {
 // and that intermediate phase durations (such as Discover) are zero when their corresponding
 // timestamps are missing.
 func TestCalculateTimingPartialPhases(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	now := time.Now()
 	// Only discover and ack, missing offer and request times
-	tx := &Transaction{
+	tx := &dhcp.Transaction{
 		XID:          12346,
 		DiscoverTime: now,
 		AckTime:      now.Add(100 * time.Millisecond),
 		Complete:     true,
 	}
 
-	monitor.transactions[tx.XID] = tx
-	monitor.calculateTiming(tx)
+	monitor.AddTransaction(tx)
+	monitor.CalculateTiming(tx)
 
 	timing := monitor.GetLastTiming()
 	if timing == nil {
@@ -461,7 +460,7 @@ func TestCalculateTimingPartialPhases(t *testing.T) {
 }
 
 func TestTimingFields(t *testing.T) {
-	timing := Timing{
+	timing := dhcp.Timing{
 		Discover: 25 * time.Millisecond,
 		Offer:    15 * time.Millisecond,
 		Request:  30 * time.Millisecond,
@@ -487,18 +486,16 @@ func TestTimingFields(t *testing.T) {
 }
 
 func TestRecordPhaseNewTransaction(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	now := time.Now()
 	xid := uint32(99999)
 
 	// Record first phase (Discover) - should create new transaction
-	monitor.RecordPhase(xid, PhaseDiscover, now)
+	monitor.RecordPhase(xid, dhcp.PhaseDiscover, now)
 
 	// Verify transaction was created
-	monitor.mu.RLock()
-	tx, exists := monitor.transactions[xid]
-	monitor.mu.RUnlock()
+	tx, exists := monitor.GetTransaction(xid)
 
 	if !exists {
 		t.Fatal("expected transaction to be created")
@@ -512,23 +509,19 @@ func TestRecordPhaseNewTransaction(t *testing.T) {
 }
 
 func TestRecordPhaseAllPhases(t *testing.T) {
-	monitor := NewMonitor("eth0")
+	monitor := dhcp.NewMonitor("eth0")
 
 	now := time.Now()
 	xid := uint32(88888)
 
 	// Record all phases
-	monitor.RecordPhase(xid, PhaseDiscover, now)
-	monitor.RecordPhase(xid, PhaseOffer, now.Add(10*time.Millisecond))
-	monitor.RecordPhase(xid, PhaseRequest, now.Add(20*time.Millisecond))
-	monitor.RecordPhase(xid, PhaseAck, now.Add(50*time.Millisecond))
+	monitor.RecordPhase(xid, dhcp.PhaseDiscover, now)
+	monitor.RecordPhase(xid, dhcp.PhaseOffer, now.Add(10*time.Millisecond))
+	monitor.RecordPhase(xid, dhcp.PhaseRequest, now.Add(20*time.Millisecond))
+	monitor.RecordPhase(xid, dhcp.PhaseAck, now.Add(50*time.Millisecond))
 
 	// After Ack, timing should be calculated and transaction removed
-	monitor.mu.RLock()
-	_, exists := monitor.transactions[xid]
-	monitor.mu.RUnlock()
-
-	if exists {
+	if monitor.TransactionExists(xid) {
 		t.Error("expected transaction to be removed after Ack")
 	}
 
@@ -609,9 +602,9 @@ func TestFindDHCPMessageType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := findDHCPMessageType(tt.options)
+			result := dhcp.FindDHCPMessageType(tt.options)
 			if result != tt.expected {
-				t.Errorf("findDHCPMessageType() = %d, want %d", result, tt.expected)
+				t.Errorf("FindDHCPMessageType() = %d, want %d", result, tt.expected)
 			}
 		})
 	}

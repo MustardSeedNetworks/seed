@@ -4,13 +4,13 @@ package vlan
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Fixes #915: Maximum number of tracked VLANs (802.1Q max is 4094).
@@ -62,7 +62,7 @@ func (m *TrafficMonitor) Start() error {
 	// Set BPF filter for 802.1Q tagged frames (EtherType 0x8100)
 	if filterErr := handle.SetBPFFilter("vlan"); filterErr != nil {
 		// Fixes #941: Log BPF filter failures for debugging (kernel/interface issues)
-		slog.Error("Failed to set VLAN BPF filter",
+		logging.GetLogger().Error("Failed to set VLAN BPF filter",
 			"interface", m.interfaceName,
 			"error", filterErr)
 		handle.Close()

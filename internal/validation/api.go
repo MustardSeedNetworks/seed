@@ -5,9 +5,10 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // APIError represents a standardized JSON error response.
@@ -44,7 +45,7 @@ func WriteJSONErrorWithCode(w http.ResponseWriter, status int, message, code str
 		Code:  code,
 	}
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		slog.Warn("failed to encode error response", "error", err)
+		logging.GetLogger().Warn("failed to encode error response", "error", err)
 	}
 }
 
@@ -58,7 +59,7 @@ func WriteValidationError(w http.ResponseWriter, fields []FieldError) {
 		Fields: fields,
 	}
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		slog.Warn("failed to encode validation error response", "error", err)
+		logging.GetLogger().Warn("failed to encode validation error response", "error", err)
 	}
 }
 

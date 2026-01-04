@@ -1,54 +1,52 @@
-// Package dhcp provides DHCP monitoring including rogue DHCP server detection.
-// Test suite validates rogue server detection, packet parsing, and security alerts.
-package dhcp
+package dhcp_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/dhcp"
 )
 
 func TestNewRogueDetector(t *testing.T) {
 	// Test with nil config - interface is empty (must be set by caller #572)
-	rd := NewRogueDetector(nil)
+	rd := dhcp.NewRogueDetector(nil)
 	if rd == nil {
 		t.Fatal("NewRogueDetector returned nil")
 	}
-	if rd.config == nil {
+	if rd.RogueConfig() == nil {
 		t.Fatal("config should not be nil")
 	}
-	if rd.config.Interface != "" {
-		t.Errorf("expected default interface to be empty (must be set by caller), got %s", rd.config.Interface)
+	if rd.RogueConfig().Interface != "" {
+		t.Errorf("expected default interface to be empty (must be set by caller), got %s", rd.RogueConfig().Interface)
 	}
 
 	// Test with custom config
-	config := &RogueDetectorConfig{
+	config := &dhcp.RogueDetectorConfig{
 		Interface:        "wlan0",
 		KnownServers:     []string{"192.168.1.1", "192.168.1.2"},
 		AlertOnDetection: false,
 	}
-	rd = NewRogueDetector(config)
-	if rd.config.Interface != "wlan0" {
-		t.Errorf("expected interface wlan0, got %s", rd.config.Interface)
+	rd = dhcp.NewRogueDetector(config)
+	if rd.RogueConfig().Interface != "wlan0" {
+		t.Errorf("expected interface wlan0, got %s", rd.RogueConfig().Interface)
 	}
-	if len(rd.knownServerSet) != 2 {
-		t.Errorf("expected 2 known servers, got %d", len(rd.knownServerSet))
+	if len(rd.RogueKnownServerSet()) != 2 {
+		t.Errorf("expected 2 known servers, got %d", len(rd.RogueKnownServerSet()))
 	}
-	if !rd.knownServerSet["192.168.1.1"] {
+	if !rd.RogueKnownServerSet()["192.168.1.1"] {
 		t.Error("192.168.1.1 should be in known server set")
 	}
 }
 
 func TestRogueDetector_IsRunning(t *testing.T) {
-	rd := NewRogueDetector(nil)
+	rd := dhcp.NewRogueDetector(nil)
 
 	if rd.IsRunning() {
 		t.Error("detector should not be running initially")
 	}
 
 	// Manually set running to test getter
-	rd.mu.Lock()
-	rd.running = true
-	rd.mu.Unlock()
+	rd.SetRogueRunning(true)
 
 	if !rd.IsRunning() {
 		t.Error("detector should be running")
@@ -56,24 +54,22 @@ func TestRogueDetector_IsRunning(t *testing.T) {
 }
 
 func TestRogueDetector_UpdateKnownServers(t *testing.T) {
-	config := &RogueDetectorConfig{
+	config := &dhcp.RogueDetectorConfig{
 		Interface:        "eth0",
 		KnownServers:     []string{"192.168.1.1"},
 		AlertOnDetection: true,
 	}
-	rd := NewRogueDetector(config)
+	rd := dhcp.NewRogueDetector(config)
 
 	// Simulate detected servers
-	rd.mu.Lock()
-	rd.detectedServers["192.168.1.1"] = &RogueServer{
+	rd.AddDetectedServer(&dhcp.RogueServer{
 		IP:           "192.168.1.1",
 		IsAuthorized: true,
-	}
-	rd.detectedServers["192.168.1.100"] = &RogueServer{
+	})
+	rd.AddDetectedServer(&dhcp.RogueServer{
 		IP:           "192.168.1.100",
 		IsAuthorized: false,
-	}
-	rd.mu.Unlock()
+	})
 
 	// Update known servers to include the rogue
 	rd.UpdateKnownServers([]string{"192.168.1.1", "192.168.1.100"})
@@ -87,15 +83,13 @@ func TestRogueDetector_UpdateKnownServers(t *testing.T) {
 	}
 
 	// Verify known server set
-	rd.mu.RLock()
-	if !rd.knownServerSet["192.168.1.100"] {
+	if !rd.RogueKnownServerSet()["192.168.1.100"] {
 		t.Error("192.168.1.100 should be in known server set")
 	}
-	rd.mu.RUnlock()
 }
 
 func TestRogueDetector_GetDetectedServers(t *testing.T) {
-	rd := NewRogueDetector(nil)
+	rd := dhcp.NewRogueDetector(nil)
 
 	// Should return empty list initially
 	servers := rd.GetDetectedServers()
@@ -105,24 +99,22 @@ func TestRogueDetector_GetDetectedServers(t *testing.T) {
 
 	// Add some servers
 	now := time.Now()
-	rd.mu.Lock()
-	rd.detectedServers["192.168.1.1"] = &RogueServer{
+	rd.AddDetectedServer(&dhcp.RogueServer{
 		IP:           "192.168.1.1",
 		MAC:          "aa:bb:cc:dd:ee:ff",
 		FirstSeen:    now,
 		LastSeen:     now,
 		OfferCount:   5,
 		IsAuthorized: true,
-	}
-	rd.detectedServers["192.168.1.100"] = &RogueServer{
+	})
+	rd.AddDetectedServer(&dhcp.RogueServer{
 		IP:           "192.168.1.100",
 		MAC:          "11:22:33:44:55:66",
 		FirstSeen:    now.Add(-1 * time.Hour),
 		LastSeen:     now,
 		OfferCount:   3,
 		IsAuthorized: false,
-	}
-	rd.mu.Unlock()
+	})
 
 	servers = rd.GetDetectedServers()
 	if len(servers) != 2 {
@@ -130,7 +122,7 @@ func TestRogueDetector_GetDetectedServers(t *testing.T) {
 	}
 
 	// Verify server data (order may vary)
-	serverMap := make(map[string]*RogueServer)
+	serverMap := make(map[string]*dhcp.RogueServer)
 	for _, s := range servers {
 		serverMap[s.IP] = s
 	}
@@ -159,32 +151,30 @@ func TestRogueDetector_GetDetectedServers(t *testing.T) {
 }
 
 func TestRogueDetector_GetRogueServers(t *testing.T) {
-	config := &RogueDetectorConfig{
+	config := &dhcp.RogueDetectorConfig{
 		Interface:        "eth0",
 		KnownServers:     []string{"192.168.1.1"},
 		AlertOnDetection: true,
 	}
-	rd := NewRogueDetector(config)
+	rd := dhcp.NewRogueDetector(config)
 
 	// Add authorized and unauthorized servers
 	now := time.Now()
-	rd.mu.Lock()
-	rd.detectedServers["192.168.1.1"] = &RogueServer{
+	rd.AddDetectedServer(&dhcp.RogueServer{
 		IP:           "192.168.1.1",
 		FirstSeen:    now,
 		IsAuthorized: true,
-	}
-	rd.detectedServers["192.168.1.100"] = &RogueServer{
+	})
+	rd.AddDetectedServer(&dhcp.RogueServer{
 		IP:           "192.168.1.100",
 		FirstSeen:    now,
 		IsAuthorized: false,
-	}
-	rd.detectedServers["192.168.1.200"] = &RogueServer{
+	})
+	rd.AddDetectedServer(&dhcp.RogueServer{
 		IP:           "192.168.1.200",
 		FirstSeen:    now,
 		IsAuthorized: false,
-	}
-	rd.mu.Unlock()
+	})
 
 	rogues := rd.GetRogueServers()
 	if len(rogues) != 2 {
@@ -203,13 +193,11 @@ func TestRogueDetector_GetRogueServers(t *testing.T) {
 }
 
 func TestRogueDetector_ClearDetectedServers(t *testing.T) {
-	rd := NewRogueDetector(nil)
+	rd := dhcp.NewRogueDetector(nil)
 
 	// Add some servers
-	rd.mu.Lock()
-	rd.detectedServers["192.168.1.1"] = &RogueServer{IP: "192.168.1.1"}
-	rd.detectedServers["192.168.1.100"] = &RogueServer{IP: "192.168.1.100"}
-	rd.mu.Unlock()
+	rd.AddDetectedServer(&dhcp.RogueServer{IP: "192.168.1.1"})
+	rd.AddDetectedServer(&dhcp.RogueServer{IP: "192.168.1.100"})
 
 	// Verify they exist
 	if len(rd.GetDetectedServers()) != 2 {
@@ -227,17 +215,17 @@ func TestRogueDetector_ClearDetectedServers(t *testing.T) {
 }
 
 func TestRogueDetector_GetConfig(t *testing.T) {
-	originalConfig := &RogueDetectorConfig{
+	originalConfig := &dhcp.RogueDetectorConfig{
 		Interface:        "wlan0",
 		KnownServers:     []string{"192.168.1.1", "192.168.1.2"},
 		AlertOnDetection: false,
 	}
-	rd := NewRogueDetector(originalConfig)
+	rd := dhcp.NewRogueDetector(originalConfig)
 
 	config := rd.GetConfig()
 
 	// Verify config is a copy
-	if config == rd.config {
+	if config == rd.RogueConfig() {
 		t.Error("GetConfig should return a copy, not the original")
 	}
 
@@ -261,12 +249,12 @@ func TestRogueDetector_GetConfig(t *testing.T) {
 }
 
 func TestRogueDetector_Start_InvalidInterface(t *testing.T) {
-	config := &RogueDetectorConfig{
+	config := &dhcp.RogueDetectorConfig{
 		Interface:        "nonexistent999",
 		KnownServers:     []string{},
 		AlertOnDetection: false,
 	}
-	rd := NewRogueDetector(config)
+	rd := dhcp.NewRogueDetector(config)
 
 	err := rd.Start()
 	if err == nil {
@@ -276,7 +264,7 @@ func TestRogueDetector_Start_InvalidInterface(t *testing.T) {
 }
 
 func TestRogueDetector_Stop_NotRunning(t *testing.T) {
-	rd := NewRogueDetector(nil)
+	rd := dhcp.NewRogueDetector(nil)
 
 	// Stopping when not running should not error
 	err := rd.Stop()

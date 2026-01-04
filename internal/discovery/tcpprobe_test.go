@@ -1,13 +1,16 @@
-package discovery
+// Package discovery_test provides TCP prober tests.
+package discovery_test
 
 import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
 func TestTCPProber_ProbeTCP(t *testing.T) {
-	prober, err := NewTCPProber(2 * time.Second)
+	prober, err := discovery.NewTCPProber(2 * time.Second)
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
@@ -27,7 +30,7 @@ func TestTCPProber_ProbeTCP(t *testing.T) {
 }
 
 func TestTCPProber_ProbeClosedPort(t *testing.T) {
-	prober, err := NewTCPProber(1 * time.Second)
+	prober, err := discovery.NewTCPProber(1 * time.Second)
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
@@ -38,13 +41,13 @@ func TestTCPProber_ProbeClosedPort(t *testing.T) {
 	result := prober.ProbeTCP(ctx, "127.0.0.1", 59999)
 
 	// Should be closed on localhost
-	if result.State != PortClosed {
+	if result.State != discovery.PortClosed {
 		t.Logf("expected closed state, got %s (may vary by system config)", result.State)
 	}
 }
 
 func TestTCPProber_ScanPorts(t *testing.T) {
-	prober, err := NewTCPProber(1 * time.Second)
+	prober, err := discovery.NewTCPProber(1 * time.Second)
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
@@ -70,12 +73,12 @@ func TestTCPProber_ScanPorts(t *testing.T) {
 
 func TestPortState_String(t *testing.T) {
 	tests := []struct {
-		state    PortState
+		state    discovery.PortState
 		expected string
 	}{
-		{PortOpen, "open"},
-		{PortClosed, "closed"},
-		{PortFiltered, "filtered"},
+		{discovery.PortOpen, "open"},
+		{discovery.PortClosed, "closed"},
+		{discovery.PortFiltered, "filtered"},
 	}
 
 	for _, tt := range tests {
@@ -87,14 +90,14 @@ func TestPortState_String(t *testing.T) {
 
 func TestCommonPorts(t *testing.T) {
 	// Verify common ports slice is populated
-	if len(CommonPorts) == 0 {
+	if len(discovery.CommonPorts) == 0 {
 		t.Error("CommonPorts should not be empty")
 	}
 
 	// Verify it contains expected ports
 	expected := map[int]bool{22: true, 80: true, 443: true}
 	found := make(map[int]bool)
-	for _, port := range CommonPorts {
+	for _, port := range discovery.CommonPorts {
 		if expected[port] {
 			found[port] = true
 		}

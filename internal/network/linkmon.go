@@ -4,7 +4,6 @@
 package network
 
 import (
-	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // LinkState represents the current link state.
@@ -180,7 +181,7 @@ func (m *LinkMonitor) pollLoop() {
 
 				// Skip callback notification if rate limited
 				if !shouldNotify {
-					slog.Debug("Link state change rate limited",
+					logging.GetLogger().Debug("Link state change rate limited",
 						"interface", event.Interface,
 						"state", event.State.String())
 					continue
@@ -192,7 +193,7 @@ func (m *LinkMonitor) pollLoop() {
 						defer func() {
 							if r := recover(); r != nil {
 								// Log panic details to help debug callback issues
-								slog.Error("Panic in link monitor callback",
+								logging.GetLogger().Error("Panic in link monitor callback",
 									"panic", r,
 									"interface", event.Interface,
 									"state", event.State.String(),

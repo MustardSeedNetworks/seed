@@ -1,25 +1,26 @@
-// Package survey provides WiFi site survey functionality.
-package survey
+// Package survey_test provides WiFi site survey functionality tests.
+package survey_test
 
 import (
 	"math"
 	"testing"
 
+	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 )
 
 func TestNewInterpolator(t *testing.T) {
-	samples := []SampleValue{
-		{Point: Point2D{X: 0, Y: 0}, Value: 10},
-		{Point: Point2D{X: 100, Y: 100}, Value: 20},
+	samples := []survey.SampleValue{
+		{Point: survey.Point2D{X: 0, Y: 0}, Value: 10},
+		{Point: survey.Point2D{X: 100, Y: 100}, Value: 20},
 	}
 
-	interp := NewInterpolator(samples)
+	interp := survey.NewInterpolator(samples)
 
 	if len(interp.Samples) != 2 {
 		t.Errorf("Expected 2 samples, got %d", len(interp.Samples))
 	}
-	if interp.Method != MethodIDW {
+	if interp.Method != survey.MethodIDW {
 		t.Errorf("Expected method IDW, got %s", interp.Method)
 	}
 	if interp.Power != 2.0 {
@@ -34,7 +35,7 @@ func TestNewInterpolator(t *testing.T) {
 }
 
 func TestInterpolator_Interpolate_Empty(t *testing.T) {
-	interp := NewInterpolator([]SampleValue{})
+	interp := survey.NewInterpolator([]survey.SampleValue{})
 
 	result := interp.Interpolate(50, 50)
 	if result != 0 {
@@ -43,60 +44,60 @@ func TestInterpolator_Interpolate_Empty(t *testing.T) {
 }
 
 func TestInterpolator_Interpolate_IDW(t *testing.T) {
-	samples := []SampleValue{
-		{Point: Point2D{X: 0, Y: 0}, Value: -70},
-		{Point: Point2D{X: 100, Y: 0}, Value: -50},
-		{Point: Point2D{X: 0, Y: 100}, Value: -60},
-		{Point: Point2D{X: 100, Y: 100}, Value: -40},
+	samples := []survey.SampleValue{
+		{Point: survey.Point2D{X: 0, Y: 0}, Value: -70},
+		{Point: survey.Point2D{X: 100, Y: 0}, Value: -50},
+		{Point: survey.Point2D{X: 0, Y: 100}, Value: -60},
+		{Point: survey.Point2D{X: 100, Y: 100}, Value: -40},
 	}
 
-	interp := NewInterpolator(samples)
-	interp.Method = MethodIDW
+	interp := survey.NewInterpolator(samples)
+	interp.Method = survey.MethodIDW
 
-	// Test at a sample point - should return exact value
+	// Test at a sample point - should return exact value.
 	result := interp.Interpolate(0, 0)
 	if result != -70 {
 		t.Errorf("Expected -70 at sample point, got %f", result)
 	}
 
-	// Test at center - should be weighted average
+	// Test at center - should be weighted average.
 	result = interp.Interpolate(50, 50)
-	// All corners are equidistant, so result should be average
+	// All corners are equidistant, so result should be average.
 	expected := (-70 + -50 + -60 + -40) / 4.0
 	if math.Abs(result-expected) > 0.1 {
 		t.Errorf("Expected ~%f at center, got %f", expected, result)
 	}
 
-	// Test closer to one corner
+	// Test closer to one corner.
 	result = interp.Interpolate(10, 10)
-	// Should be closer to -70 (nearest corner)
+	// Should be closer to -70 (nearest corner).
 	if result > -65 || result < -75 {
 		t.Errorf("Expected value near -70 at (10,10), got %f", result)
 	}
 }
 
 func TestInterpolator_Interpolate_Nearest(t *testing.T) {
-	samples := []SampleValue{
-		{Point: Point2D{X: 0, Y: 0}, Value: -70},
-		{Point: Point2D{X: 100, Y: 100}, Value: -40},
+	samples := []survey.SampleValue{
+		{Point: survey.Point2D{X: 0, Y: 0}, Value: -70},
+		{Point: survey.Point2D{X: 100, Y: 100}, Value: -40},
 	}
 
-	interp := NewInterpolator(samples)
-	interp.Method = MethodNearest
+	interp := survey.NewInterpolator(samples)
+	interp.Method = survey.MethodNearest
 
-	// Test at first sample
+	// Test at first sample.
 	result := interp.Interpolate(0, 0)
 	if result != -70 {
 		t.Errorf("Expected -70, got %f", result)
 	}
 
-	// Test closer to first sample
+	// Test closer to first sample.
 	result = interp.Interpolate(10, 10)
 	if result != -70 {
 		t.Errorf("Expected -70 (nearest), got %f", result)
 	}
 
-	// Test closer to second sample
+	// Test closer to second sample.
 	result = interp.Interpolate(90, 90)
 	if result != -40 {
 		t.Errorf("Expected -40 (nearest), got %f", result)
@@ -104,22 +105,22 @@ func TestInterpolator_Interpolate_Nearest(t *testing.T) {
 }
 
 func TestInterpolator_Interpolate_MaxDist(t *testing.T) {
-	samples := []SampleValue{
-		{Point: Point2D{X: 0, Y: 0}, Value: -70},
-		{Point: Point2D{X: 1000, Y: 1000}, Value: -40},
+	samples := []survey.SampleValue{
+		{Point: survey.Point2D{X: 0, Y: 0}, Value: -70},
+		{Point: survey.Point2D{X: 1000, Y: 1000}, Value: -40},
 	}
 
-	interp := NewInterpolator(samples)
-	interp.Method = MethodIDW
-	interp.MaxDist = 50 // Only consider samples within 50 units
+	interp := survey.NewInterpolator(samples)
+	interp.Method = survey.MethodIDW
+	interp.MaxDist = 50 // Only consider samples within 50 units.
 
-	// At origin, should use first sample
+	// At origin, should use first sample.
 	result := interp.Interpolate(0, 0)
 	if result != -70 {
 		t.Errorf("Expected -70, got %f", result)
 	}
 
-	// At (100, 100), first sample is out of range, should fall back to nearest
+	// At (100, 100), first sample is out of range, should fall back to nearest.
 	result = interp.Interpolate(100, 100)
 	if result != -70 {
 		t.Errorf("Expected -70 (nearest fallback), got %f", result)
@@ -127,16 +128,16 @@ func TestInterpolator_Interpolate_MaxDist(t *testing.T) {
 }
 
 func TestInterpolator_InterpolateGrid(t *testing.T) {
-	samples := []SampleValue{
-		{Point: Point2D{X: 0, Y: 0}, Value: -70},
-		{Point: Point2D{X: 100, Y: 0}, Value: -50},
-		{Point: Point2D{X: 0, Y: 100}, Value: -60},
-		{Point: Point2D{X: 100, Y: 100}, Value: -40},
+	samples := []survey.SampleValue{
+		{Point: survey.Point2D{X: 0, Y: 0}, Value: -70},
+		{Point: survey.Point2D{X: 100, Y: 0}, Value: -50},
+		{Point: survey.Point2D{X: 0, Y: 100}, Value: -60},
+		{Point: survey.Point2D{X: 100, Y: 100}, Value: -40},
 	}
 
-	interp := NewInterpolator(samples)
+	interp := survey.NewInterpolator(samples)
 
-	// 100x100 with 50px cells = 2x2 grid
+	// 100x100 with 50px cells = 2x2 grid.
 	grid := interp.InterpolateGrid(100, 100, 50)
 
 	if len(grid) != 2 {
@@ -146,7 +147,7 @@ func TestInterpolator_InterpolateGrid(t *testing.T) {
 		t.Errorf("Expected 2 columns, got %d", len(grid[0]))
 	}
 
-	// Values should be reasonable (between -70 and -40)
+	// Values should be reasonable (between -70 and -40).
 	for row, rowData := range grid {
 		for col, val := range rowData {
 			if val > -40 || val < -70 {
@@ -160,45 +161,45 @@ func TestInterpolator_InterpolateGrid(t *testing.T) {
 func TestDistance(t *testing.T) {
 	tests := []struct {
 		name     string
-		p1       Point2D
-		p2       Point2D
+		p1       survey.Point2D
+		p2       survey.Point2D
 		expected float64
 	}{
 		{
 			name:     "same point",
-			p1:       Point2D{X: 0, Y: 0},
-			p2:       Point2D{X: 0, Y: 0},
+			p1:       survey.Point2D{X: 0, Y: 0},
+			p2:       survey.Point2D{X: 0, Y: 0},
 			expected: 0,
 		},
 		{
 			name:     "horizontal",
-			p1:       Point2D{X: 0, Y: 0},
-			p2:       Point2D{X: 10, Y: 0},
+			p1:       survey.Point2D{X: 0, Y: 0},
+			p2:       survey.Point2D{X: 10, Y: 0},
 			expected: 10,
 		},
 		{
 			name:     "vertical",
-			p1:       Point2D{X: 0, Y: 0},
-			p2:       Point2D{X: 0, Y: 10},
+			p1:       survey.Point2D{X: 0, Y: 0},
+			p2:       survey.Point2D{X: 0, Y: 10},
 			expected: 10,
 		},
 		{
 			name:     "diagonal 3-4-5 triangle",
-			p1:       Point2D{X: 0, Y: 0},
-			p2:       Point2D{X: 3, Y: 4},
+			p1:       survey.Point2D{X: 0, Y: 0},
+			p2:       survey.Point2D{X: 3, Y: 4},
 			expected: 5,
 		},
 		{
 			name:     "negative coordinates",
-			p1:       Point2D{X: -5, Y: -5},
-			p2:       Point2D{X: -5, Y: 5},
+			p1:       survey.Point2D{X: -5, Y: -5},
+			p2:       survey.Point2D{X: -5, Y: 5},
 			expected: 10,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := distance(tt.p1, tt.p2)
+			got := survey.Distance(tt.p1, tt.p2)
 			if math.Abs(got-tt.expected) > 0.0001 {
 				t.Errorf("distance(%v, %v) = %f, want %f", tt.p1, tt.p2, got, tt.expected)
 			}
@@ -210,17 +211,17 @@ func TestCalculateGridStats(t *testing.T) {
 	tests := []struct {
 		name     string
 		grid     [][]float64
-		expected GridStats
+		expected survey.GridStats
 	}{
 		{
 			name:     "empty grid",
 			grid:     [][]float64{},
-			expected: GridStats{},
+			expected: survey.GridStats{},
 		},
 		{
 			name:     "single value",
 			grid:     [][]float64{{-50}},
-			expected: GridStats{Min: -50, Max: -50, Average: -50, Count: 1},
+			expected: survey.GridStats{Min: -50, Max: -50, Average: -50, Count: 1},
 		},
 		{
 			name: "2x2 grid",
@@ -228,7 +229,7 @@ func TestCalculateGridStats(t *testing.T) {
 				{-70, -50},
 				{-60, -40},
 			},
-			expected: GridStats{Min: -70, Max: -40, Average: -55, Count: 4},
+			expected: survey.GridStats{Min: -70, Max: -40, Average: -55, Count: 4},
 		},
 		{
 			name: "3x3 grid",
@@ -237,13 +238,13 @@ func TestCalculateGridStats(t *testing.T) {
 				{40, 50, 60},
 				{70, 80, 90},
 			},
-			expected: GridStats{Min: 10, Max: 90, Average: 50, Count: 9},
+			expected: survey.GridStats{Min: 10, Max: 90, Average: 50, Count: 9},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CalculateGridStats(tt.grid)
+			got := survey.CalculateGridStats(tt.grid)
 			if got.Count != tt.expected.Count {
 				t.Errorf("Count = %d, want %d", got.Count, tt.expected.Count)
 			}
@@ -263,12 +264,12 @@ func TestCalculateGridStats(t *testing.T) {
 }
 
 func TestExtractSamplesFromSurvey(t *testing.T) {
-	survey := &Survey{
-		Samples: []*SamplePoint{
+	s := &survey.Survey{
+		Samples: []*survey.SamplePoint{
 			{
 				X: 10,
 				Y: 20,
-				SampleData: &PassiveSample{
+				SampleData: &survey.PassiveSample{
 					Networks: []*wifi.ScannedNetwork{
 						{Signal: -55, SNR: 30},
 					},
@@ -279,7 +280,7 @@ func TestExtractSamplesFromSurvey(t *testing.T) {
 			{
 				X: 30,
 				Y: 40,
-				SampleData: &PassiveSample{
+				SampleData: &survey.PassiveSample{
 					Networks: []*wifi.ScannedNetwork{
 						{Signal: -65, SNR: 25},
 					},
@@ -319,7 +320,7 @@ func TestExtractSamplesFromSurvey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			samples := ExtractSamplesFromSurvey(survey, tt.valueType)
+			samples := survey.ExtractSamplesFromSurvey(s, tt.valueType)
 			if len(samples) != len(tt.expected) {
 				t.Fatalf("Expected %d samples, got %d", len(tt.expected), len(samples))
 			}
@@ -333,7 +334,7 @@ func TestExtractSamplesFromSurvey(t *testing.T) {
 }
 
 func TestExtractPassiveValue(t *testing.T) {
-	sample := &PassiveSample{
+	sample := &survey.PassiveSample{
 		Networks: []*wifi.ScannedNetwork{
 			{Signal: -55, SNR: 30},
 		},
@@ -359,12 +360,12 @@ func TestExtractPassiveValue(t *testing.T) {
 		{"ap_2_4", "ap_2_4", 3},
 		{"ap_5", "ap_5", 2},
 		{"ap_6", "ap_6", 1},
-		{"default", "unknown", -55}, // Defaults to signal
+		{"default", "unknown", -55}, // Defaults to signal.
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractPassiveValue(sample, tt.valueType)
+			got := survey.ExtractPassiveValue(sample, tt.valueType)
 			if got != tt.expected {
 				t.Errorf("extractPassiveValue(%q) = %f, want %f", tt.valueType, got, tt.expected)
 			}
@@ -373,22 +374,22 @@ func TestExtractPassiveValue(t *testing.T) {
 }
 
 func TestExtractPassiveValue_Empty(t *testing.T) {
-	// Nil sample
-	result := extractPassiveValue(nil, "rssi")
+	// Nil sample.
+	result := survey.ExtractPassiveValue(nil, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for nil sample, got %f", result)
 	}
 
-	// Empty networks
-	sample := &PassiveSample{Networks: []*wifi.ScannedNetwork{}}
-	result = extractPassiveValue(sample, "rssi")
+	// Empty networks.
+	sample := &survey.PassiveSample{Networks: []*wifi.ScannedNetwork{}}
+	result = survey.ExtractPassiveValue(sample, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for empty networks, got %f", result)
 	}
 }
 
 func TestExtractActiveValue(t *testing.T) {
-	sample := &ActiveSample{
+	sample := &survey.ActiveSample{
 		RSSI:     -60,
 		DataRate: 100.5,
 	}
@@ -402,12 +403,12 @@ func TestExtractActiveValue(t *testing.T) {
 		{"signal alias", "signal", -60},
 		{"datarate", "datarate", 100.5},
 		{"speed alias", "speed", 100.5},
-		{"default", "unknown", -60}, // Defaults to RSSI
+		{"default", "unknown", -60}, // Defaults to RSSI.
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractActiveValue(sample, tt.valueType)
+			got := survey.ExtractActiveValue(sample, tt.valueType)
 			if got != tt.expected {
 				t.Errorf("extractActiveValue(%q) = %f, want %f", tt.valueType, got, tt.expected)
 			}
@@ -416,14 +417,14 @@ func TestExtractActiveValue(t *testing.T) {
 }
 
 func TestExtractActiveValue_Nil(t *testing.T) {
-	result := extractActiveValue(nil, "rssi")
+	result := survey.ExtractActiveValue(nil, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for nil sample, got %f", result)
 	}
 }
 
 func TestExtractThroughputValue(t *testing.T) {
-	sample := &ThroughputSample{
+	sample := &survey.ThroughputSample{
 		RSSI:         -65,
 		DownloadMbps: 100.0,
 		UploadMbps:   50.0,
@@ -442,12 +443,12 @@ func TestExtractThroughputValue(t *testing.T) {
 		{"upload", "upload", 50.0},
 		{"latency", "latency", 10.5},
 		{"jitter", "jitter", 2.3},
-		{"default", "unknown", -65}, // Defaults to RSSI
+		{"default", "unknown", -65}, // Defaults to RSSI.
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractThroughputValue(sample, tt.valueType)
+			got := survey.ExtractThroughputValue(sample, tt.valueType)
 			if got != tt.expected {
 				t.Errorf("extractThroughputValue(%q) = %f, want %f", tt.valueType, got, tt.expected)
 			}
@@ -456,7 +457,7 @@ func TestExtractThroughputValue(t *testing.T) {
 }
 
 func TestExtractThroughputValue_Nil(t *testing.T) {
-	result := extractThroughputValue(nil, "rssi")
+	result := survey.ExtractThroughputValue(nil, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for nil sample, got %f", result)
 	}
@@ -486,7 +487,7 @@ func TestExtractMapValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractMapValue(data, tt.valueType)
+			got := survey.ExtractMapValue(data, tt.valueType)
 			if got != tt.expected {
 				t.Errorf("extractMapValue(%q) = %f, want %f", tt.valueType, got, tt.expected)
 			}
@@ -499,7 +500,7 @@ func TestExtractMapValue_IntValue(t *testing.T) {
 		"rssi": int(-60),
 	}
 
-	result := extractMapValue(data, "rssi")
+	result := survey.ExtractMapValue(data, "rssi")
 	if result != -60 {
 		t.Errorf("Expected -60 for int value, got %f", result)
 	}
@@ -508,52 +509,52 @@ func TestExtractMapValue_IntValue(t *testing.T) {
 func TestExtractMapValue_Missing(t *testing.T) {
 	data := map[string]any{}
 
-	result := extractMapValue(data, "rssi")
+	result := survey.ExtractMapValue(data, "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for missing key, got %f", result)
 	}
 }
 
 func TestExtractValue_UnsupportedType(t *testing.T) {
-	result := extractValue("string data", "rssi")
+	result := survey.ExtractValue("string data", "rssi")
 	if !math.IsNaN(result) {
 		t.Errorf("Expected NaN for unsupported type, got %f", result)
 	}
 }
 
 func TestExtractValue_PassiveSampleDirect(t *testing.T) {
-	// Test non-pointer PassiveSample
-	sample := PassiveSample{
+	// Test non-pointer PassiveSample.
+	sample := survey.PassiveSample{
 		Networks: []*wifi.ScannedNetwork{
 			{Signal: -55},
 		},
 	}
 
-	result := extractValue(sample, "rssi")
+	result := survey.ExtractValue(sample, "rssi")
 	if result != -55 {
 		t.Errorf("Expected -55, got %f", result)
 	}
 }
 
 func TestExtractValue_ActiveSampleDirect(t *testing.T) {
-	// Test non-pointer ActiveSample
-	sample := ActiveSample{
+	// Test non-pointer ActiveSample.
+	sample := survey.ActiveSample{
 		RSSI: -60,
 	}
 
-	result := extractValue(sample, "rssi")
+	result := survey.ExtractValue(sample, "rssi")
 	if result != -60 {
 		t.Errorf("Expected -60, got %f", result)
 	}
 }
 
 func TestExtractValue_ThroughputSampleDirect(t *testing.T) {
-	// Test non-pointer ThroughputSample
-	sample := ThroughputSample{
+	// Test non-pointer ThroughputSample.
+	sample := survey.ThroughputSample{
 		RSSI: -65,
 	}
 
-	result := extractValue(sample, "rssi")
+	result := survey.ExtractValue(sample, "rssi")
 	if result != -65 {
 		t.Errorf("Expected -65, got %f", result)
 	}

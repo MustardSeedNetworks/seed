@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/iperf"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Type indicates the type of survey being conducted.
@@ -736,7 +736,7 @@ func (m *Manager) LoadSurveys() error {
 	for _, file := range files {
 		// Check timeout to prevent hanging on slow/unresponsive filesystem (fixes #872)
 		if time.Since(startTime) > loadTimeout {
-			slog.Warn("Survey loading timeout reached, some surveys may not be loaded",
+			logging.GetLogger().Warn("Survey loading timeout reached, some surveys may not be loaded",
 				"loaded_count", len(m.surveys),
 				"elapsed", time.Since(startTime))
 			break
@@ -757,7 +757,7 @@ func (m *Manager) LoadSurveys() error {
 		if MigrateToMultiFloor(&survey) {
 			// Save the migrated survey back to disk
 			if saveErr := m.saveSurveyUnlocked(&survey); saveErr != nil {
-				slog.Warn("Failed to save migrated survey", "survey_id", survey.ID, "error", saveErr)
+				logging.GetLogger().Warn("Failed to save migrated survey", "survey_id", survey.ID, "error", saveErr)
 			}
 		}
 

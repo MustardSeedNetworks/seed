@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"sync"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Fixes #907: Limits for detected servers map to prevent unbounded growth.
@@ -115,7 +115,7 @@ func (rd *RogueDetector) startLocked() error {
 	// Start packet capture goroutine
 	go rd.capturePackets(ctx)
 
-	slog.Info("Rogue DHCP detector started", "interface", rd.config.Interface)
+	logging.GetLogger().Info("Rogue DHCP detector started", "interface", rd.config.Interface)
 	return nil
 }
 
@@ -147,7 +147,7 @@ func (rd *RogueDetector) stopLocked() {
 	rd.handle = nil
 	rd.cancel = nil
 
-	slog.Info("Rogue DHCP detector stopped")
+	logging.GetLogger().Info("Rogue DHCP detector stopped")
 }
 
 // IsRunning returns whether the detector is currently running.
@@ -170,7 +170,7 @@ func (rd *RogueDetector) capturePackets(ctx context.Context) {
 			}
 			rd.running = false
 			rd.cancel = nil
-			slog.Warn("Rogue DHCP detector capture loop exited unexpectedly")
+			logging.GetLogger().Warn("Rogue DHCP detector capture loop exited unexpectedly")
 		}
 		rd.mu.Unlock()
 	}()
@@ -258,7 +258,7 @@ func (rd *RogueDetector) processPacket(packet gopacket.Packet) {
 	if !exists {
 		// Fixes #907: Hard limit - don't add more servers if at capacity
 		if len(rd.detectedServers) >= maxDetectedServers {
-			slog.Warn("Detected servers limit reached, skipping new server", "ip", serverIP)
+			logging.GetLogger().Warn("Detected servers limit reached, skipping new server", "ip", serverIP)
 			return
 		}
 
@@ -275,7 +275,7 @@ func (rd *RogueDetector) processPacket(packet gopacket.Packet) {
 
 		// Alert if it's a rogue server
 		if !isKnown && rd.config.AlertOnDetection {
-			slog.Warn("Rogue DHCP server detected", "ip", serverIP, "mac", serverMAC)
+			logging.GetLogger().Warn("Rogue DHCP server detected", "ip", serverIP, "mac", serverMAC)
 		}
 	} else {
 		// Update existing server

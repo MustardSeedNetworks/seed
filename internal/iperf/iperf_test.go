@@ -1,16 +1,18 @@
-// Package iperf provides network throughput testing using the iperf3 tool.
+// Package iperf_test provides network throughput testing using the iperf3 tool.
 // Test suite validates iperf3 client/server operations, result parsing, and bandwidth measurement.
-package iperf
+package iperf_test
 
 import (
 	"context"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/iperf"
 )
 
 func TestNewManager(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	if manager == nil {
 		t.Fatal("expected non-nil manager")
@@ -26,7 +28,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestManagerGetServerStatus(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	status := manager.GetServerStatus()
 	if status.Running {
@@ -41,7 +43,7 @@ func TestManagerGetServerStatus(t *testing.T) {
 }
 
 func TestManagerGetClientStatus(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	status := manager.GetClientStatus()
 	if status.Running {
@@ -56,7 +58,7 @@ func TestManagerGetClientStatus(t *testing.T) {
 }
 
 func TestManagerGetLastResult(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	result := manager.GetLastResult()
 	if result != nil {
@@ -65,7 +67,7 @@ func TestManagerGetLastResult(t *testing.T) {
 }
 
 func TestClientConfigDefaults(t *testing.T) {
-	config := ClientConfig{
+	config := iperf.ClientConfig{
 		Server: "localhost",
 	}
 
@@ -91,7 +93,7 @@ func TestClientConfigDefaults(t *testing.T) {
 }
 
 func TestClientConfigWithValues(t *testing.T) {
-	config := ClientConfig{
+	config := iperf.ClientConfig{
 		Server:   "192.168.1.100",
 		Port:     5201,
 		Protocol: "tcp",
@@ -122,7 +124,7 @@ func TestClientConfigWithValues(t *testing.T) {
 
 func TestResultFields(t *testing.T) {
 	now := time.Now()
-	result := Result{
+	result := iperf.Result{
 		BitsPerSecond: 100_000_000,
 		Bandwidth:     100.0,
 		Transfer:      125.0,
@@ -180,7 +182,7 @@ func TestResultFields(t *testing.T) {
 }
 
 func TestServerStatus(t *testing.T) {
-	status := ServerStatus{
+	status := iperf.ServerStatus{
 		Running: true,
 		Port:    5201,
 		PID:     12345,
@@ -202,7 +204,7 @@ func TestServerStatus(t *testing.T) {
 }
 
 func TestClientStatus(t *testing.T) {
-	status := ClientStatus{
+	status := iperf.ClientStatus{
 		Running:  true,
 		Phase:    "testing",
 		Progress: 50.0,
@@ -220,7 +222,7 @@ func TestClientStatus(t *testing.T) {
 }
 
 func TestManagerStopServerNotRunning(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	err := manager.StopServer()
 	if err == nil {
@@ -232,15 +234,13 @@ func TestManagerStopServerNotRunning(t *testing.T) {
 }
 
 func TestManagerRunClientAlreadyRunning(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
-	// Manually set client as running
-	manager.mu.Lock()
-	manager.clientStatus.Running = true
-	manager.mu.Unlock()
+	// Manually set client as running using exported helper
+	manager.SetManagerClientStatusRunning(true)
 
 	ctx := context.Background()
-	_, err := manager.RunClient(ctx, &ClientConfig{Server: "localhost"})
+	_, err := manager.RunClient(ctx, &iperf.ClientConfig{Server: "localhost"})
 	if err == nil {
 		t.Error("expected error when test already in progress")
 	}
@@ -249,19 +249,14 @@ func TestManagerRunClientAlreadyRunning(t *testing.T) {
 	}
 
 	// Clean up
-	manager.mu.Lock()
-	manager.clientStatus.Running = false
-	manager.mu.Unlock()
+	manager.SetManagerClientStatusRunning(false)
 }
 
 func TestManagerServerAlreadyRunning(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
-	// Manually set server as running
-	manager.mu.Lock()
-	manager.serverStatus.Running = true
-	manager.serverStatus.Port = 5201
-	manager.mu.Unlock()
+	// Manually set server as running using exported helper
+	manager.SetManagerServerStatusRunning(true, 5201)
 
 	err := manager.StartServer(5201)
 	if err == nil {
@@ -269,25 +264,23 @@ func TestManagerServerAlreadyRunning(t *testing.T) {
 	}
 
 	// Clean up
-	manager.mu.Lock()
-	manager.serverStatus.Running = false
-	manager.mu.Unlock()
+	manager.SetManagerServerStatusRunning(false, 0)
 }
 
 func TestCheckInstalled(_ *testing.T) {
 	// This test may fail if iperf3 is not installed, which is okay
-	err := CheckInstalled()
+	err := iperf.CheckInstalled()
 	// Just check it doesn't panic - the result depends on system configuration
 	_ = err
 }
 
 func TestGetVersion(t *testing.T) {
 	// Skip if iperf3 not installed
-	if err := CheckInstalled(); err != nil {
+	if err := iperf.CheckInstalled(); err != nil {
 		t.Skip("iperf3 not installed, skipping version test")
 	}
 
-	version, err := GetVersion()
+	version, err := iperf.GetVersion()
 	if err != nil {
 		t.Skipf("could not get iperf3 version: %v", err)
 	}
@@ -297,8 +290,8 @@ func TestGetVersion(t *testing.T) {
 }
 
 func TestIperfJSONFields(t *testing.T) {
-	// Test the iperfJSON structure
-	output := iperfJSON{}
+	// Test the IperfJSON structure
+	output := iperf.IperfJSON{}
 	if len(output.Start.Connected) != 0 {
 		t.Error("expected empty Connected slice")
 	}
@@ -309,11 +302,11 @@ func TestIperfJSONFields(t *testing.T) {
 
 func TestFindIperf3Binary(_ *testing.T) {
 	// Reset the cached path to test finding
-	originalPath := iperfBinaryPath
-	iperfBinaryPath = ""
-	defer func() { iperfBinaryPath = originalPath }()
+	originalPath := iperf.IperfBinaryPath()
+	iperf.SetIperfBinaryPath("")
+	defer func() { iperf.SetIperfBinaryPath(originalPath) }()
 
-	path, err := findIperf3Binary()
+	path, err := iperf.FindIperf3Binary()
 	// Just verify it doesn't panic - result depends on system
 	_ = path
 	_ = err
@@ -321,11 +314,11 @@ func TestFindIperf3Binary(_ *testing.T) {
 
 func TestFindIperf3BinaryCached(t *testing.T) {
 	// Test that cached path is returned
-	originalPath := iperfBinaryPath
-	iperfBinaryPath = "/cached/path/iperf3"
-	defer func() { iperfBinaryPath = originalPath }()
+	originalPath := iperf.IperfBinaryPath()
+	iperf.SetIperfBinaryPath("/cached/path/iperf3")
+	defer func() { iperf.SetIperfBinaryPath(originalPath) }()
 
-	path, err := findIperf3Binary()
+	path, err := iperf.FindIperf3Binary()
 	if err != nil {
 		t.Errorf("unexpected error with cached path: %v", err)
 	}
@@ -347,7 +340,7 @@ func TestClientConfigProtocols(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		config := ClientConfig{
+		config := iperf.ClientConfig{
 			Server:   "localhost",
 			Protocol: tt.protocol,
 			Reverse:  tt.reverse,
@@ -367,8 +360,8 @@ func TestClientConfigProtocols(t *testing.T) {
 }
 
 func TestResultDirections(t *testing.T) {
-	uploadResult := Result{Direction: "upload"}
-	downloadResult := Result{Direction: "download"}
+	uploadResult := iperf.Result{Direction: "upload"}
+	downloadResult := iperf.Result{Direction: "download"}
 
 	if uploadResult.Direction != "upload" {
 		t.Errorf("expected direction 'upload', got %q", uploadResult.Direction)
@@ -379,7 +372,7 @@ func TestResultDirections(t *testing.T) {
 }
 
 func TestResultUDPFields(t *testing.T) {
-	result := Result{
+	result := iperf.Result{
 		Protocol:    "udp",
 		Jitter:      2.5,
 		LostPackets: 10,
@@ -401,7 +394,7 @@ func TestResultUDPFields(t *testing.T) {
 }
 
 func TestServerStatusError(t *testing.T) {
-	status := ServerStatus{
+	status := iperf.ServerStatus{
 		Running: false,
 		Port:    0,
 		PID:     0,
@@ -426,7 +419,7 @@ func TestClientStatusPhases(t *testing.T) {
 	phases := []string{"idle", "connecting", "testing", "complete"}
 
 	for _, phase := range phases {
-		status := ClientStatus{Phase: phase}
+		status := iperf.ClientStatus{Phase: phase}
 		if status.Phase != phase {
 			t.Errorf("expected phase %q, got %q", phase, status.Phase)
 		}
@@ -434,7 +427,7 @@ func TestClientStatusPhases(t *testing.T) {
 }
 
 func TestConcurrentManagerAccess(_ *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	done := make(chan bool)
 	for range 10 {
@@ -454,20 +447,18 @@ func TestConcurrentManagerAccess(_ *testing.T) {
 }
 
 func TestManagerStoreResult(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	// Initially nil
 	if manager.GetLastResult() != nil {
 		t.Error("expected nil result initially")
 	}
 
-	// Manually set a result
-	manager.mu.Lock()
-	manager.lastResult = &Result{
+	// Manually set a result using exported helper
+	manager.SetManagerLastResult(&iperf.Result{
 		Bandwidth: 100.0,
 		Direction: "download",
-	}
-	manager.mu.Unlock()
+	})
 
 	result := manager.GetLastResult()
 	if result == nil {
@@ -480,13 +471,10 @@ func TestManagerStoreResult(t *testing.T) {
 }
 
 func TestManagerStartServerAlreadyRunning(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
-	// Manually set server as running
-	manager.mu.Lock()
-	manager.serverStatus.Running = true
-	manager.serverStatus.Port = 5201
-	manager.mu.Unlock()
+	// Manually set server as running using exported helper
+	manager.SetManagerServerStatusRunning(true, 5201)
 
 	err := manager.StartServer(5202)
 	if err == nil {
@@ -494,14 +482,12 @@ func TestManagerStartServerAlreadyRunning(t *testing.T) {
 	}
 
 	// Clean up
-	manager.mu.Lock()
-	manager.serverStatus.Running = false
-	manager.mu.Unlock()
+	manager.SetManagerServerStatusRunning(false, 0)
 }
 
 func TestResultAllFields(t *testing.T) {
 	now := time.Now()
-	result := Result{
+	result := iperf.Result{
 		BitsPerSecond: 100_000_000,
 		Bandwidth:     100.0,
 		Transfer:      125.0,
@@ -559,7 +545,7 @@ func TestResultAllFields(t *testing.T) {
 }
 
 func TestServerStatusFields(t *testing.T) {
-	status := ServerStatus{
+	status := iperf.ServerStatus{
 		Running: true,
 		Port:    5201,
 		PID:     12345,
@@ -581,7 +567,7 @@ func TestServerStatusFields(t *testing.T) {
 }
 
 func TestClientStatusFields(t *testing.T) {
-	status := ClientStatus{
+	status := iperf.ClientStatus{
 		Running:  true,
 		Phase:    "testing",
 		Progress: 50.0,
@@ -599,8 +585,8 @@ func TestClientStatusFields(t *testing.T) {
 }
 
 func TestIperfJSONStructure(t *testing.T) {
-	// Test the iperfJSON structure fields
-	output := iperfJSON{}
+	// Test the IperfJSON structure fields
+	output := iperf.IperfJSON{}
 	if len(output.Start.Connected) != 0 {
 		t.Error("expected empty Connected slice")
 	}
@@ -613,7 +599,7 @@ func TestIperfJSONStructure(t *testing.T) {
 }
 
 func TestManagerStatusMethods(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	// Test initial server status
 	serverStatus := manager.GetServerStatus()
@@ -635,7 +621,7 @@ func TestManagerStatusMethods(t *testing.T) {
 }
 
 func TestManagerConcurrentStatusAccess(_ *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	done := make(chan bool)
 	for range 10 {
@@ -667,7 +653,7 @@ func TestClientConfigProtocol(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		config := ClientConfig{
+		config := iperf.ClientConfig{
 			Server:   "localhost",
 			Protocol: tt.protocol,
 			Reverse:  tt.reverse,
@@ -686,7 +672,7 @@ func TestClientConfigProtocol(t *testing.T) {
 }
 
 func TestServerStatusWithError(t *testing.T) {
-	status := ServerStatus{
+	status := iperf.ServerStatus{
 		Running: false,
 		Port:    0,
 		PID:     0,
@@ -708,21 +694,19 @@ func TestServerStatusWithError(t *testing.T) {
 }
 
 func TestManagerSetResult(t *testing.T) {
-	manager := NewManager()
+	manager := iperf.NewManager()
 
 	// Initially nil
 	if manager.GetLastResult() != nil {
 		t.Error("expected nil result initially")
 	}
 
-	// Set result manually
-	manager.mu.Lock()
-	manager.lastResult = &Result{
+	// Set result manually using exported helper
+	manager.SetManagerLastResult(&iperf.Result{
 		Bandwidth: 500.0,
 		Direction: "upload",
 		Protocol:  "tcp",
-	}
-	manager.mu.Unlock()
+	})
 
 	result := manager.GetLastResult()
 	if result == nil {
@@ -744,7 +728,7 @@ func TestIperf3BinaryRequired(t *testing.T) {
 		t.Skip("Skipping iperf3 binary test (SKIP_IPERF_TEST=1)")
 	}
 
-	path, err := findIperf3Binary()
+	path, err := iperf.FindIperf3Binary()
 	if err != nil {
 		t.Fatalf(
 			"iperf3 binary not found: %v\n\nTo fix this:\n1. Run scripts/build-iperf3.sh to build bundled binary\n2. Or install system-wide: apt-get install iperf3 (Ubuntu) or brew install iperf3 (macOS)\n3. Or set SKIP_IPERF_TEST=1 to skip this test in CI",
@@ -771,7 +755,7 @@ func TestIperf3VersionRequired(t *testing.T) {
 		t.Skip("Skipping iperf3 version test (SKIP_IPERF_TEST=1)")
 	}
 
-	version, err := GetVersion()
+	version, err := iperf.GetVersion()
 	if err != nil {
 		t.Fatalf("Failed to get iperf3 version: %v", err)
 	}
@@ -779,12 +763,12 @@ func TestIperf3VersionRequired(t *testing.T) {
 	t.Logf("iperf3 version: %s", version)
 
 	// Validate minimum version
-	err = ValidateVersion()
+	err = iperf.ValidateVersion()
 	if err != nil {
 		t.Fatalf(
 			"iperf3 version validation failed: %v\n\nRequired version: %s or higher\nFound version: %s",
 			err,
-			minSupportedVersion,
+			iperf.MinSupportedVersion,
 			version,
 		)
 	}
@@ -809,9 +793,9 @@ func TestVersionComparison(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result := compareVersions(tt.v1, tt.v2)
+		result := iperf.CompareVersions(tt.v1, tt.v2)
 		if result != tt.expected {
-			t.Errorf("compareVersions(%q, %q) = %d; expected %d", tt.v1, tt.v2, result, tt.expected)
+			t.Errorf("CompareVersions(%q, %q) = %d; expected %d", tt.v1, tt.v2, result, tt.expected)
 		}
 	}
 }

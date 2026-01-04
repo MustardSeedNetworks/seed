@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"slices"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/version"
 )
 
@@ -104,13 +104,13 @@ func (s *Server) registerTools() {
 // ServeStdio runs the MCP server over stdin/stdout.
 // This is used for direct integration with Claude Code.
 func (s *Server) ServeStdio() error {
-	slog.Info("Starting MCP server over stdio")
+	logging.GetLogger().Info("Starting MCP server over stdio")
 	return server.ServeStdio(s.mcpServer)
 }
 
 // ServeStdioWithContext runs the MCP server over stdin/stdout with context.
 func (s *Server) ServeStdioWithContext(ctx context.Context) error {
-	slog.Info("Starting MCP server over stdio with context")
+	logging.GetLogger().Info("Starting MCP server over stdio with context")
 
 	// Create a channel to signal completion
 	done := make(chan error, 1)
@@ -139,9 +139,9 @@ func (s *Server) GetMCPServer() *server.MCPServer {
 
 func (s *Server) addTool(name string, isAllowed func(string) bool, tool mcp.Tool, handler server.ToolHandlerFunc) {
 	if !isAllowed(name) {
-		slog.Debug("Tool not in allowed list, skipping", "tool", name)
+		logging.GetLogger().Debug("Tool not in allowed list, skipping", "tool", name)
 		return
 	}
 	s.mcpServer.AddTool(tool, handler)
-	slog.Debug("Registered MCP tool", "tool", name)
+	logging.GetLogger().Debug("Registered MCP tool", "tool", name)
 }

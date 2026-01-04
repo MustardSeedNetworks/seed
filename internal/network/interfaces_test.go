@@ -1,10 +1,12 @@
-// Package network handles network interface management.
+// Package network_test handles network interface management.
 // Test suite validates interface detection, configuration, and cross-platform operations.
 // Tests cover interface enumeration, property detection, IP configuration, and DNS setup.
-package network
+package network_test
 
 import (
 	"testing"
+
+	"github.com/krisarmstrong/seed/internal/network"
 )
 
 func TestNewManager(t *testing.T) {
@@ -24,7 +26,7 @@ func TestNewManager(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mgr, err := NewManager(tt.defaultInterface)
+			mgr, err := network.NewManager(tt.defaultInterface)
 			if err != nil {
 				t.Fatalf("NewManager() error = %v", err)
 			}
@@ -32,16 +34,17 @@ func TestNewManager(t *testing.T) {
 				t.Fatal("NewManager() returned nil manager")
 			}
 
-			if mgr.currentInterface != tt.defaultInterface {
-				t.Errorf("currentInterface = %v, want %v", mgr.currentInterface, tt.defaultInterface)
+			helper := network.NewManagerTestHelper(mgr)
+			if helper.GetCurrentInterface() != tt.defaultInterface {
+				t.Errorf("currentInterface = %v, want %v", helper.GetCurrentInterface(), tt.defaultInterface)
 			}
 
-			if mgr.interfaces == nil {
+			if helper.GetInterfaces() == nil {
 				t.Error("interfaces map is nil")
 			}
 
-			// Should have at least loopback interface
-			if len(mgr.interfaces) == 0 {
+			// Should have at least loopback interface.
+			if len(helper.GetInterfaces()) == 0 {
 				t.Error("No interfaces found")
 			}
 		})
@@ -49,7 +52,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestRefreshInterfaces(t *testing.T) {
-	mgr, err := NewManager("")
+	mgr, err := network.NewManager("")
 	if err != nil {
 		t.Fatalf("NewManager() failed: %v", err)
 	}
@@ -59,7 +62,7 @@ func TestRefreshInterfaces(t *testing.T) {
 		t.Errorf("RefreshInterfaces() error = %v", err)
 	}
 
-	// Should have at least one interface (loopback)
+	// Should have at least one interface (loopback).
 	ifaces := mgr.GetInterfaces()
 	if len(ifaces) == 0 {
 		t.Error("RefreshInterfaces() found no interfaces")
@@ -67,7 +70,7 @@ func TestRefreshInterfaces(t *testing.T) {
 }
 
 func TestGetInterfaces(t *testing.T) {
-	mgr, err := NewManager("")
+	mgr, err := network.NewManager("")
 	if err != nil {
 		t.Fatalf("NewManager() failed: %v", err)
 	}
@@ -78,12 +81,12 @@ func TestGetInterfaces(t *testing.T) {
 		t.Fatal("GetInterfaces() returned nil")
 	}
 
-	// Should have at least loopback
+	// Should have at least loopback.
 	if len(ifaces) == 0 {
 		t.Error("GetInterfaces() returned empty list")
 	}
 
-	// Verify interface info structure
+	// Verify interface info structure.
 	for _, iface := range ifaces {
 		if iface.Name == "" {
 			t.Error("Interface has empty name")
@@ -100,15 +103,15 @@ func TestGetInterfaces(t *testing.T) {
 }
 
 func TestGetInterface(t *testing.T) {
-	mgr, mgrErr := NewManager("")
+	mgr, mgrErr := network.NewManager("")
 	if mgrErr != nil {
 		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
 
-	// Get a known interface (loopback should exist on all systems)
+	// Get a known interface (loopback should exist on all systems).
 	var loopbackName string
 	for _, iface := range mgr.GetInterfaces() {
-		if iface.Type == InterfaceTypeLoopback {
+		if iface.Type == network.InterfaceTypeLoopback {
 			loopbackName = iface.Name
 			break
 		}
@@ -163,7 +166,7 @@ func TestGetInterface(t *testing.T) {
 }
 
 func TestGetCurrentInterface(t *testing.T) {
-	mgr, err := NewManager("test-iface")
+	mgr, err := network.NewManager("test-iface")
 	if err != nil {
 		t.Fatalf("NewManager() failed: %v", err)
 	}
@@ -175,12 +178,12 @@ func TestGetCurrentInterface(t *testing.T) {
 }
 
 func TestSetCurrentInterface(t *testing.T) {
-	mgr, mgrErr := NewManager("")
+	mgr, mgrErr := network.NewManager("")
 	if mgrErr != nil {
 		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
 
-	// Get a valid interface name
+	// Get a valid interface name.
 	var validName string
 	for _, iface := range mgr.GetInterfaces() {
 		validName = iface.Name
@@ -233,12 +236,12 @@ func TestSetCurrentInterface(t *testing.T) {
 }
 
 func TestFindFirstAvailable(t *testing.T) {
-	mgr, err := NewManager("")
+	mgr, err := network.NewManager("")
 	if err != nil {
 		t.Fatalf("NewManager() failed: %v", err)
 	}
 
-	// Get list of available interfaces
+	// Get list of available interfaces.
 	ifaces := mgr.GetInterfaces()
 	if len(ifaces) == 0 {
 		t.Skip("No interfaces available")
@@ -285,8 +288,8 @@ func TestFindFirstAvailable(t *testing.T) {
 				return
 			}
 
-			// Auto-detect should find at least loopback
-			// But we exclude loopback, so it might be empty on minimal systems
+			// Auto-detect should find at least loopback.
+			// But we exclude loopback, so it might be empty on minimal systems.
 			t.Logf("FindFirstAvailable() = %v", result)
 		})
 	}
@@ -296,65 +299,64 @@ func TestDetectInterfaceType(t *testing.T) {
 	tests := []struct {
 		name  string
 		iface string
-		want  InterfaceType
+		want  network.InterfaceType
 	}{
 		// Loopback
-		{"loopback lo", "lo", InterfaceTypeLoopback},
-		{"loopback lo0", "lo0", InterfaceTypeLoopback},
+		{"loopback lo", "lo", network.InterfaceTypeLoopback},
+		{"loopback lo0", "lo0", network.InterfaceTypeLoopback},
 
 		// Virtual
-		{"docker", "docker0", InterfaceTypeVirtual},
-		{"bridge", "br-abc123", InterfaceTypeVirtual},
-		{"veth", "veth0", InterfaceTypeVirtual},
-		{"virbr", "virbr0", InterfaceTypeVirtual},
-		{"tun", "tun0", InterfaceTypeVirtual},
-		{"tap", "tap0", InterfaceTypeVirtual},
+		{"docker", "docker0", network.InterfaceTypeVirtual},
+		{"bridge", "br-abc123", network.InterfaceTypeVirtual},
+		{"veth", "veth0", network.InterfaceTypeVirtual},
+		{"virbr", "virbr0", network.InterfaceTypeVirtual},
+		{"tun", "tun0", network.InterfaceTypeVirtual},
+		{"tap", "tap0", network.InterfaceTypeVirtual},
 
 		// WiFi
-		{"wlan", "wlan0", InterfaceTypeWiFi},
-		{"wlp", "wlp3s0", InterfaceTypeWiFi},
-		{"wifi", "wifi0", InterfaceTypeWiFi},
-		{"ath", "ath0", InterfaceTypeWiFi},
+		{"wlan", "wlan0", network.InterfaceTypeWiFi},
+		{"wlp", "wlp3s0", network.InterfaceTypeWiFi},
+		{"wifi", "wifi0", network.InterfaceTypeWiFi},
+		{"ath", "ath0", network.InterfaceTypeWiFi},
 
 		// Ethernet
-		{"eth", "eth0", InterfaceTypeEthernet},
-		{"enp", "enp0s3", InterfaceTypeEthernet},
-		{"ens", "ens33", InterfaceTypeEthernet},
-		{"eno", "eno1", InterfaceTypeEthernet},
-		{"em", "em1", InterfaceTypeEthernet},
-		{"en", "en0", InterfaceTypeEthernet},
+		{"eth", "eth0", network.InterfaceTypeEthernet},
+		{"enp", "enp0s3", network.InterfaceTypeEthernet},
+		{"ens", "ens33", network.InterfaceTypeEthernet},
+		{"eno", "eno1", network.InterfaceTypeEthernet},
+		{"em", "em1", network.InterfaceTypeEthernet},
+		{"en", "en0", network.InterfaceTypeEthernet},
 
 		// Other
-		{"unknown", "xyz123", InterfaceTypeOther},
+		{"unknown", "xyz123", network.InterfaceTypeOther},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := detectInterfaceType(tt.iface)
+			got := network.DetectInterfaceType(tt.iface)
 			if got != tt.want {
-				t.Errorf("detectInterfaceType(%v) = %v, want %v", tt.iface, got, tt.want)
+				t.Errorf("DetectInterfaceType(%v) = %v, want %v", tt.iface, got, tt.want)
 			}
 		})
 	}
 }
 
 func TestIsWireless(t *testing.T) {
-	mgr, err := NewManager("")
+	mgr, err := network.NewManager("")
 	if err != nil {
 		t.Fatalf("NewManager() failed: %v", err)
 	}
 
-	// Test with mock data - manually add WiFi interface
-	mgr.mu.Lock()
-	mgr.interfaces["wlan0"] = &InterfaceInfo{
+	// Test with mock data - manually add WiFi interface.
+	helper := network.NewManagerTestHelper(mgr)
+	helper.SetInterface("wlan0", &network.InterfaceInfo{
 		Name: "wlan0",
-		Type: InterfaceTypeWiFi,
-	}
-	mgr.interfaces["eth0"] = &InterfaceInfo{
+		Type: network.InterfaceTypeWiFi,
+	})
+	helper.SetInterface("eth0", &network.InterfaceInfo{
 		Name: "eth0",
-		Type: InterfaceTypeEthernet,
-	}
-	mgr.mu.Unlock()
+		Type: network.InterfaceTypeEthernet,
+	})
 
 	tests := []struct {
 		name  string
@@ -426,9 +428,9 @@ func TestHasRoutableAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := hasRoutableAddress(tt.addresses)
+			got := network.HasRoutableAddress(tt.addresses)
 			if got != tt.want {
-				t.Errorf("hasRoutableAddress(%v) = %v, want %v", tt.addresses, got, tt.want)
+				t.Errorf("HasRoutableAddress(%v) = %v, want %v", tt.addresses, got, tt.want)
 			}
 		})
 	}
@@ -437,12 +439,12 @@ func TestHasRoutableAddress(t *testing.T) {
 func TestValidateIPConfig(t *testing.T) {
 	tests := []struct {
 		name    string
-		cfg     *StaticIPConfig
+		cfg     *network.StaticIPConfig
 		wantErr bool
 	}{
 		{
 			name: "valid config with CIDR netmask",
-			cfg: &StaticIPConfig{
+			cfg: &network.StaticIPConfig{
 				Address: "192.168.1.100",
 				Netmask: "24",
 				Gateway: "192.168.1.1",
@@ -452,7 +454,7 @@ func TestValidateIPConfig(t *testing.T) {
 		},
 		{
 			name: "valid config without gateway",
-			cfg: &StaticIPConfig{
+			cfg: &network.StaticIPConfig{
 				Address: "192.168.1.100",
 				Netmask: "24",
 			},
@@ -460,7 +462,7 @@ func TestValidateIPConfig(t *testing.T) {
 		},
 		{
 			name: "missing address",
-			cfg: &StaticIPConfig{
+			cfg: &network.StaticIPConfig{
 				Address: "",
 				Netmask: "24",
 			},
@@ -468,7 +470,7 @@ func TestValidateIPConfig(t *testing.T) {
 		},
 		{
 			name: "missing netmask",
-			cfg: &StaticIPConfig{
+			cfg: &network.StaticIPConfig{
 				Address: "192.168.1.100",
 				Netmask: "",
 			},
@@ -476,7 +478,7 @@ func TestValidateIPConfig(t *testing.T) {
 		},
 		{
 			name: "invalid IP address",
-			cfg: &StaticIPConfig{
+			cfg: &network.StaticIPConfig{
 				Address: "invalid",
 				Netmask: "24",
 			},
@@ -484,7 +486,7 @@ func TestValidateIPConfig(t *testing.T) {
 		},
 		{
 			name: "invalid netmask",
-			cfg: &StaticIPConfig{
+			cfg: &network.StaticIPConfig{
 				Address: "192.168.1.100",
 				Netmask: "invalid",
 			},
@@ -492,7 +494,7 @@ func TestValidateIPConfig(t *testing.T) {
 		},
 		{
 			name: "invalid gateway",
-			cfg: &StaticIPConfig{
+			cfg: &network.StaticIPConfig{
 				Address: "192.168.1.100",
 				Netmask: "24",
 				Gateway: "invalid",
@@ -501,7 +503,7 @@ func TestValidateIPConfig(t *testing.T) {
 		},
 		{
 			name: "invalid DNS server",
-			cfg: &StaticIPConfig{
+			cfg: &network.StaticIPConfig{
 				Address: "192.168.1.100",
 				Netmask: "24",
 				DNS:     []string{"8.8.8.8", "invalid"},
@@ -512,15 +514,15 @@ func TestValidateIPConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateIPConfig(tt.cfg)
+			err := network.ValidateIPConfig(tt.cfg)
 
 			if tt.wantErr {
 				if err == nil {
-					t.Error("validateIPConfig() error = nil, want error")
+					t.Error("ValidateIPConfig() error = nil, want error")
 				}
 			} else {
 				if err != nil {
-					t.Errorf("validateIPConfig() error = %v, want nil", err)
+					t.Errorf("ValidateIPConfig() error = %v, want nil", err)
 				}
 			}
 		})
@@ -549,9 +551,9 @@ func TestIsValidNetmask(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isValidNetmask(tt.netmask)
+			got := network.IsValidNetmask(tt.netmask)
 			if got != tt.want {
-				t.Errorf("isValidNetmask(%v) = %v, want %v", tt.netmask, got, tt.want)
+				t.Errorf("IsValidNetmask(%v) = %v, want %v", tt.netmask, got, tt.want)
 			}
 		})
 	}
@@ -573,16 +575,16 @@ func TestCIDRToNetmask(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := cidrToNetmask(tt.prefix)
+			got := network.CIDRToNetmask(tt.prefix)
 			if got != tt.want {
-				t.Errorf("cidrToNetmask(%v) = %v, want %v", tt.prefix, got, tt.want)
+				t.Errorf("CIDRToNetmask(%v) = %v, want %v", tt.prefix, got, tt.want)
 			}
 		})
 	}
 }
 
 func TestSetMTU(t *testing.T) {
-	mgr, mgrErr := NewManager("")
+	mgr, mgrErr := network.NewManager("")
 	if mgrErr != nil {
 		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
@@ -629,8 +631,8 @@ func TestSetMTU(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := mgr.SetMTU(tt.iface, tt.mtu)
 
-			// We only check validation errors (MTU range)
-			// Platform-specific errors are expected in tests
+			// We only check validation errors (MTU range).
+			// Platform-specific errors are expected in tests.
 			if tt.wantErr {
 				if err == nil {
 					t.Error("SetMTU() error = nil, want validation error")
@@ -640,18 +642,18 @@ func TestSetMTU(t *testing.T) {
 					t.Error("SetMTU() should return validation error for out-of-range MTU")
 				}
 			}
-			// Don't check platform execution errors
+			// Don't check platform execution errors.
 		})
 	}
 }
 
 func TestGetLinkStatus(t *testing.T) {
-	mgr, mgrErr := NewManager("")
+	mgr, mgrErr := network.NewManager("")
 	if mgrErr != nil {
 		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
 
-	// Get a valid interface
+	// Get a valid interface.
 	ifaces := mgr.GetInterfaces()
 	if len(ifaces) == 0 {
 		t.Skip("No interfaces available")
@@ -696,7 +698,7 @@ func TestGetLinkStatus(t *testing.T) {
 				t.Fatal("GetLinkStatus() returned nil status")
 			}
 
-			// Verify structure (values may vary by system/interface state)
+			// Verify structure (values may vary by system/interface state).
 			t.Logf("LinkStatus for %s: Speed=%s, Duplex=%s, Carrier=%v, HasIP=%v",
 				tt.iface, status.Speed, status.Duplex, status.Carrier, status.HasIP)
 		})
@@ -704,7 +706,7 @@ func TestGetLinkStatus(t *testing.T) {
 }
 
 func TestInterfaceInfo(t *testing.T) {
-	mgr, err := NewManager("")
+	mgr, err := network.NewManager("")
 	if err != nil {
 		t.Fatalf("NewManager() failed: %v", err)
 	}
@@ -714,7 +716,7 @@ func TestInterfaceInfo(t *testing.T) {
 		t.Skip("No interfaces available")
 	}
 
-	// Test that InterfaceInfo fields are properly populated
+	// Test that InterfaceInfo fields are properly populated.
 	for _, iface := range ifaces {
 		t.Run(iface.Name, func(t *testing.T) {
 			if iface.Name == "" {
@@ -729,7 +731,7 @@ func TestInterfaceInfo(t *testing.T) {
 				t.Errorf("MTU = %d, want > 0", iface.MTU)
 			}
 
-			// Addresses might be empty on some interfaces
+			// Addresses might be empty on some interfaces.
 			t.Logf("Interface: %s, Type: %s, Up: %v, Running: %v, MTU: %d, Addresses: %v",
 				iface.Name, iface.Type, iface.Up, iface.Running, iface.MTU, iface.Addresses)
 		})
@@ -737,19 +739,19 @@ func TestInterfaceInfo(t *testing.T) {
 }
 
 func TestConcurrentAccess(t *testing.T) {
-	mgr, err := NewManager("")
+	mgr, err := network.NewManager("")
 	if err != nil {
 		t.Fatalf("NewManager() failed: %v", err)
 	}
 
-	// Get a valid interface
+	// Get a valid interface.
 	ifaces := mgr.GetInterfaces()
 	if len(ifaces) == 0 {
 		t.Skip("No interfaces available")
 	}
 	validInterface := ifaces[0].Name
 
-	// Test concurrent reads
+	// Test concurrent reads.
 	done := make(chan bool)
 	for range 10 {
 		go func() {
@@ -763,64 +765,64 @@ func TestConcurrentAccess(t *testing.T) {
 		}()
 	}
 
-	// Wait for all goroutines
+	// Wait for all goroutines.
 	for range 10 {
 		<-done
 	}
 }
 
 func TestManagerEdgeCases(t *testing.T) {
-	mgr, err := NewManager("")
+	mgr, err := network.NewManager("")
 	if err != nil {
 		t.Fatalf("NewManager() failed: %v", err)
 	}
 
-	// Test GetInterface with empty string
+	// Test GetInterface with empty string.
 	_, err = mgr.GetInterface("")
 	if err == nil {
 		t.Error("GetInterface(\"\") should return error")
 	}
 
-	// Test SetCurrentInterface with empty string
+	// Test SetCurrentInterface with empty string.
 	err = mgr.SetCurrentInterface("")
 	if err == nil {
 		t.Error("SetCurrentInterface(\"\") should return error")
 	}
 
-	// Test FindFirstAvailable with nil slice
+	// Test FindFirstAvailable with nil slice.
 	result := mgr.FindFirstAvailable(nil)
-	// Should not panic, may return empty or auto-detected interface
+	// Should not panic, may return empty or auto-detected interface.
 	t.Logf("FindFirstAvailable(nil) = %v", result)
 }
 
 func TestInterfaceTypeConstants(t *testing.T) {
-	// Verify type constants are correctly defined
-	if InterfaceTypeEthernet == "" {
+	// Verify type constants are correctly defined.
+	if network.InterfaceTypeEthernet == "" {
 		t.Error("InterfaceTypeEthernet is empty")
 	}
-	if InterfaceTypeWiFi == "" {
+	if network.InterfaceTypeWiFi == "" {
 		t.Error("InterfaceTypeWiFi is empty")
 	}
-	if InterfaceTypeLoopback == "" {
+	if network.InterfaceTypeLoopback == "" {
 		t.Error("InterfaceTypeLoopback is empty")
 	}
-	if InterfaceTypeVirtual == "" {
+	if network.InterfaceTypeVirtual == "" {
 		t.Error("InterfaceTypeVirtual is empty")
 	}
-	if InterfaceTypeOther == "" {
+	if network.InterfaceTypeOther == "" {
 		t.Error("InterfaceTypeOther is empty")
 	}
 
-	// Verify they're all different
-	types := []InterfaceType{
-		InterfaceTypeEthernet,
-		InterfaceTypeWiFi,
-		InterfaceTypeLoopback,
-		InterfaceTypeVirtual,
-		InterfaceTypeOther,
+	// Verify they're all different.
+	types := []network.InterfaceType{
+		network.InterfaceTypeEthernet,
+		network.InterfaceTypeWiFi,
+		network.InterfaceTypeLoopback,
+		network.InterfaceTypeVirtual,
+		network.InterfaceTypeOther,
 	}
 
-	seen := make(map[InterfaceType]bool)
+	seen := make(map[network.InterfaceType]bool)
 	for _, typ := range types {
 		if seen[typ] {
 			t.Errorf("Duplicate InterfaceType value: %v", typ)
@@ -830,45 +832,45 @@ func TestInterfaceTypeConstants(t *testing.T) {
 }
 
 func TestFindFirstAvailableLogic(t *testing.T) {
-	mgr := &Manager{
-		interfaces: make(map[string]*InterfaceInfo),
-	}
+	interfaces := make(map[string]*network.InterfaceInfo)
 
-	// Build test scenario with various interface types
-	mgr.interfaces["lo"] = &InterfaceInfo{
+	// Build test scenario with various interface types.
+	interfaces["lo"] = &network.InterfaceInfo{
 		Name:      "lo",
-		Type:      InterfaceTypeLoopback,
+		Type:      network.InterfaceTypeLoopback,
 		Up:        true,
 		Addresses: []string{"127.0.0.1/8"},
 	}
 
-	mgr.interfaces["eth0"] = &InterfaceInfo{
+	interfaces["eth0"] = &network.InterfaceInfo{
 		Name:      "eth0",
-		Type:      InterfaceTypeEthernet,
+		Type:      network.InterfaceTypeEthernet,
 		Up:        true,
 		Addresses: []string{"192.168.1.100/24"},
 	}
 
-	mgr.interfaces["wlan0"] = &InterfaceInfo{
+	interfaces["wlan0"] = &network.InterfaceInfo{
 		Name:      "wlan0",
-		Type:      InterfaceTypeWiFi,
+		Type:      network.InterfaceTypeWiFi,
 		Up:        true,
 		Addresses: []string{"192.168.1.101/24"},
 	}
 
-	mgr.interfaces["eth1"] = &InterfaceInfo{
+	interfaces["eth1"] = &network.InterfaceInfo{
 		Name:      "eth1",
-		Type:      InterfaceTypeEthernet,
+		Type:      network.InterfaceTypeEthernet,
 		Up:        true,
 		Addresses: []string{}, // No IP
 	}
 
-	mgr.interfaces["docker0"] = &InterfaceInfo{
+	interfaces["docker0"] = &network.InterfaceInfo{
 		Name:      "docker0",
-		Type:      InterfaceTypeVirtual,
+		Type:      network.InterfaceTypeVirtual,
 		Up:        true,
 		Addresses: []string{"172.17.0.1/16"},
 	}
+
+	mgr := network.CreateManagerWithInterfaces(interfaces)
 
 	tests := []struct {
 		name      string
@@ -896,7 +898,7 @@ func TestFindFirstAvailableLogic(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := mgr.FindFirstAvailable(tt.preferred)
 			// Note: Order in map iteration may vary, so we check that
-			// it's one of the expected interfaces (eth0 or wlan0)
+			// it's one of the expected interfaces (eth0 or wlan0).
 			if got != "eth0" && got != "wlan0" {
 				t.Errorf("FindFirstAvailable(%v) = %v, want eth0 or wlan0 (got neither)", tt.preferred, got)
 			}
@@ -925,25 +927,25 @@ func TestAddressesWithoutCIDR(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := hasRoutableAddress(tt.addresses)
+			got := network.HasRoutableAddress(tt.addresses)
 			if got != tt.want {
-				t.Errorf("hasRoutableAddress(%v) = %v, want %v", tt.addresses, got, tt.want)
+				t.Errorf("HasRoutableAddress(%v) = %v, want %v", tt.addresses, got, tt.want)
 			}
 		})
 	}
 }
 
 func TestNetmaskValidation(t *testing.T) {
-	// Test comprehensive netmask scenarios
-	// Note: Implementation primarily validates CIDR notation
+	// Test comprehensive netmask scenarios.
+	// Note: Implementation primarily validates CIDR notation.
 	validMasks := []string{
 		"0", "8", "16", "24", "32",
 	}
 
 	for _, mask := range validMasks {
 		t.Run("valid_"+mask, func(t *testing.T) {
-			if !isValidNetmask(mask) {
-				t.Errorf("isValidNetmask(%q) = false, want true", mask)
+			if !network.IsValidNetmask(mask) {
+				t.Errorf("IsValidNetmask(%q) = false, want true", mask)
 			}
 		})
 	}
@@ -954,8 +956,8 @@ func TestNetmaskValidation(t *testing.T) {
 
 	for _, mask := range invalidMasks {
 		t.Run("invalid_"+mask, func(t *testing.T) {
-			if isValidNetmask(mask) {
-				t.Errorf("isValidNetmask(%q) = true, want false", mask)
+			if network.IsValidNetmask(mask) {
+				t.Errorf("IsValidNetmask(%q) = true, want false", mask)
 			}
 		})
 	}
@@ -963,30 +965,30 @@ func TestNetmaskValidation(t *testing.T) {
 
 func TestInterfaceTypeDetectionPriority(t *testing.T) {
 	// Test that more specific prefixes are detected correctly
-	// even if they match multiple patterns
+	// even if they match multiple patterns.
 
 	tests := []struct {
 		name string
-		want InterfaceType
+		want network.InterfaceType
 	}{
-		// "en" matches both ethernet prefixes, but "enp" is more specific
-		{"enp0s3", InterfaceTypeEthernet},
-		{"en0", InterfaceTypeEthernet},
+		// "en" matches both ethernet prefixes, but "enp" is more specific.
+		{"enp0s3", network.InterfaceTypeEthernet},
+		{"en0", network.InterfaceTypeEthernet},
 
-		// Virtual prefixes should match before ethernet
-		{"docker0", InterfaceTypeVirtual},
-		{"br-123abc", InterfaceTypeVirtual},
+		// Virtual prefixes should match before ethernet.
+		{"docker0", network.InterfaceTypeVirtual},
+		{"br-123abc", network.InterfaceTypeVirtual},
 
-		// WiFi should be detected
-		{"wlan0", InterfaceTypeWiFi},
-		{"wlp3s0", InterfaceTypeWiFi},
+		// WiFi should be detected.
+		{"wlan0", network.InterfaceTypeWiFi},
+		{"wlp3s0", network.InterfaceTypeWiFi},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := detectInterfaceType(tt.name)
+			got := network.DetectInterfaceType(tt.name)
 			if got != tt.want {
-				t.Errorf("detectInterfaceType(%q) = %v, want %v", tt.name, got, tt.want)
+				t.Errorf("DetectInterfaceType(%q) = %v, want %v", tt.name, got, tt.want)
 			}
 		})
 	}

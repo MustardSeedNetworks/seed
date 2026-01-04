@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
@@ -109,17 +109,17 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 	ctx := context.Background()
 	if mode == paths.ModeSystem {
 		if stopErr := exec.CommandContext(ctx, "systemctl", "stop", "seed").Run(); stopErr != nil {
-			slog.Warn("Failed to stop seed service", "error", stopErr)
+			logging.GetLogger().Warn("Failed to stop seed service", "error", stopErr)
 		}
 		if disableErr := exec.CommandContext(ctx, "systemctl", "disable", "seed").Run(); disableErr != nil {
-			slog.Warn("Failed to disable seed service", "error", disableErr)
+			logging.GetLogger().Warn("Failed to disable seed service", "error", disableErr)
 		}
 	} else {
 		if stopErr := exec.CommandContext(ctx, "systemctl", "--user", "stop", "seed").Run(); stopErr != nil {
-			slog.Warn("Failed to stop seed user service", "error", stopErr)
+			logging.GetLogger().Warn("Failed to stop seed user service", "error", stopErr)
 		}
 		if disableErr := exec.CommandContext(ctx, "systemctl", "--user", "disable", "seed").Run(); disableErr != nil {
-			slog.Warn("Failed to disable seed user service", "error", disableErr)
+			logging.GetLogger().Warn("Failed to disable seed user service", "error", disableErr)
 		}
 	}
 
@@ -131,23 +131,23 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 	} else {
 		userConfigDir, configErr := os.UserConfigDir()
 		if configErr != nil {
-			slog.Warn("Failed to get user config dir", "error", configErr)
+			logging.GetLogger().Warn("Failed to get user config dir", "error", configErr)
 			return
 		}
 		servicePath = filepath.Join(userConfigDir, "systemd", "user", "seed.service")
 	}
 	if removeErr := os.Remove(servicePath); removeErr != nil && !os.IsNotExist(removeErr) {
-		slog.Warn("Failed to remove service file", "error", removeErr)
+		logging.GetLogger().Warn("Failed to remove service file", "error", removeErr)
 	}
 
 	// Reload systemd (fixes #789 - log errors instead of silently ignoring)
 	if mode == paths.ModeSystem {
 		if reloadErr := exec.CommandContext(ctx, "systemctl", "daemon-reload").Run(); reloadErr != nil {
-			slog.Warn("Failed to reload systemd", "error", reloadErr)
+			logging.GetLogger().Warn("Failed to reload systemd", "error", reloadErr)
 		}
 	} else {
 		if reloadErr := exec.CommandContext(ctx, "systemctl", "--user", "daemon-reload").Run(); reloadErr != nil {
-			slog.Warn("Failed to reload user systemd", "error", reloadErr)
+			logging.GetLogger().Warn("Failed to reload user systemd", "error", reloadErr)
 		}
 	}
 
@@ -158,7 +158,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 		binaryPath = filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
 	}
 	if removeBinErr := os.Remove(binaryPath); removeBinErr != nil && !os.IsNotExist(removeBinErr) {
-		slog.Warn("Failed to remove binary", "error", removeBinErr)
+		logging.GetLogger().Warn("Failed to remove binary", "error", removeBinErr)
 	}
 
 	// Purge data
@@ -167,7 +167,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 		dirs := []string{p.ConfigDir, p.DataDir, p.LogDir, p.CacheDir}
 		for _, dir := range dirs {
 			if rmErr := os.RemoveAll(dir); rmErr != nil {
-				slog.Warn("Failed to remove directory", "path", dir, "error", rmErr)
+				logging.GetLogger().Warn("Failed to remove directory", "path", dir, "error", rmErr)
 			} else {
 				fmt.Fprintf(os.Stdout, "  Removed: %s\n", dir)
 			}
@@ -177,7 +177,7 @@ func runUninstall(cmd *cobra.Command, _ []string) {
 		if mode == paths.ModeSystem {
 			fmt.Fprintln(os.Stdout, "Removing seed user...")
 			if userDelErr := exec.CommandContext(ctx, "userdel", "seed").Run(); userDelErr != nil {
-				slog.Warn("Failed to remove seed user", "error", userDelErr)
+				logging.GetLogger().Warn("Failed to remove seed user", "error", userDelErr)
 			}
 		}
 	}

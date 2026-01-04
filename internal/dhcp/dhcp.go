@@ -9,7 +9,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -22,6 +21,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Phase represents a DHCP transaction phase.
@@ -226,7 +226,7 @@ func (m *Monitor) processPacket(packet gopacket.Packet) {
 		timestamp = meta.Timestamp
 	}
 
-	slog.Debug("DHCP captured", "phase", phase, "xid", fmt.Sprintf("0x%08x", xid))
+	logging.GetLogger().Debug("DHCP captured", "phase", phase, "xid", fmt.Sprintf("0x%08x", xid))
 	m.RecordPhase(xid, phase, timestamp)
 }
 
