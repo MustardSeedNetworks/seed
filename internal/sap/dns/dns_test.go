@@ -492,7 +492,7 @@ func TestConcurrentDNSOperations(t *testing.T) {
 
 func TestGetSystemDNSPlatform(t *testing.T) {
 	// Just verify it doesn't panic.
-	servers := dns.GetSystemDNSPlatform()
+	servers := dns.ExportGetSystemDNSPlatform()
 	if servers == nil {
 		t.Error("expected non-nil slice, even if empty")
 	}

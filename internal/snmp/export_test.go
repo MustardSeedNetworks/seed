@@ -3,15 +3,17 @@ package snmp
 
 import "github.com/gosnmp/gosnmp"
 
-// FormatSNMPValue exports formatSNMPValue for testing.
-var FormatSNMPValue = formatSNMPValue
+// ExportFormatSNMPValue exports formatSNMPValue for testing.
+func ExportFormatSNMPValue(variable gosnmp.SnmpPDU) string {
+	return formatSNMPValue(variable)
+}
 
-// GetAuthProtocol exports getAuthProtocol for testing.
-var GetAuthProtocol = func(protocol string) gosnmp.SnmpV3AuthProtocol {
+// ExportGetAuthProtocol exports getAuthProtocol for testing.
+func ExportGetAuthProtocol(protocol string) gosnmp.SnmpV3AuthProtocol {
 	return getAuthProtocol(protocol)
 }
 
-// GetPrivProtocol exports getPrivProtocol for testing.
-var GetPrivProtocol = func(protocol string) gosnmp.SnmpV3PrivProtocol {
+// ExportGetPrivProtocol exports getPrivProtocol for testing.
+func ExportGetPrivProtocol(protocol string) gosnmp.SnmpV3PrivProtocol {
 	return getPrivProtocol(protocol)
 }

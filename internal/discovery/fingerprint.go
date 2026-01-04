@@ -207,27 +207,31 @@ type osMatch struct {
 	confidence int
 }
 
-// sshOSMatchers defines OS patterns for SSH banners.
-var sshOSMatchers = []osMatch{
-	{[]string{"ubuntu"}, osLinux, "ubuntu", 90},
-	{[]string{"debian"}, osLinux, "debian", 90},
-	{[]string{"centos"}, osLinux, "rhel", 90},
-	{[]string{"red hat"}, osLinux, "rhel", 90},
-	{[]string{"freebsd"}, "bsd", "freebsd", 90},
-	{[]string{"cisco"}, osCisco, "", 95},
-	{[]string{"windows"}, osWindows, "", 90},
-	{[]string{"openssh"}, "unix", "", 50},
+// getSSHOSMatchers returns OS patterns for SSH banners.
+func getSSHOSMatchers() []osMatch {
+	return []osMatch{
+		{[]string{"ubuntu"}, osLinux, "ubuntu", 90},
+		{[]string{"debian"}, osLinux, "debian", 90},
+		{[]string{"centos"}, osLinux, "rhel", 90},
+		{[]string{"red hat"}, osLinux, "rhel", 90},
+		{[]string{"freebsd"}, "bsd", "freebsd", 90},
+		{[]string{"cisco"}, osCisco, "", 95},
+		{[]string{"windows"}, osWindows, "", 90},
+		{[]string{"openssh"}, "unix", "", 50},
+	}
 }
 
-// genericOSMatchers defines OS patterns for generic banners.
-var genericOSMatchers = []osMatch{
-	{[]string{"linux"}, osLinux, "", 80},
-	{[]string{"windows"}, osWindows, "", 80},
-	{[]string{"cisco"}, osCisco, "", 95},
-	{[]string{"junos"}, "juniper", "", 95},
-	{[]string{"vsftpd"}, osLinux, "", 75},
-	{[]string{"proftpd"}, osLinux, "", 75},
-	{[]string{"microsoft", "ftp"}, osWindows, "", 85},
+// getGenericOSMatchers returns OS patterns for generic banners.
+func getGenericOSMatchers() []osMatch {
+	return []osMatch{
+		{[]string{"linux"}, osLinux, "", 80},
+		{[]string{"windows"}, osWindows, "", 80},
+		{[]string{"cisco"}, osCisco, "", 95},
+		{[]string{"junos"}, "juniper", "", 95},
+		{[]string{"vsftpd"}, osLinux, "", 75},
+		{[]string{"proftpd"}, osLinux, "", 75},
+		{[]string{"microsoft", "ftp"}, osWindows, "", 85},
+	}
 }
 
 // parseOSFromBanner extracts OS info from service banners.
@@ -235,10 +239,10 @@ func (f *Fingerprinter) parseOSFromBanner(banner string) *OSFingerprint {
 	fp := &OSFingerprint{}
 
 	if strings.Contains(banner, "ssh") {
-		f.matchOSPatterns(banner, sshOSMatchers, fp)
+		f.matchOSPatterns(banner, getSSHOSMatchers(), fp)
 	}
 	if fp.OSFamily == "" {
-		f.matchOSPatterns(banner, genericOSMatchers, fp)
+		f.matchOSPatterns(banner, getGenericOSMatchers(), fp)
 	}
 
 	if fp.OSFamily == "" {
@@ -266,25 +270,27 @@ func (*Fingerprinter) matchOSPatterns(banner string, matchers []osMatch, fp *OSF
 	}
 }
 
-// serverOSMatchers defines OS patterns for HTTP Server headers.
-var serverOSMatchers = []osMatch{
-	{[]string{"ubuntu"}, osLinux, "ubuntu", 85},
-	{[]string{"debian"}, osLinux, "debian", 85},
-	{[]string{"centos"}, osLinux, "rhel", 85},
-	{[]string{"red hat"}, osLinux, "rhel", 85},
-	{[]string{"cisco"}, osCisco, "", 90},
-	{
-		[]string{"routeros"},
-		"mikrotik",
-		"",
-		95,
-	}, //nolint:misspell // RouterOS is MikroTik's product name
-	{[]string{"fortinet"}, "fortinet", "", 95},
-	{[]string{"fortigate"}, "fortinet", "", 95},
-	{[]string{"pfsense"}, "bsd", "firewall", 90},
-	{[]string{"opnsense"}, "bsd", "firewall", 90},
-	{[]string{"synology"}, osLinux, "dsm", 95},
-	{[]string{"qnap"}, osLinux, "qts", 95},
+// getServerOSMatchers returns OS patterns for HTTP Server headers.
+func getServerOSMatchers() []osMatch {
+	return []osMatch{
+		{[]string{"ubuntu"}, osLinux, "ubuntu", 85},
+		{[]string{"debian"}, osLinux, "debian", 85},
+		{[]string{"centos"}, osLinux, "rhel", 85},
+		{[]string{"red hat"}, osLinux, "rhel", 85},
+		{[]string{"cisco"}, osCisco, "", 90},
+		{
+			[]string{"routeros"},
+			"mikrotik",
+			"",
+			95,
+		}, //nolint:misspell // RouterOS is MikroTik's product name
+		{[]string{"fortinet"}, "fortinet", "", 95},
+		{[]string{"fortigate"}, "fortinet", "", 95},
+		{[]string{"pfsense"}, "bsd", "firewall", 90},
+		{[]string{"opnsense"}, "bsd", "firewall", 90},
+		{[]string{"synology"}, osLinux, "dsm", 95},
+		{[]string{"qnap"}, osLinux, "qts", 95},
+	}
 }
 
 // parseOSFromServer extracts OS info from HTTP Server header.
@@ -304,7 +310,7 @@ func (f *Fingerprinter) parseOSFromServer(server string) *OSFingerprint {
 	}
 
 	// Try pattern matching
-	f.matchOSPatterns(server, serverOSMatchers, fp)
+	f.matchOSPatterns(server, getServerOSMatchers(), fp)
 
 	// Fallback for generic web servers
 	if fp.OSFamily == "" &&

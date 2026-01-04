@@ -714,7 +714,7 @@ func TestExtractTokenFromSubprotocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := auth.ExtractTokenFromSubprotocol(tt.protocol)
+			result := auth.ExportExtractTokenFromSubprotocol(tt.protocol)
 			if result != tt.expected {
 				t.Errorf(
 					"ExtractTokenFromSubprotocol(%q) = %q, want %q",
@@ -881,7 +881,7 @@ func TestRandomChar(t *testing.T) {
 	// Generate many characters and ensure they're all in the charset
 	seen := make(map[byte]bool)
 	for range 100 {
-		c, err := auth.RandomChar(chars)
+		c, err := auth.ExportRandomChar(chars)
 		if err != nil {
 			t.Fatalf("RandomChar failed: %v", err)
 		}
@@ -899,7 +899,7 @@ func TestRandomChar(t *testing.T) {
 
 func TestRandomInt(t *testing.T) {
 	// Test with n=0
-	result, err := auth.RandomInt(0)
+	result, err := auth.ExportRandomInt(0)
 	if err != nil {
 		t.Errorf("RandomInt(0) error: %v", err)
 	}
@@ -909,7 +909,7 @@ func TestRandomInt(t *testing.T) {
 
 	// Test with small n
 	for range 100 {
-		smallResult, smallErr := auth.RandomInt(10)
+		smallResult, smallErr := auth.ExportRandomInt(10)
 		if smallErr != nil {
 			t.Fatalf("RandomInt(10) error: %v", smallErr)
 		}
@@ -920,7 +920,7 @@ func TestRandomInt(t *testing.T) {
 
 	// Test with larger n (>256 to hit the multi-byte path)
 	for range 50 {
-		largeResult, largeErr := auth.RandomInt(1000)
+		largeResult, largeErr := auth.ExportRandomInt(1000)
 		if largeErr != nil {
 			t.Fatalf("RandomInt(1000) error: %v", largeErr)
 		}

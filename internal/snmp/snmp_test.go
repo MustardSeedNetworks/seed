@@ -263,7 +263,7 @@ func TestFormatSNMPValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := snmp.FormatSNMPValue(tt.variable)
+			got := snmp.ExportFormatSNMPValue(tt.variable)
 			if got != tt.want {
 				t.Errorf("FormatSNMPValue() = %v, want %v", got, tt.want)
 			}
@@ -289,7 +289,7 @@ func TestGetAuthProtocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := snmp.GetAuthProtocol(tt.protocol)
+			got := snmp.ExportGetAuthProtocol(tt.protocol)
 			if got != tt.want {
 				t.Errorf("GetAuthProtocol(%v) = %v, want %v", tt.protocol, got, tt.want)
 			}
@@ -315,7 +315,7 @@ func TestGetPrivProtocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := snmp.GetPrivProtocol(tt.protocol)
+			got := snmp.ExportGetPrivProtocol(tt.protocol)
 			if got != tt.want {
 				t.Errorf("GetPrivProtocol(%v) = %v, want %v", tt.protocol, got, tt.want)
 			}
@@ -549,12 +549,12 @@ func TestV3CredentialFields(t *testing.T) {
 	}
 
 	// Test protocol conversion
-	authProto := snmp.GetAuthProtocol(cred.AuthProtocol)
+	authProto := snmp.ExportGetAuthProtocol(cred.AuthProtocol)
 	if authProto != gosnmp.SHA256 {
 		t.Errorf("Auth protocol = %v, want SHA256", authProto)
 	}
 
-	privProto := snmp.GetPrivProtocol(cred.PrivProtocol)
+	privProto := snmp.ExportGetPrivProtocol(cred.PrivProtocol)
 	if privProto != gosnmp.AES256 {
 		t.Errorf("Priv protocol = %v, want AES256", privProto)
 	}

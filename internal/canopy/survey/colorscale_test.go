@@ -123,7 +123,7 @@ func TestInterpolateColor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := survey.InterpolateColor(stop1, stop2, tt.value)
+			got := survey.ExportInterpolateColor(stop1, stop2, tt.value)
 			if got != tt.expected {
 				t.Errorf("interpolateColor(%v) = %v, want %v", tt.value, got, tt.expected)
 			}

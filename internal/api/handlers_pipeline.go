@@ -193,19 +193,19 @@ func (s *Server) handlePipelinePortIntensityInfo(w http.ResponseWriter, _ *http.
 		},
 		{
 			Level:       "quick",
-			PortCount:   len(discovery.QuickPorts),
+			PortCount:   len(discovery.GetQuickPorts()),
 			Description: "Minimal ports for basic device identification (SSH, HTTP/S, Telnet)",
 			IDSRisk:     "very_low",
 		},
 		{
 			Level:       "standard",
-			PortCount:   len(discovery.StandardPorts),
+			PortCount:   len(discovery.GetStandardPorts()),
 			Description: "Common enterprise services (databases, email, file sharing, etc.)",
 			IDSRisk:     "low",
 		},
 		{
 			Level:       "comprehensive",
-			PortCount:   len(discovery.ComprehensivePorts),
+			PortCount:   len(discovery.GetComprehensivePorts()),
 			Description: "Top 1000+ most common ports for thorough service enumeration",
 			IDSRisk:     "medium_high",
 			Warning: "WARNING: Comprehensive port scanning may trigger Intrusion Detection Systems (IDS) " +

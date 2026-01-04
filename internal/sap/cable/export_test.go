@@ -8,8 +8,12 @@ func (t *Tester) TesterInterfaceName() string {
 	return t.interfaceName
 }
 
-// IsSupportedPlatform is exported for testing.
-var IsSupportedPlatform = isSupportedPlatform
+// ExportIsSupportedPlatform is exported for testing.
+func ExportIsSupportedPlatform(iface string) bool {
+	return isSupportedPlatform(iface)
+}
 
-// TestPlatform is exported for testing.
-var TestPlatform = testPlatform
+// ExportTestPlatform is exported for testing.
+func ExportTestPlatform(iface string) *TestResult {
+	return testPlatform(iface)
+}
