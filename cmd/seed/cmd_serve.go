@@ -183,7 +183,7 @@ func setupLogging(cfg *config.Config) string {
 		os.Exit(1)
 	}
 
-	logging.GetLogger().Info("The Seed starting", "version", version.Version, "log_path", logPath)
+	logging.GetLogger().Info("The Seed starting", "version", version.GetVersion(), "log_path", logPath)
 
 	return logPath
 }

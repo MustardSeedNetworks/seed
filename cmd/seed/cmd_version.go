@@ -14,7 +14,7 @@ var versionCmd = &cobra.Command{
 	Short: "Print version information",
 	Long:  `Print The Seed version information.`,
 	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Fprintf(os.Stdout, "The Seed %s\n", version.Version)
+		fmt.Fprintf(os.Stdout, "The Seed %s\n", version.GetVersion())
 	},
 }
 

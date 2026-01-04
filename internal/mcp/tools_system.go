@@ -183,7 +183,7 @@ func (s *Server) handleSystemHealth(
 	runtime.ReadMemStats(&memStats)
 
 	health := map[string]any{
-		"version":    version.Version,
+		"version":    version.GetVersion(),
 		"goVersion":  runtime.Version(),
 		"os":         runtime.GOOS,
 		"arch":       runtime.GOARCH,

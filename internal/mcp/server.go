@@ -64,7 +64,7 @@ func NewServer(cfg *config.MCPConfig, services ServiceProvider) *Server {
 	// Create MCP server
 	s.mcpServer = server.NewMCPServer(
 		"The Seed Network Diagnostics",
-		version.Version,
+		version.GetVersion(),
 		server.WithToolCapabilities(false), // We handle tool listing
 		server.WithRecovery(),              // Recover from panics
 	)

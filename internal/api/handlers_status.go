@@ -62,7 +62,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 	resp := StatusResponse{
 		Status:        "ok",
-		Version:       version.Version,
+		Version:       version.GetVersion(),
 		Interface:     s.config.Interface.Default,
 		IsWireless:    isWireless,
 		ICMPAvailable: s.icmpAvailable,
@@ -108,7 +108,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	export := ExportData{
-		Version:   version.Version,
+		Version:   version.GetVersion(),
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Device: ExportDeviceInfo{
 			Interface: currentIface,
@@ -396,7 +396,7 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	appHealth := map[string]any{
 		"system": health,
 		"application": map[string]any{
-			"version":     version.Version,
+			"version":     version.GetVersion(),
 			"uptime":      time.Since(s.startTime).Seconds(),
 			"uptime_text": time.Since(s.startTime).String(),
 		},

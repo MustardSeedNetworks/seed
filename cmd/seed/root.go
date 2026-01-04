@@ -22,7 +22,7 @@ var rootCmd = &cobra.Command{
 	Short: "The Seed - Network Diagnostics by Mustard Seed Networks",
 	Long: fmt.Sprintf(`The Seed %s - Network Diagnostics by Mustard Seed Networks
 
-A comprehensive network diagnostic tool that provides:`, version.Version) + `
+A comprehensive network diagnostic tool that provides:`, version.GetVersion()) + `
 
   - Network device discovery and monitoring
   - WiFi site surveys and heatmaps
@@ -54,7 +54,7 @@ func Execute() {
 // This replaces init() functions to satisfy gochecknoinits linter.
 func initCommands() {
 	// Set version for --version flag and help output
-	rootCmd.Version = version.Version
+	rootCmd.Version = version.GetVersion()
 
 	// Persistent flags are available to all subcommands
 	rootCmd.PersistentFlags().
