@@ -16,9 +16,10 @@ type Migration struct {
 	Up          string
 }
 
-// migrations is the list of all database migrations in order.
+// getMigrations returns the list of all database migrations in order.
 // IMPORTANT: Never modify existing migrations, only add new ones.
-var migrations = []Migration{
+func getMigrations() []Migration {
+	return []Migration{
 	{
 		Version:     1,
 		Description: "Create schema version table",
@@ -421,6 +422,7 @@ var migrations = []Migration{
 			CREATE INDEX IF NOT EXISTS idx_scheduled_reports_next_run ON scheduled_reports(next_run);
 		`,
 	},
+	}
 }
 
 // migrate runs all pending migrations.
@@ -428,7 +430,7 @@ func (db *DB) migrate() error {
 	ctx := context.Background()
 
 	// Ensure schema_migrations table exists (migration 1)
-	_, err := db.conn.ExecContext(ctx, migrations[0].Up)
+	_, err := db.conn.ExecContext(ctx, getMigrations()[0].Up)
 	if err != nil {
 		return fmt.Errorf("failed to create schema_migrations table: %w", err)
 	}
@@ -440,7 +442,7 @@ func (db *DB) migrate() error {
 	}
 
 	// Run pending migrations
-	for _, m := range migrations {
+	for _, m := range getMigrations() {
 		if m.Version <= currentVersion {
 			continue
 		}
@@ -546,6 +548,7 @@ func (db *DB) MigrationStatus(ctx context.Context) ([]MigrationInfo, error) {
 	}
 
 	// Build status list
+	migrations := getMigrations()
 	result := make([]MigrationInfo, 0, len(migrations))
 	for _, m := range migrations {
 		info := MigrationInfo{
