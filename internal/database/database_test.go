@@ -94,7 +94,7 @@ func TestMigrations(t *testing.T) {
 		t.Fatalf("failed to get schema version: %v", err)
 	}
 
-	migrationsCount := database.MigrationsCount()
+	migrationsCount := database.ExportMigrationsCount()
 	if version != migrationsCount {
 		t.Errorf("expected schema version %d, got %d", migrationsCount, version)
 	}

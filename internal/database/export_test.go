@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// MigrationsCount returns the count of migrations for testing.
-var MigrationsCount = func() int {
+// ExportMigrationsCount returns the count of migrations for testing.
+func ExportMigrationsCount() int {
 	return len(migrations)
 }
 

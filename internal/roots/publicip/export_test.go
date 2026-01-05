@@ -2,6 +2,7 @@
 package publicip
 
 import (
+	"context"
 	"net/http"
 	"time"
 )
@@ -84,17 +85,31 @@ func (c *Checker) GetHistoryCopy() []HistoryEntry {
 	return c.getHistoryCopy()
 }
 
-// FetchFromService is exported for testing.
-var FetchFromService = (*Checker).fetchFromService
+// ExportFetchFromService exposes fetchFromService for testing.
+// It's a standalone function that matches the old var export signature.
+func ExportFetchFromService(
+	c *Checker,
+	ctx context.Context,
+	url string,
+	parser func([]byte) (string, error),
+) (string, error) {
+	return c.fetchFromService(ctx, url, parser)
+}
 
-// ParseIpifyJSON is exported for testing.
-var ParseIpifyJSON = parseIpifyJSON
+// ExportParseIpifyJSON exposes parseIpifyJSON for testing.
+func ExportParseIpifyJSON(data []byte) (string, error) {
+	return parseIpifyJSON(data)
+}
 
-// ParseMyIPJSON is exported for testing.
-var ParseMyIPJSON = parseMyIPJSON
+// ExportParseMyIPJSON exposes parseMyIPJSON for testing.
+func ExportParseMyIPJSON(data []byte) (string, error) {
+	return parseMyIPJSON(data)
+}
 
-// ParseTextIP is exported for testing.
-var ParseTextIP = parseTextIP
+// ExportParseTextIP exposes parseTextIP for testing.
+func ExportParseTextIP(data []byte) (string, error) {
+	return parseTextIP(data)
+}
 
 // RequestTimeout is exported for testing.
 const RequestTimeout = requestTimeout

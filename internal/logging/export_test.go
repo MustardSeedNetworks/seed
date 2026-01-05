@@ -7,20 +7,30 @@ import (
 	"sync"
 )
 
-// IsSensitiveKey exports isSensitiveKey for testing.
-var IsSensitiveKey = isSensitiveKey
+// ExportIsSensitiveKey exposes isSensitiveKey for testing.
+func ExportIsSensitiveKey(key string) bool {
+	return isSensitiveKey(key)
+}
 
-// ToLower exports toLower for testing.
-var ToLower = toLower
+// ExportToLower exposes toLower for testing.
+func ExportToLower(s string) string {
+	return toLower(s)
+}
 
-// Contains exports contains for testing.
-var Contains = contains
+// ExportContains exposes contains for testing.
+func ExportContains(s, substr string) bool {
+	return contains(s, substr)
+}
 
-// ParseLevel exports parseLevel for testing.
-var ParseLevel = parseLevel
+// ExportParseLevel exposes parseLevel for testing.
+func ExportParseLevel(level string) slog.Level {
+	return parseLevel(level)
+}
 
-// GenerateRequestID exports generateRequestID for testing.
-var GenerateRequestID = generateRequestID
+// ExportGenerateRequestID exposes generateRequestID for testing.
+func ExportGenerateRequestID() string {
+	return generateRequestID()
+}
 
 // LoggerMu returns a reference to loggerMu for testing.
 func LoggerMu() *sync.RWMutex {
@@ -41,8 +51,10 @@ func ClearGlobalLogger() {
 	loggerMu.Unlock()
 }
 
-// RequestIDKeyValue returns the requestIDKey for testing.
-var RequestIDKeyValue = requestIDKey
+// ExportRequestIDKeyValue returns the requestIDKey for testing.
+func ExportRequestIDKeyValue() any {
+	return requestIDKey
+}
 
 // TestResponseWriter is a wrapper for responseWriter for testing.
 type TestResponseWriter struct {
