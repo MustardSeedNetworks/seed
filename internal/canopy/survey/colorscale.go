@@ -19,14 +19,11 @@ type ColorStop struct {
 	Color color.RGBA // The color at this stop.
 }
 
-// Predefined color scales for different visualization types.
-// Each scale defines gradient stops for a specific metric range.
-//
-
-var (
-	// RSSIColorScale maps signal strength (-100 to -30 dBm) to colors.
-	// Red (weak) -> Yellow (fair) -> Green (strong).
-	RSSIColorScale = ColorScale{
+// GetRSSIColorScale returns the RSSI color scale.
+// Maps signal strength (-100 to -30 dBm) to colors.
+// Red (weak) -> Yellow (fair) -> Green (strong).
+func GetRSSIColorScale() ColorScale {
+	return ColorScale{
 		Name:   "rssi",
 		MinVal: -100,
 		MaxVal: -30,
@@ -39,9 +36,12 @@ var (
 			{Value: -30, Color: color.RGBA{R: 40, G: 167, B: 69, A: 255}},    // Green (excellent)
 		},
 	}
+}
 
-	// SNRColorScale maps signal-to-noise ratio (0 to 50 dB) to colors.
-	SNRColorScale = ColorScale{
+// GetSNRColorScale returns the SNR color scale.
+// Maps signal-to-noise ratio (0 to 50 dB) to colors.
+func GetSNRColorScale() ColorScale {
+	return ColorScale{
 		Name:   "snr",
 		MinVal: 0,
 		MaxVal: 50,
@@ -53,10 +53,13 @@ var (
 			{Value: 50, Color: color.RGBA{R: 40, G: 167, B: 69, A: 255}},   // Green
 		},
 	}
+}
 
-	// APDensityColorScale maps AP count (0 to 20+) to colors.
-	// Blue (few) -> Purple (moderate) -> Red (many/congested).
-	APDensityColorScale = ColorScale{
+// GetAPDensityColorScale returns the AP density color scale.
+// Maps AP count (0 to 20+) to colors.
+// Blue (few) -> Purple (moderate) -> Red (many/congested).
+func GetAPDensityColorScale() ColorScale {
+	return ColorScale{
 		Name:   "ap_density",
 		MinVal: 0,
 		MaxVal: 20,
@@ -68,25 +71,25 @@ var (
 			{Value: 20, Color: color.RGBA{R: 220, G: 53, B: 69, A: 255}},  // Red (congested)
 		},
 	}
+}
 
-	// InterferenceColorScale maps co-channel interference (0 to 10+) to colors.
-	// Green (none) -> Yellow -> Red (severe).
-	InterferenceColorScale = ColorScale{
+// GetInterferenceColorScale returns the interference color scale.
+// Maps co-channel interference (0 to 10+) to colors.
+// Green (none) -> Yellow -> Red (severe).
+func GetInterferenceColorScale() ColorScale {
+	return ColorScale{
 		Name:   "interference",
 		MinVal: 0,
 		MaxVal: 10,
 		Stops: []ColorStop{
-			{
-				Value: 0,
-				Color: color.RGBA{R: 40, G: 167, B: 69, A: 255},
-			}, // Green (no interference)
+			{Value: 0, Color: color.RGBA{R: 40, G: 167, B: 69, A: 255}},   // Green (no interference)
 			{Value: 2, Color: color.RGBA{R: 144, G: 238, B: 144, A: 255}}, // Light green
 			{Value: 4, Color: color.RGBA{R: 255, G: 193, B: 7, A: 255}},   // Yellow
 			{Value: 6, Color: color.RGBA{R: 255, G: 128, B: 0, A: 255}},   // Orange
 			{Value: 10, Color: color.RGBA{R: 220, G: 53, B: 69, A: 255}},  // Red
 		},
 	}
-)
+}
 
 // GetColor returns the interpolated color for a given value.
 func (cs *ColorScale) GetColor(value float64) color.RGBA {
@@ -125,18 +128,20 @@ func interpolateColor(stop1, stop2 ColorStop, value float64) color.RGBA {
 // GetColorScaleByName returns a predefined color scale by name.
 // Accepts both constant values and user-friendly aliases.
 func GetColorScaleByName(name string) *ColorScale {
+	var scale ColorScale
 	switch name {
 	case string(HeatmapRSSI), HeatmapAliasSignal:
-		return &RSSIColorScale
+		scale = GetRSSIColorScale()
 	case string(HeatmapSNR):
-		return &SNRColorScale
+		scale = GetSNRColorScale()
 	case string(HeatmapDensity), "ap_density":
-		return &APDensityColorScale
+		scale = GetAPDensityColorScale()
 	case string(HeatmapInterference), HeatmapAliasCochannel:
-		return &InterferenceColorScale
+		scale = GetInterferenceColorScale()
 	default:
-		return &RSSIColorScale
+		scale = GetRSSIColorScale()
 	}
+	return &scale
 }
 
 // WithAlpha returns a copy of the color with the specified alpha value.

@@ -381,7 +381,8 @@ func TestRenderHeatmapToImage(t *testing.T) {
 		{-65, -55},
 	}
 	img := survey.CreateTestImage(40, 40)
-	scale := &survey.RSSIColorScale
+	rssiScale := survey.GetRSSIColorScale()
+	scale := &rssiScale
 
 	// Should not panic.
 	survey.ExportRenderHeatmapToImage(img, grid, 20, scale, 180)
@@ -401,7 +402,8 @@ func TestRenderHeatmapToImage(t *testing.T) {
 func TestRenderHeatmapToImage_EmptyGrid(t *testing.T) {
 	img := survey.CreateTestImage(100, 100)
 	grid := [][]float64{}
-	scale := &survey.RSSIColorScale
+	rssiScale := survey.GetRSSIColorScale()
+	scale := &rssiScale
 
 	// Should not panic.
 	survey.ExportRenderHeatmapToImage(img, grid, 10, scale, 180)

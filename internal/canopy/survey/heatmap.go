@@ -117,7 +117,7 @@ func GenerateHeatmap(survey *Survey, config HeatmapConfig) (*HeatmapResult, erro
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	// Fill with heatmap colors
-	renderHeatmapToImage(img, grid, config.CellSize, colorScale, config.Opacity)
+	renderHeatmapToImage(img, grid, config.CellSize, &colorScale, config.Opacity)
 
 	// Optionally show sample points
 	if config.ShowSamples {
@@ -201,20 +201,20 @@ func mapHeatmapTypeToValueType(ht HeatmapType) string {
 }
 
 // getColorScaleForType returns the appropriate color scale for a heatmap type.
-func getColorScaleForType(ht HeatmapType) *ColorScale {
+func getColorScaleForType(ht HeatmapType) ColorScale {
 	switch ht {
 	case HeatmapRSSI:
-		return &RSSIColorScale
+		return GetRSSIColorScale()
 	case HeatmapSNR:
-		return &SNRColorScale
+		return GetSNRColorScale()
 	case HeatmapDensity:
-		return &APDensityColorScale
+		return GetAPDensityColorScale()
 	case HeatmapInterference:
-		return &InterferenceColorScale
+		return GetInterferenceColorScale()
 	case HeatmapDownload, HeatmapUpload:
 		// Create a throughput scale (0-500 Mbps).
 		// Similar structure to other scales but with throughput-specific values.
-		return &ColorScale{
+		return ColorScale{
 			Name:   "throughput",
 			MinVal: 0,
 			MaxVal: 500,
@@ -227,7 +227,7 @@ func getColorScaleForType(ht HeatmapType) *ColorScale {
 			},
 		}
 	default:
-		return &RSSIColorScale
+		return GetRSSIColorScale()
 	}
 }
 

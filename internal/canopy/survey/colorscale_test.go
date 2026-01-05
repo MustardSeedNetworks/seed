@@ -9,6 +9,11 @@ import (
 )
 
 func TestColorScale_GetColor(t *testing.T) {
+	rssiScale := survey.GetRSSIColorScale()
+	snrScale := survey.GetSNRColorScale()
+	apDensityScale := survey.GetAPDensityColorScale()
+	interferenceScale := survey.GetInterferenceColorScale()
+
 	tests := []struct {
 		name     string
 		scale    *survey.ColorScale
@@ -17,55 +22,55 @@ func TestColorScale_GetColor(t *testing.T) {
 	}{
 		{
 			name:     "RSSI at minimum",
-			scale:    &survey.RSSIColorScale,
+			scale:    &rssiScale,
 			value:    -100,
 			expected: color.RGBA{R: 128, G: 128, B: 128, A: 255}, // Gray
 		},
 		{
 			name:     "RSSI below minimum (clamped)",
-			scale:    &survey.RSSIColorScale,
+			scale:    &rssiScale,
 			value:    -120,
 			expected: color.RGBA{R: 128, G: 128, B: 128, A: 255}, // Gray
 		},
 		{
 			name:     "RSSI at maximum",
-			scale:    &survey.RSSIColorScale,
+			scale:    &rssiScale,
 			value:    -30,
 			expected: color.RGBA{R: 40, G: 167, B: 69, A: 255}, // Green
 		},
 		{
 			name:     "RSSI above maximum (clamped)",
-			scale:    &survey.RSSIColorScale,
+			scale:    &rssiScale,
 			value:    0,
 			expected: color.RGBA{R: 40, G: 167, B: 69, A: 255}, // Green
 		},
 		{
 			name:  "RSSI interpolated between stops",
-			scale: &survey.RSSIColorScale,
+			scale: &rssiScale,
 			value: -70, // Between -75 (orange) and -67 (yellow)
 			// Should be somewhere between orange and yellow
 		},
 		{
 			name:     "SNR at zero",
-			scale:    &survey.SNRColorScale,
+			scale:    &snrScale,
 			value:    0,
 			expected: color.RGBA{R: 220, G: 53, B: 69, A: 255}, // Red
 		},
 		{
 			name:     "SNR at max",
-			scale:    &survey.SNRColorScale,
+			scale:    &snrScale,
 			value:    50,
 			expected: color.RGBA{R: 40, G: 167, B: 69, A: 255}, // Green
 		},
 		{
 			name:     "AP density at zero",
-			scale:    &survey.APDensityColorScale,
+			scale:    &apDensityScale,
 			value:    0,
 			expected: color.RGBA{R: 240, G: 240, B: 255, A: 255}, // Very light blue
 		},
 		{
 			name:     "Interference at zero",
-			scale:    &survey.InterferenceColorScale,
+			scale:    &interferenceScale,
 			value:    0,
 			expected: color.RGBA{R: 40, G: 167, B: 69, A: 255}, // Green
 		},
@@ -133,61 +138,61 @@ func TestInterpolateColor(t *testing.T) {
 
 func TestGetColorScaleByName(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expected *survey.ColorScale
+		name         string
+		input        string
+		expectedName string
 	}{
 		{
-			name:     "rssi",
-			input:    "rssi",
-			expected: &survey.RSSIColorScale,
+			name:         "rssi",
+			input:        "rssi",
+			expectedName: "rssi",
 		},
 		{
-			name:     "signal alias",
-			input:    "signal",
-			expected: &survey.RSSIColorScale,
+			name:         "signal alias",
+			input:        "signal",
+			expectedName: "rssi",
 		},
 		{
-			name:     "snr",
-			input:    "snr",
-			expected: &survey.SNRColorScale,
+			name:         "snr",
+			input:        "snr",
+			expectedName: "snr",
 		},
 		{
-			name:     "density",
-			input:    "density",
-			expected: &survey.APDensityColorScale,
+			name:         "density",
+			input:        "density",
+			expectedName: "ap_density",
 		},
 		{
-			name:     "ap_density alias",
-			input:    "ap_density",
-			expected: &survey.APDensityColorScale,
+			name:         "ap_density alias",
+			input:        "ap_density",
+			expectedName: "ap_density",
 		},
 		{
-			name:     "interference",
-			input:    "interference",
-			expected: &survey.InterferenceColorScale,
+			name:         "interference",
+			input:        "interference",
+			expectedName: "interference",
 		},
 		{
-			name:     "cochannel alias",
-			input:    "cochannel",
-			expected: &survey.InterferenceColorScale,
+			name:         "cochannel alias",
+			input:        "cochannel",
+			expectedName: "interference",
 		},
 		{
-			name:     "unknown defaults to RSSI",
-			input:    "unknown",
-			expected: &survey.RSSIColorScale,
+			name:         "unknown defaults to RSSI",
+			input:        "unknown",
+			expectedName: "rssi",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := survey.GetColorScaleByName(tt.input)
-			if got.Name != tt.expected.Name {
+			if got.Name != tt.expectedName {
 				t.Errorf(
 					"GetColorScaleByName(%q) = %s, want %s",
 					tt.input,
 					got.Name,
-					tt.expected.Name,
+					tt.expectedName,
 				)
 			}
 		})
@@ -230,11 +235,16 @@ func TestWithAlpha(t *testing.T) {
 }
 
 func TestColorScaleProperties(t *testing.T) {
+	rssiScale := survey.GetRSSIColorScale()
+	snrScale := survey.GetSNRColorScale()
+	apDensityScale := survey.GetAPDensityColorScale()
+	interferenceScale := survey.GetInterferenceColorScale()
+
 	scales := []*survey.ColorScale{
-		&survey.RSSIColorScale,
-		&survey.SNRColorScale,
-		&survey.APDensityColorScale,
-		&survey.InterferenceColorScale,
+		&rssiScale,
+		&snrScale,
+		&apDensityScale,
+		&interferenceScale,
 	}
 
 	for _, scale := range scales {
