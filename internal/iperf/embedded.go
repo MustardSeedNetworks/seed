@@ -23,12 +23,14 @@ import (
 //go:embed binaries/*
 var embeddedBinaries embed.FS
 
-// platformBinaryMap maps GOOS-GOARCH to embedded binary filenames.
-var platformBinaryMap = map[string]string{
-	"linux-amd64":  "iperf3-linux-amd64",
-	"linux-arm64":  "iperf3-linux-arm64",
-	"darwin-amd64": "iperf3-darwin-amd64",
-	"darwin-arm64": "iperf3-darwin-arm64",
+// getPlatformBinaryMap returns the mapping of GOOS-GOARCH to binary filenames.
+func getPlatformBinaryMap() map[string]string {
+	return map[string]string{
+		"linux-amd64":  "iperf3-linux-amd64",
+		"linux-arm64":  "iperf3-linux-arm64",
+		"darwin-amd64": "iperf3-darwin-amd64",
+		"darwin-arm64": "iperf3-darwin-arm64",
+	}
 }
 
 // EmbeddedVersion is the version of the embedded iperf3 binaries.
@@ -56,7 +58,7 @@ func getCacheDir() (string, error) {
 // Returns the path to the extracted binary or an error.
 func extractEmbeddedBinary() (string, error) {
 	platform := fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH)
-	binaryName, ok := platformBinaryMap[platform]
+	binaryName, ok := getPlatformBinaryMap()[platform]
 	if !ok {
 		return "", fmt.Errorf("no embedded iperf3 binary for platform %s", platform)
 	}
