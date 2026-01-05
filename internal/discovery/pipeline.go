@@ -170,26 +170,28 @@ func GetComprehensivePorts() []int {
 	return generateComprehensivePorts()
 }
 
-// ScanTimingPresets maps profiles to timing configurations.
-var ScanTimingPresets = map[ScanTimingProfile]PipelineTiming{
-	ScanProfilePolite: {
-		ProbeDelay:         200 * time.Millisecond,
-		HostDelay:          100 * time.Millisecond,
-		MaxConcurrentHosts: 5,
-		PhaseTimeout:       30 * time.Minute,
-	},
-	ScanProfileNormal: {
-		ProbeDelay:         50 * time.Millisecond,
-		HostDelay:          20 * time.Millisecond,
-		MaxConcurrentHosts: 20,
-		PhaseTimeout:       10 * time.Minute,
-	},
-	ScanProfileAggressive: {
-		ProbeDelay:         10 * time.Millisecond,
-		HostDelay:          5 * time.Millisecond,
-		MaxConcurrentHosts: 100,
-		PhaseTimeout:       5 * time.Minute,
-	},
+// GetScanTimingPresets returns the scan timing presets map.
+func GetScanTimingPresets() map[ScanTimingProfile]PipelineTiming {
+	return map[ScanTimingProfile]PipelineTiming{
+		ScanProfilePolite: {
+			ProbeDelay:         200 * time.Millisecond,
+			HostDelay:          100 * time.Millisecond,
+			MaxConcurrentHosts: 5,
+			PhaseTimeout:       30 * time.Minute,
+		},
+		ScanProfileNormal: {
+			ProbeDelay:         50 * time.Millisecond,
+			HostDelay:          20 * time.Millisecond,
+			MaxConcurrentHosts: 20,
+			PhaseTimeout:       10 * time.Minute,
+		},
+		ScanProfileAggressive: {
+			ProbeDelay:         10 * time.Millisecond,
+			HostDelay:          5 * time.Millisecond,
+			MaxConcurrentHosts: 100,
+			PhaseTimeout:       5 * time.Minute,
+		},
+	}
 }
 
 // PipelineConfig controls the sequential discovery pipeline.
@@ -446,7 +448,7 @@ func NewPipeline(
 
 	// Apply timing profile if set
 	if config.Timing.Profile != "" {
-		if preset, ok := ScanTimingPresets[config.Timing.Profile]; ok {
+		if preset, ok := GetScanTimingPresets()[config.Timing.Profile]; ok {
 			profileName := config.Timing.Profile // Save profile name before overwriting
 			p.config.Timing = preset
 			p.config.Timing.Profile = profileName // Restore profile name
@@ -573,7 +575,7 @@ func (p *Pipeline) UpdateConfig(config *PipelineConfig) error {
 
 	// Apply timing profile if set
 	if config.Timing.Profile != "" {
-		if preset, ok := ScanTimingPresets[config.Timing.Profile]; ok {
+		if preset, ok := GetScanTimingPresets()[config.Timing.Profile]; ok {
 			profileName := config.Timing.Profile // Save profile name before overwriting
 			config.Timing = preset
 			config.Timing.Profile = profileName // Restore profile name

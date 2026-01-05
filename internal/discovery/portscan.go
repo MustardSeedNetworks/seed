@@ -293,12 +293,12 @@ func isHTTPPort(port int) bool {
 
 // QuickScan performs a quick scan of common ports.
 func (s *PortScanner) QuickScan(ctx context.Context, target string) *PortScanResult {
-	return s.ScanWithBanners(ctx, target, CommonPorts, 20)
+	return s.ScanWithBanners(ctx, target, GetCommonPorts(), 20)
 }
 
 // WebScan scans common web ports.
 func (s *PortScanner) WebScan(ctx context.Context, target string) *PortScanResult {
-	return s.ScanWithBanners(ctx, target, WebPorts, 10)
+	return s.ScanWithBanners(ctx, target, GetWebPorts(), 10)
 }
 
 // FullScan scans the top 1000 ports.

@@ -349,34 +349,38 @@ func (p *TCPProber) ScanPortsOnHosts(
 	return results
 }
 
-// CommonPorts contains commonly scanned ports.
-var CommonPorts = []int{
-	21,   // FTP
-	22,   // SSH
-	23,   // Telnet
-	25,   // SMTP
-	53,   // DNS
-	80,   // HTTP
-	110,  // POP3
-	111,  // RPCBind
-	135,  // MSRPC
-	139,  // NetBIOS
-	143,  // IMAP
-	443,  // HTTPS
-	445,  // SMB
-	993,  // IMAPS
-	995,  // POP3S
-	1723, // PPTP
-	3306, // MySQL
-	3389, // RDP
-	5432, // PostgreSQL
-	5900, // VNC
-	8080, // HTTP Alt
-	8443, // HTTPS Alt
+// GetCommonPorts returns the commonly scanned ports.
+func GetCommonPorts() []int {
+	return []int{
+		21,   // FTP
+		22,   // SSH
+		23,   // Telnet
+		25,   // SMTP
+		53,   // DNS
+		80,   // HTTP
+		110,  // POP3
+		111,  // RPCBind
+		135,  // MSRPC
+		139,  // NetBIOS
+		143,  // IMAP
+		443,  // HTTPS
+		445,  // SMB
+		993,  // IMAPS
+		995,  // POP3S
+		1723, // PPTP
+		3306, // MySQL
+		3389, // RDP
+		5432, // PostgreSQL
+		5900, // VNC
+		8080, // HTTP Alt
+		8443, // HTTPS Alt
+	}
 }
 
-// WebPorts contains common web server ports.
-var WebPorts = []int{80, 443, 8080, 8443, 8000, 8888}
+// GetWebPorts returns the common web server ports.
+func GetWebPorts() []int {
+	return []int{80, 443, 8080, 8443, 8000, 8888}
+}
 
 // CheckTCPPrivileges checks if raw TCP sockets can be created.
 func CheckTCPPrivileges() error {

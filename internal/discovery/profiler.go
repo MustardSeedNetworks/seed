@@ -775,19 +775,21 @@ type httpDeviceMatch struct {
 	icon           string
 }
 
-// httpDeviceMatchers defines patterns for HTTP-based device detection.
-var httpDeviceMatchers = []httpDeviceMatch{
-	{[]string{"router"}, []string{"router"}, deviceTypeRouter, "router"},
-	{[]string{"switch"}, nil, deviceTypeSwitch, "switch"},
-	{[]string{"firewall", "pfsense", "opnsense", "fortinet"}, nil, deviceTypeFirewall, "firewall"},
-	{[]string{"nas", "synology", "qnap"}, nil, deviceTypeNAS, "storage"},
-	{[]string{"printer", "hp ", "canon", "epson"}, nil, deviceTypePrinter, "printer"},
-	{nil, []string{"apache", "nginx"}, deviceTypeServer, "server"},
+// getHTTPDeviceMatchers returns the patterns for HTTP-based device detection.
+func getHTTPDeviceMatchers() []httpDeviceMatch {
+	return []httpDeviceMatch{
+		{[]string{"router"}, []string{"router"}, deviceTypeRouter, "router"},
+		{[]string{"switch"}, nil, deviceTypeSwitch, "switch"},
+		{[]string{"firewall", "pfsense", "opnsense", "fortinet"}, nil, deviceTypeFirewall, "firewall"},
+		{[]string{"nas", "synology", "qnap"}, nil, deviceTypeNAS, "storage"},
+		{[]string{"printer", "hp ", "canon", "epson"}, nil, deviceTypePrinter, "printer"},
+		{nil, []string{"apache", "nginx"}, deviceTypeServer, "server"},
+	}
 }
 
 // matchHTTPDeviceType matches HTTP title/server against known device patterns.
 func matchHTTPDeviceType(title, server string) (string, string) {
-	for _, m := range httpDeviceMatchers {
+	for _, m := range getHTTPDeviceMatchers() {
 		for _, p := range m.titlePatterns {
 			if strings.Contains(title, p) {
 				return m.deviceType, m.icon

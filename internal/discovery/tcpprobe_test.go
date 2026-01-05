@@ -88,16 +88,17 @@ func TestPortState_String(t *testing.T) {
 	}
 }
 
-func TestCommonPorts(t *testing.T) {
+func TestGetCommonPorts(t *testing.T) {
 	// Verify common ports slice is populated
-	if len(discovery.CommonPorts) == 0 {
-		t.Error("CommonPorts should not be empty")
+	commonPorts := discovery.GetCommonPorts()
+	if len(commonPorts) == 0 {
+		t.Error("GetCommonPorts() should not return empty slice")
 	}
 
 	// Verify it contains expected ports
 	expected := map[int]bool{22: true, 80: true, 443: true}
 	found := make(map[int]bool)
-	for _, port := range discovery.CommonPorts {
+	for _, port := range commonPorts {
 		if expected[port] {
 			found[port] = true
 		}
@@ -105,7 +106,7 @@ func TestCommonPorts(t *testing.T) {
 
 	for port := range expected {
 		if !found[port] {
-			t.Errorf("CommonPorts should contain port %d", port)
+			t.Errorf("GetCommonPorts() should contain port %d", port)
 		}
 	}
 }
