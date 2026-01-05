@@ -4,11 +4,15 @@ package config
 // EncryptedPrefix exports encryptedPrefix for testing.
 const EncryptedPrefix = encryptedPrefix
 
-// HasIPv4Address exports hasIPv4Address for testing.
-var HasIPv4Address = hasIPv4Address
+// ExportHasIPv4Address exposes hasIPv4Address for testing.
+func ExportHasIPv4Address(ifaceName string) bool {
+	return hasIPv4Address(ifaceName)
+}
 
-// DetectActiveInterface exports detectActiveInterface for testing.
-var DetectActiveInterface = detectActiveInterface
+// ExportDetectActiveInterface exposes detectActiveInterface for testing.
+func ExportDetectActiveInterface() string {
+	return detectActiveInterface()
+}
 
 // ExtractVersion wraps the unexported extractVersion method for testing.
 func (b *BackupManager) ExtractVersion(data []byte) int {

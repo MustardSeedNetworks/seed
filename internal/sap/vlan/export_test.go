@@ -22,14 +22,20 @@ func (m *Manager) ManagerConfiguredID() int {
 	return m.configuredID
 }
 
-// Contains is exported for testing.
-var Contains = contains
+// ExportContains exposes contains for testing.
+func ExportContains(slice []int, val int) bool {
+	return contains(slice, val)
+}
 
-// DetectVlanSubinterfacesPlatform is exported for testing.
-var DetectVlanSubinterfacesPlatform = detectVlanSubinterfacesPlatform
+// ExportDetectVlanSubinterfacesPlatform exposes detectVlanSubinterfacesPlatform for testing.
+func ExportDetectVlanSubinterfacesPlatform(iface string) []int {
+	return detectVlanSubinterfacesPlatform(iface)
+}
 
-// CreateVlanInterfacePlatform is exported for testing.
-var CreateVlanInterfacePlatform = createVlanInterfacePlatform
+// ExportCreateVlanInterfacePlatform exposes createVlanInterfacePlatform for testing.
+func ExportCreateVlanInterfacePlatform(parentIface string, vlanID int) error {
+	return createVlanInterfacePlatform(parentIface, vlanID)
+}
 
 // DetectVlanSubinterfaces is exported for testing.
 func (m *Manager) DetectVlanSubinterfaces(iface string) []int {

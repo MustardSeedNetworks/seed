@@ -13,7 +13,7 @@ import (
 // Verifies BodyLimitMiddleware applies to GET requests (regression for #766).
 func TestBodyLimitMiddleware_GETEnforced(t *testing.T) {
 	// Handler that reads the entire body and surfaces the read error
-	handler := api.BodyLimitMiddleware(
+	handler := api.ExportBodyLimitMiddleware(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, err := io.ReadAll(r.Body)
 			if err != nil {

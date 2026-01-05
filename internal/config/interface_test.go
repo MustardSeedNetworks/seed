@@ -9,24 +9,24 @@ import (
 
 func TestHasIPv4Address(t *testing.T) {
 	// Test with loopback (should exist on all systems)
-	if !config.HasIPv4Address("lo") && !config.HasIPv4Address("lo0") {
+	if !config.ExportHasIPv4Address("lo") && !config.ExportHasIPv4Address("lo0") {
 		// Some systems might not have loopback configured the same way
 		t.Log("Loopback interface test skipped - no lo or lo0 found")
 	}
 
 	// Test with non-existent interface
-	if config.HasIPv4Address("nonexistent123456") {
+	if config.ExportHasIPv4Address("nonexistent123456") {
 		t.Error("HasIPv4Address should return false for non-existent interface")
 	}
 
 	// Test with empty name
-	if config.HasIPv4Address("") {
+	if config.ExportHasIPv4Address("") {
 		t.Error("HasIPv4Address should return false for empty interface name")
 	}
 }
 
 func TestDetectActiveInterface(t *testing.T) {
-	detected := config.DetectActiveInterface()
+	detected := config.ExportDetectActiveInterface()
 
 	// Should detect at least one interface on any system with networking
 	if detected == "" {
@@ -37,7 +37,7 @@ func TestDetectActiveInterface(t *testing.T) {
 	}
 
 	// Verify the detected interface actually has an IPv4 address
-	if !config.HasIPv4Address(detected) {
+	if !config.ExportHasIPv4Address(detected) {
 		t.Errorf("DetectActiveInterface returned %q but it has no IPv4 address", detected)
 	}
 
@@ -112,7 +112,7 @@ func TestGetActiveInterface(t *testing.T) {
 
 func TestGetActiveInterfaceWithValidDefault(t *testing.T) {
 	// Find a valid interface on this system
-	validIface := config.DetectActiveInterface()
+	validIface := config.ExportDetectActiveInterface()
 	if validIface == "" {
 		t.Skip("No active interface available for testing")
 	}
@@ -137,7 +137,7 @@ func TestGetActiveInterfaceWithValidDefault(t *testing.T) {
 
 func TestGetActiveInterfaceWithFallback(t *testing.T) {
 	// Find a valid interface on this system
-	validIface := config.DetectActiveInterface()
+	validIface := config.ExportDetectActiveInterface()
 	if validIface == "" {
 		t.Skip("No active interface available for testing")
 	}

@@ -7,22 +7,33 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
-// SplitCIDR exports splitCIDR for testing.
-var SplitCIDR = splitCIDR
+// ExportSplitCIDR exposes splitCIDR for testing.
+func ExportSplitCIDR(addr string) [2]string {
+	return splitCIDR(addr)
+}
 
-// IsIPv4Address exports isIPv4Address for testing.
-var IsIPv4Address = isIPv4Address
+// ExportIsIPv4Address exposes isIPv4Address for testing.
+func ExportIsIPv4Address(addr string) bool {
+	return isIPv4Address(addr)
+}
 
-// ParsePrefix exports parsePrefix for testing.
-var ParsePrefix = parsePrefix
+// ExportParsePrefix exposes parsePrefix for testing.
+func ExportParsePrefix(s string) int {
+	return parsePrefix(s)
+}
 
-// IsLinkLocal exports isLinkLocal for testing.
-var IsLinkLocal = isLinkLocal
+// ExportIsLinkLocal exposes isLinkLocal for testing.
+func ExportIsLinkLocal(addr string) bool {
+	return isLinkLocal(addr)
+}
 
-// IsUniqueLocal exports isUniqueLocal for testing.
-var IsUniqueLocal = isUniqueLocal
+// ExportIsUniqueLocal exposes isUniqueLocal for testing.
+func ExportIsUniqueLocal(addr string) bool {
+	return isUniqueLocal(addr)
+}
 
 // IPAddrInfo represents parsed IP address information for testing.
 type IPAddrInfo struct {
@@ -34,8 +45,8 @@ type IPAddrInfo struct {
 	Source  string
 }
 
-// ParseIPAddress exports parseIPAddress for testing.
-var ParseIPAddress = func(addr string) IPAddrInfo {
+// ExportParseIPAddress exposes parseIPAddress for testing.
+func ExportParseIPAddress(addr string) IPAddrInfo {
 	result := parseIPAddress(addr)
 	return IPAddrInfo{
 		IsIPv4:  result.isIPv4,
@@ -47,54 +58,79 @@ var ParseIPAddress = func(addr string) IPAddrInfo {
 	}
 }
 
-// GetTestStatus exports getTestStatus for testing.
-var GetTestStatus = getTestStatus
+// ExportGetTestStatus exposes getTestStatus for testing.
+func ExportGetTestStatus(latencyMs float64, warningMs, criticalMs int64) string {
+	return getTestStatus(latencyMs, warningMs, criticalMs)
+}
 
-// GetTLSVersionString exports getTLSVersionString for testing.
-var GetTLSVersionString = getTLSVersionString
+// ExportGetTLSVersionString exposes getTLSVersionString for testing.
+func ExportGetTLSVersionString(tlsVersion uint16) string {
+	return getTLSVersionString(tlsVersion)
+}
 
-// RunTCPTest exports runTCPTest for testing.
-var RunTCPTest = func(ctx context.Context, host string, port int) (float64, error) {
+// ExportRunTCPTest exposes runTCPTest for testing.
+func ExportRunTCPTest(ctx context.Context, host string, port int) (float64, error) {
 	return runTCPTest(ctx, host, port)
 }
 
-// RunExtendedPing exports runExtendedPing for testing.
-var RunExtendedPing = runExtendedPing
+// ExportRunExtendedPing exposes runExtendedPing for testing.
+func ExportRunExtendedPing(host string, count int) (*PingStats, error) {
+	return runExtendedPing(host, count)
+}
 
 // GetInterfaceFromRequest exports getInterfaceFromRequest for testing.
 func (s *Server) GetInterfaceFromRequest(r *http.Request) string {
 	return s.getInterfaceFromRequest(r)
 }
 
-// NormalizeHTTPURL exports normalizeHTTPURL for testing.
-var NormalizeHTTPURL = normalizeHTTPURL
+// ExportNormalizeHTTPURL exposes normalizeHTTPURL for testing.
+func ExportNormalizeHTTPURL(rawURL string) (string, bool) {
+	return normalizeHTTPURL(rawURL)
+}
 
-// ValidateIperfClientRequest exports validateIperfClientRequest for testing.
-var ValidateIperfClientRequest = validateIperfClientRequest
+// ExportValidateIperfClientRequest exposes validateIperfClientRequest for testing.
+func ExportValidateIperfClientRequest(req *IperfClientRequest) error {
+	return validateIperfClientRequest(req)
+}
 
-// ParseLogQueryParams exports parseLogQueryParams for testing.
-var ParseLogQueryParams = parseLogQueryParams
+// ExportParseLogQueryParams exposes parseLogQueryParams for testing.
+func ExportParseLogQueryParams(r *http.Request) LogQueryParams {
+	return LogQueryParams(parseLogQueryParams(r))
+}
 
-// MatchesLogFilters exports matchesLogFilters for testing.
-var MatchesLogFilters = matchesLogFilters
+// ExportMatchesLogFilters exposes matchesLogFilters for testing.
+func ExportMatchesLogFilters(log *logging.LogEntry, params *LogQueryParams) bool {
+	p := logQueryParams(*params)
+	return matchesLogFilters(log, &p)
+}
 
-// PaginateLogs exports paginateLogs for testing.
-var PaginateLogs = paginateLogs
+// ExportPaginateLogs exposes paginateLogs for testing.
+func ExportPaginateLogs(logs []*logging.LogEntry, offset, limit int) []*logging.LogEntry {
+	return paginateLogs(logs, offset, limit)
+}
 
-// ParseCSV exports parseCSV for testing.
-var ParseCSV = parseCSV
+// ExportParseCSV exposes parseCSV for testing.
+func ExportParseCSV(s string) []string {
+	return parseCSV(s)
+}
 
-// ContainsIgnoreCase exports containsIgnoreCase for testing.
-var ContainsIgnoreCase = containsIgnoreCase
+// ExportContainsIgnoreCase exposes containsIgnoreCase for testing.
+func ExportContainsIgnoreCase(slice []string, target string) bool {
+	return containsIgnoreCase(slice, target)
+}
 
-// IsValidIPOctet exports isValidIPOctet for testing.
-var IsValidIPOctet = isValidIPOctet
+// ExportIsValidIPOctet exposes isValidIPOctet for testing.
+func ExportIsValidIPOctet(s string) bool {
+	return isValidIPOctet(s)
+}
 
 // LogQueryParams is a type alias for logQueryParams for testing.
 type LogQueryParams = logQueryParams
 
-// BodyLimitMiddleware exports bodyLimitMiddleware for testing.
-var BodyLimitMiddleware = bodyLimitMiddleware
+// ExportBodyLimitMiddleware exposes bodyLimitMiddleware for testing.
+func ExportBodyLimitMiddleware(next http.Handler) http.Handler {
+	return bodyLimitMiddleware(next)
+}
 
 // HandleStatus exports handleStatus for testing.
 func (s *Server) HandleStatus(w http.ResponseWriter, r *http.Request) {

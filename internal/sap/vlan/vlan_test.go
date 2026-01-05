@@ -189,7 +189,7 @@ func TestContains(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := vlan.Contains(tt.slice, tt.val)
+			result := vlan.ExportContains(tt.slice, tt.val)
 			if result != tt.expected {
 				t.Errorf("Contains(%v, %d) = %v, want %v", tt.slice, tt.val, result, tt.expected)
 			}
@@ -221,7 +221,7 @@ func TestConcurrentManagerAccess(_ *testing.T) {
 
 func TestDetectVlanSubinterfacesPlatform(t *testing.T) {
 	// This will return empty if no VLANs configured.
-	vlans := vlan.DetectVlanSubinterfacesPlatform("eth0")
+	vlans := vlan.ExportDetectVlanSubinterfacesPlatform("eth0")
 	if vlans == nil {
 		t.Error("expected non-nil slice, even if empty")
 	}
@@ -236,7 +236,7 @@ func TestCreateVlanInterface(_ *testing.T) {
 
 func TestCreateVlanInterfacePlatform(_ *testing.T) {
 	// This requires root privileges on Linux.
-	err := vlan.CreateVlanInterfacePlatform("eth0", 100)
+	err := vlan.ExportCreateVlanInterfacePlatform("eth0", 100)
 	// Error is expected without root or on macOS (returns nil).
 	_ = err
 }
@@ -295,13 +295,13 @@ func TestContainsEdgeCases(t *testing.T) {
 		largeSlice[i] = i
 	}
 
-	if !vlan.Contains(largeSlice, 500) {
+	if !vlan.ExportContains(largeSlice, 500) {
 		t.Error("expected to find 500 in large slice")
 	}
-	if !vlan.Contains(largeSlice, 999) {
+	if !vlan.ExportContains(largeSlice, 999) {
 		t.Error("expected to find 999 in large slice")
 	}
-	if vlan.Contains(largeSlice, 1000) {
+	if vlan.ExportContains(largeSlice, 1000) {
 		t.Error("did not expect to find 1000 in slice 0-999")
 	}
 }

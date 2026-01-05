@@ -26,7 +26,7 @@ func TestSplitCIDR(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := api.SplitCIDR(tt.input)
+			result := api.ExportSplitCIDR(tt.input)
 			if result != tt.expected {
 				t.Errorf("SplitCIDR(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
@@ -49,7 +49,7 @@ func TestIsIPv4Address(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.addr, func(t *testing.T) {
-			result := api.IsIPv4Address(tt.addr)
+			result := api.ExportIsIPv4Address(tt.addr)
 			if result != tt.expected {
 				t.Errorf("IsIPv4Address(%q) = %v, want %v", tt.addr, result, tt.expected)
 			}
@@ -72,7 +72,7 @@ func TestParsePrefix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := api.ParsePrefix(tt.input)
+			result := api.ExportParsePrefix(tt.input)
 			if result != tt.expected {
 				t.Errorf("ParsePrefix(%q) = %d, want %d", tt.input, result, tt.expected)
 			}
@@ -96,7 +96,7 @@ func TestIsLinkLocal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.addr, func(t *testing.T) {
-			result := api.IsLinkLocal(tt.addr)
+			result := api.ExportIsLinkLocal(tt.addr)
 			if result != tt.expected {
 				t.Errorf("IsLinkLocal(%q) = %v, want %v", tt.addr, result, tt.expected)
 			}
@@ -122,7 +122,7 @@ func TestIsUniqueLocal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.addr, func(t *testing.T) {
-			result := api.IsUniqueLocal(tt.addr)
+			result := api.ExportIsUniqueLocal(tt.addr)
 			if result != tt.expected {
 				t.Errorf("IsUniqueLocal(%q) = %v, want %v", tt.addr, result, tt.expected)
 			}
@@ -147,7 +147,7 @@ func TestParseIPAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := api.ParseIPAddress(tt.addr)
+			result := api.ExportParseIPAddress(tt.addr)
 			if result.IsIPv4 != tt.isIPv4 {
 				t.Errorf(
 					"ParseIPAddress(%q).IsIPv4 = %v, want %v",
@@ -188,7 +188,7 @@ func TestGetTestStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := api.GetTestStatus(tt.latencyMs, tt.warningMs, tt.criticalMs)
+			result := api.ExportGetTestStatus(tt.latencyMs, tt.warningMs, tt.criticalMs)
 			if result != tt.expected {
 				t.Errorf("GetTestStatus(%v, %d, %d) = %q, want %q",
 					tt.latencyMs, tt.warningMs, tt.criticalMs, result, tt.expected)
@@ -212,7 +212,7 @@ func TestGetTLSVersionString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			result := api.GetTLSVersionString(tt.version)
+			result := api.ExportGetTLSVersionString(tt.version)
 			if result != tt.expected {
 				t.Errorf(
 					"GetTLSVersionString(0x%04X) = %q, want %q",
@@ -231,7 +231,7 @@ func TestRunTCPTest(t *testing.T) {
 	}
 
 	// Test against a known-working port
-	latency, err := api.RunTCPTest(context.Background(), "google.com", 80)
+	latency, err := api.ExportRunTCPTest(context.Background(), "google.com", 80)
 	if err != nil {
 		t.Skipf("network test failed (may be offline): %v", err)
 	}
@@ -245,7 +245,7 @@ func TestRunTCPTestInvalidHost(t *testing.T) {
 		t.Skip("skipping network test in short mode")
 	}
 
-	_, err := api.RunTCPTest(context.Background(), "invalid.invalid.invalid", 80)
+	_, err := api.ExportRunTCPTest(context.Background(), "invalid.invalid.invalid", 80)
 	if err == nil {
 		t.Error("expected error for invalid host")
 	}
@@ -256,7 +256,7 @@ func TestRunExtendedPing(t *testing.T) {
 		t.Skip("skipping network test in short mode")
 	}
 
-	stats, err := api.RunExtendedPing("google.com", 3)
+	stats, err := api.ExportRunExtendedPing("google.com", 3)
 	if err != nil {
 		t.Skipf("network test failed (may be offline): %v", err)
 	}
@@ -274,7 +274,7 @@ func TestRunExtendedPingInvalidHost(t *testing.T) {
 		t.Skip("skipping network test in short mode")
 	}
 
-	stats, err := api.RunExtendedPing("invalid.invalid.invalid", 2)
+	stats, err := api.ExportRunExtendedPing("invalid.invalid.invalid", 2)
 	if err == nil && stats.PacketLoss != 100 {
 		t.Error("expected 100% packet loss for invalid host")
 	}
