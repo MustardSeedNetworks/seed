@@ -73,7 +73,7 @@ func TestParseLevel(t *testing.T) {
 
 func TestInitLogger(t *testing.T) {
 	// Reset global logger after test
-	defer logging.ClearGlobalLogger()
+	defer logging.ExportClearGlobalLogger()
 
 	t.Run("nil config uses defaults", func(t *testing.T) {
 		err := logging.InitLogger(nil)
@@ -149,7 +149,7 @@ func TestInitLogger(t *testing.T) {
 
 func TestGetLogger(t *testing.T) {
 	// Reset global logger
-	logging.ClearGlobalLogger()
+	logging.ExportClearGlobalLogger()
 
 	t.Run("returns default when not initialized", func(t *testing.T) {
 		logger := logging.GetLogger()
@@ -172,7 +172,7 @@ func TestGetLogger(t *testing.T) {
 	})
 
 	// Reset global logger after test
-	logging.ClearGlobalLogger()
+	logging.ExportClearGlobalLogger()
 }
 
 func TestWithRequestID(t *testing.T) {
@@ -259,7 +259,7 @@ func TestFromContext(t *testing.T) {
 	})
 
 	// Reset global logger after test
-	logging.ClearGlobalLogger()
+	logging.ExportClearGlobalLogger()
 }
 
 func TestConvenienceLogFunctions(t *testing.T) {
@@ -299,7 +299,7 @@ func TestConvenienceLogFunctions(t *testing.T) {
 	}
 
 	// Reset global logger
-	logging.ClearGlobalLogger()
+	logging.ExportClearGlobalLogger()
 }
 
 func TestContextLogFunctions(t *testing.T) {
@@ -332,12 +332,12 @@ func TestContextLogFunctions(t *testing.T) {
 	}
 
 	// Reset global logger
-	logging.ClearGlobalLogger()
+	logging.ExportClearGlobalLogger()
 }
 
 func TestConcurrentLoggerAccess(t *testing.T) {
 	// Reset and initialize logger
-	logging.ClearGlobalLogger()
+	logging.ExportClearGlobalLogger()
 
 	err := logging.InitLogger(nil)
 	if err != nil {
@@ -362,5 +362,5 @@ func TestConcurrentLoggerAccess(t *testing.T) {
 	}
 
 	// Reset global logger
-	logging.ClearGlobalLogger()
+	logging.ExportClearGlobalLogger()
 }

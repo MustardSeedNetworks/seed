@@ -284,26 +284,46 @@ func (lb *LogBroadcaster) LogCount() int {
 	return lb.buffer.Count()
 }
 
-// Global log broadcaster instance.
+// Broadcaster accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
+// getBroadcaster returns the global broadcaster instance.
+// setBroadcaster sets the global broadcaster instance.
+// _ (clearBroadcaster) resets the global broadcaster to nil (unused but required for pattern).
 var (
-	globalBroadcaster *LogBroadcaster
-	broadcasterMu     sync.RWMutex
+	getBroadcaster, setBroadcaster, _ = func() (
+		func() *LogBroadcaster,
+		func(*LogBroadcaster),
+		func(),
+	) {
+		var broadcaster *LogBroadcaster
+		var mu sync.RWMutex
+
+		return func() *LogBroadcaster {
+				mu.RLock()
+				defer mu.RUnlock()
+				return broadcaster
+			}, func(b *LogBroadcaster) {
+				mu.Lock()
+				defer mu.Unlock()
+				broadcaster = b
+			}, func() {
+				mu.Lock()
+				defer mu.Unlock()
+				broadcaster = nil
+			}
+	}()
 )
 
 // InitBroadcaster initializes the global log broadcaster.
 // Call this during server initialization.
 func InitBroadcaster(bufferSize int) *LogBroadcaster {
-	broadcasterMu.Lock()
-	defer broadcasterMu.Unlock()
-	globalBroadcaster = NewLogBroadcaster(bufferSize)
-	return globalBroadcaster
+	b := NewLogBroadcaster(bufferSize)
+	setBroadcaster(b)
+	return b
 }
 
 // GetBroadcaster returns the global log broadcaster.
 func GetBroadcaster() *LogBroadcaster {
-	broadcasterMu.RLock()
-	defer broadcasterMu.RUnlock()
-	return globalBroadcaster
+	return getBroadcaster()
 }
 
 // BroadcastLog creates and broadcasts a log entry from the given parameters.

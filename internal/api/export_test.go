@@ -95,13 +95,12 @@ func ExportValidateIperfClientRequest(req *IperfClientRequest) error {
 
 // ExportParseLogQueryParams exposes parseLogQueryParams for testing.
 func ExportParseLogQueryParams(r *http.Request) LogQueryParams {
-	return LogQueryParams(parseLogQueryParams(r))
+	return parseLogQueryParams(r)
 }
 
 // ExportMatchesLogFilters exposes matchesLogFilters for testing.
 func ExportMatchesLogFilters(log *logging.LogEntry, params *LogQueryParams) bool {
-	p := logQueryParams(*params)
-	return matchesLogFilters(log, &p)
+	return matchesLogFilters(log, params)
 }
 
 // ExportPaginateLogs exposes paginateLogs for testing.

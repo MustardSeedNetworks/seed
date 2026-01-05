@@ -19,10 +19,11 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var mcpCmd = &cobra.Command{
-	Use:   "mcp",
-	Short: "Start MCP server over stdio",
-	Long: `Start the Model Context Protocol (MCP) server for AI assistant integration.
+func initMCPCmd() {
+	mcpCmd := &cobra.Command{
+		Use:   "mcp",
+		Short: "Start MCP server over stdio",
+		Long: `Start the Model Context Protocol (MCP) server for AI assistant integration.
 
 The MCP server communicates over stdin/stdout and exposes network diagnostic
 tools that can be used by AI assistants like Claude Code.
@@ -37,16 +38,14 @@ Example usage in .claude/mcp.json:
     }
   }
 }`,
-	Run: runMCP,
-}
-
-func initMCPCmd() {
-	rootCmd.AddCommand(mcpCmd)
+		Run: runMCP,
+	}
+	cli.rootCmd.AddCommand(mcpCmd)
 }
 
 func runMCP(_ *cobra.Command, _ []string) {
 	// Resolve config path
-	configPath := paths.ResolveConfigPath(cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
 
 	// Load configuration
 	cfg, err := config.Load(configPath)

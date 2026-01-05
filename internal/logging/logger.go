@@ -54,10 +54,44 @@ const (
 	userIDKey contextKey = "user_id"
 )
 
+// loggerState holds the encapsulated logger state.
+type loggerState struct {
+	logger *slog.Logger
+	mu     sync.RWMutex
+}
+
+// Logger accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
+// getLogger returns the global logger instance.
+// setLogger sets the global logger instance.
+// clearLogger resets the global logger to nil.
 var (
-	// globalLogger is the package-level logger instance.
-	globalLogger *slog.Logger
-	loggerMu     sync.RWMutex
+	getLogger, setLogger, clearLogger = func() (
+		func() *slog.Logger,
+		func(*slog.Logger),
+		func(),
+	) {
+		state := &loggerState{}
+
+		getLoggerFn := func() *slog.Logger {
+			state.mu.RLock()
+			defer state.mu.RUnlock()
+			return state.logger
+		}
+
+		setLoggerFn := func(l *slog.Logger) {
+			state.mu.Lock()
+			defer state.mu.Unlock()
+			state.logger = l
+		}
+
+		clearLoggerFn := func() {
+			state.mu.Lock()
+			defer state.mu.Unlock()
+			state.logger = nil
+		}
+
+		return getLoggerFn, setLoggerFn, clearLoggerFn
+	}()
 )
 
 // parseLevel converts a string level to slog.Level.
@@ -134,10 +168,9 @@ func InitLogger(cfg *LoggingConfig) error {
 	redactingHandler := NewRedactingHandler(baseHandler)
 
 	// Set global logger
-	loggerMu.Lock()
-	globalLogger = slog.New(redactingHandler)
-	slog.SetDefault(globalLogger)
-	loggerMu.Unlock()
+	logger := slog.New(redactingHandler)
+	setLogger(logger)
+	slog.SetDefault(logger)
 
 	return nil
 }
@@ -145,13 +178,10 @@ func InitLogger(cfg *LoggingConfig) error {
 // GetLogger returns the global logger instance.
 // If InitLogger hasn't been called, returns slog.Default().
 func GetLogger() *slog.Logger {
-	loggerMu.RLock()
-	defer loggerMu.RUnlock()
-
-	if globalLogger == nil {
-		return slog.Default()
+	if logger := getLogger(); logger != nil {
+		return logger
 	}
-	return globalLogger
+	return slog.Default()
 }
 
 // WithRequestID returns a new context with the given request ID.

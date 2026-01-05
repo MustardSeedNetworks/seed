@@ -13,23 +13,22 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var resetCmd = &cobra.Command{
-	Use:   "reset-config",
-	Short: "Reset configuration to defaults",
-	Long: `Reset configuration to defaults.
+func initResetCmd() {
+	resetCmd := &cobra.Command{
+		Use:   "reset-config",
+		Short: "Reset configuration to defaults",
+		Long: `Reset configuration to defaults.
 
 By default, this will create a backup of the current config and replace it
 with a fresh default configuration. Authentication credentials can optionally
 be preserved.`,
-	Run: runReset,
-}
-
-func initResetCmd() {
+		Run: runReset,
+	}
 	resetCmd.Flags().Bool("preserve-auth", false, "Preserve authentication credentials")
 	resetCmd.Flags().Bool("preserve-jwt", false, "Preserve JWT secret")
 	resetCmd.Flags().Bool("backup", true, "Create backup before reset")
 	resetCmd.Flags().BoolP("force", "f", false, "Skip confirmation prompt")
-	rootCmd.AddCommand(resetCmd)
+	cli.rootCmd.AddCommand(resetCmd)
 }
 
 func runReset(cmd *cobra.Command, _ []string) {
@@ -55,7 +54,7 @@ func runReset(cmd *cobra.Command, _ []string) {
 	}
 
 	// Resolve config path
-	configPath := paths.ResolveConfigPath(cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
 
 	// Load existing config if it exists (for preservation)
 	var existingCfg *config.Config

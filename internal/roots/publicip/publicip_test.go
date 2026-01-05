@@ -232,7 +232,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			defer server.Close()
 
 			c := publicip.NewChecker()
-			got, err := publicip.ExportFetchFromService(c, context.Background(), server.URL, tt.parser)
+			got, err := publicip.ExportFetchFromService(context.Background(), c, server.URL, tt.parser)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("fetchFromService() error = %v, wantErr %v", err, tt.wantErr)
@@ -256,7 +256,7 @@ func TestChecker_FetchFromService_ContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately.
 
-	_, err := publicip.ExportFetchFromService(c, ctx, server.URL, publicip.ExportParseTextIP)
+	_, err := publicip.ExportFetchFromService(ctx, c, server.URL, publicip.ExportParseTextIP)
 	if err == nil {
 		t.Error("expected error for canceled context")
 	}
@@ -346,7 +346,7 @@ func TestChecker_FetchIPv6_ValidatesIPv6(t *testing.T) {
 	// that the validation logic exists by checking the code path.
 	// This is a behavioral test - fetchIPv6 checks for ":" in the result.
 	ctx := context.Background()
-	ip, _ := publicip.ExportFetchFromService(c, ctx, server.URL, publicip.ExportParseIpifyJSON)
+	ip, _ := publicip.ExportFetchFromService(ctx, c, server.URL, publicip.ExportParseIpifyJSON)
 
 	// The service returns an IPv4, which shouldn't contain ":".
 	if strings.Contains(ip, ":") {

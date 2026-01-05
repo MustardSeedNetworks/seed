@@ -4,7 +4,6 @@ package logging
 import (
 	"log/slog"
 	"net/http"
-	"sync"
 )
 
 // ExportIsSensitiveKey exposes isSensitiveKey for testing.
@@ -32,23 +31,14 @@ func ExportGenerateRequestID() string {
 	return generateRequestID()
 }
 
-// LoggerMu returns a reference to loggerMu for testing.
-func LoggerMu() *sync.RWMutex {
-	return &loggerMu
+// ExportSetGlobalLogger sets the global logger for testing.
+func ExportSetGlobalLogger(l *slog.Logger) {
+	setLogger(l)
 }
 
-// SetGlobalLogger sets the global logger for testing.
-func SetGlobalLogger(l *slog.Logger) {
-	loggerMu.Lock()
-	globalLogger = l
-	loggerMu.Unlock()
-}
-
-// ClearGlobalLogger clears the global logger for testing.
-func ClearGlobalLogger() {
-	loggerMu.Lock()
-	globalLogger = nil
-	loggerMu.Unlock()
+// ExportClearGlobalLogger clears the global logger for testing.
+func ExportClearGlobalLogger() {
+	clearLogger()
 }
 
 // ExportRequestIDKeyValue returns the requestIDKey for testing.

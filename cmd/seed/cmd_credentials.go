@@ -13,12 +13,11 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var outputJSON bool
-
-var credentialsCmd = &cobra.Command{
-	Use:   "credentials",
-	Short: "Check setup status",
-	Long: `Check if initial setup is required and display setup instructions.
+func initCredentialsCmd() {
+	credentialsCmd := &cobra.Command{
+		Use:   "credentials",
+		Short: "Check setup status",
+		Long: `Check if initial setup is required and display setup instructions.
 
 This command checks whether The Seed has been configured with a secure
 password. If setup is required, it provides instructions for accessing
@@ -30,17 +29,15 @@ The setup wizard allows you to:
   - Complete initial configuration
 
 Use the --json flag to output the status in machine-readable JSON format.`,
-	Run: runCredentials,
+		Run: runCredentials,
+	}
+	credentialsCmd.Flags().Bool("json", false, "output status as JSON")
+	cli.rootCmd.AddCommand(credentialsCmd)
 }
 
-func initCredentialsCmd() {
-	credentialsCmd.Flags().BoolVar(&outputJSON, "json", false, "output status as JSON")
-	rootCmd.AddCommand(credentialsCmd)
-}
-
-func runCredentials(_ *cobra.Command, _ []string) {
+func runCredentials(cmd *cobra.Command, _ []string) {
 	// Resolve config path using paths package
-	configPath := paths.ResolveConfigPath(cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
 
 	// Load or create config
 	cfg, result, err := config.EnsureConfig(configPath, auth.IsDefaultPasswordHash)
@@ -75,6 +72,7 @@ func runCredentials(_ *cobra.Command, _ []string) {
 	}
 
 	// Output status
+	outputJSON, _ := cmd.Flags().GetBool("json")
 	if outputJSON {
 		var jsonData []byte
 		jsonData, err = json.MarshalIndent(status, "", "  ")

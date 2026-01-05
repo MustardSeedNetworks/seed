@@ -13,23 +13,22 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var setupCmd = &cobra.Command{
-	Use:   "setup-wizard",
-	Short: "Re-run the setup wizard",
-	Long: `Re-run the first-time setup to reset or regenerate credentials.
+func initSetupCmd() {
+	setupCmd := &cobra.Command{
+		Use:   "setup-wizard",
+		Short: "Re-run the setup wizard",
+		Long: `Re-run the first-time setup to reset or regenerate credentials.
 
 This command allows you to regenerate authentication credentials without
 going through the web UI. Use --generate-password to auto-generate a
 secure password, or start the server and use the web wizard for
 interactive setup.`,
-	Run: runSetup,
-}
-
-func initSetupCmd() {
+		Run: runSetup,
+	}
 	setupCmd.Flags().Bool("generate-password", false, "Auto-generate a secure password")
 	setupCmd.Flags().Bool("json", false, "Output credentials as JSON")
 	setupCmd.Flags().Bool("reset-jwt", false, "Also regenerate the JWT secret")
-	rootCmd.AddCommand(setupCmd)
+	cli.rootCmd.AddCommand(setupCmd)
 }
 
 func runSetup(cmd *cobra.Command, _ []string) {
@@ -50,7 +49,7 @@ func runSetup(cmd *cobra.Command, _ []string) {
 	}
 
 	// Resolve config path
-	configPath := paths.ResolveConfigPath(cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
 
 	// Load or create config
 	cfg, err := config.Load(configPath)

@@ -11,17 +11,16 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var validateCmd = &cobra.Command{
-	Use:   "validate-config",
-	Short: "Validate configuration file",
-	Long:  "Validate the configuration file against the schema without starting the server",
-	Run:   runValidate,
-}
-
 func initValidateCmd() {
+	validateCmd := &cobra.Command{
+		Use:   "validate-config",
+		Short: "Validate configuration file",
+		Long:  "Validate the configuration file against the schema without starting the server",
+		Run:   runValidate,
+	}
 	validateCmd.Flags().Bool("strict", false, "Treat warnings as errors")
 	validateCmd.Flags().Bool("json", false, "Output results as JSON")
-	rootCmd.AddCommand(validateCmd)
+	cli.rootCmd.AddCommand(validateCmd)
 }
 
 // ValidationResult holds the validation output.
@@ -45,7 +44,7 @@ func runValidate(cmd *cobra.Command, _ []string) {
 	}
 
 	// Resolve config path using paths package
-	configPath := paths.ResolveConfigPath(cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
 
 	result := ValidationResult{
 		Valid: true,

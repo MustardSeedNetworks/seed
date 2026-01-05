@@ -218,7 +218,7 @@ func (s *Server) validateOAuthCallback(
 	// Get and validate state from cookie
 	stateCookie, err := r.Cookie(oauthStateCookie)
 	if err != nil {
-		logger.WarnContext(r.Context(), 
+		logger.WarnContext(r.Context(),
 			"Missing OAuth state cookie",
 			"client_ip",
 			clientIP,
@@ -239,7 +239,7 @@ func (s *Server) validateOAuthCallback(
 	// Get provider from cookie
 	providerCookie, err := r.Cookie("oauth_provider")
 	if err != nil {
-		logger.WarnContext(r.Context(), 
+		logger.WarnContext(r.Context(),
 			"Missing OAuth provider cookie",
 			"client_ip",
 			clientIP,
@@ -512,7 +512,7 @@ func (s *Server) requireSSOAuth(w http.ResponseWriter, r *http.Request, logger *
 	token, _ := auth.GetTokenFromRequest(r)
 	if token == "" {
 		clientIP := s.getClientIP(r)
-		logger.WarnContext(r.Context(), 
+		logger.WarnContext(r.Context(),
 			"Unauthenticated SSO update attempt",
 			"client_ip",
 			clientIP,
@@ -531,7 +531,7 @@ func (s *Server) requireSSOAuth(w http.ResponseWriter, r *http.Request, logger *
 	}
 	if _, err := s.authManager.ValidateToken(r.Context(), token); err != nil {
 		clientIP := s.getClientIP(r)
-		logger.WarnContext(r.Context(), 
+		logger.WarnContext(r.Context(),
 			"Invalid token SSO update attempt",
 			"client_ip",
 			clientIP,
@@ -638,7 +638,7 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.initOAuthManager()
-	logger.InfoContext(r.Context(), 
+	logger.InfoContext(r.Context(),
 		"SSO provider updated",
 		"provider",
 		req.Provider,

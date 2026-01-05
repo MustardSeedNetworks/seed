@@ -16,102 +16,145 @@ import (
 	"github.com/shirou/gopsutil/v3/process"
 )
 
-// cpuCache stores the last CPU percentage to avoid blocking calls.
+// cpuCacheState holds the CPU sampling state.
+type cpuCacheState struct {
+	mu      sync.RWMutex
+	percent float64
+	once    sync.Once
+	stop    chan struct{}
+}
+
+// CPU cache accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
+// getCPUCache returns the CPU cache state.
+// getCachedCPUPercent returns the cached CPU percentage.
+// startCPUSampler starts the background CPU sampler.
 var (
-	cpuCacheMu      sync.RWMutex
-	cpuCachePercent float64
-	cpuSamplerOnce  sync.Once
-	cpuSamplerStop  chan struct{}
-)
+	getCPUCache, getCachedCPUPercent, startCPUSampler = func() (
+		func() *cpuCacheState,
+		func() float64,
+		func(),
+	) {
+		state := &cpuCacheState{}
 
-// startCPUSampler starts a background goroutine that samples CPU every 2 seconds.
-// This avoids the blocking 100ms call in GetHealth().
-func startCPUSampler() {
-	cpuSamplerStop = make(chan struct{})
-	go func() {
-		// Take initial sample immediately
-		if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil && len(pct) > 0 {
-			cpuCacheMu.Lock()
-			cpuCachePercent = pct[0]
-			cpuCacheMu.Unlock()
-		}
-
-		ticker := time.NewTicker(2 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-cpuSamplerStop:
-				return
-			case <-ticker.C:
-				if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil &&
-					len(pct) > 0 {
-					cpuCacheMu.Lock()
-					cpuCachePercent = pct[0]
-					cpuCacheMu.Unlock()
+		startSampler := func() {
+			state.stop = make(chan struct{})
+			go func() {
+				// Take initial sample immediately
+				if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil && len(pct) > 0 {
+					state.mu.Lock()
+					state.percent = pct[0]
+					state.mu.Unlock()
 				}
-			}
+
+				ticker := time.NewTicker(2 * time.Second)
+				defer ticker.Stop()
+
+				for {
+					select {
+					case <-state.stop:
+						return
+					case <-ticker.C:
+						if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil &&
+							len(pct) > 0 {
+							state.mu.Lock()
+							state.percent = pct[0]
+							state.mu.Unlock()
+						}
+					}
+				}
+			}()
 		}
+
+		getCache := func() *cpuCacheState {
+			return state
+		}
+
+		getCached := func() float64 {
+			// Ensure sampler is started
+			state.once.Do(startSampler)
+
+			state.mu.RLock()
+			defer state.mu.RUnlock()
+			return state.percent
+		}
+
+		return getCache, getCached, startSampler
 	}()
-}
-
-// getCachedCPUPercent returns the cached CPU percentage (non-blocking).
-func getCachedCPUPercent() float64 {
-	// Ensure sampler is started
-	cpuSamplerOnce.Do(startCPUSampler)
-
-	cpuCacheMu.RLock()
-	defer cpuCacheMu.RUnlock()
-	return cpuCachePercent
-}
+)
 
 // processCacheTTL is how long process info remains valid.
 const processCacheTTL = 5 * time.Second
 
-// processCache stores cached process information to avoid expensive enumeration.
-var (
-	processCacheMu     sync.RWMutex
-	processCacheTop5   []ProcessInfo
-	processCacheMem5   []ProcessInfo
-	processCacheTime   time.Time
-	processUpdateMu    sync.Mutex
-	processUpdateInFly bool
-)
-
-// getCachedProcesses returns cached top processes (non-blocking).
-// Returns cached data immediately, triggers background refresh if stale.
-func getCachedProcesses() ([]ProcessInfo, []ProcessInfo) {
-	processCacheMu.RLock()
-	cacheAge := time.Since(processCacheTime)
-	topCPU := processCacheTop5
-	topMemory := processCacheMem5
-	processCacheMu.RUnlock()
-
-	// If cache is stale, trigger background update (non-blocking)
-	if cacheAge > processCacheTTL {
-		processUpdateMu.Lock()
-		if !processUpdateInFly {
-			processUpdateInFly = true
-			go func() {
-				defer func() {
-					processUpdateMu.Lock()
-					processUpdateInFly = false
-					processUpdateMu.Unlock()
-				}()
-
-				cpu, mem := getTopProcessesInternal()
-				processCacheMu.Lock()
-				processCacheTop5 = cpu
-				processCacheMem5 = mem
-				processCacheTime = time.Now()
-				processCacheMu.Unlock()
-			}()
-		}
-		processUpdateMu.Unlock()
-	}
-
-	return topCPU, topMemory
+// processCacheState holds the process cache state.
+type processCacheState struct {
+	cacheMu     sync.RWMutex
+	top5        []ProcessInfo
+	mem5        []ProcessInfo
+	cacheTime   time.Time
+	updateMu    sync.Mutex
+	updateInFly bool
 }
+
+// Process cache accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
+// getProcessCache returns the process cache state.
+// clearProcessCache clears the process cache for testing.
+// getCachedProcesses returns cached top processes (non-blocking).
+var (
+	getProcessCache, clearProcessCache, getCachedProcesses = func() (
+		func() *processCacheState,
+		func(),
+		func() ([]ProcessInfo, []ProcessInfo),
+	) {
+		state := &processCacheState{}
+
+		getCache := func() *processCacheState {
+			return state
+		}
+
+		clearCache := func() {
+			state.cacheMu.Lock()
+			state.top5 = nil
+			state.mem5 = nil
+			state.cacheTime = time.Time{}
+			state.cacheMu.Unlock()
+		}
+
+		getCached := func() ([]ProcessInfo, []ProcessInfo) {
+			state.cacheMu.RLock()
+			cacheAge := time.Since(state.cacheTime)
+			topCPU := state.top5
+			topMemory := state.mem5
+			state.cacheMu.RUnlock()
+
+			// If cache is stale, trigger background update (non-blocking)
+			if cacheAge > processCacheTTL {
+				state.updateMu.Lock()
+				if !state.updateInFly {
+					state.updateInFly = true
+					go func() {
+						defer func() {
+							state.updateMu.Lock()
+							state.updateInFly = false
+							state.updateMu.Unlock()
+						}()
+
+						cpuProcs, memProcs := getTopProcessesInternal()
+						state.cacheMu.Lock()
+						state.top5 = cpuProcs
+						state.mem5 = memProcs
+						state.cacheTime = time.Now()
+						state.cacheMu.Unlock()
+					}()
+				}
+				state.updateMu.Unlock()
+			}
+
+			return topCPU, topMemory
+		}
+
+		return getCache, clearCache, getCached
+	}()
+)
 
 // ProcessInfo contains information about a single process.
 type ProcessInfo struct {

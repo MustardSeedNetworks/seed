@@ -16,22 +16,21 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var uninstallCmd = &cobra.Command{
-	Use:   "uninstall",
-	Short: "Uninstall Seed",
-	Long: `Uninstall Seed and optionally remove all data.
+func initUninstallCmd() {
+	uninstallCmd := &cobra.Command{
+		Use:   "uninstall",
+		Short: "Uninstall Seed",
+		Long: `Uninstall Seed and optionally remove all data.
 
 By default, configuration and data files are preserved.
 Use --purge to remove all files including configuration.`,
-	Run: runUninstall,
-}
-
-func initUninstallCmd() {
+		Run: runUninstall,
+	}
 	uninstallCmd.Flags().Bool("purge", false, "Remove all data and configuration")
 	uninstallCmd.Flags().BoolP("force", "f", false, "Skip confirmation prompt")
 	uninstallCmd.Flags().Bool("system", false, "Uninstall system service")
 	uninstallCmd.Flags().Bool("user", false, "Uninstall user service")
-	rootCmd.AddCommand(uninstallCmd)
+	cli.rootCmd.AddCommand(uninstallCmd)
 }
 
 //nolint:gocyclo // Command handler complexity is acceptable

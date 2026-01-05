@@ -16,25 +16,30 @@ type Migration struct {
 	Up          string
 }
 
-// getMigrations returns the list of all database migrations in order.
+// migrationDef is the definition without version (computed from index).
+type migrationDef struct {
+	Description string
+	Up          string
+}
+
+// getMigrationDefs returns migration definitions without versions.
 // IMPORTANT: Never modify existing migrations, only add new ones.
-func getMigrations() []Migration {
-	return []Migration{
-	{
-		Version:     1,
-		Description: "Create schema version table",
-		Up: `
+// The version is computed as index + 1.
+func getMigrationDefs() []migrationDef {
+	return []migrationDef{
+		{
+			Description: "Create schema version table",
+			Up: `
 			CREATE TABLE IF NOT EXISTS schema_migrations (
 				version INTEGER PRIMARY KEY,
 				applied_at TEXT NOT NULL,
 				description TEXT
 			);
 		`,
-	},
-	{
-		Version:     2,
-		Description: "Create profiles table",
-		Up: `
+		},
+		{
+			Description: "Create profiles table",
+			Up: `
 			CREATE TABLE IF NOT EXISTS profiles (
 				id TEXT PRIMARY KEY,
 				name TEXT NOT NULL UNIQUE,
@@ -48,11 +53,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_profiles_name ON profiles(name);
 			CREATE INDEX IF NOT EXISTS idx_profiles_is_default ON profiles(is_default);
 		`,
-	},
-	{
-		Version:     3,
-		Description: "Create metrics table for historical data",
-		Up: `
+		},
+		{
+			Description: "Create metrics table for historical data",
+			Up: `
 			CREATE TABLE IF NOT EXISTS metrics (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				interface_name TEXT NOT NULL,
@@ -68,11 +72,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON metrics(timestamp);
 			CREATE INDEX IF NOT EXISTS idx_metrics_interface_type_time ON metrics(interface_name, metric_type, timestamp);
 		`,
-	},
-	{
-		Version:     4,
-		Description: "Create devices table for discovered devices",
-		Up: `
+		},
+		{
+			Description: "Create devices table for discovered devices",
+			Up: `
 			CREATE TABLE IF NOT EXISTS devices (
 				id TEXT PRIMARY KEY,
 				ip_address TEXT NOT NULL,
@@ -94,11 +97,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_devices_active ON devices(is_active);
 			CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON devices(last_seen);
 		`,
-	},
-	{
-		Version:     5,
-		Description: "Create alerts table",
-		Up: `
+		},
+		{
+			Description: "Create alerts table",
+			Up: `
 			CREATE TABLE IF NOT EXISTS alerts (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				type TEXT NOT NULL,
@@ -124,22 +126,20 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at);
 			CREATE INDEX IF NOT EXISTS idx_alerts_device ON alerts(device_id);
 		`,
-	},
-	{
-		Version:     6,
-		Description: "Create settings table for key-value settings",
-		Up: `
+		},
+		{
+			Description: "Create settings table for key-value settings",
+			Up: `
 			CREATE TABLE IF NOT EXISTS settings (
 				key TEXT PRIMARY KEY,
 				value TEXT NOT NULL,
 				updated_at TEXT NOT NULL
 			);
 		`,
-	},
-	{
-		Version:     7,
-		Description: "Create speed test results table",
-		Up: `
+		},
+		{
+			Description: "Create speed test results table",
+			Up: `
 			CREATE TABLE IF NOT EXISTS speedtest_results (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				interface_name TEXT NOT NULL,
@@ -157,11 +157,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_speedtest_interface ON speedtest_results(interface_name);
 			CREATE INDEX IF NOT EXISTS idx_speedtest_timestamp ON speedtest_results(timestamp);
 		`,
-	},
-	{
-		Version:     8,
-		Description: "Create wifi survey samples table",
-		Up: `
+		},
+		{
+			Description: "Create wifi survey samples table",
+			Up: `
 			CREATE TABLE IF NOT EXISTS survey_samples (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				survey_id TEXT NOT NULL,
@@ -182,11 +181,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_survey_samples_survey ON survey_samples(survey_id);
 			CREATE INDEX IF NOT EXISTS idx_survey_samples_coords ON survey_samples(x, y);
 		`,
-	},
-	{
-		Version:     9,
-		Description: "Create dns results table",
-		Up: `
+		},
+		{
+			Description: "Create dns results table",
+			Up: `
 			CREATE TABLE IF NOT EXISTS dns_results (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				interface_name TEXT NOT NULL,
@@ -203,11 +201,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_dns_server ON dns_results(server);
 			CREATE INDEX IF NOT EXISTS idx_dns_timestamp ON dns_results(timestamp);
 		`,
-	},
-	{
-		Version:     10,
-		Description: "Create gateway ping results table",
-		Up: `
+		},
+		{
+			Description: "Create gateway ping results table",
+			Up: `
 			CREATE TABLE IF NOT EXISTS gateway_results (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				interface_name TEXT NOT NULL,
@@ -221,11 +218,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_gateway_interface ON gateway_results(interface_name);
 			CREATE INDEX IF NOT EXISTS idx_gateway_timestamp ON gateway_results(timestamp);
 		`,
-	},
-	{
-		Version:     11,
-		Description: "Create audit log table",
-		Up: `
+		},
+		{
+			Description: "Create audit log table",
+			Up: `
 			CREATE TABLE IF NOT EXISTS audit_log (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				action TEXT NOT NULL,
@@ -244,11 +240,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(timestamp);
 			CREATE INDEX IF NOT EXISTS idx_audit_resource ON audit_log(resource_type, resource_id);
 		`,
-	},
-	{
-		Version:     12,
-		Description: "Create pipeline tables for discovery pipeline",
-		Up: `
+		},
+		{
+			Description: "Create pipeline tables for discovery pipeline",
+			Up: `
 			-- Pipeline run history
 			CREATE TABLE IF NOT EXISTS pipeline_runs (
 				id TEXT PRIMARY KEY,
@@ -329,11 +324,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_device_vulns_status ON device_vulnerabilities(status);
 			CREATE UNIQUE INDEX IF NOT EXISTS idx_device_vulns_unique ON device_vulnerabilities(device_id, cve_id);
 		`,
-	},
-	{
-		Version:     13,
-		Description: "Create users table for authentication",
-		Up: `
+		},
+		{
+			Description: "Create users table for authentication",
+			Up: `
 			-- Users table for authentication
 			-- Moves password hashes from config.yaml to database for better security
 			CREATE TABLE IF NOT EXISTS users (
@@ -353,11 +347,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 			CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);
 		`,
-	},
-	{
-		Version:     14,
-		Description: "Create logs table for persistent log storage",
-		Up: `
+		},
+		{
+			Description: "Create logs table for persistent log storage",
+			Up: `
 			CREATE TABLE IF NOT EXISTS logs (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				timestamp TEXT NOT NULL,
@@ -378,11 +371,10 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_logs_component ON logs(component);
 			CREATE INDEX IF NOT EXISTS idx_logs_request_id ON logs(request_id);
 		`,
-	},
-	{
-		Version:     15,
-		Description: "Create reports and scheduled_reports tables for Harvest module",
-		Up: `
+		},
+		{
+			Description: "Create reports and scheduled_reports tables for Harvest module",
+			Up: `
 			CREATE TABLE IF NOT EXISTS reports (
 				id TEXT PRIMARY KEY,
 				name TEXT NOT NULL,
@@ -421,8 +413,23 @@ func getMigrations() []Migration {
 			CREATE INDEX IF NOT EXISTS idx_scheduled_reports_enabled ON scheduled_reports(enabled);
 			CREATE INDEX IF NOT EXISTS idx_scheduled_reports_next_run ON scheduled_reports(next_run);
 		`,
-	},
+		},
 	}
+}
+
+// getMigrations returns migrations with computed version numbers.
+// Version = index + 1 (starting from 1).
+func getMigrations() []Migration {
+	defs := getMigrationDefs()
+	migrations := make([]Migration, len(defs))
+	for i, d := range defs {
+		migrations[i] = Migration{
+			Version:     i + 1,
+			Description: d.Description,
+			Up:          d.Up,
+		}
+	}
+	return migrations
 }
 
 // migrate runs all pending migrations.

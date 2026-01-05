@@ -315,7 +315,7 @@ func NewServer(
 	}
 
 	// Configure security: allowed origins for CORS/WebSocket
-	SetAllowedOrigins(cfg.Security.AllowedOrigins)
+	wsState.setAllowedOrigins(cfg.Security.AllowedOrigins)
 	if len(cfg.Security.AllowedOrigins) > 0 {
 		// Check for wildcard origin in production mode (fixes #715)
 		// Production mode is inferred from HTTPS being enabled

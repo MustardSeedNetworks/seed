@@ -88,8 +88,8 @@ func (c *Checker) GetHistoryCopy() []HistoryEntry {
 // ExportFetchFromService exposes fetchFromService for testing.
 // It's a standalone function that matches the old var export signature.
 func ExportFetchFromService(
-	c *Checker,
 	ctx context.Context,
+	c *Checker,
 	url string,
 	parser func([]byte) (string, error),
 ) (string, error) {

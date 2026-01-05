@@ -277,7 +277,7 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 	// Get the profile
 	profile, err := s.db.Profiles().Get(ctx, activeID)
 	if err != nil {
-		logger.WarnContext(ctx, 
+		logger.WarnContext(ctx,
 			"Failed to get active profile for settings save",
 			"error",
 			err,
@@ -309,7 +309,7 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 	// Update profile
 	profile.ConfigJSON = configJSON
 	if updateErr := s.db.Profiles().Update(ctx, profile); updateErr != nil {
-		logger.ErrorContext(ctx, 
+		logger.ErrorContext(ctx,
 			"Failed to save settings to profile",
 			"error",
 			updateErr,
@@ -319,7 +319,7 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 		return updateErr
 	}
 
-	logger.DebugContext(ctx, 
+	logger.DebugContext(ctx,
 		"Saved settings to active profile",
 		"profile_id",
 		profile.ID,
@@ -1252,7 +1252,7 @@ func (s *Server) saveActiveProfileSettings(
 		// Try to get default profile
 		defaultProfile, getErr := s.db.Profiles().GetDefault(ctx)
 		if getErr != nil {
-			logger.DebugContext(ctx, 
+			logger.DebugContext(ctx,
 				"No active or default profile to save settings to",
 				"reason",
 				getErr.Error(),
@@ -1277,7 +1277,7 @@ func (s *Server) saveActiveProfileSettings(
 	// Update profile
 	profile.ConfigJSON = configJSON
 	if updateErr := s.db.Profiles().Update(ctx, profile); updateErr != nil {
-		logger.ErrorContext(ctx, 
+		logger.ErrorContext(ctx,
 			"Failed to save settings to profile",
 			"error",
 			updateErr,
@@ -1287,7 +1287,7 @@ func (s *Server) saveActiveProfileSettings(
 		return updateErr
 	}
 
-	logger.DebugContext(ctx, 
+	logger.DebugContext(ctx,
 		"Saved settings to active profile",
 		"profile_id",
 		profile.ID,

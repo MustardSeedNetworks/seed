@@ -16,10 +16,11 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install Seed as a system service",
-	Long: `Install Seed as a system service with proper permissions.
+func initInstallCmd() {
+	installCmd := &cobra.Command{
+		Use:   "install",
+		Short: "Install Seed as a system service",
+		Long: `Install Seed as a system service with proper permissions.
 
 This command will:
 1. Create the seed user and group (system mode)
@@ -28,15 +29,13 @@ This command will:
 4. Set capabilities for raw socket access
 5. Install and enable the systemd service
 6. Create a default configuration file if needed`,
-	Run: runInstall,
-}
-
-func initInstallCmd() {
+		Run: runInstall,
+	}
 	installCmd.Flags().Bool("system", false, "Install as system service (requires root)")
 	installCmd.Flags().Bool("user", false, "Install as user service (systemd --user)")
 	installCmd.Flags().Bool("no-service", false, "Skip systemd service installation")
 	installCmd.Flags().BoolP("force", "f", false, "Overwrite existing installation")
-	rootCmd.AddCommand(installCmd)
+	cli.rootCmd.AddCommand(installCmd)
 }
 
 const systemdServiceTemplate = `[Unit]

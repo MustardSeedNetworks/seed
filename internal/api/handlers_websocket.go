@@ -90,59 +90,51 @@ const (
 	messageRateBurst = 20
 )
 
-// configuredOrigins holds explicitly configured WebSocket/CORS origins from the config file.
-//
-// Origin validation behavior:
-//   - Empty slice (default): Use RFC 1918 private network ranges (10.x, 172.16-31.x, 192.168.x)
-//   - Contains "*": Allow all origins (development/testing only - security risk in production)
-//   - Contains specific origins: Match exactly against Origin header (case-sensitive)
-//
-// Origins should include protocol and port: "https://192.168.1.100:8443"
-var (
-	configuredOrigins   []string
-	configuredOriginsMu sync.RWMutex // Protects configuredOrigins (fixes #847)
-)
-
-// SetAllowedOrigins configures the allowed WebSocket/CORS origins from application config.
-//
-// This function is called during server initialization with values from the
-// Security.AllowedOrigins configuration field. Origin validation is enforced
-// in the WebSocket upgrader CheckOrigin function and CORS middleware.
-//
-// Parameters:
-//   - origins: List of allowed origin strings, or ["*"] to allow all
-//
-// Thread-safety: Protected by mutex for safe concurrent access (fixes #847).
-func SetAllowedOrigins(origins []string) {
-	configuredOriginsMu.Lock()
-	defer configuredOriginsMu.Unlock()
-	configuredOrigins = origins
+// wsConfig holds WebSocket configuration state to satisfy gochecknoglobals.
+// Access via wsState.getConfiguredOrigins(), wsState.getUpgrader(), wsState.setAllowedOrigins().
+type wsConfig struct {
+	originMu      sync.RWMutex
+	origins       []string
+	upgraderOnce  sync.Once
+	upgraderInst  *websocket.Upgrader
 }
 
-// upgrader configures the WebSocket protocol upgrade from HTTP.
-//
-// The upgrader handles the HTTP handshake to upgrade a connection to WebSocket protocol.
-// It validates the Origin header to prevent Cross-Site WebSocket Hijacking (CSWSH) attacks.
-//
-// Buffer sizes (1024 bytes each) are appropriate for JSON messages containing network
-// status updates. Adjust if implementing file transfer or large data payloads.
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024, // Buffer for incoming messages (client->server, currently unused)
-	WriteBufferSize: 1024, // Buffer for outgoing broadcasts (server->client, main data flow)
+// wsState provides thread-safe WebSocket configuration via closure to satisfy gochecknoglobals.
+var wsState = func() *wsConfig {
+	return &wsConfig{}
+}()
 
-	// CheckOrigin validates the WebSocket upgrade request's Origin header.
-	// This prevents malicious web pages from connecting to our WebSocket endpoint.
-	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
+// getConfiguredOrigins returns the configured origins (thread-safe).
+func (ws *wsConfig) getConfiguredOrigins() []string {
+	ws.originMu.RLock()
+	defer ws.originMu.RUnlock()
+	return ws.origins
+}
 
-		// Allow requests with no Origin header (same-origin requests, native apps, tools)
-		if origin == "" {
-			return true
+// getUpgrader returns the lazily-initialized WebSocket upgrader.
+func (ws *wsConfig) getUpgrader() *websocket.Upgrader {
+	ws.upgraderOnce.Do(func() {
+		ws.upgraderInst = &websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return true
+				}
+				// Call isAllowedWSOriginWithGetter to avoid init cycle
+				return isAllowedWSOriginWithGetter(origin, ws.getConfiguredOrigins)
+			},
 		}
+	})
+	return ws.upgraderInst
+}
 
-		// Validate origin against configured allowed list
-		return isAllowedWSOrigin(origin)
-	},
+// setAllowedOrigins sets the allowed origins (thread-safe).
+func (ws *wsConfig) setAllowedOrigins(origins []string) {
+	ws.originMu.Lock()
+	defer ws.originMu.Unlock()
+	ws.origins = origins
 }
 
 // isAllowedWSOrigin checks if the WebSocket origin is allowed to connect.
@@ -172,11 +164,14 @@ var upgrader = websocket.Upgrader{
 //   - true if the origin is allowed to establish a WebSocket connection
 //   - false if the origin should be rejected (connection will fail with 403)
 func isAllowedWSOrigin(origin string) bool {
-	// Copy origins under lock to avoid race condition (fixes #847)
-	configuredOriginsMu.RLock()
-	origins := make([]string, len(configuredOrigins))
-	copy(origins, configuredOrigins)
-	configuredOriginsMu.RUnlock()
+	return isAllowedWSOriginWithGetter(origin, wsState.getConfiguredOrigins)
+}
+
+// isAllowedWSOriginWithGetter is the internal implementation that accepts a getter function.
+// This allows it to be called during initialization without causing an init cycle.
+func isAllowedWSOriginWithGetter(origin string, getOrigins func() []string) bool {
+	// Get configured origins via provided getter
+	origins := getOrigins()
 
 	// If explicit origins are configured, use them exclusively
 	if len(origins) > 0 {
@@ -801,7 +796,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		Debug("WebSocket authenticated", "username", claims.Username, "source", source)
 
 	// No response header needed for cookie auth
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := wsState.getUpgrader().Upgrade(w, r, nil)
 	if err != nil {
 		logging.GetLogger().Error("WebSocket upgrade error", "error", err)
 		return

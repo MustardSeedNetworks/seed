@@ -28,28 +28,29 @@ import (
 	"github.com/krisarmstrong/seed/internal/version"
 )
 
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "Start The Seed server",
-	Long: `Start The Seed network diagnostics server.
+func initServeCmd(state *cliState) {
+	serveCmd := &cobra.Command{
+		Use:   "serve",
+		Short: "Start The Seed server",
+		Long: `Start The Seed network diagnostics server.
 
 The server provides a web-based UI for network diagnostics, monitoring,
 and analysis. By default, it runs with HTTPS enabled on port 8443.
 
 Use the --dev flag to run in development mode (HTTP on port 8080).`,
-	Run: runServe,
+		Run: func(cmd *cobra.Command, args []string) {
+			runServe(cmd, args, state)
+		},
+	}
+	state.rootCmd.AddCommand(serveCmd)
 }
 
-func initServeCmd() {
-	rootCmd.AddCommand(serveCmd)
-}
-
-func runServe(_ *cobra.Command, _ []string) {
+func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	// Resolve config path using paths package
-	configPath := paths.ResolveConfigPath(cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
 	icmpAvailable := checkICMPCapabilities()
-	cfg := loadAndConfigureConfig(configPath, devMode)
+	cfg := loadAndConfigureConfig(configPath, state.devMode)
 	logPath := setupLogging(cfg)
 
 	// Check for deprecated SNMP settings after logging is initialized
@@ -58,7 +59,7 @@ func runServe(_ *cobra.Command, _ []string) {
 	netMgr := setupNetworkInterface(cfg, configPath)
 
 	// Create trusted proxies configuration
-	proxies := api.NewTrustedProxies(trustedProxies)
+	proxies := api.NewTrustedProxies(state.trustedProxies)
 	if !proxies.IsEmpty() {
 		logging.GetLogger().Info("Trusted proxies configured", "count", proxies.Count())
 	}

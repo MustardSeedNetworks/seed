@@ -156,9 +156,9 @@ func TestLoggingMiddleware(t *testing.T) {
 		Level: slog.LevelDebug,
 	})
 
-	logging.SetGlobalLogger(slog.New(baseHandler))
+	logging.ExportSetGlobalLogger(slog.New(baseHandler))
 
-	defer logging.ClearGlobalLogger()
+	defer logging.ExportClearGlobalLogger()
 
 	t.Run("logs request details", func(t *testing.T) {
 		buf.Reset()
@@ -364,9 +364,9 @@ func TestLoggingMiddleware_ClientIP(t *testing.T) {
 		Level: slog.LevelDebug,
 	})
 
-	logging.SetGlobalLogger(slog.New(baseHandler))
+	logging.ExportSetGlobalLogger(slog.New(baseHandler))
 
-	defer logging.ClearGlobalLogger()
+	defer logging.ExportClearGlobalLogger()
 
 	t.Run("logs X-Forwarded-For IP", func(t *testing.T) {
 		buf.Reset()
@@ -419,9 +419,9 @@ func TestMiddlewareChain(t *testing.T) {
 		Level: slog.LevelDebug,
 	})
 
-	logging.SetGlobalLogger(slog.New(baseHandler))
+	logging.ExportSetGlobalLogger(slog.New(baseHandler))
 
-	defer logging.ClearGlobalLogger()
+	defer logging.ExportClearGlobalLogger()
 
 	// Chain: RequestID -> Logging -> Handler
 	handler := logging.RequestIDMiddleware(

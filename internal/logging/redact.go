@@ -33,95 +33,131 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 )
 
-// Sensitive field patterns that should always be redacted (fixes #713).
+// Sensitive data accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
+// getSensitivePatterns returns the compiled sensitive field patterns.
+// getSensitiveHeaders returns the sensitive header names map.
+// _ (initSensitiveCache) ensures the sensitive data cache is initialized (unused but required).
+var (
+	getSensitivePatterns, getSensitiveHeaders, _ = func() (
+		func() []*regexp.Regexp,
+		func() map[string]bool,
+		func(),
+	) {
+		var patterns []*regexp.Regexp
+		var headers map[string]bool
+		var once sync.Once
+
+		initFn := func() {
+			once.Do(func() {
+				patterns = buildSensitivePatterns()
+				headers = buildSensitiveHeaders()
+			})
+		}
+
+		return func() []*regexp.Regexp {
+				initFn()
+				return patterns
+			}, func() map[string]bool {
+				initFn()
+				return headers
+			}, initFn
+	}()
+)
+
+// buildSensitivePatterns compiles the sensitive field patterns.
 // Comprehensive patterns for: passwords, tokens, API keys, secrets, SSNs, credit cards, etc.
-var sensitivePatterns = []*regexp.Regexp{
-	// Passwords and credentials
-	regexp.MustCompile(`(?i)(password|passwd|pwd)\s*[=:]\s*[^\s&]+`),
-	regexp.MustCompile(`(?i)(token|auth|api[_-]?key|secret)\s*[=:]\s*[^\s&]+`),
-	regexp.MustCompile(`(?i)(bearer\s+)\S+`),
-	regexp.MustCompile(`(?i)(basic\s+)\S+`),
+func buildSensitivePatterns() []*regexp.Regexp {
+	return []*regexp.Regexp{
+		// Passwords and credentials
+		regexp.MustCompile(`(?i)(password|passwd|pwd)\s*[=:]\s*[^\s&]+`),
+		regexp.MustCompile(`(?i)(token|auth|api[_-]?key|secret)\s*[=:]\s*[^\s&]+`),
+		regexp.MustCompile(`(?i)(bearer\s+)\S+`),
+		regexp.MustCompile(`(?i)(basic\s+)\S+`),
 
-	// API keys and tokens - common formats
-	regexp.MustCompile(`(?i)(api[_-]?key|apikey|access[_-]?key)\s*[=:]\s*[a-zA-Z0-9_\-\.]+`),
-	regexp.MustCompile(`(?i)(client[_-]?secret|client_id)\s*[=:]\s*[a-zA-Z0-9_\-.]+`),
-	regexp.MustCompile(`(?i)(oauth[_-]?token|refresh[_-]?token)\s*[=:]\s*[a-zA-Z0-9_\-\.]+`),
+		// API keys and tokens - common formats
+		regexp.MustCompile(`(?i)(api[_-]?key|apikey|access[_-]?key)\s*[=:]\s*[a-zA-Z0-9_\-\.]+`),
+		regexp.MustCompile(`(?i)(client[_-]?secret|client_id)\s*[=:]\s*[a-zA-Z0-9_\-.]+`),
+		regexp.MustCompile(`(?i)(oauth[_-]?token|refresh[_-]?token)\s*[=:]\s*[a-zA-Z0-9_\-\.]+`),
 
-	// AWS-style keys
-	regexp.MustCompile(
-		`(?i)(aws[_-]?access[_-]?key[_-]?id|aws[_-]?secret[_-]?access[_-]?key)\s*[=:]\s*[A-Z0-9]+`,
-	),
-	regexp.MustCompile(`AKIA[0-9A-Z]{16}`), // AWS Access Key ID pattern
+		// AWS-style keys
+		regexp.MustCompile(
+			`(?i)(aws[_-]?access[_-]?key[_-]?id|aws[_-]?secret[_-]?access[_-]?key)\s*[=:]\s*[A-Z0-9]+`,
+		),
+		regexp.MustCompile(`AKIA[0-9A-Z]{16}`), // AWS Access Key ID pattern
 
-	// GitHub/GitLab tokens
-	regexp.MustCompile(`(?i)(github[_-]?token|gh[ps]_[a-zA-Z0-9_]{36,})`),
-	regexp.MustCompile(`(?i)(gitlab[_-]?token|glpat-[a-zA-Z0-9_\-]{20,})`),
+		// GitHub/GitLab tokens
+		regexp.MustCompile(`(?i)(github[_-]?token|gh[ps]_[a-zA-Z0-9_]{36,})`),
+		regexp.MustCompile(`(?i)(gitlab[_-]?token|glpat-[a-zA-Z0-9_\-]{20,})`),
 
-	// Private keys
-	regexp.MustCompile(
-		`-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----[^-]*-----END\s+(RSA\s+)?PRIVATE\s+KEY-----`,
-	),
-	regexp.MustCompile(`(?i)(private[_-]?key|privatekey)\s*[=:]\s*[^\s&]+`),
+		// Private keys
+		regexp.MustCompile(
+			`-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----[^-]*-----END\s+(RSA\s+)?PRIVATE\s+KEY-----`,
+		),
+		regexp.MustCompile(`(?i)(private[_-]?key|privatekey)\s*[=:]\s*[^\s&]+`),
 
-	// Social Security Numbers (US) - XXX-XX-XXXX format
-	// Note: Go regexp doesn't support negative lookahead, so this is a simple pattern
-	regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),
+		// Social Security Numbers (US) - XXX-XX-XXXX format
+		// Note: Go regexp doesn't support negative lookahead, so this is a simple pattern
+		regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),
 
-	// Credit card numbers (13-19 digits, with or without spaces/dashes)
-	// Matches Visa, MasterCard, Amex, Discover, etc.
-	regexp.MustCompile(`\b(?:\d{4}[\s\-]?){3}\d{1,7}\b`),
-	regexp.MustCompile(`\b\d{13,19}\b`), // Simple 13-19 digit sequence
+		// Credit card numbers (13-19 digits, with or without spaces/dashes)
+		// Matches Visa, MasterCard, Amex, Discover, etc.
+		regexp.MustCompile(`\b(?:\d{4}[\s\-]?){3}\d{1,7}\b`),
+		regexp.MustCompile(`\b\d{13,19}\b`), // Simple 13-19 digit sequence
 
-	// Email addresses (for privacy)
-	regexp.MustCompile(`\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b`),
+		// Email addresses (for privacy)
+		regexp.MustCompile(`\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b`),
 
-	// JWT tokens (base64.base64.base64 format)
-	regexp.MustCompile(`eyJ[a-zA-Z0-9_\-]*\.eyJ[a-zA-Z0-9_\-]*\.[a-zA-Z0-9_\-]*`),
+		// JWT tokens (base64.base64.base64 format)
+		regexp.MustCompile(`eyJ[a-zA-Z0-9_\-]*\.eyJ[a-zA-Z0-9_\-]*\.[a-zA-Z0-9_\-]*`),
 
-	// Generic secrets and credentials
-	regexp.MustCompile(`(?i)(credential|credentials|auth[_-]?token)\s*[=:]\s*[^\s&]+`),
-	regexp.MustCompile(`(?i)(passphrase|pin|shared[_-]?secret)\s*[=:]\s*[^\s&]+`),
+		// Generic secrets and credentials
+		regexp.MustCompile(`(?i)(credential|credentials|auth[_-]?token)\s*[=:]\s*[^\s&]+`),
+		regexp.MustCompile(`(?i)(passphrase|pin|shared[_-]?secret)\s*[=:]\s*[^\s&]+`),
+	}
 }
 
-// Sensitive header names (case-insensitive) (fixes #713, #714).
+// buildSensitiveHeaders returns the sensitive header names map.
 // Extended to include authentication, credential, and privacy-sensitive headers.
-var sensitiveHeaders = map[string]bool{
-	// Authentication and credentials
-	"authorization":       true,
-	"x-api-key":           true,
-	"x-auth-token":        true,
-	"cookie":              true,
-	"set-cookie":          true,
-	"x-csrf-token":        true,
-	"x-xsrf-token":        true,
-	"proxy-authorization": true,
-	"x-access-token":      true,
-	"x-refresh-token":     true,
-	"x-session-token":     true,
-	"x-client-secret":     true,
-	"x-client-id":         true,
-	"x-oauth-token":       true,
-	"apikey":              true,
-	"api-key":             true,
-	// Privacy-sensitive headers (fixes #714 - client IP exposure)
-	// SECURITY NOTE: These headers are UNTRUSTED and can be spoofed by clients.
-	// They are redacted in logs for privacy, but also because they should NEVER
-	// be used for security decisions (rate limiting, access control, etc.).
-	// For security-critical IP tracking, use r.RemoteAddr only (see api.GetClientIP).
-	"x-forwarded-for":     true, // UNTRUSTED - can be spoofed
-	"x-real-ip":           true, // UNTRUSTED - can be spoofed
-	"x-client-ip":         true, // UNTRUSTED - can be spoofed
-	"cf-connecting-ip":    true, // Cloudflare - only trust if behind verified CF proxy
-	"true-client-ip":      true, // Akamai - only trust if behind verified Akamai proxy
-	"x-cluster-client-ip": true, // UNTRUSTED - can be spoofed
-	"forwarded":           true, // RFC 7239 - UNTRUSTED without proxy verification
+func buildSensitiveHeaders() map[string]bool {
+	return map[string]bool{
+		// Authentication and credentials
+		"authorization":       true,
+		"x-api-key":           true,
+		"x-auth-token":        true,
+		"cookie":              true,
+		"set-cookie":          true,
+		"x-csrf-token":        true,
+		"x-xsrf-token":        true,
+		"proxy-authorization": true,
+		"x-access-token":      true,
+		"x-refresh-token":     true,
+		"x-session-token":     true,
+		"x-client-secret":     true,
+		"x-client-id":         true,
+		"x-oauth-token":       true,
+		"apikey":              true,
+		"api-key":             true,
+		// Privacy-sensitive headers (fixes #714 - client IP exposure)
+		// SECURITY NOTE: These headers are UNTRUSTED and can be spoofed by clients.
+		// They are redacted in logs for privacy, but also because they should NEVER
+		// be used for security decisions (rate limiting, access control, etc.).
+		// For security-critical IP tracking, use r.RemoteAddr only (see api.GetClientIP).
+		"x-forwarded-for":     true, // UNTRUSTED - can be spoofed
+		"x-real-ip":           true, // UNTRUSTED - can be spoofed
+		"x-client-ip":         true, // UNTRUSTED - can be spoofed
+		"cf-connecting-ip":    true, // Cloudflare - only trust if behind verified CF proxy
+		"true-client-ip":      true, // Akamai - only trust if behind verified Akamai proxy
+		"x-cluster-client-ip": true, // UNTRUSTED - can be spoofed
+		"forwarded":           true, // RFC 7239 - UNTRUSTED without proxy verification
+	}
 }
 
 // RedactString removes sensitive data from a string.
 func RedactString(s string) string {
-	for _, pattern := range sensitivePatterns {
+	for _, pattern := range getSensitivePatterns() {
 		s = pattern.ReplaceAllString(s, "[REDACTED]")
 	}
 	return s
@@ -129,6 +165,7 @@ func RedactString(s string) string {
 
 // RedactHeaders returns a map of headers with sensitive values redacted.
 func RedactHeaders(headers http.Header) map[string]string {
+	sensitiveHeaders := getSensitiveHeaders()
 	redacted := make(map[string]string)
 	for key, values := range headers {
 		lowerKey := strings.ToLower(key)

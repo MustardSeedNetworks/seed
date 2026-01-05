@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"gopkg.in/yaml.v3"
@@ -152,24 +153,30 @@ func extractValidationErrors(err *jsonschema.ValidationError) []ValidationError 
 	return errors
 }
 
-// Global validator (lazy initialized).
-var (
-	globalValidator        *SchemaValidator
-	errGlobalValidatorInit error
-)
+// schemaValidatorState holds the lazy-initialized schema validator to satisfy gochecknoglobals.
+type schemaValidatorState struct {
+	once      sync.Once
+	validator *SchemaValidator
+	err       error
+}
+
+// validatorState provides thread-safe lazy initialization of the schema validator.
+var validatorState = func() *schemaValidatorState {
+	return &schemaValidatorState{}
+}()
 
 // ValidateWithSchema validates a Config against the embedded JSON schema.
 // Returns nil if valid, otherwise returns validation errors.
-// This is a convenience function that uses a global validator instance.
+// This is a convenience function that uses a lazily-initialized validator instance.
 func ValidateWithSchema(cfg *Config) []ValidationError {
-	if globalValidator == nil && errGlobalValidatorInit == nil {
-		globalValidator, errGlobalValidatorInit = NewSchemaValidator()
-	}
+	validatorState.once.Do(func() {
+		validatorState.validator, validatorState.err = NewSchemaValidator()
+	})
 
-	if errGlobalValidatorInit != nil {
+	if validatorState.err != nil {
 		// Schema validation unavailable, return nil to fall back to struct validation
 		return nil
 	}
 
-	return globalValidator.ValidateConfig(cfg)
+	return validatorState.validator.ValidateConfig(cfg)
 }

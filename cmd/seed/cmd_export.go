@@ -12,20 +12,19 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-var exportCmd = &cobra.Command{
-	Use:   "export-config",
-	Short: "Export configuration",
-	Long:  "Export configuration with secrets redacted (safe for sharing)",
-	Run:   runExport,
-}
-
 const redactedValue = "[REDACTED]"
 
 func initExportCmd() {
+	exportCmd := &cobra.Command{
+		Use:   "export-config",
+		Short: "Export configuration",
+		Long:  "Export configuration with secrets redacted (safe for sharing)",
+		Run:   runExport,
+	}
 	exportCmd.Flags().StringP("output", "o", "-", "Output file (- for stdout)")
 	exportCmd.Flags().StringP("format", "f", "yaml", "Output format (yaml or json)")
 	exportCmd.Flags().Bool("no-redact", false, "Do not redact secrets (DANGEROUS)")
-	rootCmd.AddCommand(exportCmd)
+	cli.rootCmd.AddCommand(exportCmd)
 }
 
 func runExport(cmd *cobra.Command, _ []string) {
@@ -46,7 +45,7 @@ func runExport(cmd *cobra.Command, _ []string) {
 	}
 
 	// Resolve config path
-	configPath := paths.ResolveConfigPath(cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
 
 	// Load config
 	cfg, err := config.Load(configPath)

@@ -592,7 +592,11 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		return nil
 	}
 	if len(p.snmpConfig.Communities) == 0 && len(p.snmpConfig.V3Credentials) == 0 {
-		logging.GetLogger().DebugContext(ctx, "SNMP probe skipped - no communities or v3 credentials configured", "ip", ip)
+		logging.GetLogger().DebugContext(
+			ctx,
+			"SNMP probe skipped - no communities or v3 credentials configured",
+			"ip", ip,
+		)
 		return nil
 	}
 

@@ -199,13 +199,15 @@ func InitLoggerWithBroadcaster(cfg *LoggingConfig, broadcaster *LogBroadcaster) 
 	}
 
 	// Get the current handler and wrap it with streaming
-	loggerMu.Lock()
-	defer loggerMu.Unlock()
-
-	currentHandler := globalLogger.Handler()
+	currentLogger := getLogger()
+	if currentLogger == nil {
+		currentLogger = slog.Default()
+	}
+	currentHandler := currentLogger.Handler()
 	streamingHandler := NewStreamingHandler(currentHandler, broadcaster)
-	globalLogger = slog.New(streamingHandler)
-	slog.SetDefault(globalLogger)
+	newLogger := slog.New(streamingHandler)
+	setLogger(newLogger)
+	slog.SetDefault(newLogger)
 
 	return nil
 }

@@ -24,7 +24,7 @@ type MigrationManager struct {
 // NewMigrationManager creates a new migration manager with the default migrations.
 func NewMigrationManager() *MigrationManager {
 	return &MigrationManager{
-		migrations: defaultMigrations,
+		migrations: getDefaultMigrations(),
 	}
 }
 
@@ -130,33 +130,35 @@ func (m *MigrationManager) updateVersion(data []byte, newVersion int) ([]byte, e
 	return newData, nil
 }
 
-// defaultMigrations contains the built-in migrations.
+// getDefaultMigrations returns the built-in migrations.
 // Add new migrations here when making breaking config changes.
-var defaultMigrations = []Migration{
-	// Example migration (commented out - uncomment and modify when needed):
-	// {
-	// 	FromVersion: 1,
-	// 	ToVersion:   2,
-	// 	Description: "Rename network_discovery.enabled to network_discovery.active",
-	// 	Migrate: func(data []byte) ([]byte, error) {
-	// 		// Parse as generic map for field renaming
-	// 		var raw map[string]interface{}
-	// 		if err := yaml.Unmarshal(data, &raw); err != nil {
-	// 			return nil, err
-	// 		}
-	//
-	// 		// Perform the rename
-	// 		if nd, ok := raw["network_discovery"].(map[string]interface{}); ok {
-	// 			if enabled, exists := nd["enabled"]; exists {
-	// 				nd["active"] = enabled
-	// 				delete(nd, "enabled")
-	// 			}
-	// 		}
-	//
-	// 		// Update version
-	// 		raw["version"] = 2
-	//
-	// 		return yaml.Marshal(raw)
-	// 	},
-	// },
+func getDefaultMigrations() []Migration {
+	return []Migration{
+		// Example migration (commented out - uncomment and modify when needed):
+		// {
+		// 	FromVersion: 1,
+		// 	ToVersion:   2,
+		// 	Description: "Rename network_discovery.enabled to network_discovery.active",
+		// 	Migrate: func(data []byte) ([]byte, error) {
+		// 		// Parse as generic map for field renaming
+		// 		var raw map[string]interface{}
+		// 		if err := yaml.Unmarshal(data, &raw); err != nil {
+		// 			return nil, err
+		// 		}
+		//
+		// 		// Perform the rename
+		// 		if nd, ok := raw["network_discovery"].(map[string]interface{}); ok {
+		// 			if enabled, exists := nd["enabled"]; exists {
+		// 				nd["active"] = enabled
+		// 				delete(nd, "enabled")
+		// 			}
+		// 		}
+		//
+		// 		// Update version
+		// 		raw["version"] = 2
+		//
+		// 		return yaml.Marshal(raw)
+		// 	},
+		// },
+	}
 }
