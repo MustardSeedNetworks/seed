@@ -36,14 +36,18 @@ var (
 	bundleOnce sync.Once
 )
 
-// SupportedLanguages lists all available language codes.
-var SupportedLanguages = []string{"en", "es"}
-
 // DefaultLanguage is the fallback language.
 const DefaultLanguage = "en"
 
-// namespaces lists all translation file namespaces.
-var namespaces = []string{"common", "cards", "settings", "errors", "validation", "api", "help"}
+// GetSupportedLanguages returns all available language codes.
+func GetSupportedLanguages() []string {
+	return []string{"en", "es"}
+}
+
+// getNamespaces returns all translation file namespaces.
+func getNamespaces() []string {
+	return []string{"common", "cards", "settings", "errors", "validation", "api", "help"}
+}
 
 // GetBundle returns the singleton i18n bundle with all translations loaded.
 func GetBundle() *i18n.Bundle {
@@ -52,8 +56,8 @@ func GetBundle() *i18n.Bundle {
 		bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
 		// Load all locale files for each language
-		for _, lang := range SupportedLanguages {
-			for _, ns := range namespaces {
+		for _, lang := range GetSupportedLanguages() {
+			for _, ns := range getNamespaces() {
 				path := fmt.Sprintf("locales/%s/%s.json", lang, ns)
 				data, err := localesFS.ReadFile(path)
 				if err != nil {
@@ -154,7 +158,7 @@ func normalizeLanguage(lang string) string {
 	lang = strings.ToLower(strings.TrimSpace(lang))
 
 	// Validate supported language
-	if slices.Contains(SupportedLanguages, lang) {
+	if slices.Contains(GetSupportedLanguages(), lang) {
 		return lang
 	}
 
@@ -196,5 +200,5 @@ func (l *Localizer) Language() string {
 // IsSupported checks if a language code is supported.
 func IsSupported(lang string) bool {
 	lang = normalizeLanguage(lang)
-	return slices.Contains(SupportedLanguages, lang)
+	return slices.Contains(GetSupportedLanguages(), lang)
 }

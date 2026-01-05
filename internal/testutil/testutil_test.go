@@ -214,7 +214,7 @@ func TestMustBuild(t *testing.T) {
 
 func TestFixtures(t *testing.T) {
 	t.Run("MinimalConfig is valid", func(t *testing.T) {
-		cfg := testutil.Fixtures.MinimalConfig()
+		cfg := testutil.MinimalValidConfig()
 
 		if cfg == nil {
 			t.Fatal("expected non-nil config")
@@ -234,7 +234,7 @@ func TestFixtures(t *testing.T) {
 	})
 
 	t.Run("InsecureConfig has empty password", func(t *testing.T) {
-		cfg := testutil.Fixtures.InsecureConfig()
+		cfg := testutil.InsecureConfig()
 
 		if cfg == nil {
 			t.Fatal("expected non-nil config")
@@ -246,7 +246,7 @@ func TestFixtures(t *testing.T) {
 	})
 
 	t.Run("FullConfig has all features", func(t *testing.T) {
-		cfg := testutil.Fixtures.FullConfig()
+		cfg := testutil.FullScanConfig()
 
 		if cfg == nil {
 			t.Fatal("expected non-nil config")

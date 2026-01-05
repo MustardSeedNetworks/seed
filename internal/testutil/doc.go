@@ -22,5 +22,5 @@
 //		Build()
 //
 //	// Use pre-built fixtures
-//	minimalCfg := testutil.Fixtures.MinimalConfig()
+//	minimalCfg := testutil.MinimalValidConfig()
 package testutil
