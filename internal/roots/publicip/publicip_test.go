@@ -74,7 +74,7 @@ func TestParseIpifyJSON(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := publicip.ParseIpifyJSON(tt.input)
+			got, err := publicip.ExportParseIpifyJSON(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseIpifyJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -109,7 +109,7 @@ func TestParseMyIPJSON(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := publicip.ParseMyIPJSON(tt.input)
+			got, err := publicip.ExportParseMyIPJSON(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseMyIPJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -162,7 +162,7 @@ func TestParseTextIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := publicip.ParseTextIP(tt.input)
+			got, err := publicip.ExportParseTextIP(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseTextIP() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -187,7 +187,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			name:       "successful JSON response",
 			statusCode: http.StatusOK,
 			body:       `{"ip":"198.51.100.1"}`,
-			parser:     publicip.ParseIpifyJSON,
+			parser:     publicip.ExportParseIpifyJSON,
 			wantIP:     "198.51.100.1",
 			wantErr:    false,
 		},
@@ -195,7 +195,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			name:       "successful text response",
 			statusCode: http.StatusOK,
 			body:       "198.51.100.2\n",
-			parser:     publicip.ParseTextIP,
+			parser:     publicip.ExportParseTextIP,
 			wantIP:     "198.51.100.2",
 			wantErr:    false,
 		},
@@ -203,7 +203,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			name:       "HTTP 500 error",
 			statusCode: http.StatusInternalServerError,
 			body:       "Internal Server Error",
-			parser:     publicip.ParseTextIP,
+			parser:     publicip.ExportParseTextIP,
 			wantIP:     "",
 			wantErr:    true,
 		},
@@ -211,7 +211,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			name:       "HTTP 404 error",
 			statusCode: http.StatusNotFound,
 			body:       "Not Found",
-			parser:     publicip.ParseTextIP,
+			parser:     publicip.ExportParseTextIP,
 			wantIP:     "",
 			wantErr:    true,
 		},
@@ -232,7 +232,7 @@ func TestChecker_FetchFromService(t *testing.T) {
 			defer server.Close()
 
 			c := publicip.NewChecker()
-			got, err := publicip.FetchFromService(c, context.Background(), server.URL, tt.parser)
+			got, err := publicip.ExportFetchFromService(c, context.Background(), server.URL, tt.parser)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("fetchFromService() error = %v, wantErr %v", err, tt.wantErr)
@@ -256,7 +256,7 @@ func TestChecker_FetchFromService_ContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately.
 
-	_, err := publicip.FetchFromService(c, ctx, server.URL, publicip.ParseTextIP)
+	_, err := publicip.ExportFetchFromService(c, ctx, server.URL, publicip.ExportParseTextIP)
 	if err == nil {
 		t.Error("expected error for canceled context")
 	}
@@ -346,7 +346,7 @@ func TestChecker_FetchIPv6_ValidatesIPv6(t *testing.T) {
 	// that the validation logic exists by checking the code path.
 	// This is a behavioral test - fetchIPv6 checks for ":" in the result.
 	ctx := context.Background()
-	ip, _ := publicip.FetchFromService(c, ctx, server.URL, publicip.ParseIpifyJSON)
+	ip, _ := publicip.ExportFetchFromService(c, ctx, server.URL, publicip.ExportParseIpifyJSON)
 
 	// The service returns an IPv4, which shouldn't contain ":".
 	if strings.Contains(ip, ":") {

@@ -63,7 +63,7 @@ func TestParseLevel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := logging.ParseLevel(tt.input)
+			result := logging.ExportParseLevel(tt.input)
 			if result != tt.expected {
 				t.Errorf("ParseLevel(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
@@ -216,7 +216,7 @@ func TestRequestIDFromContext(t *testing.T) {
 
 	t.Run("returns empty string for context with wrong type", func(t *testing.T) {
 		// Create context with wrong value type
-		ctx := context.WithValue(context.Background(), logging.RequestIDKeyValue, 12345)
+		ctx := context.WithValue(context.Background(), logging.ExportRequestIDKeyValue(), 12345)
 		result := logging.RequestIDFromContext(ctx)
 		if result != "" {
 			t.Errorf("RequestIDFromContext(wrong type) = %q, want empty string", result)

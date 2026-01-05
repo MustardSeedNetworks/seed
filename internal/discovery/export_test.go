@@ -8,13 +8,25 @@ import (
 	"sync"
 )
 
-// Export private functions for testing.
-var (
-	IncrementIP           = incrementIP
-	NormalizeMac          = normalizeMac
-	GuessOSFromTTL        = guessOSFromTTL
-	SplitSubnetIntoChunks = splitSubnetIntoChunks
-)
+// ExportIncrementIP exposes incrementIP for testing.
+func ExportIncrementIP(ip net.IP, n int) net.IP {
+	return incrementIP(ip, n)
+}
+
+// ExportNormalizeMac exposes normalizeMac for testing.
+func ExportNormalizeMac(mac string) string {
+	return normalizeMac(mac)
+}
+
+// ExportGuessOSFromTTL exposes guessOSFromTTL for testing.
+func ExportGuessOSFromTTL(ttl int) string {
+	return guessOSFromTTL(ttl)
+}
+
+// ExportSplitSubnetIntoChunks exposes splitSubnetIntoChunks for testing.
+func ExportSplitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
+	return splitSubnetIntoChunks(subnet, maxChunks)
+}
 
 // Export NVD rate limit constants for testing.
 const (

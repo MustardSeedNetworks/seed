@@ -355,7 +355,7 @@ func TestIsSensitiveKey(t *testing.T) {
 
 	for _, key := range sensitiveKeys {
 		t.Run(key, func(t *testing.T) {
-			if !logging.IsSensitiveKey(key) {
+			if !logging.ExportIsSensitiveKey(key) {
 				t.Errorf("isSensitiveKey(%q) = false, want true", key)
 			}
 		})
@@ -376,7 +376,7 @@ func TestIsSensitiveKey(t *testing.T) {
 
 	for _, key := range nonSensitiveKeys {
 		t.Run(key, func(t *testing.T) {
-			if logging.IsSensitiveKey(key) {
+			if logging.ExportIsSensitiveKey(key) {
 				t.Errorf("isSensitiveKey(%q) = true, want false", key)
 			}
 		})
@@ -399,7 +399,7 @@ func TestToLower(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := logging.ToLower(tt.input)
+			result := logging.ExportToLower(tt.input)
 			if result != tt.expected {
 				t.Errorf("toLower(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -427,7 +427,7 @@ func TestContains(t *testing.T) {
 	for _, tt := range tests {
 		name := tt.s + "_" + tt.substr
 		t.Run(name, func(t *testing.T) {
-			result := logging.Contains(tt.s, tt.substr)
+			result := logging.ExportContains(tt.s, tt.substr)
 			if result != tt.expected {
 				t.Errorf("contains(%q, %q) = %v, want %v", tt.s, tt.substr, result, tt.expected)
 			}

@@ -120,7 +120,7 @@ func TestGenerateRequestID(t *testing.T) {
 	t.Run("generates unique IDs", func(t *testing.T) {
 		ids := make(map[string]bool)
 		for range 100 {
-			id := logging.GenerateRequestID()
+			id := logging.ExportGenerateRequestID()
 			if ids[id] {
 				t.Errorf("generateRequestID() produced duplicate ID: %s", id)
 			}
@@ -130,7 +130,7 @@ func TestGenerateRequestID(t *testing.T) {
 
 	t.Run("generates correct length", func(t *testing.T) {
 		for range 10 {
-			id := logging.GenerateRequestID()
+			id := logging.ExportGenerateRequestID()
 			if len(id) != 16 {
 				t.Errorf("generateRequestID() length = %d, want 16", len(id))
 			}
@@ -138,7 +138,7 @@ func TestGenerateRequestID(t *testing.T) {
 	})
 
 	t.Run("generates valid hex", func(t *testing.T) {
-		id := logging.GenerateRequestID()
+		id := logging.ExportGenerateRequestID()
 		for _, c := range id {
 			isDigit := c >= '0' && c <= '9'
 			isHexLetter := c >= 'a' && c <= 'f'

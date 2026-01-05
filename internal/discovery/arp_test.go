@@ -111,7 +111,7 @@ func TestIncrementIP(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ip := net.ParseIP(tt.ip).To4()
-			result := discovery.IncrementIP(ip, tt.n)
+			result := discovery.ExportIncrementIP(ip, tt.n)
 			if result.String() != tt.expected {
 				t.Errorf(
 					"incrementIP(%s, %d) = %s, want %s",
@@ -128,13 +128,13 @@ func TestIncrementIP(t *testing.T) {
 func TestIncrementIP_Nil(t *testing.T) {
 	// IPv6 address should return nil (only IPv4 supported)
 	ip := net.ParseIP("::1")
-	result := discovery.IncrementIP(ip, 1)
+	result := discovery.ExportIncrementIP(ip, 1)
 	if result != nil {
 		t.Errorf("Expected nil for IPv6, got %v", result)
 	}
 
 	// nil input
-	result = discovery.IncrementIP(nil, 1)
+	result = discovery.ExportIncrementIP(nil, 1)
 	if result != nil {
 		t.Errorf("Expected nil for nil input, got %v", result)
 	}
@@ -156,7 +156,7 @@ func TestNormalizeMac(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := discovery.NormalizeMac(tt.input)
+			result := discovery.ExportNormalizeMac(tt.input)
 			if result != tt.expected {
 				t.Errorf("normalizeMac(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -188,7 +188,7 @@ func TestGuessOSFromTTL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			result := discovery.GuessOSFromTTL(tt.ttl)
+			result := discovery.ExportGuessOSFromTTL(tt.ttl)
 			if result != tt.expected {
 				t.Errorf("guessOSFromTTL(%d) = %q, want %q", tt.ttl, result, tt.expected)
 			}
@@ -422,7 +422,7 @@ func TestSplitSubnetIntoChunks(t *testing.T) {
 				t.Fatalf("Invalid CIDR %s: %v", tt.cidr, err)
 			}
 
-			chunks := discovery.SplitSubnetIntoChunks(subnet, tt.maxChunks)
+			chunks := discovery.ExportSplitSubnetIntoChunks(subnet, tt.maxChunks)
 
 			if len(chunks) != tt.expectedChunks {
 				t.Errorf("Expected %d chunks, got %d", tt.expectedChunks, len(chunks))
@@ -489,7 +489,7 @@ func TestSplitSubnetIntoChunks_MaxChunksCap(t *testing.T) {
 	_, subnet, _ := net.ParseCIDR("10.0.0.0/8")
 
 	// With cap of 16, should only get 16 chunks
-	chunks := discovery.SplitSubnetIntoChunks(subnet, 16)
+	chunks := discovery.ExportSplitSubnetIntoChunks(subnet, 16)
 	if len(chunks) != 16 {
 		t.Errorf("/8 with maxChunks=16: expected 16 chunks, got %d", len(chunks))
 	}
@@ -510,7 +510,7 @@ func TestSplitSubnetIntoChunks_DefaultCap(t *testing.T) {
 	_, subnet, _ := net.ParseCIDR("10.0.0.0/8")
 
 	// With default cap, should get MaxChunksDefault chunks
-	chunks := discovery.SplitSubnetIntoChunks(subnet, 0)
+	chunks := discovery.ExportSplitSubnetIntoChunks(subnet, 0)
 	if len(chunks) != discovery.MaxChunksDefault {
 		t.Errorf(
 			"/8 with default cap: expected %d chunks, got %d",
