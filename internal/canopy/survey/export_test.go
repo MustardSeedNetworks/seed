@@ -106,7 +106,7 @@ func ExportMapHeatmapTypeToValueType(ht HeatmapType) string {
 }
 
 // ExportGetColorScaleForType exports getColorScaleForType for testing.
-func ExportGetColorScaleForType(ht HeatmapType) *ColorScale {
+func ExportGetColorScaleForType(ht HeatmapType) ColorScale {
 	return getColorScaleForType(ht)
 }
 
