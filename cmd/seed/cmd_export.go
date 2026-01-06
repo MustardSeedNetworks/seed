@@ -14,20 +14,22 @@ import (
 
 const redactedValue = "[REDACTED]"
 
-func initExportCmd() {
+func initExportCmd(state *cliState) {
 	exportCmd := &cobra.Command{
 		Use:   "export-config",
 		Short: "Export configuration",
 		Long:  "Export configuration with secrets redacted (safe for sharing)",
-		Run:   runExport,
+		Run: func(cmd *cobra.Command, args []string) {
+			runExport(cmd, args, state)
+		},
 	}
 	exportCmd.Flags().StringP("output", "o", "-", "Output file (- for stdout)")
 	exportCmd.Flags().StringP("format", "f", "yaml", "Output format (yaml or json)")
 	exportCmd.Flags().Bool("no-redact", false, "Do not redact secrets (DANGEROUS)")
-	cli.rootCmd.AddCommand(exportCmd)
+	state.rootCmd.AddCommand(exportCmd)
 }
 
-func runExport(cmd *cobra.Command, _ []string) {
+func runExport(cmd *cobra.Command, _ []string, state *cliState) {
 	output, err := cmd.Flags().GetString("output")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting output flag: %v\n", err)
@@ -45,7 +47,7 @@ func runExport(cmd *cobra.Command, _ []string) {
 	}
 
 	// Resolve config path
-	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
 	// Load config
 	cfg, err := config.Load(configPath)

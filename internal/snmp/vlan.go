@@ -1,5 +1,3 @@
-// Package snmp provides SNMP query functionality for network device discovery.
-// This file implements Q-BRIDGE-MIB (IEEE 802.1Q) VLAN collection for L2 topology.
 package snmp
 
 import (

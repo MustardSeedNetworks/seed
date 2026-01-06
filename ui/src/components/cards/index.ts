@@ -35,24 +35,24 @@
  * Dependencies: Individual card component files
  */
 
-export { CableCard, type CableData } from "./CableCard";
-export { DnsCard, type DnsData } from "./DNSCard";
-export { GatewayCard, type GatewayData } from "./GatewayCard";
-export { LinkCard, type LinkData } from "./LinkCard";
-export { LogViewerCard, type LogViewerCardProps } from "./LogViewerCard";
+export { CableCard, type CableData } from "./cable-card";
+export { DnsCard, type DnsData } from "./dns-card";
+export { GatewayCard, type GatewayData } from "./gateway-card";
+export { LinkCard, type LinkData } from "./link-card";
+export { LogViewerCard, type LogViewerCardProps } from "./log-viewer-card";
 export {
   type DHCPData,
   type DHCPTiming,
   NetworkCard,
   type PublicIPInfo,
-} from "./NetworkCard";
+} from "./network-card";
 export {
   type DiscoveredDevice,
   type DiscoveryStatus,
   NetworkDiscoveryCard,
   type NetworkDiscoveryData,
-} from "./NetworkDiscoveryCard";
-export { PathDiscoveryCard } from "./PathDiscoveryCard";
-export { PublicIpCard, type PublicIpData } from "./PublicIPCard";
-export { SwitchCard, type SwitchData, type VlanData } from "./SwitchCard";
-export { WiFiCard, type WiFiData } from "./WiFiCard";
+} from "./network-discovery-card";
+export { PathDiscoveryCard } from "./path-discovery-card";
+export { PublicIpCard, type PublicIpData } from "./public-ip-card";
+export { SwitchCard, type SwitchData, type VlanData } from "./switch-card";
+export { WiFiCard, type WiFiData } from "./wifi-card";

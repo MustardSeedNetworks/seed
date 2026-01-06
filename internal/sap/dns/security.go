@@ -1,10 +1,3 @@
-// Package dns provides DNS security scanning functionality.
-//
-// This file implements security checks for DNS servers:
-//   - Open resolver detection
-//   - DNS rebinding vulnerability detection
-//   - Response amplification factor calculation
-//   - DNSSEC validation support detection
 package dns
 
 import (

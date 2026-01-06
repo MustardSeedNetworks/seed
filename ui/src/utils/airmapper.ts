@@ -25,7 +25,7 @@
  * ```
  */
 
-import JSZip from "jszip";
+import JsZip from "jszip";
 
 /** Location point from AirMapper */
 export interface AirMapperLocation {
@@ -155,17 +155,18 @@ function toMeters(value: number, unit: string): number {
  * @param data - ArrayBuffer of the .amp file
  * @returns Parse result with extracted data or error
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Parser handles many file format variations
 export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperParseResult> {
   const warnings: string[] = [];
 
   try {
     // Load ZIP archive
-    const zip = await JSZip.loadAsync(data);
+    const zip = await JsZip.loadAsync(data);
 
     // Find files by extension
-    let serialFile: JSZip.JSZipObject | null = null;
-    let jpgFile: JSZip.JSZipObject | null = null;
-    let surveyResultFile: JSZip.JSZipObject | null = null;
+    let serialFile: JsZip.JSZipObject | null = null;
+    let jpgFile: JsZip.JSZipObject | null = null;
+    let surveyResultFile: JsZip.JSZipObject | null = null;
 
     for (const [filename, file] of Object.entries(zip.files)) {
       if (file.dir) continue;

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Complex component
 /**
  * Health Checks Hook
  *

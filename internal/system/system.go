@@ -16,6 +16,11 @@ import (
 	"github.com/shirou/gopsutil/v3/process"
 )
 
+const (
+	cpuSampleInterval = 100 * time.Millisecond
+	cpuTickerInterval = 2 * time.Second
+)
+
 // cpuCacheState holds the CPU sampling state.
 type cpuCacheState struct {
 	mu      sync.RWMutex
@@ -29,7 +34,7 @@ type cpuCacheState struct {
 // getCachedCPUPercent returns the cached CPU percentage.
 // startCPUSampler starts the background CPU sampler.
 var (
-	getCPUCache, getCachedCPUPercent, startCPUSampler = func() (
+	_, getCachedCPUPercent, startCPUSampler = func() (
 		func() *cpuCacheState,
 		func() float64,
 		func(),
@@ -40,13 +45,13 @@ var (
 			state.stop = make(chan struct{})
 			go func() {
 				// Take initial sample immediately
-				if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil && len(pct) > 0 {
+				if pct, err := cpu.Percent(cpuSampleInterval, false); err == nil && len(pct) > 0 {
 					state.mu.Lock()
 					state.percent = pct[0]
 					state.mu.Unlock()
 				}
 
-				ticker := time.NewTicker(2 * time.Second)
+				ticker := time.NewTicker(cpuTickerInterval)
 				defer ticker.Stop()
 
 				for {
@@ -54,7 +59,7 @@ var (
 					case <-state.stop:
 						return
 					case <-ticker.C:
-						if pct, err := cpu.Percent(100*time.Millisecond, false); err == nil &&
+						if pct, err := cpu.Percent(cpuSampleInterval, false); err == nil &&
 							len(pct) > 0 {
 							state.mu.Lock()
 							state.percent = pct[0]
@@ -100,7 +105,7 @@ type processCacheState struct {
 // clearProcessCache clears the process cache for testing.
 // getCachedProcesses returns cached top processes (non-blocking).
 var (
-	getProcessCache, clearProcessCache, getCachedProcesses = func() (
+	_, clearProcessCache, getCachedProcesses = func() (
 		func() *processCacheState,
 		func(),
 		func() ([]ProcessInfo, []ProcessInfo),

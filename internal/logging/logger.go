@@ -60,10 +60,12 @@ type loggerState struct {
 	mu     sync.RWMutex
 }
 
-// Logger accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
+// Logger accessor functions use closure-encapsulated state for thread-safe singleton access.
 // getLogger returns the global logger instance.
 // setLogger sets the global logger instance.
 // clearLogger resets the global logger to nil.
+//
+//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
 var (
 	getLogger, setLogger, clearLogger = func() (
 		func() *slog.Logger,

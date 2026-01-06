@@ -51,18 +51,45 @@ type NetworkDiscoveryDefaults struct {
 	AutoScan       bool          // Auto-scan on startup
 }
 
+// Test defaults accessor functions use closure-encapsulated state for thread-safe singleton access.
+// getTestDefaults returns the cached test defaults instance.
+// setTestDefaults sets the cached test defaults instance.
+// getTestDefaultsOnce returns the sync.Once for lazy initialization.
+//
+//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
 var (
-	testDefaults     *TestDefaults
-	testDefaultsOnce sync.Once
+	getTestDefaults, setTestDefaults, getTestDefaultsOnce = func() (
+		func() *TestDefaults,
+		func(*TestDefaults),
+		func() *sync.Once,
+	) {
+		var (
+			mu       sync.RWMutex
+			defaults *TestDefaults
+			once     sync.Once
+		)
+
+		return func() *TestDefaults {
+				mu.RLock()
+				defer mu.RUnlock()
+				return defaults
+			}, func(d *TestDefaults) {
+				mu.Lock()
+				defer mu.Unlock()
+				defaults = d
+			}, func() *sync.Once {
+				return &once
+			}
+	}()
 )
 
 // GetTestDefaults returns singleton test defaults derived from config.DefaultConfig().
 // This function uses lazy initialization to compute expensive values only once.
 func GetTestDefaults() *TestDefaults {
-	testDefaultsOnce.Do(func() {
+	getTestDefaultsOnce().Do(func() {
 		cfg := config.DefaultConfig()
 
-		testDefaults = &TestDefaults{
+		setTestDefaults(&TestDefaults{
 			Auth: AuthDefaults{
 				Username:     "admin",
 				Password:     "TestP@ssw0rd!Secure123",
@@ -88,8 +115,8 @@ func GetTestDefaults() *TestDefaults {
 				ScanTimeout:    cfg.NetworkDiscovery.ScanTimeout,
 				AutoScan:       cfg.NetworkDiscovery.AutoScan,
 			},
-		}
+		})
 	})
 
-	return testDefaults
+	return getTestDefaults()
 }

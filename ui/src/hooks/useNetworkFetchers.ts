@@ -1,3 +1,4 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Complex component
 /**
  * Network Data Fetchers Hook
  *
@@ -437,6 +438,7 @@ export function useNetworkFetchers({
           ...prev,
           cable: {
             supported: data.supported || false,
+            // biome-ignore lint/style/useExplicitLengthCheck: data.length is cable length property, not array
             length: data.length || null,
             status: data.status || "unknown",
             faults: data.faults || [],
@@ -507,6 +509,7 @@ export function useNetworkFetchers({
             deviceCount: 0,
             lastScan: "",
             subnet: "",
+            // biome-ignore lint/style/useNamingConvention: Matches backend API
             localIP: "",
             interface: requestedInterface,
           },

@@ -142,9 +142,10 @@ export function useVulnerabilities() {
         params.set("ip", trimmed);
       }
 
-      const endpoint = params.size
-        ? `/api/shell/vulnerabilities/scan?${params.toString()}`
-        : "/api/shell/vulnerabilities/scan";
+      const endpoint =
+        params.size > 0
+          ? `/api/shell/vulnerabilities/scan?${params.toString()}`
+          : "/api/shell/vulnerabilities/scan";
 
       const data = await api.post<ScanResponse>(endpoint);
       return data.status === "scan started" || data.status === "scan already in progress";
@@ -179,9 +180,10 @@ export function useVulnerabilities() {
         params.set("severity", validSeverity);
       }
 
-      const endpoint = params.size
-        ? `/api/shell/vulnerabilities/results?${params.toString()}`
-        : "/api/shell/vulnerabilities/results";
+      const endpoint =
+        params.size > 0
+          ? `/api/shell/vulnerabilities/results?${params.toString()}`
+          : "/api/shell/vulnerabilities/results";
       const data = await api.get<ResultsResponse>(endpoint);
       return data.results || [];
     } catch (error) {

@@ -40,6 +40,7 @@ import type {
 /**
  * Extract metric value from a sample based on the criterion
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Extracts metrics from various criterion types
 function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): number | null {
   const data = sample.sampleData;
 

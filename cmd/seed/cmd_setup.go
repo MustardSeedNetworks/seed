@@ -13,7 +13,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-func initSetupCmd() {
+func initSetupCmd(state *cliState) {
 	setupCmd := &cobra.Command{
 		Use:   "setup-wizard",
 		Short: "Re-run the setup wizard",
@@ -23,15 +23,18 @@ This command allows you to regenerate authentication credentials without
 going through the web UI. Use --generate-password to auto-generate a
 secure password, or start the server and use the web wizard for
 interactive setup.`,
-		Run: runSetup,
+		Run: func(cmd *cobra.Command, args []string) {
+			runSetup(cmd, args, state)
+		},
 	}
 	setupCmd.Flags().Bool("generate-password", false, "Auto-generate a secure password")
 	setupCmd.Flags().Bool("json", false, "Output credentials as JSON")
 	setupCmd.Flags().Bool("reset-jwt", false, "Also regenerate the JWT secret")
-	cli.rootCmd.AddCommand(setupCmd)
+	state.rootCmd.AddCommand(setupCmd)
 }
 
-func runSetup(cmd *cobra.Command, _ []string) {
+//nolint:gocognit // CLI setup workflow requires sequential steps
+func runSetup(cmd *cobra.Command, _ []string, state *cliState) {
 	generatePwd, err := cmd.Flags().GetBool("generate-password")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting generate-password flag: %v\n", err)
@@ -49,7 +52,7 @@ func runSetup(cmd *cobra.Command, _ []string) {
 	}
 
 	// Resolve config path
-	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
 	// Load or create config
 	cfg, err := config.Load(configPath)

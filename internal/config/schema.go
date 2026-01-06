@@ -160,23 +160,54 @@ type schemaValidatorState struct {
 	err       error
 }
 
-// validatorState provides thread-safe lazy initialization of the schema validator.
-var validatorState = func() *schemaValidatorState {
-	return &schemaValidatorState{}
-}()
+// Validator state accessor functions use closure-encapsulated state for thread-safe singleton access.
+// getValidatorState returns the global schema validator state instance.
+// setValidatorState sets the global schema validator state instance.
+// _ (clearValidatorState) resets the global schema validator state to nil (unused but required for pattern).
+//
+//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
+var (
+	getValidatorState, _, _ = func() (
+		func() *schemaValidatorState,
+		func(*schemaValidatorState),
+		func(),
+	) {
+		var (
+			mu    sync.RWMutex
+			state *schemaValidatorState
+		)
+		// Initialize with default state
+		state = &schemaValidatorState{}
+
+		return func() *schemaValidatorState {
+				mu.RLock()
+				defer mu.RUnlock()
+				return state
+			}, func(s *schemaValidatorState) {
+				mu.Lock()
+				defer mu.Unlock()
+				state = s
+			}, func() {
+				mu.Lock()
+				defer mu.Unlock()
+				state = nil
+			}
+	}()
+)
 
 // ValidateWithSchema validates a Config against the embedded JSON schema.
 // Returns nil if valid, otherwise returns validation errors.
 // This is a convenience function that uses a lazily-initialized validator instance.
 func ValidateWithSchema(cfg *Config) []ValidationError {
-	validatorState.once.Do(func() {
-		validatorState.validator, validatorState.err = NewSchemaValidator()
+	state := getValidatorState()
+	state.once.Do(func() {
+		state.validator, state.err = NewSchemaValidator()
 	})
 
-	if validatorState.err != nil {
+	if state.err != nil {
 		// Schema validation unavailable, return nil to fall back to struct validation
 		return nil
 	}
 
-	return validatorState.validator.ValidateConfig(cfg)
+	return state.validator.ValidateConfig(cfg)
 }

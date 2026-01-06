@@ -134,8 +134,38 @@ func validateServer(server string) error {
 	return nil
 }
 
-// iperfBinaryPath caches the resolved iperf3 binary path.
-var iperfBinaryPath string
+// iperf binary path accessor functions use closure-encapsulated state for thread-safe singleton access.
+// getIperfBinaryPath returns the cached iperf3 binary path.
+// setIperfBinaryPath sets the cached iperf3 binary path.
+// _ (clearIperfBinaryPath) resets the cached path to empty (unused but required for pattern).
+//
+//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
+var (
+	getIperfBinaryPath, setIperfBinaryPath, _ = func() (
+		func() string,
+		func(string),
+		func(),
+	) {
+		var (
+			mu   sync.RWMutex
+			path string
+		)
+
+		return func() string {
+				mu.RLock()
+				defer mu.RUnlock()
+				return path
+			}, func(p string) {
+				mu.Lock()
+				defer mu.Unlock()
+				path = p
+			}, func() {
+				mu.Lock()
+				defer mu.Unlock()
+				path = ""
+			}
+	}()
+)
 
 // ClientConfig holds iperf3 client test configuration.
 type ClientConfig struct {
@@ -251,8 +281,8 @@ func NewManager() *Manager {
 //  3. Return detailed error with OS-specific install instructions if not found.
 func findIperf3Binary() (string, error) {
 	// Return cached path if already found
-	if iperfBinaryPath != "" {
-		return iperfBinaryPath, nil
+	if cachedPath := getIperfBinaryPath(); cachedPath != "" {
+		return cachedPath, nil
 	}
 
 	searchedPaths := make([]string, 0, 8) // Preallocate for typical search paths
@@ -263,7 +293,7 @@ func findIperf3Binary() (string, error) {
 		if path, err := extractEmbeddedBinary(); err == nil {
 			// Validate the extracted binary works
 			if validateBinary(path) {
-				iperfBinaryPath = path
+				setIperfBinaryPath(path)
 				logging.GetLogger().
 					Info("Using embedded iperf3 binary", "path", path, "version", EmbeddedVersion)
 				return path, nil
@@ -279,7 +309,7 @@ func findIperf3Binary() (string, error) {
 	// This is the proper way to find executables - it searches the entire PATH
 	if path, err := findSystemIperf3(); err == nil {
 		if validateBinary(path) {
-			iperfBinaryPath = path
+			setIperfBinaryPath(path)
 			logging.GetLogger().Info("Using system iperf3 binary", "path", path)
 			return path, nil
 		}
@@ -295,7 +325,7 @@ func findIperf3Binary() (string, error) {
 		searchedPaths = append(searchedPaths, path)
 		if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
 			if validateBinary(path) {
-				iperfBinaryPath = path
+				setIperfBinaryPath(path)
 				logging.GetLogger().Info("Using iperf3 from legacy path", "path", path)
 				return path, nil
 			}

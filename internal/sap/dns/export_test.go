@@ -1,4 +1,3 @@
-// Package dns exports internal functions for testing.
 package dns
 
 import (

@@ -1,4 +1,3 @@
-// Package vlan provides VLAN detection and configuration functionality.
 package vlan
 
 import (
