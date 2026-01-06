@@ -14,6 +14,30 @@ import (
 	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
+// Discovery tool configuration constants.
+const (
+	// defaultScanTimeoutSeconds is the default timeout for network scans in seconds.
+	defaultScanTimeoutSeconds = 30
+	// maxScanTimeoutSeconds is the maximum allowed timeout for network scans (5 minutes).
+	maxScanTimeoutSeconds = 300
+	// maxTracerouteHops is the maximum number of hops allowed for traceroute.
+	maxTracerouteHops = 64
+	// defaultTracerouteTimeoutSeconds is the default timeout per hop for traceroute.
+	defaultTracerouteTimeoutSeconds = 3
+	// defaultTCPProbeTimeoutSeconds is the default timeout for TCP probe connections.
+	defaultTCPProbeTimeoutSeconds = 5
+	// defaultPortScanTimeoutSeconds is the default timeout for port scan operations.
+	defaultPortScanTimeoutSeconds = 5
+	// portScanConcurrency is the number of concurrent port scans to run.
+	portScanConcurrency = 10
+	// portRangeSplitParts is the expected number of parts when splitting a port range (start-end).
+	portRangeSplitParts = 2
+	// maxPortRangeSize is the maximum number of ports allowed in a single range.
+	maxPortRangeSize = 1000
+	// defaultTracerouteMaxHops is the default maximum hops for traceroute.
+	defaultTracerouteMaxHops = 30
+)
+
 // registerDiscoveryTools registers all discovery-related MCP tools.
 func (s *Server) registerDiscoveryTools(isAllowed func(string) bool) {
 	s.registerNetworkScanTools(isAllowed)
@@ -155,10 +179,10 @@ func (s *Server) handleNetworkScan(
 	request mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	args := getArguments(request)
-	timeout := 30 * time.Second
+	timeout := defaultScanTimeoutSeconds * time.Second
 	if t, ok := args["timeout"].(float64); ok && t > 0 {
-		if t > 300 {
-			t = 300 // Cap at 5 minutes
+		if t > maxScanTimeoutSeconds {
+			t = maxScanTimeoutSeconds // Cap at 5 minutes
 		}
 		timeout = time.Duration(t) * time.Second
 	}
@@ -296,12 +320,12 @@ func (s *Server) handleTraceroute(
 	}
 
 	args := getArguments(request)
-	maxHops := 30
+	maxHops := defaultTracerouteMaxHops
 	if h, ok := args["max_hops"].(float64); ok && h > 0 {
-		maxHops = min(int(h), 64)
+		maxHops = min(int(h), maxTracerouteHops)
 	}
 
-	timeout := 3 * time.Second
+	timeout := defaultTracerouteTimeoutSeconds * time.Second
 	if t, ok := args["timeout"].(float64); ok && t > 0 {
 		timeout = time.Duration(t) * time.Second
 	}
@@ -339,7 +363,7 @@ func (s *Server) handleTCPProbe(
 	}
 
 	args := getArguments(request)
-	timeout := 5 * time.Second
+	timeout := defaultTCPProbeTimeoutSeconds * time.Second
 	if t, ok := args["timeout"].(float64); ok && t > 0 {
 		timeout = time.Duration(t) * time.Second
 	}
@@ -374,20 +398,20 @@ func (s *Server) handlePortScan(
 		}
 	}
 
-	scanner, err := discovery.NewPortScanner(5 * time.Second)
+	scanner, err := discovery.NewPortScanner(defaultPortScanTimeoutSeconds * time.Second)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to create port scanner: %v", err)), nil
 	}
 	defer func() { _ = scanner.Close() }()
 
-	result := scanner.ScanWithBanners(ctx, host, ports, 10)
+	result := scanner.ScanWithBanners(ctx, host, ports, portScanConcurrency)
 	return formatJSONResult(result)
 }
 
 // parsePortRange parses a port range like "1-1024" and returns start, end.
 func parsePortRange(part string) (int, int, error) {
-	rangeParts := strings.SplitN(part, "-", 2)
-	if len(rangeParts) != 2 {
+	rangeParts := strings.SplitN(part, "-", portRangeSplitParts)
+	if len(rangeParts) != portRangeSplitParts {
 		return 0, 0, fmt.Errorf("invalid range: %s", part)
 	}
 	start, err := strconv.Atoi(strings.TrimSpace(rangeParts[0]))
@@ -401,8 +425,8 @@ func parsePortRange(part string) (int, int, error) {
 	if start < 1 || end > 65535 || start > end {
 		return 0, 0, fmt.Errorf("invalid port range: %d-%d", start, end)
 	}
-	if end-start > 1000 {
-		return 0, 0, fmt.Errorf("port range too large (max 1000 ports): %d-%d", start, end)
+	if end-start > maxPortRangeSize {
+		return 0, 0, fmt.Errorf("port range too large (max %d ports): %d-%d", maxPortRangeSize, start, end)
 	}
 	return start, end, nil
 }
@@ -419,6 +443,39 @@ func parseSinglePort(part string) (int, error) {
 	return p, nil
 }
 
+// addPortIfUnique adds a port to the slice if it hasn't been seen before.
+func addPortIfUnique(ports []int, seen map[int]bool, port int) []int {
+	if !seen[port] {
+		seen[port] = true
+		ports = append(ports, port)
+	}
+	return ports
+}
+
+// addPortRange adds all ports in the range [start, end] to the slice, deduplicating.
+func addPortRange(ports []int, seen map[int]bool, start, end int) []int {
+	for p := start; p <= end; p++ {
+		ports = addPortIfUnique(ports, seen, p)
+	}
+	return ports
+}
+
+// parsePortPart parses a single port part (either a range or single port) and adds to the slice.
+func parsePortPart(ports []int, seen map[int]bool, part string) ([]int, error) {
+	if strings.Contains(part, "-") {
+		start, end, err := parsePortRange(part)
+		if err != nil {
+			return nil, err
+		}
+		return addPortRange(ports, seen, start, end), nil
+	}
+	p, err := parseSinglePort(part)
+	if err != nil {
+		return nil, err
+	}
+	return addPortIfUnique(ports, seen, p), nil
+}
+
 // parsePorts parses a port specification string into a list of ports.
 // Supports formats like "22,80,443" or "1-1024" or "22,80,100-200".
 func parsePorts(spec string) ([]int, error) {
@@ -432,26 +489,10 @@ func parsePorts(spec string) ([]int, error) {
 			continue
 		}
 
-		if strings.Contains(part, "-") {
-			start, end, err := parsePortRange(part)
-			if err != nil {
-				return nil, err
-			}
-			for p := start; p <= end; p++ {
-				if !seen[p] {
-					seen[p] = true
-					ports = append(ports, p)
-				}
-			}
-		} else {
-			p, err := parseSinglePort(part)
-			if err != nil {
-				return nil, err
-			}
-			if !seen[p] {
-				seen[p] = true
-				ports = append(ports, p)
-			}
+		var err error
+		ports, err = parsePortPart(ports, seen, part)
+		if err != nil {
+			return nil, err
 		}
 	}
 

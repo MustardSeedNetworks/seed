@@ -1,4 +1,3 @@
-// Package survey provides WiFi site survey functionality.
 package survey
 
 import (
@@ -10,6 +9,104 @@ import (
 	"time"
 
 	"github.com/go-pdf/fpdf"
+)
+
+// PDF layout constants for spacing, margins, and positioning.
+const (
+	// Page margins and breaks.
+	pdfPageBreakMargin = 15
+
+	// Spacing constants (in mm).
+	pdfSpacingTiny         = 3  // Tiny spacing between elements
+	pdfSpacingSmall        = 5  // Small spacing between elements
+	pdfSpacingMedium       = 6  // Medium spacing for multi-cell content
+	pdfSpacingNormal       = 7  // Normal line spacing
+	pdfSpacingLarge        = 8  // Large spacing for cells
+	pdfSpacingSection      = 10 // Section separation
+	pdfSpacingSectionTitle = 12 // Section header cell height
+	pdfSpacingTitle        = 15 // Title cell height
+	pdfSpacingPriority     = 20 // Priority badge width
+	pdfSpacingMajor        = 20 // Major section separation
+	pdfSpacingHuge         = 30 // Large vertical gap
+	pdfSpacingCover        = 50 // Cover page title offset
+
+	// Font sizes.
+	pdfFontSizeTiny        = 7  // Very small text (table data)
+	pdfFontSizeTableHeader = 8  // Table header text
+	pdfFontSizePriority    = 9  // Priority badge text
+	pdfFontSizeSmall       = 10 // Small body text
+	pdfFontSizeNormal      = 11 // Normal body text
+	pdfFontSizeBody        = 12 // Standard body text
+	pdfFontSizeSectionHead = 16 // Section header text
+	pdfFontSizeSubtitle    = 18 // Subtitle text
+	pdfFontSizeTitle       = 28 // Main title text
+
+	// Text colors (grayscale values).
+	pdfColorGrayDark    = 60  // Dark gray text
+	pdfColorGrayMedium  = 80  // Medium gray text
+	pdfColorGrayLight   = 100 // Light gray text
+	pdfColorGrayMuted   = 150 // Muted gray for disabled text
+	pdfColorGrayLine    = 200 // Gray for line drawing
+	pdfColorGrayTableBg = 240 // Light gray for table header background
+
+	// Table column widths for raw data appendix.
+	tableColIndexWidth   = 8
+	tableColCoordWidth   = 15
+	tableColRSSIWidth    = 20
+	tableColSNRWidth     = 20
+	tableColSSIDWidth    = 50
+	tableColChannelWidth = 20
+	tableColTimeWidth    = 35
+
+	// Miscellaneous layout constants.
+	pdfLineStartX        = 10  // Line drawing start X position
+	pdfLineEndX          = 200 // Line drawing end X position
+	pdfMaxSamplesInTable = 50  // Maximum samples to display in raw data table
+	pdfSSIDMaxLength     = 15  // Maximum SSID length before truncation
+
+	// Priority badge colors (RGB).
+	priorityHighColorR   = 220
+	priorityHighColorG   = 53
+	priorityHighColorB   = 69
+	priorityMediumColorR = 255
+	priorityMediumColorG = 128
+	priorityMediumColorB = 0
+	priorityLowColorR    = 40
+	priorityLowColorG    = 167
+	priorityLowColorB    = 69
+
+	// Stat card layout constants.
+	pdfFontSizeStatLabel = 14 // Stat card label font size
+	pdfFontSizeStatValue = 36 // Stat card value font size
+	pdfFontSizeStatGrade = 24 // Stat card grade font size
+	pdfStatValueWidth    = 60 // Stat card value cell width
+
+	// Distribution bar constants.
+	pdfDistLabelWidth   = 60  // Distribution bar label width
+	pdfDistBarWidth     = 80  // Distribution bar width
+	pdfDistBarHeight    = 5   // Distribution bar height
+	pdfDistBarGap       = 2   // Gap after distribution bar
+	pdfDistPercentWidth = 20  // Percentage label width
+	pdfDistBarBgColor   = 230 // Distribution bar background color
+
+	// Metric row constants.
+	pdfMetricLabelWidth = 80 // Metric row label width
+
+	// Percentage and score constants.
+	percentMultiplier     = 100 // Multiplier for percentage calculation
+	fairCoverageWeight    = 0.5 // Weight for fair coverage in score calculation
+	topChannelsLimit      = 5   // Maximum number of top channels to show
+	minSampleThreshold    = 20  // Minimum samples for accurate analysis
+	coverageScoreCritical = 50  // Coverage score threshold: critical
+	coverageScorePoor     = 70  // Coverage score threshold: poor
+	coverageScoreModerate = 85  // Coverage score threshold: moderate
+	coverageScoreGood     = 90  // Coverage score threshold: good (for grade)
+	coverageGradeB        = 80  // Minimum score for grade B
+	coverageGradeC        = 70  // Minimum score for grade C
+	coverageGradeD        = 60  // Minimum score for grade D
+
+	// Signal strength constants.
+	minRSSIValue = -100 // Minimum RSSI value in dBm (worst possible signal)
 )
 
 // ReportOptions configures what sections to include in the survey report.
@@ -55,7 +152,7 @@ func (g *ReportGenerator) Generate() ([]byte, error) {
 
 	// Initialize PDF
 	g.pdf = fpdf.New("P", "mm", "A4", "")
-	g.pdf.SetAutoPageBreak(true, 15)
+	g.pdf.SetAutoPageBreak(true, pdfPageBreakMargin)
 
 	// Add cover page
 	g.addCoverPage()
@@ -93,59 +190,59 @@ func (g *ReportGenerator) addCoverPage() {
 
 	// Header with company name if provided
 	if g.options.CompanyName != "" {
-		g.pdf.SetFont("Arial", "", 12)
-		g.pdf.SetTextColor(100, 100, 100)
-		g.pdf.CellFormat(0, 10, g.options.CompanyName, "", 1, "C", false, 0, "")
+		g.pdf.SetFont("Arial", "", pdfFontSizeBody)
+		g.pdf.SetTextColor(pdfColorGrayLight, pdfColorGrayLight, pdfColorGrayLight)
+		g.pdf.CellFormat(0, pdfSpacingSection, g.options.CompanyName, "", 1, "C", false, 0, "")
 	}
 
 	// Main title
-	g.pdf.Ln(50)
-	g.pdf.SetFont("Arial", "B", 28)
+	g.pdf.Ln(pdfSpacingCover)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeTitle)
 	g.pdf.SetTextColor(0, 0, 0)
-	g.pdf.CellFormat(0, 15, "WiFi Site Survey Report", "", 1, "C", false, 0, "")
+	g.pdf.CellFormat(0, pdfSpacingTitle, "WiFi Site Survey Report", "", 1, "C", false, 0, "")
 
 	// Survey name
-	g.pdf.Ln(10)
-	g.pdf.SetFont("Arial", "", 18)
-	g.pdf.SetTextColor(60, 60, 60)
-	g.pdf.CellFormat(0, 10, g.survey.Name, "", 1, "C", false, 0, "")
+	g.pdf.Ln(pdfSpacingSection)
+	g.pdf.SetFont("Arial", "", pdfFontSizeSubtitle)
+	g.pdf.SetTextColor(pdfColorGrayDark, pdfColorGrayDark, pdfColorGrayDark)
+	g.pdf.CellFormat(0, pdfSpacingSection, g.survey.Name, "", 1, "C", false, 0, "")
 
 	// Description if provided
 	if g.survey.Description != "" {
-		g.pdf.Ln(5)
-		g.pdf.SetFont("Arial", "I", 12)
-		g.pdf.SetTextColor(100, 100, 100)
-		g.pdf.MultiCell(0, 6, g.survey.Description, "", "C", false)
+		g.pdf.Ln(pdfSpacingSmall)
+		g.pdf.SetFont("Arial", "I", pdfFontSizeBody)
+		g.pdf.SetTextColor(pdfColorGrayLight, pdfColorGrayLight, pdfColorGrayLight)
+		g.pdf.MultiCell(0, pdfSpacingMedium, g.survey.Description, "", "C", false)
 	}
 
 	// Date info
-	g.pdf.Ln(30)
-	g.pdf.SetFont("Arial", "", 12)
-	g.pdf.SetTextColor(80, 80, 80)
+	g.pdf.Ln(pdfSpacingHuge)
+	g.pdf.SetFont("Arial", "", pdfFontSizeBody)
+	g.pdf.SetTextColor(pdfColorGrayMedium, pdfColorGrayMedium, pdfColorGrayMedium)
 
 	dateStr := time.Now().Format("January 2, 2006")
-	g.pdf.CellFormat(0, 8, fmt.Sprintf("Report Generated: %s", dateStr), "", 1, "C", false, 0, "")
+	g.pdf.CellFormat(0, pdfSpacingLarge, fmt.Sprintf("Report Generated: %s", dateStr), "", 1, "C", false, 0, "")
 
 	surveyDate := g.survey.CreatedAt.Format("January 2, 2006")
-	g.pdf.CellFormat(0, 8, fmt.Sprintf("Survey Date: %s", surveyDate), "", 1, "C", false, 0, "")
+	g.pdf.CellFormat(0, pdfSpacingLarge, fmt.Sprintf("Survey Date: %s", surveyDate), "", 1, "C", false, 0, "")
 
 	// Status
-	g.pdf.Ln(5)
-	g.pdf.SetFont("Arial", "B", 12)
+	g.pdf.Ln(pdfSpacingSmall)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeBody)
 	statusColor := getStatusColor(g.survey.Status)
 	g.pdf.SetTextColor(statusColor[0], statusColor[1], statusColor[2])
-	g.pdf.CellFormat(0, 8, fmt.Sprintf("Status: %s", g.survey.Status), "", 1, "C", false, 0, "")
+	g.pdf.CellFormat(0, pdfSpacingLarge, fmt.Sprintf("Status: %s", g.survey.Status), "", 1, "C", false, 0, "")
 
 	// Building info
-	g.pdf.Ln(20)
-	g.pdf.SetFont("Arial", "", 11)
-	g.pdf.SetTextColor(80, 80, 80)
+	g.pdf.Ln(pdfSpacingMajor)
+	g.pdf.SetFont("Arial", "", pdfFontSizeNormal)
+	g.pdf.SetTextColor(pdfColorGrayMedium, pdfColorGrayMedium, pdfColorGrayMedium)
 
 	floorCount := len(g.survey.Floors)
 	sampleCount := len(g.survey.GetAllSamples())
 	g.pdf.CellFormat(
 		0,
-		7,
+		pdfSpacingNormal,
 		fmt.Sprintf("Floors: %d | Sample Points: %d", floorCount, sampleCount),
 		"",
 		1,
@@ -166,7 +263,7 @@ func (g *ReportGenerator) addExecutiveSummary() {
 	stats := calculateSurveyStats(allSamples)
 
 	// Coverage score card
-	g.pdf.Ln(5)
+	g.pdf.Ln(pdfSpacingSmall)
 	g.addStatCard(
 		"Overall Coverage Score",
 		fmt.Sprintf("%.0f%%", stats.CoverageScore),
@@ -174,11 +271,11 @@ func (g *ReportGenerator) addExecutiveSummary() {
 	)
 
 	// Key metrics table
-	g.pdf.Ln(10)
-	g.pdf.SetFont("Arial", "B", 12)
-	g.pdf.CellFormat(0, 8, "Key Metrics", "", 1, "L", false, 0, "")
+	g.pdf.Ln(pdfSpacingSection)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeBody)
+	g.pdf.CellFormat(0, pdfSpacingLarge, "Key Metrics", "", 1, "L", false, 0, "")
 
-	g.pdf.SetFont("Arial", "", 10)
+	g.pdf.SetFont("Arial", "", pdfFontSizeSmall)
 	metrics := []struct {
 		label string
 		value string
@@ -196,11 +293,11 @@ func (g *ReportGenerator) addExecutiveSummary() {
 	}
 
 	// Signal distribution breakdown
-	g.pdf.Ln(10)
-	g.pdf.SetFont("Arial", "B", 12)
-	g.pdf.CellFormat(0, 8, "Signal Quality Distribution", "", 1, "L", false, 0, "")
+	g.pdf.Ln(pdfSpacingSection)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeBody)
+	g.pdf.CellFormat(0, pdfSpacingLarge, "Signal Quality Distribution", "", 1, "L", false, 0, "")
 
-	g.pdf.SetFont("Arial", "", 10)
+	g.pdf.SetFont("Arial", "", pdfFontSizeSmall)
 	signalDist := []struct {
 		label   string
 		percent float64
@@ -243,11 +340,11 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 	g.addSectionHeader(fmt.Sprintf("Floor Analysis: %s", floor.Name))
 
 	// Floor info
-	g.pdf.SetFont("Arial", "", 10)
-	g.pdf.SetTextColor(80, 80, 80)
+	g.pdf.SetFont("Arial", "", pdfFontSizeSmall)
+	g.pdf.SetTextColor(pdfColorGrayMedium, pdfColorGrayMedium, pdfColorGrayMedium)
 	g.pdf.CellFormat(
 		0,
-		6,
+		pdfSpacingMedium,
 		fmt.Sprintf("Level: %d | Samples: %d", floor.Level, len(floor.Samples)),
 		"",
 		1,
@@ -261,7 +358,7 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 	if floor.FloorPlan != nil {
 		g.pdf.CellFormat(
 			0,
-			6,
+			pdfSpacingMedium,
 			fmt.Sprintf("Dimensions: %d x %d px", floor.FloorPlan.Width, floor.FloorPlan.Height),
 			"",
 			1,
@@ -273,7 +370,7 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 		if floor.FloorPlan.ScaleM > 0 {
 			g.pdf.CellFormat(
 				0,
-				6,
+				pdfSpacingMedium,
 				fmt.Sprintf("Scale: %.2f m/px", floor.FloorPlan.ScaleM),
 				"",
 				1,
@@ -287,14 +384,14 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 
 	// Floor statistics
 	if len(floor.Samples) > 0 {
-		g.pdf.Ln(5)
+		g.pdf.Ln(pdfSpacingSmall)
 		stats := calculateFloorStats(floor.Samples)
 
-		g.pdf.SetFont("Arial", "B", 11)
+		g.pdf.SetFont("Arial", "B", pdfFontSizeNormal)
 		g.pdf.SetTextColor(0, 0, 0)
-		g.pdf.CellFormat(0, 8, "Coverage Statistics", "", 1, "L", false, 0, "")
+		g.pdf.CellFormat(0, pdfSpacingLarge, "Coverage Statistics", "", 1, "L", false, 0, "")
 
-		g.pdf.SetFont("Arial", "", 10)
+		g.pdf.SetFont("Arial", "", pdfFontSizeSmall)
 		floorMetrics := []struct {
 			label string
 			value string
@@ -312,15 +409,15 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 		// Channel usage summary
 		channels := getChannelUsage(floor.Samples)
 		if len(channels) > 0 {
-			g.pdf.Ln(5)
-			g.pdf.SetFont("Arial", "B", 11)
-			g.pdf.CellFormat(0, 8, "WiFi Channels Detected", "", 1, "L", false, 0, "")
+			g.pdf.Ln(pdfSpacingSmall)
+			g.pdf.SetFont("Arial", "B", pdfFontSizeNormal)
+			g.pdf.CellFormat(0, pdfSpacingLarge, "WiFi Channels Detected", "", 1, "L", false, 0, "")
 
-			g.pdf.SetFont("Arial", "", 10)
+			g.pdf.SetFont("Arial", "", pdfFontSizeSmall)
 			for _, ch := range channels {
 				g.pdf.CellFormat(
 					0,
-					6,
+					pdfSpacingMedium,
 					fmt.Sprintf("Channel %d: %d APs", ch.Channel, ch.Count),
 					"",
 					1,
@@ -332,10 +429,10 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 			}
 		}
 	} else {
-		g.pdf.Ln(5)
-		g.pdf.SetFont("Arial", "I", 10)
-		g.pdf.SetTextColor(150, 150, 150)
-		g.pdf.CellFormat(0, 8, "No samples collected for this floor", "", 1, "L", false, 0, "")
+		g.pdf.Ln(pdfSpacingSmall)
+		g.pdf.SetFont("Arial", "I", pdfFontSizeSmall)
+		g.pdf.SetTextColor(pdfColorGrayMuted, pdfColorGrayMuted, pdfColorGrayMuted)
+		g.pdf.CellFormat(0, pdfSpacingLarge, "No samples collected for this floor", "", 1, "L", false, 0, "")
 	}
 
 	// Add heatmap if requested and floor has data
@@ -346,12 +443,12 @@ func (g *ReportGenerator) addFloorSection(floor *Floor) {
 
 // addFloorHeatmapNote adds a note about heatmap availability.
 func (g *ReportGenerator) addFloorHeatmapNote(_ *Floor) {
-	g.pdf.Ln(10)
-	g.pdf.SetFont("Arial", "I", 10)
-	g.pdf.SetTextColor(80, 80, 80)
+	g.pdf.Ln(pdfSpacingSection)
+	g.pdf.SetFont("Arial", "I", pdfFontSizeSmall)
+	g.pdf.SetTextColor(pdfColorGrayMedium, pdfColorGrayMedium, pdfColorGrayMedium)
 	g.pdf.CellFormat(
 		0,
-		6,
+		pdfSpacingMedium,
 		"Heatmap visualization available in the web interface.",
 		"",
 		1,
@@ -373,11 +470,11 @@ func (g *ReportGenerator) addRecommendations() {
 	recommendations := generateSurveyRecommendations(&stats)
 
 	if len(recommendations) == 0 {
-		g.pdf.SetFont("Arial", "I", 10)
-		g.pdf.SetTextColor(100, 100, 100)
+		g.pdf.SetFont("Arial", "I", pdfFontSizeSmall)
+		g.pdf.SetTextColor(pdfColorGrayLight, pdfColorGrayLight, pdfColorGrayLight)
 		g.pdf.CellFormat(
 			0,
-			8,
+			pdfSpacingLarge,
 			"No specific recommendations - WiFi coverage meets quality standards.",
 			"",
 			1,
@@ -389,37 +486,37 @@ func (g *ReportGenerator) addRecommendations() {
 		return
 	}
 
-	g.pdf.SetFont("Arial", "", 10)
+	g.pdf.SetFont("Arial", "", pdfFontSizeSmall)
 	g.pdf.SetTextColor(0, 0, 0)
 
 	for i, rec := range recommendations {
-		g.pdf.Ln(3)
+		g.pdf.Ln(pdfSpacingTiny)
 		priority := getPriorityLabel(rec.Priority)
 
 		// Priority badge
-		g.pdf.SetFont("Arial", "B", 9)
+		g.pdf.SetFont("Arial", "B", pdfFontSizePriority)
 		switch rec.Priority {
 		case PriorityHigh:
-			g.pdf.SetTextColor(220, 53, 69)
+			g.pdf.SetTextColor(priorityHighColorR, priorityHighColorG, priorityHighColorB)
 		case PriorityMedium:
-			g.pdf.SetTextColor(255, 128, 0)
+			g.pdf.SetTextColor(priorityMediumColorR, priorityMediumColorG, priorityMediumColorB)
 		case PriorityLow:
-			g.pdf.SetTextColor(40, 167, 69)
+			g.pdf.SetTextColor(priorityLowColorR, priorityLowColorG, priorityLowColorB)
 		}
-		g.pdf.CellFormat(20, 6, priority, "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(pdfSpacingPriority, pdfSpacingMedium, priority, "1", 0, "C", false, 0, "")
 
 		// Recommendation text
-		g.pdf.SetFont("Arial", "", 10)
+		g.pdf.SetFont("Arial", "", pdfFontSizeSmall)
 		g.pdf.SetTextColor(0, 0, 0)
-		g.pdf.MultiCell(0, 6, fmt.Sprintf(" %d. %s", i+1, rec.Text), "", "L", false)
+		g.pdf.MultiCell(0, pdfSpacingMedium, fmt.Sprintf(" %d. %s", i+1, rec.Text), "", "L", false)
 	}
 
 	// Implementation notes
-	g.pdf.Ln(10)
-	g.pdf.SetFont("Arial", "B", 11)
-	g.pdf.CellFormat(0, 8, "Implementation Notes", "", 1, "L", false, 0, "")
+	g.pdf.Ln(pdfSpacingSection)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeNormal)
+	g.pdf.CellFormat(0, pdfSpacingLarge, "Implementation Notes", "", 1, "L", false, 0, "")
 
-	g.pdf.SetFont("Arial", "", 10)
+	g.pdf.SetFont("Arial", "", pdfFontSizeSmall)
 	notes := []string{
 		"High priority items should be addressed within 1-2 weeks",
 		"Consider WiFi 6/6E access points for improved capacity",
@@ -428,9 +525,9 @@ func (g *ReportGenerator) addRecommendations() {
 	}
 
 	for _, note := range notes {
-		g.pdf.SetTextColor(80, 80, 80)
-		g.pdf.CellFormat(5, 6, "-", "", 0, "L", false, 0, "")
-		g.pdf.CellFormat(0, 6, note, "", 1, "L", false, 0, "")
+		g.pdf.SetTextColor(pdfColorGrayMedium, pdfColorGrayMedium, pdfColorGrayMedium)
+		g.pdf.CellFormat(pdfSpacingSmall, pdfSpacingMedium, "-", "", 0, "L", false, 0, "")
+		g.pdf.CellFormat(0, pdfSpacingMedium, note, "", 1, "L", false, 0, "")
 	}
 }
 
@@ -441,36 +538,36 @@ func (g *ReportGenerator) addRawDataAppendix() {
 
 	allSamples := g.survey.GetAllSamples()
 	if len(allSamples) == 0 {
-		g.pdf.SetFont("Arial", "I", 10)
-		g.pdf.CellFormat(0, 8, "No sample data collected", "", 1, "L", false, 0, "")
+		g.pdf.SetFont("Arial", "I", pdfFontSizeSmall)
+		g.pdf.CellFormat(0, pdfSpacingLarge, "No sample data collected", "", 1, "L", false, 0, "")
 		return
 	}
 
 	// Table header
-	g.pdf.SetFont("Arial", "B", 8)
-	g.pdf.SetFillColor(240, 240, 240)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeTableHeader)
+	g.pdf.SetFillColor(pdfColorGrayTableBg, pdfColorGrayTableBg, pdfColorGrayTableBg)
 	headers := []struct {
 		text  string
 		width float64
 	}{
-		{"#", 8},
-		{"X", 15},
-		{"Y", 15},
-		{"RSSI", 20},
-		{"SNR", 20},
-		{"SSID", 50},
-		{"Channel", 20},
-		{"Time", 35},
+		{"#", tableColIndexWidth},
+		{"X", tableColCoordWidth},
+		{"Y", tableColCoordWidth},
+		{"RSSI", tableColRSSIWidth},
+		{"SNR", tableColSNRWidth},
+		{"SSID", tableColSSIDWidth},
+		{"Channel", tableColChannelWidth},
+		{"Time", tableColTimeWidth},
 	}
 
 	for _, h := range headers {
-		g.pdf.CellFormat(h.width, 7, h.text, "1", 0, "C", true, 0, "")
+		g.pdf.CellFormat(h.width, pdfSpacingNormal, h.text, "1", 0, "C", true, 0, "")
 	}
 	g.pdf.Ln(-1)
 
-	// Table rows (limit to 50 samples per page section)
-	g.pdf.SetFont("Arial", "", 7)
-	maxSamples := min(len(allSamples), 50)
+	// Table rows (limit samples per page section)
+	g.pdf.SetFont("Arial", "", pdfFontSizeTiny)
+	maxSamples := min(len(allSamples), pdfMaxSamplesInTable)
 
 	for i := range maxSamples {
 		sample := allSamples[i]
@@ -485,27 +582,37 @@ func (g *ReportGenerator) addRawDataAppendix() {
 			net := ps.Networks[0]
 			rssi = strconv.Itoa(net.Signal)
 			snr = strconv.Itoa(net.SNR)
-			ssid = truncateString(net.SSID, 15)
+			ssid = truncateString(net.SSID, pdfSSIDMaxLength)
 			channel = strconv.Itoa(net.Channel)
 		}
 
-		g.pdf.CellFormat(8, 6, strconv.Itoa(i+1), "1", 0, "C", false, 0, "")
-		g.pdf.CellFormat(15, 6, strconv.Itoa(sample.X), "1", 0, "C", false, 0, "")
-		g.pdf.CellFormat(15, 6, strconv.Itoa(sample.Y), "1", 0, "C", false, 0, "")
-		g.pdf.CellFormat(20, 6, rssi, "1", 0, "C", false, 0, "")
-		g.pdf.CellFormat(20, 6, snr, "1", 0, "C", false, 0, "")
-		g.pdf.CellFormat(50, 6, ssid, "1", 0, "L", false, 0, "")
-		g.pdf.CellFormat(20, 6, channel, "1", 0, "C", false, 0, "")
-		g.pdf.CellFormat(35, 6, sample.Timestamp.Format("15:04:05"), "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(tableColIndexWidth, pdfSpacingMedium, strconv.Itoa(i+1), "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(tableColCoordWidth, pdfSpacingMedium, strconv.Itoa(sample.X), "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(tableColCoordWidth, pdfSpacingMedium, strconv.Itoa(sample.Y), "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(tableColRSSIWidth, pdfSpacingMedium, rssi, "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(tableColSNRWidth, pdfSpacingMedium, snr, "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(tableColSSIDWidth, pdfSpacingMedium, ssid, "1", 0, "L", false, 0, "")
+		g.pdf.CellFormat(tableColChannelWidth, pdfSpacingMedium, channel, "1", 0, "C", false, 0, "")
+		g.pdf.CellFormat(
+			tableColTimeWidth,
+			pdfSpacingMedium,
+			sample.Timestamp.Format("15:04:05"),
+			"1",
+			0,
+			"C",
+			false,
+			0,
+			"",
+		)
 		g.pdf.Ln(-1)
 	}
 
 	if len(allSamples) > maxSamples {
-		g.pdf.Ln(5)
-		g.pdf.SetFont("Arial", "I", 9)
+		g.pdf.Ln(pdfSpacingSmall)
+		g.pdf.SetFont("Arial", "I", pdfFontSizePriority)
 		g.pdf.CellFormat(
 			0,
-			6,
+			pdfSpacingMedium,
 			fmt.Sprintf(
 				"... and %d more samples (truncated for readability)",
 				len(allSamples)-maxSamples,
@@ -523,59 +630,59 @@ func (g *ReportGenerator) addRawDataAppendix() {
 // Helper methods
 
 func (g *ReportGenerator) addSectionHeader(title string) {
-	g.pdf.SetFont("Arial", "B", 16)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeSectionHead)
 	g.pdf.SetTextColor(0, 0, 0)
-	g.pdf.CellFormat(0, 12, title, "", 1, "L", false, 0, "")
+	g.pdf.CellFormat(0, pdfSpacingSectionTitle, title, "", 1, "L", false, 0, "")
 
 	// Underline
-	g.pdf.SetDrawColor(200, 200, 200)
-	g.pdf.Line(10, g.pdf.GetY(), 200, g.pdf.GetY())
-	g.pdf.Ln(5)
+	g.pdf.SetDrawColor(pdfColorGrayLine, pdfColorGrayLine, pdfColorGrayLine)
+	g.pdf.Line(pdfLineStartX, g.pdf.GetY(), pdfLineEndX, g.pdf.GetY())
+	g.pdf.Ln(pdfSpacingSmall)
 }
 
 func (g *ReportGenerator) addStatCard(label, value, grade string) {
-	g.pdf.SetFont("Arial", "B", 14)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeStatLabel)
 	g.pdf.SetTextColor(0, 0, 0)
-	g.pdf.CellFormat(0, 10, label, "", 1, "L", false, 0, "")
+	g.pdf.CellFormat(0, pdfSpacingSection, label, "", 1, "L", false, 0, "")
 
-	g.pdf.SetFont("Arial", "B", 36)
+	g.pdf.SetFont("Arial", "B", pdfFontSizeStatValue)
 	gradeColor := getGradeColor(grade)
 	g.pdf.SetTextColor(gradeColor[0], gradeColor[1], gradeColor[2])
-	g.pdf.CellFormat(60, 20, value, "", 0, "L", false, 0, "")
+	g.pdf.CellFormat(pdfStatValueWidth, pdfSpacingMajor, value, "", 0, "L", false, 0, "")
 
-	g.pdf.SetFont("Arial", "B", 24)
-	g.pdf.CellFormat(0, 20, grade, "", 1, "L", false, 0, "")
+	g.pdf.SetFont("Arial", "B", pdfFontSizeStatGrade)
+	g.pdf.CellFormat(0, pdfSpacingMajor, grade, "", 1, "L", false, 0, "")
 }
 
 func (g *ReportGenerator) addMetricRow(label, value string) {
-	g.pdf.SetTextColor(80, 80, 80)
-	g.pdf.CellFormat(80, 6, label+":", "", 0, "L", false, 0, "")
+	g.pdf.SetTextColor(pdfColorGrayMedium, pdfColorGrayMedium, pdfColorGrayMedium)
+	g.pdf.CellFormat(pdfMetricLabelWidth, pdfSpacingMedium, label+":", "", 0, "L", false, 0, "")
 	g.pdf.SetTextColor(0, 0, 0)
-	g.pdf.CellFormat(0, 6, value, "", 1, "L", false, 0, "")
+	g.pdf.CellFormat(0, pdfSpacingMedium, value, "", 1, "L", false, 0, "")
 }
 
 func (g *ReportGenerator) addDistributionBar(label string, percent float64, col []int) {
-	g.pdf.SetTextColor(80, 80, 80)
-	g.pdf.CellFormat(60, 6, label, "", 0, "L", false, 0, "")
+	g.pdf.SetTextColor(pdfColorGrayMedium, pdfColorGrayMedium, pdfColorGrayMedium)
+	g.pdf.CellFormat(pdfDistLabelWidth, pdfSpacingMedium, label, "", 0, "L", false, 0, "")
 
 	// Draw bar background
 	barX := g.pdf.GetX()
 	barY := g.pdf.GetY()
-	barWidth := 80.0
-	barHeight := 5.0
+	barWidth := float64(pdfDistBarWidth)
+	barHeight := float64(pdfDistBarHeight)
 
-	g.pdf.SetFillColor(230, 230, 230)
+	g.pdf.SetFillColor(pdfDistBarBgColor, pdfDistBarBgColor, pdfDistBarBgColor)
 	g.pdf.Rect(barX, barY, barWidth, barHeight, "F")
 
 	// Draw filled portion
-	filledWidth := barWidth * (percent / 100.0)
+	filledWidth := barWidth * (percent / percentMultiplier)
 	g.pdf.SetFillColor(col[0], col[1], col[2])
 	g.pdf.Rect(barX, barY, filledWidth, barHeight, "F")
 
 	// Percentage label
-	g.pdf.SetX(barX + barWidth + 2)
+	g.pdf.SetX(barX + barWidth + pdfDistBarGap)
 	g.pdf.SetTextColor(0, 0, 0)
-	g.pdf.CellFormat(20, 6, fmt.Sprintf("%.1f%%", percent), "", 1, "L", false, 0, "")
+	g.pdf.CellFormat(pdfDistPercentWidth, pdfSpacingMedium, fmt.Sprintf("%.1f%%", percent), "", 1, "L", false, 0, "")
 }
 
 // SurveyStats holds calculated statistics for a survey.
@@ -600,7 +707,7 @@ func calculateSurveyStats(samples []*SamplePoint) SurveyStats {
 	stats := SurveyStats{
 		TotalSamples: len(samples),
 		MinRSSI:      0,
-		MaxRSSI:      -100,
+		MaxRSSI:      minRSSIValue,
 	}
 
 	if len(samples) == 0 {
@@ -617,7 +724,7 @@ func calculateSurveyStats(samples []*SamplePoint) SurveyStats {
 		}
 
 		// Use best RSSI from networks in the passive sample
-		bestRSSI := -100
+		bestRSSI := minRSSIValue
 		for _, net := range ps.Networks {
 			if net.Signal > bestRSSI {
 				bestRSSI = net.Signal
@@ -649,12 +756,12 @@ func calculateSurveyStats(samples []*SamplePoint) SurveyStats {
 	if len(samples) > 0 {
 		stats.AvgRSSI = sumRSSI / len(samples)
 		total := float64(len(samples))
-		stats.ExcellentPercent = float64(excellent) / total * 100
-		stats.GoodPercent = float64(good) / total * 100
-		stats.FairPercent = float64(fair) / total * 100
-		stats.PoorPercent = float64(poor) / total * 100
-		stats.DeadPercent = float64(dead) / total * 100
-		stats.CoverageScore = stats.ExcellentPercent + stats.GoodPercent + (stats.FairPercent * 0.5)
+		stats.ExcellentPercent = float64(excellent) / total * percentMultiplier
+		stats.GoodPercent = float64(good) / total * percentMultiplier
+		stats.FairPercent = float64(fair) / total * percentMultiplier
+		stats.PoorPercent = float64(poor) / total * percentMultiplier
+		stats.DeadPercent = float64(dead) / total * percentMultiplier
+		stats.CoverageScore = stats.ExcellentPercent + stats.GoodPercent + (stats.FairPercent * fairCoverageWeight)
 		stats.WeakAreas = poor
 		stats.DeadZones = dead
 	}
@@ -696,9 +803,9 @@ func getChannelUsage(samples []*SamplePoint) []ChannelInfo {
 		return channels[i].Count > channels[j].Count
 	})
 
-	// Limit to top 5 channels
-	if len(channels) > 5 {
-		channels = channels[:5]
+	// Limit to top channels
+	if len(channels) > topChannelsLimit {
+		channels = channels[:topChannelsLimit]
 	}
 
 	return channels
@@ -725,17 +832,17 @@ func generateSurveyRecommendations(stats *SurveyStats) []Recommendation {
 
 	// Coverage-based recommendations
 	switch {
-	case stats.CoverageScore < 50:
+	case stats.CoverageScore < coverageScoreCritical:
 		recommendations = append(recommendations, Recommendation{
 			Text:     "Critical coverage issues detected. Consider a complete WiFi infrastructure redesign with additional access points.",
 			Priority: PriorityHigh,
 		})
-	case stats.CoverageScore < 70:
+	case stats.CoverageScore < coverageScorePoor:
 		recommendations = append(recommendations, Recommendation{
 			Text:     "Poor overall coverage. Add 2-3 additional access points in strategic locations to improve connectivity.",
 			Priority: PriorityHigh,
 		})
-	case stats.CoverageScore < 85:
+	case stats.CoverageScore < coverageScoreModerate:
 		recommendations = append(recommendations, Recommendation{
 			Text:     "Moderate coverage detected. Consider adding 1-2 access points to strengthen weak areas.",
 			Priority: PriorityMedium,
@@ -765,7 +872,7 @@ func generateSurveyRecommendations(stats *SurveyStats) []Recommendation {
 	}
 
 	// Sample density recommendations
-	if stats.TotalSamples < 20 {
+	if stats.TotalSamples < minSampleThreshold {
 		recommendations = append(recommendations, Recommendation{
 			Text:     "Limited sample data. Collect more samples for accurate analysis, especially in edge areas and around obstacles.",
 			Priority: PriorityLow,
@@ -773,7 +880,7 @@ func generateSurveyRecommendations(stats *SurveyStats) []Recommendation {
 	}
 
 	// No issues found
-	if len(recommendations) == 0 && stats.CoverageScore >= 90 {
+	if len(recommendations) == 0 && stats.CoverageScore >= coverageScoreGood {
 		recommendations = append(recommendations, Recommendation{
 			Text:     "WiFi coverage meets quality standards. Continue monitoring for any future degradation.",
 			Priority: PriorityLow,
@@ -811,13 +918,13 @@ func getStatusColor(status Status) []int {
 
 func getCoverageGrade(score float64) string {
 	switch {
-	case score >= 90:
+	case score >= coverageScoreGood:
 		return "A"
-	case score >= 80:
+	case score >= coverageGradeB:
 		return "B"
-	case score >= 70:
+	case score >= coverageGradeC:
 		return "C"
-	case score >= 60:
+	case score >= coverageGradeD:
 		return "D"
 	default:
 		return "F"

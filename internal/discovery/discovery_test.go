@@ -1,4 +1,3 @@
-// Package discovery_test implements multi-protocol network device discovery tests.
 // Test suite validates device discovery functionality across all discovery methods,
 // settings configurations, and state management operations. Ensures device aggregation,
 // protocol-specific information, and discovery timing work correctly.

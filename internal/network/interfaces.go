@@ -28,6 +28,10 @@ const (
 	InterfaceTypeOther    InterfaceType = "other"
 )
 
+// ipv4BitLength is the number of bits in an IPv4 address (32 bits).
+// Used for CIDR mask calculations and netmask validation.
+const ipv4BitLength = 32
+
 // InterfaceInfo contains information about a network interface.
 type InterfaceInfo struct {
 	Name          string        `json:"name"`
@@ -514,7 +518,7 @@ func isValidNetmask(netmask string) bool {
 	var prefix int
 	_, err := fmt.Sscanf(netmask, "%d", &prefix)
 	if err == nil {
-		return prefix >= 0 && prefix <= 32
+		return prefix >= 0 && prefix <= ipv4BitLength
 	}
 
 	// Check if it's dotted notation (e.g., "255.255.255.0")
@@ -524,6 +528,6 @@ func isValidNetmask(netmask string) bool {
 
 // cidrToNetmask converts a CIDR prefix to dotted decimal netmask.
 func cidrToNetmask(prefix int) string {
-	mask := net.CIDRMask(prefix, 32)
+	mask := net.CIDRMask(prefix, ipv4BitLength)
 	return fmt.Sprintf("%d.%d.%d.%d", mask[0], mask[1], mask[2], mask[3])
 }

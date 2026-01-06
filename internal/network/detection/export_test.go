@@ -1,4 +1,3 @@
-// Package detection exports internal functions for testing.
 package detection
 
 // DetectType exposes detectType for testing.

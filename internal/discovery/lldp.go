@@ -1,4 +1,3 @@
-// Package discovery handles network discovery protocols (LLDP, CDP, EDP).
 package discovery
 
 import (
@@ -12,6 +11,10 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
+
+// pcapSnapshotLengthLLDP is the maximum number of bytes to capture from each packet.
+// 65535 is the maximum possible packet size for IP.
+const pcapSnapshotLengthLLDP = 65535
 
 // LLDPNeighbor represents a discovered LLDP neighbor.
 type LLDPNeighbor struct {
@@ -61,7 +64,7 @@ func (c *LLDPCapture) Start() error {
 	}
 
 	// Open capture handle
-	handle, err := pcap.OpenLive(c.interfaceName, 65535, true, pcap.BlockForever)
+	handle, err := pcap.OpenLive(c.interfaceName, pcapSnapshotLengthLLDP, true, pcap.BlockForever)
 	if err != nil {
 		c.mu.Unlock()
 		return fmt.Errorf("failed to open capture: %w", err)

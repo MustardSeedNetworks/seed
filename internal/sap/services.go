@@ -21,6 +21,18 @@ import (
 // DefaultInterface is the default network interface to use when none is configured.
 const DefaultInterface = "eth0"
 
+// InterfaceStateWaitMs is the time in milliseconds to wait for initial interface state detection.
+const InterfaceStateWaitMs = 100
+
+// SNMPTimeticksPerSecond is the number of SNMP timeticks per second (timeticks are in centiseconds).
+const SNMPTimeticksPerSecond = 100
+
+// DefaultIPerfPort is the default port for iPerf3 tests.
+const DefaultIPerfPort = 5201
+
+// DefaultIPerfDurationSec is the default duration in seconds for iPerf tests.
+const DefaultIPerfDurationSec = 10
+
 // LinkService monitors network link status.
 type LinkService struct {
 	cfg        *config.Config
@@ -112,7 +124,7 @@ func (s *LinkService) GetInterfaceStatus(_ context.Context, name string) (*LinkS
 	if err := mon.Start(); err != nil {
 		return nil, fmt.Errorf("starting interface monitor: %w", err)
 	}
-	time.Sleep(100 * time.Millisecond) // Brief wait for initial state
+	time.Sleep(InterfaceStateWaitMs * time.Millisecond) // Brief wait for initial state
 	mon.Stop()
 
 	var state LinkState
@@ -392,7 +404,7 @@ func (s *SNMPService) Collect(ctx context.Context, ip, community string) (*SNMPD
 		SysDescr:    sysInfo.SysDescr,
 		SysLocation: sysInfo.SysLocation,
 		SysContact:  sysInfo.SysContact,
-		SysUpTime:   time.Duration(sysInfo.SysUpTime) * time.Second / 100, // timeticks to duration
+		SysUpTime:   time.Duration(sysInfo.SysUpTime) * time.Second / SNMPTimeticksPerSecond, // timeticks to duration
 		CollectedAt: time.Now(),
 	}
 
@@ -474,9 +486,9 @@ func (s *PerformanceService) IPerf(
 	// Build client config
 	clientCfg := &iperf.ClientConfig{
 		Server:   host,
-		Port:     5201,
+		Port:     DefaultIPerfPort,
 		Protocol: "tcp",
-		Duration: 10,
+		Duration: DefaultIPerfDurationSec,
 		Parallel: 1,
 	}
 

@@ -20,6 +20,37 @@ const (
 	ifTypeOther    = "other"
 )
 
+// Network speed thresholds in bits per second for interface classification.
+// These represent standard Ethernet link speeds from 10 Mbps to 100 Gbps.
+const (
+	// Speed100Gbps is the threshold for 100 Gigabit Ethernet links (IEEE 802.3ba).
+	Speed100Gbps = 100_000_000_000 // 100 Gbps
+
+	// Speed40Gbps is the threshold for 40 Gigabit Ethernet links (IEEE 802.3ba).
+	Speed40Gbps = 40_000_000_000 // 40 Gbps
+
+	// Speed25Gbps is the threshold for 25 Gigabit Ethernet links (IEEE 802.3by).
+	Speed25Gbps = 25_000_000_000 // 25 Gbps
+
+	// Speed10Gbps is the threshold for 10 Gigabit Ethernet links (IEEE 802.3ae).
+	Speed10Gbps = 10_000_000_000 // 10 Gbps
+
+	// Speed5Gbps is the threshold for 5 Gigabit BASE-T Ethernet (IEEE 802.3bz).
+	Speed5Gbps = 5_000_000_000 // 5 Gbps
+
+	// Speed2500Mbps is the threshold for 2.5 Gigabit BASE-T Ethernet (IEEE 802.3bz).
+	Speed2500Mbps = 2_500_000_000 // 2.5 Gbps
+
+	// Speed1Gbps is the threshold for Gigabit Ethernet links (IEEE 802.3ab).
+	Speed1Gbps = 1_000_000_000 // 1 Gbps
+
+	// Speed100Mbps is the threshold for Fast Ethernet links (IEEE 802.3u).
+	Speed100Mbps = 100_000_000 // 100 Mbps
+
+	// Speed10Mbps is the threshold for standard Ethernet links (IEEE 802.3i).
+	Speed10Mbps = 10_000_000 // 10 Mbps
+)
+
 // InterfaceScore represents a scored network interface with metadata.
 type InterfaceScore struct {
 	Name           string   `json:"name"`           // System interface name (e.g., "enp3s0")
@@ -324,23 +355,23 @@ func hasRoutableAddress(addresses []string) bool {
 // formatSpeed converts bits per second to human-readable format.
 func formatSpeed(bps int64) string {
 	switch {
-	case bps >= 100_000_000_000:
+	case bps >= Speed100Gbps:
 		return "100 Gbps"
-	case bps >= 40_000_000_000:
+	case bps >= Speed40Gbps:
 		return "40 Gbps"
-	case bps >= 25_000_000_000:
+	case bps >= Speed25Gbps:
 		return "25 Gbps"
-	case bps >= 10_000_000_000:
+	case bps >= Speed10Gbps:
 		return "10 Gbps"
-	case bps >= 5_000_000_000:
+	case bps >= Speed5Gbps:
 		return "5 Gbps"
-	case bps >= 2_500_000_000:
+	case bps >= Speed2500Mbps:
 		return "2.5 Gbps"
-	case bps >= 1_000_000_000:
+	case bps >= Speed1Gbps:
 		return "1 Gbps"
-	case bps >= 100_000_000:
+	case bps >= Speed100Mbps:
 		return "100 Mbps"
-	case bps >= 10_000_000:
+	case bps >= Speed10Mbps:
 		return "10 Mbps"
 	case bps > 0:
 		return "< 10 Mbps"

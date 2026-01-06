@@ -1,19 +1,26 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // This file implements extended SNMP MIB collection for Phase 3 of the pipeline.
 // It collects interface, IP address, MAC table, VLAN, and LLDP data from network devices.
-package discovery
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/snmp"
+)
+
+// SNMP collector constants.
+const (
+	snmpCollectorTimeoutS = 30      // Default timeout for SNMP walks in seconds
+	snmpCollectorMaxOIDs  = 10      // Default maximum OIDs per SNMP request
+	snmpSpeedMbpsDivisor  = 1000000 // Divisor to convert speed to Mbps
 )
 
 // SNMPFullData contains all collected SNMP data from a device.
@@ -143,8 +150,8 @@ func NewSNMPCollector(cfg *config.SNMPConfig, mibConfig SNMPMIBSelection) *SNMPC
 	return &SNMPCollector{
 		config:     cfg,
 		mibConfig:  mibConfig,
-		timeout:    30 * time.Second,
-		maxOIDsReq: 10,
+		timeout:    snmpCollectorTimeoutS * time.Second,
+		maxOIDsReq: snmpCollectorMaxOIDs,
 	}
 }
 
@@ -164,9 +171,14 @@ func (c *SNMPCollector) SetMaxOIDsPerRequest(maxOIDs int) {
 	}
 }
 
-// Collect gathers all enabled MIB data from a device.
-//
+// collectionTask represents a single MIB collection operation.
+type collectionTask struct {
+	enabled   bool
+	name      string
+	collector func()
+}
 
+// Collect gathers all enabled MIB data from a device.
 func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, error) {
 	if c.config == nil {
 		return nil, errors.New("SNMP config is nil")
@@ -176,144 +188,237 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 		CollectedAt: time.Now(),
 	}
 
-	// Create timeout context
 	collectCtx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// Always collect system info
-	if c.mibConfig.System {
-		wg.Go(func() {
-			if sysInfo, err := snmp.GetSystemInfo(collectCtx, ip, c.config); err == nil {
-				mu.Lock()
-				data.System = sysInfo
-				mu.Unlock()
-				slog.Debug("Collected system info", "ip", ip, "sysName", sysInfo.SysName)
-			} else {
-				mu.Lock()
-				data.Errors = append(data.Errors, fmt.Sprintf("system: %v", err))
-				mu.Unlock()
-			}
-		})
-	}
-
-	// Collect interfaces (IF-MIB)
-	if c.mibConfig.Interfaces {
-		wg.Go(func() {
-			if interfaces, err := c.collectInterfaces(collectCtx, ip); err == nil {
-				mu.Lock()
-				data.Interfaces = interfaces
-				mu.Unlock()
-				slog.Debug("Collected interfaces", "ip", ip, "count", len(interfaces))
-			} else {
-				mu.Lock()
-				data.Errors = append(data.Errors, fmt.Sprintf("interfaces: %v", err))
-				mu.Unlock()
-			}
-		})
-	}
-
-	// Collect IP addresses (IP-MIB)
-	if c.mibConfig.IPAddresses {
-		wg.Go(func() {
-			if ipAddrs, err := c.collectIPAddresses(collectCtx, ip); err == nil {
-				mu.Lock()
-				data.IPAddresses = ipAddrs
-				mu.Unlock()
-				slog.Debug("Collected IP addresses", "ip", ip, "count", len(ipAddrs))
-			} else {
-				mu.Lock()
-				data.Errors = append(data.Errors, fmt.Sprintf("ipAddresses: %v", err))
-				mu.Unlock()
-			}
-		})
-	}
-
-	// Collect MAC table (BRIDGE-MIB)
-	if c.mibConfig.Bridge {
-		wg.Go(func() {
-			if macTable, err := c.collectMACTable(collectCtx, ip); err == nil {
-				mu.Lock()
-				data.MACTable = macTable
-				mu.Unlock()
-				slog.Debug("Collected MAC table", "ip", ip, "count", len(macTable))
-			} else {
-				mu.Lock()
-				data.Errors = append(data.Errors, fmt.Sprintf("macTable: %v", err))
-				mu.Unlock()
-			}
-		})
-	}
-
-	// Collect VLANs (Q-BRIDGE-MIB)
-	if c.mibConfig.VLAN {
-		wg.Go(func() {
-			if vlans, err := c.collectVLANs(collectCtx, ip); err == nil {
-				mu.Lock()
-				data.VLANs = vlans
-				mu.Unlock()
-				slog.Debug("Collected VLANs", "ip", ip, "count", len(vlans))
-			} else {
-				mu.Lock()
-				data.Errors = append(data.Errors, fmt.Sprintf("vlans: %v", err))
-				mu.Unlock()
-			}
-		})
-	}
-
-	// Collect physical inventory (ENTITY-MIB)
-	if c.mibConfig.Entity {
-		wg.Go(func() {
-			if entities, err := c.collectInventory(collectCtx, ip); err == nil {
-				mu.Lock()
-				data.Inventory = entities
-				mu.Unlock()
-				slog.Debug("Collected inventory", "ip", ip, "count", len(entities))
-			} else {
-				mu.Lock()
-				data.Errors = append(data.Errors, fmt.Sprintf("inventory: %v", err))
-				mu.Unlock()
-			}
-		})
-	}
-
-	// Collect LLDP neighbors (LLDP-MIB)
-	if c.mibConfig.LLDP {
-		wg.Go(func() {
-			if neighbors, err := c.collectLLDPNeighbors(collectCtx, ip); err == nil {
-				mu.Lock()
-				data.LLDPNeighbors = neighbors
-				mu.Unlock()
-				slog.Debug("Collected LLDP neighbors", "ip", ip, "count", len(neighbors))
-			} else {
-				mu.Lock()
-				data.Errors = append(data.Errors, fmt.Sprintf("lldp: %v", err))
-				mu.Unlock()
-			}
-		})
-	}
-
-	// Collect routing table (IP-FORWARD-MIB)
-	if c.mibConfig.Routing {
-		wg.Go(func() {
-			if routes, err := c.collectRoutes(collectCtx, ip); err == nil {
-				mu.Lock()
-				data.Routing = routes
-				mu.Unlock()
-				slog.Debug("Collected routes", "ip", ip, "count", len(routes))
-			} else {
-				mu.Lock()
-				data.Errors = append(data.Errors, fmt.Sprintf("routing: %v", err))
-				mu.Unlock()
-			}
-		})
-	}
-
+	tasks := c.buildCollectionTasks(collectCtx, ip, data, &mu)
+	c.executeCollectionTasks(&wg, tasks)
 	wg.Wait()
 
 	return data, nil
+}
+
+// buildCollectionTasks creates the list of MIB collection tasks based on configuration.
+func (c *SNMPCollector) buildCollectionTasks(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) []collectionTask {
+	return []collectionTask{
+		{
+			enabled: c.mibConfig.System,
+			name:    "system",
+			collector: func() {
+				c.collectAndStoreSystem(ctx, ip, data, mu)
+			},
+		},
+		{
+			enabled: c.mibConfig.Interfaces,
+			name:    "interfaces",
+			collector: func() {
+				c.collectAndStoreInterfaces(ctx, ip, data, mu)
+			},
+		},
+		{
+			enabled: c.mibConfig.IPAddresses,
+			name:    "ipAddresses",
+			collector: func() {
+				c.collectAndStoreIPAddresses(ctx, ip, data, mu)
+			},
+		},
+		{
+			enabled: c.mibConfig.Bridge,
+			name:    "macTable",
+			collector: func() {
+				c.collectAndStoreMACTable(ctx, ip, data, mu)
+			},
+		},
+		{
+			enabled: c.mibConfig.VLAN,
+			name:    "vlans",
+			collector: func() {
+				c.collectAndStoreVLANs(ctx, ip, data, mu)
+			},
+		},
+		{
+			enabled: c.mibConfig.Entity,
+			name:    "inventory",
+			collector: func() {
+				c.collectAndStoreInventory(ctx, ip, data, mu)
+			},
+		},
+		{
+			enabled: c.mibConfig.LLDP,
+			name:    "lldp",
+			collector: func() {
+				c.collectAndStoreLLDP(ctx, ip, data, mu)
+			},
+		},
+		{
+			enabled: c.mibConfig.Routing,
+			name:    "routing",
+			collector: func() {
+				c.collectAndStoreRoutes(ctx, ip, data, mu)
+			},
+		},
+	}
+}
+
+// executeCollectionTasks runs all enabled collection tasks concurrently.
+func (c *SNMPCollector) executeCollectionTasks(wg *sync.WaitGroup, tasks []collectionTask) {
+	for _, task := range tasks {
+		if task.enabled {
+			wg.Go(task.collector)
+		}
+	}
+}
+
+// collectAndStoreSystem collects system info and stores it in data.
+func (c *SNMPCollector) collectAndStoreSystem(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) {
+	sysInfo, err := snmp.GetSystemInfo(ctx, ip, c.config)
+	mu.Lock()
+	defer mu.Unlock()
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Sprintf("system: %v", err))
+		return
+	}
+	data.System = sysInfo
+	logging.GetLogger().DebugContext(ctx, "Collected system info", "ip", ip, "sysName", sysInfo.SysName)
+}
+
+// collectAndStoreInterfaces collects interfaces and stores them in data.
+func (c *SNMPCollector) collectAndStoreInterfaces(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) {
+	interfaces, err := c.collectInterfaces(ctx, ip)
+	mu.Lock()
+	defer mu.Unlock()
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Sprintf("interfaces: %v", err))
+		return
+	}
+	data.Interfaces = interfaces
+	logging.GetLogger().DebugContext(ctx, "Collected interfaces", "ip", ip, "count", len(interfaces))
+}
+
+// collectAndStoreIPAddresses collects IP addresses and stores them in data.
+func (c *SNMPCollector) collectAndStoreIPAddresses(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) {
+	ipAddrs, err := c.collectIPAddresses(ctx, ip)
+	mu.Lock()
+	defer mu.Unlock()
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Sprintf("ipAddresses: %v", err))
+		return
+	}
+	data.IPAddresses = ipAddrs
+	logging.GetLogger().DebugContext(ctx, "Collected IP addresses", "ip", ip, "count", len(ipAddrs))
+}
+
+// collectAndStoreMACTable collects MAC table and stores it in data.
+func (c *SNMPCollector) collectAndStoreMACTable(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) {
+	macTable, err := c.collectMACTable(ctx, ip)
+	mu.Lock()
+	defer mu.Unlock()
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Sprintf("macTable: %v", err))
+		return
+	}
+	data.MACTable = macTable
+	logging.GetLogger().DebugContext(ctx, "Collected MAC table", "ip", ip, "count", len(macTable))
+}
+
+// collectAndStoreVLANs collects VLANs and stores them in data.
+func (c *SNMPCollector) collectAndStoreVLANs(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) {
+	vlans, err := c.collectVLANs(ctx, ip)
+	mu.Lock()
+	defer mu.Unlock()
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Sprintf("vlans: %v", err))
+		return
+	}
+	data.VLANs = vlans
+	logging.GetLogger().DebugContext(ctx, "Collected VLANs", "ip", ip, "count", len(vlans))
+}
+
+// collectAndStoreInventory collects inventory and stores it in data.
+func (c *SNMPCollector) collectAndStoreInventory(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) {
+	entities, err := c.collectInventory(ctx, ip)
+	mu.Lock()
+	defer mu.Unlock()
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Sprintf("inventory: %v", err))
+		return
+	}
+	data.Inventory = entities
+	logging.GetLogger().DebugContext(ctx, "Collected inventory", "ip", ip, "count", len(entities))
+}
+
+// collectAndStoreLLDP collects LLDP neighbors and stores them in data.
+func (c *SNMPCollector) collectAndStoreLLDP(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) {
+	neighbors, err := c.collectLLDPNeighbors(ctx, ip)
+	mu.Lock()
+	defer mu.Unlock()
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Sprintf("lldp: %v", err))
+		return
+	}
+	data.LLDPNeighbors = neighbors
+	logging.GetLogger().DebugContext(ctx, "Collected LLDP neighbors", "ip", ip, "count", len(neighbors))
+}
+
+// collectAndStoreRoutes collects routes and stores them in data.
+func (c *SNMPCollector) collectAndStoreRoutes(
+	ctx context.Context,
+	ip string,
+	data *SNMPFullData,
+	mu *sync.Mutex,
+) {
+	routes, err := c.collectRoutes(ctx, ip)
+	mu.Lock()
+	defer mu.Unlock()
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Sprintf("routing: %v", err))
+		return
+	}
+	data.Routing = routes
+	logging.GetLogger().DebugContext(ctx, "Collected routes", "ip", ip, "count", len(routes))
 }
 
 // collectInterfaces retrieves interface information from IF-MIB.
@@ -329,7 +434,7 @@ func (c *SNMPCollector) collectInterfaces(ctx context.Context, ip string) ([]SNM
 		// Convert bps to Mbps, handling negative speeds (which shouldn't occur but be safe)
 		speedMbps := uint64(0)
 		if iface.Speed > 0 {
-			speedMbps = uint64(iface.Speed) / 1000000
+			speedMbps = uint64(iface.Speed) / snmpSpeedMbpsDivisor
 		}
 		result[i] = SNMPInterface{
 			Index:       iface.Index,

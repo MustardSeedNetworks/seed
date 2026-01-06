@@ -26,24 +26,28 @@ const (
 	OIDIfLastChange  = "1.3.6.1.2.1.2.2.1.9"    // ifLastChange (TimeTicks)
 	OIDIfName        = "1.3.6.1.2.1.31.1.1.1.1" // ifName (IF-MIB)
 
-	// EtherLike-MIB for duplex status.
-	OIDDot3StatsDuplexStatus = "1.3.6.1.2.1.10.7.2.1.19" // dot3StatsDuplexStatus
+	// OIDDot3StatsDuplexStatus is the EtherLike-MIB OID for duplex status.
+	OIDDot3StatsDuplexStatus = "1.3.6.1.2.1.10.7.2.1.19"
 
-	// BRIDGE-MIB for MAC address table.
-	OIDDot1dTpFdbAddress = "1.3.6.1.2.1.17.4.3.1.1" // dot1dTpFdbAddress
-	OIDDot1dTpFdbPort    = "1.3.6.1.2.1.17.4.3.1.2" // dot1dTpFdbPort
-	OIDDot1dTpFdbStatus  = "1.3.6.1.2.1.17.4.3.1.3" // dot1dTpFdbStatus
+	// OIDDot1dTpFdbAddress is the BRIDGE-MIB OID for MAC address table entries.
+	OIDDot1dTpFdbAddress = "1.3.6.1.2.1.17.4.3.1.1"
+	// OIDDot1dTpFdbPort is the BRIDGE-MIB OID for MAC table port mapping.
+	OIDDot1dTpFdbPort = "1.3.6.1.2.1.17.4.3.1.2"
+	// OIDDot1dTpFdbStatus is the BRIDGE-MIB OID for MAC table entry status.
+	OIDDot1dTpFdbStatus = "1.3.6.1.2.1.17.4.3.1.3"
 
-	// Q-BRIDGE-MIB for VLAN-aware MAC address table.
-	OIDDot1qTpFdbPort   = "1.3.6.1.2.1.17.7.1.2.2.1.2" // dot1qTpFdbPort
-	OIDDot1qTpFdbStatus = "1.3.6.1.2.1.17.7.1.2.2.1.3" // dot1qTpFdbStatus
+	// OIDDot1qTpFdbPort is the Q-BRIDGE-MIB OID for VLAN-aware MAC address table port.
+	OIDDot1qTpFdbPort = "1.3.6.1.2.1.17.7.1.2.2.1.2"
+	// OIDDot1qTpFdbStatus is the Q-BRIDGE-MIB OID for VLAN-aware MAC address table status.
+	OIDDot1qTpFdbStatus = "1.3.6.1.2.1.17.7.1.2.2.1.3"
 
-	// Q-BRIDGE-MIB for VLAN membership.
-	OIDDot1qVlanCurrentEgressPorts   = "1.3.6.1.2.1.17.7.1.4.2.1.4" // dot1qVlanCurrentEgressPorts
-	OIDDot1qVlanCurrentUntaggedPorts = "1.3.6.1.2.1.17.7.1.4.2.1.5" // dot1qVlanCurrentUntaggedPorts
+	// OIDDot1qVlanCurrentEgressPorts is the Q-BRIDGE-MIB OID for VLAN egress ports.
+	OIDDot1qVlanCurrentEgressPorts = "1.3.6.1.2.1.17.7.1.4.2.1.4"
+	// OIDDot1qVlanCurrentUntaggedPorts is the Q-BRIDGE-MIB OID for VLAN untagged ports.
+	OIDDot1qVlanCurrentUntaggedPorts = "1.3.6.1.2.1.17.7.1.4.2.1.5"
 
-	// Bridge port mapping (dot1dBasePortIfIndex).
-	OIDDot1dBasePortIfIndex = "1.3.6.1.2.1.17.1.4.1.2" // Maps bridge port to ifIndex
+	// OIDDot1dBasePortIfIndex is the Bridge port to ifIndex mapping OID.
+	OIDDot1dBasePortIfIndex = "1.3.6.1.2.1.17.1.4.1.2"
 )
 
 // Interface status values.
@@ -64,6 +68,41 @@ const (
 // ID subtype values for LLDP.
 const (
 	IDSubtypeLocal = "local"
+)
+
+// OID parsing constants for validating minimum required parts.
+const (
+	// minOIDPartsForIndex is the minimum OID parts needed to extract an index (e.g., ifIndex).
+	minOIDPartsForIndex = 2
+	// minOIDPartsQBridge is the minimum OID parts for Q-BRIDGE-MIB MAC table entries
+	// (OID base + VLAN + 6 MAC octets = 8 parts minimum).
+	minOIDPartsQBridge = 8
+	// minOIDPartsBridge is the minimum OID parts for BRIDGE-MIB MAC table entries
+	// (OID base + 6 MAC octets = 7 parts minimum).
+	minOIDPartsBridge = 7
+	// vlanOIDOffset is the offset from end of OID parts to locate the VLAN ID
+	// in Q-BRIDGE-MIB (VLAN + 6 MAC octets = 7 positions back).
+	vlanOIDOffset = 7
+)
+
+// MAC address parsing constants.
+const (
+	// macOctetCount is the number of octets in a MAC address.
+	macOctetCount = 6
+)
+
+// Time conversion constants.
+const (
+	// timeTicksToMilliseconds converts SNMP TimeTicks (hundredths of a second) to milliseconds.
+	timeTicksToMilliseconds = 10
+)
+
+// Port bitmap parsing constants.
+const (
+	// bitsPerByte is the number of bits in a byte for port bitmap calculations.
+	bitsPerByte = 8
+	// highBitIndex is the index of the highest bit in a byte (0-7).
+	highBitIndex = 7
 )
 
 // InterfaceInfo contains network interface details from IF-MIB.
@@ -222,7 +261,7 @@ func walkInterfaceTable(params *gosnmp.GoSNMP) ([]InterfaceInfo, error) {
 	err := params.BulkWalk(OIDIfIndex, func(pdu gosnmp.SnmpPDU) error {
 		// Extract ifIndex from OID.
 		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 2 {
+		if len(parts) < minOIDPartsForIndex {
 			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
@@ -296,7 +335,7 @@ func walkIfAttribute(
 	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
 		// Extract ifIndex from OID.
 		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 2 {
+		if len(parts) < minOIDPartsForIndex {
 			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
@@ -423,47 +462,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 
 	// Walk dot1qTpFdbPort (MAC to bridge port mapping).
 	err := params.BulkWalk(OIDDot1qTpFdbPort, func(pdu gosnmp.SnmpPDU) error {
-		// OID format: .1.3.6.1.2.1.17.7.1.2.2.1.2.VLAN.MAC1.MAC2.MAC3.MAC4.MAC5.MAC6
-		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 8 {
-			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
-			return nil
-		}
-
-		// Extract VLAN and MAC address.
-		vlanIdx := len(parts) - 7
-		vlan, err := strconv.Atoi(parts[vlanIdx])
-		if err != nil {
-			logging.GetLogger().Warn("failed to parse VLAN", "error", err)
-			return nil
-		}
-
-		mac := parseMACFromOID(parts[vlanIdx+1:])
-		if mac == "" {
-			return nil
-		}
-
-		bridgePort := formatSNMPValue(pdu)
-		bridgePortNum, err := strconv.Atoi(bridgePort)
-		if err != nil {
-			logging.GetLogger().Warn("failed to parse bridge port", "error", err)
-			return nil
-		}
-
-		// Map bridge port to ifIndex.
-		ifIndex := bridgePortMap[bridgePortNum]
-		if ifIndex == 0 {
-			ifIndex = bridgePortNum // Fallback if mapping not available
-		}
-
-		entry := &MACEntry{
-			MAC:     mac,
-			VLAN:    vlan,
-			IfIndex: ifIndex,
-		}
-
-		macToEntry[mac] = entry
-		return nil
+		return processQBridgeFdbPortPDU(pdu, bridgePortMap, macToEntry)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to walk Q-BRIDGE MAC table: %w", err)
@@ -471,32 +470,107 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 
 	// Walk dot1qTpFdbStatus to get MAC entry type.
 	walkErr := params.BulkWalk(OIDDot1qTpFdbStatus, func(pdu gosnmp.SnmpPDU) error {
-		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 8 {
-			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
-			return nil
-		}
-
-		vlanIdx := len(parts) - 7
-		mac := parseMACFromOID(parts[vlanIdx+1:])
-		if mac == "" {
-			return nil
-		}
-
-		entry, exists := macToEntry[mac]
-		if !exists {
-			return nil
-		}
-
-		status := formatSNMPValue(pdu)
-		entry.Type = parseMACStatus(status)
-		return nil
+		return processQBridgeFdbStatusPDU(pdu, macToEntry)
 	})
 	if walkErr != nil {
 		logging.GetLogger().Warn("failed to walk MAC status", "error", walkErr)
 	}
 
-	// Convert map to slice.
+	return collectMACEntries(macToEntry), nil
+}
+
+// processQBridgeFdbPortPDU processes a single PDU from dot1qTpFdbPort walk.
+// OID format: .1.3.6.1.2.1.17.7.1.2.2.1.2.VLAN.MAC1.MAC2.MAC3.MAC4.MAC5.MAC6.
+func processQBridgeFdbPortPDU(
+	pdu gosnmp.SnmpPDU,
+	bridgePortMap map[int]int,
+	macToEntry map[string]*MACEntry,
+) error {
+	parts := strings.Split(pdu.Name, ".")
+	if len(parts) < minOIDPartsQBridge {
+		logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
+		return nil
+	}
+
+	vlan, mac, ok := parseVLANAndMAC(parts)
+	if !ok {
+		return nil
+	}
+
+	bridgePortNum, ok := parseBridgePort(pdu)
+	if !ok {
+		return nil
+	}
+
+	// Map bridge port to ifIndex (fallback to bridgePortNum if mapping not available).
+	ifIndex := bridgePortMap[bridgePortNum]
+	if ifIndex == 0 {
+		ifIndex = bridgePortNum
+	}
+
+	macToEntry[mac] = &MACEntry{
+		MAC:     mac,
+		VLAN:    vlan,
+		IfIndex: ifIndex,
+	}
+	return nil
+}
+
+// processQBridgeFdbStatusPDU processes a single PDU from dot1qTpFdbStatus walk.
+func processQBridgeFdbStatusPDU(pdu gosnmp.SnmpPDU, macToEntry map[string]*MACEntry) error {
+	parts := strings.Split(pdu.Name, ".")
+	if len(parts) < minOIDPartsQBridge {
+		logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
+		return nil
+	}
+
+	_, mac, ok := parseVLANAndMAC(parts)
+	if !ok {
+		return nil
+	}
+
+	entry, exists := macToEntry[mac]
+	if !exists {
+		return nil
+	}
+
+	status := formatSNMPValue(pdu)
+	entry.Type = parseMACStatus(status)
+	return nil
+}
+
+// parseVLANAndMAC extracts VLAN and MAC address from OID parts.
+// Returns (vlan, mac, ok).
+func parseVLANAndMAC(parts []string) (int, string, bool) {
+	vlanIdx := len(parts) - vlanOIDOffset
+	vlan, err := strconv.Atoi(parts[vlanIdx])
+	if err != nil {
+		logging.GetLogger().Warn("failed to parse VLAN", "error", err)
+		return 0, "", false
+	}
+
+	mac := parseMACFromOID(parts[vlanIdx+1:])
+	if mac == "" {
+		return 0, "", false
+	}
+
+	return vlan, mac, true
+}
+
+// parseBridgePort extracts the bridge port number from an SNMP PDU.
+// Returns (bridgePort, ok) where ok is false if parsing fails.
+func parseBridgePort(pdu gosnmp.SnmpPDU) (int, bool) {
+	bridgePort := formatSNMPValue(pdu)
+	bridgePortNum, err := strconv.Atoi(bridgePort)
+	if err != nil {
+		logging.GetLogger().Warn("failed to parse bridge port", "error", err)
+		return 0, false
+	}
+	return bridgePortNum, true
+}
+
+// collectMACEntries converts a MAC entry map to a slice, applying default type if needed.
+func collectMACEntries(macToEntry map[string]*MACEntry) []MACEntry {
 	entries := make([]MACEntry, 0, len(macToEntry))
 	for _, entry := range macToEntry {
 		if entry.Type == "" {
@@ -504,8 +578,7 @@ func walkQBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 		}
 		entries = append(entries, *entry)
 	}
-
-	return entries, nil
+	return entries
 }
 
 // walkMACTableBridge walks BRIDGE-MIB MAC table using SNMPv2c.
@@ -548,12 +621,12 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 	err := params.BulkWalk(OIDDot1dTpFdbPort, func(pdu gosnmp.SnmpPDU) error {
 		// OID format: .1.3.6.1.2.1.17.4.3.1.2.MAC1.MAC2.MAC3.MAC4.MAC5.MAC6
 		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 7 {
+		if len(parts) < minOIDPartsBridge {
 			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
-		mac := parseMACFromOID(parts[len(parts)-6:])
+		mac := parseMACFromOID(parts[len(parts)-macOctetCount:])
 		if mac == "" {
 			return nil
 		}
@@ -587,12 +660,12 @@ func walkBridgeMACTable(params *gosnmp.GoSNMP) ([]MACEntry, error) {
 	// Walk dot1dTpFdbStatus to get MAC entry type.
 	walkErr := params.BulkWalk(OIDDot1dTpFdbStatus, func(pdu gosnmp.SnmpPDU) error {
 		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 7 {
+		if len(parts) < minOIDPartsBridge {
 			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
 
-		mac := parseMACFromOID(parts[len(parts)-6:])
+		mac := parseMACFromOID(parts[len(parts)-macOctetCount:])
 		if mac == "" {
 			return nil
 		}
@@ -696,7 +769,7 @@ func walkPortVLANs(params *gosnmp.GoSNMP, ifIndex int) ([]int, error) {
 	err := params.BulkWalk(OIDDot1qVlanCurrentEgressPorts, func(pdu gosnmp.SnmpPDU) error {
 		// OID format: .1.3.6.1.2.1.17.7.1.4.2.1.4.VLAN_ID
 		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 2 {
+		if len(parts) < minOIDPartsForIndex {
 			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
@@ -729,7 +802,7 @@ func getBridgePortMapping(params *gosnmp.GoSNMP) map[int]int {
 	err := params.BulkWalk(OIDDot1dBasePortIfIndex, func(pdu gosnmp.SnmpPDU) error {
 		// OID format: .1.3.6.1.2.1.17.1.4.1.2.BRIDGE_PORT
 		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 2 {
+		if len(parts) < minOIDPartsForIndex {
 			logging.GetLogger().Warn("invalid OID format", "oid", pdu.Name)
 			return nil
 		}
@@ -805,12 +878,12 @@ func parseMACStatus(value string) string {
 // parseMACFromOID extracts MAC address from OID suffix.
 // Expects 6 octets in the last parts of the OID.
 func parseMACFromOID(parts []string) string {
-	if len(parts) < 6 {
+	if len(parts) < macOctetCount {
 		return ""
 	}
 
-	mac := make([]string, 6)
-	for i := range 6 {
+	mac := make([]string, macOctetCount)
+	for i := range macOctetCount {
 		octet, err := strconv.Atoi(parts[i])
 		if err != nil || octet < 0 || octet > 255 {
 			return ""
@@ -830,7 +903,7 @@ func parseTimeTicks(value string) time.Time {
 	}
 
 	// Convert hundredths of a second to duration.
-	duration := time.Duration(ticks) * 10 * time.Millisecond
+	duration := time.Duration(ticks) * timeTicksToMilliseconds * time.Millisecond
 
 	// Return time relative to now (approximation).
 	return time.Now().Add(-duration)
@@ -850,8 +923,8 @@ func portListContainsPort(portList any, portNum int) bool {
 		return false
 	}
 
-	byteIdx := portIdx / 8
-	bitIdx := 7 - (portIdx % 8) // #nosec G115 -- portIdx%8 is always 0-7
+	byteIdx := portIdx / bitsPerByte
+	bitIdx := highBitIndex - (portIdx % bitsPerByte) // #nosec G115 -- portIdx%8 is always 0-7
 
 	if byteIdx >= len(bytes) {
 		return false

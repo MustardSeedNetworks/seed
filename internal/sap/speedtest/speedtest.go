@@ -1,4 +1,5 @@
-// Package speedtest provides network bandwidth testing using speedtest.net infrastructure.
+package speedtest
+
 //
 // This package wraps the showwin/speedtest-go library to provide internet speed testing
 // with progress tracking and server selection. Tests measure upload/download bandwidth
@@ -38,7 +39,6 @@
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Download: %.2f Mbps, Upload: %.2f Mbps\n", result.Download, result.Upload)
-package speedtest
 
 import (
 	"context"
@@ -48,6 +48,25 @@ import (
 	"time"
 
 	"github.com/showwin/speedtest-go/speedtest"
+)
+
+// Test phase progress percentage constants.
+const (
+	progressFindingServer   = 10
+	progressTestingLatency  = 20
+	progressTestingDownload = 40
+	progressTestingUpload   = 70
+	progressComplete        = 100
+)
+
+// Timing and conversion constants.
+const (
+	// speedPollInterval is the interval for polling live speed updates during tests.
+	speedPollInterval = 100 * time.Millisecond
+	// bytesToMbps converts bytes/sec to Mbps (1 Mbps = 125000 bytes/sec).
+	bytesToMbps = 125000.0
+	// idleResetDelay is the delay before resetting status to idle after test completion.
+	idleResetDelay = 2 * time.Second
 )
 
 // Result contains the complete speedtest results including bandwidth, latency, and server information.
@@ -170,13 +189,13 @@ func (t *Tester) findTestServer() (*speedtest.Server, error) {
 
 // runDownloadTest performs the download test with live speed updates.
 func (t *Tester) runDownloadTest(server *speedtest.Server) error {
-	t.setStatus("testing_download", 40)
+	t.setStatus("testing_download", progressTestingDownload)
 	t.setCurrentSpeeds(0, 0)
 
 	// Start polling goroutine for live download speed from Context
 	done := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(100 * time.Millisecond)
+		ticker := time.NewTicker(speedPollInterval)
 		defer ticker.Stop()
 		for {
 			select {
@@ -185,7 +204,7 @@ func (t *Tester) runDownloadTest(server *speedtest.Server) error {
 			case <-ticker.C:
 				// GetEWMADownloadRate returns bytes/sec, convert to Mbps
 				rate := server.Context.GetEWMADownloadRate()
-				mbps := rate / 125000.0
+				mbps := rate / bytesToMbps
 				t.setCurrentSpeeds(mbps, 0)
 			}
 		}
@@ -205,12 +224,12 @@ func (t *Tester) runDownloadTest(server *speedtest.Server) error {
 
 // runUploadTest performs the upload test with live speed updates.
 func (t *Tester) runUploadTest(server *speedtest.Server, finalDownload float64) error {
-	t.setStatus("testing_upload", 70)
+	t.setStatus("testing_upload", progressTestingUpload)
 
 	// Start polling goroutine for live upload speed from Context
 	done := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(100 * time.Millisecond)
+		ticker := time.NewTicker(speedPollInterval)
 		defer ticker.Stop()
 		for {
 			select {
@@ -219,7 +238,7 @@ func (t *Tester) runUploadTest(server *speedtest.Server, finalDownload float64) 
 			case <-ticker.C:
 				// GetEWMAUploadRate returns bytes/sec, convert to Mbps
 				rate := server.Context.GetEWMAUploadRate()
-				mbps := rate / 125000.0
+				mbps := rate / bytesToMbps
 				t.setCurrentSpeeds(finalDownload, mbps)
 			}
 		}
@@ -266,7 +285,7 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	startTime := time.Now()
 
 	// Find servers
-	t.setStatus("finding_server", 10)
+	t.setStatus("finding_server", progressFindingServer)
 	server, err := t.findTestServer()
 	if err != nil {
 		t.setStatus("idle", 0)
@@ -274,7 +293,7 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	}
 
 	// Test latency
-	t.setStatus("testing_latency", 20)
+	t.setStatus("testing_latency", progressTestingLatency)
 	err = server.PingTest(nil)
 	if err != nil {
 		t.setStatus("idle", 0)
@@ -299,7 +318,7 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	}
 
 	// Build and store result
-	t.setStatus("complete", 100)
+	t.setStatus("complete", progressComplete)
 	result := t.buildTestResult(server, startTime)
 
 	t.mu.Lock()
@@ -308,7 +327,7 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 
 	// Reset to idle after a moment
 	// Fixes #864: Use time.AfterFunc instead of goroutine to allow GC if Tester is discarded
-	time.AfterFunc(2*time.Second, func() {
+	time.AfterFunc(idleResetDelay, func() {
 		t.setStatus("idle", 0)
 	})
 

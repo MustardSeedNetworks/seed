@@ -1,4 +1,3 @@
-// Package database provides user management for The Seed.
 package database
 
 import (

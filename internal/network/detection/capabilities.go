@@ -1,7 +1,7 @@
-// Package detection provides intelligent network interface auto-detection.
+package detection
+
 // Capabilities module provides cross-platform abstractions for TDR and DOM
 // capability detection, with platform-specific implementations.
-package detection
 
 // Capabilities represents the detected capabilities of a network interface.
 type Capabilities struct {

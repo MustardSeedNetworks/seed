@@ -1,8 +1,9 @@
+package logging
+
 // Package logging provides structured logging with automatic redaction of sensitive data.
 //
 // This package wraps Go's log/slog with automatic sensitive data redaction,
 // request ID correlation, and configurable output formats (text/JSON).
-package logging
 
 import (
 	"context"
@@ -13,6 +14,20 @@ import (
 	"sync"
 
 	"gopkg.in/natefinch/lumberjack.v2"
+)
+
+const (
+	// defaultLogMaxSizeMB is the maximum size in megabytes per log file before rotation.
+	// Limits individual log file sizes to prevent disk exhaustion.
+	defaultLogMaxSizeMB = 100
+
+	// defaultLogMaxBackups is the number of old log files to retain after rotation.
+	// Balances disk usage with log history availability.
+	defaultLogMaxBackups = 5
+
+	// defaultLogMaxAgeDays is the number of days to keep old log files.
+	// Files older than this are automatically deleted during rotation.
+	defaultLogMaxAgeDays = 30
 )
 
 // LoggingConfig contains logging configuration options.
@@ -37,9 +52,9 @@ func DefaultLoggingConfig() *LoggingConfig {
 		Format:     "json",
 		AddSource:  false,
 		File:       "",
-		MaxSize:    100,
-		MaxBackups: 5,
-		MaxAge:     30,
+		MaxSize:    defaultLogMaxSizeMB,
+		MaxBackups: defaultLogMaxBackups,
+		MaxAge:     defaultLogMaxAgeDays,
 		Compress:   true,
 	}
 }

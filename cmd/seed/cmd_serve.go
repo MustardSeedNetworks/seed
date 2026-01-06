@@ -12,13 +12,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/krisarmstrong/seed/internal/api"
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/canopy"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/harvest"
+	api "github.com/krisarmstrong/seed/internal/httpapi"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/paths"
@@ -26,6 +26,17 @@ import (
 	"github.com/krisarmstrong/seed/internal/sap"
 	"github.com/krisarmstrong/seed/internal/shell"
 	"github.com/krisarmstrong/seed/internal/version"
+)
+
+const (
+	// logBroadcasterBufferSize is the number of log entries to buffer for streaming to the frontend.
+	logBroadcasterBufferSize = 1000
+
+	// signalChannelBufferSize is the buffer size for the OS signal channel to handle SIGINT/SIGTERM.
+	signalChannelBufferSize = 2
+
+	// shutdownTimeoutSeconds is the maximum time to wait for graceful server shutdown.
+	shutdownTimeoutSeconds = 30
 )
 
 func initServeCmd(state *cliState) {
@@ -178,7 +189,7 @@ func setupLogging(cfg *config.Config) string {
 	}
 
 	// Initialize logger with broadcaster to enable log streaming to frontend (#959)
-	broadcaster := logging.InitBroadcaster(1000) // Buffer 1000 log entries
+	broadcaster := logging.InitBroadcaster(logBroadcasterBufferSize)
 	if err := logging.InitLoggerWithBroadcaster(logCfg, broadcaster); err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal: Failed to initialize logger: %v\n", err)
 		os.Exit(1)
@@ -398,7 +409,7 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, modules *api.
 		serverErrors <- server.Start()
 	}()
 
-	sigChan := make(chan os.Signal, 2)
+	sigChan := make(chan os.Signal, signalChannelBufferSize)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
@@ -417,7 +428,7 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, modules *api.
 			os.Exit(1)
 		}()
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeoutSeconds*time.Second)
 		defer cancel()
 
 		// Stop modules first

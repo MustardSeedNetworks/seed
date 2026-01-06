@@ -1,4 +1,3 @@
-// Package discovery provides network discovery functionality.
 package discovery
 
 import (
@@ -42,6 +41,9 @@ const (
 	tcpACK = 0x10
 )
 
+// TCP probe constants.
+const tcpProbeDialTimeoutS = 5 // Default timeout in seconds for local IP detection dial
+
 // TCPProber provides TCP connect probing functionality.
 type TCPProber struct {
 	timeout   time.Duration
@@ -75,7 +77,7 @@ func NewTCPProber(timeout time.Duration) (*TCPProber, error) {
 
 // getLocalIP returns the local IP address used for outbound connections.
 func getLocalIP() (net.IP, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), tcpProbeDialTimeoutS*time.Second)
 	defer cancel()
 	dialer := &net.Dialer{}
 	conn, err := dialer.DialContext(ctx, "udp", "8.8.8.8:53")

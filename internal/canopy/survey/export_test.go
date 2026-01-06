@@ -1,4 +1,3 @@
-// Package survey exports internal functions for testing.
 package survey
 
 import (

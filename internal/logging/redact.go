@@ -1,4 +1,5 @@
-// Package logging provides secure logging utilities with automatic redaction of sensitive data.
+package logging
+
 //
 // SECURITY MODEL FOR IP ADDRESS LOGGING (Plan G6):
 //
@@ -26,7 +27,6 @@
 //  1. The reverse proxy is configured to strip/override client-supplied headers
 //  2. Trusted proxy configuration is properly set up
 //  3. The proxy is verified to be in the request path
-package logging
 
 import (
 	"fmt"

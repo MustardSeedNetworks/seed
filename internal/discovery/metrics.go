@@ -1,6 +1,6 @@
-// Package discovery provides network device discovery functionality.
-// This file implements discovery metrics and coverage tracking.
 package discovery
+
+// This file implements discovery metrics and coverage tracking.
 
 import (
 	"maps"
@@ -18,6 +18,13 @@ const (
 const (
 	HealthCritical = "critical"
 	HealthDegraded = "degraded"
+)
+
+// Percentage calculation and threshold constants.
+const (
+	percentMultiplierMetrics = 100 // Multiplier for percentage calculations
+	errorRateCriticalPercent = 50  // Error rate threshold for critical status
+	errorRateDegradedPercent = 20  // Error rate threshold for degraded status
 )
 
 // Metrics tracks discovery statistics and coverage.
@@ -148,7 +155,7 @@ func (m *Metrics) EndScan() {
 
 	// Calculate coverage.
 	if m.HostsProbed > 0 {
-		m.CoveragePercent = float64(m.HostsResponding) / float64(m.HostsProbed) * 100
+		m.CoveragePercent = float64(m.HostsResponding) / float64(m.HostsProbed) * percentMultiplierMetrics
 	}
 }
 
@@ -503,11 +510,11 @@ func (m *Metrics) GetDegradationStatus() *DegradationStatus {
 	totalOps := m.HostsProbed + m.ProfilesCompleted
 
 	if totalOps > 0 {
-		errorRate := float64(totalErrors) / float64(totalOps) * 100
-		if errorRate > 50 {
+		errorRate := float64(totalErrors) / float64(totalOps) * percentMultiplierMetrics
+		if errorRate > errorRateCriticalPercent {
 			status.OverallHealth = HealthCritical
 			status.Warnings = append(status.Warnings, "High error rate detected (>50%)")
-		} else if errorRate > 20 {
+		} else if errorRate > errorRateDegradedPercent {
 			status.OverallHealth = HealthDegraded
 			status.Warnings = append(status.Warnings, "Elevated error rate detected (>20%)")
 		}

@@ -1,4 +1,3 @@
-// Package config provides configuration management with encryption support.
 package config
 
 import (

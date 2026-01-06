@@ -1,4 +1,3 @@
-// Package database provides alert repository for system alerts.
 package database
 
 import (

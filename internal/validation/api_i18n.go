@@ -110,7 +110,7 @@ func ValidateLoginRequestI18n(req *LoginRequest) []FieldErrorWithKey {
 			Field:      "username",
 			MessageKey: "validation.login.usernameRequired",
 		})
-	} else if len(req.Username) > 64 {
+	} else if len(req.Username) > MaxUsernameLength {
 		errors = append(errors, FieldErrorWithKey{
 			Field:      "username",
 			MessageKey: "validation.login.usernameTooLong",
@@ -122,7 +122,7 @@ func ValidateLoginRequestI18n(req *LoginRequest) []FieldErrorWithKey {
 			Field:      "password",
 			MessageKey: "validation.login.passwordRequired",
 		})
-	} else if len(req.Password) > 128 {
+	} else if len(req.Password) > MaxPasswordLength {
 		errors = append(errors, FieldErrorWithKey{
 			Field:      "password",
 			MessageKey: "validation.login.passwordTooLong",
@@ -169,7 +169,7 @@ func ValidateHTTPEndpointI18n(ep *HTTPEndpointRequest) []FieldErrorWithKey {
 			Field:      "name",
 			MessageKey: "validation.endpoint.nameRequired",
 		})
-	} else if len(ep.Name) > 100 {
+	} else if len(ep.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldErrorWithKey{
 			Field:      "name",
 			MessageKey: "validation.endpoint.nameTooLong",
@@ -210,7 +210,7 @@ func ValidatePingTargetI18n(pt *PingTargetRequest) []FieldErrorWithKey {
 			Field:      "name",
 			MessageKey: "validation.endpoint.nameRequired",
 		})
-	} else if len(pt.Name) > 100 {
+	} else if len(pt.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldErrorWithKey{
 			Field:      "name",
 			MessageKey: "validation.endpoint.nameTooLong",
@@ -241,7 +241,7 @@ func ValidateTCPPortI18n(tp *TCPPortRequest) []FieldErrorWithKey {
 			Field:      "name",
 			MessageKey: "validation.endpoint.nameRequired",
 		})
-	} else if len(tp.Name) > 100 {
+	} else if len(tp.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldErrorWithKey{
 			Field:      "name",
 			MessageKey: "validation.endpoint.nameTooLong",

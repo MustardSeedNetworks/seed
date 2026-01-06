@@ -95,10 +95,44 @@ const (
 	// Short timeout since port bind should succeed or fail immediately.
 	portCheckTimeout = 2 * time.Second
 
+	// binaryValidationTimeoutSeconds is the timeout for validating iperf3 binary via --version check.
+	binaryValidationTimeoutSeconds = 2
+
 	// minSupportedVersion is the minimum iperf3 version required for reliable operation.
 	// Version 3.17+ provides stable JSON output format for programmatic parsing.
 	// Earlier versions have JSON parsing issues and missing fields.
 	minSupportedVersion = "3.17"
+
+	// maxHostnameLength is the maximum allowed length for a hostname per RFC 1035.
+	maxHostnameLength = 253
+
+	// minVersionParts is the minimum number of parts expected when parsing version output.
+	// iperf3 outputs "iperf X.XX", so we expect at least 2 parts (command name and version).
+	minVersionParts = 2
+
+	// progressWarningThreshold is the progress percentage used when entering the "testing" phase.
+	progressWarningThreshold = 30
+
+	// progressCriticalThreshold is the progress percentage used when entering the "parsing" phase.
+	progressCriticalThreshold = 80
+
+	// progressMaxPercent is the maximum progress percentage (100%).
+	progressMaxPercent = 100
+
+	// bytesToMegabits is the conversion factor from bytes per second to megabits per second.
+	// 1 megabit = 1,000,000 bits, and 8 bits = 1 byte.
+	// So bytes/sec * 8 / 1,000,000 = Mbps, which simplifies to bytes/sec / 1,000,000 for bits/sec.
+	bytesToMegabits = 1_000_000
+
+	// searchPathsPrealloc is the preallocation size for the slice storing searched binary paths.
+	// This covers typical search locations: embedded, system PATH, and legacy paths.
+	searchPathsPrealloc = 8
+
+	// portCheckIntervalMs is the interval in milliseconds between port availability checks.
+	portCheckIntervalMs = 100
+
+	// progressConnectingPercent is the progress percentage when client enters "connecting" phase.
+	progressConnectingPercent = 10
 
 	// Direction constants for iPerf tests.
 	directionDownload      = "download"
@@ -123,7 +157,7 @@ func validateServer(server string) error {
 	}
 
 	// Check if it's a valid hostname
-	if len(server) > 253 {
+	if len(server) > maxHostnameLength {
 		return errors.New("server hostname too long")
 	}
 
@@ -285,7 +319,7 @@ func findIperf3Binary() (string, error) {
 		return cachedPath, nil
 	}
 
-	searchedPaths := make([]string, 0, 8) // Preallocate for typical search paths
+	searchedPaths := make([]string, 0, searchPathsPrealloc) // Preallocate for typical search paths
 	var embeddedErr, systemErr error
 
 	// Strategy 1: Try embedded binary (extract to cache if needed)
@@ -365,7 +399,7 @@ func getLegacyPaths() []string {
 
 // validateBinary checks if the binary at the given path is a valid iperf3 executable.
 func validateBinary(path string) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), binaryValidationTimeoutSeconds*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, path, "--version")
@@ -411,7 +445,7 @@ func GetVersion() (string, error) {
 		line := strings.TrimSpace(lines[0])
 		// Parse "iperf X.XX" format
 		parts := strings.Fields(line)
-		if len(parts) >= 2 {
+		if len(parts) >= minVersionParts {
 			return "v" + parts[1], nil
 		}
 		return line, nil
@@ -476,19 +510,25 @@ func waitForPortReady(port int, timeout time.Duration) error {
 		return err
 	}
 
-	deadline := time.Now().Add(timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	dialer := &net.Dialer{Timeout: portCheckIntervalMs * time.Millisecond}
 
-	for time.Now().Before(deadline) {
-		conn, err := net.DialTimeout("tcp", addr, 100*time.Millisecond)
-		if err == nil {
-			_ = conn.Close()
-			return nil
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("port %d not ready after %v", port, timeout)
+		default:
+			conn, err := dialer.DialContext(ctx, "tcp", addr)
+			if err == nil {
+				_ = conn.Close()
+				return nil
+			}
+			time.Sleep(portCheckIntervalMs * time.Millisecond)
 		}
-		time.Sleep(100 * time.Millisecond)
 	}
-
-	return fmt.Errorf("port %d not ready after %v", port, timeout)
 }
 
 // GetServerStatus returns the current server status.
@@ -625,7 +665,7 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 	direction := normalizeDirection(config)
 	args := buildClientArgs(config, direction)
 
-	m.updateClientProgress("testing", 30)
+	m.updateClientProgress("testing", progressWarningThreshold)
 
 	cmd := exec.CommandContext(ctx, binaryPath, args...)
 	output, err := cmd.Output()
@@ -637,7 +677,7 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 		return nil, fmt.Errorf("iperf3 failed: %w", err)
 	}
 
-	m.updateClientProgress("parsing", 80)
+	m.updateClientProgress("parsing", progressCriticalThreshold)
 
 	var iperfOut iperfJSON
 	if unmarshalErr := json.Unmarshal(output, &iperfOut); unmarshalErr != nil {
@@ -652,7 +692,7 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 	m.mu.Lock()
 	m.lastResult = result
 	m.clientStatus.Phase = "complete"
-	m.clientStatus.Progress = 100
+	m.clientStatus.Progress = progressMaxPercent
 	m.mu.Unlock()
 
 	return result, nil
@@ -664,7 +704,7 @@ func (m *Manager) startClientTest() error {
 	if m.clientStatus.Running {
 		return errors.New("test already in progress")
 	}
-	m.clientStatus = ClientStatus{Running: true, Phase: "connecting", Progress: 10}
+	m.clientStatus = ClientStatus{Running: true, Phase: "connecting", Progress: progressConnectingPercent}
 	return nil
 }
 
@@ -744,16 +784,16 @@ func parseClientResult(iperfOut *iperfJSON, config *ClientConfig, direction stri
 	switch direction {
 	case directionDownload:
 		result.BitsPerSecond = iperfOut.End.SumReceived.BitsPerSecond
-		result.Bandwidth = iperfOut.End.SumReceived.BitsPerSecond / 1_000_000
-		result.Transfer = iperfOut.End.SumReceived.Bytes / 1_000_000
+		result.Bandwidth = iperfOut.End.SumReceived.BitsPerSecond / bytesToMegabits
+		result.Transfer = iperfOut.End.SumReceived.Bytes / bytesToMegabits
 		result.Duration = iperfOut.End.SumReceived.Seconds
 	case directionBidirectional:
 		result.DownloadBitsPerSecond = iperfOut.End.SumReceived.BitsPerSecond
-		result.DownloadBandwidth = iperfOut.End.SumReceived.BitsPerSecond / 1_000_000
-		result.DownloadTransfer = iperfOut.End.SumReceived.Bytes / 1_000_000
+		result.DownloadBandwidth = iperfOut.End.SumReceived.BitsPerSecond / bytesToMegabits
+		result.DownloadTransfer = iperfOut.End.SumReceived.Bytes / bytesToMegabits
 		result.UploadBitsPerSecond = iperfOut.End.SumSent.BitsPerSecond
-		result.UploadBandwidth = iperfOut.End.SumSent.BitsPerSecond / 1_000_000
-		result.UploadTransfer = iperfOut.End.SumSent.Bytes / 1_000_000
+		result.UploadBandwidth = iperfOut.End.SumSent.BitsPerSecond / bytesToMegabits
+		result.UploadTransfer = iperfOut.End.SumSent.Bytes / bytesToMegabits
 		result.BitsPerSecond = result.DownloadBitsPerSecond
 		result.Bandwidth = result.DownloadBandwidth
 		result.Transfer = result.DownloadTransfer
@@ -761,8 +801,8 @@ func parseClientResult(iperfOut *iperfJSON, config *ClientConfig, direction stri
 		result.Retransmits = iperfOut.End.SumSent.Retransmits
 	default:
 		result.BitsPerSecond = iperfOut.End.SumSent.BitsPerSecond
-		result.Bandwidth = iperfOut.End.SumSent.BitsPerSecond / 1_000_000
-		result.Transfer = iperfOut.End.SumSent.Bytes / 1_000_000
+		result.Bandwidth = iperfOut.End.SumSent.BitsPerSecond / bytesToMegabits
+		result.Transfer = iperfOut.End.SumSent.Bytes / bytesToMegabits
 		result.Duration = iperfOut.End.SumSent.Seconds
 		result.Retransmits = iperfOut.End.SumSent.Retransmits
 	}

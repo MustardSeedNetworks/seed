@@ -14,10 +14,10 @@
 package i18n
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"maps"
 	"slices"
 	"strings"
@@ -25,6 +25,8 @@ import (
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
+
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 //go:embed locales
@@ -75,50 +77,73 @@ func getNamespaces() []string {
 	return []string{"common", "cards", "settings", "errors", "validation", "api", "help"}
 }
 
+// loadLocaleFile reads and parses a locale JSON file from the embedded filesystem.
+// Returns the parsed messages map and true if successful, nil and false otherwise.
+func loadLocaleFile(lang, ns string) (map[string]any, bool) {
+	path := fmt.Sprintf("locales/%s/%s.json", lang, ns)
+	data, err := localesFS.ReadFile(path)
+	if err != nil {
+		// File may not exist for all namespaces - this is expected
+		return nil, false
+	}
+
+	var messages map[string]any
+	if unmarshalErr := json.Unmarshal(data, &messages); unmarshalErr != nil {
+		return nil, false
+	}
+
+	return messages, true
+}
+
+// addMessagesToBundle adds flattened messages to the bundle for a specific language.
+func addMessagesToBundle(bundle *i18n.Bundle, lang string, flatMessages map[string]any) {
+	langTag := language.Make(lang)
+	for key, value := range flatMessages {
+		strValue, ok := value.(string)
+		if !ok {
+			continue
+		}
+		if addErr := bundle.AddMessages(langTag, &i18n.Message{
+			ID:    key,
+			Other: strValue,
+		}); addErr != nil {
+			logging.GetLogger().WarnContext(
+				context.Background(),
+				"failed to add i18n message",
+				"key", key,
+				"lang", lang,
+				"error", addErr,
+			)
+		}
+	}
+}
+
+// loadNamespaceForLanguage loads a single namespace for a language into the bundle.
+func loadNamespaceForLanguage(bundle *i18n.Bundle, lang, ns string) {
+	messages, ok := loadLocaleFile(lang, ns)
+	if !ok {
+		return
+	}
+
+	flatMessages := flattenMessages(messages, ns)
+	addMessagesToBundle(bundle, lang, flatMessages)
+}
+
+// loadAllTranslations loads all translations for all supported languages into the bundle.
+func loadAllTranslations(bundle *i18n.Bundle) {
+	for _, lang := range GetSupportedLanguages() {
+		for _, ns := range getNamespaces() {
+			loadNamespaceForLanguage(bundle, lang, ns)
+		}
+	}
+}
+
 // GetBundle returns the singleton i18n bundle with all translations loaded.
 func GetBundle() *i18n.Bundle {
 	getBundleOnce().Do(func() {
 		newBundle := i18n.NewBundle(language.English)
 		newBundle.RegisterUnmarshalFunc("json", json.Unmarshal)
-
-		// Load all locale files for each language
-		for _, lang := range GetSupportedLanguages() {
-			for _, ns := range getNamespaces() {
-				path := fmt.Sprintf("locales/%s/%s.json", lang, ns)
-				data, err := localesFS.ReadFile(path)
-				if err != nil {
-					// Log warning but continue - file may not exist for all namespaces
-					continue
-				}
-
-				// Parse the JSON and add messages with namespaced keys
-				var messages map[string]any
-				if unmarshalErr := json.Unmarshal(data, &messages); unmarshalErr != nil {
-					continue
-				}
-
-				// Flatten nested structure and add to bundle.
-				flatMessages := flattenMessages(messages, ns)
-				for key, value := range flatMessages {
-					if strValue, ok := value.(string); ok {
-						if addErr := newBundle.AddMessages(language.Make(lang), &i18n.Message{
-							ID:    key,
-							Other: strValue,
-						}); addErr != nil {
-							slog.Warn(
-								"failed to add i18n message",
-								"key",
-								key,
-								"lang",
-								lang,
-								"error",
-								addErr,
-							)
-						}
-					}
-				}
-			}
-		}
+		loadAllTranslations(newBundle)
 		setBundle(newBundle)
 	})
 

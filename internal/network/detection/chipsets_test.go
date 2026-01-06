@@ -1,6 +1,6 @@
-// Package detection_test provides intelligent network interface auto-detection.
-// Test suite for chipset database and identification.
 package detection_test
+
+// Test suite for chipset database and identification.
 
 import (
 	"testing"

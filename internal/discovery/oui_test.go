@@ -1,4 +1,3 @@
-// Package discovery_test provides OUI database tests.
 package discovery_test
 
 import (

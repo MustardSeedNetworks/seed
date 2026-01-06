@@ -1,8 +1,8 @@
-// Package iperf provides embedded iperf3 binary management.
+package iperf
+
 //
 // This file handles extracting embedded iperf3 binaries and provides
 // robust detection with OS-specific installation guidance.
-package iperf
 
 import (
 	"embed"

@@ -1,7 +1,7 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // This file implements Phase 2 (Name Resolution) of the discovery pipeline.
 // It performs DNS, NetBIOS, and mDNS name resolution for discovered devices.
-package discovery
 
 import (
 	"context"
@@ -11,6 +11,21 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/logging"
+)
+
+// Progress reporting interval for resolution phase.
+const resolutionProgressTickerMs = 500
+
+// Resolution phase constants.
+const (
+	resolutionPercentMultiplier  = 100 // Multiplier for percentage calculations
+	resolutionPercentMax         = 100 // Maximum percentage value
+	resolutionDefaultTimeoutMs   = 500 // Default timeout in milliseconds for DNS resolution
+	resolutionMDNSTimeoutS       = 2   // mDNS timeout in seconds
+	resolutionPhaseTimeoutMin    = 5   // Phase timeout in minutes
+	resolutionMaxConcurrentDNS   = 50  // Maximum concurrent DNS lookups
+	resolutionMaxConcurrentNBIOS = 20  // Maximum concurrent NetBIOS queries
+	resolutionMaxConcurrentMDNS  = 10  // Maximum concurrent mDNS queries
 )
 
 // ResolutionPhase implements the Phase interface for name resolution.
@@ -71,13 +86,13 @@ func DefaultResolutionConfig() *ResolutionConfig {
 		NetBIOS: true,
 		MDNS:    true,
 		Timing: ResolutionTiming{
-			DNSTimeout:           500 * time.Millisecond,
-			NetBIOSTimeout:       500 * time.Millisecond,
-			MDNSTimeout:          2 * time.Second,
-			PhaseTimeout:         5 * time.Minute,
-			MaxConcurrentDNS:     50,
-			MaxConcurrentNetBIOS: 20,
-			MaxConcurrentMDNS:    10,
+			DNSTimeout:           resolutionDefaultTimeoutMs * time.Millisecond,
+			NetBIOSTimeout:       resolutionDefaultTimeoutMs * time.Millisecond,
+			MDNSTimeout:          resolutionMDNSTimeoutS * time.Second,
+			PhaseTimeout:         resolutionPhaseTimeoutMin * time.Minute,
+			MaxConcurrentDNS:     resolutionMaxConcurrentDNS,
+			MaxConcurrentNetBIOS: resolutionMaxConcurrentNBIOS,
+			MaxConcurrentMDNS:    resolutionMaxConcurrentMDNS,
 		},
 	}
 }
@@ -106,8 +121,6 @@ func (p *ResolutionPhase) Name() string {
 
 // Run executes the name resolution phase.
 // Devices from Phase 1 are enriched with hostnames.
-//
-
 func (p *ResolutionPhase) Run(
 	ctx context.Context,
 	devices []*DiscoveredDevice,
@@ -124,22 +137,41 @@ func (p *ResolutionPhase) Run(
 		return devices, nil
 	}
 
-	// Use phase timeout if configured
-	resolveCtx := ctx
-	if p.config.Timing.PhaseTimeout > 0 {
-		var cancel context.CancelFunc
-		resolveCtx, cancel = context.WithTimeout(ctx, p.config.Timing.PhaseTimeout)
+	resolveCtx, cancel := p.createResolveContext(ctx)
+	if cancel != nil {
 		defer cancel()
 	}
 
-	// Track progress
 	var progress ResolutionProgress
 	progress.Start(len(devices))
 
-	// Mutex to protect device field updates from concurrent goroutines
 	var deviceMu sync.Mutex
+	ips, deviceByIP := p.buildDeviceMap(devices)
 
-	// Collect IPs for resolution
+	done := p.startProgressReporter(progressCh, &progress, len(devices), start)
+	p.runResolvers(resolveCtx, ips, deviceByIP, &deviceMu, &progress)
+	close(done)
+
+	resolved := p.finalizeDevices(devices)
+
+	logging.GetLogger().InfoContext(ctx, "Resolution phase completed",
+		"resolved", resolved,
+		"total", len(devices),
+		"duration", time.Since(start))
+
+	return devices, nil
+}
+
+// createResolveContext creates a context with phase timeout if configured.
+func (p *ResolutionPhase) createResolveContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	if p.config.Timing.PhaseTimeout > 0 {
+		return context.WithTimeout(ctx, p.config.Timing.PhaseTimeout)
+	}
+	return ctx, nil
+}
+
+// buildDeviceMap collects IPs and builds a map from IP to device.
+func (p *ResolutionPhase) buildDeviceMap(devices []*DiscoveredDevice) ([]string, map[string]*DiscoveredDevice) {
 	var ips []string
 	deviceByIP := make(map[string]*DiscoveredDevice)
 	for _, device := range devices {
@@ -148,11 +180,20 @@ func (p *ResolutionPhase) Run(
 			deviceByIP[device.IP] = device
 		}
 	}
+	return ips, deviceByIP
+}
 
-	// Progress reporting goroutine
+// startProgressReporter starts a goroutine that reports progress periodically.
+// Returns a done channel that should be closed when resolution is complete.
+func (p *ResolutionPhase) startProgressReporter(
+	progressCh chan<- PhaseProgressPayload,
+	progress *ResolutionProgress,
+	totalDevices int,
+	start time.Time,
+) chan struct{} {
 	done := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(500 * time.Millisecond)
+		ticker := time.NewTicker(resolutionProgressTickerMs * time.Millisecond)
 		defer ticker.Stop()
 		for {
 			select {
@@ -163,7 +204,7 @@ func (p *ResolutionPhase) Run(
 					progressCh <- PhaseProgressPayload{
 						Phase:           "resolution",
 						ProcessedCount:  progress.Resolved(),
-						TotalCount:      len(devices), // Use devices count, not IPs
+						TotalCount:      totalDevices,
 						PercentComplete: progress.PercentComplete(),
 						CurrentTarget:   progress.CurrentTarget(),
 						ElapsedMs:       time.Since(start).Milliseconds(),
@@ -172,54 +213,53 @@ func (p *ResolutionPhase) Run(
 			}
 		}
 	}()
+	return done
+}
 
-	// Run all resolution methods in parallel
+// runResolvers executes all enabled resolution methods in parallel.
+func (p *ResolutionPhase) runResolvers(
+	ctx context.Context,
+	ips []string,
+	deviceByIP map[string]*DiscoveredDevice,
+	deviceMu *sync.Mutex,
+	progress *ResolutionProgress,
+) {
 	var wg sync.WaitGroup
 
-	// 1. DNS reverse lookup (PTR records)
 	if p.config.DNS {
 		wg.Go(func() {
-			p.resolveDNS(resolveCtx, ips, deviceByIP, &deviceMu, &progress)
+			p.resolveDNS(ctx, ips, deviceByIP, deviceMu, progress)
 		})
 	}
 
-	// 2. NetBIOS name resolution (Windows)
 	if p.config.NetBIOS {
 		wg.Go(func() {
-			p.resolveNetBIOS(resolveCtx, ips, deviceByIP, &deviceMu, &progress)
+			p.resolveNetBIOS(ctx, ips, deviceByIP, deviceMu, progress)
 		})
 	}
 
-	// 3. mDNS name resolution (Apple/Linux)
 	if p.config.MDNS {
 		wg.Go(func() {
-			p.resolveMDNS(resolveCtx, ips, deviceByIP, &deviceMu, &progress)
+			p.resolveMDNS(ctx, ips, deviceByIP, deviceMu, progress)
 		})
 	}
 
-	// Wait for all resolution to complete
 	wg.Wait()
-	close(done)
+}
 
-	// Compute display names for all devices (single-threaded, no lock needed)
+// finalizeDevices computes display names and counts resolved devices.
+func (p *ResolutionPhase) finalizeDevices(devices []*DiscoveredDevice) int {
 	for _, device := range devices {
 		device.DisplayName = device.ComputeDisplayName()
 	}
 
-	// Count resolved names
 	resolved := 0
 	for _, device := range devices {
 		if device.DisplayName != "" && device.DisplayName != device.IP {
 			resolved++
 		}
 	}
-
-	logging.GetLogger().InfoContext(ctx, "Resolution phase completed",
-		"resolved", resolved,
-		"total", len(devices),
-		"duration", time.Since(start))
-
-	return devices, nil
+	return resolved
 }
 
 // resolveDNS performs reverse DNS lookups for all devices.
@@ -433,11 +473,11 @@ func (p *ResolutionProgress) PercentComplete() float64 {
 	p.mu.RUnlock()
 
 	if total == 0 {
-		return 100
+		return resolutionPercentMax
 	}
-	pct := float64(resolved) / float64(total) * 100
-	if pct > 100 {
-		pct = 100
+	pct := float64(resolved) / float64(total) * resolutionPercentMultiplier
+	if pct > resolutionPercentMax {
+		pct = resolutionPercentMax
 	}
 	return pct
 }
@@ -451,7 +491,7 @@ type DNSResolver struct {
 // NewDNSResolver creates a new DNS resolver with custom settings.
 func NewDNSResolver(timeout time.Duration, maxParallel int) *DNSResolver {
 	if timeout == 0 {
-		timeout = 500 * time.Millisecond
+		timeout = resolutionDefaultTimeoutMs * time.Millisecond
 	}
 	if maxParallel == 0 {
 		maxParallel = 50

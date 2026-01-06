@@ -14,16 +14,32 @@ import (
 
 // Q-BRIDGE-MIB OIDs (IEEE 802.1Q).
 const (
-	// dot1qVlanStaticTable - static VLAN configuration.
-	OIDDot1qVlanStaticName        = "1.3.6.1.2.1.17.7.1.4.3.1.1" // dot1qVlanStaticName
-	OIDDot1qVlanStaticEgressPorts = "1.3.6.1.2.1.17.7.1.4.3.1.2" // dot1qVlanStaticEgressPorts
-	OIDDot1qVlanStaticRowStatus   = "1.3.6.1.2.1.17.7.1.4.3.1.5" // dot1qVlanStaticRowStatus
+	// OIDDot1qVlanStaticName is the Q-BRIDGE-MIB OID for static VLAN name.
+	OIDDot1qVlanStaticName = "1.3.6.1.2.1.17.7.1.4.3.1.1"
+	// OIDDot1qVlanStaticEgressPorts is the Q-BRIDGE-MIB OID for static VLAN egress ports.
+	OIDDot1qVlanStaticEgressPorts = "1.3.6.1.2.1.17.7.1.4.3.1.2"
+	// OIDDot1qVlanStaticRowStatus is the Q-BRIDGE-MIB OID for static VLAN row status.
+	OIDDot1qVlanStaticRowStatus = "1.3.6.1.2.1.17.7.1.4.3.1.5"
 
-	// dot1qVlanCurrentTable - current VLAN state.
-	OIDDot1qVlanFdbID = "1.3.6.1.2.1.17.7.1.4.2.1.3" // dot1qVlanFdbId
+	// OIDDot1qVlanFdbID is the Q-BRIDGE-MIB OID for VLAN FDB ID.
+	OIDDot1qVlanFdbID = "1.3.6.1.2.1.17.7.1.4.2.1.3"
 
-	// dot1qPvid - port VLAN ID.
-	OIDDot1qPvid = "1.3.6.1.2.1.17.7.1.4.5.1.1" // dot1qPvid
+	// OIDDot1qPvid is the Q-BRIDGE-MIB OID for port VLAN ID.
+	OIDDot1qPvid = "1.3.6.1.2.1.17.7.1.4.5.1.1"
+)
+
+// VLAN OID parsing constants.
+const (
+	// minOIDPartsVLANIndex is the minimum OID parts needed to extract VLAN ID from OID.
+	minOIDPartsVLANIndex = 2
+)
+
+// Port bitmap parsing constants for VLAN port membership.
+const (
+	// vlanBitsPerByte is the number of bits per byte in VLAN port bitmaps.
+	vlanBitsPerByte = 8
+	// vlanHighBitIndex is the index of the highest bit in a byte (MSB first).
+	vlanHighBitIndex = 7
 )
 
 // VLANInfo contains VLAN information from Q-BRIDGE-MIB.
@@ -176,7 +192,7 @@ func walkVLANTable(params *gosnmp.GoSNMP) []VLANInfo {
 // extractVLANIndex extracts VLAN ID from OID.
 func extractVLANIndex(oid string) int {
 	parts := strings.Split(oid, ".")
-	if len(parts) < 2 {
+	if len(parts) < minOIDPartsVLANIndex {
 		return 0
 	}
 
@@ -196,10 +212,10 @@ func parsePortBitmap(value any) []int {
 
 	ports := make([]int, 0)
 	for byteIdx, b := range bytes {
-		for bitIdx := 7; bitIdx >= 0; bitIdx-- {
+		for bitIdx := vlanHighBitIndex; bitIdx >= 0; bitIdx-- {
 			if b&(1<<bitIdx) != 0 {
 				// Port numbering starts at 1, bit 7 of byte 0 is port 1
-				portNum := byteIdx*8 + (7 - bitIdx) + 1
+				portNum := byteIdx*vlanBitsPerByte + (vlanHighBitIndex - bitIdx) + 1
 				ports = append(ports, portNum)
 			}
 		}

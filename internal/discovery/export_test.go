@@ -1,7 +1,7 @@
-// Package discovery exports internal types and functions for testing.
+package discovery
+
 // This file is only compiled during testing (due to _test.go suffix)
 // and provides access to internal implementation details.
-package discovery
 
 import (
 	"net"

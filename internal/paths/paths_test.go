@@ -250,6 +250,50 @@ func TestResolveConfigPath_Priority(t *testing.T) {
 	}
 }
 
+// createTestFile creates a file in the current directory for testing.
+func createTestFile(t *testing.T, filename string) {
+	t.Helper()
+	if filename == "" {
+		return
+	}
+	f, err := os.Create(filename)
+	if err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+	_ = f.Close()
+}
+
+// assertFoundMatch validates the found boolean matches expectations.
+func assertFoundMatch(t *testing.T, got, want bool) {
+	t.Helper()
+	if got != want {
+		t.Errorf("found=%v, want %v", got, want)
+	}
+}
+
+// assertPathWhenFound validates path properties when config is expected to be found.
+func assertPathWhenFound(t *testing.T, path, expectContains string) {
+	t.Helper()
+	if path == "" {
+		t.Error("expected non-empty path when found=true")
+		return
+	}
+	if !filepath.IsAbs(path) {
+		t.Errorf("expected absolute path, got %q", path)
+	}
+	if expectContains != "" && filepath.Base(path) != expectContains {
+		t.Errorf("path %q does not contain %q", path, expectContains)
+	}
+}
+
+// assertPathWhenNotFound validates path is empty when config is not expected.
+func assertPathWhenNotFound(t *testing.T, path string) {
+	t.Helper()
+	if path != "" {
+		t.Errorf("expected empty path when found=false, got %q", path)
+	}
+}
+
 func TestDetectLegacyConfig(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -285,33 +329,17 @@ func TestDetectLegacyConfig(t *testing.T) {
 			t.Chdir(tmpDir)
 
 			// Create test file if specified
-			if tt.createFile != "" {
-				f, err := os.Create(tt.createFile)
-				if err != nil {
-					t.Fatalf("failed to create test file: %v", err)
-				}
-				_ = f.Close()
-			}
+			createTestFile(t, tt.createFile)
 
 			// Test detection
 			path, found := paths.DetectLegacyConfig()
 
-			if found != tt.expectFound {
-				t.Errorf("found=%v, want %v", found, tt.expectFound)
-			}
+			assertFoundMatch(t, found, tt.expectFound)
 
 			if tt.expectFound {
-				if path == "" {
-					t.Error("expected non-empty path when found=true")
-				}
-				if !filepath.IsAbs(path) {
-					t.Errorf("expected absolute path, got %q", path)
-				}
-				if tt.expectContains != "" && filepath.Base(path) != tt.expectContains {
-					t.Errorf("path %q does not contain %q", path, tt.expectContains)
-				}
-			} else if path != "" {
-				t.Errorf("expected empty path when found=false, got %q", path)
+				assertPathWhenFound(t, path, tt.expectContains)
+			} else {
+				assertPathWhenNotFound(t, path)
 			}
 		})
 	}

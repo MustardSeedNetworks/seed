@@ -1,4 +1,5 @@
-// Package discovery provides device fingerprinting and OS/service detection capabilities.
+package discovery
+
 //
 // This file implements active fingerprinting to identify operating systems, service versions,
 // and TLS configurations of discovered network devices. It uses multiple techniques including
@@ -12,7 +13,6 @@
 //
 // The fingerprinter combines results from multiple methods and assigns confidence scores
 // to provide accurate device identification.
-package discovery
 
 import (
 	"context"
@@ -35,6 +35,16 @@ const (
 
 // Product name constants.
 const productCiscoIOS = "Cisco IOS"
+
+// Fingerprinting constants.
+const (
+	hoursPerDay              = 24   // Hours in a day for certificate expiry calculation
+	bannerReadBufferSize     = 1024 // Buffer size for reading service banners
+	httpReadBufferSize       = 2048 // Buffer size for reading HTTP responses
+	defaultFingerprintTimeS  = 3    // Default timeout in seconds for fingerprinting operations
+	telnetPort               = 23   // Standard Telnet port number
+	defaultServiceConfidence = 50   // Default confidence score for service detection
+)
 
 // OSFingerprint contains OS detection results.
 type OSFingerprint struct {
@@ -87,7 +97,7 @@ type Fingerprinter struct {
 // NewFingerprinter creates a new fingerprinter.
 func NewFingerprinter(timeout time.Duration) *Fingerprinter {
 	if timeout == 0 {
-		timeout = 3 * time.Second
+		timeout = defaultFingerprintTimeS * time.Second
 	}
 	return &Fingerprinter{timeout: timeout}
 }
@@ -114,38 +124,64 @@ func (f *Fingerprinter) ProbeDevice(
 	result.OSFingerprint = f.fingerprintOS(ctx, ip, profile)
 
 	// Service version detection from banners
-	if profile != nil {
-		for _, port := range profile.OpenPorts {
-			if sv := f.detectServiceVersion(port); sv != nil {
-				result.ServiceVersions = append(result.ServiceVersions, *sv)
-			}
-		}
-	}
+	result.ServiceVersions = f.detectAllServiceVersions(profile)
 
 	// TLS certificate inspection for HTTPS ports
-	// Fixes #980: Cap tlsPorts to prevent unbounded growth from malicious profiles
-	const maxTLSPorts = 20
-	tlsPorts := []int{443, 8443, 8080}
-	if profile != nil {
-		for _, port := range profile.OpenPorts {
-			if len(tlsPorts) >= maxTLSPorts {
-				break // Prevent unbounded slice growth
-			}
-			if port.Port == 443 || port.Port == 8443 || strings.HasSuffix(port.Service, "s") {
-				if !containsInt(tlsPorts, port.Port) {
-					tlsPorts = append(tlsPorts, port.Port)
-				}
-			}
-		}
-	}
-
-	for _, port := range tlsPorts {
-		if tlsInfo := f.probeTLS(ctx, ip, port); tlsInfo != nil {
-			result.TLSInfo = append(result.TLSInfo, *tlsInfo)
-		}
-	}
+	tlsPorts := f.collectTLSPorts(profile)
+	result.TLSInfo = f.probeAllTLS(ctx, ip, tlsPorts)
 
 	return result
+}
+
+// detectAllServiceVersions detects service versions for all open ports in a profile.
+func (f *Fingerprinter) detectAllServiceVersions(profile *DeviceProfile) []ServiceVersion {
+	versions := []ServiceVersion{}
+	if profile == nil {
+		return versions
+	}
+	for _, port := range profile.OpenPorts {
+		if sv := f.detectServiceVersion(port); sv != nil {
+			versions = append(versions, *sv)
+		}
+	}
+	return versions
+}
+
+// collectTLSPorts gathers ports that should be probed for TLS certificates.
+// Fixes #980: Cap tlsPorts to prevent unbounded growth from malicious profiles.
+func (f *Fingerprinter) collectTLSPorts(profile *DeviceProfile) []int {
+	const maxTLSPorts = 20
+	tlsPorts := []int{443, 8443, 8080}
+
+	if profile == nil {
+		return tlsPorts
+	}
+
+	for _, port := range profile.OpenPorts {
+		if len(tlsPorts) >= maxTLSPorts {
+			break
+		}
+		if f.isTLSPort(port) && !containsInt(tlsPorts, port.Port) {
+			tlsPorts = append(tlsPorts, port.Port)
+		}
+	}
+	return tlsPorts
+}
+
+// isTLSPort determines if a port should be probed for TLS.
+func (*Fingerprinter) isTLSPort(port OpenPort) bool {
+	return port.Port == 443 || port.Port == 8443 || strings.HasSuffix(port.Service, "s")
+}
+
+// probeAllTLS probes all specified ports for TLS information.
+func (f *Fingerprinter) probeAllTLS(ctx context.Context, ip string, ports []int) []TLSInfo {
+	tlsInfos := []TLSInfo{}
+	for _, port := range ports {
+		if tlsInfo := f.probeTLS(ctx, ip, port); tlsInfo != nil {
+			tlsInfos = append(tlsInfos, *tlsInfo)
+		}
+	}
+	return tlsInfos
 }
 
 // fingerprintOS attempts to identify the operating system.
@@ -158,45 +194,58 @@ func (f *Fingerprinter) fingerprintOS(
 		Methods: []string{},
 	}
 
+	if profile == nil {
+		return nil
+	}
+
 	// Note: TTL-based detection requires raw sockets which aren't available
 	// through Go's standard net package. We rely on banner and HTTP analysis instead.
 
 	// Method 1: Banner analysis
-	if profile != nil {
-		for _, port := range profile.OpenPorts {
-			if port.Banner != "" {
-				bannerLower := strings.ToLower(port.Banner)
-				if osInfo := f.parseOSFromBanner(bannerLower); osInfo != nil {
-					fp.Methods = append(fp.Methods, "banner")
-					// Banner is more reliable than TTL
-					if osInfo.Confidence > fp.Confidence {
-						fp.OSFamily = osInfo.OSFamily
-						fp.OSVersion = osInfo.OSVersion
-						fp.Confidence = osInfo.Confidence
-					}
-				}
-			}
-		}
+	f.fingerprintFromBanners(profile, fp)
 
-		// Method 3: HTTP Server header analysis
-		if profile.HTTPInfo != nil && profile.HTTPInfo.Server != "" {
-			serverLower := strings.ToLower(profile.HTTPInfo.Server)
-			if osInfo := f.parseOSFromServer(serverLower); osInfo != nil {
-				fp.Methods = append(fp.Methods, "http")
-				if osInfo.Confidence > fp.Confidence {
-					fp.OSFamily = osInfo.OSFamily
-					fp.OSVersion = osInfo.OSVersion
-					fp.Confidence = osInfo.Confidence
-				}
-			}
-		}
-	}
+	// Method 2: HTTP Server header analysis
+	f.fingerprintFromHTTP(profile, fp)
 
 	if fp.OSFamily == "" {
 		return nil
 	}
 
 	return fp
+}
+
+// fingerprintFromBanners analyzes port banners for OS information.
+func (f *Fingerprinter) fingerprintFromBanners(profile *DeviceProfile, fp *OSFingerprint) {
+	for _, port := range profile.OpenPorts {
+		if port.Banner == "" {
+			continue
+		}
+		bannerLower := strings.ToLower(port.Banner)
+		if osInfo := f.parseOSFromBanner(bannerLower); osInfo != nil {
+			f.updateFingerprintIfBetter(fp, osInfo, "banner")
+		}
+	}
+}
+
+// fingerprintFromHTTP analyzes HTTP Server header for OS information.
+func (f *Fingerprinter) fingerprintFromHTTP(profile *DeviceProfile, fp *OSFingerprint) {
+	if profile.HTTPInfo == nil || profile.HTTPInfo.Server == "" {
+		return
+	}
+	serverLower := strings.ToLower(profile.HTTPInfo.Server)
+	if osInfo := f.parseOSFromServer(serverLower); osInfo != nil {
+		f.updateFingerprintIfBetter(fp, osInfo, "http")
+	}
+}
+
+// updateFingerprintIfBetter updates the fingerprint if the new info has higher confidence.
+func (*Fingerprinter) updateFingerprintIfBetter(fp, osInfo *OSFingerprint, method string) {
+	fp.Methods = append(fp.Methods, method)
+	if osInfo.Confidence > fp.Confidence {
+		fp.OSFamily = osInfo.OSFamily
+		fp.OSVersion = osInfo.OSVersion
+		fp.Confidence = osInfo.Confidence
+	}
 }
 
 // osMatch defines a pattern for OS detection.
@@ -334,7 +383,7 @@ func (f *Fingerprinter) detectServiceVersion(port OpenPort) *ServiceVersion {
 	sv := &ServiceVersion{
 		Port:       port.Port,
 		Service:    port.Service,
-		Confidence: 50,
+		Confidence: defaultServiceConfidence,
 	}
 
 	if port.Banner == "" {
@@ -430,7 +479,7 @@ func (*Fingerprinter) detectSMTPVersion(port int, banner string, sv *ServiceVers
 
 // detectTelnetVersion detects Telnet service version from banner.
 func (*Fingerprinter) detectTelnetVersion(port int, banner string, sv *ServiceVersion) {
-	if port != 23 {
+	if port != telnetPort {
 		return
 	}
 	sv.Service = "telnet"
@@ -479,7 +528,7 @@ func (f *Fingerprinter) probeTLS(ctx context.Context, ip string, port int) *TLSI
 		CommonName:        cert.Subject.CommonName,
 		ValidFrom:         cert.NotBefore,
 		ValidTo:           cert.NotAfter,
-		DaysUntilExpiry:   int(time.Until(cert.NotAfter).Hours() / 24),
+		DaysUntilExpiry:   int(time.Until(cert.NotAfter).Hours() / hoursPerDay),
 		SelfSigned:        cert.Issuer.CommonName == cert.Subject.CommonName,
 		SubjectAltNames:   cert.DNSNames,
 		CertificateErrors: []string{},
@@ -531,19 +580,23 @@ func containsInt(slice []int, val int) bool {
 	return slices.Contains(slice, val)
 }
 
-// quickScan performs a fast port scan to create a minimal DeviceProfile.
-// This is used when no existing profile is available.
-func (f *Fingerprinter) quickScan(ctx context.Context, ip string) *DeviceProfile {
-	profile := &DeviceProfile{
-		ProfiledAt: time.Now(),
-		OpenPorts:  []OpenPort{},
-	}
+// portSpec defines a port and its associated service name.
+type portSpec struct {
+	port    int
+	service string
+}
 
-	// Common ports to scan
-	ports := []struct {
-		port    int
-		service string
-	}{
+// scanResult holds the result of scanning a single port.
+type scanResult struct {
+	port    int
+	service string
+	open    bool
+	banner  string
+}
+
+// getCommonPorts returns the list of common ports to scan.
+func getCommonPorts() []portSpec {
+	return []portSpec{
 		{22, "ssh"},
 		{23, "telnet"},
 		{80, "http"},
@@ -561,15 +614,30 @@ func (f *Fingerprinter) quickScan(ctx context.Context, ip string) *DeviceProfile
 		{3389, "rdp"},
 		{5900, "vnc"},
 	}
+}
 
-	// Scan ports concurrently
-	type scanResult struct {
-		port    int
-		service string
-		open    bool
-		banner  string
+// quickScan performs a fast port scan to create a minimal DeviceProfile.
+// This is used when no existing profile is available.
+func (f *Fingerprinter) quickScan(ctx context.Context, ip string) *DeviceProfile {
+	profile := &DeviceProfile{
+		ProfiledAt: time.Now(),
+		OpenPorts:  []OpenPort{},
 	}
 
+	ports := getCommonPorts()
+	results := f.scanPortsConcurrently(ctx, ip, ports)
+	profile.OpenPorts = f.collectOpenPorts(results)
+	profile.HTTPInfo = f.findHTTPInfo(ctx, ip, profile.OpenPorts)
+
+	return profile
+}
+
+// scanPortsConcurrently scans all ports in parallel and returns results channel.
+func (f *Fingerprinter) scanPortsConcurrently(
+	ctx context.Context,
+	ip string,
+	ports []portSpec,
+) <-chan scanResult {
 	results := make(chan scanResult, len(ports))
 	var wg sync.WaitGroup
 
@@ -577,72 +645,96 @@ func (f *Fingerprinter) quickScan(ctx context.Context, ip string) *DeviceProfile
 		wg.Add(1)
 		go func(port int, service string) {
 			defer wg.Done()
-			result := scanResult{port: port, service: service}
-
-			addr := fmt.Sprintf("%s:%d", ip, port)
-			d := net.Dialer{Timeout: f.timeout}
-
-			conn, err := d.DialContext(ctx, "tcp", addr)
-			if err != nil {
-				results <- result
-				return
-			}
-			defer func() { _ = conn.Close() }()
-
-			result.open = true
-
-			// Try to grab banner with short timeout
-			_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-			buf := make([]byte, 1024)
-
-			// For HTTP ports, send a request first
-			if port == 80 || port == 8080 {
-				_, _ = conn.Write(
-					[]byte("HEAD / HTTP/1.0\r\nHost: " + ip + "\r\n\r\n"),
-				)
-			}
-
-			n, err := conn.Read(buf)
-			if err == nil && n > 0 {
-				result.banner = strings.TrimSpace(string(buf[:n]))
-				// Truncate long banners
-				if len(result.banner) > 256 {
-					result.banner = result.banner[:256]
-				}
-			}
-
-			results <- result
+			results <- f.scanSinglePort(ctx, ip, port, service)
 		}(p.port, p.service)
 	}
 
-	// Wait for all scans to complete
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
 
-	// Collect results
+	return results
+}
+
+// scanSinglePort probes a single port and returns the result.
+func (f *Fingerprinter) scanSinglePort(
+	ctx context.Context,
+	ip string,
+	port int,
+	service string,
+) scanResult {
+	result := scanResult{port: port, service: service}
+
+	addr := fmt.Sprintf("%s:%d", ip, port)
+	d := net.Dialer{Timeout: f.timeout}
+
+	conn, err := d.DialContext(ctx, "tcp", addr)
+	if err != nil {
+		return result
+	}
+	defer func() { _ = conn.Close() }()
+
+	result.open = true
+	result.banner = f.grabBanner(conn, ip, port)
+
+	return result
+}
+
+// grabBanner attempts to read a service banner from a connection.
+func (*Fingerprinter) grabBanner(conn net.Conn, ip string, port int) string {
+	const bannerTimeout = 2 * time.Second
+	const maxBannerLen = 256
+
+	_ = conn.SetReadDeadline(time.Now().Add(bannerTimeout))
+	buf := make([]byte, bannerReadBufferSize)
+
+	// For HTTP ports, send a request first
+	if port == 80 || port == 8080 {
+		_, _ = conn.Write([]byte("HEAD / HTTP/1.0\r\nHost: " + ip + "\r\n\r\n"))
+	}
+
+	n, err := conn.Read(buf)
+	if err != nil || n == 0 {
+		return ""
+	}
+
+	banner := strings.TrimSpace(string(buf[:n]))
+	if len(banner) > maxBannerLen {
+		banner = banner[:maxBannerLen]
+	}
+	return banner
+}
+
+// collectOpenPorts converts scan results into OpenPort slice.
+func (*Fingerprinter) collectOpenPorts(results <-chan scanResult) []OpenPort {
+	openPorts := []OpenPort{}
 	for result := range results {
 		if result.open {
-			profile.OpenPorts = append(profile.OpenPorts, OpenPort{
+			openPorts = append(openPorts, OpenPort{
 				Port:    result.port,
 				Service: result.service,
 				Banner:  result.banner,
 			})
 		}
 	}
+	return openPorts
+}
 
-	// Try to get HTTP server header if port 80 or 8080 is open
-	for _, op := range profile.OpenPorts {
+// findHTTPInfo attempts to get HTTP server info from open HTTP ports.
+func (f *Fingerprinter) findHTTPInfo(
+	ctx context.Context,
+	ip string,
+	openPorts []OpenPort,
+) *HTTPInfo {
+	for _, op := range openPorts {
 		if op.Port == 80 || op.Port == 8080 {
 			if httpInfo := f.getHTTPInfo(ctx, ip, op.Port); httpInfo != nil {
-				profile.HTTPInfo = httpInfo
-				break
+				return httpInfo
 			}
 		}
 	}
-
-	return profile
+	return nil
 }
 
 // getHTTPInfo fetches HTTP server information.
@@ -666,7 +758,7 @@ func (f *Fingerprinter) getHTTPInfo(ctx context.Context, ip string, port int) *H
 
 	// Read response
 	_ = conn.SetReadDeadline(time.Now().Add(f.timeout))
-	buf := make([]byte, 2048)
+	buf := make([]byte, httpReadBufferSize)
 	n, err := conn.Read(buf)
 	if err != nil || n == 0 {
 		return nil

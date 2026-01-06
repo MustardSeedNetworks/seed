@@ -1,4 +1,3 @@
-// Package survey provides WiFi site survey functionality.
 package survey
 
 import (

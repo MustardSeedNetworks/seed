@@ -1,4 +1,3 @@
-// Package survey_test tests the survey package.
 package survey_test
 
 import (

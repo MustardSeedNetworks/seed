@@ -427,105 +427,180 @@ func TestChecker_ConcurrentAccess(_ *testing.T) {
 	}
 }
 
+// assertHistoryLen checks that the checker's history has the expected length.
+func assertHistoryLen(t *testing.T, c *publicip.Checker, expected int) {
+	t.Helper()
+	if got := len(c.CheckerHistory()); got != expected {
+		t.Errorf("expected %d history entries, got %d", expected, got)
+	}
+}
+
+// assertHistoryLenFatal checks history length and fails immediately if wrong.
+func assertHistoryLenFatal(t *testing.T, c *publicip.Checker, expected int) {
+	t.Helper()
+	if got := len(c.CheckerHistory()); got != expected {
+		t.Fatalf("expected %d history entries, got %d", expected, got)
+	}
+}
+
+// assertLastIPv4 checks that the checker's lastIPv4 matches expected.
+func assertLastIPv4(t *testing.T, c *publicip.Checker, expected string) {
+	t.Helper()
+	if got := c.CheckerLastIPv4(); got != expected {
+		t.Errorf("expected lastIPv4 = %q, got %q", expected, got)
+	}
+}
+
+// assertHistoryIP checks that the history entry at index has the expected IP.
+func assertHistoryIP(t *testing.T, c *publicip.Checker, index int, expectedIP string) {
+	t.Helper()
+	if got := c.CheckerHistory()[index].IP; got != expectedIP {
+		t.Errorf("expected history[%d].IP = %q, got %q", index, expectedIP, got)
+	}
+}
+
+// assertHistoryGeo checks that the history entry at index has expected city/country.
+func assertHistoryGeo(t *testing.T, c *publicip.Checker, index int, expectedCity, expectedCountry string) {
+	t.Helper()
+	entry := c.CheckerHistory()[index]
+	if entry.City != expectedCity {
+		t.Errorf("expected history[%d].City = %q, got %q", index, expectedCity, entry.City)
+	}
+	if entry.Country != expectedCountry {
+		t.Errorf("expected history[%d].Country = %q, got %q", index, expectedCountry, entry.Country)
+	}
+}
+
+// assertHistoryMaxEntries checks that history does not exceed max entries.
+func assertHistoryMaxEntries(t *testing.T, c *publicip.Checker, maxEntries int) {
+	t.Helper()
+	if got := len(c.CheckerHistory()); got > maxEntries {
+		t.Errorf("expected max %d history entries, got %d", maxEntries, got)
+	}
+}
+
+// assertLastSeenRecent checks that the history entry's LastSeen is recent.
+func assertLastSeenRecent(t *testing.T, c *publicip.Checker, index int, threshold time.Duration) {
+	t.Helper()
+	cutoff := time.Now().Add(-threshold)
+	if c.CheckerHistory()[index].LastSeen.Before(cutoff) {
+		t.Error("expected LastSeen to be updated to recent time")
+	}
+}
+
 func TestChecker_updateHistory(t *testing.T) {
-	t.Run("empty IP does nothing", func(t *testing.T) {
-		c := publicip.NewChecker()
-		c.UpdateHistory("")
-		if len(c.CheckerHistory()) != 0 {
-			t.Errorf("expected empty history, got %d entries", len(c.CheckerHistory()))
-		}
-	})
+	tests := []struct {
+		name   string
+		setup  func(*publicip.Checker)
+		action func(*publicip.Checker)
+		verify func(*testing.T, *publicip.Checker)
+	}{
+		{
+			name:   "empty IP does nothing",
+			setup:  func(_ *publicip.Checker) {},
+			action: func(c *publicip.Checker) { c.UpdateHistory("") },
+			verify: func(t *testing.T, c *publicip.Checker) {
+				assertHistoryLen(t, c, 0)
+			},
+		},
+		{
+			name:  "first IP sets lastIPv4",
+			setup: func(_ *publicip.Checker) {},
+			action: func(c *publicip.Checker) {
+				c.UpdateHistory("192.0.2.1")
+			},
+			verify: func(t *testing.T, c *publicip.Checker) {
+				assertLastIPv4(t, c, "192.0.2.1")
+				// No history yet - history only populated on IP change.
+				assertHistoryLen(t, c, 0)
+			},
+		},
+		{
+			name: "same IP does not add to history",
+			setup: func(c *publicip.Checker) {
+				c.CheckerSetLastIPv4("192.0.2.1")
+			},
+			action: func(c *publicip.Checker) {
+				c.UpdateHistory("192.0.2.1") // Same IP.
+			},
+			verify: func(t *testing.T, c *publicip.Checker) {
+				assertHistoryLen(t, c, 0)
+			},
+		},
+		{
+			name: "IP change adds old IP to history",
+			setup: func(c *publicip.Checker) {
+				c.CheckerSetLastIPv4("192.0.2.1")
+			},
+			action: func(c *publicip.Checker) {
+				c.UpdateHistory("192.0.2.2") // New IP.
+			},
+			verify: func(t *testing.T, c *publicip.Checker) {
+				assertHistoryLenFatal(t, c, 1)
+				assertHistoryIP(t, c, 0, "192.0.2.1")
+				assertLastIPv4(t, c, "192.0.2.2")
+			},
+		},
+		{
+			name: "history capped at 10 entries",
+			setup: func(c *publicip.Checker) {
+				c.CheckerSetLastIPv4("192.0.2.1")
+			},
+			action: func(c *publicip.Checker) {
+				// Add more than 10 entries.
+				for i := 2; i <= 15; i++ {
+					c.UpdateHistory("192.0.2." + string(rune('0'+i%10)))
+					c.CheckerSetLastIPv4("192.0.2." + string(rune('0'+i%10)))
+				}
+			},
+			verify: func(t *testing.T, c *publicip.Checker) {
+				assertHistoryMaxEntries(t, c, 10)
+			},
+		},
+		{
+			name: "IP change with geo cache populates city/country",
+			setup: func(c *publicip.Checker) {
+				c.CheckerSetLastIPv4("192.0.2.1")
+				c.CheckerSetGeoCache(map[string]*publicip.GeoResponse{
+					"192.0.2.1": {City: "TestCity", Country: "TestCountry"},
+				})
+			},
+			action: func(c *publicip.Checker) {
+				c.UpdateHistory("192.0.2.2") // Trigger IP change.
+			},
+			verify: func(t *testing.T, c *publicip.Checker) {
+				assertHistoryLenFatal(t, c, 1)
+				assertHistoryGeo(t, c, 0, "TestCity", "TestCountry")
+			},
+		},
+		{
+			name: "existing IP in history updates LastSeen",
+			setup: func(c *publicip.Checker) {
+				oldTime := time.Now().Add(-1 * time.Hour)
+				c.CheckerSetHistory([]publicip.HistoryEntry{
+					{IP: "192.0.2.1", FirstSeen: oldTime, LastSeen: oldTime},
+				})
+				c.CheckerSetLastIPv4("192.0.2.1")
+			},
+			action: func(c *publicip.Checker) {
+				// Change to new IP and back.
+				c.UpdateHistory("192.0.2.2")
+			},
+			verify: func(t *testing.T, c *publicip.Checker) {
+				assertHistoryLenFatal(t, c, 1)
+				assertLastSeenRecent(t, c, 0, 1*time.Minute)
+			},
+		},
+	}
 
-	t.Run("first IP sets lastIPv4", func(t *testing.T) {
-		c := publicip.NewChecker()
-		c.UpdateHistory("192.0.2.1")
-		if c.CheckerLastIPv4() != "192.0.2.1" {
-			t.Errorf("expected lastIPv4 = '192.0.2.1', got %q", c.CheckerLastIPv4())
-		}
-		// No history yet - history only populated on IP change.
-		if len(c.CheckerHistory()) != 0 {
-			t.Errorf("expected no history on first IP, got %d entries", len(c.CheckerHistory()))
-		}
-	})
-
-	t.Run("same IP does not add to history", func(t *testing.T) {
-		c := publicip.NewChecker()
-		c.CheckerSetLastIPv4("192.0.2.1")
-		c.UpdateHistory("192.0.2.1") // Same IP.
-		if len(c.CheckerHistory()) != 0 {
-			t.Errorf("expected no history for same IP, got %d entries", len(c.CheckerHistory()))
-		}
-	})
-
-	t.Run("IP change adds old IP to history", func(t *testing.T) {
-		c := publicip.NewChecker()
-		c.CheckerSetLastIPv4("192.0.2.1")
-		c.UpdateHistory("192.0.2.2") // New IP.
-
-		if len(c.CheckerHistory()) != 1 {
-			t.Fatalf("expected 1 history entry, got %d", len(c.CheckerHistory()))
-		}
-		if c.CheckerHistory()[0].IP != "192.0.2.1" {
-			t.Errorf("expected old IP in history, got %q", c.CheckerHistory()[0].IP)
-		}
-		if c.CheckerLastIPv4() != "192.0.2.2" {
-			t.Errorf("expected lastIPv4 = '192.0.2.2', got %q", c.CheckerLastIPv4())
-		}
-	})
-
-	t.Run("history capped at 10 entries", func(t *testing.T) {
-		c := publicip.NewChecker()
-		c.CheckerSetLastIPv4("192.0.2.1")
-
-		// Add more than 10 entries.
-		for i := 2; i <= 15; i++ {
-			c.UpdateHistory("192.0.2." + string(rune('0'+i%10)))
-			c.CheckerSetLastIPv4("192.0.2." + string(rune('0'+i%10)))
-		}
-
-		if len(c.CheckerHistory()) > 10 {
-			t.Errorf("expected max 10 history entries, got %d", len(c.CheckerHistory()))
-		}
-	})
-
-	t.Run("IP change with geo cache populates city/country", func(t *testing.T) {
-		c := publicip.NewChecker()
-		c.CheckerSetLastIPv4("192.0.2.1")
-		c.CheckerSetGeoCache(map[string]*publicip.GeoResponse{
-			"192.0.2.1": {City: "TestCity", Country: "TestCountry"},
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := publicip.NewChecker()
+			tt.setup(c)
+			tt.action(c)
+			tt.verify(t, c)
 		})
-
-		c.UpdateHistory("192.0.2.2") // Trigger IP change.
-
-		if len(c.CheckerHistory()) != 1 {
-			t.Fatalf("expected 1 history entry, got %d", len(c.CheckerHistory()))
-		}
-		if c.CheckerHistory()[0].City != "TestCity" {
-			t.Errorf("expected city 'TestCity', got %q", c.CheckerHistory()[0].City)
-		}
-		if c.CheckerHistory()[0].Country != "TestCountry" {
-			t.Errorf("expected country 'TestCountry', got %q", c.CheckerHistory()[0].Country)
-		}
-	})
-
-	t.Run("existing IP in history updates LastSeen", func(t *testing.T) {
-		c := publicip.NewChecker()
-		oldTime := time.Now().Add(-1 * time.Hour)
-		c.CheckerSetHistory([]publicip.HistoryEntry{
-			{IP: "192.0.2.1", FirstSeen: oldTime, LastSeen: oldTime},
-		})
-		c.CheckerSetLastIPv4("192.0.2.1")
-
-		// Change to new IP and back.
-		c.UpdateHistory("192.0.2.2")
-
-		if len(c.CheckerHistory()) != 1 {
-			t.Fatalf("expected 1 history entry, got %d", len(c.CheckerHistory()))
-		}
-		if c.CheckerHistory()[0].LastSeen.Before(time.Now().Add(-1 * time.Minute)) {
-			t.Error("expected LastSeen to be updated to recent time")
-		}
-	})
+	}
 }
 
 func TestChecker_getHistoryCopy(t *testing.T) {

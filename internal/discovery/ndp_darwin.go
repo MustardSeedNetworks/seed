@@ -1,9 +1,9 @@
 //go:build darwin
 
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // NDP (Neighbor Discovery Protocol) support for macOS is a stub implementation
 // as IPv6 neighbor discovery on macOS is complex and the primary production target is Linux.
-package discovery
 
 import (
 	"errors"

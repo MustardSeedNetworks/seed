@@ -1,9 +1,9 @@
 //go:build darwin
 
-// Package gateway provides gateway reachability testing and latency measurement.
+package gateway
+
 // macOS implementation uses routing socket interface to detect default IPv4 and IPv6 gateways,
 // enumerate all routes, and monitor routing changes. Also provides detailed route information.
-package gateway
 
 import (
 	"fmt"

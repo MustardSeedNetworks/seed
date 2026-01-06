@@ -19,6 +19,9 @@ const (
 	GitHubUserEmailURL = "https://api.github.com/user/emails"
 )
 
+// HTTP timeout for GitHub API requests.
+const gitHubAPITimeout = 10 * time.Second
+
 // GetGitHubDefaultScopes returns the default scopes for GitHub OAuth.
 func GetGitHubDefaultScopes() []string {
 	return []string{
@@ -82,7 +85,7 @@ func GetGitHubUserInfo(
 ) (*UserInfo, error) {
 	client := config.Client(ctx, token)
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, gitHubAPITimeout)
 	defer cancel()
 
 	// Get user info

@@ -10,12 +10,18 @@ import (
 	"time"
 )
 
+// Darwin platform constants.
+const (
+	infoTimeoutSeconds = 5 // Timeout for WiFi info retrieval operations
+	keyValuePairCount  = 2 // Expected number of parts when splitting key:value pairs
+)
+
 // isWirelessPlatform checks if interface is wireless on macOS.
 // macOS requires exec-based approach as there's no nl80211 equivalent.
 func isWirelessPlatform(iface string) bool {
 	// On macOS, Wi-Fi interface is typically en0 or starts with en
 	// We can use networksetup to check
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), infoTimeoutSeconds*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "networksetup", "-listallhardwareports")
 	output, err := cmd.Output()
@@ -46,7 +52,7 @@ func isWirelessPlatform(iface string) bool {
 func getInfoPlatform(_ string) *Info {
 	// Use airport command for Wi-Fi info
 	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), infoTimeoutSeconds*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, airportPath, "-I")
 	output, err := cmd.Output()
@@ -59,8 +65,8 @@ func getInfoPlatform(_ string) *Info {
 
 	for line := range lines {
 		line = strings.TrimSpace(line)
-		parts := strings.SplitN(line, ":", 2)
-		if len(parts) != 2 {
+		parts := strings.SplitN(line, ":", keyValuePairCount)
+		if len(parts) != keyValuePairCount {
 			continue
 		}
 

@@ -11,6 +11,15 @@ const (
 	Band6GHz  = "6GHz"
 )
 
+// Channel width constants in MHz for WiFi standards.
+const (
+	ChannelWidth20MHz  = 20  // 802.11a/b/g/n (HT20)
+	ChannelWidth40MHz  = 40  // 802.11n (HT40)
+	ChannelWidth80MHz  = 80  // 802.11ac (VHT80)
+	ChannelWidth160MHz = 160 // 802.11ac/ax (VHT160/HE160)
+	ChannelWidth320MHz = 320 // 802.11be (EHT320)
+)
+
 // ChannelNetwork represents a network for channel visualization.
 // Contains all information needed to render the network on a channel overlap graph.
 type ChannelNetwork struct {
@@ -115,27 +124,27 @@ func detectChannelWidth(freq int, htMode string) int {
 	// Parse HTMode string (e.g., "HT20", "HT40", "VHT80", "HE160", "EHT320")
 	switch htMode {
 	case "HT20", "VHT20", "HE20", "EHT20":
-		return 20
+		return ChannelWidth20MHz
 	case "HT40", "HT40+", "HT40-", "VHT40", "HE40", "EHT40":
-		return 40
+		return ChannelWidth40MHz
 	case "VHT80", "HE80", "EHT80":
-		return 80
+		return ChannelWidth80MHz
 	case "VHT160", "HE160", "EHT160":
-		return 160
+		return ChannelWidth160MHz
 	case "EHT320":
-		return 320
+		return ChannelWidth320MHz
 	}
 
 	// Fallback: Guess based on frequency band
 	band := getBand(freq)
 	switch band {
 	case Band24GHz:
-		return 20 // 2.4 GHz typically uses 20 MHz (rarely 40 MHz)
+		return ChannelWidth20MHz // 2.4 GHz typically uses 20 MHz (rarely 40 MHz)
 	case Band5GHz:
-		return 80 // 5 GHz often uses 80 MHz (can be 20, 40, 80, 160)
+		return ChannelWidth80MHz // 5 GHz often uses 80 MHz (can be 20, 40, 80, 160)
 	case Band6GHz:
-		return 160 // 6 GHz often uses 160 MHz or 320 MHz
+		return ChannelWidth160MHz // 6 GHz often uses 160 MHz or 320 MHz
 	default:
-		return 20 // Default to 20 MHz if unknown
+		return ChannelWidth20MHz // Default to 20 MHz if unknown
 	}
 }

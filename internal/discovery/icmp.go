@@ -1,8 +1,8 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // ICMP ping support enables active probing of devices to verify reachability,
 // measure latency, and identify responsive hosts on the network. Supports both
 // sequential pinging and broadcast ping sweeps for network enumeration.
-package discovery
 
 import (
 	"context"
@@ -35,6 +35,23 @@ const (
 	ttlOSLinuxMacOS    = "Linux/macOS"
 	ttlOSWindows       = "Windows"
 	ttlOSNetworkDevice = "Network Device"
+
+	// TTL threshold values for OS detection.
+	icmpTTLLinux   = 64  // Default TTL for Linux/macOS systems
+	icmpTTLWindows = 128 // Default TTL for Windows systems
+	icmpTTLNetwork = 255 // Default TTL for network devices
+
+	// Sequence number mask for 16-bit ICMP sequence numbers.
+	seqNumMask = 0xffff
+
+	// Read deadline for ICMP receiver loop.
+	icmpReadDeadlineMs = 100
+
+	// Default sweep configuration values.
+	defaultSweepWorkers    = 50 // Number of concurrent workers for default sweep
+	politeSweepWorkers     = 10 // Number of concurrent workers for polite sweep
+	politeSweepJitterMinMs = 10 // Minimum jitter delay in milliseconds
+	politeSweepJitterMaxMs = 50 // Maximum jitter delay in milliseconds
 )
 
 // PingResult contains the result of a single ICMP ping.
@@ -86,7 +103,7 @@ type SweepConfig struct {
 // DefaultSweepConfig returns conservative defaults for network scanning.
 func DefaultSweepConfig() *SweepConfig {
 	return &SweepConfig{
-		Workers:   50,
+		Workers:   defaultSweepWorkers,
 		JitterMin: 0,
 		JitterMax: 0,
 	}
@@ -95,9 +112,9 @@ func DefaultSweepConfig() *SweepConfig {
 // PoliteSweepConfig returns IDS-friendly settings with jitter.
 func PoliteSweepConfig() *SweepConfig {
 	return &SweepConfig{
-		Workers:   10,
-		JitterMin: 10 * time.Millisecond,
-		JitterMax: 50 * time.Millisecond,
+		Workers:   politeSweepWorkers,
+		JitterMin: politeSweepJitterMinMs * time.Millisecond,
+		JitterMax: politeSweepJitterMaxMs * time.Millisecond,
 	}
 }
 
@@ -110,7 +127,7 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 
 	p := &ICMPPinger{
 		timeout: timeout,
-		id:      os.Getpid() & 0xffff,
+		id:      os.Getpid() & seqNumMask,
 		pending: make(map[int]*pendingPing),
 		stopCh:  make(chan struct{}),
 	}
@@ -174,7 +191,109 @@ func (p *ICMPPinger) Close() error {
 
 // nextSeq returns the next sequence number.
 func (p *ICMPPinger) nextSeq() int {
-	return int(atomic.AddUint32(&p.seq, 1) & 0xffff)
+	return int(atomic.AddUint32(&p.seq, 1) & seqNumMask)
+}
+
+// receiverReadResult represents the outcome of a single packet read attempt.
+type receiverReadResult struct {
+	n          int
+	cm         *ipv4.ControlMessage
+	shouldExit bool
+}
+
+// readPacket attempts to read a single ICMP packet from the connection.
+// Returns the read result and whether to continue the receiver loop.
+func (p *ICMPPinger) readPacket(reply []byte) (receiverReadResult, bool) {
+	// Set a short read deadline so we can check stopCh periodically
+	if err := p.conn.SetReadDeadline(time.Now().Add(icmpReadDeadlineMs * time.Millisecond)); err != nil {
+		logging.GetLogger().Error("failed to set ICMP read deadline", "error", err)
+		return receiverReadResult{}, true // continue loop
+	}
+
+	n, cm, _, err := p.conn.IPv4PacketConn().ReadFrom(reply)
+	if err != nil {
+		return p.handleReadError(err)
+	}
+
+	return receiverReadResult{n: n, cm: cm}, true
+}
+
+// handleReadError processes errors from packet reads.
+// Returns the result and whether to continue the receiver loop.
+func (p *ICMPPinger) handleReadError(err error) (receiverReadResult, bool) {
+	// Timeout is expected, just continue
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
+		return receiverReadResult{}, true // continue loop
+	}
+	// Socket closed - signal exit
+	return receiverReadResult{shouldExit: true}, false
+}
+
+// extractEchoReply parses an ICMP message and extracts the echo reply if valid.
+// Returns the echo body and whether it's a valid echo reply for this pinger.
+func (p *ICMPPinger) extractEchoReply(data []byte) (*icmp.Echo, bool) {
+	rm, err := icmp.ParseMessage(protocolICMP, data)
+	if err != nil {
+		return nil, false
+	}
+
+	if rm.Type != ipv4.ICMPTypeEchoReply {
+		return nil, false
+	}
+
+	echo, ok := rm.Body.(*icmp.Echo)
+	if !ok || echo.ID != p.id {
+		return nil, false
+	}
+
+	return echo, true
+}
+
+// completePendingPing finds and completes a pending ping by sequence number.
+// Returns the pending ping if found and removed from the map.
+func (p *ICMPPinger) completePendingPing(seq int) (*pendingPing, bool) {
+	p.pendingMu.Lock()
+	defer p.pendingMu.Unlock()
+
+	pp, found := p.pending[seq]
+	if found {
+		delete(p.pending, seq)
+	}
+	return pp, found
+}
+
+// sendPingResult constructs and sends the ping result to the waiting goroutine.
+func (p *ICMPPinger) sendPingResult(pp *pendingPing, cm *ipv4.ControlMessage) {
+	result := PingResult{
+		IP:        pp.ip,
+		Reachable: true,
+		RTT:       time.Since(pp.start),
+		TTL:       -1,
+	}
+	if cm != nil {
+		result.TTL = cm.TTL
+	}
+
+	select {
+	case pp.result <- result:
+	default:
+	}
+}
+
+// processReceivedPacket handles a successfully received ICMP packet.
+func (p *ICMPPinger) processReceivedPacket(reply []byte, readResult receiverReadResult) {
+	echo, valid := p.extractEchoReply(reply[:readResult.n])
+	if !valid {
+		return
+	}
+
+	pp, found := p.completePendingPing(echo.Seq)
+	if !found {
+		return
+	}
+
+	p.sendPingResult(pp, readResult.cm)
 }
 
 // receiver runs in a goroutine and dispatches received ICMP replies.
@@ -188,59 +307,15 @@ func (p *ICMPPinger) receiver() {
 		default:
 		}
 
-		// Set a short read deadline so we can check stopCh periodically
-		if err := p.conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond)); err != nil {
-			logging.GetLogger().Error("failed to set ICMP read deadline", "error", err)
-			continue
-		}
-
-		n, cm, _, err := p.conn.IPv4PacketConn().ReadFrom(reply)
-		if err != nil {
-			// Timeout is expected, just continue
-			var netErr net.Error
-			if errors.As(err, &netErr) && netErr.Timeout() {
-				continue
-			}
-			// Socket closed
+		readResult, shouldContinue := p.readPacket(reply)
+		if readResult.shouldExit {
 			return
 		}
-
-		// Parse ICMP message
-		rm, err := icmp.ParseMessage(protocolICMP, reply[:n])
-		if err != nil {
+		if !shouldContinue || readResult.n == 0 {
 			continue
 		}
 
-		// Check if this is an echo reply for us
-		if rm.Type == ipv4.ICMPTypeEchoReply {
-			if echo, ok := rm.Body.(*icmp.Echo); ok {
-				if echo.ID == p.id {
-					// Find the pending ping for this sequence
-					p.pendingMu.Lock()
-					pp, found := p.pending[echo.Seq]
-					if found {
-						delete(p.pending, echo.Seq)
-					}
-					p.pendingMu.Unlock()
-
-					if found {
-						result := PingResult{
-							IP:        pp.ip,
-							Reachable: true,
-							RTT:       time.Since(pp.start),
-							TTL:       -1,
-						}
-						if cm != nil {
-							result.TTL = cm.TTL
-						}
-						select {
-						case pp.result <- result:
-						default:
-						}
-					}
-				}
-			}
-		}
+		p.processReceivedPacket(reply, readResult)
 	}
 }
 
@@ -336,83 +411,129 @@ func (p *ICMPPinger) PingSweep(ctx context.Context, ips []net.IP, workers int) [
 	return p.PingSweepWithConfig(ctx, ips, cfg)
 }
 
+// normalizeSweepConfig returns a valid sweep configuration with defaults applied.
+func normalizeSweepConfig(cfg *SweepConfig) *SweepConfig {
+	if cfg == nil {
+		return DefaultSweepConfig()
+	}
+	normalized := *cfg
+	if normalized.Workers <= 0 {
+		normalized.Workers = 50
+	}
+	return &normalized
+}
+
+// createWorkChannel creates and populates a buffered channel with work indices.
+func createWorkChannel(count int) chan int {
+	work := make(chan int, count)
+	for i := range count {
+		work <- i
+	}
+	close(work)
+	return work
+}
+
+// calculateJitter computes a random jitter duration within the configured range.
+func calculateJitter(cfg *SweepConfig) time.Duration {
+	jitter := cfg.JitterMin
+	if cfg.JitterMax > cfg.JitterMin {
+		jitter += time.Duration(
+			rand.Int64N(
+				int64(cfg.JitterMax - cfg.JitterMin),
+			), // #nosec G404 -- weak RNG acceptable for timing jitter
+		)
+	}
+	return jitter
+}
+
+// applyJitterDelay waits for the jitter duration, respecting context cancellation.
+// Returns true if the context was cancelled during the wait.
+func applyJitterDelay(ctx context.Context, cfg *SweepConfig) bool {
+	if cfg.JitterMax <= 0 {
+		return false
+	}
+
+	jitter := calculateJitter(cfg)
+	select {
+	case <-ctx.Done():
+		return true
+	case <-time.After(jitter):
+		return false
+	}
+}
+
+// sweepWorkerState holds the shared state for sweep workers.
+type sweepWorkerState struct {
+	results   []PingResult
+	resultsMu *sync.Mutex
+	ips       []net.IP
+	cfg       *SweepConfig
+}
+
+// runSweepWorker processes work items from the channel, pinging each IP.
+func (p *ICMPPinger) runSweepWorker(ctx context.Context, work <-chan int, state *sweepWorkerState) {
+	for idx := range work {
+		if ctx.Err() != nil {
+			return
+		}
+
+		result := p.Ping(ctx, state.ips[idx].String())
+
+		state.resultsMu.Lock()
+		state.results[idx] = result
+		state.resultsMu.Unlock()
+
+		if applyJitterDelay(ctx, state.cfg) {
+			return
+		}
+	}
+}
+
+// countReachable counts the number of reachable hosts in the results.
+func countReachable(results []PingResult) int {
+	count := 0
+	for _, r := range results {
+		if r.Reachable {
+			count++
+		}
+	}
+	return count
+}
+
 // PingSweepWithConfig pings multiple hosts with configurable jitter for IDS-aware scanning.
 func (p *ICMPPinger) PingSweepWithConfig(
 	ctx context.Context,
 	ips []net.IP,
 	cfg *SweepConfig,
 ) []PingResult {
-	if cfg == nil {
-		cfg = DefaultSweepConfig()
-	}
-	workers := cfg.Workers
-	if workers <= 0 {
-		workers = 50
+	cfg = normalizeSweepConfig(cfg)
+
+	state := &sweepWorkerState{
+		results:   make([]PingResult, len(ips)),
+		resultsMu: &sync.Mutex{},
+		ips:       ips,
+		cfg:       cfg,
 	}
 
-	results := make([]PingResult, len(ips))
-	resultsMu := sync.Mutex{}
+	work := createWorkChannel(len(ips))
 
-	// Create work channel
-	work := make(chan int, len(ips))
-	for i := range ips {
-		work <- i
-	}
-	close(work)
-
-	// Create worker pool
 	var wg sync.WaitGroup
-	wg.Add(workers)
+	wg.Add(cfg.Workers)
 
-	for range workers {
+	for range cfg.Workers {
 		go func() {
 			defer wg.Done()
-			for idx := range work {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-
-				ip := ips[idx]
-				result := p.Ping(ctx, ip.String())
-
-				resultsMu.Lock()
-				results[idx] = result
-				resultsMu.Unlock()
-
-				// Apply jitter delay between pings (IDS-aware pacing)
-				if cfg.JitterMax > 0 {
-					jitter := cfg.JitterMin
-					if cfg.JitterMax > cfg.JitterMin {
-						jitter += time.Duration(
-							rand.Int64N(
-								int64(cfg.JitterMax - cfg.JitterMin),
-							), // #nosec G404 -- weak RNG acceptable for timing jitter
-						)
-					}
-					select {
-					case <-ctx.Done():
-						return
-					case <-time.After(jitter):
-					}
-				}
-			}
+			p.runSweepWorker(ctx, work, state)
 		}()
 	}
 
 	wg.Wait()
 
-	// Log summary
-	reachable := 0
-	for _, r := range results {
-		if r.Reachable {
-			reachable++
-		}
-	}
-	logging.GetLogger().InfoContext(ctx, "Ping sweep complete", "reachable", reachable, "total", len(ips))
+	logging.GetLogger().InfoContext(ctx, "Ping sweep complete",
+		"reachable", countReachable(state.results),
+		"total", len(ips))
 
-	return results
+	return state.results
 }
 
 // PingSweepReachable is a convenience method that returns only reachable hosts.
@@ -448,11 +569,11 @@ func TTLToOS(ttl int) string {
 	switch {
 	case ttl <= 0:
 		return ttlOSUnknown
-	case ttl <= 64:
+	case ttl <= icmpTTLLinux:
 		return ttlOSLinuxMacOS
-	case ttl <= 128:
+	case ttl <= icmpTTLWindows:
 		return ttlOSWindows
-	case ttl <= 255:
+	case ttl <= icmpTTLNetwork:
 		return ttlOSNetworkDevice
 	default:
 		return ttlOSUnknown

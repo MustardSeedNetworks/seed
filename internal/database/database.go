@@ -1,4 +1,5 @@
-// Package database provides SQLite database management for The Seed.
+package database
+
 //
 // It handles connection pooling, schema migrations, and provides a clean
 // interface for data persistence operations. Uses modernc.org/sqlite for
@@ -21,7 +22,6 @@
 //	// Use repositories for data access
 //	profiles := db.Profiles()
 //	metrics := db.Metrics()
-package database
 
 import (
 	"context"
@@ -33,6 +33,27 @@ import (
 	"time"
 
 	_ "modernc.org/sqlite" // SQLite driver
+)
+
+// Connection pool configuration defaults.
+const (
+	// defaultMaxOpenConns is the maximum number of open database connections.
+	defaultMaxOpenConns = 10
+
+	// defaultMaxIdleConns is the maximum number of idle connections in the pool.
+	defaultMaxIdleConns = 5
+
+	// defaultRetentionDays is the default number of days to retain data.
+	defaultRetentionDays = 90
+
+	// defaultBusyTimeoutMs is the SQLite busy timeout in milliseconds.
+	defaultBusyTimeoutMs = 5000
+
+	// dbConnTimeoutSeconds is the timeout for database connection operations.
+	dbConnTimeoutSeconds = 30
+
+	// dbPingTimeoutSeconds is the timeout for database ping/checkpoint operations.
+	dbPingTimeoutSeconds = 5
 )
 
 // DB represents the database connection and provides access to repositories.
@@ -79,12 +100,12 @@ type Config struct {
 func DefaultConfig(path string) Config {
 	return Config{
 		Path:            path,
-		MaxOpenConns:    10,
-		MaxIdleConns:    5,
+		MaxOpenConns:    defaultMaxOpenConns,
+		MaxIdleConns:    defaultMaxIdleConns,
 		ConnMaxLifetime: time.Hour,
-		RetentionDays:   90, // Keep 90 days of data by default
+		RetentionDays:   defaultRetentionDays,
 		EnableWAL:       true,
-		BusyTimeout:     5000, // 5 seconds
+		BusyTimeout:     defaultBusyTimeoutMs,
 	}
 }
 
@@ -128,7 +149,7 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 		pragmas[1] = "PRAGMA journal_mode = DELETE"
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), dbConnTimeoutSeconds*time.Second)
 	defer cancel()
 
 	for _, pragma := range pragmas {
@@ -176,7 +197,7 @@ func (db *DB) Close() error {
 	db.closed = true
 
 	// Checkpoint WAL before closing for clean shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), dbPingTimeoutSeconds*time.Second)
 	defer cancel()
 	if _, err := db.conn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
 		// Log but don't fail - this is a cleanup operation

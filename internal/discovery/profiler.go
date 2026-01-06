@@ -1,8 +1,8 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // Device profiler module performs deep inspection of discovered devices through HTTP,
 // SNMP, mDNS, and port scanning to gather detailed information about capabilities,
 // services, and device types. Enables intelligent device identification and visualization hints.
-package discovery
 
 import (
 	"context"
@@ -33,6 +33,46 @@ const (
 	deviceTypeSwitch        = "switch"
 	deviceTypeFirewall      = "firewall"
 	deviceTypeNAS           = "nas"
+)
+
+// Profiler timing and buffer constants.
+const (
+	profilerQueueSize        = 100  // Size of profiling queue channel
+	profilerDefaultTimeoutS  = 10   // Default timeout for profiling operations in seconds
+	profilerBannerReadMs     = 500  // Timeout for reading service banners in milliseconds
+	profilerBannerBufferSize = 256  // Buffer size for reading service banners
+	profilerHTTPBodyLimit    = 8192 // Maximum HTTP response body to read
+	profilerLogTruncateLen   = 50   // Maximum length for log message truncation
+	profilerMinTruncateLen   = 3    // Minimum length for truncation with ellipsis
+	profilerTitleMaxLen      = 100  // Maximum length for extracted HTML titles
+	profilerTimeoutS         = 2    // Default profiler timeout in seconds
+	profilerMaxConcurrent    = 10   // Default max concurrent profiling operations
+	profilerProbeDelayMs     = 50   // Default probe delay in milliseconds
+	profilerHostDelayMs      = 20   // Default host delay in milliseconds
+)
+
+// Common port numbers for service classification.
+const (
+	portFTP        = 21
+	portSSHProf    = 22
+	portTelnet     = 23
+	portSMTP       = 25
+	portDNS        = 53
+	portHTTPProf   = 80
+	portPOP3       = 110
+	portIMAP       = 143
+	portSNMP       = 161
+	portSMTPSubmit = 587
+	portMySQL      = 3306
+	portPostgreSQL = 5432
+	portRedis      = 6379
+	portHTTPAltP   = 8080
+	portHTTPSProf  = 443
+	portHTTPSAltP  = 8443
+	portJetDirect  = 9100
+	portLPD        = 515
+	portIPP        = 631
+	portMongoDB    = 27017
 )
 
 // DeviceProfile contains auto-discovered profile information about a device.
@@ -107,8 +147,8 @@ type ProfilerConfig struct {
 func DefaultProfilerConfig() *ProfilerConfig {
 	return &ProfilerConfig{
 		Enabled:       true,
-		Timeout:       2 * time.Second,
-		MaxConcurrent: 10,
+		Timeout:       profilerTimeoutS * time.Second,
+		MaxConcurrent: profilerMaxConcurrent,
 		QuickPorts: []int{
 			22,   // SSH
 			23,   // Telnet
@@ -121,9 +161,9 @@ func DefaultProfilerConfig() *ProfilerConfig {
 		PortScanIntensity: PortScanOff, // Default: OFF for security
 		TimingProfile:     ScanProfileNormal,
 		BannerGrab:        true,
-		ProbeDelay:        50 * time.Millisecond,
-		HostDelay:         20 * time.Millisecond,
-		ConnectTimeout:    2 * time.Second,
+		ProbeDelay:        profilerProbeDelayMs * time.Millisecond,
+		HostDelay:         profilerHostDelayMs * time.Millisecond,
+		ConnectTimeout:    profilerTimeoutS * time.Second,
 		SkipTLSVerify:     false, // Set to true for internal network devices with self-signed certs
 	}
 }
@@ -222,7 +262,7 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 		},
 		profiles:  make(map[string]*DeviceProfile),
 		profiling: make(map[string]bool),
-		queue:     make(chan string, 100),
+		queue:     make(chan string, profilerQueueSize),
 	}
 }
 
@@ -239,7 +279,8 @@ func (p *DeviceProfiler) UpdateScanConfig(
 	p.config.PortScanIntensity = intensity
 	p.config.CustomPorts = customPorts
 	p.config.TimingProfile = timing
-	logging.GetLogger().Info("Updated profiler scan config", "intensity", intensity, "timing", timing)
+	logging.GetLogger().
+		Info("Updated profiler scan config", "intensity", intensity, "timing", timing)
 }
 
 // Start begins the profiler worker pool.
@@ -361,31 +402,31 @@ func (p *DeviceProfiler) QueueProfile(ip string) error {
 	}
 }
 
-// profileDevice performs the actual profiling.
-func (p *DeviceProfiler) profileDevice(ip string) {
-	defer func() {
-		p.mu.Lock()
-		delete(p.profiling, ip)
-		p.mu.Unlock()
-	}()
-
-	// Get stopCh under lock to check for shutdown (fixes #828)
+// checkShutdown checks if the profiler is shutting down.
+// Returns the stopCh if active, or nil if shutdown is in progress/complete.
+func (p *DeviceProfiler) checkShutdown() chan struct{} {
 	p.mu.RLock()
 	stopCh := p.stopCh
 	p.mu.RUnlock()
 
-	// Check if we're shutting down before starting work
 	if stopCh == nil {
-		return
-	}
-	select {
-	case <-stopCh:
-		return
-	default:
+		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	select {
+	case <-stopCh:
+		return nil
+	default:
+		return stopCh
+	}
+}
+
+// createProfilingContext creates a context for profiling that respects shutdown signals.
+// Returns the context, a cancel function, and a cleanup function that must be called when done.
+func (p *DeviceProfiler) createProfilingContext(
+	stopCh chan struct{},
+) (context.Context, context.CancelFunc, func()) {
+	ctx, cancel := context.WithTimeout(context.Background(), profilerDefaultTimeoutS*time.Second)
 
 	// Create cancellable context that respects shutdown (fixes #828)
 	ctx, cancelWithShutdown := context.WithCancel(ctx)
@@ -396,102 +437,152 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 		case <-ctx.Done():
 		}
 	}()
-	defer cancelWithShutdown()
 
-	profile := &DeviceProfile{
-		ProfiledAt:  time.Now(),
-		OpenPorts:   []OpenPort{},
-		DeviceIcons: []string{},
+	cleanup := func() {
+		cancelWithShutdown()
+		cancel()
+	}
+
+	return ctx, cancelWithShutdown, cleanup
+}
+
+// scanPorts scans the configured ports and returns open ports found.
+func (p *DeviceProfiler) scanPorts(ctx context.Context, ip string) []OpenPort {
+	portsToScan := p.config.GetPortsForIntensity()
+	if len(portsToScan) == 0 {
+		portsToScan = p.config.QuickPorts
 	}
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+	openPorts := []OpenPort{}
 
-	// Determine which ports to scan based on intensity
-	portsToScan := p.config.GetPortsForIntensity()
-	if len(portsToScan) == 0 {
-		// Fall back to QuickPorts if intensity is off but profiler is enabled
-		portsToScan = p.config.QuickPorts
-	}
-
-	// Rate limiting semaphore for IDS-friendly scanning
 	sem := make(chan struct{}, p.config.MaxConcurrent)
 
-	// Check ports with rate limiting based on timing profile
 	for _, port := range portsToScan {
 		wg.Add(1)
 		go func(port int) {
 			defer wg.Done()
-
-			// Check for context cancellation before acquiring semaphore (fixes #834)
-			select {
-			case <-ctx.Done():
-				return
-			case sem <- struct{}{}:
-			}
-			defer func() { <-sem }()
-
-			// Apply probe delay for IDS-friendly scanning with context check (fixes #834)
-			if p.config.ProbeDelay > 0 {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(p.config.ProbeDelay):
-				}
-			}
-
-			result := p.checkPortWithConfig(ctx, ip, port)
-			if result.IsOpen {
+			if result := p.scanSinglePort(ctx, ip, port, sem); result != nil {
 				mu.Lock()
-				profile.OpenPorts = append(profile.OpenPorts, result)
+				openPorts = append(openPorts, *result)
 				mu.Unlock()
 			}
 		}(port)
 	}
 
 	wg.Wait()
+	return openPorts
+}
 
-	// Check HTTP/HTTPS if ports are open
-	for _, op := range profile.OpenPorts {
+// scanSinglePort scans a single port with rate limiting and returns the result if open.
+func (p *DeviceProfiler) scanSinglePort(
+	ctx context.Context,
+	ip string,
+	port int,
+	sem chan struct{},
+) *OpenPort {
+	// Check for context cancellation before acquiring semaphore (fixes #834)
+	select {
+	case <-ctx.Done():
+		return nil
+	case sem <- struct{}{}:
+	}
+	defer func() { <-sem }()
+
+	// Apply probe delay for IDS-friendly scanning with context check (fixes #834)
+	if p.config.ProbeDelay > 0 {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.After(p.config.ProbeDelay):
+		}
+	}
+
+	result := p.checkPortWithConfig(ctx, ip, port)
+	if result.IsOpen {
+		return &result
+	}
+	return nil
+}
+
+// probeHTTPFromOpenPorts probes HTTP/HTTPS on open ports and returns the first successful result.
+func (p *DeviceProfiler) probeHTTPFromOpenPorts(
+	ctx context.Context,
+	ip string,
+	openPorts []OpenPort,
+) *HTTPInfo {
+	for _, op := range openPorts {
 		if op.Port == 80 || op.Port == 8080 {
 			if info := p.probeHTTP(ctx, ip, op.Port, false); info != nil {
-				profile.HTTPInfo = info
-				break
+				return info
 			}
 		}
 		if op.Port == 443 || op.Port == 8443 {
 			if info := p.probeHTTP(ctx, ip, op.Port, true); info != nil {
-				profile.HTTPInfo = info
-				break
+				return info
 			}
 		}
 	}
+	return nil
+}
 
-	// Always try SNMP probing - SNMP uses UDP port 161, not TCP,
-	// so we can't detect it via TCP port scanning. Just try to query.
-	if info := p.probeSNMP(ctx, ip); info != nil {
-		profile.SNMPInfo = info
-		logging.GetLogger().DebugContext(ctx, "Got SNMP info from device", "ip", ip, "sysName", info.SysName)
+// probeSNMPAndLog probes SNMP and logs the result if successful.
+func (p *DeviceProfiler) probeSNMPAndLog(ctx context.Context, ip string) *SNMPInfo {
+	info := p.probeSNMP(ctx, ip)
+	if info != nil {
+		logging.GetLogger().
+			DebugContext(ctx, "Got SNMP info from device", "ip", ip, "sysName", info.SysName)
 	}
+	return info
+}
 
-	// Infer device type and icons from profile
-	p.inferDeviceType(profile)
-
+// storeProfileAndLog stores the profile and logs the result.
+func (p *DeviceProfiler) storeProfileAndLog(
+	ctx context.Context,
+	ip string,
+	profile *DeviceProfile,
+) {
 	p.mu.Lock()
 	p.profiles[ip] = profile
 	p.mu.Unlock()
 
 	logging.GetLogger().InfoContext(ctx,
 		"Profiled device",
-		"ip",
-		ip,
-		"open_ports",
-		len(profile.OpenPorts),
-		"type",
-		profile.DeviceType,
-		"icons",
-		profile.DeviceIcons,
+		"ip", ip,
+		"open_ports", len(profile.OpenPorts),
+		"type", profile.DeviceType,
+		"icons", profile.DeviceIcons,
 	)
+}
+
+// profileDevice performs the actual profiling.
+func (p *DeviceProfiler) profileDevice(ip string) {
+	defer func() {
+		p.mu.Lock()
+		delete(p.profiling, ip)
+		p.mu.Unlock()
+	}()
+
+	stopCh := p.checkShutdown()
+	if stopCh == nil {
+		return
+	}
+
+	ctx, _, cleanup := p.createProfilingContext(stopCh)
+	defer cleanup()
+
+	profile := &DeviceProfile{
+		ProfiledAt:  time.Now(),
+		OpenPorts:   p.scanPorts(ctx, ip),
+		DeviceIcons: []string{},
+	}
+
+	profile.HTTPInfo = p.probeHTTPFromOpenPorts(ctx, ip, profile.OpenPorts)
+	profile.SNMPInfo = p.probeSNMPAndLog(ctx, ip)
+
+	p.inferDeviceType(profile)
+	p.storeProfileAndLog(ctx, ip, profile)
 }
 
 // checkPortWithConfig checks if a TCP port is open using configurable settings.
@@ -530,10 +621,15 @@ func (p *DeviceProfiler) checkPortWithConfig(ctx context.Context, ip string, por
 		default:
 		}
 		// Try to grab banner for certain ports that typically send banners
-		if port == 22 || port == 21 || port == 23 || port == 25 || port == 110 || port == 143 ||
-			port == 3306 || port == 5432 || port == 6379 || port == 27017 {
-			_ = conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
-			banner := make([]byte, 256)
+		if port == portSSHProf || port == portFTP || port == portTelnet || port == portSMTP ||
+			port == portPOP3 ||
+			port == portIMAP ||
+			port == portMySQL ||
+			port == portPostgreSQL ||
+			port == portRedis ||
+			port == portMongoDB {
+			_ = conn.SetReadDeadline(time.Now().Add(profilerBannerReadMs * time.Millisecond))
+			banner := make([]byte, profilerBannerBufferSize)
 			n, _ := conn.Read(banner)
 			if n > 0 {
 				result.Banner = strings.TrimSpace(string(banner[:n]))
@@ -577,7 +673,7 @@ func (p *DeviceProfiler) probeHTTP(
 	}
 
 	// Read limited body to extract title
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 8192))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, profilerHTTPBodyLimit))
 	if err == nil {
 		info.Title = extractHTMLTitle(string(body))
 	}
@@ -624,7 +720,7 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		"sysName",
 		sysInfo.SysName,
 		"sysDescr",
-		truncateString(sysInfo.SysDescr, 50),
+		truncateString(sysInfo.SysDescr, profilerLogTruncateLen),
 	)
 
 	return &SNMPInfo{
@@ -638,7 +734,7 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 // truncateString truncates a string to maxLen with ellipsis.
 // Fixes #982: Guard against maxLen < 3 to prevent negative slice index panic.
 func truncateString(s string, maxLen int) string {
-	if maxLen < 3 {
+	if maxLen < profilerMinTruncateLen {
 		// Can't fit ellipsis, just truncate to maxLen (or return empty for 0 or negative)
 		if maxLen <= 0 {
 			return ""
@@ -661,8 +757,8 @@ func extractHTMLTitle(html string) string {
 	if len(matches) > 1 {
 		title := strings.TrimSpace(matches[1])
 		// Truncate long titles
-		if len(title) > 100 {
-			title = title[:100] + "..."
+		if len(title) > profilerTitleMaxLen {
+			title = title[:profilerTitleMaxLen] + "..."
 		}
 		return title
 	}
@@ -708,27 +804,27 @@ func (p *DeviceProfiler) setIconsForPort(
 	deviceType string,
 ) string {
 	switch port {
-	case 22:
+	case portSSHProf:
 		icons["ssh"] = true
-	case 23:
+	case portTelnet:
 		icons["telnet"] = true
-	case 80, 8080:
+	case portHTTPProf, portHTTPAltP:
 		icons["web"] = true
-	case 443, 8443:
+	case portHTTPSProf, portHTTPSAltP:
 		icons["web-secure"] = true
-	case 21:
+	case portFTP:
 		icons["ftp"] = true
-	case 25, 587:
+	case portSMTP, portSMTPSubmit:
 		icons["mail"] = true
-	case 53:
+	case portDNS:
 		icons["dns"] = true
-	case 161:
+	case portSNMP:
 		icons["snmp"] = true
-	case 3306, 5432:
+	case portMySQL, portPostgreSQL:
 		icons["database"] = true
-	case 6379:
+	case portRedis:
 		icons["cache"] = true
-	case 9100, 515, 631:
+	case portJetDirect, portLPD, portIPP:
 		icons["printer"] = true
 		deviceType = deviceTypePrinter
 	}
@@ -784,7 +880,12 @@ func getHTTPDeviceMatchers() []httpDeviceMatch {
 	return []httpDeviceMatch{
 		{[]string{"router"}, []string{"router"}, deviceTypeRouter, "router"},
 		{[]string{"switch"}, nil, deviceTypeSwitch, "switch"},
-		{[]string{"firewall", "pfsense", "opnsense", "fortinet"}, nil, deviceTypeFirewall, "firewall"},
+		{
+			[]string{"firewall", "pfsense", "opnsense", "fortinet"},
+			nil,
+			deviceTypeFirewall,
+			"firewall",
+		},
 		{[]string{"nas", "synology", "qnap"}, nil, deviceTypeNAS, "storage"},
 		{[]string{"printer", "hp ", "canon", "epson"}, nil, deviceTypePrinter, "printer"},
 		{nil, []string{"apache", "nginx"}, deviceTypeServer, "server"},
