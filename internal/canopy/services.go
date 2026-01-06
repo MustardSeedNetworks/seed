@@ -15,6 +15,43 @@ import (
 // DefaultInterface is the default network interface to use when none is configured.
 const DefaultInterface = "wlan0"
 
+// Channel utilization constants.
+const (
+	// UtilizationPerNetworkPercent is the estimated channel utilization percentage per detected network.
+	// Used as a simple heuristic for channel congestion estimation.
+	UtilizationPerNetworkPercent = 10
+)
+
+// WiFi frequency band thresholds in MHz.
+const (
+	// Freq6GHzMinMHz is the minimum frequency in MHz for the 6 GHz WiFi band.
+	Freq6GHzMinMHz = 5900
+)
+
+// WiFi channel to frequency conversion constants.
+const (
+	// Channel2_4GHzMax is the maximum standard channel number in the 2.4 GHz band.
+	Channel2_4GHzMax = 13
+
+	// Channel2_4GHzJapan is the special channel 14 used only in Japan.
+	Channel2_4GHzJapan = 14
+
+	// Freq2_4GHzBaseMHz is the base frequency in MHz for 2.4 GHz band channel calculation.
+	// Channel 1 is at 2412 MHz = 2407 + (1 * 5).
+	Freq2_4GHzBaseMHz = 2407
+
+	// Freq2_4GHzChannel14MHz is the center frequency in MHz for channel 14 (Japan only).
+	Freq2_4GHzChannel14MHz = 2484
+
+	// Freq5GHzBaseMHz is the base frequency in MHz for 5 GHz band channel calculation.
+	// For example, channel 36 is at 5180 MHz = 5000 + (36 * 5).
+	Freq5GHzBaseMHz = 5000
+
+	// ChannelSpacingMHz is the frequency spacing in MHz between adjacent WiFi channels.
+	// This applies to both 2.4 GHz and 5 GHz bands.
+	ChannelSpacingMHz = 5
+)
+
 // WiFiService handles WiFi scanning and connections.
 type WiFiService struct {
 	cfg       *config.Config
@@ -303,7 +340,7 @@ func (s *ChannelService) Analyze(_ context.Context, band WiFiBand) (*ChannelAnal
 			Number:        channel,
 			CenterFreqMHz: channelToFrequency(channel),
 			NetworkCount:  count,
-			Utilization:   float64(count) * 10, // Simple utilization estimate
+			Utilization:   float64(count) * UtilizationPerNetworkPercent,
 			IsDFS:         isDFSChannel(channel),
 		}
 
@@ -430,9 +467,9 @@ func frequencyToBand(freq int) WiFiBand {
 	switch {
 	case freq >= 2400 && freq < 2500:
 		return Band2_4GHz
-	case freq >= 5000 && freq < 5900:
+	case freq >= 5000 && freq < Freq6GHzMinMHz:
 		return Band5GHz
-	case freq >= 5900:
+	case freq >= Freq6GHzMinMHz:
 		return Band6GHz
 	default:
 		return Band2_4GHz
@@ -441,16 +478,16 @@ func frequencyToBand(freq int) WiFiBand {
 
 func channelToFrequency(channel int) int {
 	// 2.4 GHz band
-	if channel >= 1 && channel <= 13 {
-		return 2407 + (channel * 5)
+	if channel >= 1 && channel <= Channel2_4GHzMax {
+		return Freq2_4GHzBaseMHz + (channel * ChannelSpacingMHz)
 	}
-	if channel == 14 {
-		return 2484
+	if channel == Channel2_4GHzJapan {
+		return Freq2_4GHzChannel14MHz
 	}
 
 	// 5 GHz band
 	if channel >= 36 && channel <= 165 {
-		return 5000 + (channel * 5)
+		return Freq5GHzBaseMHz + (channel * ChannelSpacingMHz)
 	}
 
 	return 0

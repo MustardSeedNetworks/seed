@@ -1,4 +1,3 @@
-// Package dhcp provides DHCP monitoring including rogue DHCP server detection.
 package dhcp
 
 import (
@@ -20,6 +19,16 @@ import (
 const (
 	maxDetectedServers = 1000           // Maximum number of tracked servers
 	serverExpiry       = 24 * time.Hour // Expire servers not seen in 24 hours
+)
+
+// Packet capture constants for rogue detection.
+const (
+	// roguePcapSnapshotLen is the snapshot length for pcap capture in rogue detection.
+	// 1024 bytes is sufficient for DHCP packets in this context.
+	roguePcapSnapshotLen = 1024
+
+	// roguePcapTimeout is the read timeout for pcap in rogue detection.
+	roguePcapTimeout = 100 * time.Millisecond
 )
 
 // RogueServer represents a detected rogue DHCP server.
@@ -89,10 +98,10 @@ func (rd *RogueDetector) startLocked() error {
 	}
 
 	// Open pcap handle for DHCP traffic (UDP ports 67/68)
-	// Use snapshot length of 1024 bytes (enough for DHCP packets)
+	// Use snapshot length of roguePcapSnapshotLen bytes (enough for DHCP packets)
 	// Set promiscuous mode to false (we only need broadcast packets)
-	// Set timeout to 100ms for responsive shutdown
-	handle, err := pcap.OpenLive(rd.config.Interface, 1024, false, 100*time.Millisecond)
+	// Set timeout to roguePcapTimeout for responsive shutdown
+	handle, err := pcap.OpenLive(rd.config.Interface, roguePcapSnapshotLen, false, roguePcapTimeout)
 	if err != nil {
 		return fmt.Errorf("failed to open pcap: %w (requires CAP_NET_RAW or root)", err)
 	}
@@ -193,99 +202,159 @@ func (rd *RogueDetector) capturePackets(ctx context.Context) {
 
 // processPacket analyzes a captured packet for DHCP OFFER messages.
 func (rd *RogueDetector) processPacket(packet gopacket.Packet) {
-	// Extract DHCP layer
+	dhcp := rd.extractDHCPOffer(packet)
+	if dhcp == nil {
+		return
+	}
+
+	serverIP, serverMAC := rd.extractServerInfo(packet, dhcp)
+	if serverIP == "" {
+		return
+	}
+
+	rd.recordDetectedServer(serverIP, serverMAC)
+}
+
+// extractDHCPOffer extracts the DHCP layer if the packet is a DHCP OFFER.
+// Returns nil if the packet is not a valid DHCP OFFER.
+func (rd *RogueDetector) extractDHCPOffer(packet gopacket.Packet) *layers.DHCPv4 {
 	dhcpLayer := packet.Layer(layers.LayerTypeDHCPv4)
 	if dhcpLayer == nil {
-		return
+		return nil
 	}
 
 	dhcp, ok := dhcpLayer.(*layers.DHCPv4)
 	if !ok {
-		return
+		return nil
 	}
 
-	// We only care about DHCP OFFER packets
+	// We only care about DHCP OFFER packets (replies with message type OFFER)
 	if dhcp.Operation != layers.DHCPOpReply {
-		return
+		return nil
 	}
 
-	// Check if it's an OFFER (MessageType option = 2)
 	messageType := rd.getDHCPMessageType(dhcp)
 	if messageType != layers.DHCPMsgTypeOffer {
-		return
+		return nil
 	}
 
-	// Extract server identifier from DHCP options
+	return dhcp
+}
+
+// extractServerInfo extracts the server IP and MAC address from a DHCP packet.
+// Returns empty strings if the information cannot be extracted.
+func (rd *RogueDetector) extractServerInfo(
+	packet gopacket.Packet,
+	dhcp *layers.DHCPv4,
+) (string, string) {
+	// Try to get server identifier from DHCP options first
 	serverIP := rd.getServerIdentifier(dhcp)
 	if serverIP == "" {
 		// Fallback to source IP if server identifier not found
-		if ipLayer := packet.Layer(layers.LayerTypeIPv4); ipLayer != nil {
-			ip, ipOK := ipLayer.(*layers.IPv4)
-			if !ipOK {
-				return
-			}
-			serverIP = ip.SrcIP.String()
-		} else {
-			return
-		}
+		serverIP = rd.extractSourceIP(packet)
 	}
 
-	// Extract source MAC address
-	serverMAC := ""
-	if ethLayer := packet.Layer(layers.LayerTypeEthernet); ethLayer != nil {
-		eth, ethOK := ethLayer.(*layers.Ethernet)
-		if ethOK {
-			serverMAC = eth.SrcMAC.String()
-		}
+	serverMAC := rd.extractSourceMAC(packet)
+	return serverIP, serverMAC
+}
+
+// extractSourceIP extracts the source IP address from the packet's IPv4 layer.
+func (rd *RogueDetector) extractSourceIP(packet gopacket.Packet) string {
+	ipLayer := packet.Layer(layers.LayerTypeIPv4)
+	if ipLayer == nil {
+		return ""
 	}
 
-	// Check if this is a known/authorized server
+	ip, ok := ipLayer.(*layers.IPv4)
+	if !ok {
+		return ""
+	}
+
+	return ip.SrcIP.String()
+}
+
+// extractSourceMAC extracts the source MAC address from the packet's Ethernet layer.
+func (rd *RogueDetector) extractSourceMAC(packet gopacket.Packet) string {
+	ethLayer := packet.Layer(layers.LayerTypeEthernet)
+	if ethLayer == nil {
+		return ""
+	}
+
+	eth, ok := ethLayer.(*layers.Ethernet)
+	if !ok {
+		return ""
+	}
+
+	return eth.SrcMAC.String()
+}
+
+// recordDetectedServer records a detected DHCP server, handling both new
+// servers and updates to existing ones. Caller must not hold rd.mu.
+func (rd *RogueDetector) recordDetectedServer(serverIP, serverMAC string) {
 	rd.mu.Lock()
 	defer rd.mu.Unlock()
 
-	isKnown := rd.knownServerSet[serverIP]
 	now := time.Now()
-
-	// Fixes #907: Prune expired entries if map is getting large
-	if len(rd.detectedServers) > maxDetectedServers/2 {
-		for ip, srv := range rd.detectedServers {
-			if now.Sub(srv.LastSeen) > serverExpiry {
-				delete(rd.detectedServers, ip)
-			}
-		}
-	}
+	rd.pruneExpiredServers(now)
 
 	server, exists := rd.detectedServers[serverIP]
 	if !exists {
-		// Fixes #907: Hard limit - don't add more servers if at capacity
-		if len(rd.detectedServers) >= maxDetectedServers {
-			logging.GetLogger().
-				Warn("Detected servers limit reached, skipping new server", "ip", serverIP)
-			return
-		}
-
-		// New server detected
-		server = &RogueServer{
-			IP:           serverIP,
-			MAC:          serverMAC,
-			FirstSeen:    now,
-			LastSeen:     now,
-			OfferCount:   1,
-			IsAuthorized: isKnown,
-		}
-		rd.detectedServers[serverIP] = server
-
-		// Alert if it's a rogue server
-		if !isKnown && rd.config.AlertOnDetection {
-			logging.GetLogger().Warn("Rogue DHCP server detected", "ip", serverIP, "mac", serverMAC)
-		}
+		rd.addNewServer(serverIP, serverMAC, now)
 	} else {
-		// Update existing server
-		server.LastSeen = now
-		server.OfferCount++
-		if serverMAC != "" && server.MAC == "" {
-			server.MAC = serverMAC
+		rd.updateExistingServer(server, serverMAC, now)
+	}
+}
+
+// pruneExpiredServers removes servers not seen within the expiry window.
+// Fixes #907: Prevents unbounded growth of detected servers map.
+// Caller must hold rd.mu.Lock().
+func (rd *RogueDetector) pruneExpiredServers(now time.Time) {
+	if len(rd.detectedServers) <= maxDetectedServers/2 {
+		return
+	}
+
+	for ip, srv := range rd.detectedServers {
+		if now.Sub(srv.LastSeen) > serverExpiry {
+			delete(rd.detectedServers, ip)
 		}
+	}
+}
+
+// addNewServer adds a newly detected DHCP server to the tracking map.
+// Fixes #907: Enforces hard limit on tracked servers.
+// Caller must hold rd.mu.Lock().
+func (rd *RogueDetector) addNewServer(serverIP, serverMAC string, now time.Time) {
+	// Hard limit - don't add more servers if at capacity
+	if len(rd.detectedServers) >= maxDetectedServers {
+		logging.GetLogger().
+			Warn("Detected servers limit reached, skipping new server", "ip", serverIP)
+		return
+	}
+
+	isKnown := rd.knownServerSet[serverIP]
+	server := &RogueServer{
+		IP:           serverIP,
+		MAC:          serverMAC,
+		FirstSeen:    now,
+		LastSeen:     now,
+		OfferCount:   1,
+		IsAuthorized: isKnown,
+	}
+	rd.detectedServers[serverIP] = server
+
+	// Alert if it's a rogue server
+	if !isKnown && rd.config.AlertOnDetection {
+		logging.GetLogger().Warn("Rogue DHCP server detected", "ip", serverIP, "mac", serverMAC)
+	}
+}
+
+// updateExistingServer updates the tracking information for a known server.
+// Caller must hold rd.mu.Lock().
+func (rd *RogueDetector) updateExistingServer(server *RogueServer, serverMAC string, now time.Time) {
+	server.LastSeen = now
+	server.OfferCount++
+	if serverMAC != "" && server.MAC == "" {
+		server.MAC = serverMAC
 	}
 }
 

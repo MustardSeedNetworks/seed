@@ -1,6 +1,6 @@
-// Package survey provides WiFi site survey functionality.
-// This file implements AirMapper .amp file parsing.
 package survey
+
+// This file implements AirMapper .amp file parsing.
 
 import (
 	"archive/zip"
@@ -12,6 +12,18 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+)
+
+// Unit conversion and default constants for AirMapper parsing.
+const (
+	// feetToMeters is the conversion factor from feet to meters (1 foot = 0.3048 meters).
+	feetToMeters = 0.3048
+
+	// defaultScaleMeters is the default floor plan scale when calibration data is unavailable (10cm per pixel).
+	defaultScaleMeters = 0.1
+
+	// defaultPropagationMeters is the default signal propagation radius in meters when not specified.
+	defaultPropagationMeters = 10
 )
 
 // AirMapperFile represents a parsed .amp file from NetAlly AirMapper.
@@ -197,11 +209,11 @@ func (a *AirMapperFile) ToImportResult() (*AirMapperImportResult, error) {
 	// Convert scale from pixels per foot to meters per pixel
 	if a.Serial.FloorPlanScalePpf > 0 {
 		// ppf = pixels per foot
-		// We need meters per pixel = 1 / (ppf * 3.28084) = feet_per_pixel * 0.3048
+		// We need meters per pixel = 1 / (ppf * 3.28084) = feet_per_pixel * feetToMeters
 		feetPerPixel := 1.0 / a.Serial.FloorPlanScalePpf
-		result.Calibration.ScaleM = feetPerPixel * 0.3048
+		result.Calibration.ScaleM = feetPerPixel * feetToMeters
 	} else {
-		result.Calibration.ScaleM = 0.1 // Default 10cm per pixel
+		result.Calibration.ScaleM = defaultScaleMeters
 		result.Warnings = append(result.Warnings, "No scale calibration found, using default")
 	}
 
@@ -209,11 +221,11 @@ func (a *AirMapperFile) ToImportResult() (*AirMapperImportResult, error) {
 	if a.Serial.Propagation > 0 {
 		switch a.Serial.PropagationUnit {
 		case "ft", "":
-			result.Calibration.PropagationM = a.Serial.Propagation * 0.3048
+			result.Calibration.PropagationM = a.Serial.Propagation * feetToMeters
 		case "m":
 			result.Calibration.PropagationM = a.Serial.Propagation
 		default:
-			result.Calibration.PropagationM = a.Serial.Propagation * 0.3048 // Default to feet
+			result.Calibration.PropagationM = a.Serial.Propagation * feetToMeters // Default to feet
 			result.Warnings = append(
 				result.Warnings,
 				fmt.Sprintf(
@@ -223,7 +235,7 @@ func (a *AirMapperFile) ToImportResult() (*AirMapperImportResult, error) {
 			)
 		}
 	} else {
-		result.Calibration.PropagationM = 10 // Default 10m
+		result.Calibration.PropagationM = defaultPropagationMeters
 	}
 
 	// Copy locations if available
@@ -245,8 +257,8 @@ func (a *AirMapperFile) ToImportResult() (*AirMapperImportResult, error) {
 // GetCalibration extracts calibration data from an AirMapper file.
 func (a *AirMapperFile) GetCalibration() AirMapperCalibration {
 	cal := AirMapperCalibration{
-		ScaleM:       0.1, // Default
-		PropagationM: 10,  // Default
+		ScaleM:       defaultScaleMeters,
+		PropagationM: defaultPropagationMeters,
 	}
 
 	if a.Serial == nil {
@@ -256,7 +268,7 @@ func (a *AirMapperFile) GetCalibration() AirMapperCalibration {
 	// Convert scale
 	if a.Serial.FloorPlanScalePpf > 0 {
 		feetPerPixel := 1.0 / a.Serial.FloorPlanScalePpf
-		cal.ScaleM = feetPerPixel * 0.3048
+		cal.ScaleM = feetPerPixel * feetToMeters
 	}
 
 	// Convert propagation
@@ -264,7 +276,7 @@ func (a *AirMapperFile) GetCalibration() AirMapperCalibration {
 		if a.Serial.PropagationUnit == "m" {
 			cal.PropagationM = a.Serial.Propagation
 		} else {
-			cal.PropagationM = a.Serial.Propagation * 0.3048
+			cal.PropagationM = a.Serial.Propagation * feetToMeters
 		}
 	}
 

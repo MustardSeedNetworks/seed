@@ -1,4 +1,3 @@
-// Package config handles application configuration with JSON Schema validation.
 package config
 
 import (
@@ -11,6 +10,12 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"gopkg.in/yaml.v3"
+)
+
+// Schema validation constants.
+const (
+	// errorMessageSplitParts is the number of parts to split error messages into (path: message).
+	errorMessageSplitParts = 2
 )
 
 //go:embed schema.json
@@ -133,9 +138,9 @@ func extractValidationErrors(err *jsonschema.ValidationError) []ValidationError 
 		fullError := err.Error()
 		// The error format is typically: "path: message"
 		// We want just the message part
-		parts := strings.SplitN(fullError, ": ", 2)
+		parts := strings.SplitN(fullError, ": ", errorMessageSplitParts)
 		message := fullError
-		if len(parts) == 2 {
+		if len(parts) == errorMessageSplitParts {
 			message = parts[1]
 		}
 

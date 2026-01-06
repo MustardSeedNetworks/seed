@@ -5,6 +5,12 @@ import (
 	"strings"
 )
 
+const (
+	// expectedLinuxReleaseParts is the number of parts expected when splitting key=value lines
+	// in /etc/os-release (key and value).
+	expectedLinuxReleaseParts = 2
+)
+
 // Distro represents a Linux distribution.
 type Distro struct {
 	ID      string // ubuntu, fedora, rhel, debian, arch, etc.
@@ -27,8 +33,8 @@ func DetectDistro() *Distro {
 func parseOSRelease(content string) *Distro {
 	d := &Distro{}
 	for line := range strings.SplitSeq(content, "\n") {
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
+		parts := strings.SplitN(line, "=", expectedLinuxReleaseParts)
+		if len(parts) != expectedLinuxReleaseParts {
 			continue
 		}
 		key := parts[0]

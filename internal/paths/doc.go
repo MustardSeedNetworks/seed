@@ -1,4 +1,5 @@
-// Package paths provides XDG Base Directory compliant path resolution for Seed.
+package paths
+
 //
 // The package implements the XDG Base Directory Specification for portable,
 // standards-compliant configuration and data storage across different installation
@@ -56,4 +57,3 @@
 //	if legacy, ok := paths.DetectLegacyConfig(); ok {
 //	    fmt.Printf("Found legacy config: %s\n", legacy)
 //	}
-package paths

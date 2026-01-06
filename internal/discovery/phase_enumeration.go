@@ -1,7 +1,7 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // This file implements Phase 1 (Enumeration) of the discovery pipeline.
 // It wraps existing scanners to provide comprehensive device enumeration.
-package discovery
 
 import (
 	"context"
@@ -11,6 +11,18 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/logging"
+)
+
+// Timing constants for enumeration phase.
+const (
+	enumProgressTickerMs   = 500 // Progress reporting interval in milliseconds
+	enumSlowScanDelayS     = 2   // Delay between slow scan passes in seconds
+	enumRetryDelayMs       = 500 // Delay between retry attempts in milliseconds
+	enumSubnetExcludeNum   = 2   // Number of addresses excluded from subnet (network + broadcast)
+	enumDefaultScanTimeMin = 5   // Default scan timeout in minutes
+	enumDefaultPingWorkers = 50  // Default number of concurrent ping workers
+	enumSubnet24HostCount  = 254 // Usable hosts in a /24 subnet for progress estimation
+	enumPercentComplete    = 100 // Value representing 100% completion
 )
 
 // EnumerationPhase implements the Phase interface for device enumeration.
@@ -82,8 +94,8 @@ func DefaultEnumerationConfig() *EnumerationConfig {
 		},
 		Timing: EnumerationTiming{
 			PingTimeout: 1 * time.Second,
-			ScanTimeout: 5 * time.Minute,
-			PingWorkers: 50,
+			ScanTimeout: enumDefaultScanTimeMin * time.Minute,
+			PingWorkers: enumDefaultPingWorkers,
 			ARPDelay:    0, // No delay by default (ARP is very fast)
 		},
 	}
@@ -123,108 +135,157 @@ func (p *EnumerationPhase) Run(
 		"icmp", p.config.ICMPScan,
 		"ndp", p.config.NDPScan)
 
-	// Use scan timeout if configured
-	scanCtx := ctx
-	if p.config.Timing.ScanTimeout > 0 {
-		var cancel context.CancelFunc
-		scanCtx, cancel = context.WithTimeout(ctx, p.config.Timing.ScanTimeout)
-		defer cancel()
-	}
+	scanCtx := p.createScanContext(ctx)
 
-	// Track progress
 	var progress EnumerationProgress
 	progress.Start()
 
-	// Run parallel discovery methods
-	var wg sync.WaitGroup
-
-	// 1. ARP scan for local subnet (Layer 2)
-	if p.config.ARPScan {
-		wg.Go(func() {
-			progress.SetPhase("arp_scan")
-			if err := p.runARPScan(scanCtx, &progress); err != nil {
-				logging.GetLogger().WarnContext(ctx, "ARP scan failed", "error", err)
-				progress.AddError("arp_scan", err)
-			}
-			progress.MarkComplete("arp_scan")
-		})
-	}
-
-	// 2. ICMP ping sweep for additional subnets (Layer 3)
-	if p.config.ICMPScan && len(p.config.AdditionalSubnets) > 0 {
-		wg.Go(func() {
-			progress.SetPhase("icmp_scan")
-			if err := p.runICMPScan(scanCtx, &progress); err != nil {
-				logging.GetLogger().WarnContext(ctx, "ICMP scan failed", "error", err)
-				progress.AddError("icmp_scan", err)
-			}
-			progress.MarkComplete("icmp_scan")
-		})
-	}
-
-	// 3. NDP scan for IPv6 (if enabled)
-	if p.config.NDPScan {
-		wg.Go(func() {
-			progress.SetPhase("ndp_scan")
-			// NDP is handled by the background NDP scanner
-			// Just trigger a quick refresh
-			progress.MarkComplete("ndp_scan")
-		})
-	}
-
-	// Progress reporting goroutine
-	done := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(500 * time.Millisecond)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-done:
-				return
-			case <-ticker.C:
-				if progressCh != nil {
-					progressCh <- PhaseProgressPayload{
-						Phase:           "enumeration",
-						ProcessedCount:  progress.DevicesFound(),
-						TotalCount:      progress.EstimatedTotal(),
-						PercentComplete: progress.PercentComplete(),
-						CurrentTarget:   progress.CurrentTarget(),
-						ElapsedMs:       time.Since(start).Milliseconds(),
-					}
-				}
-			}
-		}
-	}()
-
-	// Wait for all scans to complete
-	wg.Wait()
+	done := p.startProgressReporter(progressCh, &progress, start)
+	p.runParallelScans(ctx, scanCtx, &progress)
 	close(done)
 
-	// Aggregate all results
 	devices := p.deviceDiscovery.GetDevices()
-
-	// Broadcast device discoveries
-	for _, device := range devices {
-		if p.broadcaster != nil {
-			p.broadcaster.BroadcastPipelineEvent(PipelineEvent{
-				Type:      EventDeviceDiscovered,
-				Timestamp: time.Now(),
-				Payload: DeviceDiscoveredPayload{
-					IP:      device.IP,
-					MAC:     device.MAC,
-					Vendor:  device.Vendor,
-					Methods: methodsToStrings(device.DiscoveryMethod),
-					IsNew:   true, // TODO: Track new vs existing
-				},
-			})
-		}
-	}
+	p.broadcastDiscoveries(devices)
 
 	logging.GetLogger().InfoContext(ctx, "Enumeration phase completed",
 		"devices", len(devices),
 		"duration", time.Since(start))
 
 	return devices, nil
+}
+
+// createScanContext creates a context with timeout if configured.
+func (p *EnumerationPhase) createScanContext(ctx context.Context) context.Context {
+	if p.config.Timing.ScanTimeout > 0 {
+		scanCtx, cancel := context.WithTimeout(ctx, p.config.Timing.ScanTimeout)
+		// Note: caller should handle cancel, but for enumeration phase the context
+		// is only used during the scan and we rely on parent context cancellation
+		go func() {
+			<-ctx.Done()
+			cancel()
+		}()
+		return scanCtx
+	}
+	return ctx
+}
+
+// startProgressReporter starts a goroutine that reports progress periodically.
+// Returns a channel that should be closed when scanning is complete.
+func (p *EnumerationPhase) startProgressReporter(
+	progressCh chan<- PhaseProgressPayload,
+	progress *EnumerationProgress,
+	start time.Time,
+) chan struct{} {
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(enumProgressTickerMs * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				p.sendProgressUpdate(progressCh, progress, start)
+			}
+		}
+	}()
+	return done
+}
+
+// sendProgressUpdate sends a progress update if the channel is available.
+func (p *EnumerationPhase) sendProgressUpdate(
+	progressCh chan<- PhaseProgressPayload,
+	progress *EnumerationProgress,
+	start time.Time,
+) {
+	if progressCh != nil {
+		progressCh <- PhaseProgressPayload{
+			Phase:           "enumeration",
+			ProcessedCount:  progress.DevicesFound(),
+			TotalCount:      progress.EstimatedTotal(),
+			PercentComplete: progress.PercentComplete(),
+			CurrentTarget:   progress.CurrentTarget(),
+			ElapsedMs:       time.Since(start).Milliseconds(),
+		}
+	}
+}
+
+// runParallelScans executes all configured scans in parallel.
+func (p *EnumerationPhase) runParallelScans(
+	ctx context.Context,
+	scanCtx context.Context,
+	progress *EnumerationProgress,
+) {
+	var wg sync.WaitGroup
+
+	if p.config.ARPScan {
+		wg.Go(func() {
+			p.executeARPScan(ctx, scanCtx, progress)
+		})
+	}
+
+	if p.config.ICMPScan && len(p.config.AdditionalSubnets) > 0 {
+		wg.Go(func() {
+			p.executeICMPScan(ctx, scanCtx, progress)
+		})
+	}
+
+	if p.config.NDPScan {
+		wg.Go(func() {
+			progress.SetPhase("ndp_scan")
+			progress.MarkComplete("ndp_scan")
+		})
+	}
+
+	wg.Wait()
+}
+
+// executeARPScan runs the ARP scan and records results.
+func (p *EnumerationPhase) executeARPScan(
+	ctx context.Context,
+	scanCtx context.Context,
+	progress *EnumerationProgress,
+) {
+	progress.SetPhase("arp_scan")
+	if err := p.runARPScan(scanCtx, progress); err != nil {
+		logging.GetLogger().WarnContext(ctx, "ARP scan failed", "error", err)
+		progress.AddError("arp_scan", err)
+	}
+	progress.MarkComplete("arp_scan")
+}
+
+// executeICMPScan runs the ICMP scan and records results.
+func (p *EnumerationPhase) executeICMPScan(
+	ctx context.Context,
+	scanCtx context.Context,
+	progress *EnumerationProgress,
+) {
+	progress.SetPhase("icmp_scan")
+	if err := p.runICMPScan(scanCtx, progress); err != nil {
+		logging.GetLogger().WarnContext(ctx, "ICMP scan failed", "error", err)
+		progress.AddError("icmp_scan", err)
+	}
+	progress.MarkComplete("icmp_scan")
+}
+
+// broadcastDiscoveries sends discovery events for all devices.
+func (p *EnumerationPhase) broadcastDiscoveries(devices []*DiscoveredDevice) {
+	if p.broadcaster == nil {
+		return
+	}
+	for _, device := range devices {
+		p.broadcaster.BroadcastPipelineEvent(PipelineEvent{
+			Type:      EventDeviceDiscovered,
+			Timestamp: time.Now(),
+			Payload: DeviceDiscoveredPayload{
+				IP:      device.IP,
+				MAC:     device.MAC,
+				Vendor:  device.Vendor,
+				Methods: methodsToStrings(device.DiscoveryMethod),
+				IsNew:   true, // TODO: Track new vs existing
+			},
+		})
+	}
 }
 
 // runARPScan performs ARP-based Layer 2 discovery.
@@ -326,7 +387,7 @@ func (p *EnumerationProgress) DevicesFound() int {
 // EstimatedTotal returns estimated total devices (for progress calculation).
 func (p *EnumerationProgress) EstimatedTotal() int {
 	// Rough estimate based on typical /24 subnet
-	return 254
+	return enumSubnet24HostCount
 }
 
 // PercentComplete returns completion percentage.
@@ -337,7 +398,7 @@ func (p *EnumerationProgress) PercentComplete() float64 {
 	}
 	// We don't know total, so estimate based on typical discovery rate
 	// After finding devices, we're "mostly done"
-	return float64(found) / float64(p.EstimatedTotal()) * 100
+	return float64(found) / float64(p.EstimatedTotal()) * enumPercentComplete
 }
 
 // AddError records an error.
@@ -435,45 +496,13 @@ func (e *EnhancedEnumerator) EnumerateSubnet(
 
 	logging.GetLogger().InfoContext(ctx, "Enhanced enumeration starting", "subnet", cidr)
 
-	// Generate all host IPs in subnet
 	hosts := generateHostIPs(subnet)
 	logging.GetLogger().DebugContext(ctx, "Host IPs generated", "count", len(hosts))
 
-	// Multi-pass ARP if enabled
-	if e.config.MultiPassARP && e.config.ARPPasses > 1 {
-		for pass := range e.config.ARPPasses {
-			select {
-			case <-ctx.Done():
-				return nil, fmt.Errorf("enumeration cancelled during ARP pass: %w", ctx.Err())
-			default:
-			}
-
-			logging.GetLogger().DebugContext(ctx, "ARP pass", "pass", pass+1, "total", e.config.ARPPasses)
-
-			// Add delay between passes for IDS-friendly scanning
-			if e.config.SlowScan && pass > 0 {
-				select {
-				case <-time.After(2 * time.Second):
-				case <-ctx.Done():
-					return nil, fmt.Errorf(
-						"enumeration cancelled during slow scan delay: %w",
-						ctx.Err(),
-					)
-				}
-			}
-
-			if scanErr := e.deviceDiscovery.Scan(ctx); scanErr != nil {
-				logging.GetLogger().WarnContext(ctx, "ARP pass failed", "pass", pass+1, "error", scanErr)
-			}
-		}
-	} else {
-		// Single pass
-		if scanErr := e.deviceDiscovery.Scan(ctx); scanErr != nil {
-			return nil, scanErr
-		}
+	if arpErr := e.performARPScans(ctx); arpErr != nil {
+		return nil, arpErr
 	}
 
-	// Retry unresponsive hosts
 	if e.config.RetryUnresponsive && e.pinger != nil {
 		e.retryUnresponsive(ctx, hosts)
 	}
@@ -481,20 +510,58 @@ func (e *EnhancedEnumerator) EnumerateSubnet(
 	return e.deviceDiscovery.GetDevices(), nil
 }
 
-// retryUnresponsive pings hosts that weren't discovered.
-func (e *EnhancedEnumerator) retryUnresponsive(ctx context.Context, hosts []net.IP) {
-	discovered := make(map[string]bool)
-	for _, d := range e.deviceDiscovery.GetDevices() {
-		discovered[d.IP] = true
+// performARPScans executes either multi-pass or single-pass ARP scanning.
+func (e *EnhancedEnumerator) performARPScans(ctx context.Context) error {
+	if e.config.MultiPassARP && e.config.ARPPasses > 1 {
+		return e.runMultiPassARP(ctx)
 	}
+	return e.deviceDiscovery.Scan(ctx)
+}
 
-	var unresponsive []net.IP
-	for _, ip := range hosts {
-		if !discovered[ip.String()] {
-			unresponsive = append(unresponsive, ip)
+// runMultiPassARP performs multiple ARP scan passes for reliability.
+func (e *EnhancedEnumerator) runMultiPassARP(ctx context.Context) error {
+	for pass := range e.config.ARPPasses {
+		if err := e.executeARPPass(ctx, pass); err != nil {
+			return err
 		}
 	}
+	return nil
+}
 
+// executeARPPass runs a single ARP scan pass with optional slow scan delay.
+func (e *EnhancedEnumerator) executeARPPass(ctx context.Context, pass int) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("enumeration cancelled during ARP pass: %w", err)
+	}
+
+	logging.GetLogger().DebugContext(ctx, "ARP pass", "pass", pass+1, "total", e.config.ARPPasses)
+
+	if err := e.applySlowScanDelay(ctx, pass); err != nil {
+		return err
+	}
+
+	if scanErr := e.deviceDiscovery.Scan(ctx); scanErr != nil {
+		logging.GetLogger().WarnContext(ctx, "ARP pass failed", "pass", pass+1, "error", scanErr)
+	}
+	return nil
+}
+
+// applySlowScanDelay waits between passes if slow scan mode is enabled.
+func (e *EnhancedEnumerator) applySlowScanDelay(ctx context.Context, pass int) error {
+	if !e.config.SlowScan || pass == 0 {
+		return nil
+	}
+	select {
+	case <-time.After(enumSlowScanDelayS * time.Second):
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("enumeration cancelled during slow scan delay: %w", ctx.Err())
+	}
+}
+
+// retryUnresponsive pings hosts that weren't discovered.
+func (e *EnhancedEnumerator) retryUnresponsive(ctx context.Context, hosts []net.IP) {
+	unresponsive := e.findUnresponsiveHosts(hosts)
 	if len(unresponsive) == 0 {
 		return
 	}
@@ -504,37 +571,69 @@ func (e *EnhancedEnumerator) retryUnresponsive(ctx context.Context, hosts []net.
 		"retries", e.config.RetryCount)
 
 	for range e.config.RetryCount {
-		select {
-		case <-ctx.Done():
+		if ctx.Err() != nil {
 			return
-		default:
 		}
 
-		// Ping sweep the unresponsive hosts
-		results := e.pinger.PingSweep(ctx, unresponsive, e.config.Timing.PingWorkers)
-
-		// Filter out now-responsive hosts
-		var stillUnresponsive []net.IP
-		for _, r := range results {
-			if !r.Reachable {
-				ip := net.ParseIP(r.IP)
-				if ip != nil {
-					stillUnresponsive = append(stillUnresponsive, ip)
-				}
-			}
-		}
-		unresponsive = stillUnresponsive
-
+		unresponsive = e.retryPingSweep(ctx, unresponsive)
 		if len(unresponsive) == 0 {
 			break
 		}
 
-		// Delay between retries
-		select {
-		case <-time.After(500 * time.Millisecond):
-		case <-ctx.Done():
+		if !e.waitBetweenRetries(ctx) {
 			return
 		}
+	}
+}
+
+// findUnresponsiveHosts returns hosts that haven't been discovered yet.
+func (e *EnhancedEnumerator) findUnresponsiveHosts(hosts []net.IP) []net.IP {
+	discovered := e.buildDiscoveredSet()
+
+	var unresponsive []net.IP
+	for _, ip := range hosts {
+		if !discovered[ip.String()] {
+			unresponsive = append(unresponsive, ip)
+		}
+	}
+	return unresponsive
+}
+
+// buildDiscoveredSet creates a set of already discovered IP addresses.
+func (e *EnhancedEnumerator) buildDiscoveredSet() map[string]bool {
+	discovered := make(map[string]bool)
+	for _, d := range e.deviceDiscovery.GetDevices() {
+		discovered[d.IP] = true
+	}
+	return discovered
+}
+
+// retryPingSweep performs a ping sweep and returns hosts that are still unresponsive.
+func (e *EnhancedEnumerator) retryPingSweep(ctx context.Context, unresponsive []net.IP) []net.IP {
+	results := e.pinger.PingSweep(ctx, unresponsive, e.config.Timing.PingWorkers)
+	return e.filterStillUnresponsive(results)
+}
+
+// filterStillUnresponsive extracts IPs that remain unreachable from ping results.
+func (e *EnhancedEnumerator) filterStillUnresponsive(results []PingResult) []net.IP {
+	var stillUnresponsive []net.IP
+	for _, r := range results {
+		if !r.Reachable {
+			if ip := net.ParseIP(r.IP); ip != nil {
+				stillUnresponsive = append(stillUnresponsive, ip)
+			}
+		}
+	}
+	return stillUnresponsive
+}
+
+// waitBetweenRetries waits for the retry delay. Returns false if context is cancelled.
+func (e *EnhancedEnumerator) waitBetweenRetries(ctx context.Context) bool {
+	select {
+	case <-time.After(enumRetryDelayMs * time.Millisecond):
+		return true
+	case <-ctx.Done():
+		return false
 	}
 }
 
@@ -563,7 +662,7 @@ func generateHostIPs(subnet *net.IPNet) []net.IP {
 		hostBits = maxHostBits
 	}
 
-	numHosts := (1 << hostBits) - 2
+	numHosts := (1 << hostBits) - enumSubnetExcludeNum
 	if numHosts <= 0 {
 		return nil // /31 or smaller
 	}

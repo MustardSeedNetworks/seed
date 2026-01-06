@@ -1,4 +1,3 @@
-// Package logging provides structured logging with automatic redaction of sensitive data.
 package logging
 
 import (
@@ -6,6 +5,12 @@ import (
 	"log/slog"
 	"runtime"
 	"time"
+)
+
+const (
+	// defaultBroadcasterBufferSize is the default capacity for the log broadcaster's ring buffer.
+	// Determines how many recent log entries are retained for streaming to new clients.
+	defaultBroadcasterBufferSize = 1000
 )
 
 // StreamingHandler wraps an slog.Handler and broadcasts log entries to connected clients.
@@ -195,7 +200,7 @@ func InitLoggerWithBroadcaster(cfg *LoggingConfig, broadcaster *LogBroadcaster) 
 
 	// If no broadcaster provided, create one
 	if broadcaster == nil {
-		broadcaster = InitBroadcaster(1000) // Default 1000 entry buffer
+		broadcaster = InitBroadcaster(defaultBroadcasterBufferSize)
 	}
 
 	// Get the current handler and wrap it with streaming

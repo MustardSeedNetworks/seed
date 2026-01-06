@@ -11,6 +11,26 @@ import (
 	"github.com/krisarmstrong/seed/internal/iperf"
 )
 
+const (
+	// SpeedtestTimeoutMinutes is the timeout in minutes for speedtest operations.
+	// Speedtests typically take 10-30 seconds but we allow extra time for slow connections.
+	SpeedtestTimeoutMinutes = 2
+
+	// DefaultIperfPort is the standard iPerf3 server port as defined by the protocol.
+	DefaultIperfPort = 5201
+
+	// DefaultIperfDurationSeconds is the default duration for an iPerf test.
+	DefaultIperfDurationSeconds = 10
+
+	// MaxIperfDurationSeconds is the maximum allowed duration for an iPerf test.
+	// This prevents excessively long tests that could impact network performance.
+	MaxIperfDurationSeconds = 60
+
+	// IperfTimeoutBufferSeconds is additional time added to the iPerf test duration
+	// to allow for connection setup, result processing, and cleanup.
+	IperfTimeoutBufferSeconds = 30
+)
+
 // registerTestingTools registers all testing-related MCP tools.
 func (s *Server) registerTestingTools(isAllowed func(string) bool) {
 	// dns_test - Test DNS resolution
@@ -148,8 +168,8 @@ func (s *Server) handleSpeedtest(
 		return mcp.NewToolResultError("A speedtest is already in progress"), nil
 	}
 
-	// Run with a 2-minute timeout
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	// Run with a timeout to prevent indefinite hangs
+	ctx, cancel := context.WithTimeout(ctx, SpeedtestTimeoutMinutes*time.Minute)
 	defer cancel()
 
 	result, err := tester.Run(ctx)
@@ -164,8 +184,8 @@ func (s *Server) handleSpeedtest(
 func parseIperfConfig(serverAddr string, args map[string]any) (*iperf.ClientConfig, error) {
 	opts := &iperf.ClientConfig{
 		Server:   serverAddr,
-		Port:     5201,
-		Duration: 10,
+		Port:     DefaultIperfPort,
+		Duration: DefaultIperfDurationSeconds,
 		Protocol: "tcp",
 	}
 
@@ -174,8 +194,8 @@ func parseIperfConfig(serverAddr string, args map[string]any) (*iperf.ClientConf
 	}
 
 	if duration, ok := args["duration"].(float64); ok && duration > 0 {
-		if duration > 60 {
-			duration = 60
+		if duration > MaxIperfDurationSeconds {
+			duration = MaxIperfDurationSeconds
 		}
 		opts.Duration = int(duration)
 	}
@@ -226,8 +246,8 @@ func (s *Server) handleIperfTest(
 		return mcp.NewToolResultError("An iPerf test is already in progress"), nil
 	}
 
-	// Run with timeout based on duration + buffer
-	timeout := time.Duration(opts.Duration+30) * time.Second
+	// Run with timeout based on duration + buffer for setup/teardown
+	timeout := time.Duration(opts.Duration+IperfTimeoutBufferSeconds) * time.Second
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 

@@ -1,4 +1,3 @@
-// Package gateway_test provides gateway reachability testing and latency measurement.
 // Test suite validates gateway detection, ping testing, threshold evaluation,
 // and packet loss calculation for gateway health monitoring.
 package gateway_test
@@ -492,10 +491,8 @@ func TestConcurrentTesterAccess(_ *testing.T) {
 
 func TestGetStatsWithNilStats(t *testing.T) {
 	tester := gateway.NewTester(gateway.DefaultThresholds())
-	// Force nil stats.
-	tester.TesterMu().Lock()
+	// Force nil stats - TesterSetStats handles its own locking.
 	tester.TesterSetStats(nil)
-	tester.TesterMu().Unlock()
 
 	stats := tester.GetStats()
 	if stats == nil {
@@ -763,10 +760,9 @@ func TestTesterTestWithFailedPings(t *testing.T) {
 	// Use an unreachable IP.
 	tester.SetGateway("192.0.2.1")
 	// Reduce ping count for faster test.
-	tester.TesterMu().Lock()
+	// TesterSetPingCount and TesterSetPingTimeout handle their own locking.
 	tester.TesterSetPingCount(2)
 	tester.TesterSetPingTimeout(1 * time.Second)
-	tester.TesterMu().Unlock()
 
 	stats := tester.Test()
 	if stats == nil {

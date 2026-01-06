@@ -1,7 +1,7 @@
-// Package network_test handles network interface management.
+package network_test
+
 // LinkMonitor test suite validates real-time link state monitoring, state change detection,
 // and interface property change tracking across network transitions.
-package network_test
 
 import (
 	"testing"

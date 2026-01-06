@@ -37,6 +37,30 @@ const (
 	MinPasswordLength = 12 // Increased from 8 for better security
 )
 
+// Cryptographic constants for secure random generation.
+const (
+	// jwtSecretBytes is the number of random bytes for JWT signing secrets (256-bit key).
+	jwtSecretBytes = 32
+
+	// maxByteValue is the maximum value of a single byte, used for unbiased random selection.
+	maxByteValue = 256
+
+	// bitsPerUint32 is the number of bits in a uint32, used for random integer generation.
+	bitsPerUint32 = 32
+
+	// byteShift8 is the bit shift amount for the second byte in uint32 construction.
+	byteShift8 = 8
+
+	// byteShift16 is the bit shift amount for the third byte in uint32 construction.
+	byteShift16 = 16
+
+	// byteShift24 is the bit shift amount for the fourth byte in uint32 construction.
+	byteShift24 = 24
+
+	// initialCredentialsPasswordLength is the password length for auto-generated initial credentials.
+	initialCredentialsPasswordLength = 16
+)
+
 // SetupModePlaceholder is a placeholder hash used during initial setup.
 // This allows the server to start and show the wizard before a real password is set.
 // It is not a valid bcrypt hash and will fail any authentication attempt.
@@ -192,7 +216,7 @@ func cryptoRandRead(b []byte, operation string) error {
 // Fixes #539: Consolidated JWT secret generation into single function.
 // Fixes G7: Added retry logic for crypto/rand failures instead of immediate panic.
 func GenerateJWTSecret() string {
-	bytes := make([]byte, 32) // 256-bit key
+	bytes := make([]byte, jwtSecretBytes)
 	if err := cryptoRandRead(bytes, "GenerateJWTSecret"); err != nil {
 		// If crypto/rand fails after retries, the system is critically insecure
 		// Panic to prevent operation in an insecure state - this should never happen on modern systems
@@ -216,40 +240,57 @@ func (m *Manager) Authenticate(ctx context.Context, username, password string) (
 
 	// If we have a UserStore, use it for authentication
 	if userStore != nil {
-		// Check if account is locked
-		locked, err := userStore.IsLocked(ctx, username)
-		if err != nil {
-			logging.GetLogger().
-				WarnContext(ctx, "Failed to check user lock status", "username", username, "error", err)
-		}
-		if locked {
-			return "", ErrInvalidCredentials
-		}
-
-		// Get password hash from database
-		dbHash, err := userStore.GetPasswordHash(ctx, username)
-		if err != nil {
-			// User not found in database - record failure and return error
-			_ = userStore.RecordLoginFailure(ctx, username)
-			return "", ErrInvalidCredentials
-		}
-
-		// Password comparison (bcrypt.CompareHashAndPassword is already constant-time)
-		if compareErr := bcrypt.CompareHashAndPassword([]byte(dbHash), []byte(password)); compareErr != nil {
-			_ = userStore.RecordLoginFailure(ctx, username)
-			return "", ErrInvalidCredentials
-		}
-
-		// Record successful login
-		if successErr := userStore.RecordLoginSuccess(ctx, username); successErr != nil {
-			logging.GetLogger().
-				WarnContext(ctx, "Failed to record login success", "username", username, "error", successErr)
-		}
-
-		return m.GenerateToken(ctx, username)
+		return m.authenticateWithUserStore(ctx, userStore, username, password)
 	}
 
 	// Fallback to in-memory authentication (legacy/config-based)
+	return m.authenticateInMemory(ctx, username, password, storedUsername, storedPasswordHash)
+}
+
+// authenticateWithUserStore handles authentication via the database-backed UserStore.
+func (m *Manager) authenticateWithUserStore(
+	ctx context.Context,
+	userStore UserStore,
+	username, password string,
+) (string, error) {
+	// Check if account is locked
+	locked, err := userStore.IsLocked(ctx, username)
+	if err != nil {
+		logging.GetLogger().
+			WarnContext(ctx, "Failed to check user lock status", "username", username, "error", err)
+	}
+	if locked {
+		return "", ErrInvalidCredentials
+	}
+
+	// Get password hash from database
+	dbHash, err := userStore.GetPasswordHash(ctx, username)
+	if err != nil {
+		// User not found in database - record failure and return error
+		_ = userStore.RecordLoginFailure(ctx, username)
+		return "", ErrInvalidCredentials
+	}
+
+	// Password comparison (bcrypt.CompareHashAndPassword is already constant-time)
+	if compareErr := bcrypt.CompareHashAndPassword([]byte(dbHash), []byte(password)); compareErr != nil {
+		_ = userStore.RecordLoginFailure(ctx, username)
+		return "", ErrInvalidCredentials
+	}
+
+	// Record successful login
+	if successErr := userStore.RecordLoginSuccess(ctx, username); successErr != nil {
+		logging.GetLogger().
+			WarnContext(ctx, "Failed to record login success", "username", username, "error", successErr)
+	}
+
+	return m.GenerateToken(ctx, username)
+}
+
+// authenticateInMemory handles authentication via in-memory credentials (legacy/config-based).
+func (m *Manager) authenticateInMemory(
+	ctx context.Context,
+	username, password, storedUsername, storedPasswordHash string,
+) (string, error) {
 	// Constant-time username comparison to prevent timing attacks
 	usernameMatch := subtle.ConstantTimeCompare(
 		[]byte(username),
@@ -459,64 +500,79 @@ func extractTokenFromSubprotocol(protocols string) string {
 	return ""
 }
 
+// shouldBypassAuth checks if the given path should skip authentication.
+// Returns true for login, refresh, setup, SSO endpoints and static files.
+func shouldBypassAuth(path string) bool {
+	// Skip auth for login, refresh, setup, and SSO endpoints (fixes #478)
+	switch path {
+	case "/api/auth/login", "/api/auth/refresh", "/api/setup/status", "/api/setup/complete":
+		return true
+	}
+	if strings.HasPrefix(path, "/api/sso/") {
+		return true
+	}
+	// Skip auth for static files (non-API, non-WebSocket paths)
+	if !strings.HasPrefix(path, "/api/") && !strings.HasPrefix(path, "/ws") {
+		return true
+	}
+	return false
+}
+
+// extractTokenFromRequest extracts the JWT token from the request.
+// For WebSocket connections, checks Sec-WebSocket-Protocol header first.
+// Falls back to cookie/Authorization header via GetTokenFromRequest.
+func extractTokenFromRequest(r *http.Request) string {
+	// For WebSocket connections, check Sec-WebSocket-Protocol first (fixes #478)
+	if strings.HasPrefix(r.URL.Path, "/ws") {
+		// Method 1 (Preferred): Check Sec-WebSocket-Protocol header
+		// Format: "access_token, <token>" or "bearer, <token>"
+		if protocols := r.Header.Get("Sec-WebSocket-Protocol"); protocols != "" {
+			if token := extractTokenFromSubprotocol(protocols); token != "" {
+				return token
+			}
+		}
+	}
+
+	// Use unified token extraction with cookie priority (fixes #478)
+	token, _ := GetTokenFromRequest(r)
+	return token
+}
+
+// handleTokenValidationError sends the appropriate error response for token validation failures.
+func handleTokenValidationError(w http.ResponseWriter, err error) {
+	if errors.Is(err, ErrTokenExpired) {
+		sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Token expired")
+		return
+	}
+	sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Invalid token")
+}
+
 // Middleware returns an HTTP middleware that validates JWT tokens.
 func (m *Manager) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip auth for login, refresh, setup, and SSO endpoints (fixes #478)
-		if r.URL.Path == "/api/auth/login" ||
-			r.URL.Path == "/api/auth/refresh" ||
-			r.URL.Path == "/api/setup/status" ||
-			r.URL.Path == "/api/setup/complete" ||
-			strings.HasPrefix(r.URL.Path, "/api/sso/") {
+		// Skip auth for bypassed paths (login, refresh, setup, SSO, static files)
+		if shouldBypassAuth(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Skip auth for static files
-		if !strings.HasPrefix(r.URL.Path, "/api/") && !strings.HasPrefix(r.URL.Path, "/ws") {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		var tokenString string
-
-		// For WebSocket connections, check Sec-WebSocket-Protocol first (fixes #478)
-		if strings.HasPrefix(r.URL.Path, "/ws") {
-			// Method 1 (Preferred): Check Sec-WebSocket-Protocol header
-			// Format: "access_token, <token>" or "bearer, <token>"
-			protocols := r.Header.Get("Sec-WebSocket-Protocol")
-			if protocols != "" {
-				tokenString = extractTokenFromSubprotocol(protocols)
-			}
-		}
-
-		// Use unified token extraction with cookie priority (fixes #478)
+		// Extract token from request (WebSocket subprotocol or cookie/header)
+		tokenString := extractTokenFromRequest(r)
 		if tokenString == "" {
-			tokenString, _ = GetTokenFromRequest(r)
-			if tokenString == "" {
-				sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Unauthorized")
-				return
-			}
+			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Unauthorized")
+			return
 		}
 
+		// Validate the token
 		claims, err := m.ValidateToken(r.Context(), tokenString)
 		if err != nil {
-			if errors.Is(err, ErrTokenExpired) {
-				sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Token expired")
-				return
-			}
-			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Invalid token")
+			handleTokenValidationError(w, err)
 			return
 		}
 
 		// Validate username claim exists and is not empty (fixes #711)
 		if claims.Username == "" {
-			sendAuthError(
-				w,
-				http.StatusUnauthorized,
-				errCodeUnauthorized,
-				"Invalid token: missing username claim",
-			)
+			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Invalid token: missing username claim")
 			return
 		}
 
@@ -561,7 +617,7 @@ func ValidatePasswordStrength(password string) error {
 func randomChar(chars string) (byte, error) {
 	charsLen := byte(len(chars))
 	// Calculate the largest multiple of charsLen that fits in a byte
-	maxValid := 256 - (256 % int(charsLen))
+	maxValid := maxByteValue - (maxByteValue % int(charsLen))
 
 	for {
 		var b [1]byte
@@ -585,8 +641,8 @@ func randomInt(n int) (int, error) {
 	}
 
 	// For small n, use a single byte
-	if n <= 256 {
-		maxValid := 256 - (256 % n)
+	if n <= maxByteValue {
+		maxValid := maxByteValue - (maxByteValue % n)
 		for {
 			var b [1]byte
 			if err := cryptoRandRead(b[:], "randomInt"); err != nil {
@@ -601,7 +657,7 @@ func randomInt(n int) (int, error) {
 	// For larger n, use multiple bytes
 	var b [4]byte
 	// Use uint64 for calculation to avoid overflow
-	maxUint := uint64(1) << 32
+	maxUint := uint64(1) << bitsPerUint32
 	// #nosec G115 -- Result is always < 2^32 (maxUint - remainder), safe for uint32
 	maxValid := uint32(maxUint - (maxUint % uint64(n)))
 
@@ -609,7 +665,7 @@ func randomInt(n int) (int, error) {
 		if err := cryptoRandRead(b[:], "randomInt"); err != nil {
 			return 0, err
 		}
-		val := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24
+		val := uint32(b[0]) | uint32(b[1])<<byteShift8 | uint32(b[2])<<byteShift16 | uint32(b[3])<<byteShift24
 		if val < maxValid {
 			// #nosec G115 -- val % uint32(n) is always < n, safe for int conversion
 			return int(val % uint32(n)), nil
@@ -688,7 +744,7 @@ type InitialCredentials struct {
 
 // GenerateInitialCredentials creates new secure credentials for first-boot setup.
 func GenerateInitialCredentials(username string) (*InitialCredentials, error) {
-	password, err := GenerateSecurePassword(16)
+	password, err := GenerateSecurePassword(initialCredentialsPasswordLength)
 	if err != nil {
 		return nil, err
 	}

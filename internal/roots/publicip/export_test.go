@@ -1,4 +1,3 @@
-// Package publicip exports internal functions for testing.
 package publicip
 
 import (

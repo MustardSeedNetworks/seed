@@ -1,9 +1,9 @@
 //go:build darwin
 
-// Package detection provides intelligent network interface auto-detection.
+package detection
+
 // macOS-specific speed detection module uses system_profiler and networksetup
 // for interface speed detection and hardware identification.
-package detection
 
 import (
 	"context"
@@ -14,9 +14,39 @@ import (
 	"time"
 )
 
+// Command timeout constants for macOS system utilities.
+const (
+	// networkSetupTimeout is the timeout for networksetup and ifconfig commands.
+	// These are fast local system calls that should complete quickly.
+	networkSetupTimeout = 5 * time.Second
+
+	// systemProfilerTimeout is the timeout for system_profiler commands.
+	// system_profiler can take longer as it queries hardware information.
+	systemProfilerTimeout = 10 * time.Second
+)
+
+// Regex match index constants for parsing ifconfig media output.
+const (
+	// regexMinMatches is the minimum number of matches required for valid speed extraction.
+	// Match 0 is the full match, match 1 is the speed value, match 2 is optional 'g' suffix.
+	regexMinMatches = 2
+
+	// regexGbpsSuffixIndex is the index of the optional 'g' suffix in regex matches.
+	regexGbpsSuffixIndex = 3
+)
+
+// Speed conversion multipliers for network interface speeds.
+const (
+	// bitsPerGbps converts Gbps values to bits per second (1 Gbps = 1 billion bps).
+	bitsPerGbps = 1_000_000_000
+
+	// bitsPerMbps converts Mbps values to bits per second (1 Mbps = 1 million bps).
+	bitsPerMbps = 1_000_000
+)
+
 // getInterfaceSpeed returns the interface speed in bits per second.
 func getInterfaceSpeed(name string) int64 {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), networkSetupTimeout)
 	defer cancel()
 
 	// Try networksetup first
@@ -69,19 +99,19 @@ func parseIfconfigSpeed(output string) int64 {
 	re := regexp.MustCompile(`media:.*\((\d+(?:\.\d+)?)(g)?base`)
 	matches := re.FindStringSubmatch(strings.ToLower(output))
 
-	if len(matches) >= 2 {
+	if len(matches) >= regexMinMatches {
 		speedVal, err := strconv.ParseFloat(matches[1], 64)
 		if err != nil {
 			return 0
 		}
 
 		// Check if it's in Gbps (has 'g' suffix)
-		if len(matches) >= 3 && matches[2] == "g" {
-			return int64(speedVal * 1_000_000_000)
+		if len(matches) >= regexGbpsSuffixIndex && matches[2] == "g" {
+			return int64(speedVal * bitsPerGbps)
 		}
 
 		// Otherwise assume Mbps
-		return int64(speedVal * 1_000_000)
+		return int64(speedVal * bitsPerMbps)
 	}
 
 	return 0
@@ -89,7 +119,7 @@ func parseIfconfigSpeed(output string) int64 {
 
 // identifyByPlatform attempts platform-specific chipset identification on macOS.
 func (db *ChipsetDatabase) identifyByPlatform(_ string) *ChipsetInfo {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), systemProfilerTimeout)
 	defer cancel()
 
 	// Use system_profiler to get hardware info

@@ -9,6 +9,18 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
+// API request validation limits.
+const (
+	// MaxUsernameLength is the maximum length of a username.
+	MaxUsernameLength = 64
+
+	// MaxPasswordLength is the maximum length of a password.
+	MaxPasswordLength = 128
+
+	// MaxEndpointNameLength is the maximum length of an endpoint/target name.
+	MaxEndpointNameLength = 100
+)
+
 // APIError represents a standardized JSON error response.
 type APIError struct {
 	Error   string            `json:"error"`
@@ -75,13 +87,13 @@ func ValidateLoginRequest(req *LoginRequest) []FieldError {
 
 	if req.Username == "" {
 		errors = append(errors, FieldError{Field: "username", Message: "username is required"})
-	} else if len(req.Username) > 64 {
+	} else if len(req.Username) > MaxUsernameLength {
 		errors = append(errors, FieldError{Field: "username", Message: "username too long (max 64 characters)"})
 	}
 
 	if req.Password == "" {
 		errors = append(errors, FieldError{Field: "password", Message: "password is required"})
-	} else if len(req.Password) > 128 {
+	} else if len(req.Password) > MaxPasswordLength {
 		errors = append(errors, FieldError{Field: "password", Message: "password too long (max 128 characters)"})
 	}
 
@@ -136,7 +148,7 @@ func ValidateHTTPEndpoint(ep *HTTPEndpointRequest) []FieldError {
 
 	if ep.Name == "" {
 		errors = append(errors, FieldError{Field: "name", Message: "name is required"})
-	} else if len(ep.Name) > 100 {
+	} else if len(ep.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldError{Field: "name", Message: "name too long (max 100 characters)"})
 	}
 
@@ -171,7 +183,7 @@ func ValidatePingTarget(pt *PingTargetRequest) []FieldError {
 
 	if pt.Name == "" {
 		errors = append(errors, FieldError{Field: "name", Message: "name is required"})
-	} else if len(pt.Name) > 100 {
+	} else if len(pt.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldError{Field: "name", Message: "name too long (max 100 characters)"})
 	}
 
@@ -198,7 +210,7 @@ func ValidateTCPPort(tp *TCPPortRequest) []FieldError {
 
 	if tp.Name == "" {
 		errors = append(errors, FieldError{Field: "name", Message: "name is required"})
-	} else if len(tp.Name) > 100 {
+	} else if len(tp.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldError{Field: "name", Message: "name too long (max 100 characters)"})
 	}
 

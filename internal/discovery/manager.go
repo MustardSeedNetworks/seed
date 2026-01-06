@@ -1,4 +1,5 @@
-// Package discovery provides link-layer discovery protocol coordination.
+package discovery
+
 //
 // This file implements the Manager, which orchestrates multiple discovery protocol
 // captures (LLDP, CDP, EDP) to discover neighboring network devices. The manager
@@ -26,7 +27,6 @@
 //   - Low CPU usage (waits for incoming packets)
 //   - Memory usage scales with number of discovered neighbors
 //   - TTL-based automatic expiration prevents unbounded growth
-package discovery
 
 import (
 	"sync"

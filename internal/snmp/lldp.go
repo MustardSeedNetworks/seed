@@ -15,20 +15,42 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
-// LLDP-MIB OIDs.
+// LLDP-MIB OIDs (lldpRemTable - remote device information).
 const (
-	// lldpRemTable - remote device information.
-	OIDLldpRemChassisIDSubtype = "1.0.8802.1.1.2.1.4.1.1.4"  // lldpRemChassisIdSubtype
-	OIDLldpRemChassisID        = "1.0.8802.1.1.2.1.4.1.1.5"  // lldpRemChassisId
-	OIDLldpRemPortIDSubtype    = "1.0.8802.1.1.2.1.4.1.1.6"  // lldpRemPortIdSubtype
-	OIDLldpRemPortID           = "1.0.8802.1.1.2.1.4.1.1.7"  // lldpRemPortId
-	OIDLldpRemPortDesc         = "1.0.8802.1.1.2.1.4.1.1.8"  // lldpRemPortDesc
-	OIDLldpRemSysName          = "1.0.8802.1.1.2.1.4.1.1.9"  // lldpRemSysName
-	OIDLldpRemSysDesc          = "1.0.8802.1.1.2.1.4.1.1.10" // lldpRemSysDesc
+	// OIDLldpRemChassisIDSubtype is the LLDP-MIB OID for chassis ID subtype.
+	OIDLldpRemChassisIDSubtype = "1.0.8802.1.1.2.1.4.1.1.4"
+	// OIDLldpRemChassisID is the LLDP-MIB OID for chassis ID.
+	OIDLldpRemChassisID = "1.0.8802.1.1.2.1.4.1.1.5"
+	// OIDLldpRemPortIDSubtype is the LLDP-MIB OID for port ID subtype.
+	OIDLldpRemPortIDSubtype = "1.0.8802.1.1.2.1.4.1.1.6"
+	// OIDLldpRemPortID is the LLDP-MIB OID for port ID.
+	OIDLldpRemPortID = "1.0.8802.1.1.2.1.4.1.1.7"
+	// OIDLldpRemPortDesc is the LLDP-MIB OID for port description.
+	OIDLldpRemPortDesc = "1.0.8802.1.1.2.1.4.1.1.8"
+	// OIDLldpRemSysName is the LLDP-MIB OID for system name.
+	OIDLldpRemSysName = "1.0.8802.1.1.2.1.4.1.1.9"
+	// OIDLldpRemSysDesc is the LLDP-MIB OID for system description.
+	OIDLldpRemSysDesc = "1.0.8802.1.1.2.1.4.1.1.10"
 
-	// lldpRemManAddrTable - remote management addresses.
-	OIDLldpRemManAddrIfSubtype = "1.0.8802.1.1.2.1.4.2.1.3" // lldpRemManAddrIfSubtype
-	OIDLldpRemManAddrIfID      = "1.0.8802.1.1.2.1.4.2.1.4" // lldpRemManAddrIfId
+	// OIDLldpRemManAddrIfSubtype is the LLDP-MIB OID for management address interface subtype.
+	OIDLldpRemManAddrIfSubtype = "1.0.8802.1.1.2.1.4.2.1.3"
+	// OIDLldpRemManAddrIfID is the LLDP-MIB OID for management address interface ID.
+	OIDLldpRemManAddrIfID = "1.0.8802.1.1.2.1.4.2.1.4"
+)
+
+// LLDP OID parsing constants.
+const (
+	// minOIDPartsLLDPIndex is the minimum OID parts to extract LLDP index components.
+	// Format: ...TimeMark.LocalPortNum.RemoteIndex (need at least 3 trailing parts).
+	minOIDPartsLLDPIndex = 3
+)
+
+// Network address length constants for chassis ID formatting.
+const (
+	// macAddressLength is the byte length of a MAC address.
+	macAddressLength = 6
+	// ipv4AddressLength is the byte length of an IPv4 address.
+	ipv4AddressLength = 4
 )
 
 // LLDPNeighbor contains LLDP neighbor information from LLDP-MIB.
@@ -211,7 +233,7 @@ func walkLLDPAttribute(
 // OID format: ...TimeMark.LocalPortNum.RemoteIndex.
 func extractLLDPIndex(oid string) (int, int) {
 	parts := strings.Split(oid, ".")
-	if len(parts) < 3 {
+	if len(parts) < minOIDPartsLLDPIndex {
 		return 0, 0
 	}
 
@@ -238,12 +260,12 @@ func formatChassisID(value any) string {
 	}
 
 	// Check if it's a MAC address (6 bytes)
-	if len(bytes) == 6 {
+	if len(bytes) == macAddressLength {
 		return net.HardwareAddr(bytes).String()
 	}
 
 	// Check if it's an IP address (4 bytes)
-	if len(bytes) == 4 {
+	if len(bytes) == ipv4AddressLength {
 		return net.IP(bytes).String()
 	}
 

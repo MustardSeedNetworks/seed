@@ -1,10 +1,10 @@
-// Package detection provides intelligent network interface auto-detection.
+package detection
+
 // Chipset database module contains a curated list of network interface chipsets
 // with quality ratings, capability flags (TDR, DOM), and MAC OUI prefixes.
 //
 // The database can be loaded from an external YAML file for easy updates,
 // or falls back to an embedded default if no file is present.
-package detection
 
 import (
 	_ "embed"
@@ -14,6 +14,13 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/krisarmstrong/seed/internal/logging"
+)
+
+// MAC address parsing constants.
+const (
+	// macOUIPartCount is the number of octets in a MAC OUI (Organizationally Unique Identifier).
+	// A MAC address has 6 octets total, with the first 3 forming the OUI assigned to vendors.
+	macOUIPartCount = 3
 )
 
 //go:embed chipsets.yaml
@@ -187,10 +194,10 @@ func (db *ChipsetDatabase) IdentifyByMAC(mac string) *ChipsetInfo {
 	// Normalize MAC - take first 3 octets (OUI)
 	mac = strings.ToLower(strings.ReplaceAll(mac, "-", ":"))
 	parts := strings.Split(mac, ":")
-	if len(parts) < 3 {
+	if len(parts) < macOUIPartCount {
 		return nil
 	}
-	oui := strings.Join(parts[:3], ":")
+	oui := strings.Join(parts[:macOUIPartCount], ":")
 
 	return db.ouiMap[oui]
 }

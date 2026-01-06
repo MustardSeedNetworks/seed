@@ -6,6 +6,12 @@ import (
 	"net/http"
 )
 
+const (
+	// sliceCapacityMultiplier is used when pre-allocating slices for key-value pairs.
+	// Each attribute produces 2 elements (key and value), so we double the count.
+	sliceCapacityMultiplier = 2
+)
+
 // RedactingHandler is a slog.Handler that automatically redacts sensitive data
 // from log messages and attributes before passing them to the underlying handler.
 //
@@ -104,7 +110,7 @@ func (h *RedactingHandler) redactAttr(a slog.Attr) slog.Attr {
 
 	case []slog.Attr:
 		// Handle nested groups
-		redactedAttrs := make([]any, 0, len(v)*2)
+		redactedAttrs := make([]any, 0, len(v)*sliceCapacityMultiplier)
 		for _, nested := range v {
 			redactedNested := h.redactAttr(nested)
 			redactedAttrs = append(redactedAttrs, redactedNested.Key, redactedNested.Value.Any())

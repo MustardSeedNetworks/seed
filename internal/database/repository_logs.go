@@ -1,4 +1,3 @@
-// Package database provides log repository for persistent log storage.
 package database
 
 import (

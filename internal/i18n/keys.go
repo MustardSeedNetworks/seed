@@ -1,4 +1,3 @@
-// Package i18n provides internationalization support.
 package i18n
 
 // Message keys for authentication errors.

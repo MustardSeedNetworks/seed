@@ -1,4 +1,3 @@
-// Package logging provides structured logging with automatic redaction of sensitive data.
 package logging
 
 import (
@@ -6,6 +5,24 @@ import (
 	"encoding/json"
 	"sync"
 	"time"
+)
+
+const (
+	// defaultBatchSize is the number of log entries to accumulate before flushing to the database.
+	// This balances write efficiency with memory usage.
+	defaultBatchSize = 50
+
+	// batchFlushIntervalSec is the interval in seconds between periodic batch flushes.
+	// Ensures logs are persisted even when batch size threshold is not reached.
+	batchFlushIntervalSec = 5
+
+	// batchFlushTimeoutSec is the timeout in seconds for database batch write operations.
+	// Prevents blocking on slow database operations.
+	batchFlushTimeoutSec = 10
+
+	// defaultRingBufferSize is the default capacity of the ring buffer for recent log entries.
+	// Used when creating a new ring buffer without specifying a size.
+	defaultRingBufferSize = 1000
 )
 
 // Broadcaster defines the interface for broadcasting log entries to connected clients.
@@ -39,7 +56,7 @@ type RingBuffer struct {
 // NewRingBuffer creates a new ring buffer with the specified capacity.
 func NewRingBuffer(size int) *RingBuffer {
 	if size <= 0 {
-		size = 1000 // Default to 1000 entries
+		size = defaultRingBufferSize
 	}
 	return &RingBuffer{
 		entries: make([]*LogEntry, size),
@@ -147,8 +164,8 @@ type LogBroadcaster struct {
 func NewLogBroadcaster(bufferSize int) *LogBroadcaster {
 	return &LogBroadcaster{
 		buffer:      NewRingBuffer(bufferSize),
-		batchBuffer: make([]*LogEntry, 0, 50),
-		batchSize:   50, // Flush after 50 entries
+		batchBuffer: make([]*LogEntry, 0, defaultBatchSize),
+		batchSize:   defaultBatchSize,
 		stopCh:      make(chan struct{}),
 	}
 }
@@ -168,9 +185,9 @@ func (lb *LogBroadcaster) SetDBWriter(w DBLogWriter) {
 	defer lb.mu.Unlock()
 	lb.dbWriter = w
 
-	// Start the periodic flush timer (every 5 seconds)
+	// Start the periodic flush timer
 	if lb.batchTimer == nil {
-		lb.batchTimer = time.AfterFunc(5*time.Second, lb.flushBatch)
+		lb.batchTimer = time.AfterFunc(batchFlushIntervalSec*time.Second, lb.flushBatch)
 	}
 }
 
@@ -182,7 +199,7 @@ func (lb *LogBroadcaster) flushBatch() {
 		// Reset timer
 		lb.mu.RLock()
 		if lb.batchTimer != nil {
-			lb.batchTimer.Reset(5 * time.Second)
+			lb.batchTimer.Reset(batchFlushIntervalSec * time.Second)
 		}
 		lb.mu.RUnlock()
 		return
@@ -200,7 +217,7 @@ func (lb *LogBroadcaster) flushBatch() {
 	lb.mu.RUnlock()
 
 	if dbWriter != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), batchFlushTimeoutSec*time.Second)
 		defer cancel()
 
 		if err := dbWriter.WriteBatch(ctx, entries); err != nil {
@@ -213,7 +230,7 @@ func (lb *LogBroadcaster) flushBatch() {
 	// Reset timer for next flush
 	lb.mu.RLock()
 	if lb.batchTimer != nil {
-		lb.batchTimer.Reset(5 * time.Second)
+		lb.batchTimer.Reset(batchFlushIntervalSec * time.Second)
 	}
 	lb.mu.RUnlock()
 }

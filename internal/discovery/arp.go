@@ -1,4 +1,5 @@
-// Package discovery implements active network scanning via ARP and ICMP.
+package discovery
+
 //
 // This file provides active Layer 2 and Layer 3 network scanning to discover
 // devices on local and remote subnets. Unlike passive discovery protocols (LLDP/CDP),
@@ -44,7 +45,6 @@
 //   - May trigger security alerts in monitored environments
 //   - Requires CAP_NET_RAW on Linux for ICMP scanning
 //   - Should be rate-limited in production environments
-package discovery
 
 import (
 	"context"
@@ -85,6 +85,32 @@ type ARPEntry struct {
 // DefaultMaxHostsPerSubnet is the default limit for hosts scanned per subnet.
 // This can be increased via SetMaxHostsPerSubnet for larger networks at the cost of longer scan times.
 const DefaultMaxHostsPerSubnet = 254
+
+// IP address and byte manipulation constants.
+const (
+	ipv4ByteSize          = 4    // Size of an IPv4 address in bytes
+	byteMask              = 0xff // Mask for extracting a single byte
+	percentMultiplier     = 100  // Multiplier for percentage calculations
+	byteShift24           = 24   // Bit shift for first byte of IPv4
+	byteShift16           = 16   // Bit shift for second byte of IPv4
+	byteShift8            = 8    // Bit shift for third byte of IPv4
+	cidrMask24            = 24   // CIDR prefix length for /24 subnet
+	cidrBits32            = 32   // Total bits in IPv4 address
+	pingSweepWorkers      = 50   // Number of concurrent workers for ping sweep
+	hostnameResolveMs     = 500  // Timeout in milliseconds for hostname resolution
+	hostsPerSubnet24      = 254  // Usable hosts in a /24 subnet (excluding network/broadcast)
+	subnetExcludeCount    = 2    // Number of addresses excluded (network + broadcast)
+	roundUpAdjust         = 253  // Value added before division for chunk count rounding
+	hostsPerSubnet24Block = 256  // Total IPs in a /24 block (including network/broadcast)
+)
+
+// TTL threshold constants for OS detection heuristics.
+const (
+	ttlThresholdLow     = 32  // TTL threshold for low-TTL network devices
+	ttlThresholdLinux   = 64  // Default TTL for Linux/macOS/Unix systems
+	ttlThresholdWindows = 128 // Default TTL for Windows systems
+	ttlThresholdNetwork = 255 // Default TTL for network devices/Cisco
+)
 
 // ARPScanner performs active network discovery via ARP.
 type ARPScanner struct {
@@ -224,14 +250,14 @@ func incrementIP(ip net.IP, n int) net.IP {
 	if n < 0 || n > 0xFFFFFF {
 		return nil
 	}
-	result := make(net.IP, 4)
+	result := make(net.IP, ipv4ByteSize)
 	copy(result, ip)
 
 	carry := n
 	for i := 3; i >= 0 && carry > 0; i-- {
-		sum := int(result[i]) + (carry & 0xff)
-		result[i] = byte(sum & 0xff)
-		carry = (carry >> 8) + (sum >> 8)
+		sum := int(result[i]) + (carry & byteMask)
+		result[i] = byte(sum & byteMask)
+		carry = (carry >> byteShift8) + (sum >> byteShift8)
 	}
 
 	return result
@@ -356,18 +382,18 @@ const MaxChunksDefault = 256
 // Pass 0 for maxChunks to use MaxChunksDefault.
 func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 	ones, bits := subnet.Mask.Size()
-	if bits != 32 {
+	if bits != cidrBits32 {
 		// IPv6 or invalid - return as-is
 		return []*net.IPNet{subnet}
 	}
 
 	// /24 or smaller - no need to chunk
-	if ones >= 24 {
+	if ones >= cidrMask24 {
 		return []*net.IPNet{subnet}
 	}
 
 	// Calculate number of /24 chunks needed
-	numChunks := 1 << (24 - ones) // e.g., /22 = 4 chunks, /16 = 256 chunks
+	numChunks := 1 << (cidrMask24 - ones) // e.g., /22 = 4 chunks, /16 = 256 chunks
 
 	// Apply safety cap
 	if maxChunks <= 0 {
@@ -378,7 +404,7 @@ func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 			"subnet", subnet.String(),
 			"totalChunks", numChunks,
 			"maxChunks", maxChunks,
-			"coverage", fmt.Sprintf("%.1f%%", float64(maxChunks)/float64(numChunks)*100))
+			"coverage", fmt.Sprintf("%.1f%%", float64(maxChunks)/float64(numChunks)*percentMultiplier))
 		numChunks = maxChunks
 	}
 
@@ -391,11 +417,11 @@ func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 	// Convert base IP to uint32 for proper arithmetic
 	baseUint := uint32(
 		baseIP[0],
-	)<<24 | uint32(
+	)<<byteShift24 | uint32(
 		baseIP[1],
-	)<<16 | uint32(
+	)<<byteShift16 | uint32(
 		baseIP[2],
-	)<<8 | uint32(
+	)<<byteShift8 | uint32(
 		baseIP[3],
 	)
 
@@ -405,19 +431,19 @@ func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 		if i < 0 || i > 256 {
 			continue
 		}
-		offset := uint32(i) * 256
+		offset := uint32(i) * hostsPerSubnet24Block
 		chunkUint := baseUint + offset
 
 		chunkIP := net.IP{
-			byte(chunkUint >> 24),
-			byte(chunkUint >> 16),
-			byte(chunkUint >> 8),
+			byte(chunkUint >> byteShift24),
+			byte(chunkUint >> byteShift16),
+			byte(chunkUint >> byteShift8),
 			0, // Start of /24 block
 		}
 
 		chunk := &net.IPNet{
 			IP:   chunkIP,
-			Mask: net.CIDRMask(24, 32),
+			Mask: net.CIDRMask(cidrMask24, cidrBits32),
 		}
 		chunks = append(chunks, chunk)
 	}
@@ -430,12 +456,12 @@ func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 // Respects maxHostsPerSubnet configuration to cap total hosts scanned.
 func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 	ones, bits := subnet.Mask.Size()
-	totalHosts := 1<<(bits-ones) - 2 // Exclude network and broadcast
+	totalHosts := 1<<(bits-ones) - subnetExcludeCount // Exclude network and broadcast
 
 	// Calculate max chunks based on configured host limit
 	// maxHostsPerSubnet / 254 = max /24 chunks to scan
 	maxHosts := s.GetMaxHostsPerSubnet()
-	maxChunks := (maxHosts + 253) / 254 // Round up
+	maxChunks := (maxHosts + roundUpAdjust) / hostsPerSubnet24 // Round up
 
 	// For large subnets, split into /24 chunks and scan sequentially
 	chunks := splitSubnetIntoChunks(subnet, maxChunks)
@@ -472,7 +498,7 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 // pingSweepChunk scans a single /24 or smaller subnet chunk.
 func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) error {
 	ones, bits := subnet.Mask.Size()
-	numHosts := 1<<(bits-ones) - 2 // Exclude network and broadcast
+	numHosts := 1<<(bits-ones) - subnetExcludeCount // Exclude network and broadcast
 
 	// Generate host IPs
 	baseIP := subnet.IP.Mask(subnet.Mask).To4()
@@ -503,8 +529,8 @@ func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) erro
 	pinger := s.pinger // Copy reference under lock
 	s.mu.Unlock()
 
-	// Perform ping sweep using raw ICMP sockets (50 workers)
-	results := pinger.PingSweep(ctx, ips, 50)
+	// Perform ping sweep using raw ICMP sockets
+	results := pinger.PingSweep(ctx, ips, pingSweepWorkers)
 
 	// Store results and track responders
 	s.mu.Lock()
@@ -617,7 +643,7 @@ func (s *ARPScanner) enrichEntries(ctx context.Context, entries []*ARPEntry) {
 		go func(e *ARPEntry) {
 			defer wg.Done()
 
-			resolveCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+			resolveCtx, cancel := context.WithTimeout(ctx, hostnameResolveMs*time.Millisecond)
 			defer cancel()
 
 			names, err := net.DefaultResolver.LookupAddr(resolveCtx, e.IP)
@@ -643,13 +669,13 @@ func guessOSFromTTL(ttl int) string {
 	// 30: Some older network devices
 
 	switch {
-	case ttl <= 32:
+	case ttl <= ttlThresholdLow:
 		return "Network Device (Low TTL)"
-	case ttl <= 64:
+	case ttl <= ttlThresholdLinux:
 		return "Linux/macOS/Unix"
-	case ttl <= 128:
+	case ttl <= ttlThresholdWindows:
 		return "Windows"
-	case ttl <= 255:
+	case ttl <= ttlThresholdNetwork:
 		return "Network Device/Cisco"
 	default:
 		return "Unknown"

@@ -1,9 +1,9 @@
 //go:build darwin
 
-// Package network handles network interface management.
+package network
+
 // macOS-specific interface configuration module uses networksetup command-line tool
 // for interface configuration, static IP assignment, DHCP management, and DNS setup.
-package network
 
 import (
 	"context"
@@ -13,6 +13,17 @@ import (
 	"strconv"
 	"strings"
 	"time"
+)
+
+// Command timeout constants for macOS system utilities.
+const (
+	// networksetupTimeoutSeconds is the timeout for networksetup commands (static IP, DHCP).
+	// 30 seconds allows for slow network reconfiguration operations.
+	networksetupTimeoutSeconds = 30
+
+	// ifconfigTimeoutSeconds is the timeout for ifconfig commands (MTU, service lookup).
+	// 10 seconds is sufficient for quick interface queries.
+	ifconfigTimeoutSeconds = 10
 )
 
 // configureStaticIPPlatform applies static IP on macOS using networksetup.
@@ -34,7 +45,7 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 		netmask = cidrToNetmask(prefix)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), networksetupTimeoutSeconds*time.Second)
 	defer cancel()
 
 	// Set manual IP
@@ -66,7 +77,7 @@ func configureDHCPPlatform(iface string) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), networksetupTimeoutSeconds*time.Second)
 	defer cancel()
 	return exec.CommandContext(ctx, "networksetup", "-setdhcp", service).Run()
 }
@@ -84,7 +95,7 @@ func getNetworkServiceName(iface string) (string, error) {
 	}
 
 	// Try to find the service by listing all
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ifconfigTimeoutSeconds*time.Second)
 	defer cancel()
 	output, err := exec.CommandContext(ctx, "networksetup", "-listnetworkserviceorder").Output()
 	if err != nil {
@@ -116,7 +127,7 @@ func setMTUPlatform(iface string, mtu int) error {
 	}
 
 	// Use ifconfig to set MTU
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ifconfigTimeoutSeconds*time.Second)
 	defer cancel()
 	//nolint:gosec // G204: ifconfig is a known macOS system binary, args are validated
 	if runErr := exec.CommandContext(ctx, "ifconfig", iface, "mtu", strconv.Itoa(mtu)).Run(); runErr != nil {

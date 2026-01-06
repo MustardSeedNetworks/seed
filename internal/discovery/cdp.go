@@ -1,8 +1,8 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // CDP (Cisco Discovery Protocol) support enables discovery of Cisco networking equipment
 // and compatible devices that advertise their capabilities, platform, and management information
 // on the local network segment via Ethernet frames.
-package discovery
 
 import (
 	"context"
@@ -14,6 +14,10 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
+
+// pcapSnapshotLength is the maximum number of bytes to capture from each packet.
+// 65535 is the maximum possible packet size for IP.
+const pcapSnapshotLength = 65535
 
 // CDPNeighbor represents a discovered CDP neighbor.
 type CDPNeighbor struct {
@@ -62,7 +66,7 @@ func (c *CDPCapture) Start() error {
 	}
 
 	// Open capture handle
-	handle, err := pcap.OpenLive(c.interfaceName, 65535, true, pcap.BlockForever)
+	handle, err := pcap.OpenLive(c.interfaceName, pcapSnapshotLength, true, pcap.BlockForever)
 	if err != nil {
 		c.mu.Unlock()
 		return fmt.Errorf("failed to open capture: %w", err)
@@ -160,39 +164,41 @@ func (c *CDPCapture) processPacket(packet gopacket.Packet) {
 	}
 
 	// Parse CDP TLVs from the Info layer
-	cdpInfoLayer := packet.Layer(layers.LayerTypeCiscoDiscoveryInfo)
-	if cdpInfoLayer != nil {
-		cdpInfo, infoOK := cdpInfoLayer.(*layers.CiscoDiscoveryInfo)
-		if infoOK {
-			neighbor.DeviceID = cdpInfo.DeviceID
-			neighbor.PortID = cdpInfo.PortID
-			neighbor.Platform = cdpInfo.Platform
-			neighbor.SoftwareVersion = cdpInfo.Version
-			neighbor.VTPDomain = cdpInfo.VTPDomain
-			neighbor.NativeVLAN = int(cdpInfo.NativeVLAN)
-
-			// Parse capabilities
-			neighbor.Capabilities = parseCDPCapabilities(cdpInfo.Capabilities)
-
-			// Parse duplex
-			if cdpInfo.FullDuplex {
-				neighbor.Duplex = "full"
-			} else {
-				neighbor.Duplex = "half"
-			}
-
-			// Parse management addresses
-			if len(cdpInfo.MgmtAddresses) > 0 {
-				neighbor.ManagementAddress = cdpInfo.MgmtAddresses[0].String()
-			}
-		}
-	}
+	populateCDPInfoFields(packet, neighbor)
 
 	// Store neighbor (keyed by DeviceID + PortID)
 	key := neighbor.DeviceID + ":" + neighbor.PortID
 	c.mu.Lock()
 	c.neighbors[key] = neighbor
 	c.mu.Unlock()
+}
+
+// populateCDPInfoFields extracts CDP Info layer fields into a neighbor struct.
+func populateCDPInfoFields(packet gopacket.Packet, neighbor *CDPNeighbor) {
+	cdpInfoLayer := packet.Layer(layers.LayerTypeCiscoDiscoveryInfo)
+	if cdpInfoLayer == nil {
+		return
+	}
+
+	cdpInfo, ok := cdpInfoLayer.(*layers.CiscoDiscoveryInfo)
+	if !ok {
+		return
+	}
+
+	neighbor.DeviceID = cdpInfo.DeviceID
+	neighbor.PortID = cdpInfo.PortID
+	neighbor.Platform = cdpInfo.Platform
+	neighbor.SoftwareVersion = cdpInfo.Version
+	neighbor.VTPDomain = cdpInfo.VTPDomain
+	neighbor.NativeVLAN = int(cdpInfo.NativeVLAN)
+	neighbor.Capabilities = parseCDPCapabilities(cdpInfo.Capabilities)
+	neighbor.Duplex = "half"
+	if cdpInfo.FullDuplex {
+		neighbor.Duplex = "full"
+	}
+	if len(cdpInfo.MgmtAddresses) > 0 {
+		neighbor.ManagementAddress = cdpInfo.MgmtAddresses[0].String()
+	}
 }
 
 // parseCDPCapabilities converts CDP capability struct to readable strings.

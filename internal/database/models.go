@@ -1,8 +1,13 @@
-// Package database provides model types for database entities.
 package database
 
 import (
 	"time"
+)
+
+// Pagination defaults.
+const (
+	// defaultPaginationLimit is the default number of items returned per page.
+	defaultPaginationLimit = 100
 )
 
 // Profile represents a configuration profile.
@@ -182,5 +187,5 @@ type Pagination struct {
 
 // DefaultPagination returns default pagination (first 100 items).
 func DefaultPagination() Pagination {
-	return Pagination{Offset: 0, Limit: 100}
+	return Pagination{Offset: 0, Limit: defaultPaginationLimit}
 }

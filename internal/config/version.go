@@ -1,4 +1,3 @@
-// Package config handles application configuration.
 package config
 
 // ConfigVersion is the current configuration schema version.

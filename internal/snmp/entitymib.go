@@ -30,6 +30,12 @@ const (
 	OIDEntPhysicalIsFRU        = "1.3.6.1.2.1.47.1.1.1.1.16" // entPhysicalIsFRU
 )
 
+// Entity MIB OID parsing constants.
+const (
+	// minOIDPartsEntityIndex is the minimum OID parts needed to extract entity index.
+	minOIDPartsEntityIndex = 2
+)
+
 // PhysicalEntity represents a physical entity from ENTITY-MIB.
 type PhysicalEntity struct {
 	Index        int    // entPhysicalIndex
@@ -206,7 +212,7 @@ func walkEntityAttribute(
 // extractEntityIndex extracts entity index from OID.
 func extractEntityIndex(oid string) int {
 	parts := strings.Split(oid, ".")
-	if len(parts) < 2 {
+	if len(parts) < minOIDPartsEntityIndex {
 		return 0
 	}
 

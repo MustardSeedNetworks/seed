@@ -1,4 +1,3 @@
-// Package cable exports internal functions for testing.
 package cable
 
 // TesterInterfaceName returns the interface name for testing.

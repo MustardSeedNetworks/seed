@@ -1,4 +1,5 @@
-// Package discovery provides CVE (Common Vulnerabilities and Exposures) scanning.
+package discovery
+
 //
 // This file integrates with the CISA KEV (Known Exploited Vulnerabilities) catalog
 // to identify vulnerabilities that are actively being exploited in the wild.
@@ -13,7 +14,6 @@
 //   - Prioritize remediation based on real-world exploitation
 //
 // See: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
-package discovery
 
 import (
 	"context"
@@ -38,6 +38,8 @@ const (
 	kevRansomwareKnown = "known"        // KEV ransomware campaign status
 	kevCacheFilePerms  = 0o600          // Cache file permissions
 	kevCacheDirPerms   = 0o750          // Cache directory permissions
+	kevHTTPTimeoutS    = 30             // HTTP client timeout in seconds
+	kevMaxCVSSScore    = 10.0           // Maximum CVSS score for actively exploited vulns
 )
 
 // KEVCatalog represents the CISA Known Exploited Vulnerabilities catalog.
@@ -80,7 +82,7 @@ func NewKEVProvider(cachePath string) (*KEVProvider, error) {
 	provider := &KEVProvider{
 		cveIndex:  make(map[string]*KEVEntry),
 		cachePath: cachePath,
-		client:    &http.Client{Timeout: 30 * time.Second},
+		client:    &http.Client{Timeout: kevHTTPTimeoutS * time.Second},
 	}
 
 	// Try to load cached catalog
@@ -358,8 +360,8 @@ func (kev *KEVProvider) entryToVulnerability(entry *KEVEntry) Vulnerability {
 	return Vulnerability{
 		CVEID:       entry.CVEID,
 		Description: entry.ShortDescription,
-		Severity:    "CRITICAL", // All KEV entries are critical priority
-		Score:       10.0,       // Max score for actively exploited
+		Severity:    "CRITICAL",      // All KEV entries are critical priority
+		Score:       kevMaxCVSSScore, // Max score for actively exploited
 		Published:   dateAdded,
 		References: []string{
 			fmt.Sprintf("https://nvd.nist.gov/vuln/detail/%s", entry.CVEID),

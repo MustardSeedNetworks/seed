@@ -13,6 +13,31 @@ import (
 	"time"
 )
 
+// Validation limits for network-related fields.
+const (
+	// MaxHostnameLength is the maximum length of a valid hostname per RFC 1035.
+	MaxHostnameLength = 253
+
+	// MaxInterfaceNameLength is the maximum length of a network interface name.
+	// Linux uses 16 characters (IFNAMSIZ), macOS is similar.
+	MaxInterfaceNameLength = 16
+
+	// MaxFilenameLength is the maximum length of a filename on most filesystems.
+	MaxFilenameLength = 255
+
+	// MaxSurveyIDLength is the maximum length of a survey ID.
+	MaxSurveyIDLength = 64
+
+	// DataURLPartCount is the expected number of parts when splitting a data URL by comma.
+	DataURLPartCount = 2
+
+	// DialerTimeout is the timeout for establishing connections.
+	DialerTimeout = 10 * time.Second
+
+	// DialerKeepAlive is the keep-alive interval for connections.
+	DialerKeepAlive = 30 * time.Second
+)
+
 // validHostnameRegex matches valid hostnames (letters, numbers, dots, hyphens).
 var validHostnameRegex = regexp.MustCompile(
 	`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`,
@@ -36,7 +61,7 @@ func IsValidIPv4(s string) bool {
 
 // IsValidHostname checks if the string is a valid hostname.
 func IsValidHostname(s string) bool {
-	if s == "" || len(s) > 253 {
+	if s == "" || len(s) > MaxHostnameLength {
 		return false
 	}
 	return validHostnameRegex.MatchString(s)
@@ -57,7 +82,7 @@ func ValidateServerAddress(server string) error {
 		return nil
 	}
 
-	if len(server) > 253 {
+	if len(server) > MaxHostnameLength {
 		return errors.New("server hostname too long")
 	}
 
@@ -70,7 +95,7 @@ func ValidateServerAddress(server string) error {
 
 // IsValidInterface checks if the string is a valid network interface name.
 func IsValidInterface(iface string) bool {
-	if iface == "" || len(iface) > 16 {
+	if iface == "" || len(iface) > MaxInterfaceNameLength {
 		return false
 	}
 	return validInterfaceRegex.MatchString(iface)
@@ -81,7 +106,7 @@ func ValidateInterface(iface string) error {
 	if iface == "" {
 		return errors.New("interface name is required")
 	}
-	if len(iface) > 16 {
+	if len(iface) > MaxInterfaceNameLength {
 		return errors.New("interface name too long (max 16 characters)")
 	}
 	if !validInterfaceRegex.MatchString(iface) {
@@ -333,7 +358,7 @@ func ValidateFilename(filename, fieldName string) error {
 	}
 
 	// Check length (filesystem limits, typically 255)
-	if len(filename) > 255 {
+	if len(filename) > MaxFilenameLength {
 		return fmt.Errorf("%s too long (max 255 characters)", fieldName)
 	}
 
@@ -364,7 +389,7 @@ func ValidateSurveyID(id string) error {
 		return errors.New("survey ID is required")
 	}
 
-	if len(id) > 64 {
+	if len(id) > MaxSurveyIDLength {
 		return errors.New("survey ID too long (max 64 characters)")
 	}
 
@@ -397,8 +422,8 @@ func ValidateImageDataURL(dataURL string, maxSizeBytes int) error {
 	}
 
 	// Extract MIME type
-	parts := strings.SplitN(dataURL, ",", 2)
-	if len(parts) != 2 {
+	parts := strings.SplitN(dataURL, ",", DataURLPartCount)
+	if len(parts) != DataURLPartCount {
 		return errors.New("invalid image data format")
 	}
 
@@ -433,8 +458,8 @@ var ErrPrivateIPBlocked = errors.New("connection to private/internal IP address 
 // validation but a private IP at connection time.
 func SafeTransport() *http.Transport {
 	dialer := &net.Dialer{
-		Timeout:   10 * time.Second,
-		KeepAlive: 30 * time.Second,
+		Timeout:   DialerTimeout,
+		KeepAlive: DialerKeepAlive,
 	}
 
 	return &http.Transport{

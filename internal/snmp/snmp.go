@@ -35,6 +35,16 @@ const (
 // Use SHA256 or SHA512 instead for secure authentication.
 const AuthProtocolMD5 = "MD5"
 
+// SNMP bulk request configuration constants.
+const (
+	// defaultMaxRepetitions is the default number of OID values returned per GetBulk request.
+	// This value balances response size with the number of requests needed.
+	defaultMaxRepetitions = 10
+	// maxAllowedRepetitions is the maximum MaxRepetitions value allowed to avoid overwhelming slow devices.
+	// Higher values may cause timeouts on devices with limited resources.
+	maxAllowedRepetitions = 50
+)
+
 // SystemInfo contains standard SNMP system information.
 type SystemInfo struct {
 	SysDescr    string
@@ -457,15 +467,15 @@ func getPrivProtocol(protocol string) gosnmp.SnmpV3PrivProtocol {
 	}
 }
 
-// getMaxRepetitions returns the MaxRepetitions value from config, defaulting to 10.
+// getMaxRepetitions returns the MaxRepetitions value from config, defaulting to defaultMaxRepetitions.
 // This controls how many OID values are returned per GetBulk request.
 // Lower values reduce memory usage and network load on slow devices.
 func getMaxRepetitions(cfg *config.SNMPConfig) uint32 {
 	if cfg == nil || cfg.MaxRepetitions == 0 {
-		return 10 // Default value
+		return defaultMaxRepetitions
 	}
-	if cfg.MaxRepetitions > 50 {
-		return 50 // Cap at 50 to avoid overwhelming slow devices
+	if cfg.MaxRepetitions > maxAllowedRepetitions {
+		return maxAllowedRepetitions
 	}
 	return cfg.MaxRepetitions
 }

@@ -1,8 +1,8 @@
-// Package iperf provides automatic iperf3 installation capabilities.
+package iperf
+
 //
 // This file handles automated detection, download, build, and installation
 // of iperf3 from GitHub with OS-specific package manager support.
-package iperf
 
 import (
 	"context"
@@ -30,6 +30,21 @@ const (
 
 	// Build timeout.
 	buildTimeout = 10 * time.Minute
+
+	// githubAPITimeoutSeconds is the timeout for GitHub API requests to fetch release info.
+	githubAPITimeoutSeconds = 30
+
+	// packageUpdateTimeoutMinutes is the timeout for package manager update operations.
+	packageUpdateTimeoutMinutes = 2
+
+	// packageInstallTimeoutMinutes is the timeout for package manager install operations.
+	packageInstallTimeoutMinutes = 5
+
+	// extractTimeoutMinutes is the timeout for extracting downloaded tarballs.
+	extractTimeoutMinutes = 2
+
+	// makeInstallTimeoutMinutes is the timeout for make install operations.
+	makeInstallTimeoutMinutes = 2
 
 	// OS constants for runtime.GOOS checks.
 	osLinux   = "linux"
@@ -192,7 +207,7 @@ func detectWindowsPackageManager() *PackageManagerInfo {
 
 // GetLatestGitHubRelease fetches the latest iperf3 release info from GitHub.
 func GetLatestGitHubRelease() (string, string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), githubAPITimeoutSeconds*time.Second)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, iperfReleasesAPI, http.NoBody)
@@ -245,7 +260,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 		logging.GetLogger().
 			Debug("Running package manager update", "command", strings.Join(updateCmd, " "))
 
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), packageUpdateTimeoutMinutes*time.Minute)
 		//nolint:gosec // G204: commands are from controlled sources
 		cmd := exec.CommandContext(ctx, updateCmd[0], updateCmd[1:]...)
 		cmd.Stdout = os.Stdout
@@ -266,7 +281,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 
 	logging.GetLogger().Info("Running install command", "command", strings.Join(installCmd, " "))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), packageInstallTimeoutMinutes*time.Minute)
 	defer cancel()
 
 	//nolint:gosec // G204: commands are from controlled sources
@@ -362,7 +377,7 @@ func InstallFromGitHub(opts InstallOptions) *InstallResult {
 
 	// Extract tarball.
 	logging.GetLogger().Info("Extracting source...")
-	extractCtx, extractCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	extractCtx, extractCancel := context.WithTimeout(context.Background(), extractTimeoutMinutes*time.Minute)
 	defer extractCancel()
 	extractCmd := exec.CommandContext(
 		extractCtx,
@@ -499,7 +514,7 @@ func buildIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 }
 
 func installIperf3(sourceDir string, opts InstallOptions) *InstallResult {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), makeInstallTimeoutMinutes*time.Minute)
 	defer cancel()
 
 	// Make install

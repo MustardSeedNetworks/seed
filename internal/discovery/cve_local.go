@@ -1,4 +1,5 @@
-// Package discovery provides local CVE database support for offline vulnerability scanning.
+package discovery
+
 //
 // The LocalProvider loads CVE data from a JSON file, enabling vulnerability scanning
 // without requiring NVD API access. This is useful for:
@@ -7,7 +8,6 @@
 //   - Testing and development
 //
 // The database file should be in NIST JSON feed format.
-package discovery
 
 import (
 	"context"

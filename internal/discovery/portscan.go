@@ -1,8 +1,8 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // Port scanning support enables detection of open services and their versions on discovered devices.
 // Performs banner grabbing to identify service types and versions, mapping active services
 // and potential vulnerabilities based on detected ports and versions.
-package discovery
 
 import (
 	"bufio"
@@ -18,6 +18,18 @@ import (
 const (
 	errNoIPv4ForTarget = "no IPv4 address found for target"
 	serviceUnknown     = "unknown"
+)
+
+// Port scanning constants.
+const (
+	portSSH              = 22   // SSH port for banner grabbing
+	quickScanConcurrency = 20   // Concurrent connections for quick scan
+	webScanConcurrency   = 10   // Concurrent connections for web scan
+	fullScanPortCount    = 1000 // Number of ports in full scan
+	fullScanConcurrency  = 50   // Concurrent connections for full scan
+	bannerMaxLines       = 5    // Maximum lines to read from banner
+	bannerTimeoutS       = 2    // Banner timeout in seconds
+	maxBannerBytes       = 512  // Maximum bytes to read from banner
 )
 
 // ServiceInfo contains information about a detected service.
@@ -54,14 +66,76 @@ func NewPortScanner(timeout time.Duration) (*PortScanner, error) {
 	}
 	return &PortScanner{
 		prober:        prober,
-		bannerTimeout: 2 * time.Second,
-		maxBannerLen:  512,
+		bannerTimeout: bannerTimeoutS * time.Second,
+		maxBannerLen:  maxBannerBytes,
 	}, nil
 }
 
 // Close closes the port scanner.
 func (s *PortScanner) Close() error {
 	return s.prober.Close()
+}
+
+// resolveTargetResult holds the result of hostname resolution.
+type resolveTargetResult struct {
+	IP       string
+	Hostname string
+	ErrMsg   string
+}
+
+// resolveTarget resolves a hostname to an IPv4 address.
+func resolveTarget(ctx context.Context, target string) resolveTargetResult {
+	// If target is already an IP, return it directly
+	if parsedIP := net.ParseIP(target); parsedIP != nil {
+		return resolveTargetResult{IP: target}
+	}
+
+	// Target is a hostname, resolve it with context
+	resolver := &net.Resolver{}
+	ips, err := resolver.LookupIP(ctx, "ip", target)
+	if err != nil {
+		return resolveTargetResult{
+			IP:     target,
+			ErrMsg: fmt.Sprintf("failed to resolve target: %v", err),
+		}
+	}
+
+	// Find first IPv4 address
+	for _, resolvedIP := range ips {
+		if ip4 := resolvedIP.To4(); ip4 != nil {
+			return resolveTargetResult{IP: ip4.String(), Hostname: target}
+		}
+	}
+
+	return resolveTargetResult{IP: target, ErrMsg: errNoIPv4ForTarget}
+}
+
+// processProbeResult converts a probe result into a ServiceInfo with banner information.
+func (s *PortScanner) processProbeResult(ctx context.Context, ip string, probe TCPProbeResult) ServiceInfo {
+	service := ServiceInfo{
+		Port:     probe.Port,
+		State:    probe.State,
+		Protocol: "tcp",
+		Service:  identifyServiceByPort(probe.Port),
+	}
+
+	// Try to grab banner for open ports
+	banner, version := s.grabBanner(ctx, ip, probe.Port)
+	if banner == "" {
+		return service
+	}
+
+	service.Banner = banner
+	if version != "" {
+		service.Version = version
+	}
+
+	// Try to identify service from banner
+	if detected := identifyServiceFromBanner(banner); detected != "" {
+		service.Service = detected
+	}
+
+	return service
 }
 
 // ScanWithBanners performs a port scan with service banner detection.
@@ -78,26 +152,13 @@ func (s *PortScanner) ScanWithBanners(
 	}
 
 	// Resolve hostname
-	if ip := net.ParseIP(target); ip == nil {
-		// Target is a hostname, resolve it with context
-		resolver := &net.Resolver{}
-		ips, err := resolver.LookupIP(ctx, "ip", target)
-		if err != nil {
-			result.Error = fmt.Sprintf("failed to resolve target: %v", err)
-			return result
-		}
-		for _, ip := range ips {
-			if ip4 := ip.To4(); ip4 != nil {
-				result.IP = ip4.String()
-				result.Hostname = target
-				break
-			}
-		}
-		if result.IP == target {
-			result.Error = errNoIPv4ForTarget
-			return result
-		}
+	resolved := resolveTarget(ctx, target)
+	if resolved.ErrMsg != "" {
+		result.Error = resolved.ErrMsg
+		return result
 	}
+	result.IP = resolved.IP
+	result.Hostname = resolved.Hostname
 
 	// Scan ports
 	probeResults := s.prober.ScanPorts(ctx, result.IP, ports, workers)
@@ -111,31 +172,12 @@ func (s *PortScanner) ScanWithBanners(
 			return result
 		default:
 		}
+
 		if probe.State != PortOpen {
 			continue
 		}
 
-		service := ServiceInfo{
-			Port:     probe.Port,
-			State:    probe.State,
-			Protocol: "tcp",
-			Service:  identifyServiceByPort(probe.Port),
-		}
-
-		// Try to grab banner for open ports
-		banner, version := s.grabBanner(ctx, result.IP, probe.Port)
-		if banner != "" {
-			service.Banner = banner
-			if version != "" {
-				service.Version = version
-			}
-			// Try to identify service from banner
-			if detected := identifyServiceFromBanner(banner); detected != "" {
-				service.Service = detected
-			}
-		}
-
-		result.Services = append(result.Services, service)
+		result.Services = append(result.Services, s.processProbeResult(ctx, result.IP, probe))
 	}
 
 	result.ScanTime = time.Since(start)
@@ -164,7 +206,7 @@ func (s *PortScanner) grabBanner(ctx context.Context, ip string, port int) (stri
 	case isHTTPPort(port):
 		_, _ = fmt.Fprintf(conn, "HEAD / HTTP/1.0\r\nHost: %s\r\n\r\n", ip)
 	case port == 25 || port == 587: // SMTP sends banner on connect
-	case port == 22: // SSH sends banner on connect
+	case port == portSSH: // SSH sends banner on connect
 	}
 
 	// Read response
@@ -177,7 +219,7 @@ func (s *PortScanner) grabBanner(ctx context.Context, ip string, port int) (stri
 		}
 		sb.WriteString(line)
 		// Stop after first few lines for most protocols
-		if strings.Count(sb.String(), "\n") >= 5 {
+		if strings.Count(sb.String(), "\n") >= bannerMaxLines {
 			break
 		}
 	}
@@ -293,19 +335,19 @@ func isHTTPPort(port int) bool {
 
 // QuickScan performs a quick scan of common ports.
 func (s *PortScanner) QuickScan(ctx context.Context, target string) *PortScanResult {
-	return s.ScanWithBanners(ctx, target, GetCommonPorts(), 20)
+	return s.ScanWithBanners(ctx, target, GetCommonPorts(), quickScanConcurrency)
 }
 
 // WebScan scans common web ports.
 func (s *PortScanner) WebScan(ctx context.Context, target string) *PortScanResult {
-	return s.ScanWithBanners(ctx, target, GetWebPorts(), 10)
+	return s.ScanWithBanners(ctx, target, GetWebPorts(), webScanConcurrency)
 }
 
 // FullScan scans the top 1000 ports.
 func (s *PortScanner) FullScan(ctx context.Context, target string) *PortScanResult {
-	ports := make([]int, 1000)
+	ports := make([]int, fullScanPortCount)
 	for i := range ports {
 		ports[i] = i + 1
 	}
-	return s.ScanWithBanners(ctx, target, ports, 50)
+	return s.ScanWithBanners(ctx, target, ports, fullScanConcurrency)
 }

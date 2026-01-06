@@ -15,22 +15,46 @@ import (
 
 // IP-FORWARD-MIB OIDs (RFC 4292).
 const (
-	// inetCidrRouteTable - modern routing table (supports IPv4/IPv6).
-	OIDInetCidrRouteDest    = "1.3.6.1.2.1.4.24.7.1.1"  // inetCidrRouteDest (index)
-	OIDInetCidrRouteIfIndex = "1.3.6.1.2.1.4.24.7.1.7"  // inetCidrRouteIfIndex
-	OIDInetCidrRouteType    = "1.3.6.1.2.1.4.24.7.1.8"  // inetCidrRouteType
-	OIDInetCidrRouteProto   = "1.3.6.1.2.1.4.24.7.1.9"  // inetCidrRouteProto
-	OIDInetCidrRouteNextHop = "1.3.6.1.2.1.4.24.7.1.4"  // inetCidrRouteNextHop (index)
-	OIDInetCidrRouteMetric1 = "1.3.6.1.2.1.4.24.7.1.12" // inetCidrRouteMetric1
+	// OIDInetCidrRouteDest is the IP-FORWARD-MIB OID for route destination (modern, IPv4/IPv6).
+	OIDInetCidrRouteDest = "1.3.6.1.2.1.4.24.7.1.1"
+	// OIDInetCidrRouteIfIndex is the IP-FORWARD-MIB OID for route interface index.
+	OIDInetCidrRouteIfIndex = "1.3.6.1.2.1.4.24.7.1.7"
+	// OIDInetCidrRouteType is the IP-FORWARD-MIB OID for route type.
+	OIDInetCidrRouteType = "1.3.6.1.2.1.4.24.7.1.8"
+	// OIDInetCidrRouteProto is the IP-FORWARD-MIB OID for route protocol.
+	OIDInetCidrRouteProto = "1.3.6.1.2.1.4.24.7.1.9"
+	// OIDInetCidrRouteNextHop is the IP-FORWARD-MIB OID for route next hop.
+	OIDInetCidrRouteNextHop = "1.3.6.1.2.1.4.24.7.1.4"
+	// OIDInetCidrRouteMetric1 is the IP-FORWARD-MIB OID for route metric.
+	OIDInetCidrRouteMetric1 = "1.3.6.1.2.1.4.24.7.1.12"
 
-	// ipCidrRouteTable - legacy routing table (IPv4 only).
-	OIDIpCidrRouteDest    = "1.3.6.1.2.1.4.24.4.1.1"  // ipCidrRouteDest
-	OIDIpCidrRouteMask    = "1.3.6.1.2.1.4.24.4.1.2"  // ipCidrRouteMask
-	OIDIpCidrRouteNextHop = "1.3.6.1.2.1.4.24.4.1.4"  // ipCidrRouteNextHop
-	OIDIpCidrRouteIfIndex = "1.3.6.1.2.1.4.24.4.1.5"  // ipCidrRouteIfIndex
-	OIDIpCidrRouteType    = "1.3.6.1.2.1.4.24.4.1.6"  // ipCidrRouteType
-	OIDIpCidrRouteProto   = "1.3.6.1.2.1.4.24.4.1.7"  // ipCidrRouteProto
-	OIDIpCidrRouteMetric1 = "1.3.6.1.2.1.4.24.4.1.11" // ipCidrRouteMetric1
+	// OIDIpCidrRouteDest is the IP-FORWARD-MIB OID for route destination (legacy, IPv4 only).
+	OIDIpCidrRouteDest = "1.3.6.1.2.1.4.24.4.1.1"
+	// OIDIpCidrRouteMask is the IP-FORWARD-MIB OID for route mask.
+	OIDIpCidrRouteMask = "1.3.6.1.2.1.4.24.4.1.2"
+	// OIDIpCidrRouteNextHop is the IP-FORWARD-MIB OID for route next hop.
+	OIDIpCidrRouteNextHop = "1.3.6.1.2.1.4.24.4.1.4"
+	// OIDIpCidrRouteIfIndex is the IP-FORWARD-MIB OID for route interface index.
+	OIDIpCidrRouteIfIndex = "1.3.6.1.2.1.4.24.4.1.5"
+	// OIDIpCidrRouteType is the IP-FORWARD-MIB OID for route type.
+	OIDIpCidrRouteType = "1.3.6.1.2.1.4.24.4.1.6"
+	// OIDIpCidrRouteProto is the IP-FORWARD-MIB OID for route protocol.
+	OIDIpCidrRouteProto = "1.3.6.1.2.1.4.24.4.1.7"
+	// OIDIpCidrRouteMetric1 is the IP-FORWARD-MIB OID for route metric.
+	OIDIpCidrRouteMetric1 = "1.3.6.1.2.1.4.24.4.1.11"
+)
+
+// Routing table OID parsing constants.
+const (
+	// minOIDPartsInetCidrRoute is the minimum OID parts for modern inetCidrRouteTable entries.
+	// Format includes: OID base + destType + destLen + dest(4-16) + pfxLen + policy + nextHopType + nextHopLen + nextHop.
+	minOIDPartsInetCidrRoute = 12
+	// minOIDPartsIPCidrRoute is the minimum OID parts for legacy ipCidrRouteTable entries.
+	// Format includes: OID base + 4 dest octets + 4 mask octets + 1 TOS + 4 nextHop octets = 14 parts minimum.
+	minOIDPartsIPCidrRoute = 14
+	// ipCidrRouteIndexOffset is the number of parts from the end of OID to the start of the route index.
+	// (4 dest + 4 mask + 1 TOS + 4 nextHop = 13 parts from end).
+	ipCidrRouteIndexOffset = 13
 )
 
 // RouteEntry contains routing table information from IP-FORWARD-MIB.
@@ -347,7 +371,7 @@ func walkIPCidrRouteAttribute(
 // OID format: ...destType.destLen.dest.pfxLen.policy.nextHopType.nextHopLen.nextHop.
 func parseInetCidrRouteIndex(oid string) (string, int, string) {
 	parts := strings.Split(oid, ".")
-	if len(parts) < 12 {
+	if len(parts) < minOIDPartsInetCidrRoute {
 		return "", 0, ""
 	}
 
@@ -393,12 +417,12 @@ func parseInetCidrRouteIndex(oid string) (string, int, string) {
 func parseIPCidrRouteIndex(oid string) (string, string, string) {
 	parts := strings.Split(oid, ".")
 	// Need at least: base OID + 4 dest + 4 mask + 1 tos + 4 nexthop = 13 parts after base
-	if len(parts) < 14 {
+	if len(parts) < minOIDPartsIPCidrRoute {
 		return "", "", ""
 	}
 
 	// Destination is last 13 parts starting at -13 to -10
-	destStart := len(parts) - 13
+	destStart := len(parts) - ipCidrRouteIndexOffset
 	dest := strings.Join(parts[destStart:destStart+4], ".")
 
 	// Mask is next 4 parts

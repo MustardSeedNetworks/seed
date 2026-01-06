@@ -1,4 +1,3 @@
-// Package validation_test tests the validation package API error responses and request validators.
 package validation_test
 
 import (

@@ -13,6 +13,14 @@ import (
 const (
 	// RequestIDHeader is the HTTP header used to pass request IDs.
 	RequestIDHeader = "X-Request-ID"
+
+	// requestIDBytes is the number of random bytes used to generate a request ID.
+	// 8 bytes produces a 16-character hex string for unique request identification.
+	requestIDBytes = 8
+
+	// maxRequestIDLength is the maximum allowed length for client-provided request IDs.
+	// Prevents log injection and header abuse from oversized identifiers.
+	maxRequestIDLength = 64
 )
 
 // RequestIDMiddleware generates a unique request ID for each incoming request
@@ -52,7 +60,7 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
 // generateRequestID creates a unique request ID using random bytes.
 // Format: 16 hex characters (8 bytes of randomness).
 func generateRequestID() string {
-	b := make([]byte, 8)
+	b := make([]byte, requestIDBytes)
 	if _, err := rand.Read(b); err != nil {
 		// Crypto failure is unrecoverable - log critical and let service restart
 		GetLogger().Error("crypto/rand failed - system is in insecure state", "error", err)
@@ -67,7 +75,7 @@ func isValidRequestID(id string) bool {
 	if id == "" {
 		return false
 	}
-	if len(id) > 64 {
+	if len(id) > maxRequestIDLength {
 		return false
 	}
 	for _, c := range id {

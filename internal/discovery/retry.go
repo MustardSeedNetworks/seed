@@ -1,6 +1,6 @@
-// Package discovery provides network device discovery functionality.
-// This file implements retry logic with exponential backoff for transient failures.
 package discovery
+
+// This file implements retry logic with exponential backoff for transient failures.
 
 import (
 	"context"
@@ -8,6 +8,30 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/logging"
+)
+
+// Character case conversion constant.
+const asciiCaseOffset = 32 // Difference between ASCII uppercase and lowercase letters
+
+// Retry configuration constants.
+const (
+	retryDefaultMaxAttempts = 3   // Default maximum retry attempts
+	retryDefaultInitDelayMs = 100 // Default initial delay in milliseconds
+	retryDefaultMaxDelayS   = 5   // Default maximum delay in seconds
+	retryFastMaxAttempts    = 2   // Fast retry max attempts
+	retryFastInitDelayMs    = 50  // Fast retry initial delay in milliseconds
+	retryFastMaxDelayMs     = 500 // Fast retry max delay in milliseconds
+	retrySNMPInitDelayMs    = 500 // SNMP retry initial delay in milliseconds
+	retrySNMPMaxDelayS      = 10  // SNMP retry max delay in seconds
+
+	// Backoff factor constants.
+	retryBackoffFactor       = 2.0  // Default exponential backoff multiplier
+	retryDefaultJitter       = 0.2  // Default jitter percentage (20%)
+	retryFastJitter          = 0.1  // Fast retry jitter percentage (10%)
+	retrySNMPJitter          = 0.25 // SNMP retry jitter percentage (25%)
+	retryDiscoveryInitDelayM = 200  // Discovery retry initial delay in milliseconds
+	retryDiscoveryMaxDelayS  = 3    // Discovery retry max delay in seconds
+	retryDiscoveryJitter     = 0.15 // Discovery retry jitter percentage (15%)
 )
 
 // RetryConfig configures retry behavior for network operations.
@@ -23,33 +47,33 @@ type RetryConfig struct {
 // DefaultRetryConfig returns sensible defaults for network operations.
 func DefaultRetryConfig() RetryConfig {
 	return RetryConfig{
-		MaxRetries:    3,
-		InitialDelay:  100 * time.Millisecond,
-		MaxDelay:      5 * time.Second,
-		BackoffFactor: 2.0,
-		JitterPercent: 0.2,
+		MaxRetries:    retryDefaultMaxAttempts,
+		InitialDelay:  retryDefaultInitDelayMs * time.Millisecond,
+		MaxDelay:      retryDefaultMaxDelayS * time.Second,
+		BackoffFactor: retryBackoffFactor,
+		JitterPercent: retryDefaultJitter,
 	}
 }
 
 // FastRetryConfig returns config for quick operations that should retry fast.
 func FastRetryConfig() RetryConfig {
 	return RetryConfig{
-		MaxRetries:    2,
-		InitialDelay:  50 * time.Millisecond,
-		MaxDelay:      500 * time.Millisecond,
-		BackoffFactor: 2.0,
-		JitterPercent: 0.1,
+		MaxRetries:    retryFastMaxAttempts,
+		InitialDelay:  retryFastInitDelayMs * time.Millisecond,
+		MaxDelay:      retryFastMaxDelayMs * time.Millisecond,
+		BackoffFactor: retryBackoffFactor,
+		JitterPercent: retryFastJitter,
 	}
 }
 
 // SNMPRetryConfig returns config optimized for SNMP operations.
 func SNMPRetryConfig() RetryConfig {
 	return RetryConfig{
-		MaxRetries:    3,
-		InitialDelay:  500 * time.Millisecond,
-		MaxDelay:      10 * time.Second,
-		BackoffFactor: 2.0,
-		JitterPercent: 0.25,
+		MaxRetries:    retryDefaultMaxAttempts,
+		InitialDelay:  retrySNMPInitDelayMs * time.Millisecond,
+		MaxDelay:      retrySNMPMaxDelayS * time.Second,
+		BackoffFactor: retryBackoffFactor,
+		JitterPercent: retrySNMPJitter,
 		RetryableErrors: []string{
 			"timeout",
 			"connection refused",
@@ -249,7 +273,7 @@ func containsIgnoreCase(s, substr string) bool {
 	for i := range len(s) {
 		c := s[i]
 		if c >= 'A' && c <= 'Z' {
-			sLower[i] = c + 32
+			sLower[i] = c + asciiCaseOffset
 		} else {
 			sLower[i] = c
 		}
@@ -259,7 +283,7 @@ func containsIgnoreCase(s, substr string) bool {
 	for i := range len(substr) {
 		c := substr[i]
 		if c >= 'A' && c <= 'Z' {
-			substrLower[i] = c + 32
+			substrLower[i] = c + asciiCaseOffset
 		} else {
 			substrLower[i] = c
 		}
@@ -284,11 +308,11 @@ func containsIgnoreCase(s, substr string) bool {
 // NetworkRetryConfig returns config for general network operations.
 func NetworkRetryConfig() RetryConfig {
 	return RetryConfig{
-		MaxRetries:    3,
-		InitialDelay:  200 * time.Millisecond,
-		MaxDelay:      3 * time.Second,
-		BackoffFactor: 2.0,
-		JitterPercent: 0.15,
+		MaxRetries:    retryDefaultMaxAttempts,
+		InitialDelay:  retryDiscoveryInitDelayM * time.Millisecond,
+		MaxDelay:      retryDiscoveryMaxDelayS * time.Second,
+		BackoffFactor: retryBackoffFactor,
+		JitterPercent: retryDiscoveryJitter,
 		RetryableErrors: []string{
 			"timeout",
 			"connection refused",

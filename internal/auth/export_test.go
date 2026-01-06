@@ -1,4 +1,3 @@
-// Package auth exports internal functions for testing.
 package auth
 
 // ExportRandomChar exports randomChar for testing.

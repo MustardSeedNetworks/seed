@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,6 +15,14 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/paths"
+)
+
+const (
+	// userCheckTimeoutSeconds is the timeout for checking if the seed user exists.
+	userCheckTimeoutSeconds = 5
+
+	// commandTimeoutSeconds is the default timeout for executing shell commands during installation.
+	commandTimeoutSeconds = 30
 )
 
 func initInstallCmd(state *cliState) {
@@ -93,70 +102,183 @@ type serviceConfig struct {
 	CacheDir   string
 }
 
-//nolint:gocyclo // Command handler complexity is acceptable
-//nolint:gocognit // CLI install workflow requires sequential steps
+// installFlags holds the parsed command-line flags for installation.
+type installFlags struct {
+	systemMode bool
+	userMode   bool
+	noService  bool
+	force      bool
+}
+
+// parseInstallFlags extracts and validates command-line flags.
+func parseInstallFlags(cmd *cobra.Command) (installFlags, error) {
+	var flags installFlags
+	var err error
+
+	flags.systemMode, err = cmd.Flags().GetBool("system")
+	if err != nil {
+		return flags, fmt.Errorf("getting system flag: %w", err)
+	}
+
+	flags.userMode, err = cmd.Flags().GetBool("user")
+	if err != nil {
+		return flags, fmt.Errorf("getting user flag: %w", err)
+	}
+
+	flags.noService, err = cmd.Flags().GetBool("no-service")
+	if err != nil {
+		return flags, fmt.Errorf("getting no-service flag: %w", err)
+	}
+
+	flags.force, err = cmd.Flags().GetBool("force")
+	if err != nil {
+		return flags, fmt.Errorf("getting force flag: %w", err)
+	}
+
+	if flags.systemMode && flags.userMode {
+		return flags, errors.New("cannot specify both --system and --user")
+	}
+
+	return flags, nil
+}
+
+// resolveInstallMode determines the installation mode based on flags and privileges.
+func resolveInstallMode(flags installFlags) (paths.Mode, error) {
+	mode := paths.ModeAuto
+	if flags.systemMode {
+		mode = paths.ModeSystem
+	} else if flags.userMode {
+		mode = paths.ModeUser
+	}
+
+	if mode == paths.ModeSystem || (mode == paths.ModeAuto && os.Getuid() == 0) {
+		if os.Getuid() != 0 {
+			return mode, errors.New("system installation requires root privileges (use sudo)")
+		}
+		return paths.ModeSystem, nil
+	}
+
+	return paths.ModeUser, nil
+}
+
+// createInstallDirectories creates all required directories for installation.
+func createInstallDirectories(dirs []string) error {
+	fmt.Fprintln(os.Stdout, "\nCreating directories...")
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			return fmt.Errorf("creating %s: %w", dir, err)
+		}
+		fmt.Fprintf(os.Stdout, "  Created: %s\n", dir)
+	}
+	return nil
+}
+
+// setupSystemModeUser creates the system user and sets directory ownership.
+func setupSystemModeUser(dirs []string) {
+	fmt.Fprintln(os.Stdout, "\nCreating seed user and group...")
+	createSystemUser()
+
+	for _, dir := range dirs {
+		if err := runCommand("chown", "-R", "seed:seed", dir); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: Failed to set ownership for %s: %v\n", dir, err)
+		}
+	}
+}
+
+// resolveBinaryDestination determines where to install the binary.
+func resolveBinaryDestination(mode paths.Mode, p *paths.Paths) (string, error) {
+	if mode == paths.ModeUser {
+		destBinary := filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
+		//nolint:gosec // G301: User binary directory needs 0755 permissions
+		if err := os.MkdirAll(filepath.Dir(destBinary), 0o755); err != nil {
+			return "", fmt.Errorf("creating binary directory: %w", err)
+		}
+		return destBinary, nil
+	}
+	return filepath.Join(p.BinaryDir, "seed"), nil
+}
+
+// installBinary copies the executable to the destination path.
+func installBinary(executable, destBinary string, force bool) error {
+	if _, err := os.Stat(destBinary); err == nil && !force {
+		fmt.Fprintf(os.Stdout, "\nBinary already exists at %s\n", destBinary)
+		fmt.Fprintln(os.Stdout, "Use --force to overwrite")
+		return nil
+	}
+
+	fmt.Fprintf(os.Stdout, "\nCopying binary to %s...\n", destBinary)
+	if err := copyFile(executable, destBinary); err != nil {
+		return fmt.Errorf("copying binary: %w", err)
+	}
+
+	//nolint:gosec // G302: Binary file needs execute permission (0755)
+	if err := os.Chmod(destBinary, 0o755); err != nil {
+		return fmt.Errorf("setting binary permissions: %w", err)
+	}
+
+	return nil
+}
+
+// setSystemCapabilities sets network capabilities on the binary for system mode.
+func setSystemCapabilities(destBinary string) {
+	fmt.Fprintln(os.Stdout, "\nSetting capabilities...")
+	if err := runCommand("setcap", "cap_net_raw,cap_net_admin=+ep", destBinary); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to set capabilities: %v\n", err)
+		fmt.Fprintln(os.Stdout, "  ICMP and protocol capture features will require root")
+	} else {
+		fmt.Fprintln(os.Stdout, "  Set cap_net_raw,cap_net_admin for raw socket access")
+	}
+}
+
+// createDefaultConfig creates a default configuration file if one does not exist.
+func createDefaultConfig(configDir string) {
+	configFile := filepath.Join(configDir, "seed.yaml")
+	_, statErr := os.Stat(configFile)
+	if os.IsNotExist(statErr) {
+		fmt.Fprintf(os.Stdout, "\nCreating default config at %s...\n", configFile)
+		cfg := config.DefaultConfig()
+		if saveErr := cfg.Save(configFile); saveErr != nil {
+			fmt.Fprintf(os.Stderr, "Error creating config: %v\n", saveErr)
+		}
+	}
+}
+
+// printCompletionMessage displays post-installation instructions.
+func printCompletionMessage(mode paths.Mode) {
+	fmt.Fprintln(os.Stdout, "\n[ok] Installation complete!")
+	fmt.Fprintf(os.Stdout, "\nTo start the service:\n")
+	if mode == paths.ModeSystem {
+		fmt.Fprintln(os.Stdout, "  sudo systemctl start seed")
+		fmt.Fprintln(os.Stdout, "  sudo systemctl enable seed  # Start on boot")
+	} else {
+		fmt.Fprintln(os.Stdout, "  systemctl --user start seed")
+		fmt.Fprintln(os.Stdout, "  systemctl --user enable seed  # Start on login")
+	}
+}
+
 func runInstall(cmd *cobra.Command, _ []string, _ *cliState) {
 	if runtime.GOOS != "linux" {
 		fmt.Fprintf(os.Stderr, "Error: install command is only supported on Linux\n")
 		os.Exit(1)
 	}
 
-	systemMode, err := cmd.Flags().GetBool("system")
+	flags, err := parseInstallFlags(cmd)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting system flag: %v\n", err)
-		os.Exit(1)
-	}
-	userMode, err := cmd.Flags().GetBool("user")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting user flag: %v\n", err)
-		os.Exit(1)
-	}
-	noService, err := cmd.Flags().GetBool("no-service")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting no-service flag: %v\n", err)
-		os.Exit(1)
-	}
-	force, err := cmd.Flags().GetBool("force")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting force flag: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Determine mode
-	if systemMode && userMode {
-		fmt.Fprintf(os.Stderr, "Error: cannot specify both --system and --user\n")
+	mode, err := resolveInstallMode(flags)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	mode := paths.ModeAuto
-	if systemMode {
-		mode = paths.ModeSystem
-	} else if userMode {
-		mode = paths.ModeUser
-	}
-
-	// Check root for system mode
-	if mode == paths.ModeSystem || (mode == paths.ModeAuto && os.Getuid() == 0) {
-		if os.Getuid() != 0 {
-			fmt.Fprintf(
-				os.Stderr,
-				"Error: system installation requires root privileges (use sudo)\n",
-			)
-			os.Exit(1)
-		}
-		mode = paths.ModeSystem
-	} else {
-		mode = paths.ModeUser
-	}
-
-	// Detect distro
 	distro := DetectDistro()
 	fmt.Fprintf(os.Stdout, "Detected: %s (%s family)\n", distro.Name, distro.Family)
 
-	// Resolve paths
 	p := paths.Resolve(mode)
 
-	// Get current binary path
 	executable, err := os.Executable()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting executable path: %v\n", err)
@@ -168,102 +290,41 @@ func runInstall(cmd *cobra.Command, _ []string, _ *cliState) {
 	fmt.Fprintf(os.Stdout, "Data directory: %s\n", p.DataDir)
 	fmt.Fprintf(os.Stdout, "Log directory: %s\n", p.LogDir)
 
-	// Create directories
-	fmt.Fprintln(os.Stdout, "\nCreating directories...")
 	dirs := []string{p.ConfigDir, p.DataDir, p.LogDir, p.CacheDir}
-	for _, dir := range dirs {
-		err = os.MkdirAll(dir, 0o750)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating %s: %v\n", dir, err)
-			os.Exit(1)
-		}
-		fmt.Fprintf(os.Stdout, "  Created: %s\n", dir)
+	err = createInstallDirectories(dirs)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 
-	// System mode: create user/group
 	if mode == paths.ModeSystem {
-		fmt.Fprintln(os.Stdout, "\nCreating seed user and group...")
-		createSystemUser()
-
-		// Set ownership
-		for _, dir := range dirs {
-			err = runCommand("chown", "-R", "seed:seed", dir)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: Failed to set ownership for %s: %v\n", dir, err)
-			}
-		}
+		setupSystemModeUser(dirs)
 	}
 
-	// Copy binary
-	destBinary := filepath.Join(p.BinaryDir, "seed")
-	if mode == paths.ModeUser {
-		destBinary = filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
-		//nolint:gosec // G301: User binary directory needs 0755 permissions
-		err = os.MkdirAll(filepath.Dir(destBinary), 0o755)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating binary directory: %v\n", err)
-			os.Exit(1)
-		}
+	destBinary, err := resolveBinaryDestination(mode, p)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 
-	_, err = os.Stat(destBinary)
-	if err == nil && !force {
-		fmt.Fprintf(os.Stdout, "\nBinary already exists at %s\n", destBinary)
-		fmt.Fprintln(os.Stdout, "Use --force to overwrite")
-	} else {
-		fmt.Fprintf(os.Stdout, "\nCopying binary to %s...\n", destBinary)
-		err = copyFile(executable, destBinary)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error copying binary: %v\n", err)
-			os.Exit(1)
-		}
-		//nolint:gosec // G302: Binary file needs execute permission (0755)
-		err = os.Chmod(destBinary, 0o755)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error setting binary permissions: %v\n", err)
-			os.Exit(1)
-		}
+	err = installBinary(executable, destBinary, flags.force)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 
-	// Set capabilities (system mode only)
 	if mode == paths.ModeSystem {
-		fmt.Fprintln(os.Stdout, "\nSetting capabilities...")
-		err = runCommand("setcap", "cap_net_raw,cap_net_admin=+ep", destBinary)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to set capabilities: %v\n", err)
-			fmt.Fprintln(os.Stdout, "  ICMP and protocol capture features will require root")
-		} else {
-			fmt.Fprintln(os.Stdout, "  Set cap_net_raw,cap_net_admin for raw socket access")
-		}
+		setSystemCapabilities(destBinary)
 	}
 
-	// Create default config
-	configFile := filepath.Join(p.ConfigDir, "seed.yaml")
-	_, err = os.Stat(configFile)
-	if os.IsNotExist(err) {
-		fmt.Fprintf(os.Stdout, "\nCreating default config at %s...\n", configFile)
-		cfg := config.DefaultConfig()
-		err = cfg.Save(configFile)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating config: %v\n", err)
-		}
-	}
+	createDefaultConfig(p.ConfigDir)
 
-	// Install systemd service
-	if !noService {
+	if !flags.noService {
 		fmt.Fprintln(os.Stdout, "\nInstalling systemd service...")
 		installSystemdService(mode, p, destBinary)
 	}
 
-	fmt.Fprintln(os.Stdout, "\n✓ Installation complete!")
-	fmt.Fprintf(os.Stdout, "\nTo start the service:\n")
-	if mode == paths.ModeSystem {
-		fmt.Fprintln(os.Stdout, "  sudo systemctl start seed")
-		fmt.Fprintln(os.Stdout, "  sudo systemctl enable seed  # Start on boot")
-	} else {
-		fmt.Fprintln(os.Stdout, "  systemctl --user start seed")
-		fmt.Fprintln(os.Stdout, "  systemctl --user enable seed  # Start on login")
-	}
+	printCompletionMessage(mode)
 }
 
 func modeString(mode paths.Mode) string {
@@ -282,7 +343,7 @@ func modeString(mode paths.Mode) string {
 func createSystemUser() {
 	// Check if user exists
 	if _, err := exec.LookPath("id"); err == nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), userCheckTimeoutSeconds*time.Second)
 		defer cancel()
 		if exec.CommandContext(ctx, "id", "seed").Run() == nil {
 			fmt.Fprintln(os.Stdout, "  User 'seed' already exists")
@@ -383,7 +444,7 @@ func copyFile(src, dst string) error {
 }
 
 func runCommand(name string, args ...string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeoutSeconds*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Stdout = os.Stdout

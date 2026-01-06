@@ -1,4 +1,3 @@
-// Package logging exports internal functions for testing.
 package logging
 
 import (

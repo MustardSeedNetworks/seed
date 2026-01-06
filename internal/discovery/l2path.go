@@ -1,6 +1,6 @@
-// Package discovery implements multi-protocol network device discovery.
-// L2 path discovery traces Layer 2 switch paths between devices using LLDP/CDP neighbor data.
 package discovery
+
+// L2 path discovery traces Layer 2 switch paths between devices using LLDP/CDP neighbor data.
 
 import (
 	"context"

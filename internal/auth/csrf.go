@@ -1,4 +1,3 @@
-// Package auth handles JWT authentication and CSRF protection.
 package auth
 
 import (
@@ -26,6 +25,15 @@ const (
 	CSRFHeaderName = "X-Csrf-Token"
 	// CSRFCookieName is the cookie name for CSRF tokens.
 	CSRFCookieName = "csrf_token"
+)
+
+// Internal constants for CSRF token management.
+const (
+	// csrfCleanupIntervalMinutes is how often expired tokens are cleaned up.
+	csrfCleanupIntervalMinutes = 5
+
+	// jwtTokenPartsCount is the minimum number of parts in a valid JWT token (header.payload.signature).
+	jwtTokenPartsCount = 2
 )
 
 // CSRF errors.
@@ -137,7 +145,7 @@ func (m *CSRFManager) RevokeToken(sessionID string) {
 
 // cleanupExpiredTokens periodically removes expired tokens (fixes #785 - respects shutdown signal).
 func (m *CSRFManager) cleanupExpiredTokens() {
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(csrfCleanupIntervalMinutes * time.Minute)
 	defer ticker.Stop()
 
 	for {
@@ -240,7 +248,7 @@ func GetSessionIDFromRequest(r *http.Request) string {
 		// Use the first part of the token as a session identifier
 		// This is a simplified approach - in production you'd decode the JWT
 		parts := strings.Split(token, ".")
-		if len(parts) >= 2 {
+		if len(parts) >= jwtTokenPartsCount {
 			return parts[1] // Use payload part as identifier
 		}
 	}

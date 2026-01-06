@@ -1,8 +1,8 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // This file implements Phase 4 (Vulnerability Assessment) of the discovery pipeline.
 // It performs CVE lookup and risk scoring for discovered devices based on
 // software versions extracted from SNMP, banners, and service fingerprints.
-package discovery
 
 import (
 	"context"
@@ -19,6 +19,18 @@ const (
 	severityHigh     = "HIGH"
 	severityMedium   = "MEDIUM"
 	severityLow      = "LOW"
+)
+
+// Progress reporting interval for progress ticker.
+const progressTickerIntervalMs = 500
+
+// Assessment phase configuration constants.
+const (
+	assessmentDefaultConcurrent = 5     // Default concurrent assessments
+	assessmentDefaultDelayMs    = 100   // Default device delay in milliseconds
+	assessmentDefaultTimeoutMin = 15    // Default phase timeout in minutes
+	assessmentUpdateIntervalS   = 86400 // CVE update interval in seconds (24 hours)
+	assessmentPercentComplete   = 100   // Value representing 100% completion
 )
 
 // AssessmentPhase implements the Phase interface for vulnerability assessment.
@@ -72,10 +84,10 @@ func DefaultAssessmentConfig() *AssessmentConfig {
 		Enabled:           false, // Disabled by default
 		CVEDatabase:       "nvd",
 		SeverityThreshold: "medium",
-		MaxConcurrent:     5,
+		MaxConcurrent:     assessmentDefaultConcurrent,
 		Timing: AssessmentTiming{
-			DeviceDelay:  100 * time.Millisecond,
-			PhaseTimeout: 15 * time.Minute,
+			DeviceDelay:  assessmentDefaultDelayMs * time.Millisecond,
+			PhaseTimeout: assessmentDefaultTimeoutMin * time.Minute,
 		},
 	}
 }
@@ -101,7 +113,7 @@ func NewAssessmentPhase(
 			LocalDBPath:       config.LocalDBPath,
 			SeverityThreshold: config.SeverityThreshold,
 			MaxConcurrent:     config.MaxConcurrent,
-			UpdateInterval:    86400, // 24 hours
+			UpdateInterval:    assessmentUpdateIntervalS, // 24 hours
 		}
 
 		scanner, err = NewVulnerabilityScanner(scannerConfig)
@@ -161,7 +173,7 @@ func (p *AssessmentPhase) Run(
 	// Progress reporting goroutine
 	done := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(500 * time.Millisecond)
+		ticker := time.NewTicker(progressTickerIntervalMs * time.Millisecond)
 		defer ticker.Stop()
 		for {
 			select {
@@ -383,10 +395,10 @@ func (p *AssessmentProgress) PercentComplete() float64 {
 	p.mu.RUnlock()
 
 	if total == 0 {
-		return 100
+		return assessmentPercentComplete
 	}
 	assessed := p.Assessed()
-	return float64(assessed) / float64(total) * 100
+	return float64(assessed) / float64(total) * assessmentPercentComplete
 }
 
 // VulnerabilityDiscoveredPayload is sent when vulnerabilities are found.

@@ -1,4 +1,3 @@
-//nolint:cyclop
 // Package testutil_test tests the testutil package.
 package testutil_test
 
@@ -67,21 +66,123 @@ func TestGetTestDefaults(t *testing.T) {
 	})
 }
 
+// assertConfigNotNil is a helper that fails if cfg is nil.
+func assertConfigNotNil(t *testing.T, cfg *config.Config) {
+	t.Helper()
+
+	if cfg == nil {
+		t.Fatal("expected non-nil config")
+	}
+}
+
+// assertPort checks if the config port matches expected.
+func assertPort(t *testing.T, cfg *config.Config, expected int) {
+	t.Helper()
+
+	if cfg.Server.Port != expected {
+		t.Errorf("expected port %d, got %d", expected, cfg.Server.Port)
+	}
+}
+
+// assertInterface checks if the config interface matches expected.
+func assertInterface(t *testing.T, cfg *config.Config, expected string) {
+	t.Helper()
+
+	if cfg.Interface.Default != expected {
+		t.Errorf("expected interface %q, got %q", expected, cfg.Interface.Default)
+	}
+}
+
+// assertHTTPS checks if HTTPS setting matches expected.
+func assertHTTPS(t *testing.T, cfg *config.Config, expected bool) {
+	t.Helper()
+
+	if cfg.Server.HTTPS != expected {
+		t.Errorf("expected HTTPS=%v, got %v", expected, cfg.Server.HTTPS)
+	}
+}
+
+// assertDiscoveryMethods checks ARP, ICMP, and PortScan settings.
+func assertDiscoveryMethods(t *testing.T, cfg *config.Config, arp, icmp, port bool) {
+	t.Helper()
+
+	if cfg.NetworkDiscovery.Options.ARPScan != arp {
+		t.Errorf("expected ARPScan=%v, got %v", arp, cfg.NetworkDiscovery.Options.ARPScan)
+	}
+
+	if cfg.NetworkDiscovery.Options.ICMPScan != icmp {
+		t.Errorf("expected ICMPScan=%v, got %v", icmp, cfg.NetworkDiscovery.Options.ICMPScan)
+	}
+
+	if cfg.NetworkDiscovery.Options.PortScan.Enabled != port {
+		t.Errorf("expected PortScan=%v, got %v", port, cfg.NetworkDiscovery.Options.PortScan.Enabled)
+	}
+}
+
+// assertConcurrency checks if the discovery concurrency matches expected.
+func assertConcurrency(t *testing.T, cfg *config.Config, expected int) {
+	t.Helper()
+
+	if cfg.NetworkDiscovery.ARPScanWorkers != expected {
+		t.Errorf("expected concurrency %d, got %d", expected, cfg.NetworkDiscovery.ARPScanWorkers)
+	}
+}
+
+// assertAuth checks if auth credentials match expected values.
+func assertAuth(t *testing.T, cfg *config.Config, username, hash string) {
+	t.Helper()
+
+	if cfg.Auth.DefaultUsername != username {
+		t.Errorf("expected username %q, got %q", username, cfg.Auth.DefaultUsername)
+	}
+
+	if cfg.Auth.DefaultPasswordHash != hash {
+		t.Errorf("expected hash %q, got %q", hash, cfg.Auth.DefaultPasswordHash)
+	}
+}
+
+// assertTCPPorts checks if the TCP ports match expected.
+func assertTCPPorts(t *testing.T, cfg *config.Config, expected string) {
+	t.Helper()
+
+	if cfg.NetworkDiscovery.Options.PortScan.TCPPorts != expected {
+		t.Errorf("expected ports %q, got %q", expected, cfg.NetworkDiscovery.Options.PortScan.TCPPorts)
+	}
+}
+
+// assertConfigValid checks if the config passes validation.
+func assertConfigValid(t *testing.T, cfg *config.Config) {
+	t.Helper()
+
+	if err := cfg.Validate(); err != nil {
+		t.Errorf("expected valid config: %v", err)
+	}
+}
+
+// assertEmptyPasswordHash checks if the password hash is empty.
+func assertEmptyPasswordHash(t *testing.T, cfg *config.Config) {
+	t.Helper()
+
+	if cfg.Auth.DefaultPasswordHash != "" {
+		t.Error("expected empty password hash")
+	}
+}
+
+// assertTCPPortsNotEmpty checks that TCP ports are configured.
+func assertTCPPortsNotEmpty(t *testing.T, cfg *config.Config) {
+	t.Helper()
+
+	if cfg.NetworkDiscovery.Options.PortScan.TCPPorts == "" {
+		t.Error("expected TCP ports configured")
+	}
+}
+
 func TestConfigBuilder(t *testing.T) {
 	t.Run("creates valid config with defaults", func(t *testing.T) {
 		cfg := testutil.NewConfigBuilder().Build()
-
-		if cfg == nil {
-			t.Fatal("expected non-nil config")
-		}
-
-		if cfg.Server.HTTPS {
-			t.Error("expected HTTPS disabled for testing")
-		}
-
-		if cfg.Interface.Default != "lo" {
-			t.Errorf("expected loopback interface, got %q", cfg.Interface.Default)
-		}
+		assertConfigNotNil(t, cfg)
+		assertHTTPS(t, cfg, false)
+		assertInterface(t, cfg, "lo")
 
 		defaults := testutil.GetTestDefaults()
 		if cfg.Auth.DefaultPasswordHash != defaults.Auth.PasswordHash {
@@ -94,30 +195,15 @@ func TestConfigBuilder(t *testing.T) {
 			WithPort(9090).
 			WithInterface("eth0").
 			WithHTTPS(true).
-			WithDiscoveryMethods(true, true, true). // All methods enabled
+			WithDiscoveryMethods(true, true, true).
 			WithDiscoveryConcurrency(100).
 			Build()
 
-		if cfg.Server.Port != 9090 {
-			t.Errorf("expected port 9090, got %d", cfg.Server.Port)
-		}
-
-		if cfg.Interface.Default != "eth0" {
-			t.Errorf("expected eth0, got %q", cfg.Interface.Default)
-		}
-
-		if !cfg.Server.HTTPS {
-			t.Error("expected HTTPS enabled")
-		}
-
-		// WithDiscoveryMethods(true, true, true) enables all methods
-		if !cfg.NetworkDiscovery.Options.ARPScan {
-			t.Error("expected ARP scan enabled")
-		}
-
-		if cfg.NetworkDiscovery.ARPScanWorkers != 100 {
-			t.Errorf("expected concurrency 100, got %d", cfg.NetworkDiscovery.ARPScanWorkers)
-		}
+		assertPort(t, cfg, 9090)
+		assertInterface(t, cfg, "eth0")
+		assertHTTPS(t, cfg, true)
+		assertDiscoveryMethods(t, cfg, true, true, true)
+		assertConcurrency(t, cfg, 100)
 	})
 
 	t.Run("WithAuth sets credentials", func(t *testing.T) {
@@ -125,13 +211,7 @@ func TestConfigBuilder(t *testing.T) {
 			WithAuth("testuser", "testhash").
 			Build()
 
-		if cfg.Auth.DefaultUsername != "testuser" {
-			t.Errorf("expected testuser, got %q", cfg.Auth.DefaultUsername)
-		}
-
-		if cfg.Auth.DefaultPasswordHash != "testhash" {
-			t.Errorf("expected testhash, got %q", cfg.Auth.DefaultPasswordHash)
-		}
+		assertAuth(t, cfg, "testuser", "testhash")
 	})
 
 	t.Run("WithDiscoveryMethods configures methods", func(t *testing.T) {
@@ -139,17 +219,7 @@ func TestConfigBuilder(t *testing.T) {
 			WithDiscoveryMethods(true, false, true).
 			Build()
 
-		if !cfg.NetworkDiscovery.Options.ARPScan {
-			t.Error("expected ARP enabled")
-		}
-
-		if cfg.NetworkDiscovery.Options.ICMPScan {
-			t.Error("expected ICMP disabled")
-		}
-
-		if !cfg.NetworkDiscovery.Options.PortScan.Enabled {
-			t.Error("expected PortScan enabled")
-		}
+		assertDiscoveryMethods(t, cfg, true, false, true)
 	})
 
 	t.Run("WithTCPPorts sets ports", func(t *testing.T) {
@@ -158,13 +228,7 @@ func TestConfigBuilder(t *testing.T) {
 			WithTCPPorts(ports).
 			Build()
 
-		if cfg.NetworkDiscovery.Options.PortScan.TCPPorts != ports {
-			t.Errorf(
-				"expected ports %q, got %q",
-				ports,
-				cfg.NetworkDiscovery.Options.PortScan.TCPPorts,
-			)
-		}
+		assertTCPPorts(t, cfg, ports)
 	})
 }
 
@@ -213,85 +277,79 @@ func TestMustBuild(t *testing.T) {
 	})
 }
 
+// fixtureTestCase defines a test case for fixture functions.
+type fixtureTestCase struct {
+	name       string
+	getConfig  func() *config.Config
+	assertions func(t *testing.T, cfg *config.Config)
+}
+
 func TestFixtures(t *testing.T) {
-	t.Run("MinimalConfig is valid", func(t *testing.T) {
-		cfg := testutil.MinimalValidConfig()
+	testCases := []fixtureTestCase{
+		{
+			name:      "MinimalConfig is valid",
+			getConfig: testutil.MinimalValidConfig,
+			assertions: func(t *testing.T, cfg *config.Config) {
+				t.Helper()
+				assertConfigValid(t, cfg)
+				assertPort(t, cfg, 8080)
+				assertInterface(t, cfg, "lo")
+			},
+		},
+		{
+			name:      "InsecureConfig has empty password",
+			getConfig: testutil.InsecureConfig,
+			assertions: func(t *testing.T, cfg *config.Config) {
+				t.Helper()
+				assertEmptyPasswordHash(t, cfg)
+			},
+		},
+		{
+			name:      "FullConfig has all features",
+			getConfig: testutil.FullScanConfig,
+			assertions: func(t *testing.T, cfg *config.Config) {
+				t.Helper()
+				assertDiscoveryMethods(t, cfg, true, true, true)
+				assertTCPPortsNotEmpty(t, cfg)
+			},
+		},
+		{
+			name:      "PassiveOnlyConfig has passive only",
+			getConfig: testutil.PassiveOnlyConfig,
+			assertions: func(t *testing.T, cfg *config.Config) {
+				t.Helper()
+				assertDiscoveryMethods(t, cfg, false, false, false)
+			},
+		},
+		{
+			name:      "StandardScanConfig has ARP and ICMP",
+			getConfig: testutil.StandardScanConfig,
+			assertions: func(t *testing.T, cfg *config.Config) {
+				t.Helper()
+				assertDiscoveryMethods(t, cfg, true, true, false)
+			},
+		},
+	}
 
-		if cfg == nil {
-			t.Fatal("expected non-nil config")
-		}
-
-		if err := cfg.Validate(); err != nil {
-			t.Errorf("MinimalConfig should be valid: %v", err)
-		}
-
-		if cfg.Server.Port != 8080 {
-			t.Errorf("expected port 8080, got %d", cfg.Server.Port)
-		}
-
-		if cfg.Interface.Default != "lo" {
-			t.Errorf("expected loopback, got %q", cfg.Interface.Default)
-		}
-	})
-
-	t.Run("InsecureConfig has empty password", func(t *testing.T) {
-		cfg := testutil.InsecureConfig()
-
-		if cfg == nil {
-			t.Fatal("expected non-nil config")
-		}
-
-		if cfg.Auth.DefaultPasswordHash != "" {
-			t.Error("expected empty password hash to trigger setup")
-		}
-	})
-
-	t.Run("FullConfig has all features", func(t *testing.T) {
-		cfg := testutil.FullScanConfig()
-
-		if cfg == nil {
-			t.Fatal("expected non-nil config")
-		}
-
-		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan ||
-			!cfg.NetworkDiscovery.Options.PortScan.Enabled {
-			t.Error("expected all discovery methods enabled")
-		}
-
-		if cfg.NetworkDiscovery.Options.PortScan.TCPPorts == "" {
-			t.Error("expected TCP ports configured")
-		}
-	})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := tc.getConfig()
+			assertConfigNotNil(t, cfg)
+			tc.assertions(t, cfg)
+		})
+	}
 
 	t.Run("helper functions return same as fixtures", func(t *testing.T) {
-		if testutil.MinimalValidConfig() == nil {
-			t.Error("MinimalValidConfig should not be nil")
+		fixtures := []func() *config.Config{
+			testutil.MinimalValidConfig,
+			testutil.InsecureConfig,
+			testutil.FullScanConfig,
 		}
 
-		if testutil.InsecureConfig() == nil {
-			t.Error("InsecureConfig should not be nil")
-		}
-
-		if testutil.FullScanConfig() == nil {
-			t.Error("FullScanConfig should not be nil")
-		}
-	})
-
-	t.Run("PassiveOnlyConfig has passive only", func(t *testing.T) {
-		cfg := testutil.PassiveOnlyConfig()
-
-		if cfg.NetworkDiscovery.Options.ARPScan || cfg.NetworkDiscovery.Options.ICMPScan ||
-			cfg.NetworkDiscovery.Options.PortScan.Enabled {
-			t.Error("expected passive only for passive scan")
-		}
-	})
-
-	t.Run("StandardScanConfig has ARP and ICMP", func(t *testing.T) {
-		cfg := testutil.StandardScanConfig()
-
-		if !cfg.NetworkDiscovery.Options.ARPScan || !cfg.NetworkDiscovery.Options.ICMPScan ||
-			cfg.NetworkDiscovery.Options.PortScan.Enabled {
-			t.Error("expected ARP + ICMP for standard scan")
+		for _, fn := range fixtures {
+			if fn() == nil {
+				t.Error("fixture function should not return nil")
+			}
 		}
 	})
 }

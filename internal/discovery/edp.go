@@ -1,8 +1,8 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // EDP (Extreme Discovery Protocol) support enables discovery of Extreme Networks equipment
 // and compatible devices that advertise their device ID, port information, VLAN membership,
 // and IP addressing via Ethernet frames.
-package discovery
 
 import (
 	"context"
@@ -17,6 +17,10 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
+// pcapSnapshotLengthEDP is the maximum number of bytes to capture from each packet.
+// 65535 is the maximum possible packet size for IP.
+const pcapSnapshotLengthEDP = 65535
+
 // EDP TLV Types (Extreme Discovery Protocol).
 const (
 	EDPTLVNull    uint8 = 0x00
@@ -26,6 +30,18 @@ const (
 	EDPTLVESRP    uint8 = 0x06
 	EDPTLVUnknown uint8 = 0x07
 	EDPTLVIPAddr  uint8 = 0x99
+)
+
+// EDP protocol parsing constants.
+const (
+	edpMinHeaderSize    = 8    // Minimum EDP header size
+	edpTLVHeaderSize    = 4    // TLV header size (marker + type + length)
+	edpTLVMarker        = 0x99 // TLV marker byte
+	edpInfoSlotPortSize = 4    // Slot + port field size
+	edpInfoVLANOffset   = 8    // Offset to VLAN in info TLV
+	edpVLANIDSize       = 2    // VLAN ID field size
+	edpVLANNameOffset   = 4    // Offset to VLAN name
+	edpIPAddrSize       = 4    // IPv4 address size
 )
 
 // EDPNeighbor represents a discovered EDP neighbor.
@@ -74,7 +90,7 @@ func (c *EDPCapture) Start() error {
 	}
 
 	// Open capture handle
-	handle, err := pcap.OpenLive(c.interfaceName, 65535, true, pcap.BlockForever)
+	handle, err := pcap.OpenLive(c.interfaceName, pcapSnapshotLengthEDP, true, pcap.BlockForever)
 	if err != nil {
 		c.mu.Unlock()
 		return fmt.Errorf("failed to open capture: %w", err)
@@ -172,7 +188,7 @@ func (c *EDPCapture) processPacket(packet gopacket.Packet) {
 
 	// Get the payload after LLC header
 	payload := llcLayer.LayerPayload()
-	if len(payload) < 8 {
+	if len(payload) < edpMinHeaderSize {
 		return
 	}
 
@@ -189,7 +205,7 @@ func (c *EDPCapture) processPacket(packet gopacket.Packet) {
 	}
 
 	// Parse EDP header
-	if len(payload) < 8 {
+	if len(payload) < edpMinHeaderSize {
 		return
 	}
 
@@ -200,14 +216,14 @@ func (c *EDPCapture) processPacket(packet gopacket.Packet) {
 	}
 
 	machineIDLen := binary.BigEndian.Uint16(payload[6:8])
-	if len(payload) < 8+int(machineIDLen) {
+	if len(payload) < edpMinHeaderSize+int(machineIDLen) {
 		return
 	}
 
-	neighbor.DeviceID = string(payload[8 : 8+machineIDLen])
+	neighbor.DeviceID = string(payload[edpMinHeaderSize : edpMinHeaderSize+machineIDLen])
 
 	// Parse TLVs starting after machine ID
-	tlvOffset := 8 + int(machineIDLen)
+	tlvOffset := edpMinHeaderSize + int(machineIDLen)
 	c.parseEDPTLVs(payload[tlvOffset:], neighbor)
 
 	// Store neighbor (keyed by DeviceID + SourceMAC if no PortID)
@@ -224,12 +240,12 @@ func (c *EDPCapture) processPacket(packet gopacket.Packet) {
 func (c *EDPCapture) parseEDPTLVs(data []byte, neighbor *EDPNeighbor) {
 	offset := 0
 
-	for offset+4 <= len(data) {
+	for offset+edpTLVHeaderSize <= len(data) {
 		// TLV header: 1 byte marker (0x99), 1 byte type, 2 bytes length
-		if data[offset] != 0x99 {
+		if data[offset] != edpTLVMarker {
 			// Try alternative format: 1 byte type, 1 byte reserved, 2 bytes length
 			tlvType := data[offset]
-			tlvLen := binary.BigEndian.Uint16(data[offset+2 : offset+4])
+			tlvLen := binary.BigEndian.Uint16(data[offset+2 : offset+edpTLVHeaderSize])
 
 			if tlvLen < 4 || offset+int(tlvLen) > len(data) {
 				break
@@ -269,7 +285,7 @@ func (c *EDPCapture) parseEDPTLV(tlvType uint8, data []byte, neighbor *EDPNeighb
 	case EDPTLVInfo:
 		// Device info TLV
 		// Contains: slot, port, vlan info, and more
-		if len(data) >= 4 {
+		if len(data) >= edpInfoSlotPortSize {
 			// First 2 bytes: slot
 			// Next 2 bytes: port
 			slot := binary.BigEndian.Uint16(data[0:2])
@@ -277,22 +293,22 @@ func (c *EDPCapture) parseEDPTLV(tlvType uint8, data []byte, neighbor *EDPNeighb
 			neighbor.PortID = fmt.Sprintf("%d:%d", slot, port)
 		}
 		// Additional info may follow
-		if len(data) >= 8 {
+		if len(data) >= edpInfoVLANOffset {
 			neighbor.VLAN = int(binary.BigEndian.Uint16(data[6:8]))
 		}
 	case EDPTLVVlan:
 		// VLAN TLV
-		if len(data) >= 2 {
+		if len(data) >= edpVLANIDSize {
 			neighbor.VLAN = int(binary.BigEndian.Uint16(data[0:2]))
 		}
 		// VLAN name may follow
-		if len(data) > 4 {
-			neighbor.VLANName = trimNull(string(data[4:]))
+		if len(data) > edpVLANNameOffset {
+			neighbor.VLANName = trimNull(string(data[edpVLANNameOffset:]))
 		}
 	case EDPTLVIPAddr:
 		// IP Address TLV
-		if len(data) >= 4 {
-			neighbor.ManagementAddress = net.IP(data[0:4]).String()
+		if len(data) >= edpIPAddrSize {
+			neighbor.ManagementAddress = net.IP(data[0:edpIPAddrSize]).String()
 		}
 	}
 }

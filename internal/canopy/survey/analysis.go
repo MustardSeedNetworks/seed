@@ -1,4 +1,3 @@
-// Package survey provides WiFi site survey functionality.
 package survey
 
 import (
@@ -47,6 +46,27 @@ const DefaultThreshold = -75
 
 // ClusterRadius defines the maximum distance (in pixels) to consider samples as part of the same dead zone.
 const ClusterRadius = 50.0
+
+// Dead zone analysis coverage score thresholds and calculation constants.
+const (
+	// deadZonePercentMultiplier converts a ratio (0.0-1.0) to a percentage (0-100).
+	deadZonePercentMultiplier = 100.0
+
+	// deadZoneThresholdCritical indicates critical coverage issues requiring infrastructure redesign.
+	deadZoneThresholdCritical = 50
+
+	// deadZoneThresholdPoor indicates poor coverage needing 2-3 additional access points.
+	deadZoneThresholdPoor = 70
+
+	// deadZoneThresholdModerate indicates moderate coverage needing 1-2 additional access points.
+	deadZoneThresholdModerate = 85
+
+	// deadZoneThresholdGood indicates good coverage with only minor improvements needed.
+	deadZoneThresholdGood = 95
+
+	// deadZoneMinSamples is the minimum number of samples needed for reliable dead zone analysis.
+	deadZoneMinSamples = 20
+)
 
 // DetectDeadZones analyzes a survey and identifies areas with poor WiFi coverage.
 //
@@ -142,7 +162,7 @@ func calculateCoverageScore(allSamples, weakSamples []SampleValue) float64 {
 	}
 
 	goodSamples := len(allSamples) - len(weakSamples)
-	return (float64(goodSamples) / float64(len(allSamples))) * 100.0
+	return (float64(goodSamples) / float64(len(allSamples))) * deadZonePercentMultiplier
 }
 
 // clusterDeadZones groups nearby weak samples into dead zones using distance-based clustering.
@@ -262,22 +282,22 @@ func generateRecommendations(
 
 	// Coverage-based recommendations
 	switch {
-	case coverageScore < 50:
+	case coverageScore < deadZoneThresholdCritical:
 		recommendations = append(
 			recommendations,
 			"Critical coverage issues detected. Consider a complete WiFi infrastructure redesign with additional access points.",
 		)
-	case coverageScore < 70:
+	case coverageScore < deadZoneThresholdPoor:
 		recommendations = append(
 			recommendations,
 			"Poor overall coverage. Add 2-3 additional access points in strategic locations.",
 		)
-	case coverageScore < 85:
+	case coverageScore < deadZoneThresholdModerate:
 		recommendations = append(
 			recommendations,
 			"Moderate coverage. Consider adding 1-2 access points to improve coverage in weak areas.",
 		)
-	case coverageScore < 95:
+	case coverageScore < deadZoneThresholdGood:
 		recommendations = append(
 			recommendations,
 			"Good coverage overall. Minor improvements may be beneficial in identified weak spots.",
@@ -336,7 +356,7 @@ func generateRecommendations(
 	}
 
 	// Sample density recommendations
-	if totalSamples < 20 {
+	if totalSamples < deadZoneMinSamples {
 		recommendations = append(
 			recommendations,
 			"Limited sample data. Collect more samples for accurate analysis, especially in edge areas.",

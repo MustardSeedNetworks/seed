@@ -1,8 +1,8 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // This file implements the phased discovery pipeline that orchestrates
 // sequential execution of discovery phases: enumeration, resolution,
 // service discovery, and vulnerability assessment.
-package discovery
 
 import (
 	"context"
@@ -47,6 +47,50 @@ const (
 	EventPipelineCompleted PipelineEventType = "pipeline_completed"
 	EventPipelineFailed    PipelineEventType = "pipeline_failed"
 	EventPipelineCanceled  PipelineEventType = "pipeline_canceled"
+)
+
+// Pipeline timing and channel constants.
+const (
+	pipelineProgressChannelSize  = 10  // Buffer size for progress channels
+	pipelinePercentComplete      = 100 // Value representing 100% completion
+	pipelineProgressTickerMs     = 500 // Progress ticker interval in milliseconds
+	pipelineDefaultPhaseTimeoutM = 10  // Default phase timeout in minutes
+
+	// Polite profile timing constants.
+	politeProbeDelayMs    = 200 // Probe delay for polite profile in milliseconds
+	politeHostDelayMs     = 100 // Host delay for polite profile in milliseconds
+	politeConcurrentHosts = 5   // Max concurrent hosts for polite profile
+	politePhaseTimeoutMin = 30  // Phase timeout for polite profile in minutes
+
+	// Normal profile timing constants.
+	normalProbeDelayMs    = 50 // Probe delay for normal profile in milliseconds
+	normalHostDelayMs     = 20 // Host delay for normal profile in milliseconds
+	normalConcurrentHosts = 20 // Max concurrent hosts for normal profile
+	normalPhaseTimeoutMin = 10 // Phase timeout for normal profile in minutes
+
+	// Aggressive profile timing constants.
+	aggressiveProbeDelayMs    = 10  // Probe delay for aggressive profile in milliseconds
+	aggressiveHostDelayMs     = 5   // Host delay for aggressive profile in milliseconds
+	aggressiveConcurrentHosts = 100 // Max concurrent hosts for aggressive profile
+	aggressivePhaseTimeoutMin = 5   // Phase timeout for aggressive profile in minutes
+
+	// Port scan configuration constants.
+	portScanConnectTimeoutS = 2 // Default connect timeout in seconds
+
+	// SNMP collection configuration constants.
+	snmpWalkTimeoutS       = 30 // SNMP walk timeout in seconds
+	snmpMaxOIDsPerRequest  = 10 // Maximum OIDs per SNMP request
+	snmpDefaultConcurrency = 10 // Default SNMP concurrency
+
+	// Persistence configuration constants.
+	persistStalenessHours = 24 // Staleness threshold in hours
+
+	// Resolution timing constants (pipeline).
+	pipelineResDNSTimeoutMs   = 500 // DNS timeout in milliseconds
+	pipelineResMDNSTimeoutS   = 2   // mDNS timeout in seconds
+	pipelineResMaxConcDNS     = 50  // Max concurrent DNS lookups
+	pipelineResMaxConcNetBIOS = 20  // Max concurrent NetBIOS queries
+	pipelineResMaxConcMDNS    = 10  // Max concurrent mDNS queries
 )
 
 // PipelineEvent is the WebSocket message for pipeline updates.
@@ -174,22 +218,22 @@ func GetComprehensivePorts() []int {
 func GetScanTimingPresets() map[ScanTimingProfile]PipelineTiming {
 	return map[ScanTimingProfile]PipelineTiming{
 		ScanProfilePolite: {
-			ProbeDelay:         200 * time.Millisecond,
-			HostDelay:          100 * time.Millisecond,
-			MaxConcurrentHosts: 5,
-			PhaseTimeout:       30 * time.Minute,
+			ProbeDelay:         politeProbeDelayMs * time.Millisecond,
+			HostDelay:          politeHostDelayMs * time.Millisecond,
+			MaxConcurrentHosts: politeConcurrentHosts,
+			PhaseTimeout:       politePhaseTimeoutMin * time.Minute,
 		},
 		ScanProfileNormal: {
-			ProbeDelay:         50 * time.Millisecond,
-			HostDelay:          20 * time.Millisecond,
-			MaxConcurrentHosts: 20,
-			PhaseTimeout:       10 * time.Minute,
+			ProbeDelay:         normalProbeDelayMs * time.Millisecond,
+			HostDelay:          normalHostDelayMs * time.Millisecond,
+			MaxConcurrentHosts: normalConcurrentHosts,
+			PhaseTimeout:       normalPhaseTimeoutMin * time.Minute,
 		},
 		ScanProfileAggressive: {
-			ProbeDelay:         10 * time.Millisecond,
-			HostDelay:          5 * time.Millisecond,
-			MaxConcurrentHosts: 100,
-			PhaseTimeout:       5 * time.Minute,
+			ProbeDelay:         aggressiveProbeDelayMs * time.Millisecond,
+			HostDelay:          aggressiveHostDelayMs * time.Millisecond,
+			MaxConcurrentHosts: aggressiveConcurrentHosts,
+			PhaseTimeout:       aggressivePhaseTimeoutMin * time.Minute,
 		},
 	}
 }
@@ -317,16 +361,16 @@ func DefaultPipelineConfig() PipelineConfig {
 			VulnAssessment:   false, // Disabled by default (requires opt-in)
 		},
 		Timing: PipelineTiming{
-			ProbeDelay:         50 * time.Millisecond,
-			HostDelay:          20 * time.Millisecond,
-			MaxConcurrentHosts: 20,
-			PhaseTimeout:       10 * time.Minute,
+			ProbeDelay:         normalProbeDelayMs * time.Millisecond,
+			HostDelay:          normalHostDelayMs * time.Millisecond,
+			MaxConcurrentHosts: normalConcurrentHosts,
+			PhaseTimeout:       normalPhaseTimeoutMin * time.Minute,
 			Profile:            ScanProfileNormal,
 		},
 		PortScan: PipelinePortScanConfig{
 			Intensity:      PortScanOff, // OFF by default - security conscious
 			BannerGrab:     true,
-			ConnectTimeout: 2 * time.Second,
+			ConnectTimeout: portScanConnectTimeoutS * time.Second,
 		},
 		SNMPCollection: SNMPCollectionConfig{
 			Enabled: true,
@@ -340,8 +384,8 @@ func DefaultPipelineConfig() PipelineConfig {
 				LLDP:        true,  // Required for L2 topology
 				VLAN:        true,  // Required for L2 VLAN diagrams
 			},
-			WalkTimeout:       30 * time.Second,
-			MaxOIDsPerRequest: 10,
+			WalkTimeout:       snmpWalkTimeoutS * time.Second,
+			MaxOIDsPerRequest: snmpMaxOIDsPerRequest,
 		},
 		Resolution: PipelineResolutionConfig{
 			DNS:     true, // Enabled by default
@@ -350,8 +394,8 @@ func DefaultPipelineConfig() PipelineConfig {
 		},
 		Persistence: PipelinePersistenceConfig{
 			StoreHistory:       true,
-			StalenessThreshold: 24 * time.Hour,
-			PurgeAfter:         30 * 24 * time.Hour,
+			StalenessThreshold: persistStalenessHours * time.Hour,
+			PurgeAfter:         30 * persistStalenessHours * time.Hour,
 		},
 	}
 }
@@ -423,13 +467,13 @@ func NewPipeline(
 		NetBIOS: config.Resolution.NetBIOS,
 		MDNS:    config.Resolution.MDNS,
 		Timing: ResolutionTiming{
-			DNSTimeout:           500 * time.Millisecond,
-			NetBIOSTimeout:       500 * time.Millisecond,
-			MDNSTimeout:          2 * time.Second,
+			DNSTimeout:           pipelineResDNSTimeoutMs * time.Millisecond,
+			NetBIOSTimeout:       pipelineResDNSTimeoutMs * time.Millisecond,
+			MDNSTimeout:          pipelineResMDNSTimeoutS * time.Second,
 			PhaseTimeout:         config.Timing.PhaseTimeout,
-			MaxConcurrentDNS:     50,
-			MaxConcurrentNetBIOS: 20,
-			MaxConcurrentMDNS:    10,
+			MaxConcurrentDNS:     pipelineResMaxConcDNS,
+			MaxConcurrentNetBIOS: pipelineResMaxConcNetBIOS,
+			MaxConcurrentMDNS:    pipelineResMaxConcMDNS,
 		},
 	}
 
@@ -591,13 +635,13 @@ func (p *Pipeline) UpdateConfig(config *PipelineConfig) error {
 			NetBIOS: config.Resolution.NetBIOS,
 			MDNS:    config.Resolution.MDNS,
 			Timing: ResolutionTiming{
-				DNSTimeout:           500 * time.Millisecond,
-				NetBIOSTimeout:       500 * time.Millisecond,
-				MDNSTimeout:          2 * time.Second,
+				DNSTimeout:           pipelineResDNSTimeoutMs * time.Millisecond,
+				NetBIOSTimeout:       pipelineResDNSTimeoutMs * time.Millisecond,
+				MDNSTimeout:          pipelineResMDNSTimeoutS * time.Second,
 				PhaseTimeout:         config.Timing.PhaseTimeout,
-				MaxConcurrentDNS:     50,
-				MaxConcurrentNetBIOS: 20,
-				MaxConcurrentMDNS:    10,
+				MaxConcurrentDNS:     pipelineResMaxConcDNS,
+				MaxConcurrentNetBIOS: pipelineResMaxConcNetBIOS,
+				MaxConcurrentMDNS:    pipelineResMaxConcMDNS,
 			},
 		}
 
@@ -780,7 +824,7 @@ func (p *Pipeline) runResolutionPhase(
 	})
 
 	// Create progress channel for resolution updates
-	progressCh := make(chan PhaseProgressPayload, 10)
+	progressCh := make(chan PhaseProgressPayload, pipelineProgressChannelSize)
 	go func() {
 		for progress := range progressCh {
 			p.broadcastEvent(EventPhaseProgress, progress)
@@ -829,139 +873,46 @@ func (p *Pipeline) runResolutionPhase(
 
 // runScanningPhase executes the service discovery phase.
 //
-
+//nolint:unparam // Error return kept for interface consistency with other phase methods.
 func (p *Pipeline) runScanningPhase(
 	ctx context.Context,
 	devices []*DiscoveredDevice,
 	phaseNumber int,
 ) ([]*DiscoveredDevice, error) {
 	start := time.Now()
-	totalPhases := p.countEnabledPhases()
 
 	p.broadcastEvent(EventPhaseStarted, PhaseStartedPayload{
 		Phase:       "scanning",
 		PhaseNumber: phaseNumber,
-		TotalPhases: totalPhases,
+		TotalPhases: p.countEnabledPhases(),
 		DeviceCount: len(devices),
 	})
 
 	// Sync profiler config with pipeline settings (fixes profiler race condition)
-	// This ensures the shared profiler uses Pipeline's scan intensity during scanning phase
 	p.profiler.UpdateScanConfig(
 		p.config.PortScan.Intensity,
 		p.config.PortScan.CustomPorts,
 		p.config.Timing.Profile,
 	)
 
-	// Get ports based on intensity
-	ports := p.getPortsForIntensity()
-
-	if len(ports) == 0 {
+	// Get ports based on intensity and run profiling if enabled
+	if ports := p.getPortsForIntensity(); len(ports) == 0 {
 		logging.GetLogger().InfoContext(ctx, "Port scanning disabled, skipping service discovery")
 	} else {
-		// Queue devices for profiling
-		for _, device := range devices {
-			if device.IP != "" {
-				_ = p.profiler.QueueProfile(device.IP)
-			}
+		p.queueDevicesForProfiling(devices)
+
+		spc := &scanningPhaseContext{
+			ctx:          ctx,
+			devices:      devices,
+			start:        start,
+			processedSet: make(map[string]bool, len(devices)),
 		}
-
-		// Wait for profiling to complete (with timeout)
-		timeout := p.config.Timing.PhaseTimeout
-		if timeout == 0 {
-			timeout = 10 * time.Minute
-		}
-
-		waitCtx, cancel := context.WithTimeout(ctx, timeout)
-		defer cancel()
-
-		// Poll for completion
-		ticker := time.NewTicker(500 * time.Millisecond)
-		defer ticker.Stop()
-
-		// Fixes #991: Track processed count incrementally using a set instead of O(n) scan each tick
-		processedSet := make(map[string]bool, len(devices))
-
-	waitLoop:
-		for {
-			select {
-			case <-waitCtx.Done():
-				// Fixes #938: Distinguish between timeout and intentional cancellation
-				if ctx.Err() != nil {
-					logging.GetLogger().InfoContext(ctx, "Scanning phase cancelled", "reason", ctx.Err())
-				} else if waitCtx.Err() == context.DeadlineExceeded {
-					logging.GetLogger().WarnContext(ctx, "Scanning phase timed out", "timeout", timeout)
-				}
-				break waitLoop
-			case <-ticker.C:
-				// Fixes #878: Check context in device iteration to exit promptly on cancellation
-				allDone := true
-				for _, device := range devices {
-					// Check for cancellation during iteration (fixes #878)
-					select {
-					case <-waitCtx.Done():
-						break waitLoop
-					default:
-					}
-					if device.IP == "" {
-						continue
-					}
-					// Fixes #991: Only check profiler state for devices not yet processed
-					if !processedSet[device.IP] {
-						if p.profiler.GetProfile(device.IP) != nil {
-							processedSet[device.IP] = true
-						} else if p.profiler.IsProfiling(device.IP) {
-							allDone = false
-						}
-					}
-				}
-				if allDone {
-					break waitLoop
-				}
-
-				// Broadcast progress using incremental count
-				processed := len(processedSet)
-				// Prevent division by zero (fixes #821)
-				percentComplete := float64(100)
-				if len(devices) > 0 {
-					percentComplete = float64(processed) / float64(len(devices)) * 100
-				}
-				p.broadcastEvent(EventPhaseProgress, PhaseProgressPayload{
-					Phase:           "scanning",
-					ProcessedCount:  processed,
-					TotalCount:      len(devices),
-					PercentComplete: percentComplete,
-					ElapsedMs:       time.Since(start).Milliseconds(),
-				})
-			}
-		}
+		p.waitForProfilingCompletion(spc)
 	}
 
-	// Attach profiles to devices
-	openPorts := 0
-	for _, device := range devices {
-		if device.IP != "" {
-			if profile := p.profiler.GetProfile(device.IP); profile != nil {
-				device.Profile = profile
-				openPorts += len(profile.OpenPorts)
-			}
-		}
-	}
-
-	duration := time.Since(start)
-	p.mu.Lock()
-	p.currentRun.PhaseDurations["scanning"] = duration
-	p.mu.Unlock()
-
-	p.broadcastEvent(EventPhaseCompleted, PhaseCompletedPayload{
-		Phase:     "scanning",
-		PortsOpen: openPorts,
-		Duration:  duration,
-	})
-
-	logging.GetLogger().InfoContext(ctx, "Scanning phase completed",
-		"openPorts", openPorts,
-		"duration", duration)
+	// Attach profiles to devices and finalize phase
+	openPorts := p.attachProfilesToDevices(devices)
+	p.finalizeScanningPhase(ctx, start, openPorts)
 
 	return devices, nil
 }
@@ -1105,6 +1056,172 @@ func (p *Pipeline) GetEnabledPhaseNames() []string {
 		phases = append(phases, "assessment")
 	}
 	return phases
+}
+
+// scanningPhaseContext holds the context for scanning phase execution.
+// This struct reduces the number of parameters passed between helper functions.
+type scanningPhaseContext struct {
+	ctx          context.Context
+	devices      []*DiscoveredDevice
+	start        time.Time
+	processedSet map[string]bool
+}
+
+// queueDevicesForProfiling queues all devices with valid IPs for profiling.
+func (p *Pipeline) queueDevicesForProfiling(devices []*DiscoveredDevice) {
+	for _, device := range devices {
+		if device.IP != "" {
+			_ = p.profiler.QueueProfile(device.IP)
+		}
+	}
+}
+
+// getScanningTimeout returns the timeout for the scanning phase.
+func (p *Pipeline) getScanningTimeout() time.Duration {
+	timeout := p.config.Timing.PhaseTimeout
+	if timeout == 0 {
+		timeout = pipelineDefaultPhaseTimeoutM * time.Minute
+	}
+	return timeout
+}
+
+// checkDeviceProfilingStatus checks if a single device's profiling is complete.
+// Returns true if the device is done (either profiled or not in progress).
+func (p *Pipeline) checkDeviceProfilingStatus(
+	spc *scanningPhaseContext,
+	device *DiscoveredDevice,
+) bool {
+	if device.IP == "" {
+		return true
+	}
+
+	// Only check profiler state for devices not yet processed
+	if !spc.processedSet[device.IP] {
+		if p.profiler.GetProfile(device.IP) != nil {
+			spc.processedSet[device.IP] = true
+			return true
+		}
+		if p.profiler.IsProfiling(device.IP) {
+			return false
+		}
+	}
+	return true
+}
+
+// checkAllDevicesProfiled checks if all devices have completed profiling.
+// Returns (true, false) when all devices are done, (false, true) if cancelled.
+func (p *Pipeline) checkAllDevicesProfiled(
+	waitCtx context.Context,
+	spc *scanningPhaseContext,
+) (bool, bool) {
+	for _, device := range spc.devices {
+		// Check for cancellation during iteration (fixes #878)
+		select {
+		case <-waitCtx.Done():
+			return false, true
+		default:
+		}
+		if !p.checkDeviceProfilingStatus(spc, device) {
+			return false, false
+		}
+	}
+	return true, false
+}
+
+// broadcastScanProgress broadcasts the current scanning phase progress.
+func (p *Pipeline) broadcastScanProgress(spc *scanningPhaseContext) {
+	processed := len(spc.processedSet)
+	totalDevices := len(spc.devices)
+
+	// Prevent division by zero (fixes #821)
+	percentComplete := float64(pipelinePercentComplete)
+	if totalDevices > 0 {
+		percentComplete = float64(processed) / float64(totalDevices) * pipelinePercentComplete
+	}
+
+	p.broadcastEvent(EventPhaseProgress, PhaseProgressPayload{
+		Phase:           "scanning",
+		ProcessedCount:  processed,
+		TotalCount:      totalDevices,
+		PercentComplete: percentComplete,
+		ElapsedMs:       time.Since(spc.start).Milliseconds(),
+	})
+}
+
+// handleScanningContextDone handles context cancellation or timeout.
+func (p *Pipeline) handleScanningContextDone(
+	ctx context.Context,
+	waitCtx context.Context,
+	timeout time.Duration,
+) {
+	// Fixes #938: Distinguish between timeout and intentional cancellation
+	if ctx.Err() != nil {
+		logging.GetLogger().InfoContext(ctx, "Scanning phase cancelled", "reason", ctx.Err())
+	} else if waitCtx.Err() == context.DeadlineExceeded {
+		logging.GetLogger().WarnContext(ctx, "Scanning phase timed out", "timeout", timeout)
+	}
+}
+
+// waitForProfilingCompletion waits for all device profiles to complete.
+// Returns when all devices are profiled, context is cancelled, or timeout occurs.
+func (p *Pipeline) waitForProfilingCompletion(spc *scanningPhaseContext) {
+	timeout := p.getScanningTimeout()
+	waitCtx, cancel := context.WithTimeout(spc.ctx, timeout)
+	defer cancel()
+
+	ticker := time.NewTicker(pipelineProgressTickerMs * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-waitCtx.Done():
+			p.handleScanningContextDone(spc.ctx, waitCtx, timeout)
+			return
+		case <-ticker.C:
+			allDone, cancelled := p.checkAllDevicesProfiled(waitCtx, spc)
+			if cancelled || allDone {
+				return
+			}
+			p.broadcastScanProgress(spc)
+		}
+	}
+}
+
+// attachProfilesToDevices attaches profiler results to devices and counts open ports.
+func (p *Pipeline) attachProfilesToDevices(devices []*DiscoveredDevice) int {
+	openPorts := 0
+	for _, device := range devices {
+		if device.IP != "" {
+			if profile := p.profiler.GetProfile(device.IP); profile != nil {
+				device.Profile = profile
+				openPorts += len(profile.OpenPorts)
+			}
+		}
+	}
+	return openPorts
+}
+
+// finalizeScanningPhase records the phase duration and broadcasts completion.
+func (p *Pipeline) finalizeScanningPhase(
+	ctx context.Context,
+	start time.Time,
+	openPorts int,
+) {
+	duration := time.Since(start)
+
+	p.mu.Lock()
+	p.currentRun.PhaseDurations["scanning"] = duration
+	p.mu.Unlock()
+
+	p.broadcastEvent(EventPhaseCompleted, PhaseCompletedPayload{
+		Phase:     "scanning",
+		PortsOpen: openPorts,
+		Duration:  duration,
+	})
+
+	logging.GetLogger().InfoContext(ctx, "Scanning phase completed",
+		"openPorts", openPorts,
+		"duration", duration)
 }
 
 // getPortsForIntensity returns the port list based on configured intensity.

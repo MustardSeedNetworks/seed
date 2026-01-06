@@ -1,10 +1,19 @@
-// Package database provides user store adapter for authentication.
-// (c) 2025 Mustard Seed Networks
 package database
+
+// (c) 2025 Mustard Seed Networks
 
 import (
 	"context"
 	"time"
+)
+
+// User authentication security defaults.
+const (
+	// defaultMaxLoginAttempts is the number of failed login attempts before account lockout.
+	defaultMaxLoginAttempts = 5
+
+	// defaultLockDurationMinutes is the account lockout duration in minutes.
+	defaultLockDurationMinutes = 15
 )
 
 // UserStoreAdapter adapts the database to the auth.UserStore interface.
@@ -20,8 +29,8 @@ type UserStoreAdapter struct {
 func NewUserStoreAdapter(db *DB) *UserStoreAdapter {
 	return &UserStoreAdapter{
 		db:               db,
-		maxLoginAttempts: 5,                // Lock after 5 failed attempts
-		lockDuration:     15 * time.Minute, // Lock for 15 minutes
+		maxLoginAttempts: defaultMaxLoginAttempts,
+		lockDuration:     defaultLockDurationMinutes * time.Minute,
 	}
 }
 

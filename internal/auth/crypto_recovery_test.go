@@ -1,6 +1,6 @@
-// Package auth_test tests the auth package.
-// This file tests the crypto/rand retry logic for Plan G7.
 package auth_test
+
+// This file tests the crypto/rand retry logic for Plan G7.
 
 import (
 	"bytes"

@@ -1,4 +1,3 @@
-// Package database provides device repository for discovered network devices.
 package database
 
 import (

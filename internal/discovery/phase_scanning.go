@@ -1,7 +1,7 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // This file implements Phase 3 (Service Discovery) of the discovery pipeline.
 // It performs port scanning and extended SNMP MIB collection for discovered devices.
-package discovery
 
 import (
 	"context"
@@ -12,6 +12,18 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/logging"
+)
+
+// Scanning phase constants.
+const (
+	scanProgressTickerMs = 500 // Progress reporting interval in milliseconds
+	scanPercentComplete  = 100 // Value representing 100% completion
+
+	// Common port numbers for HTTP probing.
+	portHTTP     = 80
+	portHTTPAlt  = 8080
+	portHTTPS    = 443
+	portHTTPSAlt = 8443
 )
 
 // ScanningPhase implements the Phase interface for service discovery.
@@ -114,7 +126,7 @@ func (p *ScanningPhase) Run(
 	// Progress reporting goroutine
 	done := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(500 * time.Millisecond)
+		ticker := time.NewTicker(scanProgressTickerMs * time.Millisecond)
 		defer ticker.Stop()
 		for {
 			select {
@@ -181,69 +193,121 @@ func (p *ScanningPhase) scanWorker(
 	portScan, snmpScan bool,
 ) {
 	for device := range deviceCh {
-		select {
-		case <-ctx.Done():
+		if p.shouldStopScanning(ctx) {
 			return
-		default:
 		}
 
 		if device.IP == "" {
 			continue
 		}
 
-		progress.SetCurrentTarget(device.IP)
-
-		// Apply host delay for IDS-friendly scanning
-		if p.pipelineConfig.Timing.HostDelay > 0 {
-			time.Sleep(p.pipelineConfig.Timing.HostDelay)
-		}
-
-		var wg sync.WaitGroup
-		var mu sync.Mutex
-
-		// Port scanning (if enabled)
-		if portScan {
-			wg.Go(func() {
-				profile := p.scanPorts(ctx, device.IP)
-				if profile != nil {
-					mu.Lock()
-					device.Profile = profile
-					progress.AddPortsFound(len(profile.OpenPorts))
-					mu.Unlock()
-				}
-			})
-		}
-
-		// Extended SNMP collection (if enabled)
-		if snmpScan {
-			wg.Go(func() {
-				snmpData := p.collectSNMP(ctx, device.IP)
-				if snmpData != nil {
-					mu.Lock()
-					device.SNMPData = snmpData
-					if len(snmpData.Errors) == 0 || snmpData.System != nil {
-						progress.IncrementSNMPSuccess()
-					}
-					mu.Unlock()
-				}
-			})
-		}
-
-		wg.Wait()
-		progress.IncrementScanned()
-
-		// Broadcast device update if we have a broadcaster
-		if p.broadcaster != nil {
-			p.broadcaster.BroadcastPipelineEvent(PipelineEvent{
-				Type:      EventDeviceUpdated,
-				Timestamp: time.Now(),
-				Payload: DeviceUpdatedPayload{
-					Device: device,
-					Phase:  "scanning",
-				},
-			})
-		}
+		p.processDevice(ctx, device, progress, portScan, snmpScan)
 	}
+}
+
+// shouldStopScanning checks if the context has been cancelled.
+func (p *ScanningPhase) shouldStopScanning(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
+	}
+}
+
+// processDevice handles scanning for a single device.
+func (p *ScanningPhase) processDevice(
+	ctx context.Context,
+	device *DiscoveredDevice,
+	progress *ScanningProgress,
+	portScan, snmpScan bool,
+) {
+	progress.SetCurrentTarget(device.IP)
+	p.applyHostDelay()
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	p.startPortScan(ctx, &wg, &mu, device, progress, portScan)
+	p.startSNMPCollection(ctx, &wg, &mu, device, progress, snmpScan)
+
+	wg.Wait()
+	progress.IncrementScanned()
+
+	p.broadcastDeviceUpdate(device)
+}
+
+// applyHostDelay sleeps for the configured host delay (IDS-friendly scanning).
+func (p *ScanningPhase) applyHostDelay() {
+	if p.pipelineConfig.Timing.HostDelay > 0 {
+		time.Sleep(p.pipelineConfig.Timing.HostDelay)
+	}
+}
+
+// startPortScan launches a goroutine to scan ports if enabled.
+func (p *ScanningPhase) startPortScan(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	mu *sync.Mutex,
+	device *DiscoveredDevice,
+	progress *ScanningProgress,
+	enabled bool,
+) {
+	if !enabled {
+		return
+	}
+
+	wg.Go(func() {
+		profile := p.scanPorts(ctx, device.IP)
+		if profile != nil {
+			mu.Lock()
+			device.Profile = profile
+			progress.AddPortsFound(len(profile.OpenPorts))
+			mu.Unlock()
+		}
+	})
+}
+
+// startSNMPCollection launches a goroutine to collect SNMP data if enabled.
+func (p *ScanningPhase) startSNMPCollection(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	mu *sync.Mutex,
+	device *DiscoveredDevice,
+	progress *ScanningProgress,
+	enabled bool,
+) {
+	if !enabled {
+		return
+	}
+
+	wg.Go(func() {
+		snmpData := p.collectSNMP(ctx, device.IP)
+		if snmpData != nil {
+			mu.Lock()
+			device.SNMPData = snmpData
+			if len(snmpData.Errors) == 0 || snmpData.System != nil {
+				progress.IncrementSNMPSuccess()
+			}
+			mu.Unlock()
+		}
+	})
+}
+
+// broadcastDeviceUpdate sends a device update event if a broadcaster is configured.
+func (p *ScanningPhase) broadcastDeviceUpdate(device *DiscoveredDevice) {
+	if p.broadcaster == nil {
+		return
+	}
+
+	p.broadcaster.BroadcastPipelineEvent(PipelineEvent{
+		Type:      EventDeviceUpdated,
+		Timestamp: time.Now(),
+		Payload: DeviceUpdatedPayload{
+			Device: device,
+			Phase:  "scanning",
+		},
+	})
 }
 
 // scanPorts performs port scanning on a device.
@@ -259,71 +323,10 @@ func (p *ScanningPhase) scanPorts(ctx context.Context, ip string) *DeviceProfile
 		DeviceIcons: []string{},
 	}
 
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, p.pipelineConfig.Timing.MaxConcurrentHosts)
+	p.scanAllPorts(ctx, ip, ports, profile)
+	p.probeHTTPServices(ctx, ip, profile)
+	p.probeBasicSNMP(ctx, ip, profile)
 
-	for _, port := range ports {
-		select {
-		case <-ctx.Done():
-			return profile
-		default:
-		}
-
-		wg.Add(1)
-		go func(port int) {
-			defer wg.Done()
-
-			// Check for cancellation before acquiring semaphore
-			select {
-			case <-ctx.Done():
-				return
-			case sem <- struct{}{}:
-			}
-			defer func() { <-sem }()
-
-			// Check for cancellation before sleeping
-			if p.pipelineConfig.Timing.ProbeDelay > 0 {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(p.pipelineConfig.Timing.ProbeDelay):
-				}
-			}
-
-			result := p.profiler.checkPortWithConfig(ctx, ip, port)
-			if result.IsOpen {
-				mu.Lock()
-				profile.OpenPorts = append(profile.OpenPorts, result)
-				mu.Unlock()
-			}
-		}(port)
-	}
-
-	wg.Wait()
-
-	// Probe HTTP/HTTPS if ports are open
-	for _, op := range profile.OpenPorts {
-		if op.Port == 80 || op.Port == 8080 {
-			if info := p.profiler.probeHTTP(ctx, ip, op.Port, false); info != nil {
-				profile.HTTPInfo = info
-				break
-			}
-		}
-		if op.Port == 443 || op.Port == 8443 {
-			if info := p.profiler.probeHTTP(ctx, ip, op.Port, true); info != nil {
-				profile.HTTPInfo = info
-				break
-			}
-		}
-	}
-
-	// Try SNMP probing (basic - for device type inference)
-	if info := p.profiler.probeSNMP(ctx, ip); info != nil {
-		profile.SNMPInfo = info
-	}
-
-	// Infer device type and icons
 	p.profiler.inferDeviceType(profile)
 
 	logging.GetLogger().DebugContext(ctx, "Port scan completed",
@@ -332,6 +335,111 @@ func (p *ScanningPhase) scanPorts(ctx context.Context, ip string) *DeviceProfile
 		"deviceType", profile.DeviceType)
 
 	return profile
+}
+
+// scanAllPorts scans all specified ports concurrently and populates the profile.
+func (p *ScanningPhase) scanAllPorts(
+	ctx context.Context,
+	ip string,
+	ports []int,
+	profile *DeviceProfile,
+) {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, p.pipelineConfig.Timing.MaxConcurrentHosts)
+
+	for _, port := range ports {
+		if p.shouldStopScanning(ctx) {
+			return
+		}
+
+		wg.Add(1)
+		go p.scanSinglePort(ctx, ip, port, sem, &mu, &wg, profile)
+	}
+
+	wg.Wait()
+}
+
+// scanSinglePort scans a single port with proper semaphore and delay handling.
+func (p *ScanningPhase) scanSinglePort(
+	ctx context.Context,
+	ip string,
+	port int,
+	sem chan struct{},
+	mu *sync.Mutex,
+	wg *sync.WaitGroup,
+	profile *DeviceProfile,
+) {
+	defer wg.Done()
+
+	if !p.acquireSemaphore(ctx, sem) {
+		return
+	}
+	defer func() { <-sem }()
+
+	if !p.waitProbeDelay(ctx) {
+		return
+	}
+
+	result := p.profiler.checkPortWithConfig(ctx, ip, port)
+	if result.IsOpen {
+		mu.Lock()
+		profile.OpenPorts = append(profile.OpenPorts, result)
+		mu.Unlock()
+	}
+}
+
+// acquireSemaphore attempts to acquire a slot in the semaphore, respecting context cancellation.
+func (p *ScanningPhase) acquireSemaphore(ctx context.Context, sem chan struct{}) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	case sem <- struct{}{}:
+		return true
+	}
+}
+
+// waitProbeDelay waits for the configured probe delay, respecting context cancellation.
+func (p *ScanningPhase) waitProbeDelay(ctx context.Context) bool {
+	if p.pipelineConfig.Timing.ProbeDelay <= 0 {
+		return true
+	}
+
+	select {
+	case <-ctx.Done():
+		return false
+	case <-time.After(p.pipelineConfig.Timing.ProbeDelay):
+		return true
+	}
+}
+
+// probeHTTPServices probes HTTP/HTTPS services on open ports.
+func (p *ScanningPhase) probeHTTPServices(ctx context.Context, ip string, profile *DeviceProfile) {
+	for _, op := range profile.OpenPorts {
+		if info := p.tryHTTPProbe(ctx, ip, op.Port); info != nil {
+			profile.HTTPInfo = info
+			return
+		}
+	}
+}
+
+// tryHTTPProbe attempts to probe HTTP or HTTPS based on the port.
+func (p *ScanningPhase) tryHTTPProbe(ctx context.Context, ip string, port int) *HTTPInfo {
+	switch port {
+	case portHTTP, portHTTPAlt:
+		return p.profiler.probeHTTP(ctx, ip, port, false)
+	case portHTTPS, portHTTPSAlt:
+		return p.profiler.probeHTTP(ctx, ip, port, true)
+	default:
+		return nil
+	}
+}
+
+// probeBasicSNMP performs basic SNMP probing for device type inference.
+func (p *ScanningPhase) probeBasicSNMP(ctx context.Context, ip string, profile *DeviceProfile) {
+	if info := p.profiler.probeSNMP(ctx, ip); info != nil {
+		profile.SNMPInfo = info
+	}
 }
 
 // collectSNMP performs extended SNMP MIB collection.
@@ -437,10 +545,10 @@ func (p *ScanningProgress) PercentComplete() float64 {
 	p.mu.RUnlock()
 
 	if total == 0 {
-		return 100
+		return scanPercentComplete
 	}
 	scanned := p.Scanned()
-	return float64(scanned) / float64(total) * 100
+	return float64(scanned) / float64(total) * scanPercentComplete
 }
 
 // DeviceUpdatedPayload is sent when a device is updated during scanning.

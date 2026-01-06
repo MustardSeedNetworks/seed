@@ -1,4 +1,3 @@
-// Package network exports internal functions for testing.
 package network
 
 import "sync"

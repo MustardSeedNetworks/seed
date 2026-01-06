@@ -44,67 +44,61 @@ type Paths struct {
 //
 // Returns a Paths structure with all resolved directory and file paths.
 func Resolve(mode Mode) *Paths {
-	// Auto-detect mode if needed
-	actualMode := mode
-	if mode == ModeAuto {
-		if isSystemdService() || os.Getuid() == 0 {
-			actualMode = ModeSystem
-		} else {
-			actualMode = ModeUser
-		}
-	}
-
+	actualMode := detectActualMode(mode)
 	p := &Paths{Mode: actualMode}
 
 	if actualMode == ModeSystem {
-		p.ConfigDir = filepath.Join("/etc", appName)
-		p.DataDir = filepath.Join("/var/lib", appName)
-		p.LogDir = filepath.Join("/var/log", appName)
-		p.CacheDir = filepath.Join("/var/cache", appName)
-		p.BinaryDir = "/usr/local/bin"
+		resolveSystemPaths(p)
 	} else {
-		// User mode - XDG Base Directory compliant
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			// Fallback to current directory if home unavailable
-			homeDir = "."
-		}
-
-		// XDG_CONFIG_HOME
-		configHome := os.Getenv("XDG_CONFIG_HOME")
-		if configHome == "" {
-			configHome = filepath.Join(homeDir, ".config")
-		}
-		p.ConfigDir = filepath.Join(configHome, appName)
-
-		// XDG_DATA_HOME
-		dataHome := os.Getenv("XDG_DATA_HOME")
-		if dataHome == "" {
-			dataHome = filepath.Join(homeDir, ".local", "share")
-		}
-		p.DataDir = filepath.Join(dataHome, appName)
-
-		// XDG_STATE_HOME (for logs)
-		stateHome := os.Getenv("XDG_STATE_HOME")
-		if stateHome == "" {
-			stateHome = filepath.Join(homeDir, ".local", "state")
-		}
-		p.LogDir = filepath.Join(stateHome, appName, "logs")
-
-		// XDG_CACHE_HOME
-		cacheHome := os.Getenv("XDG_CACHE_HOME")
-		if cacheHome == "" {
-			cacheHome = filepath.Join(homeDir, ".cache")
-		}
-		p.CacheDir = filepath.Join(cacheHome, appName)
-
-		// User binary dir
-		p.BinaryDir = filepath.Join(homeDir, ".local", "bin")
+		resolveUserPaths(p)
 	}
 
 	p.ConfigFile = filepath.Join(p.ConfigDir, defaultConfig)
 
 	return p
+}
+
+// detectActualMode resolves ModeAuto to either ModeSystem or ModeUser.
+func detectActualMode(mode Mode) Mode {
+	if mode != ModeAuto {
+		return mode
+	}
+	if isSystemdService() || os.Getuid() == 0 {
+		return ModeSystem
+	}
+	return ModeUser
+}
+
+// resolveSystemPaths sets system-level paths (FHS compliant).
+func resolveSystemPaths(p *Paths) {
+	p.ConfigDir = filepath.Join("/etc", appName)
+	p.DataDir = filepath.Join("/var/lib", appName)
+	p.LogDir = filepath.Join("/var/log", appName)
+	p.CacheDir = filepath.Join("/var/cache", appName)
+	p.BinaryDir = "/usr/local/bin"
+}
+
+// resolveUserPaths sets user-level paths (XDG Base Directory compliant).
+func resolveUserPaths(p *Paths) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// Fallback to current directory if home unavailable
+		homeDir = "."
+	}
+
+	p.ConfigDir = filepath.Join(xdgDir("XDG_CONFIG_HOME", homeDir, ".config"), appName)
+	p.DataDir = filepath.Join(xdgDir("XDG_DATA_HOME", homeDir, ".local", "share"), appName)
+	p.LogDir = filepath.Join(xdgDir("XDG_STATE_HOME", homeDir, ".local", "state"), appName, "logs")
+	p.CacheDir = filepath.Join(xdgDir("XDG_CACHE_HOME", homeDir, ".cache"), appName)
+	p.BinaryDir = filepath.Join(homeDir, ".local", "bin")
+}
+
+// xdgDir returns the XDG directory from environment or constructs default.
+func xdgDir(envVar, homeDir string, defaultSubdirs ...string) string {
+	if dir := os.Getenv(envVar); dir != "" {
+		return dir
+	}
+	return filepath.Join(append([]string{homeDir}, defaultSubdirs...)...)
 }
 
 // ResolveConfigPath returns the config file path with priority:

@@ -1,4 +1,5 @@
-// Package discovery provides CVE (Common Vulnerabilities and Exposures) scanning.
+package discovery
+
 //
 // This file integrates with the National Vulnerability Database (NVD) to identify known
 // security vulnerabilities in discovered network devices based on their fingerprinted
@@ -13,7 +14,6 @@
 //
 // The scanner uses device fingerprinting results (OS, services, versions) to identify
 // applicable CVEs and provides detailed vulnerability reports with remediation guidance.
-package discovery
 
 import (
 	"context"
@@ -31,6 +31,8 @@ const (
 	nvdAPIBaseURL       = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 	nvdRateLimitNoKey   = 10  // requests per 30 seconds without API key
 	nvdRateLimitWithKey = 100 // requests per 30 seconds with API key
+	nvdHTTPTimeoutS     = 30  // HTTP client timeout in seconds for NVD API
+	nvdAPIKeyCheckTimeS = 15  // HTTP client timeout for API key validation
 )
 
 // NVDProvider implements CVEProvider using the NVD API.
@@ -111,7 +113,7 @@ func NewNVDProvider(apiKey string) (*NVDProvider, error) {
 
 	return &NVDProvider{
 		apiKey:    apiKey,
-		client:    &http.Client{Timeout: 30 * time.Second},
+		client:    &http.Client{Timeout: nvdHTTPTimeoutS * time.Second},
 		rateLimit: rateLimit,
 	}, nil
 }
@@ -303,7 +305,7 @@ func ValidateNVDAPIKey(ctx context.Context, apiKey string) (bool, error) {
 	// Add API key header
 	req.Header.Set("Apikey", apiKey)
 
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := &http.Client{Timeout: nvdAPIKeyCheckTimeS * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return false, fmt.Errorf("failed to make request: %w", err)
