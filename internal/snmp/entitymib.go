@@ -1,5 +1,3 @@
-// Package snmp provides SNMP query functionality for network device discovery.
-// This file implements ENTITY-MIB (RFC 6933) collection for physical inventory.
 package snmp
 
 import (

@@ -19,7 +19,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-func initMCPCmd() {
+func initMCPCmd(state *cliState) {
 	mcpCmd := &cobra.Command{
 		Use:   "mcp",
 		Short: "Start MCP server over stdio",
@@ -38,14 +38,16 @@ Example usage in .claude/mcp.json:
     }
   }
 }`,
-		Run: runMCP,
+		Run: func(cmd *cobra.Command, args []string) {
+			runMCP(cmd, args, state)
+		},
 	}
-	cli.rootCmd.AddCommand(mcpCmd)
+	state.rootCmd.AddCommand(mcpCmd)
 }
 
-func runMCP(_ *cobra.Command, _ []string) {
+func runMCP(_ *cobra.Command, _ []string, state *cliState) {
 	// Resolve config path
-	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
 	// Load configuration
 	cfg, err := config.Load(configPath)

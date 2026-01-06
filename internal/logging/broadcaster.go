@@ -284,10 +284,12 @@ func (lb *LogBroadcaster) LogCount() int {
 	return lb.buffer.Count()
 }
 
-// Broadcaster accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
+// Broadcaster accessor functions use closure-encapsulated state for thread-safe singleton access.
 // getBroadcaster returns the global broadcaster instance.
 // setBroadcaster sets the global broadcaster instance.
 // _ (clearBroadcaster) resets the global broadcaster to nil (unused but required for pattern).
+//
+//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
 var (
 	getBroadcaster, setBroadcaster, _ = func() (
 		func() *LogBroadcaster,

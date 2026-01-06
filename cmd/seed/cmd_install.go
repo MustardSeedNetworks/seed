@@ -16,7 +16,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-func initInstallCmd() {
+func initInstallCmd(state *cliState) {
 	installCmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install Seed as a system service",
@@ -29,13 +29,15 @@ This command will:
 4. Set capabilities for raw socket access
 5. Install and enable the systemd service
 6. Create a default configuration file if needed`,
-		Run: runInstall,
+		Run: func(cmd *cobra.Command, args []string) {
+			runInstall(cmd, args, state)
+		},
 	}
 	installCmd.Flags().Bool("system", false, "Install as system service (requires root)")
 	installCmd.Flags().Bool("user", false, "Install as user service (systemd --user)")
 	installCmd.Flags().Bool("no-service", false, "Skip systemd service installation")
 	installCmd.Flags().BoolP("force", "f", false, "Overwrite existing installation")
-	cli.rootCmd.AddCommand(installCmd)
+	state.rootCmd.AddCommand(installCmd)
 }
 
 const systemdServiceTemplate = `[Unit]
@@ -92,7 +94,8 @@ type serviceConfig struct {
 }
 
 //nolint:gocyclo // Command handler complexity is acceptable
-func runInstall(cmd *cobra.Command, _ []string) {
+//nolint:gocognit // CLI install workflow requires sequential steps
+func runInstall(cmd *cobra.Command, _ []string, _ *cliState) {
 	if runtime.GOOS != "linux" {
 		fmt.Fprintf(os.Stderr, "Error: install command is only supported on Linux\n")
 		os.Exit(1)

@@ -126,6 +126,7 @@ async function getCsrfToken(): Promise<string | null> {
 /**
  * Clears the cached CSRF token. Should be called on logout.
  */
+// biome-ignore lint/style/useNamingConvention: CSRF is a well-known acronym
 export function clearCSRFToken(): void {
   csrfToken = null;
 }

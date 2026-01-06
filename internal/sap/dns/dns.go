@@ -1,4 +1,3 @@
-// Package dns provides DNS testing and lookup functionality with timing.
 package dns
 
 import (

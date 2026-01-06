@@ -43,7 +43,9 @@ export interface Device {
   lastSeen: string;
   isLocal?: boolean;
   isRouter?: boolean;
+  // biome-ignore lint/style/useNamingConvention: Matches backend API
   hasDuplicateIP?: boolean;
+  // biome-ignore lint/style/useNamingConvention: Matches backend API
   duplicateMACs?: string[];
   lldpInfo?: LLDPDeviceInfo;
   cdpInfo?: CDPDeviceInfo;
@@ -55,6 +57,7 @@ export interface Device {
 }
 
 /** LLDP-specific device information */
+// biome-ignore lint/style/useNamingConvention: LLDP is an acronym
 export interface LLDPDeviceInfo {
   chassisId: string;
   portId: string;
@@ -66,6 +69,7 @@ export interface LLDPDeviceInfo {
 }
 
 /** CDP-specific device information */
+// biome-ignore lint/style/useNamingConvention: CDP is an acronym
 export interface CDPDeviceInfo {
   deviceId: string;
   portId: string;
@@ -76,6 +80,7 @@ export interface CDPDeviceInfo {
 }
 
 /** EDP-specific device information */
+// biome-ignore lint/style/useNamingConvention: EDP is an acronym
 export interface EDPDeviceInfo {
   deviceId: string;
   slot?: number;
@@ -84,6 +89,7 @@ export interface EDPDeviceInfo {
 }
 
 /** NDP (IPv6 Neighbor Discovery) information */
+// biome-ignore lint/style/useNamingConvention: NDP is an acronym
 export interface NDPDeviceInfo {
   isRouter: boolean;
   reachabilityState?: string;
@@ -102,11 +108,13 @@ export interface DeviceProfile {
 }
 
 /** SNMP data collected from device */
+// biome-ignore lint/style/useNamingConvention: SNMP is an acronym
 export interface SNMPFullData {
   collectedAt: string;
   system?: {
     sysName?: string;
     sysDescr?: string;
+    // biome-ignore lint/style/useNamingConvention: SNMP OID naming
     sysObjectID?: string;
     sysUpTime?: number;
     sysContact?: string;

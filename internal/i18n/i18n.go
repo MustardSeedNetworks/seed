@@ -30,10 +30,36 @@ import (
 //go:embed locales
 var localesFS embed.FS
 
-// Bundle holds all loaded translations.
+// Bundle accessor functions use closure-encapsulated state for thread-safe singleton access.
+// getBundle returns the global i18n bundle instance.
+// setBundle sets the global i18n bundle instance.
+// getBundleOnce returns the sync.Once for lazy bundle initialization.
+//
+//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
 var (
-	bundle     *i18n.Bundle
-	bundleOnce sync.Once
+	getBundle, setBundle, getBundleOnce = func() (
+		func() *i18n.Bundle,
+		func(*i18n.Bundle),
+		func() *sync.Once,
+	) {
+		var (
+			mu         sync.RWMutex
+			bundle     *i18n.Bundle
+			bundleOnce sync.Once
+		)
+
+		return func() *i18n.Bundle {
+				mu.RLock()
+				defer mu.RUnlock()
+				return bundle
+			}, func(b *i18n.Bundle) {
+				mu.Lock()
+				defer mu.Unlock()
+				bundle = b
+			}, func() *sync.Once {
+				return &bundleOnce
+			}
+	}()
 )
 
 // DefaultLanguage is the fallback language.
@@ -51,9 +77,9 @@ func getNamespaces() []string {
 
 // GetBundle returns the singleton i18n bundle with all translations loaded.
 func GetBundle() *i18n.Bundle {
-	bundleOnce.Do(func() {
-		bundle = i18n.NewBundle(language.English)
-		bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+	getBundleOnce().Do(func() {
+		newBundle := i18n.NewBundle(language.English)
+		newBundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
 		// Load all locale files for each language
 		for _, lang := range GetSupportedLanguages() {
@@ -75,7 +101,7 @@ func GetBundle() *i18n.Bundle {
 				flatMessages := flattenMessages(messages, ns)
 				for key, value := range flatMessages {
 					if strValue, ok := value.(string); ok {
-						if addErr := bundle.AddMessages(language.Make(lang), &i18n.Message{
+						if addErr := newBundle.AddMessages(language.Make(lang), &i18n.Message{
 							ID:    key,
 							Other: strValue,
 						}); addErr != nil {
@@ -93,9 +119,10 @@ func GetBundle() *i18n.Bundle {
 				}
 			}
 		}
+		setBundle(newBundle)
 	})
 
-	return bundle
+	return getBundle()
 }
 
 // flattenMessages converts nested JSON structure to flat keys.

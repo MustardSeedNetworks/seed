@@ -27,18 +27,18 @@
  * Dependencies: Individual component files in this directory
  */
 
-export { AppearanceSettings } from "./AppearanceSettings";
-export { AutoSaveIndicator } from "./AutoSaveIndicator";
-export { CableTestSettings } from "./CableTestSettings";
-export { ConfigBackupsSection } from "./ConfigBackupsSection";
-export { DiscoverySettings } from "./DiscoverySettings";
-export { DnsSettings } from "./DNSSettings";
-export { HealthChecksSettings } from "./HealthChecksSettings";
-export { LinkSettings } from "./LinkSettings";
-export { MtuControl } from "./MTUControl";
-export { PerformanceSettings } from "./PerformanceSettings";
-export { SnmpSettings } from "./SNMPSettings";
-export { ThresholdsSettings } from "./ThresholdsSettings";
-export { VlanControl } from "./VLANControl";
-export { VulnerabilitySettings } from "./VulnerabilitySettings";
-export { WiFiSettings } from "./WiFiSettings";
+export { AppearanceSettings } from "./appearance-settings";
+export { AutoSaveIndicator } from "./auto-save-indicator";
+export { CableTestSettings } from "./cable-test-settings";
+export { ConfigBackupsSection } from "./config-backups-section";
+export { DiscoverySettings } from "./discovery-settings";
+export { DnsSettings } from "./dns-settings";
+export { HealthChecksSettings } from "./health-checks-settings";
+export { LinkSettings } from "./link-settings";
+export { MtuControl } from "./mtu-control";
+export { PerformanceSettings } from "./performance-settings";
+export { SnmpSettings } from "./snmp-settings";
+export { ThresholdsSettings } from "./thresholds-settings";
+export { VlanControl } from "./vlan-control";
+export { VulnerabilitySettings } from "./vulnerability-settings";
+export { WiFiSettings } from "./wifi-settings";

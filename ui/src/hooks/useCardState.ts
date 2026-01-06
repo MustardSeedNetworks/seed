@@ -1,3 +1,4 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Complex component
 /**
  * Card State Management Hook
  *
@@ -24,7 +25,7 @@ import type {
   VlanData,
   WiFiData,
 } from "../components/cards";
-import type { TraceHopMessage } from "../components/cards/PathDiscoveryCard";
+import type { TraceHopMessage } from "../components/cards/path-discovery-card";
 import { LogComponents, logger } from "../lib/logger";
 import type { PipelineEvent, PipelineEventType } from "./usePipelineStatus";
 import type { CardUpdate, Message } from "./useWebSocket";

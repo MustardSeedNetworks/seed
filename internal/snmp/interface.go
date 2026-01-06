@@ -1,4 +1,3 @@
-// Package snmp provides SNMP query functionality for network device discovery.
 package snmp
 
 import (

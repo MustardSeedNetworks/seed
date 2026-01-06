@@ -1,5 +1,3 @@
-// Package snmp provides SNMP query functionality for network device discovery.
-// This file implements IP-MIB (RFC 4293) collection for IP address information.
 package snmp
 
 import (

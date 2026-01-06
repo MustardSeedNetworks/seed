@@ -1,7 +1,3 @@
-// Package snmp provides SNMP query functionality for network device discovery.
-// This file implements LLDP-MIB collection for L2 topology discovery.
-// LLDP (Link Layer Discovery Protocol) provides neighbor information for
-// building network topology diagrams.
 package snmp
 
 import (

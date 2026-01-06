@@ -25,6 +25,7 @@ type migrationDef struct {
 // getMigrationDefs returns migration definitions without versions.
 // IMPORTANT: Never modify existing migrations, only add new ones.
 // The version is computed as index + 1.
+//nolint:funlen // Migration definitions are intentionally in one place
 func getMigrationDefs() []migrationDef {
 	return []migrationDef{
 		{

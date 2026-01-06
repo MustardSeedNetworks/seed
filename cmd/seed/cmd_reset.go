@@ -13,7 +13,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-func initResetCmd() {
+func initResetCmd(state *cliState) {
 	resetCmd := &cobra.Command{
 		Use:   "reset-config",
 		Short: "Reset configuration to defaults",
@@ -22,16 +22,20 @@ func initResetCmd() {
 By default, this will create a backup of the current config and replace it
 with a fresh default configuration. Authentication credentials can optionally
 be preserved.`,
-		Run: runReset,
+		Run: func(cmd *cobra.Command, args []string) {
+			runReset(cmd, args, state)
+		},
 	}
 	resetCmd.Flags().Bool("preserve-auth", false, "Preserve authentication credentials")
 	resetCmd.Flags().Bool("preserve-jwt", false, "Preserve JWT secret")
 	resetCmd.Flags().Bool("backup", true, "Create backup before reset")
 	resetCmd.Flags().BoolP("force", "f", false, "Skip confirmation prompt")
-	cli.rootCmd.AddCommand(resetCmd)
+	state.rootCmd.AddCommand(resetCmd)
 }
 
-func runReset(cmd *cobra.Command, _ []string) {
+//nolint:gocognit // CLI reset workflow requires sequential steps
+//nolint:funlen,gocognit // CLI reset workflow has many steps
+func runReset(cmd *cobra.Command, _ []string, state *cliState) {
 	preserveAuth, err := cmd.Flags().GetBool("preserve-auth")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting preserve-auth flag: %v\n", err)
@@ -54,7 +58,7 @@ func runReset(cmd *cobra.Command, _ []string) {
 	}
 
 	// Resolve config path
-	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
 	// Load existing config if it exists (for preservation)
 	var existingCfg *config.Config

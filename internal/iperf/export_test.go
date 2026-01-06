@@ -4,12 +4,12 @@ package iperf
 
 // IperfBinaryPath returns the current cached iperf binary path for testing.
 func IperfBinaryPath() string {
-	return iperfBinaryPath
+	return getIperfBinaryPath()
 }
 
 // SetIperfBinaryPath sets the cached iperf binary path for testing.
 func SetIperfBinaryPath(path string) {
-	iperfBinaryPath = path
+	setIperfBinaryPath(path)
 }
 
 // FindIperf3Binary exposes the internal findIperf3Binary function for testing.

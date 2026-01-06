@@ -1,4 +1,3 @@
-// Package oauth provides OAuth2 authentication for SSO providers.
 package oauth
 
 import (

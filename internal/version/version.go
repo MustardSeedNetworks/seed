@@ -5,65 +5,51 @@ package version
 
 import (
 	"runtime/debug"
-	"sync"
 )
 
 // shortCommitLen is the number of characters to use for shortened commit hashes.
 const shortCommitLen = 7
 
-// Version accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
-// getVersionInfo returns (version, commit, buildTime) from build info.
-// _ (initVersionInfo) ensures version info is loaded (unused but required for pattern).
-var (
-	getVersionInfo, _ = func() (
-		func() (version, commit, buildTime string),
-		func(),
-	) {
-		var once sync.Once
-		var ver, com, bt string
+// getVersionInfo extracts version, commit, and build time from build info.
+// The Go runtime caches ReadBuildInfo() results, so no additional caching is needed.
+func getVersionInfo() (string, string, string) {
+	ver := "dev"
+	commit := "unknown"
+	buildTime := "unknown"
 
-		loadVersionInfo := func() {
-			once.Do(func() {
-				ver = "dev"
-				com = "unknown"
-				bt = "unknown"
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ver, commit, buildTime
+	}
 
-				info, ok := debug.ReadBuildInfo()
-				if !ok {
-					return
-				}
+	// Get module version.
+	if info.Main.Version != "" && info.Main.Version != "(devel)" {
+		ver = info.Main.Version
+	}
 
-				// Get module version
-				if info.Main.Version != "" && info.Main.Version != "(devel)" {
-					ver = info.Main.Version
-				}
-
-				// Extract VCS settings
-				for _, setting := range info.Settings {
-					switch setting.Key {
-					case "vcs.revision":
-						com = setting.Value
-						// Shorten for display
-						if len(com) > shortCommitLen {
-							com = com[:shortCommitLen]
-						}
-					case "vcs.time":
-						bt = setting.Value
-					case "vcs.modified":
-						if setting.Value == "true" && ver != "dev" {
-							ver += "-dirty"
-						}
-					}
-				}
-			})
+	// Extract VCS settings.
+	var modified bool
+	for _, setting := range info.Settings {
+		switch setting.Key {
+		case "vcs.revision":
+			commit = setting.Value
+			// Shorten for display.
+			if len(commit) > shortCommitLen {
+				commit = commit[:shortCommitLen]
+			}
+		case "vcs.time":
+			buildTime = setting.Value
+		case "vcs.modified":
+			modified = setting.Value == "true"
 		}
+	}
 
-		return func() (string, string, string) {
-			loadVersionInfo()
-			return ver, com, bt
-		}, loadVersionInfo
-	}()
-)
+	if modified && ver != "dev" {
+		ver += "-dirty"
+	}
+
+	return ver, commit, buildTime
+}
 
 // GetVersion returns the semantic version from build info.
 func GetVersion() string {

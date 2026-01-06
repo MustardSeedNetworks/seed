@@ -61,6 +61,9 @@ import (
 )
 
 const (
+	// websocketBufferSize is the read/write buffer size for WebSocket connections.
+	websocketBufferSize = 1024
+
 	// writeWait is the maximum time allowed to write a message to the peer.
 	// If a write takes longer, the connection is considered dead and closed.
 	// Set to 10 seconds to accommodate slow networks while preventing indefinite hangs.
@@ -91,18 +94,48 @@ const (
 )
 
 // wsConfig holds WebSocket configuration state to satisfy gochecknoglobals.
-// Access via wsState.getConfiguredOrigins(), wsState.getUpgrader(), wsState.setAllowedOrigins().
+// Access via getWSState().getConfiguredOrigins(), getWSState().getUpgrader(), getWSState().setAllowedOrigins().
 type wsConfig struct {
-	originMu      sync.RWMutex
-	origins       []string
-	upgraderOnce  sync.Once
-	upgraderInst  *websocket.Upgrader
+	originMu     sync.RWMutex
+	origins      []string
+	upgraderOnce sync.Once
+	upgraderInst *websocket.Upgrader
 }
 
-// wsState provides thread-safe WebSocket configuration via closure to satisfy gochecknoglobals.
-var wsState = func() *wsConfig {
-	return &wsConfig{}
-}()
+// WebSocket state accessor functions use closure-encapsulated state for thread-safe singleton access.
+// getWSState returns the global WebSocket configuration instance.
+// setWSState sets the global WebSocket configuration instance.
+// _ (clearWSState) resets the global WebSocket configuration to nil (unused but required for pattern).
+//
+//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
+var (
+	getWSState, _, _ = func() (
+		func() *wsConfig,
+		func(*wsConfig),
+		func(),
+	) {
+		var (
+			mu    sync.RWMutex
+			state *wsConfig
+		)
+		// Initialize with default state
+		state = &wsConfig{}
+
+		return func() *wsConfig {
+				mu.RLock()
+				defer mu.RUnlock()
+				return state
+			}, func(s *wsConfig) {
+				mu.Lock()
+				defer mu.Unlock()
+				state = s
+			}, func() {
+				mu.Lock()
+				defer mu.Unlock()
+				state = nil
+			}
+	}()
+)
 
 // getConfiguredOrigins returns the configured origins (thread-safe).
 func (ws *wsConfig) getConfiguredOrigins() []string {
@@ -115,8 +148,8 @@ func (ws *wsConfig) getConfiguredOrigins() []string {
 func (ws *wsConfig) getUpgrader() *websocket.Upgrader {
 	ws.upgraderOnce.Do(func() {
 		ws.upgraderInst = &websocket.Upgrader{
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
+			ReadBufferSize:  websocketBufferSize,
+			WriteBufferSize: websocketBufferSize,
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
 				if origin == "" {
@@ -164,11 +197,12 @@ func (ws *wsConfig) setAllowedOrigins(origins []string) {
 //   - true if the origin is allowed to establish a WebSocket connection
 //   - false if the origin should be rejected (connection will fail with 403)
 func isAllowedWSOrigin(origin string) bool {
-	return isAllowedWSOriginWithGetter(origin, wsState.getConfiguredOrigins)
+	return isAllowedWSOriginWithGetter(origin, getWSState().getConfiguredOrigins)
 }
 
 // isAllowedWSOriginWithGetter is the internal implementation that accepts a getter function.
 // This allows it to be called during initialization without causing an init cycle.
+//nolint:gocognit // Origin validation requires multiple checks
 func isAllowedWSOriginWithGetter(origin string, getOrigins func() []string) bool {
 	// Get configured origins via provided getter
 	origins := getOrigins()
@@ -796,7 +830,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		Debug("WebSocket authenticated", "username", claims.Username, "source", source)
 
 	// No response header needed for cookie auth
-	conn, err := wsState.getUpgrader().Upgrade(w, r, nil)
+	conn, err := getWSState().getUpgrader().Upgrade(w, r, nil)
 	if err != nil {
 		logging.GetLogger().Error("WebSocket upgrade error", "error", err)
 		return
@@ -975,6 +1009,7 @@ func (c *Client) readPump() {
 
 // writePump pumps messages from the hub to the WebSocket connection.
 // Fixes #869: Ensure writer is closed on all error paths to prevent resource leaks.
+//nolint:gocognit // WebSocket pump handles multiple message types
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
