@@ -1,9 +1,9 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // This file implements NetBIOS name resolution (NBNS) for Windows device discovery.
 //
 // NetBIOS Name Service (NBNS) allows querying Windows devices for their computer names.
 // It uses UDP port 137 and is part of the NetBIOS over TCP/IP (NBT) protocol suite.
-package discovery
 
 import (
 	"context"
@@ -23,6 +23,18 @@ const (
 	netbiosMaxWorkers  = 20
 	netbiosNameLen     = 15
 	netbiosQueryOpcode = 0x0000
+
+	// NetBIOS packet constants.
+	netbiosResponseBufferSize = 1024   // Buffer for reading NetBIOS responses
+	netbiosQueryPacketSize    = 50     // Size of NetBIOS query packet
+	netbiosTransactionID      = 0x1234 // Transaction ID for queries
+	netbiosNamePadding        = 14     // Number of spaces to pad name to
+	netbiosSuffixWorkstation  = 0x00   // Workstation service suffix
+	netbiosQueryTypeNBSTAT    = 0x0021 // NBSTAT query type
+	netbiosQueryClassIN       = 0x0001 // IN query class
+	netbiosNibbleShift        = 4      // Bit shift for extracting high nibble
+	netbiosNibbleMask         = 0x0F   // Mask for extracting low nibble
+	netbiosMinResponseSize    = 57     // Minimum size for a valid NetBIOS response
 )
 
 // NetBIOSResolver performs NetBIOS name resolution (UDP 137).
@@ -86,7 +98,7 @@ func (r *NetBIOSResolver) ResolveIP(ctx context.Context, ip string) (string, err
 	}
 
 	// Read response
-	buf := make([]byte, 1024)
+	buf := make([]byte, netbiosResponseBufferSize)
 	n, err := conn.Read(buf)
 	if err != nil {
 		return "", fmt.Errorf("read response: %w", err)
@@ -185,10 +197,10 @@ func buildNetBIOSQuery() []byte {
 	// - Additional RRs (2 bytes): 0
 	// - Question section
 
-	packet := make([]byte, 50)
+	packet := make([]byte, netbiosQueryPacketSize)
 
 	// Transaction ID (random but we'll use a fixed value)
-	binary.BigEndian.PutUint16(packet[0:2], 0x1234)
+	binary.BigEndian.PutUint16(packet[0:2], netbiosTransactionID)
 
 	// Flags: standard query
 	binary.BigEndian.PutUint16(packet[2:4], netbiosQueryOpcode)
@@ -215,33 +227,33 @@ func buildNetBIOSQuery() []byte {
 	// Encode "*" name (first-level encoding)
 	// "*" padded to 15 characters with spaces, then a null suffix (0x00)
 	// Each character is split into two nibbles, added to 'A' (0x41)
-	name := "*" + strings.Repeat(" ", 14) // 15 chars
-	suffix := byte(0x00)                  // Workstation service
+	name := "*" + strings.Repeat(" ", netbiosNamePadding) // 15 chars
+	suffix := byte(netbiosSuffixWorkstation)              // Workstation service
 
 	for i := range 15 {
 		ch := name[i]
-		packet[13+i*2] = 'A' + (ch >> 4)
-		packet[13+i*2+1] = 'A' + (ch & 0x0F)
+		packet[13+i*2] = 'A' + (ch >> netbiosNibbleShift)
+		packet[13+i*2+1] = 'A' + (ch & netbiosNibbleMask)
 	}
 	// Encode suffix
-	packet[13+30] = 'A' + (suffix >> 4)
-	packet[13+31] = 'A' + (suffix & 0x0F)
+	packet[13+30] = 'A' + (suffix >> netbiosNibbleShift)
+	packet[13+31] = 'A' + (suffix & netbiosNibbleMask)
 
 	// Null terminator for name
 	packet[45] = 0x00
 
-	// Query type: NBSTAT (0x0021)
-	binary.BigEndian.PutUint16(packet[46:48], 0x0021)
+	// Query type: NBSTAT
+	binary.BigEndian.PutUint16(packet[46:48], netbiosQueryTypeNBSTAT)
 
-	// Query class: IN (0x0001)
-	binary.BigEndian.PutUint16(packet[48:50], 0x0001)
+	// Query class: IN
+	binary.BigEndian.PutUint16(packet[48:50], netbiosQueryClassIN)
 
 	return packet
 }
 
 // parseNetBIOSResponse parses a NetBIOS node status response.
 func parseNetBIOSResponse(data []byte) (string, error) {
-	if len(data) < 57 {
+	if len(data) < netbiosMinResponseSize {
 		return "", fmt.Errorf("response too short: %d bytes", len(data))
 	}
 

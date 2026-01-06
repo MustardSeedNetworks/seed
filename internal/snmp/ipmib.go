@@ -15,17 +15,39 @@ import (
 
 // IP-MIB OIDs (RFC 4293).
 const (
-	// ipAddrTable (deprecated but widely supported) - RFC 1213.
-	OIDIpAdEntAddr    = "1.3.6.1.2.1.4.20.1.1" // ipAdEntAddr - IP address
-	OIDIpAdEntIfIndex = "1.3.6.1.2.1.4.20.1.2" // ipAdEntIfIndex - interface index
-	OIDIpAdEntNetMask = "1.3.6.1.2.1.4.20.1.3" // ipAdEntNetMask - subnet mask
+	// OIDIpAdEntAddr is the IP-MIB OID for IP address (ipAddrTable, RFC 1213).
+	OIDIpAdEntAddr = "1.3.6.1.2.1.4.20.1.1"
+	// OIDIpAdEntIfIndex is the IP-MIB OID for interface index.
+	OIDIpAdEntIfIndex = "1.3.6.1.2.1.4.20.1.2"
+	// OIDIpAdEntNetMask is the IP-MIB OID for subnet mask.
+	OIDIpAdEntNetMask = "1.3.6.1.2.1.4.20.1.3"
 
-	// ipAddressTable (RFC 4293) - modern, supports IPv6.
-	OIDIpAddressIfIndex = "1.3.6.1.2.1.4.34.1.3" // ipAddressIfIndex
-	OIDIpAddressType    = "1.3.6.1.2.1.4.34.1.4" // ipAddressType (unicast, broadcast, etc.)
-	OIDIpAddressPrefix  = "1.3.6.1.2.1.4.34.1.5" // ipAddressPrefix
-	OIDIpAddressOrigin  = "1.3.6.1.2.1.4.34.1.6" // ipAddressOrigin (manual, dhcp, etc.)
-	OIDIpAddressStatus  = "1.3.6.1.2.1.4.34.1.7" // ipAddressStatus
+	// OIDIpAddressIfIndex is the IP-MIB OID for interface index (RFC 4293, IPv6 support).
+	OIDIpAddressIfIndex = "1.3.6.1.2.1.4.34.1.3"
+	// OIDIpAddressType is the IP-MIB OID for address type (unicast, broadcast, etc.).
+	OIDIpAddressType = "1.3.6.1.2.1.4.34.1.4"
+	// OIDIpAddressPrefix is the IP-MIB OID for address prefix.
+	OIDIpAddressPrefix = "1.3.6.1.2.1.4.34.1.5"
+	// OIDIpAddressOrigin is the IP-MIB OID for address origin (manual, dhcp, etc.).
+	OIDIpAddressOrigin = "1.3.6.1.2.1.4.34.1.6"
+	// OIDIpAddressStatus is the IP-MIB OID for address status.
+	OIDIpAddressStatus = "1.3.6.1.2.1.4.34.1.7"
+)
+
+// IP address OID parsing constants.
+const (
+	// minOIDPartsIPAddrTable is the minimum OID parts for legacy ipAddrTable entries
+	// (OID base + 4 IPv4 octets = 5 parts minimum).
+	minOIDPartsIPAddrTable = 5
+	// minOIDPartsIPAddressTable is the minimum OID parts for modern ipAddressTable entries
+	// (OID base + type + length + address bytes = 6 parts minimum).
+	minOIDPartsIPAddressTable = 6
+	// ipv4OctetCount is the number of octets in an IPv4 address.
+	ipv4OctetCount = 4
+	// ipv6OctetCount is the number of octets in an IPv6 address.
+	ipv6OctetCount = 16
+	// ipv6GroupCount is the number of 16-bit groups in an IPv6 address.
+	ipv6GroupCount = 8
 )
 
 // IPAddressEntry contains an IP address from IP-MIB.
@@ -145,10 +167,10 @@ func walkLegacyIPTable(params *gosnmp.GoSNMP) ([]IPAddressEntry, error) {
 	// Walk ipAdEntIfIndex to get interface associations.
 	walkErr := params.BulkWalk(OIDIpAdEntIfIndex, func(pdu gosnmp.SnmpPDU) error {
 		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 5 {
+		if len(parts) < minOIDPartsIPAddrTable {
 			return nil
 		}
-		ipAddr := strings.Join(parts[len(parts)-4:], ".")
+		ipAddr := strings.Join(parts[len(parts)-ipv4OctetCount:], ".")
 
 		entry, exists := entries[ipAddr]
 		if !exists {
@@ -168,10 +190,10 @@ func walkLegacyIPTable(params *gosnmp.GoSNMP) ([]IPAddressEntry, error) {
 	// Walk ipAdEntNetMask to get subnet masks.
 	walkErr = params.BulkWalk(OIDIpAdEntNetMask, func(pdu gosnmp.SnmpPDU) error {
 		parts := strings.Split(pdu.Name, ".")
-		if len(parts) < 5 {
+		if len(parts) < minOIDPartsIPAddrTable {
 			return nil
 		}
-		ipAddr := strings.Join(parts[len(parts)-4:], ".")
+		ipAddr := strings.Join(parts[len(parts)-ipv4OctetCount:], ".")
 
 		entry, exists := entries[ipAddr]
 		if !exists {
@@ -388,7 +410,7 @@ func walkIPAddressAttribute(
 // OID format: ...TYPE.LEN.ADDR_BYTES where TYPE is 1=ipv4, 2=ipv6.
 func parseIPAddressFromOID(oid string) (string, string) {
 	parts := strings.Split(oid, ".")
-	if len(parts) < 6 {
+	if len(parts) < minOIDPartsIPAddressTable {
 		return "", ""
 	}
 
@@ -406,16 +428,16 @@ func parseIPAddressFromOID(oid string) (string, string) {
 			continue
 		}
 
-		if addrType == 1 && addrLen == 4 && i-3+4 <= len(parts) {
+		if addrType == 1 && addrLen == ipv4OctetCount && i-3+ipv4OctetCount <= len(parts) {
 			// IPv4: 4 octets.
-			octets := parts[i-3 : i-3+4]
+			octets := parts[i-3 : i-3+ipv4OctetCount]
 			ip := strings.Join(octets, ".")
 			return ip, "ipv4"
 		}
 
-		if addrType == 2 && addrLen == 16 && i-3+16 <= len(parts) {
+		if addrType == 2 && addrLen == ipv6OctetCount && i-3+ipv6OctetCount <= len(parts) {
 			// IPv6: 16 octets.
-			octets := parts[i-3 : i-3+16]
+			octets := parts[i-3 : i-3+ipv6OctetCount]
 			ip := formatIPv6FromOctets(octets)
 			return ip, "ipv6"
 		}
@@ -426,13 +448,13 @@ func parseIPAddressFromOID(oid string) (string, string) {
 
 // formatIPv6FromOctets formats IPv6 address from decimal octet strings.
 func formatIPv6FromOctets(octets []string) string {
-	if len(octets) != 16 {
+	if len(octets) != ipv6OctetCount {
 		return ""
 	}
 
 	// Build IPv6 in standard format.
-	groups := make([]string, 8)
-	for i := range 8 {
+	groups := make([]string, ipv6GroupCount)
+	for i := range ipv6GroupCount {
 		high, err1 := strconv.Atoi(octets[i*2])
 		low, err2 := strconv.Atoi(octets[i*2+1])
 		if err1 != nil || err2 != nil {
@@ -447,7 +469,7 @@ func formatIPv6FromOctets(octets []string) string {
 // netmaskToPrefix converts subnet mask to CIDR prefix length.
 func netmaskToPrefix(mask string) int {
 	parts := strings.Split(mask, ".")
-	if len(parts) != 4 {
+	if len(parts) != ipv4OctetCount {
 		return 0
 	}
 

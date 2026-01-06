@@ -1,4 +1,3 @@
-// Package validation_test tests the validation package.
 package validation_test
 
 import (

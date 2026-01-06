@@ -1,9 +1,12 @@
-// Package config provides default settings as the single source of truth.
-// The default profile settings are exposed via API so the frontend
-// doesn't need to maintain duplicate default values.
 package config
 
+// The default profile settings are exposed via API so the frontend
+// doesn't need to maintain duplicate default values.
+
 import "time"
+
+// defaultPingCount is the number of ICMP echo requests sent per ping target.
+const defaultPingCount = 3
 
 // DefaultSettings contains all user-facing default settings.
 // This is the single source of truth for defaults across the entire application.
@@ -409,7 +412,7 @@ func buildTestsDefaults(cfg *Config) TestsDefaults {
 			Name:    pt.Name,
 			Host:    pt.Host,
 			Enabled: pt.Enabled,
-			Count:   3, // Default ping count
+			Count:   defaultPingCount,
 		})
 	}
 

@@ -1,6 +1,6 @@
-// Package detection_test provides intelligent network interface auto-detection.
-// Test suite validates interface scoring, chipset identification, and capability detection.
 package detection_test
+
+// Test suite validates interface scoring, chipset identification, and capability detection.
 
 import (
 	"net"

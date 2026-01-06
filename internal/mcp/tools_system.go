@@ -11,6 +11,13 @@ import (
 	"github.com/krisarmstrong/seed/internal/version"
 )
 
+const (
+	// BytesPerKilobyte is the number of bytes in a kilobyte (binary).
+	BytesPerKilobyte = 1024
+	// BytesPerMegabyte is the number of bytes in a megabyte (binary).
+	BytesPerMegabyte = BytesPerKilobyte * BytesPerKilobyte
+)
+
 // registerSystemTools registers all system-related MCP tools.
 func (s *Server) registerSystemTools(isAllowed func(string) bool) {
 	// get_interfaces - List network interfaces
@@ -190,9 +197,9 @@ func (s *Server) handleSystemHealth(
 		"numCPU":     runtime.NumCPU(),
 		"goroutines": runtime.NumGoroutine(),
 		"memory": map[string]any{
-			"allocMB":      float64(memStats.Alloc) / 1024 / 1024,
-			"totalAllocMB": float64(memStats.TotalAlloc) / 1024 / 1024,
-			"sysMB":        float64(memStats.Sys) / 1024 / 1024,
+			"allocMB":      float64(memStats.Alloc) / BytesPerMegabyte,
+			"totalAllocMB": float64(memStats.TotalAlloc) / BytesPerMegabyte,
+			"sysMB":        float64(memStats.Sys) / BytesPerMegabyte,
 			"numGC":        memStats.NumGC,
 		},
 		"timestamp": time.Now().UTC(),

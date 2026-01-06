@@ -1,4 +1,3 @@
-// Package discovery_test provides profiler tests.
 package discovery_test
 
 import (

@@ -1,4 +1,3 @@
-// Package discovery_test provides TCP prober tests.
 package discovery_test
 
 import (

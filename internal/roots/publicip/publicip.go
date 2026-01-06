@@ -18,6 +18,18 @@ const (
 	cacheDuration = 5 * time.Minute
 	// requestTimeout is the timeout for external API requests.
 	requestTimeout = 10 * time.Second
+	// maxHistoryEntries is the maximum number of IP history entries to retain.
+	maxHistoryEntries = 10
+	// historySliceCapacity is the initial capacity for new history slices (max + 1 for prepend).
+	historySliceCapacity = 11
+	// ipFetchGoroutines is the number of goroutines used to fetch IPv4 and IPv6 concurrently.
+	ipFetchGoroutines = 2
+	// geoResponseMaxBytes is the maximum bytes to read from geo API response.
+	geoResponseMaxBytes = 4096
+	// ipResponseMaxBytes is the maximum bytes to read from IP lookup service response.
+	ipResponseMaxBytes = 1024
+	// asnFieldParts is the number of parts when splitting ASN field (e.g., "AS15169 Google LLC").
+	asnFieldParts = 2
 )
 
 // HistoryEntry represents a previous IP address with geo info.
@@ -87,7 +99,7 @@ func NewChecker() *Checker {
 		},
 		geoCache:     make(map[string]*geoResponse),
 		geoCacheTime: make(map[string]time.Time),
-		history:      make([]HistoryEntry, 0, 10),
+		history:      make([]HistoryEntry, 0, maxHistoryEntries),
 	}
 }
 
@@ -124,7 +136,7 @@ func (c *Checker) refresh(ctx context.Context) *Result {
 	var ipv4, ipv6 string
 	var ipv4Err, ipv6Err error
 
-	wg.Add(2)
+	wg.Add(ipFetchGoroutines)
 
 	go func() {
 		defer wg.Done()
@@ -147,26 +159,7 @@ func (c *Checker) refresh(ctx context.Context) *Result {
 	}
 
 	// Fetch geolocation data for IPv4 (primary IP for geo)
-	if ipv4 != "" {
-		geo := c.fetchGeoData(ctx, ipv4)
-		if geo != nil {
-			result.ISP = geo.ISP
-			result.Org = geo.Org
-			result.City = geo.City
-			result.Region = geo.RegionName
-			result.Country = geo.Country
-			result.CountryCode = geo.CountryCode
-			result.Lat = geo.Lat
-			result.Lon = geo.Lon
-			// Parse ASN from the "AS" field (format: "AS15169 Google LLC")
-			if geo.AS != "" {
-				parts := strings.SplitN(geo.AS, " ", 2)
-				if len(parts) > 0 {
-					result.ASN = strings.TrimPrefix(parts[0], "AS")
-				}
-			}
-		}
-	}
+	c.applyGeoData(ctx, ipv4, result)
 
 	// Update history if IP changed
 	c.mu.Lock()
@@ -217,7 +210,7 @@ func (c *Checker) fetchGeoData(ctx context.Context, ip string) *geoResponse {
 		return nil
 	}
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, geoResponseMaxBytes))
 	if err != nil {
 		return nil
 	}
@@ -240,6 +233,40 @@ func (c *Checker) fetchGeoData(ctx context.Context, ip string) *geoResponse {
 	return &geo
 }
 
+// applyGeoData fetches and applies geolocation data to the result.
+func (c *Checker) applyGeoData(ctx context.Context, ipv4 string, result *Result) {
+	if ipv4 == "" {
+		return
+	}
+
+	geo := c.fetchGeoData(ctx, ipv4)
+	if geo == nil {
+		return
+	}
+
+	result.ISP = geo.ISP
+	result.Org = geo.Org
+	result.City = geo.City
+	result.Region = geo.RegionName
+	result.Country = geo.Country
+	result.CountryCode = geo.CountryCode
+	result.Lat = geo.Lat
+	result.Lon = geo.Lon
+	result.ASN = parseASN(geo.AS)
+}
+
+// parseASN extracts the ASN number from an AS field (format: "AS15169 Google LLC").
+func parseASN(asField string) string {
+	if asField == "" {
+		return ""
+	}
+	parts := strings.SplitN(asField, " ", asnFieldParts)
+	if len(parts) == 0 {
+		return ""
+	}
+	return strings.TrimPrefix(parts[0], "AS")
+}
+
 // updateHistory updates the IP history when IP changes.
 // Must be called with c.mu held.
 // Fixes #867: Use explicit length check before slicing to prevent potential issues.
@@ -248,44 +275,59 @@ func (c *Checker) updateHistory(ipv4 string) {
 		return
 	}
 
+	defer func() { c.lastIPv4 = ipv4 }()
+
+	// No previous IP or IP hasn't changed - nothing to record
+	if c.lastIPv4 == "" || c.lastIPv4 == ipv4 {
+		return
+	}
+
+	// IP changed - update or add old IP to history
+	c.recordIPChange(c.lastIPv4)
+}
+
+// recordIPChange adds an IP to history or updates its LastSeen timestamp.
+// Must be called with c.mu held.
+func (c *Checker) recordIPChange(oldIP string) {
 	now := time.Now()
 
-	// Check if IP changed
-	if c.lastIPv4 != "" && c.lastIPv4 != ipv4 {
-		// IP changed - add old IP to history if not already there
-		found := false
-		for i := range c.history {
-			if c.history[i].IP == c.lastIPv4 {
-				c.history[i].LastSeen = now
-				found = true
-				break
-			}
-		}
-		if !found && c.lastIPv4 != "" {
-			// Prepend to history (most recent first)
-			entry := HistoryEntry{
-				IP:        c.lastIPv4,
-				FirstSeen: now,
-				LastSeen:  now,
-			}
-			// Get geo for old IP if we have it cached
-			if geo, ok := c.geoCache[c.lastIPv4]; ok {
-				entry.City = geo.City
-				entry.Country = geo.Country
-			}
-			// Fixes #867: Create new slice to avoid aliasing issues with append
-			newHistory := make([]HistoryEntry, 0, 11)
-			newHistory = append(newHistory, entry)
-			newHistory = append(newHistory, c.history...)
-			c.history = newHistory
-			// Keep max 10 entries
-			if len(c.history) > 10 {
-				c.history = c.history[:10]
-			}
+	// Check if IP already exists in history
+	for i := range c.history {
+		if c.history[i].IP == oldIP {
+			c.history[i].LastSeen = now
+			return
 		}
 	}
 
-	c.lastIPv4 = ipv4
+	// Create new history entry for the old IP
+	c.prependHistoryEntry(oldIP, now)
+}
+
+// prependHistoryEntry adds a new IP entry to the front of history.
+// Must be called with c.mu held.
+func (c *Checker) prependHistoryEntry(ip string, now time.Time) {
+	entry := HistoryEntry{
+		IP:        ip,
+		FirstSeen: now,
+		LastSeen:  now,
+	}
+
+	// Get geo for old IP if we have it cached
+	if geo, ok := c.geoCache[ip]; ok {
+		entry.City = geo.City
+		entry.Country = geo.Country
+	}
+
+	// Fixes #867: Create new slice to avoid aliasing issues with append
+	newHistory := make([]HistoryEntry, 0, historySliceCapacity)
+	newHistory = append(newHistory, entry)
+	newHistory = append(newHistory, c.history...)
+	c.history = newHistory
+
+	// Keep max entries
+	if len(c.history) > maxHistoryEntries {
+		c.history = c.history[:maxHistoryEntries]
+	}
 }
 
 // getHistoryCopy returns a copy of the history slice.
@@ -369,7 +411,7 @@ func (c *Checker) fetchFromService(
 		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, ipResponseMaxBytes))
 	if err != nil {
 		return "", err
 	}

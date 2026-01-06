@@ -21,6 +21,17 @@ const (
 	cpuTickerInterval = 2 * time.Second
 )
 
+// Memory conversion constants.
+const (
+	// bytesPerKilobyte is the number of bytes in one kilobyte.
+	bytesPerKilobyte = 1024
+	// bytesPerMegabyte is the number of bytes in one megabyte.
+	bytesPerMegabyte = bytesPerKilobyte * bytesPerKilobyte
+)
+
+// topProcessCount is the number of top processes to return.
+const topProcessCount = 5
+
 // cpuCacheState holds the CPU sampling state.
 type cpuCacheState struct {
 	mu      sync.RWMutex
@@ -29,63 +40,54 @@ type cpuCacheState struct {
 	stop    chan struct{}
 }
 
-// CPU cache accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
-// getCPUCache returns the CPU cache state.
+// cpuCacheSingleton holds the singleton CPU cache state using sync.OnceValue.
+// This pattern satisfies gochecknoglobals by using a function rather than a variable.
+func cpuCacheSingleton() *cpuCacheState {
+	return sync.OnceValue(func() *cpuCacheState {
+		return &cpuCacheState{}
+	})()
+}
+
 // getCachedCPUPercent returns the cached CPU percentage.
-// startCPUSampler starts the background CPU sampler.
-var (
-	_, getCachedCPUPercent, startCPUSampler = func() (
-		func() *cpuCacheState,
-		func() float64,
-		func(),
-	) {
-		state := &cpuCacheState{}
+func getCachedCPUPercent() float64 {
+	state := cpuCacheSingleton()
 
-		startSampler := func() {
-			state.stop = make(chan struct{})
-			go func() {
-				// Take initial sample immediately
-				if pct, err := cpu.Percent(cpuSampleInterval, false); err == nil && len(pct) > 0 {
-					state.mu.Lock()
-					state.percent = pct[0]
-					state.mu.Unlock()
-				}
+	startSampler := func() {
+		state.stop = make(chan struct{})
+		go func() {
+			// Take initial sample immediately
+			if pct, err := cpu.Percent(cpuSampleInterval, false); err == nil && len(pct) > 0 {
+				state.mu.Lock()
+				state.percent = pct[0]
+				state.mu.Unlock()
+			}
 
-				ticker := time.NewTicker(cpuTickerInterval)
-				defer ticker.Stop()
+			ticker := time.NewTicker(cpuTickerInterval)
+			defer ticker.Stop()
 
-				for {
-					select {
-					case <-state.stop:
-						return
-					case <-ticker.C:
-						if pct, err := cpu.Percent(cpuSampleInterval, false); err == nil &&
-							len(pct) > 0 {
-							state.mu.Lock()
-							state.percent = pct[0]
-							state.mu.Unlock()
-						}
+			for {
+				select {
+				case <-state.stop:
+					return
+				case <-ticker.C:
+					if pct, err := cpu.Percent(cpuSampleInterval, false); err == nil &&
+						len(pct) > 0 {
+						state.mu.Lock()
+						state.percent = pct[0]
+						state.mu.Unlock()
 					}
 				}
-			}()
-		}
+			}
+		}()
+	}
 
-		getCache := func() *cpuCacheState {
-			return state
-		}
+	// Ensure sampler is started
+	state.once.Do(startSampler)
 
-		getCached := func() float64 {
-			// Ensure sampler is started
-			state.once.Do(startSampler)
-
-			state.mu.RLock()
-			defer state.mu.RUnlock()
-			return state.percent
-		}
-
-		return getCache, getCached, startSampler
-	}()
-)
+	state.mu.RLock()
+	defer state.mu.RUnlock()
+	return state.percent
+}
 
 // processCacheTTL is how long process info remains valid.
 const processCacheTTL = 5 * time.Second
@@ -100,66 +102,48 @@ type processCacheState struct {
 	updateInFly bool
 }
 
-// Process cache accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
-// getProcessCache returns the process cache state.
-// clearProcessCache clears the process cache for testing.
+// processCacheSingleton holds the singleton process cache state using sync.OnceValue.
+func processCacheSingleton() *processCacheState {
+	return sync.OnceValue(func() *processCacheState {
+		return &processCacheState{}
+	})()
+}
+
 // getCachedProcesses returns cached top processes (non-blocking).
-var (
-	_, clearProcessCache, getCachedProcesses = func() (
-		func() *processCacheState,
-		func(),
-		func() ([]ProcessInfo, []ProcessInfo),
-	) {
-		state := &processCacheState{}
+func getCachedProcesses() ([]ProcessInfo, []ProcessInfo) {
+	state := processCacheSingleton()
 
-		getCache := func() *processCacheState {
-			return state
+	state.cacheMu.RLock()
+	cacheAge := time.Since(state.cacheTime)
+	topCPU := state.top5
+	topMemory := state.mem5
+	state.cacheMu.RUnlock()
+
+	// If cache is stale, trigger background update (non-blocking)
+	if cacheAge > processCacheTTL {
+		state.updateMu.Lock()
+		if !state.updateInFly {
+			state.updateInFly = true
+			go func() {
+				defer func() {
+					state.updateMu.Lock()
+					state.updateInFly = false
+					state.updateMu.Unlock()
+				}()
+
+				cpuProcs, memProcs := getTopProcessesInternal()
+				state.cacheMu.Lock()
+				state.top5 = cpuProcs
+				state.mem5 = memProcs
+				state.cacheTime = time.Now()
+				state.cacheMu.Unlock()
+			}()
 		}
+		state.updateMu.Unlock()
+	}
 
-		clearCache := func() {
-			state.cacheMu.Lock()
-			state.top5 = nil
-			state.mem5 = nil
-			state.cacheTime = time.Time{}
-			state.cacheMu.Unlock()
-		}
-
-		getCached := func() ([]ProcessInfo, []ProcessInfo) {
-			state.cacheMu.RLock()
-			cacheAge := time.Since(state.cacheTime)
-			topCPU := state.top5
-			topMemory := state.mem5
-			state.cacheMu.RUnlock()
-
-			// If cache is stale, trigger background update (non-blocking)
-			if cacheAge > processCacheTTL {
-				state.updateMu.Lock()
-				if !state.updateInFly {
-					state.updateInFly = true
-					go func() {
-						defer func() {
-							state.updateMu.Lock()
-							state.updateInFly = false
-							state.updateMu.Unlock()
-						}()
-
-						cpuProcs, memProcs := getTopProcessesInternal()
-						state.cacheMu.Lock()
-						state.top5 = cpuProcs
-						state.mem5 = memProcs
-						state.cacheTime = time.Now()
-						state.cacheMu.Unlock()
-					}()
-				}
-				state.updateMu.Unlock()
-			}
-
-			return topCPU, topMemory
-		}
-
-		return getCache, clearCache, getCached
-	}()
-)
+	return topCPU, topMemory
+}
 
 // ProcessInfo contains information about a single process.
 type ProcessInfo struct {
@@ -237,7 +221,7 @@ func getTopProcessesInternal() ([]ProcessInfo, []ProcessInfo) {
 		if memErr != nil {
 			continue
 		}
-		memoryMB := float64(memInfo.RSS) / (1024 * 1024)
+		memoryMB := float64(memInfo.RSS) / bytesPerMegabyte
 
 		processes = append(processes, ProcessInfo{
 			Name:       name,
@@ -247,28 +231,28 @@ func getTopProcessesInternal() ([]ProcessInfo, []ProcessInfo) {
 		})
 	}
 
-	// Sort by CPU and get top 5
+	// Sort by CPU and get top processes
 	cpuSorted := make([]ProcessInfo, len(processes))
 	copy(cpuSorted, processes)
 	sort.Slice(cpuSorted, func(i, j int) bool {
 		return cpuSorted[i].CPUPercent > cpuSorted[j].CPUPercent
 	})
 	var topCPU []ProcessInfo
-	if len(cpuSorted) > 5 {
-		topCPU = cpuSorted[:5]
+	if len(cpuSorted) > topProcessCount {
+		topCPU = cpuSorted[:topProcessCount]
 	} else {
 		topCPU = cpuSorted
 	}
 
-	// Sort by memory and get top 5
+	// Sort by memory and get top processes
 	memSorted := make([]ProcessInfo, len(processes))
 	copy(memSorted, processes)
 	sort.Slice(memSorted, func(i, j int) bool {
 		return memSorted[i].MemoryMB > memSorted[j].MemoryMB
 	})
 	var topMemory []ProcessInfo
-	if len(memSorted) > 5 {
-		topMemory = memSorted[:5]
+	if len(memSorted) > topProcessCount {
+		topMemory = memSorted[:topProcessCount]
 	} else {
 		topMemory = memSorted
 	}

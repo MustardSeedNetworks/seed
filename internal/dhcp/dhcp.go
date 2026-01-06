@@ -1,8 +1,8 @@
-// Package dhcp provides DHCP transaction timing and monitoring.
+package dhcp
+
 //
 // The Monitor uses gopacket/pcap for real-time DHCP packet capture to measure
 // transaction timing (DISCOVER→OFFER→REQUEST→ACK). Requires root/CAP_NET_RAW.
-package dhcp
 
 import (
 	"bufio"
@@ -34,6 +34,70 @@ const (
 	PhaseOffer    Phase = "offer"
 	PhaseRequest  Phase = "request"
 	PhaseAck      Phase = "ack"
+)
+
+// DHCP protocol constants.
+const (
+	// dhcpMagicCookie is the DHCP magic cookie (RFC 2131).
+	// This value identifies a BOOTP/DHCP options field.
+	dhcpMagicCookie = 0x63825363
+
+	// dhcpMinPacketSize is the minimum DHCP packet size (header + magic cookie).
+	dhcpMinPacketSize = 240
+
+	// dhcpOptionEnd marks the end of DHCP options (RFC 2132).
+	dhcpOptionEnd = 255
+
+	// dhcpOptionPad is the padding option in DHCP (RFC 2132).
+	dhcpOptionPad = 0
+
+	// dhcpOptionMessageType is the DHCP message type option code (RFC 2132).
+	dhcpOptionMessageType = 53
+)
+
+// DHCP message type constants (RFC 2132 section 9.6).
+const (
+	dhcpMsgTypeDiscover = 1
+	dhcpMsgTypeOffer    = 2
+	dhcpMsgTypeRequest  = 3
+	dhcpMsgTypeAck      = 5
+)
+
+// Packet capture constants.
+const (
+	// pcapSnapshotLen is the snapshot length for pcap capture.
+	// 1600 bytes is sufficient for DHCP packets (typically ~300-600 bytes).
+	pcapSnapshotLen = 1600
+
+	// pcapTimeout is the read timeout for pcap packet batching.
+	pcapTimeout = 100 * time.Millisecond
+)
+
+// DHCP option parsing constants.
+const (
+	// dhcpOptionHeaderLen is the length of option type + length fields.
+	dhcpOptionHeaderLen = 2
+
+	// hexIPv4Len is the expected length of a hex-encoded IPv4 address.
+	hexIPv4Len = 4
+)
+
+// Timing constants.
+const (
+	// transactionCleanupInterval is how often to clean up stale transactions.
+	transactionCleanupInterval = 30 * time.Second
+
+	// simulatedDiscoverTime is the simulated DHCP discover duration for testing.
+	simulatedDiscoverTime = 50 * time.Millisecond
+
+	// simulatedOfferTime is the simulated DHCP offer duration for testing.
+	simulatedOfferTime = 10 * time.Millisecond
+
+	// simulatedRequestTime is the simulated DHCP request duration for testing.
+	simulatedRequestTime = 45 * time.Millisecond
+
+	// simulatedTotalTime is the simulated total DHCP transaction time for testing.
+	simulatedTotalTime = 105 * time.Millisecond
 )
 
 // Timing contains timing information for a complete DHCP transaction.
@@ -106,9 +170,9 @@ func (m *Monitor) Start() error {
 	}
 
 	// Open pcap handle on the interface
-	// Snapshot length of 1600 bytes is enough for DHCP packets
-	// Timeout of 100ms for packet batching
-	handle, err := pcap.OpenLive(m.interfaceName, 1600, true, 100*time.Millisecond)
+	// Snapshot length of pcapSnapshotLen bytes is enough for DHCP packets
+	// Timeout of pcapTimeout for packet batching
+	handle, err := pcap.OpenLive(m.interfaceName, pcapSnapshotLen, true, pcapTimeout)
 	if err != nil {
 		return err
 	}
@@ -172,14 +236,14 @@ func extractDHCPPayload(packet gopacket.Packet) []byte {
 		return nil
 	}
 	payload := appLayer.Payload()
-	// DHCP packets must be at least 240 bytes (minimum header + magic cookie)
-	if len(payload) < 240 {
+	// DHCP packets must be at least dhcpMinPacketSize bytes (minimum header + magic cookie)
+	if len(payload) < dhcpMinPacketSize {
 		return nil
 	}
 
-	// Magic cookie check at offset 236-239 (should be 0x63825363)
+	// Magic cookie check at offset 236-239 (should be dhcpMagicCookie)
 	magicCookie := binary.BigEndian.Uint32(payload[236:240])
-	if magicCookie != 0x63825363 {
+	if magicCookie != dhcpMagicCookie {
 		return nil
 	}
 
@@ -190,13 +254,13 @@ func extractDHCPPayload(packet gopacket.Packet) []byte {
 // Returns false if the message type should be ignored.
 func msgTypeToPhase(msgType byte) (Phase, bool) {
 	switch msgType {
-	case 1: // DHCP Discover
+	case dhcpMsgTypeDiscover:
 		return PhaseDiscover, true
-	case 2: // DHCP Offer
+	case dhcpMsgTypeOffer:
 		return PhaseOffer, true
-	case 3: // DHCP Request
+	case dhcpMsgTypeRequest:
 		return PhaseRequest, true
-	case 5: // DHCP ACK
+	case dhcpMsgTypeAck:
 		return PhaseAck, true
 	default:
 		// Ignore other message types (DECLINE, NAK, RELEASE, INFORM)
@@ -237,12 +301,12 @@ func findDHCPMessageType(options []byte) byte {
 		optionType := options[i]
 
 		// End option
-		if optionType == 255 {
+		if optionType == dhcpOptionEnd {
 			break
 		}
 
 		// Pad option
-		if optionType == 0 {
+		if optionType == dhcpOptionPad {
 			i++
 			continue
 		}
@@ -252,16 +316,16 @@ func findDHCPMessageType(options []byte) byte {
 			break
 		}
 		optionLen := int(options[i+1])
-		if i+2+optionLen > len(options) {
+		if i+dhcpOptionHeaderLen+optionLen > len(options) {
 			break
 		}
 
 		// Option 53 is DHCP Message Type
-		if optionType == 53 && optionLen >= 1 {
-			return options[i+2]
+		if optionType == dhcpOptionMessageType && optionLen >= 1 {
+			return options[i+dhcpOptionHeaderLen]
 		}
 
-		i += 2 + optionLen
+		i += dhcpOptionHeaderLen + optionLen
 	}
 	return 0
 }
@@ -305,7 +369,7 @@ func (m *Monitor) Stop() {
 // cleanupStaleTransactions periodically removes incomplete transactions older than 2 minutes.
 // This prevents unbounded memory growth from incomplete DHCP transactions (fixes #841).
 func (m *Monitor) cleanupStaleTransactions() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(transactionCleanupInterval)
 	defer ticker.Stop()
 	defer close(m.cleanupDone)
 
@@ -447,10 +511,10 @@ func (m *Monitor) calculateTiming(tx *Transaction) {
 // This is useful when packet capture isn't available.
 func SimulateTiming() *Timing {
 	return &Timing{
-		Discover: 50 * time.Millisecond,
-		Offer:    10 * time.Millisecond,
-		Request:  45 * time.Millisecond,
-		Total:    105 * time.Millisecond,
+		Discover: simulatedDiscoverTime,
+		Offer:    simulatedOfferTime,
+		Request:  simulatedRequestTime,
+		Total:    simulatedTotalTime,
 		Complete: true,
 	}
 }
@@ -613,50 +677,68 @@ func extractPlistInteger(content, key string) int {
 	return val
 }
 
+// parseDataTagsFromArray extracts IP addresses from <data> tags within array content.
+func parseDataTagsFromArray(arrayContent string) []string {
+	var ips []string
+	content := arrayContent
+
+	for {
+		dataStart := strings.Index(content, "<data>")
+		if dataStart == -1 {
+			break
+		}
+		dataEnd := strings.Index(content[dataStart:], "</data>")
+		if dataEnd == -1 {
+			break
+		}
+		hexData := strings.TrimSpace(content[dataStart+6 : dataStart+dataEnd])
+		if ip := hexToIP(hexData); ip != "" {
+			ips = append(ips, ip)
+		}
+		content = content[dataStart+dataEnd+7:]
+	}
+
+	return ips
+}
+
+// extractArrayContent finds and extracts the content between <array> and </array> tags.
+func extractArrayContent(remaining string) (string, bool) {
+	arrayStart := strings.Index(remaining, "<array>")
+	if arrayStart == -1 {
+		return "", false
+	}
+
+	arrayEnd := strings.Index(remaining[arrayStart:], "</array>")
+	if arrayEnd == -1 {
+		return "", false
+	}
+
+	return remaining[arrayStart+7 : arrayStart+arrayEnd], true
+}
+
 // extractPlistIPArray extracts array of IPs from plist.
 func extractPlistIPArray(content, key string) []string {
-	var ips []string
 	keyTag := "<key>" + key + "</key>"
 	idx := strings.Index(content, keyTag)
 	if idx == -1 {
-		return ips
+		return nil
 	}
 
 	remaining := content[idx+len(keyTag):]
 
 	// Try array format first
-	arrayStart := strings.Index(remaining, "<array>")
-	if arrayStart != -1 {
-		arrayEnd := strings.Index(remaining[arrayStart:], "</array>")
-		if arrayEnd != -1 {
-			arrayContent := remaining[arrayStart+7 : arrayStart+arrayEnd]
-			// Find all <data> tags within array
-			for {
-				dataStart := strings.Index(arrayContent, "<data>")
-				if dataStart == -1 {
-					break
-				}
-				dataEnd := strings.Index(arrayContent[dataStart:], "</data>")
-				if dataEnd == -1 {
-					break
-				}
-				hexData := strings.TrimSpace(arrayContent[dataStart+6 : dataStart+dataEnd])
-				if ip := hexToIP(hexData); ip != "" {
-					ips = append(ips, ip)
-				}
-				arrayContent = arrayContent[dataStart+dataEnd+7:]
-			}
+	if arrayContent, found := extractArrayContent(remaining); found {
+		if ips := parseDataTagsFromArray(arrayContent); len(ips) > 0 {
+			return ips
 		}
 	}
 
 	// Try single data format
-	if len(ips) == 0 {
-		if ip := extractPlistIP(content, key); ip != "" {
-			ips = append(ips, ip)
-		}
+	if ip := extractPlistIP(content, key); ip != "" {
+		return []string{ip}
 	}
 
-	return ips
+	return nil
 }
 
 // hexToIP converts hex-encoded IP address to string.
@@ -673,7 +755,7 @@ func hexToIP(hexStr string) string {
 
 	// macOS sometimes uses raw bytes in base64 - try that too
 	// The data might actually be raw bytes interpreted as string
-	if len(hexStr) == 4 {
+	if len(hexStr) == hexIPv4Len {
 		return net.IP([]byte(hexStr)).String()
 	}
 
@@ -790,6 +872,73 @@ type leaseFieldMapping struct {
 	dnsKey       string
 }
 
+// parseLeaseLineServer extracts the DHCP server from a line if it matches the server key.
+func parseLeaseLineServer(line, serverKey string) (string, bool) {
+	after, ok := strings.CutPrefix(line, serverKey)
+	if !ok {
+		return "", false
+	}
+	return after, true
+}
+
+// parseLeaseLineRouter extracts the gateway from a line if it matches the router key.
+func parseLeaseLineRouter(line, routerKey string) (string, bool) {
+	after, ok := strings.CutPrefix(line, routerKey)
+	if !ok {
+		return "", false
+	}
+	parts := strings.Split(after, " ")
+	if len(parts) == 0 {
+		return "", false
+	}
+	return parts[0], true
+}
+
+// parseLeaseLineTime extracts the lease time from a line if it matches the lease time key.
+func parseLeaseLineTime(line, leaseTimeKey string) (int, bool) {
+	after, ok := strings.CutPrefix(line, leaseTimeKey)
+	if !ok {
+		return 0, false
+	}
+	lease, err := strconv.Atoi(after)
+	if err != nil {
+		return 0, false
+	}
+	return lease, true
+}
+
+// parseLeaseLineDNS extracts DNS servers from a line if it matches the DNS key.
+func parseLeaseLineDNS(line, dnsKey string) []string {
+	after, ok := strings.CutPrefix(line, dnsKey)
+	if !ok {
+		return nil
+	}
+	var servers []string
+	for dns := range strings.SplitSeq(after, " ") {
+		dns = strings.TrimSpace(dns)
+		if dns != "" {
+			servers = append(servers, dns)
+		}
+	}
+	return servers
+}
+
+// processLeaseLine processes a single lease file line and updates the LeaseInfo.
+func processLeaseLine(line string, mapping leaseFieldMapping, info *LeaseInfo) {
+	if server, ok := parseLeaseLineServer(line, mapping.serverKey); ok {
+		info.DHCPServer = server
+	}
+	if gateway, ok := parseLeaseLineRouter(line, mapping.routerKey); ok {
+		info.Gateway = gateway
+	}
+	if leaseTime, ok := parseLeaseLineTime(line, mapping.leaseTimeKey); ok {
+		info.LeaseTime = leaseTime
+	}
+	if dnsServers := parseLeaseLineDNS(line, mapping.dnsKey); dnsServers != nil {
+		info.DNS = append(info.DNS, dnsServers...)
+	}
+}
+
 // parseLeaseFileWithMapping parses a lease file using the given field mappings.
 func parseLeaseFileWithMapping(path string, mapping leaseFieldMapping) *LeaseInfo {
 	file, err := os.Open(path)
@@ -803,30 +952,7 @@ func parseLeaseFileWithMapping(path string, mapping leaseFieldMapping) *LeaseInf
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-
-		if after, ok := strings.CutPrefix(line, mapping.serverKey); ok {
-			info.DHCPServer = after
-		}
-		if after, ok := strings.CutPrefix(line, mapping.routerKey); ok {
-			val := after
-			if parts := strings.Split(val, " "); len(parts) > 0 {
-				info.Gateway = parts[0]
-			}
-		}
-		if after, ok := strings.CutPrefix(line, mapping.leaseTimeKey); ok {
-			if lease, parseErr := strconv.Atoi(after); parseErr == nil {
-				info.LeaseTime = lease
-			}
-		}
-		if after, ok := strings.CutPrefix(line, mapping.dnsKey); ok {
-			val := after
-			for dns := range strings.SplitSeq(val, " ") {
-				dns = strings.TrimSpace(dns)
-				if dns != "" {
-					info.DNS = append(info.DNS, dns)
-				}
-			}
-		}
+		processLeaseLine(line, mapping, info)
 	}
 
 	if info.DHCPServer != "" || info.Gateway != "" {

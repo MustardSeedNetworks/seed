@@ -13,6 +13,37 @@ import (
 	"github.com/krisarmstrong/seed/internal/roots/publicip"
 )
 
+const (
+	// defaultHopTimeout is the default timeout per hop in traceroute.
+	defaultHopTimeout = 2 * time.Second
+	// defaultMaxHops is the default maximum number of hops in traceroute.
+	defaultMaxHops = 30
+	// defaultUDPPort is the default UDP port for UDP traceroute.
+	defaultUDPPort = 33434
+	// percentMultiplier converts a ratio to a percentage.
+	percentMultiplier = 100
+	// bottleneckRTTThreshold is the minimum RTT increase (ms) to flag as bottleneck.
+	bottleneckRTTThreshold = 50
+	// bottleneckRTTRatio is the minimum ratio of current/previous RTT to flag as bottleneck.
+	bottleneckRTTRatio = 2
+	// highRTTThreshold is the RTT threshold (ms) above which score is penalized.
+	highRTTThreshold = 100
+	// rttPenaltyDivisor is the divisor for calculating RTT penalty.
+	rttPenaltyDivisor = 10
+	// bottleneckScorePenalty is the score deduction per bottleneck.
+	bottleneckScorePenalty = 5
+	// maxScore is the maximum possible path quality score.
+	maxScore = 100
+	// scoreExcellent is the threshold for excellent path quality.
+	scoreExcellent = 90
+	// scoreGood is the threshold for good path quality.
+	scoreGood = 70
+	// scoreFair is the threshold for fair path quality.
+	scoreFair = 50
+	// scorePoor is the threshold for poor path quality.
+	scorePoor = 30
+)
+
 // TracerouteService handles network path tracing.
 type TracerouteService struct {
 	cfg    *config.Config
@@ -21,13 +52,9 @@ type TracerouteService struct {
 
 // NewTracerouteService creates a new traceroute service.
 func NewTracerouteService(cfg *config.Config) *TracerouteService {
-	// Default timeout from config or fallback
-	timeout := 2 * time.Second
-	maxHops := 30
-
 	return &TracerouteService{
 		cfg:    cfg,
-		tracer: discovery.NewTracer(timeout, maxHops),
+		tracer: discovery.NewTracer(defaultHopTimeout, defaultMaxHops),
 	}
 }
 
@@ -44,8 +71,8 @@ func (s *TracerouteService) Trace(
 	startTime := time.Now()
 
 	// Apply options to create appropriate tracer
-	timeout := 2 * time.Second
-	maxHops := 30
+	timeout := defaultHopTimeout
+	maxHops := defaultMaxHops
 	if opts != nil {
 		if opts.Timeout > 0 {
 			timeout = opts.Timeout
@@ -66,8 +93,7 @@ func (s *TracerouteService) Trace(
 	// Perform the trace based on protocol
 	var discoveryResult *discovery.TracerouteResult
 	if opts != nil && opts.UseUDP {
-		port := 33434 // Default UDP traceroute port
-		discoveryResult = tracer.TraceUDP(ctx, target, port)
+		discoveryResult = tracer.TraceUDP(ctx, target, defaultUDPPort)
 	} else {
 		discoveryResult = tracer.TraceICMP(ctx, target)
 	}
@@ -275,7 +301,7 @@ func (s *AnalysisService) AnalyzePath(
 
 	// Calculate packet loss percentage
 	if len(result.Hops) > 0 {
-		analysis.PacketLoss = float64(lostHops) / float64(len(result.Hops)) * 100
+		analysis.PacketLoss = float64(lostHops) / float64(len(result.Hops)) * percentMultiplier
 	}
 
 	// Calculate path quality score and generate analysis text
@@ -325,7 +351,7 @@ func (s *AnalysisService) detectBottleneck(
 	}
 
 	increase := currentRTT - previousRTT
-	isSignificantIncrease := increase > 50 || currentRTT/previousRTT > 2
+	isSignificantIncrease := increase > bottleneckRTTThreshold || currentRTT/previousRTT > bottleneckRTTRatio
 
 	if !isSignificantIncrease {
 		return nil
@@ -344,33 +370,33 @@ func (s *AnalysisService) detectBottleneck(
 
 // calculateScore computes the path quality score (0-100).
 func (s *AnalysisService) calculateScore(analysis *PathAnalysis) int {
-	score := 100
+	score := maxScore
 
 	// Deduct for packet loss
 	score -= int(analysis.PacketLoss)
 
 	// Deduct for high average RTT
-	if analysis.AverageRTT > 100 {
-		score -= int((analysis.AverageRTT - 100) / 10)
+	if analysis.AverageRTT > highRTTThreshold {
+		score -= int((analysis.AverageRTT - highRTTThreshold) / rttPenaltyDivisor)
 	}
 
 	// Deduct for bottlenecks
-	score -= len(analysis.Bottlenecks) * 5
+	score -= len(analysis.Bottlenecks) * bottleneckScorePenalty
 
 	// Ensure score is within bounds
-	return max(0, min(100, score))
+	return max(0, min(maxScore, score))
 }
 
 // scoreToDescription converts a score to a human-readable description.
 func scoreToDescription(score int) string {
 	switch {
-	case score >= 90:
+	case score >= scoreExcellent:
 		return "Excellent path quality with low latency and no packet loss."
-	case score >= 70:
+	case score >= scoreGood:
 		return "Good path quality with acceptable latency."
-	case score >= 50:
+	case score >= scoreFair:
 		return "Fair path quality. Some latency or packet loss detected."
-	case score >= 30:
+	case score >= scorePoor:
 		return "Poor path quality. High latency or significant packet loss."
 	default:
 		return "Very poor path quality. Consider using an alternative route."

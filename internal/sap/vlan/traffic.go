@@ -16,6 +16,10 @@ import (
 // Fixes #915: Maximum number of tracked VLANs (802.1Q max is 4094).
 const maxTrackedVLANs = 4096
 
+// pcapSnapshotLen is the maximum number of bytes to capture per packet.
+// 128 bytes is enough to capture Ethernet, VLAN, and IP headers for traffic analysis.
+const pcapSnapshotLen = 128
+
 // Traffic represents per-VLAN traffic statistics.
 type Traffic struct {
 	ID       int       `json:"id"`
@@ -53,7 +57,7 @@ func (m *TrafficMonitor) Start() error {
 	}
 
 	// Open capture handle
-	handle, err := pcap.OpenLive(m.interfaceName, 128, true, pcap.BlockForever)
+	handle, err := pcap.OpenLive(m.interfaceName, pcapSnapshotLen, true, pcap.BlockForever)
 	if err != nil {
 		m.mu.Unlock()
 		return fmt.Errorf("failed to open capture: %w", err)

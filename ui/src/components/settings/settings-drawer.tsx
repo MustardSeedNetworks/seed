@@ -585,7 +585,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch SNMP settings from API
   const fetchSnmpSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/snmp/settings`, {
+      const response = await fetch(`${API_BASE}/api/sap/snmp/settings`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -808,7 +808,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const saveSnmpSettings = useCallback(async () => {
     setSnmpStatus("saving");
     try {
-      const response = await fetch(`${API_BASE}/api/snmp/settings`, {
+      const response = await fetch(`${API_BASE}/api/sap/snmp/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

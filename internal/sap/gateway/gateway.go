@@ -1,7 +1,7 @@
-// Package gateway provides gateway reachability testing and latency measurement.
+package gateway
+
 // Implements ICMP-based ping tests to verify gateway connectivity, measure round-trip times,
 // and detect gateway availability issues. Supports sequential and continuous gateway monitoring.
-package gateway
 
 import (
 	"context"
@@ -21,6 +21,38 @@ const (
 	StatusWarning Status = "warning"
 	StatusError   Status = "error"
 	StatusUnknown Status = "unknown"
+)
+
+// Time conversion and threshold constants.
+const (
+	// microsecondsPerMillisecond is the number of microseconds in one millisecond,
+	// used for converting time.Duration.Microseconds() to milliseconds.
+	microsecondsPerMillisecond = 1000.0
+
+	// pingIntervalDelay is the delay between consecutive ping packets
+	// to avoid flooding the network and allow for accurate timing measurements.
+	pingIntervalDelay = 200 * time.Millisecond
+
+	// defaultWarningLatencyMs is the default latency threshold (in ms) for warning status.
+	defaultWarningLatencyMs = 50
+
+	// defaultCriticalLatencyMs is the default latency threshold (in ms) for critical status.
+	defaultCriticalLatencyMs = 200
+
+	// defaultLossWarningPercent is the default packet loss percentage for warning status.
+	defaultLossWarningPercent = 5.0
+
+	// defaultLossCriticalPercent is the default packet loss percentage for critical status.
+	defaultLossCriticalPercent = 20.0
+
+	// defaultPingCount is the number of ping probes sent per test cycle.
+	defaultPingCount = 3
+
+	// defaultPingTimeoutSec is the timeout in seconds for each ping probe.
+	defaultPingTimeoutSec = 2
+
+	// percentMultiplier converts a ratio to percentage (0-100 scale).
+	percentMultiplier = 100
 )
 
 // PingResult contains the result of a single ping.
@@ -61,10 +93,10 @@ type Thresholds struct {
 // DefaultThresholds returns reasonable default thresholds.
 func DefaultThresholds() Thresholds {
 	return Thresholds{
-		Warning:  50 * time.Millisecond,
-		Critical: 200 * time.Millisecond,
-		LossWarn: 5.0,  // 5% packet loss
-		LossCrit: 20.0, // 20% packet loss
+		Warning:  defaultWarningLatencyMs * time.Millisecond,
+		Critical: defaultCriticalLatencyMs * time.Millisecond,
+		LossWarn: defaultLossWarningPercent,
+		LossCrit: defaultLossCriticalPercent,
 	}
 }
 
@@ -86,8 +118,8 @@ type Tester struct {
 func NewTester(thresholds Thresholds) *Tester {
 	t := &Tester{
 		thresholds:  thresholds,
-		pingCount:   3, // 3 pings matches the Min/Avg/Max display
-		pingTimeout: 2 * time.Second,
+		pingCount:   defaultPingCount,
+		pingTimeout: defaultPingTimeoutSec * time.Second,
 		stats:       &PingStats{Status: StatusUnknown},
 		stopCh:      make(chan struct{}),
 	}
@@ -164,31 +196,36 @@ func (t *Tester) Ping() *PingResult {
 		return result
 	}
 
-	// Use raw ICMP pinger if available
-	if pinger != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
-
-		pingResult := pinger.Ping(ctx, gateway)
-		if pingResult.Reachable {
-			result.Success = true
-			result.Time = pingResult.RTT
-			result.TimeMs = float64(pingResult.RTT.Microseconds()) / 1000.0
-		} else {
-			result.Success = false
-			if pingResult.Error != nil {
-				result.Error = pingResult.Error.Error()
-			} else {
-				result.Error = "ping timeout"
-			}
-		}
+	// Fallback: pinger unavailable (no CAP_NET_RAW)
+	if pinger == nil {
+		result.Success = false
+		result.Error = "ICMP pinger unavailable - requires CAP_NET_RAW"
 		return result
 	}
 
-	// Fallback: pinger unavailable (no CAP_NET_RAW)
-	result.Success = false
-	result.Error = "ICMP pinger unavailable - requires CAP_NET_RAW"
+	// Use raw ICMP pinger
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	pingResult := pinger.Ping(ctx, gateway)
+	if !pingResult.Reachable {
+		result.Success = false
+		result.Error = pingErrorMessage(pingResult.Error)
+		return result
+	}
+
+	result.Success = true
+	result.Time = pingResult.RTT
+	result.TimeMs = float64(pingResult.RTT.Microseconds()) / microsecondsPerMillisecond
 	return result
+}
+
+// pingErrorMessage returns an appropriate error message for a failed ping.
+func pingErrorMessage(err error) string {
+	if err != nil {
+		return err.Error()
+	}
+	return "ping timeout"
 }
 
 // Test performs a complete ping test with multiple packets.
@@ -251,7 +288,7 @@ func (t *Tester) Test() *PingStats {
 
 		// Small delay between pings
 		if i < count-1 {
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(pingIntervalDelay)
 		}
 	}
 
@@ -264,7 +301,7 @@ func (t *Tester) Test() *PingStats {
 	}
 
 	if stats.Sent > 0 {
-		stats.LossPercent = float64(stats.Lost) / float64(stats.Sent) * 100
+		stats.LossPercent = float64(stats.Lost) / float64(stats.Sent) * percentMultiplier
 	}
 
 	// Determine status

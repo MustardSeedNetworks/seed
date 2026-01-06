@@ -1,4 +1,3 @@
-// Package gateway exports internal functions for testing.
 package gateway
 
 import (

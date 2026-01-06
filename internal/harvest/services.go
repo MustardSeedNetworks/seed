@@ -39,6 +39,59 @@ const (
 // SQLite date format for grouping.
 const sqliteDateFormat = "%Y-%m-%d"
 
+// PDF layout and formatting constants.
+const (
+	// Page margins and spacing.
+	pdfPageMarginBottom    = 15  // Bottom margin for auto page break
+	pdfCoverTopMargin      = 60  // Top margin on cover page
+	pdfSectionSpacingSmall = 5   // Small vertical spacing between sections
+	pdfSectionSpacingMed   = 10  // Medium vertical spacing between sections
+	pdfSectionSpacingLarge = 20  // Large vertical spacing between sections
+	pdfLineStartX          = 10  // X coordinate for horizontal line start
+	pdfLineEndX            = 200 // X coordinate for horizontal line end
+
+	// Font sizes.
+	pdfFontSizeCoverTitle = 28 // Cover page title font size
+	pdfFontSizeCoverName  = 16 // Cover page report name font size
+	pdfFontSizeCoverMeta  = 12 // Cover page metadata font size
+	pdfFontSizeSection    = 14 // Section header font size
+	pdfFontSizeSubsection = 11 // Subsection header font size
+	pdfFontSizeBody       = 10 // Body text font size
+	pdfFontSizeSmall      = 9  // Small text font size
+
+	// Cell dimensions.
+	pdfCellHeightTitle    = 15 // Height for title cells
+	pdfCellHeightSubtitle = 10 // Height for subtitle/name cells
+	pdfCellHeightBody     = 8  // Height for body text cells
+	pdfCellHeightMetric   = 7  // Height for metric rows
+	pdfCellHeightSeverity = 6  // Height for severity list items
+	pdfLabelColumnWidth   = 60 // Width for label columns in metric tables
+	pdfSeverityLabelWidth = 30 // Width for severity labels
+
+	// Colors (RGB components).
+	pdfColorGrayLight = 200 // Light gray for divider lines
+	pdfColorGrayMid   = 100 // Medium gray for metadata text
+	pdfColorGrayDark  = 80  // Dark gray for label text
+)
+
+// Date calculation constants.
+const (
+	hoursPerDay           = 24 // Hours in a day for period calculations
+	monthlyThresholdDays  = 30 // Days threshold for monthly period
+	daysInWeek            = 7  // Days in a week for modular arithmetic
+	topIssuesDisplayLimit = 5  // Maximum top issues to display in reports
+)
+
+// Template section order constants.
+const (
+	sectionOrderOverview    = 1 // Order for overview/summary sections
+	sectionOrderSecondary   = 2 // Order for secondary sections (security, critical, devices)
+	sectionOrderTertiary    = 3 // Order for tertiary sections (performance, high severity, software)
+	sectionOrderQuaternary  = 4 // Order for fourth sections (recommendations, medium severity, changes)
+	sectionOrderQuinary     = 5 // Order for fifth sections (low severity)
+	sectionOrderRemediation = 6 // Order for remediation section
+)
+
 // GeneratorService generates reports in various formats.
 type GeneratorService struct {
 	cfg         *config.Config
@@ -109,8 +162,8 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 	// Aggregate data for the report
 	dateRange := PeriodWeekly
 	if report.Parameters.DateRange != nil {
-		days := report.Parameters.DateRange.End.Sub(report.Parameters.DateRange.Start).Hours() / 24
-		if days > 30 {
+		days := report.Parameters.DateRange.End.Sub(report.Parameters.DateRange.Start).Hours() / hoursPerDay
+		if days > monthlyThresholdDays {
 			dateRange = PeriodMonthly
 		} else if days <= 1 {
 			dateRange = PeriodDaily
@@ -166,7 +219,7 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 // generatePDF creates a PDF report.
 func (s *GeneratorService) generatePDF(report *Report, data *AggregatedData) ([]byte, error) {
 	pdf := fpdf.New("P", "mm", "A4", "")
-	pdf.SetAutoPageBreak(true, 15)
+	pdf.SetAutoPageBreak(true, pdfPageMarginBottom)
 
 	// Cover page
 	pdf.AddPage()
@@ -203,20 +256,20 @@ func (s *GeneratorService) generatePDF(report *Report, data *AggregatedData) ([]
 }
 
 func (s *GeneratorService) addPDFCover(pdf *fpdf.Fpdf, report *Report) {
-	pdf.SetFont("Arial", "B", 28)
-	pdf.Ln(60)
-	pdf.CellFormat(0, 15, "Network Report", "", 1, "C", false, 0, "")
+	pdf.SetFont("Arial", "B", pdfFontSizeCoverTitle)
+	pdf.Ln(pdfCoverTopMargin)
+	pdf.CellFormat(0, pdfCellHeightTitle, "Network Report", "", 1, "C", false, 0, "")
 
-	pdf.SetFont("Arial", "", 16)
-	pdf.Ln(10)
-	pdf.CellFormat(0, 10, report.Name, "", 1, "C", false, 0, "")
+	pdf.SetFont("Arial", "", pdfFontSizeCoverName)
+	pdf.Ln(pdfSectionSpacingMed)
+	pdf.CellFormat(0, pdfCellHeightSubtitle, report.Name, "", 1, "C", false, 0, "")
 
-	pdf.SetFont("Arial", "", 12)
-	pdf.Ln(20)
-	pdf.SetTextColor(100, 100, 100)
+	pdf.SetFont("Arial", "", pdfFontSizeCoverMeta)
+	pdf.Ln(pdfSectionSpacingLarge)
+	pdf.SetTextColor(pdfColorGrayMid, pdfColorGrayMid, pdfColorGrayMid)
 	pdf.CellFormat(
 		0,
-		8,
+		pdfCellHeightBody,
 		fmt.Sprintf("Generated: %s", time.Now().Format("January 2, 2006 15:04")),
 		"",
 		1,
@@ -225,13 +278,13 @@ func (s *GeneratorService) addPDFCover(pdf *fpdf.Fpdf, report *Report) {
 		0,
 		"",
 	)
-	pdf.CellFormat(0, 8, fmt.Sprintf("Type: %s", report.Type), "", 1, "C", false, 0, "")
+	pdf.CellFormat(0, pdfCellHeightBody, fmt.Sprintf("Type: %s", report.Type), "", 1, "C", false, 0, "")
 }
 
 func (s *GeneratorService) addPDFExecutiveSummary(pdf *fpdf.Fpdf, data *AggregatedData) {
 	s.addPDFSectionHeader(pdf, "Executive Summary")
 
-	pdf.SetFont("Arial", "", 10)
+	pdf.SetFont("Arial", "", pdfFontSizeBody)
 	pdf.SetTextColor(0, 0, 0)
 
 	metrics := []struct {
@@ -254,21 +307,21 @@ func (s *GeneratorService) addPDFExecutiveSummary(pdf *fpdf.Fpdf, data *Aggregat
 	}
 
 	for _, m := range metrics {
-		pdf.SetTextColor(80, 80, 80)
-		pdf.CellFormat(60, 7, m.label+":", "", 0, "L", false, 0, "")
+		pdf.SetTextColor(pdfColorGrayDark, pdfColorGrayDark, pdfColorGrayDark)
+		pdf.CellFormat(pdfLabelColumnWidth, pdfCellHeightMetric, m.label+":", "", 0, "L", false, 0, "")
 		pdf.SetTextColor(0, 0, 0)
-		pdf.CellFormat(0, 7, m.value, "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, pdfCellHeightMetric, m.value, "", 1, "L", false, 0, "")
 	}
 }
 
 func (s *GeneratorService) addPDFDeviceSection(pdf *fpdf.Fpdf, data *AggregatedData) {
 	s.addPDFSectionHeader(pdf, "Device Inventory")
 
-	pdf.SetFont("Arial", "", 10)
+	pdf.SetFont("Arial", "", pdfFontSizeBody)
 	pdf.SetTextColor(0, 0, 0)
 	pdf.CellFormat(
 		0,
-		8,
+		pdfCellHeightBody,
 		fmt.Sprintf("Total devices discovered: %d", data.DeviceCount),
 		"",
 		1,
@@ -283,10 +336,10 @@ func (s *GeneratorService) addPDFVulnerabilitySection(pdf *fpdf.Fpdf, data *Aggr
 	s.addPDFSectionHeader(pdf, "Vulnerability Assessment")
 
 	// Severity breakdown
-	pdf.SetFont("Arial", "B", 11)
-	pdf.CellFormat(0, 8, "Severity Distribution", "", 1, "L", false, 0, "")
+	pdf.SetFont("Arial", "B", pdfFontSizeSubsection)
+	pdf.CellFormat(0, pdfCellHeightBody, "Severity Distribution", "", 1, "L", false, 0, "")
 
-	pdf.SetFont("Arial", "", 10)
+	pdf.SetFont("Arial", "", pdfFontSizeBody)
 	severities := []struct {
 		label string
 		count int
@@ -300,26 +353,26 @@ func (s *GeneratorService) addPDFVulnerabilitySection(pdf *fpdf.Fpdf, data *Aggr
 
 	for _, sev := range severities {
 		pdf.SetTextColor(sev.color[0], sev.color[1], sev.color[2])
-		pdf.CellFormat(30, 6, sev.label+":", "", 0, "L", false, 0, "")
+		pdf.CellFormat(pdfSeverityLabelWidth, pdfCellHeightSeverity, sev.label+":", "", 0, "L", false, 0, "")
 		pdf.SetTextColor(0, 0, 0)
-		pdf.CellFormat(0, 6, strconv.Itoa(sev.count), "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, pdfCellHeightSeverity, strconv.Itoa(sev.count), "", 1, "L", false, 0, "")
 	}
 
 	// Top issues
 	if len(data.TopIssues) > 0 {
-		pdf.Ln(5)
-		pdf.SetFont("Arial", "B", 11)
+		pdf.Ln(pdfSectionSpacingSmall)
+		pdf.SetFont("Arial", "B", pdfFontSizeSubsection)
 		pdf.SetTextColor(0, 0, 0)
-		pdf.CellFormat(0, 8, "Top Issues", "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, pdfCellHeightBody, "Top Issues", "", 1, "L", false, 0, "")
 
-		pdf.SetFont("Arial", "", 9)
+		pdf.SetFont("Arial", "", pdfFontSizeSmall)
 		for i, issue := range data.TopIssues {
-			if i >= 5 {
+			if i >= topIssuesDisplayLimit {
 				break
 			}
 			pdf.CellFormat(
 				0,
-				6,
+				pdfCellHeightSeverity,
 				fmt.Sprintf("%d. %s (%d occurrences)", i+1, issue.Description, issue.Count),
 				"",
 				1,
@@ -335,7 +388,7 @@ func (s *GeneratorService) addPDFVulnerabilitySection(pdf *fpdf.Fpdf, data *Aggr
 func (s *GeneratorService) addPDFPerformanceSection(pdf *fpdf.Fpdf, data *AggregatedData) {
 	s.addPDFSectionHeader(pdf, "Performance Metrics")
 
-	pdf.SetFont("Arial", "", 10)
+	pdf.SetFont("Arial", "", pdfFontSizeBody)
 	pdf.SetTextColor(0, 0, 0)
 
 	metrics := []struct {
@@ -349,21 +402,21 @@ func (s *GeneratorService) addPDFPerformanceSection(pdf *fpdf.Fpdf, data *Aggreg
 	}
 
 	for _, m := range metrics {
-		pdf.SetTextColor(80, 80, 80)
-		pdf.CellFormat(60, 7, m.label+":", "", 0, "L", false, 0, "")
+		pdf.SetTextColor(pdfColorGrayDark, pdfColorGrayDark, pdfColorGrayDark)
+		pdf.CellFormat(pdfLabelColumnWidth, pdfCellHeightMetric, m.label+":", "", 0, "L", false, 0, "")
 		pdf.SetTextColor(0, 0, 0)
-		pdf.CellFormat(0, 7, m.value, "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, pdfCellHeightMetric, m.value, "", 1, "L", false, 0, "")
 	}
 }
 
 func (s *GeneratorService) addPDFSectionHeader(pdf *fpdf.Fpdf, title string) {
-	pdf.SetFont("Arial", "B", 14)
+	pdf.SetFont("Arial", "B", pdfFontSizeSection)
 	pdf.SetTextColor(0, 0, 0)
-	pdf.CellFormat(0, 10, title, "", 1, "L", false, 0, "")
+	pdf.CellFormat(0, pdfCellHeightSubtitle, title, "", 1, "L", false, 0, "")
 
-	pdf.SetDrawColor(200, 200, 200)
-	pdf.Line(10, pdf.GetY(), 200, pdf.GetY())
-	pdf.Ln(5)
+	pdf.SetDrawColor(pdfColorGrayLight, pdfColorGrayLight, pdfColorGrayLight)
+	pdf.Line(pdfLineStartX, pdf.GetY(), pdfLineEndX, pdf.GetY())
+	pdf.Ln(pdfSectionSpacingSmall)
 }
 
 // generateHTML creates an HTML report.
@@ -863,10 +916,10 @@ func (s *TemplateService) loadBuiltInTemplates() {
 		Type:        ReportTypeExecutive,
 		Formats:     []ExportFormat{FormatPDF, FormatHTML},
 		Sections: []TemplateSection{
-			{ID: "overview", Name: "Overview", Title: "Network Overview", Order: 1},
-			{ID: "security", Name: "Security", Title: "Security Posture", Order: 2},
-			{ID: "performance", Name: "Performance", Title: "Performance Summary", Order: 3},
-			{ID: "recommendations", Name: "Recommendations", Title: "Recommendations", Order: 4},
+			{ID: "overview", Name: "Overview", Title: "Network Overview", Order: sectionOrderOverview},
+			{ID: "security", Name: "Security", Title: "Security Posture", Order: sectionOrderSecondary},
+			{ID: "performance", Name: "Performance", Title: "Performance Summary", Order: sectionOrderTertiary},
+			{ID: "recommendations", Name: "Recommendations", Title: "Recommendations", Order: sectionOrderQuaternary},
 		},
 		IsBuiltIn: true,
 		CreatedAt: now,
@@ -881,12 +934,12 @@ func (s *TemplateService) loadBuiltInTemplates() {
 		Type:        ReportTypeVulnerability,
 		Formats:     []ExportFormat{FormatPDF, FormatHTML, FormatCSV},
 		Sections: []TemplateSection{
-			{ID: "summary", Name: "Summary", Title: "Vulnerability Summary", Order: 1},
-			{ID: "critical", Name: "Critical", Title: "Critical Vulnerabilities", Order: 2},
-			{ID: "high", Name: "High", Title: "High Severity", Order: 3},
-			{ID: "medium", Name: "Medium", Title: "Medium Severity", Order: 4, Optional: true},
-			{ID: "low", Name: "Low", Title: "Low Severity", Order: 5, Optional: true},
-			{ID: "remediation", Name: "Remediation", Title: "Remediation Plan", Order: 6},
+			{ID: "summary", Name: "Summary", Title: "Vulnerability Summary", Order: sectionOrderOverview},
+			{ID: "critical", Name: "Critical", Title: "Critical Vulnerabilities", Order: sectionOrderSecondary},
+			{ID: "high", Name: "High", Title: "High Severity", Order: sectionOrderTertiary},
+			{ID: "medium", Name: "Medium", Title: "Medium Severity", Order: sectionOrderQuaternary, Optional: true},
+			{ID: "low", Name: "Low", Title: "Low Severity", Order: sectionOrderQuinary, Optional: true},
+			{ID: "remediation", Name: "Remediation", Title: "Remediation Plan", Order: sectionOrderRemediation},
 		},
 		IsBuiltIn: true,
 		CreatedAt: now,
@@ -901,16 +954,16 @@ func (s *TemplateService) loadBuiltInTemplates() {
 		Type:        ReportTypeInventory,
 		Formats:     []ExportFormat{FormatPDF, FormatHTML, FormatCSV, FormatExcel},
 		Sections: []TemplateSection{
-			{ID: "summary", Name: "Summary", Title: "Inventory Summary", Order: 1},
-			{ID: "devices", Name: "Devices", Title: "Device List", Order: 2},
+			{ID: "summary", Name: "Summary", Title: "Inventory Summary", Order: sectionOrderOverview},
+			{ID: "devices", Name: "Devices", Title: "Device List", Order: sectionOrderSecondary},
 			{
 				ID:       "software",
 				Name:     "Software",
 				Title:    "Software Inventory",
-				Order:    3,
+				Order:    sectionOrderTertiary,
 				Optional: true,
 			},
-			{ID: "changes", Name: "Changes", Title: "Recent Changes", Order: 4, Optional: true},
+			{ID: "changes", Name: "Changes", Title: "Recent Changes", Order: sectionOrderQuaternary, Optional: true},
 		},
 		IsBuiltIn: true,
 		CreatedAt: now,
@@ -925,10 +978,10 @@ func (s *TemplateService) loadBuiltInTemplates() {
 		Type:        ReportTypePerformance,
 		Formats:     []ExportFormat{FormatPDF, FormatHTML, FormatJSON},
 		Sections: []TemplateSection{
-			{ID: "overview", Name: "Overview", Title: "Performance Overview", Order: 1},
-			{ID: "latency", Name: "Latency", Title: "Latency Analysis", Order: 2},
-			{ID: "throughput", Name: "Throughput", Title: "Throughput Metrics", Order: 3},
-			{ID: "availability", Name: "Availability", Title: "Service Availability", Order: 4},
+			{ID: "overview", Name: "Overview", Title: "Performance Overview", Order: sectionOrderOverview},
+			{ID: "latency", Name: "Latency", Title: "Latency Analysis", Order: sectionOrderSecondary},
+			{ID: "throughput", Name: "Throughput", Title: "Throughput Metrics", Order: sectionOrderTertiary},
+			{ID: "availability", Name: "Availability", Title: "Service Availability", Order: sectionOrderQuaternary},
 		},
 		IsBuiltIn: true,
 		CreatedAt: now,
@@ -1192,9 +1245,9 @@ func calculateNextRun(schedule *Schedule) *time.Time {
 	case FrequencyWeekly:
 		next = now
 		if schedule.DayOfWeek != nil {
-			daysUntil := (*schedule.DayOfWeek - int(now.Weekday()) + 7) % 7
+			daysUntil := (*schedule.DayOfWeek - int(now.Weekday()) + daysInWeek) % daysInWeek
 			if daysUntil == 0 {
-				daysUntil = 7
+				daysUntil = daysInWeek
 			}
 			next = next.AddDate(0, 0, daysUntil)
 		}

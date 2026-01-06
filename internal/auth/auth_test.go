@@ -1,6 +1,6 @@
-// Package auth_test tests the auth package for JWT authentication.
-// Test suite validates password hashing, JWT issuance/verification, and middleware behavior.
 package auth_test
+
+// Test suite validates password hashing, JWT issuance/verification, and middleware behavior.
 
 import (
 	"context"
@@ -13,6 +13,28 @@ import (
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/testutil"
 )
+
+// assertAuthError is a test helper that verifies authentication failed as expected.
+func assertAuthError(t *testing.T, err, wantErr error, token string) {
+	t.Helper()
+	if !errors.Is(err, wantErr) {
+		t.Errorf("expected error %v, got %v", wantErr, err)
+	}
+	if token != "" {
+		t.Error("expected empty token on error")
+	}
+}
+
+// assertAuthSuccess is a test helper that verifies authentication succeeded.
+func assertAuthSuccess(t *testing.T, err error, token string) {
+	t.Helper()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if token == "" {
+		t.Error("expected token, got empty string")
+	}
+}
 
 func TestNewManager(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
@@ -98,21 +120,14 @@ func TestAuthenticate(t *testing.T) {
 			ctx := context.Background()
 			token, err := m.Authenticate(ctx, tt.username, tt.password)
 
+			// Handle expected error case
 			if tt.wantErr != nil {
-				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("expected error %v, got %v", tt.wantErr, err)
-				}
-				if token != "" {
-					t.Error("expected empty token on error")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				if token == "" {
-					t.Error("expected token, got empty string")
-				}
+				assertAuthError(t, err, tt.wantErr, token)
+				return
 			}
+
+			// Handle expected success case
+			assertAuthSuccess(t, err, token)
 		})
 	}
 }

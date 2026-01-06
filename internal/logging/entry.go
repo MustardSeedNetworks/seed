@@ -1,4 +1,3 @@
-// Package logging provides structured logging with automatic redaction of sensitive data.
 package logging
 
 import (

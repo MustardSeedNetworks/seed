@@ -1,4 +1,3 @@
-// Package database provides metrics repository for time-series data.
 package database
 
 import (

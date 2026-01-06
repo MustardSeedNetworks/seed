@@ -1,7 +1,7 @@
-// Package network_test handles network interface management.
+package network_test
+
 // Test suite validates interface detection, configuration, and cross-platform operations.
 // Tests cover interface enumeration, property detection, IP configuration, and DNS setup.
-package network_test
 
 import (
 	"testing"
@@ -106,21 +106,55 @@ func TestGetInterfaces(t *testing.T) {
 	}
 }
 
+// findLoopbackInterface returns the name of the loopback interface from the manager.
+func findLoopbackInterface(t *testing.T, mgr *network.Manager) string {
+	t.Helper()
+
+	for _, iface := range mgr.GetInterfaces() {
+		if iface.Type == network.InterfaceTypeLoopback {
+			return iface.Name
+		}
+	}
+
+	return ""
+}
+
+// assertGetInterfaceError verifies that GetInterface returns an error.
+func assertGetInterfaceError(t *testing.T, mgr *network.Manager, ifaceName string) {
+	t.Helper()
+
+	_, err := mgr.GetInterface(ifaceName)
+	if err == nil {
+		t.Error("GetInterface() error = nil, want error")
+	}
+}
+
+// assertGetInterfaceSuccess verifies that GetInterface succeeds and returns valid info.
+func assertGetInterfaceSuccess(t *testing.T, mgr *network.Manager, ifaceName string) {
+	t.Helper()
+
+	info, err := mgr.GetInterface(ifaceName)
+	if err != nil {
+		t.Errorf("GetInterface() error = %v, want nil", err)
+		return
+	}
+
+	if info == nil {
+		t.Fatal("GetInterface() returned nil info")
+	}
+
+	if info.Name != ifaceName {
+		t.Errorf("Interface Name = %v, want %v", info.Name, ifaceName)
+	}
+}
+
 func TestGetInterface(t *testing.T) {
 	mgr, mgrErr := network.NewManager("")
 	if mgrErr != nil {
 		t.Fatalf("NewManager() failed: %v", mgrErr)
 	}
 
-	// Get a known interface (loopback should exist on all systems).
-	var loopbackName string
-	for _, iface := range mgr.GetInterfaces() {
-		if iface.Type == network.InterfaceTypeLoopback {
-			loopbackName = iface.Name
-			break
-		}
-	}
-
+	loopbackName := findLoopbackInterface(t, mgr)
 	if loopbackName == "" {
 		t.Skip("No loopback interface found")
 	}
@@ -144,27 +178,12 @@ func TestGetInterface(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			info, err := mgr.GetInterface(tt.iface)
-
 			if tt.wantErr {
-				if err == nil {
-					t.Error("GetInterface() error = nil, want error")
-				}
+				assertGetInterfaceError(t, mgr, tt.iface)
 				return
 			}
 
-			if err != nil {
-				t.Errorf("GetInterface() error = %v, want nil", err)
-				return
-			}
-
-			if info == nil {
-				t.Fatal("GetInterface() returned nil info")
-			}
-
-			if info.Name != tt.iface {
-				t.Errorf("Interface Name = %v, want %v", info.Name, tt.iface)
-			}
+			assertGetInterfaceSuccess(t, mgr, tt.iface)
 		})
 	}
 }

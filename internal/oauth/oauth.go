@@ -38,6 +38,16 @@ var (
 	ErrUserInfo        = errors.New("failed to get user info from provider")
 )
 
+// OAuth configuration constants.
+const (
+	// userInfoRequestTimeout is the timeout for HTTP requests to provider userinfo endpoints.
+	userInfoRequestTimeout = 10 * time.Second
+
+	// stateByteLength is the number of random bytes used for OAuth state parameter.
+	// 32 bytes provides 256 bits of entropy for CSRF protection.
+	stateByteLength = 32
+)
+
 // Provider represents an OAuth2 identity provider.
 type Provider struct {
 	Name        string
@@ -108,7 +118,7 @@ func (p *Provider) Exchange(ctx context.Context, code string) (*oauth2.Token, er
 func (p *Provider) GetUserInfo(ctx context.Context, token *oauth2.Token) (*UserInfo, error) {
 	client := p.Config.Client(ctx, token)
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, userInfoRequestTimeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.UserInfoURL, http.NoBody)
@@ -149,7 +159,7 @@ func (p *Provider) GetUserInfo(ctx context.Context, token *oauth2.Token) (*UserI
 // GenerateState creates a cryptographically secure random state string.
 // This is used for CSRF protection in the OAuth flow.
 func GenerateState() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, stateByteLength)
 	if _, err := rand.Read(b); err != nil {
 		return "", fmt.Errorf("failed to generate state: %w", err)
 	}

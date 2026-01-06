@@ -1,8 +1,8 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // It manages the aggregation of device information discovered through various protocols
 // including ARP, NDP, LLDP, CDP, EDP, mDNS, and ICMP ping. The package maintains a synchronized
 // view of all discovered devices and their protocol-specific metadata.
-package discovery
 
 import (
 	"context"
@@ -28,6 +28,21 @@ const (
 	MethodEDP  Method = "edp"
 	MethodMDNS Method = "mdns"
 	MethodPING Method = "ping"
+)
+
+// Time constants for device discovery operations.
+const (
+	ouiUpdateTimeoutMinutes = 2  // Timeout for OUI database updates
+	nameResGoroutineCount   = 2  // Number of name resolution goroutines
+	dbPersistTimeoutSeconds = 30 // Timeout for database persistence operations
+)
+
+// MAC address parsing constants.
+const (
+	macOctetMinLen  = 2    // Minimum length to parse a MAC octet
+	hexLetterOffset = 10   // Offset to add when parsing A-F hex digits (after subtracting 'A' or 'a')
+	localAdminBit   = 0x02 // Bit mask for locally administered MAC address check
+	deviceTTLHours  = 24   // Default device TTL in hours before expiration
 )
 
 // DiscoveredDevice represents a network device with aggregated discovery info.
@@ -139,6 +154,52 @@ type DeviceDiscovery struct {
 	dbWriter        DBDeviceWriter // Database writer for persistence
 }
 
+// loadOUIDatabase loads the OUI database based on configuration.
+// Uses early returns to minimize nesting complexity.
+func loadOUIDatabase(oui *OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
+	// No path provided: try standard locations silently
+	if ouiPath == "" {
+		_ = oui.TryLoadIEEEFile()
+		return
+	}
+
+	// Path provided but no auto-update: just load from file
+	if ouiMaxAge == 0 {
+		loadOUIFromFile(oui, ouiPath)
+		return
+	}
+
+	// Auto-update enabled: download if needed, then load
+	loadOUIWithAutoUpdate(oui, ouiPath, ouiMaxAge)
+}
+
+// loadOUIFromFile loads OUI from a specific file path with fallback.
+func loadOUIFromFile(oui *OUIDatabase, ouiPath string) {
+	if err := oui.LoadFromIEEEFormat(ouiPath); err != nil {
+		logging.GetLogger().Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
+		if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
+			logging.GetLogger().Warn("Failed to load IEEE OUI file", "error", loadErr)
+		}
+		return
+	}
+	logging.GetLogger().Info("OUI database loaded from file", "path", ouiPath, "entries", oui.Count())
+}
+
+// loadOUIWithAutoUpdate updates OUI database if needed, then loads it.
+func loadOUIWithAutoUpdate(oui *OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), ouiUpdateTimeoutMinutes*time.Minute)
+	defer cancel()
+
+	if err := oui.UpdateIfNeeded(ctx, ouiPath, ouiMaxAge); err != nil {
+		logging.GetLogger().Warn("Failed to update OUI database", "error", err)
+		if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
+			logging.GetLogger().Warn("Failed to load IEEE OUI file", "error", loadErr)
+		}
+		return
+	}
+	logging.GetLogger().Info("OUI database loaded", "entries", oui.Count())
+}
+
 // NewDeviceDiscovery creates a new device discovery aggregator.
 func NewDeviceDiscovery(interfaceName string) *DeviceDiscovery {
 	return NewDeviceDiscoveryWithOUI(interfaceName, "", 0)
@@ -152,37 +213,7 @@ func NewDeviceDiscoveryWithOUI(
 	ouiMaxAge time.Duration,
 ) *DeviceDiscovery {
 	oui := NewOUIDatabase()
-
-	// Try to load/update OUI database
-	//nolint:gocritic // ifElseChain: conditions check different combinations, switch not applicable
-	if ouiPath != "" && ouiMaxAge > 0 {
-		// Auto-update enabled: download if needed, then load
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
-		if err := oui.UpdateIfNeeded(ctx, ouiPath, ouiMaxAge); err != nil {
-			logging.GetLogger().Warn("Failed to update OUI database", "error", err)
-			// Try loading from standard locations as fallback
-			if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
-				logging.GetLogger().Warn("Failed to load IEEE OUI file", "error", loadErr)
-			}
-		} else {
-			logging.GetLogger().Info("OUI database loaded", "entries", oui.Count())
-		}
-	} else if ouiPath != "" {
-		// Path provided but no auto-update: just load from file
-		if err := oui.LoadFromIEEEFormat(ouiPath); err != nil {
-			logging.GetLogger().Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
-			if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
-				logging.GetLogger().Warn("Failed to load IEEE OUI file", "error", loadErr)
-			}
-		} else {
-			logging.GetLogger().Info("OUI database loaded from file", "path", ouiPath, "entries", oui.Count())
-		}
-	} else {
-		// No path provided: try standard locations silently
-		// Embedded OUI database has 200+ common vendors as fallback
-		_ = oui.TryLoadIEEEFile()
-	}
+	loadOUIDatabase(oui, ouiPath, ouiMaxAge)
 
 	return &DeviceDiscovery{
 		interfaceName:   interfaceName,
@@ -194,8 +225,8 @@ func NewDeviceDiscoveryWithOUI(
 		mdnsResolver:    NewMDNSResolver(interfaceName),
 		mdnsListener:    NewMDNSListener(interfaceName),
 		devices:         make(map[string]*DiscoveredDevice),
-		nameResolution:  true,           // Enabled by default
-		deviceTTL:       24 * time.Hour, // Default: expire stale devices after 24h (fixes #829)
+		nameResolution:  true,                       // Enabled by default
+		deviceTTL:       deviceTTLHours * time.Hour, // Default: expire stale devices after 24h (fixes #829)
 	}
 }
 
@@ -318,7 +349,7 @@ func (d *DeviceDiscovery) Scan(ctx context.Context) error {
 	// Trigger name resolution in background (NetBIOS for Windows, mDNS for Apple/Linux)
 	// Track with WaitGroup so Stop() can wait for completion (fixes #836)
 	if d.nameResolution {
-		d.nameResWg.Add(2)
+		d.nameResWg.Add(nameResGoroutineCount)
 		go func() {
 			defer d.nameResWg.Done()
 			d.ResolveNetBIOSNames(ctx)
@@ -359,7 +390,7 @@ func (d *DeviceDiscovery) aggregateResults() {
 
 	// Persist devices outside of lock to avoid holding it during I/O
 	if dbWriter != nil && len(deviceList) > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), dbPersistTimeoutSeconds*time.Second)
 		defer cancel()
 		if err := dbWriter.PersistDevices(ctx, deviceList); err != nil {
 			logging.GetLogger().
@@ -533,93 +564,134 @@ func (d *DeviceDiscovery) mergeNDPResults() {
 		mac := normalizeMac(ndp.MAC)
 		device := d.getOrCreateDevice(mac)
 
-		if ndp.IPv6 != "" {
-			if device.IPv6Address == "" {
-				device.IPv6Address = ndp.IPv6
-			}
-			// Fixes #884: Limit IPv6 addresses to prevent unbounded growth
-			if len(device.IPv6Addresses) < maxIPv6AddressesPerDevice {
-				if !containsIPv6(device.IPv6Addresses, ndp.IPv6) {
-					device.IPv6Addresses = append(device.IPv6Addresses, ndp.IPv6)
-				}
-			}
-		}
+		d.mergeNDPNeighborIntoDevice(device, *ndp)
+	}
+}
 
-		if ndp.IsRouter {
-			device.IsRouter = true
-		}
+// mergeNDPNeighborIntoDevice updates a device with NDP neighbor information.
+func (d *DeviceDiscovery) mergeNDPNeighborIntoDevice(device *DiscoveredDevice, ndp NDPNeighbor) {
+	updateDeviceIPv6Addresses(device, ndp.IPv6)
 
-		if device.NDPInfo == nil {
-			device.NDPInfo = &NDPDeviceInfo{
-				LinkLayerAddress: ndp.MAC,
-				IsRouter:         ndp.IsRouter,
-			}
-		} else {
-			device.NDPInfo.IsRouter = ndp.IsRouter
-		}
+	if ndp.IsRouter {
+		device.IsRouter = true
+	}
 
-		if ndp.LastSeen.After(device.LastSeen) {
-			device.LastSeen = ndp.LastSeen
-		}
+	updateDeviceNDPInfo(device, ndp)
 
-		if !containsMethod(device.DiscoveryMethod, MethodNDP) {
-			device.DiscoveryMethod = append(device.DiscoveryMethod, MethodNDP)
+	if ndp.LastSeen.After(device.LastSeen) {
+		device.LastSeen = ndp.LastSeen
+	}
+
+	if !containsMethod(device.DiscoveryMethod, MethodNDP) {
+		device.DiscoveryMethod = append(device.DiscoveryMethod, MethodNDP)
+	}
+}
+
+// updateDeviceIPv6Addresses adds an IPv6 address to the device if valid and not already present.
+func updateDeviceIPv6Addresses(device *DiscoveredDevice, ipv6 string) {
+	if ipv6 == "" {
+		return
+	}
+
+	if device.IPv6Address == "" {
+		device.IPv6Address = ipv6
+	}
+
+	// Fixes #884: Limit IPv6 addresses to prevent unbounded growth
+	if len(device.IPv6Addresses) < maxIPv6AddressesPerDevice {
+		if !containsIPv6(device.IPv6Addresses, ipv6) {
+			device.IPv6Addresses = append(device.IPv6Addresses, ipv6)
 		}
+	}
+}
+
+// updateDeviceNDPInfo creates or updates the NDPInfo on a device.
+func updateDeviceNDPInfo(device *DiscoveredDevice, ndp NDPNeighbor) {
+	if device.NDPInfo == nil {
+		device.NDPInfo = &NDPDeviceInfo{
+			LinkLayerAddress: ndp.MAC,
+			IsRouter:         ndp.IsRouter,
+		}
+	} else {
+		device.NDPInfo.IsRouter = ndp.IsRouter
 	}
 }
 
 // detectDuplicateIPs flags devices that share the same IP address. Must be called with mu held.
 func (d *DeviceDiscovery) detectDuplicateIPs() {
+	ipToMACs := d.buildIPToMACsMap()
+	d.flagDuplicateIPDevices(ipToMACs)
+}
+
+// buildIPToMACsMap creates a mapping of IP addresses to all MACs that have that IP.
+func (d *DeviceDiscovery) buildIPToMACsMap() map[string][]string {
 	ipToMACs := make(map[string][]string)
 	for _, device := range d.devices {
 		if device.IP != "" && device.MAC != "" {
 			ipToMACs[device.IP] = append(ipToMACs[device.IP], device.MAC)
 		}
 	}
+	return ipToMACs
+}
 
+// flagDuplicateIPDevices marks devices with duplicate IPs and populates DuplicateMACs.
+func (d *DeviceDiscovery) flagDuplicateIPDevices(ipToMACs map[string][]string) {
 	for ip, macs := range ipToMACs {
-		if len(macs) > 1 {
-			for _, device := range d.devices {
-				if device.IP == ip && device.MAC != "" {
-					device.HasDuplicateIP = true
-					device.DuplicateMACs = make([]string, 0, len(macs)-1)
-					for _, mac := range macs {
-						if mac != device.MAC {
-							device.DuplicateMACs = append(device.DuplicateMACs, mac)
-						}
-					}
-				}
-			}
+		if len(macs) <= 1 {
+			continue
+		}
+		d.markDevicesWithDuplicateIP(ip, macs)
+	}
+}
+
+// markDevicesWithDuplicateIP flags all devices with the given IP and sets their DuplicateMACs.
+func (d *DeviceDiscovery) markDevicesWithDuplicateIP(ip string, macs []string) {
+	for _, device := range d.devices {
+		if device.IP != ip || device.MAC == "" {
+			continue
+		}
+		device.HasDuplicateIP = true
+		device.DuplicateMACs = collectOtherMACs(macs, device.MAC)
+	}
+}
+
+// collectOtherMACs returns all MACs from the slice except the excluded one.
+func collectOtherMACs(macs []string, excludeMAC string) []string {
+	others := make([]string, 0, len(macs)-1)
+	for _, mac := range macs {
+		if mac != excludeMAC {
+			others = append(others, mac)
 		}
 	}
+	return others
 }
 
 // isLocallyAdministeredMAC checks if a MAC address is locally administered.
 // LAAs have the second-least-significant bit of the first octet set to 1.
 // These are typically used by VMs, containers, or MAC randomization features.
 func isLocallyAdministeredMAC(mac string) bool {
-	if len(mac) < 2 {
+	if len(mac) < macOctetMinLen {
 		return false
 	}
 	// Parse first octet (handles both AA:BB:CC and AA-BB-CC formats)
-	firstOctet := mac[:2]
+	firstOctet := mac[:macOctetMinLen]
 	var b byte
-	for i := range 2 {
+	for i := range macOctetMinLen {
 		c := firstOctet[i]
 		b <<= 4
 		switch {
 		case c >= '0' && c <= '9':
 			b |= c - '0'
 		case c >= 'A' && c <= 'F':
-			b |= c - 'A' + 10
+			b |= c - 'A' + hexLetterOffset
 		case c >= 'a' && c <= 'f':
-			b |= c - 'a' + 10
+			b |= c - 'a' + hexLetterOffset
 		default:
 			return false
 		}
 	}
 	// Check the locally administered bit (second bit from right of first octet)
-	return (b & 0x02) != 0
+	return (b & localAdminBit) != 0
 }
 
 // ensureVendorInfo populates vendor information for devices missing it. Must be called with mu held.
@@ -749,108 +821,161 @@ func (d *DeviceDiscovery) GetDeviceByIP(ip string) *DiscoveredDevice {
 func copyDevice(device *DiscoveredDevice) *DiscoveredDevice {
 	deviceCopy := *device
 
-	// Deep copy slices that could be mutated
-	if device.DiscoveryMethod != nil {
-		deviceCopy.DiscoveryMethod = make([]Method, len(device.DiscoveryMethod))
-		copy(deviceCopy.DiscoveryMethod, device.DiscoveryMethod)
-	}
-	if device.IPv6Addresses != nil {
-		deviceCopy.IPv6Addresses = make([]string, len(device.IPv6Addresses))
-		copy(deviceCopy.IPv6Addresses, device.IPv6Addresses)
-	}
-	if device.DuplicateMACs != nil {
-		deviceCopy.DuplicateMACs = make([]string, len(device.DuplicateMACs))
-		copy(deviceCopy.DuplicateMACs, device.DuplicateMACs)
-	}
+	// Deep copy top-level slices
+	copyDeviceSlices(&deviceCopy, device)
 
 	// Deep copy protocol-specific info pointers
-	if device.LLDPInfo != nil {
-		infoCopy := *device.LLDPInfo
-		if device.LLDPInfo.Capabilities != nil {
-			infoCopy.Capabilities = make([]string, len(device.LLDPInfo.Capabilities))
-			copy(infoCopy.Capabilities, device.LLDPInfo.Capabilities)
-		}
-		deviceCopy.LLDPInfo = &infoCopy
-	}
-	if device.CDPInfo != nil {
-		infoCopy := *device.CDPInfo
-		if device.CDPInfo.Capabilities != nil {
-			infoCopy.Capabilities = make([]string, len(device.CDPInfo.Capabilities))
-			copy(infoCopy.Capabilities, device.CDPInfo.Capabilities)
-		}
-		deviceCopy.CDPInfo = &infoCopy
-	}
-	if device.EDPInfo != nil {
-		infoCopy := *device.EDPInfo
-		deviceCopy.EDPInfo = &infoCopy
-	}
-	if device.NDPInfo != nil {
-		infoCopy := *device.NDPInfo
-		deviceCopy.NDPInfo = &infoCopy
-	}
+	copyDeviceProtocolInfo(&deviceCopy, device)
 
-	// Deep copy profile (contains slices)
-	if device.Profile != nil {
-		profileCopy := *device.Profile
-		if device.Profile.OpenPorts != nil {
-			profileCopy.OpenPorts = make([]OpenPort, len(device.Profile.OpenPorts))
-			copy(profileCopy.OpenPorts, device.Profile.OpenPorts)
-		}
-		if device.Profile.MDNSServices != nil {
-			profileCopy.MDNSServices = make([]MDNSService, len(device.Profile.MDNSServices))
-			copy(profileCopy.MDNSServices, device.Profile.MDNSServices)
-		}
-		if device.Profile.DeviceIcons != nil {
-			profileCopy.DeviceIcons = make([]string, len(device.Profile.DeviceIcons))
-			copy(profileCopy.DeviceIcons, device.Profile.DeviceIcons)
-		}
-		deviceCopy.Profile = &profileCopy
-	}
-
-	// Deep copy SNMP data (contains slices)
-	if device.SNMPData != nil {
-		snmpCopy := *device.SNMPData
-		if device.SNMPData.Interfaces != nil {
-			snmpCopy.Interfaces = make([]SNMPInterface, len(device.SNMPData.Interfaces))
-			copy(snmpCopy.Interfaces, device.SNMPData.Interfaces)
-		}
-		if device.SNMPData.IPAddresses != nil {
-			snmpCopy.IPAddresses = make([]SNMPIPAddress, len(device.SNMPData.IPAddresses))
-			copy(snmpCopy.IPAddresses, device.SNMPData.IPAddresses)
-		}
-		if device.SNMPData.VLANs != nil {
-			snmpCopy.VLANs = make([]SNMPVLAN, len(device.SNMPData.VLANs))
-			copy(snmpCopy.VLANs, device.SNMPData.VLANs)
-		}
-		if device.SNMPData.MACTable != nil {
-			snmpCopy.MACTable = make([]SNMPMACEntry, len(device.SNMPData.MACTable))
-			copy(snmpCopy.MACTable, device.SNMPData.MACTable)
-		}
-		if device.SNMPData.Inventory != nil {
-			snmpCopy.Inventory = make([]SNMPEntity, len(device.SNMPData.Inventory))
-			copy(snmpCopy.Inventory, device.SNMPData.Inventory)
-		}
-		if device.SNMPData.LLDPNeighbors != nil {
-			snmpCopy.LLDPNeighbors = make([]SNMPLLDPNeighbor, len(device.SNMPData.LLDPNeighbors))
-			copy(snmpCopy.LLDPNeighbors, device.SNMPData.LLDPNeighbors)
-		}
-		deviceCopy.SNMPData = &snmpCopy
-	}
-
-	// Deep copy vulnerabilities (contains slices)
-	if device.Vulnerabilities != nil {
-		vulnCopy := *device.Vulnerabilities
-		if device.Vulnerabilities.Vulnerabilities != nil {
-			vulnCopy.Vulnerabilities = make(
-				[]Vulnerability,
-				len(device.Vulnerabilities.Vulnerabilities),
-			)
-			copy(vulnCopy.Vulnerabilities, device.Vulnerabilities.Vulnerabilities)
-		}
-		deviceCopy.Vulnerabilities = &vulnCopy
-	}
+	// Deep copy complex nested structures
+	deviceCopy.Profile = copyDeviceProfile(device.Profile)
+	deviceCopy.SNMPData = copySNMPData(device.SNMPData)
+	deviceCopy.Vulnerabilities = copyVulnerabilities(device.Vulnerabilities)
 
 	return &deviceCopy
+}
+
+// copyDeviceSlices deep copies the top-level slices of a device.
+func copyDeviceSlices(dst *DiscoveredDevice, src *DiscoveredDevice) {
+	if src.DiscoveryMethod != nil {
+		dst.DiscoveryMethod = make([]Method, len(src.DiscoveryMethod))
+		copy(dst.DiscoveryMethod, src.DiscoveryMethod)
+	}
+	if src.IPv6Addresses != nil {
+		dst.IPv6Addresses = make([]string, len(src.IPv6Addresses))
+		copy(dst.IPv6Addresses, src.IPv6Addresses)
+	}
+	if src.DuplicateMACs != nil {
+		dst.DuplicateMACs = make([]string, len(src.DuplicateMACs))
+		copy(dst.DuplicateMACs, src.DuplicateMACs)
+	}
+}
+
+// copyDeviceProtocolInfo deep copies the protocol-specific info pointers.
+func copyDeviceProtocolInfo(dst *DiscoveredDevice, src *DiscoveredDevice) {
+	dst.LLDPInfo = copyLLDPInfo(src.LLDPInfo)
+	dst.CDPInfo = copyCDPInfo(src.CDPInfo)
+	dst.EDPInfo = copyEDPInfo(src.EDPInfo)
+	dst.NDPInfo = copyNDPInfo(src.NDPInfo)
+}
+
+// copyLLDPInfo creates a deep copy of LLDPDeviceInfo.
+func copyLLDPInfo(info *LLDPDeviceInfo) *LLDPDeviceInfo {
+	if info == nil {
+		return nil
+	}
+	infoCopy := *info
+	if info.Capabilities != nil {
+		infoCopy.Capabilities = make([]string, len(info.Capabilities))
+		copy(infoCopy.Capabilities, info.Capabilities)
+	}
+	return &infoCopy
+}
+
+// copyCDPInfo creates a deep copy of CDPDeviceInfo.
+func copyCDPInfo(info *CDPDeviceInfo) *CDPDeviceInfo {
+	if info == nil {
+		return nil
+	}
+	infoCopy := *info
+	if info.Capabilities != nil {
+		infoCopy.Capabilities = make([]string, len(info.Capabilities))
+		copy(infoCopy.Capabilities, info.Capabilities)
+	}
+	return &infoCopy
+}
+
+// copyEDPInfo creates a deep copy of EDPDeviceInfo.
+func copyEDPInfo(info *EDPDeviceInfo) *EDPDeviceInfo {
+	if info == nil {
+		return nil
+	}
+	infoCopy := *info
+	return &infoCopy
+}
+
+// copyNDPInfo creates a deep copy of NDPDeviceInfo.
+func copyNDPInfo(info *NDPDeviceInfo) *NDPDeviceInfo {
+	if info == nil {
+		return nil
+	}
+	infoCopy := *info
+	return &infoCopy
+}
+
+// copyDeviceProfile creates a deep copy of DeviceProfile.
+func copyDeviceProfile(profile *DeviceProfile) *DeviceProfile {
+	if profile == nil {
+		return nil
+	}
+	profileCopy := *profile
+	if profile.OpenPorts != nil {
+		profileCopy.OpenPorts = make([]OpenPort, len(profile.OpenPorts))
+		copy(profileCopy.OpenPorts, profile.OpenPorts)
+	}
+	if profile.MDNSServices != nil {
+		profileCopy.MDNSServices = make([]MDNSService, len(profile.MDNSServices))
+		copy(profileCopy.MDNSServices, profile.MDNSServices)
+	}
+	if profile.DeviceIcons != nil {
+		profileCopy.DeviceIcons = make([]string, len(profile.DeviceIcons))
+		copy(profileCopy.DeviceIcons, profile.DeviceIcons)
+	}
+	return &profileCopy
+}
+
+// copySNMPData creates a deep copy of SNMPFullData.
+func copySNMPData(data *SNMPFullData) *SNMPFullData {
+	if data == nil {
+		return nil
+	}
+	snmpCopy := *data
+	copySNMPDataSlices(&snmpCopy, data)
+	return &snmpCopy
+}
+
+// copySNMPDataSlices deep copies all slices within SNMPFullData.
+func copySNMPDataSlices(dst *SNMPFullData, src *SNMPFullData) {
+	if src.Interfaces != nil {
+		dst.Interfaces = make([]SNMPInterface, len(src.Interfaces))
+		copy(dst.Interfaces, src.Interfaces)
+	}
+	if src.IPAddresses != nil {
+		dst.IPAddresses = make([]SNMPIPAddress, len(src.IPAddresses))
+		copy(dst.IPAddresses, src.IPAddresses)
+	}
+	if src.VLANs != nil {
+		dst.VLANs = make([]SNMPVLAN, len(src.VLANs))
+		copy(dst.VLANs, src.VLANs)
+	}
+	if src.MACTable != nil {
+		dst.MACTable = make([]SNMPMACEntry, len(src.MACTable))
+		copy(dst.MACTable, src.MACTable)
+	}
+	if src.Inventory != nil {
+		dst.Inventory = make([]SNMPEntity, len(src.Inventory))
+		copy(dst.Inventory, src.Inventory)
+	}
+	if src.LLDPNeighbors != nil {
+		dst.LLDPNeighbors = make([]SNMPLLDPNeighbor, len(src.LLDPNeighbors))
+		copy(dst.LLDPNeighbors, src.LLDPNeighbors)
+	}
+}
+
+// copyVulnerabilities creates a deep copy of DeviceVulnerabilities.
+func copyVulnerabilities(vuln *DeviceVulnerabilities) *DeviceVulnerabilities {
+	if vuln == nil {
+		return nil
+	}
+	vulnCopy := *vuln
+	if vuln.Vulnerabilities != nil {
+		vulnCopy.Vulnerabilities = make(
+			[]Vulnerability,
+			len(vuln.Vulnerabilities),
+		)
+		copy(vulnCopy.Vulnerabilities, vuln.Vulnerabilities)
+	}
+	return &vulnCopy
 }
 
 // Count returns the number of discovered devices.

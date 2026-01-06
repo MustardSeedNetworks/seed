@@ -1,4 +1,3 @@
-// Package survey_test provides WiFi site survey functionality tests.
 // Test suite validates survey persistence, floor plan handling, AP scan parsing,
 // and integration with iperf throughput measurements.
 package survey_test
@@ -47,18 +46,74 @@ func TestNewManager(t *testing.T) {
 	}
 }
 
+// createSurveyTestCase defines a test case for TestCreateSurvey.
+type createSurveyTestCase struct {
+	name        string
+	surveyName  string
+	description string
+	iface       string
+	surveyType  survey.Type
+	wantErr     bool
+}
+
+// assertSurveyFields validates basic survey fields match expected values.
+func assertSurveyFields(t *testing.T, s *survey.Survey, tc createSurveyTestCase) {
+	t.Helper()
+
+	if s.ID == "" {
+		t.Error("Survey ID is empty")
+	}
+	if s.Name != tc.surveyName {
+		t.Errorf("Survey Name = %v, want %v", s.Name, tc.surveyName)
+	}
+	if s.Description != tc.description {
+		t.Errorf("Survey Description = %v, want %v", s.Description, tc.description)
+	}
+	if s.Interface != tc.iface {
+		t.Errorf("Survey Interface = %v, want %v", s.Interface, tc.iface)
+	}
+	if s.SurveyType != tc.surveyType {
+		t.Errorf("Survey Type = %v, want %v", s.SurveyType, tc.surveyType)
+	}
+	if s.Status != survey.StatusCreated {
+		t.Errorf("Survey Status = %v, want %v", s.Status, survey.StatusCreated)
+	}
+}
+
+// assertSurveyFloors validates survey has proper floor structure.
+func assertSurveyFloors(t *testing.T, s *survey.Survey) {
+	t.Helper()
+
+	if len(s.Floors) == 0 {
+		t.Error("Survey has no floors")
+	}
+
+	activeFloor := s.GetActiveFloor()
+	if activeFloor == nil {
+		t.Fatal("Survey has no active floor")
+	}
+	if activeFloor.Samples == nil {
+		t.Error("Active floor Samples is nil")
+	}
+}
+
+// assertSurveyTimestamps validates survey timestamps are set.
+func assertSurveyTimestamps(t *testing.T, s *survey.Survey) {
+	t.Helper()
+
+	if s.CreatedAt.IsZero() {
+		t.Error("Survey CreatedAt is zero")
+	}
+	if s.UpdatedAt.IsZero() {
+		t.Error("Survey UpdatedAt is zero")
+	}
+}
+
 func TestCreateSurvey(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
-	tests := []struct {
-		name        string
-		surveyName  string
-		description string
-		iface       string
-		surveyType  survey.Type
-		wantErr     bool
-	}{
+	tests := []createSurveyTestCase{
 		{
 			name:        "valid passive survey",
 			surveyName:  "Test Passive",
@@ -105,51 +160,9 @@ func TestCreateSurvey(t *testing.T) {
 				t.Fatal("CreateSurvey() returned nil survey")
 			}
 
-			if s.ID == "" {
-				t.Error("Survey ID is empty")
-			}
-
-			if s.Name != tt.surveyName {
-				t.Errorf("Survey Name = %v, want %v", s.Name, tt.surveyName)
-			}
-
-			if s.Description != tt.description {
-				t.Errorf("Survey Description = %v, want %v", s.Description, tt.description)
-			}
-
-			if s.Interface != tt.iface {
-				t.Errorf("Survey Interface = %v, want %v", s.Interface, tt.iface)
-			}
-
-			if s.SurveyType != tt.surveyType {
-				t.Errorf("Survey Type = %v, want %v", s.SurveyType, tt.surveyType)
-			}
-
-			if s.Status != survey.StatusCreated {
-				t.Errorf("Survey Status = %v, want %v", s.Status, survey.StatusCreated)
-			}
-
-			// With multi-floor support, surveys have floors instead of direct Samples.
-			if len(s.Floors) == 0 {
-				t.Error("Survey has no floors")
-			}
-
-			activeFloor := s.GetActiveFloor()
-			if activeFloor == nil {
-				t.Fatal("Survey has no active floor")
-			}
-
-			if activeFloor.Samples == nil {
-				t.Error("Active floor Samples is nil")
-			}
-
-			if s.CreatedAt.IsZero() {
-				t.Error("Survey CreatedAt is zero")
-			}
-
-			if s.UpdatedAt.IsZero() {
-				t.Error("Survey UpdatedAt is zero")
-			}
+			assertSurveyFields(t, s, tt)
+			assertSurveyFloors(t, s)
+			assertSurveyTimestamps(t, s)
 		})
 	}
 }
@@ -524,6 +537,71 @@ func TestStateTransitions(t *testing.T) {
 	}
 }
 
+// updateFloorPlanTestCase defines a test case for TestUpdateFloorPlan.
+type updateFloorPlanTestCase struct {
+	name      string
+	id        string
+	floorPlan *survey.FloorPlan
+	wantErr   bool
+}
+
+// assertFloorPlanUpdated verifies that the floor plan was correctly updated on the survey.
+func assertFloorPlanUpdated(
+	t *testing.T,
+	mgr *survey.Manager,
+	surveyID string,
+	expected *survey.FloorPlan,
+) {
+	t.Helper()
+
+	result, getErr := mgr.GetSurvey(surveyID)
+	if getErr != nil {
+		t.Fatalf("GetSurvey() failed: %v", getErr)
+	}
+
+	activeFloor := result.GetActiveFloor()
+	if activeFloor == nil {
+		t.Fatal("No active floor found")
+	}
+
+	if activeFloor.FloorPlan == nil {
+		t.Fatal("FloorPlan is nil after update")
+	}
+
+	if activeFloor.FloorPlan.Width != expected.Width {
+		t.Errorf("FloorPlan Width = %v, want %v", activeFloor.FloorPlan.Width, expected.Width)
+	}
+
+	if activeFloor.FloorPlan.Height != expected.Height {
+		t.Errorf("FloorPlan Height = %v, want %v", activeFloor.FloorPlan.Height, expected.Height)
+	}
+}
+
+// runUpdateFloorPlanTest executes a single update floor plan test case.
+func runUpdateFloorPlanTest(
+	t *testing.T,
+	mgr *survey.Manager,
+	tc updateFloorPlanTestCase,
+) {
+	t.Helper()
+
+	updateErr := mgr.UpdateFloorPlan(tc.id, tc.floorPlan)
+
+	if tc.wantErr {
+		if updateErr == nil {
+			t.Error("UpdateFloorPlan() error = nil, want error")
+		}
+		return
+	}
+
+	if updateErr != nil {
+		t.Errorf("UpdateFloorPlan() error = %v, want nil", updateErr)
+		return
+	}
+
+	assertFloorPlanUpdated(t, mgr, tc.id, tc.floorPlan)
+}
+
 func TestUpdateFloorPlan(t *testing.T) {
 	tmpDir := t.TempDir()
 	mgr := survey.NewManager(tmpDir, nil, nil, nil)
@@ -539,12 +617,7 @@ func TestUpdateFloorPlan(t *testing.T) {
 		Height:    800,
 	}
 
-	tests := []struct {
-		name      string
-		id        string
-		floorPlan *survey.FloorPlan
-		wantErr   bool
-	}{
+	tests := []updateFloorPlanTestCase{
 		{
 			name:      "update with valid floor plan",
 			id:        s.ID,
@@ -561,56 +634,31 @@ func TestUpdateFloorPlan(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			updateErr := mgr.UpdateFloorPlan(tt.id, tt.floorPlan)
-
-			if tt.wantErr {
-				if updateErr == nil {
-					t.Error("UpdateFloorPlan() error = nil, want error")
-				}
-				return
-			}
-
-			if updateErr != nil {
-				t.Errorf("UpdateFloorPlan() error = %v, want nil", updateErr)
-				return
-			}
-
-			// Verify floor plan updated (now on the active floor).
-			result, getErr := mgr.GetSurvey(tt.id)
-			if getErr != nil {
-				t.Fatalf("GetSurvey() failed: %v", getErr)
-			}
-
-			// With multi-floor support, floor plan is on the active floor.
-			activeFloor := result.GetActiveFloor()
-			if activeFloor == nil {
-				t.Fatal("No active floor found")
-			}
-
-			if activeFloor.FloorPlan == nil {
-				t.Fatal("FloorPlan is nil after update")
-			}
-
-			if activeFloor.FloorPlan.Width != floorPlan.Width {
-				t.Errorf(
-					"FloorPlan Width = %v, want %v",
-					activeFloor.FloorPlan.Width,
-					floorPlan.Width,
-				)
-			}
-
-			if activeFloor.FloorPlan.Height != floorPlan.Height {
-				t.Errorf(
-					"FloorPlan Height = %v, want %v",
-					activeFloor.FloorPlan.Height,
-					floorPlan.Height,
-				)
-			}
+			runUpdateFloorPlanTest(t, mgr, tt)
 		})
 	}
 }
 
-func TestAddSample(t *testing.T) {
+// addSampleTestCase defines test parameters for TestAddSample.
+type addSampleTestCase struct {
+	name       string
+	id         string
+	x          int
+	y          int
+	sampleData map[string]any
+	wantErr    bool
+}
+
+// addSampleTestFixture holds shared test resources for AddSample tests.
+type addSampleTestFixture struct {
+	mgr         *survey.Manager
+	validID     string
+	passiveData map[string]any
+}
+
+// setupAddSampleTest creates a test fixture with a started survey.
+func setupAddSampleTest(t *testing.T) *addSampleTestFixture {
+	t.Helper()
 	tmpDir := t.TempDir()
 	mgr := survey.NewManager(tmpDir, nil, nil, nil)
 
@@ -619,7 +667,6 @@ func TestAddSample(t *testing.T) {
 		t.Fatalf("CreateSurvey() failed: %v", err)
 	}
 
-	// Start survey to allow samples.
 	err = mgr.StartSurvey(s.ID)
 	if err != nil {
 		t.Fatalf("StartSurvey() failed: %v", err)
@@ -635,20 +682,48 @@ func TestAddSample(t *testing.T) {
 		},
 	}
 
-	tests := []struct {
-		name       string
-		id         string
-		x          int
-		y          int
-		sampleData map[string]any
-		wantErr    bool
-	}{
+	return &addSampleTestFixture{
+		mgr:         mgr,
+		validID:     s.ID,
+		passiveData: passiveData,
+	}
+}
+
+// assertSampleAdded verifies that a sample was correctly added to the survey.
+func assertSampleAdded(t *testing.T, mgr *survey.Manager, surveyID string, wantX, wantY int) {
+	t.Helper()
+	result, err := mgr.GetSurvey(surveyID)
+	if err != nil {
+		t.Fatalf("GetSurvey() failed: %v", err)
+	}
+
+	samples := result.GetAllSamples()
+	if len(samples) == 0 {
+		t.Fatal("No samples found after AddSample()")
+	}
+
+	lastSample := samples[len(samples)-1]
+	if lastSample.X != wantX {
+		t.Errorf("Sample X = %v, want %v", lastSample.X, wantX)
+	}
+	if lastSample.Y != wantY {
+		t.Errorf("Sample Y = %v, want %v", lastSample.Y, wantY)
+	}
+	if lastSample.Timestamp.IsZero() {
+		t.Error("Sample Timestamp is zero")
+	}
+}
+
+func TestAddSample(t *testing.T) {
+	fixture := setupAddSampleTest(t)
+
+	tests := []addSampleTestCase{
 		{
 			name:       "add valid sample",
-			id:         s.ID,
+			id:         fixture.validID,
 			x:          100,
 			y:          200,
-			sampleData: passiveData,
+			sampleData: fixture.passiveData,
 			wantErr:    false,
 		},
 		{
@@ -656,52 +731,27 @@ func TestAddSample(t *testing.T) {
 			id:         "non-existent-id",
 			x:          100,
 			y:          200,
-			sampleData: passiveData,
+			sampleData: fixture.passiveData,
 			wantErr:    true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			addErr := mgr.AddSample(tt.id, tt.x, tt.y, tt.sampleData)
+			err := fixture.mgr.AddSample(tt.id, tt.x, tt.y, tt.sampleData)
 
 			if tt.wantErr {
-				if addErr == nil {
+				if err == nil {
 					t.Error("AddSample() error = nil, want error")
 				}
 				return
 			}
 
-			if addErr != nil {
-				t.Errorf("AddSample() error = %v, want nil", addErr)
-				return
+			if err != nil {
+				t.Fatalf("AddSample() error = %v, want nil", err)
 			}
 
-			// Verify sample was added (now on the active floor).
-			result, getErr := mgr.GetSurvey(tt.id)
-			if getErr != nil {
-				t.Fatalf("GetSurvey() failed: %v", getErr)
-			}
-
-			// With multi-floor support, samples are on the active floor.
-			samples := result.GetAllSamples()
-			if len(samples) == 0 {
-				t.Error("No samples found after AddSample()")
-				return
-			}
-
-			lastSample := samples[len(samples)-1]
-			if lastSample.X != tt.x {
-				t.Errorf("Sample X = %v, want %v", lastSample.X, tt.x)
-			}
-
-			if lastSample.Y != tt.y {
-				t.Errorf("Sample Y = %v, want %v", lastSample.Y, tt.y)
-			}
-
-			if lastSample.Timestamp.IsZero() {
-				t.Error("Sample Timestamp is zero")
-			}
+			assertSampleAdded(t, fixture.mgr, tt.id, tt.x, tt.y)
 		})
 	}
 }
@@ -1107,28 +1157,35 @@ func TestPassiveSampleAggregations(t *testing.T) {
 				Networks: tt.networks,
 			}
 			sample.CalculateAggregations()
-
-			if sample.UniqueSSIDs != tt.want.UniqueSSIDs {
-				t.Errorf("UniqueSSIDs = %d, want %d", sample.UniqueSSIDs, tt.want.UniqueSSIDs)
-			}
-			if sample.UniqueBSSIDs != tt.want.UniqueBSSIDs {
-				t.Errorf("UniqueBSSIDs = %d, want %d", sample.UniqueBSSIDs, tt.want.UniqueBSSIDs)
-			}
-			if sample.APCount2_4 != tt.want.APCount2_4 {
-				t.Errorf("APCount2_4 = %d, want %d", sample.APCount2_4, tt.want.APCount2_4)
-			}
-			if sample.APCount5 != tt.want.APCount5 {
-				t.Errorf("APCount5 = %d, want %d", sample.APCount5, tt.want.APCount5)
-			}
-			if sample.APCount6 != tt.want.APCount6 {
-				t.Errorf("APCount6 = %d, want %d", sample.APCount6, tt.want.APCount6)
-			}
-			if sample.CoChannelAPs != tt.want.CoChannelAPs {
-				t.Errorf("CoChannelAPs = %d, want %d", sample.CoChannelAPs, tt.want.CoChannelAPs)
-			}
-			if sample.AdjChannelAPs != tt.want.AdjChannelAPs {
-				t.Errorf("AdjChannelAPs = %d, want %d", sample.AdjChannelAPs, tt.want.AdjChannelAPs)
-			}
+			assertPassiveSampleAggregations(t, sample, tt.want)
 		})
+	}
+}
+
+// assertPassiveSampleAggregations compares the aggregation fields of a PassiveSample
+// and reports any mismatches. This helper reduces cognitive complexity in the test.
+func assertPassiveSampleAggregations(t *testing.T, got, want survey.PassiveSample) {
+	t.Helper()
+
+	if got.UniqueSSIDs != want.UniqueSSIDs {
+		t.Errorf("UniqueSSIDs = %d, want %d", got.UniqueSSIDs, want.UniqueSSIDs)
+	}
+	if got.UniqueBSSIDs != want.UniqueBSSIDs {
+		t.Errorf("UniqueBSSIDs = %d, want %d", got.UniqueBSSIDs, want.UniqueBSSIDs)
+	}
+	if got.APCount2_4 != want.APCount2_4 {
+		t.Errorf("APCount2_4 = %d, want %d", got.APCount2_4, want.APCount2_4)
+	}
+	if got.APCount5 != want.APCount5 {
+		t.Errorf("APCount5 = %d, want %d", got.APCount5, want.APCount5)
+	}
+	if got.APCount6 != want.APCount6 {
+		t.Errorf("APCount6 = %d, want %d", got.APCount6, want.APCount6)
+	}
+	if got.CoChannelAPs != want.CoChannelAPs {
+		t.Errorf("CoChannelAPs = %d, want %d", got.CoChannelAPs, want.CoChannelAPs)
+	}
+	if got.AdjChannelAPs != want.AdjChannelAPs {
+		t.Errorf("AdjChannelAPs = %d, want %d", got.AdjChannelAPs, want.AdjChannelAPs)
 	}
 }

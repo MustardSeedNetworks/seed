@@ -18,7 +18,8 @@ func TestNewProfileSettings(t *testing.T) {
 	}
 }
 
-func TestProfileSettingsFromConfig(t *testing.T) {
+// setupTestConfig creates a Config with non-default values for testing extraction.
+func setupTestConfig() *config.Config {
 	cfg := config.DefaultConfig()
 
 	// Set some non-default values to verify extraction
@@ -67,11 +68,12 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	cfg.DisplayOptions.ShowPublicIP = true
 	cfg.DisplayOptions.UnitSystem = "metric"
 
-	// Extract settings from config
-	ps := config.NewProfileSettings()
-	ps.FromConfig(cfg)
+	return cfg
+}
 
-	// Verify thresholds
+// verifyThresholds checks that threshold values were correctly extracted.
+func verifyThresholds(t *testing.T, ps *config.ProfileSettings) {
+	t.Helper()
 	if ps.Thresholds.DNS.Warning != 50 {
 		t.Errorf("DNS warning threshold: expected 50, got %d", ps.Thresholds.DNS.Warning)
 	}
@@ -90,8 +92,11 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	if ps.Thresholds.WiFi.Critical != -80 {
 		t.Errorf("WiFi critical threshold: expected -80, got %d", ps.Thresholds.WiFi.Critical)
 	}
+}
 
-	// Verify health checks
+// verifyHealthChecks checks that health check settings were correctly extracted.
+func verifyHealthChecks(t *testing.T, ps *config.ProfileSettings) {
+	t.Helper()
 	if !ps.HealthChecks.RunPerformance {
 		t.Error("expected RunPerformance to be true")
 	}
@@ -116,8 +121,11 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	if len(ps.HealthChecks.HTTPEndpoints) != 1 {
 		t.Errorf("expected 1 HTTP endpoint, got %d", len(ps.HealthChecks.HTTPEndpoints))
 	}
+}
 
-	// Verify DNS
+// verifyDNSSettings checks that DNS settings were correctly extracted.
+func verifyDNSSettings(t *testing.T, ps *config.ProfileSettings) {
+	t.Helper()
 	if ps.DNS.TestHostname != "example.org" {
 		t.Errorf("expected DNS hostname 'example.org', got %s", ps.DNS.TestHostname)
 	}
@@ -127,8 +135,11 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	if len(ps.DNS.Servers) != 2 {
 		t.Errorf("expected 2 DNS servers, got %d", len(ps.DNS.Servers))
 	}
+}
 
-	// Verify SNMP
+// verifySNMPSettings checks that SNMP settings were correctly extracted.
+func verifySNMPSettings(t *testing.T, ps *config.ProfileSettings) {
+	t.Helper()
 	if len(ps.SNMP.Communities) != 2 {
 		t.Errorf("expected 2 SNMP communities, got %d", len(ps.SNMP.Communities))
 	}
@@ -138,8 +149,11 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	if ps.SNMP.Port != 161 {
 		t.Errorf("expected SNMP port 161, got %d", ps.SNMP.Port)
 	}
+}
 
-	// Verify network discovery
+// verifyNetworkDiscovery checks that network discovery settings were correctly extracted.
+func verifyNetworkDiscovery(t *testing.T, ps *config.ProfileSettings) {
+	t.Helper()
 	if !ps.NetworkDiscovery.Enabled {
 		t.Error("expected NetworkDiscovery.Enabled to be true")
 	}
@@ -149,8 +163,11 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	if len(ps.NetworkDiscovery.AdditionalSubnets) != 1 {
 		t.Errorf("expected 1 additional subnet, got %d", len(ps.NetworkDiscovery.AdditionalSubnets))
 	}
+}
 
-	// Verify FAB options
+// verifyFABOptions checks that FAB options were correctly extracted.
+func verifyFABOptions(t *testing.T, ps *config.ProfileSettings) {
+	t.Helper()
 	if !ps.FABOptions.RunLink {
 		t.Error("expected FABOptions.RunLink to be true")
 	}
@@ -160,8 +177,11 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	if !ps.FABOptions.AutoScanOnLink {
 		t.Error("expected FABOptions.AutoScanOnLink to be true")
 	}
+}
 
-	// Verify display options
+// verifyDisplayOptions checks that display options were correctly extracted.
+func verifyDisplayOptions(t *testing.T, ps *config.ProfileSettings) {
+	t.Helper()
 	if !ps.DisplayOptions.ShowPublicIP {
 		t.Error("expected DisplayOptions.ShowPublicIP to be true")
 	}
@@ -170,9 +190,121 @@ func TestProfileSettingsFromConfig(t *testing.T) {
 	}
 }
 
-func TestProfileSettingsApplyTo(t *testing.T) {
-	// Create profile settings with specific values
-	ps := &config.ProfileSettings{
+// verifyAppliedThresholds checks that threshold values were correctly applied to config.
+func verifyAppliedThresholds(t *testing.T, cfg *config.Config) {
+	t.Helper()
+	if cfg.Thresholds.DNS.Warning != 100*time.Millisecond {
+		t.Errorf("DNS warning: expected 100ms, got %v", cfg.Thresholds.DNS.Warning)
+	}
+	if cfg.Thresholds.DNS.Critical != 200*time.Millisecond {
+		t.Errorf("DNS critical: expected 200ms, got %v", cfg.Thresholds.DNS.Critical)
+	}
+	if cfg.Thresholds.Ping.Warning != 50*time.Millisecond {
+		t.Errorf("Ping warning: expected 50ms, got %v", cfg.Thresholds.Ping.Warning)
+	}
+	if cfg.Thresholds.WiFi.Signal.Warning != -65 {
+		t.Errorf("WiFi warning: expected -65, got %d", cfg.Thresholds.WiFi.Signal.Warning)
+	}
+}
+
+// verifyAppliedHealthChecks checks that health check settings were correctly applied to config.
+func verifyAppliedHealthChecks(t *testing.T, cfg *config.Config) {
+	t.Helper()
+	if !cfg.HealthChecks.RunPerformance {
+		t.Error("expected RunPerformance to be true")
+	}
+	if !cfg.HealthChecks.RunSpeedtest {
+		t.Error("expected RunSpeedtest to be true")
+	}
+	if cfg.HealthChecks.RunIperf {
+		t.Error("expected RunIperf to be false")
+	}
+	if len(cfg.HealthChecks.PingTargets) != 1 {
+		t.Errorf("expected 1 ping target, got %d", len(cfg.HealthChecks.PingTargets))
+	}
+	if cfg.HealthChecks.PingTargets[0].Name != "Router" {
+		t.Errorf("expected ping target name 'Router', got %s", cfg.HealthChecks.PingTargets[0].Name)
+	}
+}
+
+// verifyAppliedDNS checks that DNS settings were correctly applied to config.
+func verifyAppliedDNS(t *testing.T, cfg *config.Config) {
+	t.Helper()
+	if cfg.DNS.TestHostname != "test.example.com" {
+		t.Errorf("expected DNS hostname 'test.example.com', got %s", cfg.DNS.TestHostname)
+	}
+	if cfg.DNS.Timeout != 3*time.Second {
+		t.Errorf("expected DNS timeout 3s, got %v", cfg.DNS.Timeout)
+	}
+	if len(cfg.DNS.Servers) != 1 {
+		t.Errorf("expected 1 DNS server, got %d", len(cfg.DNS.Servers))
+	}
+}
+
+// verifyAppliedSNMP checks that SNMP settings were correctly applied to config.
+func verifyAppliedSNMP(t *testing.T, cfg *config.Config) {
+	t.Helper()
+	if len(cfg.SNMP.Communities) != 1 || cfg.SNMP.Communities[0] != "community1" {
+		t.Errorf("expected SNMP community 'community1', got %v", cfg.SNMP.Communities)
+	}
+	if cfg.SNMP.Port != 1161 {
+		t.Errorf("expected SNMP port 1161, got %d", cfg.SNMP.Port)
+	}
+}
+
+// verifyAppliedNetworkDiscovery checks that network discovery was correctly applied to config.
+func verifyAppliedNetworkDiscovery(t *testing.T, cfg *config.Config) {
+	t.Helper()
+	if !cfg.NetworkDiscovery.Enabled {
+		t.Error("expected discovery enabled")
+	}
+	if cfg.NetworkDiscovery.AutoScan {
+		t.Error("expected auto scan to be false")
+	}
+}
+
+// verifyAppliedFABOptions checks that FAB options were correctly applied to config.
+func verifyAppliedFABOptions(t *testing.T, cfg *config.Config) {
+	t.Helper()
+	if cfg.FABOptions.RunLink {
+		t.Error("expected FABOptions.RunLink to be false")
+	}
+	if !cfg.FABOptions.RunSpeedtest {
+		t.Error("expected FABOptions.RunSpeedtest to be true")
+	}
+}
+
+// verifyAppliedDisplayOptions checks that display options were correctly applied to config.
+func verifyAppliedDisplayOptions(t *testing.T, cfg *config.Config) {
+	t.Helper()
+	if cfg.DisplayOptions.ShowPublicIP {
+		t.Error("expected ShowPublicIP to be false")
+	}
+	if cfg.DisplayOptions.UnitSystem != "imperial" {
+		t.Errorf("expected unit system 'imperial', got %s", cfg.DisplayOptions.UnitSystem)
+	}
+}
+
+func TestProfileSettingsFromConfig(t *testing.T) {
+	cfg := setupTestConfig()
+
+	// Extract settings from config
+	ps := config.NewProfileSettings()
+	ps.FromConfig(cfg)
+
+	// Verify all settings using helper functions
+	verifyThresholds(t, ps)
+	verifyHealthChecks(t, ps)
+	verifyDNSSettings(t, ps)
+	verifySNMPSettings(t, ps)
+	verifyNetworkDiscovery(t, ps)
+	verifyFABOptions(t, ps)
+	verifyDisplayOptions(t, ps)
+}
+
+// createApplyToTestProfileSettings creates a ProfileSettings with specific values for ApplyTo testing.
+func createApplyToTestProfileSettings() *config.ProfileSettings {
+	return &config.ProfileSettings{
 		Version: config.ProfileSettingsVersion,
 		Thresholds: config.ProfileThresholds{
 			DNS:        config.ThresholdPair{Warning: 100, Critical: 200},
@@ -222,84 +354,23 @@ func TestProfileSettingsApplyTo(t *testing.T) {
 			UnitSystem:   "imperial",
 		},
 	}
+}
+
+func TestProfileSettingsApplyTo(t *testing.T) {
+	ps := createApplyToTestProfileSettings()
 
 	// Apply to a default config
 	cfg := config.DefaultConfig()
 	ps.ApplyTo(cfg)
 
-	// Verify thresholds were applied
-	if cfg.Thresholds.DNS.Warning != 100*time.Millisecond {
-		t.Errorf("DNS warning: expected 100ms, got %v", cfg.Thresholds.DNS.Warning)
-	}
-	if cfg.Thresholds.DNS.Critical != 200*time.Millisecond {
-		t.Errorf("DNS critical: expected 200ms, got %v", cfg.Thresholds.DNS.Critical)
-	}
-	if cfg.Thresholds.Ping.Warning != 50*time.Millisecond {
-		t.Errorf("Ping warning: expected 50ms, got %v", cfg.Thresholds.Ping.Warning)
-	}
-	if cfg.Thresholds.WiFi.Signal.Warning != -65 {
-		t.Errorf("WiFi warning: expected -65, got %d", cfg.Thresholds.WiFi.Signal.Warning)
-	}
-
-	// Verify health checks were applied
-	if !cfg.HealthChecks.RunPerformance {
-		t.Error("expected RunPerformance to be true")
-	}
-	if !cfg.HealthChecks.RunSpeedtest {
-		t.Error("expected RunSpeedtest to be true")
-	}
-	if cfg.HealthChecks.RunIperf {
-		t.Error("expected RunIperf to be false")
-	}
-	if len(cfg.HealthChecks.PingTargets) != 1 {
-		t.Errorf("expected 1 ping target, got %d", len(cfg.HealthChecks.PingTargets))
-	}
-	if cfg.HealthChecks.PingTargets[0].Name != "Router" {
-		t.Errorf("expected ping target name 'Router', got %s", cfg.HealthChecks.PingTargets[0].Name)
-	}
-
-	// Verify DNS was applied
-	if cfg.DNS.TestHostname != "test.example.com" {
-		t.Errorf("expected DNS hostname 'test.example.com', got %s", cfg.DNS.TestHostname)
-	}
-	if cfg.DNS.Timeout != 3*time.Second {
-		t.Errorf("expected DNS timeout 3s, got %v", cfg.DNS.Timeout)
-	}
-	if len(cfg.DNS.Servers) != 1 {
-		t.Errorf("expected 1 DNS server, got %d", len(cfg.DNS.Servers))
-	}
-
-	// Verify SNMP was applied
-	if len(cfg.SNMP.Communities) != 1 || cfg.SNMP.Communities[0] != "community1" {
-		t.Errorf("expected SNMP community 'community1', got %v", cfg.SNMP.Communities)
-	}
-	if cfg.SNMP.Port != 1161 {
-		t.Errorf("expected SNMP port 1161, got %d", cfg.SNMP.Port)
-	}
-
-	// Verify network discovery was applied
-	if !cfg.NetworkDiscovery.Enabled {
-		t.Error("expected discovery enabled")
-	}
-	if cfg.NetworkDiscovery.AutoScan {
-		t.Error("expected auto scan to be false")
-	}
-
-	// Verify FAB options were applied
-	if cfg.FABOptions.RunLink {
-		t.Error("expected FABOptions.RunLink to be false")
-	}
-	if !cfg.FABOptions.RunSpeedtest {
-		t.Error("expected FABOptions.RunSpeedtest to be true")
-	}
-
-	// Verify display options were applied
-	if cfg.DisplayOptions.ShowPublicIP {
-		t.Error("expected ShowPublicIP to be false")
-	}
-	if cfg.DisplayOptions.UnitSystem != "imperial" {
-		t.Errorf("expected unit system 'imperial', got %s", cfg.DisplayOptions.UnitSystem)
-	}
+	// Verify all settings were applied using helper functions
+	verifyAppliedThresholds(t, cfg)
+	verifyAppliedHealthChecks(t, cfg)
+	verifyAppliedDNS(t, cfg)
+	verifyAppliedSNMP(t, cfg)
+	verifyAppliedNetworkDiscovery(t, cfg)
+	verifyAppliedFABOptions(t, cfg)
+	verifyAppliedDisplayOptions(t, cfg)
 }
 
 func TestProfileSettingsJSONRoundTrip(t *testing.T) {

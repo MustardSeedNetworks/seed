@@ -1,4 +1,3 @@
-// Package config provides threshold extraction helpers.
 package config
 
 // ThresholdMsValues contains extracted millisecond threshold values.

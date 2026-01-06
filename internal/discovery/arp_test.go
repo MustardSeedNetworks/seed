@@ -1,4 +1,3 @@
-// Package discovery_test provides ARP scanner tests.
 package discovery_test
 
 import (
@@ -362,15 +361,81 @@ func TestARPScanner_isInSubnet(t *testing.T) {
 	}
 }
 
-func TestSplitSubnetIntoChunks(t *testing.T) {
-	tests := []struct {
-		name           string
-		cidr           string
-		maxChunks      int // 0 = use default
-		expectedChunks int
-		firstChunk     string
-		lastChunk      string
-	}{
+// subnetChunkTestCase defines test data for subnet chunking tests.
+type subnetChunkTestCase struct {
+	name           string
+	cidr           string
+	maxChunks      int // 0 = use default
+	expectedChunks int
+	firstChunk     string
+	lastChunk      string
+}
+
+// ipToUint32 converts an IPv4 address to a uint32 for comparison.
+func ipToUint32(ip net.IP) uint32 {
+	ip4 := ip.To4()
+	return uint32(ip4[0])<<24 | uint32(ip4[1])<<16 | uint32(ip4[2])<<8 | uint32(ip4[3])
+}
+
+// assertChunkCount verifies the number of chunks matches expected.
+func assertChunkCount(t *testing.T, got, want int) {
+	t.Helper()
+	if got != want {
+		t.Errorf("Expected %d chunks, got %d", want, got)
+	}
+}
+
+// assertFirstChunk verifies the first chunk matches expected CIDR.
+func assertFirstChunk(t *testing.T, chunks []*net.IPNet, want string) {
+	t.Helper()
+	if len(chunks) == 0 {
+		return
+	}
+	if chunks[0].String() != want {
+		t.Errorf("First chunk: expected %s, got %s", want, chunks[0].String())
+	}
+}
+
+// assertLastChunk verifies the last chunk matches expected CIDR.
+func assertLastChunk(t *testing.T, chunks []*net.IPNet, want string) {
+	t.Helper()
+	if len(chunks) == 0 {
+		return
+	}
+	if chunks[len(chunks)-1].String() != want {
+		t.Errorf("Last chunk: expected %s, got %s", want, chunks[len(chunks)-1].String())
+	}
+}
+
+// assertAllChunksAre24 verifies all chunks have a /24 mask.
+func assertAllChunksAre24(t *testing.T, chunks []*net.IPNet) {
+	t.Helper()
+	for i, chunk := range chunks {
+		ones, _ := chunk.Mask.Size()
+		if ones != 24 {
+			t.Errorf("Chunk %d: expected /24 mask, got /%d", i, ones)
+		}
+	}
+}
+
+// assertChunksContiguous verifies chunks are contiguous with no gaps.
+func assertChunksContiguous(t *testing.T, chunks []*net.IPNet) {
+	t.Helper()
+	const expectedGap = 256 // /24 block size
+	for i := 1; i < len(chunks); i++ {
+		prevUint := ipToUint32(chunks[i-1].IP)
+		currUint := ipToUint32(chunks[i].IP)
+		gap := currUint - prevUint
+		if gap != expectedGap {
+			t.Errorf("Chunks %d and %d are not contiguous: %s -> %s (gap: %d)",
+				i-1, i, chunks[i-1].IP, chunks[i].IP, gap)
+		}
+	}
+}
+
+// getSubnetChunkTestCases returns test cases for subnet chunking.
+func getSubnetChunkTestCases() []subnetChunkTestCase {
+	return []subnetChunkTestCase{
 		{
 			name:           "/24 - no chunking needed",
 			cidr:           "192.168.1.0/24",
@@ -414,72 +479,33 @@ func TestSplitSubnetIntoChunks(t *testing.T) {
 			lastChunk:      "10.0.255.0/24",
 		},
 	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, subnet, err := net.ParseCIDR(tt.cidr)
-			if err != nil {
-				t.Fatalf("Invalid CIDR %s: %v", tt.cidr, err)
-			}
+// runSubnetChunkTest executes a single subnet chunk test case.
+func runSubnetChunkTest(t *testing.T, tc subnetChunkTestCase) {
+	t.Helper()
 
-			chunks := discovery.ExportSplitSubnetIntoChunks(subnet, tt.maxChunks)
+	_, subnet, err := net.ParseCIDR(tc.cidr)
+	if err != nil {
+		t.Fatalf("Invalid CIDR %s: %v", tc.cidr, err)
+	}
 
-			if len(chunks) != tt.expectedChunks {
-				t.Errorf("Expected %d chunks, got %d", tt.expectedChunks, len(chunks))
-			}
+	chunks := discovery.ExportSplitSubnetIntoChunks(subnet, tc.maxChunks)
 
-			if len(chunks) > 0 {
-				if chunks[0].String() != tt.firstChunk {
-					t.Errorf("First chunk: expected %s, got %s", tt.firstChunk, chunks[0].String())
-				}
-				if chunks[len(chunks)-1].String() != tt.lastChunk {
-					t.Errorf(
-						"Last chunk: expected %s, got %s",
-						tt.lastChunk,
-						chunks[len(chunks)-1].String(),
-					)
-				}
-			}
+	assertChunkCount(t, len(chunks), tc.expectedChunks)
+	assertFirstChunk(t, chunks, tc.firstChunk)
+	assertLastChunk(t, chunks, tc.lastChunk)
 
-			// Verify all chunks are /24 for large subnets
-			if tt.expectedChunks > 1 {
-				for i, chunk := range chunks {
-					ones, _ := chunk.Mask.Size()
-					if ones != 24 {
-						t.Errorf("Chunk %d: expected /24 mask, got /%d", i, ones)
-					}
-				}
-			}
+	if tc.expectedChunks > 1 {
+		assertAllChunksAre24(t, chunks)
+		assertChunksContiguous(t, chunks)
+	}
+}
 
-			// Verify chunks are contiguous (no gaps)
-			if tt.expectedChunks > 1 {
-				for i := 1; i < len(chunks); i++ {
-					prevIP := chunks[i-1].IP.To4()
-					currIP := chunks[i].IP.To4()
-					prevUint := uint32(
-						prevIP[0],
-					)<<24 | uint32(
-						prevIP[1],
-					)<<16 | uint32(
-						prevIP[2],
-					)<<8 | uint32(
-						prevIP[3],
-					)
-					currUint := uint32(
-						currIP[0],
-					)<<24 | uint32(
-						currIP[1],
-					)<<16 | uint32(
-						currIP[2],
-					)<<8 | uint32(
-						currIP[3],
-					)
-					if currUint-prevUint != 256 {
-						t.Errorf("Chunks %d and %d are not contiguous: %s -> %s (gap: %d)",
-							i-1, i, chunks[i-1].IP, chunks[i].IP, currUint-prevUint)
-					}
-				}
-			}
+func TestSplitSubnetIntoChunks(t *testing.T) {
+	for _, tc := range getSubnetChunkTestCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			runSubnetChunkTest(t, tc)
 		})
 	}
 }

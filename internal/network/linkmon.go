@@ -1,7 +1,7 @@
-// Package network handles network interface management, monitoring, and configuration.
+package network
+
 // Link monitor module provides real-time network interface state tracking, detecting changes
 // in link status, speed, duplex, and other physical layer attributes across Linux and macOS.
-package network
 
 import (
 	"net"
@@ -24,6 +24,26 @@ const (
 	LinkStateUnknown LinkState = iota
 	LinkStateDown
 	LinkStateUp
+)
+
+// Link monitor configuration constants.
+const (
+	// defaultPollIntervalMs is the default polling interval in milliseconds
+	// for checking link state changes. 500ms provides responsive detection
+	// without excessive CPU usage.
+	defaultPollIntervalMs = 500
+
+	// defaultEventBufferSize is the maximum number of link events to retain
+	// in history. Keeps memory bounded while providing useful diagnostics.
+	defaultEventBufferSize = 100
+
+	// defaultMinCallbackGapMs is the minimum interval in milliseconds between
+	// callback invocations to prevent callback storms during rapid state changes.
+	defaultMinCallbackGapMs = 100
+
+	// linkCheckPollIntervalMs is the polling interval in milliseconds used when
+	// actively waiting for link state changes (e.g., in WaitForLinkUp).
+	linkCheckPollIntervalMs = 100
 )
 
 func (s LinkState) String() string {
@@ -72,11 +92,11 @@ func NewLinkMonitor(interfaceName string) *LinkMonitor {
 		interfaceName:  interfaceName,
 		callbacks:      make([]LinkStateCallback, 0),
 		lastState:      LinkStateUnknown,
-		pollInterval:   500 * time.Millisecond, // Check every 500ms
+		pollInterval:   defaultPollIntervalMs * time.Millisecond,
 		history:        make([]LinkEvent, 0),
-		maxHistory:     100, // Keep last 100 events
+		maxHistory:     defaultEventBufferSize,
 		startTime:      time.Now(),
-		minCallbackGap: 100 * time.Millisecond, // Rate limit callbacks (fixes #857)
+		minCallbackGap: defaultMinCallbackGapMs * time.Millisecond,
 	}
 }
 
@@ -138,6 +158,13 @@ func (m *LinkMonitor) IsUp() bool {
 	return m.GetState() == LinkStateUp
 }
 
+// stateChangeResult holds the result of processing a link state change.
+type stateChangeResult struct {
+	event        LinkEvent
+	callbacks    []LinkStateCallback
+	shouldNotify bool
+}
+
 // pollLoop continuously checks link state.
 func (m *LinkMonitor) pollLoop() {
 	ticker := time.NewTicker(m.pollInterval)
@@ -148,66 +175,102 @@ func (m *LinkMonitor) pollLoop() {
 		case <-m.stopCh:
 			return
 		case <-ticker.C:
-			newState := m.checkLinkState()
-
-			m.mu.Lock()
-			oldState := m.lastState
-			if newState != oldState {
-				m.lastState = newState
-
-				// Create event
-				event := LinkEvent{
-					Interface: m.interfaceName,
-					State:     newState,
-					Timestamp: time.Now(),
-				}
-
-				// Record in history
-				m.history = append(m.history, event)
-				if len(m.history) > m.maxHistory {
-					m.history = m.history[1:]
-				}
-
-				callbacks := make([]LinkStateCallback, len(m.callbacks))
-				copy(callbacks, m.callbacks)
-
-				// Rate limit callback goroutines to prevent explosion on rapid link flap (fixes #857)
-				now := time.Now()
-				shouldNotify := now.Sub(m.lastCallbackTime) >= m.minCallbackGap
-				if shouldNotify {
-					m.lastCallbackTime = now
-				}
-				m.mu.Unlock()
-
-				// Skip callback notification if rate limited
-				if !shouldNotify {
-					logging.GetLogger().Debug("Link state change rate limited",
-						"interface", event.Interface,
-						"state", event.State.String())
-					continue
-				}
-
-				// Notify callbacks with panic recovery (fixes #790 - log panic details)
-				for _, cb := range callbacks {
-					go func(callback LinkStateCallback) {
-						defer func() {
-							if r := recover(); r != nil {
-								// Log panic details to help debug callback issues
-								logging.GetLogger().Error("Panic in link monitor callback",
-									"panic", r,
-									"interface", event.Interface,
-									"state", event.State.String(),
-									"stack", string(debug.Stack()))
-							}
-						}()
-						callback(event)
-					}(cb)
-				}
-			} else {
-				m.mu.Unlock()
-			}
+			m.handlePollTick()
 		}
 	}
+}
+
+// handlePollTick processes a single poll tick, checking for state changes.
+func (m *LinkMonitor) handlePollTick() {
+	newState := m.checkLinkState()
+
+	result, changed := m.processStateChange(newState)
+	if !changed {
+		return
+	}
+
+	if !result.shouldNotify {
+		logging.GetLogger().Debug("Link state change rate limited",
+			"interface", result.event.Interface,
+			"state", result.event.State.String())
+		return
+	}
+
+	m.notifyCallbacks(result.event, result.callbacks)
+}
+
+// processStateChange handles state transition logic under lock.
+// Returns the result and whether a state change occurred.
+func (m *LinkMonitor) processStateChange(newState LinkState) (stateChangeResult, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if newState == m.lastState {
+		return stateChangeResult{}, false
+	}
+
+	m.lastState = newState
+
+	event := LinkEvent{
+		Interface: m.interfaceName,
+		State:     newState,
+		Timestamp: time.Now(),
+	}
+
+	m.recordEvent(event)
+
+	callbacks := make([]LinkStateCallback, len(m.callbacks))
+	copy(callbacks, m.callbacks)
+
+	shouldNotify := m.checkAndUpdateRateLimit()
+
+	return stateChangeResult{
+		event:        event,
+		callbacks:    callbacks,
+		shouldNotify: shouldNotify,
+	}, true
+}
+
+// recordEvent adds an event to history, maintaining max size.
+// Must be called with mu held.
+func (m *LinkMonitor) recordEvent(event LinkEvent) {
+	m.history = append(m.history, event)
+	if len(m.history) > m.maxHistory {
+		m.history = m.history[1:]
+	}
+}
+
+// checkAndUpdateRateLimit checks if callbacks should be notified based on rate limiting.
+// Returns true if notification is allowed, and updates the last callback time.
+// Must be called with mu held.
+func (m *LinkMonitor) checkAndUpdateRateLimit() bool {
+	now := time.Now()
+	if now.Sub(m.lastCallbackTime) < m.minCallbackGap {
+		return false
+	}
+	m.lastCallbackTime = now
+	return true
+}
+
+// notifyCallbacks invokes all callbacks asynchronously with panic recovery.
+func (m *LinkMonitor) notifyCallbacks(event LinkEvent, callbacks []LinkStateCallback) {
+	for _, cb := range callbacks {
+		go m.safeInvokeCallback(cb, event)
+	}
+}
+
+// safeInvokeCallback invokes a callback with panic recovery (fixes #790).
+func (m *LinkMonitor) safeInvokeCallback(callback LinkStateCallback, event LinkEvent) {
+	defer func() {
+		if r := recover(); r != nil {
+			logging.GetLogger().Error("Panic in link monitor callback",
+				"panic", r,
+				"interface", event.Interface,
+				"state", event.State.String(),
+				"stack", string(debug.Stack()))
+		}
+	}()
+	callback(event)
 }
 
 // checkLinkState reads the current link state from the system.
@@ -304,7 +367,7 @@ func (m *LinkMonitor) WaitForLinkUp(timeout time.Duration) bool {
 		if m.checkLinkState() == LinkStateUp {
 			return true
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(linkCheckPollIntervalMs * time.Millisecond)
 	}
 	return false
 }

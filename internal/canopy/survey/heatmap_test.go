@@ -1,4 +1,3 @@
-// Package survey_test provides WiFi site survey functionality tests.
 package survey_test
 
 import (

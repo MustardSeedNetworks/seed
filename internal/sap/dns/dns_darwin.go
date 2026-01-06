@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+// minNameserverParts is the minimum number of fields required for a valid nameserver line.
+// A nameserver line must have at least 2 parts: "nameserver" and the IP address.
+const minNameserverParts = 2
+
 // getSystemDNSPlatform reads DNS servers on macOS from resolver config files.
 // This reads the resolver configuration directly instead of calling scutil.
 func getSystemDNSPlatform() []string {
@@ -72,7 +76,7 @@ func parseResolvConfDarwin(path string) []string {
 		// Parse nameserver lines
 		if strings.HasPrefix(line, "nameserver") {
 			parts := strings.Fields(line)
-			if len(parts) >= 2 {
+			if len(parts) >= minNameserverParts {
 				servers = append(servers, parts[1])
 			}
 		}

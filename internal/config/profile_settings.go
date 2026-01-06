@@ -1,4 +1,3 @@
-// Package config provides profile-specific settings support.
 package config
 
 import (

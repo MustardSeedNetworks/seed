@@ -1,4 +1,3 @@
-// Package database provides settings repository for key-value settings.
 package database
 
 import (

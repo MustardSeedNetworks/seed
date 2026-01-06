@@ -1,4 +1,3 @@
-// Package database provides profile repository for managing configuration profiles.
 package database
 
 import (

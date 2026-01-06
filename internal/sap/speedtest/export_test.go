@@ -1,4 +1,3 @@
-// Package speedtest exports internal functions for testing.
 package speedtest
 
 // TesterServerID returns the server ID for testing.

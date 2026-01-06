@@ -1,4 +1,3 @@
-// Package discovery_test provides traceroute tests.
 package discovery_test
 
 import (

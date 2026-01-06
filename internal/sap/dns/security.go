@@ -17,6 +17,22 @@ const (
 	checkResultWarn = "WARN"
 )
 
+// Security scan configuration defaults.
+const (
+	// DefaultSecurityScanTimeoutMs is the default timeout for security scans in milliseconds.
+	DefaultSecurityScanTimeoutMs = 5000
+	// DefaultSecurityScanTimeout is the default timeout as a duration.
+	DefaultSecurityScanTimeout = 5 * time.Second
+)
+
+// Amplification risk thresholds based on TXT record count.
+const (
+	// HighAmplificationRecordThreshold - above this count indicates high amplification risk.
+	HighAmplificationRecordThreshold = 10
+	// MediumAmplificationRecordThreshold - above this count indicates medium amplification risk.
+	MediumAmplificationRecordThreshold = 3
+)
+
 // SecurityScanConfig contains configuration for DNS security scanning.
 type SecurityScanConfig struct {
 	Enabled            bool     `yaml:"enabled"             json:"enabled"`
@@ -37,7 +53,7 @@ func DefaultSecurityScanConfig() SecurityScanConfig {
 		CheckAmplification: true,
 		CheckDNSSEC:        true,
 		TestDomains:        []string{"google.com", "cloudflare.com"},
-		Timeout:            5000, // 5 seconds
+		Timeout:            DefaultSecurityScanTimeoutMs,
 	}
 }
 
@@ -138,7 +154,7 @@ func (s *SecurityScanner) ScanServer(
 
 	timeout := time.Duration(s.config.Timeout) * time.Millisecond
 	if timeout == 0 {
-		timeout = 5 * time.Second
+		timeout = DefaultSecurityScanTimeout
 	}
 
 	// Normalize server address.
@@ -334,7 +350,7 @@ func (s *SecurityScanner) checkAmplification(
 	// A typical DNS query is ~50 bytes, responses can be much larger.
 	// This is a rough estimate - real measurement requires raw packet analysis.
 	switch {
-	case maxRecords > 10:
+	case maxRecords > HighAmplificationRecordThreshold:
 		result.AmplificationFactor = 50.0 // High amplification
 		result.AmplificationRisk = "high"
 		result.Vulnerabilities = append(result.Vulnerabilities, "High DNS amplification potential")
@@ -343,7 +359,7 @@ func (s *SecurityScanner) checkAmplification(
 			"Limit response sizes for recursive queries",
 		)
 		result.CheckResults["amplification"] = checkResultFail
-	case maxRecords > 3:
+	case maxRecords > MediumAmplificationRecordThreshold:
 		result.AmplificationFactor = 20.0 // Medium amplification
 		result.AmplificationRisk = "medium"
 		result.CheckResults["amplification"] = checkResultWarn

@@ -1,4 +1,3 @@
-// Package survey provides WiFi site survey functionality.
 package survey
 
 import (
@@ -32,6 +31,39 @@ const (
 	HeatmapAliasCochannel = "cochannel" // Alias for interference.
 )
 
+// Heatmap rendering constants.
+const (
+	// defaultHeatmapCellSize is the default size of each grid cell in pixels.
+	defaultHeatmapCellSize = 10
+
+	// defaultHeatmapOpacity is the default opacity for heatmap overlay (0-255).
+	defaultHeatmapOpacity = 180
+
+	// defaultIDWPowerHeatmap is the default IDW power parameter for heatmap interpolation.
+	defaultIDWPowerHeatmap = 2.0
+
+	// heatmapPaddingPixels is the padding added to calculated dimensions from sample points.
+	heatmapPaddingPixels = 50
+)
+
+// Throughput color scale thresholds in Mbps.
+const (
+	throughputMin       = 0   // Minimum throughput (red).
+	throughputSlow      = 50  // Slow throughput (orange).
+	throughputModerate  = 100 // Moderate throughput (yellow).
+	throughputGood      = 200 // Good throughput (light green).
+	throughputExcellent = 500 // Excellent throughput (green).
+)
+
+// Sample point marker rendering constants.
+const (
+	// markerSizePixels is the radius of sample point markers.
+	markerSizePixels = 4
+
+	// markerCenterPixels is the radius of the center dot in sample markers.
+	markerCenterPixels = 1
+)
+
 // HeatmapConfig contains configuration for heatmap generation.
 type HeatmapConfig struct {
 	Type          HeatmapType         // Type of heatmap to generate
@@ -60,10 +92,10 @@ type HeatmapResult struct {
 func DefaultHeatmapConfig() HeatmapConfig {
 	return HeatmapConfig{
 		Type:          HeatmapRSSI,
-		CellSize:      10,
-		Opacity:       180,
+		CellSize:      defaultHeatmapCellSize,
+		Opacity:       defaultHeatmapOpacity,
 		Method:        MethodIDW,
-		Power:         2.0,
+		Power:         defaultIDWPowerHeatmap,
 		ShowGrid:      false,
 		ShowSamples:   true,
 		BlendWithPlan: true,
@@ -84,13 +116,13 @@ func GenerateHeatmap(survey *Survey, config HeatmapConfig) (*HeatmapResult, erro
 
 	// Apply defaults
 	if config.CellSize <= 0 {
-		config.CellSize = 10
+		config.CellSize = defaultHeatmapCellSize
 	}
 	if config.Opacity == 0 {
-		config.Opacity = 180
+		config.Opacity = defaultHeatmapOpacity
 	}
 	if config.Power <= 0 {
-		config.Power = 2.0
+		config.Power = defaultIDWPowerHeatmap
 	}
 
 	// Extract sample values for the requested type
@@ -182,7 +214,7 @@ func getHeatmapDimensions(survey *Survey) (int, int) {
 	}
 
 	// Add padding
-	return maxX + 50, maxY + 50
+	return maxX + heatmapPaddingPixels, maxY + heatmapPaddingPixels
 }
 
 // mapHeatmapTypeToValueType converts heatmap type to value extraction key.
@@ -216,14 +248,29 @@ func getColorScaleForType(ht HeatmapType) ColorScale {
 		// Similar structure to other scales but with throughput-specific values.
 		return ColorScale{
 			Name:   "throughput",
-			MinVal: 0,
-			MaxVal: 500,
+			MinVal: throughputMin,
+			MaxVal: throughputExcellent,
 			Stops: []ColorStop{
-				{Value: 0, Color: color.RGBA{R: 220, G: 53, B: 69, A: 255}},
-				{Value: 50, Color: color.RGBA{R: 255, G: 128, B: 0, A: 255}},
-				{Value: 100, Color: color.RGBA{R: 255, G: 193, B: 7, A: 255}},
-				{Value: 200, Color: color.RGBA{R: 144, G: 238, B: 144, A: 255}},
-				{Value: 500, Color: color.RGBA{R: 40, G: 167, B: 69, A: 255}},
+				// Red (very slow)
+				{Value: throughputMin, Color: color.RGBA{
+					R: colorChannelDarkRed, G: colorChannelWarningOrange, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				}},
+				// Orange (slow)
+				{Value: throughputSlow, Color: color.RGBA{
+					R: colorChannelFull, G: colorChannelMidGray, B: 0, A: colorChannelOpaque,
+				}},
+				// Yellow (moderate)
+				{Value: throughputModerate, Color: color.RGBA{
+					R: colorChannelFull, G: colorChannelYellowGreen, B: colorChannelYellowBlue, A: colorChannelOpaque,
+				}},
+				// Light green (good)
+				{Value: throughputGood, Color: color.RGBA{
+					R: colorChannelMediumGreen, G: colorChannelLightGreen, B: colorChannelMediumGreen, A: colorChannelOpaque,
+				}},
+				// Green (excellent)
+				{Value: throughputExcellent, Color: color.RGBA{
+					R: colorChannelAccentGreen, G: colorChannelDarkGreen, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				}},
 			},
 		}
 	default:
@@ -265,44 +312,57 @@ func renderHeatmapToImage(
 	}
 }
 
-// renderSamplePoints draws markers at sample locations.
-func renderSamplePoints(img *image.RGBA, samples []SampleValue) {
-	markerColor := color.RGBA{R: 0, G: 0, B: 0, A: 255}
-	markerSize := 4
+// isWithinBounds checks if a pixel coordinate is within the image bounds.
+func isWithinBounds(img *image.RGBA, x, y int) bool {
+	return x >= 0 && x < img.Bounds().Max.X && y >= 0 && y < img.Bounds().Max.Y
+}
 
-	for _, sample := range samples {
-		x := int(sample.Point.X)
-		y := int(sample.Point.Y)
+// setPixelSafe sets a pixel if it's within bounds.
+func setPixelSafe(img *image.RGBA, x, y int, c color.Color) {
+	if isWithinBounds(img, x, y) {
+		img.Set(x, y, c)
+	}
+}
 
-		// Draw a small circle/square marker
-		for dy := -markerSize; dy <= markerSize; dy++ {
-			for dx := -markerSize; dx <= markerSize; dx++ {
-				// Circle check
-				if dx*dx+dy*dy <= markerSize*markerSize {
-					px, py := x+dx, y+dy
-					if px >= 0 && px < img.Bounds().Max.X && py >= 0 && py < img.Bounds().Max.Y {
-						img.Set(px, py, markerColor)
-					}
-				}
-			}
-		}
-
-		// White center dot
-		centerColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
-		for dy := -1; dy <= 1; dy++ {
-			for dx := -1; dx <= 1; dx++ {
-				px, py := x+dx, y+dy
-				if px >= 0 && px < img.Bounds().Max.X && py >= 0 && py < img.Bounds().Max.Y {
-					img.Set(px, py, centerColor)
-				}
+// drawFilledCircle draws a filled circle at the given center point.
+func drawFilledCircle(img *image.RGBA, centerX, centerY, radius int, c color.Color) {
+	radiusSq := radius * radius
+	for dy := -radius; dy <= radius; dy++ {
+		for dx := -radius; dx <= radius; dx++ {
+			if dx*dx+dy*dy <= radiusSq {
+				setPixelSafe(img, centerX+dx, centerY+dy, c)
 			}
 		}
 	}
 }
 
+// renderSamplePoints draws markers at sample locations.
+func renderSamplePoints(img *image.RGBA, samples []SampleValue) {
+	markerColor := color.RGBA{R: 0, G: 0, B: 0, A: colorChannelOpaque}
+	centerColor := color.RGBA{R: colorChannelFull, G: colorChannelFull, B: colorChannelFull, A: colorChannelOpaque}
+	markerSize := markerSizePixels
+	centerSize := markerCenterPixels
+
+	for _, sample := range samples {
+		x := int(sample.Point.X)
+		y := int(sample.Point.Y)
+
+		// Draw outer marker circle (black)
+		drawFilledCircle(img, x, y, markerSize, markerColor)
+
+		// Draw center dot (white)
+		drawFilledCircle(img, x, y, centerSize, centerColor)
+	}
+}
+
 // renderGrid draws grid lines on the image.
 func renderGrid(img *image.RGBA, cellSize int) {
-	gridColor := color.RGBA{R: 200, G: 200, B: 200, A: 100}
+	gridColor := color.RGBA{
+		R: colorChannelGridGray,
+		G: colorChannelGridGray,
+		B: colorChannelGridGray,
+		A: colorChannelGridAlpha,
+	}
 	maxX := img.Bounds().Max.X
 	maxY := img.Bounds().Max.Y
 

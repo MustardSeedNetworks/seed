@@ -14,6 +14,12 @@ import (
 // DefaultInterface is the default network interface to use when none is configured.
 const DefaultInterface = "eth0"
 
+// perfectSecurityScore is the baseline score before any vulnerability deductions (100%).
+const perfectSecurityScore = 100
+
+// vulnerabilityPenaltyMultiplier is the per-vulnerability deduction for category scoring.
+const vulnerabilityPenaltyMultiplier = 5
+
 // DiscoveryService handles network device discovery.
 type DiscoveryService struct {
 	cfg             *config.Config
@@ -306,7 +312,7 @@ func NewPostureService(
 // Assess performs a security posture assessment.
 func (s *PostureService) Assess(ctx context.Context) (*PostureScore, error) {
 	score := &PostureScore{
-		Overall:    100,
+		Overall:    perfectSecurityScore,
 		Categories: make(map[string]int),
 		Issues:     make([]PostureIssue, 0),
 		AssessedAt: time.Now(),
@@ -337,7 +343,7 @@ func (s *PostureService) Assess(ctx context.Context) (*PostureScore, error) {
 					// Info severity doesn't affect score
 				}
 			}
-			score.Categories["vulnerabilities"] = max(0, 100-len(vulns)*5)
+			score.Categories["vulnerabilities"] = max(0, perfectSecurityScore-len(vulns)*vulnerabilityPenaltyMultiplier)
 		}
 	}
 

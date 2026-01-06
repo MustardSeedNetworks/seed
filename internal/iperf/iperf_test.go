@@ -1,4 +1,3 @@
-// Package iperf_test provides network throughput testing using the iperf3 tool.
 // Test suite validates iperf3 client/server operations, result parsing, and bandwidth measurement.
 package iperf_test
 

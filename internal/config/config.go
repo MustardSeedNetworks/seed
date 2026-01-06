@@ -1,4 +1,3 @@
-// Package config handles application configuration.
 package config
 
 import (
@@ -20,6 +19,231 @@ import (
 const (
 	ipModeDHCP   = "dhcp"
 	ipModeStatic = "static"
+)
+
+// Default configuration value constants.
+const (
+	// defaultHTTPSPort is the default port for HTTPS server (standard HTTPS alternate port).
+	defaultHTTPSPort = 8443
+
+	// defaultStartupRetries is the number of retries when finding interface at startup.
+	defaultStartupRetries = 3
+
+	// defaultStartupRetryWaitSec is the delay in seconds between startup retries.
+	defaultStartupRetryWaitSec = 5
+
+	// defaultDiscoveryTimeoutSec is the default timeout in seconds for switch discovery.
+	defaultDiscoveryTimeoutSec = 30
+
+	// defaultSNMPPort is the standard SNMP protocol port.
+	defaultSNMPPort = 161
+
+	// defaultSNMPTimeoutSec is the default timeout in seconds for SNMP queries.
+	defaultSNMPTimeoutSec = 5
+
+	// defaultSNMPRetries is the default number of retries for failed SNMP queries.
+	defaultSNMPRetries = 2
+
+	// defaultDNSTimeoutSec is the default timeout in seconds for DNS queries.
+	defaultDNSTimeoutSec = 5
+
+	// defaultIperfPort is the standard iperf3 server port.
+	defaultIperfPort = 5201
+
+	// defaultIperfDurationSec is the default iperf test duration in seconds.
+	defaultIperfDurationSec = 10
+)
+
+// Logging default constants.
+const (
+	// defaultLogMaxSizeMB is the maximum size in megabytes before log rotation.
+	defaultLogMaxSizeMB = 100
+
+	// defaultLogMaxBackups is the number of old log files to keep.
+	defaultLogMaxBackups = 5
+
+	// defaultLogMaxAgeDays is the maximum number of days to retain old log files.
+	defaultLogMaxAgeDays = 30
+)
+
+// API and rate limiting constants.
+const (
+	// defaultRateLimitPerMinute is the default API rate limit per client per minute.
+	defaultRateLimitPerMinute = 60
+)
+
+// Database default constants.
+const (
+	// defaultDBRetentionDays is the default number of days to retain historical data.
+	defaultDBRetentionDays = 90
+
+	// defaultDBMaxConnections is the default maximum number of database connections.
+	defaultDBMaxConnections = 10
+
+	// defaultBackupMaxCount is the default maximum number of config backups to retain.
+	defaultBackupMaxCount = 10
+)
+
+// Network port constants for common services.
+const (
+	// portHTTPS is the standard HTTPS port.
+	portHTTPS = 443
+
+	// portDICOM is the standard DICOM medical imaging protocol port.
+	portDICOM = 104
+
+	// portFTP is the standard FTP control port.
+	portFTP = 21
+
+	// portSMB is the standard SMB/CIFS file sharing port.
+	portSMB = 445
+
+	// portRTSP is the standard RTSP streaming protocol port.
+	portRTSP = 554
+
+	// portPostgreSQL is the standard PostgreSQL database port.
+	portPostgreSQL = 5432
+
+	// portSSH is the standard SSH/SFTP port.
+	portSSH = 22
+
+	// portDNS is the standard DNS port.
+	portDNS = 53
+
+	// portNTP is the standard NTP time synchronization port.
+	portNTP = 123
+
+	// portHTTP is the standard HTTP port for default health check endpoints.
+	portHTTP = 80
+
+	// portHTTPAlt is the alternate HTTP port commonly used for web servers.
+	portHTTPAlt = 8080
+)
+
+// HTTP response status codes.
+const (
+	// httpStatusOK is the HTTP 200 OK status code.
+	httpStatusOK = 200
+)
+
+// Timeout and timing constants.
+const (
+	// defaultBannerTimeoutSec is the timeout in seconds for service banner grabbing.
+	defaultBannerTimeoutSec = 2
+
+	// defaultTracerouteTimeoutSec is the timeout in seconds for traceroute TCP probes.
+	defaultTracerouteTimeoutSec = 2
+
+	// defaultTracerouteWorkers is the number of concurrent traceroute workers.
+	defaultTracerouteWorkers = 20
+
+	// defaultMDNSTimeoutSec is the timeout in seconds for mDNS/device profiling operations.
+	defaultMDNSTimeoutSec = 2
+
+	// defaultMDNSMaxConcurrent is the maximum concurrent mDNS/profiler operations.
+	defaultMDNSMaxConcurrent = 5
+
+	// defaultProbeIntervalMs is the interval in milliseconds between network probes.
+	defaultProbeIntervalMs = 75
+
+	// defaultRescanIntervalMin is the interval in minutes between full network rescans.
+	defaultRescanIntervalMin = 10
+
+	// defaultARPWorkers is the number of concurrent ARP scan workers.
+	defaultARPWorkers = 50
+
+	// defaultPingTimeoutMs is the timeout in milliseconds for ICMP ping operations.
+	defaultPingTimeoutMs = 500
+
+	// defaultScanTimeoutSec is the total timeout in seconds for network scans.
+	defaultScanTimeoutSec = 30
+
+	// defaultOUIMaxAgeDays is the maximum age in days for OUI database before refresh.
+	defaultOUIMaxAgeDays = 30
+
+	// defaultSessionTimeoutHours is the default session timeout in hours.
+	defaultSessionTimeoutHours = 24
+
+	// defaultVulnUpdateIntervalSec is the interval in seconds for vulnerability database updates (24 hours).
+	defaultVulnUpdateIntervalSec = 86400
+)
+
+// Pipeline timing constants.
+const (
+	// defaultPipelineProbeDelayMs is the delay in milliseconds between pipeline probes.
+	defaultPipelineProbeDelayMs = 50
+
+	// defaultPipelineHostDelayMs is the delay in milliseconds between scanning hosts.
+	defaultPipelineHostDelayMs = 20
+
+	// defaultPipelineMaxConcurrentHosts is the maximum concurrent hosts in pipeline scanning.
+	defaultPipelineMaxConcurrentHosts = 20
+
+	// defaultPipelinePhaseTimeoutMin is the timeout in minutes for each pipeline phase.
+	defaultPipelinePhaseTimeoutMin = 10
+
+	// defaultSNMPWalkTimeoutSec is the timeout in seconds for SNMP walk operations.
+	defaultSNMPWalkTimeoutSec = 30
+
+	// defaultSNMPMaxOIDsPerRequest is the maximum OIDs per SNMP bulk request.
+	defaultSNMPMaxOIDsPerRequest = 10
+
+	// defaultStalenessThresholdHours is hours before a device is considered stale.
+	defaultStalenessThresholdHours = 24
+
+	// defaultPurgeAfterDays is days before inactive devices are purged.
+	defaultPurgeAfterDays = 30
+)
+
+// Threshold timing constants (in milliseconds).
+const (
+	// thresholdDHCPTotalWarningMs is the warning threshold for total DHCP time.
+	thresholdDHCPTotalWarningMs = 500
+
+	// thresholdDHCPPhaseWarningMs is the warning threshold for DHCP phase time.
+	thresholdDHCPPhaseWarningMs = 200
+
+	// thresholdDNSWarningMs is the warning threshold for DNS resolution.
+	thresholdDNSWarningMs = 100
+
+	// thresholdPingWarningMs is the warning threshold for ping latency.
+	thresholdPingWarningMs = 50
+
+	// thresholdPingCriticalMs is the critical threshold for ping latency.
+	thresholdPingCriticalMs = 200
+
+	// thresholdCustomPingCriticalMs is the critical threshold for custom ping tests.
+	thresholdCustomPingCriticalMs = 100
+
+	// thresholdTCPWarningMs is the warning threshold for TCP connections.
+	thresholdTCPWarningMs = 100
+
+	// thresholdHTTPWarningMs is the warning threshold for HTTP requests.
+	thresholdHTTPWarningMs = 500
+
+	// thresholdTLSWarningMs is the warning threshold for TLS handshakes.
+	thresholdTLSWarningMs = 150
+)
+
+// Threshold integer constants.
+const (
+	// thresholdWiFiSignalWarningDBm is the warning threshold for WiFi signal strength in dBm.
+	thresholdWiFiSignalWarningDBm = -70
+
+	// thresholdWiFiSignalCriticalDBm is the critical threshold for WiFi signal strength in dBm.
+	thresholdWiFiSignalCriticalDBm = -80
+
+	// thresholdLinkFlapWarning is the warning threshold for link flaps in 24 hours.
+	thresholdLinkFlapWarning = 3
+
+	// thresholdLinkFlapCritical is the critical threshold for link flaps in 24 hours.
+	thresholdLinkFlapCritical = 5
+
+	// thresholdCertExpiryWarningDays is days until certificate expiry warning.
+	thresholdCertExpiryWarningDays = 30
+
+	// thresholdCertExpiryCriticalDays is days until certificate expiry critical alert.
+	thresholdCertExpiryCriticalDays = 7
 )
 
 // ErrInsecureCredentials is returned when default credentials are detected.
@@ -822,24 +1046,24 @@ type MCPConfig struct {
 func DefaultConfig() *Config {
 	return &Config{
 		Version: ConfigVersion,
-		Server:  ServerConfig{Port: 8443, HTTPS: true},
+		Server:  ServerConfig{Port: defaultHTTPSPort, HTTPS: true},
 		Interface: InterfaceConfig{
 			Default:          "",
 			Fallbacks:        []string{},
-			StartupRetries:   3,
-			StartupRetryWait: 5 * time.Second,
+			StartupRetries:   defaultStartupRetries,
+			StartupRetryWait: defaultStartupRetryWaitSec * time.Second,
 		},
 		VLAN:             VLANConfig{Enabled: false, ID: 0},
 		IP:               IPConfig{Mode: ipModeDHCP},
-		Discovery:        DiscoveryConfig{Protocol: "auto", Timeout: 30 * time.Second},
+		Discovery:        DiscoveryConfig{Protocol: "auto", Timeout: defaultDiscoveryTimeoutSec * time.Second},
 		NetworkDiscovery: defaultNetworkDiscoveryConfig(),
 		SNMP: SNMPConfig{
 			Communities: []string{"public"},
-			Timeout:     5 * time.Second,
-			Retries:     2,
-			Port:        161,
+			Timeout:     defaultSNMPTimeoutSec * time.Second,
+			Retries:     defaultSNMPRetries,
+			Port:        defaultSNMPPort,
 		},
-		DNS:          DNSConfig{TestHostname: "google.com", Timeout: 5 * time.Second},
+		DNS:          DNSConfig{TestHostname: "google.com", Timeout: defaultDNSTimeoutSec * time.Second},
 		HealthChecks: defaultHealthChecksConfig(),
 		Speedtest:    SpeedtestConfig{ServerID: "", AutoRunOnLink: true},
 		Thresholds:   defaultThresholdsConfig(),
@@ -848,11 +1072,11 @@ func DefaultConfig() *Config {
 		Iperf: IperfConfig{
 			AutoRunOnLink: false,
 			Server:        "",
-			Port:          5201,
+			Port:          defaultIperfPort,
 			Protocol:      "tcp",
 			Direction:     "download",
-			Duration:      10,
-			ServerPort:    5201,
+			Duration:      defaultIperfDurationSec,
+			ServerPort:    defaultIperfPort,
 			EnableServer:  true,
 		},
 		FABOptions: FABOptionsConfig{
@@ -875,22 +1099,22 @@ func DefaultConfig() *Config {
 			Format:     "text",
 			AddSource:  false,
 			File:       "",
-			MaxSize:    100,
-			MaxBackups: 5,
-			MaxAge:     30,
+			MaxSize:    defaultLogMaxSizeMB,
+			MaxBackups: defaultLogMaxBackups,
+			MaxAge:     defaultLogMaxAgeDays,
 			Compress:   true,
 		},
 		MCP: MCPConfig{
 			Enabled:            false,
 			RequireAuth:        true,
-			RateLimitPerMinute: 60,
+			RateLimitPerMinute: defaultRateLimitPerMinute,
 			AllowedTools:       nil,
 		},
 		Database: DatabaseConfig{
 			Path:           "data/seed.db",
-			RetentionDays:  90,
+			RetentionDays:  defaultDBRetentionDays,
 			EnableWAL:      true,
-			MaxConnections: 10,
+			MaxConnections: defaultDBMaxConnections,
 		},
 		Pipeline: defaultPipelineConfig(),
 	}
@@ -907,31 +1131,31 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 				Preset:        PortPresetCommon,
 				TCPPorts:      "",
 				UDPPorts:      "",
-				BannerTimeout: 2 * time.Second,
+				BannerTimeout: defaultBannerTimeoutSec * time.Second,
 			},
 			TCPProbe: TCPProbeConfig{
-				Timeout: 2 * time.Second,
-				Workers: 20,
+				Timeout: defaultTracerouteTimeoutSec * time.Second,
+				Workers: defaultTracerouteWorkers,
 			}, Traceroute: false, SNMPQuery: false,
 		},
 		Profiler: DeviceProfilerConfig{
 			Enabled:       true,
-			Timeout:       2 * time.Second,
-			MaxConcurrent: 5,
-			QuickPorts:    []int{22, 80, 443, 8080},
+			Timeout:       defaultMDNSTimeoutSec * time.Second,
+			MaxConcurrent: defaultMDNSMaxConcurrent,
+			QuickPorts:    []int{portSSH, portHTTP, portHTTPS, portHTTPAlt},
 		},
 		Timing: DiscoveryTiming{
-			ProbeInterval:  75 * time.Millisecond,
-			RescanInterval: 10 * time.Minute,
-			Workers:        50,
+			ProbeInterval:  defaultProbeIntervalMs * time.Millisecond,
+			RescanInterval: defaultRescanIntervalMin * time.Minute,
+			Workers:        defaultARPWorkers,
 		},
 		Fingerprinting: FingerprintingConfig{
 			Enabled:       false,
 			OSDetection:   false,
 			ServiceProbes: false,
 		},
-		IPv6Enabled: true, Enabled: true, ARPScanWorkers: 50, PingTimeout: 500 * time.Millisecond, ScanTimeout: 30 * time.Second,
-		AutoScan: true, ScanInterval: 0, OUIFilePath: "data/oui.txt", OUIMaxAge: 30 * 24 * time.Hour, AdditionalSubnets: []SubnetConfig{},
+		IPv6Enabled: true, Enabled: true, ARPScanWorkers: defaultARPWorkers, PingTimeout: defaultPingTimeoutMs * time.Millisecond, ScanTimeout: defaultScanTimeoutSec * time.Second,
+		AutoScan: true, ScanInterval: 0, OUIFilePath: "data/oui.txt", OUIMaxAge: defaultOUIMaxAgeDays * 24 * time.Hour, AdditionalSubnets: []SubnetConfig{},
 	}
 }
 
@@ -946,41 +1170,41 @@ func defaultHealthChecksConfig() HealthChecksConfig {
 			{
 				Name:    "HTTPS",
 				Host:    "www.google.com",
-				Port:    443,
+				Port:    portHTTPS,
 				Enabled: true,
-			}, {Name: "DICOM", Host: "dicomserver.co.uk", Port: 104, Enabled: true},
+			}, {Name: "DICOM", Host: "dicomserver.co.uk", Port: portDICOM, Enabled: true},
 			{
 				Name:    "FTP",
 				Host:    "ftp.debian.org",
-				Port:    21,
+				Port:    portFTP,
 				Enabled: true,
-			}, {Name: "SMB", Host: "files.example.com", Port: 445, Enabled: false},
+			}, {Name: "SMB", Host: "files.example.com", Port: portSMB, Enabled: false},
 			{
 				Name:    "RTSP",
 				Host:    "wowzaec2demo.streamlock.net",
-				Port:    554,
+				Port:    portRTSP,
 				Enabled: true,
-			}, {Name: "PostgreSQL", Host: "db.example.com", Port: 5432, Enabled: false},
-			{Name: "SFTP", Host: "sftp.example.com", Port: 22, Enabled: false},
+			}, {Name: "PostgreSQL", Host: "db.example.com", Port: portPostgreSQL, Enabled: false},
+			{Name: "SFTP", Host: "sftp.example.com", Port: portSSH, Enabled: false},
 		},
 		UDPPorts: []UDPPortTest{
-			{Name: "DNS", Host: "8.8.8.8", Port: 53, Enabled: true},
-			{Name: "NTP", Host: "time.google.com", Port: 123, Enabled: true},
+			{Name: "DNS", Host: "8.8.8.8", Port: portDNS, Enabled: true},
+			{Name: "NTP", Host: "time.google.com", Port: portNTP, Enabled: true},
 		},
 		HTTPEndpoints: []HTTPEndpoint{
 			{
 				Name:           "Google HTTPS",
 				URL:            "https://www.google.com",
-				ExpectedStatus: 200,
+				ExpectedStatus: httpStatusOK,
 				Enabled:        true,
 			},
 			{
 				Name:           "Cloudflare",
 				URL:            "https://www.cloudflare.com",
-				ExpectedStatus: 200,
+				ExpectedStatus: httpStatusOK,
 				Enabled:        true,
 			},
-			{Name: "Example HTTP", URL: "http://example.com", ExpectedStatus: 200, Enabled: true},
+			{Name: "Example HTTP", URL: "http://example.com", ExpectedStatus: httpStatusOK, Enabled: true},
 		},
 		RunPerformance: true, RunSpeedtest: true, RunIperf: true, RunDiscovery: true,
 	}
@@ -990,25 +1214,65 @@ func defaultHealthChecksConfig() HealthChecksConfig {
 func defaultThresholdsConfig() ThresholdsConfig {
 	return ThresholdsConfig{
 		DHCP: DHCPThresholds{
-			Total:    Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
-			PerPhase: Threshold{Warning: 200 * time.Millisecond, Critical: 1 * time.Second},
-		},
-		DNS:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-		Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 200 * time.Millisecond},
-		WiFi: WiFiThresholds{Signal: SignalThreshold{Warning: -70, Critical: -80}},
-		Link: LinkThresholds{FlapCount24h: IntThreshold{Warning: 3, Critical: 5}},
-		CustomTests: CustomThresholds{
-			Ping: Threshold{Warning: 50 * time.Millisecond, Critical: 100 * time.Millisecond},
-			TCP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-			UDP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-			HTTP: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
-			HTTPTimings: HTTPTimingThresholds{
-				DNS:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-				TCP:  Threshold{Warning: 100 * time.Millisecond, Critical: 500 * time.Millisecond},
-				TLS:  Threshold{Warning: 150 * time.Millisecond, Critical: 500 * time.Millisecond},
-				TTFB: Threshold{Warning: 500 * time.Millisecond, Critical: 2 * time.Second},
+			Total: Threshold{
+				Warning:  thresholdDHCPTotalWarningMs * time.Millisecond,
+				Critical: defaultBannerTimeoutSec * time.Second,
 			},
-			CertExpiry: CertExpiryThreshold{Warning: 30, Critical: 7},
+			PerPhase: Threshold{Warning: thresholdDHCPPhaseWarningMs * time.Millisecond, Critical: 1 * time.Second},
+		},
+		DNS: Threshold{
+			Warning:  thresholdDNSWarningMs * time.Millisecond,
+			Critical: thresholdDHCPTotalWarningMs * time.Millisecond,
+		},
+		Ping: Threshold{
+			Warning:  thresholdPingWarningMs * time.Millisecond,
+			Critical: thresholdPingCriticalMs * time.Millisecond,
+		},
+		WiFi: WiFiThresholds{
+			Signal: SignalThreshold{Warning: thresholdWiFiSignalWarningDBm, Critical: thresholdWiFiSignalCriticalDBm},
+		},
+		Link: LinkThresholds{
+			FlapCount24h: IntThreshold{Warning: thresholdLinkFlapWarning, Critical: thresholdLinkFlapCritical},
+		},
+		CustomTests: CustomThresholds{
+			Ping: Threshold{
+				Warning:  thresholdPingWarningMs * time.Millisecond,
+				Critical: thresholdCustomPingCriticalMs * time.Millisecond,
+			},
+			TCP: Threshold{
+				Warning:  thresholdTCPWarningMs * time.Millisecond,
+				Critical: thresholdDHCPTotalWarningMs * time.Millisecond,
+			},
+			UDP: Threshold{
+				Warning:  thresholdTCPWarningMs * time.Millisecond,
+				Critical: thresholdDHCPTotalWarningMs * time.Millisecond,
+			},
+			HTTP: Threshold{
+				Warning:  thresholdHTTPWarningMs * time.Millisecond,
+				Critical: defaultBannerTimeoutSec * time.Second,
+			},
+			HTTPTimings: HTTPTimingThresholds{
+				DNS: Threshold{
+					Warning:  thresholdDNSWarningMs * time.Millisecond,
+					Critical: thresholdDHCPTotalWarningMs * time.Millisecond,
+				},
+				TCP: Threshold{
+					Warning:  thresholdTCPWarningMs * time.Millisecond,
+					Critical: thresholdDHCPTotalWarningMs * time.Millisecond,
+				},
+				TLS: Threshold{
+					Warning:  thresholdTLSWarningMs * time.Millisecond,
+					Critical: thresholdDHCPTotalWarningMs * time.Millisecond,
+				},
+				TTFB: Threshold{
+					Warning:  thresholdHTTPWarningMs * time.Millisecond,
+					Critical: defaultBannerTimeoutSec * time.Second,
+				},
+			},
+			CertExpiry: CertExpiryThreshold{
+				Warning:  thresholdCertExpiryWarningDays,
+				Critical: thresholdCertExpiryCriticalDays,
+			},
 		},
 	}
 }
@@ -1016,7 +1280,7 @@ func defaultThresholdsConfig() ThresholdsConfig {
 // defaultAuthConfig returns the default authentication configuration.
 func defaultAuthConfig() AuthConfig {
 	return AuthConfig{
-		DefaultUsername: "admin", DefaultPasswordHash: "", SessionTimeout: 24 * time.Hour, JWTSecret: "",
+		DefaultUsername: "admin", DefaultPasswordHash: "", SessionTimeout: defaultSessionTimeoutHours * time.Hour, JWTSecret: "",
 		SSO: SSOConfig{
 			Providers: []SSOProviderConfig{
 				{Name: "google", Enabled: false},
@@ -1035,9 +1299,9 @@ func defaultSecurityConfig() SecurityConfig {
 			Enabled:           true,
 			CVEDatabase:       "nvd",
 			NVDAPIKey:         "",
-			UpdateInterval:    86400,
+			UpdateInterval:    defaultVulnUpdateIntervalSec,
 			SeverityThreshold: "medium",
-			MaxConcurrent:     5,
+			MaxConcurrent:     defaultMDNSMaxConcurrent,
 			AutoScan:          true,
 		},
 	}
@@ -1053,16 +1317,16 @@ func defaultPipelineConfig() PipelineConfig {
 			VulnAssessment:   false,
 		},
 		Timing: PipelineTimingConfig{
-			ProbeDelay:         50 * time.Millisecond,
-			HostDelay:          20 * time.Millisecond,
-			MaxConcurrentHosts: 20,
-			PhaseTimeout:       10 * time.Minute,
+			ProbeDelay:         defaultPipelineProbeDelayMs * time.Millisecond,
+			HostDelay:          defaultPipelineHostDelayMs * time.Millisecond,
+			MaxConcurrentHosts: defaultPipelineMaxConcurrentHosts,
+			PhaseTimeout:       defaultPipelinePhaseTimeoutMin * time.Minute,
 			Profile:            "normal",
 		},
 		PortScan: PipelinePortScanConfig{
 			Intensity:      "off",
 			BannerGrab:     true,
-			ConnectTimeout: 2 * time.Second,
+			ConnectTimeout: defaultBannerTimeoutSec * time.Second,
 		},
 		SNMPCollection: PipelineSNMPConfig{
 			Enabled: true,
@@ -1076,12 +1340,12 @@ func defaultPipelineConfig() PipelineConfig {
 				LLDP:        true,
 				VLAN:        false,
 			},
-			WalkTimeout: 30 * time.Second, MaxOIDsPerRequest: 10,
+			WalkTimeout: defaultSNMPWalkTimeoutSec * time.Second, MaxOIDsPerRequest: defaultSNMPMaxOIDsPerRequest,
 		},
 		Persistence: PipelinePersistenceConfig{
 			StoreHistory:       true,
-			StalenessThreshold: 24 * time.Hour,
-			PurgeAfter:         30 * 24 * time.Hour,
+			StalenessThreshold: defaultStalenessThresholdHours * time.Hour,
+			PurgeAfter:         defaultPurgeAfterDays * 24 * time.Hour,
 		},
 	}
 }
@@ -1137,7 +1401,7 @@ func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, 
 	migrated := false
 	if partial.Version < ConfigVersion && migrator != nil {
 		// Create backup before migration
-		backupMgr := NewBackupManager(path, "", 10)
+		backupMgr := NewBackupManager(path, "", defaultBackupMaxCount)
 		if _, backupErr := backupMgr.CreateBackup(); backupErr != nil {
 			logging.GetLogger().Warn("Failed to create backup before migration", "error", backupErr)
 		}
@@ -1257,21 +1521,28 @@ func (c *Config) validateIPConfig() []string {
 	if c.IP.Mode != ipModeDHCP && c.IP.Mode != ipModeStatic {
 		errs = append(errs, fmt.Sprintf("ip.mode must be 'dhcp' or 'static', got '%s'", c.IP.Mode))
 	}
-	if c.IP.Mode == ipModeStatic {
-		// Fixes #896: Check for nil Static config before accessing fields
-		if c.IP.Static == nil {
-			errs = append(errs, "ip.static is required when ip.mode is 'static'")
-		} else {
-			if c.IP.Static.Address == "" {
-				errs = append(errs, "ip.static.address is required when ip.mode is 'static'")
-			}
-			if c.IP.Static.Netmask == "" {
-				errs = append(errs, "ip.static.netmask is required when ip.mode is 'static'")
-			}
-			if c.IP.Static.Gateway == "" {
-				errs = append(errs, "ip.static.gateway is required when ip.mode is 'static'")
-			}
-		}
+	if c.IP.Mode != ipModeStatic {
+		return errs
+	}
+	// Fixes #896: Check for nil Static config before accessing fields
+	if c.IP.Static == nil {
+		return append(errs, "ip.static is required when ip.mode is 'static'")
+	}
+	errs = append(errs, c.validateStaticIPFields()...)
+	return errs
+}
+
+// validateStaticIPFields validates individual static IP configuration fields.
+func (c *Config) validateStaticIPFields() []string {
+	var errs []string
+	if c.IP.Static.Address == "" {
+		errs = append(errs, "ip.static.address is required when ip.mode is 'static'")
+	}
+	if c.IP.Static.Netmask == "" {
+		errs = append(errs, "ip.static.netmask is required when ip.mode is 'static'")
+	}
+	if c.IP.Static.Gateway == "" {
+		errs = append(errs, "ip.static.gateway is required when ip.mode is 'static'")
 	}
 	return errs
 }

@@ -1,4 +1,3 @@
-// Package survey provides WiFi site survey functionality.
 package survey
 
 import (
@@ -36,6 +35,21 @@ const (
 	StatusInProgress Status = "in_progress"
 	StatusPaused     Status = "paused"
 	StatusCompleted  Status = "completed"
+)
+
+// Test duration constants for throughput surveys.
+const (
+	// defaultTestDurationSec is the default duration for throughput tests in seconds.
+	defaultTestDurationSec = 3
+
+	// maxTestDurationSec is the maximum allowed duration for throughput tests in seconds.
+	maxTestDurationSec = 60
+)
+
+// WiFi frequency band constants.
+const (
+	// wifi6eMinFrequencyMHz is the minimum frequency in MHz for WiFi 6E band (6 GHz).
+	wifi6eMinFrequencyMHz = 5900
 )
 
 // FloorPlan contains floor plan image and metadata.
@@ -122,9 +136,9 @@ func (p *PassiveSample) CalculateAggregations() {
 		switch {
 		case network.Frequency >= 2400 && network.Frequency < 2500:
 			p.APCount2_4++
-		case network.Frequency >= 5000 && network.Frequency < 5900:
+		case network.Frequency >= 5000 && network.Frequency < wifi6eMinFrequencyMHz:
 			p.APCount5++
-		case network.Frequency >= 5900:
+		case network.Frequency >= wifi6eMinFrequencyMHz:
 			p.APCount6++
 		}
 
@@ -478,10 +492,10 @@ func (m *Manager) UpdateSurveySettings(
 
 	// Validate test duration
 	if testDuration < 1 {
-		testDuration = 3 // Default
+		testDuration = defaultTestDurationSec
 	}
-	if testDuration > 60 {
-		testDuration = 60 // Max
+	if testDuration > maxTestDurationSec {
+		testDuration = maxTestDurationSec
 	}
 	survey.TestDuration = testDuration
 	survey.IperfServer = iperfServer

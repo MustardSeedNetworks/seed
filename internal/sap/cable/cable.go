@@ -1,4 +1,3 @@
-// Package cable provides TDR cable testing functionality.
 package cable
 
 import (
@@ -30,6 +29,22 @@ const (
 	// Wiring568B is the T568B standard, most common in commercial installations.
 	Wiring568B WiringStandard = "568B"
 )
+
+// RJ45 pin numbers for Ethernet connectors (8P8C modular connector).
+const (
+	Pin1 = 1
+	Pin2 = 2
+	Pin3 = 3
+	Pin4 = 4
+	Pin5 = 5
+	Pin6 = 6
+	Pin7 = 7
+	Pin8 = 8
+)
+
+// MetersToFeetFactor is the conversion factor from meters to feet.
+// 1 meter = 3.28084 feet (exact definition: 1 foot = 0.3048 meters).
+const MetersToFeetFactor = 3.28084
 
 // PairResult contains TDR test results for a single twisted pair.
 type PairResult struct {
@@ -125,14 +140,14 @@ func (t *Tester) GetLastResult() *TestResult {
 // T568A is primarily used in residential installations and crossover cables.
 func Get568APinout() []WirePinout {
 	return []WirePinout{
-		{Pin: 1, Color: "White/Green", Pair: "3-6"},
-		{Pin: 2, Color: "Green", Pair: "3-6"},
-		{Pin: 3, Color: "White/Orange", Pair: "1-2"},
-		{Pin: 4, Color: "Blue", Pair: "4-5"},
-		{Pin: 5, Color: "White/Blue", Pair: "4-5"},
-		{Pin: 6, Color: "Orange", Pair: "1-2"},
-		{Pin: 7, Color: "White/Brown", Pair: "7-8"},
-		{Pin: 8, Color: "Brown", Pair: "7-8"},
+		{Pin: Pin1, Color: "White/Green", Pair: "3-6"},
+		{Pin: Pin2, Color: "Green", Pair: "3-6"},
+		{Pin: Pin3, Color: "White/Orange", Pair: "1-2"},
+		{Pin: Pin4, Color: "Blue", Pair: "4-5"},
+		{Pin: Pin5, Color: "White/Blue", Pair: "4-5"},
+		{Pin: Pin6, Color: "Orange", Pair: "1-2"},
+		{Pin: Pin7, Color: "White/Brown", Pair: "7-8"},
+		{Pin: Pin8, Color: "Brown", Pair: "7-8"},
 	}
 }
 
@@ -140,14 +155,14 @@ func Get568APinout() []WirePinout {
 // T568B is the most common standard in commercial installations.
 func Get568BPinout() []WirePinout {
 	return []WirePinout{
-		{Pin: 1, Color: "White/Orange", Pair: "1-2"},
-		{Pin: 2, Color: "Orange", Pair: "1-2"},
-		{Pin: 3, Color: "White/Green", Pair: "3-6"},
-		{Pin: 4, Color: "Blue", Pair: "4-5"},
-		{Pin: 5, Color: "White/Blue", Pair: "4-5"},
-		{Pin: 6, Color: "Green", Pair: "3-6"},
-		{Pin: 7, Color: "White/Brown", Pair: "7-8"},
-		{Pin: 8, Color: "Brown", Pair: "7-8"},
+		{Pin: Pin1, Color: "White/Orange", Pair: "1-2"},
+		{Pin: Pin2, Color: "Orange", Pair: "1-2"},
+		{Pin: Pin3, Color: "White/Green", Pair: "3-6"},
+		{Pin: Pin4, Color: "Blue", Pair: "4-5"},
+		{Pin: Pin5, Color: "White/Blue", Pair: "4-5"},
+		{Pin: Pin6, Color: "Green", Pair: "3-6"},
+		{Pin: Pin7, Color: "White/Brown", Pair: "7-8"},
+		{Pin: Pin8, Color: "Brown", Pair: "7-8"},
 	}
 }
 
@@ -165,7 +180,7 @@ func GetPinout(std WiringStandard) []WirePinout {
 
 // MetersToFeet converts meters to feet.
 func MetersToFeet(m float64) float64 {
-	return m * 3.28084
+	return m * MetersToFeetFactor
 }
 
 // GetPairInfo returns pair identification info for Ethernet.

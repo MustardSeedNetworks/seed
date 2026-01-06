@@ -1,4 +1,3 @@
-// Package survey provides WiFi site survey functionality.
 package survey
 
 import (
@@ -27,6 +26,20 @@ const (
 	MethodNearest InterpolationMethod = "nearest"
 )
 
+// Interpolation parameter constants.
+const (
+	// defaultIDWPower is the default power parameter for Inverse Distance Weighting.
+	// A value of 2.0 provides a good balance between local and global influence.
+	defaultIDWPower = 2.0
+
+	// distanceEpsilon is the minimum distance threshold to consider a point as coincident with a sample.
+	// Points closer than this distance return the exact sample value to avoid division issues.
+	distanceEpsilon = 0.0001
+
+	// cellCenterDivisor divides cell size to find the center point for grid interpolation.
+	cellCenterDivisor = 2
+)
+
 // Interpolator performs spatial interpolation of sample values.
 type Interpolator struct {
 	Samples  []SampleValue
@@ -41,7 +54,7 @@ func NewInterpolator(samples []SampleValue) *Interpolator {
 	return &Interpolator{
 		Samples:  samples,
 		Method:   MethodIDW,
-		Power:    2.0,
+		Power:    defaultIDWPower,
 		MaxDist:  0,
 		MinCount: 1,
 	}
@@ -73,7 +86,7 @@ func (i *Interpolator) inverseDistanceWeighting(x, y float64) float64 {
 		dist := distance(point, sample.Point)
 
 		// If we're exactly on a sample point, return its value
-		if dist < 0.0001 {
+		if dist < distanceEpsilon {
 			return sample.Value
 		}
 
@@ -134,8 +147,8 @@ func (i *Interpolator) InterpolateGrid(width, height, cellSize int) [][]float64 
 		grid[row] = make([]float64, cols)
 		for col := range cols {
 			// Calculate center of cell
-			x := float64(col*cellSize) + float64(cellSize)/2
-			y := float64(row*cellSize) + float64(cellSize)/2
+			x := float64(col*cellSize) + float64(cellSize)/cellCenterDivisor
+			y := float64(row*cellSize) + float64(cellSize)/cellCenterDivisor
 			grid[row][col] = i.Interpolate(x, y)
 		}
 	}

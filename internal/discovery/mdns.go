@@ -1,10 +1,10 @@
-// Package discovery implements multi-protocol network device discovery.
+package discovery
+
 // This file implements mDNS/Bonjour name resolution for Apple/Linux device discovery.
 //
 // mDNS (Multicast DNS) allows devices to advertise their hostname on the local network
 // using the .local domain. It uses UDP multicast to 224.0.0.251:5353 (IPv4) or
 // ff02::fb:5353 (IPv6).
-package discovery
 
 import (
 	"context"
@@ -27,6 +27,10 @@ const (
 	mdnsIPv6Addr   = "ff02::fb"
 	mdnsTimeout    = 2 * time.Second
 	mdnsMaxWorkers = 10
+
+	// Buffer sizes for mDNS packet processing.
+	mdnsPacketBufferSize = 4096  // Buffer for reading mDNS packets
+	mdnsReadBufferSize   = 65536 // Socket read buffer size
 )
 
 // MDNSResolver performs mDNS name resolution.
@@ -175,7 +179,7 @@ func (r *MDNSResolver) sendMDNSQuery(
 	}
 
 	// Read response
-	buf := make([]byte, 4096)
+	buf := make([]byte, mdnsPacketBufferSize)
 	n, err := conn.Read(buf)
 	if err != nil {
 		return "", fmt.Errorf("read response: %w", err)
@@ -213,7 +217,7 @@ func (r *MDNSResolver) sendMDNSQueryForIP(ctx context.Context, query []byte) (st
 	}
 
 	// Read responses (devices respond with unicast)
-	buf := make([]byte, 4096)
+	buf := make([]byte, mdnsPacketBufferSize)
 	n, _, err := conn.ReadFromUDP(buf)
 	if err != nil {
 		return "", fmt.Errorf("read response: %w", err)
@@ -464,11 +468,11 @@ func (l *MDNSListener) listen() {
 	defer func() { _ = conn.Close() }()
 
 	// Set read buffer
-	_ = conn.SetReadBuffer(65536)
+	_ = conn.SetReadBuffer(mdnsReadBufferSize)
 
 	logging.GetLogger().Info("mDNS listener started", "interface", l.interfaceName)
 
-	buf := make([]byte, 4096)
+	buf := make([]byte, mdnsPacketBufferSize)
 	for {
 		select {
 		case <-l.stopCh:
@@ -504,37 +508,66 @@ func (l *MDNSListener) processPacket(data []byte, remoteAddr *net.UDPAddr) {
 
 	ip := remoteAddr.IP.String()
 
-	// Look for A records to get hostname->IP mappings
+	// Process all answers for name mappings
 	for i := range msg.Answers {
-		if msg.Answers[i].Header.Type == dnsmessage.TypeA {
-			name := strings.TrimSuffix(msg.Answers[i].Header.Name.String(), ".")
-			if strings.HasSuffix(name, ".local") {
-				if a, ok := msg.Answers[i].Body.(*dnsmessage.AResource); ok {
-					answerIP := net.IP(a.A[:]).String()
-					l.mu.Lock()
-					l.names[answerIP] = name
-					l.mu.Unlock()
-					logging.GetLogger().Debug("mDNS: captured name", "ip", answerIP, "name", name)
-				}
-			}
-		}
+		l.processAnswer(&msg.Answers[i], ip)
+	}
+}
+
+// processAnswer handles a single DNS answer record.
+func (l *MDNSListener) processAnswer(answer *dnsmessage.Resource, remoteIP string) {
+	if answer.Header.Type == dnsmessage.TypeA {
+		l.processARecord(answer)
+		return
+	}
+	if answer.Header.Type == dnsmessage.TypePTR {
+		l.processPTRRecord(answer, remoteIP)
+	}
+}
+
+// processARecord extracts hostname->IP mappings from A records.
+func (l *MDNSListener) processARecord(answer *dnsmessage.Resource) {
+	name := strings.TrimSuffix(answer.Header.Name.String(), ".")
+	if !strings.HasSuffix(name, ".local") {
+		return
 	}
 
-	// Also check for PTR records (service announcements often include the device name)
-	for i := range msg.Answers {
-		if msg.Answers[i].Header.Type == dnsmessage.TypePTR {
-			if ptr, ok := msg.Answers[i].Body.(*dnsmessage.PTRResource); ok {
-				name := strings.TrimSuffix(ptr.PTR.String(), ".")
-				if strings.HasSuffix(name, ".local") {
-					l.mu.Lock()
-					if _, exists := l.names[ip]; !exists {
-						l.names[ip] = name
-					}
-					l.mu.Unlock()
-				}
-			}
+	a, ok := answer.Body.(*dnsmessage.AResource)
+	if !ok {
+		return
+	}
+
+	answerIP := net.IP(a.A[:]).String()
+	l.storeName(answerIP, name, false)
+	logging.GetLogger().Debug("mDNS: captured name", "ip", answerIP, "name", name)
+}
+
+// processPTRRecord extracts name mappings from PTR records.
+func (l *MDNSListener) processPTRRecord(answer *dnsmessage.Resource, remoteIP string) {
+	ptr, ok := answer.Body.(*dnsmessage.PTRResource)
+	if !ok {
+		return
+	}
+
+	name := strings.TrimSuffix(ptr.PTR.String(), ".")
+	if !strings.HasSuffix(name, ".local") {
+		return
+	}
+
+	l.storeName(remoteIP, name, true)
+}
+
+// storeName saves a name mapping. If onlyIfAbsent is true, it only stores if no mapping exists.
+func (l *MDNSListener) storeName(ip, name string, onlyIfAbsent bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if onlyIfAbsent {
+		if _, exists := l.names[ip]; exists {
+			return
 		}
 	}
+	l.names[ip] = name
 }
 
 // GetNames returns all captured mDNS names.

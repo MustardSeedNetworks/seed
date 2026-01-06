@@ -24,6 +24,15 @@ const (
 	MaxDNSTimeout = 30 * time.Second
 )
 
+// Default threshold values for DNS response times.
+const (
+	DefaultWarningThresholdMs  = 100 // milliseconds - response times above this trigger warning
+	DefaultCriticalThresholdMs = 500 // milliseconds - response times above this trigger critical
+)
+
+// DefaultDialerTimeout is the default timeout for DNS dialer connections.
+const DefaultDialerTimeout = 5 * time.Second
+
 // ValidateDNSTimeout validates that a DNS timeout is within acceptable bounds.
 func ValidateDNSTimeout(timeout time.Duration) error {
 	if timeout < MinDNSTimeout || timeout > MaxDNSTimeout {
@@ -83,8 +92,8 @@ type Thresholds struct {
 // DefaultThresholds returns reasonable default thresholds for DNS.
 func DefaultThresholds() Thresholds {
 	return Thresholds{
-		Warning:  100 * time.Millisecond,
-		Critical: 500 * time.Millisecond,
+		Warning:  DefaultWarningThresholdMs * time.Millisecond,
+		Critical: DefaultCriticalThresholdMs * time.Millisecond,
 	}
 }
 
@@ -118,7 +127,7 @@ func NewTester(server, testHostname string, thresholds Thresholds) *Tester {
 			PreferGo: true,
 			Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
 				d := net.Dialer{
-					Timeout: 5 * time.Second,
+					Timeout: DefaultDialerTimeout,
 				}
 				// Use the specified DNS server
 				return d.DialContext(ctx, "udp", server+":53")
@@ -152,7 +161,7 @@ func (t *Tester) SetServer(server string) {
 			PreferGo: true,
 			Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
 				d := net.Dialer{
-					Timeout: 5 * time.Second,
+					Timeout: DefaultDialerTimeout,
 				}
 				return d.DialContext(ctx, "udp", serverAddr)
 			},

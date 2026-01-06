@@ -1,4 +1,3 @@
-// Package database provides data retention and cleanup functionality.
 package database
 
 import (
@@ -6,6 +5,30 @@ import (
 	"errors"
 	"fmt"
 	"time"
+)
+
+// Data retention period defaults (in days).
+const (
+	// defaultMetricsDays is the default retention period for metric data (3 months).
+	defaultMetricsDays = 90
+
+	// defaultAlertsDays is the default retention period for alerts (1 year).
+	defaultAlertsDays = 365
+
+	// defaultInactiveDeviceDays is the default period before removing inactive devices (1 month).
+	defaultInactiveDeviceDays = 30
+
+	// defaultAuditLogDays is the default retention period for audit logs (1 year).
+	defaultAuditLogDays = 365
+
+	// defaultSpeedTestDays is the default retention period for speed test results (3 months).
+	defaultSpeedTestDays = 90
+
+	// defaultDNSResultDays is the default retention period for DNS test results (1 month).
+	defaultDNSResultDays = 30
+
+	// defaultGatewayResultDays is the default retention period for gateway results (1 month).
+	defaultGatewayResultDays = 30
 )
 
 // SQL query fragment constants.
@@ -49,13 +72,13 @@ type RetentionPolicy struct {
 // DefaultRetentionPolicy returns the default retention policy.
 func DefaultRetentionPolicy() RetentionPolicy {
 	return RetentionPolicy{
-		MetricsDays:        90,  // 3 months
-		AlertsDays:         365, // 1 year
-		InactiveDeviceDays: 30,  // 1 month
-		AuditLogDays:       365, // 1 year
-		SpeedTestDays:      90,  // 3 months
-		DNSResultDays:      30,  // 1 month
-		GatewayResultDays:  30,  // 1 month
+		MetricsDays:        defaultMetricsDays,
+		AlertsDays:         defaultAlertsDays,
+		InactiveDeviceDays: defaultInactiveDeviceDays,
+		AuditLogDays:       defaultAuditLogDays,
+		SpeedTestDays:      defaultSpeedTestDays,
+		DNSResultDays:      defaultDNSResultDays,
+		GatewayResultDays:  defaultGatewayResultDays,
 	}
 }
 
@@ -71,84 +94,81 @@ type CleanupResult struct {
 	Duration              time.Duration
 }
 
+// cleanupFunc is a function type for cleanup operations that delete records older than a cutoff time.
+type cleanupFunc func(ctx context.Context, cutoff time.Time) (int64, error)
+
+// cleanupTask represents a single cleanup operation with its configuration.
+type cleanupTask struct {
+	retentionDays int
+	deleteFunc    cleanupFunc
+	name          string
+}
+
+// runCleanupTask executes a single cleanup task if retention days > 0.
+func (db *DB) runCleanupTask(ctx context.Context, task cleanupTask, now time.Time) (int64, error) {
+	if task.retentionDays <= 0 {
+		return 0, nil
+	}
+
+	cutoff := now.AddDate(0, 0, -task.retentionDays)
+	deleted, err := task.deleteFunc(ctx, cutoff)
+	if err != nil {
+		return 0, fmt.Errorf("failed to cleanup %s: %w", task.name, err)
+	}
+
+	return deleted, nil
+}
+
 // RunCleanup executes data cleanup based on the retention policy.
 func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupResult, error) {
 	start := time.Now()
 	result := &CleanupResult{}
 	now := time.Now().UTC()
 
-	// Cleanup metrics
-	if policy.MetricsDays > 0 {
-		cutoff := now.AddDate(0, 0, -policy.MetricsDays)
-		deleted, err := db.Metrics().DeleteOlderThan(ctx, cutoff)
-		if err != nil {
-			return nil, fmt.Errorf("failed to cleanup metrics: %w", err)
-		}
-		result.MetricsDeleted = deleted
+	tasks := []cleanupTask{
+		{policy.MetricsDays, db.cleanupMetrics, "metrics"},
+		{policy.AlertsDays, db.cleanupAlerts, "alerts"},
+		{policy.InactiveDeviceDays, db.cleanupDevices, "devices"},
+		{policy.AuditLogDays, db.deleteAuditLogsOlderThan, "audit logs"},
+		{policy.SpeedTestDays, db.deleteSpeedTestsOlderThan, "speed tests"},
+		{policy.DNSResultDays, db.deleteDNSResultsOlderThan, "DNS results"},
+		{policy.GatewayResultDays, db.deleteGatewayResultsOlderThan, "gateway results"},
 	}
 
-	// Cleanup alerts
-	if policy.AlertsDays > 0 {
-		cutoff := now.AddDate(0, 0, -policy.AlertsDays)
-		deleted, err := db.Alerts().DeleteOlderThan(ctx, cutoff)
+	results := make([]int64, len(tasks))
+	for i, task := range tasks {
+		deleted, err := db.runCleanupTask(ctx, task, now)
 		if err != nil {
-			return nil, fmt.Errorf("failed to cleanup alerts: %w", err)
+			return nil, err
 		}
-		result.AlertsDeleted = deleted
+		results[i] = deleted
 	}
 
-	// Cleanup inactive devices
-	if policy.InactiveDeviceDays > 0 {
-		cutoff := now.AddDate(0, 0, -policy.InactiveDeviceDays)
-		deleted, err := db.Devices().DeleteInactive(ctx, cutoff)
-		if err != nil {
-			return nil, fmt.Errorf("failed to cleanup devices: %w", err)
-		}
-		result.DevicesDeleted = deleted
-	}
-
-	// Cleanup audit logs
-	if policy.AuditLogDays > 0 {
-		cutoff := now.AddDate(0, 0, -policy.AuditLogDays)
-		deleted, err := db.deleteAuditLogsOlderThan(ctx, cutoff)
-		if err != nil {
-			return nil, fmt.Errorf("failed to cleanup audit logs: %w", err)
-		}
-		result.AuditLogsDeleted = deleted
-	}
-
-	// Cleanup speed tests
-	if policy.SpeedTestDays > 0 {
-		cutoff := now.AddDate(0, 0, -policy.SpeedTestDays)
-		deleted, err := db.deleteSpeedTestsOlderThan(ctx, cutoff)
-		if err != nil {
-			return nil, fmt.Errorf("failed to cleanup speed tests: %w", err)
-		}
-		result.SpeedTestsDeleted = deleted
-	}
-
-	// Cleanup DNS results
-	if policy.DNSResultDays > 0 {
-		cutoff := now.AddDate(0, 0, -policy.DNSResultDays)
-		deleted, err := db.deleteDNSResultsOlderThan(ctx, cutoff)
-		if err != nil {
-			return nil, fmt.Errorf("failed to cleanup DNS results: %w", err)
-		}
-		result.DNSResultsDeleted = deleted
-	}
-
-	// Cleanup gateway results
-	if policy.GatewayResultDays > 0 {
-		cutoff := now.AddDate(0, 0, -policy.GatewayResultDays)
-		deleted, err := db.deleteGatewayResultsOlderThan(ctx, cutoff)
-		if err != nil {
-			return nil, fmt.Errorf("failed to cleanup gateway results: %w", err)
-		}
-		result.GatewayResultsDeleted = deleted
-	}
-
+	result.MetricsDeleted = results[0]
+	result.AlertsDeleted = results[1]
+	result.DevicesDeleted = results[2]
+	result.AuditLogsDeleted = results[3]
+	result.SpeedTestsDeleted = results[4]
+	result.DNSResultsDeleted = results[5]
+	result.GatewayResultsDeleted = results[6]
 	result.Duration = time.Since(start)
+
 	return result, nil
+}
+
+// cleanupMetrics wraps the Metrics().DeleteOlderThan call to match cleanupFunc signature.
+func (db *DB) cleanupMetrics(ctx context.Context, cutoff time.Time) (int64, error) {
+	return db.Metrics().DeleteOlderThan(ctx, cutoff)
+}
+
+// cleanupAlerts wraps the Alerts().DeleteOlderThan call to match cleanupFunc signature.
+func (db *DB) cleanupAlerts(ctx context.Context, cutoff time.Time) (int64, error) {
+	return db.Alerts().DeleteOlderThan(ctx, cutoff)
+}
+
+// cleanupDevices wraps the Devices().DeleteInactive call to match cleanupFunc signature.
+func (db *DB) cleanupDevices(ctx context.Context, cutoff time.Time) (int64, error) {
+	return db.Devices().DeleteInactive(ctx, cutoff)
 }
 
 // Vacuum optimizes the database file by reclaiming unused space.

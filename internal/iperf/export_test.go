@@ -1,6 +1,6 @@
-// Package iperf exports internal items for testing.
-// This file is only compiled during testing.
 package iperf
+
+// This file is only compiled during testing.
 
 // IperfBinaryPath returns the current cached iperf binary path for testing.
 func IperfBinaryPath() string {

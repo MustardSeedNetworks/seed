@@ -1,4 +1,3 @@
-// Package paths exports internal functions for testing.
 package paths
 
 // ExportIsSystemdService exports isSystemdService for testing.

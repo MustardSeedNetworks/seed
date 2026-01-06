@@ -1,4 +1,3 @@
-// Package database exports internal functions for testing.
 package database
 
 import (

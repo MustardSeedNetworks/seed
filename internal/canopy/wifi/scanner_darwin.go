@@ -20,13 +20,20 @@ const (
 	securityWPA3 = "WPA3"
 )
 
+// Scanner constants.
+const (
+	scanTimeoutSeconds        = 30  // Timeout for WiFi scanning operations
+	airportParseMinMatchCount = 7   // Minimum regex match count for valid airport output
+	defaultNoiseFloorDBm      = -95 // Typical noise floor estimate in dBm
+)
+
 // scanPlatform performs a WiFi scan on macOS using the airport utility.
 func scanPlatform(_ string) ([]*ScannedNetwork, error) {
 	// Use airport utility for scanning
 	// /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport
 	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), scanTimeoutSeconds*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, airportPath, "-s")
 	var out bytes.Buffer
@@ -67,7 +74,7 @@ func parseAirportLine(line string) *ScannedNetwork {
 	)
 	matches := re.FindStringSubmatch(line)
 
-	if len(matches) < 7 {
+	if len(matches) < airportParseMinMatchCount {
 		return nil
 	}
 
@@ -90,16 +97,16 @@ func parseAirportLine(line string) *ScannedNetwork {
 
 	// Determine channel width and HT mode from HT flag
 	// Y = 802.11n capable (40MHz), N = legacy (20MHz)
-	channelWidth := 20
+	channelWidth := ChannelWidth20MHz
 	htMode := "HT20"
 	if htFlag == "Y" {
-		channelWidth = 40
+		channelWidth = ChannelWidth40MHz
 		htMode = "HT40"
 	}
 
 	// Estimate noise floor (typical range: -90 to -100 dBm)
 	// In practice, this should be obtained from 'airport -I' but we'll use a conservative estimate
-	noiseFloor := -95
+	noiseFloor := defaultNoiseFloorDBm
 
 	// Calculate SNR (Signal-to-Noise Ratio)
 	snr := signal - noiseFloor

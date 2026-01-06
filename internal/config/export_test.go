@@ -1,4 +1,3 @@
-// Package config exports internal functions for testing.
 package config
 
 // EncryptedPrefix exports encryptedPrefix for testing.

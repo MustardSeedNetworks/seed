@@ -1,4 +1,3 @@
-// Package auth_test tests the CSRF manager.
 package auth_test
 
 import (
