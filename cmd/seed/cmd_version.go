@@ -9,7 +9,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/version"
 )
 
-func initVersionCmd() {
+func initVersionCmd(state *cliState) {
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
@@ -18,5 +18,5 @@ func initVersionCmd() {
 			fmt.Fprintf(os.Stdout, "The Seed %s\n", version.GetVersion())
 		},
 	}
-	cli.rootCmd.AddCommand(versionCmd)
+	state.rootCmd.AddCommand(versionCmd)
 }

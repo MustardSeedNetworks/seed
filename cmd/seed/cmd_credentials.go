@@ -13,7 +13,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-func initCredentialsCmd() {
+func initCredentialsCmd(state *cliState) {
 	credentialsCmd := &cobra.Command{
 		Use:   "credentials",
 		Short: "Check setup status",
@@ -29,15 +29,17 @@ The setup wizard allows you to:
   - Complete initial configuration
 
 Use the --json flag to output the status in machine-readable JSON format.`,
-		Run: runCredentials,
+		Run: func(cmd *cobra.Command, args []string) {
+			runCredentials(cmd, args, state)
+		},
 	}
 	credentialsCmd.Flags().Bool("json", false, "output status as JSON")
-	cli.rootCmd.AddCommand(credentialsCmd)
+	state.rootCmd.AddCommand(credentialsCmd)
 }
 
-func runCredentials(cmd *cobra.Command, _ []string) {
+func runCredentials(cmd *cobra.Command, _ []string, state *cliState) {
 	// Resolve config path using paths package
-	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
 	// Load or create config
 	cfg, result, err := config.EnsureConfig(configPath, auth.IsDefaultPasswordHash)

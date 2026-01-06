@@ -16,7 +16,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-func initUninstallCmd() {
+func initUninstallCmd(state *cliState) {
 	uninstallCmd := &cobra.Command{
 		Use:   "uninstall",
 		Short: "Uninstall Seed",
@@ -24,17 +24,20 @@ func initUninstallCmd() {
 
 By default, configuration and data files are preserved.
 Use --purge to remove all files including configuration.`,
-		Run: runUninstall,
+		Run: func(cmd *cobra.Command, args []string) {
+			runUninstall(cmd, args, state)
+		},
 	}
 	uninstallCmd.Flags().Bool("purge", false, "Remove all data and configuration")
 	uninstallCmd.Flags().BoolP("force", "f", false, "Skip confirmation prompt")
 	uninstallCmd.Flags().Bool("system", false, "Uninstall system service")
 	uninstallCmd.Flags().Bool("user", false, "Uninstall user service")
-	cli.rootCmd.AddCommand(uninstallCmd)
+	state.rootCmd.AddCommand(uninstallCmd)
 }
 
 //nolint:gocyclo // Command handler complexity is acceptable
-func runUninstall(cmd *cobra.Command, _ []string) {
+//nolint:gocognit // CLI uninstall workflow requires sequential steps
+func runUninstall(cmd *cobra.Command, _ []string, _ *cliState) {
 	if runtime.GOOS != "linux" {
 		fmt.Fprintf(os.Stderr, "Error: uninstall command is only supported on Linux\n")
 		os.Exit(1)

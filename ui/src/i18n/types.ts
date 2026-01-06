@@ -82,6 +82,7 @@ export type SurveyKeys = NestedKeys<SurveyTranslations>;
  */
 declare module "i18next" {
   interface CustomTypeOptions {
+    // biome-ignore lint/style/useNamingConvention: i18next API
     defaultNS: "common";
     resources: Translations;
   }

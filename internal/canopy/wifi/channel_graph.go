@@ -1,4 +1,3 @@
-// Package wifi provides wireless network information functionality.
 package wifi
 
 import (

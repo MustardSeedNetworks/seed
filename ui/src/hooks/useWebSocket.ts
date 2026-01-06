@@ -1,3 +1,4 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Complex component
 /**
  * WebSocket Connection Hook
  *
@@ -42,30 +43,30 @@ export type ConnectionStatus =
 
 /** WebSocket close code categories for better error handling (fixes #676) */
 enum CloseCodeCategory {
-  Normal = "normal", // 1000-1001: Normal closure
-  ProtocolError = "protocol_error", // 1002-1003: Protocol errors
-  InvalidData = "invalid_data", // 1007-1008: Invalid data
-  PolicyViolation = "policy_violation", // 1008-1009: Policy violations
-  TooLarge = "too_large", // 1009: Message too large
-  ClientError = "client_error", // 1011-1014: Client-side errors
-  ServerError = "server_error", // 1011, 1015: Server-side errors
-  Abnormal = "abnormal", // 1006: Abnormal closure (connection lost)
-  Unknown = "unknown", // Any other code
+  NORMAL = "normal", // 1000-1001: Normal closure
+  PROTOCOL_ERROR = "protocol_error", // 1002-1003: Protocol errors
+  INVALID_DATA = "invalid_data", // 1007-1008: Invalid data
+  POLICY_VIOLATION = "policy_violation", // 1008-1009: Policy violations
+  TOO_LARGE = "too_large", // 1009: Message too large
+  CLIENT_ERROR = "client_error", // 1011-1014: Client-side errors
+  SERVER_ERROR = "server_error", // 1011, 1015: Server-side errors
+  ABNORMAL = "abnormal", // 1006: Abnormal closure (connection lost)
+  UNKNOWN = "unknown", // Any other code
 }
 
 /**
  * Categorize WebSocket close codes for better error handling and recovery strategies
  */
 function categorizeCloseCode(code: number): CloseCodeCategory {
-  if (code === 1000 || code === 1001) return CloseCodeCategory.Normal;
-  if (code === 1002 || code === 1003) return CloseCodeCategory.ProtocolError;
-  if (code === 1007 || code === 1008) return CloseCodeCategory.InvalidData;
-  if (code === 1008 || code === 1009) return CloseCodeCategory.PolicyViolation;
-  if (code === 1009) return CloseCodeCategory.TooLarge;
-  if (code >= 1011 && code <= 1014) return CloseCodeCategory.ClientError;
-  if (code === 1011 || code === 1015) return CloseCodeCategory.ServerError;
-  if (code === 1006) return CloseCodeCategory.Abnormal;
-  return CloseCodeCategory.Unknown;
+  if (code === 1000 || code === 1001) return CloseCodeCategory.NORMAL;
+  if (code === 1002 || code === 1003) return CloseCodeCategory.PROTOCOL_ERROR;
+  if (code === 1007 || code === 1008) return CloseCodeCategory.INVALID_DATA;
+  if (code === 1008 || code === 1009) return CloseCodeCategory.POLICY_VIOLATION;
+  if (code === 1009) return CloseCodeCategory.TOO_LARGE;
+  if (code >= 1011 && code <= 1014) return CloseCodeCategory.CLIENT_ERROR;
+  if (code === 1011 || code === 1015) return CloseCodeCategory.SERVER_ERROR;
+  if (code === 1006) return CloseCodeCategory.ABNORMAL;
+  return CloseCodeCategory.UNKNOWN;
 }
 
 /**
@@ -73,19 +74,19 @@ function categorizeCloseCode(code: number): CloseCodeCategory {
  */
 function shouldRetryForCategory(category: CloseCodeCategory): boolean {
   switch (category) {
-    case CloseCodeCategory.Normal:
+    case CloseCodeCategory.NORMAL:
       return false; // Normal closure - no retry needed
-    case CloseCodeCategory.Abnormal:
-    case CloseCodeCategory.ServerError:
+    case CloseCodeCategory.ABNORMAL:
+    case CloseCodeCategory.SERVER_ERROR:
       return true; // Network issues or server problems - retry
-    case CloseCodeCategory.ProtocolError:
-    case CloseCodeCategory.InvalidData:
-    case CloseCodeCategory.PolicyViolation:
-    case CloseCodeCategory.ClientError:
+    case CloseCodeCategory.PROTOCOL_ERROR:
+    case CloseCodeCategory.INVALID_DATA:
+    case CloseCodeCategory.POLICY_VIOLATION:
+    case CloseCodeCategory.CLIENT_ERROR:
       return false; // Client-side issues - retrying won't help
-    case CloseCodeCategory.TooLarge:
+    case CloseCodeCategory.TOO_LARGE:
       return false; // Message too large - client issue
-    case CloseCodeCategory.Unknown:
+    case CloseCodeCategory.UNKNOWN:
       return true; // Unknown issue - try to reconnect
     default:
       return true; // Default to retry for safety
@@ -281,7 +282,7 @@ export function useWebSocket({
 
         // Exponential backoff with jitter, capped to keep retries happening after long outages.
         // For server errors, use more aggressive backoff
-        const isServerError = category === CloseCodeCategory.ServerError;
+        const isServerError = category === CloseCodeCategory.SERVER_ERROR;
         const maxDelayMs = isServerError ? 60000 : 30000; // 60s for server errors, 30s otherwise
         const baseDelayMs = reconnectInterval * 2 ** (cappedAttempt - 1);
         const delayMs = Math.min(baseDelayMs, maxDelayMs) + Math.floor(Math.random() * 500);

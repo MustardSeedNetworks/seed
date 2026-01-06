@@ -239,7 +239,8 @@ export interface DiscoveryServiceStatus {
   deviceCount: number;
   lastScan: string;
   subnet: string;
-  localIP: string; // Matches backend json:"localIP"
+  // biome-ignore lint/style/useNamingConvention: Matches backend API json:"localIP"
+  localIP: string;
   interface: string;
   activeMethods: string[];
   rescanInterval: number; // Backend sends time.Duration (nanoseconds)

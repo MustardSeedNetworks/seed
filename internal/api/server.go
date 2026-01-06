@@ -106,6 +106,7 @@ func (s *Server) getClientIP(r *http.Request) string {
 // NewServer creates a new server instance.
 //
 
+//nolint:gocognit // Server initialization requires many setup steps
 func NewServer(
 	cfg *config.Config,
 	configPath, logPath string,
@@ -315,7 +316,7 @@ func NewServer(
 	}
 
 	// Configure security: allowed origins for CORS/WebSocket
-	wsState.setAllowedOrigins(cfg.Security.AllowedOrigins)
+	getWSState().setAllowedOrigins(cfg.Security.AllowedOrigins)
 	if len(cfg.Security.AllowedOrigins) > 0 {
 		// Check for wildcard origin in production mode (fixes #715)
 		// Production mode is inferred from HTTPS being enabled

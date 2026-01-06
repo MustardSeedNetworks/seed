@@ -11,16 +11,18 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
-func initValidateCmd() {
+func initValidateCmd(state *cliState) {
 	validateCmd := &cobra.Command{
 		Use:   "validate-config",
 		Short: "Validate configuration file",
 		Long:  "Validate the configuration file against the schema without starting the server",
-		Run:   runValidate,
+		Run: func(cmd *cobra.Command, args []string) {
+			runValidate(cmd, args, state)
+		},
 	}
 	validateCmd.Flags().Bool("strict", false, "Treat warnings as errors")
 	validateCmd.Flags().Bool("json", false, "Output results as JSON")
-	cli.rootCmd.AddCommand(validateCmd)
+	state.rootCmd.AddCommand(validateCmd)
 }
 
 // ValidationResult holds the validation output.
@@ -31,7 +33,7 @@ type ValidationResult struct {
 	Path     string   `json:"path"`
 }
 
-func runValidate(cmd *cobra.Command, _ []string) {
+func runValidate(cmd *cobra.Command, _ []string, state *cliState) {
 	strict, err := cmd.Flags().GetBool("strict")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting strict flag: %v\n", err)
@@ -44,7 +46,7 @@ func runValidate(cmd *cobra.Command, _ []string) {
 	}
 
 	// Resolve config path using paths package
-	configPath := paths.ResolveConfigPath(cli.cfgFile, paths.ModeAuto)
+	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
 	result := ValidationResult{
 		Valid: true,

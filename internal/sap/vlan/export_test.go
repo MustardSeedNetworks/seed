@@ -1,4 +1,3 @@
-// Package vlan exports internal functions for testing.
 package vlan
 
 // ManagerInterfaceName returns the interface name for testing.

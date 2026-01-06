@@ -8,18 +8,18 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**"],
-    "ignore": [
-      "**/node_modules",
-      "**/dist",
-      "**/build",
-      "**/coverage",
-      "**/.next",
-      "**/package-lock.json",
-      "**/go.sum",
-      "**/*.d.ts",
-      "**/*.min.js",
-      "**/*.generated.*"
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/coverage",
+      "!**/.next",
+      "!**/package-lock.json",
+      "!**/go.sum",
+      "!**/*.d.ts",
+      "!**/*.min.js",
+      "!**/*.generated.*"
     ],
     "maxSize": 1048576
   },
@@ -63,7 +63,14 @@
           "level": "error",
           "options": {
             "strictCase": true,
-            "enumMemberCase": "CONSTANT_CASE"
+            "conventions": [
+              {
+                "selector": {
+                  "kind": "enumMember"
+                },
+                "formats": ["CONSTANT_CASE"]
+              }
+            ]
           }
         },
         "useExplicitLengthCheck": "error",

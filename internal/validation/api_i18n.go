@@ -1,4 +1,3 @@
-// Package validation provides input validation utilities with i18n support.
 package validation
 
 import (

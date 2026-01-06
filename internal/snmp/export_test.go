@@ -1,4 +1,3 @@
-// Package snmp exports internal functions for testing.
 package snmp
 
 import "github.com/gosnmp/gosnmp"

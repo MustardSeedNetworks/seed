@@ -544,6 +544,7 @@ func applyCustomTestThresholds(thresholds map[string]any, cfg *config.Config) er
 
 // applyHTTPTimingThresholds applies HTTP timing threshold updates.
 // Returns error if httpTimings key exists but has invalid type (fixes #784, G3).
+//nolint:gocognit,funlen // Threshold application requires many checks
 func applyHTTPTimingThresholds(thresholds map[string]any, cfg *config.Config) error {
 	val, exists := thresholds["httpTimings"]
 	if !exists {

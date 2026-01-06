@@ -36,10 +36,12 @@ import (
 	"sync"
 )
 
-// Sensitive data accessor functions use closure-encapsulated state to satisfy gochecknoglobals.
+// Sensitive data accessor functions use closure-encapsulated state for thread-safe singleton access.
 // getSensitivePatterns returns the compiled sensitive field patterns.
 // getSensitiveHeaders returns the sensitive header names map.
 // _ (initSensitiveCache) ensures the sensitive data cache is initialized (unused but required).
+//
+//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
 var (
 	getSensitivePatterns, getSensitiveHeaders, _ = func() (
 		func() []*regexp.Regexp,

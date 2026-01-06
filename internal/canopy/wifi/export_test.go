@@ -1,4 +1,3 @@
-// Package wifi exports internals for testing.
 package wifi
 
 // GetBand exports getBand for testing.

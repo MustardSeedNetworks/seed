@@ -17,15 +17,15 @@
  * ```
  */
 
-import type { CableData } from "../components/cards/CableCard";
+import type { CableData } from "../components/cards/cable-card";
 import type { DnsData } from "../components/cards/DnsCard";
-import type { GatewayData } from "../components/cards/GatewayCard";
-import type { LinkData } from "../components/cards/LinkCard";
-import type { DhcpData } from "../components/cards/NetworkCard";
-import type { NetworkDiscoveryData } from "../components/cards/NetworkDiscoveryCard";
+import type { GatewayData } from "../components/cards/gateway-card";
+import type { LinkData } from "../components/cards/link-card";
+import type { DhcpData } from "../components/cards/network-card";
+import type { NetworkDiscoveryData } from "../components/cards/network-discovery-card";
 import type { PublicIpData } from "../components/cards/PublicIpCard";
-import type { SwitchData, VlanData } from "../components/cards/SwitchCard";
-import type { WiFiData } from "../components/cards/WiFiCard";
+import type { SwitchData, VlanData } from "../components/cards/switch-card";
+import type { WiFiData } from "../components/cards/wifi-card";
 
 // ============================================================================
 // Link Card Mock Data
@@ -485,6 +485,7 @@ export const mockNetworkDiscoveryData = {
       deviceCount: 3,
       lastScan: new Date(Date.now() - 60000).toISOString(),
       subnet: "192.168.1.0/24",
+      // biome-ignore lint/style/useNamingConvention: Matches backend API
       localIP: "192.168.1.100",
       interface: "eth0",
     },
@@ -497,6 +498,7 @@ export const mockNetworkDiscoveryData = {
       deviceCount: 0,
       lastScan: "",
       subnet: "192.168.1.0/24",
+      // biome-ignore lint/style/useNamingConvention: Matches backend API
       localIP: "192.168.1.100",
       interface: "eth0",
     },
@@ -509,6 +511,7 @@ export const mockNetworkDiscoveryData = {
       deviceCount: 0,
       lastScan: new Date(Date.now() - 300000).toISOString(),
       subnet: "192.168.1.0/24",
+      // biome-ignore lint/style/useNamingConvention: Matches backend API
       localIP: "192.168.1.100",
       interface: "eth0",
     },

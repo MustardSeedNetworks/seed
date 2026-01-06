@@ -1,6 +1,3 @@
-// Package snmp provides SNMP query functionality for network device discovery.
-// This file implements IP-FORWARD-MIB collection for L3 routing topology.
-// Routing table information is essential for building network layer diagrams.
 package snmp
 
 import (
