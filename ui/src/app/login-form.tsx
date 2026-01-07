@@ -8,17 +8,20 @@
  * - SSO provider integration (Google, Microsoft, GitHub)
  * - Error display for authentication failures
  * - Dynamic SSO provider availability checking
+ * - Password recovery mode integration
  *
  * Features:
  * - Fetches enabled SSO providers from backend
  * - Displays SSO buttons only for enabled providers
  * - Handles SSO error messages from URL parameters
+ * - Checks for active recovery mode and shows recovery form
  * - Responsive design with consistent theming
  */
 
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { RecoveryForm } from "../components/login/recovery-form";
 import { button, cn, input, layout, radius, spacing } from "../styles/theme";
 
 // API base URL - configurable via environment variable
@@ -48,6 +51,13 @@ interface SsoProvider {
   enabled: boolean;
 }
 
+// Recovery status response
+interface RecoveryStatus {
+  active: boolean;
+  remainingTime?: number;
+  instructions?: string;
+}
+
 export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   const { t } = useTranslation("common");
   const [username, setUsername] = useState("");
@@ -56,6 +66,23 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   const [ssoError] = useState<string | null>(getAndClearSsoError);
   // Fetch SSO providers to conditionally show buttons (fixes #769)
   const [ssoProviders, setSsoProviders] = useState<SsoProvider[]>([]);
+  // Password recovery mode state
+  const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus | null>(null);
+  const [showRecoveryForm, setShowRecoveryForm] = useState(false);
+
+  // Fetch recovery status on mount
+  useEffect(() => {
+    fetch(`${API_BASE}/api/recovery/status`)
+      .then((res) => (res.ok ? res.json() : { active: false }))
+      .then((data: RecoveryStatus) => {
+        setRecoveryStatus(data);
+        // Auto-show recovery form if recovery mode is active
+        if (data.active) {
+          setShowRecoveryForm(true);
+        }
+      })
+      .catch(() => setRecoveryStatus({ active: false }));
+  }, []);
 
   // Fetch enabled SSO providers on mount (fixes #769)
   useEffect(() => {
@@ -76,6 +103,28 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
     e.preventDefault();
     await onLogin(username, password);
   };
+
+  // Handle recovery completion - reload to get fresh login state
+  const handleRecoveryComplete = () => {
+    window.location.reload();
+  };
+
+  // Handle back to login from recovery form
+  const handleBackToLogin = () => {
+    setShowRecoveryForm(false);
+  };
+
+  // Show recovery form when active
+  if (showRecoveryForm && recoveryStatus?.active) {
+    return (
+      <RecoveryForm
+        onRecoveryComplete={handleRecoveryComplete}
+        onBackToLogin={handleBackToLogin}
+        remainingTime={recoveryStatus.remainingTime}
+        tokenFilePath={recoveryStatus.instructions}
+      />
+    );
+  }
 
   return (
     <div className={cn("min-h-screen", layout.flex.center, "pad")}>

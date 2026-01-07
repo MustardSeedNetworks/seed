@@ -38,6 +38,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/oauth"
+	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/roots/publicip"
 	"github.com/krisarmstrong/seed/internal/sap/cable"
 	"github.com/krisarmstrong/seed/internal/sap/dns"
@@ -93,8 +94,9 @@ type Server struct {
 	logPath             string
 	httpServer          *http.Server
 	authManager         *auth.Manager
-	csrfManager         *auth.CSRFManager  // CSRF token manager for state-changing requests (fixes contract review)
-	setupTokenManager   *SetupTokenManager // Setup token manager for secure initial setup (fixes #724, #758)
+	csrfManager         *auth.CSRFManager          // CSRF token manager for state-changing requests (fixes contract review)
+	setupTokenManager   *SetupTokenManager         // Setup token manager for secure initial setup (fixes #724, #758)
+	recoveryManager     *auth.RecoveryTokenManager // Password recovery for headless machines
 	loginRateLimiter    *RateLimiter
 	endpointRateLimiter *EndpointRateLimiter // Rate limiter for expensive endpoints (fixes #530)
 	wsHub               *Hub
@@ -165,6 +167,7 @@ func NewServer(
 			DefaultEndpointRateLimitConfig(),
 		), // Rate limit expensive endpoints (fixes #530)
 		setupTokenManager: NewSetupTokenManager(), // Setup token for secure initial setup (fixes #724, #758)
+		recoveryManager:   auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir),
 		linkMonitor:       network.NewLinkMonitor(cfg.Interface.Default),
 		deviceDiscovery: discovery.NewDeviceDiscoveryWithOUI(
 			cfg.Interface.Default,
@@ -535,6 +538,9 @@ func (s *Server) setupCoreRoutes() {
 	s.mux.HandleFunc("/api/profiles/", s.handleProfiles)
 	s.mux.HandleFunc("/api/setup/status", s.handleSetupStatus)
 	s.mux.HandleFunc("/api/setup/complete", s.handleSetupComplete)
+	s.mux.HandleFunc("/api/recovery/status", s.handleRecoveryStatus)
+	s.mux.HandleFunc("/api/recovery/complete", s.handleRecoveryComplete)
+	s.mux.HandleFunc("/api/recovery/instructions", s.handleRecoveryInstructions)
 	s.mux.HandleFunc("/api/sso/providers", s.handleSSOProviders)
 	s.mux.HandleFunc("/api/sso/login", s.handleSSOLogin)
 	s.mux.HandleFunc("/api/sso/callback", s.handleSSOCallback)
